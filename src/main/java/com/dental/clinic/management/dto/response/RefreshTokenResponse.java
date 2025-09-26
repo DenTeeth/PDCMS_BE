@@ -1,0 +1,19 @@
+package com.dental.clinic.management.dto.response;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+/**
+ * Response containing a new access token generated from a valid refresh token.
+ */
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class RefreshTokenResponse {
+    private String accessToken;
+    private String refreshToken;
+
+}

@@ -1,0 +1,141 @@
+package com.dental.clinic.management.domain;
+
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
+
+/**
+ * A Specialization entity.
+ * Represents dental specializations that can be assigned to users in the clinic
+ * system.
+ */
+@Entity
+@Table(name = "specializations")
+public class Specialization {
+
+    @Id
+    @Column(name = "specialization_id", length = 20)
+    private String specializationId;
+
+    @NotBlank
+    @Size(max = 10)
+    @Column(name = "specialization_code", unique = true, nullable = false, length = 10)
+    private String specializationCode;
+
+    @NotBlank
+    @Size(max = 100)
+    @Column(name = "specialization_name", nullable = false, length = 100)
+    private String specializationName;
+
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
+
+    @Column(name = "is_active")
+    private Boolean isActive = true;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @ManyToMany(mappedBy = "specializations", fetch = FetchType.LAZY)
+    private Set<User> users = new HashSet<>();
+
+    // Constructors
+    public Specialization() {
+    }
+
+    public Specialization(String specializationId, String specializationCode, String specializationName) {
+        this.specializationId = specializationId;
+        this.specializationCode = specializationCode;
+        this.specializationName = specializationName;
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+    }
+
+    // Getters and Setters
+    public String getSpecializationId() {
+        return specializationId;
+    }
+
+    public void setSpecializationId(String specializationId) {
+        this.specializationId = specializationId;
+    }
+
+    public String getSpecializationCode() {
+        return specializationCode;
+    }
+
+    public void setSpecializationCode(String specializationCode) {
+        this.specializationCode = specializationCode;
+    }
+
+    public String getSpecializationName() {
+        return specializationName;
+    }
+
+    public void setSpecializationName(String specializationName) {
+        this.specializationName = specializationName;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public Boolean getIsActive() {
+        return isActive;
+    }
+
+    public void setIsActive(Boolean isActive) {
+        this.isActive = isActive;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Set<User> getUsers() {
+        return users;
+    }
+
+    public void setUsers(Set<User> users) {
+        this.users = users;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (!(o instanceof Specialization))
+            return false;
+        Specialization that = (Specialization) o;
+        return specializationId != null && specializationId.equals(that.getSpecializationId());
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "Specialization{" +
+                "specializationId='" + specializationId + '\'' +
+                ", specializationCode='" + specializationCode + '\'' +
+                ", specializationName='" + specializationName + '\'' +
+                ", isActive=" + isActive +
+                '}';
+    }
+}

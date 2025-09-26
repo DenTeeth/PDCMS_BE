@@ -1,0 +1,244 @@
+package com.dental.clinic.management.domain;
+
+import com.dental.clinic.management.domain.enums.AccountStatus;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
+
+/**
+ * An Account entity.
+ * Represents user authentication credentials and account information for the
+ * dental clinic management system.
+ */
+@Entity
+@Table(name = "accounts")
+public class Account {
+
+    @Id
+    @Column(name = "account_id", length = 20)
+    private String accountId;
+
+    @NotBlank
+    @Size(max = 50)
+    @Column(name = "username", unique = true, nullable = false, length = 50)
+    private String username;
+
+    @NotBlank
+    @Size(max = 255)
+    @Column(name = "password", nullable = false, length = 255)
+    private String password;
+
+    @Email
+    @NotBlank
+    @Size(max = 100)
+    @Column(name = "email", unique = true, nullable = false, length = 100)
+    private String email;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status")
+    private AccountStatus status = AccountStatus.ACTIVE;
+
+    @Column(name = "is_deleted")
+    private Boolean isDeleted = false;
+
+    @Column(name = "last_login_at")
+    private LocalDateTime lastLoginAt;
+
+    @Column(name = "failed_login_attempts")
+    private Integer failedLoginAttempts = 0;
+
+    @Column(name = "locked_until")
+    private LocalDateTime lockedUntil;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @OneToOne(mappedBy = "account", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private User user;
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "account_roles", joinColumns = @JoinColumn(name = "account_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
+    private Set<Role> roles = new HashSet<>();
+
+    // Constructors
+    public Account() {
+    }
+
+    public Account(String accountId, String username, String email, String password) {
+        this.accountId = accountId;
+        this.username = username;
+        this.email = email;
+        this.password = password;
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
+    // Getters and Setters
+    public String getAccountId() {
+        return accountId;
+    }
+
+    public void setAccountId(String accountId) {
+        this.accountId = accountId;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public AccountStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(AccountStatus status) {
+        this.status = status;
+    }
+
+    public Boolean getIsDeleted() {
+        return isDeleted;
+    }
+
+    public void setIsDeleted(Boolean isDeleted) {
+        this.isDeleted = isDeleted;
+    }
+
+    public LocalDateTime getLastLoginAt() {
+        return lastLoginAt;
+    }
+
+    public void setLastLoginAt(LocalDateTime lastLoginAt) {
+        this.lastLoginAt = lastLoginAt;
+    }
+
+    public Integer getFailedLoginAttempts() {
+        return failedLoginAttempts;
+    }
+
+    public void setFailedLoginAttempts(Integer failedLoginAttempts) {
+        this.failedLoginAttempts = failedLoginAttempts;
+    }
+
+    public LocalDateTime getLockedUntil() {
+        return lockedUntil;
+    }
+
+    public void setLockedUntil(LocalDateTime lockedUntil) {
+        this.lockedUntil = lockedUntil;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+        if (user != null) {
+            user.setAccount(this);
+        }
+    }
+
+    public Set<Role> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(Set<Role> roles) {
+        this.roles = roles;
+    }
+
+    // Helper methods
+    public void addRole(Role role) {
+        this.roles.add(role);
+        role.getAccounts().add(this);
+    }
+
+    public void removeRole(Role role) {
+        this.roles.remove(role);
+        role.getAccounts().remove(this);
+    }
+
+    public boolean isActive() {
+        return status == AccountStatus.ACTIVE && !isDeleted;
+    }
+
+    public boolean isLocked() {
+        return lockedUntil != null && lockedUntil.isAfter(LocalDateTime.now());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (!(o instanceof Account))
+            return false;
+        Account account = (Account) o;
+        return accountId != null && accountId.equals(account.getAccountId());
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "Account{" +
+                "accountId='" + accountId + '\'' +
+                ", username='" + username + '\'' +
+                ", email='" + email + '\'' +
+                ", status=" + status +
+                ", isDeleted=" + isDeleted +
+                '}';
+    }
+}
