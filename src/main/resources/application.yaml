@@ -1,0 +1,58 @@
+spring:
+  application:
+    name: Dental Clinic Management
+  
+  # ==============================
+  # Database Configuration
+  # ==============================
+  datasource:
+    url: jdbc:mysql://localhost:3306/dental_clinic_db
+    username: root
+    password: 123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  
+  # JPA Configuration
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        "[format_sql]": true
+    show-sql: true
+
+# ==============================
+# Custom JWT Configuration
+# ==============================
+dentalclinic:
+  jwt:
+    base64-secret: OOWH6vzvKUVsTUWvDEUz0SMnO3mfXiwIbXSKX6ey7fLI/oGjlrSOrucHd2qvsaZ+ZbxH/6TosGTtBxRMOOW0Bg==
+    # 15 minutes
+    access-token-validity-in-seconds: 900
+    # 30 days
+    refresh-token-validity-in-seconds: 2592000
+
+# ==============================
+# Server Configuration
+# ==============================
+server:
+  port: 8080
+
+# ==============================
+# Logging Configuration
+# ==============================
+logging:
+  level:
+    "[com.dental.clinic.management]": DEBUG
+    "[org.springdoc]": DEBUG
+
+# ==============================
+# Swagger/OpenAPI Configuration
+# ==============================
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    try-it-out-enabled: true
+    operations-sorter: method
+    tags-sorter: alpha
+    filter: true
