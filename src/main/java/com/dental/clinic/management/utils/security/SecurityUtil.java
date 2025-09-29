@@ -16,6 +16,8 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -25,6 +27,7 @@ public class SecurityUtil {
     public static final String AUTHORITIES_CLAIM = "authorities";
 
     private final JwtEncoder jwtEncoder;
+    private final JwtDecoder jwtDecoder;
 
     @Value("${dentalclinic.jwt.access-token-validity-in-seconds}")
     private long jwtExpiration;
@@ -32,8 +35,9 @@ public class SecurityUtil {
     @Value("${dentalclinic.jwt.refresh-token-validity-in-seconds}")
     private long refreshExpiration;
 
-    public SecurityUtil(JwtEncoder jwtEncoder) {
+    public SecurityUtil(JwtEncoder jwtEncoder, JwtDecoder jwtDecoder) {
         this.jwtEncoder = jwtEncoder;
+        this.jwtDecoder = jwtDecoder;
     }
 
     public String createAccessToken(String username, List<String> roles, List<String> permissions) {
@@ -68,6 +72,32 @@ public class SecurityUtil {
                 .build();
         JwsHeader jwsHeader = JwsHeader.with(JWT_ALGORITHM).build();
         return this.jwtEncoder.encode(JwtEncoderParameters.from(jwsHeader, claims)).getTokenValue();
+    }
+
+    /**
+     * Validate and decode a refresh token; returns Jwt if valid and of
+     * type=refresh.
+     * Throws JwtException (wrapped) if invalid/expired/wrong type.
+     */
+    public Jwt decodeRefreshToken(String refreshToken) {
+        try {
+            Jwt jwt = jwtDecoder.decode(refreshToken);
+            Object typeClaim = jwt.getClaims().get("type");
+            if (typeClaim == null || !"refresh".equals(typeClaim.toString())) {
+                throw new JwtException("Token is not a refresh token");
+            }
+            return jwt;
+        } catch (JwtException e) {
+            throw e; // propagate for service layer to translate
+        }
+    }
+
+    public long getAccessTokenValiditySeconds() {
+        return jwtExpiration;
+    }
+
+    public long getRefreshTokenValiditySeconds() {
+        return refreshExpiration;
     }
 
     /**

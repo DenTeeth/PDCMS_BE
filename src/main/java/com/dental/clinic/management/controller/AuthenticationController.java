@@ -30,14 +30,11 @@ public class AuthenticationController {
     }
 
     /**
-     * Authenticate a user and issue an access token.
-     * <p>
-     * {@code POST /api/v1/auth/login}
-     * </p>
+     * Authenticate user credentials and issue JWT tokens.
      *
      * @param request login credentials (username & password)
-     * @return 200 OK with {@link LoginResponse} including access token, roles and
-     *         permissions
+     * @return 200 OK with {@link LoginResponse} containing access token, refresh
+     *         token, roles and permissions
      * @throws com.dental.clinic.management.exception.BadCredentialsException if
      *                                                                        authentication
      *                                                                        fails
@@ -50,23 +47,14 @@ public class AuthenticationController {
     }
 
     /**
-     * Refresh an access token using a valid refresh token.
-     * <p>
-     * {@code POST /api/v1/auth/refresh-token}
-     * </p>
+     * Refresh access token using a valid refresh token.
      *
      * @param request payload containing a refresh token
-     * @return 200 OK with new access token (and optionally new refresh token in
-     *         future)
+     * @return 200 OK with new access token and existing refresh token
      * @throws com.dental.clinic.management.exception.BadCredentialsException if
      *                                                                        refresh
      *                                                                        token
-     *                                                                        is
-     *                                                                        invalid
-     *                                                                        or
-     *                                                                        decoding
-     *                                                                        not
-     *                                                                        implemented
+     *                                                                        invalid/expired
      */
     @PostMapping("/refresh-token")
     @ApiMessage("Làm mới access token")
@@ -76,12 +64,7 @@ public class AuthenticationController {
     }
 
     /**
-     * Logout a user (stateless).
-     * <p>
-     * {@code POST /api/v1/auth/logout}
-     * </p>
-     * Since JWT is stateless, the client should discard its tokens. (Có thể mở
-     * rộng: lưu blacklist.)
+     * Logout user
      *
      * @return 200 OK with empty body
      */

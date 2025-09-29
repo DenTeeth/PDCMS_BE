@@ -14,6 +14,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class RefreshTokenResponse {
     private String accessToken;
-    private String refreshToken;
-
+    private long accessTokenExpiresAt; // epoch seconds
+    private String refreshToken; // May be rotated
+    private Long refreshTokenExpiresAt; // nullable if not rotated
 }
