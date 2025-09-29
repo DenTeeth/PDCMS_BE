@@ -1,6 +1,15 @@
 package com.dental.clinic.management.domain;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
@@ -10,8 +19,6 @@ import java.util.Set;
 
 /**
  * A User profile entity.
- * Contains detailed information about dental clinic users including personal
- * info and specializations.
  */
 @Entity
 @Table(name = "users")

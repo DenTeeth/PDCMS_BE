@@ -1,6 +1,14 @@
 package com.dental.clinic.management.domain;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
@@ -9,8 +17,6 @@ import java.util.Set;
 
 /**
  * A Role entity.
- * Represents user roles in the dental clinic management system with associated
- * permissions.
  */
 @Entity
 @Table(name = "roles")

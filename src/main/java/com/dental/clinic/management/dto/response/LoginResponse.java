@@ -1,35 +1,68 @@
 package com.dental.clinic.management.dto.response;
 
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
+/**
+ * Login response với access token trong body và refresh token trong cookie.
+ */
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class LoginResponse {
 
-    private String token;
+    private String token; // Access token
+    private String refreshToken; // Refresh token
+    private long tokenExpiresAt; // epoch seconds
+    private long refreshTokenExpiresAt; // epoch seconds
     private String username;
     private String email;
     private List<String> roles;
     private List<String> permissions;
 
-    // Constructors
     public LoginResponse() {
     }
 
-    public LoginResponse(String token, String username, String email,
-            List<String> roles, List<String> permissions) {
+    public LoginResponse(String token, long tokenExpiresAt, String refreshToken, long refreshTokenExpiresAt,
+            String username, String email, List<String> roles, List<String> permissions) {
         this.token = token;
+        this.tokenExpiresAt = tokenExpiresAt;
+        this.refreshToken = refreshToken;
+        this.refreshTokenExpiresAt = refreshTokenExpiresAt;
         this.username = username;
         this.email = email;
         this.roles = roles;
         this.permissions = permissions;
     }
 
-    // Getters and Setters
     public String getToken() {
         return token;
     }
 
     public void setToken(String token) {
         this.token = token;
+    }
+
+    public String getRefreshToken() {
+        return refreshToken;
+    }
+
+    public void setRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
+    }
+
+    public long getTokenExpiresAt() {
+        return tokenExpiresAt;
+    }
+
+    public void setTokenExpiresAt(long tokenExpiresAt) {
+        this.tokenExpiresAt = tokenExpiresAt;
+    }
+
+    public long getRefreshTokenExpiresAt() {
+        return refreshTokenExpiresAt;
+    }
+
+    public void setRefreshTokenExpiresAt(long refreshTokenExpiresAt) {
+        this.refreshTokenExpiresAt = refreshTokenExpiresAt;
     }
 
     public String getUsername() {

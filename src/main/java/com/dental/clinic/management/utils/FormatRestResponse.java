@@ -17,8 +17,6 @@ public class FormatRestResponse implements ResponseBodyAdvice<Object> {
 
     @Override
     public boolean supports(MethodParameter returnType, Class converterType) {
-        // Chỉ áp dụng cho controller trong package ứng dụng, không ảnh hưởng springdoc
-        // endpoints
         return returnType.getDeclaringClass().getPackageName()
                 .startsWith("com.dental.clinic.management.controller");
     }
@@ -34,8 +32,6 @@ public class FormatRestResponse implements ResponseBodyAdvice<Object> {
 
         HttpServletResponse servletResponse = ((ServletServerHttpResponse) response).getServletResponse();
         int status = servletResponse.getStatus();
-
-        // Không cần kiểm tra path swagger nữa vì supports() đã giới hạn scope
 
         // Không format nếu là String hoặc error response
         if (body instanceof String || status >= 400) {

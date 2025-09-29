@@ -51,25 +51,23 @@ public class SecurityConfig {
                 .csrf(c -> c.disable())
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(authz -> authz
-                        // Public endpoints - không cần authentication
-                        .requestMatchers("/v3/api-docs/**",
-                                "/swagger-ui/**",
-                                "/swagger-ui.html", "/", "/api/v1/auth/login")
+                        // Public endpoints
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/",
+                                "/api/v1/auth/login", "/api/v1/auth/refresh-token")
                         .permitAll()
-                        .requestMatchers("/api/v1/setup/**").permitAll() // Setup endpoints
-                        .requestMatchers("/error").permitAll()
+                        .requestMatchers("/api/v1/setup/**", "/error").permitAll()
 
-                        // Account endpoints - tất cả user đã login đều xem được
+                        // Authenticated endpoints - Role-based access control applied in service layer
                         .requestMatchers("/api/v1/account/**").authenticated()
 
-                        // Default - tất cả các request khác cần authentication
+                        // All other endpoints require authentication
                         .anyRequest().authenticated())
 
-                // Configure OAuth2 Resource Server với JWT
+                // JWT Resource Server configuration
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt
                         .jwtAuthenticationConverter(jwtAuthenticationConverter)))
 
-                // Session management - stateless cho JWT
+                // Stateless session for JWT
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         return http.build();

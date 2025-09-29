@@ -1,6 +1,11 @@
 package com.dental.clinic.management.domain;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
@@ -9,8 +14,6 @@ import java.util.Set;
 
 /**
  * A Permission entity.
- * Represents granular permissions that can be assigned to roles in the dental
- * clinic system.
  */
 @Entity
 @Table(name = "permissions")

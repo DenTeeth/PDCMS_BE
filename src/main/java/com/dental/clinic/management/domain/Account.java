@@ -1,18 +1,30 @@
 package com.dental.clinic.management.domain;
 
-import com.dental.clinic.management.domain.enums.AccountStatus;
-import jakarta.persistence.*;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.dental.clinic.management.domain.enums.AccountStatus;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
 /**
  * An Account entity.
- * Represents user authentication credentials and account information for the
- * dental clinic management system.
  */
 @Entity
 @Table(name = "accounts")
@@ -42,26 +54,11 @@ public class Account {
     @Column(name = "status")
     private AccountStatus status = AccountStatus.ACTIVE;
 
-    @Column(name = "is_deleted")
-    private Boolean isDeleted = false;
-
-    @Column(name = "last_login_at")
-    private LocalDateTime lastLoginAt;
-
-    @Column(name = "failed_login_attempts")
-    private Integer failedLoginAttempts = 0;
-
-    @Column(name = "locked_until")
-    private LocalDateTime lockedUntil;
-
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
     @OneToOne(mappedBy = "account", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private User user;
+    private Employee employee;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "account_roles", joinColumns = @JoinColumn(name = "account_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
@@ -81,15 +78,9 @@ public class Account {
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
     }
 
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
-
-    // Getters and Setters
+    // Getters và Setters
     public String getAccountId() {
         return accountId;
     }
@@ -130,38 +121,6 @@ public class Account {
         this.status = status;
     }
 
-    public Boolean getIsDeleted() {
-        return isDeleted;
-    }
-
-    public void setIsDeleted(Boolean isDeleted) {
-        this.isDeleted = isDeleted;
-    }
-
-    public LocalDateTime getLastLoginAt() {
-        return lastLoginAt;
-    }
-
-    public void setLastLoginAt(LocalDateTime lastLoginAt) {
-        this.lastLoginAt = lastLoginAt;
-    }
-
-    public Integer getFailedLoginAttempts() {
-        return failedLoginAttempts;
-    }
-
-    public void setFailedLoginAttempts(Integer failedLoginAttempts) {
-        this.failedLoginAttempts = failedLoginAttempts;
-    }
-
-    public LocalDateTime getLockedUntil() {
-        return lockedUntil;
-    }
-
-    public void setLockedUntil(LocalDateTime lockedUntil) {
-        this.lockedUntil = lockedUntil;
-    }
-
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
@@ -170,22 +129,14 @@ public class Account {
         this.createdAt = createdAt;
     }
 
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
+    public Employee getEmployee() {
+        return employee;
     }
 
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-        if (user != null) {
-            user.setAccount(this);
+    public void setEmployee(Employee employee) {
+        this.employee = employee;
+        if (employee != null) {
+            employee.setAccount(this);
         }
     }
 
@@ -209,11 +160,7 @@ public class Account {
     }
 
     public boolean isActive() {
-        return status == AccountStatus.ACTIVE && !isDeleted;
-    }
-
-    public boolean isLocked() {
-        return lockedUntil != null && lockedUntil.isAfter(LocalDateTime.now());
+        return status == AccountStatus.ACTIVE;
     }
 
     @Override
@@ -238,7 +185,7 @@ public class Account {
                 ", username='" + username + '\'' +
                 ", email='" + email + '\'' +
                 ", status=" + status +
-                ", isDeleted=" + isDeleted +
+                ", createdAt=" + createdAt +
                 '}';
     }
 }

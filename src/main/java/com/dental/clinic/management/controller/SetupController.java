@@ -1,13 +1,14 @@
 package com.dental.clinic.management.controller;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Set;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.dental.clinic.management.domain.Account;
 import com.dental.clinic.management.domain.Permission;
@@ -21,9 +22,11 @@ import com.dental.clinic.management.repository.RoleRepository;
 import com.dental.clinic.management.repository.SpecializationRepository;
 import com.dental.clinic.management.repository.UserRepository;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.Set;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 /**
  * REST controller for system setup and initialization.
@@ -152,7 +155,6 @@ public class SetupController {
         account.setPassword(passwordEncoder.encode(password));
         account.setRoles(roles);
         account.setStatus(AccountStatus.ACTIVE);
-        account.setIsDeleted(false);
         account.setCreatedAt(LocalDateTime.now());
         return accountRepository.save(account);
     }
