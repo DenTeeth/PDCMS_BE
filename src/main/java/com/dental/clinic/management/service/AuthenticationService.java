@@ -1,28 +1,31 @@
 package com.dental.clinic.management.service;
 
-import com.dental.clinic.management.domain.Account;
-import com.dental.clinic.management.domain.Permission;
-import com.dental.clinic.management.domain.Role;
-import com.dental.clinic.management.domain.User;
-import com.dental.clinic.management.dto.request.LoginRequest;
-import com.dental.clinic.management.dto.response.LoginResponse;
-import com.dental.clinic.management.dto.request.RefreshTokenRequest;
-import com.dental.clinic.management.dto.response.RefreshTokenResponse;
-import com.dental.clinic.management.dto.response.UserInfoResponse;
-import com.dental.clinic.management.exception.AccountNotFoundException;
-import com.dental.clinic.management.repository.AccountRepository;
-import com.dental.clinic.management.repository.RefreshTokenRepository;
-import com.dental.clinic.management.utils.security.SecurityUtil;
+import java.security.MessageDigest;
+import java.time.Instant;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.security.MessageDigest;
+import com.dental.clinic.management.domain.Account;
+import com.dental.clinic.management.domain.Employee;
+import com.dental.clinic.management.domain.Permission;
+import com.dental.clinic.management.domain.Role;
+import com.dental.clinic.management.dto.request.LoginRequest;
+import com.dental.clinic.management.dto.request.RefreshTokenRequest;
+import com.dental.clinic.management.dto.response.LoginResponse;
+import com.dental.clinic.management.dto.response.RefreshTokenResponse;
+import com.dental.clinic.management.dto.response.UserInfoResponse;
+import com.dental.clinic.management.dto.response.UserPermissionsResponse;
+import com.dental.clinic.management.dto.response.UserProfileResponse;
+import com.dental.clinic.management.exception.AccountNotFoundException;
+import com.dental.clinic.management.repository.AccountRepository;
+import com.dental.clinic.management.repository.RefreshTokenRepository;
+import com.dental.clinic.management.utils.security.SecurityUtil;
 
 /**
  * Service layer for authentication & user identity operations.
@@ -188,9 +191,9 @@ public class AuthenticationService {
                                 .collect(Collectors.toList());
                 response.setPermissions(permissions);
 
-                // Thông tin chi tiết nếu user có profile
-                if (account.getUser() != null) {
-                        User profile = account.getUser();
+                // Thông tin chi tiết nếu employee có profile
+                if (account.getEmployee() != null) {
+                        Employee profile = account.getEmployee();
                         response.setFullName(profile.getFullName());
                         response.setPhoneNumber(profile.getPhone());
                         response.setAddress(profile.getAddress());
@@ -207,6 +210,71 @@ public class AuthenticationService {
                 }
 
                 return response;
+        }
+
+        /**
+         * Get user profile with roles but without permissions.
+         *
+         * @param username account username
+         * @return {@link UserProfileResponse} with profile & roles only
+         * @throws AccountNotFoundException if account does not exist
+         */
+        public UserProfileResponse getUserProfile(String username) {
+                Account account = accountRepository.findByUsernameWithRolesAndPermissions(username)
+                                .orElseThrow(() -> new AccountNotFoundException(username));
+
+                UserProfileResponse response = new UserProfileResponse();
+                response.setId(account.getAccountId());
+                response.setUsername(account.getUsername());
+                response.setEmail(account.getEmail());
+                response.setAccountStatus(account.getStatus() != null ? account.getStatus().name() : null);
+
+                // Lấy danh sách vai trò (không có permissions)
+                List<String> roles = account.getRoles().stream()
+                                .map(Role::getRoleName)
+                                .collect(Collectors.toList());
+                response.setRoles(roles);
+
+                // Thông tin chi tiết nếu employee có profile
+                if (account.getEmployee() != null) {
+                        Employee profile = account.getEmployee();
+                        response.setFullName(profile.getFullName());
+                        response.setPhoneNumber(profile.getPhone());
+                        response.setAddress(profile.getAddress());
+                        response.setDateOfBirth(
+                                        profile.getDateOfBirth() != null ? profile.getDateOfBirth().toString() : null);
+
+                        // Lấy chuyên khoa chính (nếu có)
+                        if (!profile.getSpecializations().isEmpty()) {
+                                response.setSpecializationName(
+                                                profile.getSpecializations().iterator().next().getSpecializationName());
+                        }
+
+                        response.setCreatedAt(profile.getCreatedAt());
+                }
+
+                return response;
+        }
+
+        /**
+         * Get user permissions only.
+         *
+         * @param username account username
+         * @return {@link UserPermissionsResponse} with permissions only
+         * @throws AccountNotFoundException if account does not exist
+         */
+        public UserPermissionsResponse getUserPermissions(String username) {
+                Account account = accountRepository.findByUsernameWithRolesAndPermissions(username)
+                                .orElseThrow(() -> new AccountNotFoundException(username));
+
+                // Lấy tất cả quyền hạn từ các vai trò
+                List<String> permissions = account.getRoles().stream()
+                                .flatMap(role -> role.getPermissions().stream())
+                                .map(Permission::getPermissionName)
+                                .distinct()
+                                .collect(Collectors.toList());
+
+                return new UserPermissionsResponse(account.getUsername(), permissions);
         }
 
         /**
