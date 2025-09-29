@@ -11,6 +11,7 @@ import com.dental.clinic.management.dto.response.RefreshTokenResponse;
 import com.dental.clinic.management.dto.response.UserInfoResponse;
 import com.dental.clinic.management.exception.AccountNotFoundException;
 import com.dental.clinic.management.repository.AccountRepository;
+import com.dental.clinic.management.repository.RefreshTokenRepository;
 import com.dental.clinic.management.utils.security.SecurityUtil;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -21,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.security.MessageDigest;
 
 /**
  * Service layer for authentication & user identity operations.
@@ -36,14 +38,17 @@ public class AuthenticationService {
         private final AuthenticationManager authenticationManager;
         private final SecurityUtil securityUtil;
         private final AccountRepository accountRepository;
+        private final RefreshTokenRepository refreshTokenRepository;
 
         public AuthenticationService(
                         AuthenticationManager authenticationManager,
                         SecurityUtil securityUtil,
-                        AccountRepository accountRepository) {
+                        AccountRepository accountRepository,
+                        RefreshTokenRepository refreshTokenRepository) {
                 this.authenticationManager = authenticationManager;
                 this.securityUtil = securityUtil;
                 this.accountRepository = accountRepository;
+                this.refreshTokenRepository = refreshTokenRepository;
         }
 
         /**
@@ -202,5 +207,42 @@ public class AuthenticationService {
                 }
 
                 return response;
+        }
+
+        /**
+         * Logout user by invalidating their refresh token.
+         *
+         * @param refreshToken the refresh token to invalidate
+         * @throws com.dental.clinic.management.exception.BadCredentialsException if
+         *                                                                        refresh
+         *                                                                        token
+         *                                                                        is
+         *                                                                        invalid
+         */
+        public void logout(String refreshToken) {
+                if (refreshToken == null || refreshToken.isBlank()) {
+                        return; // Không có token để xóa
+                }
+
+                try {
+                        // Hash refresh token để tìm trong database
+                        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+                        byte[] hashBytes = digest.digest(refreshToken.getBytes());
+                        StringBuilder hexString = new StringBuilder();
+                        for (byte b : hashBytes) {
+                                String hex = Integer.toHexString(0xff & b);
+                                if (hex.length() == 1) {
+                                        hexString.append('0');
+                                }
+                                hexString.append(hex);
+                        }
+                        String tokenHash = hexString.toString();
+
+                        // Xóa token từ database
+                        refreshTokenRepository.deleteByTokenHash(tokenHash);
+
+                } catch (Exception e) {
+                        // Token không hợp lệ hoặc đã hết hạn - ignore
+                }
         }
 }

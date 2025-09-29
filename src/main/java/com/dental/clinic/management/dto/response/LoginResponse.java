@@ -1,7 +1,12 @@
 package com.dental.clinic.management.dto.response;
 
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
+/**
+ * Login response với access token trong body và refresh token trong cookie.
+ */
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class LoginResponse {
 
     private String token; // Access token

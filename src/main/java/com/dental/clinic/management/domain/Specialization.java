@@ -1,6 +1,12 @@
 package com.dental.clinic.management.domain;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
@@ -9,8 +15,6 @@ import java.util.Set;
 
 /**
  * A Specialization entity.
- * Represents dental specializations that can be assigned to users in the clinic
- * system.
  */
 @Entity
 @Table(name = "specializations")
