@@ -1,7 +1,9 @@
 package com.dental.clinic.management.service;
 
-import com.dental.clinic.management.domain.Account;
-import com.dental.clinic.management.repository.AccountRepository;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -10,9 +12,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import com.dental.clinic.management.domain.Account;
+import com.dental.clinic.management.repository.AccountRepository;
 
 /**
  * Spring Security {@link UserDetailsService} implementation loading
@@ -45,10 +46,6 @@ public class CustomUserDetailsService implements UserDetailsService {
             throw new UsernameNotFoundException("Account is not active: " + username);
         }
 
-        if (account.isLocked()) {
-            throw new UsernameNotFoundException("Account is locked: " + username);
-        }
-
         return new CustomUserPrincipal(account);
     }
 
@@ -67,10 +64,6 @@ public class CustomUserDetailsService implements UserDetailsService {
             throw new UsernameNotFoundException("Account is not active: " + email);
         }
 
-        if (account.isLocked()) {
-            throw new UsernameNotFoundException("Account is locked: " + email);
-        }
-
         return new CustomUserPrincipal(account);
     }
 
@@ -83,7 +76,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         /**
          * Construct principal from persistent {@link Account}.
-         * 
+         *
          * @param account account entity
          */
         public CustomUserPrincipal(Account account) {
@@ -131,7 +124,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         @Override
         public boolean isAccountNonLocked() {
-            return !account.isLocked();
+            return account.isActive();
         }
 
         @Override
@@ -160,7 +153,9 @@ public class CustomUserDetailsService implements UserDetailsService {
         }
 
         public String getFullName() {
-            return account.getUser() != null ? account.getUser().getFullName() : "";
+            return account.getEmployee() != null
+                    ? account.getEmployee().getFirstName() + " " + account.getEmployee().getLastName()
+                    : "";
         }
     }
 }
