@@ -20,6 +20,7 @@ import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 
 import com.dental.clinic.management.utils.security.SecurityUtil;
+import com.dental.clinic.management.utils.security.AuthoritiesConstants;
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import com.nimbusds.jose.util.Base64;
 
@@ -63,17 +64,15 @@ public class JwtConfig {
         converter.setJwtGrantedAuthoritiesConverter(jwt -> {
             Collection<GrantedAuthority> authorities = new HashSet<>();
 
-            // Extract roles from JWT
+            // Extract roles from JWT - roles are already formatted by SecurityUtil
             List<String> roles = jwt.getClaimAsStringList("roles");
             if (roles != null) {
                 for (String role : roles) {
-                    // Ensure role has ROLE_ prefix
-                    String roleAuthority = role.startsWith("ROLE_") ? role : "ROLE_" + role;
-                    authorities.add(new SimpleGrantedAuthority(roleAuthority));
+                    authorities.add(new SimpleGrantedAuthority(role));
                 }
             }
 
-            // Extract permissions from JWT
+            // Extract permissions from JWT - add all permissions dynamically for RBAC
             List<String> permissions = jwt.getClaimAsStringList("permissions");
             if (permissions != null) {
                 for (String permission : permissions) {

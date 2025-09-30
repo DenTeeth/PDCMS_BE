@@ -20,6 +20,8 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.stereotype.Component;
 
+import static com.dental.clinic.management.utils.security.AuthoritiesConstants.*;
+
 @Component
 public class SecurityUtil {
 
@@ -44,7 +46,7 @@ public class SecurityUtil {
         Instant now = Instant.now();
         Instant validity = now.plus(jwtExpiration, ChronoUnit.SECONDS);
 
-        // Tạo ROLE_xxxx nếu chưa có
+        // Ensure roles have ROLE_ prefix for Spring Security RBAC
         List<String> formattedRoles = roles.stream()
                 .map(role -> role.startsWith("ROLE_") ? role : "ROLE_" + role)
                 .collect(Collectors.toList());

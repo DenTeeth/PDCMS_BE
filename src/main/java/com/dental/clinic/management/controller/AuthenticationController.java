@@ -6,6 +6,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -14,6 +15,7 @@ import com.dental.clinic.management.dto.response.LoginResponse;
 import com.dental.clinic.management.dto.request.RefreshTokenRequest;
 import com.dental.clinic.management.dto.response.RefreshTokenResponse;
 import com.dental.clinic.management.service.AuthenticationService;
+import com.dental.clinic.management.service.TokenBlacklistService;
 import com.dental.clinic.management.utils.annotation.ApiMessage;
 
 import jakarta.validation.Valid;
@@ -28,9 +30,12 @@ import jakarta.validation.Valid;
 public class AuthenticationController {
 
     private final AuthenticationService authenticationService;
+    private final TokenBlacklistService tokenBlacklistService;
 
-    public AuthenticationController(AuthenticationService authenticationService) {
+    public AuthenticationController(AuthenticationService authenticationService,
+                                  TokenBlacklistService tokenBlacklistService) {
         this.authenticationService = authenticationService;
+        this.tokenBlacklistService = tokenBlacklistService;
     }
 
     /**
@@ -68,8 +73,6 @@ public class AuthenticationController {
                     .path("/") // Áp dụng cho toàn bộ API
                     .maxAge(7 * 24 * 60 * 60) // 7 ngày
                     .build();
-            // TODO - Save lại refresh token vào database
-            // authenticationService.saveRefreshToken(loginResponse.getRefreshToken());
             return ResponseEntity.ok()
                     .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
                     .body(responseBody);
@@ -97,19 +100,41 @@ public class AuthenticationController {
             @CookieValue(value = "refreshToken", required = true) String refreshToken) {
         RefreshTokenRequest request = new RefreshTokenRequest(refreshToken);
         RefreshTokenResponse response = authenticationService.refreshToken(request);
+
+        // Set new refresh token vào HTTP-only cookie
+        if (response.getRefreshToken() != null) {
+            ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", response.getRefreshToken())
+                    .httpOnly(true)
+                    .secure(false) // Set true khi dùng HTTPS
+                    .path("/")
+                    .maxAge(7 * 24 * 60 * 60) // 7 ngày
+                    .build();
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+                    .body(response);
+        }
+
         return ResponseEntity.ok(response);
     }
 
     /**
-     * Logout user by invalidating refresh token and clearing cookie.
+     * Logout user by invalidating both access and refresh tokens.
      *
+     * @param authHeader Authorization header containing access token
      * @param refreshToken refresh token from HTTP-only cookie
      * @return 200 OK with cleared refresh token cookie
      */
     @PostMapping("/logout")
     @ApiMessage("Đăng xuất thành công")
     public ResponseEntity<Void> logout(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
             @CookieValue(value = "refreshToken", required = false) String refreshToken) {
+
+        // Blacklist access token if provided
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String accessToken = authHeader.substring(7);
+            tokenBlacklistService.blacklistToken(accessToken);
+        }
 
         // Vô hiệu hóa refresh token trong database
         if (refreshToken != null) {

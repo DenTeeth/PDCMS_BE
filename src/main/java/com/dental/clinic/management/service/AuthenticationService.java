@@ -154,9 +154,6 @@ public class AuthenticationService {
                         String newRefresh = securityUtil.createRefreshToken(username);
                         long refreshExp = now + securityUtil.getRefreshTokenValiditySeconds();
 
-                        // TODO - Xóa cookie khỏi cookie cũ và lưu refresh token mới vào database
-                        // authenticationService.saveRefreshToken(newRefresh);
-
                         return new RefreshTokenResponse(newAccess, accessExp, newRefresh, refreshExp);
                 } catch (Exception e) {
                         throw new com.dental.clinic.management.exception.BadCredentialsException(

@@ -2,8 +2,10 @@ package com.dental.clinic.management.controller;
 
 import java.util.List;
 
+import com.dental.clinic.management.domain.Employee;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -26,18 +28,18 @@ public class EmployeeController {
 
   @GetMapping("")
   @ApiMessage("Get all employees successfully")
-  // TODO : Pagination + Filter
   public ResponseEntity<List<EmployeeInfoResponse>> getAllEmployees() {
     List<EmployeeInfoResponse> employees = employeeMapper.toEmployeeInfoResponseList(
         employeeService.findAllEmployees());
     return ResponseEntity.ok().body(employees);
   }
 
-  @GetMapping("/{id}")
-  @ApiMessage("Get employee by ID successfully")
-  public ResponseEntity<EmployeeInfoResponse> getEmployeeById() {
-    // TODO : Service to get All Employee by ID
-    return ResponseEntity.ok().body(new EmployeeInfoResponse());
-  }
+    @GetMapping("/{employeeCode}")
+    @ApiMessage("Get employee by Employee Code successfully")
+    public ResponseEntity<EmployeeInfoResponse> getEmployeeByCode(@PathVariable("employeeCode") String employeeCode) {
+        Employee employee = employeeService.findEmployeeByCode(employeeCode);
+        EmployeeInfoResponse response = employeeMapper.toEmployeeInfoResponse(employee);
+        return ResponseEntity.ok(response);
+    }
 
 }

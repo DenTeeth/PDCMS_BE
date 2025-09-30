@@ -11,6 +11,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 
 import com.dental.clinic.management.service.CustomUserDetailsService;
@@ -20,11 +21,14 @@ public class SecurityConfig {
 
     private final CustomUserDetailsService userDetailsService;
     private final JwtAuthenticationConverter jwtAuthenticationConverter;
+    private final JwtBlacklistFilter jwtBlacklistFilter;
 
     public SecurityConfig(CustomUserDetailsService userDetailsService,
-            JwtAuthenticationConverter jwtAuthenticationConverter) {
+            JwtAuthenticationConverter jwtAuthenticationConverter,
+            JwtBlacklistFilter jwtBlacklistFilter) {
         this.userDetailsService = userDetailsService;
         this.jwtAuthenticationConverter = jwtAuthenticationConverter;
+        this.jwtBlacklistFilter = jwtBlacklistFilter;
     }
 
     @Bean
@@ -60,12 +64,19 @@ public class SecurityConfig {
                         // Authenticated endpoints - Role-based access control applied in service layer
                         .requestMatchers("/api/v1/account/**").authenticated()
 
+                        // Test endpoints (remove in production)
+                        .requestMatchers("/api/v1/test-security/public").permitAll()
+                        .requestMatchers("/api/v1/test-security/**").authenticated()
+
                         // All other endpoints require authentication
                         .anyRequest().authenticated())
 
                 // JWT Resource Server configuration
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt
                         .jwtAuthenticationConverter(jwtAuthenticationConverter)))
+
+                // Add JWT blacklist filter before JWT authentication
+                .addFilterBefore(jwtBlacklistFilter, BearerTokenAuthenticationFilter.class)
 
                 // Stateless session for JWT
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
