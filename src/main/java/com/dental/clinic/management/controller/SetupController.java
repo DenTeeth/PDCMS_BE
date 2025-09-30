@@ -11,16 +11,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.dental.clinic.management.domain.Account;
+import com.dental.clinic.management.domain.Employee;
 import com.dental.clinic.management.domain.Permission;
 import com.dental.clinic.management.domain.Role;
 import com.dental.clinic.management.domain.Specialization;
-import com.dental.clinic.management.domain.User;
 import com.dental.clinic.management.domain.enums.AccountStatus;
 import com.dental.clinic.management.repository.AccountRepository;
+import com.dental.clinic.management.repository.EmployeeRepository;
 import com.dental.clinic.management.repository.PermissionRepository;
 import com.dental.clinic.management.repository.RoleRepository;
 import com.dental.clinic.management.repository.SpecializationRepository;
-import com.dental.clinic.management.repository.UserRepository;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -38,7 +38,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 public class SetupController {
 
     private final AccountRepository accountRepository;
-    private final UserRepository userRepository;
+    private final EmployeeRepository employeeRepository;
     private final RoleRepository roleRepository;
     private final PermissionRepository permissionRepository;
     private final SpecializationRepository specializationRepository;
@@ -46,13 +46,13 @@ public class SetupController {
 
     public SetupController(
             AccountRepository accountRepository,
-            UserRepository userRepository,
+            EmployeeRepository employeeRepository,
             RoleRepository roleRepository,
             PermissionRepository permissionRepository,
             SpecializationRepository specializationRepository,
             PasswordEncoder passwordEncoder) {
         this.accountRepository = accountRepository;
-        this.userRepository = userRepository;
+        this.employeeRepository = employeeRepository;
         this.roleRepository = roleRepository;
         this.permissionRepository = permissionRepository;
         this.specializationRepository = specializationRepository;
@@ -97,9 +97,9 @@ public class SetupController {
                 "123456",
                 Set.of(adminRole));
 
-        // 5. Tạo Admin User Profile
-        createUser(
-                "USER_ADM001",
+        // 5. Tạo Admin Employee Profile
+        createEmployee(
+                "EMP_ADM001",
                 adminAccount,
                 "ADM001",
                 "Admin",
@@ -159,20 +159,22 @@ public class SetupController {
         return accountRepository.save(account);
     }
 
-    private User createUser(String id, Account account, String employeeCode, String firstName, String lastName,
+    private Employee createEmployee(String id, Account account, String employeeCode, String firstName, String lastName,
             String phone, LocalDate dateOfBirth, String address, Set<Specialization> specializations) {
-        User user = new User();
-        user.setUserId(id);
-        user.setAccount(account);
-        user.setEmployeeCode(employeeCode);
-        user.setFirstName(firstName);
-        user.setLastName(lastName);
-        user.setPhone(phone);
-        user.setDateOfBirth(dateOfBirth);
-        user.setAddress(address);
-        user.setSpecializations(specializations);
-        user.setIsActive(true);
-        user.setCreatedAt(LocalDateTime.now());
-        return userRepository.save(user);
+        Employee employee = new Employee();
+        employee.setEmployeeId(id);
+        employee.setAccount(account);
+        employee.setEmployeeCode(employeeCode);
+        employee.setFirstName(firstName);
+        employee.setLastName(lastName);
+        employee.setPhone(phone);
+        employee.setDateOfBirth(dateOfBirth);
+        employee.setAddress(address);
+        employee.setSpecializations(specializations);
+        employee.setIsActive(true);
+        employee.setCreatedAt(LocalDateTime.now());
+        // Set default role as DENTIST
+        employee.setRoleId(1); // Assuming DENTIST = 1
+        return employeeRepository.save(employee);
     }
 }

@@ -1,6 +1,7 @@
 package com.dental.clinic.management.repository;
 
 import com.dental.clinic.management.domain.Account;
+import com.dental.clinic.management.domain.enums.AccountStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -42,8 +43,7 @@ public interface AccountRepository extends JpaRepository<Account, String> {
     Optional<Account> findByAccountIdWithRolesAndPermissions(@Param("accountId") String accountId);
 
     /**
-     * Find all active (status=ACTIVE & not deleted) accounts.
+     * Find all active accounts.
      */
-    @Query("SELECT a FROM Account a WHERE a.status = 'ACTIVE' AND a.isDeleted = false")
-    List<Account> findAllActiveAccounts();
+    List<Account> findByStatus(AccountStatus status);
 }

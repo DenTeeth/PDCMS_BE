@@ -68,7 +68,8 @@ public class AuthenticationController {
                     .path("/") // Áp dụng cho toàn bộ API
                     .maxAge(7 * 24 * 60 * 60) // 7 ngày
                     .build();
-
+            // TODO - Save lại refresh token vào database
+            // authenticationService.saveRefreshToken(loginResponse.getRefreshToken());
             return ResponseEntity.ok()
                     .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
                     .body(responseBody);

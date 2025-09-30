@@ -22,7 +22,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, String> {
 
   Optional<Employee> findOneByAccountEmail(String email);
 
-  List<Employee> findAllEmployees();
+  List<Employee> findByIsActive(Boolean isActive);
 
   Boolean existsByEmployeeCode(String employeeCode);
 }

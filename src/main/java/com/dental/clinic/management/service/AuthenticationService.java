@@ -153,11 +153,16 @@ public class AuthenticationService {
                         // Tạo refresh token mới (thay vì dùng cái cũ)
                         String newRefresh = securityUtil.createRefreshToken(username);
                         long refreshExp = now + securityUtil.getRefreshTokenValiditySeconds();
+
+                        // TODO - Xóa cookie khỏi cookie cũ và lưu refresh token mới vào database
+                        // authenticationService.saveRefreshToken(newRefresh);
+
                         return new RefreshTokenResponse(newAccess, accessExp, newRefresh, refreshExp);
                 } catch (Exception e) {
                         throw new com.dental.clinic.management.exception.BadCredentialsException(
                                         "Invalid refresh token");
                 }
+
         }
 
         /**
@@ -294,7 +299,7 @@ public class AuthenticationService {
 
                 try {
                         // Hash refresh token để tìm trong database
-                        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+                        MessageDigest digest = MessageDigest.getInstance("SHA-512");
                         byte[] hashBytes = digest.digest(refreshToken.getBytes());
                         StringBuilder hexString = new StringBuilder();
                         for (byte b : hashBytes) {
@@ -310,7 +315,7 @@ public class AuthenticationService {
                         refreshTokenRepository.deleteByTokenHash(tokenHash);
 
                 } catch (Exception e) {
-                        // Token không hợp lệ hoặc đã hết hạn - ignore
+                        throw new RuntimeException("Logout failed", e);
                 }
         }
 }

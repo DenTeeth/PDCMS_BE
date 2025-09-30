@@ -18,8 +18,7 @@ public class EmployeeService {
 
   @PreAuthorize("hasRole('ADMIN')")
   public List<Employee> findAllEmployees() {
-    return employeeRepository.findAllEmployees();
+    return employeeRepository.findAll();
   }
 
-  
 }

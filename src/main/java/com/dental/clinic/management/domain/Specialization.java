@@ -44,7 +44,7 @@ public class Specialization {
     private LocalDateTime createdAt;
 
     @ManyToMany(mappedBy = "specializations", fetch = FetchType.LAZY)
-    private Set<User> users = new HashSet<>();
+    private Set<Employee> employees = new HashSet<>();
 
     // Constructors
     public Specialization() {
@@ -110,12 +110,12 @@ public class Specialization {
         this.createdAt = createdAt;
     }
 
-    public Set<User> getUsers() {
-        return users;
+    public Set<Employee> getEmployees() {
+        return employees;
     }
 
-    public void setUsers(Set<User> users) {
-        this.users = users;
+    public void setEmployees(Set<Employee> employees) {
+        this.employees = employees;
     }
 
     @Override

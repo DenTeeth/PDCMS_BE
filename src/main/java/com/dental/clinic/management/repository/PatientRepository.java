@@ -19,8 +19,6 @@ public interface PatientRepository extends JpaRepository<Patient, String> {
 
   Optional<Patient> findOneByPhone(String phone);
 
-  List<Patient> findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(String firstName, String lastName);
-
   @Query("SELECT p FROM Patient p WHERE p.isActive = true")
   List<Patient> findAllActivePatients();
 
