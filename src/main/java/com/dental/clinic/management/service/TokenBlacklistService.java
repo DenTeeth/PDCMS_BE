@@ -15,17 +15,17 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class TokenBlacklistService {
-    
+
     private final ConcurrentHashMap<String, Long> blacklistedTokens = new ConcurrentHashMap<>();
     private final JwtDecoder jwtDecoder;
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-    
+
     public TokenBlacklistService(JwtDecoder jwtDecoder) {
         this.jwtDecoder = jwtDecoder;
         // Cleanup expired tokens every hour
         scheduler.scheduleAtFixedRate(this::cleanupExpiredTokens, 1, 1, TimeUnit.HOURS);
     }
-    
+
     /**
      * Add token to blacklist when user logs out
      */
@@ -40,14 +40,14 @@ public class TokenBlacklistService {
             // Token already invalid, no need to blacklist
         }
     }
-    
+
     /**
      * Check if token is blacklisted
      */
     public boolean isTokenBlacklisted(String token) {
         return blacklistedTokens.containsKey(token);
     }
-    
+
     /**
      * Remove expired tokens from blacklist
      */

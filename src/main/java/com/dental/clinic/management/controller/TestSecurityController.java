@@ -36,14 +36,14 @@ public class TestSecurityController {
         return "User: " + auth.getName() + ", Authorities: " + authorities;
     }
 
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('" + ADMIN + "')")
     @GetMapping("/admin-only")
     @ApiMessage("Chỉ ADMIN mới truy cập được")
     public String adminOnlyEndpoint() {
         return "Admin only endpoint accessed successfully";
     }
 
-    @PreAuthorize("hasRole('ROLE_USER')")
+    @PreAuthorize("hasRole('" + USER + "')")
     @GetMapping("/user-only")
     @ApiMessage("Chỉ USER mới truy cập được")
     public String userOnlyEndpoint() {
