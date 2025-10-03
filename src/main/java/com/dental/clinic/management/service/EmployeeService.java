@@ -1,5 +1,6 @@
 package com.dental.clinic.management.service;
 
+import com.dental.clinic.management.domain.enums.AccountStatus;
 import com.dental.clinic.management.dto.request.CreateEmployeeRequest;
 import com.dental.clinic.management.dto.request.UpdateEmployeeRequest;
 import com.dental.clinic.management.dto.response.EmployeeInfoResponse;
@@ -11,7 +12,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import static com.dental.clinic.management.utils.security.AuthoritiesConstants.*;
@@ -21,6 +24,7 @@ import com.dental.clinic.management.domain.Employee;
 import com.dental.clinic.management.domain.Specialization;
 import com.dental.clinic.management.repository.AccountRepository;
 import com.dental.clinic.management.repository.EmployeeRepository;
+import com.dental.clinic.management.repository.RoleRepository;
 import com.dental.clinic.management.repository.SpecializationRepository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,16 +38,22 @@ public class EmployeeService {
     private final EmployeeMapper employeeMapper;
     private final AccountRepository accountRepository;
     private final SpecializationRepository specializationRepository;
+    private final RoleRepository roleRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public EmployeeService(
             EmployeeRepository employeeRepository,
             EmployeeMapper employeeMapper,
             AccountRepository accountRepository,
-            SpecializationRepository specializationRepository) {
+            SpecializationRepository specializationRepository,
+            RoleRepository roleRepository,
+            PasswordEncoder passwordEncoder) {
         this.employeeRepository = employeeRepository;
         this.employeeMapper = employeeMapper;
         this.accountRepository = accountRepository;
         this.specializationRepository = specializationRepository;
+        this.roleRepository = roleRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @PreAuthorize("hasRole('" + ADMIN + "')")
@@ -54,7 +64,9 @@ public class EmployeeService {
     }
 
     /**
-     * Get all employees with pagination, sorting and mapping to DTO
+     * Get all ACTIVE employees only (isActive = true) with pagination, sorting and
+     * mapping to DTO
+     * This is the default method for normal operations
      *
      * @param page          page number (zero-based)
      * @param size          number of items per page
@@ -62,8 +74,8 @@ public class EmployeeService {
      * @param sortDirection ASC or DESC
      * @return Page of EmployeeInfoResponse
      */
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + READ_ALL_EMPLOYEES + "')")
-    public Page<EmployeeInfoResponse> getAllEmployees(
+    @PreAuthorize("hasRole('" + ADMIN + "')")
+    public Page<EmployeeInfoResponse> getAllActiveEmployees(
             int page, int size, String sortBy, String sortDirection) {
 
         // Validate and sanitize inputs
@@ -79,45 +91,186 @@ public class EmployeeService {
         Sort sort = Sort.by(direction, sortBy);
 
         // Create pageable
-        Pageable pageable = PageRequest.of(page, size,
-                sort);
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        // Create specification to filter only active employees
+        Specification<Employee> spec = (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("isActive"),
+                true);
 
         // Fetch employees and map to DTO
+        Page<Employee> employeePage = employeeRepository.findAll(spec, pageable);
+        return employeePage.map(employeeMapper::toEmployeeInfoResponse);
+    }
+
+    /**
+     * Get ALL employees including deleted ones (isActive = true AND false)
+     * This method is for admin management purposes only
+     *
+     * @param page          page number (zero-based)
+     * @param size          number of items per page
+     * @param sortBy        field name to sort by
+     * @param sortDirection ASC or DESC
+     * @return Page of EmployeeInfoResponse
+     */
+    @PreAuthorize("hasRole('" + ADMIN + "')")
+    public Page<EmployeeInfoResponse> getAllEmployeesIncludingDeleted(
+            int page, int size, String sortBy, String sortDirection) {
+
+        // Validate and sanitize inputs
+        page = Math.max(0, page); // Ensure page is not negative
+        size = (size <= 0 || size > 100) ? 10 : size; // Default to 10 if invalid, max 100
+
+        // Create sort direction
+        Sort.Direction direction = sortDirection.equalsIgnoreCase("DESC")
+                ? Sort.Direction.DESC
+                : Sort.Direction.ASC;
+
+        // Create sort object
+        Sort sort = Sort.by(direction, sortBy);
+
+        // Create pageable
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        // Fetch ALL employees (no filter) and map to DTO
         Page<Employee> employeePage = employeeRepository.findAll(pageable);
         return employeePage.map(employeeMapper::toEmployeeInfoResponse);
     }
 
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + READ_EMPLOYEE_BY_CODE + "')")
+    /**
+     * Get ACTIVE employee by employee code with DTO response (isActive = true only)
+     * This is the default method for normal operations
+     *
+     * @param employeeCode the code of the employee
+     * @return EmployeeInfoResponse
+     * @throws EmployeeNotFoundException if employee not found or deleted
+     */
+    @PreAuthorize("hasRole('" + ADMIN + "')")
     @Transactional(readOnly = true)
-    public Employee findEmployeeByCode(String employeeCode) {
+    public EmployeeInfoResponse getActiveEmployeeByCode(String employeeCode) {
+        Employee employee = findActiveEmployeeByCode(employeeCode);
+        return employeeMapper.toEmployeeInfoResponse(employee);
+    }
+
+    /**
+     * Get employee by code INCLUDING deleted ones (isActive = true or false)
+     * This method is for admin management purposes only
+     *
+     * @param employeeCode the code of the employee
+     * @return EmployeeInfoResponse
+     * @throws EmployeeNotFoundException if employee not found
+     */
+    @PreAuthorize("hasRole('" + ADMIN + "')")
+    @Transactional(readOnly = true)
+    public EmployeeInfoResponse getEmployeeByCodeIncludingDeleted(String employeeCode) {
         if (employeeCode == null || employeeCode.trim().isEmpty()) {
             throw new IllegalArgumentException("Employee code cannot be null or empty");
         }
 
-        return employeeRepository.findOneByEmployeeCode(employeeCode)
+        Employee employee = employeeRepository.findOneByEmployeeCode(employeeCode)
                 .orElseThrow(() -> new EmployeeNotFoundException("Employee not found with code: " + employeeCode));
+
+        return employeeMapper.toEmployeeInfoResponse(employee);
+    }
+
+    /**
+     * Find ACTIVE employee entity by code (isActive = true only)
+     *
+     * @param employeeCode the code of the employee
+     * @return Employee entity
+     * @throws EmployeeNotFoundException if employee not found or deleted
+     */
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + READ_EMPLOYEE_BY_CODE + "')")
+    @Transactional(readOnly = true)
+    public Employee findActiveEmployeeByCode(String employeeCode) {
+        if (employeeCode == null || employeeCode.trim().isEmpty()) {
+            throw new IllegalArgumentException("Employee code cannot be null or empty");
+        }
+
+        Employee employee = employeeRepository.findOneByEmployeeCode(employeeCode)
+                .orElseThrow(() -> new EmployeeNotFoundException("Employee not found with code: " + employeeCode));
+
+        // Check if employee is active (not soft-deleted)
+        if (employee.getIsActive() == null || !employee.getIsActive()) {
+            throw new EmployeeNotFoundException("Employee not found with code: " + employeeCode);
+        }
+
+        return employee;
     }
 
     @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + CREATE_EMPLOYEE + "')")
     @Transactional
     public EmployeeInfoResponse createEmployee(CreateEmployeeRequest request) {
-        // Validate account exists
-        Account account = accountRepository.findById(request.getAccountId())
-                .orElseThrow(() -> new BadRequestAlertException(
-                        "Account not found with ID: " + request.getAccountId(),
-                        "account",
-                        "accountnotfound"));
+        Account account;
 
-        // Check if employee already exists for this account
-        if (employeeRepository.findOneByAccountId(request.getAccountId()).isPresent()) {
-            throw new BadRequestAlertException(
-                    "Employee already exists",
-                    "employee",
-                    "employeeexists");
+        // Check if accountId is provided (use existing account) or need to create new
+        // account
+        if (request.getAccountId() != null && !request.getAccountId().trim().isEmpty()) {
+            // Mode 1: Use existing account
+            account = accountRepository.findById(request.getAccountId())
+                    .orElseThrow(() -> new BadRequestAlertException(
+                            "Account not found with ID: " + request.getAccountId(),
+                            "account",
+                            "accountnotfound"));
+
+            // Check if employee already exists for this account
+            if (employeeRepository.findOneByAccountAccountId(request.getAccountId()).isPresent()) {
+                throw new BadRequestAlertException(
+                        "Employee already exists for this account",
+                        "employee",
+                        "employeeexists");
+            }
+        } else {
+            // Mode 2: Create new account
+            if (request.getUsername() == null || request.getUsername().trim().isEmpty()) {
+                throw new BadRequestAlertException(
+                        "Either accountId or username/email/password must be provided",
+                        "employee",
+                        "missingaccountinfo");
+            }
+
+            if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
+                throw new BadRequestAlertException(
+                        "Email is required when creating new account",
+                        "account",
+                        "emailrequired");
+            }
+
+            if (request.getPassword() == null || request.getPassword().trim().isEmpty()) {
+                throw new BadRequestAlertException(
+                        "Password is required when creating new account",
+                        "account",
+                        "passwordrequired");
+            }
+
+            // Check if username or email already exists
+            if (accountRepository.existsByUsername(request.getUsername())) {
+                throw new BadRequestAlertException(
+                        "Username already exists",
+                        "account",
+                        "usernameexists");
+            }
+
+            if (accountRepository.existsByEmail(request.getEmail())) {
+                throw new BadRequestAlertException(
+                        "Email already exists",
+                        "account",
+                        "emailexists");
+            }
+
+            // Create new account
+            account = new Account();
+            account.setAccountId(UUID.randomUUID().toString().substring(0, 20));
+            account.setUsername(request.getUsername());
+            account.setEmail(request.getEmail());
+            account.setPassword(passwordEncoder.encode(request.getPassword()));
+            account.setStatus(AccountStatus.ACTIVE);
+            account.setCreatedAt(java.time.LocalDateTime.now());
+
+            account = accountRepository.save(account);
         }
 
         // Generate unique employee ID
-        String employeeId = UUID.randomUUID().toString();
+        String employeeId = UUID.randomUUID().toString().substring(0, 20);
 
         // Generate employee code (e.g., EMP001, EMP002, ...)
         String employeeCode = generateEmployeeCode();
@@ -134,12 +287,13 @@ public class EmployeeService {
         employee.setDateOfBirth(request.getDateOfBirth());
         employee.setAddress(request.getAddress());
         employee.setIsActive(true);
+        employee.setCreatedAt(java.time.LocalDateTime.now());
 
         // Add specializations if provided
         if (request.getSpecializationIds() != null && !request.getSpecializationIds().isEmpty()) {
             Set<Specialization> specializations = new HashSet<>();
-            for (Integer specializationId : request.getSpecializationIds()) {
-                Specialization specialization = specializationRepository.findById(String.valueOf(specializationId))
+            for (String specializationId : request.getSpecializationIds()) {
+                Specialization specialization = specializationRepository.findById(specializationId)
                         .orElseThrow(() -> new BadRequestAlertException(
                                 "Specialization not found with ID: " + specializationId,
                                 "specialization",
@@ -159,8 +313,9 @@ public class EmployeeService {
     /**
      * Generate unique employee code
      * Format: EMP001, EMP002, EMP003...
+     * Using synchronized to prevent duplicate codes in concurrent requests
      */
-    private String generateEmployeeCode() {
+    private synchronized String generateEmployeeCode() {
         long count = employeeRepository.count();
         return String.format("EMP%03d", count + 1);
     }
@@ -212,8 +367,8 @@ public class EmployeeService {
         // Update specializations if provided
         if (request.getSpecializationIds() != null) {
             Set<Specialization> specializations = new HashSet<>();
-            for (Integer specializationId : request.getSpecializationIds()) {
-                Specialization specialization = specializationRepository.findById(String.valueOf(specializationId))
+            for (String specializationId : request.getSpecializationIds()) {
+                Specialization specialization = specializationRepository.findById(specializationId)
                         .orElseThrow(() -> new BadRequestAlertException(
                                 "Specialization not found with ID: " + specializationId,
                                 "specialization",
@@ -228,6 +383,63 @@ public class EmployeeService {
 
         // Return DTO response
         return employeeMapper.toEmployeeInfoResponse(updatedEmployee);
+    }
+
+    /**
+     * Replace (full update) an employee - all fields are required
+     * This is a PUT operation that replaces the entire resource
+     *
+     * @param employeeCode the code of the employee to replace
+     * @param request      the replacement data (all fields required)
+     * @return the replaced employee as DTO
+     */
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + UPDATE_EMPLOYEE + "')")
+    @Transactional
+    public EmployeeInfoResponse replaceEmployee(String employeeCode,
+            com.dental.clinic.management.dto.request.ReplaceEmployeeRequest request) {
+        // Find existing employee
+        Employee employee = employeeRepository.findOneByEmployeeCode(employeeCode)
+                .orElseThrow(() -> new EmployeeNotFoundException("Employee not found with code: " + employeeCode));
+
+        // Verify role exists
+        if (!roleRepository.existsById(request.getRoleId())) {
+            throw new BadRequestAlertException(
+                    "Role not found with ID: " + request.getRoleId(),
+                    "role",
+                    "rolenotfound");
+        }
+
+        // Replace ALL fields (required by PUT semantics)
+        employee.setRoleId(request.getRoleId());
+        employee.setFirstName(request.getFirstName());
+        employee.setLastName(request.getLastName());
+        employee.setPhone(request.getPhone());
+        employee.setDateOfBirth(request.getDateOfBirth());
+        employee.setAddress(request.getAddress());
+        employee.setIsActive(request.getIsActive());
+
+        // Replace specializations
+        if (request.getSpecializationIds() != null && !request.getSpecializationIds().isEmpty()) {
+            Set<Specialization> specializations = new HashSet<>();
+            for (String specializationId : request.getSpecializationIds()) {
+                Specialization specialization = specializationRepository.findById(specializationId)
+                        .orElseThrow(() -> new BadRequestAlertException(
+                                "Specialization not found with ID: " + specializationId,
+                                "specialization",
+                                "specializationnotfound"));
+                specializations.add(specialization);
+            }
+            employee.setSpecializations(specializations);
+        } else {
+            // Clear specializations if none provided
+            employee.setSpecializations(new HashSet<>());
+        }
+
+        // Save replaced employee
+        Employee replacedEmployee = employeeRepository.save(employee);
+
+        // Return DTO response
+        return employeeMapper.toEmployeeInfoResponse(replacedEmployee);
     }
 
     /**

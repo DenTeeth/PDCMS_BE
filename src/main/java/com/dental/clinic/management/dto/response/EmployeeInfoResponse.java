@@ -34,7 +34,7 @@ public class EmployeeInfoResponse {
   private String phone;
   private LocalDate dateOfBirth;
   private String address;
-  private Integer roleId;
+  private String roleId;
   private String roleName;
   private Set<SpecializationResponse> specializations;
   private Boolean isActive;

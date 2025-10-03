@@ -14,7 +14,8 @@ import java.util.Set;
  */
 public class UpdateEmployeeRequest {
 
-    private Integer roleId;
+    @Size(max = 20, message = "Role ID must not exceed 20 characters")
+    private String roleId;
 
     @Size(max = 50, message = "First name must not exceed 50 characters")
     private String firstName;
@@ -33,18 +34,18 @@ public class UpdateEmployeeRequest {
 
     private Boolean isActive;
 
-    private Set<Integer> specializationIds;
+    private Set<String> specializationIds;
 
     // Constructors
     public UpdateEmployeeRequest() {
     }
 
     // Getters and Setters
-    public Integer getRoleId() {
+    public String getRoleId() {
         return roleId;
     }
 
-    public void setRoleId(Integer roleId) {
+    public void setRoleId(String roleId) {
         this.roleId = roleId;
     }
 
@@ -96,11 +97,11 @@ public class UpdateEmployeeRequest {
         this.isActive = isActive;
     }
 
-    public Set<Integer> getSpecializationIds() {
+    public Set<String> getSpecializationIds() {
         return specializationIds;
     }
 
-    public void setSpecializationIds(Set<Integer> specializationIds) {
+    public void setSpecializationIds(Set<String> specializationIds) {
         this.specializationIds = specializationIds;
     }
 

@@ -1,7 +1,7 @@
 package com.dental.clinic.management.dto.request;
 
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -10,30 +10,11 @@ import java.time.LocalDate;
 import java.util.Set;
 
 /**
- * DTO for creating a new employee
- * Supports two modes:
- * 1. With existing account: provide accountId
- * 2. With new account: provide username, email, password (accountId will be
- * auto-generated)
+ * DTO for replacing (full update) an existing employee via PUT request
+ * All fields are REQUIRED - this replaces the entire employee resource
  */
-public class CreateEmployeeRequest {
+public class ReplaceEmployeeRequest {
 
-    // Option 1: Use existing account
-    @Size(max = 20, message = "Account ID must not exceed 20 characters")
-    private String accountId;
-
-    // Option 2: Create new account (required if accountId is not provided)
-    @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
-    private String username;
-
-    @Email(message = "Email must be valid")
-    @Size(max = 100, message = "Email must not exceed 100 characters")
-    private String email;
-
-    @Size(min = 6, max = 100, message = "Password must be between 6 and 100 characters")
-    private String password;
-
-    // Employee information (required)
     @NotBlank(message = "Role ID is required")
     @Size(max = 50, message = "Role ID must not exceed 50 characters")
     private String roleId;
@@ -46,61 +27,39 @@ public class CreateEmployeeRequest {
     @Size(max = 50, message = "Last name must not exceed 50 characters")
     private String lastName;
 
+    @NotBlank(message = "Phone number is required")
     @Pattern(regexp = "^[0-9]{10,15}$", message = "Phone number must be 10-15 digits")
     private String phone;
 
+    @NotNull(message = "Date of birth is required")
     @Past(message = "Date of birth must be in the past")
     private LocalDate dateOfBirth;
 
     @Size(max = 500, message = "Address must not exceed 500 characters")
     private String address;
 
+    @NotNull(message = "isActive status is required")
+    private Boolean isActive;
+
     private Set<String> specializationIds;
 
     // Constructors
-    public CreateEmployeeRequest() {
+    public ReplaceEmployeeRequest() {
     }
 
-    public CreateEmployeeRequest(String accountId, String roleId, String firstName, String lastName) {
-        this.accountId = accountId;
+    public ReplaceEmployeeRequest(String roleId, String firstName, String lastName, String phone,
+            LocalDate dateOfBirth, String address, Boolean isActive, Set<String> specializationIds) {
         this.roleId = roleId;
         this.firstName = firstName;
         this.lastName = lastName;
+        this.phone = phone;
+        this.dateOfBirth = dateOfBirth;
+        this.address = address;
+        this.isActive = isActive;
+        this.specializationIds = specializationIds;
     }
 
     // Getters and Setters
-    public String getAccountId() {
-        return accountId;
-    }
-
-    public void setAccountId(String accountId) {
-        this.accountId = accountId;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
     public String getRoleId() {
         return roleId;
     }
@@ -149,6 +108,14 @@ public class CreateEmployeeRequest {
         this.address = address;
     }
 
+    public Boolean getIsActive() {
+        return isActive;
+    }
+
+    public void setIsActive(Boolean isActive) {
+        this.isActive = isActive;
+    }
+
     public Set<String> getSpecializationIds() {
         return specializationIds;
     }
@@ -159,13 +126,14 @@ public class CreateEmployeeRequest {
 
     @Override
     public String toString() {
-        return "CreateEmployeeRequest{" +
-                "accountId='" + accountId + '\'' +
-                ", roleId=" + roleId +
+        return "ReplaceEmployeeRequest{" +
+                "roleId='" + roleId + '\'' +
                 ", firstName='" + firstName + '\'' +
                 ", lastName='" + lastName + '\'' +
                 ", phone='" + phone + '\'' +
                 ", dateOfBirth=" + dateOfBirth +
+                ", address='" + address + '\'' +
+                ", isActive=" + isActive +
                 ", specializationIds=" + specializationIds +
                 '}';
     }

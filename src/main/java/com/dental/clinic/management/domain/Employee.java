@@ -12,6 +12,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
@@ -33,8 +34,14 @@ public class Employee {
   @JoinColumn(name = "account_id", nullable = false)
   private Account account;
 
-  @Column(name = "role_id", nullable = false)
-  private Integer roleId;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "role_id", nullable = false, insertable = false, updatable = false)
+  private Role role;
+
+  @NotBlank
+  @Size(max = 50)
+  @Column(name = "role_id", nullable = false, length = 50)
+  private String roleId;
 
   @NotBlank
   @Size(max = 10)
@@ -105,11 +112,19 @@ public class Employee {
     this.account = account;
   }
 
-  public Integer getRoleId() {
+  public Role getRole() {
+    return role;
+  }
+
+  public void setRole(Role role) {
+    this.role = role;
+  }
+
+  public String getRoleId() {
     return roleId;
   }
 
-  public void setRoleId(Integer roleId) {
+  public void setRoleId(String roleId) {
     this.roleId = roleId;
   }
 

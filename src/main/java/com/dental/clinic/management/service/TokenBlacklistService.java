@@ -9,6 +9,8 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.stereotype.Service;
 
+import jakarta.annotation.PreDestroy;
+
 /**
  * Simple in-memory token blacklist service.
  * For production, consider using Redis or database.
@@ -54,5 +56,27 @@ public class TokenBlacklistService {
     private void cleanupExpiredTokens() {
         long currentTime = System.currentTimeMillis() / 1000;
         blacklistedTokens.entrySet().removeIf(entry -> entry.getValue() < currentTime);
+    }
+
+    /**
+     * Shutdown scheduler gracefully when application stops
+     * This prevents memory leak warnings
+     */
+    @PreDestroy
+    public void destroy() {
+        if (scheduler != null && !scheduler.isShutdown()) {
+            scheduler.shutdown();
+            try {
+                // Wait for existing tasks to complete
+                if (!scheduler.awaitTermination(5, TimeUnit.SECONDS)) {
+                    // Force shutdown if tasks don't complete in time
+                    scheduler.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                // Force shutdown if interrupted
+                scheduler.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
+        }
     }
 }
