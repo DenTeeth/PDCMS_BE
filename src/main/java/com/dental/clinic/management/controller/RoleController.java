@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/roles")
+@RequestMapping("/api/v1/roles")
 @Tag(name = "Role Management", description = "APIs for managing roles, role-permission assignments, and user-role assignments")
 public class RoleController {
 
