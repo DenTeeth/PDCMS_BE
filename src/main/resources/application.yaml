@@ -1,7 +1,7 @@
 spring:
   application:
     name: Dental Clinic Management
-  
+
   # ==============================
   # Database Configuration
   # ==============================
@@ -10,7 +10,7 @@ spring:
     username: root
     password: 123456
     driver-class-name: com.mysql.cj.jdbc.Driver
-  
+
   # JPA Configuration
   jpa:
     hibernate:

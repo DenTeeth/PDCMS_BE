@@ -11,7 +11,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
-import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationFilter;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 
 import com.dental.clinic.management.service.CustomUserDetailsService;
@@ -57,7 +57,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authz -> authz
                         // Public endpoints
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/",
-                                "/api/v1/auth/login", "/api/v1/auth/refresh-token")
+                                "/api/v1/auth/login", "/api/v1/auth/refresh-token",
+                                "/api/v1/auth/logout")
                         .permitAll()
                         .requestMatchers("/api/v1/setup/**", "/error").permitAll()
 
@@ -76,7 +77,7 @@ public class SecurityConfig {
                         .jwtAuthenticationConverter(jwtAuthenticationConverter)))
 
                 // Add JWT blacklist filter before JWT authentication
-                .addFilterBefore(jwtBlacklistFilter, BearerTokenAuthenticationFilter.class)
+                .addFilterBefore(jwtBlacklistFilter, UsernamePasswordAuthenticationFilter.class)
 
                 // Stateless session for JWT
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));

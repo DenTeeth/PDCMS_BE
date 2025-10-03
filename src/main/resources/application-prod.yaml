@@ -1,0 +1,55 @@
+spring:
+  application:
+    name: Dental Clinic Management
+
+  # Database Configuration - Railway MySQL
+  datasource:
+    url: ${DATABASE_URL:jdbc:mysql://localhost:3306/dental_clinic_db}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:123456}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 2
+      connection-timeout: 30000
+
+  # JPA Configuration
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        "[format_sql]": false
+    show-sql: false
+
+# JWT Configuration
+dentalclinic:
+  jwt:
+    base64-secret: ${JWT_SECRET:OOWH6vzvKUVsTUWvDEUz0SMnO3mfXiwIbXSKX6ey7fLI/oGjlrSOrucHd2qvsaZ+ZbxH/6TosGTtBxRMOOW0Bg==}
+    access-token-validity-in-seconds: ${JWT_ACCESS_TOKEN_VALIDITY:900}
+    refresh-token-validity-in-seconds: ${JWT_REFRESH_TOKEN_VALIDITY:2592000}
+
+# Server Configuration
+server:
+  port: ${PORT:8080}
+  compression:
+    enabled: true
+    mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
+    min-response-size: 1024
+
+# Logging Configuration
+logging:
+  level:
+    root: INFO
+    "[com.dental.clinic.management]": INFO
+    "[org.springframework.web]": INFO
+    "[org.hibernate]": WARN
+
+# Swagger/OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true

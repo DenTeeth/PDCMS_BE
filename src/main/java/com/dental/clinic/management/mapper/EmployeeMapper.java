@@ -32,6 +32,17 @@ public class EmployeeMapper {
     response.setDateOfBirth(employee.getDateOfBirth());
     response.setAddress(employee.getAddress());
     response.setRoleId(employee.getRoleId());
+
+    // Map roleName from Role entity
+    if (employee.getRole() != null) {
+      response.setRoleName(employee.getRole().getRoleName());
+    }
+
+    // Map role name
+    if (employee.getRole() != null) {
+      response.setRoleName(employee.getRole().getRoleName());
+    }
+
     response.setIsActive(employee.getIsActive());
     response.setCreatedAt(employee.getCreatedAt());
 

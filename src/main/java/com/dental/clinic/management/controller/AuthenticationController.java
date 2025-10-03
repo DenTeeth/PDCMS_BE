@@ -33,7 +33,7 @@ public class AuthenticationController {
     private final TokenBlacklistService tokenBlacklistService;
 
     public AuthenticationController(AuthenticationService authenticationService,
-                                  TokenBlacklistService tokenBlacklistService) {
+            TokenBlacklistService tokenBlacklistService) {
         this.authenticationService = authenticationService;
         this.tokenBlacklistService = tokenBlacklistService;
     }
@@ -120,7 +120,7 @@ public class AuthenticationController {
     /**
      * Logout user by invalidating both access and refresh tokens.
      *
-     * @param authHeader Authorization header containing access token
+     * @param authHeader   Authorization header containing access token
      * @param refreshToken refresh token from HTTP-only cookie
      * @return 200 OK with cleared refresh token cookie
      */

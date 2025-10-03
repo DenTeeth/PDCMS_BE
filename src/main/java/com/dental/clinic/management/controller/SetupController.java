@@ -173,8 +173,8 @@ public class SetupController {
         employee.setSpecializations(specializations);
         employee.setIsActive(true);
         employee.setCreatedAt(LocalDateTime.now());
-        // Set default role as DENTIST
-        employee.setRoleId(1); // Assuming DENTIST = 1
+        // Set default role as ADMIN
+        employee.setRoleId("ADMIN");
         return employeeRepository.save(employee);
     }
 }

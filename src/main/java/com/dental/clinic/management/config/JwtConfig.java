@@ -20,7 +20,6 @@ import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 
 import com.dental.clinic.management.utils.security.SecurityUtil;
-import com.dental.clinic.management.utils.security.AuthoritiesConstants;
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import com.nimbusds.jose.util.Base64;
 
