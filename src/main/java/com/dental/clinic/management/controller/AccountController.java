@@ -89,5 +89,4 @@ public class AccountController {
         UserInfoResponse userInfo = authenticationService.getUserInfo(username);
         return ResponseEntity.ok(userInfo);
     }
-
 }
