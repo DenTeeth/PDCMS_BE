@@ -56,13 +56,6 @@ public class EmployeeService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    @PreAuthorize("hasRole('" + ADMIN + "')")
-    @Transactional(readOnly = true)
-    public Page<Employee> findAllEmployees(
-            Pageable pageable) {
-        return employeeRepository.findAll(pageable);
-    }
-
     /**
      * Get all ACTIVE employees only (isActive = true) with pagination, sorting and
      * mapping to DTO
@@ -457,22 +450,5 @@ public class EmployeeService {
         // Soft delete - set isActive to false
         employee.setIsActive(false);
         employeeRepository.save(employee);
-    }
-
-    /**
-     * Permanently delete an employee (hard delete)
-     * Use with caution - this cannot be undone
-     *
-     * @param employeeCode the code of the employee to delete permanently
-     */
-    @PreAuthorize("hasRole('" + ADMIN + "')")
-    @Transactional
-    public void deleteEmployeePermanently(String employeeCode) {
-        // Find existing employee
-        Employee employee = employeeRepository.findOneByEmployeeCode(employeeCode)
-                .orElseThrow(() -> new EmployeeNotFoundException("Employee not found with code: " + employeeCode));
-
-        // Hard delete - remove from database
-        employeeRepository.delete(employee);
     }
 }
