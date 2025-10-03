@@ -18,6 +18,9 @@ import com.dental.clinic.management.service.AuthenticationService;
 import com.dental.clinic.management.service.TokenBlacklistService;
 import com.dental.clinic.management.utils.annotation.ApiMessage;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 /**
@@ -27,6 +30,7 @@ import jakarta.validation.Valid;
  */
 @RestController
 @RequestMapping("/api/v1/auth")
+@Tag(name = "Authentication", description = "APIs for user authentication, token management, and logout")
 public class AuthenticationController {
 
     private final AuthenticationService authenticationService;
@@ -50,6 +54,7 @@ public class AuthenticationController {
      *                                                                        fails
      */
     @PostMapping("/login")
+    @Operation(summary = "User login", description = "Authenticate user with username/password and issue JWT access token with refresh token in HTTP-only cookie")
     @ApiMessage("Đăng nhập thành công")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         LoginResponse loginResponse = authenticationService.login(request);
@@ -95,9 +100,10 @@ public class AuthenticationController {
      *                                                                        expired
      */
     @PostMapping("/refresh-token")
+    @Operation(summary = "Refresh access token", description = "Issue new access token using refresh token from HTTP-only cookie")
     @ApiMessage("Làm mới access token")
     public ResponseEntity<RefreshTokenResponse> refresh(
-            @CookieValue(value = "refreshToken", required = true) String refreshToken) {
+            @Parameter(description = "Refresh token from HTTP-only cookie", required = true) @CookieValue(value = "refreshToken", required = true) String refreshToken) {
         RefreshTokenRequest request = new RefreshTokenRequest(refreshToken);
         RefreshTokenResponse response = authenticationService.refreshToken(request);
 
@@ -125,10 +131,11 @@ public class AuthenticationController {
      * @return 200 OK with cleared refresh token cookie
      */
     @PostMapping("/logout")
+    @Operation(summary = "User logout", description = "Invalidate access token and refresh token, clear refresh token cookie")
     @ApiMessage("Đăng xuất thành công")
     public ResponseEntity<Void> logout(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @CookieValue(value = "refreshToken", required = false) String refreshToken) {
+            @Parameter(description = "Authorization header with Bearer token") @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @Parameter(description = "Refresh token from HTTP-only cookie") @CookieValue(value = "refreshToken", required = false) String refreshToken) {
 
         // Blacklist access token if provided
         if (authHeader != null && authHeader.startsWith("Bearer ")) {

@@ -18,6 +18,9 @@ import com.dental.clinic.management.dto.response.EmployeeInfoResponse;
 import com.dental.clinic.management.service.EmployeeService;
 import com.dental.clinic.management.utils.annotation.ApiMessage;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 import java.net.URI;
@@ -28,6 +31,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 @RequestMapping("/api/v1/employees")
+@Tag(name = "Employee Management", description = "APIs for managing employees (doctors, receptionists, etc.)")
 public class EmployeeController {
 
   private final EmployeeService employeeService;
@@ -36,11 +40,8 @@ public class EmployeeController {
     this.employeeService = employeeService;
   }
 
-  /**
-   * Get all ACTIVE employees (isActive = true only)
-   * This is the default endpoint for normal operations
-   */
   @GetMapping("")
+  @Operation(summary = "Get all active employees", description = "Retrieve a paginated list of active employees only")
   @ApiMessage("Get all active employees successfully")
   public ResponseEntity<Page<EmployeeInfoResponse>> getAllActiveEmployees(
       @RequestParam(defaultValue = "0") int page,
@@ -57,6 +58,7 @@ public class EmployeeController {
    * This endpoint is for admin management purposes only
    */
   @GetMapping("/admin/all")
+  @Operation(summary = "Get all employees (Admin)", description = "Retrieve all employees including deleted ones (Admin only)")
   @ApiMessage("Get all employees including deleted successfully")
   public ResponseEntity<Page<EmployeeInfoResponse>> getAllEmployeesIncludingDeleted(
       @RequestParam(defaultValue = "0") int page,
@@ -74,9 +76,10 @@ public class EmployeeController {
    * This is the default endpoint for normal operations
    */
   @GetMapping("/{employeeCode}")
+  @Operation(summary = "Get employee by code", description = "Get active employee details by employee code")
   @ApiMessage("Get active employee by Employee Code successfully")
   public ResponseEntity<EmployeeInfoResponse> getActiveEmployeeByCode(
-      @PathVariable("employeeCode") String employeeCode) {
+      @Parameter(description = "Employee code (e.g., EMP001)", required = true) @PathVariable("employeeCode") String employeeCode) {
     EmployeeInfoResponse response = employeeService.getActiveEmployeeByCode(employeeCode);
     return ResponseEntity.ok(response);
   }
@@ -86,6 +89,7 @@ public class EmployeeController {
    * This endpoint is for admin management purposes only
    */
   @GetMapping("/admin/{employeeCode}")
+  @Operation(summary = "Get employee by code (Admin)", description = "Get employee details including deleted ones (Admin only)")
   @ApiMessage("Get employee by code including deleted successfully")
   public ResponseEntity<EmployeeInfoResponse> getEmployeeByCodeIncludingDeleted(
       @PathVariable("employeeCode") String employeeCode) {
@@ -94,19 +98,11 @@ public class EmployeeController {
   }
 
   /**
-   * {@code POST  /employees} : Create a new employee (requires existing account).
-   *
-   * @param request the employee data to create.
-   * @return the {@link ResponseEntity} with status {@code 201 (Created)} and with
-   *         body the new employee, or with status {@code 400 (Bad Request)} if
-   *         validation fails.
-   * @throws URISyntaxException if the Location URI syntax is incorrect.
-   *                            /**
-   *                            {@code POST  /employees} : Create a new employee.
-   *                            Supports two modes:
-   *                            1. With existing account: provide accountId
-   *                            2. With new account: provide username, email,
-   *                            password (accountId auto-generated)
+   * {@code POST  /employees} : Create a new employee.
+   * Supports two modes:
+   * 1. With existing account: provide accountId
+   * 2. With new account: provide username, email, password (accountId
+   * auto-generated)
    *
    * @param request the employee data to create.
    * @return the {@link ResponseEntity} with status {@code 201 (Created)} and with
@@ -115,6 +111,7 @@ public class EmployeeController {
    * @throws URISyntaxException if the Location URI syntax is incorrect.
    */
   @PostMapping("")
+  @Operation(summary = "Create new employee", description = "Create employee with existing account OR create new account automatically")
   @ApiMessage("Create employee successfully")
   public ResponseEntity<EmployeeInfoResponse> createEmployee(@Valid @RequestBody CreateEmployeeRequest request)
       throws URISyntaxException {
@@ -141,9 +138,10 @@ public class EmployeeController {
    *         couldn't be updated.
    */
   @PatchMapping("/{employeeCode}")
+  @Operation(summary = "Update employee (partial)", description = "Update specific fields of an employee (null fields are ignored)")
   @ApiMessage("Update employee successfully")
   public ResponseEntity<EmployeeInfoResponse> updateEmployee(
-      @PathVariable("employeeCode") String employeeCode,
+      @Parameter(description = "Employee code", required = true) @PathVariable("employeeCode") String employeeCode,
       @Valid @RequestBody UpdateEmployeeRequest request) {
 
     EmployeeInfoResponse response = employeeService.updateEmployee(employeeCode, request);
@@ -164,9 +162,10 @@ public class EmployeeController {
    *         or with status {@code 404 (Not Found)} if the employee is not found.
    */
   @PutMapping("/{employeeCode}")
+  @Operation(summary = "Replace employee (full update)", description = "Replace entire employee data (all fields required)")
   @ApiMessage("Replace employee successfully")
   public ResponseEntity<EmployeeInfoResponse> replaceEmployee(
-      @PathVariable("employeeCode") String employeeCode,
+      @Parameter(description = "Employee code", required = true) @PathVariable("employeeCode") String employeeCode,
       @Valid @RequestBody ReplaceEmployeeRequest request) {
 
     EmployeeInfoResponse response = employeeService.replaceEmployee(employeeCode, request);
@@ -181,8 +180,10 @@ public class EmployeeController {
    * @return the {@link ResponseEntity} with status {@code 204 (NO_CONTENT)}.
    */
   @DeleteMapping("/{employeeCode}")
+  @Operation(summary = "Delete employee (soft delete)", description = "Soft delete employee by setting isActive to false")
   @ApiMessage("Delete employee successfully")
-  public ResponseEntity<Void> deleteEmployee(@PathVariable("employeeCode") String employeeCode) {
+  public ResponseEntity<Void> deleteEmployee(
+      @Parameter(description = "Employee code", required = true) @PathVariable("employeeCode") String employeeCode) {
     employeeService.deleteEmployee(employeeCode);
     return ResponseEntity.noContent().build();
   }

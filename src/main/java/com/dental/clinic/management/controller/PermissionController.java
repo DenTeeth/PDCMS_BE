@@ -17,6 +17,8 @@ import com.dental.clinic.management.service.PermissionService;
 import com.dental.clinic.management.utils.annotation.ApiMessage;
 
 import io.swagger.v3.oas.annotations.Hidden;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 import java.net.URI;
@@ -26,6 +28,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/permissions")
+@Tag(name = "Permission Management", description = "APIs for managing system permissions and access control")
 public class PermissionController {
 
     private final PermissionService permissionService;
@@ -35,6 +38,7 @@ public class PermissionController {
     }
 
     @GetMapping("")
+    @Operation(summary = "Get all permissions", description = "Retrieve a complete list of all active permissions in the system")
     @ApiMessage("Get all permissions successfully")
     public ResponseEntity<List<PermissionInfoResponse>> getAllPermissions() {
         List<PermissionInfoResponse> response = permissionService.getAllActivePermissions();
@@ -42,6 +46,7 @@ public class PermissionController {
     }
 
     @GetMapping("/by-module")
+    @Operation(summary = "Get permissions by module", description = "Retrieve permissions grouped by their module (e.g., USER, ADMIN, EMPLOYEE)")
     @ApiMessage("Get permissions grouped by module successfully")
     public ResponseEntity<Map<String, List<PermissionInfoResponse>>> getPermissionsByModule() {
         Map<String, List<PermissionInfoResponse>> response = permissionService.getPermissionsGroupedByModule();
