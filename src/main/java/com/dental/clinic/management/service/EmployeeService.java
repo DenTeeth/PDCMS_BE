@@ -109,7 +109,7 @@ public class EmployeeService {
                         "accountnotfound"));
 
         // Check if employee already exists for this account
-        if (employeeRepository.findOneByAccountId(request.getAccountId()).isPresent()) {
+        if (employeeRepository.findOneByAccountAccountId(request.getAccountId()).isPresent()) {
             throw new BadRequestAlertException(
                     "Employee already exists",
                     "employee",
