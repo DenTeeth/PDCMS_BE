@@ -16,6 +16,7 @@ import com.dental.clinic.management.dto.response.PermissionInfoResponse;
 import com.dental.clinic.management.service.PermissionService;
 import com.dental.clinic.management.utils.annotation.ApiMessage;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.Valid;
 
 import java.net.URI;
@@ -47,6 +48,7 @@ public class PermissionController {
         return ResponseEntity.ok().body(response);
     }
 
+    @Hidden
     @GetMapping("/active")
     @ApiMessage("Get all active permissions successfully")
     public ResponseEntity<List<PermissionInfoResponse>> getAllActivePermissions() {
@@ -54,6 +56,7 @@ public class PermissionController {
         return ResponseEntity.ok().body(response);
     }
 
+    @Hidden
     @GetMapping("/{permissionId}")
     @ApiMessage("Get permission by ID successfully")
     public ResponseEntity<PermissionInfoResponse> getPermissionById(@PathVariable String permissionId) {
@@ -61,6 +64,7 @@ public class PermissionController {
         return ResponseEntity.ok().body(response);
     }
 
+    @Hidden
     @GetMapping("/module/{module}")
     @ApiMessage("Get permissions by module successfully")
     public ResponseEntity<List<PermissionInfoResponse>> getPermissionsByModule(@PathVariable String module) {
@@ -68,6 +72,7 @@ public class PermissionController {
         return ResponseEntity.ok().body(response);
     }
 
+    @Hidden
     @PostMapping("")
     @ApiMessage("Create permission successfully")
     public ResponseEntity<PermissionInfoResponse> createPermission(@Valid @RequestBody CreatePermissionRequest request)
@@ -76,6 +81,7 @@ public class PermissionController {
         return ResponseEntity.created(new URI("/api/v1/permissions/" + response.getPermissionId())).body(response);
     }
 
+    @Hidden
     @PatchMapping("/{permissionId}")
     @ApiMessage("Update permission successfully")
     public ResponseEntity<PermissionInfoResponse> updatePermission(
@@ -85,6 +91,7 @@ public class PermissionController {
         return ResponseEntity.ok().body(response);
     }
 
+    @Hidden
     @DeleteMapping("/{permissionId}")
     @ApiMessage("Delete permission successfully")
     public ResponseEntity<Void> deletePermission(@PathVariable String permissionId) {
@@ -92,6 +99,7 @@ public class PermissionController {
         return ResponseEntity.noContent().build();
     }
 
+    @Hidden
     @DeleteMapping("/{permissionId}/hard")
     @ApiMessage("Hard delete permission successfully")
     public ResponseEntity<Void> hardDeletePermission(@PathVariable String permissionId) {
@@ -99,6 +107,7 @@ public class PermissionController {
         return ResponseEntity.noContent().build();
     }
 
+    @Hidden
     @GetMapping("/exists/{permissionName}")
     @ApiMessage("Check if permission name exists")
     public ResponseEntity<Boolean> existsByPermissionName(@PathVariable String permissionName) {

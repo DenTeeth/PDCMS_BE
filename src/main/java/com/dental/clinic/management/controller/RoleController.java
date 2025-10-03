@@ -1,6 +1,7 @@
 package com.dental.clinic.management.controller;
 
 import com.dental.clinic.management.dto.response.PermissionInfoResponse;
+import com.dental.clinic.management.service.AccountService;
 import com.dental.clinic.management.service.RoleService;
 import com.dental.clinic.management.utils.annotation.ApiMessage;
 
@@ -19,9 +20,11 @@ import java.util.List;
 public class RoleController {
 
     private final RoleService roleService;
+    private final AccountService accountService;
 
-    public RoleController(RoleService roleService) {
+    public RoleController(RoleService roleService, AccountService accountService) {
         this.roleService = roleService;
+        this.accountService = accountService;
     }
 
     @PostMapping("/{roleId}/permissions")
@@ -38,5 +41,21 @@ public class RoleController {
     public ResponseEntity<List<PermissionInfoResponse>> getRolePermissions(@PathVariable String roleId) {
         List<PermissionInfoResponse> permissions = roleService.getRolePermissions(roleId);
         return ResponseEntity.ok().body(permissions);
+    }
+
+    @PostMapping("/accounts/{accountId}")
+    @ApiMessage("Assign multiple roles to user successfully")
+    public ResponseEntity<Void> assignRolesToAccount(
+            @PathVariable String accountId,
+            @RequestBody List<String> roleIds) {
+        accountService.assignRolesToAccount(accountId, roleIds);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/accounts/{accountId}")
+    @ApiMessage("Get roles of user successfully")
+    public ResponseEntity<List<String>> getAccountRoles(@PathVariable String accountId) {
+        List<String> roles = accountService.getAccountRoles(accountId);
+        return ResponseEntity.ok().body(roles);
     }
 }
