@@ -38,7 +38,7 @@ public class RoleController {
     }
 
     @PostMapping("")
-    @Operation(summary = "Create new role", description = "Create a new role (Admin only)")
+    @Operation(summary = "Create new role", description = "Create a new role with specified details")
     @ApiMessage("Create role successfully")
     public ResponseEntity<com.dental.clinic.management.dto.response.RoleInfoResponse> createRole(@Valid @RequestBody com.dental.clinic.management.dto.request.CreateRoleRequest request) throws URISyntaxException {
         com.dental.clinic.management.dto.response.RoleInfoResponse response = roleService.createRole(request);
@@ -46,7 +46,7 @@ public class RoleController {
     }
 
     @GetMapping("")
-    @Operation(summary = "Get all roles", description = "Retrieve all active roles (Admin only)")
+    @Operation(summary = "Get all roles", description = "Retrieve all active roles")
     @ApiMessage("Get roles successfully")
     public ResponseEntity<List<com.dental.clinic.management.dto.response.RoleInfoResponse>> getAllRoles() {
         List<com.dental.clinic.management.dto.response.RoleInfoResponse> response = roleService.getAllRoles();
@@ -54,7 +54,7 @@ public class RoleController {
     }
 
     @GetMapping("/{roleId}")
-    @Operation(summary = "Get role by ID", description = "Get role details by role ID (Admin only)")
+    @Operation(summary = "Get role by ID", description = "Get role details by role ID")
     @ApiMessage("Get role successfully")
     public ResponseEntity<com.dental.clinic.management.dto.response.RoleInfoResponse> getRoleById(@PathVariable String roleId) {
         com.dental.clinic.management.dto.response.RoleInfoResponse response = roleService.getRoleById(roleId);
@@ -62,7 +62,7 @@ public class RoleController {
     }
 
     @PutMapping("/{roleId}")
-    @Operation(summary = "Update role", description = "Update role data by role ID (Admin only)")
+    @Operation(summary = "Update role", description = "Update role data by role ID")
     @ApiMessage("Update role successfully")
     public ResponseEntity<com.dental.clinic.management.dto.response.RoleInfoResponse> updateRole(@PathVariable String roleId, @Valid @RequestBody com.dental.clinic.management.dto.request.UpdateRoleRequest request) {
         com.dental.clinic.management.dto.response.RoleInfoResponse response = roleService.updateRole(roleId, request);
@@ -70,7 +70,7 @@ public class RoleController {
     }
 
     @DeleteMapping("/{roleId}")
-    @Operation(summary = "Delete role (soft)", description = "Soft delete role by setting isActive to false (Admin only)")
+    @Operation(summary = "Delete role (soft)", description = "Soft delete role by setting isActive to false")
     @ApiMessage("Delete role successfully")
     public ResponseEntity<com.dental.clinic.management.dto.response.RoleInfoResponse> deleteRole(@PathVariable String roleId) {
         com.dental.clinic.management.dto.response.RoleInfoResponse response = roleService.deleteRole(roleId);
