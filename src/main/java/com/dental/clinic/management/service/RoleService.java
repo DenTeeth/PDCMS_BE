@@ -25,13 +25,18 @@ public class RoleService {
     private final PermissionRepository permissionRepository;
     private final PermissionMapper permissionMapper;
 
+    // --- New dependencies for CRUD ---
+    private final com.dental.clinic.management.mapper.RoleMapper roleMapper;
+
     public RoleService(
             RoleRepository roleRepository,
             PermissionRepository permissionRepository,
-            PermissionMapper permissionMapper) {
+            PermissionMapper permissionMapper,
+            com.dental.clinic.management.mapper.RoleMapper roleMapper) {
         this.roleRepository = roleRepository;
         this.permissionRepository = permissionRepository;
         this.permissionMapper = permissionMapper;
+        this.roleMapper = roleMapper;
     }
 
     @PreAuthorize("hasRole('" + ADMIN + "')")
@@ -68,5 +73,58 @@ public class RoleService {
 
         List<Permission> permissions = role.getPermissions().stream().toList();
         return permissionMapper.toPermissionInfoResponseList(permissions);
+    }
+
+    @PreAuthorize("hasRole('" + ADMIN + "')")
+    @Transactional
+    public com.dental.clinic.management.dto.response.RoleInfoResponse createRole(com.dental.clinic.management.dto.request.CreateRoleRequest request) {
+        if (roleRepository.existsById(request.getRoleId()) || roleRepository.existsByRoleName(request.getRoleName())) {
+            throw new BadRequestAlertException("Role already exists", "role", "roleexists");
+        }
+        com.dental.clinic.management.domain.Role role = roleMapper.toRole(request);
+        roleRepository.save(role);
+        return roleMapper.toRoleInfoResponse(role);
+    }
+
+    @PreAuthorize("hasRole('" + ADMIN + "')")
+    @Transactional(readOnly = true)
+    public java.util.List<com.dental.clinic.management.dto.response.RoleInfoResponse> getAllRoles() {
+        java.util.List<com.dental.clinic.management.domain.Role> roles = roleRepository.findAllActiveRoles();
+        return roleMapper.toRoleInfoResponseList(roles);
+    }
+
+    @PreAuthorize("hasRole('" + ADMIN + "')")
+    @Transactional(readOnly = true)
+    public com.dental.clinic.management.dto.response.RoleInfoResponse getRoleById(String roleId) {
+        com.dental.clinic.management.domain.Role role = roleRepository.findById(roleId)
+                .orElseThrow(() -> new BadRequestAlertException("Role not found with ID: " + roleId, "role", "rolenotfound"));
+        return roleMapper.toRoleInfoResponse(role);
+    }
+
+    @PreAuthorize("hasRole('" + ADMIN + "')")
+    @Transactional
+    public com.dental.clinic.management.dto.response.RoleInfoResponse updateRole(String roleId, com.dental.clinic.management.dto.request.UpdateRoleRequest request) {
+        com.dental.clinic.management.domain.Role role = roleRepository.findById(roleId)
+                .orElseThrow(() -> new BadRequestAlertException("Role not found with ID: " + roleId, "role", "rolenotfound"));
+        role.setRoleName(request.getRoleName());
+        role.setDescription(request.getDescription());
+        roleRepository.save(role);
+        return roleMapper.toRoleInfoResponse(role);
+    }
+
+    @PreAuthorize("hasRole('" + ADMIN + "')")
+    @Transactional
+    public com.dental.clinic.management.dto.response.RoleInfoResponse deleteRole(String roleId) {
+        com.dental.clinic.management.domain.Role role = roleRepository.findById(roleId)
+                .orElseThrow(() -> new BadRequestAlertException("Role not found with ID: " + roleId, "role", "rolenotfound"));
+        // If already soft-deleted, treat as not found
+        if (role.getIsActive() != null && !role.getIsActive()) {
+            throw new BadRequestAlertException("Role not found with ID: " + roleId, "role", "rolenotfound");
+        }
+
+        // Soft delete: set isActive = false
+        role.setIsActive(false);
+        roleRepository.save(role);
+        return roleMapper.toRoleInfoResponse(role);
     }
 }

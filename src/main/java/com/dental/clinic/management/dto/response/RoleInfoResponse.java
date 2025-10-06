@@ -1,0 +1,62 @@
+package com.dental.clinic.management.dto.response;
+
+import java.time.LocalDateTime;
+
+public class RoleInfoResponse {
+    private String roleId;
+    private String roleName;
+    private String description;
+    private Boolean isActive;
+    private LocalDateTime createdAt;
+
+    public RoleInfoResponse() {
+    }
+
+    public RoleInfoResponse(String roleId, String roleName, String description, Boolean isActive, LocalDateTime createdAt) {
+        this.roleId = roleId;
+        this.roleName = roleName;
+        this.description = description;
+        this.isActive = isActive;
+        this.createdAt = createdAt;
+    }
+
+    public String getRoleId() {
+        return roleId;
+    }
+
+    public void setRoleId(String roleId) {
+        this.roleId = roleId;
+    }
+
+    public String getRoleName() {
+        return roleName;
+    }
+
+    public void setRoleName(String roleName) {
+        this.roleName = roleName;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public Boolean getIsActive() {
+        return isActive;
+    }
+
+    public void setIsActive(Boolean isActive) {
+        this.isActive = isActive;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+}
