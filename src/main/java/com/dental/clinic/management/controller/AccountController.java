@@ -13,6 +13,10 @@ import com.dental.clinic.management.dto.response.UserProfileResponse;
 import com.dental.clinic.management.service.AuthenticationService;
 import com.dental.clinic.management.utils.annotation.ApiMessage;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 /**
  * REST controller for account profile operations.
  * <p>
@@ -22,6 +26,7 @@ import com.dental.clinic.management.utils.annotation.ApiMessage;
  */
 @RestController
 @RequestMapping("/api/v1/account")
+@Tag(name = "Account Profile", description = "APIs for retrieving authenticated user profile, permissions, and account information")
 public class AccountController {
 
     private final AuthenticationService authenticationService;
@@ -41,8 +46,9 @@ public class AccountController {
      * @throws com.dental.clinic.management.exception.AccountNotFoundException if the account no longer exists
      */
     @GetMapping("/profile")
+    @Operation(summary = "Get user profile", description = "Retrieve personal profile information of the currently authenticated user")
     @ApiMessage("Lấy thông tin profile cá nhân thành công")
-    public ResponseEntity<UserProfileResponse> getProfile(@AuthenticationPrincipal Jwt jwt) {
+    public ResponseEntity<UserProfileResponse> getProfile(@Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
         String username = jwt.getClaimAsString("sub");
         UserProfileResponse userProfile = authenticationService.getUserProfile(username);
         return ResponseEntity.ok(userProfile);
@@ -65,8 +71,9 @@ public class AccountController {
      *                                                                         exists
      */
     @GetMapping("/permissions")
+    @Operation(summary = "Get user permissions", description = "Retrieve all permissions of the currently authenticated user")
     @ApiMessage("Lấy quyền hạn người dùng thành công")
-    public ResponseEntity<UserPermissionsResponse> getPermissions(@AuthenticationPrincipal Jwt jwt) {
+    public ResponseEntity<UserPermissionsResponse> getPermissions(@Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
         String username = jwt.getClaimAsString("sub");
         UserPermissionsResponse userPermissions = authenticationService.getUserPermissions(username);
         return ResponseEntity.ok(userPermissions);
@@ -83,8 +90,9 @@ public class AccountController {
      * @throws com.dental.clinic.management.exception.AccountNotFoundException if the account no longer exists
      */
     @GetMapping("/info")
+    @Operation(summary = "Get complete user info", description = "Retrieve complete user information including roles and permissions")
     @ApiMessage("Lấy thông tin đầy đủ người dùng thành công")
-    public ResponseEntity<UserInfoResponse> getInfo(@AuthenticationPrincipal Jwt jwt) {
+    public ResponseEntity<UserInfoResponse> getInfo(@Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
         String username = jwt.getClaimAsString("sub");
         UserInfoResponse userInfo = authenticationService.getUserInfo(username);
         return ResponseEntity.ok(userInfo);
