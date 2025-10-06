@@ -15,4 +15,10 @@ public final class AuthoritiesConstants {
     public static final String CREATE_EMPLOYEE = "CREATE_EMPLOYEE";
     public static final String UPDATE_EMPLOYEE = "UPDATE_EMPLOYEE";
     public static final String DELETE_EMPLOYEE = "DELETE_EMPLOYEE";
+
+    // Patient Permissions
+    public static final String VIEW_PATIENT = "VIEW_PATIENT";
+    public static final String CREATE_PATIENT = "CREATE_PATIENT";
+    public static final String UPDATE_PATIENT = "UPDATE_PATIENT";
+    public static final String DELETE_PATIENT = "DELETE_PATIENT";
 }

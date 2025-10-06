@@ -3,8 +3,11 @@ package com.dental.clinic.management.domain;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import com.dental.clinic.management.domain.enums.Gender;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
@@ -54,9 +57,9 @@ public class Patient {
   @Column(name = "address", columnDefinition = "TEXT")
   private String address;
 
-  @Size(max = 10)
+  @Enumerated(EnumType.STRING)
   @Column(name = "gender", length = 10)
-  private String gender;
+  private Gender gender;
 
   @Column(name = "medical_history", columnDefinition = "TEXT")
   private String medicalHistory;
@@ -165,11 +168,11 @@ public class Patient {
     this.address = address;
   }
 
-  public String getGender() {
+  public Gender getGender() {
     return gender;
   }
 
-  public void setGender(String gender) {
+  public void setGender(Gender gender) {
     this.gender = gender;
   }
 
