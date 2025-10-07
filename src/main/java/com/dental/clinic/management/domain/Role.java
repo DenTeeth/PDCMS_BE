@@ -23,7 +23,7 @@ import java.util.Set;
 public class Role {
 
     @Id
-    @Column(name = "role_id", length = 10)
+    @Column(name = "role_id", length = 50)
     private String roleId;
 
     @NotBlank
