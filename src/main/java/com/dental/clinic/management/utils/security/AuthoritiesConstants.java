@@ -24,5 +24,24 @@ public final class AuthoritiesConstants {
     public static final String VIEW_PATIENT = "VIEW_PATIENT";
     public static final String CREATE_PATIENT = "CREATE_PATIENT";
     public static final String UPDATE_PATIENT = "UPDATE_PATIENT";
-    public static final String DELETE_PATIENT = "DELETE_PATIENT";
+    public static final String DELETE_PATIENT = "DELETE_PATIENT";//soft delete
+
+    // Appointment Permissions
+    public static final String VIEW_APPOINTMENT = "VIEW_APPOINTMENT";
+    public static final String CREATE_APPOINTMENT = "CREATE_APPOINTMENT";
+    public static final String UPDATE_APPOINTMENT = "UPDATE_APPOINTMENT";
+    public static final String CANCEL_APPOINTMENT = "CANCEL_APPOINTMENT";
+    public static final String DELETE_APPOINTMENT = "DELETE_APPOINTMENT";
+
+    // Contact (Customer Contacts) Permissions
+    public static final String VIEW_CONTACT = "VIEW_CONTACT";
+    public static final String CREATE_CONTACT = "CREATE_CONTACT";
+    public static final String UPDATE_CONTACT = "UPDATE_CONTACT";
+    public static final String DELETE_CONTACT = "DELETE_CONTACT"; // soft delete if implemented
+
+    // Contact History Permissions
+    public static final String VIEW_CONTACT_HISTORY = "VIEW_CONTACT_HISTORY";
+    public static final String CREATE_CONTACT_HISTORY = "CREATE_CONTACT_HISTORY";
+    public static final String UPDATE_CONTACT_HISTORY = "UPDATE_CONTACT_HISTORY";
+    public static final String DELETE_CONTACT_HISTORY = "DELETE_CONTACT_HISTORY"; // soft delete if implemented
 }

@@ -31,7 +31,7 @@ import jakarta.validation.constraints.Size;
 public class Account {
 
     @Id
-    @Column(name = "account_id", length = 20)
+    @Column(name = "account_id", length = 36)
     private String accountId;
 
     @NotBlank

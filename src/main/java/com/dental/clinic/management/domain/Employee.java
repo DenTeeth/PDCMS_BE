@@ -27,7 +27,7 @@ import jakarta.validation.constraints.Size;
 public class Employee {
 
   @Id
-  @Column(name = "employee_id", length = 20)
+  @Column(name = "employee_id", length = 36)
   private String employeeId;
 
   @OneToOne(fetch = FetchType.LAZY)
