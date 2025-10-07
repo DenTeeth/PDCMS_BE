@@ -24,7 +24,7 @@ import jakarta.validation.constraints.Size;
 public class Patient {
 
   @Id
-  @Column(name = "patient_id", length = 20)
+  @Column(name = "patient_id", length = 36)
   private String patientId;
 
   @NotBlank

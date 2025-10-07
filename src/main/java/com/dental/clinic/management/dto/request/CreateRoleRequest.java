@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Size;
 public class CreateRoleRequest {
 
     @NotBlank(message = "Role ID is required")
-    @Size(max = 10, message = "Role ID must not exceed 10 characters")
+    @Size(max = 50, message = "Role ID must not exceed 50 characters")
     private String roleId;
 
     @NotBlank(message = "Role name is required")
