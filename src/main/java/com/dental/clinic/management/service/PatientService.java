@@ -71,7 +71,8 @@ public class PatientService {
      * Get ALL patients including deleted ones (Admin only)
      *
      * @param page          page number (zero-based)
-     * @param size          number of items per page
+     * @param size          number of items per pageThere is no data provider
+     *                      registered that can provide view data.
      * @param sortBy        field name to sort by
      * @param sortDirection ASC or DESC
      * @return Page of PatientInfoResponse
