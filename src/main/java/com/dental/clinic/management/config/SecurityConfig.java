@@ -7,12 +7,18 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationEntryPoint;
+import org.springframework.security.oauth2.server.resource.web.access.BearerTokenAccessDeniedHandler;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
+import org.springframework.security.web.servlet.util.matcher.MvcRequestMatcher;
+import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
 
 import com.dental.clinic.management.service.CustomUserDetailsService;
 
@@ -50,38 +56,87 @@ public class SecurityConfig {
     }
 
     @Bean
-    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    SecurityFilterChain filterChain(HttpSecurity http, MvcRequestMatcher.Builder mvc) throws Exception {
         http
                 .csrf(c -> c.disable())
                 .cors(Customizer.withDefaults())
-                .authorizeHttpRequests(authz -> authz
-                        // Public endpoints
-                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/",
-                                "/api/v1/auth/login", "/api/v1/auth/refresh-token",
-                                "/api/v1/auth/logout")
-                        .permitAll()
-                        .requestMatchers("/api/v1/setup/**", "/error").permitAll()
 
-                        // Authenticated endpoints - Role-based access control applied in service layer
-                        .requestMatchers("/api/v1/account/**").authenticated()
+                // Security Headers
+                .headers(headers -> headers
+                        // Content Security Policy - Prevent XSS attacks
+                        .contentSecurityPolicy(csp -> csp.policyDirectives(
+                                "default-src 'self'; " +
+                                        "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
+                                        "style-src 'self' 'unsafe-inline'; " +
+                                        "img-src 'self' data: https:; " +
+                                        "font-src 'self' data:; " +
+                                        "connect-src 'self'"))
+                        // Frame Options - Prevent clickjacking
+                        .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)
+                        // Referrer Policy - Control referrer information
+                        .referrerPolicy(referrer -> referrer.policy(
+                                ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
+                        // Permissions Policy - Control browser features
+                        .permissionsPolicy(permissions -> permissions.policy(
+                                "camera=(), fullscreen=(self), geolocation=(), gyroscope=(), " +
+                                        "magnetometer=(), microphone=(), midi=(), payment=(), sync-xhr=()")))
+
+                // Authorization Rules - Using MvcRequestMatcher for better security
+                .authorizeHttpRequests(authz -> authz
+                        // Public endpoints - API Documentation
+                        .requestMatchers(mvc.pattern("/v3/api-docs/**")).permitAll()
+                        .requestMatchers(mvc.pattern("/swagger-ui/**")).permitAll()
+                        .requestMatchers(mvc.pattern("/swagger-ui.html")).permitAll()
+
+                        // Public endpoints - Authentication
+                        .requestMatchers(mvc.pattern("/api/v1/auth/login")).permitAll()
+                        .requestMatchers(mvc.pattern("/api/v1/auth/refresh-token")).permitAll()
+                        .requestMatchers(mvc.pattern("/api/v1/auth/logout")).permitAll()
+
+                        // Public endpoints - Setup & Error
+                        .requestMatchers(mvc.pattern("/api/v1/setup/**")).permitAll()
+                        .requestMatchers(mvc.pattern("/error")).permitAll()
+
+                        // Authenticated endpoints - Account management
+                        .requestMatchers(mvc.pattern("/api/v1/account/**")).authenticated()
 
                         // Test endpoints (remove in production)
-                        .requestMatchers("/api/v1/test-security/public").permitAll()
-                        .requestMatchers("/api/v1/test-security/**").authenticated()
+                        .requestMatchers(mvc.pattern("/api/v1/test-security/public")).permitAll()
+                        .requestMatchers(mvc.pattern("/api/v1/test-security/**")).authenticated()
 
                         // All other endpoints require authentication
+                        // Fine-grained RBAC applied at service layer with @PreAuthorize
                         .anyRequest().authenticated())
 
                 // JWT Resource Server configuration
-                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt
-                        .jwtAuthenticationConverter(jwtAuthenticationConverter)))
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter)))
 
-                // Add JWT blacklist filter before JWT authentication
+                // Exception Handling
+                .exceptionHandling(exceptions -> exceptions
+                        // 401 Unauthorized - Authentication failed (invalid/expired token)
+                        .authenticationEntryPoint(new BearerTokenAuthenticationEntryPoint())
+                        // 403 Forbidden - Access denied (insufficient permissions)
+                        .accessDeniedHandler(new BearerTokenAccessDeniedHandler()))
+
+                // Custom JWT Blacklist Filter - Our improvement over JHipster
                 .addFilterBefore(jwtBlacklistFilter, UsernamePasswordAuthenticationFilter.class)
 
                 // Stateless session for JWT
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         return http.build();
+    }
+
+    /**
+     * MvcRequestMatcher.Builder bean - Learned from JHipster
+     * Provides more secure request matching using Spring MVC path matching
+     * - Prevents path traversal attacks
+     * - Handles trailing slashes automatically
+     * - Aware of Spring MVC controller mappings
+     */
+    @Bean
+    MvcRequestMatcher.Builder mvc(HandlerMappingIntrospector introspector) {
+        return new MvcRequestMatcher.Builder(introspector);
     }
 }

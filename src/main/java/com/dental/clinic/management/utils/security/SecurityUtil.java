@@ -26,6 +26,11 @@ public class SecurityUtil {
     public static final MacAlgorithm JWT_ALGORITHM = MacAlgorithm.HS512;
     public static final String AUTHORITIES_CLAIM = "authorities";
 
+    // JWT Claim Names for roles and permissions
+    public static final String ROLES_CLAIM = "roles";
+    public static final String PERMISSIONS_CLAIM = "permissions";
+    public static final String TOKEN_TYPE_CLAIM = "type";
+
     private final JwtEncoder jwtEncoder;
     private final JwtDecoder jwtDecoder;
 
@@ -53,8 +58,8 @@ public class SecurityUtil {
                 .issuedAt(now)
                 .expiresAt(validity)
                 .subject(username)
-                .claim("roles", formattedRoles)
-                .claim("permissions", permissions)
+                .claim(ROLES_CLAIM, formattedRoles)
+                .claim(PERMISSIONS_CLAIM, permissions)
                 .build();
 
         JwsHeader jwsHeader = JwsHeader.with(JWT_ALGORITHM).build();
@@ -68,7 +73,7 @@ public class SecurityUtil {
                 .issuedAt(now)
                 .expiresAt(validity)
                 .subject(username)
-                .claim("type", "refresh")
+                .claim(TOKEN_TYPE_CLAIM, "refresh")
                 .build();
         JwsHeader jwsHeader = JwsHeader.with(JWT_ALGORITHM).build();
         return this.jwtEncoder.encode(JwtEncoderParameters.from(jwsHeader, claims)).getTokenValue();
@@ -77,18 +82,26 @@ public class SecurityUtil {
     /**
      * Validate and decode a refresh token; returns Jwt if valid and of
      * type=refresh.
-     * Throws JwtException (wrapped) if invalid/expired/wrong type.
+     * Throws JwtException if invalid/expired/wrong type.
      */
     public Jwt decodeRefreshToken(String refreshToken) {
         try {
+            // This automatically validates:
+            // - Token signature
+            // - Token expiration
+            // - Token format
             Jwt jwt = jwtDecoder.decode(refreshToken);
+
+            // Additionally check if it's a refresh token
             Object typeClaim = jwt.getClaims().get("type");
             if (typeClaim == null || !"refresh".equals(typeClaim.toString())) {
                 throw new JwtException("Token is not a refresh token");
             }
             return jwt;
         } catch (JwtException e) {
-            throw e; // propagate for service layer to translate
+            // Re-throw with clear error context
+            // Possible reasons: expired, invalid signature, malformed, or wrong type
+            throw e;
         }
     }
 
