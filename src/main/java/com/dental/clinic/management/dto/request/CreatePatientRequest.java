@@ -11,8 +11,34 @@ import java.time.LocalDate;
 
 /**
  * DTO for creating a new patient
+ *
+ * FLOW 1: Patient CÓ ACCOUNT (có thể đăng nhập)
+ * - Cung cấp: username, password + thông tin patient
+ * - System tạo account + patient
+ *
+ * FLOW 2: Patient KHÔNG ACCOUNT (chỉ lưu hồ sơ)
+ * - Không cung cấp username/password
+ * - System chỉ tạo patient (không tạo account)
  */
 public class CreatePatientRequest {
+
+    // ===== ACCOUNT FIELDS (Optional - nếu muốn patient đăng nhập) =====
+
+    /**
+     * Username for patient account (optional)
+     * Nếu cung cấp username → cần cả password và email
+     */
+    @Size(max = 50)
+    private String username;
+
+    /**
+     * Password for patient account (optional)
+     * Bắt buộc nếu có username
+     */
+    @Size(min = 8, max = 100)
+    private String password;
+
+    // ===== PATIENT FIELDS =====
 
     @NotBlank
     @Size(max = 50)
@@ -59,6 +85,22 @@ public class CreatePatientRequest {
     }
 
     // Getters and Setters
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
     public String getFirstName() {
         return firstName;
     }

@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -15,6 +16,7 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -27,17 +29,19 @@ import jakarta.validation.constraints.Size;
 public class Employee {
 
   @Id
-  @Column(name = "employee_id", length = 20)
+  @Column(name = "employee_id", length = 36)
   private String employeeId;
 
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "account_id", nullable = false)
   private Account account;
 
+  // Role relationship: Read-only (để query, không dùng để update)
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "role_id", nullable = false, insertable = false, updatable = false)
+  @JoinColumn(name = "role_id", insertable = false, updatable = false)
   private Role role;
 
+  // Role ID: Dùng để set/update role
   @NotBlank
   @Size(max = 50)
   @Column(name = "role_id", nullable = false, length = 50)
@@ -92,6 +96,9 @@ public class Employee {
 
   @PrePersist
   protected void onCreate() {
+    if (employeeId == null || employeeId.isEmpty()) {
+      employeeId = UUID.randomUUID().toString();
+    }
     createdAt = LocalDateTime.now();
   }
 

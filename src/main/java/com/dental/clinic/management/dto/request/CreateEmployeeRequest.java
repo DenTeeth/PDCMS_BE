@@ -11,29 +11,28 @@ import java.util.Set;
 
 /**
  * DTO for creating a new employee
- * Supports two modes:
- * 1. With existing account: provide accountId
- * 2. With new account: provide username, email, password (accountId will be
- * auto-generated)
+ *
+ * FLOW: Tạo Employee → Tự động tạo Account
+ * - Admin cung cấp: username, email, password + thông tin employee
+ * - System tự động tạo account và employee
  */
 public class CreateEmployeeRequest {
 
-    // Option 1: Use existing account
-    @Size(max = 20, message = "Account ID must not exceed 20 characters")
-    private String accountId;
-
-    // Option 2: Create new account (required if accountId is not provided)
+    // Account information (REQUIRED - sẽ tạo account mới)
+    @NotBlank(message = "Username is required")
     @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
     private String username;
 
+    @NotBlank(message = "Email is required")
     @Email(message = "Email must be valid")
     @Size(max = 100, message = "Email must not exceed 100 characters")
     private String email;
 
+    @NotBlank(message = "Password is required")
     @Size(min = 6, max = 100, message = "Password must be between 6 and 100 characters")
     private String password;
 
-    // Employee information (required)
+    // Employee information (REQUIRED)
     @NotBlank(message = "Role ID is required")
     @Size(max = 50, message = "Role ID must not exceed 50 characters")
     private String roleId;
@@ -61,22 +60,14 @@ public class CreateEmployeeRequest {
     public CreateEmployeeRequest() {
     }
 
-    public CreateEmployeeRequest(String accountId, String roleId, String firstName, String lastName) {
-        this.accountId = accountId;
+    public CreateEmployeeRequest(String username, String roleId, String firstName, String lastName) {
+        this.username = username;
         this.roleId = roleId;
         this.firstName = firstName;
         this.lastName = lastName;
     }
 
     // Getters and Setters
-    public String getAccountId() {
-        return accountId;
-    }
-
-    public void setAccountId(String accountId) {
-        this.accountId = accountId;
-    }
-
     public String getUsername() {
         return username;
     }
@@ -160,7 +151,8 @@ public class CreateEmployeeRequest {
     @Override
     public String toString() {
         return "CreateEmployeeRequest{" +
-                "accountId='" + accountId + '\'' +
+                "username='" + username + '\'' +
+                ", email='" + email + '\'' +
                 ", roleId=" + roleId +
                 ", firstName='" + firstName + '\'' +
                 ", lastName='" + lastName + '\'' +
