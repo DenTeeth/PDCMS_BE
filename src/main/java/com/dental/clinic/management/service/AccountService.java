@@ -2,6 +2,8 @@ package com.dental.clinic.management.service;
 
 import com.dental.clinic.management.exception.BadRequestAlertException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +22,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class AccountService {
+    private static final Logger log = LoggerFactory.getLogger(AccountService.class);
+
     private final AccountRepository accountRepository;
     private final RoleRepository roleRepository;
 

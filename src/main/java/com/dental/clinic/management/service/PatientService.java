@@ -9,6 +9,8 @@ import com.dental.clinic.management.exception.BadRequestAlertException;
 import com.dental.clinic.management.mapper.PatientMapper;
 import com.dental.clinic.management.repository.PatientRepository;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -27,6 +29,7 @@ import java.util.UUID;
  */
 @Service
 public class PatientService {
+    private static final Logger log = LoggerFactory.getLogger(PatientService.class);
 
     private final PatientRepository patientRepository;
     private final PatientMapper patientMapper;

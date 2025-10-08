@@ -5,6 +5,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.stereotype.Service;
@@ -17,6 +19,7 @@ import jakarta.annotation.PreDestroy;
  */
 @Service
 public class TokenBlacklistService {
+    private static final Logger log = LoggerFactory.getLogger(TokenBlacklistService.class);
 
     private final ConcurrentHashMap<String, Long> blacklistedTokens = new ConcurrentHashMap<>();
     private final JwtDecoder jwtDecoder;

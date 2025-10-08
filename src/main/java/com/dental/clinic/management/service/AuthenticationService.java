@@ -5,6 +5,8 @@ import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
@@ -37,6 +39,8 @@ import com.dental.clinic.management.utils.security.SecurityUtil;
 @Service
 @Transactional
 public class AuthenticationService {
+
+        private static final Logger log = LoggerFactory.getLogger(AuthenticationService.class);
 
         private final AuthenticationManager authenticationManager;
         private final SecurityUtil securityUtil;
@@ -127,39 +131,52 @@ public class AuthenticationService {
          *                                                                        expired
          */
         public RefreshTokenResponse refreshToken(RefreshTokenRequest request) {
+                log.debug("Refresh token request received");
+
                 if (request.getRefreshToken() == null || request.getRefreshToken().isBlank()) {
+                        log.warn("Refresh token is missing in request");
                         throw new com.dental.clinic.management.exception.BadCredentialsException(
-                                        "Invalid refresh token");
-                }
-                try {
-                        // Giải mã và kiểm tra refresh token
-                        var jwt = securityUtil.decodeRefreshToken(request.getRefreshToken());
-                        String username = jwt.getSubject();
-
-                        // Lấy thông tin tài khoản với roles/permissions
-                        Account account = accountRepository.findByUsernameWithRolesAndPermissions(username)
-                                        .orElseThrow(() -> new AccountNotFoundException(username));
-
-                        List<String> roles = account.getRoles().stream().map(Role::getRoleName)
-                                        .collect(Collectors.toList());
-                        List<String> permissions = account.getRoles().stream().flatMap(r -> r.getPermissions().stream())
-                                        .map(Permission::getPermissionName).distinct().collect(Collectors.toList());
-
-                        // Tạo access token mới
-                        String newAccess = securityUtil.createAccessToken(username, roles, permissions);
-                        long now = Instant.now().getEpochSecond();
-                        long accessExp = now + securityUtil.getAccessTokenValiditySeconds();
-
-                        // Tạo refresh token mới (thay vì dùng cái cũ)
-                        String newRefresh = securityUtil.createRefreshToken(username);
-                        long refreshExp = now + securityUtil.getRefreshTokenValiditySeconds();
-
-                        return new RefreshTokenResponse(newAccess, accessExp, newRefresh, refreshExp);
-                } catch (Exception e) {
-                        throw new com.dental.clinic.management.exception.BadCredentialsException(
-                                        "Invalid refresh token");
+                                        "Refresh token is missing");
                 }
 
+                // Giải mã và kiểm tra refresh token
+                // JwtException will be caught by GlobalExceptionHandler and return 401
+                log.debug("Decoding refresh token");
+                var jwt = securityUtil.decodeRefreshToken(request.getRefreshToken());
+                String username = jwt.getSubject();
+                log.debug("Refresh token decoded successfully for user: {}", username);
+
+                // Lấy thông tin tài khoản với roles/permissions
+                Account account = accountRepository.findByUsernameWithRolesAndPermissions(username)
+                                .orElseThrow(() -> {
+                                        log.error("Account not found for username: {}", username);
+                                        return new AccountNotFoundException(username);
+                                });
+
+                // Check if account is active
+                if (!account.isActive()) {
+                        log.warn("Account {} is not active", username);
+                        throw new com.dental.clinic.management.exception.BadCredentialsException(
+                                        "Account is not active");
+                }
+
+                log.debug("Generating new tokens for user: {}", username);
+                List<String> roles = account.getRoles().stream().map(Role::getRoleName)
+                                .collect(Collectors.toList());
+                List<String> permissions = account.getRoles().stream().flatMap(r -> r.getPermissions().stream())
+                                .map(Permission::getPermissionName).distinct().collect(Collectors.toList());
+
+                // Tạo access token mới
+                String newAccess = securityUtil.createAccessToken(username, roles, permissions);
+                long now = Instant.now().getEpochSecond();
+                long accessExp = now + securityUtil.getAccessTokenValiditySeconds();
+
+                // Tạo refresh token mới (refresh token rotation for security)
+                String newRefresh = securityUtil.createRefreshToken(username);
+                long refreshExp = now + securityUtil.getRefreshTokenValiditySeconds();
+
+                log.info("Refresh token successful for user: {}", username);
+                return new RefreshTokenResponse(newAccess, accessExp, newRefresh, refreshExp);
         }
 
         /**

@@ -8,6 +8,8 @@ import com.dental.clinic.management.exception.BadRequestAlertException;
 import com.dental.clinic.management.exception.EmployeeNotFoundException;
 import com.dental.clinic.management.mapper.EmployeeMapper;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -34,6 +36,8 @@ import java.util.UUID;
 
 @Service
 public class EmployeeService {
+    private static final Logger log = LoggerFactory.getLogger(EmployeeService.class);
+
     private final EmployeeRepository employeeRepository;
     private final EmployeeMapper employeeMapper;
     private final AccountRepository accountRepository;
@@ -180,11 +184,11 @@ public class EmployeeService {
         }
 
         Employee employee = employeeRepository.findOneByEmployeeCode(employeeCode)
-                .orElseThrow(() -> new EmployeeNotFoundException("Employee not found with code: " + employeeCode));
+                .orElseThrow(() -> new EmployeeNotFoundException(employeeCode));
 
         // Check if employee is active (not soft-deleted)
         if (employee.getIsActive() == null || !employee.getIsActive()) {
-            throw new EmployeeNotFoundException("Employee not found with code: " + employeeCode);
+            throw new EmployeeNotFoundException(employeeCode);
         }
 
         return employee;

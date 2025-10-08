@@ -4,6 +4,8 @@ import com.dental.clinic.management.dto.response.PermissionInfoResponse;
 import com.dental.clinic.management.exception.BadRequestAlertException;
 import com.dental.clinic.management.mapper.PermissionMapper;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +23,8 @@ import java.util.Set;
 
 @Service
 public class RoleService {
+    private static final Logger log = LoggerFactory.getLogger(RoleService.class);
+
     private final RoleRepository roleRepository;
     private final PermissionRepository permissionRepository;
     private final PermissionMapper permissionMapper;
@@ -77,7 +81,8 @@ public class RoleService {
 
     @PreAuthorize("hasRole('" + ADMIN + "')")
     @Transactional
-    public com.dental.clinic.management.dto.response.RoleInfoResponse createRole(com.dental.clinic.management.dto.request.CreateRoleRequest request) {
+    public com.dental.clinic.management.dto.response.RoleInfoResponse createRole(
+            com.dental.clinic.management.dto.request.CreateRoleRequest request) {
         if (roleRepository.existsById(request.getRoleId()) || roleRepository.existsByRoleName(request.getRoleName())) {
             throw new BadRequestAlertException("Role already exists", "role", "roleexists");
         }
@@ -97,15 +102,18 @@ public class RoleService {
     @Transactional(readOnly = true)
     public com.dental.clinic.management.dto.response.RoleInfoResponse getRoleById(String roleId) {
         com.dental.clinic.management.domain.Role role = roleRepository.findById(roleId)
-                .orElseThrow(() -> new BadRequestAlertException("Role not found with ID: " + roleId, "role", "rolenotfound"));
+                .orElseThrow(() -> new BadRequestAlertException("Role not found with ID: " + roleId, "role",
+                        "rolenotfound"));
         return roleMapper.toRoleInfoResponse(role);
     }
 
     @PreAuthorize("hasRole('" + ADMIN + "')")
     @Transactional
-    public com.dental.clinic.management.dto.response.RoleInfoResponse updateRole(String roleId, com.dental.clinic.management.dto.request.UpdateRoleRequest request) {
+    public com.dental.clinic.management.dto.response.RoleInfoResponse updateRole(String roleId,
+            com.dental.clinic.management.dto.request.UpdateRoleRequest request) {
         com.dental.clinic.management.domain.Role role = roleRepository.findById(roleId)
-                .orElseThrow(() -> new BadRequestAlertException("Role not found with ID: " + roleId, "role", "rolenotfound"));
+                .orElseThrow(() -> new BadRequestAlertException("Role not found with ID: " + roleId, "role",
+                        "rolenotfound"));
         role.setRoleName(request.getRoleName());
         role.setDescription(request.getDescription());
         roleRepository.save(role);
@@ -116,7 +124,8 @@ public class RoleService {
     @Transactional
     public com.dental.clinic.management.dto.response.RoleInfoResponse deleteRole(String roleId) {
         com.dental.clinic.management.domain.Role role = roleRepository.findById(roleId)
-                .orElseThrow(() -> new BadRequestAlertException("Role not found with ID: " + roleId, "role", "rolenotfound"));
+                .orElseThrow(() -> new BadRequestAlertException("Role not found with ID: " + roleId, "role",
+                        "rolenotfound"));
         // If already soft-deleted, treat as not found
         if (role.getIsActive() != null && !role.getIsActive()) {
             throw new BadRequestAlertException("Role not found with ID: " + roleId, "role", "rolenotfound");

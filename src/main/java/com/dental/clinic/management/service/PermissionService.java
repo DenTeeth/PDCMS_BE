@@ -7,6 +7,8 @@ import com.dental.clinic.management.exception.BadRequestAlertException;
 import com.dental.clinic.management.exception.PermissionNotFoundException;
 import com.dental.clinic.management.mapper.PermissionMapper;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -27,6 +29,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class PermissionService {
+    private static final Logger log = LoggerFactory.getLogger(PermissionService.class);
+
     private final PermissionRepository permissionRepository;
     private final PermissionMapper permissionMapper;
 
@@ -42,7 +46,7 @@ public class PermissionService {
     public Page<PermissionInfoResponse> getAllPermissions(int page, int size, String sortBy, String sortDirection) {
         Sort.Direction direction = Sort.Direction.fromString(sortDirection);
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
-        
+
         Page<Permission> permissionPage = permissionRepository.findAll(pageable);
         return permissionPage.map(permissionMapper::toPermissionInfoResponse);
     }
@@ -59,7 +63,7 @@ public class PermissionService {
     public PermissionInfoResponse getPermissionById(String permissionId) {
         Permission permission = permissionRepository.findById(permissionId)
                 .orElseThrow(() -> new PermissionNotFoundException("Permission not found with ID: " + permissionId));
-        
+
         return permissionMapper.toPermissionInfoResponse(permission);
     }
 
@@ -89,8 +93,7 @@ public class PermissionService {
                 permissionId,
                 request.getPermissionName(),
                 request.getModule(),
-                request.getDescription()
-        );
+                request.getDescription());
 
         Permission savedPermission = permissionRepository.save(permission);
         return permissionMapper.toPermissionInfoResponse(savedPermission);
@@ -103,9 +106,9 @@ public class PermissionService {
                 .orElseThrow(() -> new PermissionNotFoundException("Permission not found with ID: " + permissionId));
 
         // Check if new permission name already exists (if being changed)
-        if (request.getPermissionName() != null && 
-            !request.getPermissionName().equals(existingPermission.getPermissionName()) &&
-            permissionRepository.existsByPermissionName(request.getPermissionName())) {
+        if (request.getPermissionName() != null &&
+                !request.getPermissionName().equals(existingPermission.getPermissionName()) &&
+                permissionRepository.existsByPermissionName(request.getPermissionName())) {
             throw new BadRequestAlertException(
                     "Permission with name '" + request.getPermissionName() + "' already exists",
                     "permission",

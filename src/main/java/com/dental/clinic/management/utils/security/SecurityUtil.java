@@ -20,6 +20,8 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.stereotype.Component;
 
+import com.dental.clinic.management.exception.JwtValidationException;
+
 @Component
 public class SecurityUtil {
 
@@ -82,7 +84,7 @@ public class SecurityUtil {
     /**
      * Validate and decode a refresh token; returns Jwt if valid and of
      * type=refresh.
-     * Throws JwtException if invalid/expired/wrong type.
+     * Throws JwtValidationException if invalid/expired/wrong type.
      */
     public Jwt decodeRefreshToken(String refreshToken) {
         try {
@@ -95,13 +97,12 @@ public class SecurityUtil {
             // Additionally check if it's a refresh token
             Object typeClaim = jwt.getClaims().get("type");
             if (typeClaim == null || !"refresh".equals(typeClaim.toString())) {
-                throw new JwtException("Token is not a refresh token");
+                throw new JwtValidationException("Token is not a refresh token");
             }
             return jwt;
         } catch (JwtException e) {
-            // Re-throw with clear error context
-            // Possible reasons: expired, invalid signature, malformed, or wrong type
-            throw e;
+            // Convert Spring's JwtException to our custom exception
+            throw new JwtValidationException(e.getMessage(), e);
         }
     }
 
