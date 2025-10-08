@@ -20,6 +20,15 @@ spring:
         dialect: org.hibernate.dialect.MySQLDialect
         "[format_sql]": true
     show-sql: true
+    defer-datasource-initialization: true
+
+  # SQL Init Configuration - Auto-run seed data
+  sql:
+    init:
+      mode: always
+      data-locations: classpath:db/dental-clinic-seed-data.sql
+      encoding: UTF-8
+      continue-on-error: true
 
 # ==============================
 # Custom JWT Configuration

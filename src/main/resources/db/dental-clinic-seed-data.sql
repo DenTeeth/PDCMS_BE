@@ -13,59 +13,59 @@ SET CHARACTER SET utf8mb4;
 -- STEP 1: CREATE ROLES (Dynamic RBAC)
 -- ============================================
 
-INSERT INTO roles (role_id, name, description, is_active, created_at)
+INSERT INTO roles (role_id, role_name, description, is_active, created_at)
 VALUES
 -- Admin role
-('550e8400-e29b-41d4-a716-446655440001', 'Admin', 'Quản trị viên hệ thống - Toàn quyền', TRUE, NOW()),
+('ROLE_ADMIN', 'Admin', 'Quản trị viên hệ thống - Toàn quyền', TRUE, NOW()),
 
 -- Clinical roles
-('550e8400-e29b-41d4-a716-446655440002', 'Bác sĩ', 'Bác sĩ nha khoa - Khám và điều trị', TRUE, NOW()),
-('550e8400-e29b-41d4-a716-446655440003', 'Y tá', 'Y tá hỗ trợ điều trị', TRUE, NOW()),
+('ROLE_DOCTOR', 'Bác sĩ', 'Bác sĩ nha khoa - Khám và điều trị', TRUE, NOW()),
+('ROLE_NURSE', 'Y tá', 'Y tá hỗ trợ điều trị', TRUE, NOW()),
 
 -- Administrative roles
-('550e8400-e29b-41d4-a716-446655440004', 'Lễ tân', 'Tiếp đón và quản lý lịch hẹn', TRUE, NOW()),
-('550e8400-e29b-41d4-a716-446655440005', 'Kế toán', 'Quản lý tài chính và thanh toán', TRUE, NOW()),
-('550e8400-e29b-41d4-a716-446655440006', 'Quản lý kho', 'Quản lý vật tư và thuốc', TRUE, NOW()),
+('ROLE_RECEPTIONIST', 'Lễ tân', 'Tiếp đón và quản lý lịch hẹn', TRUE, NOW()),
+('ROLE_ACCOUNTANT', 'Kế toán', 'Quản lý tài chính và thanh toán', TRUE, NOW()),
+('ROLE_INVENTORY_MANAGER', 'Quản lý kho', 'Quản lý vật tư và thuốc', TRUE, NOW()),
 
 -- Patient role
-('550e8400-e29b-41d4-a716-446655440007', 'Bệnh nhân', 'Người bệnh - Xem hồ sơ cá nhân', TRUE, NOW())
-ON DUPLICATE KEY UPDATE name = VALUES(name);
+('ROLE_PATIENT', 'Bệnh nhân', 'Người bệnh - Xem hồ sơ cá nhân', TRUE, NOW())
+ON DUPLICATE KEY UPDATE role_name = VALUES(role_name);
 
 
 -- ============================================
 -- STEP 2: CREATE PERMISSIONS (Granular Access Control)
 -- ============================================
 
-INSERT INTO permissions (permission_id, resource, action, description, created_at)
+INSERT INTO permissions (permission_id, permission_name, module, description, created_at)
 VALUES
 -- Account Management
-('660e8400-e29b-41d4-a716-446655440001', 'ACCOUNT', 'CREATE', 'Tạo tài khoản mới', NOW()),
-('660e8400-e29b-41d4-a716-446655440002', 'ACCOUNT', 'VIEW', 'Xem danh sách tài khoản', NOW()),
-('660e8400-e29b-41d4-a716-446655440003', 'ACCOUNT', 'UPDATE', 'Cập nhật tài khoản', NOW()),
-('660e8400-e29b-41d4-a716-446655440004', 'ACCOUNT', 'DELETE', 'Xóa tài khoản', NOW()),
+('CREATE_ACCOUNT', 'CREATE_ACCOUNT', 'ACCOUNT', 'Tạo tài khoản mới', NOW()),
+('VIEW_ACCOUNT', 'VIEW_ACCOUNT', 'ACCOUNT', 'Xem danh sách tài khoản', NOW()),
+('UPDATE_ACCOUNT', 'UPDATE_ACCOUNT', 'ACCOUNT', 'Cập nhật tài khoản', NOW()),
+('DELETE_ACCOUNT', 'DELETE_ACCOUNT', 'ACCOUNT', 'Xóa tài khoản', NOW()),
 
 -- Employee Management
-('660e8400-e29b-41d4-a716-446655440011', 'EMPLOYEE', 'CREATE', 'Tạo nhân viên mới', NOW()),
-('660e8400-e29b-41d4-a716-446655440012', 'EMPLOYEE', 'VIEW', 'Xem danh sách nhân viên', NOW()),
-('660e8400-e29b-41d4-a716-446655440013', 'EMPLOYEE', 'UPDATE', 'Cập nhật nhân viên', NOW()),
-('660e8400-e29b-41d4-a716-446655440014', 'EMPLOYEE', 'DELETE', 'Xóa nhân viên', NOW()),
+('CREATE_EMPLOYEE', 'CREATE_EMPLOYEE', 'EMPLOYEE', 'Tạo nhân viên mới', NOW()),
+('VIEW_EMPLOYEE', 'VIEW_EMPLOYEE', 'EMPLOYEE', 'Xem danh sách nhân viên', NOW()),
+('UPDATE_EMPLOYEE', 'UPDATE_EMPLOYEE', 'EMPLOYEE', 'Cập nhật nhân viên', NOW()),
+('DELETE_EMPLOYEE', 'DELETE_EMPLOYEE', 'EMPLOYEE', 'Xóa nhân viên', NOW()),
 
 -- Patient Management
-('660e8400-e29b-41d4-a716-446655440021', 'PATIENT', 'CREATE', 'Tạo hồ sơ bệnh nhân', NOW()),
-('660e8400-e29b-41d4-a716-446655440022', 'PATIENT', 'VIEW', 'Xem hồ sơ bệnh nhân', NOW()),
-('660e8400-e29b-41d4-a716-446655440023', 'PATIENT', 'UPDATE', 'Cập nhật hồ sơ bệnh nhân', NOW()),
-('660e8400-e29b-41d4-a716-446655440024', 'PATIENT', 'DELETE', 'Xóa hồ sơ bệnh nhân', NOW()),
+('CREATE_PATIENT', 'CREATE_PATIENT', 'PATIENT', 'Tạo hồ sơ bệnh nhân', NOW()),
+('VIEW_PATIENT', 'VIEW_PATIENT', 'PATIENT', 'Xem hồ sơ bệnh nhân', NOW()),
+('UPDATE_PATIENT', 'UPDATE_PATIENT', 'PATIENT', 'Cập nhật hồ sơ bệnh nhân', NOW()),
+('DELETE_PATIENT', 'DELETE_PATIENT', 'PATIENT', 'Xóa hồ sơ bệnh nhân', NOW()),
 
 -- Treatment Management
-('660e8400-e29b-41d4-a716-446655440031', 'TREATMENT', 'CREATE', 'Tạo phác đồ điều trị', NOW()),
-('660e8400-e29b-41d4-a716-446655440032', 'TREATMENT', 'VIEW', 'Xem phác đồ điều trị', NOW()),
-('660e8400-e29b-41d4-a716-446655440033', 'TREATMENT', 'UPDATE', 'Cập nhật phác đồ điều trị', NOW()),
+('CREATE_TREATMENT', 'CREATE_TREATMENT', 'TREATMENT', 'Tạo phác đồ điều trị', NOW()),
+('VIEW_TREATMENT', 'VIEW_TREATMENT', 'TREATMENT', 'Xem phác đồ điều trị', NOW()),
+('UPDATE_TREATMENT', 'UPDATE_TREATMENT', 'TREATMENT', 'Cập nhật phác đồ điều trị', NOW()),
 
 -- Appointment Management
-('660e8400-e29b-41d4-a716-446655440041', 'APPOINTMENT', 'CREATE', 'Đặt lịch hẹn', NOW()),
-('660e8400-e29b-41d4-a716-446655440042', 'APPOINTMENT', 'VIEW', 'Xem lịch hẹn', NOW()),
-('660e8400-e29b-41d4-a716-446655440043', 'APPOINTMENT', 'UPDATE', 'Cập nhật lịch hẹn', NOW()),
-('660e8400-e29b-41d4-a716-446655440044', 'APPOINTMENT', 'DELETE', 'Hủy lịch hẹn', NOW())
+('CREATE_APPOINTMENT', 'CREATE_APPOINTMENT', 'APPOINTMENT', 'Đặt lịch hẹn', NOW()),
+('VIEW_APPOINTMENT', 'VIEW_APPOINTMENT', 'APPOINTMENT', 'Xem lịch hẹn', NOW()),
+('UPDATE_APPOINTMENT', 'UPDATE_APPOINTMENT', 'APPOINTMENT', 'Cập nhật lịch hẹn', NOW()),
+('DELETE_APPOINTMENT', 'DELETE_APPOINTMENT', 'APPOINTMENT', 'Hủy lịch hẹn', NOW())
 ON DUPLICATE KEY UPDATE description = VALUES(description);
 
 
@@ -75,39 +75,39 @@ ON DUPLICATE KEY UPDATE description = VALUES(description);
 
 -- Admin: Full permissions
 INSERT INTO role_permissions (role_id, permission_id)
-SELECT '550e8400-e29b-41d4-a716-446655440001', permission_id FROM permissions
+SELECT 'ROLE_ADMIN', permission_id FROM permissions
 ON DUPLICATE KEY UPDATE role_id = VALUES(role_id);
 
 -- Bác sĩ: Clinical permissions
 INSERT INTO role_permissions (role_id, permission_id)
 VALUES
-('550e8400-e29b-41d4-a716-446655440002', '660e8400-e29b-41d4-a716-446655440022'), -- VIEW_PATIENT
-('550e8400-e29b-41d4-a716-446655440002', '660e8400-e29b-41d4-a716-446655440023'), -- UPDATE_PATIENT
-('550e8400-e29b-41d4-a716-446655440002', '660e8400-e29b-41d4-a716-446655440031'), -- CREATE_TREATMENT
-('550e8400-e29b-41d4-a716-446655440002', '660e8400-e29b-41d4-a716-446655440032'), -- VIEW_TREATMENT
-('550e8400-e29b-41d4-a716-446655440002', '660e8400-e29b-41d4-a716-446655440033'), -- UPDATE_TREATMENT
-('550e8400-e29b-41d4-a716-446655440002', '660e8400-e29b-41d4-a716-446655440042')  -- VIEW_APPOINTMENT
+('ROLE_DOCTOR', 'VIEW_PATIENT'),
+('ROLE_DOCTOR', 'UPDATE_PATIENT'),
+('ROLE_DOCTOR', 'CREATE_TREATMENT'),
+('ROLE_DOCTOR', 'VIEW_TREATMENT'),
+('ROLE_DOCTOR', 'UPDATE_TREATMENT'),
+('ROLE_DOCTOR', 'VIEW_APPOINTMENT')
 ON DUPLICATE KEY UPDATE role_id = VALUES(role_id);
 
 -- Lễ tân: Patient + Appointment management
 INSERT INTO role_permissions (role_id, permission_id)
 VALUES
-('550e8400-e29b-41d4-a716-446655440004', '660e8400-e29b-41d4-a716-446655440021'), -- CREATE_PATIENT
-('550e8400-e29b-41d4-a716-446655440004', '660e8400-e29b-41d4-a716-446655440022'), -- VIEW_PATIENT
-('550e8400-e29b-41d4-a716-446655440004', '660e8400-e29b-41d4-a716-446655440023'), -- UPDATE_PATIENT
-('550e8400-e29b-41d4-a716-446655440004', '660e8400-e29b-41d4-a716-446655440041'), -- CREATE_APPOINTMENT
-('550e8400-e29b-41d4-a716-446655440004', '660e8400-e29b-41d4-a716-446655440042'), -- VIEW_APPOINTMENT
-('550e8400-e29b-41d4-a716-446655440004', '660e8400-e29b-41d4-a716-446655440043'), -- UPDATE_APPOINTMENT
-('550e8400-e29b-41d4-a716-446655440004', '660e8400-e29b-41d4-a716-446655440044')  -- DELETE_APPOINTMENT
+('ROLE_RECEPTIONIST', 'CREATE_PATIENT'),
+('ROLE_RECEPTIONIST', 'VIEW_PATIENT'),
+('ROLE_RECEPTIONIST', 'UPDATE_PATIENT'),
+('ROLE_RECEPTIONIST', 'CREATE_APPOINTMENT'),
+('ROLE_RECEPTIONIST', 'VIEW_APPOINTMENT'),
+('ROLE_RECEPTIONIST', 'UPDATE_APPOINTMENT'),
+('ROLE_RECEPTIONIST', 'DELETE_APPOINTMENT')
 ON DUPLICATE KEY UPDATE role_id = VALUES(role_id);
 
 -- Bệnh nhân: Own records only
 INSERT INTO role_permissions (role_id, permission_id)
 VALUES
-('550e8400-e29b-41d4-a716-446655440007', '660e8400-e29b-41d4-a716-446655440022'), -- VIEW_PATIENT (own)
-('550e8400-e29b-41d4-a716-446655440007', '660e8400-e29b-41d4-a716-446655440032'), -- VIEW_TREATMENT (own)
-('550e8400-e29b-41d4-a716-446655440007', '660e8400-e29b-41d4-a716-446655440041'), -- CREATE_APPOINTMENT (own)
-('550e8400-e29b-41d4-a716-446655440007', '660e8400-e29b-41d4-a716-446655440042')  -- VIEW_APPOINTMENT (own)
+('ROLE_PATIENT', 'VIEW_PATIENT'),
+('ROLE_PATIENT', 'VIEW_TREATMENT'),
+('ROLE_PATIENT', 'CREATE_APPOINTMENT'),
+('ROLE_PATIENT', 'VIEW_APPOINTMENT')
 ON DUPLICATE KEY UPDATE role_id = VALUES(role_id);
 
 
@@ -130,32 +130,38 @@ ON DUPLICATE KEY UPDATE specialization_name = VALUES(specialization_name);
 -- ============================================
 -- STEP 5: CREATE ACCOUNTS FOR EMPLOYEES
 -- ============================================
--- Password: DentalClinic@2025 (BCrypt hashed)
--- $2a$10$N.zmdr9k7uOCQQVbMhOHOe6LwXJm5k4h9wJQCn1lSaGEQXrNTbxG6
+-- Password: 123456 (BCrypt hashed)
+-- $2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi
 
 -- Admin Account
 INSERT INTO accounts (account_id, username, email, password, status, created_at)
 VALUES
-('880e8400-e29b-41d4-a716-446655440001', 'admin', 'admin@dentalclinic.com', '$2a$10$N.zmdr9k7uOCQQVbMhOHOe6LwXJm5k4h9wJQCn1lSaGEQXrNTbxG6', 'ACTIVE', NOW())
+('880e8400-e29b-41d4-a716-446655440001', 'admin', 'admin@dentalclinic.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'ACTIVE', NOW())
 ON DUPLICATE KEY UPDATE username = VALUES(username);
 
 -- Doctor Accounts
 INSERT INTO accounts (account_id, username, email, password, status, created_at)
 VALUES
-('880e8400-e29b-41d4-a716-446655440002', 'bs.nguyen.van.a', 'nguyen.van.a@dentalclinic.com', '$2a$10$N.zmdr9k7uOCQQVbMhOHOe6LwXJm5k4h9wJQCn1lSaGEQXrNTbxG6', 'ACTIVE', NOW()),
-('880e8400-e29b-41d4-a716-446655440003', 'bs.tran.thi.b', 'tran.thi.b@dentalclinic.com', '$2a$10$N.zmdr9k7uOCQQVbMhOHOe6LwXJm5k4h9wJQCn1lSaGEQXrNTbxG6', 'ACTIVE', NOW())
+('880e8400-e29b-41d4-a716-446655440002', 'nhasi1', 'nhasi1@dentalclinic.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'ACTIVE', NOW()),
+('880e8400-e29b-41d4-a716-446655440003', 'nhasi2', 'nhasi2@dentalclinic.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'ACTIVE', NOW())
+ON DUPLICATE KEY UPDATE username = VALUES(username);
+
+-- Nurse Account
+INSERT INTO accounts (account_id, username, email, password, status, created_at)
+VALUES
+('880e8400-e29b-41d4-a716-446655440006', 'yta', 'yta@dentalclinic.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'ACTIVE', NOW())
 ON DUPLICATE KEY UPDATE username = VALUES(username);
 
 -- Receptionist Account
 INSERT INTO accounts (account_id, username, email, password, status, created_at)
 VALUES
-('880e8400-e29b-41d4-a716-446655440004', 'le.thi.c', 'le.thi.c@dentalclinic.com', '$2a$10$N.zmdr9k7uOCQQVbMhOHOe6LwXJm5k4h9wJQCn1lSaGEQXrNTbxG6', 'ACTIVE', NOW())
+('880e8400-e29b-41d4-a716-446655440004', 'letan', 'letan@dentalclinic.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'ACTIVE', NOW())
 ON DUPLICATE KEY UPDATE username = VALUES(username);
 
 -- Accountant Account
 INSERT INTO accounts (account_id, username, email, password, status, created_at)
 VALUES
-('880e8400-e29b-41d4-a716-446655440005', 'pham.van.d', 'pham.van.d@dentalclinic.com', '$2a$10$N.zmdr9k7uOCQQVbMhOHOe6LwXJm5k4h9wJQCn1lSaGEQXrNTbxG6', 'ACTIVE', NOW())
+('880e8400-e29b-41d4-a716-446655440005', 'ketoan', 'ketoan@dentalclinic.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'ACTIVE', NOW())
 ON DUPLICATE KEY UPDATE username = VALUES(username);
 
 
@@ -166,17 +172,20 @@ ON DUPLICATE KEY UPDATE username = VALUES(username);
 INSERT INTO account_roles (account_id, role_id)
 VALUES
 -- Admin
-('880e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440001'),
+('880e8400-e29b-41d4-a716-446655440001', 'ROLE_ADMIN'),
 
 -- Doctors
-('880e8400-e29b-41d4-a716-446655440002', '550e8400-e29b-41d4-a716-446655440002'),
-('880e8400-e29b-41d4-a716-446655440003', '550e8400-e29b-41d4-a716-446655440002'),
+('880e8400-e29b-41d4-a716-446655440002', 'ROLE_DOCTOR'),
+('880e8400-e29b-41d4-a716-446655440003', 'ROLE_DOCTOR'),
+
+-- Nurse
+('880e8400-e29b-41d4-a716-446655440006', 'ROLE_NURSE'),
 
 -- Receptionist
-('880e8400-e29b-41d4-a716-446655440004', '550e8400-e29b-41d4-a716-446655440004'),
+('880e8400-e29b-41d4-a716-446655440004', 'ROLE_RECEPTIONIST'),
 
 -- Accountant
-('880e8400-e29b-41d4-a716-446655440005', '550e8400-e29b-41d4-a716-446655440005')
+('880e8400-e29b-41d4-a716-446655440005', 'ROLE_ACCOUNTANT')
 ON DUPLICATE KEY UPDATE role_id = VALUES(role_id);
 
 
@@ -187,31 +196,37 @@ ON DUPLICATE KEY UPDATE role_id = VALUES(role_id);
 -- Admin Employee
 INSERT INTO employees (employee_id, account_id, role_id, employee_code, first_name, last_name, phone, date_of_birth, address, is_active, created_at)
 VALUES
-('990e8400-e29b-41d4-a716-446655440001', '880e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440001', 'EMP001', 'Admin', 'Hệ thống', '0900000001', '1985-01-01', 'Phòng quản trị', TRUE, NOW())
+('990e8400-e29b-41d4-a716-446655440001', '880e8400-e29b-41d4-a716-446655440001', 'ROLE_ADMIN', 'EMP001', 'Admin', 'Hệ thống', '0900000001', '1985-01-01', 'Phòng quản trị', TRUE, NOW())
 ON DUPLICATE KEY UPDATE employee_code = VALUES(employee_code);
 
 -- Doctor 1: Chuyên Chỉnh nha + Răng thẩm mỹ
 INSERT INTO employees (employee_id, account_id, role_id, employee_code, first_name, last_name, phone, date_of_birth, address, is_active, created_at)
 VALUES
-('990e8400-e29b-41d4-a716-446655440002', '880e8400-e29b-41d4-a716-446655440002', '550e8400-e29b-41d4-a716-446655440002', 'EMP002', 'Văn A', 'Nguyễn', '0901234567', '1985-05-15', '123 Nguyễn Huệ, Q1, TPHCM', TRUE, NOW())
+('990e8400-e29b-41d4-a716-446655440002', '880e8400-e29b-41d4-a716-446655440002', 'ROLE_DOCTOR', 'EMP002', 'Minh', 'Nguyễn Văn', '0901234567', '1985-05-15', '123 Nguyễn Huệ, Q1, TPHCM', TRUE, NOW())
 ON DUPLICATE KEY UPDATE employee_code = VALUES(employee_code);
 
 -- Doctor 2: Chuyên Nội nha + Phục hồi răng
 INSERT INTO employees (employee_id, account_id, role_id, employee_code, first_name, last_name, phone, date_of_birth, address, is_active, created_at)
 VALUES
-('990e8400-e29b-41d4-a716-446655440003', '880e8400-e29b-41d4-a716-446655440003', '550e8400-e29b-41d4-a716-446655440002', 'EMP003', 'Thị B', 'Trần', '0902345678', '1988-08-20', '456 Lê Lợi, Q3, TPHCM', TRUE, NOW())
+('990e8400-e29b-41d4-a716-446655440003', '880e8400-e29b-41d4-a716-446655440003', 'ROLE_DOCTOR', 'EMP003', 'Lan', 'Trần Thị', '0902345678', '1988-08-20', '456 Lê Lợi, Q3, TPHCM', TRUE, NOW())
+ON DUPLICATE KEY UPDATE employee_code = VALUES(employee_code);
+
+-- Nurse
+INSERT INTO employees (employee_id, account_id, role_id, employee_code, first_name, last_name, phone, date_of_birth, address, is_active, created_at)
+VALUES
+('990e8400-e29b-41d4-a716-446655440006', '880e8400-e29b-41d4-a716-446655440006', 'ROLE_NURSE', 'EMP006', 'Hoa', 'Phạm Thị', '0906789012', '1992-06-15', '111 Lý Thường Kiệt, Q10, TPHCM', TRUE, NOW())
 ON DUPLICATE KEY UPDATE employee_code = VALUES(employee_code);
 
 -- Receptionist
 INSERT INTO employees (employee_id, account_id, role_id, employee_code, first_name, last_name, phone, date_of_birth, address, is_active, created_at)
 VALUES
-('990e8400-e29b-41d4-a716-446655440004', '880e8400-e29b-41d4-a716-446655440004', '550e8400-e29b-41d4-a716-446655440004', 'EMP004', 'Thị C', 'Lê', '0903456789', '1995-03-10', '789 Trần Hưng Đạo, Q5, TPHCM', TRUE, NOW())
+('990e8400-e29b-41d4-a716-446655440004', '880e8400-e29b-41d4-a716-446655440004', 'ROLE_RECEPTIONIST', 'EMP004', 'Mai', 'Lê Thị', '0903456789', '1995-03-10', '789 Trần Hưng Đạo, Q5, TPHCM', TRUE, NOW())
 ON DUPLICATE KEY UPDATE employee_code = VALUES(employee_code);
 
 -- Accountant
 INSERT INTO employees (employee_id, account_id, role_id, employee_code, first_name, last_name, phone, date_of_birth, address, is_active, created_at)
 VALUES
-('990e8400-e29b-41d4-a716-446655440005', '880e8400-e29b-41d4-a716-446655440005', '550e8400-e29b-41d4-a716-446655440005', 'EMP005', 'Văn D', 'Phạm', '0904567890', '1992-07-25', '321 Hai Bà Trưng, Q1, TPHCM', TRUE, NOW())
+('990e8400-e29b-41d4-a716-446655440005', '880e8400-e29b-41d4-a716-446655440005', 'ROLE_ACCOUNTANT', 'EMP005', 'Tuấn', 'Hoàng Văn', '0904567890', '1992-07-25', '321 Hai Bà Trưng, Q1, TPHCM', TRUE, NOW())
 ON DUPLICATE KEY UPDATE employee_code = VALUES(employee_code);
 
 
@@ -240,17 +255,17 @@ ON DUPLICATE KEY UPDATE employee_id = VALUES(employee_id);
 
 INSERT INTO accounts (account_id, username, email, password, status, created_at)
 VALUES
-('880e8400-e29b-41d4-a716-446655440101', 'patient.nguyen.khang', 'khang.nguyen@email.com', '$2a$10$N.zmdr9k7uOCQQVbMhOHOe6LwXJm5k4h9wJQCn1lSaGEQXrNTbxG6', 'ACTIVE', NOW()),
-('880e8400-e29b-41d4-a716-446655440102', 'patient.tran.lan', 'lan.tran@email.com', '$2a$10$N.zmdr9k7uOCQQVbMhOHOe6LwXJm5k4h9wJQCn1lSaGEQXrNTbxG6', 'ACTIVE', NOW()),
-('880e8400-e29b-41d4-a716-446655440103', 'patient.le.duc', 'duc.le@email.com', '$2a$10$N.zmdr9k7uOCQQVbMhOHOe6LwXJm5k4h9wJQCn1lSaGEQXrNTbxG6', 'ACTIVE', NOW())
+('880e8400-e29b-41d4-a716-446655440101', 'benhnhan1', 'benhnhan1@email.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'ACTIVE', NOW()),
+('880e8400-e29b-41d4-a716-446655440102', 'benhnhan2', 'benhnhan2@email.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'ACTIVE', NOW()),
+('880e8400-e29b-41d4-a716-446655440103', 'benhnhan3', 'benhnhan3@email.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'ACTIVE', NOW())
 ON DUPLICATE KEY UPDATE username = VALUES(username);
 
 -- Assign PATIENT role
 INSERT INTO account_roles (account_id, role_id)
 VALUES
-('880e8400-e29b-41d4-a716-446655440101', '550e8400-e29b-41d4-a716-446655440007'),
-('880e8400-e29b-41d4-a716-446655440102', '550e8400-e29b-41d4-a716-446655440007'),
-('880e8400-e29b-41d4-a716-446655440103', '550e8400-e29b-41d4-a716-446655440007')
+('880e8400-e29b-41d4-a716-446655440101', 'ROLE_PATIENT'),
+('880e8400-e29b-41d4-a716-446655440102', 'ROLE_PATIENT'),
+('880e8400-e29b-41d4-a716-446655440103', 'ROLE_PATIENT')
 ON DUPLICATE KEY UPDATE role_id = VALUES(role_id);
 
 
@@ -260,9 +275,9 @@ ON DUPLICATE KEY UPDATE role_id = VALUES(role_id);
 
 INSERT INTO patients (patient_id, patient_code, first_name, last_name, email, phone, date_of_birth, address, gender, is_active, created_at, updated_at)
 VALUES
-('aa0e8400-e29b-41d4-a716-446655440101', 'PT001', 'Văn Khang', 'Nguyễn', 'khang.nguyen@email.com', '0911111111', '1990-01-15', '123 Lê Văn Việt, Q9, TPHCM', 'MALE', TRUE, NOW(), NOW()),
-('aa0e8400-e29b-41d4-a716-446655440102', 'PT002', 'Thị Lan', 'Trần', 'lan.tran@email.com', '0922222222', '1985-05-20', '456 Võ Văn Ngân, Thủ Đức, TPHCM', 'FEMALE', TRUE, NOW(), NOW()),
-('aa0e8400-e29b-41d4-a716-446655440103', 'PT003', 'Minh Đức', 'Lê', 'duc.le@email.com', '0933333333', '1995-12-10', '789 Đường D2, Bình Thạnh, TPHCM', 'MALE', TRUE, NOW(), NOW())
+('aa0e8400-e29b-41d4-a716-446655440101', 'PT001', 'Khang', 'Nguyễn Văn', 'benhnhan1@email.com', '0911111111', '1990-01-15', '123 Lê Văn Việt, Q9, TPHCM', 'MALE', TRUE, NOW(), NOW()),
+('aa0e8400-e29b-41d4-a716-446655440102', 'PT002', 'Lan', 'Trần Thị', 'benhnhan2@email.com', '0922222222', '1985-05-20', '456 Võ Văn Ngân, Thủ Đức, TPHCM', 'FEMALE', TRUE, NOW(), NOW()),
+('aa0e8400-e29b-41d4-a716-446655440103', 'PT003', 'Đức', 'Lê Minh', 'benhnhan3@email.com', '0933333333', '1995-12-10', '789 Đường D2, Bình Thạnh, TPHCM', 'MALE', TRUE, NOW(), NOW())
 ON DUPLICATE KEY UPDATE patient_code = VALUES(patient_code);
 
 
@@ -275,7 +290,7 @@ SELECT
     e.employee_code,
     e.first_name,
     e.last_name,
-    r.name AS role_name,
+    r.role_name AS role_name,
     a.username,
     a.email,
     GROUP_CONCAT(s.specialization_name SEPARATOR ', ') AS specializations
@@ -298,21 +313,21 @@ SELECT
     CASE WHEN a.account_id IS NOT NULL THEN 'Yes' ELSE 'No' END AS has_account
 FROM patients p
 LEFT JOIN accounts a ON a.account_id IN (
-    SELECT account_id FROM account_roles WHERE role_id = '550e8400-e29b-41d4-a716-446655440007'
+    SELECT account_id FROM account_roles WHERE role_id = 'ROLE_PATIENT'
 )
 AND a.email = p.email
 ORDER BY p.patient_code;
 
 -- View permissions by role
 SELECT
-    r.name AS role_name,
+    r.role_name AS role_name,
     COUNT(DISTINCT p.permission_id) AS permission_count,
-    GROUP_CONCAT(CONCAT(p.resource, ':', p.action) SEPARATOR ', ') AS permissions
+    GROUP_CONCAT(CONCAT(p.module, ':', p.permission_name) SEPARATOR ', ') AS permissions
 FROM roles r
 LEFT JOIN role_permissions rp ON r.role_id = rp.role_id
 LEFT JOIN permissions p ON rp.permission_id = p.permission_id
 GROUP BY r.role_id
-ORDER BY r.name;
+ORDER BY r.role_name;
 
 
 -- ============================================
@@ -320,24 +335,25 @@ ORDER BY r.name;
 -- ============================================
 
 /*
-DEFAULT PASSWORD FOR ALL ACCOUNTS: DentalClinic@2025
+DEFAULT PASSWORD FOR ALL ACCOUNTS: 123456
 
 ADMIN:
 - Username: admin
-- Password: DentalClinic@2025
+- Password: 123456
 
 DOCTORS:
-- Username: bs.nguyen.van.a | Password: DentalClinic@2025
-- Username: bs.tran.thi.b | Password: DentalClinic@2025
+- Username: nhasi1 | Password: 123456
+- Username: nhasi2 | Password: 123456
 
 STAFF:
-- Username: le.thi.c (Lễ tân) | Password: DentalClinic@2025
-- Username: pham.van.d (Kế toán) | Password: DentalClinic@2025
+- Username: yta (Y tá) | Password: 123456
+- Username: letan (Lễ tân) | Password: 123456
+- Username: ketoan (Kế toán) | Password: 123456
 
 PATIENTS:
-- Username: patient.nguyen.khang | Password: DentalClinic@2025
-- Username: patient.tran.lan | Password: DentalClinic@2025
-- Username: patient.le.duc | Password: DentalClinic@2025
+- Username: benhnhan1 | Password: 123456
+- Username: benhnhan2 | Password: 123456
+- Username: benhnhan3 | Password: 123456
 */
 
 

@@ -36,12 +36,17 @@ public class Employee {
   @JoinColumn(name = "account_id", nullable = false)
   private Account account;
 
-  // Role relationship: Read-only (để query, không dùng để update)
+  /**
+   * Role relationship for read-only queries.
+   * Use {@link #roleId} for updates to avoid duplication.
+   */
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "role_id", insertable = false, updatable = false)
   private Role role;
 
-  // Role ID: Dùng để set/update role
+  /**
+   * Role ID field for setting/updating employee role.
+   */
   @NotBlank
   @Size(max = 50)
   @Column(name = "role_id", nullable = false, length = 50)
