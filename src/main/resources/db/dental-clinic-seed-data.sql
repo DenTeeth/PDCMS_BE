@@ -16,19 +16,19 @@ SET CHARACTER SET utf8mb4;
 INSERT INTO roles (role_id, role_name, description, is_active, created_at)
 VALUES
 -- Admin role
-('ROLE_ADMIN', 'Admin', 'Quản trị viên hệ thống - Toàn quyền', TRUE, NOW()),
+('ROLE_ADMIN', 'ROLE_ADMIN', 'Quản trị viên hệ thống - Toàn quyền', TRUE, NOW()),
 
 -- Clinical roles
-('ROLE_DOCTOR', 'Bác sĩ', 'Bác sĩ nha khoa - Khám và điều trị', TRUE, NOW()),
-('ROLE_NURSE', 'Y tá', 'Y tá hỗ trợ điều trị', TRUE, NOW()),
+('ROLE_DOCTOR', 'ROLE_DOCTOR', 'Bác sĩ nha khoa - Khám và điều trị', TRUE, NOW()),
+('ROLE_NURSE', 'ROLE_NURSE', 'Y tá hỗ trợ điều trị', TRUE, NOW()),
 
 -- Administrative roles
-('ROLE_RECEPTIONIST', 'Lễ tân', 'Tiếp đón và quản lý lịch hẹn', TRUE, NOW()),
-('ROLE_ACCOUNTANT', 'Kế toán', 'Quản lý tài chính và thanh toán', TRUE, NOW()),
-('ROLE_INVENTORY_MANAGER', 'Quản lý kho', 'Quản lý vật tư và thuốc', TRUE, NOW()),
+('ROLE_RECEPTIONIST', 'ROLE_RECEPTIONIST', 'Tiếp đón và quản lý lịch hẹn', TRUE, NOW()),
+('ROLE_ACCOUNTANT', 'ROLE_ACCOUNTANT', 'Quản lý tài chính và thanh toán', TRUE, NOW()),
+('ROLE_INVENTORY_MANAGER', 'ROLE_INVENTORY_MANAGER', 'Quản lý vật tư và thuốc', TRUE, NOW()),
 
 -- Patient role
-('ROLE_PATIENT', 'Bệnh nhân', 'Người bệnh - Xem hồ sơ cá nhân', TRUE, NOW())
+('ROLE_PATIENT', 'ROLE_PATIENT', 'Người bệnh - Xem hồ sơ cá nhân', TRUE, NOW())
 ON DUPLICATE KEY UPDATE role_name = VALUES(role_name);
 
 
@@ -131,37 +131,37 @@ ON DUPLICATE KEY UPDATE specialization_name = VALUES(specialization_name);
 -- STEP 5: CREATE ACCOUNTS FOR EMPLOYEES
 -- ============================================
 -- Password: 123456 (BCrypt hashed)
--- $2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi
+-- $2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2
 
 -- Admin Account
 INSERT INTO accounts (account_id, username, email, password, status, created_at)
 VALUES
-('880e8400-e29b-41d4-a716-446655440001', 'admin', 'admin@dentalclinic.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'ACTIVE', NOW())
+('880e8400-e29b-41d4-a716-446655440001', 'admin', 'admin@dentalclinic.com', '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ACTIVE', NOW())
 ON DUPLICATE KEY UPDATE username = VALUES(username);
 
 -- Doctor Accounts
 INSERT INTO accounts (account_id, username, email, password, status, created_at)
 VALUES
-('880e8400-e29b-41d4-a716-446655440002', 'nhasi1', 'nhasi1@dentalclinic.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'ACTIVE', NOW()),
-('880e8400-e29b-41d4-a716-446655440003', 'nhasi2', 'nhasi2@dentalclinic.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'ACTIVE', NOW())
+('880e8400-e29b-41d4-a716-446655440002', 'nhasi1', 'nhasi1@dentalclinic.com', '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ACTIVE', NOW()),
+('880e8400-e29b-41d4-a716-446655440003', 'nhasi2', 'nhasi2@dentalclinic.com', '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ACTIVE', NOW())
 ON DUPLICATE KEY UPDATE username = VALUES(username);
 
 -- Nurse Account
 INSERT INTO accounts (account_id, username, email, password, status, created_at)
 VALUES
-('880e8400-e29b-41d4-a716-446655440006', 'yta', 'yta@dentalclinic.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'ACTIVE', NOW())
+('880e8400-e29b-41d4-a716-446655440006', 'yta', 'yta@dentalclinic.com', '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ACTIVE', NOW())
 ON DUPLICATE KEY UPDATE username = VALUES(username);
 
 -- Receptionist Account
 INSERT INTO accounts (account_id, username, email, password, status, created_at)
 VALUES
-('880e8400-e29b-41d4-a716-446655440004', 'letan', 'letan@dentalclinic.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'ACTIVE', NOW())
+('880e8400-e29b-41d4-a716-446655440004', 'letan', 'letan@dentalclinic.com', '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ACTIVE', NOW())
 ON DUPLICATE KEY UPDATE username = VALUES(username);
 
 -- Accountant Account
 INSERT INTO accounts (account_id, username, email, password, status, created_at)
 VALUES
-('880e8400-e29b-41d4-a716-446655440005', 'ketoan', 'ketoan@dentalclinic.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'ACTIVE', NOW())
+('880e8400-e29b-41d4-a716-446655440005', 'ketoan', 'ketoan@dentalclinic.com', '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ACTIVE', NOW())
 ON DUPLICATE KEY UPDATE username = VALUES(username);
 
 
@@ -255,9 +255,9 @@ ON DUPLICATE KEY UPDATE employee_id = VALUES(employee_id);
 
 INSERT INTO accounts (account_id, username, email, password, status, created_at)
 VALUES
-('880e8400-e29b-41d4-a716-446655440101', 'benhnhan1', 'benhnhan1@email.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'ACTIVE', NOW()),
-('880e8400-e29b-41d4-a716-446655440102', 'benhnhan2', 'benhnhan2@email.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'ACTIVE', NOW()),
-('880e8400-e29b-41d4-a716-446655440103', 'benhnhan3', 'benhnhan3@email.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'ACTIVE', NOW())
+('880e8400-e29b-41d4-a716-446655440101', 'benhnhan1', 'benhnhan1@email.com', '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ACTIVE', NOW()),
+('880e8400-e29b-41d4-a716-446655440102', 'benhnhan2', 'benhnhan2@email.com', '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ACTIVE', NOW()),
+('880e8400-e29b-41d4-a716-446655440103', 'benhnhan3', 'benhnhan3@email.com', '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ACTIVE', NOW())
 ON DUPLICATE KEY UPDATE username = VALUES(username);
 
 -- Assign PATIENT role

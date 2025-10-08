@@ -64,56 +64,50 @@ public class AuthenticationService {
          *
          * @param request login payload (username & password)
          * @return populated {@link LoginResponse}
-         * @throws com.dental.clinic.management.exception.BadCredentialsException if
-         *                                                                        authentication
-         *                                                                        fails
+         * @throws org.springframework.security.authentication.BadCredentialsException if
+         *                                                                             authentication
+         *                                                                             fails
          */
         public LoginResponse login(LoginRequest request) {
-                try {
-                        // Xác thực thông tin đăng nhập
-                        authenticationManager.authenticate(
-                                        new UsernamePasswordAuthenticationToken(request.getUsername(),
-                                                        request.getPassword()));
+                // Xác thực thông tin đăng nhập - throws BadCredentialsException if fails
+                authenticationManager.authenticate(
+                                new UsernamePasswordAuthenticationToken(request.getUsername(),
+                                                request.getPassword()));
 
-                        // Lấy thông tin tài khoản kèm roles và quyền hạn
-                        Account account = accountRepository.findByUsernameWithRolesAndPermissions(request.getUsername())
-                                        .orElseThrow(() -> new com.dental.clinic.management.exception.BadCredentialsException(
-                                                        "Account not found"));
+                // Lấy thông tin tài khoản kèm roles và quyền hạn
+                Account account = accountRepository.findByUsernameWithRolesAndPermissions(request.getUsername())
+                                .orElseThrow(() -> new org.springframework.security.authentication.BadCredentialsException(
+                                                "Account not found"));
 
-                        // Lấy danh sách vai trò của user
-                        List<String> roles = account.getRoles().stream()
-                                        .map(Role::getRoleName)
-                                        .collect(Collectors.toList());
+                // Lấy danh sách vai trò của user
+                List<String> roles = account.getRoles().stream()
+                                .map(Role::getRoleName)
+                                .collect(Collectors.toList());
 
-                        // Lấy tất cả quyền hạn từ các vai trò (loại bỏ trùng lặp)
-                        List<String> permissions = account.getRoles().stream()
-                                        .flatMap(role -> role.getPermissions().stream())
-                                        .map(Permission::getPermissionName)
-                                        .distinct()
-                                        .collect(Collectors.toList());
+                // Lấy tất cả quyền hạn từ các vai trò (loại bỏ trùng lặp)
+                List<String> permissions = account.getRoles().stream()
+                                .flatMap(role -> role.getPermissions().stream())
+                                .map(Permission::getPermissionName)
+                                .distinct()
+                                .collect(Collectors.toList());
 
-                        // Tạo JWT token chứa thông tin user
-                        String accessToken = securityUtil.createAccessToken(account.getUsername(), roles, permissions);
-                        String refreshToken = securityUtil.createRefreshToken(account.getUsername());
+                // Tạo JWT token chứa thông tin user
+                String accessToken = securityUtil.createAccessToken(account.getUsername(), roles, permissions);
+                String refreshToken = securityUtil.createRefreshToken(account.getUsername());
 
-                        long now = Instant.now().getEpochSecond();
-                        long accessExp = now + securityUtil.getAccessTokenValiditySeconds();
-                        long refreshExp = now + securityUtil.getRefreshTokenValiditySeconds();
+                long now = Instant.now().getEpochSecond();
+                long accessExp = now + securityUtil.getAccessTokenValiditySeconds();
+                long refreshExp = now + securityUtil.getRefreshTokenValiditySeconds();
 
-                        return new LoginResponse(
-                                        accessToken,
-                                        accessExp,
-                                        refreshToken,
-                                        refreshExp,
-                                        account.getUsername(),
-                                        account.getEmail(),
-                                        roles,
-                                        permissions);
-
-                } catch (AuthenticationException e) {
-                        throw new com.dental.clinic.management.exception.BadCredentialsException(
-                                        "Invalid username or password");
-                }
+                return new LoginResponse(
+                                accessToken,
+                                accessExp,
+                                refreshToken,
+                                refreshExp,
+                                account.getUsername(),
+                                account.getEmail(),
+                                roles,
+                                permissions);
         }
 
         /**
