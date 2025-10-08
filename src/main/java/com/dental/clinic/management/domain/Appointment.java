@@ -20,11 +20,12 @@ import java.time.LocalTime;
 public class Appointment {
 
     @Id
-    @Column(name = "appointment_id", length = 36)
+    @Size(max = 20)
+    @Column(name = "appointment_id", length = 20)
     private String appointmentId;
 
-    @Size(max = 10)
-    @Column(name = "appointment_code", length = 10, unique = true)
+    @Size(max = 12)
+    @Column(name = "appointment_code", length = 12, unique = true)
     private String appointmentCode;
 
     @Column(name = "patient_id", length = 36)

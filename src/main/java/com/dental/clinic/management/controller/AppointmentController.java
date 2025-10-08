@@ -10,7 +10,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -34,14 +33,17 @@ public class AppointmentController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "appointmentDate") String sortBy,
-            @RequestParam(defaultValue = "DESC") String sortDirection) {
+            @RequestParam(defaultValue = "DESC") String sortDirection,
+            @RequestParam(required = false) java.time.LocalDate appointmentDate,
+            @RequestParam(required = false) String doctorId,
+            @RequestParam(required = false) com.dental.clinic.management.domain.enums.AppointmentStatus status,
+            @RequestParam(required = false) com.dental.clinic.management.domain.enums.AppointmentType type) {
 
-        Page<AppointmentResponse> resp = service.listAppointments(page, size, sortBy, sortDirection);
+        Page<AppointmentResponse> resp = service.listAppointments(page, size, sortBy, sortDirection, appointmentDate, doctorId, status, type);
         return ResponseEntity.ok(resp);
     }
 
     @GetMapping("/{appointmentId}")
-    @PreAuthorize("hasAuthority('" + com.dental.clinic.management.utils.security.AuthoritiesConstants.VIEW_APPOINTMENT + "')")
     @Operation(summary = "Get appointment", description = "Get appointment by id")
     @ApiMessage("Get appointment successfully")
     public ResponseEntity<AppointmentResponse> getAppointment(@PathVariable String appointmentId) {

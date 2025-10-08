@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS contact_history (
 
 CREATE TABLE IF NOT EXISTS appointments (
   appointment_id VARCHAR(36) NOT NULL PRIMARY KEY,
-  appointment_code VARCHAR(10),
+  appointment_code VARCHAR(12),
   patient_id VARCHAR(36),
   doctor_id VARCHAR(36),
   appointment_date DATE,
@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS appointments (
   created_by VARCHAR(36),
   created_at DATETIME(6),
   updated_at DATETIME(6),
+  UNIQUE INDEX idx_appointments_code (appointment_code),
   INDEX idx_appointments_patient (patient_id),
   INDEX idx_appointments_doctor_date (doctor_id, appointment_date)
   -- foreign keys added below
