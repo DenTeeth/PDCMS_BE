@@ -1,12 +1,15 @@
 package com.dental.clinic.management.service;
 
+import com.dental.clinic.management.domain.Account;
 import com.dental.clinic.management.domain.Patient;
+import com.dental.clinic.management.domain.enums.AccountStatus;
 import com.dental.clinic.management.dto.request.CreatePatientRequest;
 import com.dental.clinic.management.dto.request.ReplacePatientRequest;
 import com.dental.clinic.management.dto.request.UpdatePatientRequest;
 import com.dental.clinic.management.dto.response.PatientInfoResponse;
 import com.dental.clinic.management.exception.BadRequestAlertException;
 import com.dental.clinic.management.mapper.PatientMapper;
+import com.dental.clinic.management.repository.AccountRepository;
 import com.dental.clinic.management.repository.PatientRepository;
 
 import org.slf4j.Logger;
@@ -17,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,10 +37,18 @@ public class PatientService {
 
     private final PatientRepository patientRepository;
     private final PatientMapper patientMapper;
+    private final AccountRepository accountRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public PatientService(PatientRepository patientRepository, PatientMapper patientMapper) {
+    public PatientService(
+            PatientRepository patientRepository,
+            PatientMapper patientMapper,
+            AccountRepository accountRepository,
+            PasswordEncoder passwordEncoder) {
         this.patientRepository = patientRepository;
         this.patientMapper = patientMapper;
+        this.accountRepository = accountRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     /**
@@ -140,14 +152,67 @@ public class PatientService {
     }
 
     /**
-     * Create a new patient
+     * Create new patient with account
      *
-     * @param request the patient information
+     * FLOW: Tạo Patient → Tự động tạo Account mới
+     * - Admin/Receptionist tạo patient
+     * - System tự động tạo account với username/password
+     * - Patient có thể đăng nhập xem hồ sơ
+     *
+     * @param request patient information including username/password
      * @return PatientInfoResponse
      */
     @PreAuthorize("hasAuthority('" + CREATE_PATIENT + "')")
     @Transactional
     public PatientInfoResponse createPatient(CreatePatientRequest request) {
+        log.debug("Request to create patient: {}", request);
+
+        Account account = null;
+
+        // Check if patient needs account (username & password provided)
+        if (request.getUsername() != null && !request.getUsername().trim().isEmpty()
+                && request.getPassword() != null && !request.getPassword().trim().isEmpty()) {
+
+            log.debug("Creating account for patient with username: {}", request.getUsername());
+
+            // Validate email required for account
+            if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
+                throw new BadRequestAlertException(
+                        "Email is required when creating account",
+                        "patient",
+                        "emailrequired");
+            }
+
+            // Check uniqueness
+            if (accountRepository.existsByUsername(request.getUsername())) {
+                throw new BadRequestAlertException(
+                        "Username already exists",
+                        "account",
+                        "usernameexists");
+            }
+
+            if (accountRepository.existsByEmail(request.getEmail())) {
+                throw new BadRequestAlertException(
+                        "Email already exists",
+                        "account",
+                        "emailexists");
+            }
+
+            // Create account for patient
+            account = new Account();
+            account.setAccountId(UUID.randomUUID().toString());
+            account.setUsername(request.getUsername());
+            account.setEmail(request.getEmail());
+            account.setPassword(passwordEncoder.encode(request.getPassword()));
+            account.setStatus(AccountStatus.ACTIVE);
+            account.setCreatedAt(java.time.LocalDateTime.now());
+
+            account = accountRepository.save(account);
+            log.info("Created account with ID: {} for patient", account.getAccountId());
+        } else {
+            log.debug("Creating patient without account (no username/password provided)");
+        }
+
         // Convert DTO to entity
         Patient patient = patientMapper.toPatient(request);
 
@@ -156,8 +221,15 @@ public class PatientService {
         patient.setPatientCode(generatePatientCode());
         patient.setIsActive(true);
 
+        // Link account if created
+        if (account != null) {
+            patient.setAccount(account);
+        }
+
         // Save to database
         Patient savedPatient = patientRepository.save(patient);
+        log.info("Created patient with code: {} and ID: {}", savedPatient.getPatientCode(),
+                savedPatient.getPatientId());
 
         return patientMapper.toPatientInfoResponse(savedPatient);
     }

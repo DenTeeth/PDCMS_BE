@@ -23,6 +23,7 @@ import static com.dental.clinic.management.utils.security.AuthoritiesConstants.*
 
 import com.dental.clinic.management.domain.Account;
 import com.dental.clinic.management.domain.Employee;
+import com.dental.clinic.management.domain.Role;
 import com.dental.clinic.management.domain.Specialization;
 import com.dental.clinic.management.repository.AccountRepository;
 import com.dental.clinic.management.repository.EmployeeRepository;
@@ -194,80 +195,98 @@ public class EmployeeService {
         return employee;
     }
 
+    /**
+     * Create new employee with account
+     *
+     * FLOW: Tạo Employee → Tự động tạo Account mới
+     * - Admin/Manager tạo employee
+     * - System tự động tạo account với username/password
+     * - Gửi thông tin đăng nhập cho employee
+     *
+     * @param request employee information including username/password
+     * @return EmployeeInfoResponse
+     */
     @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + CREATE_EMPLOYEE + "')")
     @Transactional
     public EmployeeInfoResponse createEmployee(CreateEmployeeRequest request) {
-        Account account;
+        log.debug("Request to create employee: {}", request);
 
-        // Check if accountId is provided (use existing account) or need to create new
-        // account
-        if (request.getAccountId() != null && !request.getAccountId().trim().isEmpty()) {
-            // Mode 1: Use existing account
-            account = accountRepository.findById(request.getAccountId())
-                    .orElseThrow(() -> new BadRequestAlertException(
-                            "Account not found with ID: " + request.getAccountId(),
-                            "account",
-                            "accountnotfound"));
-
-            // Check if employee already exists for this account
-            if (employeeRepository.findOneByAccountAccountId(request.getAccountId()).isPresent()) {
-                throw new BadRequestAlertException(
-                        "Employee already exists for this account",
-                        "employee",
-                        "employeeexists");
-            }
-        } else {
-            // Mode 2: Create new account
-            if (request.getUsername() == null || request.getUsername().trim().isEmpty()) {
-                throw new BadRequestAlertException(
-                        "Either accountId or username/email/password must be provided",
-                        "employee",
-                        "missingaccountinfo");
-            }
-
-            if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
-                throw new BadRequestAlertException(
-                        "Email is required when creating new account",
-                        "account",
-                        "emailrequired");
-            }
-
-            if (request.getPassword() == null || request.getPassword().trim().isEmpty()) {
-                throw new BadRequestAlertException(
-                        "Password is required when creating new account",
-                        "account",
-                        "passwordrequired");
-            }
-
-            // Check if username or email already exists
-            if (accountRepository.existsByUsername(request.getUsername())) {
-                throw new BadRequestAlertException(
-                        "Username already exists",
-                        "account",
-                        "usernameexists");
-            }
-
-            if (accountRepository.existsByEmail(request.getEmail())) {
-                throw new BadRequestAlertException(
-                        "Email already exists",
-                        "account",
-                        "emailexists");
-            }
-
-            // Create new account
-            account = new Account();
-            account.setAccountId(UUID.randomUUID().toString().substring(0, 20));
-            account.setUsername(request.getUsername());
-            account.setEmail(request.getEmail());
-            account.setPassword(passwordEncoder.encode(request.getPassword()));
-            account.setStatus(AccountStatus.ACTIVE);
-            account.setCreatedAt(java.time.LocalDateTime.now());
-
-            account = accountRepository.save(account);
+        // Validate required fields
+        if (request.getUsername() == null || request.getUsername().trim().isEmpty()) {
+            throw new BadRequestAlertException(
+                    "Username is required",
+                    "employee",
+                    "usernamerequired");
         }
 
+        if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
+            throw new BadRequestAlertException(
+                    "Email is required",
+                    "employee",
+                    "emailrequired");
+        }
+
+        if (request.getPassword() == null || request.getPassword().trim().isEmpty()) {
+            throw new BadRequestAlertException(
+                    "Password is required",
+                    "employee",
+                    "passwordrequired");
+        }
+
+        // Validate role and specialization requirements
+        Role role = roleRepository.findById(request.getRoleId())
+                .orElseThrow(() -> new BadRequestAlertException(
+                        "Role not found with ID: " + request.getRoleId(),
+                        "role",
+                        "rolenotfound"));
+
+        // Check if role requires specialization
+        boolean hasSpecializations = request.getSpecializationIds() != null
+                && !request.getSpecializationIds().isEmpty();
+
+        if (Boolean.TRUE.equals(role.getRequiresSpecialization()) && !hasSpecializations) {
+            throw new BadRequestAlertException(
+                    "Specialization is required for role: " + role.getRoleName(),
+                    "employee",
+                    "specializationrequired");
+        }
+
+        if (Boolean.FALSE.equals(role.getRequiresSpecialization()) && hasSpecializations) {
+            throw new BadRequestAlertException(
+                    "Specialization is not allowed for role: " + role.getRoleName(),
+                    "employee",
+                    "specializationnotallowed");
+        }
+
+        // Check uniqueness
+        if (accountRepository.existsByUsername(request.getUsername())) {
+            throw new BadRequestAlertException(
+                    "Username already exists",
+                    "account",
+                    "usernameexists");
+        }
+
+        if (accountRepository.existsByEmail(request.getEmail())) {
+            throw new BadRequestAlertException(
+                    "Email already exists",
+                    "account",
+                    "emailexists");
+        }
+
+        // Create new account for employee
+        Account account = new Account();
+        account.setAccountId(UUID.randomUUID().toString());
+        account.setUsername(request.getUsername());
+        account.setEmail(request.getEmail());
+        account.setPassword(passwordEncoder.encode(request.getPassword()));
+        account.setStatus(AccountStatus.ACTIVE);
+        account.setCreatedAt(java.time.LocalDateTime.now());
+
+        account = accountRepository.save(account);
+        log.info("Created account with ID: {} for employee", account.getAccountId());
+
         // Generate unique employee ID
-        String employeeId = UUID.randomUUID().toString().substring(0, 20);
+        String employeeId = UUID.randomUUID().toString();
 
         // Generate employee code (e.g., EMP001, EMP002, ...)
         String employeeCode = generateEmployeeCode();
@@ -454,5 +473,15 @@ public class EmployeeService {
         // Soft delete - set isActive to false
         employee.setIsActive(false);
         employeeRepository.save(employee);
+    }
+
+    /**
+     * Get all active specializations
+     *
+     * @return List of active specializations
+     */
+    @Transactional(readOnly = true)
+    public java.util.List<Specialization> getAllActiveSpecializations() {
+        return specializationRepository.findAllActiveSpecializations();
     }
 }

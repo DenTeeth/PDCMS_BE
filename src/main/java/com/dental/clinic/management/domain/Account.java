@@ -3,6 +3,7 @@ package com.dental.clinic.management.domain;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 import com.dental.clinic.management.domain.enums.AccountStatus;
 
@@ -31,7 +32,7 @@ import jakarta.validation.constraints.Size;
 public class Account {
 
     @Id
-    @Column(name = "account_id", length = 20)
+    @Column(name = "account_id", length = 36)
     private String accountId;
 
     @NotBlank
@@ -60,6 +61,9 @@ public class Account {
     @OneToOne(mappedBy = "account", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Employee employee;
 
+    @OneToOne(mappedBy = "account", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Patient patient;
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "account_roles", joinColumns = @JoinColumn(name = "account_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Set<Role> roles = new HashSet<>();
@@ -77,6 +81,9 @@ public class Account {
 
     @PrePersist
     protected void onCreate() {
+        if (accountId == null || accountId.isEmpty()) {
+            accountId = UUID.randomUUID().toString();
+        }
         createdAt = LocalDateTime.now();
     }
 
@@ -137,6 +144,17 @@ public class Account {
         this.employee = employee;
         if (employee != null) {
             employee.setAccount(this);
+        }
+    }
+
+    public Patient getPatient() {
+        return patient;
+    }
+
+    public void setPatient(Patient patient) {
+        this.patient = patient;
+        if (patient != null) {
+            patient.setAccount(this);
         }
     }
 

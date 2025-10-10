@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -27,17 +28,24 @@ import jakarta.validation.constraints.Size;
 public class Employee {
 
   @Id
-  @Column(name = "employee_id", length = 20)
+  @Column(name = "employee_id", length = 36)
   private String employeeId;
 
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "account_id", nullable = false)
   private Account account;
 
+  /**
+   * Role relationship for read-only queries.
+   * Use {@link #roleId} for updates to avoid duplication.
+   */
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "role_id", nullable = false, insertable = false, updatable = false)
+  @JoinColumn(name = "role_id", insertable = false, updatable = false)
   private Role role;
 
+  /**
+   * Role ID field for setting/updating employee role.
+   */
   @NotBlank
   @Size(max = 50)
   @Column(name = "role_id", nullable = false, length = 50)
@@ -92,6 +100,9 @@ public class Employee {
 
   @PrePersist
   protected void onCreate() {
+    if (employeeId == null || employeeId.isEmpty()) {
+      employeeId = UUID.randomUUID().toString();
+    }
     createdAt = LocalDateTime.now();
   }
 

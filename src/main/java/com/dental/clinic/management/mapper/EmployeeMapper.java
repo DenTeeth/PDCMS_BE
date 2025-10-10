@@ -33,12 +33,7 @@ public class EmployeeMapper {
     response.setAddress(employee.getAddress());
     response.setRoleId(employee.getRoleId());
 
-    // Map roleName from Role entity
-    if (employee.getRole() != null) {
-      response.setRoleName(employee.getRole().getRoleName());
-    }
-
-    // Map role name
+    // Map roleName from Role entity (via ManyToOne relationship)
     if (employee.getRole() != null) {
       response.setRoleName(employee.getRole().getRoleName());
     }

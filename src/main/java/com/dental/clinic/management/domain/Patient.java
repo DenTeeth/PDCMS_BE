@@ -2,13 +2,17 @@ package com.dental.clinic.management.domain;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import com.dental.clinic.management.domain.enums.Gender;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.EnumType;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
@@ -26,6 +30,10 @@ public class Patient {
   @Id
   @Column(name = "patient_id", length = 36)
   private String patientId;
+
+  @OneToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "account_id")
+  private Account account;
 
   @NotBlank
   @Size(max = 10)
@@ -94,6 +102,9 @@ public class Patient {
 
   @PrePersist
   protected void onCreate() {
+    if (patientId == null || patientId.isEmpty()) {
+      patientId = UUID.randomUUID().toString();
+    }
     createdAt = LocalDateTime.now();
     updatedAt = LocalDateTime.now();
   }
@@ -110,6 +121,14 @@ public class Patient {
 
   public void setPatientId(String patientId) {
     this.patientId = patientId;
+  }
+
+  public Account getAccount() {
+    return account;
+  }
+
+  public void setAccount(Account account) {
+    this.account = account;
   }
 
   public String getPatientCode() {
