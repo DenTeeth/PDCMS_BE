@@ -13,23 +13,23 @@ SET CHARACTER SET utf8mb4;
 -- STEP 1: CREATE ROLES (Dynamic RBAC)
 -- ============================================
 
-INSERT INTO roles (role_id, role_name, description, is_active, created_at)
+INSERT INTO roles (role_id, role_name, description, requires_specialization, is_active, created_at)
 VALUES
 -- Admin role
-('ROLE_ADMIN', 'ROLE_ADMIN', 'Quản trị viên hệ thống - Toàn quyền', TRUE, NOW()),
+('ROLE_ADMIN', 'ROLE_ADMIN', 'Quản trị viên hệ thống - Toàn quyền', FALSE, TRUE, NOW()),
 
--- Clinical roles
-('ROLE_DOCTOR', 'ROLE_DOCTOR', 'Bác sĩ nha khoa - Khám và điều trị', TRUE, NOW()),
-('ROLE_NURSE', 'ROLE_NURSE', 'Y tá hỗ trợ điều trị', TRUE, NOW()),
+-- Clinical roles (REQUIRE SPECIALIZATION)
+('ROLE_DOCTOR', 'ROLE_DOCTOR', 'Bác sĩ nha khoa - Khám và điều trị', TRUE, TRUE, NOW()),
+('ROLE_NURSE', 'ROLE_NURSE', 'Y tá hỗ trợ điều trị', TRUE, TRUE, NOW()),
 
--- Administrative roles
-('ROLE_RECEPTIONIST', 'ROLE_RECEPTIONIST', 'Tiếp đón và quản lý lịch hẹn', TRUE, NOW()),
-('ROLE_ACCOUNTANT', 'ROLE_ACCOUNTANT', 'Quản lý tài chính và thanh toán', TRUE, NOW()),
-('ROLE_INVENTORY_MANAGER', 'ROLE_INVENTORY_MANAGER', 'Quản lý vật tư và thuốc', TRUE, NOW()),
+-- Administrative roles (NO SPECIALIZATION)
+('ROLE_RECEPTIONIST', 'ROLE_RECEPTIONIST', 'Tiếp đón và quản lý lịch hẹn', FALSE, TRUE, NOW()),
+('ROLE_ACCOUNTANT', 'ROLE_ACCOUNTANT', 'Quản lý tài chính và thanh toán', FALSE, TRUE, NOW()),
+('ROLE_INVENTORY_MANAGER', 'ROLE_INVENTORY_MANAGER', 'Quản lý vật tư và thuốc', FALSE, TRUE, NOW()),
 
 -- Patient role
-('ROLE_PATIENT', 'ROLE_PATIENT', 'Người bệnh - Xem hồ sơ cá nhân', TRUE, NOW())
-ON DUPLICATE KEY UPDATE role_name = VALUES(role_name);
+('ROLE_PATIENT', 'ROLE_PATIENT', 'Người bệnh - Xem hồ sơ cá nhân', FALSE, TRUE, NOW())
+ON DUPLICATE KEY UPDATE role_name = VALUES(role_name), requires_specialization = VALUES(requires_specialization);
 
 
 -- ============================================

@@ -23,6 +23,7 @@ import static com.dental.clinic.management.utils.security.AuthoritiesConstants.*
 
 import com.dental.clinic.management.domain.Account;
 import com.dental.clinic.management.domain.Employee;
+import com.dental.clinic.management.domain.Role;
 import com.dental.clinic.management.domain.Specialization;
 import com.dental.clinic.management.repository.AccountRepository;
 import com.dental.clinic.management.repository.EmployeeRepository;
@@ -230,6 +231,31 @@ public class EmployeeService {
                     "Password is required",
                     "employee",
                     "passwordrequired");
+        }
+
+        // Validate role and specialization requirements
+        Role role = roleRepository.findById(request.getRoleId())
+                .orElseThrow(() -> new BadRequestAlertException(
+                        "Role not found with ID: " + request.getRoleId(),
+                        "role",
+                        "rolenotfound"));
+
+        // Check if role requires specialization
+        boolean hasSpecializations = request.getSpecializationIds() != null
+                && !request.getSpecializationIds().isEmpty();
+
+        if (Boolean.TRUE.equals(role.getRequiresSpecialization()) && !hasSpecializations) {
+            throw new BadRequestAlertException(
+                    "Specialization is required for role: " + role.getRoleName(),
+                    "employee",
+                    "specializationrequired");
+        }
+
+        if (Boolean.FALSE.equals(role.getRequiresSpecialization()) && hasSpecializations) {
+            throw new BadRequestAlertException(
+                    "Specialization is not allowed for role: " + role.getRoleName(),
+                    "employee",
+                    "specializationnotallowed");
         }
 
         // Check uniqueness
@@ -447,5 +473,15 @@ public class EmployeeService {
         // Soft delete - set isActive to false
         employee.setIsActive(false);
         employeeRepository.save(employee);
+    }
+
+    /**
+     * Get all active specializations
+     *
+     * @return List of active specializations
+     */
+    @Transactional(readOnly = true)
+    public java.util.List<Specialization> getAllActiveSpecializations() {
+        return specializationRepository.findAllActiveSpecializations();
     }
 }

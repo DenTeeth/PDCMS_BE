@@ -1,5 +1,6 @@
 package com.dental.clinic.management.controller;
 
+import com.dental.clinic.management.domain.Specialization;
 import com.dental.clinic.management.dto.request.CreateEmployeeRequest;
 import com.dental.clinic.management.dto.request.ReplaceEmployeeRequest;
 import com.dental.clinic.management.dto.request.UpdateEmployeeRequest;
@@ -188,4 +189,16 @@ public class EmployeeController {
     return ResponseEntity.noContent().build();
   }
 
+  /**
+   * Get all active specializations
+   * 
+   * @return List of active specializations
+   */
+  @GetMapping("/specializations")
+  @Operation(summary = "Get all specializations", description = "Retrieve list of all active specializations")
+  @ApiMessage("Get all specializations successfully")
+  public ResponseEntity<java.util.List<Specialization>> getAllSpecializations() {
+    java.util.List<Specialization> specializations = employeeService.getAllActiveSpecializations();
+    return ResponseEntity.ok(specializations);
+  }
 }

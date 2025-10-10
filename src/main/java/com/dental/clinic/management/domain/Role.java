@@ -34,6 +34,9 @@ public class Role {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
+    @Column(name = "requires_specialization")
+    private Boolean requiresSpecialization = false;
+
     @Column(name = "is_active")
     private Boolean isActive = true;
 
@@ -85,6 +88,14 @@ public class Role {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Boolean getRequiresSpecialization() {
+        return requiresSpecialization;
+    }
+
+    public void setRequiresSpecialization(Boolean requiresSpecialization) {
+        this.requiresSpecialization = requiresSpecialization;
     }
 
     public Boolean getIsActive() {
