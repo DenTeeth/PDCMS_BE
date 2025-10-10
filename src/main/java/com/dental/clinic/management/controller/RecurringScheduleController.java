@@ -100,6 +100,23 @@ public class RecurringScheduleController {
     }
 
     /**
+     * Delete recurring schedule permanently.
+     * This will remove the weekly pattern configuration.
+     * Note: Already generated employee schedules won't be affected.
+     *
+     * @param recurringId Recurring schedule ID
+     * @return Success response
+     */
+    @DeleteMapping("/{recurringId}")
+    @ApiMessage("Lịch cố định đã được xóa thành công")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @Operation(summary = "Delete recurring schedule", description = "Permanently delete recurring schedule configuration (Admin only)")
+    public ResponseEntity<Void> deleteRecurringSchedule(@PathVariable String recurringId) {
+        recurringService.deleteRecurringSchedule(recurringId);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
      * Get all recurring schedules for an employee (weekly pattern).
      *
      * @param employeeId      Employee ID

@@ -104,18 +104,18 @@ public class DentistScheduleController {
     /**
      * Get all schedules for a dentist with pagination.
      *
-     * @param dentistId Dentist ID
-     * @param startDate Start date filter (optional)
-     * @param endDate   End date filter (optional)
-     * @param page      Page number (default: 0)
-     * @param size      Page size (default: 10, max: 100)
+     * @param employeeCode Employee code (dentist ID)
+     * @param startDate    Start date filter (optional)
+     * @param endDate      End date filter (optional)
+     * @param page         Page number (default: 0)
+     * @param size         Page size (default: 10, max: 100)
      * @return Page of dentist schedules
      */
     @GetMapping
     @ApiMessage("Lấy danh sách lịch làm việc thành công")
-    @Operation(summary = "Get dentist schedules", description = "Get all schedules for a dentist with optional date range filter")
+    @Operation(summary = "Get dentist schedules", description = "Get all schedules for a dentist with optional date range filter (supports employee_code)")
     public ResponseEntity<Page<DentistScheduleResponse>> getSchedulesByDentist(
-            @RequestParam String dentistId,
+            @RequestParam String employeeCode,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @RequestParam(defaultValue = "0") int page,
@@ -130,7 +130,7 @@ public class DentistScheduleController {
         }
 
         Page<DentistScheduleResponse> response = scheduleService.getAllSchedulesByDentist(
-                dentistId, startDate, endDate, page, size);
+                employeeCode, startDate, endDate, page, size);
         return ResponseEntity.ok(response);
     }
 

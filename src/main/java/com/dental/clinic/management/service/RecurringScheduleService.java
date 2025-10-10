@@ -276,6 +276,23 @@ public class RecurringScheduleService {
     }
 
     /**
+     * Delete recurring schedule permanently.
+     * This removes the weekly pattern configuration.
+     * Note: Already generated employee schedules won't be affected.
+     *
+     * @param recurringId Recurring schedule ID
+     */
+    @Transactional
+    public void deleteRecurringSchedule(String recurringId) {
+        RecurringSchedule schedule = recurringRepository.findById(recurringId)
+                .orElseThrow(() -> new BadRequestAlertException(
+                        "Không tìm thấy lịch cố định với ID: " + recurringId,
+                        "recurring_schedule", "not_found"));
+
+        recurringRepository.delete(schedule);
+    }
+
+    /**
      * Get recurring schedule by ID.
      *
      * @param recurringId Recurring schedule ID
