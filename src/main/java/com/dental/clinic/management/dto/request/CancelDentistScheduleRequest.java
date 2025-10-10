@@ -5,7 +5,7 @@ import jakarta.validation.constraints.Size;
 
 /**
  * Request DTO for cancelling dentist work schedule.
- * 
+ *
  * Business Rules:
  * - Can only cancel AVAILABLE schedules
  * - BOOKED schedules require different workflow (reschedule patients first)

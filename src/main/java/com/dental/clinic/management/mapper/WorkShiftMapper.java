@@ -14,7 +14,7 @@ public class WorkShiftMapper {
 
     /**
      * Convert WorkShift entity to response DTO.
-     * 
+     *
      * @param entity WorkShift entity
      * @return WorkShiftResponse DTO
      */
@@ -30,13 +30,13 @@ public class WorkShiftMapper {
         response.setShiftType(entity.getShiftType() != null ? entity.getShiftType().name() : null);
         response.setStartTime(entity.getStartTime());
         response.setEndTime(entity.getEndTime());
-        
+
         // Calculate duration
         if (entity.getStartTime() != null && entity.getEndTime() != null) {
             Duration duration = Duration.between(entity.getStartTime(), entity.getEndTime());
             response.setDurationHours((int) duration.toHours());
         }
-        
+
         response.setIsActive(entity.getIsActive());
         response.setNotes(entity.getNotes());
         response.setCreatedAt(entity.getCreatedAt());

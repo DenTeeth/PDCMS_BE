@@ -7,7 +7,7 @@ import java.time.LocalTime;
 
 /**
  * Request DTO for updating dentist work schedule.
- * 
+ *
  * Business Rules:
  * - Can only update AVAILABLE schedules
  * - BOOKED schedules cannot be modified (patients scheduled)

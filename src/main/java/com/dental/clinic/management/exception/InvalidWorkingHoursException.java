@@ -7,9 +7,9 @@ import java.time.LocalTime;
 
 /**
  * Exception thrown when work hours violate clinic operating hours.
- * 
+ *
  * Business Rule: All work must be within 08:00 - 21:00.
- * 
+ *
  * Rationale:
  * - Labor law compliance (no late-night shifts)
  * - Clinic operating hours
@@ -27,9 +27,8 @@ public class InvalidWorkingHoursException extends RuntimeException {
 
     public InvalidWorkingHoursException(LocalTime startTime, LocalTime endTime) {
         super(String.format(
-            "Giờ làm việc không hợp lệ: %s - %s. Phải trong khung giờ: 08:00 - 21:00",
-            startTime, endTime
-        ));
+                "Giờ làm việc không hợp lệ: %s - %s. Phải trong khung giờ: 08:00 - 21:00",
+                startTime, endTime));
     }
 
     public InvalidWorkingHoursException(String message, Throwable cause) {

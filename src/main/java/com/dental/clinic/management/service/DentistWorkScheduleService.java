@@ -30,7 +30,7 @@ import java.util.UUID;
 
 /**
  * Service for managing dentist work schedules (part-time flexible schedules).
- * 
+ *
  * Business Rules:
  * 1. Only PART_TIME dentists can register schedules
  * 2. Maximum 2 schedules per day
@@ -40,7 +40,7 @@ import java.util.UUID;
  * 6. Working hours: 08:00 - 21:00
  * 7. No overlapping schedules for same dentist
  * 8. Cannot cancel BOOKED schedules
- * 
+ *
  * Payment commitment: "Đăng ký lên ngồi là phải trả tiền"
  */
 @Service
@@ -50,7 +50,7 @@ public class DentistWorkScheduleService {
     private static final LocalTime MAX_WORKING_HOUR = LocalTime.of(21, 0);
     private static final int MIN_DURATION_HOURS = 2;
     private static final int MAX_SCHEDULES_PER_DAY = 2;
-    private static final int MIN_ADVANCE_DAYS = 1;  // 24 hours
+    private static final int MIN_ADVANCE_DAYS = 1; // 24 hours
     private static final int MAX_ADVANCE_DAYS = 30;
 
     private final DentistWorkScheduleRepository scheduleRepository;
@@ -58,8 +58,8 @@ public class DentistWorkScheduleService {
     private final DentistScheduleMapper mapper;
 
     public DentistWorkScheduleService(DentistWorkScheduleRepository scheduleRepository,
-                                     EmployeeRepository employeeRepository,
-                                     DentistScheduleMapper mapper) {
+            EmployeeRepository employeeRepository,
+            DentistScheduleMapper mapper) {
         this.scheduleRepository = scheduleRepository;
         this.employeeRepository = employeeRepository;
         this.mapper = mapper;
@@ -67,37 +67,35 @@ public class DentistWorkScheduleService {
 
     /**
      * Create new dentist work schedule.
-     * 
+     *
      * @param request Create schedule request
      * @return Created schedule response
-     * @throws NotPartTimeDentistException if dentist is not PART_TIME
-     * @throws MaxSchedulesExceededException if already has 2 schedules on that day
+     * @throws NotPartTimeDentistException      if dentist is not PART_TIME
+     * @throws MaxSchedulesExceededException    if already has 2 schedules on that
+     *                                          day
      * @throws InvalidRegistrationDateException if registration window violated
-     * @throws InvalidWorkingHoursException if outside 08:00-21:00
-     * @throws InvalidShiftDurationException if duration < 2 hours
-     * @throws ScheduleConflictException if overlaps with existing schedule
+     * @throws InvalidWorkingHoursException     if outside 08:00-21:00
+     * @throws InvalidShiftDurationException    if duration < 2 hours
+     * @throws ScheduleConflictException        if overlaps with existing schedule
      */
     @Transactional
     public DentistScheduleResponse createDentistSchedule(CreateDentistScheduleRequest request) {
         // Validation 1: Check dentist exists and is PART_TIME
         Employee dentist = employeeRepository.findById(request.getDentistId())
-            .orElseThrow(() -> new BadRequestAlertException(
-                "Không tìm thấy nhân viên với ID: " + request.getDentistId(),
-                "dentist_schedule", "dentist_not_found"
-            ));
+                .orElseThrow(() -> new BadRequestAlertException(
+                        "Không tìm thấy nhân viên với ID: " + request.getDentistId(),
+                        "dentist_schedule", "dentist_not_found"));
 
         if (dentist.getEmploymentType() != EmploymentType.PART_TIME) {
             throw new NotPartTimeDentistException(
-                dentist.getEmployeeCode(),
-                dentist.getEmploymentType() != null ? dentist.getEmploymentType().name() : "UNKNOWN"
-            );
+                    dentist.getEmployeeCode(),
+                    dentist.getEmploymentType() != null ? dentist.getEmploymentType().name() : "UNKNOWN");
         }
 
         // Validation 2: Check max 2 schedules per day
         long existingCount = scheduleRepository.countActiveSchedulesByDentistAndDate(
-            request.getDentistId(),
-            request.getWorkDate()
-        );
+                request.getDentistId(),
+                request.getWorkDate());
 
         if (existingCount >= MAX_SCHEDULES_PER_DAY) {
             throw new MaxSchedulesExceededException(request.getWorkDate(), (int) existingCount);
@@ -111,21 +109,20 @@ public class DentistWorkScheduleService {
 
         // Validation 5: Check for conflicts
         List<DentistWorkSchedule> conflicts = scheduleRepository.findConflictingSchedules(
-            request.getDentistId(),
-            request.getWorkDate(),
-            request.getStartTime(),
-            request.getEndTime(),
-            null  // No exclusion for new schedules
+                request.getDentistId(),
+                request.getWorkDate(),
+                request.getStartTime(),
+                request.getEndTime(),
+                null // No exclusion for new schedules
         );
 
         if (!conflicts.isEmpty()) {
             DentistWorkSchedule conflict = conflicts.get(0);
             throw new ScheduleConflictException(
-                request.getWorkDate(),
-                request.getStartTime(),
-                request.getEndTime(),
-                conflict.getScheduleCode()
-            );
+                    request.getWorkDate(),
+                    request.getStartTime(),
+                    request.getEndTime(),
+                    conflict.getScheduleCode());
         }
 
         // Generate schedule code: SCH_YYYYMMDD_SEQ
@@ -151,19 +148,18 @@ public class DentistWorkScheduleService {
     /**
      * Update existing dentist work schedule.
      * Can only update AVAILABLE schedules.
-     * 
+     *
      * @param scheduleId Schedule ID
-     * @param request Update request
+     * @param request    Update request
      * @return Updated schedule response
      */
     @Transactional
     public DentistScheduleResponse updateDentistSchedule(String scheduleId, UpdateDentistScheduleRequest request) {
         // Find existing schedule
         DentistWorkSchedule schedule = scheduleRepository.findById(scheduleId)
-            .orElseThrow(() -> new BadRequestAlertException(
-                "Không tìm thấy lịch làm việc với ID: " + scheduleId,
-                "dentist_schedule", "not_found"
-            ));
+                .orElseThrow(() -> new BadRequestAlertException(
+                        "Không tìm thấy lịch làm việc với ID: " + scheduleId,
+                        "dentist_schedule", "not_found"));
 
         // Validation 1: Check ownership (SECURITY: Only owner or admin can update)
         Employee currentEmployee = getCurrentAuthenticatedEmployee();
@@ -172,10 +168,9 @@ public class DentistWorkScheduleService {
         // Validation 2: Can only update AVAILABLE schedules
         if (schedule.getStatus() != DentistWorkScheduleStatus.AVAILABLE) {
             throw new BadRequestAlertException(
-                String.format("Không thể cập nhật lịch có trạng thái: %s. Chỉ cập nhật được lịch AVAILABLE",
-                    schedule.getStatus()),
-                "dentist_schedule", "invalid_status"
-            );
+                    String.format("Không thể cập nhật lịch có trạng thái: %s. Chỉ cập nhật được lịch AVAILABLE",
+                            schedule.getStatus()),
+                    "dentist_schedule", "invalid_status");
         }
 
         // Validation 3: Validate time range
@@ -183,21 +178,20 @@ public class DentistWorkScheduleService {
 
         // Validation 4: Check for conflicts (exclude current schedule)
         List<DentistWorkSchedule> conflicts = scheduleRepository.findConflictingSchedules(
-            schedule.getDentistId(),
-            schedule.getWorkDate(),
-            request.getStartTime(),
-            request.getEndTime(),
-            scheduleId  // Exclude self
+                schedule.getDentistId(),
+                schedule.getWorkDate(),
+                request.getStartTime(),
+                request.getEndTime(),
+                scheduleId // Exclude self
         );
 
         if (!conflicts.isEmpty()) {
             DentistWorkSchedule conflict = conflicts.get(0);
             throw new ScheduleConflictException(
-                schedule.getWorkDate(),
-                request.getStartTime(),
-                request.getEndTime(),
-                conflict.getScheduleCode()
-            );
+                    schedule.getWorkDate(),
+                    request.getStartTime(),
+                    request.getEndTime(),
+                    conflict.getScheduleCode());
         }
 
         // Update fields
@@ -214,18 +208,17 @@ public class DentistWorkScheduleService {
     /**
      * Cancel dentist work schedule.
      * Cannot cancel BOOKED schedules (must reschedule patients first).
-     * 
+     *
      * @param scheduleId Schedule ID
-     * @param request Cancel request with reason
+     * @param request    Cancel request with reason
      */
     @Transactional
     public void cancelDentistSchedule(String scheduleId, CancelDentistScheduleRequest request) {
         // Find schedule
         DentistWorkSchedule schedule = scheduleRepository.findById(scheduleId)
-            .orElseThrow(() -> new BadRequestAlertException(
-                "Không tìm thấy lịch làm việc với ID: " + scheduleId,
-                "dentist_schedule", "not_found"
-            ));
+                .orElseThrow(() -> new BadRequestAlertException(
+                        "Không tìm thấy lịch làm việc với ID: " + scheduleId,
+                        "dentist_schedule", "not_found"));
 
         // Validation 1: Check ownership (SECURITY: Only owner or admin can cancel)
         Employee currentEmployee = getCurrentAuthenticatedEmployee();
@@ -239,66 +232,61 @@ public class DentistWorkScheduleService {
         // Validation 3: Cannot cancel already CANCELLED or EXPIRED schedules
         if (schedule.getStatus() == DentistWorkScheduleStatus.CANCELLED) {
             throw new BadRequestAlertException(
-                "Lịch làm việc đã được hủy trước đó",
-                "dentist_schedule", "already_cancelled"
-            );
+                    "Lịch làm việc đã được hủy trước đó",
+                    "dentist_schedule", "already_cancelled");
         }
 
         if (schedule.getStatus() == DentistWorkScheduleStatus.EXPIRED) {
             throw new BadRequestAlertException(
-                "Không thể hủy lịch đã hết hạn",
-                "dentist_schedule", "expired"
-            );
+                    "Không thể hủy lịch đã hết hạn",
+                    "dentist_schedule", "expired");
         }
 
         // Update status and notes
         schedule.setStatus(DentistWorkScheduleStatus.CANCELLED);
         schedule.setNotes(
-            (schedule.getNotes() != null ? schedule.getNotes() + "\n" : "") +
-            "Lý do hủy: " + request.getCancelReason()
-        );
+                (schedule.getNotes() != null ? schedule.getNotes() + "\n" : "") +
+                        "Lý do hủy: " + request.getCancelReason());
 
         scheduleRepository.save(schedule);
     }
 
     /**
      * Get dentist schedule by ID.
-     * 
+     *
      * @param scheduleId Schedule ID
      * @return Schedule response
      */
     @Transactional(readOnly = true)
     public DentistScheduleResponse getDentistScheduleById(String scheduleId) {
         DentistWorkSchedule schedule = scheduleRepository.findById(scheduleId)
-            .orElseThrow(() -> new BadRequestAlertException(
-                "Không tìm thấy lịch làm việc với ID: " + scheduleId,
-                "dentist_schedule", "not_found"
-            ));
+                .orElseThrow(() -> new BadRequestAlertException(
+                        "Không tìm thấy lịch làm việc với ID: " + scheduleId,
+                        "dentist_schedule", "not_found"));
 
         return mapper.toResponse(schedule);
     }
 
     /**
      * Get all schedules for a dentist within date range.
-     * 
+     *
      * @param dentistId Dentist employee ID
      * @param startDate Start date (inclusive)
-     * @param endDate End date (inclusive)
-     * @param page Page number
-     * @param size Page size
+     * @param endDate   End date (inclusive)
+     * @param page      Page number
+     * @param size      Page size
      * @return Page of schedules
      */
     @Transactional(readOnly = true)
     public Page<DentistScheduleResponse> getAllSchedulesByDentist(
             String dentistId, LocalDate startDate, LocalDate endDate,
             int page, int size) {
-        
+
         // Validate dentist exists
         if (!employeeRepository.existsById(dentistId)) {
             throw new BadRequestAlertException(
-                "Không tìm thấy nhân viên với ID: " + dentistId,
-                "dentist_schedule", "dentist_not_found"
-            );
+                    "Không tìm thấy nhân viên với ID: " + dentistId,
+                    "dentist_schedule", "dentist_not_found");
         }
 
         // Pagination setup
@@ -308,49 +296,48 @@ public class DentistWorkScheduleService {
 
         // Query with date range
         Page<DentistWorkSchedule> schedules = scheduleRepository.findByDentistIdAndWorkDateBetween(
-            dentistId, startDate, endDate, pageable
-        );
+                dentistId, startDate, endDate, pageable);
 
         return schedules.map(mapper::toResponse);
     }
 
     /**
      * Get available schedules for booking (calendar view).
-     * 
+     *
      * @param startDate Start date
-     * @param endDate End date
+     * @param endDate   End date
      * @return List of available schedules
      */
     @Transactional(readOnly = true)
-    public Page<DentistScheduleResponse> getAvailableSchedules(LocalDate startDate, LocalDate endDate, int page, int size) {
+    public Page<DentistScheduleResponse> getAvailableSchedules(LocalDate startDate, LocalDate endDate, int page,
+            int size) {
         // Validate pagination
         page = Math.max(0, page);
         size = (size <= 0 || size > 100) ? 20 : size;
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "workDate", "startTime"));
 
         List<DentistWorkSchedule> allSchedules = scheduleRepository
-            .findByWorkDateBetweenAndStatusOrderByWorkDateAscStartTimeAsc(
-                startDate, endDate, DentistWorkScheduleStatus.AVAILABLE
-            );
+                .findByWorkDateBetweenAndStatusOrderByWorkDateAscStartTimeAsc(
+                        startDate, endDate, DentistWorkScheduleStatus.AVAILABLE);
 
         // Convert to page
         int start = (int) pageable.getOffset();
         int end = Math.min((start + pageable.getPageSize()), allSchedules.size());
-        
+
         if (start > allSchedules.size()) {
             return Page.empty(pageable);
         }
-        
+
         List<DentistWorkSchedule> pageContent = allSchedules.subList(start, end);
         Page<DentistWorkSchedule> schedulePage = new PageImpl<>(pageContent, pageable, allSchedules.size());
-        
+
         return schedulePage.map(mapper::toResponse);
     }
 
     /**
      * Validate registration date window.
      * Must register 24 hours - 30 days in advance.
-     * 
+     *
      * @param workDate Work date to validate
      * @throws InvalidRegistrationDateException if outside valid window
      */
@@ -361,52 +348,47 @@ public class DentistWorkScheduleService {
 
         if (workDate.isBefore(minDate)) {
             throw new InvalidRegistrationDateException(
-                String.format("Ngày làm việc %s quá gần. Phải đăng ký trước ít nhất %d ngày (từ %s)",
-                    workDate, MIN_ADVANCE_DAYS, minDate)
-            );
+                    String.format("Ngày làm việc %s quá gần. Phải đăng ký trước ít nhất %d ngày (từ %s)",
+                            workDate, MIN_ADVANCE_DAYS, minDate));
         }
 
         if (workDate.isAfter(maxDate)) {
             throw new InvalidRegistrationDateException(
-                String.format("Ngày làm việc %s quá xa. Chỉ đăng ký được tối đa %d ngày (đến %s)",
-                    workDate, MAX_ADVANCE_DAYS, maxDate)
-            );
+                    String.format("Ngày làm việc %s quá xa. Chỉ đăng ký được tối đa %d ngày (đến %s)",
+                            workDate, MAX_ADVANCE_DAYS, maxDate));
         }
     }
 
     /**
      * Validate time range for schedule.
-     * 
+     *
      * Business Rules:
      * - Duration: minimum 2 hours
      * - Start time: >= 08:00
      * - End time: <= 21:00
      * - End time > Start time
-     * 
+     *
      * @param startTime Start time
-     * @param endTime End time
+     * @param endTime   End time
      * @throws InvalidShiftDurationException if duration < 2 hours
-     * @throws InvalidWorkingHoursException if outside working hours
+     * @throws InvalidWorkingHoursException  if outside working hours
      */
     private void validateTimeRange(LocalTime startTime, LocalTime endTime) {
         // Rule 1: End time must be after start time
         if (endTime.isBefore(startTime) || endTime.equals(startTime)) {
             throw new InvalidShiftDurationException(
-                String.format("Giờ kết thúc (%s) phải sau giờ bắt đầu (%s)", endTime, startTime)
-            );
+                    String.format("Giờ kết thúc (%s) phải sau giờ bắt đầu (%s)", endTime, startTime));
         }
 
         // Rule 2: Within clinic operating hours
         if (startTime.isBefore(MIN_WORKING_HOUR)) {
             throw new InvalidWorkingHoursException(
-                String.format("Giờ bắt đầu (%s) phải từ %s trở về sau", startTime, MIN_WORKING_HOUR)
-            );
+                    String.format("Giờ bắt đầu (%s) phải từ %s trở về sau", startTime, MIN_WORKING_HOUR));
         }
 
         if (endTime.isAfter(MAX_WORKING_HOUR)) {
             throw new InvalidWorkingHoursException(
-                String.format("Giờ kết thúc (%s) phải trước %s", endTime, MAX_WORKING_HOUR)
-            );
+                    String.format("Giờ kết thúc (%s) phải trước %s", endTime, MAX_WORKING_HOUR));
         }
 
         // Rule 3: Minimum duration check
@@ -415,17 +397,16 @@ public class DentistWorkScheduleService {
 
         if (hours < MIN_DURATION_HOURS) {
             throw new InvalidShiftDurationException(
-                String.format("Thời lượng ca làm việc: %d giờ. Tối thiểu: %d giờ. Khuyến nghị: 3-4 giờ",
-                    hours, MIN_DURATION_HOURS)
-            );
+                    String.format("Thời lượng ca làm việc: %d giờ. Tối thiểu: %d giờ. Khuyến nghị: 3-4 giờ",
+                            hours, MIN_DURATION_HOURS));
         }
     }
 
     /**
      * Generate unique schedule code.
      * Format: SCH_YYYYMMDD_SEQ
-     * 
-     * @param workDate Work date
+     *
+     * @param workDate  Work date
      * @param dentistId Dentist ID
      * @return Generated schedule code
      */
@@ -443,41 +424,38 @@ public class DentistWorkScheduleService {
     /**
      * Get current authenticated employee from security context.
      * Used for owner validation.
-     * 
+     *
      * @return Current authenticated employee
      * @throws BadRequestAlertException if not authenticated or employee not found
      */
     private Employee getCurrentAuthenticatedEmployee() {
         String username = SecurityUtil.getCurrentUserLogin()
-            .orElseThrow(() -> new BadRequestAlertException(
-                "Không tìm thấy thông tin người dùng đăng nhập",
-                "dentist_schedule", "not_authenticated"
-            ));
-        
+                .orElseThrow(() -> new BadRequestAlertException(
+                        "Không tìm thấy thông tin người dùng đăng nhập",
+                        "dentist_schedule", "not_authenticated"));
+
         return employeeRepository.findByAccount_Username(username)
-            .orElseThrow(() -> new BadRequestAlertException(
-                "Không tìm thấy thông tin nhân viên cho tài khoản: " + username,
-                "dentist_schedule", "employee_not_found"
-            ));
+                .orElseThrow(() -> new BadRequestAlertException(
+                        "Không tìm thấy thông tin nhân viên cho tài khoản: " + username,
+                        "dentist_schedule", "employee_not_found"));
     }
 
     /**
      * Validate schedule ownership.
      * Only owner or ADMIN can modify schedule.
-     * 
-     * @param schedule Schedule to validate
+     *
+     * @param schedule        Schedule to validate
      * @param currentEmployee Current authenticated employee
      * @throws EmployeeNotAuthorizedException if not owner and not admin
      */
     private void validateScheduleOwnership(DentistWorkSchedule schedule, Employee currentEmployee) {
         boolean isAdmin = SecurityUtil.hasCurrentUserRole("ADMIN");
         boolean isOwner = schedule.getDentistId().equals(currentEmployee.getEmployeeId());
-        
+
         if (!isOwner && !isAdmin) {
             throw new EmployeeNotAuthorizedException(
-                currentEmployee.getEmployeeCode(),
-                "Bạn không có quyền chỉnh sửa lịch của bác sĩ khác"
-            );
+                    currentEmployee.getEmployeeCode(),
+                    "Bạn không có quyền chỉnh sửa lịch của bác sĩ khác");
         }
     }
 }

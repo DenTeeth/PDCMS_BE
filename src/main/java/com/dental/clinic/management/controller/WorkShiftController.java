@@ -32,7 +32,7 @@ public class WorkShiftController {
 
     /**
      * Create new work shift template.
-     * 
+     *
      * @param request Create work shift request
      * @return Created work shift response
      */
@@ -47,7 +47,7 @@ public class WorkShiftController {
 
     /**
      * Update existing work shift.
-     * 
+     *
      * @param shiftId Work shift ID
      * @param request Update work shift request
      * @return Updated work shift response
@@ -65,7 +65,7 @@ public class WorkShiftController {
 
     /**
      * Get work shift by ID.
-     * 
+     *
      * @param shiftId Work shift ID
      * @return Work shift response
      */
@@ -79,9 +79,9 @@ public class WorkShiftController {
 
     /**
      * Get all work shifts with pagination.
-     * 
-     * @param page Page number (default: 0)
-     * @param size Page size (default: 10, max: 100)
+     *
+     * @param page            Page number (default: 0)
+     * @param size            Page size (default: 10, max: 100)
      * @param includeInactive Include inactive shifts (default: false)
      * @return Page of work shifts
      */
@@ -99,7 +99,7 @@ public class WorkShiftController {
     /**
      * Delete work shift (soft delete).
      * Cannot delete if shift is in use.
-     * 
+     *
      * @param shiftId Work shift ID
      * @return Success message
      */

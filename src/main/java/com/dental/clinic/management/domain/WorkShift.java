@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 /**
  * Work Shift entity - Fixed shifts for full-time employees.
  * Each clinic has 3 predefined shifts: MORNING, AFTERNOON, EVENING.
- * 
+ *
  * Business Rules:
  * - Duration: 3-8 hours (validated in service layer)
  * - Working hours: 08:00 - 21:00
@@ -63,7 +63,7 @@ public class WorkShift {
     }
 
     public WorkShift(String shiftCode, String shiftName, WorkShiftType shiftType,
-                     LocalTime startTime, LocalTime endTime) {
+            LocalTime startTime, LocalTime endTime) {
         this.shiftCode = shiftCode;
         this.shiftName = shiftName;
         this.shiftType = shiftType;

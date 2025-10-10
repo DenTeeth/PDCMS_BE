@@ -5,9 +5,9 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 
 /**
  * Exception thrown when shift duration violates business rules.
- * 
+ *
  * Business Rule: Shifts must be between 3-8 hours.
- * 
+ *
  * Applies to:
  * - WorkShift creation/update
  * - DentistWorkSchedule with custom times

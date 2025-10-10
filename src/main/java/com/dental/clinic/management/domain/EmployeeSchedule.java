@@ -12,13 +12,13 @@ import java.time.LocalDateTime;
 
 /**
  * Employee Schedule entity - Attendance tracking for all employees.
- * 
+ *
  * Business Rules:
  * - Auto-generated from recurring_schedules for FULL_TIME employees
  * - Manually created from dentist_work_schedules for PART_TIME dentists
  * - Used for attendance tracking and payroll calculation
  * - Status updated by attendance system or HR
- * 
+ *
  * Status Flow:
  * SCHEDULED (initial) → PRESENT (checked in on time)
  * SCHEDULED → LATE (checked in late)
@@ -27,9 +27,9 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "employee_schedules", indexes = {
-    @Index(name = "idx_schedule_code", columnList = "schedule_code", unique = true),
-    @Index(name = "idx_employee_date_status", columnList = "employee_id, work_date, status"),
-    @Index(name = "idx_date_status", columnList = "work_date, status")
+        @Index(name = "idx_schedule_code", columnList = "schedule_code", unique = true),
+        @Index(name = "idx_employee_date_status", columnList = "employee_id, work_date, status"),
+        @Index(name = "idx_date_status", columnList = "work_date, status")
 })
 public class EmployeeSchedule {
 
@@ -120,7 +120,7 @@ public class EmployeeSchedule {
     }
 
     public EmployeeSchedule(String scheduleCode, String employeeId, LocalDate workDate,
-                            LocalTime startTime, LocalTime endTime) {
+            LocalTime startTime, LocalTime endTime) {
         this.scheduleCode = scheduleCode;
         this.employeeId = employeeId;
         this.workDate = workDate;

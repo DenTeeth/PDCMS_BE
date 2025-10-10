@@ -7,9 +7,9 @@ import java.time.LocalDate;
 
 /**
  * Exception thrown when dentist exceeds max schedules per day limit.
- * 
+ *
  * Business Rule: Maximum 2 work schedules per day for part-time dentists.
- * 
+ *
  * Rationale:
  * - Work-life balance
  * - Prevent burnout
@@ -27,10 +27,9 @@ public class MaxSchedulesExceededException extends RuntimeException {
 
     public MaxSchedulesExceededException(LocalDate workDate, int currentCount) {
         super(String.format(
-            "Đã đạt giới hạn lịch làm việc cho ngày %s: %d/%d ca. " +
-            "Không thể đăng ký thêm.",
-            workDate, currentCount, MAX_SCHEDULES_PER_DAY
-        ));
+                "Đã đạt giới hạn lịch làm việc cho ngày %s: %d/%d ca. " +
+                        "Không thể đăng ký thêm.",
+                workDate, currentCount, MAX_SCHEDULES_PER_DAY));
     }
 
     public MaxSchedulesExceededException(String message, Throwable cause) {

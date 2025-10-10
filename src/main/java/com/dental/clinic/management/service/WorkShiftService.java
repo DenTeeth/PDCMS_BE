@@ -1,7 +1,6 @@
 package com.dental.clinic.management.service;
 
 import com.dental.clinic.management.domain.WorkShift;
-import com.dental.clinic.management.domain.enums.WorkShiftType;
 import com.dental.clinic.management.dto.request.CreateWorkShiftRequest;
 import com.dental.clinic.management.dto.request.UpdateWorkShiftRequest;
 import com.dental.clinic.management.dto.response.WorkShiftResponse;
@@ -25,7 +24,7 @@ import java.util.stream.Collectors;
 
 /**
  * Service for managing work shifts.
- * 
+ *
  * Business Rules:
  * - Duration: 3-8 hours
  * - Working hours: 08:00 - 21:00
@@ -45,8 +44,8 @@ public class WorkShiftService {
     private final WorkShiftMapper workShiftMapper;
 
     public WorkShiftService(WorkShiftRepository workShiftRepository,
-                           RecurringScheduleRepository recurringScheduleRepository,
-                           WorkShiftMapper workShiftMapper) {
+            RecurringScheduleRepository recurringScheduleRepository,
+            WorkShiftMapper workShiftMapper) {
         this.workShiftRepository = workShiftRepository;
         this.recurringScheduleRepository = recurringScheduleRepository;
         this.workShiftMapper = workShiftMapper;
@@ -54,30 +53,28 @@ public class WorkShiftService {
 
     /**
      * Create new work shift with validation.
-     * 
+     *
      * @param request Create shift request
      * @return Created shift response
      * @throws InvalidShiftDurationException if duration not 3-8 hours
-     * @throws InvalidWorkingHoursException if outside 08:00-21:00
-     * @throws ScheduleConflictException if overlaps with existing shift
-     * @throws BadRequestAlertException if shiftCode already exists
+     * @throws InvalidWorkingHoursException  if outside 08:00-21:00
+     * @throws ScheduleConflictException     if overlaps with existing shift
+     * @throws BadRequestAlertException      if shiftCode already exists
      */
     @Transactional
     public WorkShiftResponse createWorkShift(CreateWorkShiftRequest request) {
         // Validation 1: Check shift code uniqueness
         if (workShiftRepository.existsByShiftCode(request.getShiftCode())) {
             throw new BadRequestAlertException(
-                String.format("Mã ca làm việc '%s' đã tồn tại", request.getShiftCode()),
-                "work_shift", "shift_code_exists"
-            );
+                    String.format("Mã ca làm việc '%s' đã tồn tại", request.getShiftCode()),
+                    "work_shift", "shift_code_exists");
         }
 
         // Validation 2: Check shift name uniqueness
         if (workShiftRepository.existsByShiftNameIgnoreCase(request.getShiftName())) {
             throw new BadRequestAlertException(
-                String.format("Tên ca làm việc '%s' đã tồn tại", request.getShiftName()),
-                "work_shift", "shift_name_exists"
-            );
+                    String.format("Tên ca làm việc '%s' đã tồn tại", request.getShiftName()),
+                    "work_shift", "shift_name_exists");
         }
 
         // Validation 3: Validate time range
@@ -85,15 +82,13 @@ public class WorkShiftService {
 
         // Validation 4: Check for overlapping shifts
         List<WorkShift> overlappingShifts = workShiftRepository.findOverlappingShifts(
-            request.getStartTime(), request.getEndTime()
-        );
+                request.getStartTime(), request.getEndTime());
         if (!overlappingShifts.isEmpty()) {
             throw new ScheduleConflictException(
-                String.format("Ca làm việc trùng với ca '%s' (%s - %s)",
-                    overlappingShifts.get(0).getShiftName(),
-                    overlappingShifts.get(0).getStartTime(),
-                    overlappingShifts.get(0).getEndTime())
-            );
+                    String.format("Ca làm việc trùng với ca '%s' (%s - %s)",
+                            overlappingShifts.get(0).getShiftName(),
+                            overlappingShifts.get(0).getStartTime(),
+                            overlappingShifts.get(0).getEndTime()));
         }
 
         // Create entity
@@ -116,7 +111,7 @@ public class WorkShiftService {
 
     /**
      * Update existing work shift.
-     * 
+     *
      * @param shiftId Shift ID
      * @param request Update shift request
      * @return Updated shift response
@@ -125,26 +120,23 @@ public class WorkShiftService {
     public WorkShiftResponse updateWorkShift(String shiftId, UpdateWorkShiftRequest request) {
         // Find existing shift
         WorkShift workShift = workShiftRepository.findById(shiftId)
-            .orElseThrow(() -> new BadRequestAlertException(
-                String.format("Không tìm thấy ca làm việc với ID: %s", shiftId),
-                "work_shift", "not_found"
-            ));
+                .orElseThrow(() -> new BadRequestAlertException(
+                        String.format("Không tìm thấy ca làm việc với ID: %s", shiftId),
+                        "work_shift", "not_found"));
 
         // Validation: Validate time range
         validateTimeRange(request.getStartTime(), request.getEndTime());
 
         // Validation: Check for overlapping shifts (exclude current shift)
         List<WorkShift> overlappingShifts = workShiftRepository.findOverlappingShifts(
-            request.getStartTime(), request.getEndTime()
-        ).stream()
-         .filter(s -> !s.getShiftId().equals(shiftId))
-         .collect(Collectors.toList());
+                request.getStartTime(), request.getEndTime()).stream()
+                .filter(s -> !s.getShiftId().equals(shiftId))
+                .collect(Collectors.toList());
 
         if (!overlappingShifts.isEmpty()) {
             throw new ScheduleConflictException(
-                String.format("Ca làm việc trùng với ca '%s'",
-                    overlappingShifts.get(0).getShiftName())
-            );
+                    String.format("Ca làm việc trùng với ca '%s'",
+                            overlappingShifts.get(0).getShiftName()));
         }
 
         // Update fields
@@ -163,7 +155,7 @@ public class WorkShiftService {
 
     /**
      * Get all work shifts (active and inactive).
-     * 
+     *
      * @return List of all shifts
      */
     @Transactional(readOnly = true)
@@ -174,7 +166,7 @@ public class WorkShiftService {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "startTime"));
 
         List<WorkShift> allShifts;
-        
+
         if (includeInactive) {
             allShifts = workShiftRepository.findAllByOrderByStartTimeAsc();
         } else {
@@ -184,30 +176,29 @@ public class WorkShiftService {
         // Convert to page
         int start = (int) pageable.getOffset();
         int end = Math.min((start + pageable.getPageSize()), allShifts.size());
-        
+
         if (start > allShifts.size()) {
             return Page.empty(pageable);
         }
-        
+
         List<WorkShift> pageContent = allShifts.subList(start, end);
         Page<WorkShift> shiftPage = new PageImpl<>(pageContent, pageable, allShifts.size());
-        
+
         return shiftPage.map(workShiftMapper::toResponse);
     }
 
     /**
      * Get work shift by ID.
-     * 
+     *
      * @param shiftId Shift ID
      * @return Shift response
      */
     @Transactional(readOnly = true)
     public WorkShiftResponse getWorkShiftById(String shiftId) {
         WorkShift workShift = workShiftRepository.findById(shiftId)
-            .orElseThrow(() -> new BadRequestAlertException(
-                String.format("Không tìm thấy ca làm việc với ID: %s", shiftId),
-                "work_shift", "not_found"
-            ));
+                .orElseThrow(() -> new BadRequestAlertException(
+                        String.format("Không tìm thấy ca làm việc với ID: %s", shiftId),
+                        "work_shift", "not_found"));
 
         return workShiftMapper.toResponse(workShift);
     }
@@ -215,7 +206,7 @@ public class WorkShiftService {
     /**
      * Delete work shift (soft delete - set inactive).
      * Cannot delete if shift is in use by recurring schedules.
-     * 
+     *
      * @param shiftId Shift ID
      * @throws WorkShiftInUseException if shift is being used
      */
@@ -223,18 +214,16 @@ public class WorkShiftService {
     public void deleteWorkShift(String shiftId) {
         // Find shift
         WorkShift workShift = workShiftRepository.findById(shiftId)
-            .orElseThrow(() -> new BadRequestAlertException(
-                String.format("Không tìm thấy ca làm việc với ID: %s", shiftId),
-                "work_shift", "not_found"
-            ));
+                .orElseThrow(() -> new BadRequestAlertException(
+                        String.format("Không tìm thấy ca làm việc với ID: %s", shiftId),
+                        "work_shift", "not_found"));
 
         // Check if shift is being used
         int recurringCount = recurringScheduleRepository.findByShiftIdAndIsActive(shiftId, true).size();
-        
+
         if (recurringCount > 0) {
             throw new WorkShiftInUseException(
-                workShift.getShiftCode(), recurringCount, 0
-            );
+                    workShift.getShiftCode(), recurringCount, 0);
         }
 
         // Soft delete - set inactive
@@ -244,37 +233,34 @@ public class WorkShiftService {
 
     /**
      * Validate time range for shift.
-     * 
+     *
      * Business Rules:
      * - Duration: 3-8 hours
      * - Start time: >= 08:00
      * - End time: <= 21:00
      * - End time > Start time
-     * 
+     *
      * @param startTime Start time
-     * @param endTime End time
+     * @param endTime   End time
      * @throws InvalidShiftDurationException if duration invalid
-     * @throws InvalidWorkingHoursException if outside working hours
+     * @throws InvalidWorkingHoursException  if outside working hours
      */
     private void validateTimeRange(LocalTime startTime, LocalTime endTime) {
         // Rule 1: End time must be after start time
         if (endTime.isBefore(startTime) || endTime.equals(startTime)) {
             throw new InvalidShiftDurationException(
-                String.format("Giờ kết thúc (%s) phải sau giờ bắt đầu (%s)", endTime, startTime)
-            );
+                    String.format("Giờ kết thúc (%s) phải sau giờ bắt đầu (%s)", endTime, startTime));
         }
 
         // Rule 2: Within clinic operating hours
         if (startTime.isBefore(MIN_WORKING_HOUR)) {
             throw new InvalidWorkingHoursException(
-                String.format("Giờ bắt đầu (%s) phải từ %s trở về sau", startTime, MIN_WORKING_HOUR)
-            );
+                    String.format("Giờ bắt đầu (%s) phải từ %s trở về sau", startTime, MIN_WORKING_HOUR));
         }
 
         if (endTime.isAfter(MAX_WORKING_HOUR)) {
             throw new InvalidWorkingHoursException(
-                String.format("Giờ kết thúc (%s) phải trước %s", endTime, MAX_WORKING_HOUR)
-            );
+                    String.format("Giờ kết thúc (%s) phải trước %s", endTime, MAX_WORKING_HOUR));
         }
 
         // Rule 3: Duration must be 3-8 hours
@@ -283,9 +269,8 @@ public class WorkShiftService {
 
         if (hours < MIN_DURATION_HOURS || hours > MAX_DURATION_HOURS) {
             throw new InvalidShiftDurationException(
-                String.format("Thời lượng ca làm việc: %d giờ. Yêu cầu: %d-%d giờ",
-                    hours, MIN_DURATION_HOURS, MAX_DURATION_HOURS)
-            );
+                    String.format("Thời lượng ca làm việc: %d giờ. Yêu cầu: %d-%d giờ",
+                            hours, MIN_DURATION_HOURS, MAX_DURATION_HOURS));
         }
     }
 }

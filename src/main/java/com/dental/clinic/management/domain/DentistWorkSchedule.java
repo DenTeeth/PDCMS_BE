@@ -11,8 +11,9 @@ import java.time.LocalTime;
 import java.time.LocalDateTime;
 
 /**
- * Dentist Work Schedule entity - Part-time dentists register flexible schedules.
- * 
+ * Dentist Work Schedule entity - Part-time dentists register flexible
+ * schedules.
+ *
  * Business Rules:
  * - Only PART_TIME dentists can register
  * - Duration: minimum 2 hours, recommended 3-4 hours
@@ -20,7 +21,7 @@ import java.time.LocalDateTime;
  * - Max 2 schedules per day
  * - Must register at least 24 hours in advance
  * - Payment commitment: Dentist paid hourly even without patients
- * 
+ *
  * Status Flow:
  * AVAILABLE → BOOKED (when appointment created)
  * AVAILABLE → CANCELLED (dentist cancels)
@@ -28,9 +29,9 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "dentist_work_schedules", indexes = {
-    @Index(name = "idx_schedule_code", columnList = "schedule_code", unique = true),
-    @Index(name = "idx_dentist_date_status", columnList = "dentist_id, work_date, status"),
-    @Index(name = "idx_status_date", columnList = "status, work_date")
+        @Index(name = "idx_schedule_code", columnList = "schedule_code", unique = true),
+        @Index(name = "idx_dentist_date_status", columnList = "dentist_id, work_date, status"),
+        @Index(name = "idx_status_date", columnList = "status, work_date")
 })
 public class DentistWorkSchedule {
 
@@ -85,7 +86,7 @@ public class DentistWorkSchedule {
     }
 
     public DentistWorkSchedule(String scheduleCode, String dentistId, LocalDate workDate,
-                               LocalTime startTime, LocalTime endTime) {
+            LocalTime startTime, LocalTime endTime) {
         this.scheduleCode = scheduleCode;
         this.dentistId = dentistId;
         this.workDate = workDate;

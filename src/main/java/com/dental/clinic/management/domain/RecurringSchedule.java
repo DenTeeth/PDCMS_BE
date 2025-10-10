@@ -11,21 +11,22 @@ import java.time.LocalTime;
 import java.time.LocalDateTime;
 
 /**
- * Recurring Schedule entity - Repeating weekly work patterns for full-time employees.
- * 
+ * Recurring Schedule entity - Repeating weekly work patterns for full-time
+ * employees.
+ *
  * Business Rules:
  * - Only FULL_TIME employees can have recurring schedules
  * - Active schedules auto-generate employee_schedules records
  * - Used for payroll calculations and attendance tracking
  * - Can be temporarily disabled without deletion
- * 
+ *
  * Example: Doctor works MORNING shift every MONDAY and WEDNESDAY
  */
 @Entity
 @Table(name = "recurring_schedules", indexes = {
-    @Index(name = "idx_recurring_code", columnList = "recurring_code", unique = true),
-    @Index(name = "idx_employee_active", columnList = "employee_id, is_active"),
-    @Index(name = "idx_day_shift", columnList = "day_of_week, shift_type")
+        @Index(name = "idx_recurring_code", columnList = "recurring_code", unique = true),
+        @Index(name = "idx_employee_active", columnList = "employee_id, is_active"),
+        @Index(name = "idx_day_shift", columnList = "day_of_week, shift_type")
 })
 public class RecurringSchedule {
 

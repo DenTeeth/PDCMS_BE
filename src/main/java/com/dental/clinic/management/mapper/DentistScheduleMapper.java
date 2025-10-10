@@ -15,7 +15,7 @@ public class DentistScheduleMapper {
     /**
      * Convert DentistWorkSchedule entity to response DTO.
      * Includes lazy-loaded dentist details if available.
-     * 
+     *
      * @param entity DentistWorkSchedule entity
      * @return DentistScheduleResponse DTO
      */
@@ -31,13 +31,13 @@ public class DentistScheduleMapper {
         response.setWorkDate(entity.getWorkDate());
         response.setStartTime(entity.getStartTime());
         response.setEndTime(entity.getEndTime());
-        
+
         // Calculate duration
         if (entity.getStartTime() != null && entity.getEndTime() != null) {
             Duration duration = Duration.between(entity.getStartTime(), entity.getEndTime());
             response.setDurationHours((int) duration.toHours());
         }
-        
+
         response.setStatus(entity.getStatus() != null ? entity.getStatus().name() : null);
         response.setNotes(entity.getNotes());
         response.setCreatedAt(entity.getCreatedAt());

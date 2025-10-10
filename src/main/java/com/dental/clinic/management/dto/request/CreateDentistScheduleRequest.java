@@ -10,7 +10,7 @@ import java.time.LocalTime;
 
 /**
  * Request DTO for creating dentist work schedule.
- * 
+ *
  * Business Rules (validated in service layer):
  * - Only PART_TIME dentists can create schedules
  * - Max 2 schedules per day
@@ -19,7 +19,7 @@ import java.time.LocalTime;
  * - Duration: minimum 2 hours, recommended 3-4 hours
  * - Working hours: 08:00 - 21:00
  * - No overlapping with existing schedules
- * 
+ *
  * Payment commitment: Dentist will be paid even without patients.
  */
 public class CreateDentistScheduleRequest {
@@ -46,7 +46,7 @@ public class CreateDentistScheduleRequest {
     }
 
     public CreateDentistScheduleRequest(String dentistId, LocalDate workDate,
-                                        LocalTime startTime, LocalTime endTime) {
+            LocalTime startTime, LocalTime endTime) {
         this.dentistId = dentistId;
         this.workDate = workDate;
         this.startTime = startTime;

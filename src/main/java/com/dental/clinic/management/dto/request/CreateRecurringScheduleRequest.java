@@ -9,7 +9,7 @@ import java.time.LocalTime;
 
 /**
  * Request DTO for creating recurring schedule.
- * 
+ *
  * Business Rules (validated in service layer):
  * - Only FULL_TIME employees can have recurring schedules
  * - Can use predefined shift (shiftId) OR custom times (startTime/endTime)
@@ -62,7 +62,7 @@ public class CreateRecurringScheduleRequest {
 
     // With custom times
     public CreateRecurringScheduleRequest(String employeeId, DayOfWeek dayOfWeek,
-                                          LocalTime startTime, LocalTime endTime) {
+            LocalTime startTime, LocalTime endTime) {
         this.employeeId = employeeId;
         this.dayOfWeek = dayOfWeek;
         this.startTime = startTime;

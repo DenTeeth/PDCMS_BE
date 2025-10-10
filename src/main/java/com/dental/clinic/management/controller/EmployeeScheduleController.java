@@ -33,9 +33,9 @@ public class EmployeeScheduleController {
     /**
      * Update employee schedule status (attendance tracking).
      * HR/Admin can mark PRESENT, LATE, ABSENT, ON_LEAVE.
-     * 
+     *
      * @param scheduleId Schedule ID
-     * @param request Update status request
+     * @param request    Update status request
      * @return Updated schedule response
      */
     @PatchMapping("/{scheduleId}/status")
@@ -51,7 +51,7 @@ public class EmployeeScheduleController {
 
     /**
      * Get employee schedule by ID.
-     * 
+     *
      * @param scheduleId Schedule ID
      * @return Schedule response
      */
@@ -66,12 +66,12 @@ public class EmployeeScheduleController {
 
     /**
      * Get all schedules for an employee with date range filter.
-     * 
+     *
      * @param employeeId Employee ID
-     * @param startDate Start date
-     * @param endDate End date
-     * @param page Page number (default: 0)
-     * @param size Page size (default: 10, max: 100)
+     * @param startDate  Start date
+     * @param endDate    End date
+     * @param page       Page number (default: 0)
+     * @param size       Page size (default: 10, max: 100)
      * @return Page of employee schedules
      */
     @GetMapping("/employee/{employeeId}")
@@ -85,17 +85,16 @@ public class EmployeeScheduleController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         Page<EmployeeScheduleResponse> response = scheduleService.getAllSchedulesByEmployee(
-            employeeId, startDate, endDate, page, size
-        );
+                employeeId, startDate, endDate, page, size);
         return ResponseEntity.ok(response);
     }
 
     /**
      * Get all schedules for a specific date (daily attendance view).
-     * 
+     *
      * @param workDate Work date
-     * @param page Page number (default: 0)
-     * @param size Page size (default: 50, max: 100)
+     * @param page     Page number (default: 0)
+     * @param size     Page size (default: 50, max: 100)
      * @return Page of schedules for that date
      */
     @GetMapping("/date")

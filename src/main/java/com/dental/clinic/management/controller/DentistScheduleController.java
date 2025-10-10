@@ -19,7 +19,8 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 
 /**
- * Controller for managing dentist work schedules (part-time flexible registration).
+ * Controller for managing dentist work schedules (part-time flexible
+ * registration).
  */
 @RestController
 @RequestMapping("/api/v1/dentist-schedules")
@@ -34,7 +35,7 @@ public class DentistScheduleController {
 
     /**
      * Create new dentist schedule (self-registration).
-     * 
+     *
      * @param request Create schedule request
      * @return Created schedule response
      */
@@ -42,7 +43,8 @@ public class DentistScheduleController {
     @ApiMessage("Lịch làm việc đã được đăng ký thành công")
     @PreAuthorize("hasRole('ROLE_DOCTOR') or hasRole('ROLE_ADMIN')")
     @Operation(summary = "Create dentist schedule", description = "Register new work schedule (Part-time dentists only)")
-    public ResponseEntity<DentistScheduleResponse> createSchedule(@Valid @RequestBody CreateDentistScheduleRequest request) {
+    public ResponseEntity<DentistScheduleResponse> createSchedule(
+            @Valid @RequestBody CreateDentistScheduleRequest request) {
         DentistScheduleResponse response = scheduleService.createDentistSchedule(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -50,9 +52,9 @@ public class DentistScheduleController {
     /**
      * Update dentist schedule.
      * Dentist can only update their own schedules, Admin can update any.
-     * 
+     *
      * @param scheduleId Schedule ID
-     * @param request Update schedule request
+     * @param request    Update schedule request
      * @return Updated schedule response
      */
     @PutMapping("/{scheduleId}")
@@ -69,9 +71,9 @@ public class DentistScheduleController {
     /**
      * Cancel dentist schedule.
      * Cannot cancel BOOKED schedules (patient already registered).
-     * 
+     *
      * @param scheduleId Schedule ID
-     * @param request Cancel request with reason
+     * @param request    Cancel request with reason
      * @return Success message
      */
     @DeleteMapping("/{scheduleId}/cancel")
@@ -87,7 +89,7 @@ public class DentistScheduleController {
 
     /**
      * Get dentist schedule by ID.
-     * 
+     *
      * @param scheduleId Schedule ID
      * @return Schedule response
      */
@@ -101,12 +103,12 @@ public class DentistScheduleController {
 
     /**
      * Get all schedules for a dentist with pagination.
-     * 
+     *
      * @param dentistId Dentist ID
      * @param startDate Start date filter (optional)
-     * @param endDate End date filter (optional)
-     * @param page Page number (default: 0)
-     * @param size Page size (default: 10, max: 100)
+     * @param endDate   End date filter (optional)
+     * @param page      Page number (default: 0)
+     * @param size      Page size (default: 10, max: 100)
      * @return Page of dentist schedules
      */
     @GetMapping
@@ -118,7 +120,7 @@ public class DentistScheduleController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        
+
         // Set default date range if not provided
         if (startDate == null) {
             startDate = LocalDate.now();
@@ -126,20 +128,19 @@ public class DentistScheduleController {
         if (endDate == null) {
             endDate = startDate.plusMonths(1);
         }
-        
+
         Page<DentistScheduleResponse> response = scheduleService.getAllSchedulesByDentist(
-            dentistId, startDate, endDate, page, size
-        );
+                dentistId, startDate, endDate, page, size);
         return ResponseEntity.ok(response);
     }
 
     /**
      * Get available schedules (calendar view for appointment booking).
-     * 
+     *
      * @param startDate Start date
-     * @param endDate End date
-     * @param page Page number (default: 0)
-     * @param size Page size (default: 20, max: 100)
+     * @param endDate   End date
+     * @param page      Page number (default: 0)
+     * @param size      Page size (default: 20, max: 100)
      * @return Page of available schedules
      */
     @GetMapping("/available")
@@ -151,8 +152,7 @@ public class DentistScheduleController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         Page<DentistScheduleResponse> response = scheduleService.getAvailableSchedules(
-            startDate, endDate, page, size
-        );
+                startDate, endDate, page, size);
         return ResponseEntity.ok(response);
     }
 }

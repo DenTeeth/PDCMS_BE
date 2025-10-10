@@ -1,13 +1,12 @@
 package com.dental.clinic.management.dto.request;
 
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.time.LocalTime;
 
 /**
  * Request DTO for updating recurring schedule.
- * 
+ *
  * Business Rules:
  * - Can update times or shift reference
  * - Cannot change dayOfWeek (delete and create new instead)

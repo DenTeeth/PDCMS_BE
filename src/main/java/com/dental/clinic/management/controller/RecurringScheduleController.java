@@ -15,7 +15,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * Controller for managing recurring schedules (weekly patterns for full-time employees).
+ * Controller for managing recurring schedules (weekly patterns for full-time
+ * employees).
  * Admin-only access.
  */
 @RestController
@@ -31,7 +32,7 @@ public class RecurringScheduleController {
 
     /**
      * Create new recurring schedule (weekly pattern).
-     * 
+     *
      * @param request Create recurring schedule request
      * @return Created recurring schedule response
      */
@@ -39,7 +40,8 @@ public class RecurringScheduleController {
     @ApiMessage("Lịch cố định đã được tạo thành công")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(summary = "Create recurring schedule", description = "Create weekly recurring schedule (Admin only, Full-time employees)")
-    public ResponseEntity<RecurringScheduleResponse> createRecurringSchedule(@Valid @RequestBody CreateRecurringScheduleRequest request) {
+    public ResponseEntity<RecurringScheduleResponse> createRecurringSchedule(
+            @Valid @RequestBody CreateRecurringScheduleRequest request) {
         RecurringScheduleResponse response = recurringService.createRecurringSchedule(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -47,9 +49,9 @@ public class RecurringScheduleController {
     /**
      * Update recurring schedule.
      * Cannot change employeeId or dayOfWeek (delete and recreate instead).
-     * 
+     *
      * @param recurringId Recurring schedule ID
-     * @param request Update request
+     * @param request     Update request
      * @return Updated recurring schedule response
      */
     @PutMapping("/{recurringId}")
@@ -66,9 +68,9 @@ public class RecurringScheduleController {
     /**
      * Toggle active/inactive status.
      * Used to temporarily disable/enable recurring schedule.
-     * 
+     *
      * @param recurringId Recurring schedule ID
-     * @param isActive New active status
+     * @param isActive    New active status
      * @return Updated recurring schedule response
      */
     @PatchMapping("/{recurringId}/toggle")
@@ -84,7 +86,7 @@ public class RecurringScheduleController {
 
     /**
      * Get recurring schedule by ID.
-     * 
+     *
      * @param recurringId Recurring schedule ID
      * @return Recurring schedule response
      */
@@ -99,11 +101,11 @@ public class RecurringScheduleController {
 
     /**
      * Get all recurring schedules for an employee (weekly pattern).
-     * 
-     * @param employeeId Employee ID
+     *
+     * @param employeeId      Employee ID
      * @param includeInactive Include inactive schedules
-     * @param page Page number (default: 0)
-     * @param size Page size (default: 10, max: 100)
+     * @param page            Page number (default: 0)
+     * @param size            Page size (default: 10, max: 100)
      * @return Page of recurring schedules
      */
     @GetMapping
@@ -116,8 +118,7 @@ public class RecurringScheduleController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         Page<RecurringScheduleResponse> response = recurringService.getAllRecurringSchedulesByEmployee(
-            employeeId, includeInactive, page, size
-        );
+                employeeId, includeInactive, page, size);
         return ResponseEntity.ok(response);
     }
 }

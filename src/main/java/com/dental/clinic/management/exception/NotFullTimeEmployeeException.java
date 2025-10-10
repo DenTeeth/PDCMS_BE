@@ -5,9 +5,9 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 
 /**
  * Exception thrown when non-full-time employee attempts recurring schedule.
- * 
+ *
  * Business Rule: Only FULL_TIME employees can have recurring schedules.
- * 
+ *
  * Rationale:
  * - Full-time = fixed monthly salary = fixed weekly pattern
  * - Part-time = hourly payment = flexible self-registration
@@ -22,10 +22,9 @@ public class NotFullTimeEmployeeException extends RuntimeException {
 
     public NotFullTimeEmployeeException(String employeeCode, String employmentType) {
         super(String.format(
-            "Nhân viên %s (loại: %s) không được tạo lịch cố định. " +
-            "Chỉ nhân viên FULL_TIME mới có lịch tuần cố định.",
-            employeeCode, employmentType
-        ));
+                "Nhân viên %s (loại: %s) không được tạo lịch cố định. " +
+                        "Chỉ nhân viên FULL_TIME mới có lịch tuần cố định.",
+                employeeCode, employmentType));
     }
 
     public NotFullTimeEmployeeException(String message, Throwable cause) {

@@ -8,17 +8,17 @@ public enum DentistWorkScheduleStatus {
      * Schedule registered, no appointments yet.
      */
     AVAILABLE,
-    
+
     /**
      * Has appointments booked.
      */
     BOOKED,
-    
+
     /**
      * Dentist cancelled the schedule.
      */
     CANCELLED,
-    
+
     /**
      * Schedule date has passed.
      */

@@ -8,13 +8,13 @@ import java.time.LocalTime;
 
 /**
  * Request DTO for updating employee schedule status (attendance tracking).
- * 
+ *
  * Business Rules:
  * - SCHEDULED → PRESENT: Normal check-in
  * - SCHEDULED → LATE: Check-in after scheduled start time
  * - SCHEDULED → ABSENT: No check-in by end of day
  * - SCHEDULED → ON_LEAVE: Pre-approved absence
- * 
+ *
  * Auto-calculation:
  * - If actualStartTime > startTime: status = LATE
  * - If actualStartTime <= startTime: status = PRESENT

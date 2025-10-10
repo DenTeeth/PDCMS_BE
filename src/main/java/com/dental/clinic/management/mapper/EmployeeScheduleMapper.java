@@ -5,7 +5,6 @@ import com.dental.clinic.management.dto.response.EmployeeScheduleResponse;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
-import java.time.LocalTime;
 
 /**
  * Mapper for EmployeeSchedule entity and DTOs.
@@ -16,7 +15,7 @@ public class EmployeeScheduleMapper {
     /**
      * Convert EmployeeSchedule entity to response DTO.
      * Includes attendance tracking calculations.
-     * 
+     *
      * @param entity EmployeeSchedule entity
      * @return EmployeeScheduleResponse DTO
      */

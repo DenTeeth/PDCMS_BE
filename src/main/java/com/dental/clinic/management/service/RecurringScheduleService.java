@@ -27,8 +27,9 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Service for managing recurring schedules (weekly patterns for full-time employees).
- * 
+ * Service for managing recurring schedules (weekly patterns for full-time
+ * employees).
+ *
  * Business Rules:
  * 1. Only FULL_TIME employees can have recurring schedules
  * 2. Can use predefined shift OR custom times (not both)
@@ -50,9 +51,9 @@ public class RecurringScheduleService {
     private final RecurringScheduleMapper mapper;
 
     public RecurringScheduleService(RecurringScheduleRepository recurringRepository,
-                                   EmployeeRepository employeeRepository,
-                                   WorkShiftRepository workShiftRepository,
-                                   RecurringScheduleMapper mapper) {
+            EmployeeRepository employeeRepository,
+            WorkShiftRepository workShiftRepository,
+            RecurringScheduleMapper mapper) {
         this.recurringRepository = recurringRepository;
         this.employeeRepository = employeeRepository;
         this.workShiftRepository = workShiftRepository;
@@ -61,46 +62,46 @@ public class RecurringScheduleService {
 
     /**
      * Create new recurring schedule.
-     * 
+     *
      * @param request Create recurring schedule request
      * @return Created recurring schedule response
      * @throws NotFullTimeEmployeeException if employee is not FULL_TIME
-     * @throws BadRequestAlertException if both shiftId and custom times provided
-     * @throws BadRequestAlertException if neither shiftId nor custom times provided
-     * @throws ScheduleConflictException if conflicts with existing recurring schedule
+     * @throws BadRequestAlertException     if both shiftId and custom times
+     *                                      provided
+     * @throws BadRequestAlertException     if neither shiftId nor custom times
+     *                                      provided
+     * @throws ScheduleConflictException    if conflicts with existing recurring
+     *                                      schedule
      */
     @Transactional
     public RecurringScheduleResponse createRecurringSchedule(CreateRecurringScheduleRequest request) {
         // Validation 1: Check employee exists and is FULL_TIME
         Employee employee = employeeRepository.findById(request.getEmployeeId())
-            .orElseThrow(() -> new BadRequestAlertException(
-                "Không tìm thấy nhân viên với ID: " + request.getEmployeeId(),
-                "recurring_schedule", "employee_not_found"
-            ));
+                .orElseThrow(() -> new BadRequestAlertException(
+                        "Không tìm thấy nhân viên với ID: " + request.getEmployeeId(),
+                        "recurring_schedule", "employee_not_found"));
 
         if (employee.getEmploymentType() != EmploymentType.FULL_TIME) {
             throw new NotFullTimeEmployeeException(
-                employee.getEmployeeCode(),
-                employee.getEmploymentType() != null ? employee.getEmploymentType().name() : "UNKNOWN"
-            );
+                    employee.getEmployeeCode(),
+                    employee.getEmploymentType() != null ? employee.getEmploymentType().name() : "UNKNOWN");
         }
 
-        // Validation 2: Must provide EITHER shiftId OR custom times (not both, not neither)
+        // Validation 2: Must provide EITHER shiftId OR custom times (not both, not
+        // neither)
         boolean hasShiftId = request.getShiftId() != null && !request.getShiftId().trim().isEmpty();
         boolean hasCustomTimes = request.getStartTime() != null && request.getEndTime() != null;
 
         if (hasShiftId && hasCustomTimes) {
             throw new BadRequestAlertException(
-                "Không thể cung cấp đồng thời shiftId và giờ tùy chỉnh. Chọn một trong hai",
-                "recurring_schedule", "ambiguous_time"
-            );
+                    "Không thể cung cấp đồng thời shiftId và giờ tùy chỉnh. Chọn một trong hai",
+                    "recurring_schedule", "ambiguous_time");
         }
 
         if (!hasShiftId && !hasCustomTimes) {
             throw new BadRequestAlertException(
-                "Phải cung cấp shiftId HOẶC giờ tùy chỉnh (startTime + endTime)",
-                "recurring_schedule", "missing_time"
-            );
+                    "Phải cung cấp shiftId HOẶC giờ tùy chỉnh (startTime + endTime)",
+                    "recurring_schedule", "missing_time");
         }
 
         // Resolve times for validation
@@ -111,10 +112,9 @@ public class RecurringScheduleService {
         if (hasShiftId) {
             // Use predefined shift
             workShift = workShiftRepository.findById(request.getShiftId())
-                .orElseThrow(() -> new BadRequestAlertException(
-                    "Không tìm thấy ca làm việc với ID: " + request.getShiftId(),
-                    "recurring_schedule", "shift_not_found"
-                ));
+                    .orElseThrow(() -> new BadRequestAlertException(
+                            "Không tìm thấy ca làm việc với ID: " + request.getShiftId(),
+                            "recurring_schedule", "shift_not_found"));
 
             startTime = workShift.getStartTime();
             endTime = workShift.getEndTime();
@@ -127,19 +127,18 @@ public class RecurringScheduleService {
 
         // Validation 3: Check for conflicts on same day of week
         List<RecurringSchedule> conflicts = recurringRepository.findConflictingSchedules(
-            request.getEmployeeId(),
-            request.getDayOfWeek(),
-            startTime,
-            endTime,
-            null  // No exclusion for new schedules
+                request.getEmployeeId(),
+                request.getDayOfWeek(),
+                startTime,
+                endTime,
+                null // No exclusion for new schedules
         );
 
         if (!conflicts.isEmpty()) {
             throw new ScheduleConflictException(
-                request.getDayOfWeek().name(),
-                startTime,
-                endTime
-            );
+                    request.getDayOfWeek().name(),
+                    startTime,
+                    endTime);
         }
 
         // Generate recurring code: REC_YYYYMMDD_SEQ
@@ -167,19 +166,19 @@ public class RecurringScheduleService {
     /**
      * Update existing recurring schedule.
      * Cannot change employeeId or dayOfWeek (delete and recreate instead).
-     * 
+     *
      * @param recurringId Recurring schedule ID
-     * @param request Update request
+     * @param request     Update request
      * @return Updated recurring schedule response
      */
     @Transactional
-    public RecurringScheduleResponse updateRecurringSchedule(String recurringId, UpdateRecurringScheduleRequest request) {
+    public RecurringScheduleResponse updateRecurringSchedule(String recurringId,
+            UpdateRecurringScheduleRequest request) {
         // Find existing schedule
         RecurringSchedule schedule = recurringRepository.findById(recurringId)
-            .orElseThrow(() -> new BadRequestAlertException(
-                "Không tìm thấy lịch cố định với ID: " + recurringId,
-                "recurring_schedule", "not_found"
-            ));
+                .orElseThrow(() -> new BadRequestAlertException(
+                        "Không tìm thấy lịch cố định với ID: " + recurringId,
+                        "recurring_schedule", "not_found"));
 
         // Validation: Must provide EITHER shiftId OR custom times
         boolean hasShiftId = request.getShiftId() != null && !request.getShiftId().trim().isEmpty();
@@ -187,9 +186,8 @@ public class RecurringScheduleService {
 
         if (hasShiftId && hasCustomTimes) {
             throw new BadRequestAlertException(
-                "Không thể cung cấp đồng thời shiftId và giờ tùy chỉnh",
-                "recurring_schedule", "ambiguous_time"
-            );
+                    "Không thể cung cấp đồng thời shiftId và giờ tùy chỉnh",
+                    "recurring_schedule", "ambiguous_time");
         }
 
         // Resolve times for validation
@@ -199,10 +197,9 @@ public class RecurringScheduleService {
 
         if (hasShiftId) {
             workShift = workShiftRepository.findById(request.getShiftId())
-                .orElseThrow(() -> new BadRequestAlertException(
-                    "Không tìm thấy ca làm việc với ID: " + request.getShiftId(),
-                    "recurring_schedule", "shift_not_found"
-                ));
+                    .orElseThrow(() -> new BadRequestAlertException(
+                            "Không tìm thấy ca làm việc với ID: " + request.getShiftId(),
+                            "recurring_schedule", "shift_not_found"));
 
             startTime = workShift.getStartTime();
             endTime = workShift.getEndTime();
@@ -223,19 +220,18 @@ public class RecurringScheduleService {
 
         // Check for conflicts (exclude current schedule)
         List<RecurringSchedule> conflicts = recurringRepository.findConflictingSchedules(
-            schedule.getEmployeeId(),
-            schedule.getDayOfWeek(),
-            startTime,
-            endTime,
-            recurringId  // Exclude self
+                schedule.getEmployeeId(),
+                schedule.getDayOfWeek(),
+                startTime,
+                endTime,
+                recurringId // Exclude self
         );
 
         if (!conflicts.isEmpty()) {
             throw new ScheduleConflictException(
-                schedule.getDayOfWeek().name(),
-                startTime,
-                endTime
-            );
+                    schedule.getDayOfWeek().name(),
+                    startTime,
+                    endTime);
         }
 
         // Update fields
@@ -261,18 +257,17 @@ public class RecurringScheduleService {
 
     /**
      * Toggle active status of recurring schedule.
-     * 
+     *
      * @param recurringId Recurring schedule ID
-     * @param isActive New active status
+     * @param isActive    New active status
      * @return Updated recurring schedule response
      */
     @Transactional
     public RecurringScheduleResponse toggleRecurringSchedule(String recurringId, boolean isActive) {
         RecurringSchedule schedule = recurringRepository.findById(recurringId)
-            .orElseThrow(() -> new BadRequestAlertException(
-                "Không tìm thấy lịch cố định với ID: " + recurringId,
-                "recurring_schedule", "not_found"
-            ));
+                .orElseThrow(() -> new BadRequestAlertException(
+                        "Không tìm thấy lịch cố định với ID: " + recurringId,
+                        "recurring_schedule", "not_found"));
 
         schedule.setIsActive(isActive);
         RecurringSchedule updated = recurringRepository.save(schedule);
@@ -282,40 +277,38 @@ public class RecurringScheduleService {
 
     /**
      * Get recurring schedule by ID.
-     * 
+     *
      * @param recurringId Recurring schedule ID
      * @return Recurring schedule response
      */
     @Transactional(readOnly = true)
     public RecurringScheduleResponse getRecurringScheduleById(String recurringId) {
         RecurringSchedule schedule = recurringRepository.findById(recurringId)
-            .orElseThrow(() -> new BadRequestAlertException(
-                "Không tìm thấy lịch cố định với ID: " + recurringId,
-                "recurring_schedule", "not_found"
-            ));
+                .orElseThrow(() -> new BadRequestAlertException(
+                        "Không tìm thấy lịch cố định với ID: " + recurringId,
+                        "recurring_schedule", "not_found"));
 
         return mapper.toResponse(schedule);
     }
 
     /**
      * Get all recurring schedules for an employee.
-     * 
-     * @param employeeId Employee ID
+     *
+     * @param employeeId      Employee ID
      * @param includeInactive Include inactive schedules
-     * @param page Page number
-     * @param size Page size
+     * @param page            Page number
+     * @param size            Page size
      * @return Page of recurring schedules
      */
     @Transactional(readOnly = true)
     public Page<RecurringScheduleResponse> getAllRecurringSchedulesByEmployee(
             String employeeId, boolean includeInactive, int page, int size) {
-        
+
         // Validate employee exists
         if (!employeeRepository.existsById(employeeId)) {
             throw new BadRequestAlertException(
-                "Không tìm thấy nhân viên với ID: " + employeeId,
-                "recurring_schedule", "employee_not_found"
-            );
+                    "Không tìm thấy nhân viên với ID: " + employeeId,
+                    "recurring_schedule", "employee_not_found");
         }
 
         // Pagination setup
@@ -324,24 +317,23 @@ public class RecurringScheduleService {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "dayOfWeek"));
 
         Page<RecurringSchedule> schedules;
-        
+
         if (includeInactive) {
             schedules = recurringRepository.findByEmployeeIdOrderByDayOfWeekAsc(employeeId, pageable);
         } else {
             List<RecurringSchedule> activeList = recurringRepository
-                .findByEmployeeIdAndIsActiveOrderByDayOfWeekAsc(employeeId, true);
-            
+                    .findByEmployeeIdAndIsActiveOrderByDayOfWeekAsc(employeeId, true);
+
             // Convert list to page manually
             int start = (int) pageable.getOffset();
             int end = Math.min((start + pageable.getPageSize()), activeList.size());
-            
+
             if (start > activeList.size()) {
                 schedules = Page.empty(pageable);
             } else {
                 List<RecurringSchedule> pageContent = activeList.subList(start, end);
                 schedules = new org.springframework.data.domain.PageImpl<>(
-                    pageContent, pageable, activeList.size()
-                );
+                        pageContent, pageable, activeList.size());
             }
         }
 
@@ -351,29 +343,26 @@ public class RecurringScheduleService {
     /**
      * Validate time range for custom times.
      * Same rules as work shifts: 3-8 hours, 08:00-21:00.
-     * 
+     *
      * @param startTime Start time
-     * @param endTime End time
+     * @param endTime   End time
      */
     private void validateTimeRange(LocalTime startTime, LocalTime endTime) {
         // Rule 1: End time must be after start time
         if (endTime.isBefore(startTime) || endTime.equals(startTime)) {
             throw new InvalidShiftDurationException(
-                String.format("Giờ kết thúc (%s) phải sau giờ bắt đầu (%s)", endTime, startTime)
-            );
+                    String.format("Giờ kết thúc (%s) phải sau giờ bắt đầu (%s)", endTime, startTime));
         }
 
         // Rule 2: Within clinic operating hours
         if (startTime.isBefore(MIN_WORKING_HOUR)) {
             throw new InvalidWorkingHoursException(
-                String.format("Giờ bắt đầu (%s) phải từ %s trở về sau", startTime, MIN_WORKING_HOUR)
-            );
+                    String.format("Giờ bắt đầu (%s) phải từ %s trở về sau", startTime, MIN_WORKING_HOUR));
         }
 
         if (endTime.isAfter(MAX_WORKING_HOUR)) {
             throw new InvalidWorkingHoursException(
-                String.format("Giờ kết thúc (%s) phải trước %s", endTime, MAX_WORKING_HOUR)
-            );
+                    String.format("Giờ kết thúc (%s) phải trước %s", endTime, MAX_WORKING_HOUR));
         }
 
         // Rule 3: Duration must be 3-8 hours
@@ -382,16 +371,15 @@ public class RecurringScheduleService {
 
         if (hours < MIN_DURATION_HOURS || hours > MAX_DURATION_HOURS) {
             throw new InvalidShiftDurationException(
-                String.format("Thời lượng ca làm việc: %d giờ. Yêu cầu: %d-%d giờ",
-                    hours, MIN_DURATION_HOURS, MAX_DURATION_HOURS)
-            );
+                    String.format("Thời lượng ca làm việc: %d giờ. Yêu cầu: %d-%d giờ",
+                            hours, MIN_DURATION_HOURS, MAX_DURATION_HOURS));
         }
     }
 
     /**
      * Generate unique recurring code.
      * Format: REC_YYYYMMDD_SEQ
-     * 
+     *
      * @return Generated recurring code
      */
     private String generateRecurringCode() {

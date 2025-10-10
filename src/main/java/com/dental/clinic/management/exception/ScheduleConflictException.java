@@ -8,9 +8,9 @@ import java.time.LocalTime;
 
 /**
  * Exception thrown when schedule has time conflicts with existing schedules.
- * 
+ *
  * Conflict Definition: Overlapping time ranges on the same date.
- * 
+ *
  * Checked for:
  * - DentistWorkSchedule (same dentist, same date)
  * - RecurringSchedule (same employee, same day of week)
@@ -24,20 +24,18 @@ public class ScheduleConflictException extends RuntimeException {
     }
 
     public ScheduleConflictException(LocalDate date, LocalTime startTime, LocalTime endTime,
-                                     String conflictingScheduleCode) {
+            String conflictingScheduleCode) {
         super(String.format(
-            "Trùng lịch làm việc ngày %s (%s - %s) với lịch %s. " +
-            "Vui lòng chọn thời gian khác.",
-            date, startTime, endTime, conflictingScheduleCode
-        ));
+                "Trùng lịch làm việc ngày %s (%s - %s) với lịch %s. " +
+                        "Vui lòng chọn thời gian khác.",
+                date, startTime, endTime, conflictingScheduleCode));
     }
 
     public ScheduleConflictException(String dayOfWeek, LocalTime startTime, LocalTime endTime) {
         super(String.format(
-            "Trùng lịch cố định thứ %s (%s - %s). " +
-            "Vui lòng kiểm tra lại lịch tuần.",
-            dayOfWeek, startTime, endTime
-        ));
+                "Trùng lịch cố định thứ %s (%s - %s). " +
+                        "Vui lòng kiểm tra lại lịch tuần.",
+                dayOfWeek, startTime, endTime));
     }
 
     public ScheduleConflictException(String message, Throwable cause) {

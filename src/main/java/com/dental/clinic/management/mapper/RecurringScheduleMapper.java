@@ -16,7 +16,7 @@ public class RecurringScheduleMapper {
     /**
      * Convert RecurringSchedule entity to response DTO.
      * Resolves shift times from either predefined shift or custom times.
-     * 
+     *
      * @param entity RecurringSchedule entity
      * @return RecurringScheduleResponse DTO
      */

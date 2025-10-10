@@ -21,7 +21,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, String>, Jpa
   /**
    * Find employee by account username.
    * Used for owner validation and getting current employee info from JWT token.
-   * 
+   *
    * @param username Account username from security context
    * @return Optional employee entity
    */
@@ -29,7 +29,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, String>, Jpa
 
   /**
    * Check if employee exists by account username.
-   * 
+   *
    * @param username Account username
    * @return True if exists
    */

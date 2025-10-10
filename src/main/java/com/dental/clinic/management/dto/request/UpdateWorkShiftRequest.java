@@ -9,7 +9,7 @@ import java.time.LocalTime;
 
 /**
  * Request DTO for updating an existing work shift.
- * 
+ *
  * Business Rules:
  * - Cannot change shiftCode (immutable business identifier)
  * - Can update shiftName, times, type, active status
@@ -43,7 +43,7 @@ public class UpdateWorkShiftRequest {
     }
 
     public UpdateWorkShiftRequest(String shiftName, WorkShiftType shiftType,
-                                  LocalTime startTime, LocalTime endTime, Boolean isActive) {
+            LocalTime startTime, LocalTime endTime, Boolean isActive) {
         this.shiftName = shiftName;
         this.shiftType = shiftType;
         this.startTime = startTime;

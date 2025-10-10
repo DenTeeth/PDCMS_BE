@@ -10,7 +10,7 @@ import java.time.LocalTime;
 
 /**
  * Request DTO for creating a new work shift.
- * 
+ *
  * Business Rules:
  * - Shift code: SHIFT_XXX format (e.g., SHIFT_MORNING)
  * - Shift name: Max 50 chars, Vietnamese supported
@@ -47,7 +47,7 @@ public class CreateWorkShiftRequest {
     }
 
     public CreateWorkShiftRequest(String shiftCode, String shiftName, WorkShiftType shiftType,
-                                  LocalTime startTime, LocalTime endTime) {
+            LocalTime startTime, LocalTime endTime) {
         this.shiftCode = shiftCode;
         this.shiftName = shiftName;
         this.shiftType = shiftType;
