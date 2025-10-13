@@ -13,11 +13,13 @@ import org.springframework.stereotype.Component;
 public class RoleMapper {
 
     public RoleInfoResponse toRoleInfoResponse(Role role) {
-        if (role == null) return null;
+        if (role == null)
+            return null;
         RoleInfoResponse r = new RoleInfoResponse();
         r.setRoleId(role.getRoleId());
         r.setRoleName(role.getRoleName());
         r.setDescription(role.getDescription());
+        r.setRequiresSpecialization(role.getRequiresSpecialization());
         r.setIsActive(role.getIsActive());
         r.setCreatedAt(role.getCreatedAt());
         return r;
@@ -28,11 +30,15 @@ public class RoleMapper {
     }
 
     public Role toRole(CreateRoleRequest request) {
-        if (request == null) return null;
+        if (request == null)
+            return null;
         Role role = new Role();
         role.setRoleId(request.getRoleId());
         role.setRoleName(request.getRoleName());
         role.setDescription(request.getDescription());
+        role.setRequiresSpecialization(request.getRequiresSpecialization() != null
+                ? request.getRequiresSpecialization()
+                : false);
         role.setIsActive(true);
         return role;
     }

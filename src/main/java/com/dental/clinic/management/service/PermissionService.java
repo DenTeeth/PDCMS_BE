@@ -7,8 +7,6 @@ import com.dental.clinic.management.exception.BadRequestAlertException;
 import com.dental.clinic.management.exception.PermissionNotFoundException;
 import com.dental.clinic.management.mapper.PermissionMapper;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -29,7 +27,6 @@ import java.util.stream.Collectors;
 
 @Service
 public class PermissionService {
-    private static final Logger log = LoggerFactory.getLogger(PermissionService.class);
 
     private final PermissionRepository permissionRepository;
     private final PermissionMapper permissionMapper;

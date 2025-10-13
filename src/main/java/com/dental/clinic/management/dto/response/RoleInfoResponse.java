@@ -6,13 +6,15 @@ public class RoleInfoResponse {
     private String roleId;
     private String roleName;
     private String description;
+    private Boolean requiresSpecialization;
     private Boolean isActive;
     private LocalDateTime createdAt;
 
     public RoleInfoResponse() {
     }
 
-    public RoleInfoResponse(String roleId, String roleName, String description, Boolean isActive, LocalDateTime createdAt) {
+    public RoleInfoResponse(String roleId, String roleName, String description, Boolean isActive,
+            LocalDateTime createdAt) {
         this.roleId = roleId;
         this.roleName = roleName;
         this.description = description;
@@ -42,6 +44,14 @@ public class RoleInfoResponse {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Boolean getRequiresSpecialization() {
+        return requiresSpecialization;
+    }
+
+    public void setRequiresSpecialization(Boolean requiresSpecialization) {
+        this.requiresSpecialization = requiresSpecialization;
     }
 
     public Boolean getIsActive() {

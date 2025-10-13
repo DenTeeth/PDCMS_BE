@@ -1,6 +1,7 @@
 package com.dental.clinic.management.controller;
 
 import com.dental.clinic.management.dto.response.PermissionInfoResponse;
+import com.dental.clinic.management.dto.response.RoleInfoResponse;
 import com.dental.clinic.management.service.AccountService;
 import com.dental.clinic.management.service.RoleService;
 import com.dental.clinic.management.utils.annotation.ApiMessage;
@@ -40,40 +41,46 @@ public class RoleController {
     @PostMapping("")
     @Operation(summary = "Create new role", description = "Create a new role with specified details")
     @ApiMessage("Create role successfully")
-    public ResponseEntity<com.dental.clinic.management.dto.response.RoleInfoResponse> createRole(@Valid @RequestBody com.dental.clinic.management.dto.request.CreateRoleRequest request) throws URISyntaxException {
-        com.dental.clinic.management.dto.response.RoleInfoResponse response = roleService.createRole(request);
+    public ResponseEntity<RoleInfoResponse> createRole(
+            @Valid @RequestBody com.dental.clinic.management.dto.request.CreateRoleRequest request)
+            throws URISyntaxException {
+        RoleInfoResponse response = roleService.createRole(request);
         return ResponseEntity.created(new URI("/api/v1/roles/" + response.getRoleId())).body(response);
     }
 
     @GetMapping("")
     @Operation(summary = "Get all roles", description = "Retrieve all active roles")
     @ApiMessage("Get roles successfully")
-    public ResponseEntity<List<com.dental.clinic.management.dto.response.RoleInfoResponse>> getAllRoles() {
-        List<com.dental.clinic.management.dto.response.RoleInfoResponse> response = roleService.getAllRoles();
+    public ResponseEntity<List<RoleInfoResponse>> getAllRoles() {
+        List<RoleInfoResponse> response = roleService.getAllRoles();
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{roleId}")
     @Operation(summary = "Get role by ID", description = "Get role details by role ID")
     @ApiMessage("Get role successfully")
-    public ResponseEntity<com.dental.clinic.management.dto.response.RoleInfoResponse> getRoleById(@PathVariable String roleId) {
-        com.dental.clinic.management.dto.response.RoleInfoResponse response = roleService.getRoleById(roleId);
+    public ResponseEntity<RoleInfoResponse> getRoleById(
+            @PathVariable String roleId) {
+        RoleInfoResponse response = roleService.getRoleById(roleId);
         return ResponseEntity.ok(response);
     }
 
     @PutMapping("/{roleId}")
     @Operation(summary = "Update role", description = "Update role data by role ID")
     @ApiMessage("Update role successfully")
-    public ResponseEntity<com.dental.clinic.management.dto.response.RoleInfoResponse> updateRole(@PathVariable String roleId, @Valid @RequestBody com.dental.clinic.management.dto.request.UpdateRoleRequest request) {
-        com.dental.clinic.management.dto.response.RoleInfoResponse response = roleService.updateRole(roleId, request);
+    public ResponseEntity<RoleInfoResponse> updateRole(
+            @PathVariable String roleId,
+            @Valid @RequestBody com.dental.clinic.management.dto.request.UpdateRoleRequest request) {
+        RoleInfoResponse response = roleService.updateRole(roleId, request);
         return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{roleId}")
     @Operation(summary = "Delete role (soft)", description = "Soft delete role by setting isActive to false")
     @ApiMessage("Delete role successfully")
-    public ResponseEntity<com.dental.clinic.management.dto.response.RoleInfoResponse> deleteRole(@PathVariable String roleId) {
-        com.dental.clinic.management.dto.response.RoleInfoResponse response = roleService.deleteRole(roleId);
+    public ResponseEntity<RoleInfoResponse> deleteRole(
+            @PathVariable String roleId) {
+        RoleInfoResponse response = roleService.deleteRole(roleId);
         return ResponseEntity.ok(response);
     }
 

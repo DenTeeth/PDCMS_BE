@@ -12,6 +12,8 @@ public class UpdateRoleRequest {
     @Size(max = 500, message = "Description must not exceed 500 characters")
     private String description;
 
+    private Boolean requiresSpecialization;
+
     public UpdateRoleRequest() {
     }
 
@@ -34,5 +36,13 @@ public class UpdateRoleRequest {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Boolean getRequiresSpecialization() {
+        return requiresSpecialization;
+    }
+
+    public void setRequiresSpecialization(Boolean requiresSpecialization) {
+        this.requiresSpecialization = requiresSpecialization;
     }
 }
