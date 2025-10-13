@@ -30,6 +30,11 @@ public interface AppointmentRepository extends JpaRepository<Appointment, String
                                                               @Param("endTime") LocalTime endTime,
                                                               @Param("excludeId") String excludeId);
 
+        /**
+         * Find all appointments for a doctor on a specific date.
+         */
+        List<Appointment> findByDoctorIdAndAppointmentDate(String doctorId, LocalDate appointmentDate);
+
         // count existing appointments for code generation (per doctor per day)
         long countByDoctorIdAndAppointmentDate(String doctorId, java.time.LocalDate appointmentDate);
 

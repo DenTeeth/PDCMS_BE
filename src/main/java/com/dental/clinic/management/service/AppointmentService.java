@@ -16,15 +16,29 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.dental.clinic.management.domain.enums.AppointmentStatus;
+import com.dental.clinic.management.domain.enums.AppointmentType;
+import com.dental.clinic.management.domain.DentistWorkSchedule;
+import com.dental.clinic.management.domain.enums.DentistWorkScheduleStatus;
+import com.dental.clinic.management.dto.response.AvailableSlotResponse;
+import com.dental.clinic.management.domain.enums.DentistWorkScheduleStatus;
+import com.dental.clinic.management.dto.request.RescheduleAppointmentRequest;
+import com.dental.clinic.management.domain.enums.AppointmentType;
+import com.dental.clinic.management.utils.security.SecurityUtil;
+import com.dental.clinic.management.dto.response.AvailableSlotResponse;
+import com.dental.clinic.management.domain.DentistWorkSchedule;
+import com.dental.clinic.management.dto.response.AvailableSlotResponse;
+import com.dental.clinic.management.repository.DentistWorkScheduleRepository;
+import static com.dental.clinic.management.utils.security.AuthoritiesConstants.*;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import com.dental.clinic.management.domain.enums.AppointmentStatus;
 
 
-import static com.dental.clinic.management.utils.security.AuthoritiesConstants.*;
+
+
 
 @Service
 public class AppointmentService {
@@ -33,21 +47,30 @@ public class AppointmentService {
     private final AppointmentMapper mapper;
     private final PatientRepository patientRepository;
     private final EmployeeRepository employeeRepository;
+    private final DentistWorkScheduleRepository dentistWorkScheduleRepository;
 
-    public AppointmentService(AppointmentRepository repository, AppointmentMapper mapper, PatientRepository patientRepository, EmployeeRepository employeeRepository) {
+    public AppointmentService(AppointmentRepository repository,
+                              AppointmentMapper mapper,
+                              PatientRepository patientRepository,
+                              EmployeeRepository employeeRepository,
+                              DentistWorkScheduleRepository dentistWorkScheduleRepository) {
         this.repository = repository;
         this.mapper = mapper;
         this.patientRepository = patientRepository;
         this.employeeRepository = employeeRepository;
+        this.dentistWorkScheduleRepository = dentistWorkScheduleRepository;
     }
 
     @PreAuthorize("(hasAnyRole('RECEPTIONIST','ADMIN') and hasAuthority('" + VIEW_APPOINTMENT + "'))")
     @Transactional(readOnly = true)
-    public Page<AppointmentResponse> listAppointments(int page, int size, String sortBy, String sortDirection,
-                                                      java.time.LocalDate appointmentDate,
+    public Page<AppointmentResponse> listAppointments(int page,
+                                                      int size,
+                                                      String sortBy,
+                                                      String sortDirection,
+                                                      LocalDate appointmentDate,
                                                       String doctorId,
-                                                      com.dental.clinic.management.domain.enums.AppointmentStatus status,
-                                                      com.dental.clinic.management.domain.enums.AppointmentType type) {
+                                                      AppointmentStatus status,
+                                                      AppointmentType type) {
         page = Math.max(0, page);
         size = (size <= 0 || size > 100) ? 10 : size;
         Sort.Direction direction = sortDirection.equalsIgnoreCase("DESC") ? Sort.Direction.DESC : Sort.Direction.ASC;
@@ -67,12 +90,54 @@ public class AppointmentService {
         return mapper.toResponse(appt);
     }
 
+    @PreAuthorize("(hasAnyRole('RECEPTIONIST','ADMIN') and hasAuthority('" + VIEW_APPOINTMENT + "'))")
+    @Transactional(readOnly = true)
+    public java.util.List<AvailableSlotResponse> getAvailableSlots(String doctorId, java.time.LocalDate date) {
+        if (doctorId == null || doctorId.isBlank()) {
+            throw new BadRequestAlertException("doctorId is required", "appointment", "missing_doctor");
+        }
+        if (date == null) {
+            throw new BadRequestAlertException("date is required", "appointment", "missing_date");
+        }
+
+    // fetch dentist schedules for the date (only AVAILABLE or BOOKED)
+    java.util.List<DentistWorkSchedule> schedules = dentistWorkScheduleRepository.findByDentistIdAndWorkDate(doctorId, date);
+    schedules.removeIf(s -> s.getStatus() == DentistWorkScheduleStatus.CANCELLED || s.getStatus() == DentistWorkScheduleStatus.EXPIRED);
+    java.util.List<AvailableSlotResponse> slots = new java.util.ArrayList<>();
+        if (schedules == null || schedules.isEmpty()) return slots;
+
+    // fetch existing appointments for the doctor and date (exclude cancelled)
+    java.util.List<Appointment> appointments = repository.findByDoctorIdAndAppointmentDate(doctorId, date).stream()
+        .filter(a -> a.getStatus() != AppointmentStatus.CANCELLED)
+        .collect(java.util.stream.Collectors.toList());
+
+        for (DentistWorkSchedule s : schedules) {
+            java.time.LocalTime cur = s.getStartTime();
+            while (!cur.plusMinutes(30).isAfter(s.getEndTime())) {
+                java.time.LocalTime slotStart = cur;
+                java.time.LocalTime slotEnd = cur.plusMinutes(30);
+                boolean conflict = appointments.stream().anyMatch(a -> a.getStartTime().isBefore(slotEnd) && a.getEndTime().isAfter(slotStart));
+                if (!conflict) {
+                    slots.add(new AvailableSlotResponse(doctorId, date, slotStart));
+                }
+                cur = cur.plusMinutes(30);
+            }
+        }
+
+        return slots;
+    }
+
     @PreAuthorize("(hasRole('RECEPTIONIST') and hasAuthority('" + CREATE_APPOINTMENT + "'))")
     @Transactional
     public AppointmentResponse schedule(CreateAppointmentRequest request) {
         // validate times
         if (request.getStartTime().compareTo(request.getEndTime()) >= 0) {
             throw new BadRequestAlertException("Start time must be before end time", "appointment", "invalidtime");
+        }
+
+        // appointment_date must be >= today
+        if (request.getAppointmentDate().isBefore(LocalDate.now())) {
+            throw new BadRequestAlertException("Appointment date must be today or later", "appointment", "invalid_date");
         }
 
         // validate patient and doctor
@@ -94,6 +159,17 @@ public class AppointmentService {
             throw new BadRequestAlertException("Doctor not available for the given time slot", "appointment", "overlap");
         }
 
+        // Check dentist work schedules for availability on that date
+        java.util.List<DentistWorkSchedule> schedules = dentistWorkScheduleRepository.findByDentistIdAndWorkDate(request.getDoctorId(), request.getAppointmentDate());
+        if (schedules == null || schedules.isEmpty()) {
+            throw new BadRequestAlertException("Doctor is not available on this date", "appointment", "doctor_not_available");
+        }
+
+        boolean withinWorkingHours = schedules.stream().anyMatch(s -> !s.getStartTime().isAfter(request.getStartTime()) && !s.getEndTime().isBefore(request.getEndTime()));
+        if (!withinWorkingHours) {
+            throw new BadRequestAlertException("Appointment time is outside doctor's working hours", "appointment", "outside_working_hours");
+        }
+
     Appointment entity = mapper.toEntity(request);
     // appointment_id should be full APT + YYYYMMDD + SEQ (no dashes)
     DateTimeFormatter dfFull = DateTimeFormatter.ofPattern("yyyyMMdd");
@@ -101,15 +177,108 @@ public class AppointmentService {
     String datePartFull = request.getAppointmentDate().format(dfFull);
     String datePartShort = request.getAppointmentDate().format(dfShort);
     long seq = repository.countByDoctorIdAndAppointmentDate(request.getDoctorId(), request.getAppointmentDate()) + 1;
-    String seqPart = String.format("%03d", seq);
+    String seqPart = String.format("%04d", seq);
     String generatedId = "APT" + datePartFull + seqPart; // full PK
     String generatedCode = "APT" + datePartShort + seqPart; // shortened code (YYMMDD)
     entity.setAppointmentId(generatedId);
     entity.setAppointmentCode(generatedCode);
     if (entity.getStatus() == null) entity.setStatus(AppointmentStatus.SCHEDULED);
         // createdBy from security token if present
-        com.dental.clinic.management.utils.security.SecurityUtil.getCurrentUserLogin().ifPresent(entity::setCreatedBy);
+        SecurityUtil.getCurrentUserLogin().ifPresent(entity::setCreatedBy);
         Appointment saved = repository.save(entity);
+        return mapper.toResponse(saved);
+    }
+
+    @Transactional
+    public AppointmentResponse confirm(String appointmentId) {
+        Appointment appt = repository.findById(appointmentId)
+                .orElseThrow(() -> new BadRequestAlertException("Appointment not found: " + appointmentId, "appointment", "notfound"));
+        if (appt.getStatus() != AppointmentStatus.SCHEDULED) {
+            throw new BadRequestAlertException("Only SCHEDULED appointments can be confirmed", "appointment", "invalid_status");
+        }
+        appt.setStatus(AppointmentStatus.CONFIRMED);
+        appt.setConfirmedAt(java.time.LocalDateTime.now());
+        repository.save(appt);
+        return mapper.toResponse(appt);
+    }
+
+    @Transactional
+    public AppointmentResponse complete(String appointmentId) {
+        Appointment appt = repository.findById(appointmentId)
+                .orElseThrow(() -> new BadRequestAlertException("Appointment not found: " + appointmentId, "appointment", "notfound"));
+        if (appt.getStatus() != AppointmentStatus.CONFIRMED) {
+            throw new BadRequestAlertException("Only CONFIRMED appointments can be completed", "appointment", "invalid_status");
+        }
+        appt.setStatus(AppointmentStatus.COMPLETED);
+        appt.setCompletedAt(java.time.LocalDateTime.now());
+        Appointment saved = repository.save(appt);
+        // Trigger treatment plan creation if EXAMINATION
+        if (saved.getType() == AppointmentType.EXAMINATION) {
+            // TreatmentPlan creation - stubbed
+            // treatmentPlanService.createFromAppointment(saved);
+        }
+        return mapper.toResponse(saved);
+    }
+
+    @Transactional
+    public AppointmentResponse noShow(String appointmentId) {
+        Appointment appt = repository.findById(appointmentId)
+                .orElseThrow(() -> new BadRequestAlertException("Appointment not found: " + appointmentId, "appointment", "notfound"));
+        if (appt.getStatus() != AppointmentStatus.CONFIRMED) {
+            throw new BadRequestAlertException("Only CONFIRMED appointments can be marked as no-show", "appointment", "invalid_status");
+        }
+        appt.setStatus(AppointmentStatus.NO_SHOW);
+        Appointment saved = repository.save(appt);
+        return mapper.toResponse(saved);
+    }
+
+    @Transactional
+    public AppointmentResponse cancel(String appointmentId, String cancellationReason) {
+        Appointment appt = repository.findById(appointmentId)
+                .orElseThrow(() -> new BadRequestAlertException("Appointment not found: " + appointmentId, "appointment", "notfound"));
+        if (appt.getStatus() == AppointmentStatus.COMPLETED) {
+            throw new BadRequestAlertException("Cannot cancel a completed appointment", "appointment", "invalid_status");
+        }
+        appt.setStatus(AppointmentStatus.CANCELLED);
+        appt.setCancelledAt(java.time.LocalDateTime.now());
+        appt.setCancellationReason(cancellationReason);
+        Appointment saved = repository.save(appt);
+        return mapper.toResponse(saved);
+    }
+
+    @Transactional
+    public AppointmentResponse reschedule(String appointmentId, RescheduleAppointmentRequest request) {
+        Appointment appt = repository.findById(appointmentId)
+                .orElseThrow(() -> new BadRequestAlertException("Appointment not found: " + appointmentId, "appointment", "notfound"));
+        if (!(appt.getStatus() == AppointmentStatus.SCHEDULED || appt.getStatus() == AppointmentStatus.CONFIRMED)) {
+            throw new BadRequestAlertException("Only SCHEDULED or CONFIRMED appointments can be rescheduled", "appointment", "invalid_status");
+        }
+
+        // Validate times
+        if (request.getStartTime().compareTo(request.getEndTime()) >= 0) {
+            throw new BadRequestAlertException("Start time must be before end time", "appointment", "invalidtime");
+        }
+        if (request.getAppointmentDate().isBefore(LocalDate.now())) {
+            throw new BadRequestAlertException("Appointment date must be today or later", "appointment", "invalid_date");
+        }
+
+        // Check overlaps
+        List<Appointment> overlaps = repository.findOverlappingByDoctorAndDateExcluding(appt.getDoctorId(), request.getAppointmentDate(), request.getStartTime(), request.getEndTime(), appointmentId);
+        if (!overlaps.isEmpty()) {
+            throw new BadRequestAlertException("Doctor not available for the new time slot", "appointment", "overlap");
+        }
+
+        // Log old schedule into notes
+        String prev = String.format("Rescheduled from %s %s-%s. ", appt.getAppointmentDate(), appt.getStartTime(), appt.getEndTime());
+        appt.setNotes((appt.getNotes() != null ? appt.getNotes() + "\n" : "") + prev + (request.getNotes() != null ? request.getNotes() : ""));
+
+        // Apply new schedule and reset status to SCHEDULED
+        appt.setAppointmentDate(request.getAppointmentDate());
+        appt.setStartTime(request.getStartTime());
+        appt.setEndTime(request.getEndTime());
+        appt.setStatus(AppointmentStatus.SCHEDULED);
+
+        Appointment saved = repository.save(appt);
         return mapper.toResponse(saved);
     }
 

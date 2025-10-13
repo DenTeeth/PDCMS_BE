@@ -24,31 +24,31 @@ public class Appointment {
     @Column(name = "appointment_id", length = 20)
     private String appointmentId;
 
-    @Size(max = 12)
-    @Column(name = "appointment_code", length = 12, unique = true)
+    @Size(max = 15)
+    @Column(name = "appointment_code", length = 15, unique = true, nullable = false)
     private String appointmentCode;
 
-    @Column(name = "patient_id", length = 36)
+    @Column(name = "patient_id", length = 36, nullable = false)
     private String patientId;
 
-    @Column(name = "doctor_id", length = 36)
+    @Column(name = "doctor_id", length = 36, nullable = false)
     private String doctorId;
 
-    @Column(name = "appointment_date")
+    @Column(name = "appointment_date", nullable = false)
     private LocalDate appointmentDate;
 
-    @Column(name = "start_time")
+    @Column(name = "start_time", nullable = false)
     private LocalTime startTime;
 
-    @Column(name = "end_time")
+    @Column(name = "end_time", nullable = false)
     private LocalTime endTime;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "type", length = 20)
+    @Column(name = "appointment_type", length = 20, nullable = false)
     private AppointmentType type;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", length = 20)
+    @Column(name = "status", length = 20, nullable = false)
     private AppointmentStatus status;
 
     @Column(name = "reason", columnDefinition = "TEXT")
@@ -57,8 +57,20 @@ public class Appointment {
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
 
-    @Column(name = "created_by", length = 36)
+    @Column(name = "created_by", length = 36, nullable = false)
     private String createdBy;
+
+    @Column(name = "confirmed_at")
+    private LocalDateTime confirmedAt;
+
+    @Column(name = "completed_at")
+    private LocalDateTime completedAt;
+
+    @Column(name = "cancelled_at")
+    private LocalDateTime cancelledAt;
+
+    @Column(name = "cancellation_reason", columnDefinition = "TEXT")
+    private String cancellationReason;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -188,5 +200,37 @@ public class Appointment {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public LocalDateTime getConfirmedAt() {
+        return confirmedAt;
+    }
+
+    public void setConfirmedAt(LocalDateTime confirmedAt) {
+        this.confirmedAt = confirmedAt;
+    }
+
+    public LocalDateTime getCompletedAt() {
+        return completedAt;
+    }
+
+    public void setCompletedAt(LocalDateTime completedAt) {
+        this.completedAt = completedAt;
+    }
+
+    public LocalDateTime getCancelledAt() {
+        return cancelledAt;
+    }
+
+    public void setCancelledAt(LocalDateTime cancelledAt) {
+        this.cancelledAt = cancelledAt;
+    }
+
+    public String getCancellationReason() {
+        return cancellationReason;
+    }
+
+    public void setCancellationReason(String cancellationReason) {
+        this.cancellationReason = cancellationReason;
     }
 }

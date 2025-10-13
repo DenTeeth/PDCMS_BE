@@ -8,6 +8,8 @@ import com.dental.clinic.management.utils.annotation.ApiMessage;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import com.dental.clinic.management.dto.response.AvailableSlotResponse;
+import java.time.LocalDate;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -43,6 +45,16 @@ public class AppointmentController {
         return ResponseEntity.ok(resp);
     }
 
+    @GetMapping("/available-slots")
+    @Operation(summary = "Get available slots", description = "Get available 30-min slots for a doctor on a date")
+    @ApiMessage("Available slots retrieved")
+    public ResponseEntity<java.util.List<AvailableSlotResponse>> getAvailableSlots(
+            @RequestParam String doctorId,
+            @RequestParam LocalDate date) {
+        java.util.List<AvailableSlotResponse> resp = service.getAvailableSlots(doctorId, date);
+        return ResponseEntity.ok(resp);
+    }
+
     @GetMapping("/{appointmentId}")
     @Operation(summary = "Get appointment", description = "Get appointment by id")
     @ApiMessage("Get appointment successfully")
@@ -73,5 +85,45 @@ public class AppointmentController {
     public ResponseEntity<Void> cancel(@PathVariable String appointmentId) {
         service.cancel(appointmentId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{appointmentId}/confirm")
+    @Operation(summary = "Confirm appointment", description = "Confirm an appointment")
+    @ApiMessage("Confirm appointment successfully")
+    public ResponseEntity<AppointmentResponse> confirm(@PathVariable String appointmentId) {
+        AppointmentResponse resp = service.confirm(appointmentId);
+        return ResponseEntity.ok(resp);
+    }
+
+    @PutMapping("/{appointmentId}/complete")
+    @Operation(summary = "Complete appointment", description = "Mark appointment as completed")
+    @ApiMessage("Complete appointment successfully")
+    public ResponseEntity<AppointmentResponse> complete(@PathVariable String appointmentId) {
+        AppointmentResponse resp = service.complete(appointmentId);
+        return ResponseEntity.ok(resp);
+    }
+
+    @PutMapping("/{appointmentId}/no-show")
+    @Operation(summary = "Mark no-show", description = "Mark appointment as no-show")
+    @ApiMessage("Marked appointment as no-show")
+    public ResponseEntity<AppointmentResponse> noShow(@PathVariable String appointmentId) {
+        AppointmentResponse resp = service.noShow(appointmentId);
+        return ResponseEntity.ok(resp);
+    }
+
+    @PutMapping("/{appointmentId}/reschedule")
+    @Operation(summary = "Reschedule appointment", description = "Reschedule an appointment")
+    @ApiMessage("Reschedule appointment successfully")
+    public ResponseEntity<AppointmentResponse> reschedule(@PathVariable String appointmentId, @Valid @RequestBody com.dental.clinic.management.dto.request.RescheduleAppointmentRequest request) {
+        AppointmentResponse resp = service.reschedule(appointmentId, request);
+        return ResponseEntity.ok(resp);
+    }
+
+    @PutMapping("/{appointmentId}/cancel")
+    @Operation(summary = "Cancel appointment (with reason)", description = "Cancel an appointment with reason")
+    @ApiMessage("Cancel appointment successfully")
+    public ResponseEntity<AppointmentResponse> cancelWithReason(@PathVariable String appointmentId, @Valid @RequestBody com.dental.clinic.management.dto.request.CancelAppointmentRequest request) {
+        AppointmentResponse resp = service.cancel(appointmentId, request.getCancellationReason());
+        return ResponseEntity.ok(resp);
     }
 }
