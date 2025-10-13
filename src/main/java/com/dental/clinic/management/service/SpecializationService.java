@@ -2,6 +2,7 @@ package com.dental.clinic.management.service;
 
 import com.dental.clinic.management.domain.Specialization;
 import com.dental.clinic.management.repository.SpecializationRepository;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,7 +20,7 @@ public class SpecializationService {
 
     /**
      * Get all active specializations
-     * 
+     *
      * @return List of active specializations
      */
     @Transactional(readOnly = true)

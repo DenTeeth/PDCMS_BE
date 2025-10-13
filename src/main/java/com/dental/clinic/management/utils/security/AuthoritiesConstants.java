@@ -25,4 +25,8 @@ public final class AuthoritiesConstants {
     public static final String CREATE_PATIENT = "CREATE_PATIENT";
     public static final String UPDATE_PATIENT = "UPDATE_PATIENT";
     public static final String DELETE_PATIENT = "DELETE_PATIENT";
+
+    // Specialization Permissions
+    public static final String VIEW_SPECIALIZATION = "VIEW_SPECIALIZATION";
+    public static final String CREATE_SPECIALIZATION = "CREATE_SPECIALIZATION";
 }

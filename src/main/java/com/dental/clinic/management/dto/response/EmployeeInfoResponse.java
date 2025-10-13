@@ -16,9 +16,6 @@ import lombok.Setter;
  * returned by the API, including personal information, role details,
  * specializations, and associated account information.
  *
- * @author PDCMS Team
- * @version 1.0
- * @since 2025-09-29
  */
 @Getter
 @Setter

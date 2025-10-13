@@ -1,5 +1,6 @@
 package com.dental.clinic.management.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -21,7 +22,7 @@ import java.util.Set;
 public class Specialization {
 
     @Id
-    @Column(name = "specialization_id", length = 20)
+    @Column(name = "specialization_id", length = 36)
     private String specializationId;
 
     @NotBlank
@@ -43,6 +44,7 @@ public class Specialization {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @JsonIgnore
     @ManyToMany(mappedBy = "specializations", fetch = FetchType.LAZY)
     private Set<Employee> employees = new HashSet<>();
 
