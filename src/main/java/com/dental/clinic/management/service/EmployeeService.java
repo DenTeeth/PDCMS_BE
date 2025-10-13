@@ -199,7 +199,7 @@ public class EmployeeService {
      * Create new employee with account
      *
      * FLOW: Tạo Employee → Tự động tạo Account mới
-     * - Admin/Manager tạo employee
+     * - Admin tạo employee
      * - System tự động tạo account với username/password
      * - Gửi thông tin đăng nhập cho employee
      *
@@ -282,8 +282,13 @@ public class EmployeeService {
         account.setStatus(AccountStatus.ACTIVE);
         account.setCreatedAt(java.time.LocalDateTime.now());
 
+        // Assign role to account (for authentication)
+        Set<Role> accountRoles = new HashSet<>();
+        accountRoles.add(role); // Use the role we already fetched above
+        account.setRoles(accountRoles);
+
         account = accountRepository.save(account);
-        log.info("Created account with ID: {} for employee", account.getAccountId());
+        log.info("Created account with ID: {} and role: {} for employee", account.getAccountId(), role.getRoleName());
 
         // Generate unique employee ID
         String employeeId = UUID.randomUUID().toString();
