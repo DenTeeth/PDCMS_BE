@@ -279,22 +279,23 @@ public class DentistWorkScheduleService {
      */
     @Transactional(readOnly = true)
     public Page<DentistScheduleResponse> getAllSchedulesByDentist(
-            String dentistId, LocalDate startDate, LocalDate endDate,
+            String employeeCode, LocalDate startDate, LocalDate endDate,
             int page, int size) {
 
-        // Validate dentist exists
-        if (!employeeRepository.existsById(dentistId)) {
-            throw new BadRequestAlertException(
-                    "Không tìm thấy nhân viên với ID: " + dentistId,
-                    "dentist_schedule", "dentist_not_found");
-        }
+        // Get dentist by employeeCode and convert to dentistId (UUID)
+        Employee dentist = employeeRepository.findOneByEmployeeCode(employeeCode)
+                .orElseThrow(() -> new BadRequestAlertException(
+                        "Không tìm thấy nhân viên với Code: " + employeeCode,
+                        "dentist_schedule", "dentist_not_found"));
+
+        String dentistId = dentist.getEmployeeId(); // Get the UUID
 
         // Pagination setup
         page = Math.max(0, page);
         size = (size <= 0 || size > 100) ? 10 : size;
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "workDate", "startTime"));
 
-        // Query with date range
+        // Query with date range using dentistId (UUID)
         Page<DentistWorkSchedule> schedules = scheduleRepository.findByDentistIdAndWorkDateBetween(
                 dentistId, startDate, endDate, pageable);
 

@@ -127,7 +127,7 @@ public class AppointmentService {
         return slots;
     }
 
-    @PreAuthorize("(hasRole('RECEPTIONIST') and hasAuthority('" + CREATE_APPOINTMENT + "'))")
+    @PreAuthorize("hasAuthority('" + CREATE_APPOINTMENT + "') or hasRole('ADMIN')")
     @Transactional
     public AppointmentResponse schedule(CreateAppointmentRequest request) {
         // validate times
@@ -262,7 +262,19 @@ public class AppointmentService {
             throw new BadRequestAlertException("Appointment date must be today or later", "appointment", "invalid_date");
         }
 
-        // Check overlaps
+        // Check dentist work schedules for availability on the new date
+        java.util.List<DentistWorkSchedule> schedules = dentistWorkScheduleRepository.findByDentistIdAndWorkDate(appt.getDoctorId(), request.getAppointmentDate());
+        if (schedules == null || schedules.isEmpty()) {
+            throw new BadRequestAlertException("Doctor is not available on this date", "appointment", "doctor_not_available");
+        }
+
+        // Validate new time is within doctor's working hours
+        boolean withinWorkingHours = schedules.stream().anyMatch(s -> !s.getStartTime().isAfter(request.getStartTime()) && !s.getEndTime().isBefore(request.getEndTime()));
+        if (!withinWorkingHours) {
+            throw new BadRequestAlertException("Appointment time is outside doctor's working hours", "appointment", "outside_working_hours");
+        }
+
+        // Check overlaps with other appointments (excluding this one)
         List<Appointment> overlaps = repository.findOverlappingByDoctorAndDateExcluding(appt.getDoctorId(), request.getAppointmentDate(), request.getStartTime(), request.getEndTime(), appointmentId);
         if (!overlaps.isEmpty()) {
             throw new BadRequestAlertException("Doctor not available for the new time slot", "appointment", "overlap");
@@ -344,7 +356,7 @@ public class AppointmentService {
         return mapper.toResponse(saved);
     }
 
-    @PreAuthorize("(hasRole('ADMIN') and hasAuthority('" + CANCEL_APPOINTMENT + "'))")
+    @PreAuthorize("(hasRole('ADMIN') and hasAuthority('" + DELETE_APPOINTMENT + "'))")
     @Transactional
     public void cancel(String appointmentId) {
         Appointment appt = repository.findById(appointmentId)
