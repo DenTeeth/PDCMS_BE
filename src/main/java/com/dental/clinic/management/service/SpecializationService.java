@@ -3,8 +3,12 @@ package com.dental.clinic.management.service;
 import com.dental.clinic.management.domain.Specialization;
 import com.dental.clinic.management.repository.SpecializationRepository;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import static com.dental.clinic.management.utils.security.AuthoritiesConstants.ADMIN;
+import static com.dental.clinic.management.utils.security.AuthoritiesConstants.VIEW_SPECIALIZATION;
 
 import java.util.List;
 
@@ -23,6 +27,7 @@ public class SpecializationService {
      *
      * @return List of active specializations
      */
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_SPECIALIZATION + "')")
     @Transactional(readOnly = true)
     public List<Specialization> getAllActiveSpecializations() {
         return specializationRepository.findAllActiveSpecializations();
