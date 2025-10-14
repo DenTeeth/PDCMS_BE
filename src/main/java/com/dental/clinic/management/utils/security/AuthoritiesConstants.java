@@ -24,7 +24,7 @@ public final class AuthoritiesConstants {
     public static final String VIEW_PATIENT = "VIEW_PATIENT";
     public static final String CREATE_PATIENT = "CREATE_PATIENT";
     public static final String UPDATE_PATIENT = "UPDATE_PATIENT";
-    public static final String DELETE_PATIENT = "DELETE_PATIENT";//soft delete
+    public static final String DELETE_PATIENT = "DELETE_PATIENT";// soft delete
 
     // Appointment Permissions
     public static final String VIEW_APPOINTMENT = "VIEW_APPOINTMENT";
