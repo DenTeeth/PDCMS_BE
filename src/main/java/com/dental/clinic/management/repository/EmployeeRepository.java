@@ -16,5 +16,24 @@ public interface EmployeeRepository extends JpaRepository<Employee, String>, Jpa
 
   Optional<Employee> findOneByEmployeeCode(String employeeCode);
 
+  boolean existsByEmployeeCode(String employeeCode);
+
   Optional<Employee> findOneByAccountAccountId(String accountId);
+
+  /**
+   * Find employee by account username.
+   * Used for owner validation and getting current employee info from JWT token.
+   *
+   * @param username Account username from security context
+   * @return Optional employee entity
+   */
+  Optional<Employee> findByAccount_Username(String username);
+
+  /**
+   * Check if employee exists by account username.
+   *
+   * @param username Account username
+   * @return True if exists
+   */
+  boolean existsByAccount_Username(String username);
 }

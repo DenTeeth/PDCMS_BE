@@ -1,5 +1,6 @@
 package com.dental.clinic.management.domain;
 
+import com.dental.clinic.management.domain.enums.EmploymentType;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -8,6 +9,8 @@ import java.util.UUID;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
@@ -79,6 +82,10 @@ public class Employee {
 
   @Column(name = "address", columnDefinition = "TEXT")
   private String address;
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "employment_type")
+  private EmploymentType employmentType = EmploymentType.FULL_TIME;
 
   @Column(name = "is_active")
   private Boolean isActive = true;
@@ -201,6 +208,14 @@ public class Employee {
 
   public void setIsActive(Boolean isActive) {
     this.isActive = isActive;
+  }
+
+  public EmploymentType getEmploymentType() {
+    return employmentType;
+  }
+
+  public void setEmploymentType(EmploymentType employmentType) {
+    this.employmentType = employmentType;
   }
 
   public LocalDateTime getCreatedAt() {
