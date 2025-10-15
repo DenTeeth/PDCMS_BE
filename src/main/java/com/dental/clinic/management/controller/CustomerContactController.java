@@ -91,8 +91,10 @@ public class CustomerContactController {
     }
 
     @PostMapping("/{contactId}/assign")
-    @Operation(summary = "Assign contact to employee (manual if employeeId provided, otherwise auto)")
-    @PreAuthorize("hasAnyRole('" + AuthoritiesConstants.ADMIN + "','" + AuthoritiesConstants.RECEPTIONIST + "')")
+    @Operation(summary = "Assign contact to receptionist", 
+               description = "Manual mode: provide employeeId (must be Receptionist role). Auto mode: leave employeeId empty to auto-assign to receptionist with least NEW contacts")
+    @ApiMessage("Assign contact successfully")
+    @PreAuthorize("hasRole('" + AuthoritiesConstants.ADMIN + "')")
     public ResponseEntity<ContactInfoResponse> assignContact(
             @PathVariable String contactId,
             @RequestParam(required = false) String employeeId) {
@@ -101,7 +103,9 @@ public class CustomerContactController {
     }
 
     @PostMapping("/{contactId}/convert")
-    @Operation(summary = "Convert contact to patient (set status = CONVERTED and create convertedPatientId)")
+    @Operation(summary = "Convert contact to patient", 
+               description = "Creates new patient and sets contact status to CONVERTED. Returns 400 if already converted or not interested")
+    @ApiMessage("Convert contact to patient successfully")
     @PreAuthorize("hasAnyRole('" + AuthoritiesConstants.ADMIN + "','" + AuthoritiesConstants.RECEPTIONIST + "')")
     public ResponseEntity<ContactInfoResponse> convertContact(@PathVariable String contactId) {
         ContactInfoResponse resp = contactService.convertContact(contactId);

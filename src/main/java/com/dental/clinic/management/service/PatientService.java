@@ -60,7 +60,7 @@ public class PatientService {
      * @param sortDirection ASC or DESC
      * @return Page of PatientInfoResponse
      */
-    @PreAuthorize("hasAuthority('" + VIEW_PATIENT + "')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_PATIENT + "')")
     public Page<PatientInfoResponse> getAllActivePatients(
             int page, int size, String sortBy, String sortDirection) {
 
@@ -92,7 +92,7 @@ public class PatientService {
      * @param sortDirection ASC or DESC
      * @return Page of PatientInfoResponse
      */
-    @PreAuthorize("hasAuthority('" + VIEW_PATIENT + "')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_PATIENT + "')")
     public Page<PatientInfoResponse> getAllPatientsIncludingDeleted(
             int page, int size, String sortBy, String sortDirection) {
 
@@ -116,7 +116,7 @@ public class PatientService {
      * @param patientCode the patient code
      * @return PatientInfoResponse
      */
-    @PreAuthorize("hasAuthority('" + VIEW_PATIENT + "')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_PATIENT + "')")
     public PatientInfoResponse getActivePatientByCode(String patientCode) {
         Patient patient = patientRepository.findOneByPatientCode(patientCode)
                 .orElseThrow(() -> new BadRequestAlertException(
@@ -140,7 +140,7 @@ public class PatientService {
      * @param patientCode the patient code
      * @return PatientInfoResponse
      */
-    @PreAuthorize("hasAuthority('" + VIEW_PATIENT + "')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_PATIENT + "')")
     public PatientInfoResponse getPatientByCodeIncludingDeleted(String patientCode) {
         Patient patient = patientRepository.findOneByPatientCode(patientCode)
                 .orElseThrow(() -> new BadRequestAlertException(
@@ -162,7 +162,7 @@ public class PatientService {
      * @param request patient information including username/password
      * @return PatientInfoResponse
      */
-    @PreAuthorize("hasAuthority('" + CREATE_PATIENT + "')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + CREATE_PATIENT + "')")
     @Transactional
     public PatientInfoResponse createPatient(CreatePatientRequest request) {
         log.debug("Request to create patient: {}", request);
@@ -241,7 +241,7 @@ public class PatientService {
      * @param request     the update information
      * @return PatientInfoResponse
      */
-    @PreAuthorize("hasAuthority('" + UPDATE_PATIENT + "')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + UPDATE_PATIENT + "')")
     @Transactional
     public PatientInfoResponse updatePatient(String patientCode, UpdatePatientRequest request) {
         Patient patient = patientRepository.findOneByPatientCode(patientCode)
@@ -265,7 +265,7 @@ public class PatientService {
      * @param request     the replacement information
      * @return PatientInfoResponse
      */
-    @PreAuthorize("hasAuthority('" + UPDATE_PATIENT + "')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + UPDATE_PATIENT + "')")
     @Transactional
     public PatientInfoResponse replacePatient(String patientCode, ReplacePatientRequest request) {
         Patient patient = patientRepository.findOneByPatientCode(patientCode)
@@ -287,7 +287,7 @@ public class PatientService {
      *
      * @param patientCode the patient code
      */
-    @PreAuthorize("hasAuthority('" + DELETE_PATIENT + "')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + DELETE_PATIENT + "')")
     @Transactional
     public void deletePatient(String patientCode) {
         Patient patient = patientRepository.findOneByPatientCode(patientCode)
