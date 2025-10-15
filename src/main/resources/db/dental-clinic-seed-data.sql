@@ -374,3 +374,115 @@ DELETE FROM specializations;
 DELETE FROM permissions;
 DELETE FROM roles;
 */
+
+
+-- ============================================
+-- APPENDED: test-data-employee.sql
+-- (merged content from src/main/resources/db/test-data-employee.sql)
+-- ============================================
+
+-- TEST DATA - EMPLOYEE MANAGEMENT (merged)
+-- Insert complete test data including employees
+
+-- Set character set to UTF-8
+SET NAMES utf8mb4;
+SET CHARACTER SET utf8mb4;
+
+-- Insert Roles (if not present)
+INSERT IGNORE INTO roles (role_id, role_name, description, created_at)
+VALUES
+('ROLE_DOCTOR', 'Bác sĩ', 'Bác sĩ nha khoa', NOW()),
+('ROLE_RECEPTIONIST', 'Lễ tân', 'Nhân viên lễ tân tiếp đón', NOW()),
+('ROLE_ACCOUNTANT', 'Kế toán', 'Nhân viên kế toán', NOW()),
+('ROLE_WAREHOUSE_MANAGER', 'Quản lý kho', 'Quản lý kho vật tư', NOW());
+
+-- Create Accounts for test employees
+INSERT INTO accounts (account_id, username, email, password, status, created_at)
+VALUES
+('ACC_BS01', 'bs.nguyen.chinh.nha', 'nguyen.chinh.nha@dental.com', '$2a$10$abcdefghijklmnopqrstuvwxyz', 'ACTIVE', NOW()),
+('ACC_BS02', 'bs.tran.noi.nha', 'tran.noi.nha@dental.com', '$2a$10$abcdefghijklmnopqrstuvwxyz', 'ACTIVE', NOW()),
+('ACC_NV01', 'nv.le.le.tan', 'le.le.tan@dental.com', '$2a$10$abcdefghijklmnopqrstuvwxyz', 'ACTIVE', NOW()),
+('ACC_NV02', 'nv.pham.ke.toan', 'pham.ke.toan@dental.com', '$2a$10$abcdefghijklmnopqrstuvwxyz', 'ACTIVE', NOW()),
+('ACC_NV03', 'nv.hoang.kho', 'hoang.kho@dental.com', '$2a$10$abcdefghijklmnopqrstuvwxyz', 'ACTIVE', NOW());
+
+-- Create Specializations for test employees
+INSERT INTO specializations (specialization_id, specialization_code, specialization_name, description, is_active, created_at)
+VALUES
+('1', 'SPEC001', 'Chỉnh nha', 'Orthodontics - Niềng răng, chỉnh hình răng mặt', TRUE, NOW()),
+('2', 'SPEC002', 'Nội nha', 'Endodontics - Điều trị tủy, chữa răng sâu', TRUE, NOW()),
+('3', 'SPEC003', 'Nha chu', 'Periodontics - Điều trị nướu, mô nha chu', TRUE, NOW()),
+('4', 'SPEC004', 'Phục hồi răng', 'Prosthodontics - Làm răng giả, cầu răng, implant', TRUE, NOW()),
+('5', 'SPEC005', 'Phẫu thuật hàm mặt', 'Oral Surgery - Nhổ răng khôn, phẫu thuật', TRUE, NOW()),
+('6', 'SPEC006', 'Nha khoa trẻ em', 'Pediatric Dentistry - Chuyên khoa nhi', TRUE, NOW()),
+('7', 'SPEC007', 'Răng thẩm mỹ', 'Cosmetic Dentistry - Tẩy trắng, bọc sứ', TRUE, NOW());
+
+-- Insert Employees (test-data)
+INSERT INTO employees (employee_id, account_id, role_id, employee_code, first_name, last_name, phone, date_of_birth, address, is_active, created_at)
+VALUES
+('EMP_ID_001', 'ACC_BS01', 'ROLE_DOCTOR', 'EMP001', 'Văn A', 'Nguyễn', '0901234567', '1985-05-15', '123 Nguyễn Huệ, Q1, TPHCM', TRUE, NOW()),
+('EMP_ID_002', 'ACC_BS02', 'ROLE_DOCTOR', 'EMP002', 'Thị B', 'Trần', '0902345678', '1988-08-20', '456 Lê Lợi, Q3, TPHCM', TRUE, NOW()),
+('EMP_ID_003', 'ACC_NV01', 'ROLE_RECEPTIONIST', 'EMP003', 'Thị C', 'Lê', '0903456789', '1995-03-10', '789 Trần Hưng Đạo, Q5, TPHCM', TRUE, NOW()),
+('EMP_ID_004', 'ACC_NV02', 'ROLE_ACCOUNTANT', 'EMP004', 'Văn D', 'Phạm', '0904567890', '1992-07-25', '321 Hai Bà Trưng, Q1, TPHCM', TRUE, NOW()),
+('EMP_ID_005', 'ACC_NV03', 'ROLE_WAREHOUSE_MANAGER', 'EMP005', 'Văn E', 'Hoàng', '0905678901', '1990-11-18', '555 Pasteur, Q3, TPHCM', TRUE, NOW());
+
+-- Assign specializations to test employees
+INSERT INTO employee_specializations (employee_id, specialization_id)
+VALUES
+('EMP_ID_001', '1'),
+('EMP_ID_001', '7'),
+('EMP_ID_002', '2'),
+('EMP_ID_002', '4');
+
+
+-- ============================================
+-- APPENDED: V1__create_contacts_appointments.sql
+-- (merged content from src/main/resources/db/V1__create_contacts_appointments.sql)
+-- ============================================
+
+-- Create customer_contacts, contact_history, appointments (MySQL-style)
+CREATE TABLE IF NOT EXISTS customer_contacts (
+    contact_id VARCHAR(36) NOT NULL PRIMARY KEY,
+    full_name VARCHAR(100),
+    phone VARCHAR(15),
+    email VARCHAR(100),
+    source VARCHAR(50),
+    status VARCHAR(50),
+    assigned_to VARCHAR(36),
+    converted_patient_id VARCHAR(36),
+    notes TEXT,
+    created_at DATETIME(6),
+    updated_at DATETIME(6),
+    INDEX idx_contact_assigned_to (assigned_to)
+);
+
+CREATE TABLE IF NOT EXISTS contact_history (
+    history_id VARCHAR(36) NOT NULL PRIMARY KEY,
+    contact_id VARCHAR(36) NOT NULL,
+    employee_id VARCHAR(36),
+    action VARCHAR(50),
+    content TEXT,
+    created_at DATETIME(6),
+    INDEX idx_history_contact (contact_id)
+);
+
+CREATE TABLE IF NOT EXISTS appointments (
+    appointment_id VARCHAR(36) NOT NULL PRIMARY KEY,
+    appointment_code VARCHAR(12),
+    patient_id VARCHAR(36),
+    doctor_id VARCHAR(36),
+    appointment_date DATE,
+    start_time TIME,
+    end_time TIME,
+    type VARCHAR(50),
+    status VARCHAR(50),
+    reason TEXT,
+    notes TEXT,
+    created_by VARCHAR(36),
+    created_at DATETIME(6),
+    updated_at DATETIME(6),
+    UNIQUE INDEX idx_appointments_code (appointment_code),
+    INDEX idx_appointments_patient (patient_id),
+    INDEX idx_appointments_doctor_date (doctor_id, appointment_date)
+);
+
+-- Note: foreign keys left out intentionally; add after referenced tables exist

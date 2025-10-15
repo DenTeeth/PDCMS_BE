@@ -2,12 +2,12 @@ spring:
   application:
     name: Dental Clinic Management
 
-  # Database Configuration - Railway MySQL
+  # Database Configuration - Railway/Postgres
   datasource:
-    url: ${DATABASE_URL:jdbc:mysql://localhost:3306/dental_clinic_db}
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/dental_clinic_db}
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:123456}
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 5
       minimum-idle: 2
@@ -19,7 +19,7 @@ spring:
       ddl-auto: update
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQLDialect
+        dialect: org.hibernate.dialect.PostgreSQLDialect
         "[format_sql]": false
     show-sql: false
 

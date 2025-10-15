@@ -6,7 +6,7 @@ A Spring Boot application for managing a private dental clinic.
 
 - Java Development Kit (JDK) 17
 - Maven 3.9+ (or use the included Maven Wrapper `mvnw` / `mvnw.cmd`)
-- MySQL 8.x (for local profile)
+-- PostgreSQL 14+ (for local profile)
 
 > Spring Boot 3.x requires Java 17+. This project is configured to compile with Java 17.
 
@@ -62,7 +62,7 @@ If the environment still shows the error, it means the machine running the build
 
 ## Run the application
 
-- Ensure MySQL is running and the connection info in `src/main/resources/application.yaml` (or `application.properties`) matches your local setup.
+Ensure PostgreSQL is running and the connection info in `src/main/resources/application.yaml` (or `application.properties`) matches your local setup.
 - Start the app:
   - Windows: `mvnw.cmd spring-boot:run`
   - macOS/Linux: `./mvnw spring-boot:run`
