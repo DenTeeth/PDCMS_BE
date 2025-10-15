@@ -38,7 +38,7 @@ public class ContactHistoryService {
      * List history records for a contact (ordered desc).
      * Permissions: VIEW_CONTACT_HISTORY or ROLE_ADMIN
      */
-    @PreAuthorize("hasAnyAuthority('" + VIEW_CONTACT_HISTORY + "','" + ADMIN + "')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_CONTACT_HISTORY + "')")
     @Transactional(readOnly = true)
     public List<ContactHistoryResponse> listHistoryForContact(String contactId) {
         if (contactId == null || contactId.trim().isEmpty()) {
@@ -52,7 +52,7 @@ public class ContactHistoryService {
      * Add a history record. employeeId is taken from current authentication.
      * Permissions: CREATE_CONTACT_HISTORY or ROLE_ADMIN
      */
-    @PreAuthorize("hasAnyAuthority('" + CREATE_CONTACT_HISTORY + "','" + ADMIN + "')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + CREATE_CONTACT_HISTORY + "')")
     @Transactional
     public ContactHistoryResponse addHistory(CreateContactHistoryRequest req) {
         if (req == null) {
@@ -74,15 +74,9 @@ public class ContactHistoryService {
         h.setContent(req.getContent());
 
         // set employeeId from current authentication (principal name)
-        // Note: if FK constraint fails, either remove FK or ensure employee exists
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.getName() != null) {
-            // Optionally lookup employee by username/account mapping if needed
-            // For now, set directly (may fail FK if employee not exists)
             h.setEmployeeId(auth.getName());
-        } else {
-            // fallback for testing: set to null or a known employee_id
-            h.setEmployeeId(null);
         }
 
         // generate historyId HIST + YYYYMMDD + SEQ (daily). Note: not race-proof.
