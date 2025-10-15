@@ -108,8 +108,10 @@ public class ContactHistory {
     // equality by historyId (consistent with Employee entity style)
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof ContactHistory)) return false;
+        if (this == o)
+            return true;
+        if (!(o instanceof ContactHistory))
+            return false;
         ContactHistory that = (ContactHistory) o;
         return historyId != null && historyId.equals(that.historyId);
     }
