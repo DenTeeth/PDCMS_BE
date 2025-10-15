@@ -40,7 +40,8 @@ public class ContactHistoryController {
     @PostMapping("/{contactId}/history")
     @Operation(summary = "Add contact history")
     @ApiMessage("Add contact history successfully")
-    // accept ADMIN and RECEPTIONIST for testing; change later if want only receptionists
+    // accept ADMIN and RECEPTIONIST for testing; change later if want only
+    // receptionists
     @PreAuthorize("hasAnyAuthority('ROLE_RECEPTIONIST','ROLE_ADMIN','RECEPTIONIST','ADMIN','receptionist','admin')")
     public ResponseEntity<ContactHistoryResponse> addHistory(
             @PathVariable String contactId,
@@ -52,7 +53,8 @@ public class ContactHistoryController {
         }
 
         ContactHistoryResponse created = historyService.addHistory(request);
-        return ResponseEntity.created(new URI("/api/v1/customer-contacts/" + contactId + "/history/" + created.getHistoryId()))
+        return ResponseEntity
+                .created(new URI("/api/v1/customer-contacts/" + contactId + "/history/" + created.getHistoryId()))
                 .body(created);
     }
 }

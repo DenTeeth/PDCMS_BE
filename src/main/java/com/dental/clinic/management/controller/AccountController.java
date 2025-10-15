@@ -42,8 +42,14 @@ public class AccountController {
      * </p>
      *
      * @param jwt injected JWT bearer token (lấy username từ claim "sub")
-     * @return 200 OK with {@link UserProfileResponse} containing personal info and roles
-     * @throws com.dental.clinic.management.exception.AccountNotFoundException if the account no longer exists
+     * @return 200 OK with {@link UserProfileResponse} containing personal info and
+     *         roles
+     * @throws com.dental.clinic.management.exception.AccountNotFoundException if
+     *                                                                         the
+     *                                                                         account
+     *                                                                         no
+     *                                                                         longer
+     *                                                                         exists
      */
     @GetMapping("/profile")
     @Operation(summary = "Get user profile", description = "Retrieve personal profile information of the currently authenticated user")
@@ -65,15 +71,16 @@ public class AccountController {
      *         only
      * @throws com.dental.clinic.management.exception.AccountNotFoundException if
      *                                                                         the
-     *                                                            account
-     *          no
+     *                                                                         account
+     *                                                                         no
      *                                                                         longer
      *                                                                         exists
      */
     @GetMapping("/permissions")
     @Operation(summary = "Get user permissions", description = "Retrieve all permissions of the currently authenticated user")
     @ApiMessage("Lấy quyền hạn người dùng thành công")
-    public ResponseEntity<UserPermissionsResponse> getPermissions(@Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
+    public ResponseEntity<UserPermissionsResponse> getPermissions(
+            @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
         String username = jwt.getClaimAsString("sub");
         UserPermissionsResponse userPermissions = authenticationService.getUserPermissions(username);
         return ResponseEntity.ok(userPermissions);
@@ -87,7 +94,12 @@ public class AccountController {
      *
      * @param jwt injected JWT bearer token (lấy username từ claim "sub")
      * @return 200 OK with {@link UserInfoResponse} containing complete user info
-     * @throws com.dental.clinic.management.exception.AccountNotFoundException if the account no longer exists
+     * @throws com.dental.clinic.management.exception.AccountNotFoundException if
+     *                                                                         the
+     *                                                                         account
+     *                                                                         no
+     *                                                                         longer
+     *                                                                         exists
      */
     @GetMapping("/info")
     @Operation(summary = "Get complete user info", description = "Retrieve complete user information including roles and permissions")

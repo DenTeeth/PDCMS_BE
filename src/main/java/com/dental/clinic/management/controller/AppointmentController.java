@@ -41,7 +41,8 @@ public class AppointmentController {
             @RequestParam(required = false) com.dental.clinic.management.domain.enums.AppointmentStatus status,
             @RequestParam(required = false) com.dental.clinic.management.domain.enums.AppointmentType type) {
 
-        Page<AppointmentResponse> resp = service.listAppointments(page, size, sortBy, sortDirection, appointmentDate, doctorId, status, type);
+        Page<AppointmentResponse> resp = service.listAppointments(page, size, sortBy, sortDirection, appointmentDate,
+                doctorId, status, type);
         return ResponseEntity.ok(resp);
     }
 
@@ -66,7 +67,8 @@ public class AppointmentController {
     @PostMapping("")
     @Operation(summary = "Schedule appointment", description = "Create a new appointment")
     @ApiMessage("Schedule appointment successfully")
-    public ResponseEntity<AppointmentResponse> schedule(@Valid @RequestBody CreateAppointmentRequest request) throws URISyntaxException {
+    public ResponseEntity<AppointmentResponse> schedule(@Valid @RequestBody CreateAppointmentRequest request)
+            throws URISyntaxException {
         AppointmentResponse resp = service.schedule(request);
         return ResponseEntity.created(new URI("/api/v1/appointments/" + resp.getAppointmentId())).body(resp);
     }
@@ -74,7 +76,8 @@ public class AppointmentController {
     @PatchMapping("/{appointmentId}")
     @Operation(summary = "Update appointment", description = "Update an appointment (partial)")
     @ApiMessage("Update appointment successfully")
-    public ResponseEntity<AppointmentResponse> update(@PathVariable String appointmentId, @Valid @RequestBody UpdateAppointmentRequest request) {
+    public ResponseEntity<AppointmentResponse> update(@PathVariable String appointmentId,
+            @Valid @RequestBody UpdateAppointmentRequest request) {
         AppointmentResponse resp = service.update(appointmentId, request);
         return ResponseEntity.ok(resp);
     }
@@ -114,7 +117,8 @@ public class AppointmentController {
     @PutMapping("/{appointmentId}/reschedule")
     @Operation(summary = "Reschedule appointment", description = "Reschedule an appointment")
     @ApiMessage("Reschedule appointment successfully")
-    public ResponseEntity<AppointmentResponse> reschedule(@PathVariable String appointmentId, @Valid @RequestBody com.dental.clinic.management.dto.request.RescheduleAppointmentRequest request) {
+    public ResponseEntity<AppointmentResponse> reschedule(@PathVariable String appointmentId,
+            @Valid @RequestBody com.dental.clinic.management.dto.request.RescheduleAppointmentRequest request) {
         AppointmentResponse resp = service.reschedule(appointmentId, request);
         return ResponseEntity.ok(resp);
     }
@@ -122,7 +126,8 @@ public class AppointmentController {
     @PutMapping("/{appointmentId}/cancel")
     @Operation(summary = "Cancel appointment (with reason)", description = "Cancel an appointment with reason")
     @ApiMessage("Cancel appointment successfully")
-    public ResponseEntity<AppointmentResponse> cancelWithReason(@PathVariable String appointmentId, @Valid @RequestBody com.dental.clinic.management.dto.request.CancelAppointmentRequest request) {
+    public ResponseEntity<AppointmentResponse> cancelWithReason(@PathVariable String appointmentId,
+            @Valid @RequestBody com.dental.clinic.management.dto.request.CancelAppointmentRequest request) {
         AppointmentResponse resp = service.cancel(appointmentId, request.getCancellationReason());
         return ResponseEntity.ok(resp);
     }
