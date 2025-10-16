@@ -5,9 +5,76 @@
 -- UUID Format: VARCHAR(36)
 -- Auto-generate Account for every Employee/Patient
 -- ============================================
+-- DENTAL CLINIC MANAGEMENT SYSTEM
+-- COMPLETE TEST DATA WITH RBAC
+-- ============================================
+-- UUID Format: VARCHAR(36)
+-- Auto-generate Account for every Employee/Patient
+-- ============================================
 
 SET NAMES utf8mb4;
 SET CHARACTER SET utf8mb4;
+
+-- ============================================
+-- STEP 0: SCHEMA: create customer_contacts, contact_history, appointments
+-- (these tables are optional if your main schema/migrations already provide them)
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS customer_contacts (
+  contact_id VARCHAR(36) NOT NULL PRIMARY KEY,
+  full_name VARCHAR(100),
+  phone VARCHAR(15),
+  email VARCHAR(100),
+  source VARCHAR(50),
+  status VARCHAR(50),
+  assigned_to VARCHAR(36),
+  converted_patient_id VARCHAR(36),
+  notes TEXT,
+  created_at DATETIME(6),
+  updated_at DATETIME(6),
+  INDEX idx_contact_assigned_to (assigned_to)
+  -- foreign key to employees added below after employees table existence verified
+);
+
+CREATE TABLE IF NOT EXISTS contact_history (
+  history_id VARCHAR(36) NOT NULL PRIMARY KEY,
+  contact_id VARCHAR(36) NOT NULL,
+  employee_id VARCHAR(36),
+  action VARCHAR(50),
+  content TEXT,
+  created_at DATETIME(6),
+  INDEX idx_history_contact (contact_id)
+  -- foreign keys added below
+);
+
+CREATE TABLE IF NOT EXISTS appointments (
+  appointment_id VARCHAR(36) NOT NULL PRIMARY KEY,
+  appointment_code VARCHAR(12),
+  patient_id VARCHAR(36),
+  doctor_id VARCHAR(36),
+  appointment_date DATE,
+  start_time TIME,
+  end_time TIME,
+  type VARCHAR(50),
+  status VARCHAR(50),
+  reason TEXT,
+  notes TEXT,
+  created_by VARCHAR(36),
+  created_at DATETIME(6),
+  updated_at DATETIME(6),
+  UNIQUE INDEX idx_appointments_code (appointment_code),
+  INDEX idx_appointments_patient (patient_id),
+  INDEX idx_appointments_doctor_date (doctor_id, appointment_date)
+  -- foreign keys added below
+);
+
+-- Optionally add foreign keys if the referenced tables exist:
+-- ALTER TABLE customer_contacts ADD CONSTRAINT fk_contact_assigned_employee FOREIGN KEY (assigned_to) REFERENCES employees(employee_id);
+-- ALTER TABLE contact_history ADD CONSTRAINT fk_history_contact FOREIGN KEY (contact_id) REFERENCES customer_contacts(contact_id);
+-- ALTER TABLE contact_history ADD CONSTRAINT fk_history_employee FOREIGN KEY (employee_id) REFERENCES employees(employee_id);
+-- ALTER TABLE appointments ADD CONSTRAINT fk_appointments_patient FOREIGN KEY (patient_id) REFERENCES patients(patient_id);
+-- ALTER TABLE appointments ADD CONSTRAINT fk_appointments_doctor FOREIGN KEY (doctor_id) REFERENCES employees(employee_id);
+
 
 -- ============================================
 -- STEP 1: CREATE ROLES (Dynamic RBAC)
@@ -380,19 +447,57 @@ PATIENTS:
 
 
 -- ============================================
--- CLEANUP (if needed)
+-- ADDITIONAL TEST DATA (merged from test-data-employee.sql)
+-- The following entries are added with INSERT IGNORE to avoid conflicts
+-- if the same role/account/employee already exists in the main seed.
 -- ============================================
 
-/*
--- Uncomment to reset all data
+-- Roles (legacy/test file)
+INSERT IGNORE INTO roles (role_id, role_name, description, created_at)
+VALUES
+('ROLE_DOCTOR', 'Bác sĩ', 'Bác sĩ nha khoa', NOW()),
+('ROLE_RECEPTIONIST', 'Lễ tân', 'Nhân viên lễ tân tiếp đón', NOW()),
+('ROLE_ACCOUNTANT', 'Kế toán', 'Nhân viên kế toán', NOW()),
+('ROLE_WAREHOUSE_MANAGER', 'Quản lý kho', 'Quản lý kho vật tư', NOW());
 
-DELETE FROM employee_specializations;
-DELETE FROM account_roles;
-DELETE FROM role_permissions;
-DELETE FROM employees;
-DELETE FROM patients;
-DELETE FROM accounts;
-DELETE FROM specializations;
-DELETE FROM permissions;
-DELETE FROM roles;
-*/
+-- Accounts from test-data-employee
+INSERT IGNORE INTO accounts (account_id, username, email, password, status, created_at)
+VALUES
+('ACC_BS01', 'bs.nguyen.chinh.nha', 'nguyen.chinh.nha@dental.com', '$2a$10$abcdefghijklmnopqrstuvwxyz', 'ACTIVE', NOW()),
+('ACC_BS02', 'bs.tran.noi.nha', 'tran.noi.nha@dental.com', '$2a$10$abcdefghijklmnopqrstuvwxyz', 'ACTIVE', NOW()),
+('ACC_NV01', 'nv.le.le.tan', 'le.le.tan@dental.com', '$2a$10$abcdefghijklmnopqrstuvwxyz', 'ACTIVE', NOW()),
+('ACC_NV02', 'nv.pham.ke.toan', 'pham.ke.toan@dental.com', '$2a$10$abcdefghijklmnopqrstuvwxyz', 'ACTIVE', NOW()),
+('ACC_NV03', 'nv.hoang.kho', 'hoang.kho@dental.com', '$2a$10$abcdefghijklmnopqrstuvwxyz', 'ACTIVE', NOW());
+
+-- Specializations (legacy/test file) - using numeric ids, INSERT IGNORE to avoid collision
+INSERT IGNORE INTO specializations (specialization_id, specialization_code, specialization_name, description, is_active, created_at)
+VALUES
+('1', 'SPEC001', 'Chỉnh nha', 'Orthodontics - Niềng răng, chỉnh hình răng mặt', TRUE, NOW()),
+('2', 'SPEC002', 'Nội nha', 'Endodontics - Điều trị tủy, chữa răng sâu', TRUE, NOW()),
+('3', 'SPEC003', 'Nha chu', 'Periodontics - Điều trị nướu, mô nha chu', TRUE, NOW()),
+('4', 'SPEC004', 'Phục hồi răng', 'Prosthodontics - Làm răng giả, cầu răng, implant', TRUE, NOW()),
+('5', 'SPEC005', 'Phẫu thuật hàm mặt', 'Oral Surgery - Nhổ răng khôn, phẫu thuật', TRUE, NOW()),
+('6', 'SPEC006', 'Nha khoa trẻ em', 'Pediatric Dentistry - Chuyên khoa nhi', TRUE, NOW()),
+('7', 'SPEC007', 'Răng thẩm mỹ', 'Cosmetic Dentistry - Tẩy trắng, bọc sứ', TRUE, NOW());
+
+-- Employees from test-data-employee (legacy IDs)
+INSERT IGNORE INTO employees (employee_id, account_id, role_id, employee_code, first_name, last_name, phone, date_of_birth, address, is_active, created_at)
+VALUES
+('EMP_ID_001', 'ACC_BS01', 'ROLE_DOCTOR', 'EMP001', 'Văn A', 'Nguyễn', '0901234567', '1985-05-15', '123 Nguyễn Huệ, Q1, TPHCM', TRUE, NOW()),
+('EMP_ID_002', 'ACC_BS02', 'ROLE_DOCTOR', 'EMP002', 'Thị B', 'Trần', '0902345678', '1988-08-20', '456 Lê Lợi, Q3, TPHCM', TRUE, NOW()),
+('EMP_ID_003', 'ACC_NV01', 'ROLE_RECEPTIONIST', 'EMP003', 'Thị C', 'Lê', '0903456789', '1995-03-10', '789 Trần Hưng Đạo, Q5, TPHCM', TRUE, NOW()),
+('EMP_ID_004', 'ACC_NV02', 'ROLE_ACCOUNTANT', 'EMP004', 'Văn D', 'Phạm', '0904567890', '1992-07-25', '321 Hai Bà Trưng, Q1, TPHCM', TRUE, NOW()),
+('EMP_ID_005', 'ACC_NV03', 'ROLE_WAREHOUSE_MANAGER', 'EMP005', 'Văn E', 'Hoàng', '0905678901', '1990-11-18', '555 Pasteur, Q3, TPHCM', TRUE, NOW());
+
+-- Employee specializations (legacy/test file)
+INSERT IGNORE INTO employee_specializations (employee_id, specialization_id)
+VALUES
+('EMP_ID_001', '1'),
+('EMP_ID_001', '7'),
+('EMP_ID_002', '2'),
+('EMP_ID_002', '4');
+
+
+-- ============================================
+-- VERIFICATION / CLEANUP sections preserved below
+-- ============================================
