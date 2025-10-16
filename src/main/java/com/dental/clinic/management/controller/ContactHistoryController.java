@@ -32,7 +32,7 @@ public class ContactHistoryController {
     @GetMapping("/{contactId}/history")
     @Operation(summary = "List contact history")
     // accept ROLE_*, uppercase and lowercase variants to match possible JWT claims
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_RECEPTIONIST','ADMIN','RECEPTIONIST','admin','receptionist')")
+
     public ResponseEntity<List<ContactHistoryResponse>> getHistory(@PathVariable String contactId) {
         return ResponseEntity.ok(historyService.listHistoryForContact(contactId));
     }
@@ -42,7 +42,7 @@ public class ContactHistoryController {
     @ApiMessage("Add contact history successfully")
     // accept ADMIN and RECEPTIONIST for testing; change later if want only
     // receptionists
-    @PreAuthorize("hasAnyAuthority('ROLE_RECEPTIONIST','ROLE_ADMIN','RECEPTIONIST','ADMIN','receptionist','admin')")
+
     public ResponseEntity<ContactHistoryResponse> addHistory(
             @PathVariable String contactId,
             @Valid @RequestBody CreateContactHistoryRequest request,

@@ -40,7 +40,7 @@ public class EmployeeScheduleController {
      */
     @PatchMapping("/{scheduleId}/status")
     @ApiMessage("Trạng thái điểm danh đã được cập nhật")
-    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_HR')")
+
     @Operation(summary = "Update attendance status", description = "Update employee attendance status (Admin/HR only)")
     public ResponseEntity<EmployeeScheduleResponse> updateScheduleStatus(
             @PathVariable String scheduleId,
@@ -57,7 +57,7 @@ public class EmployeeScheduleController {
      */
     @GetMapping("/{scheduleId}")
     @ApiMessage("Lấy thông tin lịch làm việc thành công")
-    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_HR')")
+
     @Operation(summary = "Get employee schedule", description = "Get employee schedule by ID (Admin/HR)")
     public ResponseEntity<EmployeeScheduleResponse> getScheduleById(@PathVariable String scheduleId) {
         EmployeeScheduleResponse response = scheduleService.getEmployeeScheduleById(scheduleId);
@@ -76,7 +76,7 @@ public class EmployeeScheduleController {
      */
     @GetMapping("/employee/{employeeId}")
     @ApiMessage("Lấy lịch làm việc của nhân viên thành công")
-    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_HR')")
+
     @Operation(summary = "Get employee schedules", description = "Get all schedules for an employee (Admin/HR)")
     public ResponseEntity<Page<EmployeeScheduleResponse>> getSchedulesByEmployee(
             @PathVariable String employeeId,
@@ -99,7 +99,7 @@ public class EmployeeScheduleController {
      */
     @GetMapping("/date")
     @ApiMessage("Lấy danh sách điểm danh theo ngày thành công")
-    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_HR')")
+
     @Operation(summary = "Get schedules by date", description = "Get all employee schedules for a specific date (Admin/HR)")
     public ResponseEntity<Page<EmployeeScheduleResponse>> getSchedulesByDate(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate workDate,

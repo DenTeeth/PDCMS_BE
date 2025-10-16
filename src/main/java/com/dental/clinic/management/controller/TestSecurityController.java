@@ -42,7 +42,7 @@ public class TestSecurityController {
         return "User: " + auth.getName() + ", Authorities: " + authorities;
     }
 
-    @PreAuthorize("hasRole('" + ADMIN + "')")
+    // @PreAuthorize("hasRole('" + ADMIN + "')")
     @GetMapping("/admin-only")
     @Operation(summary = "Admin-only test endpoint", description = "Test endpoint accessible only by users with ADMIN role")
     @ApiMessage("Chỉ ADMIN mới truy cập được")
@@ -50,7 +50,7 @@ public class TestSecurityController {
         return "Admin only endpoint accessed successfully";
     }
 
-    @PreAuthorize("hasRole('" + USER + "')")
+    // @PreAuthorize("hasRole('" + USER + "')")
     @GetMapping("/user-only")
     @Operation(summary = "User-only test endpoint", description = "Test endpoint accessible only by users with USER role")
     @ApiMessage("Chỉ USER mới truy cập được")
@@ -58,7 +58,7 @@ public class TestSecurityController {
         return "User only endpoint accessed successfully";
     }
 
-    @PreAuthorize("hasAuthority('" + READ_ALL_EMPLOYEES + "')")
+    // @PreAuthorize("hasAuthority('" + READ_ALL_EMPLOYEES + "')")
     @GetMapping("/read-employees")
     @Operation(summary = "Test permission-based access", description = "Test endpoint requiring READ_ALL_EMPLOYEES permission")
     @ApiMessage("Cần quyền READ_ALL_EMPLOYEES")
@@ -66,7 +66,7 @@ public class TestSecurityController {
         return "Read employees permission granted";
     }
 
-    @PreAuthorize("hasRole('ROLE_ADMIN') or hasAuthority('" + CREATE_EMPLOYEE + "')")
+    // @PreAuthorize("hasRole('ROLE_ADMIN') or hasAuthority('" + CREATE_EMPLOYEE + "')")
     @GetMapping("/create-employee")
     @Operation(summary = "Test combined role/permission access", description = "Test endpoint accessible by ADMIN role OR CREATE_EMPLOYEE permission")
     @ApiMessage("ADMIN hoặc có quyền CREATE_EMPLOYEE")

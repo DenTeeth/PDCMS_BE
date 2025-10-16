@@ -39,7 +39,7 @@ public class CustomerContactController {
     @GetMapping
     @Operation(summary = "List customer contacts")
     @ApiMessage("List customer contacts successfully")
-    @PreAuthorize("hasAnyRole('" + AuthoritiesConstants.ADMIN + "','" + AuthoritiesConstants.RECEPTIONIST + "')")
+
     public ResponseEntity<Page<ContactInfoResponse>> listContacts(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -50,7 +50,7 @@ public class CustomerContactController {
 
     @GetMapping("/{contactId}")
     @Operation(summary = "Get contact by id")
-    @PreAuthorize("hasAnyRole('" + AuthoritiesConstants.ADMIN + "','" + AuthoritiesConstants.RECEPTIONIST + "')")
+
     public ResponseEntity<ContactInfoResponse> getContact(@PathVariable String contactId) {
         return ResponseEntity.ok(contactService.getContact(contactId));
     }
@@ -71,7 +71,7 @@ public class CustomerContactController {
     @PutMapping("/{contactId}")
     @Operation(summary = "Update contact (full/controlled)")
     @ApiMessage("Update customer contact successfully")
-    @PreAuthorize("hasAnyRole('" + AuthoritiesConstants.ADMIN + "','" + AuthoritiesConstants.RECEPTIONIST + "')")
+
     public ResponseEntity<ContactInfoResponse> updateContact(
             @PathVariable String contactId,
             @Valid @RequestBody UpdateContactRequest request) {
@@ -84,7 +84,7 @@ public class CustomerContactController {
     @DeleteMapping("/{contactId}")
     @Operation(summary = "Delete contact (soft)")
     @ApiMessage("Delete customer contact successfully")
-    @PreAuthorize("hasRole('" + AuthoritiesConstants.ADMIN + "')")
+
     public ResponseEntity<Void> deleteContact(@PathVariable String contactId) {
         contactService.deleteContact(contactId);
         return ResponseEntity.noContent().build();
@@ -93,7 +93,7 @@ public class CustomerContactController {
     @PostMapping("/{contactId}/assign")
     @Operation(summary = "Assign contact to receptionist", description = "Manual mode: provide employeeId (must be Receptionist role). Auto mode: leave employeeId empty to auto-assign to receptionist with least NEW contacts")
     @ApiMessage("Assign contact successfully")
-    @PreAuthorize("hasRole('" + AuthoritiesConstants.ADMIN + "')")
+
     public ResponseEntity<ContactInfoResponse> assignContact(
             @PathVariable String contactId,
             @RequestParam(required = false) String employeeId) {
@@ -104,7 +104,7 @@ public class CustomerContactController {
     @PostMapping("/{contactId}/convert")
     @Operation(summary = "Convert contact to patient", description = "Creates new patient and sets contact status to CONVERTED. Returns 400 if already converted or not interested")
     @ApiMessage("Convert contact to patient successfully")
-    @PreAuthorize("hasAnyRole('" + AuthoritiesConstants.ADMIN + "','" + AuthoritiesConstants.RECEPTIONIST + "')")
+
     public ResponseEntity<ContactInfoResponse> convertContact(@PathVariable String contactId) {
         ContactInfoResponse resp = contactService.convertContact(contactId);
         return ResponseEntity.ok(resp);
@@ -112,14 +112,14 @@ public class CustomerContactController {
 
     @GetMapping("/stats")
     @Operation(summary = "Statistics for customer contacts")
-    @PreAuthorize("hasAnyRole('" + AuthoritiesConstants.ADMIN + "','" + AuthoritiesConstants.RECEPTIONIST + "')")
+
     public ResponseEntity<Map<String, Object>> stats() {
         return ResponseEntity.ok(contactService.getStats());
     }
 
     @GetMapping("/conversion-rate")
     @Operation(summary = "Conversion rate (contacts -> converted patients)")
-    @PreAuthorize("hasAnyRole('" + AuthoritiesConstants.ADMIN + "','" + AuthoritiesConstants.RECEPTIONIST + "')")
+
     public ResponseEntity<Map<String, Object>> conversionRate() {
         return ResponseEntity.ok(contactService.getConversionRate());
     }

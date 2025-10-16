@@ -38,7 +38,7 @@ public class WorkShiftController {
      */
     @PostMapping
     @ApiMessage("Ca làm việc đã được tạo thành công")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+
     @Operation(summary = "Create work shift", description = "Create a new work shift template (Admin only)")
     public ResponseEntity<WorkShiftResponse> createWorkShift(@Valid @RequestBody CreateWorkShiftRequest request) {
         WorkShiftResponse response = workShiftService.createWorkShift(request);
@@ -54,7 +54,7 @@ public class WorkShiftController {
      */
     @PutMapping("/{shiftId}")
     @ApiMessage("Ca làm việc đã được cập nhật thành công")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+
     @Operation(summary = "Update work shift", description = "Update an existing work shift template (Admin only)")
     public ResponseEntity<WorkShiftResponse> updateWorkShift(
             @PathVariable String shiftId,
@@ -105,7 +105,7 @@ public class WorkShiftController {
      */
     @DeleteMapping("/{shiftId}")
     @ApiMessage("Ca làm việc đã được xóa thành công")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+
     @Operation(summary = "Delete work shift", description = "Soft delete work shift (Admin only)")
     public ResponseEntity<ResponseMessage> deleteWorkShift(@PathVariable String shiftId) {
         workShiftService.deleteWorkShift(shiftId);

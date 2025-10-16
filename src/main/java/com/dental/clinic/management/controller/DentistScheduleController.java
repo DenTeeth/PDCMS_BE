@@ -41,7 +41,7 @@ public class DentistScheduleController {
      */
     @PostMapping
     @ApiMessage("Lịch làm việc đã được đăng ký thành công")
-    @PreAuthorize("hasRole('ROLE_DOCTOR') or hasRole('ROLE_ADMIN')")
+
     @Operation(summary = "Create dentist schedule", description = "Register new work schedule (Part-time dentists only)")
     public ResponseEntity<DentistScheduleResponse> createSchedule(
             @Valid @RequestBody CreateDentistScheduleRequest request) {
@@ -59,7 +59,7 @@ public class DentistScheduleController {
      */
     @PutMapping("/{scheduleId}")
     @ApiMessage("Lịch làm việc đã được cập nhật thành công")
-    @PreAuthorize("hasRole('ROLE_DOCTOR') or hasRole('ROLE_ADMIN')")
+
     @Operation(summary = "Update dentist schedule", description = "Update existing schedule (Owner or Admin)")
     public ResponseEntity<DentistScheduleResponse> updateSchedule(
             @PathVariable String scheduleId,
@@ -78,7 +78,7 @@ public class DentistScheduleController {
      */
     @DeleteMapping("/{scheduleId}/cancel")
     @ApiMessage("Lịch làm việc đã được hủy thành công")
-    @PreAuthorize("hasRole('ROLE_DOCTOR') or hasRole('ROLE_ADMIN')")
+
     @Operation(summary = "Cancel dentist schedule", description = "Cancel AVAILABLE schedule (Cannot cancel BOOKED)")
     public ResponseEntity<Void> cancelSchedule(
             @PathVariable String scheduleId,

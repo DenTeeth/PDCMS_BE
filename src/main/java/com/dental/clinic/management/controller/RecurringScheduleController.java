@@ -38,7 +38,7 @@ public class RecurringScheduleController {
      */
     @PostMapping
     @ApiMessage("Lịch cố định đã được tạo thành công")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+
     @Operation(summary = "Create recurring schedule", description = "Create weekly recurring schedule (Admin only, Full-time employees)")
     public ResponseEntity<RecurringScheduleResponse> createRecurringSchedule(
             @Valid @RequestBody CreateRecurringScheduleRequest request) {
@@ -56,7 +56,7 @@ public class RecurringScheduleController {
      */
     @PutMapping("/{recurringId}")
     @ApiMessage("Lịch cố định đã được cập nhật thành công")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+
     @Operation(summary = "Update recurring schedule", description = "Update times/shift of recurring schedule (Admin only)")
     public ResponseEntity<RecurringScheduleResponse> updateRecurringSchedule(
             @PathVariable String recurringId,
@@ -75,7 +75,7 @@ public class RecurringScheduleController {
      */
     @PatchMapping("/{recurringId}/toggle")
     @ApiMessage("Trạng thái lịch cố định đã được cập nhật")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+
     @Operation(summary = "Toggle recurring schedule", description = "Enable/disable recurring schedule (Admin only)")
     public ResponseEntity<RecurringScheduleResponse> toggleRecurringSchedule(
             @PathVariable String recurringId,
@@ -92,7 +92,7 @@ public class RecurringScheduleController {
      */
     @GetMapping("/{recurringId}")
     @ApiMessage("Lấy thông tin lịch cố định thành công")
-    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_HR')")
+
     @Operation(summary = "Get recurring schedule", description = "Get recurring schedule by ID (Admin/HR)")
     public ResponseEntity<RecurringScheduleResponse> getRecurringScheduleById(@PathVariable String recurringId) {
         RecurringScheduleResponse response = recurringService.getRecurringScheduleById(recurringId);
@@ -109,7 +109,7 @@ public class RecurringScheduleController {
      */
     @DeleteMapping("/{recurringId}")
     @ApiMessage("Lịch cố định đã được xóa thành công")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+
     @Operation(summary = "Delete recurring schedule", description = "Permanently delete recurring schedule configuration (Admin only)")
     public ResponseEntity<Void> deleteRecurringSchedule(@PathVariable String recurringId) {
         recurringService.deleteRecurringSchedule(recurringId);
@@ -127,7 +127,7 @@ public class RecurringScheduleController {
      */
     @GetMapping
     @ApiMessage("Lấy danh sách lịch cố định thành công")
-    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_HR')")
+
     @Operation(summary = "Get recurring schedules", description = "Get all recurring schedules for an employee (Admin/HR)")
     public ResponseEntity<Page<RecurringScheduleResponse>> getRecurringSchedulesByEmployee(
             @RequestParam String employeeId,
