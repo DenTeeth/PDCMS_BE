@@ -33,7 +33,7 @@ public class AccountService {
 
     @PreAuthorize("hasRole('" + ADMIN + "')")
     @Transactional
-    public void assignRolesToAccount(String accountId, List<String> roleIds) {
+    public void assignRolesToAccount(Integer accountId, List<String> roleIds) {
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new BadRequestAlertException(
                         "Account not found with ID: " + accountId,
@@ -56,7 +56,7 @@ public class AccountService {
 
     @PreAuthorize("hasRole('" + ADMIN + "')")
     @Transactional(readOnly = true)
-    public List<String> getAccountRoles(String accountId) {
+    public List<String> getAccountRoles(Integer accountId) {
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new BadRequestAlertException(
                         "Account not found with ID: " + accountId,

@@ -145,7 +145,7 @@ public class CustomUserDetailsService implements UserDetailsService {
             return account;
         }
 
-        public String getAccountId() {
+        public Integer getAccountId() {
             return account.getAccountId();
         }
 

@@ -11,7 +11,7 @@ import com.dental.clinic.management.patient.domain.Patient;
  * Spring Data JPA repository for the {@link Patient} entity.
  */
 @Repository
-public interface PatientRepository extends JpaRepository<Patient, String>, JpaSpecificationExecutor<Patient> {
+public interface PatientRepository extends JpaRepository<Patient, Integer>, JpaSpecificationExecutor<Patient> {
 
   Optional<Patient> findOneByPatientCode(String patientCode);
 

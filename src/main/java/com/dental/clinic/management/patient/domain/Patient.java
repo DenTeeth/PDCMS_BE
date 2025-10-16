@@ -3,7 +3,6 @@ package com.dental.clinic.management.patient.domain;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 import com.dental.clinic.management.account.domain.Account;
 import com.dental.clinic.management.employee.enums.Gender;
@@ -12,6 +11,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
@@ -30,16 +31,16 @@ import jakarta.validation.constraints.Size;
 public class Patient {
 
   @Id
-  @Column(name = "patient_id", length = 36)
-  private String patientId;
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(name = "patient_id")
+  private Integer patientId;
 
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "account_id")
   private Account account;
 
-  @NotBlank
-  @Size(max = 10)
-  @Column(name = "patient_code", unique = true, nullable = false, length = 10)
+  @Size(max = 20)
+  @Column(name = "patient_code", unique = true, length = 20)
   private String patientCode;
 
   @NotBlank
@@ -96,7 +97,7 @@ public class Patient {
   public Patient() {
   }
 
-  public Patient(String patientId, String firstName, String lastName) {
+  public Patient(Integer patientId, String firstName, String lastName) {
     this.patientId = patientId;
     this.firstName = firstName;
     this.lastName = lastName;
@@ -104,9 +105,6 @@ public class Patient {
 
   @PrePersist
   protected void onCreate() {
-    if (patientId == null || patientId.isEmpty()) {
-      patientId = UUID.randomUUID().toString();
-    }
     createdAt = LocalDateTime.now();
     updatedAt = LocalDateTime.now();
   }
@@ -117,11 +115,11 @@ public class Patient {
   }
 
   // Getters and Setters
-  public String getPatientId() {
+  public Integer getPatientId() {
     return patientId;
   }
 
-  public void setPatientId(String patientId) {
+  public void setPatientId(Integer patientId) {
     this.patientId = patientId;
   }
 
@@ -276,7 +274,7 @@ public class Patient {
   @Override
   public String toString() {
     return "Patient{" +
-        "patientId='" + patientId + '\'' +
+        "patientId=" + patientId +
         ", firstName='" + firstName + '\'' +
         ", lastName='" + lastName + '\'' +
         ", email='" + email + '\'' +

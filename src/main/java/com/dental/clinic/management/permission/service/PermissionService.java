@@ -1,4 +1,3 @@
-
 package com.dental.clinic.management.permission.service;
 
 import com.dental.clinic.management.exception.BadRequestAlertException;
@@ -24,7 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -84,8 +82,8 @@ public class PermissionService {
                     "permissionnameexists");
         }
 
-        // Generate unique permission ID
-        String permissionId = UUID.randomUUID().toString();
+        // Use permission name as the ID (e.g., CREATE_CONTACT, UPDATE_CONTACT)
+        String permissionId = request.getPermissionName();
 
         // Create new permission
         Permission permission = new Permission(

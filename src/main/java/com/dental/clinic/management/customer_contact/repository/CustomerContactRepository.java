@@ -18,5 +18,5 @@ public interface CustomerContactRepository extends JpaRepository<CustomerContact
     long countByCreatedAtBetween(LocalDateTime from, LocalDateTime to);
 
     // new helper used for auto-assign + simple metrics
-    long countByAssignedToAndStatus(String assignedTo, CustomerContactStatus status);
+    long countByAssignedToAndStatus(Integer assignedTo, CustomerContactStatus status);
 }

@@ -14,7 +14,7 @@ import java.util.Optional;
  * Spring Data JPA repository for the {@link Account} entity.
  */
 @Repository
-public interface AccountRepository extends JpaRepository<Account, String> {
+public interface AccountRepository extends JpaRepository<Account, Integer> {
 
     Optional<Account> findOneByEmail(String email);
 

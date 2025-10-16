@@ -8,11 +8,13 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import com.dental.clinic.management.contact_history.enums.ContactHistoryAction;
+import com.dental.clinic.management.utils.IdGenerator;
 import java.time.LocalDateTime;
 
 /**
@@ -22,18 +24,20 @@ import java.time.LocalDateTime;
 @Table(name = "contact_history")
 public class ContactHistory {
 
+    @Transient
+    private static IdGenerator idGenerator;
+
     @Id
-    @Column(name = "history_id", length = 36)
+    @Column(name = "history_id", length = 20)
     private String historyId;
 
     @NotBlank
-    @Size(max = 36)
-    @Column(name = "contact_id", length = 36, nullable = false)
+    @Size(max = 20)
+    @Column(name = "contact_id", length = 20, nullable = false)
     private String contactId;
 
-    @Size(max = 36)
-    @Column(name = "employee_id", length = 36)
-    private String employeeId;
+    @Column(name = "employee_id")
+    private Integer employeeId;
 
     @NotNull
     @Enumerated(EnumType.STRING)
@@ -51,8 +55,16 @@ public class ContactHistory {
     public ContactHistory() {
     }
 
+    // Setter for IdGenerator (will be injected via service layer)
+    public static void setIdGenerator(IdGenerator generator) {
+        idGenerator = generator;
+    }
+
     @PrePersist
     protected void onCreate() {
+        if (historyId == null && idGenerator != null) {
+            historyId = idGenerator.generateId("CTH");
+        }
         this.createdAt = LocalDateTime.now();
     }
 
@@ -73,11 +85,11 @@ public class ContactHistory {
         this.contactId = contactId;
     }
 
-    public String getEmployeeId() {
+    public Integer getEmployeeId() {
         return employeeId;
     }
 
-    public void setEmployeeId(String employeeId) {
+    public void setEmployeeId(Integer employeeId) {
         this.employeeId = employeeId;
     }
 

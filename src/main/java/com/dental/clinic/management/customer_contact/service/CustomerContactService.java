@@ -102,7 +102,7 @@ public class CustomerContactService {
 
         // validate assignedTo if provided -> do NOT throw, just ignore and log if
         // employee not found
-        if (request.getAssignedTo() != null && !request.getAssignedTo().isBlank()) {
+        if (request.getAssignedTo() != null) {
             if (!employeeRepository.existsById(request.getAssignedTo())) {
                 log.warn("Assigned employee not found, ignoring assignedTo: {}", request.getAssignedTo());
                 request.setAssignedTo(null);
@@ -151,7 +151,7 @@ public class CustomerContactService {
 
         // validate assignedTo if provided in update -> do NOT throw, ignore if employee
         // not found
-        if (request != null && request.getAssignedTo() != null && !request.getAssignedTo().isBlank()) {
+        if (request != null && request.getAssignedTo() != null) {
             if (!employeeRepository.existsById(request.getAssignedTo())) {
                 log.warn("Assigned employee not found, ignoring assignedTo update: {}", request.getAssignedTo());
                 request.setAssignedTo(null); // leave existing assignedTo unchanged
@@ -184,12 +184,12 @@ public class CustomerContactService {
      */
     @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + UPDATE_CONTACT + "')")
     @Transactional
-    public ContactInfoResponse assignContact(String contactId, String employeeId /* nullable -> auto */) {
+    public ContactInfoResponse assignContact(String contactId, Integer employeeId /* nullable -> auto */) {
         CustomerContact contact = repository.findOneByContactId(contactId)
                 .orElseThrow(() -> new BadRequestAlertException("Contact not found: " + contactId, "customer_contact",
                         "contactnotfound"));
 
-        if (employeeId != null && !employeeId.isBlank()) {
+        if (employeeId != null) {
             // Manual mode: validate employee exists and has Receptionist role
             Employee employee = employeeRepository.findById(employeeId)
                     .orElseThrow(() -> new BadRequestAlertException("Assigned employee not found: " + employeeId,
@@ -298,7 +298,7 @@ public class CustomerContactService {
                 .collect(Collectors.groupingBy(c -> (c.getSource() == null ? "UNKNOWN" : c.getSource().name()),
                         Collectors.counting()));
         Map<String, Long> byAssigned = all.stream()
-                .collect(Collectors.groupingBy(c -> (c.getAssignedTo() == null ? "UNASSIGNED" : c.getAssignedTo()),
+                .collect(Collectors.groupingBy(c -> (c.getAssignedTo() == null ? "UNASSIGNED" : c.getAssignedTo().toString()),
                         Collectors.counting()));
 
         Map<String, Object> out = new HashMap<>();

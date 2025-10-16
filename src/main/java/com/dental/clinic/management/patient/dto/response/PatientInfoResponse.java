@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
  */
 public class PatientInfoResponse {
 
-    private String patientId;
+    private Integer patientId;
     private String patientCode;
     private String firstName;
     private String lastName;
@@ -34,11 +34,11 @@ public class PatientInfoResponse {
     }
 
     // Getters and Setters
-    public String getPatientId() {
+    public Integer getPatientId() {
         return patientId;
     }
 
-    public void setPatientId(String patientId) {
+    public void setPatientId(Integer patientId) {
         this.patientId = patientId;
     }
 

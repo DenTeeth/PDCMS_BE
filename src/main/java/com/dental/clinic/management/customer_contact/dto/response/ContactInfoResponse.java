@@ -24,8 +24,8 @@ public class ContactInfoResponse {
     private String email;
     private CustomerContactSource source;
     private CustomerContactStatus status;
-    private String assignedTo;
-    private String convertedPatientId;
+    private Integer assignedTo;
+    private Integer convertedPatientId;
     private String notes;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

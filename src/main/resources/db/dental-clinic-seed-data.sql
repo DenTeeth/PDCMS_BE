@@ -1,79 +1,16 @@
 -- ============================================
 -- DENTAL CLINIC MANAGEMENT SYSTEM
--- COMPLETE TEST DATA WITH RBAC
+-- COMPLETE TEST DATA WITH RBAC - UPDATED FOR NEW ID STRUCTURE
 -- ============================================
--- UUID Format: VARCHAR(36)
--- Auto-generate Account for every Employee/Patient
--- ============================================
--- DENTAL CLINIC MANAGEMENT SYSTEM
--- COMPLETE TEST DATA WITH RBAC
--- ============================================
--- UUID Format: VARCHAR(36)
--- Auto-generate Account for every Employee/Patient
+-- New ID Structure:
+-- - Account, Employee, Patient: INTEGER AUTO_INCREMENT with CODE fields (ACC001, EMP001, PAT001)
+-- - CustomerContact, ContactHistory: DATE-BASED VARCHAR(20) (CTC-YYMMDD-001, CTH-YYMMDD-001)
+-- - Permission, Role: Name-based VARCHAR IDs
+-- - Specialization: INTEGER (1-7)
 -- ============================================
 
 SET NAMES utf8mb4;
 SET CHARACTER SET utf8mb4;
-
--- ============================================
--- STEP 0: SCHEMA: create customer_contacts, contact_history, appointments
--- (these tables are optional if your main schema/migrations already provide them)
--- ============================================
-
-CREATE TABLE IF NOT EXISTS customer_contacts (
-  contact_id VARCHAR(36) NOT NULL PRIMARY KEY,
-  full_name VARCHAR(100),
-  phone VARCHAR(15),
-  email VARCHAR(100),
-  source VARCHAR(50),
-  status VARCHAR(50),
-  assigned_to VARCHAR(36),
-  converted_patient_id VARCHAR(36),
-  notes TEXT,
-  created_at DATETIME(6),
-  updated_at DATETIME(6),
-  INDEX idx_contact_assigned_to (assigned_to)
-  -- foreign key to employees added below after employees table existence verified
-);
-
-CREATE TABLE IF NOT EXISTS contact_history (
-  history_id VARCHAR(36) NOT NULL PRIMARY KEY,
-  contact_id VARCHAR(36) NOT NULL,
-  employee_id VARCHAR(36),
-  action VARCHAR(50),
-  content TEXT,
-  created_at DATETIME(6),
-  INDEX idx_history_contact (contact_id)
-  -- foreign keys added below
-);
-
-CREATE TABLE IF NOT EXISTS appointments (
-  appointment_id VARCHAR(36) NOT NULL PRIMARY KEY,
-  appointment_code VARCHAR(12),
-  patient_id VARCHAR(36),
-  doctor_id VARCHAR(36),
-  appointment_date DATE,
-  start_time TIME,
-  end_time TIME,
-  type VARCHAR(50),
-  status VARCHAR(50),
-  reason TEXT,
-  notes TEXT,
-  created_by VARCHAR(36),
-  created_at DATETIME(6),
-  updated_at DATETIME(6),
-  UNIQUE INDEX idx_appointments_code (appointment_code),
-  INDEX idx_appointments_patient (patient_id),
-  INDEX idx_appointments_doctor_date (doctor_id, appointment_date)
-  -- foreign keys added below
-);
-
--- Optionally add foreign keys if the referenced tables exist:
--- ALTER TABLE customer_contacts ADD CONSTRAINT fk_contact_assigned_employee FOREIGN KEY (assigned_to) REFERENCES employees(employee_id);
--- ALTER TABLE contact_history ADD CONSTRAINT fk_history_contact FOREIGN KEY (contact_id) REFERENCES customer_contacts(contact_id);
--- ALTER TABLE contact_history ADD CONSTRAINT fk_history_employee FOREIGN KEY (employee_id) REFERENCES employees(employee_id);
--- ALTER TABLE appointments ADD CONSTRAINT fk_appointments_patient FOREIGN KEY (patient_id) REFERENCES patients(patient_id);
--- ALTER TABLE appointments ADD CONSTRAINT fk_appointments_doctor FOREIGN KEY (doctor_id) REFERENCES employees(employee_id);
 
 
 -- ============================================
@@ -201,57 +138,62 @@ ON DUPLICATE KEY UPDATE role_id = VALUES(role_id);
 
 
 -- ============================================
--- STEP 4: CREATE SPECIALIZATIONS (Optional for Doctors)
+-- STEP 4: CREATE SPECIALIZATIONS (Integer IDs: 1-7)
 -- ============================================
 
 INSERT INTO specializations (specialization_id, specialization_code, specialization_name, description, is_active, created_at)
 VALUES
-('770e8400-e29b-41d4-a716-446655440001', 'SPEC001', 'Chỉnh nha', 'Orthodontics - Niềng răng, chỉnh hình răng mặt', TRUE, NOW()),
-('770e8400-e29b-41d4-a716-446655440002', 'SPEC002', 'Nội nha', 'Endodontics - Điều trị tủy, chữa răng sâu', TRUE, NOW()),
-('770e8400-e29b-41d4-a716-446655440003', 'SPEC003', 'Nha chu', 'Periodontics - Điều trị nướu, mô nha chu', TRUE, NOW()),
-('770e8400-e29b-41d4-a716-446655440004', 'SPEC004', 'Phục hồi răng', 'Prosthodontics - Làm răng giả, cầu răng, implant', TRUE, NOW()),
-('770e8400-e29b-41d4-a716-446655440005', 'SPEC005', 'Phẫu thuật hàm mặt', 'Oral Surgery - Nhổ răng khôn, phẫu thuật', TRUE, NOW()),
-('770e8400-e29b-41d4-a716-446655440006', 'SPEC006', 'Nha khoa trẻ em', 'Pediatric Dentistry - Chuyên khoa nhi', TRUE, NOW()),
-('770e8400-e29b-41d4-a716-446655440007', 'SPEC007', 'Răng thẩm mỹ', 'Cosmetic Dentistry - Tẩy trắng, bọc sứ', TRUE, NOW())
+(1, 'SPEC001', 'Chỉnh nha', 'Orthodontics - Niềng răng, chỉnh hình răng mặt', TRUE, NOW()),
+(2, 'SPEC002', 'Nội nha', 'Endodontics - Điều trị tủy, chữa răng sâu', TRUE, NOW()),
+(3, 'SPEC003', 'Nha chu', 'Periodontics - Điều trị nướu, mô nha chu', TRUE, NOW()),
+(4, 'SPEC004', 'Phục hồi răng', 'Prosthodontics - Làm răng giả, cầu răng, implant', TRUE, NOW()),
+(5, 'SPEC005', 'Phẫu thuật hàm mặt', 'Oral Surgery - Nhổ răng khôn, phẫu thuật', TRUE, NOW()),
+(6, 'SPEC006', 'Nha khoa trẻ em', 'Pediatric Dentistry - Chuyên khoa nhi', TRUE, NOW()),
+(7, 'SPEC007', 'Răng thẩm mỹ', 'Cosmetic Dentistry - Tẩy trắng, bọc sứ', TRUE, NOW())
 ON DUPLICATE KEY UPDATE specialization_name = VALUES(specialization_name);
 
 
 -- ============================================
--- STEP 5: CREATE ACCOUNTS FOR EMPLOYEES
+-- STEP 5: CREATE ACCOUNTS FOR EMPLOYEES (Auto-increment IDs + Generated Codes)
 -- ============================================
 -- Password: 123456 (BCrypt hashed)
 -- $2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2
 
 -- Admin Account
-INSERT INTO accounts (account_id, username, email, password, status, created_at)
-VALUES
-('880e8400-e29b-41d4-a716-446655440001', 'admin', 'admin@dentalclinic.com', '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ACTIVE', NOW())
-ON DUPLICATE KEY UPDATE username = VALUES(username);
+INSERT INTO accounts (username, email, password, status, created_at)
+VALUES ('admin', 'admin@dentalclinic.com', '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ACTIVE', NOW());
+SET @admin_account_id = LAST_INSERT_ID();
+UPDATE accounts SET account_code = CONCAT('ACC', LPAD(@admin_account_id, 3, '0')) WHERE account_id = @admin_account_id;
 
--- Doctor Accounts
-INSERT INTO accounts (account_id, username, email, password, status, created_at)
-VALUES
-('880e8400-e29b-41d4-a716-446655440002', 'nhasi1', 'nhasi1@dentalclinic.com', '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ACTIVE', NOW()),
-('880e8400-e29b-41d4-a716-446655440003', 'nhasi2', 'nhasi2@dentalclinic.com', '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ACTIVE', NOW())
-ON DUPLICATE KEY UPDATE username = VALUES(username);
+-- Doctor Account 1
+INSERT INTO accounts (username, email, password, status, created_at)
+VALUES ('nhasi1', 'nhasi1@dentalclinic.com', '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ACTIVE', NOW());
+SET @doctor1_account_id = LAST_INSERT_ID();
+UPDATE accounts SET account_code = CONCAT('ACC', LPAD(@doctor1_account_id, 3, '0')) WHERE account_id = @doctor1_account_id;
 
--- Nurse Account
-INSERT INTO accounts (account_id, username, email, password, status, created_at)
-VALUES
-('880e8400-e29b-41d4-a716-446655440006', 'yta', 'yta@dentalclinic.com', '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ACTIVE', NOW())
-ON DUPLICATE KEY UPDATE username = VALUES(username);
+-- Doctor Account 2
+INSERT INTO accounts (username, email, password, status, created_at)
+VALUES ('nhasi2', 'nhasi2@dentalclinic.com', '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ACTIVE', NOW());
+SET @doctor2_account_id = LAST_INSERT_ID();
+UPDATE accounts SET account_code = CONCAT('ACC', LPAD(@doctor2_account_id, 3, '0')) WHERE account_id = @doctor2_account_id;
 
 -- Receptionist Account
-INSERT INTO accounts (account_id, username, email, password, status, created_at)
-VALUES
-('880e8400-e29b-41d4-a716-446655440004', 'letan', 'letan@dentalclinic.com', '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ACTIVE', NOW())
-ON DUPLICATE KEY UPDATE username = VALUES(username);
+INSERT INTO accounts (username, email, password, status, created_at)
+VALUES ('letan', 'letan@dentalclinic.com', '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ACTIVE', NOW());
+SET @receptionist_account_id = LAST_INSERT_ID();
+UPDATE accounts SET account_code = CONCAT('ACC', LPAD(@receptionist_account_id, 3, '0')) WHERE account_id = @receptionist_account_id;
 
 -- Accountant Account
-INSERT INTO accounts (account_id, username, email, password, status, created_at)
-VALUES
-('880e8400-e29b-41d4-a716-446655440005', 'ketoan', 'ketoan@dentalclinic.com', '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ACTIVE', NOW())
-ON DUPLICATE KEY UPDATE username = VALUES(username);
+INSERT INTO accounts (username, email, password, status, created_at)
+VALUES ('ketoan', 'ketoan@dentalclinic.com', '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ACTIVE', NOW());
+SET @accountant_account_id = LAST_INSERT_ID();
+UPDATE accounts SET account_code = CONCAT('ACC', LPAD(@accountant_account_id, 3, '0')) WHERE account_id = @accountant_account_id;
+
+-- Nurse Account
+INSERT INTO accounts (username, email, password, status, created_at)
+VALUES ('yta', 'yta@dentalclinic.com', '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ACTIVE', NOW());
+SET @nurse_account_id = LAST_INSERT_ID();
+UPDATE accounts SET account_code = CONCAT('ACC', LPAD(@nurse_account_id, 3, '0')) WHERE account_id = @nurse_account_id;
 
 
 -- ============================================
@@ -261,62 +203,62 @@ ON DUPLICATE KEY UPDATE username = VALUES(username);
 INSERT INTO account_roles (account_id, role_id)
 VALUES
 -- Admin
-('880e8400-e29b-41d4-a716-446655440001', 'ROLE_ADMIN'),
+(@admin_account_id, 'ROLE_ADMIN'),
 
 -- Doctors
-('880e8400-e29b-41d4-a716-446655440002', 'ROLE_DOCTOR'),
-('880e8400-e29b-41d4-a716-446655440003', 'ROLE_DOCTOR'),
-
--- Nurse
-('880e8400-e29b-41d4-a716-446655440006', 'ROLE_NURSE'),
+(@doctor1_account_id, 'ROLE_DOCTOR'),
+(@doctor2_account_id, 'ROLE_DOCTOR'),
 
 -- Receptionist
-('880e8400-e29b-41d4-a716-446655440004', 'ROLE_RECEPTIONIST'),
+(@receptionist_account_id, 'ROLE_RECEPTIONIST'),
 
 -- Accountant
-('880e8400-e29b-41d4-a716-446655440005', 'ROLE_ACCOUNTANT')
+(@accountant_account_id, 'ROLE_ACCOUNTANT'),
+
+-- Nurse
+(@nurse_account_id, 'ROLE_NURSE')
 ON DUPLICATE KEY UPDATE role_id = VALUES(role_id);
 
 
 -- ============================================
--- STEP 7: CREATE EMPLOYEES
+-- STEP 7: CREATE EMPLOYEES (Auto-increment IDs + Generated Codes)
 -- ============================================
 
 -- Admin Employee
-INSERT INTO employees (employee_id, account_id, role_id, employee_code, first_name, last_name, phone, date_of_birth, address, is_active, created_at)
-VALUES
-('990e8400-e29b-41d4-a716-446655440001', '880e8400-e29b-41d4-a716-446655440001', 'ROLE_ADMIN', 'EMP001', 'Admin', 'Hệ thống', '0900000001', '1985-01-01', 'Phòng quản trị', TRUE, NOW())
-ON DUPLICATE KEY UPDATE employee_code = VALUES(employee_code);
+INSERT INTO employees (account_id, role_id, first_name, last_name, phone, date_of_birth, address, is_active, created_at)
+VALUES (@admin_account_id, 'ROLE_ADMIN', 'Admin', 'Hệ thống', '0900000001', '1985-01-01', 'Phòng quản trị', TRUE, NOW());
+SET @admin_employee_id = LAST_INSERT_ID();
+UPDATE employees SET employee_code = CONCAT('EMP', LPAD(@admin_employee_id, 3, '0')) WHERE employee_id = @admin_employee_id;
 
 -- Doctor 1: Chuyên Chỉnh nha + Răng thẩm mỹ
-INSERT INTO employees (employee_id, account_id, role_id, employee_code, first_name, last_name, phone, date_of_birth, address, is_active, created_at)
-VALUES
-('990e8400-e29b-41d4-a716-446655440002', '880e8400-e29b-41d4-a716-446655440002', 'ROLE_DOCTOR', 'EMP002', 'Minh', 'Nguyễn Văn', '0901234567', '1985-05-15', '123 Nguyễn Huệ, Q1, TPHCM', TRUE, NOW())
-ON DUPLICATE KEY UPDATE employee_code = VALUES(employee_code);
+INSERT INTO employees (account_id, role_id, first_name, last_name, phone, date_of_birth, address, is_active, created_at)
+VALUES (@doctor1_account_id, 'ROLE_DOCTOR', 'Minh', 'Nguyễn Văn', '0901234567', '1985-05-15', '123 Nguyễn Huệ, Q1, TPHCM', TRUE, NOW());
+SET @doctor1_employee_id = LAST_INSERT_ID();
+UPDATE employees SET employee_code = CONCAT('EMP', LPAD(@doctor1_employee_id, 3, '0')) WHERE employee_id = @doctor1_employee_id;
 
 -- Doctor 2: Chuyên Nội nha + Phục hồi răng
-INSERT INTO employees (employee_id, account_id, role_id, employee_code, first_name, last_name, phone, date_of_birth, address, is_active, created_at)
-VALUES
-('990e8400-e29b-41d4-a716-446655440003', '880e8400-e29b-41d4-a716-446655440003', 'ROLE_DOCTOR', 'EMP003', 'Lan', 'Trần Thị', '0902345678', '1988-08-20', '456 Lê Lợi, Q3, TPHCM', TRUE, NOW())
-ON DUPLICATE KEY UPDATE employee_code = VALUES(employee_code);
-
--- Nurse
-INSERT INTO employees (employee_id, account_id, role_id, employee_code, first_name, last_name, phone, date_of_birth, address, is_active, created_at)
-VALUES
-('990e8400-e29b-41d4-a716-446655440006', '880e8400-e29b-41d4-a716-446655440006', 'ROLE_NURSE', 'EMP006', 'Hoa', 'Phạm Thị', '0906789012', '1992-06-15', '111 Lý Thường Kiệt, Q10, TPHCM', TRUE, NOW())
-ON DUPLICATE KEY UPDATE employee_code = VALUES(employee_code);
+INSERT INTO employees (account_id, role_id, first_name, last_name, phone, date_of_birth, address, is_active, created_at)
+VALUES (@doctor2_account_id, 'ROLE_DOCTOR', 'Lan', 'Trần Thị', '0902345678', '1988-08-20', '456 Lê Lợi, Q3, TPHCM', TRUE, NOW());
+SET @doctor2_employee_id = LAST_INSERT_ID();
+UPDATE employees SET employee_code = CONCAT('EMP', LPAD(@doctor2_employee_id, 3, '0')) WHERE employee_id = @doctor2_employee_id;
 
 -- Receptionist
-INSERT INTO employees (employee_id, account_id, role_id, employee_code, first_name, last_name, phone, date_of_birth, address, is_active, created_at)
-VALUES
-('990e8400-e29b-41d4-a716-446655440004', '880e8400-e29b-41d4-a716-446655440004', 'ROLE_RECEPTIONIST', 'EMP004', 'Mai', 'Lê Thị', '0903456789', '1995-03-10', '789 Trần Hưng Đạo, Q5, TPHCM', TRUE, NOW())
-ON DUPLICATE KEY UPDATE employee_code = VALUES(employee_code);
+INSERT INTO employees (account_id, role_id, first_name, last_name, phone, date_of_birth, address, is_active, created_at)
+VALUES (@receptionist_account_id, 'ROLE_RECEPTIONIST', 'Mai', 'Lê Thị', '0903456789', '1995-03-10', '789 Trần Hưng Đạo, Q5, TPHCM', TRUE, NOW());
+SET @receptionist_employee_id = LAST_INSERT_ID();
+UPDATE employees SET employee_code = CONCAT('EMP', LPAD(@receptionist_employee_id, 3, '0')) WHERE employee_id = @receptionist_employee_id;
 
 -- Accountant
-INSERT INTO employees (employee_id, account_id, role_id, employee_code, first_name, last_name, phone, date_of_birth, address, is_active, created_at)
-VALUES
-('990e8400-e29b-41d4-a716-446655440005', '880e8400-e29b-41d4-a716-446655440005', 'ROLE_ACCOUNTANT', 'EMP005', 'Tuấn', 'Hoàng Văn', '0904567890', '1992-07-25', '321 Hai Bà Trưng, Q1, TPHCM', TRUE, NOW())
-ON DUPLICATE KEY UPDATE employee_code = VALUES(employee_code);
+INSERT INTO employees (account_id, role_id, first_name, last_name, phone, date_of_birth, address, is_active, created_at)
+VALUES (@accountant_account_id, 'ROLE_ACCOUNTANT', 'Tuấn', 'Hoàng Văn', '0904567890', '1992-07-25', '321 Hai Bà Trưng, Q1, TPHCM', TRUE, NOW());
+SET @accountant_employee_id = LAST_INSERT_ID();
+UPDATE employees SET employee_code = CONCAT('EMP', LPAD(@accountant_employee_id, 3, '0')) WHERE employee_id = @accountant_employee_id;
+
+-- Nurse
+INSERT INTO employees (account_id, role_id, first_name, last_name, phone, date_of_birth, address, is_active, created_at)
+VALUES (@nurse_account_id, 'ROLE_NURSE', 'Hoa', 'Phạm Thị', '0906789012', '1992-06-15', '111 Lý Thường Kiệt, Q10, TPHCM', TRUE, NOW());
+SET @nurse_employee_id = LAST_INSERT_ID();
+UPDATE employees SET employee_code = CONCAT('EMP', LPAD(@nurse_employee_id, 3, '0')) WHERE employee_id = @nurse_employee_id;
 
 
 -- ============================================
@@ -326,48 +268,76 @@ ON DUPLICATE KEY UPDATE employee_code = VALUES(employee_code);
 -- Doctor 1: Chỉnh nha + Răng thẩm mỹ
 INSERT INTO employee_specializations (employee_id, specialization_id)
 VALUES
-('990e8400-e29b-41d4-a716-446655440002', '770e8400-e29b-41d4-a716-446655440001'),
-('990e8400-e29b-41d4-a716-446655440002', '770e8400-e29b-41d4-a716-446655440007')
+(@doctor1_employee_id, 1),
+(@doctor1_employee_id, 7)
 ON DUPLICATE KEY UPDATE employee_id = VALUES(employee_id);
 
 -- Doctor 2: Nội nha + Phục hồi răng
 INSERT INTO employee_specializations (employee_id, specialization_id)
 VALUES
-('990e8400-e29b-41d4-a716-446655440003', '770e8400-e29b-41d4-a716-446655440002'),
-('990e8400-e29b-41d4-a716-446655440003', '770e8400-e29b-41d4-a716-446655440004')
+(@doctor2_employee_id, 2),
+(@doctor2_employee_id, 4)
+ON DUPLICATE KEY UPDATE employee_id = VALUES(employee_id);
+
+-- Nurse: Nha khoa trẻ em
+INSERT INTO employee_specializations (employee_id, specialization_id)
+VALUES
+(@nurse_employee_id, 6)
 ON DUPLICATE KEY UPDATE employee_id = VALUES(employee_id);
 
 
 -- ============================================
--- STEP 9: CREATE PATIENT ACCOUNTS
+-- STEP 9: CREATE PATIENT ACCOUNTS (Auto-increment IDs + Generated Codes)
 -- ============================================
 
-INSERT INTO accounts (account_id, username, email, password, status, created_at)
-VALUES
-('880e8400-e29b-41d4-a716-446655440101', 'benhnhan1', 'benhnhan1@email.com', '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ACTIVE', NOW()),
-('880e8400-e29b-41d4-a716-446655440102', 'benhnhan2', 'benhnhan2@email.com', '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ACTIVE', NOW()),
-('880e8400-e29b-41d4-a716-446655440103', 'benhnhan3', 'benhnhan3@email.com', '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ACTIVE', NOW())
-ON DUPLICATE KEY UPDATE username = VALUES(username);
+-- Patient Account 1
+INSERT INTO accounts (username, email, password, status, created_at)
+VALUES ('benhnhan1', 'benhnhan1@email.com', '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ACTIVE', NOW());
+SET @patient1_account_id = LAST_INSERT_ID();
+UPDATE accounts SET account_code = CONCAT('ACC', LPAD(@patient1_account_id, 3, '0')) WHERE account_id = @patient1_account_id;
+
+-- Patient Account 2
+INSERT INTO accounts (username, email, password, status, created_at)
+VALUES ('benhnhan2', 'benhnhan2@email.com', '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ACTIVE', NOW());
+SET @patient2_account_id = LAST_INSERT_ID();
+UPDATE accounts SET account_code = CONCAT('ACC', LPAD(@patient2_account_id, 3, '0')) WHERE account_id = @patient2_account_id;
+
+-- Patient Account 3
+INSERT INTO accounts (username, email, password, status, created_at)
+VALUES ('benhnhan3', 'benhnhan3@email.com', '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ACTIVE', NOW());
+SET @patient3_account_id = LAST_INSERT_ID();
+UPDATE accounts SET account_code = CONCAT('ACC', LPAD(@patient3_account_id, 3, '0')) WHERE account_id = @patient3_account_id;
 
 -- Assign PATIENT role
 INSERT INTO account_roles (account_id, role_id)
 VALUES
-('880e8400-e29b-41d4-a716-446655440101', 'ROLE_PATIENT'),
-('880e8400-e29b-41d4-a716-446655440102', 'ROLE_PATIENT'),
-('880e8400-e29b-41d4-a716-446655440103', 'ROLE_PATIENT')
+(@patient1_account_id, 'ROLE_PATIENT'),
+(@patient2_account_id, 'ROLE_PATIENT'),
+(@patient3_account_id, 'ROLE_PATIENT')
 ON DUPLICATE KEY UPDATE role_id = VALUES(role_id);
 
 
 -- ============================================
--- STEP 10: CREATE PATIENTS
+-- STEP 10: CREATE PATIENTS (Auto-increment IDs + Generated Codes)
 -- ============================================
 
-INSERT INTO patients (patient_id, patient_code, first_name, last_name, email, phone, date_of_birth, address, gender, is_active, created_at, updated_at)
-VALUES
-('aa0e8400-e29b-41d4-a716-446655440101', 'PT001', 'Khang', 'Nguyễn Văn', 'benhnhan1@email.com', '0911111111', '1990-01-15', '123 Lê Văn Việt, Q9, TPHCM', 'MALE', TRUE, NOW(), NOW()),
-('aa0e8400-e29b-41d4-a716-446655440102', 'PT002', 'Lan', 'Trần Thị', 'benhnhan2@email.com', '0922222222', '1985-05-20', '456 Võ Văn Ngân, Thủ Đức, TPHCM', 'FEMALE', TRUE, NOW(), NOW()),
-('aa0e8400-e29b-41d4-a716-446655440103', 'PT003', 'Đức', 'Lê Minh', 'benhnhan3@email.com', '0933333333', '1995-12-10', '789 Đường D2, Bình Thạnh, TPHCM', 'MALE', TRUE, NOW(), NOW())
-ON DUPLICATE KEY UPDATE patient_code = VALUES(patient_code);
+-- Patient 1
+INSERT INTO patients (first_name, last_name, email, phone, date_of_birth, address, gender, is_active, created_at, updated_at)
+VALUES ('Khang', 'Nguyễn Văn', 'benhnhan1@email.com', '0911111111', '1990-01-15', '123 Lê Văn Việt, Q9, TPHCM', 'MALE', TRUE, NOW(), NOW());
+SET @patient1_id = LAST_INSERT_ID();
+UPDATE patients SET patient_code = CONCAT('PAT', LPAD(@patient1_id, 3, '0')) WHERE patient_id = @patient1_id;
+
+-- Patient 2
+INSERT INTO patients (first_name, last_name, email, phone, date_of_birth, address, gender, is_active, created_at, updated_at)
+VALUES ('Lan', 'Trần Thị', 'benhnhan2@email.com', '0922222222', '1985-05-20', '456 Võ Văn Ngân, Thủ Đức, TPHCM', 'FEMALE', TRUE, NOW(), NOW());
+SET @patient2_id = LAST_INSERT_ID();
+UPDATE patients SET patient_code = CONCAT('PAT', LPAD(@patient2_id, 3, '0')) WHERE patient_id = @patient2_id;
+
+-- Patient 3
+INSERT INTO patients (first_name, last_name, email, phone, date_of_birth, address, gender, is_active, created_at, updated_at)
+VALUES ('Đức', 'Lê Minh', 'benhnhan3@email.com', '0933333333', '1995-12-10', '789 Đường D2, Bình Thạnh, TPHCM', 'MALE', TRUE, NOW(), NOW());
+SET @patient3_id = LAST_INSERT_ID();
+UPDATE patients SET patient_code = CONCAT('PAT', LPAD(@patient3_id, 3, '0')) WHERE patient_id = @patient3_id;
 
 
 -- ============================================

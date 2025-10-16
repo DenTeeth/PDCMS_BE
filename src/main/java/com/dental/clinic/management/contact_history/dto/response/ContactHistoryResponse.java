@@ -19,7 +19,7 @@ import com.dental.clinic.management.contact_history.enums.ContactHistoryAction;
 public class ContactHistoryResponse {
     private String historyId;
     private String contactId;
-    private String employeeId;
+    private Integer employeeId;
     private ContactHistoryAction action;
     private String content;
     private LocalDateTime createdAt;

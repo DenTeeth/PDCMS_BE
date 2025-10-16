@@ -10,13 +10,14 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.UUID;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
@@ -36,8 +37,9 @@ import jakarta.validation.constraints.Size;
 public class Employee {
 
   @Id
-  @Column(name = "employee_id", length = 36)
-  private String employeeId;
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(name = "employee_id")
+  private Integer employeeId;
 
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "account_id", nullable = false)
@@ -59,9 +61,8 @@ public class Employee {
   @Column(name = "role_id", nullable = false, length = 50)
   private String roleId;
 
-  @NotBlank
-  @Size(max = 10)
-  @Column(name = "employee_code", unique = true, nullable = false, length = 10)
+  @Size(max = 20)
+  @Column(name = "employee_code", unique = true, length = 20)
   private String employeeCode;
 
   @NotBlank
@@ -102,7 +103,7 @@ public class Employee {
   public Employee() {
   }
 
-  public Employee(String employeeId, Account account, String employeeCode, String firstName, String lastName) {
+  public Employee(Integer employeeId, Account account, String employeeCode, String firstName, String lastName) {
     this.employeeId = employeeId;
     this.account = account;
     this.employeeCode = employeeCode;
@@ -112,18 +113,15 @@ public class Employee {
 
   @PrePersist
   protected void onCreate() {
-    if (employeeId == null || employeeId.isEmpty()) {
-      employeeId = UUID.randomUUID().toString();
-    }
     createdAt = LocalDateTime.now();
   }
 
   // Getters and Setters
-  public String getEmployeeId() {
+  public Integer getEmployeeId() {
     return employeeId;
   }
 
-  public void setEmployeeId(String employeeId) {
+  public void setEmployeeId(Integer employeeId) {
     this.employeeId = employeeId;
   }
 
@@ -254,7 +252,7 @@ public class Employee {
   @Override
   public String toString() {
     return "Employee{" +
-        "employeeId='" + employeeId + '\'' +
+        "employeeId=" + employeeId +
         ", employeeCode='" + employeeCode + '\'' +
         ", firstName='" + firstName + '\'' +
         ", lastName='" + lastName + '\'' +

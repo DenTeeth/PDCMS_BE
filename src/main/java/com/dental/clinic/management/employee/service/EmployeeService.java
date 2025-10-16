@@ -31,11 +31,11 @@ import com.dental.clinic.management.role.domain.Role;
 import com.dental.clinic.management.role.repository.RoleRepository;
 import com.dental.clinic.management.specialization.domain.Specialization;
 import com.dental.clinic.management.specialization.repository.SpecializationRepository;
+import com.dental.clinic.management.utils.SequentialCodeGenerator;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.UUID;
 
 @Service
 public class EmployeeService {
@@ -47,6 +47,7 @@ public class EmployeeService {
     private final SpecializationRepository specializationRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final SequentialCodeGenerator codeGenerator;
 
     public EmployeeService(
             EmployeeRepository employeeRepository,
@@ -54,13 +55,15 @@ public class EmployeeService {
             AccountRepository accountRepository,
             SpecializationRepository specializationRepository,
             RoleRepository roleRepository,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder,
+            SequentialCodeGenerator codeGenerator) {
         this.employeeRepository = employeeRepository;
         this.employeeMapper = employeeMapper;
         this.accountRepository = accountRepository;
         this.specializationRepository = specializationRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
+        this.codeGenerator = codeGenerator;
     }
 
     /**
@@ -277,7 +280,6 @@ public class EmployeeService {
 
         // Create new account for employee
         Account account = new Account();
-        account.setAccountId(UUID.randomUUID().toString());
         account.setUsername(request.getUsername());
         account.setEmail(request.getEmail());
         account.setPassword(passwordEncoder.encode(request.getPassword()));
@@ -290,20 +292,15 @@ public class EmployeeService {
         account.setRoles(accountRoles);
 
         account = accountRepository.save(account);
-        log.info("Created account with ID: {} and role: {} for employee", account.getAccountId(), role.getRoleName());
-
-        // Generate unique employee ID
-        String employeeId = UUID.randomUUID().toString();
-
-        // Generate employee code (e.g., EMP001, EMP002, ...)
-        String employeeCode = generateEmployeeCode();
+        account.setAccountCode(codeGenerator.generateAccountCode(account.getAccountId()));
+        account = accountRepository.save(account);
+        log.info("Created account with ID: {} and code: {} and role: {} for employee", 
+                account.getAccountId(), account.getAccountCode(), role.getRoleName());
 
         // Create new employee
         Employee employee = new Employee();
-        employee.setEmployeeId(employeeId);
         employee.setAccount(account);
         employee.setRoleId(request.getRoleId());
-        employee.setEmployeeCode(employeeCode);
         employee.setFirstName(request.getFirstName());
         employee.setLastName(request.getLastName());
         employee.setPhone(request.getPhone());
@@ -315,7 +312,7 @@ public class EmployeeService {
         // Add specializations if provided
         if (request.getSpecializationIds() != null && !request.getSpecializationIds().isEmpty()) {
             Set<Specialization> specializations = new HashSet<>();
-            for (String specializationId : request.getSpecializationIds()) {
+            for (Integer specializationId : request.getSpecializationIds()) {
                 Specialization specialization = specializationRepository.findById(specializationId)
                         .orElseThrow(() -> new BadRequestAlertException(
                                 "Specialization not found with ID: " + specializationId,
@@ -326,21 +323,15 @@ public class EmployeeService {
             employee.setSpecializations(specializations);
         }
 
-        // Save employee
+        // Save employee to get auto-generated ID
         Employee savedEmployee = employeeRepository.save(employee);
+        
+        // Generate and set employee code
+        savedEmployee.setEmployeeCode(codeGenerator.generateEmployeeCode(savedEmployee.getEmployeeId()));
+        savedEmployee = employeeRepository.save(savedEmployee);
 
         // Return DTO response
         return employeeMapper.toEmployeeInfoResponse(savedEmployee);
-    }
-
-    /**
-     * Generate unique employee code
-     * Format: EMP001, EMP002, EMP003...
-     * Using synchronized to prevent duplicate codes in concurrent requests
-     */
-    private synchronized String generateEmployeeCode() {
-        long count = employeeRepository.count();
-        return String.format("EMP%03d", count + 1);
     }
 
     /**
@@ -390,7 +381,7 @@ public class EmployeeService {
         // Update specializations if provided
         if (request.getSpecializationIds() != null) {
             Set<Specialization> specializations = new HashSet<>();
-            for (String specializationId : request.getSpecializationIds()) {
+            for (Integer specializationId : request.getSpecializationIds()) {
                 Specialization specialization = specializationRepository.findById(specializationId)
                         .orElseThrow(() -> new BadRequestAlertException(
                                 "Specialization not found with ID: " + specializationId,
@@ -444,7 +435,7 @@ public class EmployeeService {
         // Replace specializations
         if (request.getSpecializationIds() != null && !request.getSpecializationIds().isEmpty()) {
             Set<Specialization> specializations = new HashSet<>();
-            for (String specializationId : request.getSpecializationIds()) {
+            for (Integer specializationId : request.getSpecializationIds()) {
                 Specialization specialization = specializationRepository.findById(specializationId)
                         .orElseThrow(() -> new BadRequestAlertException(
                                 "Specialization not found with ID: " + specializationId,

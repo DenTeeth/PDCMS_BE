@@ -4,7 +4,6 @@ package com.dental.clinic.management.account.domain;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.UUID;
 
 import com.dental.clinic.management.account.enums.AccountStatus;
 import com.dental.clinic.management.employee.domain.Employee;
@@ -17,6 +16,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
@@ -36,8 +37,13 @@ import jakarta.validation.constraints.Size;
 public class Account {
 
     @Id
-    @Column(name = "account_id", length = 36)
-    private String accountId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "account_id")
+    private Integer accountId;
+
+    @Size(max = 20)
+    @Column(name = "account_code", unique = true, length = 20)
+    private String accountCode;
 
     @NotBlank
     @Size(max = 50)
@@ -76,7 +82,7 @@ public class Account {
     public Account() {
     }
 
-    public Account(String accountId, String username, String email, String password) {
+    public Account(Integer accountId, String username, String email, String password) {
         this.accountId = accountId;
         this.username = username;
         this.email = email;
@@ -85,19 +91,24 @@ public class Account {
 
     @PrePersist
     protected void onCreate() {
-        if (accountId == null || accountId.isEmpty()) {
-            accountId = UUID.randomUUID().toString();
-        }
         createdAt = LocalDateTime.now();
     }
 
     // Getters và Setters
-    public String getAccountId() {
+    public Integer getAccountId() {
         return accountId;
     }
 
-    public void setAccountId(String accountId) {
+    public void setAccountId(Integer accountId) {
         this.accountId = accountId;
+    }
+
+    public String getAccountCode() {
+        return accountCode;
+    }
+
+    public void setAccountCode(String accountCode) {
+        this.accountCode = accountCode;
     }
 
     public String getUsername() {
@@ -203,7 +214,8 @@ public class Account {
     @Override
     public String toString() {
         return "Account{" +
-                "accountId='" + accountId + '\'' +
+                "accountId=" + accountId +
+                ", accountCode='" + accountCode + '\'' +
                 ", username='" + username + '\'' +
                 ", email='" + email + '\'' +
                 ", status=" + status +

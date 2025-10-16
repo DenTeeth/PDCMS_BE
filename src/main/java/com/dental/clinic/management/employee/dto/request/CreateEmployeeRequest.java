@@ -55,7 +55,7 @@ public class CreateEmployeeRequest {
     @Size(max = 500, message = "Address must not exceed 500 characters")
     private String address;
 
-    private Set<String> specializationIds;
+    private Set<Integer> specializationIds;
 
     // Constructors
     public CreateEmployeeRequest() {
@@ -141,11 +141,11 @@ public class CreateEmployeeRequest {
         this.address = address;
     }
 
-    public Set<String> getSpecializationIds() {
+    public Set<Integer> getSpecializationIds() {
         return specializationIds;
     }
 
-    public void setSpecializationIds(Set<String> specializationIds) {
+    public void setSpecializationIds(Set<Integer> specializationIds) {
         this.specializationIds = specializationIds;
     }
 

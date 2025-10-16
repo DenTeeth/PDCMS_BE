@@ -34,8 +34,7 @@ public class UpdateContactRequest {
 
     private CustomerContactStatus status;
 
-    @Size(max = 36, message = "AssignedTo must not exceed 36 characters")
-    private String assignedTo;
+    private Integer assignedTo;
 
     @Size(max = 2000, message = "Notes must not exceed 2000 characters")
     private String notes;
@@ -100,11 +99,11 @@ public class UpdateContactRequest {
         this.status = status;
     }
 
-    public String getAssignedTo() {
+    public Integer getAssignedTo() {
         return assignedTo;
     }
 
-    public void setAssignedTo(String assignedTo) {
+    public void setAssignedTo(Integer assignedTo) {
         this.assignedTo = assignedTo;
     }
 

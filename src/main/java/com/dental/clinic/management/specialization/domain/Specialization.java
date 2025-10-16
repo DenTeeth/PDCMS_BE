@@ -24,8 +24,8 @@ import java.util.Set;
 public class Specialization {
 
     @Id
-    @Column(name = "specialization_id", length = 36)
-    private String specializationId;
+    @Column(name = "specialization_id")
+    private Integer specializationId;
 
     @NotBlank
     @Size(max = 10)
@@ -54,7 +54,7 @@ public class Specialization {
     public Specialization() {
     }
 
-    public Specialization(String specializationId, String specializationCode, String specializationName) {
+    public Specialization(Integer specializationId, String specializationCode, String specializationName) {
         this.specializationId = specializationId;
         this.specializationCode = specializationCode;
         this.specializationName = specializationName;
@@ -66,11 +66,11 @@ public class Specialization {
     }
 
     // Getters and Setters
-    public String getSpecializationId() {
+    public Integer getSpecializationId() {
         return specializationId;
     }
 
-    public void setSpecializationId(String specializationId) {
+    public void setSpecializationId(Integer specializationId) {
         this.specializationId = specializationId;
     }
 
@@ -140,7 +140,7 @@ public class Specialization {
     @Override
     public String toString() {
         return "Specialization{" +
-                "specializationId='" + specializationId + '\'' +
+                "specializationId=" + specializationId +
                 ", specializationCode='" + specializationCode + '\'' +
                 ", specializationName='" + specializationName + '\'' +
                 ", isActive=" + isActive +

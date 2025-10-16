@@ -2,6 +2,7 @@ package com.dental.clinic.management.customer_contact.domain;
 
 import com.dental.clinic.management.customer_contact.enums.CustomerContactSource;
 import com.dental.clinic.management.customer_contact.enums.CustomerContactStatus;
+import com.dental.clinic.management.utils.IdGenerator;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -11,6 +12,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
@@ -20,8 +22,11 @@ import java.util.Objects;
 @Table(name = "customer_contacts")
 public class CustomerContact {
 
+    @Transient
+    private static IdGenerator idGenerator;
+
     @Id
-    @Column(name = "contact_id", length = 36)
+    @Column(name = "contact_id", length = 20)
     private String contactId;
 
     @NotBlank
@@ -53,14 +58,14 @@ public class CustomerContact {
     @Column(name = "message", columnDefinition = "TEXT")
     private String message;
 
-    @Column(name = "assigned_to", length = 36)
-    private String assignedTo;
+    @Column(name = "assigned_to")
+    private Integer assignedTo;
 
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
 
-    @Column(name = "converted_patient_id", length = 36)
-    private String convertedPatientId;
+    @Column(name = "converted_patient_id")
+    private Integer convertedPatientId;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -71,8 +76,16 @@ public class CustomerContact {
     public CustomerContact() {
     }
 
+    // Setter for IdGenerator (will be injected via service layer)
+    public static void setIdGenerator(IdGenerator generator) {
+        idGenerator = generator;
+    }
+
     @PrePersist
     protected void onCreate() {
+        if (contactId == null && idGenerator != null) {
+            contactId = idGenerator.generateId("CTC");
+        }
         createdAt = LocalDateTime.now();
         updatedAt = createdAt;
     }
@@ -147,11 +160,11 @@ public class CustomerContact {
         this.message = message;
     }
 
-    public String getAssignedTo() {
+    public Integer getAssignedTo() {
         return assignedTo;
     }
 
-    public void setAssignedTo(String assignedTo) {
+    public void setAssignedTo(Integer assignedTo) {
         this.assignedTo = assignedTo;
     }
 
@@ -163,11 +176,11 @@ public class CustomerContact {
         this.notes = notes;
     }
 
-    public String getConvertedPatientId() {
+    public Integer getConvertedPatientId() {
         return convertedPatientId;
     }
 
-    public void setConvertedPatientId(String convertedPatientId) {
+    public void setConvertedPatientId(Integer convertedPatientId) {
         this.convertedPatientId = convertedPatientId;
     }
 

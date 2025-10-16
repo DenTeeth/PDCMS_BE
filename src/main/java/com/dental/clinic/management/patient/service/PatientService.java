@@ -11,6 +11,7 @@ import com.dental.clinic.management.patient.dto.request.UpdatePatientRequest;
 import com.dental.clinic.management.patient.dto.response.PatientInfoResponse;
 import com.dental.clinic.management.patient.mapper.PatientMapper;
 import com.dental.clinic.management.patient.repository.PatientRepository;
+import com.dental.clinic.management.utils.SequentialCodeGenerator;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,8 +27,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import static com.dental.clinic.management.utils.security.AuthoritiesConstants.*;
 
-import java.util.UUID;
-
 /**
  * Service for managing patients
  */
@@ -39,16 +38,19 @@ public class PatientService {
     private final PatientMapper patientMapper;
     private final AccountRepository accountRepository;
     private final PasswordEncoder passwordEncoder;
+    private final SequentialCodeGenerator codeGenerator;
 
     public PatientService(
             PatientRepository patientRepository,
             PatientMapper patientMapper,
             AccountRepository accountRepository,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder,
+            SequentialCodeGenerator codeGenerator) {
         this.patientRepository = patientRepository;
         this.patientMapper = patientMapper;
         this.accountRepository = accountRepository;
         this.passwordEncoder = passwordEncoder;
+        this.codeGenerator = codeGenerator;
     }
 
     /**
@@ -200,7 +202,6 @@ public class PatientService {
 
             // Create account for patient
             account = new Account();
-            account.setAccountId(UUID.randomUUID().toString());
             account.setUsername(request.getUsername());
             account.setEmail(request.getEmail());
             account.setPassword(passwordEncoder.encode(request.getPassword()));
@@ -208,7 +209,9 @@ public class PatientService {
             account.setCreatedAt(java.time.LocalDateTime.now());
 
             account = accountRepository.save(account);
-            log.info("Created account with ID: {} for patient", account.getAccountId());
+            account.setAccountCode(codeGenerator.generateAccountCode(account.getAccountId()));
+            account = accountRepository.save(account);
+            log.info("Created account with ID: {} and code: {} for patient", account.getAccountId(), account.getAccountCode());
         } else {
             log.debug("Creating patient without account (no username/password provided)");
         }
@@ -216,9 +219,7 @@ public class PatientService {
         // Convert DTO to entity
         Patient patient = patientMapper.toPatient(request);
 
-        // Generate unique IDs
-        patient.setPatientId(UUID.randomUUID().toString());
-        patient.setPatientCode(generatePatientCode());
+        // Set active status
         patient.setIsActive(true);
 
         // Link account if created
@@ -226,8 +227,12 @@ public class PatientService {
             patient.setAccount(account);
         }
 
-        // Save to database
+        // Save to get auto-generated ID
         Patient savedPatient = patientRepository.save(patient);
+        
+        // Generate and set code
+        savedPatient.setPatientCode(codeGenerator.generatePatientCode(savedPatient.getPatientId()));
+        savedPatient = patientRepository.save(savedPatient);
         log.info("Created patient with code: {} and ID: {}", savedPatient.getPatientCode(),
                 savedPatient.getPatientId());
 
@@ -299,20 +304,5 @@ public class PatientService {
         // Soft delete
         patient.setIsActive(false);
         patientRepository.save(patient);
-    }
-
-    /**
-     * Generate unique patient code (PAT001, PAT002, ...)
-     * Synchronized to prevent duplicate codes in concurrent requests
-     */
-    private synchronized String generatePatientCode() {
-        long count = patientRepository.count();
-        String code;
-        do {
-            count++;
-            code = String.format("PAT%03d", count);
-        } while (patientRepository.findOneByPatientCode(code).isPresent());
-
-        return code;
     }
 }

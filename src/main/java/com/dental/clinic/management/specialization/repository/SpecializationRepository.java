@@ -15,7 +15,7 @@ import java.util.List;
  * Spring Data JPA repository for the {@link Specialization} entity.
  */
 @Repository
-public interface SpecializationRepository extends JpaRepository<Specialization, String> {
+public interface SpecializationRepository extends JpaRepository<Specialization, Integer> {
 
     Optional<Specialization> findOneBySpecializationCode(String specializationCode);
 

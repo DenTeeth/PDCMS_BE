@@ -6,7 +6,7 @@ import java.util.List;
 public class UserInfoResponse {
 
     // Account info
-    private String id;
+    private Integer id;
     private String username;
     private String email;
     private String accountStatus;
@@ -33,11 +33,11 @@ public class UserInfoResponse {
     }
 
     // Getters and Setters
-    public String getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 

@@ -5,6 +5,7 @@ import com.dental.clinic.management.contact_history.dto.request.CreateContactHis
 import com.dental.clinic.management.contact_history.dto.response.ContactHistoryResponse;
 import com.dental.clinic.management.contact_history.mapper.ContactHistoryMapper;
 import com.dental.clinic.management.contact_history.repository.ContactHistoryRepository;
+import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.exception.BadRequestAlertException;
 
 import org.slf4j.Logger;
@@ -29,10 +30,13 @@ public class ContactHistoryService {
 
     private final ContactHistoryRepository repository;
     private final ContactHistoryMapper mapper;
+    private final EmployeeRepository employeeRepository;
 
-    public ContactHistoryService(ContactHistoryRepository repository, ContactHistoryMapper mapper) {
+    public ContactHistoryService(ContactHistoryRepository repository, ContactHistoryMapper mapper,
+                                 EmployeeRepository employeeRepository) {
         this.repository = repository;
         this.mapper = mapper;
+        this.employeeRepository = employeeRepository;
     }
 
     /**
@@ -77,7 +81,9 @@ public class ContactHistoryService {
         // set employeeId from current authentication (principal name)
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.getName() != null) {
-            h.setEmployeeId(auth.getName());
+            // Look up employee by username from authentication
+            employeeRepository.findByAccount_Username(auth.getName())
+                    .ifPresent(employee -> h.setEmployeeId(employee.getEmployeeId()));
         }
 
         // generate historyId HIST + YYYYMMDD + SEQ (daily). Note: not race-proof.

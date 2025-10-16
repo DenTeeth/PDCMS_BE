@@ -42,14 +42,14 @@ public class ReplaceEmployeeRequest {
     @NotNull(message = "isActive status is required")
     private Boolean isActive;
 
-    private Set<String> specializationIds;
+    private Set<Integer> specializationIds;
 
     // Constructors
     public ReplaceEmployeeRequest() {
     }
 
     public ReplaceEmployeeRequest(String roleId, String firstName, String lastName, String phone,
-            LocalDate dateOfBirth, String address, Boolean isActive, Set<String> specializationIds) {
+            LocalDate dateOfBirth, String address, Boolean isActive, Set<Integer> specializationIds) {
         this.roleId = roleId;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -117,11 +117,11 @@ public class ReplaceEmployeeRequest {
         this.isActive = isActive;
     }
 
-    public Set<String> getSpecializationIds() {
+    public Set<Integer> getSpecializationIds() {
         return specializationIds;
     }
 
-    public void setSpecializationIds(Set<String> specializationIds) {
+    public void setSpecializationIds(Set<Integer> specializationIds) {
         this.specializationIds = specializationIds;
     }
 

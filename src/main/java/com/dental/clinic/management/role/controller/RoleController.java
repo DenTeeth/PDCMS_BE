@@ -109,7 +109,7 @@ public class RoleController {
     @Operation(summary = "Assign roles to user", description = "Assign multiple roles to a user account")
     @ApiMessage("Assign multiple roles to user successfully")
     public ResponseEntity<Void> assignRolesToAccount(
-            @Parameter(description = "Account ID (e.g., ACC_ADMIN)", required = true) @PathVariable String accountId,
+            @Parameter(description = "Account ID (integer)", required = true) @PathVariable Integer accountId,
             @Parameter(description = "List of role IDs to assign", required = true) @RequestBody List<String> roleIds) {
         accountService.assignRolesToAccount(accountId, roleIds);
         return ResponseEntity.ok().build();
@@ -119,7 +119,7 @@ public class RoleController {
     @Operation(summary = "Get user roles", description = "Retrieve all roles assigned to a specific user account")
     @ApiMessage("Get roles of user successfully")
     public ResponseEntity<List<String>> getAccountRoles(
-            @Parameter(description = "Account ID (e.g., ACC_ADMIN)", required = true) @PathVariable String accountId) {
+            @Parameter(description = "Account ID (integer)", required = true) @PathVariable Integer accountId) {
         List<String> roles = accountService.getAccountRoles(accountId);
         return ResponseEntity.ok().body(roles);
     }

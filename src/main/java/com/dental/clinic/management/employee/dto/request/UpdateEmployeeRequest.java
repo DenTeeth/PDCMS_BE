@@ -34,7 +34,7 @@ public class UpdateEmployeeRequest {
 
     private Boolean isActive;
 
-    private Set<String> specializationIds;
+    private Set<Integer> specializationIds;
 
     // Constructors
     public UpdateEmployeeRequest() {
@@ -97,11 +97,11 @@ public class UpdateEmployeeRequest {
         this.isActive = isActive;
     }
 
-    public Set<String> getSpecializationIds() {
+    public Set<Integer> getSpecializationIds() {
         return specializationIds;
     }
 
-    public void setSpecializationIds(Set<String> specializationIds) {
+    public void setSpecializationIds(Set<Integer> specializationIds) {
         this.specializationIds = specializationIds;
     }
 

@@ -24,7 +24,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class EmployeeInfoResponse {
 
-  private String employeeId;
+  private Integer employeeId;
   private String employeeCode;
   private String firstName;
   private String lastName;
@@ -47,7 +47,7 @@ public class EmployeeInfoResponse {
   @NoArgsConstructor
   @AllArgsConstructor
   public static class SpecializationResponse {
-    private String specializationId;
+    private Integer specializationId;
     private String name;
     private String description;
   }
@@ -60,7 +60,8 @@ public class EmployeeInfoResponse {
   @NoArgsConstructor
   @AllArgsConstructor
   public static class AccountInfoResponse {
-    private String accountId;
+    private Integer accountId;
+    private String accountCode;
     private String username;
     private String email;
     private String status;
