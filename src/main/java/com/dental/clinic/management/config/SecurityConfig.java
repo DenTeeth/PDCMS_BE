@@ -20,7 +20,7 @@ import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWrite
 import org.springframework.security.web.servlet.util.matcher.MvcRequestMatcher;
 import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
 
-import com.dental.clinic.management.service.CustomUserDetailsService;
+import com.dental.clinic.management.customer_contact.service.CustomUserDetailsService;
 
 @Configuration
 public class SecurityConfig {
