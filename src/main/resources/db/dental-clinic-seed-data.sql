@@ -30,6 +30,7 @@ VALUES
 ('ROLE_RECEPTIONIST', 'ROLE_RECEPTIONIST', 'Tiếp đón và quản lý lịch hẹn', FALSE, TRUE, NOW()),
 ('ROLE_ACCOUNTANT', 'ROLE_ACCOUNTANT', 'Quản lý tài chính và thanh toán', FALSE, TRUE, NOW()),
 ('ROLE_INVENTORY_MANAGER', 'ROLE_INVENTORY_MANAGER', 'Quản lý vật tư và thuốc', FALSE, TRUE, NOW()),
+('ROLE_WAREHOUSE_MANAGER', 'ROLE_WAREHOUSE_MANAGER', 'Quản lý kho', FALSE, TRUE, NOW()),
 
 -- Patient role
 ('ROLE_PATIENT', 'ROLE_PATIENT', 'Người bệnh - Xem hồ sơ cá nhân', FALSE, TRUE, NOW())
@@ -440,13 +441,7 @@ PATIENTS:
 -- if the same role/account/employee already exists in the main seed.
 -- ============================================
 
--- Roles (legacy/test file)
-INSERT IGNORE INTO roles (role_id, role_name, description, created_at)
-VALUES
-('ROLE_DOCTOR', 'Bác sĩ', 'Bác sĩ nha khoa', NOW()),
-('ROLE_RECEPTIONIST', 'Lễ tân', 'Nhân viên lễ tân tiếp đón', NOW()),
-('ROLE_ACCOUNTANT', 'Kế toán', 'Nhân viên kế toán', NOW()),
-('ROLE_WAREHOUSE_MANAGER', 'Quản lý kho', 'Quản lý kho vật tư', NOW());
+
 
 -- Accounts from test-data-employee
 INSERT IGNORE INTO accounts (account_id, username, email, password, status, created_at)

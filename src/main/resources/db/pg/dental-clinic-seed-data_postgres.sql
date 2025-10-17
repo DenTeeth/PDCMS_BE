@@ -118,6 +118,7 @@ VALUES
 ('ROLE_RECEPTIONIST', 'ROLE_RECEPTIONIST', 'Tiếp đón và quản lý lịch hẹn', false, true, NOW()),
 ('ROLE_ACCOUNTANT', 'ROLE_ACCOUNTANT', 'Quản lý tài chính và thanh toán', false, true, NOW()),
 ('ROLE_INVENTORY_MANAGER', 'ROLE_INVENTORY_MANAGER', 'Quản lý vật tư và thuốc', false, true, NOW()),
+('ROLE_WAREHOUSE_MANAGER', 'ROLE_WAREHOUSE_MANAGER', 'Quản lý kho', false, true, NOW()),
 
 -- Patient role
 ('ROLE_PATIENT', 'ROLE_PATIENT', 'Người bệnh - Xem hồ sơ cá nhân', false, true, NOW())
@@ -482,28 +483,25 @@ ON CONFLICT DO NOTHING;
 -- ============================================
 
 -- Patient 1
-INSERT INTO patients (patient_id, patient_code, first_name, last_name, email, phone, date_of_birth, address, gender, is_active, created_at, updated_at)
+INSERT INTO patients (patient_code, first_name, last_name, email, phone, date_of_birth, address, gender, is_active, created_at, updated_at)
 VALUES (
-  gen_random_uuid()::text, 
-  'PAT001', 
+  'PAT001',
   'Khang', 'Nguyễn Văn', 'benhnhan1@email.com', '0911111111', '1990-01-15', '123 Lê Văn Việt, Q9, TPHCM', 'MALE', true, NOW(), NOW()
 )
 ON CONFLICT (patient_code) DO NOTHING;
 
 -- Patient 2
-INSERT INTO patients (patient_id, patient_code, first_name, last_name, email, phone, date_of_birth, address, gender, is_active, created_at, updated_at)
+INSERT INTO patients (patient_code, first_name, last_name, email, phone, date_of_birth, address, gender, is_active, created_at, updated_at)
 VALUES (
-  gen_random_uuid()::text, 
-  'PAT002', 
+  'PAT002',
   'Lan', 'Trần Thị', 'benhnhan2@email.com', '0922222222', '1985-05-20', '456 Võ Văn Ngân, Thủ Đức, TPHCM', 'FEMALE', true, NOW(), NOW()
 )
 ON CONFLICT (patient_code) DO NOTHING;
 
 -- Patient 3
-INSERT INTO patients (patient_id, patient_code, first_name, last_name, email, phone, date_of_birth, address, gender, is_active, created_at, updated_at)
+INSERT INTO patients (patient_code, first_name, last_name, email, phone, date_of_birth, address, gender, is_active, created_at, updated_at)
 VALUES (
-  gen_random_uuid()::text, 
-  'PAT003', 
+  'PAT003',
   'Đức', 'Lê Minh', 'benhnhan3@email.com', '0933333333', '1995-12-10', '789 Đường D2, Bình Thạnh, TPHCM', 'MALE', true, NOW(), NOW()
 )
 ON CONFLICT (patient_code) DO NOTHING;
@@ -540,14 +538,6 @@ PATIENTS:
 -- Includes data with old VARCHAR-based IDs for backward compatibility testing
 -- ====================================
 
--- Roles (legacy/test file)
-INSERT INTO roles (role_id, role_name, description, created_at)
-VALUES
-    ('ROLE_DOCTOR', 'Bác sĩ', 'Bác sĩ nha khoa', NOW()),
-    ('ROLE_RECEPTIONIST', 'Lễ tân', 'Nhân viên lễ tân tiếp đón', NOW()),
-    ('ROLE_ACCOUNTANT', 'Kế toán', 'Nhân viên kế toán', NOW()),
-    ('ROLE_WAREHOUSE_MANAGER', 'Quản lý kho', 'Quản lý kho vật tư', NOW())
-ON CONFLICT (role_id) DO NOTHING;
 
 -- Accounts from test-data-employee
 INSERT INTO accounts (account_id, username, email, password, status, created_at)
