@@ -48,4 +48,8 @@ public final class AuthoritiesConstants {
     // Specialization Permissions
     public static final String VIEW_SPECIALIZATION = "VIEW_SPECIALIZATION";
     public static final String CREATE_SPECIALIZATION = "CREATE_SPECIALIZATION";
+
+    // Employee Shift Registration Permissions
+    public static final String VIEW_REGISTRATION_ALL = "VIEW_REGISTRATION_ALL";
+    public static final String VIEW_REGISTRATION_OWN = "VIEW_REGISTRATION_OWN";
 }
