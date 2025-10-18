@@ -15,6 +15,7 @@ public interface WorkShiftRepository extends JpaRepository<WorkShift, String> {
 
     /**
      * Find all work shifts by active status.
+     * 
      * @param isActive true to find active shifts, false for inactive
      * @return List of work shifts matching the status
      */
@@ -22,6 +23,7 @@ public interface WorkShiftRepository extends JpaRepository<WorkShift, String> {
 
     /**
      * Check if a work shift ID already exists.
+     * 
      * @param workShiftId the work shift ID to check
      * @return true if exists, false otherwise
      */
@@ -29,6 +31,7 @@ public interface WorkShiftRepository extends JpaRepository<WorkShift, String> {
 
     /**
      * Find active work shift by ID.
+     * 
      * @param workShiftId the work shift ID
      * @return Optional containing the work shift if found and active
      */
@@ -37,6 +40,7 @@ public interface WorkShiftRepository extends JpaRepository<WorkShift, String> {
     /**
      * Find all work shifts with IDs starting with a specific prefix.
      * Used to determine the next sequence number.
+     * 
      * @param prefix ID prefix (e.g., "WKS_MORNING_")
      * @return List of work shifts with matching prefix
      */

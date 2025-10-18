@@ -54,6 +54,7 @@ public class WorkShift {
     /**
      * Calculate the duration of the shift in hours.
      * Excludes lunch break (11:00-12:00) if the shift spans across it.
+     * 
      * @return Duration in hours (decimal)
      */
     @Transient

@@ -14,6 +14,7 @@ public interface EmployeeShiftRegistrationRepository extends JpaRepository<Emplo
 
     /**
      * Find all registrations by employee ID.
+     * 
      * @param employeeId the employee ID
      * @return List of registrations
      */
@@ -21,14 +22,16 @@ public interface EmployeeShiftRegistrationRepository extends JpaRepository<Emplo
 
     /**
      * Find active registrations by employee ID.
+     * 
      * @param employeeId the employee ID
-     * @param isActive active status
+     * @param isActive   active status
      * @return List of active registrations
      */
     List<EmployeeShiftRegistration> findByEmployeeIdAndIsActive(String employeeId, Boolean isActive);
 
     /**
      * Find registrations by slot ID.
+     * 
      * @param slotId the slot ID
      * @return List of registrations
      */

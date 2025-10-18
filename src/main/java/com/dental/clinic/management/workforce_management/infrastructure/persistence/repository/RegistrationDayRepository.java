@@ -15,6 +15,7 @@ public interface RegistrationDayRepository extends JpaRepository<RegistrationDay
 
     /**
      * Find all registration days by registration ID.
+     * 
      * @param registrationId the registration ID
      * @return List of registration days
      */
@@ -22,6 +23,7 @@ public interface RegistrationDayRepository extends JpaRepository<RegistrationDay
 
     /**
      * Find registration days by day of week.
+     * 
      * @param dayOfWeek the day of week
      * @return List of registration days
      */
@@ -29,6 +31,7 @@ public interface RegistrationDayRepository extends JpaRepository<RegistrationDay
 
     /**
      * Delete all registration days by registration ID.
+     * 
      * @param registrationId the registration ID
      */
     void deleteByIdRegistrationId(String registrationId);

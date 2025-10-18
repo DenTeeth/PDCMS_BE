@@ -17,7 +17,9 @@ import java.util.stream.Collectors;
 public class EmployeeShiftRegistrationMapper {
 
     /**
-     * Convert CreateEmployeeShiftRegistrationRequest to EmployeeShiftRegistration entity.
+     * Convert CreateEmployeeShiftRegistrationRequest to EmployeeShiftRegistration
+     * entity.
+     * 
      * @param request the request DTO
      * @return EmployeeShiftRegistration entity
      */
@@ -37,12 +39,15 @@ public class EmployeeShiftRegistrationMapper {
     }
 
     /**
-     * Convert EmployeeShiftRegistration entity to EmployeeShiftRegistrationResponse.
-     * @param registration the entity
+     * Convert EmployeeShiftRegistration entity to
+     * EmployeeShiftRegistrationResponse.
+     * 
+     * @param registration     the entity
      * @param registrationDays the associated registration days
      * @return EmployeeShiftRegistrationResponse DTO
      */
-    public EmployeeShiftRegistrationResponse toResponse(EmployeeShiftRegistration registration, Set<RegistrationDay> registrationDays) {
+    public EmployeeShiftRegistrationResponse toResponse(EmployeeShiftRegistration registration,
+            Set<RegistrationDay> registrationDays) {
         if (registration == null) {
             return null;
         }
@@ -52,13 +57,12 @@ public class EmployeeShiftRegistrationMapper {
                 .collect(Collectors.toSet());
 
         return new EmployeeShiftRegistrationResponse(
-            registration.getRegistrationId(),
-            registration.getEmployeeId(),
-            registration.getSlotId(),
-            registration.getEffectiveFrom(),
-            registration.getEffectiveTo(),
-            registration.getIsActive(),
-            days
-        );
+                registration.getRegistrationId(),
+                registration.getEmployeeId(),
+                registration.getSlotId(),
+                registration.getEffectiveFrom(),
+                registration.getEffectiveTo(),
+                registration.getIsActive(),
+                days);
     }
 }

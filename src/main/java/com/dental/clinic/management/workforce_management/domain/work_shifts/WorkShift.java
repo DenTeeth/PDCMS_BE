@@ -54,6 +54,7 @@ public class WorkShift {
     /**
      * Calculate the duration of the shift in hours.
      * Excludes lunch break (11:00-12:00) if the shift spans across it.
+     * 
      * @return Duration in hours (decimal)
      */
     @Transient
@@ -61,26 +62,26 @@ public class WorkShift {
         if (startTime == null || endTime == null) {
             return 0.0;
         }
-        
+
         long startSeconds = startTime.toSecondOfDay();
         long endSeconds = endTime.toSecondOfDay();
-        
+
         // Handle case where shift crosses midnight
         if (endSeconds <= startSeconds) {
             endSeconds += 24 * 3600; // Add 24 hours
         }
-        
+
         long durationSeconds = endSeconds - startSeconds;
         double durationHours = durationSeconds / 3600.0; // Convert to hours
-        
+
         // Subtract lunch break (12:00-13:00) if shift spans across it
         LocalTime lunchStart = LocalTime.of(12, 0);
         LocalTime lunchEnd = LocalTime.of(13, 0);
-        
+
         if (!startTime.isAfter(lunchStart) && !endTime.isBefore(lunchEnd)) {
             durationHours -= 1.0; // Subtract 1 hour for lunch break
         }
-        
+
         return durationHours;
     }
 }

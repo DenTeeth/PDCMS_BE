@@ -23,6 +23,7 @@ public class WorkShiftController {
 
     /**
      * Create a new work shift.
+     * 
      * @param request the create request
      * @return ResponseEntity with created work shift
      */
@@ -34,6 +35,7 @@ public class WorkShiftController {
 
     /**
      * Get all active work shifts.
+     * 
      * @return List of active work shifts
      */
     @GetMapping
@@ -44,6 +46,7 @@ public class WorkShiftController {
 
     /**
      * Get work shift by ID.
+     * 
      * @param workShiftId the work shift ID
      * @return ResponseEntity with work shift data
      */
@@ -55,8 +58,9 @@ public class WorkShiftController {
 
     /**
      * Update work shift.
+     * 
      * @param workShiftId the work shift ID
-     * @param request the update request
+     * @param request     the update request
      * @return ResponseEntity with updated work shift
      */
     @PutMapping("/{workShiftId}")
@@ -69,6 +73,7 @@ public class WorkShiftController {
 
     /**
      * Deactivate work shift.
+     * 
      * @param workShiftId the work shift ID
      * @return ResponseEntity
      */

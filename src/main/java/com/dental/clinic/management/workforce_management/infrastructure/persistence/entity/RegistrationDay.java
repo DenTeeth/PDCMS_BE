@@ -43,8 +43,10 @@ public class RegistrationDay {
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o)
+                return true;
+            if (o == null || getClass() != o.getClass())
+                return false;
             RegistrationDayId that = (RegistrationDayId) o;
             return registrationId.equals(that.registrationId) && dayOfWeek == that.dayOfWeek;
         }

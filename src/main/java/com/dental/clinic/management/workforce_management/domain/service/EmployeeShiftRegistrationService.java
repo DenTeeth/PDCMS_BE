@@ -12,6 +12,7 @@ public interface EmployeeShiftRegistrationService {
 
     /**
      * Create a new employee shift registration.
+     * 
      * @param request the create request
      * @return EmployeeShiftRegistrationResponse
      */
@@ -19,6 +20,7 @@ public interface EmployeeShiftRegistrationService {
 
     /**
      * Get all active registrations for an employee.
+     * 
      * @param employeeId the employee ID
      * @return List of registrations
      */
@@ -26,6 +28,7 @@ public interface EmployeeShiftRegistrationService {
 
     /**
      * Get registration by ID.
+     * 
      * @param registrationId the registration ID
      * @return EmployeeShiftRegistrationResponse
      */
@@ -33,14 +36,17 @@ public interface EmployeeShiftRegistrationService {
 
     /**
      * Update registration.
+     * 
      * @param registrationId the registration ID
-     * @param request the update request
+     * @param request        the update request
      * @return EmployeeShiftRegistrationResponse
      */
-    EmployeeShiftRegistrationResponse updateRegistration(String registrationId, CreateEmployeeShiftRegistrationRequest request);
+    EmployeeShiftRegistrationResponse updateRegistration(String registrationId,
+            CreateEmployeeShiftRegistrationRequest request);
 
     /**
      * Deactivate registration.
+     * 
      * @param registrationId the registration ID
      */
     void deactivateRegistration(String registrationId);

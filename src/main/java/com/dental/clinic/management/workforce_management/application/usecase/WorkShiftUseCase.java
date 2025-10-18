@@ -150,16 +150,16 @@ public class WorkShiftUseCase implements WorkShiftService {
     private void validateDuration(double duration) {
         if (duration < MIN_DURATION_HOURS || duration > MAX_DURATION_HOURS) {
             throw new IllegalArgumentException(
-                String.format("Work shift duration must be between %.1f and %.1f hours, but was %.1f hours",
-                    MIN_DURATION_HOURS, MAX_DURATION_HOURS, duration));
+                    String.format("Work shift duration must be between %.1f and %.1f hours, but was %.1f hours",
+                            MIN_DURATION_HOURS, MAX_DURATION_HOURS, duration));
         }
     }
 
     private void validateWorkingHours(LocalTime startTime, LocalTime endTime) {
         if (startTime.isBefore(CLINIC_OPEN) || endTime.isAfter(CLINIC_CLOSE)) {
             throw new IllegalArgumentException(
-                String.format("Work shift must be within clinic hours (%s - %s)",
-                    CLINIC_OPEN, CLINIC_CLOSE));
+                    String.format("Work shift must be within clinic hours (%s - %s)",
+                            CLINIC_OPEN, CLINIC_CLOSE));
         }
     }
 
@@ -195,8 +195,8 @@ public class WorkShiftUseCase implements WorkShiftService {
 
     private String generateWorkShiftId(LocalTime startTime, LocalTime endTime) {
         String timePrefix = String.format("%02d%02d_%02d%02d",
-            startTime.getHour(), startTime.getMinute(),
-            endTime.getHour(), endTime.getMinute());
+                startTime.getHour(), startTime.getMinute(),
+                endTime.getHour(), endTime.getMinute());
 
         // Find existing shifts with same time pattern
         List<WorkShift> existingShifts = workShiftRepository.findByWorkShiftIdStartingWith("WKS_" + timePrefix);

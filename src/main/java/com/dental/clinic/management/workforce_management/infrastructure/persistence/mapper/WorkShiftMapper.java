@@ -13,6 +13,7 @@ public class WorkShiftMapper {
 
     /**
      * Convert CreateWorkShiftRequest to WorkShift entity.
+     * 
      * @param request the request DTO
      * @return WorkShift entity
      */
@@ -33,6 +34,7 @@ public class WorkShiftMapper {
 
     /**
      * Convert WorkShift entity to WorkShiftResponse.
+     * 
      * @param workShift the entity
      * @return WorkShiftResponse DTO
      */
@@ -42,13 +44,12 @@ public class WorkShiftMapper {
         }
 
         return new WorkShiftResponse(
-            workShift.getWorkShiftId(),
-            workShift.getShiftName(),
-            workShift.getStartTime(),
-            workShift.getEndTime(),
-            workShift.getCategory(),
-            workShift.getIsActive(),
-            workShift.getDurationHours()
-        );
+                workShift.getWorkShiftId(),
+                workShift.getShiftName(),
+                workShift.getStartTime(),
+                workShift.getEndTime(),
+                workShift.getCategory(),
+                workShift.getIsActive(),
+                workShift.getDurationHours());
     }
 }
