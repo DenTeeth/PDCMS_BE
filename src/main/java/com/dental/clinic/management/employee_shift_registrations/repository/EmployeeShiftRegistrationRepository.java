@@ -1,5 +1,7 @@
 package com.dental.clinic.management.employee_shift_registrations.repository;
 
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -18,4 +20,6 @@ public interface EmployeeShiftRegistrationRepository extends JpaRepository<Emplo
     // Tạo phương thức mới cho luồng VIEW_OWN
     @EntityGraph(attributePaths = "registrationDays")
     Page<EmployeeShiftRegistration> findByEmployeeId(Integer employeeId, Pageable pageable);
+
+    Optional<EmployeeShiftRegistration> findByEmployeeId(Integer employeeId);
 }
