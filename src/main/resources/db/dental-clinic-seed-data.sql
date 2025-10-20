@@ -30,6 +30,7 @@ VALUES
 ('ROLE_RECEPTIONIST', 'ROLE_RECEPTIONIST', 'Tiếp đón và quản lý lịch hẹn', FALSE, TRUE, NOW()),
 ('ROLE_ACCOUNTANT', 'ROLE_ACCOUNTANT', 'Quản lý tài chính và thanh toán', FALSE, TRUE, NOW()),
 ('ROLE_INVENTORY_MANAGER', 'ROLE_INVENTORY_MANAGER', 'Quản lý vật tư và thuốc', FALSE, TRUE, NOW()),
+('ROLE_MANAGER', 'ROLE_MANAGER', 'Quản lý - Phê duyệt và giám sát', FALSE, TRUE, NOW()),
 
 -- Patient role
 ('ROLE_PATIENT', 'ROLE_PATIENT', 'Người bệnh - Xem hồ sơ cá nhân', FALSE, TRUE, NOW())
@@ -87,7 +88,16 @@ VALUES
 ('CREATE_WORK_SHIFTS', 'CREATE_WORK_SHIFTS', 'WORK_SHIFTS', 'Tạo mẫu ca làm việc mới', NOW()),
 ('VIEW_WORK_SHIFTS', 'VIEW_WORK_SHIFTS', 'WORK_SHIFTS', 'Xem danh sách mẫu ca làm việc', NOW()),
 ('UPDATE_WORK_SHIFTS', 'UPDATE_WORK_SHIFTS', 'WORK_SHIFTS', 'Cập nhật mẫu ca làm việc', NOW()),
-('DELETE_WORK_SHIFTS', 'DELETE_WORK_SHIFTS', 'WORK_SHIFTS', 'Xóa/vô hiệu hóa mẫu ca làm việc', NOW())
+('DELETE_WORK_SHIFTS', 'DELETE_WORK_SHIFTS', 'WORK_SHIFTS', 'Xóa/vô hiệu hóa mẫu ca làm việc', NOW()),
+
+-- Overtime Request Management Permissions
+('VIEW_OT_ALL', 'VIEW_OT_ALL', 'OVERTIME', 'Xem tất cả yêu cầu tăng ca', NOW()),
+('VIEW_OT_OWN', 'VIEW_OT_OWN', 'OVERTIME', 'Xem yêu cầu tăng ca của bản thân', NOW()),
+('CREATE_OT', 'CREATE_OT', 'OVERTIME', 'Tạo yêu cầu tăng ca mới', NOW()),
+('APPROVE_OT', 'APPROVE_OT', 'OVERTIME', 'Phê duyệt yêu cầu tăng ca', NOW()),
+('REJECT_OT', 'REJECT_OT', 'OVERTIME', 'Từ chối yêu cầu tăng ca', NOW()),
+('CANCEL_OT_OWN', 'CANCEL_OT_OWN', 'OVERTIME', 'Hủy yêu cầu tăng ca của bản thân', NOW()),
+('CANCEL_OT_PENDING', 'CANCEL_OT_PENDING', 'OVERTIME', 'Hủy yêu cầu tăng ca đang chờ duyệt', NOW())
 ON DUPLICATE KEY UPDATE description = VALUES(description);
 
 
@@ -140,6 +150,43 @@ VALUES
 ('ROLE_PATIENT', 'VIEW_TREATMENT'),
 ('ROLE_PATIENT', 'CREATE_APPOINTMENT'),
 ('ROLE_PATIENT', 'VIEW_APPOINTMENT')
+ON DUPLICATE KEY UPDATE role_id = VALUES(role_id);
+
+-- Overtime Request Permissions for Employees (All staff roles)
+INSERT INTO role_permissions (role_id, permission_id)
+VALUES
+-- Doctors: Can view own, create, and cancel own overtime requests
+('ROLE_DOCTOR', 'VIEW_OT_OWN'),
+('ROLE_DOCTOR', 'CREATE_OT'),
+('ROLE_DOCTOR', 'CANCEL_OT_OWN'),
+-- Nurses: Can view own, create, and cancel own overtime requests
+('ROLE_NURSE', 'VIEW_OT_OWN'),
+('ROLE_NURSE', 'CREATE_OT'),
+('ROLE_NURSE', 'CANCEL_OT_OWN'),
+-- Receptionists: Can view own, create, and cancel own overtime requests
+('ROLE_RECEPTIONIST', 'VIEW_OT_OWN'),
+('ROLE_RECEPTIONIST', 'CREATE_OT'),
+('ROLE_RECEPTIONIST', 'CANCEL_OT_OWN'),
+-- Accountants: Can view own, create, and cancel own overtime requests
+('ROLE_ACCOUNTANT', 'VIEW_OT_OWN'),
+('ROLE_ACCOUNTANT', 'CREATE_OT'),
+('ROLE_ACCOUNTANT', 'CANCEL_OT_OWN'),
+-- Inventory Managers: Can view own, create, and cancel own overtime requests
+('ROLE_INVENTORY_MANAGER', 'VIEW_OT_OWN'),
+('ROLE_INVENTORY_MANAGER', 'CREATE_OT'),
+('ROLE_INVENTORY_MANAGER', 'CANCEL_OT_OWN')
+ON DUPLICATE KEY UPDATE role_id = VALUES(role_id);
+
+-- Overtime Request Permissions for Managers (Full control)
+INSERT INTO role_permissions (role_id, permission_id)
+VALUES
+('ROLE_MANAGER', 'VIEW_OT_ALL'),
+('ROLE_MANAGER', 'VIEW_OT_OWN'),
+('ROLE_MANAGER', 'CREATE_OT'),
+('ROLE_MANAGER', 'APPROVE_OT'),
+('ROLE_MANAGER', 'REJECT_OT'),
+('ROLE_MANAGER', 'CANCEL_OT_OWN'),
+('ROLE_MANAGER', 'CANCEL_OT_PENDING')
 ON DUPLICATE KEY UPDATE role_id = VALUES(role_id);
 
 
