@@ -1,6 +1,8 @@
 HELP.md
 target/
 build/
+docker_compose/
+pgdata_dental/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
