@@ -1,4 +1,4 @@
-package com.dental.clinic.management.work_shifts.enums;
+package com.dental.clinic.management.working_schedule.enums;
 
 /**
  * Enum representing the source/origin of an employee shift assignment.

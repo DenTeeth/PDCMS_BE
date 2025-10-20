@@ -1,4 +1,4 @@
-package com.dental.clinic.management.work_shifts.utils;
+package com.dental.clinic.management.working_schedule.utils;
 
 import java.time.LocalTime;
 

@@ -1,4 +1,4 @@
-package com.dental.clinic.management.work_shifts.enums;
+package com.dental.clinic.management.working_schedule.enums;
 
 /**
  * Enum representing the status of various requests (leave, overtime, etc.).

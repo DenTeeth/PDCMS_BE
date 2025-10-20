@@ -1,8 +1,9 @@
-package com.dental.clinic.management.work_shifts.repository;
+package com.dental.clinic.management.working_schedule.repository;
 
-import com.dental.clinic.management.work_shifts.domain.WorkShift;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+
+import com.dental.clinic.management.working_schedule.domain.WorkShift;
 
 import java.util.List;
 import java.util.Optional;

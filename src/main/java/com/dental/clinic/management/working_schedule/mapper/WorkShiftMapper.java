@@ -1,10 +1,11 @@
-package com.dental.clinic.management.work_shifts.mapper;
+package com.dental.clinic.management.working_schedule.mapper;
 
-import com.dental.clinic.management.work_shifts.domain.WorkShift;
-import com.dental.clinic.management.work_shifts.dto.request.CreateWorkShiftRequest;
-import com.dental.clinic.management.work_shifts.dto.request.UpdateWorkShiftRequest;
-import com.dental.clinic.management.work_shifts.dto.response.WorkShiftResponse;
 import org.springframework.stereotype.Component;
+
+import com.dental.clinic.management.working_schedule.domain.WorkShift;
+import com.dental.clinic.management.working_schedule.dto.request.CreateWorkShiftRequest;
+import com.dental.clinic.management.working_schedule.dto.request.UpdateWorkShiftRequest;
+import com.dental.clinic.management.working_schedule.dto.response.WorkShiftResponse;
 
 /**
  * Mapper for converting between WorkShift entity and DTOs.

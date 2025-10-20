@@ -1,14 +1,15 @@
-package com.dental.clinic.management.work_shifts.service;
+package com.dental.clinic.management.working_schedule.service;
 
 import com.dental.clinic.management.exception.*;
-import com.dental.clinic.management.work_shifts.domain.WorkShift;
-import com.dental.clinic.management.work_shifts.dto.request.CreateWorkShiftRequest;
-import com.dental.clinic.management.work_shifts.dto.request.UpdateWorkShiftRequest;
-import com.dental.clinic.management.work_shifts.dto.response.WorkShiftResponse;
-import com.dental.clinic.management.work_shifts.enums.WorkShiftCategory;
-import com.dental.clinic.management.work_shifts.mapper.WorkShiftMapper;
-import com.dental.clinic.management.work_shifts.repository.WorkShiftRepository;
-import com.dental.clinic.management.work_shifts.utils.WorkShiftIdGenerator;
+import com.dental.clinic.management.working_schedule.domain.WorkShift;
+import com.dental.clinic.management.working_schedule.dto.request.CreateWorkShiftRequest;
+import com.dental.clinic.management.working_schedule.dto.request.UpdateWorkShiftRequest;
+import com.dental.clinic.management.working_schedule.dto.response.WorkShiftResponse;
+import com.dental.clinic.management.working_schedule.enums.WorkShiftCategory;
+import com.dental.clinic.management.working_schedule.mapper.WorkShiftMapper;
+import com.dental.clinic.management.working_schedule.repository.WorkShiftRepository;
+import com.dental.clinic.management.working_schedule.utils.WorkShiftIdGenerator;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;

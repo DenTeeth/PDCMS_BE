@@ -1,12 +1,13 @@
-package com.dental.clinic.management.work_shifts.dto.response;
+package com.dental.clinic.management.working_schedule.dto.response;
 
-import com.dental.clinic.management.work_shifts.enums.WorkShiftCategory;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalTime;
+
+import com.dental.clinic.management.working_schedule.enums.WorkShiftCategory;
 
 /**
  * DTO for work shift response.

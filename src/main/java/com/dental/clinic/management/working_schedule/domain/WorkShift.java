@@ -1,6 +1,5 @@
-package com.dental.clinic.management.work_shifts.domain;
+package com.dental.clinic.management.working_schedule.domain;
 
-import com.dental.clinic.management.work_shifts.enums.WorkShiftCategory;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -11,6 +10,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalTime;
+
+import com.dental.clinic.management.working_schedule.enums.WorkShiftCategory;
 
 /**
  * Entity representing a work shift template.

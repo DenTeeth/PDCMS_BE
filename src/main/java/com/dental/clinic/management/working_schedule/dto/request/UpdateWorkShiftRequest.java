@@ -1,12 +1,13 @@
-package com.dental.clinic.management.work_shifts.dto.request;
+package com.dental.clinic.management.working_schedule.dto.request;
 
-import com.dental.clinic.management.work_shifts.enums.WorkShiftCategory;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalTime;
+
+import com.dental.clinic.management.working_schedule.enums.WorkShiftCategory;
 
 /**
  * DTO for updating an existing work shift.

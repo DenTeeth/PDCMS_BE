@@ -1,4 +1,4 @@
-package com.dental.clinic.management.work_shifts.enums;
+package com.dental.clinic.management.working_schedule.enums;
 
 /**
  * Enum representing work shift categories.

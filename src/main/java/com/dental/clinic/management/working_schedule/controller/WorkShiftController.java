@@ -1,15 +1,16 @@
-package com.dental.clinic.management.work_shifts.controller;
+package com.dental.clinic.management.working_schedule.controller;
 
-import com.dental.clinic.management.work_shifts.dto.request.CreateWorkShiftRequest;
-import com.dental.clinic.management.work_shifts.dto.request.UpdateWorkShiftRequest;
-import com.dental.clinic.management.work_shifts.dto.response.WorkShiftResponse;
-import com.dental.clinic.management.work_shifts.service.WorkShiftService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import com.dental.clinic.management.working_schedule.dto.request.CreateWorkShiftRequest;
+import com.dental.clinic.management.working_schedule.dto.request.UpdateWorkShiftRequest;
+import com.dental.clinic.management.working_schedule.dto.response.WorkShiftResponse;
+import com.dental.clinic.management.working_schedule.service.WorkShiftService;
 
 import java.util.List;
 
