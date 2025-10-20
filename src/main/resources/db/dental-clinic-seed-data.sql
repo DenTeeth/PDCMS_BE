@@ -436,14 +436,9 @@ VALUES
 ('ROLE_ACCOUNTANT', 'Kế toán', 'Nhân viên kế toán', NOW()),
 ('ROLE_WAREHOUSE_MANAGER', 'Quản lý kho', 'Quản lý kho vật tư', NOW());
 
--- Accounts from test-data-employee
-INSERT IGNORE INTO accounts (account_id, username, email, password, status, created_at)
-VALUES
-('ACC_BS01', 'bs.nguyen.chinh.nha', 'nguyen.chinh.nha@dental.com', '$2a$10$abcdefghijklmnopqrstuvwxyz', 'ACTIVE', NOW()),
-('ACC_BS02', 'bs.tran.noi.nha', 'tran.noi.nha@dental.com', '$2a$10$abcdefghijklmnopqrstuvwxyz', 'ACTIVE', NOW()),
-('ACC_NV01', 'nv.le.le.tan', 'le.le.tan@dental.com', '$2a$10$abcdefghijklmnopqrstuvwxyz', 'ACTIVE', NOW()),
-('ACC_NV02', 'nv.pham.ke.toan', 'pham.ke.toan@dental.com', '$2a$10$abcdefghijklmnopqrstuvwxyz', 'ACTIVE', NOW()),
-('ACC_NV03', 'nv.hoang.kho', 'hoang.kho@dental.com', '$2a$10$abcdefghijklmnopqrstuvwxyz', 'ACTIVE', NOW());
+-- NOTE: Legacy accounts with string IDs removed to prevent duplicate entries
+-- The accounts 'ACC_BS01', 'ACC_BS02', etc. were causing duplicates because
+-- the account_id field is INTEGER AUTO_INCREMENT, not VARCHAR.
 
 -- Specializations (legacy/test file) - using numeric ids, INSERT IGNORE to avoid collision
 INSERT IGNORE INTO specializations (specialization_id, specialization_code, specialization_name, description, is_active, created_at)
@@ -456,24 +451,7 @@ VALUES
 ('6', 'SPEC006', 'Nha khoa trẻ em', 'Pediatric Dentistry - Chuyên khoa nhi', TRUE, NOW()),
 ('7', 'SPEC007', 'Răng thẩm mỹ', 'Cosmetic Dentistry - Tẩy trắng, bọc sứ', TRUE, NOW());
 
--- Employees from test-data-employee (legacy IDs)
-INSERT IGNORE INTO employees (employee_id, account_id, role_id, employee_code, first_name, last_name, phone, date_of_birth, address, is_active, created_at)
-VALUES
-('EMP_ID_001', 'ACC_BS01', 'ROLE_DOCTOR', 'EMP001', 'Văn A', 'Nguyễn', '0901234567', '1985-05-15', '123 Nguyễn Huệ, Q1, TPHCM', TRUE, NOW()),
-('EMP_ID_002', 'ACC_BS02', 'ROLE_DOCTOR', 'EMP002', 'Thị B', 'Trần', '0902345678', '1988-08-20', '456 Lê Lợi, Q3, TPHCM', TRUE, NOW()),
-('EMP_ID_003', 'ACC_NV01', 'ROLE_RECEPTIONIST', 'EMP003', 'Thị C', 'Lê', '0903456789', '1995-03-10', '789 Trần Hưng Đạo, Q5, TPHCM', TRUE, NOW()),
-('EMP_ID_004', 'ACC_NV02', 'ROLE_ACCOUNTANT', 'EMP004', 'Văn D', 'Phạm', '0904567890', '1992-07-25', '321 Hai Bà Trưng, Q1, TPHCM', TRUE, NOW()),
-('EMP_ID_005', 'ACC_NV03', 'ROLE_WAREHOUSE_MANAGER', 'EMP005', 'Văn E', 'Hoàng', '0905678901', '1990-11-18', '555 Pasteur, Q3, TPHCM', TRUE, NOW());
+-- NOTE: Legacy employees with string IDs removed to prevent foreign key issues
+-- The employees 'EMP_ID_001', 'EMP_ID_002', etc. were referencing non-existent
+-- account IDs 'ACC_BS01', 'ACC_BS02', etc.
 
--- Employee specializations (legacy/test file)
-INSERT IGNORE INTO employee_specializations (employee_id, specialization_id)
-VALUES
-('EMP_ID_001', '1'),
-('EMP_ID_001', '7'),
-('EMP_ID_002', '2'),
-('EMP_ID_002', '4');
-
-
--- ============================================
--- VERIFICATION / CLEANUP sections preserved below
--- ============================================
