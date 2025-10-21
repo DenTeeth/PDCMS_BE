@@ -164,15 +164,44 @@ ON CONFLICT (permission_id) DO NOTHING;
 -- MODULE: TIME_OFF (Nghỉ phép - VÍ DỤ Parent-Child Permission)
 INSERT INTO permissions (permission_id, permission_name, module, description, path, display_order, parent_permission_id, is_active, created_at)
 VALUES
--- Parent permission: Xem TẤT CẢ yêu cầu nghỉ phép
-('VIEW_TIME_OFF_ALL', 'VIEW_TIME_OFF_ALL', 'TIME_OFF',
- 'Xem tất cả yêu cầu nghỉ phép', '/app/time-off-requests', 100, NULL, TRUE, NOW()),
-
--- Child permission: Chỉ xem yêu cầu nghỉ phép CỦA MÌNH
-('VIEW_TIME_OFF_OWN', 'VIEW_TIME_OFF_OWN', 'TIME_OFF',
- 'Chỉ xem yêu cầu nghỉ phép của mình', '/app/my-time-off', 101, 'VIEW_TIME_OFF_ALL', TRUE, NOW()),
-
--- Action permissions
+('CREATE_ACCOUNT', 'CREATE_ACCOUNT', 'ACCOUNT', 'Tạo tài khoản mới', NOW()),
+('VIEW_ACCOUNT', 'VIEW_ACCOUNT', 'ACCOUNT', 'Xem danh sách tài khoản', NOW()),
+('UPDATE_ACCOUNT', 'UPDATE_ACCOUNT', 'ACCOUNT', 'Cập nhật tài khoản', NOW()),
+('DELETE_ACCOUNT', 'DELETE_ACCOUNT', 'ACCOUNT', 'Xóa tài khoản', NOW()),
+('CREATE_EMPLOYEE', 'CREATE_EMPLOYEE', 'EMPLOYEE', 'Tạo nhân viên mới', NOW()),
+('VIEW_EMPLOYEE', 'VIEW_EMPLOYEE', 'EMPLOYEE', 'Xem danh sách nhân viên', NOW()),
+('UPDATE_EMPLOYEE', 'UPDATE_EMPLOYEE', 'EMPLOYEE', 'Cập nhật nhân viên', NOW()),
+('DELETE_EMPLOYEE', 'DELETE_EMPLOYEE', 'EMPLOYEE', 'Xóa nhân viên', NOW()),
+('CREATE_PATIENT', 'CREATE_PATIENT', 'PATIENT', 'Tạo hồ sơ bệnh nhân', NOW()),
+('VIEW_PATIENT', 'VIEW_PATIENT', 'PATIENT', 'Xem hồ sơ bệnh nhân', NOW()),
+('UPDATE_PATIENT', 'UPDATE_PATIENT', 'PATIENT', 'Cập nhật hồ sơ bệnh nhân', NOW()),
+('DELETE_PATIENT', 'DELETE_PATIENT', 'PATIENT', 'Xóa hồ sơ bệnh nhân', NOW()),
+('CREATE_TREATMENT', 'CREATE_TREATMENT', 'TREATMENT', 'Tạo phác đồ điều trị', NOW()),
+('VIEW_TREATMENT', 'VIEW_TREATMENT', 'TREATMENT', 'Xem phác đồ điều trị', NOW()),
+('UPDATE_TREATMENT', 'UPDATE_TREATMENT', 'TREATMENT', 'Cập nhật phác đồ điều trị', NOW()),
+('CREATE_APPOINTMENT', 'CREATE_APPOINTMENT', 'APPOINTMENT', 'Đặt lịch hẹn', NOW()),
+('VIEW_APPOINTMENT', 'VIEW_APPOINTMENT', 'APPOINTMENT', 'Xem lịch hẹn', NOW()),
+('UPDATE_APPOINTMENT', 'UPDATE_APPOINTMENT', 'APPOINTMENT', 'Cập nhật lịch hẹn', NOW()),
+('DELETE_APPOINTMENT', 'DELETE_APPOINTMENT', 'APPOINTMENT', 'Hủy lịch hẹn', NOW()),
+('VIEW_CONTACT', 'VIEW_CONTACT', 'CONTACT', 'Xem danh sách liên hệ khách hàng', NOW()),
+('CREATE_CONTACT', 'CREATE_CONTACT', 'CONTACT', 'Tạo liên hệ khách hàng mới', NOW()),
+('UPDATE_CONTACT', 'UPDATE_CONTACT', 'CONTACT', 'Cập nhật liên hệ khách hàng', NOW()),
+('DELETE_CONTACT', 'DELETE_CONTACT', 'CONTACT', 'Xóa liên hệ khách hàng', NOW()),
+('VIEW_CONTACT_HISTORY', 'VIEW_CONTACT_HISTORY', 'CONTACT_HISTORY', 'Xem lịch sử liên hệ', NOW()),
+('CREATE_CONTACT_HISTORY', 'CREATE_CONTACT_HISTORY', 'CONTACT_HISTORY', 'Tạo lịch sử liên hệ', NOW()),
+('UPDATE_CONTACT_HISTORY', 'UPDATE_CONTACT_HISTORY', 'CONTACT_HISTORY', 'Cập nhật lịch sử liên hệ', NOW()),
+('DELETE_CONTACT_HISTORY', 'DELETE_CONTACT_HISTORY', 'CONTACT_HISTORY', 'Xóa lịch sử liên hệ', NOW()),
+('CREATE_WORK_SHIFTS', 'CREATE_WORK_SHIFTS', 'WORK_SHIFTS', 'Tạo mẫu ca làm việc mới', NOW()),
+('VIEW_WORK_SHIFTS', 'VIEW_WORK_SHIFTS', 'WORK_SHIFTS', 'Xem danh sách mẫu ca làm việc', NOW()),
+('UPDATE_WORK_SHIFTS', 'UPDATE_WORK_SHIFTS', 'WORK_SHIFTS', 'Cập nhật mẫu ca làm việc', NOW()),
+('DELETE_WORK_SHIFTS', 'DELETE_WORK_SHIFTS', 'WORK_SHIFTS', 'Xóa/vô hiệu hóa mẫu ca làm việc', NOW())
+('VIEW_OT_ALL', 'VIEW_OT_ALL', 'OVERTIME', 'Xem tất cả yêu cầu tăng ca', NOW()),
+('VIEW_OT_OWN', 'VIEW_OT_OWN', 'OVERTIME', 'Xem yêu cầu tăng ca của bản thân', NOW()),
+('CREATE_OT', 'CREATE_OT', 'OVERTIME', 'Tạo yêu cầu tăng ca', NOW()),
+('APPROVE_OT', 'APPROVE_OT', 'OVERTIME', 'Phê duyệt yêu cầu tăng ca', NOW()),
+('REJECT_OT', 'REJECT_OT', 'OVERTIME', 'Từ chối yêu cầu tăng ca', NOW()),
+('CANCEL_OT_OWN', 'CANCEL_OT_OWN', 'OVERTIME', 'Hủy yêu cầu tăng ca của bản thân', NOW()),
+('CANCEL_OT_PENDING', 'CANCEL_OT_PENDING', 'OVERTIME', 'Hủy yêu cầu tăng ca đang chờ', NOW()),
 ('CREATE_TIME_OFF', 'CREATE_TIME_OFF', 'TIME_OFF', 'Tạo yêu cầu nghỉ phép', NULL, 102, NULL, TRUE, NOW()),
 ('APPROVE_TIME_OFF', 'APPROVE_TIME_OFF', 'TIME_OFF', 'Phê duyệt yêu cầu nghỉ phép', NULL, 103, NULL, TRUE, NOW())
 ON CONFLICT (permission_id) DO NOTHING;
@@ -261,9 +290,21 @@ VALUES
 ('ROLE_PATIENT', 'VIEW_PATIENT'),          -- Chỉ xem hồ sơ của mình
 ('ROLE_PATIENT', 'VIEW_TREATMENT'),        -- Xem phác đồ điều trị của mình
 ('ROLE_PATIENT', 'VIEW_APPOINTMENT'),      -- Xem lịch hẹn của mình
-('ROLE_PATIENT', 'CREATE_APPOINTMENT')     -- Đặt lịch hẹn mới
+('ROLE_PATIENT', 'CREATE_APPOINTMENT'),    -- Đặt lịch hẹn cho mình
+('ROLE_MANAGER', 'CREATE_EMPLOYEE'), ('ROLE_MANAGER', 'VIEW_EMPLOYEE'), ('ROLE_MANAGER', 'UPDATE_EMPLOYEE'),
+('ROLE_MANAGER', 'DELETE_EMPLOYEE'), ('ROLE_MANAGER', 'CREATE_WORK_SHIFTS'), ('ROLE_MANAGER', 'VIEW_WORK_SHIFTS'),
+('ROLE_MANAGER', 'UPDATE_WORK_SHIFTS'), ('ROLE_MANAGER', 'DELETE_WORK_SHIFTS'), ('ROLE_MANAGER', 'VIEW_PATIENT'),
+('ROLE_MANAGER', 'VIEW_APPOINTMENT'), ('ROLE_MANAGER', 'VIEW_OT_ALL'), ('ROLE_MANAGER', 'APPROVE_OT'),
+('ROLE_MANAGER', 'REJECT_OT'), ('ROLE_MANAGER', 'CANCEL_OT_PENDING')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
-
+-- Assign overtime permissions to employees (Doctor, Nurse, Receptionist, etc.)
+INSERT INTO role_permissions (role_id, permission_id)
+VALUES
+('ROLE_DOCTOR', 'VIEW_OT_OWN'), ('ROLE_DOCTOR', 'CREATE_OT'), ('ROLE_DOCTOR', 'CANCEL_OT_OWN'),
+('ROLE_NURSE', 'VIEW_OT_OWN'), ('ROLE_NURSE', 'CREATE_OT'), ('ROLE_NURSE', 'CANCEL_OT_OWN'),
+('ROLE_RECEPTIONIST', 'VIEW_OT_OWN'), ('ROLE_RECEPTIONIST', 'CREATE_OT'), ('ROLE_RECEPTIONIST', 'CANCEL_OT_OWN'),
+('ROLE_ACCOUNTANT', 'VIEW_OT_OWN'), ('ROLE_ACCOUNTANT', 'CREATE_OT'), ('ROLE_ACCOUNTANT', 'CANCEL_OT_OWN'),
+('ROLE_INVENTORY_MANAGER', 'VIEW_OT_OWN'), ('ROLE_INVENTORY_MANAGER', 'CREATE_OT'), ('ROLE_INVENTORY_MANAGER', 'CANCEL_OT_OWN')
 -- ============================================
 -- BƯỚC 5: TẠO CHUYÊN KHOA
 -- ============================================
