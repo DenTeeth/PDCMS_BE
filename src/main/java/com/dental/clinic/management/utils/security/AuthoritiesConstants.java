@@ -52,4 +52,9 @@ public final class AuthoritiesConstants {
     // Employee Shift Registration Permissions
     public static final String VIEW_REGISTRATION_ALL = "VIEW_REGISTRATION_ALL";
     public static final String VIEW_REGISTRATION_OWN = "VIEW_REGISTRATION_OWN";
+    public static final String CREATE_REGISTRATION = "CREATE_REGISTRATION";
+    public static final String UPDATE_REGISTRATION_ALL = "UPDATE_REGISTRATION_ALL";
+    public static final String UPDATE_REGISTRATION_OWN = "UPDATE_REGISTRATION_OWN";
+    public static final String DELETE_REGISTRATION_ALL = "DELETE_REGISTRATION_ALL";
+    public static final String DELETE_REGISTRATION_OWN = "DELETE_REGISTRATION_OWN";
 }

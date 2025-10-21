@@ -16,12 +16,28 @@ public class EmployeeNotFoundException extends ErrorResponseException {
                 null);
     }
 
+    public EmployeeNotFoundException(Integer employeeId) {
+        super(
+                HttpStatus.NOT_FOUND,
+                createProblemDetailById(employeeId),
+                null);
+    }
+
     private static ProblemDetail createProblemDetail(String employeeCode) {
         ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
         problemDetail.setType(ErrorConstants.EMPLOYEE_NOT_FOUND_TYPE);
         problemDetail.setTitle("Employee not found");
         problemDetail.setProperty("message", "error.employee.notfound");
         problemDetail.setProperty("params", employeeCode);
+        return problemDetail;
+    }
+
+    private static ProblemDetail createProblemDetailById(Integer employeeId) {
+        ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+        problemDetail.setType(ErrorConstants.EMPLOYEE_NOT_FOUND_TYPE);
+        problemDetail.setTitle("Employee not found");
+        problemDetail.setProperty("message", "error.employee.notfound");
+        problemDetail.setProperty("params", employeeId.toString());
         return problemDetail;
     }
 }
