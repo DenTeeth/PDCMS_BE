@@ -175,30 +175,32 @@ ON CONFLICT (patient_id) DO NOTHING;
 -- STEP 11: SEED DATA CHO ĐĂNG KÝ CA LÀM VIỆC
 -- ============================================
 
--- STEP 11.1: TẠO CÁC MẪU CA LÀM VIỆC (work_shift)
-INSERT INTO work_shift (slot_id, slot_code, slot_name, start_time, end_time, category, is_active)
+-- STEP 11.1: TẠO CÁC MẪU CA LÀM VIỆC (work_shifts)
+INSERT INTO work_shifts (work_shift_id, shift_name, start_time, end_time, category, is_active)
 VALUES
-('SLOT_MORN_HC', 'HC_SANG', 'Ca Sáng (8h-16h)', '08:00:00', '16:00:00', 'NORMAL', TRUE),
-('SLOT_AFTR_HC', 'HC_CHIEU', 'Ca Chiều (13h-20h)', '13:00:00', '20:00:00', 'NORMAL', TRUE),
-('SLOT_PART_MORN', 'PT_SANG', 'Ca Part-time Sáng (8h-12h)', '08:00:00', '12:00:00', 'NORMAL', TRUE),
-('SLOT_PART_AFTR', 'PT_CHIEU', 'Ca Part-time Chiều (13h-17h)', '13:00:00', '17:00:00', 'NORMAL', TRUE)
-ON CONFLICT (slot_id) DO NOTHING;
+('SLOT_MORN_HC', 'Ca Sáng (8h-16h)', '08:00:00', '16:00:00', 'NORMAL', TRUE),
+('SLOT_AFTR_HC', 'Ca Chiều (13h-20h)', '13:00:00', '20:00:00', 'NORMAL', TRUE),
+('SLOT_PART_MORN', 'Ca Part-time Sáng (8h-12h)', '08:00:00', '12:00:00', 'NORMAL', TRUE),
+('SLOT_PART_AFTR', 'Ca Part-time Chiều (13h-17h)', '13:00:00', '17:00:00', 'NORMAL', TRUE)
+ON CONFLICT (work_shift_id) DO NOTHING;
 
 -- STEP 11.2: TẠO ĐĂNG KÝ CA (ID gán cứng: 1-3)
-INSERT INTO employee_shift_registrations (registration_id, employee_id, slot_id, effective_from, is_active)
-VALUES
-(1, 2, 'SLOT_PART_MORN', '2025-10-01', TRUE), -- Bác sĩ 1 (ID 2)
-(2, 4, 'SLOT_AFTR_HC', '2025-10-01', TRUE),   -- Lễ tân (ID 4)
-(3, 6, 'SLOT_PART_AFTR', '2025-10-01', TRUE)  -- Y tá (ID 6)
-ON CONFLICT (registration_id) DO NOTHING;
+-- TODO: Uncomment when employee_shift_registrations table is created
+-- INSERT INTO employee_shift_registrations (registration_id, employee_id, slot_id, effective_from, is_active)
+-- VALUES
+-- (1, 2, 'SLOT_PART_MORN', '2025-10-01', TRUE), -- Bác sĩ 1 (ID 2)
+-- (2, 4, 'SLOT_AFTR_HC', '2025-10-01', TRUE),   -- Lễ tân (ID 4)
+-- (3, 6, 'SLOT_PART_AFTR', '2025-10-01', TRUE)  -- Y tá (ID 6)
+-- ON CONFLICT (registration_id) DO NOTHING;
 
 -- STEP 11.3: TẠO NGÀY ĐĂNG KÝ
-INSERT INTO registration_days (registration_id, day_of_week)
-VALUES
-(1, 'MONDAY'), (1, 'WEDNESDAY'), (1, 'FRIDAY'), -- Bác sĩ 1
-(2, 'MONDAY'), (2, 'TUESDAY'), (2, 'WEDNESDAY'), (2, 'THURSDAY'), (2, 'FRIDAY'), -- Lễ tân
-(3, 'SATURDAY'), (3, 'SUNDAY') -- Y tá
-ON CONFLICT (registration_id, day_of_week) DO NOTHING;
+-- TODO: Uncomment when registration_days table is created
+-- INSERT INTO registration_days (registration_id, day_of_week)
+-- VALUES
+-- (1, 'MONDAY'), (1, 'WEDNESDAY'), (1, 'FRIDAY'), -- Bác sĩ 1
+-- (2, 'MONDAY'), (2, 'TUESDAY'), (2, 'WEDNESDAY'), (2, 'THURSDAY'), (2, 'FRIDAY'), -- Lễ tân
+-- (3, 'SATURDAY'), (3, 'SUNDAY') -- Y tá
+-- ON CONFLICT (registration_id, day_of_week) DO NOTHING;
 
 -- ============================================
 -- STEP 12: ĐỒNG BỘ HÓA CÁC CHUỖI (SEQUENCES)
@@ -208,8 +210,10 @@ ON CONFLICT (registration_id, day_of_week) DO NOTHING;
 -- Chúng ta +1 so với ID lớn nhất đã chèn.
 -- (Nếu bảng trống, nó sẽ báo lỗi, nhưng trong trường hợp này là an toàn)
 
-SELECT setval(pg_get_serial_sequence('accounts', 'account_id'), (SELECT MAX(account_id) FROM accounts));
-SELECT setval(pg_get_serial_sequence('employees', 'employee_id'), (SELECT MAX(employee_id) FROM employees));
-SELECT setval(pg_get_serial_sequence('patients', 'patient_id'), (SELECT MAX(patient_id) FROM patients));
-SELECT setval(pg_get_serial_sequence('specializations', 'specialization_id'), (SELECT MAX(specialization_id) FROM specializations));
-SELECT setval(pg_get_serial_sequence('employee_shift_registrations', 'registration_id'), (SELECT MAX(registration_id) FROM employee_shift_registrations));
+SELECT setval(pg_get_serial_sequence('accounts', 'account_id'), COALESCE((SELECT MAX(account_id) FROM accounts), 0));
+SELECT setval(pg_get_serial_sequence('employees', 'employee_id'), COALESCE((SELECT MAX(employee_id) FROM employees), 0));
+SELECT setval(pg_get_serial_sequence('patients', 'patient_id'), COALESCE((SELECT MAX(patient_id) FROM patients), 0));
+SELECT setval(pg_get_serial_sequence('specializations', 'specialization_id'), COALESCE((SELECT MAX(specialization_id) FROM specializations), 0));
+-- TODO: Uncomment when employee_shift_registrations table is created
+-- SELECT setval(pg_get_serial_sequence('employee_shift_registrations', 'registration_id'), COALESCE((SELECT MAX(registration_id) FROM employee_shift_registrations), 0));
+
