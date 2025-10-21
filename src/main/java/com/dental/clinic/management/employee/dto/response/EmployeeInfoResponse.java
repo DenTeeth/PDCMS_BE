@@ -24,7 +24,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class EmployeeInfoResponse {
 
-  private Integer employeeId;
+  private Long employeeId;
   private String employeeCode;
   private String firstName;
   private String lastName;

@@ -13,7 +13,7 @@ import com.dental.clinic.management.employee.domain.Employee;
  * Spring Data JPA repository for the {@link Employee} entity.
  */
 @Repository
-public interface EmployeeRepository extends JpaRepository<Employee, Integer>, JpaSpecificationExecutor<Employee> {
+public interface EmployeeRepository extends JpaRepository<Employee, Long>, JpaSpecificationExecutor<Employee> {
 
   Optional<Employee> findOneByEmployeeCode(String employeeCode);
 

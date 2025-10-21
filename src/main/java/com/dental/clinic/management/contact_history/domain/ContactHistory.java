@@ -37,7 +37,7 @@ public class ContactHistory {
     private String contactId;
 
     @Column(name = "employee_id")
-    private Integer employeeId;
+    private Long employeeId;
 
     @NotNull
     @Enumerated(EnumType.STRING)
@@ -85,11 +85,11 @@ public class ContactHistory {
         this.contactId = contactId;
     }
 
-    public Integer getEmployeeId() {
+    public Long getEmployeeId() {
         return employeeId;
     }
 
-    public void setEmployeeId(Integer employeeId) {
+    public void setEmployeeId(Long employeeId) {
         this.employeeId = employeeId;
     }
 

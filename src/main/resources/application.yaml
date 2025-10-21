@@ -6,29 +6,29 @@ spring:
   # Database Configuration
   # ==============================
   datasource:
-    url: jdbc:postgresql://localhost:5432/dental_clinic_db
-    username: postgres
+    url: jdbc:mysql://localhost:3306/dental_clinic_db
+    username: root
     password: 123456
-    driver-class-name: org.postgresql.Driver
+    driver-class-name: com.mysql.cj.jdbc.Driver
 
   # JPA Configuration
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create-drop
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+        dialect: org.hibernate.dialect.MySQLDialect
         "[format_sql]": true
     show-sql: true
     defer-datasource-initialization: true
 
-  # # SQL Init Configuration - Auto-run seed data
-  # sql:
-  #   init:
-  #     mode: always
-  #     data-locations: classpath:db/dental-clinic-seed-data.sql
-  #     encoding: UTF-8
-  #     continue-on-error: true
+  # SQL Init Configuration - Auto-run seed data
+  sql:
+    init:
+      mode: always
+      data-locations: classpath:db/dental-clinic-seed-data.sql
+      encoding: UTF-8
+      continue-on-error: true
 
 # ==============================
 # Custom JWT Configuration

@@ -1,4 +1,5 @@
 package com.dental.clinic.management.customer_contact.dto.response;
+
 import com.dental.clinic.management.contact_history.dto.response.ContactHistoryResponse;
 import com.dental.clinic.management.customer_contact.enums.CustomerContactSource;
 import com.dental.clinic.management.customer_contact.enums.CustomerContactStatus;
@@ -24,7 +25,7 @@ public class ContactInfoResponse {
     private String email;
     private CustomerContactSource source;
     private CustomerContactStatus status;
-    private Integer assignedTo;
+    private Long assignedTo;
     private Integer convertedPatientId;
     private String notes;
     private LocalDateTime createdAt;

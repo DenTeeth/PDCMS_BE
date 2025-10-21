@@ -39,7 +39,7 @@ public class Employee {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = "employee_id")
-  private Integer employeeId;
+  private Long employeeId;
 
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "account_id", nullable = false)
@@ -103,7 +103,7 @@ public class Employee {
   public Employee() {
   }
 
-  public Employee(Integer employeeId, Account account, String employeeCode, String firstName, String lastName) {
+  public Employee(Long employeeId, Account account, String employeeCode, String firstName, String lastName) {
     this.employeeId = employeeId;
     this.account = account;
     this.employeeCode = employeeCode;
@@ -117,11 +117,11 @@ public class Employee {
   }
 
   // Getters and Setters
-  public Integer getEmployeeId() {
+  public Long getEmployeeId() {
     return employeeId;
   }
 
-  public void setEmployeeId(Integer employeeId) {
+  public void setEmployeeId(Long employeeId) {
     this.employeeId = employeeId;
   }
 

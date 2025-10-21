@@ -33,5 +33,4 @@ if (-not $MvnArgs -or $MvnArgs.Count -eq 0) {
 
 $argsLine = $MvnArgs -join ' '
 Write-Host "`nRunning: .\mvnw.cmd $argsLine`n"
-.
-\mvnw.cmd $MvnArgs
+.\mvnw.cmd $MvnArgs

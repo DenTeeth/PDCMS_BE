@@ -33,13 +33,13 @@ public class CreateContactRequest {
     @Size(max = 2000, message = "Message must not exceed 2000 characters")
     private String message;
 
-    private Integer assignedTo;
+    private Long assignedTo;
 
     public CreateContactRequest() {
     }
 
     public CreateContactRequest(String fullName, String phone, String email, CustomerContactSource source,
-                                String serviceInterested, String message, Integer assignedTo) {
+            String serviceInterested, String message, Long assignedTo) {
         this.fullName = fullName;
         this.phone = phone;
         this.email = email;
@@ -98,11 +98,11 @@ public class CreateContactRequest {
         this.message = message;
     }
 
-    public Integer getAssignedTo() {
+    public Long getAssignedTo() {
         return assignedTo;
     }
 
-    public void setAssignedTo(Integer assignedTo) {
+    public void setAssignedTo(Long assignedTo) {
         this.assignedTo = assignedTo;
     }
 

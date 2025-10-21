@@ -160,6 +160,106 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handle EmployeeShiftNotFoundException.
+     * Returns 404 Not Found.
+     */
+    @ExceptionHandler(EmployeeShiftNotFoundException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleEmployeeShiftNotFound(
+            EmployeeShiftNotFoundException ex,
+            HttpServletRequest request) {
+
+        log.warn("Employee shift not found at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.NOT_FOUND.value());
+        res.setMessage(ex.getMessage());
+        res.setError("error.shift.not.found");
+        res.setData(null);
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(res);
+    }
+
+    /**
+     * Handle HolidayShiftException.
+     * Returns 409 Conflict.
+     */
+    @ExceptionHandler(HolidayShiftException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleHolidayShift(
+            HolidayShiftException ex,
+            HttpServletRequest request) {
+
+        log.warn("Holiday shift conflict at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.CONFLICT.value());
+        res.setMessage(ex.getMessage());
+        res.setError("error.shift.holiday");
+        res.setData(null);
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(res);
+    }
+
+    /**
+     * Handle ShiftConflictException.
+     * Returns 409 Conflict.
+     */
+    @ExceptionHandler(ShiftConflictException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleShiftConflict(
+            ShiftConflictException ex,
+            HttpServletRequest request) {
+
+        log.warn("Shift conflict at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.CONFLICT.value());
+        res.setMessage(ex.getMessage());
+        res.setError("error.shift.conflict");
+        res.setData(null);
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(res);
+    }
+
+    /**
+     * Handle ShiftUpdateNotAllowedException.
+     * Returns 409 Conflict.
+     */
+    @ExceptionHandler(ShiftUpdateNotAllowedException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleShiftUpdateNotAllowed(
+            ShiftUpdateNotAllowedException ex,
+            HttpServletRequest request) {
+
+        log.warn("Shift update not allowed at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.CONFLICT.value());
+        res.setMessage(ex.getMessage());
+        res.setError("error.shift.update.not.allowed");
+        res.setData(null);
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(res);
+    }
+
+    /**
+     * Handle BatchJobShiftCancellationException.
+     * Returns 400 Bad Request.
+     */
+    @ExceptionHandler(BatchJobShiftCancellationException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleBatchJobShiftCancellation(
+            BatchJobShiftCancellationException ex,
+            HttpServletRequest request) {
+
+        log.warn("Batch job shift cancellation not allowed at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.BAD_REQUEST.value());
+        res.setMessage(ex.getMessage());
+        res.setError("error.shift.batch.cancellation");
+        res.setData(null);
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+    }
+
+    /**
      * Fallback handler for any other unexpected exceptions.
      * Returns 500 Internal Server Error.
      */

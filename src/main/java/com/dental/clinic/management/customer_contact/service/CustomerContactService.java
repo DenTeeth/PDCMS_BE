@@ -184,7 +184,7 @@ public class CustomerContactService {
      */
     @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + UPDATE_CONTACT + "')")
     @Transactional
-    public ContactInfoResponse assignContact(String contactId, Integer employeeId /* nullable -> auto */) {
+    public ContactInfoResponse assignContact(String contactId, Long employeeId /* nullable -> auto */) {
         CustomerContact contact = repository.findOneByContactId(contactId)
                 .orElseThrow(() -> new BadRequestAlertException("Contact not found: " + contactId, "customer_contact",
                         "contactnotfound"));
@@ -298,7 +298,8 @@ public class CustomerContactService {
                 .collect(Collectors.groupingBy(c -> (c.getSource() == null ? "UNKNOWN" : c.getSource().name()),
                         Collectors.counting()));
         Map<String, Long> byAssigned = all.stream()
-                .collect(Collectors.groupingBy(c -> (c.getAssignedTo() == null ? "UNASSIGNED" : c.getAssignedTo().toString()),
+                .collect(Collectors.groupingBy(
+                        c -> (c.getAssignedTo() == null ? "UNASSIGNED" : c.getAssignedTo().toString()),
                         Collectors.counting()));
 
         Map<String, Object> out = new HashMap<>();

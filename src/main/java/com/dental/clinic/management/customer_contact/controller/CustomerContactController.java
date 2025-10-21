@@ -94,7 +94,7 @@ public class CustomerContactController {
 
     public ResponseEntity<ContactInfoResponse> assignContact(
             @PathVariable String contactId,
-            @RequestParam(required = false) Integer employeeId) {
+            @RequestParam(required = false) Long employeeId) {
         ContactInfoResponse resp = contactService.assignContact(contactId, employeeId);
         return ResponseEntity.ok(resp);
     }

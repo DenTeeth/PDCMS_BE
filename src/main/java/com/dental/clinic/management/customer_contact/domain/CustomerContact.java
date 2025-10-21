@@ -59,7 +59,7 @@ public class CustomerContact {
     private String message;
 
     @Column(name = "assigned_to")
-    private Integer assignedTo;
+    private Long assignedTo;
 
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
@@ -160,11 +160,11 @@ public class CustomerContact {
         this.message = message;
     }
 
-    public Integer getAssignedTo() {
+    public Long getAssignedTo() {
         return assignedTo;
     }
 
-    public void setAssignedTo(Integer assignedTo) {
+    public void setAssignedTo(Long assignedTo) {
         this.assignedTo = assignedTo;
     }
 

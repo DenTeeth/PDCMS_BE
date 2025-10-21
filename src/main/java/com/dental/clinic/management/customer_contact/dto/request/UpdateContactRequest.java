@@ -34,7 +34,7 @@ public class UpdateContactRequest {
 
     private CustomerContactStatus status;
 
-    private Integer assignedTo;
+    private Long assignedTo;
 
     @Size(max = 2000, message = "Notes must not exceed 2000 characters")
     private String notes;
@@ -99,11 +99,11 @@ public class UpdateContactRequest {
         this.status = status;
     }
 
-    public Integer getAssignedTo() {
+    public Long getAssignedTo() {
         return assignedTo;
     }
 
-    public void setAssignedTo(Integer assignedTo) {
+    public void setAssignedTo(Long assignedTo) {
         this.assignedTo = assignedTo;
     }
 
@@ -125,7 +125,8 @@ public class UpdateContactRequest {
                 ", serviceInterested='" + serviceInterested + '\'' +
                 ", status=" + status +
                 ", assignedTo='" + assignedTo + '\'' +
-                ", notes='" + (notes == null ? null : (notes.length() > 60 ? notes.substring(0, 60) + "..." : notes)) + '\'' +
+                ", notes='" + (notes == null ? null : (notes.length() > 60 ? notes.substring(0, 60) + "..." : notes))
+                + '\'' +
                 '}';
     }
 }
