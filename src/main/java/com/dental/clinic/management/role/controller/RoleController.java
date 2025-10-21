@@ -106,21 +106,21 @@ public class RoleController {
     }
 
     @PostMapping("/accounts/{accountId}")
-    @Operation(summary = "Assign roles to user", description = "Assign multiple roles to a user account")
-    @ApiMessage("Assign multiple roles to user successfully")
-    public ResponseEntity<Void> assignRolesToAccount(
+    @Operation(summary = "Assign role to user", description = "Assign a role to a user account (single role per account)")
+    @ApiMessage("Assign role to user successfully")
+    public ResponseEntity<Void> assignRoleToAccount(
             @Parameter(description = "Account ID (integer)", required = true) @PathVariable Integer accountId,
-            @Parameter(description = "List of role IDs to assign", required = true) @RequestBody List<String> roleIds) {
-        accountService.assignRolesToAccount(accountId, roleIds);
+            @Parameter(description = "Role ID to assign", required = true) @RequestBody String roleId) {
+        accountService.assignRoleToAccount(accountId, roleId);
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/accounts/{accountId}")
-    @Operation(summary = "Get user roles", description = "Retrieve all roles assigned to a specific user account")
-    @ApiMessage("Get roles of user successfully")
-    public ResponseEntity<List<String>> getAccountRoles(
+    @Operation(summary = "Get user role", description = "Retrieve the role assigned to a specific user account")
+    @ApiMessage("Get role of user successfully")
+    public ResponseEntity<String> getAccountRole(
             @Parameter(description = "Account ID (integer)", required = true) @PathVariable Integer accountId) {
-        List<String> roles = accountService.getAccountRoles(accountId);
-        return ResponseEntity.ok().body(roles);
+        String role = accountService.getAccountRole(accountId);
+        return ResponseEntity.ok().body(role);
     }
 }

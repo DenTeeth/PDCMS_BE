@@ -7,7 +7,6 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
-
 import com.dental.clinic.management.employee.domain.Employee;
 import com.dental.clinic.management.employee.dto.response.EmployeeInfoResponse;
 import com.dental.clinic.management.specialization.domain.Specialization;
@@ -33,11 +32,11 @@ public class EmployeeMapper {
     response.setPhone(employee.getPhone());
     response.setDateOfBirth(employee.getDateOfBirth());
     response.setAddress(employee.getAddress());
-    response.setRoleId(employee.getRoleId());
 
-    // Map roleName from Role entity (via ManyToOne relationship)
-    if (employee.getRole() != null) {
-      response.setRoleName(employee.getRole().getRoleName());
+    // Get roleId and roleName from Account (single role)
+    if (employee.getAccount() != null && employee.getAccount().getRole() != null) {
+      response.setRoleId(employee.getAccount().getRole().getRoleId());
+      response.setRoleName(employee.getAccount().getRole().getRoleName());
     }
 
     response.setIsActive(employee.getIsActive());

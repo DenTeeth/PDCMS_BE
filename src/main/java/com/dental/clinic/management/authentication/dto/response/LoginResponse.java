@@ -2,6 +2,10 @@
 package com.dental.clinic.management.authentication.dto.response;
 
 import java.util.List;
+import java.util.Map;
+
+import com.dental.clinic.management.authentication.dto.SidebarItemDTO;
+import com.dental.clinic.management.employee.enums.EmploymentType;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
@@ -18,6 +22,18 @@ public class LoginResponse {
     private String email;
     private List<String> roles;
     private List<String> permissions;
+
+    // Base role for FE layout selection
+    private String baseRole; // 'admin', 'employee', or 'patient'
+
+    // Home path for redirect after login
+    private String homePath;
+
+    // Sidebar structure grouped by module
+    private Map<String, List<SidebarItemDTO>> sidebar;
+
+    // Employee-specific info
+    private EmploymentType employmentType; // FULL_TIME or PART_TIME
 
     public LoginResponse() {
     }
@@ -96,5 +112,37 @@ public class LoginResponse {
 
     public void setPermissions(List<String> permissions) {
         this.permissions = permissions;
+    }
+
+    public String getBaseRole() {
+        return baseRole;
+    }
+
+    public void setBaseRole(String baseRole) {
+        this.baseRole = baseRole;
+    }
+
+    public String getHomePath() {
+        return homePath;
+    }
+
+    public void setHomePath(String homePath) {
+        this.homePath = homePath;
+    }
+
+    public Map<String, List<SidebarItemDTO>> getSidebar() {
+        return sidebar;
+    }
+
+    public void setSidebar(Map<String, List<SidebarItemDTO>> sidebar) {
+        this.sidebar = sidebar;
+    }
+
+    public EmploymentType getEmploymentType() {
+        return employmentType;
+    }
+
+    public void setEmploymentType(EmploymentType employmentType) {
+        this.employmentType = employmentType;
     }
 }

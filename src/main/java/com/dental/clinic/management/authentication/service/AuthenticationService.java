@@ -4,6 +4,7 @@ package com.dental.clinic.management.authentication.service;
 import java.security.MessageDigest;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -16,7 +17,9 @@ import com.dental.clinic.management.account.domain.Account;
 import com.dental.clinic.management.account.dto.response.UserInfoResponse;
 import com.dental.clinic.management.account.dto.response.UserPermissionsResponse;
 import com.dental.clinic.management.account.dto.response.UserProfileResponse;
+import com.dental.clinic.management.account.dto.response.MeResponse;
 import com.dental.clinic.management.account.repository.AccountRepository;
+import com.dental.clinic.management.authentication.dto.SidebarItemDTO;
 import com.dental.clinic.management.authentication.dto.request.LoginRequest;
 import com.dental.clinic.management.authentication.dto.request.RefreshTokenRequest;
 import com.dental.clinic.management.authentication.dto.response.LoginResponse;
@@ -45,16 +48,19 @@ public class AuthenticationService {
         private final SecurityUtil securityUtil;
         private final AccountRepository accountRepository;
         private final RefreshTokenRepository refreshTokenRepository;
+        private final SidebarService sidebarService;
 
         public AuthenticationService(
                         AuthenticationManager authenticationManager,
                         SecurityUtil securityUtil,
                         AccountRepository accountRepository,
-                        RefreshTokenRepository refreshTokenRepository) {
+                        RefreshTokenRepository refreshTokenRepository,
+                        SidebarService sidebarService) {
                 this.authenticationManager = authenticationManager;
                 this.securityUtil = securityUtil;
                 this.accountRepository = accountRepository;
                 this.refreshTokenRepository = refreshTokenRepository;
+                this.sidebarService = sidebarService;
         }
 
         /**
@@ -73,40 +79,56 @@ public class AuthenticationService {
                                 new UsernamePasswordAuthenticationToken(request.getUsername(),
                                                 request.getPassword()));
 
-                // Lấy thông tin tài khoản kèm roles và quyền hạn
-                Account account = accountRepository.findByUsernameWithRolesAndPermissions(request.getUsername())
+                // Lấy thông tin tài khoản kèm role và quyền hạn
+                Account account = accountRepository.findByUsernameWithRoleAndPermissions(request.getUsername())
                                 .orElseThrow(() -> new org.springframework.security.authentication.BadCredentialsException(
                                                 "Account not found"));
 
-                // Lấy danh sách vai trò của user
-                List<String> roles = account.getRoles().stream()
-                                .map(Role::getRoleName)
-                                .collect(Collectors.toList());
+                Role role = account.getRole();
+                String roleName = role.getRoleName();
 
-                // Lấy tất cả quyền hạn từ các vai trò (loại bỏ trùng lặp)
-                List<String> permissions = account.getRoles().stream()
-                                .flatMap(role -> role.getPermissions().stream())
-                                .map(Permission::getPermissionName)
+                // Lấy tất cả quyền hạn từ role
+                List<String> permissionIds = role.getPermissions().stream()
+                                .map(Permission::getPermissionId)
                                 .distinct()
                                 .collect(Collectors.toList());
 
+                // Generate sidebar for FE
+                Map<String, List<SidebarItemDTO>> sidebar = sidebarService.generateSidebar(role.getRoleId());
+
+                // Get home path: use override if exists, otherwise use base role default
+                String homePath = role.getEffectiveHomePath();
+                String baseRoleName = role.getBaseRole().getBaseRoleName();
+
                 // Tạo JWT token chứa thông tin user
-                String accessToken = securityUtil.createAccessToken(account.getUsername(), roles, permissions);
+                String accessToken = securityUtil.createAccessToken(account.getUsername(),
+                                List.of(roleName), permissionIds);
                 String refreshToken = securityUtil.createRefreshToken(account.getUsername());
 
                 long now = Instant.now().getEpochSecond();
                 long accessExp = now + securityUtil.getAccessTokenValiditySeconds();
                 long refreshExp = now + securityUtil.getRefreshTokenValiditySeconds();
 
-                return new LoginResponse(
+                LoginResponse response = new LoginResponse(
                                 accessToken,
                                 accessExp,
                                 refreshToken,
                                 refreshExp,
                                 account.getUsername(),
                                 account.getEmail(),
-                                roles,
-                                permissions);
+                                List.of(roleName),
+                                permissionIds);
+
+                response.setBaseRole(baseRoleName);
+                response.setHomePath(homePath);
+                response.setSidebar(sidebar);
+
+                // Set employmentType if user is an employee
+                if (account.getEmployee() != null) {
+                        response.setEmploymentType(account.getEmployee().getEmploymentType());
+                }
+
+                return response;
         }
 
         /**
@@ -139,8 +161,8 @@ public class AuthenticationService {
                 String username = jwt.getSubject();
                 log.debug("Refresh token decoded successfully for user: {}", username);
 
-                // Lấy thông tin tài khoản với roles/permissions
-                Account account = accountRepository.findByUsernameWithRolesAndPermissions(username)
+                // Lấy thông tin tài khoản với role/permissions
+                Account account = accountRepository.findByUsernameWithRoleAndPermissions(username)
                                 .orElseThrow(() -> {
                                         log.error("Account not found for username: {}", username);
                                         return new AccountNotFoundException(username);
@@ -154,10 +176,10 @@ public class AuthenticationService {
                 }
 
                 log.debug("Generating new tokens for user: {}", username);
-                List<String> roles = account.getRoles().stream().map(Role::getRoleName)
-                                .collect(Collectors.toList());
-                List<String> permissions = account.getRoles().stream().flatMap(r -> r.getPermissions().stream())
-                                .map(Permission::getPermissionName).distinct().collect(Collectors.toList());
+                Role role = account.getRole();
+                List<String> roles = List.of(role.getRoleName());
+                List<String> permissions = role.getPermissions().stream()
+                                .map(Permission::getPermissionId).distinct().collect(Collectors.toList());
 
                 // Tạo access token mới
                 String newAccess = securityUtil.createAccessToken(username, roles, permissions);
@@ -180,7 +202,7 @@ public class AuthenticationService {
          * @throws AccountNotFoundException if account does not exist
          */
         public UserInfoResponse getUserInfo(String username) {
-                Account account = accountRepository.findByUsernameWithRolesAndPermissions(username)
+                Account account = accountRepository.findByUsernameWithRoleAndPermissions(username)
                                 .orElseThrow(() -> new AccountNotFoundException(username));
 
                 UserInfoResponse response = new UserInfoResponse();
@@ -189,16 +211,13 @@ public class AuthenticationService {
                 response.setEmail(account.getEmail());
                 response.setAccountStatus(account.getStatus() != null ? account.getStatus().name() : null);
 
-                // Lấy danh sách vai trò
-                List<String> roles = account.getRoles().stream()
-                                .map(Role::getRoleName)
-                                .collect(Collectors.toList());
-                response.setRoles(roles);
+                // Lấy vai trò
+                Role role = account.getRole();
+                response.setRoles(List.of(role.getRoleName()));
 
-                // Lấy tất cả quyền hạn từ các vai trò
-                List<String> permissions = account.getRoles().stream()
-                                .flatMap(role -> role.getPermissions().stream())
-                                .map(Permission::getPermissionName)
+                // Lấy tất cả quyền hạn từ role
+                List<String> permissions = role.getPermissions().stream()
+                                .map(Permission::getPermissionId)
                                 .distinct()
                                 .collect(Collectors.toList());
                 response.setPermissions(permissions);
@@ -232,7 +251,7 @@ public class AuthenticationService {
          * @throws AccountNotFoundException if account does not exist
          */
         public UserProfileResponse getUserProfile(String username) {
-                Account account = accountRepository.findByUsernameWithRolesAndPermissions(username)
+                Account account = accountRepository.findByUsernameWithRoleAndPermissions(username)
                                 .orElseThrow(() -> new AccountNotFoundException(username));
 
                 UserProfileResponse response = new UserProfileResponse();
@@ -241,11 +260,9 @@ public class AuthenticationService {
                 response.setEmail(account.getEmail());
                 response.setAccountStatus(account.getStatus() != null ? account.getStatus().name() : null);
 
-                // Lấy danh sách vai trò (không có permissions)
-                List<String> roles = account.getRoles().stream()
-                                .map(Role::getRoleName)
-                                .collect(Collectors.toList());
-                response.setRoles(roles);
+                // Lấy vai trò
+                Role role = account.getRole();
+                response.setRoles(List.of(role.getRoleName()));
 
                 // Thông tin chi tiết nếu employee có profile
                 if (account.getEmployee() != null) {
@@ -276,17 +293,74 @@ public class AuthenticationService {
          * @throws AccountNotFoundException if account does not exist
          */
         public UserPermissionsResponse getUserPermissions(String username) {
-                Account account = accountRepository.findByUsernameWithRolesAndPermissions(username)
+                Account account = accountRepository.findByUsernameWithRoleAndPermissions(username)
                                 .orElseThrow(() -> new AccountNotFoundException(username));
 
-                // Lấy tất cả quyền hạn từ các vai trò
-                List<String> permissions = account.getRoles().stream()
-                                .flatMap(role -> role.getPermissions().stream())
-                                .map(Permission::getPermissionName)
+                // Lấy tất cả quyền hạn từ role
+                List<String> permissions = account.getRole().getPermissions().stream()
+                                .map(Permission::getPermissionId)
                                 .distinct()
                                 .collect(Collectors.toList());
 
                 return new UserPermissionsResponse(account.getUsername(), permissions);
+        }
+
+        /**
+         * Get complete user context for /me endpoint.
+         * Includes role, permissions, sidebar, homePath, and employmentType.
+         *
+         * @param username account username
+         * @return {@link MeResponse} with complete user context
+         * @throws AccountNotFoundException if account does not exist
+         */
+        public MeResponse getMe(String username) {
+                Account account = accountRepository.findByUsernameWithRoleAndPermissions(username)
+                                .orElseThrow(() -> new AccountNotFoundException(username));
+
+                MeResponse response = new MeResponse();
+
+                // Basic account info
+                response.setAccountId(account.getAccountId());
+                response.setUsername(account.getUsername());
+                response.setEmail(account.getEmail());
+                response.setAccountStatus(account.getStatus() != null ? account.getStatus().name() : null);
+
+                // Role info
+                Role role = account.getRole();
+                response.setRole(role.getRoleName());
+                response.setBaseRole(role.getBaseRole().getBaseRoleName());
+
+                // Home path - use override or base role default
+                response.setHomePath(role.getEffectiveHomePath());
+
+                // Sidebar
+                Map<String, List<SidebarItemDTO>> sidebar = sidebarService.generateSidebar(role.getRoleId());
+                response.setSidebar(sidebar);
+
+                // Permissions
+                List<String> permissions = role.getPermissions().stream()
+                                .map(Permission::getPermissionId)
+                                .distinct()
+                                .collect(Collectors.toList());
+                response.setPermissions(permissions);
+
+                // Employee-specific info
+                if (account.getEmployee() != null) {
+                        Employee employee = account.getEmployee();
+                        response.setFullName(employee.getFullName());
+                        response.setPhoneNumber(employee.getPhone());
+                        response.setEmployeeCode(employee.getEmployeeCode());
+                        response.setEmploymentType(employee.getEmploymentType());
+
+                        // Get primary specialization if exists
+                        if (!employee.getSpecializations().isEmpty()) {
+                                response.setSpecializationName(
+                                                employee.getSpecializations().iterator().next()
+                                                                .getSpecializationName());
+                        }
+                }
+
+                return response;
         }
 
         /**

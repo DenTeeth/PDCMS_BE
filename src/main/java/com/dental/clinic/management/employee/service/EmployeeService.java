@@ -286,21 +286,19 @@ public class EmployeeService {
         account.setStatus(AccountStatus.ACTIVE);
         account.setCreatedAt(java.time.LocalDateTime.now());
 
-        // Assign role to account (for authentication)
-        Set<Role> accountRoles = new HashSet<>();
-        accountRoles.add(role); // Use the role we already fetched above
-        account.setRoles(accountRoles);
+        // Assign role to account (single role)
+        account.setRole(role); // Use the role we already fetched above
 
         account = accountRepository.save(account);
         account.setAccountCode(codeGenerator.generateAccountCode(account.getAccountId()));
         account = accountRepository.save(account);
-        log.info("Created account with ID: {} and code: {} and role: {} for employee", 
+        log.info("Created account with ID: {} and code: {} and role: {} for employee",
                 account.getAccountId(), account.getAccountCode(), role.getRoleName());
 
         // Create new employee
         Employee employee = new Employee();
         employee.setAccount(account);
-        employee.setRoleId(request.getRoleId());
+        // Note: roleId is now in Account, not Employee
         employee.setFirstName(request.getFirstName());
         employee.setLastName(request.getLastName());
         employee.setPhone(request.getPhone());
@@ -325,7 +323,7 @@ public class EmployeeService {
 
         // Save employee to get auto-generated ID
         Employee savedEmployee = employeeRepository.save(employee);
-        
+
         // Generate and set employee code
         savedEmployee.setEmployeeCode(codeGenerator.generateEmployeeCode(savedEmployee.getEmployeeId()));
         savedEmployee = employeeRepository.save(savedEmployee);
@@ -351,7 +349,13 @@ public class EmployeeService {
 
         // Update only non-null fields
         if (request.getRoleId() != null) {
-            employee.setRoleId(request.getRoleId());
+            // Update role in account, not in employee
+            Role role = roleRepository.findById(request.getRoleId())
+                    .orElseThrow(() -> new BadRequestAlertException(
+                            "Role not found with ID: " + request.getRoleId(),
+                            "role",
+                            "rolenotfound"));
+            employee.getAccount().setRole(role);
         }
 
         if (request.getFirstName() != null) {
@@ -416,15 +420,15 @@ public class EmployeeService {
                 .orElseThrow(() -> new EmployeeNotFoundException("Employee not found with code: " + employeeCode));
 
         // Verify role exists
-        if (!roleRepository.existsById(request.getRoleId())) {
-            throw new BadRequestAlertException(
-                    "Role not found with ID: " + request.getRoleId(),
-                    "role",
-                    "rolenotfound");
-        }
+        Role role = roleRepository.findById(request.getRoleId())
+                .orElseThrow(() -> new BadRequestAlertException(
+                        "Role not found with ID: " + request.getRoleId(),
+                        "role",
+                        "rolenotfound"));
 
         // Replace ALL fields (required by PUT semantics)
-        employee.setRoleId(request.getRoleId());
+        // Update role in account, not in employee
+        employee.getAccount().setRole(role);
         employee.setFirstName(request.getFirstName());
         employee.setLastName(request.getLastName());
         employee.setPhone(request.getPhone());

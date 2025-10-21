@@ -2,8 +2,6 @@
 package com.dental.clinic.management.account.domain;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
 
 import com.dental.clinic.management.account.enums.AccountStatus;
 import com.dental.clinic.management.employee.domain.Employee;
@@ -20,8 +18,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
@@ -74,9 +71,9 @@ public class Account {
     @OneToOne(mappedBy = "account", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Patient patient;
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "account_roles", joinColumns = @JoinColumn(name = "account_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
-    private Set<Role> roles = new HashSet<>();
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "role_id", nullable = false)
+    private Role role;
 
     // Constructors
     public Account() {
@@ -173,23 +170,12 @@ public class Account {
         }
     }
 
-    public Set<Role> getRoles() {
-        return roles;
+    public Role getRole() {
+        return role;
     }
 
-    public void setRoles(Set<Role> roles) {
-        this.roles = roles;
-    }
-
-    // Helper methods
-    public void addRole(Role role) {
-        this.roles.add(role);
-        role.getAccounts().add(this);
-    }
-
-    public void removeRole(Role role) {
-        this.roles.remove(role);
-        role.getAccounts().remove(this);
+    public void setRole(Role role) {
+        this.role = role;
     }
 
     public boolean isActive() {

@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.dental.clinic.management.permission.dto.request.CreatePermissionRequest;
 import com.dental.clinic.management.permission.dto.request.UpdatePermissionRequest;
 import com.dental.clinic.management.permission.dto.response.PermissionInfoResponse;
+import com.dental.clinic.management.permission.dto.PermissionHierarchyDTO;
 import com.dental.clinic.management.permission.service.PermissionService;
 import com.dental.clinic.management.utils.annotation.ApiMessage;
 
@@ -50,6 +51,14 @@ public class PermissionController {
     @ApiMessage("Get permissions grouped by module successfully")
     public ResponseEntity<Map<String, List<PermissionInfoResponse>>> getPermissionsByModule() {
         Map<String, List<PermissionInfoResponse>> response = permissionService.getPermissionsGroupedByModule();
+        return ResponseEntity.ok().body(response);
+    }
+
+    @GetMapping("/grouped")
+    @Operation(summary = "Get permissions with hierarchy", description = "Retrieve all permissions grouped by module with parent-child hierarchy information. Used for frontend permission management UI with three-level selection: NONE (no permission), OWN (child permission), ALL (parent permission)")
+    @ApiMessage("Get grouped permissions with hierarchy successfully")
+    public ResponseEntity<Map<String, List<PermissionHierarchyDTO>>> getGroupedPermissions() {
+        Map<String, List<PermissionHierarchyDTO>> response = permissionService.getGroupedPermissions();
         return ResponseEntity.ok().body(response);
     }
 

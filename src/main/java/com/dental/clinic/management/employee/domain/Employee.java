@@ -3,7 +3,6 @@ package com.dental.clinic.management.employee.domain;
 
 import com.dental.clinic.management.account.domain.Account;
 import com.dental.clinic.management.employee.enums.EmploymentType;
-import com.dental.clinic.management.role.domain.Role;
 import com.dental.clinic.management.specialization.domain.Specialization;
 
 import java.time.LocalDate;
@@ -22,7 +21,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
@@ -44,22 +42,6 @@ public class Employee {
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "account_id", nullable = false)
   private Account account;
-
-  /**
-   * Role relationship for read-only queries.
-   * Use {@link #roleId} for updates to avoid duplication.
-   */
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "role_id", insertable = false, updatable = false)
-  private Role role;
-
-  /**
-   * Role ID field for setting/updating employee role.
-   */
-  @NotBlank
-  @Size(max = 50)
-  @Column(name = "role_id", nullable = false, length = 50)
-  private String roleId;
 
   @Size(max = 20)
   @Column(name = "employee_code", unique = true, length = 20)
@@ -131,22 +113,6 @@ public class Employee {
 
   public void setAccount(Account account) {
     this.account = account;
-  }
-
-  public Role getRole() {
-    return role;
-  }
-
-  public void setRole(Role role) {
-    this.role = role;
-  }
-
-  public String getRoleId() {
-    return roleId;
-  }
-
-  public void setRoleId(String roleId) {
-    this.roleId = roleId;
   }
 
   public String getEmployeeCode() {

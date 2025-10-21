@@ -13,11 +13,6 @@ import com.dental.clinic.management.account.repository.AccountRepository;
 import com.dental.clinic.management.role.repository.RoleRepository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 @Service
 public class AccountService {
 
@@ -33,38 +28,32 @@ public class AccountService {
 
     @PreAuthorize("hasRole('" + ADMIN + "')")
     @Transactional
-    public void assignRolesToAccount(Integer accountId, List<String> roleIds) {
+    public void assignRoleToAccount(Integer accountId, String roleId) {
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new BadRequestAlertException(
                         "Account not found with ID: " + accountId,
                         "account",
                         "accountnotfound"));
 
-        Set<Role> roles = new HashSet<>();
-        for (String roleId : roleIds) {
-            Role role = roleRepository.findById(roleId)
-                    .orElseThrow(() -> new BadRequestAlertException(
-                            "Role not found with ID: " + roleId,
-                            "role",
-                            "rolenotfound"));
-            roles.add(role);
-        }
+        Role role = roleRepository.findById(roleId)
+                .orElseThrow(() -> new BadRequestAlertException(
+                        "Role not found with ID: " + roleId,
+                        "role",
+                        "rolenotfound"));
 
-        account.setRoles(roles);
+        account.setRole(role);
         accountRepository.save(account);
     }
 
     @PreAuthorize("hasRole('" + ADMIN + "')")
     @Transactional(readOnly = true)
-    public List<String> getAccountRoles(Integer accountId) {
+    public String getAccountRole(Integer accountId) {
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new BadRequestAlertException(
                         "Account not found with ID: " + accountId,
                         "account",
                         "accountnotfound"));
 
-        return account.getRoles().stream()
-                .map(Role::getRoleName)
-                .collect(Collectors.toList());
+        return account.getRole() != null ? account.getRole().getRoleName() : null;
     }
 }

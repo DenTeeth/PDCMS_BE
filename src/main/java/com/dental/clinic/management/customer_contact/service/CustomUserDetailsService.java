@@ -40,7 +40,7 @@ public class CustomUserDetailsService implements UserDetailsService {
      */
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Account account = accountRepository.findByUsernameWithRolesAndPermissions(username)
+        Account account = accountRepository.findByUsernameWithRoleAndPermissions(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Account not found with username: " + username));
 
         if (!account.isActive()) {
@@ -58,7 +58,7 @@ public class CustomUserDetailsService implements UserDetailsService {
      * @throws UsernameNotFoundException if account not found / inactive / locked
      */
     public UserDetails loadUserByEmail(String email) throws UsernameNotFoundException {
-        Account account = accountRepository.findByEmailWithRolesAndPermissions(email)
+        Account account = accountRepository.findByEmailWithRoleAndPermissions(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Account not found with email: " + email));
 
         if (!account.isActive()) {
@@ -88,17 +88,18 @@ public class CustomUserDetailsService implements UserDetailsService {
         private Collection<? extends GrantedAuthority> getAuthorities(Account account) {
             Set<GrantedAuthority> authorities = new HashSet<>();
 
-            // Add roles with ROLE_ prefix
-            account.getRoles().forEach(role -> {
-                String roleName = role.getRoleName().startsWith("ROLE_") ? role.getRoleName()
-                        : "ROLE_" + role.getRoleName();
+            // Add role with ROLE_ prefix (single role)
+            if (account.getRole() != null) {
+                String roleName = account.getRole().getRoleName().startsWith("ROLE_")
+                        ? account.getRole().getRoleName()
+                        : "ROLE_" + account.getRole().getRoleName();
                 authorities.add(new SimpleGrantedAuthority(roleName));
 
-                // Add permissions from each role
-                role.getPermissions().forEach(permission -> {
+                // Add permissions from the role
+                account.getRole().getPermissions().forEach(permission -> {
                     authorities.add(new SimpleGrantedAuthority(permission.getPermissionName()));
                 });
-            });
+            }
 
             return authorities;
         }
