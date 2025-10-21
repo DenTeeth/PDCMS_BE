@@ -57,4 +57,13 @@ public final class AuthoritiesConstants {
     public static final String UPDATE_REGISTRATION_OWN = "UPDATE_REGISTRATION_OWN";
     public static final String DELETE_REGISTRATION_ALL = "DELETE_REGISTRATION_ALL";
     public static final String DELETE_REGISTRATION_OWN = "DELETE_REGISTRATION_OWN";
+
+    // Time-Off Request Permissions
+    public static final String VIEW_TIMEOFF_ALL = "VIEW_TIMEOFF_ALL";
+    public static final String VIEW_TIMEOFF_OWN = "VIEW_TIMEOFF_OWN";
+    public static final String CREATE_TIMEOFF = "CREATE_TIMEOFF";
+    public static final String APPROVE_TIMEOFF = "APPROVE_TIMEOFF";
+    public static final String REJECT_TIMEOFF = "REJECT_TIMEOFF";
+    public static final String CANCEL_TIMEOFF_OWN = "CANCEL_TIMEOFF_OWN";
+    public static final String CANCEL_TIMEOFF_PENDING = "CANCEL_TIMEOFF_PENDING";
 }

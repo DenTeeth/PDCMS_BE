@@ -28,7 +28,7 @@ spring:
       mode: always
       data-locations: classpath:db/dental-clinic-seed-data_postgres.sql
       encoding: UTF-8
-      continue-on-error: false
+      continue-on-error: true
 
 # ==============================
 # Custom JWT Configuration
