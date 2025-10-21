@@ -178,10 +178,10 @@ ON CONFLICT (patient_id) DO NOTHING;
 -- STEP 11.1: TẠO CÁC MẪU CA LÀM VIỆC (work_shifts)
 INSERT INTO work_shifts (work_shift_id, shift_name, start_time, end_time, category, is_active)
 VALUES
-('SLOT_MORN_HC', 'Ca Sáng (8h-16h)', '08:00:00', '16:00:00', 'NORMAL', TRUE),
-('SLOT_AFTR_HC', 'Ca Chiều (13h-20h)', '13:00:00', '20:00:00', 'NORMAL', TRUE),
-('SLOT_PART_MORN', 'Ca Part-time Sáng (8h-12h)', '08:00:00', '12:00:00', 'NORMAL', TRUE),
-('SLOT_PART_AFTR', 'Ca Part-time Chiều (13h-17h)', '13:00:00', '17:00:00', 'NORMAL', TRUE)
+('WKS_MORNING_01', 'Ca Sáng (8h-16h)', '08:00:00', '16:00:00', 'NORMAL', TRUE),
+('WKS_AFTERNOON_01', 'Ca Chiều (13h-20h)', '13:00:00', '20:00:00', 'NORMAL', TRUE),
+('WKS_MORNING_02', 'Ca Part-time Sáng (8h-12h)', '08:00:00', '12:00:00', 'NORMAL', TRUE),
+('WKS_AFTERNOON_02', 'Ca Part-time Chiều (13h-17h)', '13:00:00', '17:00:00', 'NORMAL', TRUE)
 ON CONFLICT (work_shift_id) DO NOTHING;
 
 -- STEP 11.2: TẠO ĐĂNG KÝ CA (ID gán cứng: 1-3)
