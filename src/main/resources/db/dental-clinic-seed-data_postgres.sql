@@ -51,7 +51,14 @@ VALUES
 ('CREATE_WORK_SHIFTS', 'CREATE_WORK_SHIFTS', 'WORK_SHIFTS', 'Tạo mẫu ca làm việc mới', NOW()),
 ('VIEW_WORK_SHIFTS', 'VIEW_WORK_SHIFTS', 'WORK_SHIFTS', 'Xem danh sách mẫu ca làm việc', NOW()),
 ('UPDATE_WORK_SHIFTS', 'UPDATE_WORK_SHIFTS', 'WORK_SHIFTS', 'Cập nhật mẫu ca làm việc', NOW()),
-('DELETE_WORK_SHIFTS', 'DELETE_WORK_SHIFTS', 'WORK_SHIFTS', 'Xóa/vô hiệu hóa mẫu ca làm việc', NOW())
+('DELETE_WORK_SHIFTS', 'DELETE_WORK_SHIFTS', 'WORK_SHIFTS', 'Xóa/vô hiệu hóa mẫu ca làm việc', NOW()),
+('VIEW_OT_ALL', 'VIEW_OT_ALL', 'OVERTIME', 'Xem tất cả yêu cầu tăng ca', NOW()),
+('VIEW_OT_OWN', 'VIEW_OT_OWN', 'OVERTIME', 'Xem yêu cầu tăng ca của bản thân', NOW()),
+('CREATE_OT', 'CREATE_OT', 'OVERTIME', 'Tạo yêu cầu tăng ca', NOW()),
+('APPROVE_OT', 'APPROVE_OT', 'OVERTIME', 'Phê duyệt yêu cầu tăng ca', NOW()),
+('REJECT_OT', 'REJECT_OT', 'OVERTIME', 'Từ chối yêu cầu tăng ca', NOW()),
+('CANCEL_OT_OWN', 'CANCEL_OT_OWN', 'OVERTIME', 'Hủy yêu cầu tăng ca của bản thân', NOW()),
+('CANCEL_OT_PENDING', 'CANCEL_OT_PENDING', 'OVERTIME', 'Hủy yêu cầu tăng ca đang chờ', NOW())
 ON CONFLICT (permission_id) DO NOTHING;
 
 -- ============================================
@@ -87,7 +94,18 @@ VALUES
 ('ROLE_MANAGER', 'CREATE_EMPLOYEE'), ('ROLE_MANAGER', 'VIEW_EMPLOYEE'), ('ROLE_MANAGER', 'UPDATE_EMPLOYEE'),
 ('ROLE_MANAGER', 'DELETE_EMPLOYEE'), ('ROLE_MANAGER', 'CREATE_WORK_SHIFTS'), ('ROLE_MANAGER', 'VIEW_WORK_SHIFTS'),
 ('ROLE_MANAGER', 'UPDATE_WORK_SHIFTS'), ('ROLE_MANAGER', 'DELETE_WORK_SHIFTS'), ('ROLE_MANAGER', 'VIEW_PATIENT'),
-('ROLE_MANAGER', 'VIEW_APPOINTMENT')
+('ROLE_MANAGER', 'VIEW_APPOINTMENT'), ('ROLE_MANAGER', 'VIEW_OT_ALL'), ('ROLE_MANAGER', 'APPROVE_OT'),
+('ROLE_MANAGER', 'REJECT_OT'), ('ROLE_MANAGER', 'CANCEL_OT_PENDING')
+ON CONFLICT (role_id, permission_id) DO NOTHING;
+
+-- Assign overtime permissions to employees (Doctor, Nurse, Receptionist, etc.)
+INSERT INTO role_permissions (role_id, permission_id)
+VALUES
+('ROLE_DOCTOR', 'VIEW_OT_OWN'), ('ROLE_DOCTOR', 'CREATE_OT'), ('ROLE_DOCTOR', 'CANCEL_OT_OWN'),
+('ROLE_NURSE', 'VIEW_OT_OWN'), ('ROLE_NURSE', 'CREATE_OT'), ('ROLE_NURSE', 'CANCEL_OT_OWN'),
+('ROLE_RECEPTIONIST', 'VIEW_OT_OWN'), ('ROLE_RECEPTIONIST', 'CREATE_OT'), ('ROLE_RECEPTIONIST', 'CANCEL_OT_OWN'),
+('ROLE_ACCOUNTANT', 'VIEW_OT_OWN'), ('ROLE_ACCOUNTANT', 'CREATE_OT'), ('ROLE_ACCOUNTANT', 'CANCEL_OT_OWN'),
+('ROLE_INVENTORY_MANAGER', 'VIEW_OT_OWN'), ('ROLE_INVENTORY_MANAGER', 'CREATE_OT'), ('ROLE_INVENTORY_MANAGER', 'CANCEL_OT_OWN')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 -- ============================================
