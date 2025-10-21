@@ -4,7 +4,8 @@
 
 Hệ thống quản lý yêu cầu nghỉ phép cho nhân viên tại phòng khám nha khoa.
 
-**Business Context**: 
+**Business Context**:
+
 - Nhân viên tạo yêu cầu nghỉ phép (full-day hoặc half-day)
 - Quản lý duyệt/từ chối yêu cầu
 - Tự động cập nhật ca làm việc khi yêu cầu được duyệt
@@ -14,19 +15,20 @@ Hệ thống quản lý yêu cầu nghỉ phép cho nhân viên tại phòng kh�
 
 ## 🎯 APIs Implemented
 
-| # | Method | Endpoint | Description | Status |
-|---|--------|----------|-------------|--------|
-| 1 | GET | /api/v1/time-off-requests | Lấy danh sách yêu cầu nghỉ phép | ✅ Complete |
-| 2 | GET | /api/v1/time-off-types | Lấy danh sách loại hình nghỉ phép | ✅ Complete |
-| 3 | GET | /api/v1/time-off-requests/{id} | Xem chi tiết yêu cầu | ✅ Complete |
-| 4 | POST | /api/v1/time-off-requests | Tạo yêu cầu nghỉ phép mới | ✅ Complete |
-| 5 | PATCH | /api/v1/time-off-requests/{id} | Cập nhật trạng thái (Duyệt/Từ chối/Hủy) | ✅ Complete |
+| #   | Method | Endpoint                       | Description                             | Status      |
+| --- | ------ | ------------------------------ | --------------------------------------- | ----------- |
+| 1   | GET    | /api/v1/time-off-requests      | Lấy danh sách yêu cầu nghỉ phép         | ✅ Complete |
+| 2   | GET    | /api/v1/time-off-types         | Lấy danh sách loại hình nghỉ phép       | ✅ Complete |
+| 3   | GET    | /api/v1/time-off-requests/{id} | Xem chi tiết yêu cầu                    | ✅ Complete |
+| 4   | POST   | /api/v1/time-off-requests      | Tạo yêu cầu nghỉ phép mới               | ✅ Complete |
+| 5   | PATCH  | /api/v1/time-off-requests/{id} | Cập nhật trạng thái (Duyệt/Từ chối/Hủy) | ✅ Complete |
 
 ---
 
 ## 🗄️ Database Schema
 
 ### Table: time_off_types
+
 ```sql
 CREATE TABLE time_off_types (
     type_id VARCHAR(50) PRIMARY KEY,
@@ -38,12 +40,14 @@ CREATE TABLE time_off_types (
 ```
 
 **Sample Data**:
+
 - `tot_annual_leave` - Annual Leave (Nghỉ phép năm)
 - `tot_sick_leave` - Sick Leave (Nghỉ ốm)
 - `tot_personal` - Personal Leave (Nghỉ việc riêng)
 - `tot_maternity` - Maternity Leave (Nghỉ thai sản)
 
 ### Table: time_off_requests
+
 ```sql
 CREATE TABLE time_off_requests (
     request_id VARCHAR(50) PRIMARY KEY,           -- TOR-YYMMDD-SEQ
@@ -90,27 +94,30 @@ CANCEL_TIMEOFF_PENDING // Quản lý hủy yêu cầu PENDING
 
 ### Recommended Role Configuration
 
-| Role | Permissions |
-|------|-------------|
-| **Admin** | All permissions |
-| **Manager** | VIEW_TIMEOFF_ALL, APPROVE_TIMEOFF, REJECT_TIMEOFF, CANCEL_TIMEOFF_PENDING |
-| **Employee** | VIEW_TIMEOFF_OWN, CREATE_TIMEOFF, CANCEL_TIMEOFF_OWN |
+| Role         | Permissions                                                               |
+| ------------ | ------------------------------------------------------------------------- |
+| **Admin**    | All permissions                                                           |
+| **Manager**  | VIEW_TIMEOFF_ALL, APPROVE_TIMEOFF, REJECT_TIMEOFF, CANCEL_TIMEOFF_PENDING |
+| **Employee** | VIEW_TIMEOFF_OWN, CREATE_TIMEOFF, CANCEL_TIMEOFF_OWN                      |
 
 ---
 
 ## 🔍 Business Rules
 
 ### 1. Date Validation
+
 - ✅ `start_date` không được lớn hơn `end_date`
 - ✅ Nếu `slot_id` có giá trị (half-day), `start_date` phải bằng `end_date`
 - ⚠️ Vi phạm → 400 Bad Request
 
 ### 2. Time-Off Type Validation
+
 - ✅ `time_off_type_id` phải tồn tại
 - ✅ Time-off type phải có `is_active = true`
 - ❌ Không tồn tại hoặc inactive → 404 Not Found
 
 ### 3. Conflict Detection
+
 - ✅ **Full-day off** conflicts với:
   - Bất kỳ yêu cầu nào trong cùng date range
 - ✅ **Half-day off** conflicts với:
@@ -120,6 +127,7 @@ CANCEL_TIMEOFF_PENDING // Quản lý hủy yêu cầu PENDING
 - ⚠️ Có conflict → 409 Conflict
 
 ### 4. Status Transition Rules
+
 - ✅ Chỉ có thể cập nhật khi status = PENDING
 - ✅ PENDING → APPROVED (requires APPROVE_TIMEOFF)
 - ✅ PENDING → REJECTED (requires REJECT_TIMEOFF + reason bắt buộc)
@@ -127,12 +135,14 @@ CANCEL_TIMEOFF_PENDING // Quản lý hủy yêu cầu PENDING
 - ❌ Cập nhật khi không phải PENDING → 409 Conflict
 
 ### 5. Ownership Validation
+
 - ✅ CREATE: `requested_by` tự động điền từ token
 - ✅ VIEW_TIMEOFF_OWN: Chỉ thấy requests của mình
 - ✅ CANCEL_TIMEOFF_OWN: Chỉ hủy requests của mình
 - ❌ Không có quyền → 403 Forbidden
 
 ### 6. Auto-Update Employee Shifts (When APPROVED)
+
 - ✅ **Full-day**: Update tất cả shifts trong date range → status = ON_LEAVE
 - ✅ **Half-day**: Update shift cụ thể (date + slot) → status = ON_LEAVE
 - 📝 **Note**: Feature này sẽ được implement khi có bảng `employee_shifts`
@@ -183,6 +193,7 @@ Authorization: Bearer <token>
 ```
 
 **Response 200 OK**:
+
 ```json
 {
   "content": [
@@ -220,6 +231,7 @@ Authorization: Bearer <token>
 ```
 
 **Response 200 OK**:
+
 ```json
 [
   {
@@ -251,6 +263,7 @@ Authorization: Bearer <token>
 ### API 4: Create Time-Off Request (POST)
 
 #### Example 1: Full-day off
+
 ```bash
 POST /api/v1/time-off-requests
 Authorization: Bearer <token>
@@ -267,6 +280,7 @@ Content-Type: application/json
 ```
 
 #### Example 2: Half-day off (morning)
+
 ```bash
 POST /api/v1/time-off-requests
 Authorization: Bearer <token>
@@ -287,6 +301,7 @@ Content-Type: application/json
 ### API 5: Update Time-Off Request Status (PATCH)
 
 #### Example 1: Approve
+
 ```bash
 PATCH /api/v1/time-off-requests/TOR-250121-001
 Authorization: Bearer <token>
@@ -298,6 +313,7 @@ Content-Type: application/json
 ```
 
 #### Example 2: Reject
+
 ```bash
 PATCH /api/v1/time-off-requests/TOR-250121-001
 Authorization: Bearer <token>
@@ -310,6 +326,7 @@ Content-Type: application/json
 ```
 
 #### Example 3: Cancel
+
 ```bash
 PATCH /api/v1/time-off-requests/TOR-250121-001
 Authorization: Bearer <token>
@@ -328,6 +345,7 @@ Content-Type: application/json
 ## ⚠️ Error Responses
 
 ### 400 Bad Request - Invalid Date Range
+
 ```json
 {
   "type": "about:blank",
@@ -339,6 +357,7 @@ Content-Type: application/json
 ```
 
 ### 400 Bad Request - Missing Reason
+
 ```json
 {
   "type": "about:blank",
@@ -349,6 +368,7 @@ Content-Type: application/json
 ```
 
 ### 403 Forbidden - No Permission
+
 ```json
 {
   "type": "about:blank",
@@ -359,6 +379,7 @@ Content-Type: application/json
 ```
 
 ### 404 Not Found - Request Not Found
+
 ```json
 {
   "type": "about:blank",
@@ -370,6 +391,7 @@ Content-Type: application/json
 ```
 
 ### 404 Not Found - Type Not Found
+
 ```json
 {
   "type": "about:blank",
@@ -381,6 +403,7 @@ Content-Type: application/json
 ```
 
 ### 409 Conflict - Duplicate Request
+
 ```json
 {
   "type": "about:blank",
@@ -392,6 +415,7 @@ Content-Type: application/json
 ```
 
 ### 409 Conflict - Invalid State Transition
+
 ```json
 {
   "type": "about:blank",
@@ -407,6 +431,7 @@ Content-Type: application/json
 ## 🧪 Testing Checklist
 
 ### POST /api/v1/time-off-requests
+
 - [x] ✅ Create full-day request successfully (201)
 - [x] ✅ Create half-day request successfully (201)
 - [x] ❌ start_date > end_date (400)
@@ -418,23 +443,27 @@ Content-Type: application/json
 - [x] ✅ requested_at auto-filled with current timestamp
 
 ### GET /api/v1/time-off-requests
+
 - [x] ✅ Admin/VIEW_TIMEOFF_ALL sees all requests
 - [x] ✅ VIEW_TIMEOFF_OWN sees only own requests
 - [x] ✅ Filters work: employeeId, status, startDate, endDate
 - [x] ✅ Pagination works correctly
 
 ### GET /api/v1/time-off-requests/{id}
+
 - [x] ✅ View own request (200)
 - [x] ✅ Admin views any request (200)
-- [x] ❌ User with _OWN permission views other's request (404)
+- [x] ❌ User with \_OWN permission views other's request (404)
 
 ### PATCH /api/v1/time-off-requests/{id} - APPROVE
+
 - [x] ✅ Approve with APPROVE_TIMEOFF permission (200)
 - [x] ❌ Approve without permission (403)
 - [x] ❌ Approve non-PENDING request (409)
 - [x] ✅ approved_by and approved_at filled
 
 ### PATCH /api/v1/time-off-requests/{id} - REJECT
+
 - [x] ✅ Reject with REJECT_TIMEOFF permission + reason (200)
 - [x] ❌ Reject without reason (400)
 - [x] ❌ Reject without permission (403)
@@ -442,6 +471,7 @@ Content-Type: application/json
 - [x] ✅ rejected_reason saved
 
 ### PATCH /api/v1/time-off-requests/{id} - CANCEL
+
 - [x] ✅ Owner cancels own request with CANCEL_TIMEOFF_OWN (200)
 - [x] ✅ Manager cancels with CANCEL_TIMEOFF_PENDING (200)
 - [x] ❌ Cancel without reason (400)
@@ -450,6 +480,7 @@ Content-Type: application/json
 - [x] ✅ cancellation_reason saved
 
 ### GET /api/v1/time-off-types
+
 - [x] ✅ Returns only active types (is_active = true)
 - [x] ✅ Requires authentication
 
@@ -479,17 +510,20 @@ Content-Type: application/json
 ```
 
 ### ID Generation
+
 ```java
 String requestId = idGenerator.generateId("TOR");
 // Result: TOR-250121-001, TOR-250121-002, etc.
 ```
 
 ### Auto-Fill Fields
+
 - `requested_by`: Extracted from JWT token → employee_id
 - `requested_at`: Auto-filled with `LocalDateTime.now()` via `@PrePersist`
 - `status`: Default to `PENDING` via `@Builder.Default`
 
 ### Permission-Based Filtering
+
 ```java
 // User with VIEW_TIMEOFF_OWN
 Integer currentEmployeeId = getCurrentEmployeeIdFromToken();
@@ -506,6 +540,7 @@ return repository.findWithFilters(employeeId, status, startDate, endDate, pageab
 **Feature Status**: 100% Complete ✅
 
 All 5 APIs implemented:
+
 - ✅ GET /api/v1/time-off-requests (with filters)
 - ✅ GET /api/v1/time-off-types
 - ✅ GET /api/v1/time-off-requests/{id}
@@ -513,6 +548,7 @@ All 5 APIs implemented:
 - ✅ PATCH /api/v1/time-off-requests/{id}
 
 **Code Quality**:
+
 - ✅ No compilation errors
 - ✅ Comprehensive business rule validation
 - ✅ Proper authorization checks
@@ -528,14 +564,17 @@ All 5 APIs implemented:
 ## 📝 Files Created
 
 ### Domain (2 files)
+
 - `TimeOffRequest.java` - Main entity
 - `TimeOffType.java` - Type entity
 
 ### Repository (2 files)
+
 - `TimeOffRequestRepository.java` - With conflict detection
 - `TimeOffTypeRepository.java` - Active types query
 
 ### Service (2 files)
+
 - `TimeOffRequestService.java` - **4 methods**:
   - `getAllRequests()` - GET list with filters
   - `getRequestById()` - GET single
@@ -544,23 +583,28 @@ All 5 APIs implemented:
 - `TimeOffTypeService.java` - 1 method: `getActiveTimeOffTypes()`
 
 ### Controller (2 files)
+
 - `TimeOffRequestController.java` - 4 endpoints
 - `TimeOffTypeController.java` - 1 endpoint
 
 ### DTOs (4 files)
+
 - `CreateTimeOffRequest.java` - POST request
 - `UpdateTimeOffStatusRequest.java` - PATCH request
 - `TimeOffRequestResponse.java` - Response DTO
 - `TimeOffTypeResponse.java` - Type response DTO
 
 ### Mapper (2 files)
+
 - `TimeOffRequestMapper.java`
 - `TimeOffTypeMapper.java`
 
 ### Enum (1 file)
+
 - `TimeOffStatus.java` - PENDING, APPROVED, REJECTED, CANCELLED
 
 ### Exceptions (5 files)
+
 - `DuplicateTimeOffRequestException.java` - 409 Conflict
 - `InvalidStateTransitionException.java` - 409 Conflict
 - `InvalidDateRangeException.java` - 400 Bad Request
@@ -568,6 +612,7 @@ All 5 APIs implemented:
 - `TimeOffTypeNotFoundException.java` - 404 Not Found
 
 ### Constants (1 file updated)
+
 - `AuthoritiesConstants.java` - 7 permissions added
 
 ---
@@ -575,21 +620,25 @@ All 5 APIs implemented:
 ## 🎓 Key Features
 
 1. **Permission-Based Access Control**:
+
    - Different permissions for different actions
-   - Ownership validation for _OWN permissions
+   - Ownership validation for \_OWN permissions
    - Automatic filtering based on permission level
 
 2. **Complex Conflict Detection**:
+
    - Full-day vs half-day logic
    - Date range overlap checking
    - Status-aware (excludes CANCELLED/REJECTED)
 
 3. **State Machine for Status**:
+
    - Only PENDING can transition to other states
    - Different permissions for different transitions
    - Required fields based on action (reason for REJECT/CANCEL)
 
 4. **Auto-Fill Security Context**:
+
    - `requested_by` from token
    - `approved_by` from token
    - No manual user ID input needed

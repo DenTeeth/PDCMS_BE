@@ -47,36 +47,36 @@ public class TimeOffRequestService {
      * Lấy danh sách yêu cầu nghỉ phép với phân trang và bộ lọc
      */
     @PreAuthorize("hasRole('" + AuthoritiesConstants.ADMIN + "') or " +
-                  "hasAuthority('" + AuthoritiesConstants.VIEW_TIMEOFF_ALL + "') or " +
-                  "hasAuthority('" + AuthoritiesConstants.VIEW_TIMEOFF_OWN + "')")
+            "hasAuthority('" + AuthoritiesConstants.VIEW_TIMEOFF_ALL + "') or " +
+            "hasAuthority('" + AuthoritiesConstants.VIEW_TIMEOFF_OWN + "')")
     public Page<TimeOffRequestResponse> getAllRequests(
             Integer employeeId,
             TimeOffStatus status,
             LocalDate startDate,
             LocalDate endDate,
             Pageable pageable) {
-        
+
         log.debug("Request to get all time-off requests with filters");
 
         // LUỒNG 1: Admin hoặc người dùng có quyền xem tất cả
         if (SecurityUtil.hasCurrentUserRole(AuthoritiesConstants.ADMIN) ||
-            SecurityUtil.hasCurrentUserPermission(AuthoritiesConstants.VIEW_TIMEOFF_ALL)) {
-            
+                SecurityUtil.hasCurrentUserPermission(AuthoritiesConstants.VIEW_TIMEOFF_ALL)) {
+
             log.info("User has VIEW_TIMEOFF_ALL permission, fetching with filters");
             return requestRepository.findWithFilters(employeeId, status, startDate, endDate, pageable)
                     .map(requestMapper::toResponse);
-        } 
+        }
         // LUỒNG 2: Nhân viên chỉ có quyền VIEW_TIMEOFF_OWN
         else {
             String username = SecurityUtil.getCurrentUserLogin()
                     .orElseThrow(() -> new RuntimeException("User not authenticated"));
-            
+
             Integer currentEmployeeId = accountRepository.findOneByUsername(username)
                     .map(account -> account.getEmployee().getEmployeeId())
                     .orElseThrow(() -> new RuntimeException("Employee not found for user: " + username));
-            
+
             log.info("User has VIEW_TIMEOFF_OWN permission, fetching for employee_id: {}", currentEmployeeId);
-            
+
             // Force filter by current employee, ignore employeeId parameter
             return requestRepository.findWithFilters(currentEmployeeId, status, startDate, endDate, pageable)
                     .map(requestMapper::toResponse);
@@ -88,32 +88,32 @@ public class TimeOffRequestService {
      * Xem chi tiết một yêu cầu nghỉ phép
      */
     @PreAuthorize("hasRole('" + AuthoritiesConstants.ADMIN + "') or " +
-                  "hasAuthority('" + AuthoritiesConstants.VIEW_TIMEOFF_ALL + "') or " +
-                  "hasAuthority('" + AuthoritiesConstants.VIEW_TIMEOFF_OWN + "')")
+            "hasAuthority('" + AuthoritiesConstants.VIEW_TIMEOFF_ALL + "') or " +
+            "hasAuthority('" + AuthoritiesConstants.VIEW_TIMEOFF_OWN + "')")
     public TimeOffRequestResponse getRequestById(String requestId) {
         log.debug("Request to get time-off request: {}", requestId);
 
         // LUỒNG 1: Admin hoặc người dùng có quyền xem tất cả
         if (SecurityUtil.hasCurrentUserRole(AuthoritiesConstants.ADMIN) ||
-            SecurityUtil.hasCurrentUserPermission(AuthoritiesConstants.VIEW_TIMEOFF_ALL)) {
-            
+                SecurityUtil.hasCurrentUserPermission(AuthoritiesConstants.VIEW_TIMEOFF_ALL)) {
+
             log.info("User has VIEW_TIMEOFF_ALL permission, fetching request: {}", requestId);
             return requestRepository.findByRequestId(requestId)
                     .map(requestMapper::toResponse)
                     .orElseThrow(() -> new TimeOffRequestNotFoundException(requestId));
-        } 
+        }
         // LUỒNG 2: Nhân viên chỉ có quyền VIEW_TIMEOFF_OWN (phải là chủ sở hữu)
         else {
             String username = SecurityUtil.getCurrentUserLogin()
                     .orElseThrow(() -> new RuntimeException("User not authenticated"));
-            
+
             Integer employeeId = accountRepository.findOneByUsername(username)
                     .map(account -> account.getEmployee().getEmployeeId())
                     .orElseThrow(() -> new RuntimeException("Employee not found for user: " + username));
-            
-            log.info("User has VIEW_TIMEOFF_OWN permission, fetching request: {} for employee_id: {}", 
-                     requestId, employeeId);
-            
+
+            log.info("User has VIEW_TIMEOFF_OWN permission, fetching request: {} for employee_id: {}",
+                    requestId, employeeId);
+
             return requestRepository.findByRequestIdAndEmployeeId(requestId, employeeId)
                     .map(requestMapper::toResponse)
                     .orElseThrow(() -> new TimeOffRequestNotFoundException(requestId,
@@ -142,14 +142,15 @@ public class TimeOffRequestService {
         if (request.getStartDate().isAfter(request.getEndDate())) {
             throw new InvalidDateRangeException(
                     "Ngày bắt đầu không được lớn hơn ngày kết thúc. " +
-                    "Ngày bắt đầu: " + request.getStartDate() + ", Ngày kết thúc: " + request.getEndDate());
+                            "Ngày bắt đầu: " + request.getStartDate() + ", Ngày kết thúc: " + request.getEndDate());
         }
 
-        // 4. Business Rule: If half-day off (slot_id provided), start_date must equal end_date
+        // 4. Business Rule: If half-day off (slot_id provided), start_date must equal
+        // end_date
         if (request.getSlotId() != null && !request.getStartDate().equals(request.getEndDate())) {
             throw new InvalidDateRangeException(
                     "Khi nghỉ theo ca, ngày bắt đầu và kết thúc phải giống nhau. " +
-                    "Ngày bắt đầu: " + request.getStartDate() + ", Ngày kết thúc: " + request.getEndDate());
+                            "Ngày bắt đầu: " + request.getStartDate() + ", Ngày kết thúc: " + request.getEndDate());
         }
 
         // 5. Check for conflicting requests
@@ -157,33 +158,31 @@ public class TimeOffRequestService {
                 request.getEmployeeId(),
                 request.getStartDate(),
                 request.getEndDate(),
-                request.getSlotId()
-        );
+                request.getSlotId());
 
         if (hasConflict) {
             List<TimeOffRequest> conflicts = requestRepository.findConflictingRequests(
                     request.getEmployeeId(),
                     request.getStartDate(),
                     request.getEndDate(),
-                    request.getSlotId()
-            );
+                    request.getSlotId());
 
             if (!conflicts.isEmpty()) {
                 TimeOffRequest conflict = conflicts.get(0);
                 throw new DuplicateTimeOffRequestException(
                         String.format("Đã tồn tại một yêu cầu nghỉ phép trùng với khoảng thời gian này. " +
-                                      "Request ID: %s, Từ ngày: %s, Đến ngày: %s, Trạng thái: %s",
-                                      conflict.getRequestId(),
-                                      conflict.getStartDate(),
-                                      conflict.getEndDate(),
-                                      conflict.getStatus()));
+                                "Request ID: %s, Từ ngày: %s, Đến ngày: %s, Trạng thái: %s",
+                                conflict.getRequestId(),
+                                conflict.getStartDate(),
+                                conflict.getEndDate(),
+                                conflict.getStatus()));
             }
         }
 
         // 6. Get current user ID from token for requested_by
         String username = SecurityUtil.getCurrentUserLogin()
                 .orElseThrow(() -> new RuntimeException("User not authenticated"));
-        
+
         Integer requestedBy = accountRepository.findOneByUsername(username)
                 .map(account -> account.getEmployee().getEmployeeId())
                 .orElseThrow(() -> new RuntimeException("Employee not found for user: " + username));
@@ -228,7 +227,7 @@ public class TimeOffRequestService {
         if (timeOffRequest.getStatus() != TimeOffStatus.PENDING) {
             throw new InvalidStateTransitionException(
                     "Không thể cập nhật yêu cầu. Yêu cầu phải ở trạng thái PENDING. " +
-                    "Trạng thái hiện tại: " + timeOffRequest.getStatus());
+                            "Trạng thái hiện tại: " + timeOffRequest.getStatus());
         }
 
         // 3. Handle different status updates
@@ -252,7 +251,7 @@ public class TimeOffRequestService {
     private void handleApproval(TimeOffRequest timeOffRequest) {
         // Check permission
         if (!SecurityUtil.hasCurrentUserRole(AuthoritiesConstants.ADMIN) &&
-            !SecurityUtil.hasCurrentUserPermission(AuthoritiesConstants.APPROVE_TIMEOFF)) {
+                !SecurityUtil.hasCurrentUserPermission(AuthoritiesConstants.APPROVE_TIMEOFF)) {
             throw new org.springframework.security.access.AccessDeniedException(
                     "Bạn không có quyền thực hiện hành động này.");
         }
@@ -260,7 +259,7 @@ public class TimeOffRequestService {
         // Get approver ID
         String username = SecurityUtil.getCurrentUserLogin()
                 .orElseThrow(() -> new RuntimeException("User not authenticated"));
-        
+
         Integer approvedBy = accountRepository.findOneByUsername(username)
                 .map(account -> account.getEmployee().getEmployeeId())
                 .orElseThrow(() -> new RuntimeException("Employee not found for user: " + username));
@@ -273,10 +272,10 @@ public class TimeOffRequestService {
         // TODO: Automatic action - update employee_shifts status to ON_LEAVE
         // This will be implemented when employee_shifts table is available
         log.info("TODO: Update employee_shifts for employee {} from {} to {} for slot {}",
-                 timeOffRequest.getEmployeeId(),
-                 timeOffRequest.getStartDate(),
-                 timeOffRequest.getEndDate(),
-                 timeOffRequest.getSlotId());
+                timeOffRequest.getEmployeeId(),
+                timeOffRequest.getStartDate(),
+                timeOffRequest.getEndDate(),
+                timeOffRequest.getSlotId());
     }
 
     /**
@@ -285,7 +284,7 @@ public class TimeOffRequestService {
     private void handleRejection(TimeOffRequest timeOffRequest, String reason) {
         // Check permission
         if (!SecurityUtil.hasCurrentUserRole(AuthoritiesConstants.ADMIN) &&
-            !SecurityUtil.hasCurrentUserPermission(AuthoritiesConstants.REJECT_TIMEOFF)) {
+                !SecurityUtil.hasCurrentUserPermission(AuthoritiesConstants.REJECT_TIMEOFF)) {
             throw new org.springframework.security.access.AccessDeniedException(
                     "Bạn không có quyền thực hiện hành động này.");
         }
@@ -298,7 +297,7 @@ public class TimeOffRequestService {
         // Get approver ID (person who rejected)
         String username = SecurityUtil.getCurrentUserLogin()
                 .orElseThrow(() -> new RuntimeException("User not authenticated"));
-        
+
         Integer approvedBy = accountRepository.findOneByUsername(username)
                 .map(account -> account.getEmployee().getEmployeeId())
                 .orElseThrow(() -> new RuntimeException("Employee not found for user: " + username));
@@ -322,7 +321,7 @@ public class TimeOffRequestService {
         // Get current user
         String username = SecurityUtil.getCurrentUserLogin()
                 .orElseThrow(() -> new RuntimeException("User not authenticated"));
-        
+
         Integer currentEmployeeId = accountRepository.findOneByUsername(username)
                 .map(account -> account.getEmployee().getEmployeeId())
                 .orElseThrow(() -> new RuntimeException("Employee not found for user: " + username));
@@ -330,7 +329,8 @@ public class TimeOffRequestService {
         // Check permission
         boolean isOwner = timeOffRequest.getEmployeeId().equals(currentEmployeeId);
         boolean hasOwnPermission = SecurityUtil.hasCurrentUserPermission(AuthoritiesConstants.CANCEL_TIMEOFF_OWN);
-        boolean hasPendingPermission = SecurityUtil.hasCurrentUserPermission(AuthoritiesConstants.CANCEL_TIMEOFF_PENDING);
+        boolean hasPendingPermission = SecurityUtil
+                .hasCurrentUserPermission(AuthoritiesConstants.CANCEL_TIMEOFF_PENDING);
         boolean isAdmin = SecurityUtil.hasCurrentUserRole(AuthoritiesConstants.ADMIN);
 
         if (!isAdmin && !hasPendingPermission && !(isOwner && hasOwnPermission)) {

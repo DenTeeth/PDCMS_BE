@@ -6,7 +6,8 @@ import org.springframework.web.ErrorResponseException;
 
 /**
  * Exception thrown when date range is invalid
- * For example: start_date > end_date, or half-day with different start/end dates
+ * For example: start_date > end_date, or half-day with different start/end
+ * dates
  */
 public class InvalidDateRangeException extends ErrorResponseException {
 

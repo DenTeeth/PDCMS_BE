@@ -5,7 +5,8 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.web.ErrorResponseException;
 
 /**
- * Exception thrown when attempting invalid state transition for time-off request
+ * Exception thrown when attempting invalid state transition for time-off
+ * request
  * For example: trying to approve a request that is not PENDING
  */
 public class InvalidStateTransitionException extends ErrorResponseException {

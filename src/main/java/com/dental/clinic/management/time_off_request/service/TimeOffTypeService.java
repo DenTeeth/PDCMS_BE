@@ -29,7 +29,7 @@ public class TimeOffTypeService {
      */
     public List<TimeOffTypeResponse> getActiveTimeOffTypes() {
         log.debug("Request to get all active time-off types");
-        
+
         return typeRepository.findByIsActiveTrue()
                 .stream()
                 .map(typeMapper::toResponse)
