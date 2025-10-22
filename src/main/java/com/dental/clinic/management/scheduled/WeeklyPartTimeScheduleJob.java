@@ -2,7 +2,6 @@ package com.dental.clinic.management.scheduled;
 
 import com.dental.clinic.management.working_schedule.domain.EmployeeShift;
 import com.dental.clinic.management.working_schedule.domain.EmployeeShiftRegistration;
-import com.dental.clinic.management.working_schedule.domain.RegistrationDays;
 import com.dental.clinic.management.working_schedule.domain.WorkShift;
 import com.dental.clinic.management.working_schedule.enums.DayOfWeek;
 import com.dental.clinic.management.working_schedule.enums.ShiftSource;

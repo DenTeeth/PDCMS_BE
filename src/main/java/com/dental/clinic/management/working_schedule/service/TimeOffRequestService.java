@@ -382,8 +382,9 @@ public class TimeOffRequestService {
 
                 // Find balance record for current year
                 EmployeeLeaveBalance balance = balanceRepository
-                                .findByEmployeeIdAndTimeOffTypeIdAndCycleYear(employeeId, timeOffTypeId, currentYear)
-                                .orElseThrow(() -> new InsufficientLeaveBalanceException(
+                                .findByEmployeeIdAndTimeOffTypeIdAndYear(employeeId, timeOffTypeId, currentYear)
+                                .orElseThrow(() -> new InvalidRequestException(
+                                                "BALANCE_NOT_FOUND",
                                                 String.format("Không tìm thấy số dư nghỉ phép cho nhân viên %d và loại nghỉ %s trong năm %d",
                                                                 employeeId, timeOffTypeId, currentYear)));
 
@@ -391,12 +392,10 @@ public class TimeOffRequestService {
                 BigDecimal daysRequested = calculateDaysRequested(startDate, endDate, slotId);
 
                 // Check if sufficient balance
-                BigDecimal daysRemaining = balance.getTotalDaysAllowed().subtract(balance.getDaysTaken());
+                double daysRemaining = balance.getRemaining();
 
-                if (daysRemaining.compareTo(daysRequested) < 0) {
-                        throw new InsufficientLeaveBalanceException(
-                                        String.format("Số dư nghỉ phép không đủ. Cần: %.1f ngày, Còn lại: %.1f ngày",
-                                                        daysRequested.doubleValue(), daysRemaining.doubleValue()));
+                if (daysRemaining < daysRequested.doubleValue()) {
+                        throw new InsufficientLeaveBalanceException(daysRemaining, daysRequested.doubleValue());
                 }
 
                 log.info("Balance check passed for employee {} - Requested: {} days, Remaining: {} days",
@@ -437,11 +436,12 @@ public class TimeOffRequestService {
 
                 // Find balance record
                 EmployeeLeaveBalance balance = balanceRepository
-                                .findByEmployeeIdAndTimeOffTypeIdAndCycleYear(
+                                .findByEmployeeIdAndTimeOffTypeIdAndYear(
                                                 timeOffRequest.getEmployeeId(),
                                                 timeOffRequest.getTimeOffTypeId(),
                                                 currentYear)
-                                .orElseThrow(() -> new InsufficientLeaveBalanceException(
+                                .orElseThrow(() -> new InvalidRequestException(
+                                                "BALANCE_NOT_FOUND",
                                                 String.format("Không tìm thấy số dư nghỉ phép cho nhân viên %d và loại nghỉ %s trong năm %d",
                                                                 timeOffRequest.getEmployeeId(),
                                                                 timeOffRequest.getTimeOffTypeId(), currentYear)));
@@ -452,20 +452,18 @@ public class TimeOffRequestService {
                                 timeOffRequest.getEndDate(),
                                 timeOffRequest.getSlotId());
 
-                // Update days_taken
-                balance.setDaysTaken(balance.getDaysTaken().add(daysToDeduct));
+                // Update used days
+                balance.setUsed(balance.getUsed() + daysToDeduct.doubleValue());
                 balanceRepository.save(balance);
 
                 // Create history record
                 LeaveBalanceHistory history = LeaveBalanceHistory.builder()
                                 .balanceId(balance.getBalanceId())
                                 .changedBy(timeOffRequest.getApprovedBy())
-                                .changeAmount(daysToDeduct.negate()) // Negative for deduction
+                                .changeAmount(daysToDeduct.negate().doubleValue()) // Negative for deduction
                                 .reason(BalanceChangeReason.APPROVED_REQUEST)
-                                .sourceRequestId(timeOffRequest.getRequestId())
                                 .notes(String.format("Trừ %.1f ngày nghỉ phép do yêu cầu %s được phê duyệt",
                                                 daysToDeduct.doubleValue(), timeOffRequest.getRequestId()))
-                                .createdAt(LocalDateTime.now())
                                 .build();
 
                 historyRepository.save(history);
