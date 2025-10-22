@@ -20,6 +20,21 @@ public interface TimeOffTypeRepository extends JpaRepository<TimeOffType, String
     Optional<TimeOffType> findByTypeId(String typeId);
 
     /**
+     * Find time-off type by type code (ANNUAL_LEAVE, SICK_LEAVE, etc.)
+     */
+    Optional<TimeOffType> findByTypeCode(String typeCode);
+
+    /**
+     * Check if type code exists (for unique validation)
+     */
+    boolean existsByTypeCode(String typeCode);
+
+    /**
+     * Check if type code exists excluding specific type_id (for update validation)
+     */
+    boolean existsByTypeCodeAndTypeIdNot(String typeCode, String typeId);
+
+    /**
      * Find time-off type by type_id and is_active
      */
     Optional<TimeOffType> findByTypeIdAndIsActive(String typeId, Boolean isActive);
@@ -28,4 +43,9 @@ public interface TimeOffTypeRepository extends JpaRepository<TimeOffType, String
      * Find all active time-off types
      */
     List<TimeOffType> findByIsActiveTrue();
+
+    /**
+     * Find all time-off types filtered by active status
+     */
+    List<TimeOffType> findByIsActive(Boolean isActive);
 }

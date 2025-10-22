@@ -26,6 +26,7 @@ import com.dental.clinic.management.working_schedule.repository.EmployeeShiftReg
 import com.dental.clinic.management.working_schedule.repository.RegistrationDaysRepository;
 import com.dental.clinic.management.working_schedule.repository.WorkShiftRepository;
 
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -54,6 +55,7 @@ public class EmployeeShiftRegistrationService {
         private final AccountRepository accountRepository;
         private final ShiftRegistrationMapper shiftRegistrationMapper;
         private final IdGenerator idGenerator;
+        private final EntityManager entityManager;
 
         /**
          * GET /api/v1/registrations
@@ -280,7 +282,21 @@ public class EmployeeShiftRegistrationService {
                         List<RegistrationDays> oldDays = registrationDaysRepository
                                         .findByIdRegistrationId(registrationId);
                         registrationDaysRepository.deleteAll(oldDays);
+                        registrationDaysRepository.flush(); // Ensure deletion is flushed to DB
                         log.info("Deleted {} old registration days", oldDays.size());
+
+                        // Clear the collection in the entity to avoid stale references
+                        registration.getRegistrationDays().clear();
+                        
+                        // Detach the registration entity to avoid lazy loading issues
+                        entityManager.detach(registration);
+                        
+                        // Clear persistence context to ensure fresh data
+                        entityManager.clear();
+
+                        // Reload registration without registrationDays to avoid stale data
+                        registration = registrationRepository.findById(registrationId)
+                                        .orElseThrow(() -> new RegistrationNotFoundException(registrationId));
 
                         // Create new registration days
                         List<RegistrationDays> newDays = new ArrayList<>();
@@ -290,6 +306,7 @@ public class EmployeeShiftRegistrationService {
                                 newDays.add(registrationDay);
                         }
                         registrationDaysRepository.saveAll(newDays);
+                        registrationDaysRepository.flush(); // Ensure new days are flushed to DB
                         log.info("Created {} new registration days", newDays.size());
 
                         needConflictCheck = true;
@@ -325,41 +342,52 @@ public class EmployeeShiftRegistrationService {
 
                 // 7. Check for conflicts if workShiftId or daysOfWeek changed
                 if (needConflictCheck) {
-                        // Reload registration days to get updated list
-                        List<DayOfWeek> currentDays = registrationDaysRepository.findByIdRegistrationId(registrationId)
-                                        .stream()
-                                        .map(rd -> rd.getId().getDayOfWeek())
-                                        .toList();
+                        // Use the days of week from request if provided, otherwise reload from database
+                        List<DayOfWeek> currentDays;
+                        if (request.getDaysOfWeek() != null && !request.getDaysOfWeek().isEmpty()) {
+                                currentDays = request.getDaysOfWeek();
+                        } else {
+                                currentDays = registrationDaysRepository.findByIdRegistrationId(registrationId)
+                                                .stream()
+                                                .map(rd -> rd.getId().getDayOfWeek())
+                                                .toList();
+                        }
 
-                        List<EmployeeShiftRegistration> conflicts = registrationRepository.findConflictingRegistrations(
-                                        registration.getEmployeeId(),
-                                        registration.getSlotId(),
-                                        currentDays);
+                        // Temporarily set current registration to inactive to exclude it from conflict check
+                        boolean wasActive = registration.getIsActive();
+                        registration.setIsActive(false);
+                        registrationRepository.saveAndFlush(registration);
 
-                        // Filter out the current registration itself
-                        conflicts = conflicts.stream()
-                                        .filter(c -> !c.getRegistrationId().equals(registrationId))
-                                        .toList();
-
-                        if (!conflicts.isEmpty()) {
-                                EmployeeShiftRegistration conflict = conflicts.get(0);
-                                String conflictingDays = conflict.getRegistrationDays().stream()
-                                                .map(rd -> rd.getId().getDayOfWeek().toString())
-                                                .reduce((a, b) -> a + ", " + b)
-                                                .orElse("");
-
-                                throw new RegistrationConflictException(
-                                                String.format("Đã tồn tại đăng ký hoạt động cho nhân viên %d, ca %s vào các ngày: %s. "
-                                                                +
-                                                                "Registration ID: %s, Hiệu lực từ: %s đến: %s",
+                        try {
+                                List<EmployeeShiftRegistration> conflicts = registrationRepository
+                                                .findConflictingRegistrations(
                                                                 registration.getEmployeeId(),
                                                                 registration.getSlotId(),
-                                                                conflictingDays,
-                                                                conflict.getRegistrationId(),
-                                                                conflict.getEffectiveFrom(),
-                                                                conflict.getEffectiveTo() != null
-                                                                                ? conflict.getEffectiveTo()
-                                                                                : "vô thời hạn"));
+                                                                currentDays);
+
+                                if (!conflicts.isEmpty()) {
+                                        EmployeeShiftRegistration conflict = conflicts.get(0);
+                                        String conflictingDays = conflict.getRegistrationDays().stream()
+                                                        .map(rd -> rd.getId().getDayOfWeek().toString())
+                                                        .reduce((a, b) -> a + ", " + b)
+                                                        .orElse("");
+
+                                        throw new RegistrationConflictException(
+                                                        String.format("Đã tồn tại đăng ký hoạt động cho nhân viên %d, ca %s vào các ngày: %s. "
+                                                                        +
+                                                                        "Registration ID: %s, Hiệu lực từ: %s đến: %s",
+                                                                        registration.getEmployeeId(),
+                                                                        registration.getSlotId(),
+                                                                        conflictingDays,
+                                                                        conflict.getRegistrationId(),
+                                                                        conflict.getEffectiveFrom(),
+                                                                        conflict.getEffectiveTo() != null
+                                                                                        ? conflict.getEffectiveTo()
+                                                                                        : "vô thời hạn"));
+                                }
+                        } finally {
+                                // Restore the active status
+                                registration.setIsActive(wasActive);
                         }
                 }
 
@@ -413,16 +441,34 @@ public class EmployeeShiftRegistrationService {
                                                         ", Ngày kết thúc: " + request.getEffectiveTo());
                 }
 
-                // 4. Check for conflicts (excluding current registration)
+                // 4. Delete old registration days first to avoid conflicts
+                List<RegistrationDays> oldDays = registrationDaysRepository.findByIdRegistrationId(registrationId);
+                registrationDaysRepository.deleteAll(oldDays);
+                registrationDaysRepository.flush(); // Ensure deletion is flushed to DB
+                log.info("Deleted {} old registration days", oldDays.size());
+
+                // Clear the collection in the entity to avoid stale references
+                registration.getRegistrationDays().clear();
+                
+                // Detach the registration entity to avoid lazy loading issues
+                entityManager.detach(registration);
+                
+                // Clear persistence context to ensure fresh data
+                entityManager.clear();
+
+                // Reload registration without registrationDays to avoid stale data
+                registration = registrationRepository.findById(registrationId)
+                                .orElseThrow(() -> new RegistrationNotFoundException(registrationId));
+
+                // 5. Temporarily set current registration to inactive to exclude it from conflict check
+                registration.setIsActive(false);
+                registrationRepository.saveAndFlush(registration);
+
+                // Check for conflicts (excluding current registration by setting it inactive)
                 List<EmployeeShiftRegistration> conflicts = registrationRepository.findConflictingRegistrations(
                                 registration.getEmployeeId(),
                                 request.getWorkShiftId(),
                                 request.getDaysOfWeek());
-
-                // Filter out the current registration itself
-                conflicts = conflicts.stream()
-                                .filter(c -> !c.getRegistrationId().equals(registrationId))
-                                .toList();
 
                 if (!conflicts.isEmpty()) {
                         EmployeeShiftRegistration conflict = conflicts.get(0);
@@ -444,17 +490,13 @@ public class EmployeeShiftRegistrationService {
                                                                         : "vô thời hạn"));
                 }
 
-                // 5. Replace all fields
+                // 6. Replace all fields
                 registration.setSlotId(request.getWorkShiftId());
                 registration.setEffectiveFrom(request.getEffectiveFrom());
                 registration.setEffectiveTo(request.getEffectiveTo());
-                registration.setIsActive(request.getIsActive());
+                // isActive already set in finally block above
 
-                // 6. Delete old registration days and create new ones
-                List<RegistrationDays> oldDays = registrationDaysRepository.findByIdRegistrationId(registrationId);
-                registrationDaysRepository.deleteAll(oldDays);
-                log.info("Deleted {} old registration days", oldDays.size());
-
+                // 7. Create new registration days
                 List<RegistrationDays> newDays = new ArrayList<>();
                 for (DayOfWeek dayOfWeek : request.getDaysOfWeek()) {
                         RegistrationDaysId dayId = new RegistrationDaysId(registrationId, dayOfWeek);
@@ -462,6 +504,7 @@ public class EmployeeShiftRegistrationService {
                         newDays.add(registrationDay);
                 }
                 registrationDaysRepository.saveAll(newDays);
+                registrationDaysRepository.flush(); // Ensure new days are flushed to DB
                 log.info("Created {} new registration days", newDays.size());
 
                 // 7. Save and return

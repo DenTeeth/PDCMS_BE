@@ -21,8 +21,10 @@ public class TimeOffTypeMapper {
 
         return TimeOffTypeResponse.builder()
                 .typeId(entity.getTypeId())
+                .typeCode(entity.getTypeCode())
                 .typeName(entity.getTypeName())
                 .description(entity.getDescription())
+                .isPaid(entity.getIsPaid())
                 .requiresApproval(entity.getRequiresApproval())
                 .isActive(entity.getIsActive())
                 .build();

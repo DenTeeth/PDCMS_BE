@@ -1,6 +1,7 @@
 package com.dental.clinic.management.working_schedule.domain;
 
 import com.dental.clinic.management.employee.domain.Employee;
+import com.dental.clinic.management.utils.IdGenerator;
 import com.dental.clinic.management.working_schedule.enums.RequestStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -17,34 +18,43 @@ import java.time.LocalDateTime;
 /**
  * Entity representing an overtime request.
  * Employees can request to work overtime on specific dates and shifts.
+ *
+ * ID Format: OTRYYMMDDSSS (e.g., OTR251022001)
+ * - OTR: Overtime Request prefix (3 chars)
+ * - YYMMDD: Date (6 digits) - 251022 = Oct 22, 2025
+ * - SSS: Daily sequence (001-999)
  */
 @Entity
-@Table(
-    name = "overtime_requests",
-    uniqueConstraints = {
-        @UniqueConstraint(
-            name = "uk_overtime_employee_date_shift",
-            columnNames = {"employee_id", "work_date", "work_shift_id"}
-        )
-    },
-    indexes = {
+@Table(name = "overtime_requests", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_overtime_employee_date_shift", columnNames = { "employee_id", "work_date",
+                "work_shift_id" })
+}, indexes = {
         @Index(name = "idx_overtime_employee", columnList = "employee_id"),
         @Index(name = "idx_overtime_status", columnList = "status"),
         @Index(name = "idx_overtime_work_date", columnList = "work_date"),
         @Index(name = "idx_overtime_requested_by", columnList = "requested_by")
-    }
-)
+})
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class OvertimeRequest {
 
+    private static final String ID_PREFIX = "OTR";
+    private static IdGenerator idGenerator;
+
+    /**
+     * Set the IdGenerator for this entity (called by EntityIdGeneratorConfig).
+     */
+    public static void setIdGenerator(IdGenerator generator) {
+        idGenerator = generator;
+    }
+
     @Id
-    @Column(name = "request_id", length = 20)
+    @Column(name = "request_id", length = 12)
     @NotBlank(message = "Request ID is required")
-    @Size(max = 20, message = "Request ID must not exceed 20 characters")
-    private String requestId; // Format: OTRyymmddSSS (e.g., OTR251021005)
+    @Size(max = 12, message = "Request ID must not exceed 12 characters")
+    private String requestId; // Format: OTRYYMMDDSSS (e.g., OTR251022001)
 
     /**
      * The employee who will work the overtime shift.
@@ -125,10 +135,13 @@ public class OvertimeRequest {
     private LocalDateTime createdAt;
 
     /**
-     * Pre-persist hook to set the creation timestamp.
+     * Pre-persist hook to set the creation timestamp and generate ID.
      */
     @PrePersist
     protected void onCreate() {
+        if (requestId == null && idGenerator != null) {
+            requestId = idGenerator.generateId(ID_PREFIX);
+        }
         if (createdAt == null) {
             createdAt = LocalDateTime.now();
         }
@@ -139,6 +152,7 @@ public class OvertimeRequest {
 
     /**
      * Check if the request is in PENDING status.
+     * 
      * @return true if status is PENDING
      */
     @Transient
@@ -148,6 +162,7 @@ public class OvertimeRequest {
 
     /**
      * Check if the request has been approved.
+     * 
      * @return true if status is APPROVED
      */
     @Transient
@@ -157,6 +172,7 @@ public class OvertimeRequest {
 
     /**
      * Check if the request has been rejected.
+     * 
      * @return true if status is REJECTED
      */
     @Transient
@@ -166,6 +182,7 @@ public class OvertimeRequest {
 
     /**
      * Check if the request has been cancelled.
+     * 
      * @return true if status is CANCELLED
      */
     @Transient
@@ -176,6 +193,7 @@ public class OvertimeRequest {
     /**
      * Check if the request can be cancelled by the owner.
      * Only PENDING requests can be cancelled.
+     * 
      * @return true if the request can be cancelled
      */
     @Transient
@@ -185,6 +203,7 @@ public class OvertimeRequest {
 
     /**
      * Check if this employee is the owner of the request.
+     * 
      * @param employeeId the employee ID to check
      * @return true if the employee is the owner
      */
@@ -195,6 +214,7 @@ public class OvertimeRequest {
 
     /**
      * Check if this employee created the request.
+     * 
      * @param employeeId the employee ID to check
      * @return true if the employee created the request
      */

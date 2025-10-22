@@ -4,16 +4,25 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.dental.clinic.management.utils.IdGenerator;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "working_schedule")
 public class EmployeeShiftRegistration {
+
+    private static IdGenerator idGenerator;
+
+    public static void setIdGenerator(IdGenerator generator) {
+        idGenerator = generator;
+    }
 
     @Id
     @Column(name = "registration_id", length = 20)
@@ -106,6 +115,13 @@ public class EmployeeShiftRegistration {
 
     public void setRegistrationDays(List<RegistrationDays> registrationDays) {
         this.registrationDays = registrationDays;
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        if (registrationId == null && idGenerator != null) {
+            this.registrationId = idGenerator.generateId("ESR");
+        }
     }
 
     @Override

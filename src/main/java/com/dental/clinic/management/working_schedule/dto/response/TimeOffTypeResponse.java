@@ -13,8 +13,10 @@ import lombok.*;
 public class TimeOffTypeResponse {
 
     private String typeId;
+    private String typeCode; // ANNUAL_LEAVE, SICK_LEAVE, etc.
     private String typeName;
     private String description;
+    private Boolean isPaid; // true = có lương, false = không lương
     private Boolean requiresApproval;
     private Boolean isActive;
 }

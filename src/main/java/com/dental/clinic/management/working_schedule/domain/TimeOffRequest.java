@@ -1,5 +1,6 @@
 package com.dental.clinic.management.working_schedule.domain;
 
+import com.dental.clinic.management.utils.IdGenerator;
 import com.dental.clinic.management.working_schedule.enums.TimeOffStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -19,6 +20,12 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class TimeOffRequest {
+
+    private static IdGenerator idGenerator;
+
+    public static void setIdGenerator(IdGenerator generator) {
+        idGenerator = generator;
+    }
 
     @Id
     @Column(name = "request_id", length = 50)
@@ -67,6 +74,9 @@ public class TimeOffRequest {
 
     @PrePersist
     protected void onCreate() {
+        if (requestId == null && idGenerator != null) {
+            this.requestId = idGenerator.generateId("TOR");
+        }
         if (requestedAt == null) {
             requestedAt = LocalDateTime.now();
         }

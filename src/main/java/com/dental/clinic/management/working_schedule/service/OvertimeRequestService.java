@@ -17,7 +17,6 @@ import com.dental.clinic.management.working_schedule.enums.RequestStatus;
 import com.dental.clinic.management.working_schedule.mapper.OvertimeRequestMapper;
 import com.dental.clinic.management.working_schedule.repository.OvertimeRequestRepository;
 import com.dental.clinic.management.working_schedule.repository.WorkShiftRepository;
-import com.dental.clinic.management.working_schedule.utils.OvertimeRequestIdGenerator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -44,15 +43,14 @@ public class OvertimeRequestService {
     private final EmployeeRepository employeeRepository;
     private final WorkShiftRepository workShiftRepository;
     private final OvertimeRequestMapper overtimeRequestMapper;
-    private final OvertimeRequestIdGenerator idGenerator;
 
     /**
      * Get all overtime requests with pagination and optional filtering.
      * Access control:
      * - VIEW_OT_ALL: Can see all requests
      * - VIEW_OT_OWN: Can only see own requests
-     * 
-     * @param status optional status filter
+     *
+     * @param status   optional status filter
      * @param pageable pagination information
      * @return page of overtime requests
      */
@@ -62,7 +60,7 @@ public class OvertimeRequestService {
         log.info("Fetching overtime requests with status: {}", status);
 
         boolean hasViewAll = SecurityUtil.hasCurrentUserPermission("VIEW_OT_ALL");
-        
+
         if (hasViewAll) {
             // User can see all requests
             log.debug("User has VIEW_OT_ALL permission");
@@ -73,7 +71,7 @@ public class OvertimeRequestService {
             log.debug("User has VIEW_OT_OWN permission");
             Employee currentEmployee = getCurrentEmployee();
             Page<OvertimeRequest> requests = overtimeRequestRepository.findByEmployeeIdAndStatus(
-                currentEmployee.getEmployeeId(), status, pageable);
+                    currentEmployee.getEmployeeId(), status, pageable);
             return requests.map(overtimeRequestMapper::toListResponse);
         }
     }
@@ -83,11 +81,11 @@ public class OvertimeRequestService {
      * Access control:
      * - VIEW_OT_ALL: Can see any request
      * - VIEW_OT_OWN: Can only see own requests
-     * 
+     *
      * @param requestId the overtime request ID
      * @return overtime request details
      * @throws OvertimeRequestNotFoundException if request not found
-     * @throws AccessDeniedException if user doesn't have permission
+     * @throws AccessDeniedException            if user doesn't have permission
      */
     @Transactional(readOnly = true)
     @PreAuthorize("hasAnyAuthority('VIEW_OT_ALL', 'VIEW_OT_OWN')")
@@ -100,10 +98,10 @@ public class OvertimeRequestService {
         // Permission check for VIEW_OT_OWN users
         if (!SecurityUtil.hasCurrentUserPermission("VIEW_OT_ALL")) {
             Employee currentEmployee = getCurrentEmployee();
-            if (!request.isOwnedBy(currentEmployee.getEmployeeId()) && 
-                !request.isRequestedBy(currentEmployee.getEmployeeId())) {
-                log.warn("User {} attempted to access overtime request {} without permission", 
-                    currentEmployee.getEmployeeId(), requestId);
+            if (!request.isOwnedBy(currentEmployee.getEmployeeId()) &&
+                    !request.isRequestedBy(currentEmployee.getEmployeeId())) {
+                log.warn("User {} attempted to access overtime request {} without permission",
+                        currentEmployee.getEmployeeId(), requestId);
                 // Return 404 instead of 403 for security (don't reveal existence)
                 throw new OvertimeRequestNotFoundException(requestId);
             }
@@ -117,19 +115,20 @@ public class OvertimeRequestService {
      * Validates:
      * - Employee and WorkShift exist
      * - Work date is not in the past
-     * - No conflicting requests (same employee, date, shift with PENDING or APPROVED status)
-     * 
+     * - No conflicting requests (same employee, date, shift with PENDING or
+     * APPROVED status)
+     *
      * @param dto create overtime request DTO
      * @return created overtime request details
-     * @throws RelatedResourceNotFoundException if employee or shift not found
+     * @throws RelatedResourceNotFoundException  if employee or shift not found
      * @throws DuplicateOvertimeRequestException if conflicting request exists
-     * @throws IllegalArgumentException if work date is in the past
+     * @throws IllegalArgumentException          if work date is in the past
      */
     @Transactional
     @PreAuthorize("hasAuthority('CREATE_OT')")
     public OvertimeRequestDetailResponse createOvertimeRequest(CreateOvertimeRequestDTO dto) {
-        log.info("Creating overtime request for employee {} on {} shift {}", 
-            dto.getEmployeeId(), dto.getWorkDate(), dto.getWorkShiftId());
+        log.info("Creating overtime request for employee {} on {} shift {}",
+                dto.getEmployeeId(), dto.getWorkDate(), dto.getWorkShiftId());
 
         // Validation 1: Verify employee exists
         Employee employee = employeeRepository.findById(dto.getEmployeeId())
@@ -148,24 +147,19 @@ public class OvertimeRequestService {
         // Validation 4: Check for conflicting requests
         List<RequestStatus> conflictStatuses = List.of(RequestStatus.PENDING, RequestStatus.APPROVED);
         boolean hasConflict = overtimeRequestRepository.existsConflictingRequest(
-            dto.getEmployeeId(), dto.getWorkDate(), dto.getWorkShiftId(), conflictStatuses);
-        
+                dto.getEmployeeId(), dto.getWorkDate(), dto.getWorkShiftId(), conflictStatuses);
+
         if (hasConflict) {
-            log.warn("Conflicting overtime request exists for employee {} on {} shift {}", 
-                dto.getEmployeeId(), dto.getWorkDate(), dto.getWorkShiftId());
+            log.warn("Conflicting overtime request exists for employee {} on {} shift {}",
+                    dto.getEmployeeId(), dto.getWorkDate(), dto.getWorkShiftId());
             throw new DuplicateOvertimeRequestException(dto.getEmployeeId(), dto.getWorkDate(), dto.getWorkShiftId());
         }
 
         // Get current user as the requester
         Employee requestedBy = getCurrentEmployee();
 
-        // Generate request ID
-        String requestId = idGenerator.generateId(dto.getWorkDate());
-        log.info("Generated overtime request ID: {}", requestId);
-
-        // Create overtime request
+        // Create overtime request (ID will be auto-generated via @PrePersist)
         OvertimeRequest overtimeRequest = new OvertimeRequest();
-        overtimeRequest.setRequestId(requestId);
         overtimeRequest.setEmployee(employee);
         overtimeRequest.setRequestedBy(requestedBy);
         overtimeRequest.setWorkDate(dto.getWorkDate());
@@ -185,16 +179,18 @@ public class OvertimeRequestService {
      * - Can only update PENDING requests
      * - APPROVED: Requires APPROVE_OT permission
      * - REJECTED: Requires REJECT_OT permission, reason is required
-     * - CANCELLED: Requires CANCEL_OT_OWN (for own requests) or CANCEL_OT_PENDING (for managing), reason is required
+     * - CANCELLED: Requires CANCEL_OT_OWN (for own requests) or CANCEL_OT_PENDING
+     * (for managing), reason is required
      * - Auto-creates EmployeeShift when APPROVED (TODO: implement in Phase 6)
-     * 
+     *
      * @param requestId the overtime request ID
-     * @param dto update status DTO
+     * @param dto       update status DTO
      * @return updated overtime request details
      * @throws OvertimeRequestNotFoundException if request not found
-     * @throws InvalidStateTransitionException if request is not PENDING
-     * @throws AccessDeniedException if user doesn't have required permission
-     * @throws IllegalArgumentException if validation fails
+     * @throws InvalidStateTransitionException  if request is not PENDING
+     * @throws AccessDeniedException            if user doesn't have required
+     *                                          permission
+     * @throws IllegalArgumentException         if validation fails
      */
     @Transactional
     public OvertimeRequestDetailResponse updateOvertimeStatus(String requestId, UpdateOvertimeStatusDTO dto) {
@@ -243,7 +239,8 @@ public class OvertimeRequestService {
 
         log.info("Overtime request {} approved by employee {}", request.getRequestId(), approvedBy.getEmployeeId());
 
-        // TODO: Auto-create EmployeeShift record (will be implemented when EmployeeShift entity exists)
+        // TODO: Auto-create EmployeeShift record (will be implemented when
+        // EmployeeShift entity exists)
         // createEmployeeShiftFromOvertimeApproval(request);
     }
 
@@ -279,14 +276,15 @@ public class OvertimeRequestService {
             throw new IllegalArgumentException("Lý do hủy là bắt buộc.");
         }
 
-        // Permission check: CANCEL_OT_OWN (for own requests) or CANCEL_OT_PENDING (for managing)
-        boolean canCancelOwn = SecurityUtil.hasCurrentUserPermission("CANCEL_OT_OWN") && 
-                               request.isOwnedBy(cancelledBy.getEmployeeId());
+        // Permission check: CANCEL_OT_OWN (for own requests) or CANCEL_OT_PENDING (for
+        // managing)
+        boolean canCancelOwn = SecurityUtil.hasCurrentUserPermission("CANCEL_OT_OWN") &&
+                request.isOwnedBy(cancelledBy.getEmployeeId());
         boolean canCancelAny = SecurityUtil.hasCurrentUserPermission("CANCEL_OT_PENDING");
 
         if (!canCancelOwn && !canCancelAny) {
-            log.warn("User {} does not have permission to cancel overtime request {}", 
-                cancelledBy.getEmployeeId(), request.getRequestId());
+            log.warn("User {} does not have permission to cancel overtime request {}",
+                    cancelledBy.getEmployeeId(), request.getRequestId());
             throw new AccessDeniedException("Bạn không có quyền hủy yêu cầu OT này.");
         }
 
@@ -298,7 +296,7 @@ public class OvertimeRequestService {
 
     /**
      * Get the current logged-in employee.
-     * 
+     *
      * @return current employee
      * @throws IllegalStateException if user not found or not an employee
      */
@@ -308,21 +306,22 @@ public class OvertimeRequestService {
 
         return employeeRepository.findByAccount_Username(username)
                 .orElseThrow(() -> new IllegalStateException(
-                    "Người dùng hiện tại không phải là nhân viên."));
+                        "Người dùng hiện tại không phải là nhân viên."));
     }
 
     // TODO: Implement when EmployeeShift entity is available
     // /**
-    //  * Auto-create EmployeeShift record when overtime is approved.
-    //  */
-    // private void createEmployeeShiftFromOvertimeApproval(OvertimeRequest request) {
-    //     EmployeeShift employeeShift = new EmployeeShift();
-    //     employeeShift.setEmployee(request.getEmployee());
-    //     employeeShift.setWorkDate(request.getWorkDate());
-    //     employeeShift.setWorkShift(request.getWorkShift());
-    //     employeeShift.setIsOvertime(true);
-    //     employeeShift.setSource(EmployeeShiftsSource.OT_APPROVAL);
-    //     employeeShift.setSourceOtRequestId(request.getRequestId());
-    //     employeeShiftRepository.save(employeeShift);
+    // * Auto-create EmployeeShift record when overtime is approved.
+    // */
+    // private void createEmployeeShiftFromOvertimeApproval(OvertimeRequest request)
+    // {
+    // EmployeeShift employeeShift = new EmployeeShift();
+    // employeeShift.setEmployee(request.getEmployee());
+    // employeeShift.setWorkDate(request.getWorkDate());
+    // employeeShift.setWorkShift(request.getWorkShift());
+    // employeeShift.setIsOvertime(true);
+    // employeeShift.setSource(EmployeeShiftsSource.OT_APPROVAL);
+    // employeeShift.setSourceOtRequestId(request.getRequestId());
+    // employeeShiftRepository.save(employeeShift);
     // }
 }

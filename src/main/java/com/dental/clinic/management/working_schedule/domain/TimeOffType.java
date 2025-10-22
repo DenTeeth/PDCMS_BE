@@ -20,11 +20,18 @@ public class TimeOffType {
     @Column(name = "type_id", length = 50)
     private String typeId;
 
+    @Column(name = "type_code", nullable = false, unique = true, length = 50)
+    private String typeCode; // Unique code: ANNUAL_LEAVE, SICK_LEAVE, UNPAID_LEAVE
+
     @Column(name = "type_name", nullable = false, length = 100)
     private String typeName;
 
-    @Column(name = "description")
+    @Column(name = "description", columnDefinition = "TEXT")
     private String description;
+
+    @Column(name = "is_paid", nullable = false)
+    @Builder.Default
+    private Boolean isPaid = true; // true = có lương, false = không lương
 
     @Column(name = "requires_approval", nullable = false)
     @Builder.Default

@@ -66,4 +66,18 @@ public final class AuthoritiesConstants {
     public static final String REJECT_TIMEOFF = "REJECT_TIMEOFF";
     public static final String CANCEL_TIMEOFF_OWN = "CANCEL_TIMEOFF_OWN";
     public static final String CANCEL_TIMEOFF_PENDING = "CANCEL_TIMEOFF_PENDING";
+
+    // Time-Off Type Management Permissions
+    public static final String VIEW_TIMEOFF_TYPE_ALL = "VIEW_TIMEOFF_TYPE_ALL";
+    public static final String CREATE_TIMEOFF_TYPE = "CREATE_TIMEOFF_TYPE";
+    public static final String UPDATE_TIMEOFF_TYPE = "UPDATE_TIMEOFF_TYPE";
+    public static final String DELETE_TIMEOFF_TYPE = "DELETE_TIMEOFF_TYPE";
+
+    // Leave Balance Management Permissions
+    public static final String VIEW_LEAVE_BALANCE_ALL = "VIEW_LEAVE_BALANCE_ALL";
+    public static final String ADJUST_LEAVE_BALANCE = "ADJUST_LEAVE_BALANCE";
+
+    // Shift Renewal Permissions
+    public static final String VIEW_RENEWAL_OWN = "VIEW_RENEWAL_OWN";
+    public static final String RESPOND_RENEWAL_OWN = "RESPOND_RENEWAL_OWN";
 }

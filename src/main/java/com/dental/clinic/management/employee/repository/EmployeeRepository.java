@@ -1,6 +1,6 @@
-
 package com.dental.clinic.management.employee.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -39,4 +39,24 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer>, Jp
    * @return True if exists
    */
   boolean existsByAccount_Username(String username);
+
+  /**
+   * Find all active employees.
+   * Used for annual leave balance reset.
+   *
+   * @return List of active employees
+   */
+  List<Employee> findByIsActiveTrue();
+
+  /**
+   * Find employees by employment type and active status.
+   * Used by scheduled jobs to create shifts.
+   *
+   * @param employmentType Employment type (FULL_TIME or PART_TIME)
+   * @param isActive       Active status
+   * @return List of matching employees
+   */
+  List<Employee> findByEmploymentTypeAndIsActive(
+      com.dental.clinic.management.employee.enums.EmploymentType employmentType,
+      Boolean isActive);
 }
