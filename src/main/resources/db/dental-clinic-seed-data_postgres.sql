@@ -161,15 +161,15 @@ ON CONFLICT (account_id, role_id) DO NOTHING;
 -- ============================================
 -- STEP 7: CREATE EMPLOYEES (ID gán cứng: 1-7)
 -- ============================================
-INSERT INTO employees (employee_id, account_id, role_id, employee_code, first_name, last_name, phone, date_of_birth, address, is_active, created_at)
+INSERT INTO employees (employee_id, account_id, role_id, employee_code, first_name, last_name, phone, date_of_birth, address, employment_type, is_active, created_at)
 VALUES
-(1, 1, 'ROLE_ADMIN', 'EMP001', 'Admin', 'Hệ thống', '0900000001', '1985-01-01', 'Phòng quản trị', TRUE, NOW()),
-(2, 2, 'ROLE_DOCTOR', 'EMP002', 'Minh', 'Nguyễn Văn', '0901234567', '1985-05-15', '123 Nguyễn Huệ, Q1, TPHCM', TRUE, NOW()),
-(3, 3, 'ROLE_DOCTOR', 'EMP003', 'Lan', 'Trần Thị', '0902345678', '1988-08-20', '456 Lê Lợi, Q3, TPHCM', TRUE, NOW()),
-(4, 4, 'ROLE_RECEPTIONIST', 'EMP004', 'Mai', 'Lê Thị', '0903456789', '1995-03-10', '789 Trần Hưng Đạo, Q5, TPHCM', TRUE, NOW()),
-(5, 5, 'ROLE_ACCOUNTANT', 'EMP005', 'Tuấn', 'Hoàng Văn', '0904567890', '1992-07-25', '321 Hai Bà Trưng, Q1, TPHCM', TRUE, NOW()),
-(6, 6, 'ROLE_NURSE', 'EMP006', 'Hoa', 'Phạm Thị', '0906789012', '1992-06-15', '111 Lý Thường Kiệt, Q10, TPHCM', TRUE, NOW()),
-(7, 7, 'ROLE_MANAGER', 'EMP007', 'Quân', 'Trần Minh', '0909999999', '1980-10-10', '77 Phạm Ngọc Thạch, Q3, TPHCM', TRUE, NOW())
+(1, 1, 'ROLE_ADMIN', 'EMP001', 'Admin', 'Hệ thống', '0900000001', '1985-01-01', 'Phòng quản trị', 'FULL_TIME', TRUE, NOW()),
+(2, 2, 'ROLE_DOCTOR', 'EMP002', 'Minh', 'Nguyễn Văn', '0901234567', '1985-05-15', '123 Nguyễn Huệ, Q1, TPHCM', 'PART_TIME', TRUE, NOW()),
+(3, 3, 'ROLE_DOCTOR', 'EMP003', 'Lan', 'Trần Thị', '0902345678', '1988-08-20', '456 Lê Lợi, Q3, TPHCM', 'FULL_TIME', TRUE, NOW()),
+(4, 4, 'ROLE_RECEPTIONIST', 'EMP004', 'Mai', 'Lê Thị', '0903456789', '1995-03-10', '789 Trần Hưng Đạo, Q5, TPHCM', 'FULL_TIME', TRUE, NOW()),
+(5, 5, 'ROLE_ACCOUNTANT', 'EMP005', 'Tuấn', 'Hoàng Văn', '0904567890', '1992-07-25', '321 Hai Bà Trưng, Q1, TPHCM', 'FULL_TIME', TRUE, NOW()),
+(6, 6, 'ROLE_NURSE', 'EMP006', 'Hoa', 'Phạm Thị', '0906789012', '1992-06-15', '111 Lý Thường Kiệt, Q10, TPHCM', 'FULL_TIME', TRUE, NOW()),
+(7, 7, 'ROLE_MANAGER', 'EMP007', 'Quân', 'Trần Minh', '0909999999', '1980-10-10', '77 Phạm Ngọc Thạch, Q3, TPHCM', 'FULL_TIME', TRUE, NOW())
 ON CONFLICT (employee_id) DO NOTHING;
 
 -- ============================================
