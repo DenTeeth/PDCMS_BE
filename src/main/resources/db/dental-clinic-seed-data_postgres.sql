@@ -203,7 +203,14 @@ VALUES
 ('CANCEL_OT_OWN', 'CANCEL_OT_OWN', 'OVERTIME', 'Hủy yêu cầu tăng ca của bản thân', NOW()),
 ('CANCEL_OT_PENDING', 'CANCEL_OT_PENDING', 'OVERTIME', 'Hủy yêu cầu tăng ca đang chờ', NOW()),
 ('CREATE_TIME_OFF', 'CREATE_TIME_OFF', 'TIME_OFF', 'Tạo yêu cầu nghỉ phép', NULL, 102, NULL, TRUE, NOW()),
-('APPROVE_TIME_OFF', 'APPROVE_TIME_OFF', 'TIME_OFF', 'Phê duyệt yêu cầu nghỉ phép', NULL, 103, NULL, TRUE, NOW())
+('APPROVE_TIME_OFF', 'APPROVE_TIME_OFF', 'TIME_OFF', 'Phê duyệt yêu cầu nghỉ phép', NULL, 103, NULL, TRUE, NOW()),
+('VIEW_REGISTRATION_ALL', 'VIEW_REGISTRATION_ALL', 'SHIFT_REGISTRATION', 'Xem tất cả đăng ký ca làm việc', NOW()),
+('VIEW_REGISTRATION_OWN', 'VIEW_REGISTRATION_OWN', 'SHIFT_REGISTRATION', 'Xem đăng ký ca làm việc của bản thân', NOW()),
+('CREATE_REGISTRATION', 'CREATE_REGISTRATION', 'SHIFT_REGISTRATION', 'Tạo đăng ký ca làm việc', NOW()),
+('UPDATE_REGISTRATION_ALL', 'UPDATE_REGISTRATION_ALL', 'SHIFT_REGISTRATION', 'Cập nhật tất cả đăng ký ca làm việc', NOW()),
+('UPDATE_REGISTRATION_OWN', 'UPDATE_REGISTRATION_OWN', 'SHIFT_REGISTRATION', 'Cập nhật đăng ký ca làm việc của bản thân', NOW()),
+('DELETE_REGISTRATION_ALL', 'DELETE_REGISTRATION_ALL', 'SHIFT_REGISTRATION', 'Xóa tất cả đăng ký ca làm việc', NOW()),
+('DELETE_REGISTRATION_OWN', 'DELETE_REGISTRATION_OWN', 'SHIFT_REGISTRATION', 'Xóa đăng ký ca làm việc của bản thân', NOW())
 ON CONFLICT (permission_id) DO NOTHING;
 
 -- ============================================
