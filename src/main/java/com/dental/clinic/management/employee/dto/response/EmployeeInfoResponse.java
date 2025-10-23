@@ -5,6 +5,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Set;
 
+import com.dental.clinic.management.employee.enums.EmploymentType;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -29,6 +31,7 @@ public class EmployeeInfoResponse {
   private String firstName;
   private String lastName;
   private String fullName;
+  private EmploymentType employeeType;
   private String phone;
   private LocalDate dateOfBirth;
   private String address;

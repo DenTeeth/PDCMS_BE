@@ -54,7 +54,7 @@ public class AuthenticationController {
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         LoginResponse loginResponse = authenticationService.login(request);
 
-        // Tạo response body không chứa refresh token
+        // Tạo response body - COPY ALL FIELDS từ loginResponse
         LoginResponse responseBody = new LoginResponse(
                 loginResponse.getToken(),
                 loginResponse.getTokenExpiresAt(),
@@ -64,6 +64,13 @@ public class AuthenticationController {
                 loginResponse.getEmail(),
                 loginResponse.getRoles(),
                 loginResponse.getPermissions());
+
+        // Copy các fields quan trọng khác
+        responseBody.setBaseRole(loginResponse.getBaseRole());
+        responseBody.setHomePath(loginResponse.getHomePath());
+        responseBody.setSidebar(loginResponse.getSidebar());
+        responseBody.setGroupedPermissions(loginResponse.getGroupedPermissions());
+        responseBody.setEmploymentType(loginResponse.getEmploymentType());
 
         // Set refresh token vào HTTP-only cookie
         if (loginResponse.getRefreshToken() != null) {
@@ -154,6 +161,22 @@ public class AuthenticationController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, clearCookie.toString())
                 .build();
+    }
+
+    /**
+     * Get grouped permissions for the currently authenticated user.
+     *
+     * @return Map of module name to list of permission IDs that the user has
+     */
+    @GetMapping("/my-permissions")
+    @Operation(summary = "Get my permissions grouped by module", description = "Get all permissions of the currently authenticated user, grouped by module")
+    @ApiMessage("Lấy danh sách quyền thành công")
+    public ResponseEntity<java.util.Map<String, java.util.List<String>>> getMyPermissions() {
+        String username = org.springframework.security.core.context.SecurityContextHolder.getContext()
+                .getAuthentication().getName();
+        java.util.Map<String, java.util.List<String>> groupedPermissions = authenticationService
+                .getMyPermissionsGrouped(username);
+        return ResponseEntity.ok(groupedPermissions);
     }
 
 }

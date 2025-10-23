@@ -93,6 +93,12 @@ public class AuthenticationService {
                                 .distinct()
                                 .collect(Collectors.toList());
 
+                // Group permissions by module for efficient FE processing
+                Map<String, List<String>> groupedPermissions = role.getPermissions().stream()
+                                .collect(Collectors.groupingBy(
+                                                Permission::getModule,
+                                                Collectors.mapping(Permission::getPermissionId, Collectors.toList())));
+
                 // Generate sidebar for FE
                 Map<String, List<SidebarItemDTO>> sidebar = sidebarService.generateSidebar(role.getRoleId());
 
@@ -109,6 +115,23 @@ public class AuthenticationService {
                 long accessExp = now + securityUtil.getAccessTokenValiditySeconds();
                 long refreshExp = now + securityUtil.getRefreshTokenValiditySeconds();
 
+                // Save refresh token to database for token rotation and invalidation
+                try {
+                        String tokenHash = hashToken(refreshToken);
+                        com.dental.clinic.management.authentication.domain.RefreshToken refreshTokenEntity = new com.dental.clinic.management.authentication.domain.RefreshToken(
+                                        java.util.UUID.randomUUID().toString(),
+                                        account,
+                                        tokenHash,
+                                        java.time.LocalDateTime.now()
+                                                        .plusSeconds(securityUtil.getRefreshTokenValiditySeconds()));
+                        refreshTokenEntity.setIsActive(true);
+                        refreshTokenRepository.save(refreshTokenEntity);
+                        log.debug("Refresh token saved to database for user: {}", account.getUsername());
+                } catch (Exception e) {
+                        log.error("Failed to save refresh token to database", e);
+                        // Continue even if save fails - token is still valid in JWT
+                }
+
                 LoginResponse response = new LoginResponse(
                                 accessToken,
                                 accessExp,
@@ -122,11 +145,19 @@ public class AuthenticationService {
                 response.setBaseRole(baseRoleName);
                 response.setHomePath(homePath);
                 response.setSidebar(sidebar);
+                response.setGroupedPermissions(groupedPermissions); // Add grouped permissions
 
                 // Set employmentType if user is an employee
                 if (account.getEmployee() != null) {
                         response.setEmploymentType(account.getEmployee().getEmploymentType());
                 }
+
+                // Debug logging
+                log.info("Login response prepared for user: {}", account.getUsername());
+                log.info("  baseRole: {}", response.getBaseRole());
+                log.info("  homePath: {}", response.getHomePath());
+                log.info("  groupedPermissions size: {}", groupedPermissions != null ? groupedPermissions.size() : 0);
+                log.info("  sidebar size: {}", sidebar != null ? sidebar.size() : 0);
 
                 return response;
         }
@@ -189,6 +220,33 @@ public class AuthenticationService {
                 // Tạo refresh token mới (refresh token rotation for security)
                 String newRefresh = securityUtil.createRefreshToken(username);
                 long refreshExp = now + securityUtil.getRefreshTokenValiditySeconds();
+
+                // TOKEN ROTATION: Invalidate old refresh token and save new one
+                try {
+                        String oldTokenHash = hashToken(request.getRefreshToken());
+
+                        // Deactivate old refresh token
+                        refreshTokenRepository.findByTokenHash(oldTokenHash).ifPresent(oldToken -> {
+                                oldToken.setIsActive(false);
+                                refreshTokenRepository.save(oldToken);
+                                log.debug("Old refresh token deactivated for user: {}", username);
+                        });
+
+                        // Save new refresh token
+                        String newTokenHash = hashToken(newRefresh);
+                        com.dental.clinic.management.authentication.domain.RefreshToken newTokenEntity = new com.dental.clinic.management.authentication.domain.RefreshToken(
+                                        java.util.UUID.randomUUID().toString(),
+                                        account,
+                                        newTokenHash,
+                                        java.time.LocalDateTime.now()
+                                                        .plusSeconds(securityUtil.getRefreshTokenValiditySeconds()));
+                        newTokenEntity.setIsActive(true);
+                        refreshTokenRepository.save(newTokenEntity);
+                        log.debug("New refresh token saved to database for user: {}", username);
+                } catch (Exception e) {
+                        log.error("Failed to rotate refresh token in database", e);
+                        // Continue even if save fails - token is still valid in JWT
+                }
 
                 log.info("Refresh token successful for user: {}", username);
                 return new RefreshTokenResponse(newAccess, accessExp, newRefresh, refreshExp);
@@ -379,9 +437,34 @@ public class AuthenticationService {
                 }
 
                 try {
-                        // Hash refresh token để tìm trong database
+                        // Hash refresh token to find in database
+                        String tokenHash = hashToken(refreshToken);
+
+                        // Mark token as inactive instead of deleting (for audit trail)
+                        refreshTokenRepository.findByTokenHash(tokenHash).ifPresent(token -> {
+                                token.setIsActive(false);
+                                refreshTokenRepository.save(token);
+                                log.info("Refresh token deactivated for user: {}",
+                                                token.getAccount().getUsername());
+                        });
+
+                } catch (Exception e) {
+                        log.error("Logout failed", e);
+                        throw new RuntimeException("Logout failed", e);
+                }
+        }
+
+        /**
+         * Hash a token using SHA-512 for secure storage.
+         * Never store raw JWT tokens in database - always hash them.
+         *
+         * @param token the raw token string
+         * @return hex-encoded SHA-512 hash
+         */
+        private String hashToken(String token) {
+                try {
                         MessageDigest digest = MessageDigest.getInstance("SHA-512");
-                        byte[] hashBytes = digest.digest(refreshToken.getBytes());
+                        byte[] hashBytes = digest.digest(token.getBytes());
                         StringBuilder hexString = new StringBuilder();
                         for (byte b : hashBytes) {
                                 String hex = Integer.toHexString(0xff & b);
@@ -390,13 +473,52 @@ public class AuthenticationService {
                                 }
                                 hexString.append(hex);
                         }
-                        String tokenHash = hexString.toString();
-
-                        // Xóa token từ database
-                        refreshTokenRepository.deleteByTokenHash(tokenHash);
-
+                        return hexString.toString();
                 } catch (Exception e) {
-                        throw new RuntimeException("Logout failed", e);
+                        throw new RuntimeException("Failed to hash token", e);
                 }
+        }
+
+        /**
+         * Get permissions of the current user, grouped by module.
+         * This returns only the permission IDs that the user has access to.
+         *
+         * @param username the username of the current user
+         * @return Map of module name to list of permission IDs
+         * @throws AccountNotFoundException if account not found
+         */
+        public Map<String, List<String>> getMyPermissionsGrouped(String username) {
+                Account account = accountRepository.findByUsernameWithRoleAndPermissions(username)
+                                .orElseThrow(() -> new AccountNotFoundException(username));
+
+                Role role = account.getRole();
+
+                // Group user's permissions by module
+                Map<String, List<String>> groupedPermissions = role.getPermissions().stream()
+                                .filter(Permission::getIsActive) // Only active permissions
+                                .sorted((p1, p2) -> {
+                                        // Sort by module first
+                                        int moduleCompare = p1.getModule().compareTo(p2.getModule());
+                                        if (moduleCompare != 0)
+                                                return moduleCompare;
+
+                                        // Then by displayOrder
+                                        if (p1.getDisplayOrder() != null && p2.getDisplayOrder() != null) {
+                                                return p1.getDisplayOrder().compareTo(p2.getDisplayOrder());
+                                        }
+                                        if (p1.getDisplayOrder() != null)
+                                                return -1;
+                                        if (p2.getDisplayOrder() != null)
+                                                return 1;
+
+                                        // Finally by permission ID
+                                        return p1.getPermissionId().compareTo(p2.getPermissionId());
+                                })
+                                .collect(Collectors.groupingBy(
+                                                Permission::getModule,
+                                                java.util.LinkedHashMap::new, // Maintain order
+                                                Collectors.mapping(Permission::getPermissionId, Collectors.toList())));
+
+                return groupedPermissions;
         }
 }

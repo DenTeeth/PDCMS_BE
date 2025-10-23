@@ -1,5 +1,6 @@
 package com.dental.clinic.management.scheduled;
 
+import com.dental.clinic.management.working_schedule.service.LeaveBalanceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -11,17 +12,13 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * Runs on January 1st at 00:01 AM every year.
  * Resets and creates new annual leave balances for all active employees.
- *
- * NOTE: This job requires LeaveBalanceService which should be created in the
- * working_schedule.service package with an annualReset(Integer year) method.
  */
 @Component
 @Slf4j
 @RequiredArgsConstructor
 public class AnnualLeaveBalanceResetJob {
 
-    // TODO: Uncomment when LeaveBalanceService is available
-    // private final LeaveBalanceService leaveBalanceService;
+    private final LeaveBalanceService leaveBalanceService;
 
     /**
      * Cron: 0 1 0 1 1 ?
@@ -37,11 +34,10 @@ public class AnnualLeaveBalanceResetJob {
         log.info("Creating leave balances for year: {}", currentYear);
 
         try {
-            // TODO: Implement LeaveBalanceService.annualReset() method
-            // leaveBalanceService.annualReset(currentYear);
+            int balancesProcessed = leaveBalanceService.annualReset(currentYear);
 
-            log.warn("LeaveBalanceService.annualReset() not yet implemented");
-            log.info("=== Annual Leave Balance Reset Job Completed (Placeholder) ===");
+            log.info("=== Annual Leave Balance Reset Job Completed Successfully ===");
+            log.info("Total balances created/updated: {}", balancesProcessed);
 
         } catch (Exception e) {
             log.error("Error in Annual Leave Balance Reset Job", e);

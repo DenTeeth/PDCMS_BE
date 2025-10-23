@@ -11,7 +11,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 /**
  * Login response với access token trong body và refresh token trong cookie.
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
+// @JsonInclude(JsonInclude.Include.NON_NULL) // Commented out for debugging -
+// fields should always be present
 public class LoginResponse {
 
     private String token; // Access token
@@ -22,6 +23,9 @@ public class LoginResponse {
     private String email;
     private List<String> roles;
     private List<String> permissions;
+
+    // Grouped permissions by module for efficient FE processing
+    private Map<String, List<String>> groupedPermissions;
 
     // Base role for FE layout selection
     private String baseRole; // 'admin', 'employee', or 'patient'
@@ -144,5 +148,13 @@ public class LoginResponse {
 
     public void setEmploymentType(EmploymentType employmentType) {
         this.employmentType = employmentType;
+    }
+
+    public Map<String, List<String>> getGroupedPermissions() {
+        return groupedPermissions;
+    }
+
+    public void setGroupedPermissions(Map<String, List<String>> groupedPermissions) {
+        this.groupedPermissions = groupedPermissions;
     }
 }

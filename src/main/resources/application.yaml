@@ -36,9 +36,9 @@ spring:
 dentalclinic:
   jwt:
     base64-secret: OOWH6vzvKUVsTUWvDEUz0SMnO3mfXiwIbXSKX6ey7fLI/oGjlrSOrucHd2qvsaZ+ZbxH/6TosGTtBxRMOOW0Bg==
-    # 15 minutes
-    access-token-validity-in-seconds: 2592000
-    # 30 days
+    # 15 minutes = 900 seconds
+    access-token-validity-in-seconds: 900
+    # 30 days = 2592000 seconds
     refresh-token-validity-in-seconds: 2592000
 
 # ==============================

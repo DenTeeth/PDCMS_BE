@@ -4,6 +4,8 @@
 -- =============================================
 
 -- Drop existing tables (in correct order to avoid FK violations)
+DROP TABLE IF EXISTS blacklisted_tokens CASCADE;
+DROP TABLE IF EXISTS refresh_tokens CASCADE;
 DROP TABLE IF EXISTS employee_shifts CASCADE;
 DROP TABLE IF EXISTS shift_renewal_requests CASCADE;
 DROP TABLE IF EXISTS holiday_dates CASCADE;
@@ -202,6 +204,58 @@ CREATE INDEX idx_employee_shifts_employee_status_date
 CREATE INDEX idx_shift_renewal_employee_pending
     ON shift_renewal_requests(employee_id, status, expires_at)
     WHERE status = 'PENDING_ACTION';
+
+-- =============================================
+-- Table: refresh_tokens
+-- Purpose: Store refresh tokens for JWT authentication with token rotation
+-- =============================================
+CREATE TABLE refresh_tokens (
+    id VARCHAR(36) PRIMARY KEY,
+    account_id INTEGER NOT NULL,
+    token_hash VARCHAR(512) NOT NULL UNIQUE,
+    expires_at TIMESTAMP NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    -- Foreign Key to accounts table
+    CONSTRAINT fk_refresh_token_account FOREIGN KEY (account_id)
+        REFERENCES accounts(account_id) ON DELETE CASCADE
+);
+
+-- Indexes for refresh_tokens
+CREATE INDEX idx_refresh_tokens_account_id ON refresh_tokens(account_id);
+CREATE INDEX idx_refresh_tokens_token_hash ON refresh_tokens(token_hash);
+CREATE INDEX idx_refresh_tokens_expires_at ON refresh_tokens(expires_at);
+CREATE INDEX idx_refresh_tokens_active ON refresh_tokens(is_active, expires_at)
+    WHERE is_active = TRUE;
+
+COMMENT ON TABLE refresh_tokens IS 'Stores refresh tokens with hash for security and token rotation support';
+COMMENT ON COLUMN refresh_tokens.token_hash IS 'SHA-512 hash of the actual refresh token for security';
+COMMENT ON COLUMN refresh_tokens.is_active IS 'FALSE when token is rotated or revoked';
+
+-- =============================================
+-- Table: blacklisted_tokens
+-- Purpose: Store blacklisted access tokens (for logout before expiry)
+-- =============================================
+CREATE TABLE blacklisted_tokens (
+    token_hash VARCHAR(512) PRIMARY KEY,
+    account_id INTEGER,
+    blacklisted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP NOT NULL,
+    reason VARCHAR(50), -- 'LOGOUT', 'PASSWORD_CHANGED', 'ADMIN_REVOKED'
+
+    -- Foreign Key to accounts table (nullable for cases where account is deleted)
+    CONSTRAINT fk_blacklisted_token_account FOREIGN KEY (account_id)
+        REFERENCES accounts(account_id) ON DELETE SET NULL
+);
+
+-- Indexes for blacklisted_tokens
+CREATE INDEX idx_blacklisted_tokens_account_id ON blacklisted_tokens(account_id);
+CREATE INDEX idx_blacklisted_tokens_expires_at ON blacklisted_tokens(expires_at);
+
+COMMENT ON TABLE blacklisted_tokens IS 'Stores blacklisted access tokens to prevent reuse after logout';
+COMMENT ON COLUMN blacklisted_tokens.reason IS 'Reason for blacklisting: LOGOUT, PASSWORD_CHANGED, ADMIN_REVOKED';
 
 -- =============================================
 -- End of Schema Definition

@@ -1,5 +1,7 @@
 package com.dental.clinic.management.scheduled;
 
+import com.dental.clinic.management.employee.domain.Employee;
+import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.working_schedule.domain.EmployeeShift;
 import com.dental.clinic.management.working_schedule.domain.EmployeeShiftRegistration;
 import com.dental.clinic.management.working_schedule.domain.WorkShift;
@@ -38,6 +40,7 @@ public class WeeklyPartTimeScheduleJob {
     private final EmployeeShiftRepository shiftRepository;
     private final WorkShiftRepository workShiftRepository;
     private final HolidayDateRepository holidayRepository;
+    private final EmployeeRepository employeeRepository;
 
     /**
      * Cron: 0 0 1 ? * SUN
@@ -56,11 +59,24 @@ public class WeeklyPartTimeScheduleJob {
         log.info("Creating schedule for: {} to {}", nextMonday, nextSunday);
 
         try {
+            // VALIDATION: Check if work shifts exist
+            long workShiftCount = workShiftRepository.count();
+            if (workShiftCount == 0) {
+                log.error("No work shifts found in database. Cannot create schedule.");
+                return;
+            }
+            log.info("Validation passed: {} work shifts available", workShiftCount);
+
             // 1. Get all active registrations
             List<EmployeeShiftRegistration> activeRegistrations = registrationRepository
                     .findActiveRegistrations(today);
 
             log.info("Found {} active part-time registrations", activeRegistrations.size());
+
+            if (activeRegistrations.isEmpty()) {
+                log.info("No active registrations found. Job completed with no actions.");
+                return;
+            }
 
             // 2. Get holidays for next week
             Set<LocalDate> holidays = holidayRepository.findHolidayDatesByRange(nextMonday, nextSunday)
@@ -71,72 +87,96 @@ public class WeeklyPartTimeScheduleJob {
 
             // 3. Create shifts for each registration
             int totalShiftsCreated = 0;
+            int skippedDueToErrors = 0;
             List<EmployeeShift> shiftsToSave = new ArrayList<>();
 
             for (EmployeeShiftRegistration registration : activeRegistrations) {
-                // Get the work shift
-                WorkShift workShift = workShiftRepository.findById(registration.getSlotId())
-                        .orElse(null);
+                try {
+                    // VALIDATION: Check if employee exists
+                    Employee employee = employeeRepository.findById(registration.getEmployeeId())
+                            .orElse(null);
 
-                if (workShift == null) {
-                    log.warn("Work shift {} not found for registration {}",
-                            registration.getSlotId(), registration.getRegistrationId());
-                    continue;
-                }
-
-                // Get registered days of week
-                Set<DayOfWeek> registeredDays = registration.getRegistrationDays().stream()
-                        .map(rd -> rd.getId().getDayOfWeek())
-                        .collect(Collectors.toSet());
-
-                log.debug("Registration {} works on: {}",
-                        registration.getRegistrationId(), registeredDays);
-
-                // Create shifts for each registered day in next week
-                int registrationShifts = 0;
-                for (int i = 0; i < 7; i++) {
-                    LocalDate workDate = nextMonday.plusDays(i);
-                    DayOfWeek dayOfWeek = mapJavaDayToCustomDay(workDate.getDayOfWeek());
-
-                    // Check if employee works on this day
-                    if (!registeredDays.contains(dayOfWeek)) {
+                    if (employee == null) {
+                        log.warn("Employee {} not found for registration {}. Skipping.",
+                                registration.getEmployeeId(), registration.getRegistrationId());
+                        skippedDueToErrors++;
                         continue;
                     }
 
-                    // Skip holidays
-                    if (holidays.contains(workDate)) {
-                        log.debug("Skipping holiday: {}", workDate);
+                    // VALIDATION: Get and validate work shift
+                    WorkShift workShift = workShiftRepository.findById(registration.getSlotId())
+                            .orElse(null);
+
+                    if (workShift == null) {
+                        log.warn("Work shift {} not found for registration {}. Skipping.",
+                                registration.getSlotId(), registration.getRegistrationId());
+                        skippedDueToErrors++;
                         continue;
                     }
 
-                    // Check if shift already exists
-                    if (shiftRepository.existsByEmployeeAndDateAndShift(
-                            registration.getEmployeeId(), workDate, workShift.getWorkShiftId())) {
+                    // VALIDATION: Check if registration has days configured
+                    Set<DayOfWeek> registeredDays = registration.getRegistrationDays().stream()
+                            .map(rd -> rd.getId().getDayOfWeek())
+                            .collect(Collectors.toSet());
+
+                    if (registeredDays.isEmpty()) {
+                        log.warn("Registration {} has no days configured. Skipping.",
+                                registration.getRegistrationId());
+                        skippedDueToErrors++;
                         continue;
                     }
 
-                    // Create shift
-                    EmployeeShift shift = new EmployeeShift();
-                    shift.setEmployee(registration.getEmployeeId() != null
-                            ? new com.dental.clinic.management.employee.domain.Employee()
-                            : null);
-                    if (shift.getEmployee() != null) {
-                        shift.getEmployee().setEmployeeId(registration.getEmployeeId());
+                    log.debug("Registration {} - Employee {} works on: {}",
+                            registration.getRegistrationId(), employee.getEmployeeId(), registeredDays);
+
+                    // Create shifts for each registered day in next week
+                    int registrationShifts = 0;
+                    for (int i = 0; i < 7; i++) {
+                        LocalDate workDate = nextMonday.plusDays(i);
+                        DayOfWeek dayOfWeek = mapJavaDayToCustomDay(workDate.getDayOfWeek());
+
+                        // Check if employee works on this day
+                        if (!registeredDays.contains(dayOfWeek)) {
+                            continue;
+                        }
+
+                        // Skip holidays
+                        if (holidays.contains(workDate)) {
+                            log.debug("Skipping holiday: {} for employee {}", workDate, employee.getEmployeeId());
+                            continue;
+                        }
+
+                        // VALIDATION: Check if shift already exists (avoid duplicates)
+                        if (shiftRepository.existsByEmployeeAndDateAndShift(
+                                employee.getEmployeeId(), workDate, workShift.getWorkShiftId())) {
+                            log.debug("Shift already exists for employee {} on {} shift {}. Skipping.",
+                                    employee.getEmployeeId(), workDate, workShift.getWorkShiftId());
+                            continue;
+                        }
+
+                        // Create shift
+                        EmployeeShift shift = new EmployeeShift();
+                        shift.setEmployee(employee);
+                        shift.setWorkDate(workDate);
+                        shift.setWorkShift(workShift);
+                        shift.setSource(ShiftSource.REGISTRATION_JOB);
+                        shift.setRegistration(registration);
+                        shift.setStatus(ShiftStatus.SCHEDULED);
+
+                        shiftsToSave.add(shift);
+                        registrationShifts++;
                     }
-                    shift.setWorkDate(workDate);
-                    shift.setWorkShift(workShift);
-                    shift.setSource(ShiftSource.REGISTRATION_JOB);
-                    shift.setRegistration(registration);
-                    shift.setStatus(ShiftStatus.SCHEDULED);
 
-                    shiftsToSave.add(shift);
-                    registrationShifts++;
-                }
+                    if (registrationShifts > 0) {
+                        log.info("Prepared {} shifts for employee {} (Registration: {})",
+                                registrationShifts, employee.getEmployeeId(), registration.getRegistrationId());
+                        totalShiftsCreated += registrationShifts;
+                    }
 
-                if (registrationShifts > 0) {
-                    log.info("Created {} shifts for registration {} (Employee ID: {})",
-                            registrationShifts, registration.getRegistrationId(), registration.getEmployeeId());
-                    totalShiftsCreated += registrationShifts;
+                } catch (Exception e) {
+                    log.error("Error processing registration {}: {}",
+                            registration.getRegistrationId(), e.getMessage(), e);
+                    skippedDueToErrors++;
                 }
             }
 
@@ -148,6 +188,8 @@ public class WeeklyPartTimeScheduleJob {
 
             log.info("=== Weekly Part-Time Schedule Job Completed ===");
             log.info("Total shifts created: {}", totalShiftsCreated);
+            log.info("Registrations processed: {}", activeRegistrations.size());
+            log.info("Registrations skipped due to errors: {}", skippedDueToErrors);
 
         } catch (Exception e) {
             log.error("Error in Weekly Part-Time Schedule Job", e);

@@ -62,6 +62,14 @@ public class PermissionController {
         return ResponseEntity.ok().body(response);
     }
 
+    @GetMapping("/grouped-simple")
+    @Operation(summary = "Get permissions grouped by module ", description = "Retrieve permissions grouped by module in a simple, readable format. Returns Map<Module, List<PermissionId>> for easy frontend display")
+    @ApiMessage("Get permissions grouped by module successfully")
+    public ResponseEntity<Map<String, List<String>>> getGroupedPermissionsSimple() {
+        Map<String, List<String>> response = permissionService.getPermissionsGroupedByModuleSimple();
+        return ResponseEntity.ok().body(response);
+    }
+
     @Hidden
     @GetMapping("/active")
     @ApiMessage("Get all active permissions successfully")

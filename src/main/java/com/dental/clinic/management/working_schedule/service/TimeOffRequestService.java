@@ -14,9 +14,11 @@ import com.dental.clinic.management.working_schedule.dto.request.CreateTimeOffRe
 import com.dental.clinic.management.working_schedule.dto.request.UpdateTimeOffStatusRequest;
 import com.dental.clinic.management.working_schedule.dto.response.TimeOffRequestResponse;
 import com.dental.clinic.management.working_schedule.enums.BalanceChangeReason;
+import com.dental.clinic.management.working_schedule.enums.ShiftStatus;
 import com.dental.clinic.management.working_schedule.enums.TimeOffStatus;
 import com.dental.clinic.management.working_schedule.mapper.TimeOffRequestMapper;
 import com.dental.clinic.management.working_schedule.repository.EmployeeLeaveBalanceRepository;
+import com.dental.clinic.management.working_schedule.repository.EmployeeShiftRepository;
 import com.dental.clinic.management.working_schedule.repository.LeaveBalanceHistoryRepository;
 import com.dental.clinic.management.working_schedule.repository.TimeOffRequestRepository;
 import com.dental.clinic.management.working_schedule.repository.TimeOffTypeRepository;
@@ -53,6 +55,7 @@ public class TimeOffRequestService {
         private final IdGenerator idGenerator;
         private final EmployeeLeaveBalanceRepository balanceRepository;
         private final LeaveBalanceHistoryRepository historyRepository;
+        private final EmployeeShiftRepository employeeShiftRepository;
 
         /**
          * GET /api/v1/time-off-requests
@@ -298,13 +301,8 @@ public class TimeOffRequestService {
                 // Deduct leave balance if applicable
                 deductLeaveBalance(timeOffRequest);
 
-                // TODO: Automatic action - update employee_shifts status to ON_LEAVE
-                // This will be implemented when employee_shifts table is available
-                log.info("TODO: Update employee_shifts for employee {} from {} to {} for slot {}",
-                                timeOffRequest.getEmployeeId(),
-                                timeOffRequest.getStartDate(),
-                                timeOffRequest.getEndDate(),
-                                timeOffRequest.getSlotId());
+                // Update employee_shifts status to ON_LEAVE
+                updateEmployeeShiftsToOnLeave(timeOffRequest);
         }
 
         /**
@@ -470,5 +468,37 @@ public class TimeOffRequestService {
 
                 log.info("Deducted {} days from balance {} for request {}",
                                 daysToDeduct, balance.getBalanceId(), timeOffRequest.getRequestId());
+        }
+
+        /**
+         * Update employee shifts to ON_LEAVE status when time-off is approved.
+         *
+         * @param timeOffRequest the approved time-off request
+         */
+        private void updateEmployeeShiftsToOnLeave(TimeOffRequest timeOffRequest) {
+                try {
+                        // Determine which shift to update based on slotId
+                        // If slotId is null, update all shifts in the date range
+                        // If slotId is specified, only update that specific shift
+                        String shiftId = timeOffRequest.getSlotId();
+
+                        int updatedCount = employeeShiftRepository.updateShiftStatus(
+                                        timeOffRequest.getEmployeeId(),
+                                        timeOffRequest.getStartDate(),
+                                        timeOffRequest.getEndDate(),
+                                        shiftId, // null means all shifts
+                                        ShiftStatus.ON_LEAVE);
+
+                        log.info("Updated {} employee shifts to ON_LEAVE for employee {} from {} to {} (slot: {})",
+                                        updatedCount,
+                                        timeOffRequest.getEmployeeId(),
+                                        timeOffRequest.getStartDate(),
+                                        timeOffRequest.getEndDate(),
+                                        shiftId != null ? shiftId : "ALL");
+                } catch (Exception e) {
+                        log.error("Failed to update employee shifts to ON_LEAVE for request {}: {}",
+                                        timeOffRequest.getRequestId(), e.getMessage(), e);
+                        // Don't fail the entire transaction, just log the error
+                }
         }
 }

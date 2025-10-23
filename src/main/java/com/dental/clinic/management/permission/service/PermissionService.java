@@ -225,4 +225,50 @@ public class PermissionService {
                         LinkedHashMap::new, // Maintain insertion order
                         Collectors.toList()));
     }
+
+    /**
+     * Get all active permissions grouped by module in simple format (Map<Module,
+     * List<PermissionId>>).
+     * This is useful for frontend display where you only need permission IDs
+     * grouped by module.
+     * Example output:
+     * {
+     * "PATIENT": ["VIEW_PATIENT", "CREATE_PATIENT", "EDIT_PATIENT"],
+     * "APPOINTMENT": ["VIEW_APPOINTMENT", "CREATE_APPOINTMENT"],
+     * ...
+     * }
+     *
+     * @return Map of module name to list of permission IDs
+     */
+    @PreAuthorize("hasRole('" + ADMIN + "')")
+    @Transactional(readOnly = true)
+    public Map<String, List<String>> getPermissionsGroupedByModuleSimple() {
+        List<Permission> permissions = permissionRepository.findAllActivePermissions();
+
+        // Group by module and maintain order
+        return permissions.stream()
+                .sorted((p1, p2) -> {
+                    // Sort by module first, then by displayOrder
+                    int moduleCompare = p1.getModule().compareTo(p2.getModule());
+                    if (moduleCompare != 0)
+                        return moduleCompare;
+
+                    // If both have displayOrder, compare them
+                    if (p1.getDisplayOrder() != null && p2.getDisplayOrder() != null) {
+                        return p1.getDisplayOrder().compareTo(p2.getDisplayOrder());
+                    }
+                    // If only one has displayOrder, prioritize it
+                    if (p1.getDisplayOrder() != null)
+                        return -1;
+                    if (p2.getDisplayOrder() != null)
+                        return 1;
+
+                    // If neither has displayOrder, sort by permission ID
+                    return p1.getPermissionId().compareTo(p2.getPermissionId());
+                })
+                .collect(Collectors.groupingBy(
+                        Permission::getModule,
+                        LinkedHashMap::new, // Maintain insertion order
+                        Collectors.mapping(Permission::getPermissionId, Collectors.toList())));
+    }
 }

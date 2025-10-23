@@ -29,6 +29,13 @@ public class TimeOffType {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
+    @Column(name = "requires_balance", nullable = false)
+    @Builder.Default
+    private Boolean requiresBalance = false; // true if this type requires balance tracking
+
+    @Column(name = "default_days_per_year")
+    private Double defaultDaysPerYear; // Default number of days allocated per year (e.g., 12 for annual leave)
+
     @Column(name = "is_paid", nullable = false)
     @Builder.Default
     private Boolean isPaid = true; // true = có lương, false = không lương

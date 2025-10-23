@@ -7,6 +7,7 @@ import com.dental.clinic.management.exception.overtime.InvalidStateTransitionExc
 import com.dental.clinic.management.exception.overtime.OvertimeRequestNotFoundException;
 import com.dental.clinic.management.exception.overtime.RelatedResourceNotFoundException;
 import com.dental.clinic.management.utils.security.SecurityUtil;
+import com.dental.clinic.management.working_schedule.domain.EmployeeShift;
 import com.dental.clinic.management.working_schedule.domain.OvertimeRequest;
 import com.dental.clinic.management.working_schedule.domain.WorkShift;
 import com.dental.clinic.management.working_schedule.dto.request.CreateOvertimeRequestDTO;
@@ -14,7 +15,10 @@ import com.dental.clinic.management.working_schedule.dto.request.UpdateOvertimeS
 import com.dental.clinic.management.working_schedule.dto.response.OvertimeRequestDetailResponse;
 import com.dental.clinic.management.working_schedule.dto.response.OvertimeRequestListResponse;
 import com.dental.clinic.management.working_schedule.enums.RequestStatus;
+import com.dental.clinic.management.working_schedule.enums.ShiftSource;
+import com.dental.clinic.management.working_schedule.enums.ShiftStatus;
 import com.dental.clinic.management.working_schedule.mapper.OvertimeRequestMapper;
+import com.dental.clinic.management.working_schedule.repository.EmployeeShiftRepository;
 import com.dental.clinic.management.working_schedule.repository.OvertimeRequestRepository;
 import com.dental.clinic.management.working_schedule.repository.WorkShiftRepository;
 import lombok.RequiredArgsConstructor;
@@ -43,6 +47,7 @@ public class OvertimeRequestService {
     private final EmployeeRepository employeeRepository;
     private final WorkShiftRepository workShiftRepository;
     private final OvertimeRequestMapper overtimeRequestMapper;
+    private final EmployeeShiftRepository employeeShiftRepository;
 
     /**
      * Get all overtime requests with pagination and optional filtering.
@@ -239,9 +244,8 @@ public class OvertimeRequestService {
 
         log.info("Overtime request {} approved by employee {}", request.getRequestId(), approvedBy.getEmployeeId());
 
-        // TODO: Auto-create EmployeeShift record (will be implemented when
-        // EmployeeShift entity exists)
-        // createEmployeeShiftFromOvertimeApproval(request);
+        // Auto-create EmployeeShift record for overtime
+        createEmployeeShiftFromOvertimeApproval(request);
     }
 
     /**
@@ -309,19 +313,49 @@ public class OvertimeRequestService {
                         "Người dùng hiện tại không phải là nhân viên."));
     }
 
-    // TODO: Implement when EmployeeShift entity is available
-    // /**
-    // * Auto-create EmployeeShift record when overtime is approved.
-    // */
-    // private void createEmployeeShiftFromOvertimeApproval(OvertimeRequest request)
-    // {
-    // EmployeeShift employeeShift = new EmployeeShift();
-    // employeeShift.setEmployee(request.getEmployee());
-    // employeeShift.setWorkDate(request.getWorkDate());
-    // employeeShift.setWorkShift(request.getWorkShift());
-    // employeeShift.setIsOvertime(true);
-    // employeeShift.setSource(EmployeeShiftsSource.OT_APPROVAL);
-    // employeeShift.setSourceOtRequestId(request.getRequestId());
-    // employeeShiftRepository.save(employeeShift);
-    // }
+    /**
+     * Auto-create EmployeeShift record when overtime is approved.
+     * This creates the actual scheduled shift for the overtime work.
+     *
+     * @param request the approved overtime request
+     */
+    private void createEmployeeShiftFromOvertimeApproval(OvertimeRequest request) {
+        try {
+            // Check if shift already exists to avoid duplicates
+            boolean exists = employeeShiftRepository.existsByEmployeeAndDateAndShift(
+                    request.getEmployee().getEmployeeId(),
+                    request.getWorkDate(),
+                    request.getWorkShift().getWorkShiftId());
+
+            if (exists) {
+                log.warn("EmployeeShift already exists for employee {} on {} shift {}. Skipping creation.",
+                        request.getEmployee().getEmployeeId(), request.getWorkDate(),
+                        request.getWorkShift().getWorkShiftId());
+                return;
+            }
+
+            // Create new employee shift
+            EmployeeShift employeeShift = new EmployeeShift();
+            employeeShift.setEmployee(request.getEmployee());
+            employeeShift.setWorkDate(request.getWorkDate());
+            employeeShift.setWorkShift(request.getWorkShift());
+            employeeShift.setSource(ShiftSource.OVERTIME); // Mark as overtime source
+            employeeShift.setStatus(ShiftStatus.SCHEDULED);
+            employeeShift.setNotes(String.format("Tạo từ yêu cầu OT %s - %s",
+                    request.getRequestId(), request.getReason()));
+
+            employeeShiftRepository.save(employeeShift);
+
+            log.info("Created EmployeeShift for overtime request {} - Employee {} on {} shift {}",
+                    request.getRequestId(),
+                    request.getEmployee().getEmployeeId(),
+                    request.getWorkDate(),
+                    request.getWorkShift().getWorkShiftId());
+
+        } catch (Exception e) {
+            log.error("Failed to create EmployeeShift for overtime request {}: {}",
+                    request.getRequestId(), e.getMessage(), e);
+            // Don't fail the entire transaction, just log the error
+        }
+    }
 }

@@ -57,17 +57,38 @@ public class MonthlyFullTimeScheduleJob {
         log.info("Creating schedule for: {}", nextMonth);
 
         try {
+            // VALIDATION: Check if work shifts exist
+            long workShiftCount = workShiftRepository.count();
+            if (workShiftCount == 0) {
+                log.error("No work shifts found in database. Cannot create schedule.");
+                return;
+            }
+            log.info("Validation passed: {} work shifts available", workShiftCount);
+
             // 1. Get all active full-time employees
             List<Employee> fullTimeEmployees = employeeRepository
                     .findByEmploymentTypeAndIsActive(EmploymentType.FULL_TIME, true);
 
             log.info("Found {} active full-time employees", fullTimeEmployees.size());
 
-            // 2. Get morning and afternoon shifts
+            if (fullTimeEmployees.isEmpty()) {
+                log.info("No full-time employees found. Job completed with no actions.");
+                return;
+            }
+
+            // VALIDATION: Get and validate required shifts
             WorkShift morningShift = workShiftRepository.findById("SLOT_MORNING")
-                    .orElseThrow(() -> new RuntimeException("SLOT_MORNING not found"));
+                    .orElse(null);
             WorkShift afternoonShift = workShiftRepository.findById("SLOT_AFTERNOON")
-                    .orElseThrow(() -> new RuntimeException("SLOT_AFTERNOON not found"));
+                    .orElse(null);
+
+            if (morningShift == null || afternoonShift == null) {
+                log.error("Required shifts not found. Morning: {}, Afternoon: {}",
+                        morningShift != null, afternoonShift != null);
+                throw new RuntimeException("SLOT_MORNING or SLOT_AFTERNOON not found in database");
+            }
+
+            log.info("Validation passed: Morning and Afternoon shifts found");
 
             // 3. Get holidays for next month
             LocalDate monthStart = nextMonth.atDay(1);
@@ -80,61 +101,77 @@ public class MonthlyFullTimeScheduleJob {
 
             // 4. Create shifts for each employee
             int totalShiftsCreated = 0;
+            int skippedDueToErrors = 0;
             List<EmployeeShift> shiftsToSave = new ArrayList<>();
 
             for (Employee employee : fullTimeEmployees) {
-                int employeeShifts = 0;
-
-                // Loop through all days of next month
-                for (int day = 1; day <= nextMonth.lengthOfMonth(); day++) {
-                    LocalDate workDate = nextMonth.atDay(day);
-
-                    // Skip weekends
-                    DayOfWeek dayOfWeek = workDate.getDayOfWeek();
-                    if (dayOfWeek == DayOfWeek.SATURDAY || dayOfWeek == DayOfWeek.SUNDAY) {
+                try {
+                    // VALIDATION: Check if employee has valid ID
+                    if (employee.getEmployeeId() == null) {
+                        log.warn("Employee has null ID. Skipping.");
+                        skippedDueToErrors++;
                         continue;
                     }
 
-                    // Skip holidays
-                    if (holidays.contains(workDate)) {
-                        log.debug("Skipping holiday: {}", workDate);
-                        continue;
+                    int employeeShifts = 0;
+
+                    // Loop through all days of next month
+                    for (int day = 1; day <= nextMonth.lengthOfMonth(); day++) {
+                        LocalDate workDate = nextMonth.atDay(day);
+
+                        // Skip weekends
+                        DayOfWeek dayOfWeek = workDate.getDayOfWeek();
+                        if (dayOfWeek == DayOfWeek.SATURDAY || dayOfWeek == DayOfWeek.SUNDAY) {
+                            continue;
+                        }
+
+                        // Skip holidays
+                        if (holidays.contains(workDate)) {
+                            continue;
+                        }
+
+                        // VALIDATION: Create morning shift (check for duplicates)
+                        if (!shiftRepository.existsByEmployeeAndDateAndShift(
+                                employee.getEmployeeId(), workDate, morningShift.getWorkShiftId())) {
+
+                            EmployeeShift morningShiftEntity = new EmployeeShift();
+                            morningShiftEntity.setEmployee(employee);
+                            morningShiftEntity.setWorkDate(workDate);
+                            morningShiftEntity.setWorkShift(morningShift);
+                            morningShiftEntity.setSource(ShiftSource.BATCH_JOB);
+                            morningShiftEntity.setStatus(ShiftStatus.SCHEDULED);
+
+                            shiftsToSave.add(morningShiftEntity);
+                            employeeShifts++;
+                        }
+
+                        // VALIDATION: Create afternoon shift (check for duplicates)
+                        if (!shiftRepository.existsByEmployeeAndDateAndShift(
+                                employee.getEmployeeId(), workDate, afternoonShift.getWorkShiftId())) {
+
+                            EmployeeShift afternoonShiftEntity = new EmployeeShift();
+                            afternoonShiftEntity.setEmployee(employee);
+                            afternoonShiftEntity.setWorkDate(workDate);
+                            afternoonShiftEntity.setWorkShift(afternoonShift);
+                            afternoonShiftEntity.setSource(ShiftSource.BATCH_JOB);
+                            afternoonShiftEntity.setStatus(ShiftStatus.SCHEDULED);
+
+                            shiftsToSave.add(afternoonShiftEntity);
+                            employeeShifts++;
+                        }
                     }
 
-                    // Create morning shift
-                    if (!shiftRepository.existsByEmployeeAndDateAndShift(
-                            employee.getEmployeeId(), workDate, morningShift.getWorkShiftId())) {
-
-                        EmployeeShift morningShiftEntity = new EmployeeShift();
-                        morningShiftEntity.setEmployee(employee);
-                        morningShiftEntity.setWorkDate(workDate);
-                        morningShiftEntity.setWorkShift(morningShift);
-                        morningShiftEntity.setSource(ShiftSource.BATCH_JOB);
-                        morningShiftEntity.setStatus(ShiftStatus.SCHEDULED);
-
-                        shiftsToSave.add(morningShiftEntity);
-                        employeeShifts++;
+                    if (employeeShifts > 0) {
+                        log.info("Prepared {} shifts for employee {} ({})",
+                                employeeShifts, employee.getEmployeeId(), employee.getFullName());
+                        totalShiftsCreated += employeeShifts;
                     }
 
-                    // Create afternoon shift
-                    if (!shiftRepository.existsByEmployeeAndDateAndShift(
-                            employee.getEmployeeId(), workDate, afternoonShift.getWorkShiftId())) {
-
-                        EmployeeShift afternoonShiftEntity = new EmployeeShift();
-                        afternoonShiftEntity.setEmployee(employee);
-                        afternoonShiftEntity.setWorkDate(workDate);
-                        afternoonShiftEntity.setWorkShift(afternoonShift);
-                        afternoonShiftEntity.setSource(ShiftSource.BATCH_JOB);
-                        afternoonShiftEntity.setStatus(ShiftStatus.SCHEDULED);
-
-                        shiftsToSave.add(afternoonShiftEntity);
-                        employeeShifts++;
-                    }
+                } catch (Exception e) {
+                    log.error("Error processing employee {}: {}",
+                            employee.getEmployeeId(), e.getMessage(), e);
+                    skippedDueToErrors++;
                 }
-
-                log.info("Created {} shifts for employee {} ({})",
-                        employeeShifts, employee.getEmployeeId(), employee.getFullName());
-                totalShiftsCreated += employeeShifts;
             }
 
             // 5. Batch save all shifts
@@ -145,6 +182,8 @@ public class MonthlyFullTimeScheduleJob {
 
             log.info("=== Monthly Full-Time Schedule Job Completed ===");
             log.info("Total shifts created: {}", totalShiftsCreated);
+            log.info("Employees processed: {}", fullTimeEmployees.size());
+            log.info("Employees skipped due to errors: {}", skippedDueToErrors);
 
         } catch (Exception e) {
             log.error("Error in Monthly Full-Time Schedule Job", e);

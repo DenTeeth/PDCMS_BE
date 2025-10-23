@@ -48,19 +48,47 @@ public class DailyRenewalDetectionJob {
         log.info("Looking for registrations expiring on: {}", expiryDate);
 
         try {
+            // VALIDATION: Check if registration repository is accessible
+            long totalRegistrations = registrationRepository.count();
+            log.info("Validation passed: {} total registrations in database", totalRegistrations);
+
+            if (totalRegistrations == 0) {
+                log.info("No registrations found in database. Job completed with no actions.");
+                return;
+            }
+
             // 1. Find registrations expiring in 7 days
             List<EmployeeShiftRegistration> expiringRegistrations = registrationRepository
                     .findRegistrationsExpiringOn(expiryDate);
 
             log.info("Found {} registrations expiring on {}", expiringRegistrations.size(), expiryDate);
 
+            if (expiringRegistrations.isEmpty()) {
+                log.info("No expiring registrations found. Job completed successfully.");
+                return;
+            }
+
             // 2. Create renewal requests for each
             int renewalsCreated = 0;
-            int skipped = 0;
+            int skippedAlreadyExists = 0;
+            int skippedDueToErrors = 0;
 
             for (EmployeeShiftRegistration registration : expiringRegistrations) {
                 try {
+                    // VALIDATION: Check if registration has valid ID
                     String registrationId = registration.getRegistrationId();
+                    if (registrationId == null || registrationId.isBlank()) {
+                        log.warn("Registration has invalid ID. Skipping.");
+                        skippedDueToErrors++;
+                        continue;
+                    }
+
+                    // VALIDATION: Check if employee ID exists
+                    if (registration.getEmployeeId() == null) {
+                        log.warn("Registration {} has no employee ID. Skipping.", registrationId);
+                        skippedDueToErrors++;
+                        continue;
+                    }
 
                     // Check if renewal already exists
                     boolean alreadyExists = renewalRepository.existsByRegistrationIdAndStatus(
@@ -68,8 +96,8 @@ public class DailyRenewalDetectionJob {
                             RenewalStatus.PENDING_ACTION);
 
                     if (alreadyExists) {
-                        log.debug("Renewal already exists for registration {}", registrationId);
-                        skipped++;
+                        log.debug("Renewal already exists for registration {}. Skipping.", registrationId);
+                        skippedAlreadyExists++;
                         continue;
                     }
 
@@ -82,13 +110,16 @@ public class DailyRenewalDetectionJob {
 
                 } catch (Exception e) {
                     log.error("Failed to create renewal for registration {}: {}",
-                            registration.getRegistrationId(), e.getMessage());
-                    skipped++;
+                            registration.getRegistrationId(), e.getMessage(), e);
+                    skippedDueToErrors++;
                 }
             }
 
             log.info("=== Daily Renewal Detection Job Completed ===");
-            log.info("Renewals created: {}, Skipped: {}", renewalsCreated, skipped);
+            log.info("Total expiring registrations: {}", expiringRegistrations.size());
+            log.info("Renewals created: {}", renewalsCreated);
+            log.info("Skipped (already exists): {}", skippedAlreadyExists);
+            log.info("Skipped (errors): {}", skippedDueToErrors);
 
         } catch (Exception e) {
             log.error("Error in Daily Renewal Detection Job", e);

@@ -10,6 +10,8 @@ import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 import java.util.Set;
 
+import com.dental.clinic.management.employee.enums.EmploymentType;
+
 /**
  * DTO for replacing (full update) an existing employee via PUT request
  * All fields are REQUIRED - this replaces the entire employee resource
@@ -39,6 +41,9 @@ public class ReplaceEmployeeRequest {
     @Size(max = 500, message = "Address must not exceed 500 characters")
     private String address;
 
+    @NotNull(message = "Employment type is required")
+    private EmploymentType employmentType;
+
     @NotNull(message = "isActive status is required")
     private Boolean isActive;
 
@@ -49,13 +54,15 @@ public class ReplaceEmployeeRequest {
     }
 
     public ReplaceEmployeeRequest(String roleId, String firstName, String lastName, String phone,
-            LocalDate dateOfBirth, String address, Boolean isActive, Set<Integer> specializationIds) {
+            LocalDate dateOfBirth, String address, EmploymentType employmentType, Boolean isActive,
+            Set<Integer> specializationIds) {
         this.roleId = roleId;
         this.firstName = firstName;
         this.lastName = lastName;
         this.phone = phone;
         this.dateOfBirth = dateOfBirth;
         this.address = address;
+        this.employmentType = employmentType;
         this.isActive = isActive;
         this.specializationIds = specializationIds;
     }
@@ -125,6 +132,14 @@ public class ReplaceEmployeeRequest {
         this.specializationIds = specializationIds;
     }
 
+    public EmploymentType getEmploymentType() {
+        return employmentType;
+    }
+
+    public void setEmploymentType(EmploymentType employmentType) {
+        this.employmentType = employmentType;
+    }
+
     @Override
     public String toString() {
         return "ReplaceEmployeeRequest{" +
@@ -134,6 +149,7 @@ public class ReplaceEmployeeRequest {
                 ", phone='" + phone + '\'' +
                 ", dateOfBirth=" + dateOfBirth +
                 ", address='" + address + '\'' +
+                ", employmentType=" + employmentType +
                 ", isActive=" + isActive +
                 ", specializationIds=" + specializationIds +
                 '}';

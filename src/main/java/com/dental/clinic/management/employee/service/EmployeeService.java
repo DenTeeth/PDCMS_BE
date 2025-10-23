@@ -304,6 +304,7 @@ public class EmployeeService {
         employee.setPhone(request.getPhone());
         employee.setDateOfBirth(request.getDateOfBirth());
         employee.setAddress(request.getAddress());
+        employee.setEmploymentType(request.getEmploymentType()); // Set employment type
         employee.setIsActive(true);
         employee.setCreatedAt(java.time.LocalDateTime.now());
 
@@ -378,6 +379,10 @@ public class EmployeeService {
             employee.setAddress(request.getAddress());
         }
 
+        if (request.getEmploymentType() != null) {
+            employee.setEmploymentType(request.getEmploymentType());
+        }
+
         if (request.getIsActive() != null) {
             employee.setIsActive(request.getIsActive());
         }
@@ -434,6 +439,7 @@ public class EmployeeService {
         employee.setPhone(request.getPhone());
         employee.setDateOfBirth(request.getDateOfBirth());
         employee.setAddress(request.getAddress());
+        employee.setEmploymentType(request.getEmploymentType()); // Set employment type
         employee.setIsActive(request.getIsActive());
 
         // Replace specializations

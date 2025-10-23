@@ -45,6 +45,11 @@ public interface TimeOffTypeRepository extends JpaRepository<TimeOffType, String
     List<TimeOffType> findByIsActiveTrue();
 
     /**
+     * Find all active time-off types that require balance tracking
+     */
+    List<TimeOffType> findByIsActiveTrueAndRequiresBalanceTrue();
+
+    /**
      * Find all time-off types filtered by active status
      */
     List<TimeOffType> findByIsActive(Boolean isActive);
