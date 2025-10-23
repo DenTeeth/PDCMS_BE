@@ -9,7 +9,7 @@ import java.util.Set;
 
 /**
  * BaseRole entity - 3 loại vai trò cơ bản: admin, employee, patient.
- * Xác định layout FE và default home path.
+ * Xác định layout FE - FE tự xử lý routing.
  */
 @Entity
 @Table(name = "base_roles")
@@ -23,10 +23,6 @@ public class BaseRole {
     @NotBlank
     @Column(name = "base_role_name", unique = true, nullable = false, length = 50)
     private String baseRoleName; // 'admin', 'employee', 'patient'
-
-    @NotBlank
-    @Column(name = "default_home_path", nullable = false, length = 255)
-    private String defaultHomePath; // '/admin/dashboard', '/app/dashboard', '/patient/dashboard'
 
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
@@ -47,9 +43,8 @@ public class BaseRole {
     public BaseRole() {
     }
 
-    public BaseRole(String baseRoleName, String defaultHomePath, String description) {
+    public BaseRole(String baseRoleName, String description) {
         this.baseRoleName = baseRoleName;
-        this.defaultHomePath = defaultHomePath;
         this.description = description;
         this.isActive = true;
     }
@@ -69,14 +64,6 @@ public class BaseRole {
 
     public void setBaseRoleName(String baseRoleName) {
         this.baseRoleName = baseRoleName;
-    }
-
-    public String getDefaultHomePath() {
-        return defaultHomePath;
-    }
-
-    public void setDefaultHomePath(String defaultHomePath) {
-        this.defaultHomePath = defaultHomePath;
     }
 
     public String getDescription() {
@@ -149,7 +136,6 @@ public class BaseRole {
         return "BaseRole{" +
                 "baseRoleId=" + baseRoleId +
                 ", baseRoleName='" + baseRoleName + '\'' +
-                ", defaultHomePath='" + defaultHomePath + '\'' +
                 ", isActive=" + isActive +
                 '}';
     }

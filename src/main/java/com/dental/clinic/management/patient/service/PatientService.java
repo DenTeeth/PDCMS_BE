@@ -3,7 +3,9 @@ package com.dental.clinic.management.patient.service;
 import com.dental.clinic.management.exception.BadRequestAlertException;
 import com.dental.clinic.management.account.enums.AccountStatus;
 import com.dental.clinic.management.account.domain.Account;
+import com.dental.clinic.management.account.domain.AccountVerificationToken;
 import com.dental.clinic.management.account.repository.AccountRepository;
+import com.dental.clinic.management.account.repository.AccountVerificationTokenRepository;
 import com.dental.clinic.management.patient.domain.Patient;
 import com.dental.clinic.management.patient.dto.request.CreatePatientRequest;
 import com.dental.clinic.management.patient.dto.request.ReplacePatientRequest;
@@ -11,6 +13,7 @@ import com.dental.clinic.management.patient.dto.request.UpdatePatientRequest;
 import com.dental.clinic.management.patient.dto.response.PatientInfoResponse;
 import com.dental.clinic.management.patient.mapper.PatientMapper;
 import com.dental.clinic.management.patient.repository.PatientRepository;
+import com.dental.clinic.management.utils.EmailService;
 import com.dental.clinic.management.utils.SequentialCodeGenerator;
 
 import org.slf4j.Logger;
@@ -39,18 +42,24 @@ public class PatientService {
     private final AccountRepository accountRepository;
     private final PasswordEncoder passwordEncoder;
     private final SequentialCodeGenerator codeGenerator;
+    private final AccountVerificationTokenRepository verificationTokenRepository;
+    private final EmailService emailService;
 
     public PatientService(
             PatientRepository patientRepository,
             PatientMapper patientMapper,
             AccountRepository accountRepository,
             PasswordEncoder passwordEncoder,
-            SequentialCodeGenerator codeGenerator) {
+            SequentialCodeGenerator codeGenerator,
+            AccountVerificationTokenRepository verificationTokenRepository,
+            EmailService emailService) {
         this.patientRepository = patientRepository;
         this.patientMapper = patientMapper;
         this.accountRepository = accountRepository;
         this.passwordEncoder = passwordEncoder;
         this.codeGenerator = codeGenerator;
+        this.verificationTokenRepository = verificationTokenRepository;
+        this.emailService = emailService;
     }
 
     /**
@@ -200,18 +209,28 @@ public class PatientService {
                         "emailexists");
             }
 
-            // Create account for patient
+            // Create account for patient (NEW accounts require email verification)
             account = new Account();
             account.setUsername(request.getUsername());
             account.setEmail(request.getEmail());
             account.setPassword(passwordEncoder.encode(request.getPassword()));
-            account.setStatus(AccountStatus.ACTIVE);
+            account.setStatus(AccountStatus.PENDING_VERIFICATION); // NEW: Require email verification
+            account.setMustChangePassword(true); // Force password change on first login
             account.setCreatedAt(java.time.LocalDateTime.now());
 
             account = accountRepository.save(account);
             account.setAccountCode(codeGenerator.generateAccountCode(account.getAccountId()));
             account = accountRepository.save(account);
-            log.info("Created account with ID: {} and code: {} for patient", account.getAccountId(), account.getAccountCode());
+            log.info("Created account with ID: {} and code: {} for patient (PENDING_VERIFICATION)",
+                    account.getAccountId(), account.getAccountCode());
+
+            // Create and send verification token
+            AccountVerificationToken verificationToken = new AccountVerificationToken(account);
+            verificationTokenRepository.save(verificationToken);
+
+            // Send verification email asynchronously
+            emailService.sendVerificationEmail(account.getEmail(), account.getUsername(), verificationToken.getToken());
+            log.info("✅ Verification email sent to: {}", account.getEmail());
         } else {
             log.debug("Creating patient without account (no username/password provided)");
         }
@@ -229,7 +248,7 @@ public class PatientService {
 
         // Save to get auto-generated ID
         Patient savedPatient = patientRepository.save(patient);
-        
+
         // Generate and set code
         savedPatient.setPatientCode(codeGenerator.generatePatientCode(savedPatient.getPatientId()));
         savedPatient = patientRepository.save(savedPatient);

@@ -8,7 +8,6 @@ public class PermissionHierarchyDTO {
 
     private String permissionId;
     private String permissionName;
-    private String path; // Navigation path (nullable)
     private Integer displayOrder;
     private String parentPermissionId; // Parent permission ID (nullable)
 
@@ -19,11 +18,10 @@ public class PermissionHierarchyDTO {
     public PermissionHierarchyDTO() {
     }
 
-    public PermissionHierarchyDTO(String permissionId, String permissionName, String path,
+    public PermissionHierarchyDTO(String permissionId, String permissionName,
             Integer displayOrder, String parentPermissionId) {
         this.permissionId = permissionId;
         this.permissionName = permissionName;
-        this.path = path;
         this.displayOrder = displayOrder;
         this.parentPermissionId = parentPermissionId;
         this.selectionLevel = "NONE";
@@ -44,14 +42,6 @@ public class PermissionHierarchyDTO {
 
     public void setPermissionName(String permissionName) {
         this.permissionName = permissionName;
-    }
-
-    public String getPath() {
-        return path;
-    }
-
-    public void setPath(String path) {
-        this.path = path;
     }
 
     public Integer getDisplayOrder() {

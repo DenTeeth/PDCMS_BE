@@ -27,17 +27,11 @@ public class LoginResponse {
     // Grouped permissions by module for efficient FE processing
     private Map<String, List<String>> groupedPermissions;
 
-    // Base role for FE layout selection
-    private String baseRole; // 'admin', 'employee', or 'patient'
-
-    // Home path for redirect after login
-    private String homePath;
-
-    // Sidebar structure grouped by module
-    private Map<String, List<SidebarItemDTO>> sidebar;
-
     // Employee-specific info
     private EmploymentType employmentType; // FULL_TIME or PART_TIME
+
+    // Password change requirement (for email verification flow)
+    private Boolean mustChangePassword;
 
     public LoginResponse() {
     }
@@ -118,30 +112,6 @@ public class LoginResponse {
         this.permissions = permissions;
     }
 
-    public String getBaseRole() {
-        return baseRole;
-    }
-
-    public void setBaseRole(String baseRole) {
-        this.baseRole = baseRole;
-    }
-
-    public String getHomePath() {
-        return homePath;
-    }
-
-    public void setHomePath(String homePath) {
-        this.homePath = homePath;
-    }
-
-    public Map<String, List<SidebarItemDTO>> getSidebar() {
-        return sidebar;
-    }
-
-    public void setSidebar(Map<String, List<SidebarItemDTO>> sidebar) {
-        this.sidebar = sidebar;
-    }
-
     public EmploymentType getEmploymentType() {
         return employmentType;
     }
@@ -156,5 +126,13 @@ public class LoginResponse {
 
     public void setGroupedPermissions(Map<String, List<String>> groupedPermissions) {
         this.groupedPermissions = groupedPermissions;
+    }
+
+    public Boolean getMustChangePassword() {
+        return mustChangePassword;
+    }
+
+    public void setMustChangePassword(Boolean mustChangePassword) {
+        this.mustChangePassword = mustChangePassword;
     }
 }

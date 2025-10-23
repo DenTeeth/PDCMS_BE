@@ -21,14 +21,10 @@ public class MeResponse {
 
     // Role information
     private String role; // Single role name (e.g., ROLE_DOCTOR)
-    private String baseRole; // Base role type: 'admin', 'employee', or 'patient'
-
-    // Navigation
-    private String homePath; // Where to redirect after login
-    private Map<String, List<SidebarItemDTO>> sidebar; // Sidebar menu structure
 
     // Permissions
     private List<String> permissions; // All permission IDs
+    private Map<String, List<String>> groupedPermissions; // Permissions grouped by module
 
     // Employee-specific fields
     private String fullName;
@@ -82,36 +78,20 @@ public class MeResponse {
         this.role = role;
     }
 
-    public String getBaseRole() {
-        return baseRole;
-    }
-
-    public void setBaseRole(String baseRole) {
-        this.baseRole = baseRole;
-    }
-
-    public String getHomePath() {
-        return homePath;
-    }
-
-    public void setHomePath(String homePath) {
-        this.homePath = homePath;
-    }
-
-    public Map<String, List<SidebarItemDTO>> getSidebar() {
-        return sidebar;
-    }
-
-    public void setSidebar(Map<String, List<SidebarItemDTO>> sidebar) {
-        this.sidebar = sidebar;
-    }
-
     public List<String> getPermissions() {
         return permissions;
     }
 
     public void setPermissions(List<String> permissions) {
         this.permissions = permissions;
+    }
+
+    public Map<String, List<String>> getGroupedPermissions() {
+        return groupedPermissions;
+    }
+
+    public void setGroupedPermissions(Map<String, List<String>> groupedPermissions) {
+        this.groupedPermissions = groupedPermissions;
     }
 
     public String getFullName() {

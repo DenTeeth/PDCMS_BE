@@ -62,6 +62,12 @@ public class Account {
     @Column(name = "status")
     private AccountStatus status = AccountStatus.ACTIVE;
 
+    @Column(name = "must_change_password")
+    private Boolean mustChangePassword = false;
+
+    @Column(name = "password_changed_at")
+    private LocalDateTime passwordChangedAt;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -138,6 +144,22 @@ public class Account {
 
     public void setStatus(AccountStatus status) {
         this.status = status;
+    }
+
+    public Boolean getMustChangePassword() {
+        return mustChangePassword;
+    }
+
+    public void setMustChangePassword(Boolean mustChangePassword) {
+        this.mustChangePassword = mustChangePassword;
+    }
+
+    public LocalDateTime getPasswordChangedAt() {
+        return passwordChangedAt;
+    }
+
+    public void setPasswordChangedAt(LocalDateTime passwordChangedAt) {
+        this.passwordChangedAt = passwordChangedAt;
     }
 
     public LocalDateTime getCreatedAt() {

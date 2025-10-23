@@ -40,15 +40,15 @@ public interface PermissionRepository extends JpaRepository<Permission, String> 
     Set<String> findAllPermissionIdsByRoleId(@Param("roleId") String roleId);
 
     /**
-     * Get sidebar permissions for a given role (only permissions with path !=
-     * null).
+     * Get sidebar permissions for a given role.
      * Results are ordered by module and display_order.
+     * Note: path field has been removed - FE handles routing independently.
      *
      * @param roleId the role ID
      * @return list of permissions for sidebar
      */
     @Query("SELECT p FROM Permission p JOIN p.roles r " +
-            "WHERE r.roleId = :roleId AND p.path IS NOT NULL " +
+            "WHERE r.roleId = :roleId AND p.isActive = true " +
             "ORDER BY p.module, p.displayOrder")
     List<Permission> findSidebarPermissionsByRoleId(@Param("roleId") String roleId);
 }

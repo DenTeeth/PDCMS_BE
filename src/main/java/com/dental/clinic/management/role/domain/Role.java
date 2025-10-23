@@ -42,11 +42,6 @@ public class Role {
     @JoinColumn(name = "base_role_id", nullable = false)
     private BaseRole baseRole;
 
-    // Optional: Override home path (nullable, use baseRole.defaultHomePath if null)
-    @Size(max = 255)
-    @Column(name = "home_path_override", length = 255)
-    private String homePathOverride;
-
     @Column(name = "requires_specialization")
     private Boolean requiresSpecialization = false;
 
@@ -106,22 +101,6 @@ public class Role {
 
     public void setBaseRole(BaseRole baseRole) {
         this.baseRole = baseRole;
-    }
-
-    public String getHomePathOverride() {
-        return homePathOverride;
-    }
-
-    public void setHomePathOverride(String homePathOverride) {
-        this.homePathOverride = homePathOverride;
-    }
-
-    /**
-     * Get effective home path: use override if exists, otherwise use base role's
-     * default.
-     */
-    public String getEffectiveHomePath() {
-        return homePathOverride != null ? homePathOverride : baseRole.getDefaultHomePath();
     }
 
     public Boolean getRequiresSpecialization() {

@@ -40,15 +40,7 @@ public class Permission {
     private String description;
 
     // --- Sidebar fields ---
-
-    /**
-     * Path for sidebar navigation. NULL = this is an action permission (button),
-     * not a menu item.
-     * Example: '/app/patients', '/app/registrations'
-     */
-    @Size(max = 255)
-    @Column(name = "path", length = 255)
-    private String path;
+    // REMOVED: path field - FE handles routing independently
 
     /**
      * Display order for sorting items within the same module.
@@ -124,14 +116,6 @@ public class Permission {
 
     public void setDescription(String description) {
         this.description = description;
-    }
-
-    public String getPath() {
-        return path;
-    }
-
-    public void setPath(String path) {
-        this.path = path;
     }
 
     public Integer getDisplayOrder() {

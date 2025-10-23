@@ -160,6 +160,66 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handle AccountNotVerifiedException.
+     * Returns 403 Forbidden.
+     */
+    @ExceptionHandler(AccountNotVerifiedException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleAccountNotVerified(
+            AccountNotVerifiedException ex,
+            HttpServletRequest request) {
+
+        log.warn("Account not verified at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.FORBIDDEN.value());
+        res.setMessage(ex.getMessage());
+        res.setError("error.account.not.verified");
+        res.setData(null);
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(res);
+    }
+
+    /**
+     * Handle TokenExpiredException.
+     * Returns 400 Bad Request.
+     */
+    @ExceptionHandler(TokenExpiredException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleTokenExpired(
+            TokenExpiredException ex,
+            HttpServletRequest request) {
+
+        log.warn("Token expired at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.BAD_REQUEST.value());
+        res.setMessage(ex.getMessage());
+        res.setError("error.token.expired");
+        res.setData(null);
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+    }
+
+    /**
+     * Handle InvalidTokenException.
+     * Returns 400 Bad Request.
+     */
+    @ExceptionHandler(InvalidTokenException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleInvalidToken(
+            InvalidTokenException ex,
+            HttpServletRequest request) {
+
+        log.warn("Invalid token at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.BAD_REQUEST.value());
+        res.setMessage(ex.getMessage());
+        res.setError("error.token.invalid");
+        res.setData(null);
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+    }
+
+    /**
      * Fallback handler for any other unexpected exceptions.
      * Returns 500 Internal Server Error.
      */

@@ -196,7 +196,6 @@ public class PermissionService {
                     PermissionHierarchyDTO dto = new PermissionHierarchyDTO();
                     dto.setPermissionId(permission.getPermissionId());
                     dto.setPermissionName(permission.getPermissionName());
-                    dto.setPath(permission.getPath());
                     dto.setDisplayOrder(permission.getDisplayOrder());
 
                     if (permission.getParentPermission() != null) {

@@ -26,9 +26,34 @@ spring:
   sql:
     init:
       mode: always
-      data-locations: classpath:db/dental-clinic-seed-data_postgres.sql
+      data-locations: classpath:db/dental-clinic-seed-data_postgres_v2.sql
       encoding: UTF-8
       continue-on-error: true
+
+  # ==============================
+  # Mail Configuration (Email Verification & Password Reset)
+  # ==============================
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME:dentalclinicPDCMS@gmail.com}
+    password: ${MAIL_PASSWORD:mit-to-bit-viet-nam}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
+# ==============================
+# Application Configuration
+# ==============================
+app:
+  frontend-url: ${FRONTEND_URL:http://localhost:3000}
 
 # ==============================
 # Custom JWT Configuration

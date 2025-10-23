@@ -88,14 +88,16 @@ public class SidebarService {
         for (Map.Entry<String, List<Permission>> entry : groupedByModule.entrySet()) {
             String moduleName = entry.getKey();
 
+            // Path field removed - FE handles routing independently
             List<SidebarItemDTO> items = entry.getValue().stream()
-                    .map(p -> new SidebarItemDTO(p.getPermissionName(), p.getPath()))
+                    .map(p -> new SidebarItemDTO(p.getPermissionName(), null))
                     .collect(Collectors.toList());
 
             finalSidebar.put(moduleName, items);
         }
 
-        log.debug("Generated sidebar with {} modules", finalSidebar.size());
+        log.debug("Generated sidebar with {} modules - Note: path field deprecated, FE handles routing",
+                finalSidebar.size());
         return finalSidebar;
     }
 }

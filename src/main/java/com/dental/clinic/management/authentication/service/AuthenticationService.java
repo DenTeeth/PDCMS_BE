@@ -3,6 +3,7 @@ package com.dental.clinic.management.authentication.service;
 
 import java.security.MessageDigest;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -11,14 +12,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.dental.clinic.management.account.domain.Account;
+import com.dental.clinic.management.account.domain.AccountVerificationToken;
+import com.dental.clinic.management.account.domain.PasswordResetToken;
 import com.dental.clinic.management.account.dto.response.UserInfoResponse;
 import com.dental.clinic.management.account.dto.response.UserPermissionsResponse;
 import com.dental.clinic.management.account.dto.response.UserProfileResponse;
 import com.dental.clinic.management.account.dto.response.MeResponse;
+import com.dental.clinic.management.account.enums.AccountStatus;
 import com.dental.clinic.management.account.repository.AccountRepository;
+import com.dental.clinic.management.account.repository.AccountVerificationTokenRepository;
+import com.dental.clinic.management.account.repository.PasswordResetTokenRepository;
 import com.dental.clinic.management.authentication.dto.SidebarItemDTO;
 import com.dental.clinic.management.authentication.dto.request.LoginRequest;
 import com.dental.clinic.management.authentication.dto.request.RefreshTokenRequest;
@@ -27,8 +34,12 @@ import com.dental.clinic.management.authentication.dto.response.RefreshTokenResp
 import com.dental.clinic.management.authentication.repository.RefreshTokenRepository;
 import com.dental.clinic.management.employee.domain.Employee;
 import com.dental.clinic.management.exception.AccountNotFoundException;
+import com.dental.clinic.management.exception.AccountNotVerifiedException;
+import com.dental.clinic.management.exception.InvalidTokenException;
+import com.dental.clinic.management.exception.TokenExpiredException;
 import com.dental.clinic.management.permission.domain.Permission;
 import com.dental.clinic.management.role.domain.Role;
+import com.dental.clinic.management.utils.EmailService;
 import com.dental.clinic.management.utils.security.SecurityUtil;
 
 /**
@@ -49,18 +60,30 @@ public class AuthenticationService {
         private final AccountRepository accountRepository;
         private final RefreshTokenRepository refreshTokenRepository;
         private final SidebarService sidebarService;
+        private final AccountVerificationTokenRepository verificationTokenRepository;
+        private final PasswordResetTokenRepository passwordResetTokenRepository;
+        private final EmailService emailService;
+        private final PasswordEncoder passwordEncoder;
 
         public AuthenticationService(
                         AuthenticationManager authenticationManager,
                         SecurityUtil securityUtil,
                         AccountRepository accountRepository,
                         RefreshTokenRepository refreshTokenRepository,
-                        SidebarService sidebarService) {
+                        SidebarService sidebarService,
+                        AccountVerificationTokenRepository verificationTokenRepository,
+                        PasswordResetTokenRepository passwordResetTokenRepository,
+                        EmailService emailService,
+                        PasswordEncoder passwordEncoder) {
                 this.authenticationManager = authenticationManager;
                 this.securityUtil = securityUtil;
                 this.accountRepository = accountRepository;
                 this.refreshTokenRepository = refreshTokenRepository;
                 this.sidebarService = sidebarService;
+                this.verificationTokenRepository = verificationTokenRepository;
+                this.passwordResetTokenRepository = passwordResetTokenRepository;
+                this.emailService = emailService;
+                this.passwordEncoder = passwordEncoder;
         }
 
         /**
@@ -84,6 +107,14 @@ public class AuthenticationService {
                                 .orElseThrow(() -> new org.springframework.security.authentication.BadCredentialsException(
                                                 "Account not found"));
 
+                // Check if account is verified (seeded accounts are ACTIVE, new accounts are
+                // PENDING_VERIFICATION)
+                if (account.getStatus() == AccountStatus.PENDING_VERIFICATION) {
+                        log.warn("Login attempt for unverified account: {}", account.getUsername());
+                        throw new AccountNotVerifiedException(
+                                        "Tài khoản chưa được xác thực. Vui lòng kiểm tra email để xác thực tài khoản.");
+                }
+
                 Role role = account.getRole();
                 String roleName = role.getRoleName();
 
@@ -98,13 +129,6 @@ public class AuthenticationService {
                                 .collect(Collectors.groupingBy(
                                                 Permission::getModule,
                                                 Collectors.mapping(Permission::getPermissionId, Collectors.toList())));
-
-                // Generate sidebar for FE
-                Map<String, List<SidebarItemDTO>> sidebar = sidebarService.generateSidebar(role.getRoleId());
-
-                // Get home path: use override if exists, otherwise use base role default
-                String homePath = role.getEffectiveHomePath();
-                String baseRoleName = role.getBaseRole().getBaseRoleName();
 
                 // Tạo JWT token chứa thông tin user
                 String accessToken = securityUtil.createAccessToken(account.getUsername(),
@@ -142,22 +166,23 @@ public class AuthenticationService {
                                 List.of(roleName),
                                 permissionIds);
 
-                response.setBaseRole(baseRoleName);
-                response.setHomePath(homePath);
-                response.setSidebar(sidebar);
-                response.setGroupedPermissions(groupedPermissions); // Add grouped permissions
+                response.setGroupedPermissions(groupedPermissions); // Grouped permissions by module
 
                 // Set employmentType if user is an employee
                 if (account.getEmployee() != null) {
                         response.setEmploymentType(account.getEmployee().getEmploymentType());
                 }
 
+                // Set mustChangePassword flag
+                response.setMustChangePassword(
+                                account.getMustChangePassword() != null && account.getMustChangePassword());
+
                 // Debug logging
                 log.info("Login response prepared for user: {}", account.getUsername());
-                log.info("  baseRole: {}", response.getBaseRole());
-                log.info("  homePath: {}", response.getHomePath());
-                log.info("  groupedPermissions size: {}", groupedPermissions != null ? groupedPermissions.size() : 0);
-                log.info("  sidebar size: {}", sidebar != null ? sidebar.size() : 0);
+                log.info("  role: {}", roleName);
+                log.info("  groupedPermissions modules: {}",
+                                groupedPermissions != null ? groupedPermissions.keySet() : null);
+                log.info("  employmentType: {}", response.getEmploymentType());
 
                 return response;
         }
@@ -386,14 +411,6 @@ public class AuthenticationService {
                 // Role info
                 Role role = account.getRole();
                 response.setRole(role.getRoleName());
-                response.setBaseRole(role.getBaseRole().getBaseRoleName());
-
-                // Home path - use override or base role default
-                response.setHomePath(role.getEffectiveHomePath());
-
-                // Sidebar
-                Map<String, List<SidebarItemDTO>> sidebar = sidebarService.generateSidebar(role.getRoleId());
-                response.setSidebar(sidebar);
 
                 // Permissions
                 List<String> permissions = role.getPermissions().stream()
@@ -401,6 +418,13 @@ public class AuthenticationService {
                                 .distinct()
                                 .collect(Collectors.toList());
                 response.setPermissions(permissions);
+
+                // Grouped permissions by module
+                Map<String, List<String>> groupedPermissions = role.getPermissions().stream()
+                                .collect(Collectors.groupingBy(
+                                                Permission::getModule,
+                                                Collectors.mapping(Permission::getPermissionId, Collectors.toList())));
+                response.setGroupedPermissions(groupedPermissions);
 
                 // Employee-specific info
                 if (account.getEmployee() != null) {
@@ -520,5 +544,141 @@ public class AuthenticationService {
                                                 Collectors.mapping(Permission::getPermissionId, Collectors.toList())));
 
                 return groupedPermissions;
+        }
+
+        /**
+         * Verify email using verification token sent via email
+         *
+         * @param token the verification token from email link
+         * @throws InvalidTokenException if token not found
+         * @throws TokenExpiredException if token has expired
+         */
+        public void verifyEmail(String token) {
+                log.info("Verifying email with token: {}", token);
+
+                AccountVerificationToken verificationToken = verificationTokenRepository.findByToken(token)
+                                .orElseThrow(() -> new InvalidTokenException("Token xác thực không hợp lệ"));
+
+                if (verificationToken.isExpired()) {
+                        log.warn("Verification token expired for account: {}",
+                                        verificationToken.getAccount().getUsername());
+                        throw new TokenExpiredException(
+                                        "Token xác thực đã hết hạn. Vui lòng yêu cầu gửi lại email xác thực.");
+                }
+
+                if (verificationToken.isVerified()) {
+                        log.warn("Token already verified for account: {}",
+                                        verificationToken.getAccount().getUsername());
+                        throw new InvalidTokenException("Token này đã được sử dụng");
+                }
+
+                Account account = verificationToken.getAccount();
+                account.setStatus(AccountStatus.ACTIVE);
+                accountRepository.save(account);
+
+                verificationToken.setVerifiedAt(LocalDateTime.now());
+                verificationTokenRepository.save(verificationToken);
+
+                log.info("✅ Email verified successfully for account: {}", account.getUsername());
+        }
+
+        /**
+         * Resend verification email to user
+         *
+         * @param email the email address to resend verification
+         * @throws AccountNotFoundException if account not found
+         */
+        public void resendVerificationEmail(String email) {
+                log.info("Resending verification email to: {}", email);
+
+                Account account = accountRepository.findByEmail(email)
+                                .orElseThrow(() -> new AccountNotFoundException("Email không tồn tại trong hệ thống"));
+
+                if (account.getStatus() == AccountStatus.ACTIVE) {
+                        log.warn("Account already verified: {}", email);
+                        throw new IllegalArgumentException("Tài khoản đã được xác thực");
+                }
+
+                // Delete old verification tokens
+                verificationTokenRepository.deleteByAccount(account);
+
+                // Create new verification token
+                AccountVerificationToken verificationToken = new AccountVerificationToken(account);
+                verificationTokenRepository.save(verificationToken);
+
+                // Send verification email
+                emailService.sendVerificationEmail(account.getEmail(), account.getUsername(),
+                                verificationToken.getToken());
+
+                log.info("✅ Verification email resent to: {}", email);
+        }
+
+        /**
+         * Initiate password reset process by sending reset email
+         *
+         * @param email the email address to reset password
+         * @throws AccountNotFoundException if account not found
+         */
+        public void forgotPassword(String email) {
+                log.info("Password reset requested for email: {}", email);
+
+                Account account = accountRepository.findByEmail(email)
+                                .orElseThrow(() -> new AccountNotFoundException("Email không tồn tại trong hệ thống"));
+
+                // Delete old password reset tokens
+                passwordResetTokenRepository.deleteByAccount(account);
+
+                // Create new password reset token
+                PasswordResetToken resetToken = new PasswordResetToken(account);
+                passwordResetTokenRepository.save(resetToken);
+
+                // Send password reset email
+                emailService.sendPasswordResetEmail(account.getEmail(), account.getUsername(), resetToken.getToken());
+
+                log.info("✅ Password reset email sent to: {}", email);
+        }
+
+        /**
+         * Reset password using reset token from email
+         *
+         * @param token           the password reset token from email
+         * @param newPassword     the new password
+         * @param confirmPassword confirm new password
+         * @throws InvalidTokenException    if token not found or already used
+         * @throws TokenExpiredException    if token has expired
+         * @throws IllegalArgumentException if passwords don't match
+         */
+        public void resetPassword(String token, String newPassword, String confirmPassword) {
+                log.info("Resetting password with token: {}", token);
+
+                if (!newPassword.equals(confirmPassword)) {
+                        throw new IllegalArgumentException("Mật khẩu xác nhận không khớp");
+                }
+
+                PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(token)
+                                .orElseThrow(() -> new InvalidTokenException("Token đặt lại mật khẩu không hợp lệ"));
+
+                if (resetToken.isExpired()) {
+                        log.warn("Password reset token expired for account: {}", resetToken.getAccount().getUsername());
+                        throw new TokenExpiredException(
+                                        "Token đặt lại mật khẩu đã hết hạn. Vui lòng yêu cầu đặt lại mật khẩu mới.");
+                }
+
+                if (resetToken.isUsed()) {
+                        log.warn("Password reset token already used for account: {}",
+                                        resetToken.getAccount().getUsername());
+                        throw new InvalidTokenException("Token này đã được sử dụng");
+                }
+
+                Account account = resetToken.getAccount();
+                account.setPassword(passwordEncoder.encode(newPassword));
+                account.setPasswordChangedAt(LocalDateTime.now());
+                account.setMustChangePassword(false); // Password has been changed
+                accountRepository.save(account);
+
+                resetToken.setUsedAt(LocalDateTime.now());
+                passwordResetTokenRepository.save(resetToken);
+
+                log.info("✅ Password reset successfully for account: {}", account.getUsername());
         }
 }
