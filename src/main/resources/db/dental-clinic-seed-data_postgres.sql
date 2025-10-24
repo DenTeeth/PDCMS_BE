@@ -203,6 +203,54 @@ VALUES
 ('CANCEL_OT_PENDING', 'CANCEL_OT_PENDING', 'OVERTIME', 'Hủy yêu cầu tăng ca đang chờ', NULL, 126, NULL, TRUE, NOW())
 ON CONFLICT (permission_id) DO NOTHING;
 
+-- MODULE: SPECIALIZATION (Chuyên khoa)
+INSERT INTO permissions (permission_id, permission_name, module, description, path, display_order, parent_permission_id, is_active, created_at)
+VALUES
+('VIEW_SPECIALIZATION', 'VIEW_SPECIALIZATION', 'SPECIALIZATION', 'Xem danh sách chuyên khoa', '/app/specializations', 130, NULL, TRUE, NOW()),
+('CREATE_SPECIALIZATION', 'CREATE_SPECIALIZATION', 'SPECIALIZATION', 'Tạo chuyên khoa mới', NULL, 131, NULL, TRUE, NOW())
+ON CONFLICT (permission_id) DO NOTHING;
+
+-- MODULE: SHIFT_RENEWAL (Gia hạn đăng ký ca)
+INSERT INTO permissions (permission_id, permission_name, module, description, path, display_order, parent_permission_id, is_active, created_at)
+VALUES
+('VIEW_RENEWAL_OWN', 'VIEW_RENEWAL_OWN', 'SHIFT_RENEWAL', 'Xem yêu cầu gia hạn ca của bản thân', '/app/my-renewals', 140, NULL, TRUE, NOW()),
+('RESPOND_RENEWAL_OWN', 'RESPOND_RENEWAL_OWN', 'SHIFT_RENEWAL', 'Phản hồi yêu cầu gia hạn ca của bản thân', NULL, 141, NULL, TRUE, NOW())
+ON CONFLICT (permission_id) DO NOTHING;
+
+-- Additional Employee Management Permissions (backward compatibility)
+INSERT INTO permissions (permission_id, permission_name, module, description, path, display_order, parent_permission_id, is_active, created_at)
+VALUES
+('READ_ALL_EMPLOYEES', 'READ_ALL_EMPLOYEES', 'EMPLOYEE', 'Đọc tất cả thông tin nhân viên', NULL, 24, NULL, TRUE, NOW()),
+('READ_EMPLOYEE_BY_CODE', 'READ_EMPLOYEE_BY_CODE', 'EMPLOYEE', 'Đọc thông tin nhân viên theo mã', NULL, 25, NULL, TRUE, NOW())
+ON CONFLICT (permission_id) DO NOTHING;
+
+-- Additional Appointment Permission
+INSERT INTO permissions (permission_id, permission_name, module, description, path, display_order, parent_permission_id, is_active, created_at)
+VALUES
+('CANCEL_APPOINTMENT', 'CANCEL_APPOINTMENT', 'APPOINTMENT', 'Hủy lịch hẹn', NULL, 54, NULL, TRUE, NOW())
+ON CONFLICT (permission_id) DO NOTHING;
+
+-- Additional Registration Permissions (granular control)
+INSERT INTO permissions (permission_id, permission_name, module, description, path, display_order, parent_permission_id, is_active, created_at)
+VALUES
+('UPDATE_REGISTRATION_ALL', 'UPDATE_REGISTRATION_ALL', 'REGISTRATION', 'Cập nhật tất cả đăng ký ca', NULL, 95, NULL, TRUE, NOW()),
+('UPDATE_REGISTRATION_OWN', 'UPDATE_REGISTRATION_OWN', 'REGISTRATION', 'Cập nhật đăng ký ca của bản thân', NULL, 96, 'UPDATE_REGISTRATION_ALL', TRUE, NOW()),
+('DELETE_REGISTRATION_ALL', 'DELETE_REGISTRATION_ALL', 'REGISTRATION', 'Xóa tất cả đăng ký ca', NULL, 97, NULL, TRUE, NOW()),
+('DELETE_REGISTRATION_OWN', 'DELETE_REGISTRATION_OWN', 'REGISTRATION', 'Xóa đăng ký ca của bản thân', NULL, 98, 'DELETE_REGISTRATION_ALL', TRUE, NOW())
+ON CONFLICT (permission_id) DO NOTHING;
+
+-- Additional Time-Off Permissions (using exact names from AuthoritiesConstants)
+INSERT INTO permissions (permission_id, permission_name, module, description, path, display_order, parent_permission_id, is_active, created_at)
+VALUES
+('VIEW_TIMEOFF_ALL', 'VIEW_TIMEOFF_ALL', 'TIME_OFF', 'Xem tất cả yêu cầu nghỉ phép (alias)', NULL, 107, NULL, TRUE, NOW()),
+('VIEW_TIMEOFF_OWN', 'VIEW_TIMEOFF_OWN', 'TIME_OFF', 'Xem yêu cầu nghỉ phép của bản thân (alias)', NULL, 108, 'VIEW_TIMEOFF_ALL', TRUE, NOW()),
+('CREATE_TIMEOFF', 'CREATE_TIMEOFF', 'TIME_OFF', 'Tạo yêu cầu nghỉ phép (alias)', NULL, 109, NULL, TRUE, NOW()),
+('APPROVE_TIMEOFF', 'APPROVE_TIMEOFF', 'TIME_OFF', 'Phê duyệt yêu cầu nghỉ phép (alias)', NULL, 110, NULL, TRUE, NOW()),
+('REJECT_TIMEOFF', 'REJECT_TIMEOFF', 'TIME_OFF', 'Từ chối yêu cầu nghỉ phép (alias)', NULL, 111, NULL, TRUE, NOW()),
+('CANCEL_TIMEOFF_OWN', 'CANCEL_TIMEOFF_OWN', 'TIME_OFF', 'Hủy yêu cầu nghỉ phép của bản thân (alias)', NULL, 112, NULL, TRUE, NOW()),
+('CANCEL_TIMEOFF_PENDING', 'CANCEL_TIMEOFF_PENDING', 'TIME_OFF', 'Hủy yêu cầu nghỉ phép đang chờ (alias)', NULL, 113, NULL, TRUE, NOW())
+ON CONFLICT (permission_id) DO NOTHING;
+
 
 -- ============================================
 -- BƯỚC 4: PHÂN QUYỀN CHO CÁC VAI TRÒ
