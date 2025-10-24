@@ -297,10 +297,12 @@ public class OvertimeRequestService {
             throw new IllegalArgumentException("Lý do hủy là bắt buộc.");
         }
 
-        // Permission check: CANCEL_OT_OWN (for own requests) or CANCEL_OT_PENDING (for
-        // managing)
-        boolean canCancelOwn = SecurityUtil.hasCurrentUserPermission("CANCEL_OT_OWN") &&
-                request.isOwnedBy(cancelledBy.getEmployeeId());
+        // Permission check: 
+        // - CANCEL_OT_OWN: Can cancel if they are the employee (assigned to the OT) OR the creator (requestedBy)
+        // - CANCEL_OT_PENDING: Can cancel any PENDING request (admin/manager)
+        boolean isOwnerOrCreator = request.isOwnedBy(cancelledBy.getEmployeeId()) || 
+                                   request.isRequestedBy(cancelledBy.getEmployeeId());
+        boolean canCancelOwn = SecurityUtil.hasCurrentUserPermission("CANCEL_OT_OWN") && isOwnerOrCreator;
         boolean canCancelAny = SecurityUtil.hasCurrentUserPermission("CANCEL_OT_PENDING");
 
         if (!canCancelOwn && !canCancelAny) {
