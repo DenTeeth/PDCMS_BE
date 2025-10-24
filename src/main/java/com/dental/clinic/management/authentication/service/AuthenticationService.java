@@ -168,6 +168,9 @@ public class AuthenticationService {
 
                 response.setGroupedPermissions(groupedPermissions); // Grouped permissions by module
 
+                // Set baseRole for FE layout determination
+                response.setBaseRole(role.getBaseRole().getBaseRoleName());
+
                 // Set employmentType if user is an employee
                 if (account.getEmployee() != null) {
                         response.setEmploymentType(account.getEmployee().getEmploymentType());
@@ -180,6 +183,7 @@ public class AuthenticationService {
                 // Debug logging
                 log.info("Login response prepared for user: {}", account.getUsername());
                 log.info("  role: {}", roleName);
+                log.info("  baseRole: {}", response.getBaseRole());
                 log.info("  groupedPermissions modules: {}",
                                 groupedPermissions != null ? groupedPermissions.keySet() : null);
                 log.info("  employmentType: {}", response.getEmploymentType());
@@ -411,6 +415,7 @@ public class AuthenticationService {
                 // Role info
                 Role role = account.getRole();
                 response.setRole(role.getRoleName());
+                response.setBaseRole(role.getBaseRole().getBaseRoleName());
 
                 // Permissions
                 List<String> permissions = role.getPermissions().stream()

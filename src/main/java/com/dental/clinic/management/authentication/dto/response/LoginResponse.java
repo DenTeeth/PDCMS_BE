@@ -24,6 +24,9 @@ public class LoginResponse {
     private List<String> roles;
     private List<String> permissions;
 
+    // Base role for determining FE layout (admin/employee/patient)
+    private String baseRole;
+
     // Grouped permissions by module for efficient FE processing
     private Map<String, List<String>> groupedPermissions;
 
@@ -134,5 +137,13 @@ public class LoginResponse {
 
     public void setMustChangePassword(Boolean mustChangePassword) {
         this.mustChangePassword = mustChangePassword;
+    }
+
+    public String getBaseRole() {
+        return baseRole;
+    }
+
+    public void setBaseRole(String baseRole) {
+        this.baseRole = baseRole;
     }
 }

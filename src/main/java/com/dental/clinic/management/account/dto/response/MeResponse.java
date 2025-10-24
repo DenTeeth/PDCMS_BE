@@ -21,6 +21,7 @@ public class MeResponse {
 
     // Role information
     private String role; // Single role name (e.g., ROLE_DOCTOR)
+    private String baseRole; // Base role for FE layout (admin/employee/patient)
 
     // Permissions
     private List<String> permissions; // All permission IDs
@@ -132,5 +133,13 @@ public class MeResponse {
 
     public void setSpecializationName(String specializationName) {
         this.specializationName = specializationName;
+    }
+
+    public String getBaseRole() {
+        return baseRole;
+    }
+
+    public void setBaseRole(String baseRole) {
+        this.baseRole = baseRole;
     }
 }

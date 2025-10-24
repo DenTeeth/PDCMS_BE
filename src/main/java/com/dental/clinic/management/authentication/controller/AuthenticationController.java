@@ -66,6 +66,7 @@ public class AuthenticationController {
                 loginResponse.getPermissions());
 
         // Copy các fields quan trọng khác
+        responseBody.setBaseRole(loginResponse.getBaseRole());
         responseBody.setGroupedPermissions(loginResponse.getGroupedPermissions());
         responseBody.setEmploymentType(loginResponse.getEmploymentType());
         responseBody.setMustChangePassword(loginResponse.getMustChangePassword());
