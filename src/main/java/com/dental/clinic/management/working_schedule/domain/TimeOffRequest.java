@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
  * Represents employee time-off requests
  */
 @Entity
-@Table(name = "working_schedules")
+@Table(name = "time_off_requests")
 @Getter
 @Setter
 @NoArgsConstructor

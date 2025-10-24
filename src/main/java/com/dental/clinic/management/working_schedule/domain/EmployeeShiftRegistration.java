@@ -15,7 +15,7 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "working_schedule")
+@Table(name = "employee_shift_registrations")
 public class EmployeeShiftRegistration {
 
     private static IdGenerator idGenerator;
