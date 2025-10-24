@@ -302,6 +302,17 @@ VALUES
 ('ROLE_PATIENT', 'VIEW_APPOINTMENT'), ('ROLE_PATIENT', 'CREATE_APPOINTMENT')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
+-- Grant basic Overtime permissions to all employee roles (idempotent)
+INSERT INTO role_permissions (role_id, permission_id)
+VALUES
+('ROLE_DOCTOR', 'VIEW_OT_OWN'), ('ROLE_DOCTOR', 'CREATE_OT'),
+('ROLE_NURSE', 'VIEW_OT_OWN'), ('ROLE_NURSE', 'CREATE_OT'),
+('ROLE_RECEPTIONIST', 'VIEW_OT_OWN'), ('ROLE_RECEPTIONIST', 'CREATE_OT'),
+('ROLE_ACCOUNTANT', 'VIEW_OT_OWN'), ('ROLE_ACCOUNTANT', 'CREATE_OT'),
+('ROLE_INVENTORY_MANAGER', 'VIEW_OT_OWN'), ('ROLE_INVENTORY_MANAGER', 'CREATE_OT'),
+('ROLE_MANAGER', 'VIEW_OT_OWN'), ('ROLE_MANAGER', 'CREATE_OT')
+ON CONFLICT (role_id, permission_id) DO NOTHING;
+
 -- ============================================
 -- BƯỚC 5: TẠO CHUYÊN KHOA
 -- ============================================
