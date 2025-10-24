@@ -313,6 +313,17 @@ VALUES
 ('ROLE_MANAGER', 'VIEW_OT_OWN'), ('ROLE_MANAGER', 'CREATE_OT')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
+-- Grant VIEW_WORK_SHIFTS to all employee roles (idempotent)
+INSERT INTO role_permissions (role_id, permission_id)
+VALUES
+('ROLE_DOCTOR', 'VIEW_WORK_SHIFTS'),
+('ROLE_NURSE', 'VIEW_WORK_SHIFTS'),
+('ROLE_RECEPTIONIST', 'VIEW_WORK_SHIFTS'),
+('ROLE_ACCOUNTANT', 'VIEW_WORK_SHIFTS'),
+('ROLE_INVENTORY_MANAGER', 'VIEW_WORK_SHIFTS'),
+('ROLE_MANAGER', 'VIEW_WORK_SHIFTS')
+ON CONFLICT (role_id, permission_id) DO NOTHING;
+
 -- ============================================
 -- BƯỚC 5: TẠO CHUYÊN KHOA
 -- ============================================
