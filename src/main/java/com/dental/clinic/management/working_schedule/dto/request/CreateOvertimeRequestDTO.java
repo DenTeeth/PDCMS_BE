@@ -18,7 +18,8 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class CreateOvertimeRequestDTO {
 
-    @NotNull(message = "Employee ID is required")
+    // Optional for employee creating their own request (will be auto-filled from JWT)
+    // Required for admin creating request for another employee
     private Integer employeeId;
 
     @NotNull(message = "Work date is required")
@@ -30,4 +31,13 @@ public class CreateOvertimeRequestDTO {
 
     @NotBlank(message = "Reason is required")
     private String reason;
+    
+    /**
+     * Constructor for employee self-request (no employeeId needed)
+     */
+    public CreateOvertimeRequestDTO(LocalDate workDate, String workShiftId, String reason) {
+        this.workDate = workDate;
+        this.workShiftId = workShiftId;
+        this.reason = reason;
+    }
 }

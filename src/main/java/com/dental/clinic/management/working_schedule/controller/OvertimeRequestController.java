@@ -97,12 +97,23 @@ public class OvertimeRequestController {
      * The request will be created with status PENDING.
      * The requesting user is automatically captured from the security context.
      * 
+     * Two modes:
+     * 1. Employee creates for themselves: omit employeeId in request body (auto-filled from JWT)
+     * 2. Admin creates for any employee: include employeeId in request body
+     * 
      * Required Permission: CREATE_OT
      * 
      * @param dto Create overtime request DTO
      * @return Created overtime request details with generated ID
      * 
-     * Example Request Body:
+     * Example Request Body (Employee self-request):
+     * {
+     *   "workDate": "2025-11-15",
+     *   "workShiftId": "WKS_NIGHT_01",
+     *   "reason": "Hoàn thành sổ sách tối"
+     * }
+     * 
+     * Example Request Body (Admin creates for employee):
      * {
      *   "employeeId": 5,
      *   "workDate": "2025-11-15",
@@ -123,8 +134,10 @@ public class OvertimeRequestController {
     @PostMapping
     public ResponseEntity<OvertimeRequestDetailResponse> createOvertimeRequest(
             @Valid @RequestBody CreateOvertimeRequestDTO dto) {
-        log.info("REST request to create overtime request for employee {} on {} shift {}", 
-            dto.getEmployeeId(), dto.getWorkDate(), dto.getWorkShiftId());
+        log.info("REST request to create overtime request - employeeId: {}, workDate: {}, workShiftId: {}", 
+            dto.getEmployeeId() != null ? dto.getEmployeeId() : "self", 
+            dto.getWorkDate(), 
+            dto.getWorkShiftId());
         
         OvertimeRequestDetailResponse response = overtimeRequestService.createOvertimeRequest(dto);
         

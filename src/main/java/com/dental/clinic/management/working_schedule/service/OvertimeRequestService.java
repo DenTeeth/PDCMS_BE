@@ -117,6 +117,10 @@ public class OvertimeRequestService {
 
     /**
      * Create a new overtime request.
+     * Two modes:
+     * 1. Employee creates for themselves: employeeId in DTO is null, auto-filled from JWT
+     * 2. Admin creates for any employee: employeeId must be provided in DTO
+     * 
      * Validates:
      * - Employee and WorkShift exist
      * - Work date is not in the past
@@ -132,12 +136,25 @@ public class OvertimeRequestService {
     @Transactional
     @PreAuthorize("hasAuthority('CREATE_OT')")
     public OvertimeRequestDetailResponse createOvertimeRequest(CreateOvertimeRequestDTO dto) {
+        // Determine target employee: use provided employeeId or current user's employeeId
+        Integer targetEmployeeId;
+        if (dto.getEmployeeId() != null) {
+            // Admin mode: creating for specified employee
+            targetEmployeeId = dto.getEmployeeId();
+            log.info("Creating overtime request for employee {} (admin mode)", targetEmployeeId);
+        } else {
+            // Employee mode: creating for themselves
+            Employee currentEmployee = getCurrentEmployee();
+            targetEmployeeId = currentEmployee.getEmployeeId();
+            log.info("Creating overtime request for employee {} (self-request mode)", targetEmployeeId);
+        }
+
         log.info("Creating overtime request for employee {} on {} shift {}",
-                dto.getEmployeeId(), dto.getWorkDate(), dto.getWorkShiftId());
+                targetEmployeeId, dto.getWorkDate(), dto.getWorkShiftId());
 
         // Validation 1: Verify employee exists
-        Employee employee = employeeRepository.findById(dto.getEmployeeId())
-                .orElseThrow(() -> new RelatedResourceNotFoundException("Nhân viên", dto.getEmployeeId()));
+        Employee employee = employeeRepository.findById(targetEmployeeId)
+                .orElseThrow(() -> new RelatedResourceNotFoundException("Nhân viên", targetEmployeeId));
 
         // Validation 2: Verify work shift exists
         WorkShift workShift = workShiftRepository.findById(dto.getWorkShiftId())
@@ -152,12 +169,12 @@ public class OvertimeRequestService {
         // Validation 4: Check for conflicting requests
         List<RequestStatus> conflictStatuses = List.of(RequestStatus.PENDING, RequestStatus.APPROVED);
         boolean hasConflict = overtimeRequestRepository.existsConflictingRequest(
-                dto.getEmployeeId(), dto.getWorkDate(), dto.getWorkShiftId(), conflictStatuses);
+                targetEmployeeId, dto.getWorkDate(), dto.getWorkShiftId(), conflictStatuses);
 
         if (hasConflict) {
             log.warn("Conflicting overtime request exists for employee {} on {} shift {}",
-                    dto.getEmployeeId(), dto.getWorkDate(), dto.getWorkShiftId());
-            throw new DuplicateOvertimeRequestException(dto.getEmployeeId(), dto.getWorkDate(), dto.getWorkShiftId());
+                    targetEmployeeId, dto.getWorkDate(), dto.getWorkShiftId());
+            throw new DuplicateOvertimeRequestException(targetEmployeeId, dto.getWorkDate(), dto.getWorkShiftId());
         }
 
         // Get current user as the requester
