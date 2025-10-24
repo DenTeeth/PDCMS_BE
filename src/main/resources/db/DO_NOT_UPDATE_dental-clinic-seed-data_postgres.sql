@@ -203,6 +203,7 @@ VALUES
 ('CANCEL_OT_PENDING', 'CANCEL_OT_PENDING', 'OVERTIME', 'Hủy yêu cầu tăng ca đang chờ', NULL, 126, NULL, TRUE, NOW())
 ON CONFLICT (permission_id) DO NOTHING;
 
+
 -- MODULE: SPECIALIZATION (Chuyên khoa)
 INSERT INTO permissions (permission_id, permission_name, module, description, path, display_order, parent_permission_id, is_active, created_at)
 VALUES
