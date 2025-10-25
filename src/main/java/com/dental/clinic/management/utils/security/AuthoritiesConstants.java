@@ -49,6 +49,21 @@ public final class AuthoritiesConstants {
     public static final String VIEW_SPECIALIZATION = "VIEW_SPECIALIZATION";
     public static final String CREATE_SPECIALIZATION = "CREATE_SPECIALIZATION";
 
+    // Work Shifts Permissions
+    public static final String VIEW_WORK_SHIFTS = "VIEW_WORK_SHIFTS";
+    public static final String CREATE_WORK_SHIFTS = "CREATE_WORK_SHIFTS";
+    public static final String UPDATE_WORK_SHIFTS = "UPDATE_WORK_SHIFTS";
+    public static final String DELETE_WORK_SHIFTS = "DELETE_WORK_SHIFTS";
+
+    // Overtime Management Permissions
+    public static final String VIEW_OT_ALL = "VIEW_OT_ALL";
+    public static final String VIEW_OT_OWN = "VIEW_OT_OWN";
+    public static final String CREATE_OT = "CREATE_OT";
+    public static final String APPROVE_OT = "APPROVE_OT";
+    public static final String REJECT_OT = "REJECT_OT";
+    public static final String CANCEL_OT_OWN = "CANCEL_OT_OWN";
+    public static final String CANCEL_OT_PENDING = "CANCEL_OT_PENDING";
+
     // Employee Shift Registration Permissions
     public static final String VIEW_REGISTRATION_ALL = "VIEW_REGISTRATION_ALL";
     public static final String VIEW_REGISTRATION_OWN = "VIEW_REGISTRATION_OWN";
