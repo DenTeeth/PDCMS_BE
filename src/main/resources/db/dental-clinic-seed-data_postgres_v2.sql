@@ -314,7 +314,7 @@ VALUES
 ('ROLE_RECEPTIONIST', 'VIEW_OT_OWN'), ('ROLE_RECEPTIONIST', 'CREATE_OT'), ('ROLE_RECEPTIONIST', 'CANCEL_OT_OWN'),
 ('ROLE_ACCOUNTANT', 'VIEW_OT_OWN'), ('ROLE_ACCOUNTANT', 'CREATE_OT'), ('ROLE_ACCOUNTANT', 'CANCEL_OT_OWN'),
 ('ROLE_INVENTORY_MANAGER', 'VIEW_OT_OWN'), ('ROLE_INVENTORY_MANAGER', 'CREATE_OT'), ('ROLE_INVENTORY_MANAGER', 'CANCEL_OT_OWN'),
-('ROLE_MANAGER', 'VIEW_OT_OWN'), ('ROLE_MANAGER', 'CREATE_OT'), ('ROLE_MANAGER', 'CANCEL_OT_OWN')
+('ROLE_MANAGER', 'VIEW_OT_ALL'), ('ROLE_MANAGER', 'VIEW_OT_OWN'), ('ROLE_MANAGER', 'CREATE_OT'), ('ROLE_MANAGER', 'CANCEL_OT_OWN')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 -- Grant VIEW_WORK_SHIFTS to all employee roles (idempotent)
@@ -337,6 +337,7 @@ VALUES
 ('ROLE_ACCOUNTANT', 'CREATE_REGISTRATION'),
 ('ROLE_INVENTORY_MANAGER', 'CREATE_REGISTRATION'),
 ('ROLE_MANAGER', 'CREATE_REGISTRATION')
+('ROLE_MANAGER', 'VIEW_REGISTRATION_ALL')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 -- ============================================
@@ -447,6 +448,34 @@ SELECT setval(pg_get_serial_sequence('accounts', 'account_id'), COALESCE((SELECT
 SELECT setval(pg_get_serial_sequence('employees', 'employee_id'), COALESCE((SELECT MAX(employee_id) FROM employees), 0)+1, false);
 SELECT setval(pg_get_serial_sequence('patients', 'patient_id'), COALESCE((SELECT MAX(patient_id) FROM patients), 0)+1, false);
 SELECT setval(pg_get_serial_sequence('specializations', 'specialization_id'), COALESCE((SELECT MAX(specialization_id) FROM specializations), 0)+1, false);
+
+-- ============================================
+-- BƯỚC 14: SAMPLE DATA FOR TIME-OFF, RENEWAL, HOLIDAYS
+-- ============================================
+
+-- Sample time-off requests
+INSERT INTO time_off_requests (request_id, employee_id, type_id, start_date, end_date, status, created_at)
+VALUES
+(1, 2, 'TOR251025001', '2025-10-28', '2025-10-29', 'PENDING', NOW()),
+(2, 3, 'TOR251025002', '2025-11-02', '2025-11-02', 'APPROVED', NOW()),
+(3, 4, 'TOR251025003', '2025-11-05', '2025-11-06', 'REJECTED', NOW())
+ON CONFLICT (request_id) DO NOTHING;
+
+-- Sample renewals
+INSERT INTO shift_renewals (renewal_id, employee_id, work_shift_id, requested_date, status, created_at)
+VALUES
+(1, 2, 'WKS_MORNING_01', '2025-11-10', 'PENDING', NOW()),
+(2, 3, 'WKS_AFTERNOON_01', '2025-11-12', 'APPROVED', NOW()),
+(3, 4, 'WKS_MORNING_02', '2025-11-15', 'REJECTED', NOW())
+ON CONFLICT (renewal_id) DO NOTHING;
+
+-- Sample holidays
+INSERT INTO holidays (holiday_id, holiday_date, name, description, is_active)
+VALUES
+(1, '2025-12-25', 'Christmas', 'Giáng Sinh', TRUE),
+(2, '2025-01-01', 'New Year', 'Tết Dương Lịch', TRUE),
+(3, '2025-04-30', 'Reunification Day', 'Ngày Giải phóng miền Nam', TRUE)
+ON CONFLICT (holiday_id) DO NOTHING;
 
 -- ============================================
 -- HƯỚNG DẪN SỬ DỤNG
