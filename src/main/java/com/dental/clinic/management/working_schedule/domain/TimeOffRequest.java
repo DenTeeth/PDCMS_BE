@@ -43,8 +43,8 @@ public class TimeOffRequest {
     @Column(name = "end_date", nullable = false)
     private LocalDate endDate;
 
-    @Column(name = "slot_id", length = 50)
-    private String slotId; // NULL if full day off, value if half-day off
+    @Column(name = "work_shift_id", length = 50)
+    private String workShiftId; // NULL if full day off, value if half-day off
 
     @Column(name = "reason", columnDefinition = "TEXT")
     private String reason;

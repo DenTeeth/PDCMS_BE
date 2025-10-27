@@ -9,7 +9,7 @@ public class ShiftRegistrationResponse {
 
     private String registrationId;
     private Integer employeeId;
-    private String slotId;
+    private String workShiftId;
     private LocalDate effectiveFrom;
     private LocalDate effectiveTo;
     private boolean isActive;
@@ -31,12 +31,12 @@ public class ShiftRegistrationResponse {
         this.employeeId = employeeId;
     }
 
-    public String getSlotId() {
-        return slotId;
+    public String getWorkShiftId() {
+        return workShiftId;
     }
 
-    public void setSlotId(String slotId) {
-        this.slotId = slotId;
+    public void setWorkShiftId(String workShiftId) {
+        this.workShiftId = workShiftId;
     }
 
     public LocalDate getEffectiveFrom() {

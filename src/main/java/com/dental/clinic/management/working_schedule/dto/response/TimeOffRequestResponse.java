@@ -21,7 +21,7 @@ public class TimeOffRequestResponse {
     private String timeOffTypeId;
     private LocalDate startDate;
     private LocalDate endDate;
-    private String slotId;
+    private String workShiftId;
     private String reason;
     private TimeOffStatus status;
     private Integer requestedBy;

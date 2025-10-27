@@ -30,7 +30,7 @@ public class ShiftRegistrationMapper {
         ShiftRegistrationResponse response = new ShiftRegistrationResponse();
         response.setRegistrationId(entity.getRegistrationId());
         response.setEmployeeId(entity.getEmployeeId());
-        response.setSlotId(entity.getSlotId());
+        response.setWorkShiftId(entity.getWorkShiftId());
         response.setEffectiveFrom(entity.getEffectiveFrom());
         response.setEffectiveTo(entity.getEffectiveTo());
         response.setActive(Boolean.TRUE.equals(entity.getIsActive()));

@@ -218,7 +218,7 @@ public class EmployeeShiftRegistrationService {
                 EmployeeShiftRegistration registration = new EmployeeShiftRegistration();
                 registration.setRegistrationId(registrationId);
                 registration.setEmployeeId(request.getEmployeeId());
-                registration.setSlotId(request.getWorkShiftId());
+                registration.setWorkShiftId(request.getWorkShiftId());
                 registration.setEffectiveFrom(request.getEffectiveFrom());
                 registration.setEffectiveTo(request.getEffectiveTo());
                 registration.setIsActive(true);
@@ -266,12 +266,12 @@ public class EmployeeShiftRegistrationService {
                 boolean needConflictCheck = false;
 
                 // 2. Update workShiftId if provided
-                if (request.getWorkShiftId() != null && !request.getWorkShiftId().equals(registration.getSlotId())) {
+                if (request.getWorkShiftId() != null && !request.getWorkShiftId().equals(registration.getWorkShiftId())) {
                         // Validate work shift exists and is active
                         workShiftRepository.findByWorkShiftIdAndIsActive(request.getWorkShiftId(), true)
                                         .orElseThrow(() -> new WorkShiftNotFoundException(request.getWorkShiftId()));
 
-                        registration.setSlotId(request.getWorkShiftId());
+                        registration.setWorkShiftId(request.getWorkShiftId());
                         needConflictCheck = true;
                         log.info("Updated work shift ID to: {}", request.getWorkShiftId());
                 }
@@ -362,7 +362,7 @@ public class EmployeeShiftRegistrationService {
                                 List<EmployeeShiftRegistration> conflicts = registrationRepository
                                                 .findConflictingRegistrations(
                                                                 registration.getEmployeeId(),
-                                                                registration.getSlotId(),
+                                                                registration.getWorkShiftId(),
                                                                 currentDays);
 
                                 if (!conflicts.isEmpty()) {
@@ -377,7 +377,7 @@ public class EmployeeShiftRegistrationService {
                                                                         +
                                                                         "Registration ID: %s, Hiệu lực từ: %s đến: %s",
                                                                         registration.getEmployeeId(),
-                                                                        registration.getSlotId(),
+                                                                        registration.getWorkShiftId(),
                                                                         conflictingDays,
                                                                         conflict.getRegistrationId(),
                                                                         conflict.getEffectiveFrom(),
@@ -491,7 +491,7 @@ public class EmployeeShiftRegistrationService {
                 }
 
                 // 6. Replace all fields
-                registration.setSlotId(request.getWorkShiftId());
+                registration.setWorkShiftId(request.getWorkShiftId());
                 registration.setEffectiveFrom(request.getEffectiveFrom());
                 registration.setEffectiveTo(request.getEffectiveTo());
                 // isActive already set in finally block above

@@ -27,7 +27,7 @@ public class CreateTimeOffRequest {
     @NotNull(message = "End date is required")
     private LocalDate endDate;
 
-    private String slotId; // NULL for full-day off, value for half-day off
+    private String workShiftId; // NULL for full-day off, value for half-day off
 
     @NotNull(message = "Reason is required")
     private String reason;
@@ -39,7 +39,7 @@ public class CreateTimeOffRequest {
                 ", timeOffTypeId='" + timeOffTypeId + '\'' +
                 ", startDate=" + startDate +
                 ", endDate=" + endDate +
-                ", slotId='" + slotId + '\'' +
+                ", workShiftId='" + workShiftId + '\'' +
                 '}';
     }
 }

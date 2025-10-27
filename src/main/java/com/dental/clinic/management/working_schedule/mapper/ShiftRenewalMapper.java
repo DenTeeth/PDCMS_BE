@@ -62,9 +62,9 @@ public class ShiftRenewalMapper {
                 .map(this::formatDayOfWeek)
                 .collect(Collectors.joining(", "));
 
-        String slot = entity.getExpiringRegistration().getSlotId();
+        String workShift = entity.getExpiringRegistration().getWorkShiftId();
 
-        return String.format("%s (%s)", days, slot);
+        return String.format("%s (%s)", days, workShift);
     }
 
     /**

@@ -31,18 +31,18 @@ public interface EmployeeShiftRegistrationRepository extends JpaRepository<Emplo
                         Integer employeeId);
 
         /**
-         * Check if there is an active registration for the same employee, slot, and day
+         * Check if there is an active registration for the same employee, work shift, and day
          * of week.
          * Used to prevent conflicts when creating new registrations.
          */
         @Query("SELECT CASE WHEN COUNT(r) > 0 THEN true ELSE false END " +
                         "FROM EmployeeShiftRegistration r JOIN r.registrationDays rd " +
                         "WHERE r.employeeId = :employeeId " +
-                        "AND r.slotId = :slotId " +
+                        "AND r.workShiftId = :workShiftId " +
                         "AND rd.id.dayOfWeek = :dayOfWeek " +
                         "AND r.isActive = true")
         boolean existsActiveRegistrationConflict(@Param("employeeId") Integer employeeId,
-                        @Param("slotId") String slotId,
+                        @Param("workShiftId") String workShiftId,
                         @Param("dayOfWeek") DayOfWeek dayOfWeek);
 
         /**
@@ -51,11 +51,11 @@ public interface EmployeeShiftRegistrationRepository extends JpaRepository<Emplo
         @Query("SELECT DISTINCT r FROM EmployeeShiftRegistration r " +
                         "JOIN FETCH r.registrationDays rd " +
                         "WHERE r.employeeId = :employeeId " +
-                        "AND r.slotId = :slotId " +
+                        "AND r.workShiftId = :workShiftId " +
                         "AND rd.id.dayOfWeek IN :daysOfWeek " +
                         "AND r.isActive = true")
         List<EmployeeShiftRegistration> findConflictingRegistrations(@Param("employeeId") Integer employeeId,
-                        @Param("slotId") String slotId,
+                        @Param("workShiftId") String workShiftId,
                         @Param("daysOfWeek") List<DayOfWeek> daysOfWeek);
 
         /**

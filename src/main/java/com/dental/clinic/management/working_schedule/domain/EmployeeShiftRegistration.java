@@ -31,8 +31,8 @@ public class EmployeeShiftRegistration {
     @Column(name = "employee_id", nullable = false)
     private Integer employeeId;
 
-    @Column(name = "slot_id", length = 20, nullable = false)
-    private String slotId;
+    @Column(name = "work_shift_id", length = 20, nullable = false)
+    private String workShiftId;
 
     @Column(name = "effective_from", nullable = false)
     private LocalDate effectiveFrom;
@@ -50,11 +50,11 @@ public class EmployeeShiftRegistration {
     public EmployeeShiftRegistration() {
     }
 
-    public EmployeeShiftRegistration(String registrationId, Integer employeeId, String slotId,
+    public EmployeeShiftRegistration(String registrationId, Integer employeeId, String workShiftId,
             LocalDate effectiveFrom, LocalDate effectiveTo, Boolean isActive) {
         this.registrationId = registrationId;
         this.employeeId = employeeId;
-        this.slotId = slotId;
+        this.workShiftId = workShiftId;
         this.effectiveFrom = effectiveFrom;
         this.effectiveTo = effectiveTo;
         this.isActive = isActive;
@@ -77,12 +77,12 @@ public class EmployeeShiftRegistration {
         this.employeeId = employeeId;
     }
 
-    public String getSlotId() {
-        return slotId;
+    public String getWorkShiftId() {
+        return workShiftId;
     }
 
-    public void setSlotId(String slotId) {
-        this.slotId = slotId;
+    public void setWorkShiftId(String workShiftId) {
+        this.workShiftId = workShiftId;
     }
 
     public LocalDate getEffectiveFrom() {
@@ -129,7 +129,7 @@ public class EmployeeShiftRegistration {
         return "EmployeeShiftRegistration{" +
                 "registrationId='" + registrationId + '\'' +
                 ", employeeId=" + employeeId +
-                ", slotId='" + slotId + '\'' +
+                ", workShiftId='" + workShiftId + '\'' +
                 ", effectiveFrom=" + effectiveFrom +
                 ", effectiveTo=" + effectiveTo +
                 ", isActive=" + isActive +

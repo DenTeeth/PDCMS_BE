@@ -201,7 +201,7 @@ public class ShiftRenewalService {
      * @return formatted message
      */
     private String buildRenewalMessage(EmployeeShiftRegistration registration) {
-        String shiftName = registration.getSlotId();
+        String shiftName = registration.getWorkShiftId();
         String expiryDate = registration.getEffectiveTo() != null
                 ? registration.getEffectiveTo().toString()
                 : "N/A";

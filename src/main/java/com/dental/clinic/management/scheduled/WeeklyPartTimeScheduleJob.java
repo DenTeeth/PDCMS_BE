@@ -104,12 +104,12 @@ public class WeeklyPartTimeScheduleJob {
                     }
 
                     // VALIDATION: Get and validate work shift
-                    WorkShift workShift = workShiftRepository.findById(registration.getSlotId())
+                    WorkShift workShift = workShiftRepository.findById(registration.getWorkShiftId())
                             .orElse(null);
 
                     if (workShift == null) {
                         log.warn("Work shift {} not found for registration {}. Skipping.",
-                                registration.getSlotId(), registration.getRegistrationId());
+                                registration.getWorkShiftId(), registration.getRegistrationId());
                         skippedDueToErrors++;
                         continue;
                     }

@@ -76,7 +76,7 @@ public interface EmployeeShiftRepository extends JpaRepository<EmployeeShift, Lo
                         @Param("endDate") LocalDate endDate);
 
         /**
-         * Update shift status for an employee within a date range and optional slot.
+         * Update shift status for an employee within a date range and optional work shift.
          * Used when approving time-off or overtime requests.
          *
          * @param employeeId  the employee ID

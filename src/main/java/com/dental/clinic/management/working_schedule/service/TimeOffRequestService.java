@@ -169,12 +169,12 @@ public class TimeOffRequestService {
                 // Các loại khác (SICK_LEAVE, UNPAID_PERSONAL) không cần check balance
                 if ("ANNUAL_LEAVE".equals(timeOffType.getTypeCode())) {
                         checkLeaveBalance(request.getEmployeeId(), request.getTimeOffTypeId(),
-                                        request.getStartDate(), request.getEndDate(), request.getSlotId());
+                                        request.getStartDate(), request.getEndDate(), request.getWorkShiftId());
                 }
 
-                // 4. Business Rule: If half-day off (slot_id provided), start_date must equal
+                // 4. Business Rule: If half-day off (work_shift_id provided), start_date must equal
                 // end_date
-                if (request.getSlotId() != null && !request.getStartDate().equals(request.getEndDate())) {
+                if (request.getWorkShiftId() != null && !request.getStartDate().equals(request.getEndDate())) {
                         throw new InvalidDateRangeException(
                                         "Khi nghỉ theo ca, ngày bắt đầu và kết thúc phải giống nhau. " +
                                                         "Ngày bắt đầu: " + request.getStartDate() + ", Ngày kết thúc: "
@@ -186,14 +186,14 @@ public class TimeOffRequestService {
                                 request.getEmployeeId(),
                                 request.getStartDate(),
                                 request.getEndDate(),
-                                request.getSlotId());
+                                request.getWorkShiftId());
 
                 if (hasConflict) {
                         List<TimeOffRequest> conflicts = requestRepository.findConflictingRequests(
                                         request.getEmployeeId(),
                                         request.getStartDate(),
                                         request.getEndDate(),
-                                        request.getSlotId());
+                                        request.getWorkShiftId());
 
                         if (!conflicts.isEmpty()) {
                                 TimeOffRequest conflict = conflicts.get(0);
@@ -227,7 +227,7 @@ public class TimeOffRequestService {
                                 .timeOffTypeId(request.getTimeOffTypeId())
                                 .startDate(request.getStartDate())
                                 .endDate(request.getEndDate())
-                                .slotId(request.getSlotId())
+                                .workShiftId(request.getWorkShiftId())
                                 .reason(request.getReason())
                                 .status(TimeOffStatus.PENDING)
                                 .requestedBy(requestedBy)
@@ -375,7 +375,7 @@ public class TimeOffRequestService {
          * Check if employee has sufficient leave balance
          */
         private void checkLeaveBalance(Integer employeeId, String timeOffTypeId,
-                        LocalDate startDate, LocalDate endDate, String slotId) {
+                        LocalDate startDate, LocalDate endDate, String workShiftId) {
                 int currentYear = Year.now().getValue();
 
                 // Find balance record for current year
@@ -387,7 +387,7 @@ public class TimeOffRequestService {
                                                                 employeeId, timeOffTypeId, currentYear)));
 
                 // Calculate days requested
-                BigDecimal daysRequested = calculateDaysRequested(startDate, endDate, slotId);
+                BigDecimal daysRequested = calculateDaysRequested(startDate, endDate, workShiftId);
 
                 // Check if sufficient balance
                 double daysRemaining = balance.getRemaining();
@@ -403,9 +403,9 @@ public class TimeOffRequestService {
         /**
          * Calculate number of days requested
          */
-        private BigDecimal calculateDaysRequested(LocalDate startDate, LocalDate endDate, String slotId) {
-                // If slot_id is provided, it's half-day (0.5 days)
-                if (slotId != null) {
+        private BigDecimal calculateDaysRequested(LocalDate startDate, LocalDate endDate, String workShiftId) {
+                // If work_shift_id is provided, it's half-day (0.5 days)
+                if (workShiftId != null) {
                         return new BigDecimal("0.5");
                 }
 
@@ -448,7 +448,7 @@ public class TimeOffRequestService {
                 BigDecimal daysToDeduct = calculateDaysRequested(
                                 timeOffRequest.getStartDate(),
                                 timeOffRequest.getEndDate(),
-                                timeOffRequest.getSlotId());
+                                timeOffRequest.getWorkShiftId());
 
                 // Update used days
                 balance.setUsed(balance.getUsed() + daysToDeduct.doubleValue());
@@ -477,10 +477,10 @@ public class TimeOffRequestService {
          */
         private void updateEmployeeShiftsToOnLeave(TimeOffRequest timeOffRequest) {
                 try {
-                        // Determine which shift to update based on slotId
-                        // If slotId is null, update all shifts in the date range
-                        // If slotId is specified, only update that specific shift
-                        String shiftId = timeOffRequest.getSlotId();
+                        // Determine which shift to update based on workShiftId
+                        // If workShiftId is null, update all shifts in the date range
+                        // If workShiftId is specified, only update that specific shift
+                        String shiftId = timeOffRequest.getWorkShiftId();
 
                         int updatedCount = employeeShiftRepository.updateShiftStatus(
                                         timeOffRequest.getEmployeeId(),
@@ -489,7 +489,7 @@ public class TimeOffRequestService {
                                         shiftId, // null means all shifts
                                         ShiftStatus.ON_LEAVE);
 
-                        log.info("Updated {} employee shifts to ON_LEAVE for employee {} from {} to {} (slot: {})",
+                        log.info("Updated {} employee shifts to ON_LEAVE for employee {} from {} to {} (work_shift: {})",
                                         updatedCount,
                                         timeOffRequest.getEmployeeId(),
                                         timeOffRequest.getStartDate(),

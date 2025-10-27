@@ -25,7 +25,7 @@ public class TimeOffRequestMapper {
                 .timeOffTypeId(entity.getTimeOffTypeId())
                 .startDate(entity.getStartDate())
                 .endDate(entity.getEndDate())
-                .slotId(entity.getSlotId())
+                .workShiftId(entity.getWorkShiftId())
                 .reason(entity.getReason())
                 .status(entity.getStatus())
                 .requestedBy(entity.getRequestedBy())

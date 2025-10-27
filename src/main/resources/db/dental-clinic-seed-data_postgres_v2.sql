@@ -516,11 +516,11 @@ SELECT setval(pg_get_serial_sequence('specializations', 'specialization_id'), CO
 -- ============================================
 
 -- Sample time-off requests
-INSERT INTO time_off_requests (request_id, employee_id, type_id, start_date, end_date, status, created_at)
+INSERT INTO time_off_requests (request_id, employee_id, time_off_type_id, work_shift_id, start_date, end_date, status, requested_at, requested_by)
 VALUES
-(1, 2, 'TOR251025001', '2025-10-28', '2025-10-29', 'PENDING', NOW()),
-(2, 3, 'TOR251025002', '2025-11-02', '2025-11-02', 'APPROVED', NOW()),
-(3, 4, 'TOR251025003', '2025-11-05', '2025-11-06', 'REJECTED', NOW())
+('TOR251025001', 2, 'TOT001', 'WKS_MORNING_01', '2025-10-28', '2025-10-29', 'PENDING', NOW(), 2),
+('TOR251025002', 3, 'TOT002', 'WKS_AFTERNOON_01', '2025-11-02', '2025-11-02', 'APPROVED', NOW(), 3),
+('TOR251025003', 4, 'TOT003', 'WKS_MORNING_02', '2025-11-05', '2025-11-06', 'REJECTED', NOW(), 4)
 ON CONFLICT (request_id) DO NOTHING;
 
 -- Sample renewals

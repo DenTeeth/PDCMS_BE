@@ -80,7 +80,7 @@ public class EmployeeShiftRegistrationController {
      * - work_shift_id phải tồn tại và is_active = true
      * - effective_from không được là quá khứ
      * - effective_to (nếu có) phải >= effective_from
-     * - Không được xung đột với các đăng ký đang hoạt động (cùng employee, slot,
+     * - Không được xung đột với các đăng ký đang hoạt động (cùng employee, work shift,
      * day_of_week)
      *
      * Response:

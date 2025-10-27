@@ -39,11 +39,11 @@ public interface TimeOffRequestRepository extends JpaRepository<TimeOffRequest, 
          * Check if there are conflicting time-off requests
          * Conflict = same employee, overlapping dates, not CANCELLED or REJECTED
          *
-         * For full-day off (slotId = null):
+         * For full-day off (workShiftId = null):
          * - Conflicts with any request in date range
          *
-         * For half-day off (slotId != null):
-         * - Only conflicts with same slot on same date
+         * For half-day off (workShiftId != null):
+         * - Only conflicts with same work shift on same date
          */
         @Query("SELECT COUNT(t) > 0 FROM TimeOffRequest t " +
                         "WHERE t.employeeId = :employeeId " +
@@ -52,16 +52,15 @@ public interface TimeOffRequestRepository extends JpaRepository<TimeOffRequest, 
                         "  (t.startDate <= :endDate AND t.endDate >= :startDate) " + // Date range overlap
                         ") " +
                         "AND (" +
-                        "  (:slotId IS NULL) OR " + // Full day off conflicts with any
-                        "  (t.slotId IS NULL) OR " + // Any request conflicts with full day
-                        "  (t.slotId = :slotId AND t.startDate = :startDate AND t.endDate = :endDate)" + // Same slot,
-                                                                                                         // same date
+                        "  (:workShiftId IS NULL) OR " + // Full day off conflicts with any
+                        "  (t.workShiftId IS NULL) OR " + // Any request conflicts with full day
+                        "  (t.workShiftId = :workShiftId AND t.startDate = :startDate AND t.endDate = :endDate)" + // Same work shift, same date
                         ")")
         boolean existsConflictingRequest(
                         @Param("employeeId") Integer employeeId,
                         @Param("startDate") LocalDate startDate,
                         @Param("endDate") LocalDate endDate,
-                        @Param("slotId") String slotId);
+                        @Param("workShiftId") String workShiftId);
 
         /**
          * Find conflicting time-off requests (for detailed error message)
@@ -71,15 +70,15 @@ public interface TimeOffRequestRepository extends JpaRepository<TimeOffRequest, 
                         "AND t.status NOT IN ('CANCELLED', 'REJECTED') " +
                         "AND (t.startDate <= :endDate AND t.endDate >= :startDate) " +
                         "AND (" +
-                        "  (:slotId IS NULL) OR " +
-                        "  (t.slotId IS NULL) OR " +
-                        "  (t.slotId = :slotId AND t.startDate = :startDate AND t.endDate = :endDate)" +
+                        "  (:workShiftId IS NULL) OR " +
+                        "  (t.workShiftId IS NULL) OR " +
+                        "  (t.workShiftId = :workShiftId AND t.startDate = :startDate AND t.endDate = :endDate)" +
                         ")")
         List<TimeOffRequest> findConflictingRequests(
                         @Param("employeeId") Integer employeeId,
                         @Param("startDate") LocalDate startDate,
                         @Param("endDate") LocalDate endDate,
-                        @Param("slotId") String slotId);
+                        @Param("workShiftId") String workShiftId);
 
         /**
          * Advanced search with filters
