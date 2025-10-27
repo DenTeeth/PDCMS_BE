@@ -351,6 +351,50 @@ VALUES
 ('ROLE_MANAGER', 'VIEW_TIMEOFF_OWN')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
+-- Grant UPDATE_REGISTRATION_OWN to all employee roles (idempotent) - Allow employees to edit their own shifts
+INSERT INTO role_permissions (role_id, permission_id)
+VALUES
+('ROLE_DOCTOR', 'UPDATE_REGISTRATION_OWN'),
+('ROLE_NURSE', 'UPDATE_REGISTRATION_OWN'),
+('ROLE_RECEPTIONIST', 'UPDATE_REGISTRATION_OWN'),
+('ROLE_ACCOUNTANT', 'UPDATE_REGISTRATION_OWN'),
+('ROLE_INVENTORY_MANAGER', 'UPDATE_REGISTRATION_OWN'),
+('ROLE_MANAGER', 'UPDATE_REGISTRATION_OWN')
+ON CONFLICT (role_id, permission_id) DO NOTHING;
+
+-- Grant DELETE_REGISTRATION_OWN to all employee roles (idempotent) - Allow employees to delete their own shifts
+INSERT INTO role_permissions (role_id, permission_id)
+VALUES
+('ROLE_DOCTOR', 'DELETE_REGISTRATION_OWN'),
+('ROLE_NURSE', 'DELETE_REGISTRATION_OWN'),
+('ROLE_RECEPTIONIST', 'DELETE_REGISTRATION_OWN'),
+('ROLE_ACCOUNTANT', 'DELETE_REGISTRATION_OWN'),
+('ROLE_INVENTORY_MANAGER', 'DELETE_REGISTRATION_OWN'),
+('ROLE_MANAGER', 'DELETE_REGISTRATION_OWN')
+ON CONFLICT (role_id, permission_id) DO NOTHING;
+
+-- Grant CREATE_TIMEOFF to all employee roles (idempotent) - Allow all employees to request time-off
+INSERT INTO role_permissions (role_id, permission_id)
+VALUES
+('ROLE_DOCTOR', 'CREATE_TIMEOFF'),
+('ROLE_NURSE', 'CREATE_TIMEOFF'),
+('ROLE_RECEPTIONIST', 'CREATE_TIMEOFF'),
+('ROLE_ACCOUNTANT', 'CREATE_TIMEOFF'),
+('ROLE_INVENTORY_MANAGER', 'CREATE_TIMEOFF'),
+('ROLE_MANAGER', 'CREATE_TIMEOFF')
+ON CONFLICT (role_id, permission_id) DO NOTHING;
+
+-- Grant CANCEL_TIMEOFF_OWN to all employee roles (idempotent) - Allow employees to cancel their own time-off requests
+INSERT INTO role_permissions (role_id, permission_id)
+VALUES
+('ROLE_DOCTOR', 'CANCEL_TIMEOFF_OWN'),
+('ROLE_NURSE', 'CANCEL_TIMEOFF_OWN'),
+('ROLE_RECEPTIONIST', 'CANCEL_TIMEOFF_OWN'),
+('ROLE_ACCOUNTANT', 'CANCEL_TIMEOFF_OWN'),
+('ROLE_INVENTORY_MANAGER', 'CANCEL_TIMEOFF_OWN'),
+('ROLE_MANAGER', 'CANCEL_TIMEOFF_OWN')
+ON CONFLICT (role_id, permission_id) DO NOTHING;
+
 -- ============================================
 -- BƯỚC 5: TẠO CHUYÊN KHOA
 -- ============================================
