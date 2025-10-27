@@ -490,11 +490,18 @@ VALUES
 ('WKS_AFTERNOON_02', 'Ca Part-time Chiều (13h-17h)', '13:00:00', '17:00:00', 'NORMAL', TRUE)
 ON CONFLICT (work_shift_id) DO NOTHING;
 
-INSERT INTO time_off_types (type_id, type_code, type_name, is_paid, requires_approval, is_active, created_at, updated_at)
+INSERT INTO time_off_types (type_id, type_code, type_name, is_paid, requires_approval, requires_balance, is_active)
 VALUES
-('TOT001', 'ANNUAL_LEAVE', 'Nghi phep nam (12 ngay/nam)', TRUE, TRUE, TRUE, NOW(), NOW()),
-('TOT002', 'UNPAID_PERSONAL', 'Nghi viec rieng khong luong', FALSE, TRUE, TRUE, NOW(), NOW()),
-('TOT003', 'SICK_LEAVE', 'Nghi om co bao hiem xa hoi', TRUE, TRUE, TRUE, NOW(), NOW())
+('TOT001', 'ANNUAL_LEAVE', 'Nghỉ phép năm (12 ngày/năm)', TRUE, TRUE, TRUE, TRUE),
+('TOT002', 'UNPAID_PERSONAL', 'Nghỉ việc riêng không lương', FALSE, TRUE, FALSE, TRUE),
+('TOT003', 'SICK_LEAVE', 'Nghỉ ốm có bảo hiểm xã hội', TRUE, TRUE, TRUE, TRUE),
+('TOT004', 'MATERNITY_LEAVE', 'Nghỉ thai sản (6 tháng)', TRUE, TRUE, FALSE, TRUE),
+('TOT005', 'PATERNITY_LEAVE', 'Nghỉ chăm con (5-14 ngày)', TRUE, TRUE, FALSE, TRUE),
+('TOT006', 'MARRIAGE_LEAVE', 'Nghỉ kết hôn (3 ngày)', TRUE, TRUE, FALSE, TRUE),
+('TOT007', 'BEREAVEMENT_LEAVE', 'Nghỉ tang lễ (1-3 ngày)', TRUE, TRUE, FALSE, TRUE),
+('TOT008', 'EMERGENCY_LEAVE', 'Nghỉ khẩn cấp', FALSE, TRUE, FALSE, TRUE),
+('TOT009', 'STUDY_LEAVE', 'Nghỉ học tập/đào tạo', TRUE, TRUE, FALSE, TRUE),
+('TOT010', 'COMPENSATORY_LEAVE', 'Nghỉ bù (sau làm thêm giờ)', TRUE, FALSE, FALSE, TRUE)
 ON CONFLICT (type_id) DO NOTHING;
 
 -- Sequences sync
