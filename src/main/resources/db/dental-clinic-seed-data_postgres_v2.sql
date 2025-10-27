@@ -340,6 +340,17 @@ VALUES
 ('ROLE_MANAGER', 'VIEW_REGISTRATION_ALL')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
+-- Grant VIEW_TIMEOFF_OWN to all employee roles (idempotent)
+INSERT INTO role_permissions (role_id, permission_id)
+VALUES
+('ROLE_DOCTOR', 'VIEW_TIMEOFF_OWN'),
+('ROLE_NURSE', 'VIEW_TIMEOFF_OWN'),
+('ROLE_RECEPTIONIST', 'VIEW_TIMEOFF_OWN'),
+('ROLE_ACCOUNTANT', 'VIEW_TIMEOFF_OWN'),
+('ROLE_INVENTORY_MANAGER', 'VIEW_TIMEOFF_OWN'),
+('ROLE_MANAGER', 'VIEW_TIMEOFF_OWN')
+ON CONFLICT (role_id, permission_id) DO NOTHING;
+
 -- ============================================
 -- BƯỚC 5: TẠO CHUYÊN KHOA
 -- ============================================
