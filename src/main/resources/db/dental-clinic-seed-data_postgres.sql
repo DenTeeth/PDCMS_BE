@@ -144,21 +144,42 @@ VALUES
 ('DELETE_WORK_SHIFTS', 'DELETE_WORK_SHIFTS', 'WORK_SHIFTS', 'Xóa ca làm việc', NULL, 83, NULL, TRUE, NOW())
 ON CONFLICT (permission_id) DO NOTHING;
 
+-- MODULE: EMPLOYEE_SHIFTS (Quản lý ca làm việc của nhân viên - VÍ DỤ Parent-Child Permission)
+INSERT INTO permissions (permission_id, permission_name, module, description, path, display_order, parent_permission_id, is_active, created_at)
+VALUES
+-- Parent permission: Xem TẤT CẢ ca làm việc (bao gồm của mình và người khác)
+('VIEW_SHIFTS_ALL', 'VIEW_SHIFTS_ALL', 'EMPLOYEE_SHIFTS',
+ 'Xem tất cả ca làm việc của nhân viên', '/app/shifts', 85, NULL, TRUE, NOW()),
+
+-- Child permission: Chỉ xem ca làm việc CỦA MÌNH (sẽ bị ẩn khỏi sidebar nếu có parent)
+('VIEW_SHIFTS_OWN', 'VIEW_SHIFTS_OWN', 'EMPLOYEE_SHIFTS',
+ 'Chỉ xem ca làm việc của chính mình', '/app/my-shifts', 86, 'VIEW_SHIFTS_ALL', TRUE, NOW()),
+
+-- Permission: Xem báo cáo tổng hợp ca làm việc
+('VIEW_SHIFTS_SUMMARY', 'VIEW_SHIFTS_SUMMARY', 'EMPLOYEE_SHIFTS',
+ 'Xem báo cáo tổng hợp ca làm việc', NULL, 87, NULL, TRUE, NOW()),
+
+-- Action permissions (không có path, không hiển thị sidebar)
+('CREATE_SHIFTS', 'CREATE_SHIFTS', 'EMPLOYEE_SHIFTS', 'Tạo ca làm việc cho nhân viên', NULL, 88, NULL, TRUE, NOW()),
+('UPDATE_SHIFTS', 'UPDATE_SHIFTS', 'EMPLOYEE_SHIFTS', 'Cập nhật ca làm việc (trạng thái, ghi chú)', NULL, 89, NULL, TRUE, NOW()),
+('DELETE_SHIFTS', 'DELETE_SHIFTS', 'EMPLOYEE_SHIFTS', 'Hủy ca làm việc', NULL, 90, NULL, TRUE, NOW())
+ON CONFLICT (permission_id) DO NOTHING;
+
 -- MODULE: REGISTRATION (Đăng ký ca - VÍ DỤ Parent-Child Permission)
 INSERT INTO permissions (permission_id, permission_name, module, description, path, display_order, parent_permission_id, is_active, created_at)
 VALUES
 -- Parent permission: Xem TẤT CẢ đăng ký ca
 ('VIEW_REGISTRATION_ALL', 'VIEW_REGISTRATION_ALL', 'REGISTRATION',
- 'Xem tất cả đăng ký ca (bao gồm của mình và người khác)', '/app/registrations', 90, NULL, TRUE, NOW()),
+ 'Xem tất cả đăng ký ca (bao gồm của mình và người khác)', '/app/registrations', 95, NULL, TRUE, NOW()),
 
 -- Child permission: Chỉ xem đăng ký ca CỦA MÌNH (sẽ bị ẩn khỏi sidebar nếu có parent)
 ('VIEW_REGISTRATION_OWN', 'VIEW_REGISTRATION_OWN', 'REGISTRATION',
- 'Chỉ xem đăng ký ca của chính mình', '/app/my-registrations', 91, 'VIEW_REGISTRATION_ALL', TRUE, NOW()),
+ 'Chỉ xem đăng ký ca của chính mình', '/app/my-registrations', 96, 'VIEW_REGISTRATION_ALL', TRUE, NOW()),
 
 -- Action permissions (không có path, không hiển thị sidebar)
-('CREATE_REGISTRATION', 'CREATE_REGISTRATION', 'REGISTRATION', 'Tạo đăng ký ca mới', NULL, 92, NULL, TRUE, NOW()),
-('UPDATE_REGISTRATION', 'UPDATE_REGISTRATION', 'REGISTRATION', 'Cập nhật đăng ký ca', NULL, 93, NULL, TRUE, NOW()),
-('DELETE_REGISTRATION', 'DELETE_REGISTRATION', 'REGISTRATION', 'Xóa đăng ký ca', NULL, 94, NULL, TRUE, NOW())
+('CREATE_REGISTRATION', 'CREATE_REGISTRATION', 'REGISTRATION', 'Tạo đăng ký ca mới', NULL, 97, NULL, TRUE, NOW()),
+('UPDATE_REGISTRATION', 'UPDATE_REGISTRATION', 'REGISTRATION', 'Cập nhật đăng ký ca', NULL, 98, NULL, TRUE, NOW()),
+('DELETE_REGISTRATION', 'DELETE_REGISTRATION', 'REGISTRATION', 'Xóa đăng ký ca', NULL, 99, NULL, TRUE, NOW())
 ON CONFLICT (permission_id) DO NOTHING;
 
 -- MODULE: TIME_OFF (Nghỉ phép - VÍ DỤ Parent-Child Permission)
@@ -231,6 +252,7 @@ VALUES
 ('ROLE_DOCTOR', 'CREATE_TREATMENT'),
 ('ROLE_DOCTOR', 'UPDATE_TREATMENT'),
 ('ROLE_DOCTOR', 'VIEW_APPOINTMENT'),
+('ROLE_DOCTOR', 'VIEW_SHIFTS_OWN'),        -- Chỉ xem ca làm việc của mình
 ('ROLE_DOCTOR', 'VIEW_REGISTRATION_OWN'),  -- Chỉ xem đăng ký ca của mình
 ('ROLE_DOCTOR', 'VIEW_TIME_OFF_OWN'),      -- Chỉ xem nghỉ phép của mình
 ('ROLE_DOCTOR', 'CREATE_TIME_OFF')
@@ -242,6 +264,7 @@ VALUES
 ('ROLE_NURSE', 'VIEW_PATIENT'),
 ('ROLE_NURSE', 'VIEW_TREATMENT'),
 ('ROLE_NURSE', 'VIEW_APPOINTMENT'),
+('ROLE_NURSE', 'VIEW_SHIFTS_OWN'),         -- Chỉ xem ca làm việc của mình
 ('ROLE_NURSE', 'VIEW_REGISTRATION_OWN'),
 ('ROLE_NURSE', 'VIEW_TIME_OFF_OWN'),
 ('ROLE_NURSE', 'CREATE_TIME_OFF')
@@ -265,6 +288,7 @@ VALUES
 ('ROLE_RECEPTIONIST', 'CREATE_CONTACT_HISTORY'),
 ('ROLE_RECEPTIONIST', 'UPDATE_CONTACT_HISTORY'),
 ('ROLE_RECEPTIONIST', 'DELETE_CONTACT_HISTORY'),
+('ROLE_RECEPTIONIST', 'VIEW_SHIFTS_OWN'),      -- Chỉ xem ca làm việc của mình
 ('ROLE_RECEPTIONIST', 'VIEW_REGISTRATION_OWN'),
 ('ROLE_RECEPTIONIST', 'VIEW_TIME_OFF_OWN'),
 ('ROLE_RECEPTIONIST', 'CREATE_TIME_OFF')
@@ -283,6 +307,11 @@ VALUES
 ('ROLE_MANAGER', 'CREATE_WORK_SHIFTS'),
 ('ROLE_MANAGER', 'UPDATE_WORK_SHIFTS'),
 ('ROLE_MANAGER', 'DELETE_WORK_SHIFTS'),
+('ROLE_MANAGER', 'VIEW_SHIFTS_ALL'),        -- Xem TẤT CẢ ca làm việc của nhân viên
+('ROLE_MANAGER', 'VIEW_SHIFTS_SUMMARY'),    -- Xem báo cáo tổng hợp ca làm việc
+('ROLE_MANAGER', 'CREATE_SHIFTS'),          -- Tạo ca làm việc cho nhân viên
+('ROLE_MANAGER', 'UPDATE_SHIFTS'),          -- Cập nhật ca làm việc
+('ROLE_MANAGER', 'DELETE_SHIFTS'),          -- Hủy ca làm việc
 ('ROLE_MANAGER', 'VIEW_REGISTRATION_ALL'),  -- Xem TẤT CẢ đăng ký ca
 ('ROLE_MANAGER', 'CREATE_REGISTRATION'),
 ('ROLE_MANAGER', 'UPDATE_REGISTRATION'),
