@@ -2,6 +2,7 @@ package com.dental.clinic.management.scheduled;
 
 import com.dental.clinic.management.employee.domain.Employee;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
+import com.dental.clinic.management.utils.IdGenerator;
 import com.dental.clinic.management.working_schedule.domain.EmployeeShift;
 import com.dental.clinic.management.working_schedule.domain.EmployeeShiftRegistration;
 import com.dental.clinic.management.working_schedule.domain.WorkShift;
@@ -41,6 +42,7 @@ public class WeeklyPartTimeScheduleJob {
     private final WorkShiftRepository workShiftRepository;
     private final HolidayDateRepository holidayRepository;
     private final EmployeeRepository employeeRepository;
+    private final IdGenerator idGenerator;
 
     /**
      * Cron: 0 0 1 ? * SUN
@@ -154,14 +156,20 @@ public class WeeklyPartTimeScheduleJob {
                             continue;
                         }
 
+                        // Generate unique ID with format EMSyyMMddSEQ (e.g., EMS251029001)
+                        String employeeShiftId = idGenerator.generateId("EMS");
+
                         // Create shift
                         EmployeeShift shift = new EmployeeShift();
+                        shift.setEmployeeShiftId(employeeShiftId); // Set generated ID
                         shift.setEmployee(employee);
                         shift.setWorkDate(workDate);
                         shift.setWorkShift(workShift);
                         shift.setSource(ShiftSource.REGISTRATION_JOB);
-                        shift.setRegistration(registration);
                         shift.setStatus(ShiftStatus.SCHEDULED);
+                        shift.setIsOvertime(false); // Regular shift, not overtime
+                        // Note: sourceOffRequestId would be set here if this was from time-off renewal
+                        shift.setNotes(String.format("Tạo tự động từ đăng ký %s", registration.getRegistrationId()));
 
                         shiftsToSave.add(shift);
                         registrationShifts++;

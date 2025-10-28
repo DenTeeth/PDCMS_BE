@@ -3,6 +3,7 @@ package com.dental.clinic.management.scheduled;
 import com.dental.clinic.management.employee.domain.Employee;
 import com.dental.clinic.management.employee.enums.EmploymentType;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
+import com.dental.clinic.management.utils.IdGenerator;
 import com.dental.clinic.management.working_schedule.domain.EmployeeShift;
 import com.dental.clinic.management.working_schedule.domain.WorkShift;
 import com.dental.clinic.management.working_schedule.enums.ShiftSource;
@@ -40,6 +41,7 @@ public class MonthlyFullTimeScheduleJob {
     private final EmployeeShiftRepository shiftRepository;
     private final WorkShiftRepository workShiftRepository;
     private final HolidayDateRepository holidayRepository;
+    private final IdGenerator idGenerator;
 
     /**
      * Cron: 0 0 2 20 * ?
@@ -134,12 +136,15 @@ public class MonthlyFullTimeScheduleJob {
                         if (!shiftRepository.existsByEmployeeAndDateAndShift(
                                 employee.getEmployeeId(), workDate, morningShift.getWorkShiftId())) {
 
+                            String morningShiftId = idGenerator.generateId("EMS");
                             EmployeeShift morningShiftEntity = new EmployeeShift();
+                            morningShiftEntity.setEmployeeShiftId(morningShiftId);
                             morningShiftEntity.setEmployee(employee);
                             morningShiftEntity.setWorkDate(workDate);
                             morningShiftEntity.setWorkShift(morningShift);
                             morningShiftEntity.setSource(ShiftSource.BATCH_JOB);
                             morningShiftEntity.setStatus(ShiftStatus.SCHEDULED);
+                            morningShiftEntity.setIsOvertime(false);
 
                             shiftsToSave.add(morningShiftEntity);
                             employeeShifts++;
@@ -149,12 +154,15 @@ public class MonthlyFullTimeScheduleJob {
                         if (!shiftRepository.existsByEmployeeAndDateAndShift(
                                 employee.getEmployeeId(), workDate, afternoonShift.getWorkShiftId())) {
 
+                            String afternoonShiftId = idGenerator.generateId("EMS");
                             EmployeeShift afternoonShiftEntity = new EmployeeShift();
+                            afternoonShiftEntity.setEmployeeShiftId(afternoonShiftId);
                             afternoonShiftEntity.setEmployee(employee);
                             afternoonShiftEntity.setWorkDate(workDate);
                             afternoonShiftEntity.setWorkShift(afternoonShift);
                             afternoonShiftEntity.setSource(ShiftSource.BATCH_JOB);
                             afternoonShiftEntity.setStatus(ShiftStatus.SCHEDULED);
+                            afternoonShiftEntity.setIsOvertime(false);
 
                             shiftsToSave.add(afternoonShiftEntity);
                             employeeShifts++;

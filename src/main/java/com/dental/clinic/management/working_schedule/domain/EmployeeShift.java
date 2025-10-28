@@ -24,24 +24,26 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "employee_shifts", indexes = {
-        @Index(name = "idx_shift_employee", columnList = "employee_id"),
-        @Index(name = "idx_shift_work_date", columnList = "work_date"),
-        @Index(name = "idx_shift_status", columnList = "status"),
-        @Index(name = "idx_shift_source", columnList = "source")
+        @Index(name = "idx_employee_workdate", columnList = "employee_id, work_date"),
+        @Index(name = "idx_workdate_status", columnList = "work_date, status")
 }, uniqueConstraints = {
         @UniqueConstraint(name = "uk_employee_date_shift", columnNames = { "employee_id", "work_date",
                 "work_shift_id" })
 })
+@org.hibernate.annotations.Check(constraints = "source IN ('BATCH_JOB', 'REGISTRATION_JOB', 'OT_APPROVAL', 'MANUAL_ENTRY')")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class EmployeeShift {
 
+    /**
+     * Primary key with custom format: EMSyyMMddSEQ (e.g., EMS251029001)
+     * Generated via service layer, not by database.
+     */
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "shift_id")
-    private Long shiftId;
+    @Column(name = "employee_shift_id", length = 20, nullable = false)
+    private String employeeShiftId;
 
     /**
      * The employee assigned to this shift.
@@ -59,12 +61,28 @@ public class EmployeeShift {
     private LocalDate workDate;
 
     /**
-     * The work shift (MORNING, AFTERNOON, EVENING, etc.).
+     * The work shift template (e.g., WKS_MORNING_01, WKS_AFTERNOON_01).
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "work_shift_id", nullable = false)
     @NotNull(message = "Work shift is required")
     private WorkShift workShift;
+
+    /**
+     * Indicates if this is an overtime shift.
+     * Affects salary calculation.
+     */
+    @Column(name = "is_overtime", nullable = false)
+    @NotNull(message = "Overtime flag is required")
+    private Boolean isOvertime = false;
+
+    /**
+     * Current status of the shift.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    @NotNull(message = "Status is required")
+    private ShiftStatus status = ShiftStatus.SCHEDULED;
 
     /**
      * Source of this shift (how it was created).
@@ -75,21 +93,31 @@ public class EmployeeShift {
     private ShiftSource source;
 
     /**
-     * Optional reference to the employee_shift_registration that generated this
-     * shift.
-     * Only populated for part-time employees.
+     * Reference to overtime request if this shift was created from OT approval.
+     * Foreign key to overtime_requests.request_id.
      */
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "registration_id")
-    private EmployeeShiftRegistration registration;
+    @Column(name = "source_ot_request_id", length = 20)
+    private String sourceOtRequestId;
 
     /**
-     * Current status of the shift.
+     * Reference to time-off request if this shift status was changed to ON_LEAVE.
+     * Foreign key to time_off_requests.request_id.
      */
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 20)
-    @NotNull(message = "Status is required")
-    private ShiftStatus status = ShiftStatus.SCHEDULED;
+    @Column(name = "source_off_request_id", length = 20)
+    private String sourceOffRequestId;
+
+    /**
+     * ID of the employee (admin/manager) who created this shift manually.
+     * Only populated when source = MANUAL_ENTRY.
+     */
+    @Column(name = "created_by")
+    private Integer createdBy;
+
+    /**
+     * Notes about this shift.
+     */
+    @Column(name = "notes", columnDefinition = "TEXT")
+    private String notes;
 
     /**
      * Timestamp when the shift was created.
@@ -103,12 +131,6 @@ public class EmployeeShift {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    /**
-     * Notes about this shift.
-     */
-    @Column(name = "notes", columnDefinition = "TEXT")
-    private String notes;
-
     @PrePersist
     protected void onCreate() {
         if (createdAt == null) {
@@ -116,6 +138,9 @@ public class EmployeeShift {
         }
         if (status == null) {
             status = ShiftStatus.SCHEDULED;
+        }
+        if (isOvertime == null) {
+            isOvertime = false;
         }
     }
 

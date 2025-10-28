@@ -62,7 +62,7 @@ dentalclinic:
   jwt:
     base64-secret: OOWH6vzvKUVsTUWvDEUz0SMnO3mfXiwIbXSKX6ey7fLI/oGjlrSOrucHd2qvsaZ+ZbxH/6TosGTtBxRMOOW0Bg==
     # 15 minutes = 900 seconds
-    access-token-validity-in-seconds: 900
+    access-token-validity-in-seconds: 9000
     # 30 days = 2592000 seconds
     refresh-token-validity-in-seconds: 2592000
 

@@ -95,7 +95,8 @@ CREATE TABLE employee_shifts (
         REFERENCES working_schedule(registration_id) ON DELETE SET NULL,
 
     -- Check Constraints
-    CONSTRAINT chk_employee_shift_source CHECK (source IN ('BATCH_JOB', 'REGISTRATION_JOB', 'MANUAL', 'OVERTIME')),
+    -- Updated to match ShiftSource enum: BATCH_JOB, REGISTRATION_JOB, OT_APPROVAL, MANUAL_ENTRY
+    CONSTRAINT chk_employee_shift_source CHECK (source IN ('BATCH_JOB', 'REGISTRATION_JOB', 'OT_APPROVAL', 'MANUAL_ENTRY')),
     CONSTRAINT chk_employee_shift_status CHECK (status IN ('SCHEDULED', 'COMPLETED', 'CANCELLED', 'ABSENT')),
 
     -- Unique constraint: one employee cannot have duplicate shift on same date

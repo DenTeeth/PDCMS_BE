@@ -6,6 +6,7 @@ import com.dental.clinic.management.exception.overtime.DuplicateOvertimeRequestE
 import com.dental.clinic.management.exception.overtime.InvalidStateTransitionException;
 import com.dental.clinic.management.exception.overtime.OvertimeRequestNotFoundException;
 import com.dental.clinic.management.exception.overtime.RelatedResourceNotFoundException;
+import com.dental.clinic.management.utils.IdGenerator;
 import com.dental.clinic.management.utils.security.SecurityUtil;
 import com.dental.clinic.management.working_schedule.domain.EmployeeShift;
 import com.dental.clinic.management.working_schedule.domain.OvertimeRequest;
@@ -48,6 +49,7 @@ public class OvertimeRequestService {
     private final WorkShiftRepository workShiftRepository;
     private final OvertimeRequestMapper overtimeRequestMapper;
     private final EmployeeShiftRepository employeeShiftRepository;
+    private final IdGenerator idGenerator;
 
     /**
      * Get all overtime requests with pagination and optional filtering.
@@ -353,19 +355,27 @@ public class OvertimeRequestService {
                 return;
             }
 
+            // Generate unique ID with format EMSyyMMddSEQ (e.g., EMS251029001)
+            String employeeShiftId = idGenerator.generateId("EMS");
+
             // Create new employee shift
             EmployeeShift employeeShift = new EmployeeShift();
+            employeeShift.setEmployeeShiftId(employeeShiftId); // Set generated ID
             employeeShift.setEmployee(request.getEmployee());
             employeeShift.setWorkDate(request.getWorkDate());
             employeeShift.setWorkShift(request.getWorkShift());
-            employeeShift.setSource(ShiftSource.OVERTIME); // Mark as overtime source
+            employeeShift.setSource(ShiftSource.OT_APPROVAL); // Mark as overtime source
             employeeShift.setStatus(ShiftStatus.SCHEDULED);
+            employeeShift.setIsOvertime(true); // Mark as overtime shift
+            employeeShift.setCreatedBy(request.getApprovedBy().getEmployeeId()); // Track who approved (created shift)
+            employeeShift.setSourceOtRequestId(request.getRequestId()); // Link to OT request
             employeeShift.setNotes(String.format("Tạo từ yêu cầu OT %s - %s",
                     request.getRequestId(), request.getReason()));
 
             employeeShiftRepository.save(employeeShift);
 
-            log.info("Created EmployeeShift for overtime request {} - Employee {} on {} shift {}",
+            log.info("Created EmployeeShift {} for overtime request {} - Employee {} on {} shift {}",
+                    employeeShiftId,
                     request.getRequestId(),
                     request.getEmployee().getEmployeeId(),
                     request.getWorkDate(),

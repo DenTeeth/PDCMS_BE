@@ -144,40 +144,47 @@ VALUES
 ('DELETE_REGISTRATION_OWN', 'DELETE_REGISTRATION_OWN', 'SCHEDULE_MANAGEMENT', 'Xóa đăng ký ca của bản thân', 97, 'DELETE_REGISTRATION_ALL', TRUE, NOW()),
 -- Shift renewal
 ('VIEW_RENEWAL_OWN', 'VIEW_RENEWAL_OWN', 'SCHEDULE_MANAGEMENT', 'Xem yêu cầu gia hạn ca của bản thân', 98, NULL, TRUE, NOW()),
-('RESPOND_RENEWAL_OWN', 'RESPOND_RENEWAL_OWN', 'SCHEDULE_MANAGEMENT', 'Phản hồi yêu cầu gia hạn ca của bản thân', 99, NULL, TRUE, NOW())
+('RESPOND_RENEWAL_OWN', 'RESPOND_RENEWAL_OWN', 'SCHEDULE_MANAGEMENT', 'Phản hồi yêu cầu gia hạn ca của bản thân', 99, NULL, TRUE, NOW()),
+-- Employee shift management (BE-302)
+('VIEW_SHIFTS_ALL', 'VIEW_SHIFTS_ALL', 'SCHEDULE_MANAGEMENT', 'Xem tất cả ca làm việc nhân viên', 100, NULL, TRUE, NOW()),
+('VIEW_SHIFTS_OWN', 'VIEW_SHIFTS_OWN', 'SCHEDULE_MANAGEMENT', 'Xem ca làm việc của bản thân', 101, 'VIEW_SHIFTS_ALL', TRUE, NOW()),
+('VIEW_SHIFTS_SUMMARY', 'VIEW_SHIFTS_SUMMARY', 'SCHEDULE_MANAGEMENT', 'Xem thống kê ca làm việc', 102, NULL, TRUE, NOW()),
+('CREATE_SHIFTS', 'CREATE_SHIFTS', 'SCHEDULE_MANAGEMENT', 'Tạo ca làm việc thủ công', 103, NULL, TRUE, NOW()),
+('UPDATE_SHIFTS', 'UPDATE_SHIFTS', 'SCHEDULE_MANAGEMENT', 'Cập nhật ca làm việc', 104, NULL, TRUE, NOW()),
+('DELETE_SHIFTS', 'DELETE_SHIFTS', 'SCHEDULE_MANAGEMENT', 'Hủy ca làm việc', 105, NULL, TRUE, NOW())
 ON CONFLICT (permission_id) DO NOTHING;
 
 -- MODULE 8: LEAVE_MANAGEMENT (MERGED: TIME_OFF + OVERTIME + TIME_OFF_MANAGEMENT)
 INSERT INTO permissions (permission_id, permission_name, module, description, display_order, parent_permission_id, is_active, created_at)
 VALUES
 -- View permissions (parent-child)
-('VIEW_LEAVE_ALL', 'VIEW_LEAVE_ALL', 'LEAVE_MANAGEMENT', 'Xem tất cả yêu cầu nghỉ phép & tăng ca', 100, NULL, TRUE, NOW()),
-('VIEW_LEAVE_OWN', 'VIEW_LEAVE_OWN', 'LEAVE_MANAGEMENT', 'Xem yêu cầu nghỉ phép & tăng ca của bản thân', 101, 'VIEW_LEAVE_ALL', TRUE, NOW()),
+('VIEW_LEAVE_ALL', 'VIEW_LEAVE_ALL', 'LEAVE_MANAGEMENT', 'Xem tất cả yêu cầu nghỉ phép & tăng ca', 110, NULL, TRUE, NOW()),
+('VIEW_LEAVE_OWN', 'VIEW_LEAVE_OWN', 'LEAVE_MANAGEMENT', 'Xem yêu cầu nghỉ phép & tăng ca của bản thân', 111, 'VIEW_LEAVE_ALL', TRUE, NOW()),
 -- Time-off view aliases (for AuthoritiesConstants compatibility)
-('VIEW_TIMEOFF_ALL', 'VIEW_TIMEOFF_ALL', 'LEAVE_MANAGEMENT', 'Xem tất cả yêu cầu nghỉ phép (alias)', 102, NULL, TRUE, NOW()),
-('VIEW_TIMEOFF_OWN', 'VIEW_TIMEOFF_OWN', 'LEAVE_MANAGEMENT', 'Xem yêu cầu nghỉ phép của bản thân (alias)', 103, 'VIEW_TIMEOFF_ALL', TRUE, NOW()),
+('VIEW_TIMEOFF_ALL', 'VIEW_TIMEOFF_ALL', 'LEAVE_MANAGEMENT', 'Xem tất cả yêu cầu nghỉ phép (alias)', 112, NULL, TRUE, NOW()),
+('VIEW_TIMEOFF_OWN', 'VIEW_TIMEOFF_OWN', 'LEAVE_MANAGEMENT', 'Xem yêu cầu nghỉ phép của bản thân (alias)', 113, 'VIEW_TIMEOFF_ALL', TRUE, NOW()),
 -- Overtime view permissions (aliases for compatibility with AuthoritiesConstants)
-('VIEW_OT_ALL', 'VIEW_OT_ALL', 'LEAVE_MANAGEMENT', 'Xem tất cả yêu cầu tăng ca', 104, NULL, TRUE, NOW()),
-('VIEW_OT_OWN', 'VIEW_OT_OWN', 'LEAVE_MANAGEMENT', 'Xem yêu cầu tăng ca của bản thân', 105, 'VIEW_OT_ALL', TRUE, NOW()),
-('CREATE_OT', 'CREATE_OT', 'LEAVE_MANAGEMENT', 'Tạo yêu cầu tăng ca (alias)', 106, NULL, TRUE, NOW()),
-('APPROVE_OT', 'APPROVE_OT', 'LEAVE_MANAGEMENT', 'Phê duyệt yêu cầu tăng ca (alias)', 107, NULL, TRUE, NOW()),
-('REJECT_OT', 'REJECT_OT', 'LEAVE_MANAGEMENT', 'Từ chối yêu cầu tăng ca (alias)', 108, NULL, TRUE, NOW()),
-('CANCEL_OT_OWN', 'CANCEL_OT_OWN', 'LEAVE_MANAGEMENT', 'Hủy yêu cầu tăng ca của bản thân (alias)', 109, NULL, TRUE, NOW()),
-('CANCEL_OT_PENDING', 'CANCEL_OT_PENDING', 'LEAVE_MANAGEMENT', 'Hủy yêu cầu tăng ca đang chờ (alias)', 110, NULL, TRUE, NOW()),
+('VIEW_OT_ALL', 'VIEW_OT_ALL', 'LEAVE_MANAGEMENT', 'Xem tất cả yêu cầu tăng ca', 114, NULL, TRUE, NOW()),
+('VIEW_OT_OWN', 'VIEW_OT_OWN', 'LEAVE_MANAGEMENT', 'Xem yêu cầu tăng ca của bản thân', 115, 'VIEW_OT_ALL', TRUE, NOW()),
+('CREATE_OT', 'CREATE_OT', 'LEAVE_MANAGEMENT', 'Tạo yêu cầu tăng ca (alias)', 116, NULL, TRUE, NOW()),
+('APPROVE_OT', 'APPROVE_OT', 'LEAVE_MANAGEMENT', 'Phê duyệt yêu cầu tăng ca (alias)', 117, NULL, TRUE, NOW()),
+('REJECT_OT', 'REJECT_OT', 'LEAVE_MANAGEMENT', 'Từ chối yêu cầu tăng ca (alias)', 118, NULL, TRUE, NOW()),
+('CANCEL_OT_OWN', 'CANCEL_OT_OWN', 'LEAVE_MANAGEMENT', 'Hủy yêu cầu tăng ca của bản thân (alias)', 119, NULL, TRUE, NOW()),
+('CANCEL_OT_PENDING', 'CANCEL_OT_PENDING', 'LEAVE_MANAGEMENT', 'Hủy yêu cầu tăng ca đang chờ (alias)', 120, NULL, TRUE, NOW()),
 -- Time off actions
-('CREATE_TIME_OFF', 'CREATE_TIME_OFF', 'LEAVE_MANAGEMENT', 'Tạo yêu cầu nghỉ phép', 115, NULL, TRUE, NOW()),
-('CREATE_TIMEOFF', 'CREATE_TIMEOFF', 'LEAVE_MANAGEMENT', 'Tạo yêu cầu nghỉ phép (alias)', 116, NULL, TRUE, NOW()),
-('APPROVE_TIME_OFF', 'APPROVE_TIME_OFF', 'LEAVE_MANAGEMENT', 'Phê duyệt yêu cầu nghỉ phép', 117, NULL, TRUE, NOW()),
-('APPROVE_TIMEOFF', 'APPROVE_TIMEOFF', 'LEAVE_MANAGEMENT', 'Phê duyệt yêu cầu nghỉ phép (alias)', 118, NULL, TRUE, NOW()),
-('REJECT_TIME_OFF', 'REJECT_TIME_OFF', 'LEAVE_MANAGEMENT', 'Từ chối yêu cầu nghỉ phép', 119, NULL, TRUE, NOW()),
-('REJECT_TIMEOFF', 'REJECT_TIMEOFF', 'LEAVE_MANAGEMENT', 'Từ chối yêu cầu nghỉ phép (alias)', 120, NULL, TRUE, NOW()),
-('CANCEL_TIME_OFF_OWN', 'CANCEL_TIME_OFF_OWN', 'LEAVE_MANAGEMENT', 'Hủy yêu cầu nghỉ phép của bản thân', 121, NULL, TRUE, NOW()),
-('CANCEL_TIMEOFF_OWN', 'CANCEL_TIMEOFF_OWN', 'LEAVE_MANAGEMENT', 'Hủy yêu cầu nghỉ phép của bản thân (alias)', 122, NULL, TRUE, NOW()),
-('CANCEL_TIME_OFF_PENDING', 'CANCEL_TIME_OFF_PENDING', 'LEAVE_MANAGEMENT', 'Hủy yêu cầu nghỉ phép đang chờ', 123, NULL, TRUE, NOW()),
-('CANCEL_TIMEOFF_PENDING', 'CANCEL_TIMEOFF_PENDING', 'LEAVE_MANAGEMENT', 'Hủy yêu cầu nghỉ phép đang chờ (alias)', 124, NULL, TRUE, NOW()),
+('CREATE_TIME_OFF', 'CREATE_TIME_OFF', 'LEAVE_MANAGEMENT', 'Tạo yêu cầu nghỉ phép', 125, NULL, TRUE, NOW()),
+('CREATE_TIMEOFF', 'CREATE_TIMEOFF', 'LEAVE_MANAGEMENT', 'Tạo yêu cầu nghỉ phép (alias)', 126, NULL, TRUE, NOW()),
+('APPROVE_TIME_OFF', 'APPROVE_TIME_OFF', 'LEAVE_MANAGEMENT', 'Phê duyệt yêu cầu nghỉ phép', 127, NULL, TRUE, NOW()),
+('APPROVE_TIMEOFF', 'APPROVE_TIMEOFF', 'LEAVE_MANAGEMENT', 'Phê duyệt yêu cầu nghỉ phép (alias)', 128, NULL, TRUE, NOW()),
+('REJECT_TIME_OFF', 'REJECT_TIME_OFF', 'LEAVE_MANAGEMENT', 'Từ chối yêu cầu nghỉ phép', 129, NULL, TRUE, NOW()),
+('REJECT_TIMEOFF', 'REJECT_TIMEOFF', 'LEAVE_MANAGEMENT', 'Từ chối yêu cầu nghỉ phép (alias)', 130, NULL, TRUE, NOW()),
+('CANCEL_TIME_OFF_OWN', 'CANCEL_TIME_OFF_OWN', 'LEAVE_MANAGEMENT', 'Hủy yêu cầu nghỉ phép của bản thân', 131, NULL, TRUE, NOW()),
+('CANCEL_TIMEOFF_OWN', 'CANCEL_TIMEOFF_OWN', 'LEAVE_MANAGEMENT', 'Hủy yêu cầu nghỉ phép của bản thân (alias)', 132, NULL, TRUE, NOW()),
+('CANCEL_TIME_OFF_PENDING', 'CANCEL_TIME_OFF_PENDING', 'LEAVE_MANAGEMENT', 'Hủy yêu cầu nghỉ phép đang chờ', 133, NULL, TRUE, NOW()),
+('CANCEL_TIMEOFF_PENDING', 'CANCEL_TIMEOFF_PENDING', 'LEAVE_MANAGEMENT', 'Hủy yêu cầu nghỉ phép đang chờ (alias)', 134, NULL, TRUE, NOW()),
 -- Overtime actions
-('CREATE_OVERTIME', 'CREATE_OVERTIME', 'LEAVE_MANAGEMENT', 'Tạo yêu cầu tăng ca', 130, NULL, TRUE, NOW()),
-('APPROVE_OVERTIME', 'APPROVE_OVERTIME', 'LEAVE_MANAGEMENT', 'Phê duyệt yêu cầu tăng ca', 131, NULL, TRUE, NOW()),
+('CREATE_OVERTIME', 'CREATE_OVERTIME', 'LEAVE_MANAGEMENT', 'Tạo yêu cầu tăng ca', 140, NULL, TRUE, NOW()),
+('APPROVE_OVERTIME', 'APPROVE_OVERTIME', 'LEAVE_MANAGEMENT', 'Phê duyệt yêu cầu tăng ca', 141, NULL, TRUE, NOW()),
 ('REJECT_OVERTIME', 'REJECT_OVERTIME', 'LEAVE_MANAGEMENT', 'Từ chối yêu cầu tăng ca', 132, NULL, TRUE, NOW()),
 ('CANCEL_OVERTIME_OWN', 'CANCEL_OVERTIME_OWN', 'LEAVE_MANAGEMENT', 'Hủy yêu cầu tăng ca của bản thân', 133, NULL, TRUE, NOW()),
 ('CANCEL_OVERTIME_PENDING', 'CANCEL_OVERTIME_PENDING', 'LEAVE_MANAGEMENT', 'Hủy yêu cầu tăng ca đang chờ', 134, NULL, TRUE, NOW()),
@@ -277,6 +284,9 @@ VALUES
 ('ROLE_MANAGER', 'UPDATE_WORK_SHIFTS'), ('ROLE_MANAGER', 'DELETE_WORK_SHIFTS'),
 ('ROLE_MANAGER', 'VIEW_REGISTRATION_ALL'), ('ROLE_MANAGER', 'CREATE_REGISTRATION'),
 ('ROLE_MANAGER', 'UPDATE_REGISTRATION'), ('ROLE_MANAGER', 'DELETE_REGISTRATION'),
+-- Employee shift management (BE-302)
+('ROLE_MANAGER', 'VIEW_SHIFTS_ALL'), ('ROLE_MANAGER', 'VIEW_SHIFTS_SUMMARY'),
+('ROLE_MANAGER', 'CREATE_SHIFTS'), ('ROLE_MANAGER', 'UPDATE_SHIFTS'), ('ROLE_MANAGER', 'DELETE_SHIFTS'),
 -- LEAVE_MANAGEMENT (full management)
 ('ROLE_MANAGER', 'VIEW_LEAVE_ALL'),
 ('ROLE_MANAGER', 'APPROVE_TIME_OFF'), ('ROLE_MANAGER', 'REJECT_TIME_OFF'), ('ROLE_MANAGER', 'CANCEL_TIME_OFF_PENDING'),
@@ -326,6 +336,17 @@ VALUES
 ('ROLE_ACCOUNTANT', 'VIEW_WORK_SHIFTS'),
 ('ROLE_INVENTORY_MANAGER', 'VIEW_WORK_SHIFTS'),
 ('ROLE_MANAGER', 'VIEW_WORK_SHIFTS')
+ON CONFLICT (role_id, permission_id) DO NOTHING;
+
+-- Grant VIEW_SHIFTS_OWN to all employee roles (BE-307)
+INSERT INTO role_permissions (role_id, permission_id)
+VALUES
+('ROLE_DOCTOR', 'VIEW_SHIFTS_OWN'),
+('ROLE_NURSE', 'VIEW_SHIFTS_OWN'),
+('ROLE_RECEPTIONIST', 'VIEW_SHIFTS_OWN'),
+('ROLE_ACCOUNTANT', 'VIEW_SHIFTS_OWN'),
+('ROLE_INVENTORY_MANAGER', 'VIEW_SHIFTS_OWN'),
+('ROLE_MANAGER', 'VIEW_SHIFTS_OWN')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 -- Grant CREATE_REGISTRATION to all employee roles (idempotent) - Allow self shift registration
@@ -530,6 +551,57 @@ VALUES
 (2, 3, 'WKS_AFTERNOON_01', '2025-11-12', 'APPROVED', NOW()),
 (3, 4, 'WKS_MORNING_02', '2025-11-15', 'REJECTED', NOW())
 ON CONFLICT (renewal_id) DO NOTHING;
+
+-- ============================================
+-- EMPLOYEE SHIFT SAMPLE DATA (BE-302)
+-- ============================================
+-- Sample employee shifts for testing Employee Shift Management API
+-- Covers different statuses, shift types, and scenarios
+-- employee_id mapping: 2=nhasi1, 3=nhasi2, 4=letan, 5=ketoan, 6=yta, 7=manager
+
+INSERT INTO employee_shifts (
+    employee_shift_id, employee_id, work_shift_id, work_date, 
+    status, shift_type, notes, created_at, updated_at
+)
+VALUES
+-- November 2025 shifts (Current month for testing)
+-- Dr. Minh (employee_id=2) - SCHEDULED shifts
+('EMS251101001', 2, 'WKS_MORNING_01', '2025-11-03', 'SCHEDULED', 'MANUAL_ENTRY', 'Ca sáng thứ 2', NOW(), NOW()),
+('EMS251101002', 2, 'WKS_AFTERNOON_01', '2025-11-04', 'SCHEDULED', 'MANUAL_ENTRY', 'Ca chiều thứ 3', NOW(), NOW()),
+('EMS251101003', 2, 'WKS_MORNING_01', '2025-11-05', 'SCHEDULED', 'BATCH_JOB', 'Ca tự động từ batch job', NOW(), NOW()),
+
+-- Dr. Lan (employee_id=3) - COMPLETED shifts
+('EMS251101004', 3, 'WKS_MORNING_01', '2025-11-01', 'COMPLETED', 'MANUAL_ENTRY', 'Ca sáng đã hoàn thành', NOW(), NOW()),
+('EMS251101005', 3, 'WKS_AFTERNOON_01', '2025-11-02', 'COMPLETED', 'BATCH_JOB', 'Ca chiều đã hoàn thành', NOW(), NOW()),
+
+-- Receptionist Mai (employee_id=4) - CANCELLED shifts
+('EMS251101006', 4, 'WKS_MORNING_02', '2025-11-03', 'CANCELLED', 'MANUAL_ENTRY', 'Ca bị hủy do bận việc', NOW(), NOW()),
+('EMS251101007', 4, 'WKS_AFTERNOON_02', '2025-11-04', 'SCHEDULED', 'MANUAL_ENTRY', 'Ca part-time chiều', NOW(), NOW()),
+
+-- Accountant Tuan (employee_id=5) - Mixed statuses
+('EMS251101008', 5, 'WKS_MORNING_01', '2025-11-06', 'SCHEDULED', 'MANUAL_ENTRY', 'Ca sáng thứ 4', NOW(), NOW()),
+('EMS251101009', 5, 'WKS_AFTERNOON_01', '2025-11-07', 'SCHEDULED', 'BATCH_JOB', 'Ca chiều từ batch job', NOW(), NOW()),
+('EMS251101010', 5, 'WKS_MORNING_01', '2025-11-01', 'COMPLETED', 'MANUAL_ENTRY', 'Ca đã hoàn thành', NOW(), NOW()),
+
+-- Nurse Hoa (employee_id=6) - ON_LEAVE status
+('EMS251101011', 6, 'WKS_MORNING_02', '2025-11-05', 'ON_LEAVE', 'BATCH_JOB', 'Nghỉ phép có đăng ký', NOW(), NOW()),
+('EMS251101012', 6, 'WKS_AFTERNOON_02', '2025-11-06', 'SCHEDULED', 'MANUAL_ENTRY', 'Ca part-time chiều', NOW(), NOW()),
+
+-- Manager Quan (employee_id=7) - All permissions
+('EMS251101013', 7, 'WKS_MORNING_01', '2025-11-08', 'SCHEDULED', 'MANUAL_ENTRY', 'Ca quản lý', NOW(), NOW()),
+('EMS251101014', 7, 'WKS_AFTERNOON_01', '2025-11-09', 'SCHEDULED', 'BATCH_JOB', 'Ca quản lý từ batch job', NOW(), NOW()),
+
+-- December 2025 shifts (Future month)
+('EMS251201001', 2, 'WKS_MORNING_01', '2025-12-02', 'SCHEDULED', 'BATCH_JOB', 'Ca tháng 12', NOW(), NOW()),
+('EMS251201002', 3, 'WKS_AFTERNOON_01', '2025-12-03', 'SCHEDULED', 'MANUAL_ENTRY', 'Ca tháng 12', NOW(), NOW()),
+('EMS251201003', 5, 'WKS_MORNING_01', '2025-12-04', 'SCHEDULED', 'BATCH_JOB', 'Ca tháng 12', NOW(), NOW()),
+
+-- October 2025 shifts (Past month for historical data)
+('EMS251001001', 2, 'WKS_MORNING_01', '2025-10-15', 'COMPLETED', 'MANUAL_ENTRY', 'Ca tháng trước đã hoàn thành', NOW(), NOW()),
+('EMS251001002', 3, 'WKS_AFTERNOON_01', '2025-10-16', 'COMPLETED', 'BATCH_JOB', 'Ca tháng trước đã hoàn thành', NOW(), NOW()),
+('EMS251001003', 5, 'WKS_MORNING_01', '2025-10-17', 'CANCELLED', 'MANUAL_ENTRY', 'Ca tháng trước bị hủy', NOW(), NOW())
+
+ON CONFLICT (employee_shift_id) DO NOTHING;
 
 -- Sample holidays
 INSERT INTO holidays (holiday_id, holiday_date, name, description, is_active)
