@@ -5,8 +5,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.UUID;
-
 /**
  * DTO for employee shift response.
  * Contains complete shift assignment details including employee and work shift
@@ -18,7 +16,7 @@ import java.util.UUID;
 @AllArgsConstructor
 public class EmployeeShiftResponseDto {
 
-    private UUID employeeShiftId;
+    private String employeeShiftId;
 
     /**
      * Work date in format: YYYY-MM-DD

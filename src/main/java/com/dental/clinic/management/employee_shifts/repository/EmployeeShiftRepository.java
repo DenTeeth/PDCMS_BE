@@ -6,13 +6,12 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Repository interface for EmployeeShift entity.
  */
 @Repository
-public interface EmployeeShiftRepository extends JpaRepository<EmployeeShift, UUID> {
+public interface EmployeeShiftRepository extends JpaRepository<EmployeeShift, String> {
 
         /**
          * Check if an employee already has a shift for a specific work shift and date.
@@ -48,4 +47,12 @@ public interface EmployeeShiftRepository extends JpaRepository<EmployeeShift, UU
          * @return List of employee shifts
          */
         List<EmployeeShift> findByWorkDateBetween(LocalDate startDate, LocalDate endDate);
+
+        /**
+         * Find all shifts on a specific work date.
+         * 
+         * @param workDate the work date
+         * @return List of employee shifts
+         */
+        List<EmployeeShift> findByWorkDate(LocalDate workDate);
 }

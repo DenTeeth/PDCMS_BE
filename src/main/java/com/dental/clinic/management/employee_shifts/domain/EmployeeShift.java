@@ -11,11 +11,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.UuidGenerator;
-
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.UUID;
 
 /**
  * Entity representing an employee's assigned shift on a specific date.
@@ -33,10 +30,10 @@ import java.util.UUID;
 public class EmployeeShift {
 
     @Id
-    @UuidGenerator
-    @Column(name = "employee_shift_id", updatable = false, nullable = false)
-    private UUID id;
-
+    @Column(name = "employee_shift_id", updatable = false, nullable = false, length = 20)
+    private String id;
+    // EMS25102301 VD: EmployeeShift 25/10/2023 Shift 01
+    // Format: EMS + yyMMdd + SEQ (3 digits)
     @NotNull(message = "Work date is required")
     @Column(name = "work_date", nullable = false)
     private LocalDate workDate;

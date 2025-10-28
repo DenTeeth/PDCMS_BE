@@ -88,8 +88,13 @@ VALUES
 ('VIEW_WORK_SHIFTS', 'VIEW_WORK_SHIFTS', 'WORK_SHIFTS', 'Xem danh sách mẫu ca làm việc', NOW()),
 ('UPDATE_WORK_SHIFTS', 'UPDATE_WORK_SHIFTS', 'WORK_SHIFTS', 'Cập nhật mẫu ca làm việc', NOW()),
 ('DELETE_WORK_SHIFTS', 'DELETE_WORK_SHIFTS', 'WORK_SHIFTS', 'Xóa/vô hiệu hóa mẫu ca làm việc', NOW())
-ON DUPLICATE KEY UPDATE description = VALUES(description);
 
+-- Employee Shift Assignment Permissions (ADD THESE)
+('CREATE_EMPLOYEE_SHIFTS', 'CREATE_EMPLOYEE_SHIFTS', 'EMPLOYEE_SHIFTS', 'Phân ca làm việc cho nhân viên', NOW()),
+('VIEW_EMPLOYEE_SHIFTS', 'VIEW_EMPLOYEE_SHIFTS', 'EMPLOYEE_SHIFTS', 'Xem ca làm việc đã phân', NOW()),
+('UPDATE_SHIFTS', 'UPDATE_SHIFTS', 'EMPLOYEE_SHIFTS', 'Cập nhật trạng thái/ghi chú ca làm (VD: báo vắng)', NOW()),
+('DELETE_EMPLOYEE_SHIFTS', 'DELETE_EMPLOYEE_SHIFTS', 'EMPLOYEE_SHIFTS', 'Xóa/hủy ca làm việc đã phân', NOW())
+ON DUPLICATE KEY UPDATE description = VALUES(description);
 
 -- ============================================
 -- STEP 3: ASSIGN PERMISSIONS TO ROLES (RBAC)
@@ -142,7 +147,19 @@ VALUES
 ('ROLE_PATIENT', 'VIEW_APPOINTMENT')
 ON DUPLICATE KEY UPDATE role_id = VALUES(role_id);
 
+-- Lễ tân: Patient + Appointment management
+INSERT INTO role_permissions (role_id, permission_id)
+VALUES
+('ROLE_RECEPTIONIST', 'CREATE_PATIENT'),
+-- ... (các quyền cũ của lễ tân) ...
+('ROLE_RECEPTIONIST', 'DELETE_CONTACT_HISTORY'),
 
+-- Employee Shift Management (ADD THESE)
+('ROLE_RECEPTIONIST', 'CREATE_EMPLOYEE_SHIFTS'),
+('ROLE_RECEPTIONIST', 'VIEW_EMPLOYEE_SHIFTS'),
+('ROLE_RECEPTIONIST', 'UPDATE_SHIFTS'),
+('ROLE_RECEPTIONIST', 'DELETE_EMPLOYEE_SHIFTS')
+ON DUPLICATE KEY UPDATE role_id = VALUES(role_id);
 -- ============================================
 -- STEP 4: CREATE SPECIALIZATIONS (Integer IDs: 1-7)
 -- ============================================
@@ -455,92 +472,69 @@ VALUES
 -- The employees 'EMP_ID_001', 'EMP_ID_002', etc. were referencing non-existent
 -- account IDs 'ACC_BS01', 'ACC_BS02', etc.
 
-
 -- ============================================
--- WORK SHIFTS - Ca làm việc mẫu
+-- STEP 7.5: CREATE SHIFT TABLES
 -- ============================================
 
-INSERT INTO work_shifts (work_shift_id, shift_name, start_time, end_time, category, is_active, created_at)
+-- Bảng mẫu ca làm việc (Work Shift Templates)
+CREATE TABLE IF NOT EXISTS work_shifts (
+    work_shift_id VARCHAR(20) NOT NULL,
+    shift_name VARCHAR(100) NOT NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (work_shift_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Bảng phân ca làm việc cho nhân viên (Employee Shift Assignments)
+CREATE TABLE IF NOT EXISTS employee_shifts (
+    employee_shift_id VARCHAR(20) NOT NULL,
+    employee_id INT NOT NULL,
+    work_shift_id VARCHAR(20) NOT NULL,
+    work_date DATE NOT NULL,
+    status ENUM('PENDING', 'SCHEDULED', 'ABSENT', 'COMPLETED', 'CANCELLED', 'ON_LEAVE') NOT NULL DEFAULT 'PENDING',
+    notes TEXT,
+    source VARCHAR(50) DEFAULT 'MANUAL',
+    is_overtime BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (employee_shift_id),
+    FOREIGN KEY (employee_id) REFERENCES employees(employee_id) ON DELETE CASCADE,
+    FOREIGN KEY (work_shift_id) REFERENCES work_shifts(work_shift_id),
+    -- Thêm index để tối ưu tìm kiếm
+    INDEX idx_employee_date (employee_id, work_date),
+    INDEX idx_work_date (work_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+-- ============================================
+-- STEP 11: CREATE SHIFT DATA
+-- ============================================
+
+-- Insert mẫu ca làm (Work Shift Templates)
+INSERT INTO work_shifts (work_shift_id, shift_name, start_time, end_time, is_active)
 VALUES
--- Ca sáng
-('WKS_MORNING_01', 'Ca sáng 8h-12h', '08:00:00', '12:00:00', 'NORMAL', TRUE, NOW()),
-('WKS_MORNING_02', 'Ca sáng 7h-11h', '07:00:00', '11:00:00', 'NORMAL', TRUE, NOW()),
-
--- Ca chiều
-('WKS_AFTERNOON_01', 'Ca chiều 13h-17h', '13:00:00', '17:00:00', 'NORMAL', TRUE, NOW()),
-('WKS_AFTERNOON_02', 'Ca chiều 14h-18h', '14:00:00', '18:00:00', 'NORMAL', TRUE, NOW()),
-
--- Ca tối
-('WKS_EVENING_01', 'Ca tối 18h-21h', '18:00:00', '21:00:00', 'NORMAL', TRUE, NOW()),
-
--- Ca đêm
-('WKS_NIGHT_01', 'Ca đêm 21h-24h', '21:00:00', '23:59:59', 'NIGHT', TRUE, NOW()),
-('WKS_NIGHT_02', 'Ca đêm 22h-02h', '22:00:00', '02:00:00', 'NIGHT', TRUE, NOW()),
-
--- Ca hành chính
-('WKS_OFFICE_01', 'Ca hành chính 8h-17h', '08:00:00', '17:00:00', 'NORMAL', TRUE, NOW())
+('WS_MORNING', 'Ca Sáng', '08:00:00', '12:00:00', TRUE),
+('WS_AFTERNOON', 'Ca Chiều', '13:30:00', '17:30:00', TRUE),
+('WS_FULLDAY', 'Ca Cả Ngày', '08:00:00', '17:30:00', TRUE)
 ON DUPLICATE KEY UPDATE shift_name = VALUES(shift_name);
 
 
--- ============================================
--- EMPLOYEE SHIFTS PERMISSIONS - Thêm quyền quản lý lịch nhân viên
--- ============================================
-
-INSERT INTO permissions (permission_id, permission_name, module, description, created_at)
+-- Insert ca làm chi tiết cho nhân viên (Employee Shift Assignments)
+-- Bao gồm cả ca làm EMS251030002 để bạn test PATCH
+INSERT INTO employee_shifts (employee_shift_id, employee_id, work_shift_id, work_date, status, notes)
 VALUES
-('VIEW_SHIFTS_ALL', 'VIEW_SHIFTS_ALL', 'EMPLOYEE_SHIFTS', 'Xem lịch làm việc của tất cả nhân viên', NOW()),
-('VIEW_SHIFTS_OWN', 'VIEW_SHIFTS_OWN', 'EMPLOYEE_SHIFTS', 'Xem lịch làm việc của chính mình', NOW()),
-('CREATE_SHIFTS', 'CREATE_SHIFTS', 'EMPLOYEE_SHIFTS', 'Tạo lịch làm việc cho nhân viên', NOW()),
-('UPDATE_SHIFTS', 'UPDATE_SHIFTS', 'EMPLOYEE_SHIFTS', 'Cập nhật lịch làm việc', NOW()),
-('DELETE_SHIFTS', 'DELETE_SHIFTS', 'EMPLOYEE_SHIFTS', 'Hủy/xóa lịch làm việc', NOW())
-ON DUPLICATE KEY UPDATE description = VALUES(description);
+-- Ca làm bạn đang test (Bác sĩ 1)
+('EMS251030002', @doctor1_employee_id, 'WS_MORNING', '2025-10-30', 'SCHEDULED', 'Ca làm đã được xếp lịch.'),
 
--- Gán quyền quản lý lịch cho Admin
-INSERT INTO role_permissions (role_id, permission_id)
-VALUES
-('ROLE_ADMIN', 'VIEW_SHIFTS_ALL'),
-('ROLE_ADMIN', 'CREATE_SHIFTS'),
-('ROLE_ADMIN', 'UPDATE_SHIFTS'),
-('ROLE_ADMIN', 'DELETE_SHIFTS')
-ON DUPLICATE KEY UPDATE role_id = VALUES(role_id);
+-- Ca làm đã hoàn thành (Bác sĩ 2) -> Dùng để test lỗi 409
+('EMS251030001', @doctor2_employee_id, 'WS_MORNING', '2025-10-30', 'COMPLETED', 'Đã hoàn thành ca.'),
 
--- Gán quyền xem lịch của chính mình cho tất cả nhân viên
-INSERT INTO role_permissions (role_id, permission_id)
-VALUES
-('ROLE_DOCTOR', 'VIEW_SHIFTS_OWN'),
-('ROLE_NURSE', 'VIEW_SHIFTS_OWN'),
-('ROLE_RECEPTIONIST', 'VIEW_SHIFTS_OWN'),
-('ROLE_ACCOUNTANT', 'VIEW_SHIFTS_OWN')
-ON DUPLICATE KEY UPDATE role_id = VALUES(role_id);
+-- Ca làm đã bị hủy (Y tá) -> Dùng để test lỗi 409
+('EMS251030003', @nurse_employee_id, 'WS_MORNING', '2025-10-30', 'CANCELLED', 'Đã hủy ca.'),
 
-
--- ============================================
--- EMPLOYEE SHIFTS - Dữ liệu test cho lịch làm việc nhân viên
--- ============================================
-
--- Lịch làm việc cho Doctor 1 (employee_id = 2)
-INSERT INTO employee_shifts (employee_shift_id, employee_id, work_shift_id, work_date, status, notes, source, is_overtime, created_at)
-VALUES
-(UUID(), 2, 'WKS_MORNING_01', '2025-10-21', 'SCHEDULED', 'Khám bệnh buổi sáng', 'MANUAL_ENTRY', FALSE, NOW()),
-(UUID(), 2, 'WKS_AFTERNOON_01', '2025-10-21', 'SCHEDULED', 'Khám bệnh buổi chiều', 'MANUAL_ENTRY', FALSE, NOW()),
-(UUID(), 2, 'WKS_MORNING_01', '2025-10-22', 'SCHEDULED', NULL, 'MANUAL_ENTRY', FALSE, NOW()),
-(UUID(), 2, 'WKS_AFTERNOON_02', '2025-10-23', 'SCHEDULED', 'Ca chiều trễ', 'MANUAL_ENTRY', FALSE, NOW()),
-(UUID(), 2, 'WKS_EVENING_01', '2025-10-24', 'SCHEDULED', 'Ca tối đặc biệt', 'MANUAL_ENTRY', TRUE, NOW())
-ON DUPLICATE KEY UPDATE status = VALUES(status);
-
--- Lịch làm việc cho Doctor 2 (employee_id = 3)
-INSERT INTO employee_shifts (employee_shift_id, employee_id, work_shift_id, work_date, status, notes, source, is_overtime, created_at)
-VALUES
-(UUID(), 3, 'WKS_AFTERNOON_01', '2025-10-21', 'SCHEDULED', 'Ca chiều', 'MANUAL_ENTRY', FALSE, NOW()),
-(UUID(), 3, 'WKS_EVENING_01', '2025-10-21', 'SCHEDULED', 'Ca tối', 'MANUAL_ENTRY', FALSE, NOW()),
-(UUID(), 3, 'WKS_MORNING_01', '2025-10-22', 'SCHEDULED', NULL, 'MANUAL_ENTRY', FALSE, NOW()),
-(UUID(), 3, 'WKS_OFFICE_01', '2025-10-25', 'SCHEDULED', 'Ca hành chính', 'MANUAL_ENTRY', FALSE, NOW())
-ON DUPLICATE KEY UPDATE status = VALUES(status);
-
--- Lịch làm việc cho Nurse (employee_id = 6)
-INSERT INTO employee_shifts (employee_shift_id, employee_id, work_shift_id, work_date, status, notes, source, is_overtime, created_at)
-VALUES
-(UUID(), 6, 'WKS_MORNING_01', '2025-10-21', 'SCHEDULED', 'Hỗ trợ bác sĩ', 'MANUAL_ENTRY', FALSE, NOW()),
-(UUID(), 6, 'WKS_AFTERNOON_01', '2025-10-21', 'COMPLETED', 'Đã hoàn thành', 'MANUAL_ENTRY', FALSE, NOW()),
-(UUID(), 6, 'WKS_MORNING_02', '2025-10-22', 'SCHEDULED', 'Ca sáng sớm', 'MANUAL_ENTRY', FALSE, NOW())
-ON DUPLICATE KEY UPDATE status = VALUES(status);
+-- Một số ca khác
+('EMS251031001', @doctor1_employee_id, 'WS_MORNING', '2025-10-31', 'SCHEDULED', ''),
+('EMS251031002', @doctor2_employee_id, 'WS_AFTERNOON', '2025-10-31', 'SCHEDULED', ''),
+('EMS251031003', @receptionist_employee_id, 'WS_FULLDAY', '2025-10-31', 'SCHEDULED', '')
+ON DUPLICATE KEY UPDATE status = VALUES(status), notes = VALUES(notes);

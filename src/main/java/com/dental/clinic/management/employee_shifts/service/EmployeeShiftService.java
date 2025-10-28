@@ -23,8 +23,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -111,7 +111,7 @@ public class EmployeeShiftService {
      */
     @Transactional(readOnly = true)
     @PreAuthorize("hasAnyAuthority('VIEW_SHIFTS_ALL', 'VIEW_SHIFTS_OWN')")
-    public EmployeeShiftResponseDto getShiftDetails(UUID shiftId) {
+    public EmployeeShiftResponseDto getShiftDetails(String shiftId) {
         log.info("Fetching shift details for ID: {}", shiftId);
 
         // Get current user's authorities
@@ -187,9 +187,18 @@ public class EmployeeShiftService {
         shift.setSource(ShiftSource.MANUAL_ENTRY);
         shift.setStatus(EmployeeShiftStatus.SCHEDULED);
 
-        // Set creator ID from current authenticated user
-        Employee currentEmployee = getCurrentEmployee();
-        shift.setCreatedBy(currentEmployee.getEmployeeId());
+        // Generate ID in format: EMS + yyMMdd + SEQ (3 digits)
+        shift.setId(generateEmployeeShiftId(requestDto.getWorkDate()));
+
+        // Set creator ID from current authenticated user (if employee exists)
+        try {
+            Employee currentEmployee = getCurrentEmployee();
+            shift.setCreatedBy(currentEmployee.getEmployeeId());
+        } catch (EmployeeNotFoundException e) {
+            // User is authenticated but not an employee (e.g., super admin)
+            // createdBy will be null
+            log.warn("Current user is not an employee. createdBy will be null.");
+        }
 
         EmployeeShift savedShift = employeeShiftRepository.save(shift);
 
@@ -207,7 +216,7 @@ public class EmployeeShiftService {
      */
     @Transactional
     @PreAuthorize("hasAuthority('UPDATE_SHIFTS')")
-    public EmployeeShiftResponseDto updateShift(UUID shiftId, UpdateShiftRequestDto requestDto) {
+    public EmployeeShiftResponseDto updateShift(String shiftId, UpdateShiftRequestDto requestDto) {
         log.info("Updating shift: {}", shiftId);
 
         // Find the shift
@@ -245,7 +254,7 @@ public class EmployeeShiftService {
      */
     @Transactional
     @PreAuthorize("hasAuthority('DELETE_SHIFTS')")
-    public void cancelShift(UUID shiftId) {
+    public void cancelShift(String shiftId) {
         log.info("Cancelling shift: {}", shiftId);
 
         // Find the shift
@@ -286,5 +295,35 @@ public class EmployeeShiftService {
         return employeeRepository.findByAccount_Username(username)
                 .orElseThrow(() -> new EmployeeNotFoundException(
                         "Employee not found for current user: " + username));
+    }
+
+    /**
+     * Generate employee shift ID in format: EMSyyMMddSEQ
+     * Example: EMS251021001
+     * 
+     * @param workDate the work date
+     * @return generated ID
+     */
+    private String generateEmployeeShiftId(LocalDate workDate) {
+        // Format: EMS + yyMMdd
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyMMdd");
+        String datePrefix = "EMS" + workDate.format(formatter);
+
+        // Find all shifts with same date prefix to get next sequence number
+        List<EmployeeShift> shiftsOnDate = employeeShiftRepository.findByWorkDate(workDate);
+
+        // Get next sequence number (3 digits)
+        int nextSeq = shiftsOnDate.size() + 1;
+        String seqStr = String.format("%03d", nextSeq);
+
+        // Check for collision and increment if needed
+        String candidateId = datePrefix + seqStr;
+        while (employeeShiftRepository.existsById(candidateId)) {
+            nextSeq++;
+            seqStr = String.format("%03d", nextSeq);
+            candidateId = datePrefix + seqStr;
+        }
+
+        return candidateId;
     }
 }
