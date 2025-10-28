@@ -95,4 +95,10 @@ public final class AuthoritiesConstants {
     // Shift Renewal Permissions
     public static final String VIEW_RENEWAL_OWN = "VIEW_RENEWAL_OWN";
     public static final String RESPOND_RENEWAL_OWN = "RESPOND_RENEWAL_OWN";
+
+    // Room Management Permissions
+    public static final String VIEW_ROOM = "VIEW_ROOM";
+    public static final String CREATE_ROOM = "CREATE_ROOM";
+    public static final String UPDATE_ROOM = "UPDATE_ROOM";
+    public static final String DELETE_ROOM = "DELETE_ROOM"; // soft delete
 }

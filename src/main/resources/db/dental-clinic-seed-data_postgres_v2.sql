@@ -212,6 +212,16 @@ VALUES
 ('DELETE_SPECIALIZATION', 'DELETE_SPECIALIZATION', 'SYSTEM_CONFIGURATION', 'Xóa chuyên khoa', 223, NULL, TRUE, NOW())
 ON CONFLICT (permission_id) DO NOTHING;
 
+-- MODULE 10: ROOM_MANAGEMENT (Quản lý phòng khám/ghế nha khoa)
+INSERT INTO permissions (permission_id, permission_name, module, description, display_order, parent_permission_id, is_active, created_at)
+VALUES
+-- Room management
+('VIEW_ROOM', 'VIEW_ROOM', 'ROOM_MANAGEMENT', 'Xem danh sách và chi tiết phòng', 230, NULL, TRUE, NOW()),
+('CREATE_ROOM', 'CREATE_ROOM', 'ROOM_MANAGEMENT', 'Tạo phòng/ghế mới', 231, NULL, TRUE, NOW()),
+('UPDATE_ROOM', 'UPDATE_ROOM', 'ROOM_MANAGEMENT', 'Cập nhật thông tin phòng', 232, NULL, TRUE, NOW()),
+('DELETE_ROOM', 'DELETE_ROOM', 'ROOM_MANAGEMENT', 'Vô hiệu hóa phòng (soft delete)', 233, NULL, TRUE, NOW())
+ON CONFLICT (permission_id) DO NOTHING;
+
 -- ============================================
 -- BƯỚC 4: PHÂN QUYỀN CHO CÁC VAI TRÒ
 -- ============================================
