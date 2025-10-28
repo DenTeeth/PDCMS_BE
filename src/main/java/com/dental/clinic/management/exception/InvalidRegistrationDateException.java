@@ -1,52 +1,42 @@
 package com.dental.clinic.management.exception;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.http.ProblemDetail;
+import org.springframework.web.ErrorResponseException;
 
 import java.time.LocalDate;
 
 /**
- * Exception thrown when schedule registration violates time window rules.
- *
- * Business Rules:
- * - Minimum: 24 hours in advance
- * - Maximum: 30 days in advance
- *
- * Rationale:
- * - 24h minimum: Allow clinic to prepare, notify patients
- * - 30d maximum: Prevent excessive forward planning, maintain flexibility
+ * Exception thrown when registration date is invalid.
+ * - effective_from cannot be in the past
+ * - effective_to must be >= effective_from
  */
-@ResponseStatus(HttpStatus.BAD_REQUEST)
-public class InvalidRegistrationDateException extends RuntimeException {
-
-    private static final int MIN_ADVANCE_DAYS = 1; // 24 hours
-    private static final int MAX_ADVANCE_DAYS = 30;
+public class InvalidRegistrationDateException extends ErrorResponseException {
 
     public InvalidRegistrationDateException(String message) {
-        super(message);
+        super(HttpStatus.BAD_REQUEST, asProblemDetailWithMessage(message), null);
     }
 
     public InvalidRegistrationDateException(LocalDate workDate, LocalDate currentDate) {
-        super(buildMessage(workDate, currentDate));
+        super(HttpStatus.BAD_REQUEST, asProblemDetailWithDates(workDate, currentDate), null);
     }
 
-    private static String buildMessage(LocalDate workDate, LocalDate currentDate) {
+    private static ProblemDetail asProblemDetailWithMessage(String message) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, message);
+        problemDetail.setTitle("Invalid Registration Date");
+        problemDetail.setProperty("message", "INVALID_REGISTRATION_DATE");
+        return problemDetail;
+    }
+
+    private static ProblemDetail asProblemDetailWithDates(LocalDate workDate, LocalDate currentDate) {
         long daysDiff = java.time.temporal.ChronoUnit.DAYS.between(currentDate, workDate);
-        return String.format(
-                "Ngày đăng ký không hợp lệ: %s (còn %d ngày). " +
-                        "Phải đăng ký trước %d-%d ngày.",
-                workDate, daysDiff, MIN_ADVANCE_DAYS, MAX_ADVANCE_DAYS);
-    }
-
-    public InvalidRegistrationDateException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public static int getMinAdvanceDays() {
-        return MIN_ADVANCE_DAYS;
-    }
-
-    public static int getMaxAdvanceDays() {
-        return MAX_ADVANCE_DAYS;
+        String message = String.format(
+                "Ngày đăng ký không hợp lệ: %s (còn %d ngày).",
+                workDate, daysDiff);
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, message);
+        problemDetail.setTitle("Invalid Registration Date");
+        problemDetail.setProperty("message", "INVALID_REGISTRATION_DATE");
+        return problemDetail;
     }
 }
+

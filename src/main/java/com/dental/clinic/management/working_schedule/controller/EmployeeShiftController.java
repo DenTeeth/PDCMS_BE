@@ -1,4 +1,4 @@
-﻿package com.dental.clinic.management.working_schedule.controller;
+package com.dental.clinic.management.working_schedule.controller;
 
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.utils.security.SecurityUtil;
