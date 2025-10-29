@@ -9,7 +9,7 @@ import com.dental.clinic.management.working_schedule.enums.WorkShiftCategory;
 import com.dental.clinic.management.working_schedule.exception.TimeOfDayMismatchException;
 import com.dental.clinic.management.working_schedule.mapper.WorkShiftMapper;
 import com.dental.clinic.management.working_schedule.repository.EmployeeShiftRepository;
-import com.dental.clinic.management.working_schedule.repository.EmployeeShiftRegistrationRepository;
+import com.dental.clinic.management.working_schedule.repository.PartTimeSlotRepository;
 import com.dental.clinic.management.working_schedule.repository.WorkShiftRepository;
 import com.dental.clinic.management.working_schedule.utils.WorkShiftIdGenerator;
 
@@ -38,7 +38,7 @@ public class WorkShiftService {
 
     private final WorkShiftRepository workShiftRepository;
     private final EmployeeShiftRepository employeeShiftRepository;
-    private final EmployeeShiftRegistrationRepository employeeShiftRegistrationRepository;
+    private final PartTimeSlotRepository partTimeSlotRepository;
     private final WorkShiftMapper workShiftMapper;
 
     // Clinic working hours: 8:00 AM to 9:00 PM
@@ -452,34 +452,35 @@ public class WorkShiftService {
     }
 
     /**
-     * Check if a work shift template is currently in use by employee schedules or registrations.
-     * Checks BOTH employee_shifts (full-time schedules) AND employee_shift_registrations (part-time).
+     * Check if a work shift template is currently in use by employee schedules or part-time slots.
+     * V2: Checks BOTH employee_shifts (full-time schedules) AND part_time_slots (which link to registrations).
      * 
      * @param workShiftId Work shift ID
-     * @return true if work shift is in use by any schedule or registration
+     * @return true if work shift is in use by any schedule or slot
      */
     private boolean isWorkShiftInUse(String workShiftId) {
         boolean usedBySchedules = employeeShiftRepository.existsByWorkShiftId(workShiftId);
-        boolean usedByRegistrations = employeeShiftRegistrationRepository.existsByWorkShiftId(workShiftId);
-        return usedBySchedules || usedByRegistrations;
+        boolean usedBySlots = partTimeSlotRepository.existsByWorkShiftId(workShiftId);
+        return usedBySchedules || usedBySlots;
     }
 
     /**
-     * Get detailed usage count for a work shift (schedules + registrations).
+     * Get detailed usage count for a work shift (schedules + slots).
+     * V2: Shows full-time schedules and part-time slots count.
      * 
      * @param workShiftId Work shift ID
-     * @return Usage count message showing schedules and registrations
+     * @return Usage count message showing schedules and slots
      */
     private String getWorkShiftUsageDetails(String workShiftId) {
         long scheduleCount = employeeShiftRepository.countByWorkShiftId(workShiftId);
-        long registrationCount = employeeShiftRegistrationRepository.countByWorkShiftId(workShiftId);
+        long slotCount = partTimeSlotRepository.countByWorkShiftId(workShiftId);
         
-        if (scheduleCount > 0 && registrationCount > 0) {
-            return scheduleCount + " lịch làm việc và " + registrationCount + " đăng ký bán thời gian";
+        if (scheduleCount > 0 && slotCount > 0) {
+            return scheduleCount + " lịch làm việc và " + slotCount + " slot bán thời gian";
         } else if (scheduleCount > 0) {
             return scheduleCount + " lịch làm việc";
         } else {
-            return registrationCount + " đăng ký bán thời gian";
+            return slotCount + " slot bán thời gian";
         }
     }
 

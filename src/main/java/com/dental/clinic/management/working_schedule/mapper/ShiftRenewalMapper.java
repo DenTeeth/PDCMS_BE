@@ -4,8 +4,6 @@ import com.dental.clinic.management.working_schedule.domain.ShiftRenewalRequest;
 import com.dental.clinic.management.working_schedule.dto.response.ShiftRenewalResponse;
 import org.springframework.stereotype.Component;
 
-import java.util.stream.Collectors;
-
 /**
  * Mapper for ShiftRenewalRequest entity.
  */
@@ -45,40 +43,20 @@ public class ShiftRenewalMapper {
 
     /**
      * Build shift details string from registration days.
-     * Example: "Monday, Wednesday (MORNING)"
+     * Example: "Slot ID: 123"
      *
      * @param entity the renewal request entity
      * @return formatted shift details
      */
     private String buildShiftDetails(ShiftRenewalRequest entity) {
         if (entity.getExpiringRegistration() == null ||
-                entity.getExpiringRegistration().getRegistrationDays() == null ||
-                entity.getExpiringRegistration().getRegistrationDays().isEmpty()) {
+                entity.getExpiringRegistration().getPartTimeSlotId() == null) {
             return "N/A";
         }
 
-        String days = entity.getExpiringRegistration().getRegistrationDays().stream()
-                .map(rd -> rd.getId().getDayOfWeek())
-                .map(this::formatDayOfWeek)
-                .collect(Collectors.joining(", "));
-
-        String workShift = entity.getExpiringRegistration().getWorkShiftId();
-
-        return String.format("%s (%s)", days, workShift);
-    }
-
-    /**
-     * Format day of week enum to readable string.
-     *
-     * @param day the day of week enum
-     * @return formatted day
-     */
-    private String formatDayOfWeek(com.dental.clinic.management.working_schedule.enums.DayOfWeek day) {
-        if (day == null) {
-            return "";
-        }
-
-        String dayName = day.name();
-        return dayName.substring(0, 1).toUpperCase() + dayName.substring(1).toLowerCase();
+        // V2: Get slot details instead of registration days
+        // This would require injecting PartTimeSlotRepository and WorkShiftRepository
+        // For now, return simple format
+        return String.format("Slot ID: %d", entity.getExpiringRegistration().getPartTimeSlotId());
     }
 }

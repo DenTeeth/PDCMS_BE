@@ -1,573 +1,250 @@
 package com.dental.clinic.management.working_schedule.service;
 
 import com.dental.clinic.management.account.repository.AccountRepository;
-import com.dental.clinic.management.employee.domain.Employee;
-import com.dental.clinic.management.employee.enums.EmploymentType;
-import com.dental.clinic.management.employee.repository.EmployeeRepository;
-import com.dental.clinic.management.exception.EmployeeNotFoundException;
-import com.dental.clinic.management.exception.InvalidEmploymentTypeException;
-import com.dental.clinic.management.exception.InvalidRegistrationDateException;
-import com.dental.clinic.management.exception.RegistrationConflictException;
-import com.dental.clinic.management.exception.RegistrationNotFoundException;
-import com.dental.clinic.management.exception.WorkShiftNotFoundException;
-import com.dental.clinic.management.utils.IdGenerator;
-import com.dental.clinic.management.utils.security.AuthoritiesConstants;
 import com.dental.clinic.management.utils.security.SecurityUtil;
 import com.dental.clinic.management.working_schedule.domain.EmployeeShiftRegistration;
-import com.dental.clinic.management.working_schedule.domain.RegistrationDays;
-import com.dental.clinic.management.working_schedule.domain.RegistrationDaysId;
-import com.dental.clinic.management.working_schedule.dto.request.CreateShiftRegistrationRequest;
-import com.dental.clinic.management.working_schedule.dto.request.ReplaceShiftRegistrationRequest;
-import com.dental.clinic.management.working_schedule.dto.request.UpdateShiftRegistrationRequest;
-import com.dental.clinic.management.working_schedule.dto.response.ShiftRegistrationResponse;
-import com.dental.clinic.management.working_schedule.enums.DayOfWeek;
-import com.dental.clinic.management.working_schedule.mapper.ShiftRegistrationMapper;
+import com.dental.clinic.management.working_schedule.domain.PartTimeSlot;
+import com.dental.clinic.management.working_schedule.domain.WorkShift;
+import com.dental.clinic.management.working_schedule.dto.request.CreateRegistrationRequest;
+import com.dental.clinic.management.working_schedule.dto.request.UpdateEffectiveToRequest;
+import com.dental.clinic.management.working_schedule.dto.response.AvailableSlotResponse;
+import com.dental.clinic.management.working_schedule.dto.response.RegistrationResponse;
+import com.dental.clinic.management.working_schedule.exception.*;
 import com.dental.clinic.management.working_schedule.repository.EmployeeShiftRegistrationRepository;
-import com.dental.clinic.management.working_schedule.repository.RegistrationDaysRepository;
+import com.dental.clinic.management.working_schedule.repository.PartTimeSlotRepository;
 import com.dental.clinic.management.working_schedule.repository.WorkShiftRepository;
 
-import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
-/**
- * Service for managing employee shift registrations
- */
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@Transactional(readOnly = true)
 public class EmployeeShiftRegistrationService {
 
-        private final EmployeeShiftRegistrationRepository registrationRepository;
-        private final RegistrationDaysRepository registrationDaysRepository;
-        private final EmployeeRepository employeeRepository;
-        private final WorkShiftRepository workShiftRepository;
-        private final AccountRepository accountRepository;
-        private final ShiftRegistrationMapper shiftRegistrationMapper;
-        private final IdGenerator idGenerator;
-        private final EntityManager entityManager;
+    private final EmployeeShiftRegistrationRepository registrationRepository;
+    private final PartTimeSlotRepository slotRepository;
+    private final WorkShiftRepository workShiftRepository;
+    private final AccountRepository accountRepository;
+    private final EntityManager entityManager;
 
-        /**
-         * GET /api/v1/registrations
-         * Xem danh sách đăng ký ca làm part-time.
-         * - Admin hoặc VIEW_REGISTRATION_ALL: xem tất cả
-         * - VIEW_REGISTRATION_OWN: chỉ xem của chính mình
-         */
-        @PreAuthorize("hasRole('" + AuthoritiesConstants.ADMIN + "') or " +
-                        "hasAuthority('" + AuthoritiesConstants.VIEW_REGISTRATION_ALL + "') or " +
-                        "hasAuthority('" + AuthoritiesConstants.VIEW_REGISTRATION_OWN + "')")
-        public Page<ShiftRegistrationResponse> getAllRegistrations(Pageable pageable) {
-                log.debug("Request to get all Employee Shift Registrations");
+    /**
+     * Get available slots for employee to claim.
+     */
+    @Transactional(readOnly = true)
+    @PreAuthorize("hasAuthority('VIEW_AVAILABLE_SLOTS')")
+    public List<AvailableSlotResponse> getAvailableSlots() {
+        Integer employeeId = getCurrentEmployeeId();
+        log.info("Fetching available slots for employee {}", employeeId);
 
-                // LUỒNG 1: Admin hoặc người dùng có quyền xem tất cả
-                if (SecurityUtil.hasCurrentUserRole(AuthoritiesConstants.ADMIN) ||
-                                SecurityUtil.hasCurrentUserPermission(AuthoritiesConstants.VIEW_REGISTRATION_ALL)) {
+        // Get slots employee already registered
+        List<Long> registeredSlotIds = registrationRepository.findByEmployeeIdAndIsActive(employeeId, true)
+                .stream()
+                .map(EmployeeShiftRegistration::getPartTimeSlotId)
+                .collect(Collectors.toList());
 
-                        log.info("User has VIEW_REGISTRATION_ALL permission, fetching all registrations");
-                        return registrationRepository.findAll(pageable)
-                                        .map(shiftRegistrationMapper::toShiftRegistrationResponse);
-                }
-                // LUỒNG 2: Nhân viên chỉ có quyền VIEW_REGISTRATION_OWN
-                else {
-                        String username = SecurityUtil.getCurrentUserLogin()
-                                        .orElseThrow(() -> new RuntimeException("User not authenticated"));
+        // Get all active slots
+        return slotRepository.findAll().stream()
+                .filter(slot -> slot.getIsActive())
+                .filter(slot -> !registeredSlotIds.contains(slot.getSlotId()))
+                .map(slot -> {
+                    long registered = slotRepository.countActiveRegistrations(slot.getSlotId());
+                    int remaining = slot.getQuota() - (int) registered;
+                    
+                    if (remaining <= 0) {
+                        return null; // Slot is full
+                    }
 
-                        Integer employeeId = accountRepository.findOneByUsername(username)
-                                        .map(account -> account.getEmployee().getEmployeeId())
-                                        .orElseThrow(() -> new RuntimeException(
-                                                        "Employee not found for user: " + username));
+                    WorkShift workShift = workShiftRepository.findById(slot.getWorkShiftId()).orElse(null);
+                    String shiftName = workShift != null ? workShift.getShiftName() : "Unknown";
 
-                        log.info("User has VIEW_REGISTRATION_OWN permission, fetching registrations for employee_id: {}",
-                                        employeeId);
-                        return registrationRepository.findByEmployeeId(employeeId, pageable)
-                                        .map(shiftRegistrationMapper::toShiftRegistrationResponse);
-                }
+                    return AvailableSlotResponse.builder()
+                            .slotId(slot.getSlotId())
+                            .shiftName(shiftName)
+                            .dayOfWeek(slot.getDayOfWeek())
+                            .remaining(remaining)
+                            .build();
+                })
+                .filter(response -> response != null)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Claim a slot (create registration) with pessimistic locking.
+     */
+    @Transactional
+    @PreAuthorize("hasAuthority('CREATE_REGISTRATION')")
+    public RegistrationResponse claimSlot(CreateRegistrationRequest request) {
+        Integer employeeId = getCurrentEmployeeId();
+        log.info("Employee {} claiming slot {}", employeeId, request.getPartTimeSlotId());
+
+        // Validate effectiveFrom not in past
+        if (request.getEffectiveFrom().isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("Effective from date cannot be in the past");
         }
 
-        /**
-         * GET /api/v1/registrations/{registration_id}
-         * Xem chi tiết một đăng ký ca làm.
-         * - Phải có permission VIEW_REGISTRATION_ALL hoặc VIEW_REGISTRATION_OWN (và là
-         * chủ sở hữu)
-         * - 404 Not Found nếu đăng ký không tồn tại hoặc người dùng không có quyền xem
-         */
-        @PreAuthorize("hasRole('" + AuthoritiesConstants.ADMIN + "') or " +
-                        "hasAuthority('" + AuthoritiesConstants.VIEW_REGISTRATION_ALL + "') or " +
-                        "hasAuthority('" + AuthoritiesConstants.VIEW_REGISTRATION_OWN + "')")
-        public ShiftRegistrationResponse getRegistrationById(String registrationId) {
-                log.debug("Request to get Employee Shift Registration: {}", registrationId);
-
-                // LUỒNG 1: Admin hoặc người dùng có quyền xem tất cả
-                if (SecurityUtil.hasCurrentUserRole(AuthoritiesConstants.ADMIN) ||
-                                SecurityUtil.hasCurrentUserPermission(AuthoritiesConstants.VIEW_REGISTRATION_ALL)) {
-
-                        log.info("User has VIEW_REGISTRATION_ALL permission, fetching registration: {}",
-                                        registrationId);
-                        return registrationRepository.findByRegistrationId(registrationId)
-                                        .map(shiftRegistrationMapper::toShiftRegistrationResponse)
-                                        .orElseThrow(() -> new RegistrationNotFoundException(registrationId));
-                }
-                // LUỒNG 2: Nhân viên chỉ có quyền VIEW_REGISTRATION_OWN (phải là chủ sở hữu)
-                else {
-                        String username = SecurityUtil.getCurrentUserLogin()
-                                        .orElseThrow(() -> new RuntimeException("User not authenticated"));
-
-                        Integer employeeId = accountRepository.findOneByUsername(username)
-                                        .map(account -> account.getEmployee().getEmployeeId())
-                                        .orElseThrow(() -> new RuntimeException(
-                                                        "Employee not found for user: " + username));
-
-                        log.info("User has VIEW_REGISTRATION_OWN permission, fetching registration: {} for employee_id: {}",
-                                        registrationId, employeeId);
-
-                        // Tìm registration và check xem có phải của employee này không
-                        return registrationRepository.findByRegistrationIdAndEmployeeId(registrationId, employeeId)
-                                        .map(shiftRegistrationMapper::toShiftRegistrationResponse)
-                                        .orElseThrow(() -> new RegistrationNotFoundException(registrationId,
-                                                        "or you don't have permission to view it"));
-                }
+        // START TRANSACTION WITH PESSIMISTIC LOCK
+        PartTimeSlot slot = entityManager.find(PartTimeSlot.class, request.getPartTimeSlotId(), LockModeType.PESSIMISTIC_WRITE);
+        
+        if (slot == null || !slot.getIsActive()) {
+            throw new SlotNotFoundException(request.getPartTimeSlotId());
         }
 
-        /**
-         * POST /api/v1/registrations
-         * Tạo đăng ký ca làm part-time mới.
-         * - Chỉ nhân viên PART_TIME mới được tạo đăng ký
-         * - Kiểm tra xung đột với các đăng ký đang hoạt động
-         * - Kiểm tra ngày hiệu lực hợp lệ
-         */
-        @PreAuthorize("hasAuthority('" + AuthoritiesConstants.CREATE_REGISTRATION + "')")
-        @Transactional
-        public ShiftRegistrationResponse createRegistration(CreateShiftRegistrationRequest request) {
-                log.debug("Request to create Employee Shift Registration: {}", request);
-
-                // 1. Validate employee exists and is PART_TIME
-                Employee employee = employeeRepository.findById(request.getEmployeeId())
-                                .orElseThrow(() -> new EmployeeNotFoundException(request.getEmployeeId()));
-
-                if (employee.getEmploymentType() != EmploymentType.PART_TIME) {
-                        log.warn("Employee {} has employment type {}, but only PART_TIME employees can create registrations",
-                                        employee.getEmployeeId(), employee.getEmploymentType());
-                        throw new InvalidEmploymentTypeException(
-                                        "Chỉ nhân viên PART_TIME mới được đăng ký ca làm. " +
-                                                        "Nhân viên này có loại hợp đồng: "
-                                                        + employee.getEmploymentType());
-                }
-
-                // 2. Validate work shift exists and is active
-                workShiftRepository.findByWorkShiftIdAndIsActive(request.getWorkShiftId(), true)
-                                .orElseThrow(() -> new WorkShiftNotFoundException(request.getWorkShiftId()));
-
-                // 3. Validate dates
-                LocalDate today = LocalDate.now();
-
-                if (request.getEffectiveFrom().isBefore(today)) {
-                        throw new InvalidRegistrationDateException(
-                                        "Ngày bắt đầu hiệu lực không thể là quá khứ. Ngày bắt đầu: " +
-                                                        request.getEffectiveFrom() + ", Ngày hiện tại: " + today);
-                }
-
-                if (request.getEffectiveTo() != null &&
-                                request.getEffectiveTo().isBefore(request.getEffectiveFrom())) {
-                        throw new InvalidRegistrationDateException(
-                                        "Ngày kết thúc hiệu lực phải sau hoặc bằng ngày bắt đầu. " +
-                                                        "Ngày bắt đầu: " + request.getEffectiveFrom() +
-                                                        ", Ngày kết thúc: " + request.getEffectiveTo());
-                }
-
-                // 4. Check for conflicts with existing active registrations
-                List<EmployeeShiftRegistration> conflicts = registrationRepository.findConflictingRegistrations(
-                                request.getEmployeeId(),
-                                request.getWorkShiftId(),
-                                request.getDaysOfWeek());
-
-                if (!conflicts.isEmpty()) {
-                        EmployeeShiftRegistration conflict = conflicts.get(0);
-                        String conflictingDays = conflict.getRegistrationDays().stream()
-                                        .map(rd -> rd.getId().getDayOfWeek().toString())
-                                        .reduce((a, b) -> a + ", " + b)
-                                        .orElse("");
-
-                        throw new RegistrationConflictException(
-                                        String.format("Đã tồn tại đăng ký hoạt động cho nhân viên %d, ca %s vào các ngày: %s. "
-                                                        +
-                                                        "Registration ID: %s, Hiệu lực từ: %s đến: %s",
-                                                        request.getEmployeeId(),
-                                                        request.getWorkShiftId(),
-                                                        conflictingDays,
-                                                        conflict.getRegistrationId(),
-                                                        conflict.getEffectiveFrom(),
-                                                        conflict.getEffectiveTo() != null ? conflict.getEffectiveTo()
-                                                                        : "vô thời hạn"));
-                }
-
-                // 5. Generate registration ID
-                String registrationId = idGenerator.generateId("REG");
-                log.info("Generated registration ID: {}", registrationId);
-
-                // 6. Create and save EmployeeShiftRegistration
-                EmployeeShiftRegistration registration = new EmployeeShiftRegistration();
-                registration.setRegistrationId(registrationId);
-                registration.setEmployeeId(request.getEmployeeId());
-                registration.setWorkShiftId(request.getWorkShiftId());
-                registration.setEffectiveFrom(request.getEffectiveFrom());
-                registration.setEffectiveTo(request.getEffectiveTo());
-                registration.setIsActive(true);
-
-                EmployeeShiftRegistration savedRegistration = registrationRepository.save(registration);
-                log.info("Saved registration: {}", savedRegistration.getRegistrationId());
-
-                // 7. Create and save RegistrationDays for each day of week
-                List<RegistrationDays> registrationDaysList = new ArrayList<>();
-                for (DayOfWeek dayOfWeek : request.getDaysOfWeek()) {
-                        RegistrationDaysId dayId = new RegistrationDaysId(registrationId, dayOfWeek);
-                        RegistrationDays registrationDay = new RegistrationDays(savedRegistration, dayId);
-                        registrationDaysList.add(registrationDay);
-                }
-
-                registrationDaysRepository.saveAll(registrationDaysList);
-                log.info("Saved {} registration days for registration {}", registrationDaysList.size(), registrationId);
-
-                // 8. Load and return the complete registration with days
-                EmployeeShiftRegistration completeRegistration = registrationRepository
-                                .findByRegistrationId(registrationId)
-                                .orElseThrow(() -> new RegistrationNotFoundException(registrationId));
-
-                return shiftRegistrationMapper.toShiftRegistrationResponse(completeRegistration);
+        // Check quota
+        long currentRegistered = slotRepository.countActiveRegistrations(slot.getSlotId());
+        if (currentRegistered >= slot.getQuota()) {
+            WorkShift workShift = workShiftRepository.findById(slot.getWorkShiftId()).orElse(null);
+            String shiftName = workShift != null ? workShift.getShiftName() : "Unknown";
+            throw new SlotIsFullException(slot.getSlotId(), shiftName, slot.getDayOfWeek());
         }
 
-        /**
-         * PATCH /api/v1/registrations/{registration_id}
-         * Cập nhật một phần đăng ký ca làm.
-         * - Admin hoặc UPDATE_REGISTRATION_ALL: cập nhật bất kỳ registration nào
-         * - UPDATE_REGISTRATION_OWN: chỉ cập nhật của chính mình
-         * - Nếu workShiftId hoặc daysOfWeek thay đổi, phải validate conflict lại
-         */
-        @PreAuthorize("hasRole('" + AuthoritiesConstants.ADMIN + "') or " +
-                        "hasAuthority('" + AuthoritiesConstants.UPDATE_REGISTRATION_ALL + "') or " +
-                        "hasAuthority('" + AuthoritiesConstants.UPDATE_REGISTRATION_OWN + "')")
-        @Transactional
-        public ShiftRegistrationResponse updateRegistration(String registrationId,
-                        UpdateShiftRegistrationRequest request) {
-                log.debug("Request to update Employee Shift Registration: {}", registrationId);
-
-                // 1. Load existing registration
-                EmployeeShiftRegistration registration = loadRegistrationWithOwnershipCheck(registrationId);
-
-                boolean needConflictCheck = false;
-
-                // 2. Update workShiftId if provided
-                if (request.getWorkShiftId() != null && !request.getWorkShiftId().equals(registration.getWorkShiftId())) {
-                        // Validate work shift exists and is active
-                        workShiftRepository.findByWorkShiftIdAndIsActive(request.getWorkShiftId(), true)
-                                        .orElseThrow(() -> new WorkShiftNotFoundException(request.getWorkShiftId()));
-
-                        registration.setWorkShiftId(request.getWorkShiftId());
-                        needConflictCheck = true;
-                        log.info("Updated work shift ID to: {}", request.getWorkShiftId());
-                }
-
-                // 3. Update daysOfWeek if provided
-                if (request.getDaysOfWeek() != null && !request.getDaysOfWeek().isEmpty()) {
-                        // Delete old registration days
-                        List<RegistrationDays> oldDays = registrationDaysRepository
-                                        .findByIdRegistrationId(registrationId);
-                        registrationDaysRepository.deleteAll(oldDays);
-                        registrationDaysRepository.flush(); // Ensure deletion is flushed to DB
-                        log.info("Deleted {} old registration days", oldDays.size());
-
-                        // Clear the collection in the entity to avoid stale references
-                        registration.getRegistrationDays().clear();
-                        
-                        // Detach the registration entity to avoid lazy loading issues
-                        entityManager.detach(registration);
-                        
-                        // Clear persistence context to ensure fresh data
-                        entityManager.clear();
-
-                        // Reload registration without registrationDays to avoid stale data
-                        registration = registrationRepository.findById(registrationId)
-                                        .orElseThrow(() -> new RegistrationNotFoundException(registrationId));
-
-                        // Create new registration days
-                        List<RegistrationDays> newDays = new ArrayList<>();
-                        for (DayOfWeek dayOfWeek : request.getDaysOfWeek()) {
-                                RegistrationDaysId dayId = new RegistrationDaysId(registrationId, dayOfWeek);
-                                RegistrationDays registrationDay = new RegistrationDays(registration, dayId);
-                                newDays.add(registrationDay);
-                        }
-                        registrationDaysRepository.saveAll(newDays);
-                        registrationDaysRepository.flush(); // Ensure new days are flushed to DB
-                        log.info("Created {} new registration days", newDays.size());
-
-                        needConflictCheck = true;
-                }
-
-                // 4. Update effectiveFrom if provided
-                if (request.getEffectiveFrom() != null) {
-                        LocalDate today = LocalDate.now();
-                        if (request.getEffectiveFrom().isBefore(today)) {
-                                throw new InvalidRegistrationDateException(
-                                                "Ngày bắt đầu hiệu lực không thể là quá khứ. Ngày bắt đầu: " +
-                                                                request.getEffectiveFrom() + ", Ngày hiện tại: "
-                                                                + today);
-                        }
-                        registration.setEffectiveFrom(request.getEffectiveFrom());
-                }
-
-                // 5. Update effectiveTo if provided
-                if (request.getEffectiveTo() != null) {
-                        if (request.getEffectiveTo().isBefore(registration.getEffectiveFrom())) {
-                                throw new InvalidRegistrationDateException(
-                                                "Ngày kết thúc hiệu lực phải sau hoặc bằng ngày bắt đầu. " +
-                                                                "Ngày bắt đầu: " + registration.getEffectiveFrom() +
-                                                                ", Ngày kết thúc: " + request.getEffectiveTo());
-                        }
-                        registration.setEffectiveTo(request.getEffectiveTo());
-                }
-
-                // 6. Update isActive if provided
-                if (request.getIsActive() != null) {
-                        registration.setIsActive(request.getIsActive());
-                }
-
-                // 7. Check for conflicts if workShiftId or daysOfWeek changed
-                if (needConflictCheck) {
-                        // Use the days of week from request if provided, otherwise reload from database
-                        List<DayOfWeek> currentDays;
-                        if (request.getDaysOfWeek() != null && !request.getDaysOfWeek().isEmpty()) {
-                                currentDays = request.getDaysOfWeek();
-                        } else {
-                                currentDays = registrationDaysRepository.findByIdRegistrationId(registrationId)
-                                                .stream()
-                                                .map(rd -> rd.getId().getDayOfWeek())
-                                                .toList();
-                        }
-
-                        // Temporarily set current registration to inactive to exclude it from conflict check
-                        boolean wasActive = registration.getIsActive();
-                        registration.setIsActive(false);
-                        registrationRepository.saveAndFlush(registration);
-
-                        try {
-                                List<EmployeeShiftRegistration> conflicts = registrationRepository
-                                                .findConflictingRegistrations(
-                                                                registration.getEmployeeId(),
-                                                                registration.getWorkShiftId(),
-                                                                currentDays);
-
-                                if (!conflicts.isEmpty()) {
-                                        EmployeeShiftRegistration conflict = conflicts.get(0);
-                                        String conflictingDays = conflict.getRegistrationDays().stream()
-                                                        .map(rd -> rd.getId().getDayOfWeek().toString())
-                                                        .reduce((a, b) -> a + ", " + b)
-                                                        .orElse("");
-
-                                        throw new RegistrationConflictException(
-                                                        String.format("Đã tồn tại đăng ký hoạt động cho nhân viên %d, ca %s vào các ngày: %s. "
-                                                                        +
-                                                                        "Registration ID: %s, Hiệu lực từ: %s đến: %s",
-                                                                        registration.getEmployeeId(),
-                                                                        registration.getWorkShiftId(),
-                                                                        conflictingDays,
-                                                                        conflict.getRegistrationId(),
-                                                                        conflict.getEffectiveFrom(),
-                                                                        conflict.getEffectiveTo() != null
-                                                                                        ? conflict.getEffectiveTo()
-                                                                                        : "vô thời hạn"));
-                                }
-                        } finally {
-                                // Restore the active status
-                                registration.setIsActive(wasActive);
-                        }
-                }
-
-                // 8. Save and return
-                registrationRepository.save(registration);
-                log.info("Updated registration: {}", registrationId);
-
-                EmployeeShiftRegistration updatedRegistration = registrationRepository
-                                .findByRegistrationId(registrationId)
-                                .orElseThrow(() -> new RegistrationNotFoundException(registrationId));
-
-                return shiftRegistrationMapper.toShiftRegistrationResponse(updatedRegistration);
+        // Check employee hasn't already registered this same slot (prevent duplicate registration of same slot)
+        boolean alreadyRegistered = registrationRepository.findByEmployeeIdAndIsActive(employeeId, true)
+                .stream()
+                .anyMatch(reg -> reg.getPartTimeSlotId().equals(slot.getSlotId()));
+        
+        if (alreadyRegistered) {
+            throw new RegistrationConflictException(employeeId);
         }
 
-        /**
-         * PUT /api/v1/registrations/{registration_id}
-         * Thay thế toàn bộ thông tin đăng ký ca làm.
-         * - Admin hoặc UPDATE_REGISTRATION_ALL: cập nhật bất kỳ registration nào
-         * - UPDATE_REGISTRATION_OWN: chỉ cập nhật của chính mình
-         * - Thực hiện đầy đủ validation như khi POST
-         */
-        @PreAuthorize("hasRole('" + AuthoritiesConstants.ADMIN + "') or " +
-                        "hasAuthority('" + AuthoritiesConstants.UPDATE_REGISTRATION_ALL + "') or " +
-                        "hasAuthority('" + AuthoritiesConstants.UPDATE_REGISTRATION_OWN + "')")
-        @Transactional
-        public ShiftRegistrationResponse replaceRegistration(String registrationId,
-                        ReplaceShiftRegistrationRequest request) {
-                log.debug("Request to replace Employee Shift Registration: {}", registrationId);
+        // Calculate effectiveTo (3 months from effectiveFrom)
+        LocalDate effectiveTo = request.getEffectiveFrom().plusMonths(3);
 
-                // 1. Load existing registration and validate ownership
-                EmployeeShiftRegistration registration = loadRegistrationWithOwnershipCheck(registrationId);
+        // Create registration
+        EmployeeShiftRegistration registration = new EmployeeShiftRegistration();
+        registration.setEmployeeId(employeeId);
+        registration.setPartTimeSlotId(slot.getSlotId());
+        registration.setEffectiveFrom(request.getEffectiveFrom());
+        registration.setEffectiveTo(effectiveTo);
+        registration.setIsActive(true);
 
-                // 2. Validate work shift exists and is active
-                workShiftRepository.findByWorkShiftIdAndIsActive(request.getWorkShiftId(), true)
-                                .orElseThrow(() -> new WorkShiftNotFoundException(request.getWorkShiftId()));
+        EmployeeShiftRegistration saved = registrationRepository.save(registration);
+        log.info("Registration {} created for employee {}", saved.getRegistrationId(), employeeId);
 
-                // 3. Validate dates
-                LocalDate today = LocalDate.now();
+        return buildResponse(saved, slot);
+    }
 
-                if (request.getEffectiveFrom().isBefore(today)) {
-                        throw new InvalidRegistrationDateException(
-                                        "Ngày bắt đầu hiệu lực không thể là quá khứ. Ngày bắt đầu: " +
-                                                        request.getEffectiveFrom() + ", Ngày hiện tại: " + today);
-                }
+    /**
+     * Get all registrations (admin sees all, employee sees own).
+     */
+    @Transactional(readOnly = true)
+    @PreAuthorize("hasAnyAuthority('UPDATE_REGISTRATIONS_ALL', 'VIEW_REGISTRATION_OWN')")
+    public List<RegistrationResponse> getRegistrations(Integer filterEmployeeId) {
+        boolean isAdmin = SecurityUtil.hasCurrentUserRole("ADMIN") ||
+                SecurityUtil.hasCurrentUserPermission("UPDATE_REGISTRATIONS_ALL");
+        
+        log.info("Fetching registrations - admin: {}, filter: {}", isAdmin, filterEmployeeId);
 
-                if (request.getEffectiveTo() != null &&
-                                request.getEffectiveTo().isBefore(request.getEffectiveFrom())) {
-                        throw new InvalidRegistrationDateException(
-                                        "Ngày kết thúc hiệu lực phải sau hoặc bằng ngày bắt đầu. " +
-                                                        "Ngày bắt đầu: " + request.getEffectiveFrom() +
-                                                        ", Ngày kết thúc: " + request.getEffectiveTo());
-                }
+        List<EmployeeShiftRegistration> registrations;
 
-                // 4. Delete old registration days first to avoid conflicts
-                List<RegistrationDays> oldDays = registrationDaysRepository.findByIdRegistrationId(registrationId);
-                registrationDaysRepository.deleteAll(oldDays);
-                registrationDaysRepository.flush(); // Ensure deletion is flushed to DB
-                log.info("Deleted {} old registration days", oldDays.size());
-
-                // Clear the collection in the entity to avoid stale references
-                registration.getRegistrationDays().clear();
-                
-                // Detach the registration entity to avoid lazy loading issues
-                entityManager.detach(registration);
-                
-                // Clear persistence context to ensure fresh data
-                entityManager.clear();
-
-                // Reload registration without registrationDays to avoid stale data
-                registration = registrationRepository.findById(registrationId)
-                                .orElseThrow(() -> new RegistrationNotFoundException(registrationId));
-
-                // 5. Temporarily set current registration to inactive to exclude it from conflict check
-                registration.setIsActive(false);
-                registrationRepository.saveAndFlush(registration);
-
-                // Check for conflicts (excluding current registration by setting it inactive)
-                List<EmployeeShiftRegistration> conflicts = registrationRepository.findConflictingRegistrations(
-                                registration.getEmployeeId(),
-                                request.getWorkShiftId(),
-                                request.getDaysOfWeek());
-
-                if (!conflicts.isEmpty()) {
-                        EmployeeShiftRegistration conflict = conflicts.get(0);
-                        String conflictingDays = conflict.getRegistrationDays().stream()
-                                        .map(rd -> rd.getId().getDayOfWeek().toString())
-                                        .reduce((a, b) -> a + ", " + b)
-                                        .orElse("");
-
-                        throw new RegistrationConflictException(
-                                        String.format("Đã tồn tại đăng ký hoạt động cho nhân viên %d, ca %s vào các ngày: %s. "
-                                                        +
-                                                        "Registration ID: %s, Hiệu lực từ: %s đến: %s",
-                                                        registration.getEmployeeId(),
-                                                        request.getWorkShiftId(),
-                                                        conflictingDays,
-                                                        conflict.getRegistrationId(),
-                                                        conflict.getEffectiveFrom(),
-                                                        conflict.getEffectiveTo() != null ? conflict.getEffectiveTo()
-                                                                        : "vô thời hạn"));
-                }
-
-                // 6. Replace all fields
-                registration.setWorkShiftId(request.getWorkShiftId());
-                registration.setEffectiveFrom(request.getEffectiveFrom());
-                registration.setEffectiveTo(request.getEffectiveTo());
-                // isActive already set in finally block above
-
-                // 7. Create new registration days
-                List<RegistrationDays> newDays = new ArrayList<>();
-                for (DayOfWeek dayOfWeek : request.getDaysOfWeek()) {
-                        RegistrationDaysId dayId = new RegistrationDaysId(registrationId, dayOfWeek);
-                        RegistrationDays registrationDay = new RegistrationDays(registration, dayId);
-                        newDays.add(registrationDay);
-                }
-                registrationDaysRepository.saveAll(newDays);
-                registrationDaysRepository.flush(); // Ensure new days are flushed to DB
-                log.info("Created {} new registration days", newDays.size());
-
-                // 7. Save and return
-                registrationRepository.save(registration);
-                log.info("Replaced registration: {}", registrationId);
-
-                EmployeeShiftRegistration replacedRegistration = registrationRepository
-                                .findByRegistrationId(registrationId)
-                                .orElseThrow(() -> new RegistrationNotFoundException(registrationId));
-
-                return shiftRegistrationMapper.toShiftRegistrationResponse(replacedRegistration);
+        if (isAdmin && filterEmployeeId != null) {
+            // Admin with filter sees ALL registrations (active + cancelled) for that employee
+            registrations = registrationRepository.findByEmployeeId(filterEmployeeId);
+        } else if (isAdmin) {
+            registrations = registrationRepository.findAll();
+        } else {
+            Integer currentEmployeeId = getCurrentEmployeeId();
+            registrations = registrationRepository.findByEmployeeIdAndIsActive(currentEmployeeId, true);
         }
 
-        /**
-         * DELETE /api/v1/registrations/{registration_id}
-         * Xóa mềm đăng ký ca làm (set is_active = false).
-         * - Admin hoặc DELETE_REGISTRATION_ALL: xóa bất kỳ registration nào
-         * - DELETE_REGISTRATION_OWN: chỉ xóa của chính mình
-         */
-        @PreAuthorize("hasRole('" + AuthoritiesConstants.ADMIN + "') or " +
-                        "hasAuthority('" + AuthoritiesConstants.DELETE_REGISTRATION_ALL + "') or " +
-                        "hasAuthority('" + AuthoritiesConstants.DELETE_REGISTRATION_OWN + "')")
-        @Transactional
-        public void deleteRegistration(String registrationId) {
-                log.debug("Request to delete (soft) Employee Shift Registration: {}", registrationId);
+        return registrations.stream()
+                .map(reg -> {
+                    PartTimeSlot slot = slotRepository.findById(reg.getPartTimeSlotId()).orElse(null);
+                    return buildResponse(reg, slot);
+                })
+                .collect(Collectors.toList());
+    }
 
-                // 1. Load existing registration and validate ownership
-                EmployeeShiftRegistration registration = loadRegistrationWithOwnershipCheck(registrationId);
+    /**
+     * Cancel registration (soft delete).
+     */
+    @Transactional
+    @PreAuthorize("hasAnyAuthority('UPDATE_REGISTRATIONS_ALL', 'CANCEL_REGISTRATION_OWN')")
+    public void cancelRegistration(String registrationId) {
+        boolean isAdmin = SecurityUtil.hasCurrentUserRole("ADMIN") ||
+                SecurityUtil.hasCurrentUserPermission("UPDATE_REGISTRATIONS_ALL");
+        Integer currentEmployeeId = getCurrentEmployeeId();
+        
+        log.info("Cancelling registration {} by employee {}", registrationId, currentEmployeeId);
 
-                // 2. Soft delete: set is_active = false
-                registration.setIsActive(false);
-                registrationRepository.save(registration);
+        EmployeeShiftRegistration registration = registrationRepository.findById(registrationId)
+                .orElseThrow(() -> new RegistrationNotFoundException(registrationId));
 
-                log.info("Soft deleted registration: {} (set is_active = false)", registrationId);
+        // Check ownership if not admin
+        if (!isAdmin && !registration.getEmployeeId().equals(currentEmployeeId)) {
+            throw new RegistrationNotFoundException(registrationId); // Hide existence
         }
 
-        /**
-         * Helper method: Load registration and check ownership permission
-         * Throws RegistrationNotFoundException if not found or user doesn't have
-         * permission
-         */
-        private EmployeeShiftRegistration loadRegistrationWithOwnershipCheck(String registrationId) {
-                // Admin or user with _ALL permission can access any registration
-                if (SecurityUtil.hasCurrentUserRole(AuthoritiesConstants.ADMIN) ||
-                                SecurityUtil.hasCurrentUserPermission(AuthoritiesConstants.UPDATE_REGISTRATION_ALL) ||
-                                SecurityUtil.hasCurrentUserPermission(AuthoritiesConstants.DELETE_REGISTRATION_ALL)) {
-
-                        return registrationRepository.findByRegistrationId(registrationId)
-                                        .orElseThrow(() -> new RegistrationNotFoundException(registrationId));
-                }
-                // User with _OWN permission can only access their own registration
-                else {
-                        String username = SecurityUtil.getCurrentUserLogin()
-                                        .orElseThrow(() -> new RuntimeException("User not authenticated"));
-
-                        Integer employeeId = accountRepository.findOneByUsername(username)
-                                        .map(account -> account.getEmployee().getEmployeeId())
-                                        .orElseThrow(() -> new RuntimeException(
-                                                        "Employee not found for user: " + username));
-
-                        return registrationRepository.findByRegistrationIdAndEmployeeId(registrationId, employeeId)
-                                        .orElseThrow(() -> new RegistrationNotFoundException(registrationId,
-                                                        "or you don't have permission to modify it"));
-                }
+        // Check if already cancelled
+        if (!registration.getIsActive()) {
+            throw new RegistrationNotFoundException(registrationId); // Already cancelled
         }
+
+        registration.setIsActive(false);
+        registration.setEffectiveTo(LocalDate.now());
+        registrationRepository.save(registration);
+
+        log.info("Registration {} cancelled", registrationId);
+    }
+
+    /**
+     * Update effectiveTo (admin only).
+     */
+    @Transactional
+    @PreAuthorize("hasAuthority('UPDATE_REGISTRATIONS_ALL')")
+    public RegistrationResponse updateEffectiveTo(String registrationId, UpdateEffectiveToRequest request) {
+        log.info("Updating effectiveTo for registration {}", registrationId);
+
+        EmployeeShiftRegistration registration = registrationRepository.findById(registrationId)
+                .orElseThrow(() -> new RegistrationNotFoundException(registrationId));
+
+        registration.setEffectiveTo(request.getEffectiveTo());
+        EmployeeShiftRegistration updated = registrationRepository.save(registration);
+
+        PartTimeSlot slot = slotRepository.findById(updated.getPartTimeSlotId()).orElse(null);
+        return buildResponse(updated, slot);
+    }
+    
+    /**
+     * Get current employee ID from security context.
+     */
+    private Integer getCurrentEmployeeId() {
+        String username = SecurityUtil.getCurrentUserLogin()
+                .orElseThrow(() -> new RuntimeException("User not authenticated"));
+        
+        return accountRepository.findOneByUsername(username)
+                .map(account -> account.getEmployee().getEmployeeId())
+                .orElseThrow(() -> new RuntimeException("Employee not found for user: " + username));
+    }
+
+    private RegistrationResponse buildResponse(EmployeeShiftRegistration registration, PartTimeSlot slot) {
+        String shiftName = "Unknown";
+        String dayOfWeek = "Unknown";
+
+        if (slot != null) {
+            WorkShift workShift = workShiftRepository.findById(slot.getWorkShiftId()).orElse(null);
+            shiftName = workShift != null ? workShift.getShiftName() : "Unknown";
+            dayOfWeek = slot.getDayOfWeek();
+        }
+
+        return RegistrationResponse.builder()
+                .registrationId(registration.getRegistrationId())
+                .employeeId(registration.getEmployeeId())
+                .partTimeSlotId(registration.getPartTimeSlotId())
+                .workShiftName(shiftName)
+                .dayOfWeek(dayOfWeek)
+                .effectiveFrom(registration.getEffectiveFrom())
+                .effectiveTo(registration.getEffectiveTo())
+                .isActive(registration.getIsActive())
+                .build();
+    }
 }

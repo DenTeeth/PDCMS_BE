@@ -1,16 +1,12 @@
 package com.dental.clinic.management.working_schedule.domain;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
 
 import com.dental.clinic.management.utils.IdGenerator;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
@@ -31,8 +27,8 @@ public class EmployeeShiftRegistration {
     @Column(name = "employee_id", nullable = false)
     private Integer employeeId;
 
-    @Column(name = "work_shift_id", length = 20, nullable = false)
-    private String workShiftId;
+    @Column(name = "part_time_slot_id", nullable = false)
+    private Long partTimeSlotId;
 
     @Column(name = "effective_from", nullable = false)
     private LocalDate effectiveFrom;
@@ -43,18 +39,15 @@ public class EmployeeShiftRegistration {
     @Column(name = "is_active", columnDefinition = "BOOLEAN DEFAULT TRUE")
     private Boolean isActive;
 
-    @OneToMany(mappedBy = "registration", fetch = FetchType.LAZY)
-    private List<RegistrationDays> registrationDays = new ArrayList<>();
-
     // Constructors
     public EmployeeShiftRegistration() {
     }
 
-    public EmployeeShiftRegistration(String registrationId, Integer employeeId, String workShiftId,
+    public EmployeeShiftRegistration(String registrationId, Integer employeeId, Long partTimeSlotId,
             LocalDate effectiveFrom, LocalDate effectiveTo, Boolean isActive) {
         this.registrationId = registrationId;
         this.employeeId = employeeId;
-        this.workShiftId = workShiftId;
+        this.partTimeSlotId = partTimeSlotId;
         this.effectiveFrom = effectiveFrom;
         this.effectiveTo = effectiveTo;
         this.isActive = isActive;
@@ -77,12 +70,12 @@ public class EmployeeShiftRegistration {
         this.employeeId = employeeId;
     }
 
-    public String getWorkShiftId() {
-        return workShiftId;
+    public Long getPartTimeSlotId() {
+        return partTimeSlotId;
     }
 
-    public void setWorkShiftId(String workShiftId) {
-        this.workShiftId = workShiftId;
+    public void setPartTimeSlotId(Long partTimeSlotId) {
+        this.partTimeSlotId = partTimeSlotId;
     }
 
     public LocalDate getEffectiveFrom() {
@@ -109,14 +102,6 @@ public class EmployeeShiftRegistration {
         this.isActive = isActive;
     }
 
-    public List<RegistrationDays> getRegistrationDays() {
-        return registrationDays;
-    }
-
-    public void setRegistrationDays(List<RegistrationDays> registrationDays) {
-        this.registrationDays = registrationDays;
-    }
-
     @PrePersist
     protected void onCreate() {
         if (registrationId == null && idGenerator != null) {
@@ -129,7 +114,7 @@ public class EmployeeShiftRegistration {
         return "EmployeeShiftRegistration{" +
                 "registrationId='" + registrationId + '\'' +
                 ", employeeId=" + employeeId +
-                ", workShiftId='" + workShiftId + '\'' +
+                ", partTimeSlotId=" + partTimeSlotId +
                 ", effectiveFrom=" + effectiveFrom +
                 ", effectiveTo=" + effectiveTo +
                 ", isActive=" + isActive +

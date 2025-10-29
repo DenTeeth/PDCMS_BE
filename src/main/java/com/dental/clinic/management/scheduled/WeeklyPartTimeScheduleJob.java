@@ -5,6 +5,7 @@ import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.utils.IdGenerator;
 import com.dental.clinic.management.working_schedule.domain.EmployeeShift;
 import com.dental.clinic.management.working_schedule.domain.EmployeeShiftRegistration;
+import com.dental.clinic.management.working_schedule.domain.PartTimeSlot;
 import com.dental.clinic.management.working_schedule.domain.WorkShift;
 import com.dental.clinic.management.working_schedule.enums.DayOfWeek;
 import com.dental.clinic.management.working_schedule.enums.ShiftSource;
@@ -12,6 +13,7 @@ import com.dental.clinic.management.working_schedule.enums.ShiftStatus;
 import com.dental.clinic.management.working_schedule.repository.EmployeeShiftRegistrationRepository;
 import com.dental.clinic.management.working_schedule.repository.EmployeeShiftRepository;
 import com.dental.clinic.management.working_schedule.repository.HolidayDateRepository;
+import com.dental.clinic.management.working_schedule.repository.PartTimeSlotRepository;
 import com.dental.clinic.management.working_schedule.repository.WorkShiftRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +42,7 @@ public class WeeklyPartTimeScheduleJob {
     private final EmployeeShiftRegistrationRepository registrationRepository;
     private final EmployeeShiftRepository shiftRepository;
     private final WorkShiftRepository workShiftRepository;
+    private final PartTimeSlotRepository partTimeSlotRepository;
     private final HolidayDateRepository holidayRepository;
     private final EmployeeRepository employeeRepository;
     private final IdGenerator idGenerator;
@@ -105,81 +108,110 @@ public class WeeklyPartTimeScheduleJob {
                         continue;
                     }
 
-                    // VALIDATION: Get and validate work shift
-                    WorkShift workShift = workShiftRepository.findById(registration.getWorkShiftId())
-                            .orElse(null);
-
-                    if (workShift == null) {
-                        log.warn("Work shift {} not found for registration {}. Skipping.",
-                                registration.getWorkShiftId(), registration.getRegistrationId());
-                        skippedDueToErrors++;
-                        continue;
-                    }
-
-                    // VALIDATION: Check if registration has days configured
-                    Set<DayOfWeek> registeredDays = registration.getRegistrationDays().stream()
-                            .map(rd -> rd.getId().getDayOfWeek())
-                            .collect(Collectors.toSet());
-
-                    if (registeredDays.isEmpty()) {
-                        log.warn("Registration {} has no days configured. Skipping.",
+                    // V2: Get work shift from part_time_slot
+                    if (registration.getPartTimeSlotId() == null) {
+                        log.warn("Registration {} has no part_time_slot_id. Skipping.",
                                 registration.getRegistrationId());
                         skippedDueToErrors++;
                         continue;
                     }
 
+                    PartTimeSlot slot = partTimeSlotRepository.findById(registration.getPartTimeSlotId())
+                            .orElse(null);
+
+                    if (slot == null) {
+                        log.warn("Part-time slot {} not found for registration {}. Skipping.",
+                                registration.getPartTimeSlotId(), registration.getRegistrationId());
+                        skippedDueToErrors++;
+                        continue;
+                    }
+
+                    WorkShift workShift = workShiftRepository.findById(slot.getWorkShiftId())
+                            .orElse(null);
+
+                    if (workShift == null) {
+                        log.warn("Work shift {} not found for slot {}. Skipping.",
+                                slot.getWorkShiftId(), slot.getSlotId());
+                        skippedDueToErrors++;
+                        continue;
+                    }
+
+                    // V2: Each registration is for ONE slot (one day), not multiple days
+                    String slotDayStr = slot.getDayOfWeek();
+                    
+                    if (slotDayStr == null || slotDayStr.isEmpty()) {
+                        log.warn("Slot {} has no day configured. Skipping.",
+                                slot.getSlotId());
+                        skippedDueToErrors++;
+                        continue;
+                    }
+                    
+                    DayOfWeek registeredDay;
+                    try {
+                        registeredDay = DayOfWeek.valueOf(slotDayStr); // Convert String to enum
+                    } catch (IllegalArgumentException e) {
+                        log.warn("Invalid day value '{}' in slot {}. Skipping.",
+                                slotDayStr, slot.getSlotId());
+                        skippedDueToErrors++;
+                        continue;
+                    }
+
                     log.debug("Registration {} - Employee {} works on: {}",
-                            registration.getRegistrationId(), employee.getEmployeeId(), registeredDays);
+                            registration.getRegistrationId(), employee.getEmployeeId(), registeredDay);
 
-                    // Create shifts for each registered day in next week
-                    int registrationShifts = 0;
+                    // V2: Calculate exact work date for this day in next week (only 1 occurrence)
+                    LocalDate workDate = null;
                     for (int i = 0; i < 7; i++) {
-                        LocalDate workDate = nextMonday.plusDays(i);
-                        DayOfWeek dayOfWeek = mapJavaDayToCustomDay(workDate.getDayOfWeek());
-
-                        // Check if employee works on this day
-                        if (!registeredDays.contains(dayOfWeek)) {
-                            continue;
+                        LocalDate candidateDate = nextMonday.plusDays(i);
+                        DayOfWeek dayOfWeek = mapJavaDayToCustomDay(candidateDate.getDayOfWeek());
+                        
+                        if (registeredDay.equals(dayOfWeek)) {
+                            workDate = candidateDate;
+                            break; // Found the matching day
                         }
-
-                        // Skip holidays
-                        if (holidays.contains(workDate)) {
-                            log.debug("Skipping holiday: {} for employee {}", workDate, employee.getEmployeeId());
-                            continue;
-                        }
-
-                        // VALIDATION: Check if shift already exists (avoid duplicates)
-                        if (shiftRepository.existsByEmployeeAndDateAndShift(
-                                employee.getEmployeeId(), workDate, workShift.getWorkShiftId())) {
-                            log.debug("Shift already exists for employee {} on {} shift {}. Skipping.",
-                                    employee.getEmployeeId(), workDate, workShift.getWorkShiftId());
-                            continue;
-                        }
-
-                        // Generate unique ID with format EMSyyMMddSEQ (e.g., EMS251029001)
-                        String employeeShiftId = idGenerator.generateId("EMS");
-
-                        // Create shift
-                        EmployeeShift shift = new EmployeeShift();
-                        shift.setEmployeeShiftId(employeeShiftId); // Set generated ID
-                        shift.setEmployee(employee);
-                        shift.setWorkDate(workDate);
-                        shift.setWorkShift(workShift);
-                        shift.setSource(ShiftSource.REGISTRATION_JOB);
-                        shift.setStatus(ShiftStatus.SCHEDULED);
-                        shift.setIsOvertime(false); // Regular shift, not overtime
-                        // Note: sourceOffRequestId would be set here if this was from time-off renewal
-                        shift.setNotes(String.format("Tạo tự động từ đăng ký %s", registration.getRegistrationId()));
-
-                        shiftsToSave.add(shift);
-                        registrationShifts++;
                     }
 
-                    if (registrationShifts > 0) {
-                        log.info("Prepared {} shifts for employee {} (Registration: {})",
-                                registrationShifts, employee.getEmployeeId(), registration.getRegistrationId());
-                        totalShiftsCreated += registrationShifts;
+                    if (workDate == null) {
+                        log.warn("Could not find matching day {} in next week. Skipping registration {}",
+                                registeredDay, registration.getRegistrationId());
+                        skippedDueToErrors++;
+                        continue;
                     }
+
+                    // Skip if it's a holiday
+                    if (holidays.contains(workDate)) {
+                        log.debug("Skipping holiday: {} for employee {}", workDate, employee.getEmployeeId());
+                        continue;
+                    }
+
+                    // VALIDATION: Check if shift already exists (avoid duplicates)
+                    if (shiftRepository.existsByEmployeeAndDateAndShift(
+                            employee.getEmployeeId(), workDate, workShift.getWorkShiftId())) {
+                        log.debug("Shift already exists for employee {} on {} shift {}. Skipping.",
+                                employee.getEmployeeId(), workDate, workShift.getWorkShiftId());
+                        continue;
+                    }
+
+                    // Generate unique ID with format EMSyyMMddSEQ (e.g., EMS251029001)
+                    String employeeShiftId = idGenerator.generateId("EMS");
+
+                    // Create shift
+                    EmployeeShift shift = new EmployeeShift();
+                    shift.setEmployeeShiftId(employeeShiftId); // Set generated ID
+                    shift.setEmployee(employee);
+                    shift.setWorkDate(workDate);
+                    shift.setWorkShift(workShift);
+                    shift.setSource(ShiftSource.REGISTRATION_JOB);
+                    shift.setStatus(ShiftStatus.SCHEDULED);
+                    shift.setIsOvertime(false); // Regular shift, not overtime
+                    // Note: sourceOffRequestId would be set here if this was from time-off renewal
+                    shift.setNotes(String.format("Tạo tự động từ đăng ký %s", registration.getRegistrationId()));
+
+                    shiftsToSave.add(shift);
+                    
+                    log.info("Prepared 1 shift for employee {} on {} (Registration: {})",
+                            employee.getEmployeeId(), workDate, registration.getRegistrationId());
+                    totalShiftsCreated++;
 
                 } catch (Exception e) {
                     log.error("Error processing registration {}: {}",

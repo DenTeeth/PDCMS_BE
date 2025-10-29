@@ -6,13 +6,17 @@ import com.dental.clinic.management.exception.InvalidRequestException;
 import com.dental.clinic.management.exception.ResourceNotFoundException;
 import com.dental.clinic.management.utils.security.AuthoritiesConstants;
 import com.dental.clinic.management.working_schedule.domain.EmployeeShiftRegistration;
+import com.dental.clinic.management.working_schedule.domain.PartTimeSlot;
 import com.dental.clinic.management.working_schedule.domain.ShiftRenewalRequest;
+import com.dental.clinic.management.working_schedule.domain.WorkShift;
 import com.dental.clinic.management.working_schedule.dto.request.RenewalResponseRequest;
 import com.dental.clinic.management.working_schedule.dto.response.ShiftRenewalResponse;
 import com.dental.clinic.management.working_schedule.enums.RenewalStatus;
 import com.dental.clinic.management.working_schedule.mapper.ShiftRenewalMapper;
 import com.dental.clinic.management.working_schedule.repository.EmployeeShiftRegistrationRepository;
+import com.dental.clinic.management.working_schedule.repository.PartTimeSlotRepository;
 import com.dental.clinic.management.working_schedule.repository.ShiftRenewalRequestRepository;
+import com.dental.clinic.management.working_schedule.repository.WorkShiftRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -35,6 +39,8 @@ public class ShiftRenewalService {
 
     private final ShiftRenewalRequestRepository renewalRepository;
     private final EmployeeShiftRegistrationRepository registrationRepository;
+    private final PartTimeSlotRepository partTimeSlotRepository;
+    private final WorkShiftRepository workShiftRepository;
     private final EmployeeRepository employeeRepository;
     private final ShiftRenewalMapper mapper;
 
@@ -195,13 +201,24 @@ public class ShiftRenewalService {
     }
 
     /**
-     * Build a friendly message for the renewal invitation.
-     *
+     * Build renewal message with shift details.
+     * 
      * @param registration the expiring registration
      * @return formatted message
      */
     private String buildRenewalMessage(EmployeeShiftRegistration registration) {
-        String shiftName = registration.getWorkShiftId();
+        // V2: Get shift name from part_time_slot
+        String shiftName = "N/A";
+        if (registration.getPartTimeSlotId() != null) {
+            PartTimeSlot slot = partTimeSlotRepository.findById(registration.getPartTimeSlotId()).orElse(null);
+            if (slot != null && slot.getWorkShiftId() != null) {
+                WorkShift workShift = workShiftRepository.findById(slot.getWorkShiftId()).orElse(null);
+                if (workShift != null) {
+                    shiftName = workShift.getShiftName() + " - " + slot.getDayOfWeek();
+                }
+            }
+        }
+        
         String expiryDate = registration.getEffectiveTo() != null
                 ? registration.getEffectiveTo().toString()
                 : "N/A";

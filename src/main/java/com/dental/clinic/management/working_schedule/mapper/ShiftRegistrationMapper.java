@@ -4,10 +4,6 @@ import org.springframework.stereotype.Component;
 
 import com.dental.clinic.management.working_schedule.domain.EmployeeShiftRegistration;
 import com.dental.clinic.management.working_schedule.dto.response.ShiftRegistrationResponse;
-import com.dental.clinic.management.working_schedule.enums.DayOfWeek;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Mapper for Shift Registration entity and DTOs
@@ -30,18 +26,15 @@ public class ShiftRegistrationMapper {
         ShiftRegistrationResponse response = new ShiftRegistrationResponse();
         response.setRegistrationId(entity.getRegistrationId());
         response.setEmployeeId(entity.getEmployeeId());
-        response.setWorkShiftId(entity.getWorkShiftId());
+        // V2: No longer has workShiftId directly, get from partTimeSlot if needed
+        response.setWorkShiftId(null); // TODO: fetch from PartTimeSlot if needed
         response.setEffectiveFrom(entity.getEffectiveFrom());
         response.setEffectiveTo(entity.getEffectiveTo());
         response.setActive(Boolean.TRUE.equals(entity.getIsActive()));
 
-        // Lấy danh sách days trực tiếp từ entity
-        if (entity.getRegistrationDays() != null && !entity.getRegistrationDays().isEmpty()) {
-            List<DayOfWeek> daysOfWeek = entity.getRegistrationDays().stream()
-                    .map(rd -> rd.getId().getDayOfWeek())
-                    .collect(Collectors.toList());
-            response.setDaysOfWeek(daysOfWeek);
-        }
+        // V2: No longer has registrationDays, each registration is for one slot (one day)
+        // Leave daysOfWeek empty or null
+        response.setDaysOfWeek(null);
 
         return response;
     }
