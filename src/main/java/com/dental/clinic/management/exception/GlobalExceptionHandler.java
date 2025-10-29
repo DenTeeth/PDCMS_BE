@@ -108,13 +108,25 @@ public class GlobalExceptionHandler {
 
         FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
         res.setStatusCode(status.value());
-        res.setMessage(ex.getBody().getTitle());
-
-        // Extract error code from ProblemDetail properties
+        
+        // Extract error code and message from ProblemDetail properties
+        Object errorCodeProperty = ex.getBody().getProperties() != null
+                ? ex.getBody().getProperties().get("errorCode")
+                : null;
         Object messageProperty = ex.getBody().getProperties() != null
                 ? ex.getBody().getProperties().get("message")
                 : null;
-        res.setError(messageProperty != null ? messageProperty.toString() : "error." + status.name().toLowerCase());
+        
+        // Set error code (use errorCode property if available, otherwise fallback to generic error)
+        res.setError(errorCodeProperty != null 
+                ? errorCodeProperty.toString() 
+                : "error." + status.name().toLowerCase());
+        
+        // Set message (use message property if available, otherwise use detail from ProblemDetail)
+        res.setMessage(messageProperty != null 
+                ? messageProperty.toString() 
+                : ex.getBody().getDetail());
+        
         res.setData(null);
 
         return ResponseEntity.status(status).body(res);

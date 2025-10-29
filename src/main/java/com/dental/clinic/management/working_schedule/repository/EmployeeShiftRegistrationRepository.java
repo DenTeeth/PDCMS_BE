@@ -87,4 +87,26 @@ public interface EmployeeShiftRegistrationRepository extends JpaRepository<Emplo
                         "AND r.effectiveTo = :targetDate")
         List<EmployeeShiftRegistration> findRegistrationsExpiringOn(
                         @Param("targetDate") java.time.LocalDate targetDate);
+
+        /**
+         * Check if a work shift is being used by any employee shift registrations.
+         * Used to prevent deletion/modification of shifts that have part-time registrations.
+         *
+         * @param workShiftId the work shift ID to check
+         * @return true if the shift has any registrations, false otherwise
+         */
+        @Query("SELECT COUNT(r) > 0 FROM EmployeeShiftRegistration r " +
+                        "WHERE r.workShiftId = :workShiftId")
+        boolean existsByWorkShiftId(@Param("workShiftId") String workShiftId);
+
+        /**
+         * Count the number of employee shift registrations using a specific work shift.
+         * Used to provide detailed error messages when preventing shift deletion/modification.
+         *
+         * @param workShiftId the work shift ID to count
+         * @return count of registrations using this shift
+         */
+        @Query("SELECT COUNT(r) FROM EmployeeShiftRegistration r " +
+                        "WHERE r.workShiftId = :workShiftId")
+        long countByWorkShiftId(@Param("workShiftId") String workShiftId);
 }

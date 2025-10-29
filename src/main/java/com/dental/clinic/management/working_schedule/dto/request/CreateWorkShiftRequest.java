@@ -9,11 +9,10 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalTime;
 
-import com.dental.clinic.management.working_schedule.enums.WorkShiftCategory;
-
 /**
  * DTO for creating a new work shift.
- * Note: shiftId is auto-generated based on time of day.
+ * Note: shiftId and category are auto-generated based on time range.
+ * Category is no longer sent in request - it's determined by start time.
  */
 @Data
 @NoArgsConstructor
@@ -30,6 +29,8 @@ public class CreateWorkShiftRequest {
     @NotNull(message = "End time is required")
     private LocalTime endTime;
 
-    @NotNull(message = "Category is required")
-    private WorkShiftCategory category;
+    // Category is removed - auto-generated based on startTime
+    // NORMAL: startTime < 18:00 AND endTime <= 18:00
+    // NIGHT: startTime >= 18:00
+    // INVALID: shift spans across 18:00 boundary
 }

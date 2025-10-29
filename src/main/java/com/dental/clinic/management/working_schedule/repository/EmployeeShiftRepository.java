@@ -102,6 +102,25 @@ public interface EmployeeShiftRepository extends JpaRepository<EmployeeShift, St
                         @Param("workShiftId") String workShiftId,
                         @Param("status") ShiftStatus status);
 
+        /**
+         * Check if a work shift template is in use by any employee schedules.
+         * Used to prevent modifying work shift hours when employees are already scheduled.
+         *
+         * @param workShiftId the work shift ID
+         * @return true if the work shift is in use
+         */
+        @Query("SELECT COUNT(es) > 0 FROM EmployeeShift es WHERE es.workShift.workShiftId = :workShiftId")
+        boolean existsByWorkShiftId(@Param("workShiftId") String workShiftId);
+
+        /**
+         * Count employee schedules using a specific work shift template.
+         *
+         * @param workShiftId the work shift ID
+         * @return count of employee shifts using this work shift
+         */
+        @Query("SELECT COUNT(es) FROM EmployeeShift es WHERE es.workShift.workShiftId = :workShiftId")
+        long countByWorkShiftId(@Param("workShiftId") String workShiftId);
+
         // ============================================================
         // NEW METHODS FOR EMPLOYEE SHIFT MANAGEMENT API
         // ============================================================

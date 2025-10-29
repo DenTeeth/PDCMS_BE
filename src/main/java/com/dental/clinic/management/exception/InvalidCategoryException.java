@@ -15,8 +15,9 @@ public class InvalidCategoryException extends ErrorResponseException {
 
     private static ProblemDetail asProblemDetail(String message) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, message);
-        problemDetail.setTitle(message);
-        problemDetail.setProperty("message", "error.work.shift.invalid.category");
+        problemDetail.setTitle("Invalid Category");
+        problemDetail.setProperty("errorCode", "INVALID_CATEGORY");
+        problemDetail.setProperty("message", message);
         return problemDetail;
     }
 }

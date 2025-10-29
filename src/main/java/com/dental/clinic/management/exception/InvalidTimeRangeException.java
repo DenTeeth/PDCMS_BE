@@ -19,8 +19,9 @@ public class InvalidTimeRangeException extends ErrorResponseException {
 
     private static ProblemDetail asProblemDetail(String message) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, message);
-        problemDetail.setTitle(message);
-        problemDetail.setProperty("message", "error.work.shift.invalid.time.range");
+        problemDetail.setTitle("Invalid Time Range");
+        problemDetail.setProperty("errorCode", "INVALID_TIME_RANGE");
+        problemDetail.setProperty("message", message);
         return problemDetail;
     }
 }

@@ -7,11 +7,10 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalTime;
 
-import com.dental.clinic.management.working_schedule.enums.WorkShiftCategory;
-
 /**
  * DTO for updating an existing work shift.
  * All fields are optional.
+ * Category is removed - auto-updated based on time changes.
  */
 @Data
 @NoArgsConstructor
@@ -25,5 +24,5 @@ public class UpdateWorkShiftRequest {
 
     private LocalTime endTime;
 
-    private WorkShiftCategory category;
+    // Category is removed - auto-updated when time changes
 }

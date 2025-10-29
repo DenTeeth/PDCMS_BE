@@ -18,7 +18,12 @@ import com.dental.clinic.management.working_schedule.enums.WorkShiftCategory;
  * Defines the time frame and category of work shifts.
  */
 @Entity
-@Table(name = "work_shifts")
+@Table(name = "work_shifts", indexes = {
+    @Index(name = "idx_work_shift_is_active", columnList = "is_active"),
+    @Index(name = "idx_work_shift_category", columnList = "category"),
+    @Index(name = "idx_work_shift_start_time", columnList = "start_time"),
+    @Index(name = "idx_work_shift_active_category", columnList = "is_active, category")
+})
 @Getter
 @Setter
 @NoArgsConstructor

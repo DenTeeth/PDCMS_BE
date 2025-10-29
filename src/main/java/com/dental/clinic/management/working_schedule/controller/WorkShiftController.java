@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import com.dental.clinic.management.working_schedule.dto.request.CreateWorkShiftRequest;
 import com.dental.clinic.management.working_schedule.dto.request.UpdateWorkShiftRequest;
 import com.dental.clinic.management.working_schedule.dto.response.WorkShiftResponse;
+import com.dental.clinic.management.working_schedule.enums.WorkShiftCategory;
 import com.dental.clinic.management.working_schedule.service.WorkShiftService;
 
 import java.util.List;
@@ -76,17 +77,45 @@ public class WorkShiftController {
     }
 
     /**
-     * Get all work shifts with optional filtering by active status.
+     * Reactivate a soft-deleted work shift (Issue 7).
+     * 
+     * @param workShiftId The ID of the work shift to reactivate
+     * @return WorkShiftResponse with reactivated shift information
+     */
+    @PutMapping("/{workShiftId}/reactivate")
+
+    public ResponseEntity<WorkShiftResponse> reactivateWorkShift(@PathVariable String workShiftId) {
+        log.info("Reactivating work shift with ID: {}", workShiftId);
+        WorkShiftResponse response = workShiftService.reactivateWorkShift(workShiftId);
+        log.info("Work shift reactivated successfully: {}", workShiftId);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Get all work shifts with advanced filtering, searching, and sorting (Issues 10, 11, 12).
      * 
      * @param isActive Optional filter for active/inactive shifts (null = all shifts)
+     * @param category Optional filter by category (NORMAL/NIGHT)
+     * @param search Optional search keyword for shift name (case-insensitive)
+     * @param sortBy Optional sort field (startTime, category, shiftName). Default: startTime
+     * @param sortDirection Optional sort direction (ASC/DESC). Default: ASC
      * @return List of WorkShiftResponse
      */
     @GetMapping
 
     public ResponseEntity<List<WorkShiftResponse>> getAllWorkShifts(
-            @RequestParam(required = false) Boolean isActive) {
-        log.info("Fetching work shifts with isActive filter: {}", isActive);
-        List<WorkShiftResponse> responses = workShiftService.getAllWorkShifts(isActive);
+            @RequestParam(required = false) Boolean isActive,
+            @RequestParam(required = false) WorkShiftCategory category,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String sortDirection) {
+        
+        log.info("Fetching work shifts - isActive: {}, category: {}, search: '{}', sortBy: {}, sortDirection: {}", 
+                 isActive, category, search, sortBy, sortDirection);
+        
+        List<WorkShiftResponse> responses = workShiftService.getAllWorkShifts(
+                isActive, category, search, sortBy, sortDirection);
+        
         log.info("Retrieved {} work shifts", responses.size());
         return ResponseEntity.ok(responses);
     }

@@ -14,10 +14,11 @@ public class DuplicateShiftCodeException extends ErrorResponseException {
     }
 
     private static ProblemDetail asProblemDetail(String shiftCode) {
-        String message = String.format("Work shift with code '%s' already exists", shiftCode);
-        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, message);
-        problemDetail.setTitle(message);
-        problemDetail.setProperty("message", "error.work.shift.duplicate.code");
+        String message = String.format("Mã ca làm việc '%s' đã tồn tại. Vui lòng sử dụng mã khác.", shiftCode);
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, message);
+        problemDetail.setTitle("Duplicate Shift Code");
+        problemDetail.setProperty("errorCode", "DUPLICATE_SHIFT_CODE");
+        problemDetail.setProperty("message", message);
         return problemDetail;
     }
 }

@@ -6,17 +6,24 @@ import com.dental.clinic.management.working_schedule.dto.request.CreateWorkShift
 import com.dental.clinic.management.working_schedule.dto.request.UpdateWorkShiftRequest;
 import com.dental.clinic.management.working_schedule.dto.response.WorkShiftResponse;
 import com.dental.clinic.management.working_schedule.enums.WorkShiftCategory;
+import com.dental.clinic.management.working_schedule.exception.TimeOfDayMismatchException;
 import com.dental.clinic.management.working_schedule.mapper.WorkShiftMapper;
+import com.dental.clinic.management.working_schedule.repository.EmployeeShiftRepository;
+import com.dental.clinic.management.working_schedule.repository.EmployeeShiftRegistrationRepository;
 import com.dental.clinic.management.working_schedule.repository.WorkShiftRepository;
 import com.dental.clinic.management.working_schedule.utils.WorkShiftIdGenerator;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.persistence.criteria.Predicate;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,6 +37,8 @@ import java.util.stream.Collectors;
 public class WorkShiftService {
 
     private final WorkShiftRepository workShiftRepository;
+    private final EmployeeShiftRepository employeeShiftRepository;
+    private final EmployeeShiftRegistrationRepository employeeShiftRegistrationRepository;
     private final WorkShiftMapper workShiftMapper;
 
     // Clinic working hours: 8:00 AM to 9:00 PM
@@ -47,6 +56,7 @@ public class WorkShiftService {
 
     /**
      * Create a new work shift.
+     * Category is auto-generated based on time range.
      * @param request CreateWorkShiftRequest
      * @return WorkShiftResponse
      */
@@ -65,8 +75,12 @@ public class WorkShiftService {
         // Validation 3: Validate working hours (8:00 - 21:00)
         validateWorkingHours(request.getStartTime(), request.getEndTime());
 
-        // Validation 4: Validate night shift category
-        validateNightShiftCategory(request.getStartTime(), request.getCategory());
+        // Validation 4: Prevent shifts spanning across 18:00 boundary
+        validateShiftDoesNotSpanBoundary(request.getStartTime(), request.getEndTime());
+
+        // Auto-generate category based on time range
+        WorkShiftCategory autoCategory = determineCategoryByTime(request.getStartTime(), request.getEndTime());
+        log.info("Auto-generated category: {} for shift {}-{}", autoCategory, request.getStartTime(), request.getEndTime());
 
         // Generate work shift ID
         String generatedId = generateWorkShiftId(request.getStartTime(), request.getEndTime());
@@ -75,15 +89,17 @@ public class WorkShiftService {
         // Create and save entity
         WorkShift workShift = workShiftMapper.toEntity(request);
         workShift.setWorkShiftId(generatedId);
+        workShift.setCategory(autoCategory); // Set auto-generated category
         
         WorkShift savedWorkShift = workShiftRepository.save(workShift);
 
-        log.info("Successfully created work shift: {}", savedWorkShift.getWorkShiftId());
+        log.info("Successfully created work shift: {} with category: {}", savedWorkShift.getWorkShiftId(), savedWorkShift.getCategory());
         return workShiftMapper.toResponse(savedWorkShift);
     }
 
     /**
      * Update an existing work shift.
+     * Category is auto-updated based on time changes.
      * @param workShiftId Work shift ID
      * @param request UpdateWorkShiftRequest
      * @return WorkShiftResponse
@@ -97,10 +113,18 @@ public class WorkShiftService {
         WorkShift workShift = workShiftRepository.findById(workShiftId)
                 .orElseThrow(() -> new WorkShiftNotFoundException(workShiftId));
 
+        // Check if time is being changed
+        boolean isTimeChanging = request.getStartTime() != null || request.getEndTime() != null;
+        
+        // Prevent time changes if work shift is in use by employee schedules OR registrations
+        if (isTimeChanging && isWorkShiftInUse(workShiftId)) {
+            String usageDetails = getWorkShiftUsageDetails(workShiftId);
+            throw new ShiftInUseException(workShiftId, usageDetails);
+        }
+
         // Determine final values (use new values if provided, otherwise keep existing)
         LocalTime finalStartTime = request.getStartTime() != null ? request.getStartTime() : workShift.getStartTime();
         LocalTime finalEndTime = request.getEndTime() != null ? request.getEndTime() : workShift.getEndTime();
-        WorkShiftCategory finalCategory = request.getCategory() != null ? request.getCategory() : workShift.getCategory();
 
         // Apply all validations with final values
         validateTimeRange(finalStartTime, finalEndTime);
@@ -109,18 +133,45 @@ public class WorkShiftService {
         validateDuration(duration);
         
         validateWorkingHours(finalStartTime, finalEndTime);
-        validateNightShiftCategory(finalStartTime, finalCategory);
+        validateShiftDoesNotSpanBoundary(finalStartTime, finalEndTime);
+
+        // Auto-update category if time changed
+        if (isTimeChanging) {
+            WorkShiftCategory newCategory = determineCategoryByTime(finalStartTime, finalEndTime);
+            
+            // Prevent category changes that would conflict with shift ID semantic meaning
+            if (workShift.getCategory() != newCategory) {
+                throw new CategoryChangeForbiddenException(
+                    workShiftId, 
+                    workShift.getCategory().toString(), 
+                    newCategory.toString()
+                );
+            }
+            
+            // Prevent time-of-day changes that conflict with shift ID prefix
+            // Example: WKS_MORNING_03 cannot be updated to afternoon hours (14:00-18:00)
+            String expectedTimeOfDay = WorkShiftIdGenerator.extractTimeOfDay(workShiftId);
+            String actualTimeOfDay = determineTimeOfDayFromStartTime(finalStartTime);
+            
+            if (expectedTimeOfDay != null && !expectedTimeOfDay.equals(actualTimeOfDay)) {
+                throw new TimeOfDayMismatchException(workShiftId, expectedTimeOfDay, actualTimeOfDay);
+            }
+            
+            log.info("Category remains {} after time update", workShift.getCategory());
+        }
 
         // Update entity
         workShiftMapper.updateEntity(workShift, request);
+        
         WorkShift updatedWorkShift = workShiftRepository.save(workShift);
 
-        log.info("Successfully updated work shift: {}", workShiftId);
+        log.info("Successfully updated work shift: {} with category: {}", workShiftId, updatedWorkShift.getCategory());
         return workShiftMapper.toResponse(updatedWorkShift);
     }
 
     /**
      * Delete (soft delete) a work shift.
+     * Prevents deletion if work shift is in use by employee schedules.
      * @param workShiftId Work shift ID
      */
     @Transactional
@@ -132,11 +183,11 @@ public class WorkShiftService {
         WorkShift workShift = workShiftRepository.findById(workShiftId)
                 .orElseThrow(() -> new WorkShiftNotFoundException(workShiftId));
 
-        // TODO: Check if work shift is in use (when employee_shifts table is implemented)
-        // For now, we'll just do soft delete
-        // if (isWorkShiftInUse(workShiftId)) {
-        //     throw new WorkShiftInUseException(workShiftId);
-        // }
+        // Check if work shift is in use by employee schedules OR registrations
+        if (isWorkShiftInUse(workShiftId)) {
+            String usageDetails = getWorkShiftUsageDetails(workShiftId);
+            throw new ShiftInUseException(workShiftId, usageDetails);
+        }
 
         // Soft delete
         workShift.setIsActive(false);
@@ -146,25 +197,143 @@ public class WorkShiftService {
     }
 
     /**
-     * Get all work shifts, optionally filtered by active status.
+     * Reactivate a soft-deleted work shift (Issue 7).
+     * @param workShiftId Work shift ID
+     * @return WorkShiftResponse
+     */
+    @Transactional
+    @PreAuthorize("hasAuthority('UPDATE_WORK_SHIFTS')")
+    public WorkShiftResponse reactivateWorkShift(String workShiftId) {
+        log.info("Reactivating work shift: {}", workShiftId);
+
+        // Find existing work shift (including inactive ones)
+        WorkShift workShift = workShiftRepository.findById(workShiftId)
+                .orElseThrow(() -> new WorkShiftNotFoundException(workShiftId));
+
+        // Check if already active
+        if (Boolean.TRUE.equals(workShift.getIsActive())) {
+            throw new IllegalStateException(
+                String.format("Work shift %s is already active", workShiftId)
+            );
+        }
+
+        // Reactivate
+        workShift.setIsActive(true);
+        WorkShift reactivatedWorkShift = workShiftRepository.save(workShift);
+
+        log.info("Successfully reactivated work shift: {}", workShiftId);
+        return workShiftMapper.toResponse(reactivatedWorkShift);
+    }
+
+    /**
+     * Get all work shifts with advanced filtering, searching, and sorting.
      * @param isActive Optional filter by active status
+     * @param category Optional filter by category (NORMAL/NIGHT)
+     * @param search Optional search keyword for shift name
+     * @param sortBy Optional sort field (startTime, category, shiftName)
+     * @param sortDirection Optional sort direction (ASC/DESC), defaults to ASC
      * @return List of WorkShiftResponse
      */
     @Transactional(readOnly = true)
     @PreAuthorize("hasAuthority('VIEW_WORK_SHIFTS')")
-    public List<WorkShiftResponse> getAllWorkShifts(Boolean isActive) {
-        log.info("Fetching all work shifts with isActive filter: {}", isActive);
+    public List<WorkShiftResponse> getAllWorkShifts(
+            Boolean isActive, 
+            WorkShiftCategory category,
+            String search,
+            String sortBy,
+            String sortDirection) {
+        
+        log.info("Fetching work shifts - isActive: {}, category: {}, search: {}, sortBy: {}, sortDirection: {}", 
+                 isActive, category, search, sortBy, sortDirection);
 
-        List<WorkShift> workShifts;
-        if (isActive != null) {
-            workShifts = workShiftRepository.findByIsActive(isActive);
-        } else {
-            workShifts = workShiftRepository.findAll();
-        }
+        // Build dynamic query using Specification (Issue 11, 12)
+        Specification<WorkShift> spec = (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            
+            // Filter by isActive
+            if (isActive != null) {
+                predicates.add(criteriaBuilder.equal(root.get("isActive"), isActive));
+            }
+            
+            // Filter by category
+            if (category != null) {
+                predicates.add(criteriaBuilder.equal(root.get("category"), category));
+            }
+            
+            // Search by shift name (case-insensitive)
+            if (search != null && !search.trim().isEmpty()) {
+                predicates.add(criteriaBuilder.like(
+                    criteriaBuilder.lower(root.get("shiftName")), 
+                    "%" + search.toLowerCase() + "%"
+                ));
+            }
+            
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
 
-        return workShifts.stream()
+        // Execute query
+        List<WorkShift> workShifts = workShiftRepository.findAll(spec);
+        
+        // Convert to response DTOs
+        List<WorkShiftResponse> responses = workShifts.stream()
                 .map(workShiftMapper::toResponse)
                 .collect(Collectors.toList());
+        
+        // Apply sorting (Issue 10, 12)
+        responses = applySorting(responses, sortBy, sortDirection);
+        
+        log.info("Retrieved {} work shifts", responses.size());
+        return responses;
+    }
+
+    /**
+     * Apply sorting to work shift responses.
+     * Default: Sort by startTime ASC, then category (NORMAL before NIGHT).
+     * 
+     * @param responses List of work shift responses
+     * @param sortBy Sort field (startTime, category, shiftName, or null for default)
+     * @param sortDirection Sort direction (ASC/DESC, or null for ASC)
+     * @return Sorted list
+     */
+    private List<WorkShiftResponse> applySorting(
+            List<WorkShiftResponse> responses, 
+            String sortBy, 
+            String sortDirection) {
+        
+        boolean isAscending = sortDirection == null || sortDirection.equalsIgnoreCase("ASC");
+        
+        if (sortBy == null || sortBy.equalsIgnoreCase("startTime")) {
+            // Default: Sort by startTime, then category
+            Comparator<WorkShiftResponse> comparator = Comparator
+                    .comparing(WorkShiftResponse::getStartTime)
+                    .thenComparing(WorkShiftResponse::getCategory);
+            
+            return isAscending 
+                    ? responses.stream().sorted(comparator).collect(Collectors.toList())
+                    : responses.stream().sorted(comparator.reversed()).collect(Collectors.toList());
+            
+        } else if (sortBy.equalsIgnoreCase("category")) {
+            // Sort by category, then startTime
+            Comparator<WorkShiftResponse> comparator = Comparator
+                    .comparing(WorkShiftResponse::getCategory)
+                    .thenComparing(WorkShiftResponse::getStartTime);
+            
+            return isAscending 
+                    ? responses.stream().sorted(comparator).collect(Collectors.toList())
+                    : responses.stream().sorted(comparator.reversed()).collect(Collectors.toList());
+            
+        } else if (sortBy.equalsIgnoreCase("shiftName")) {
+            // Sort by shift name
+            Comparator<WorkShiftResponse> comparator = Comparator
+                    .comparing(WorkShiftResponse::getShiftName);
+            
+            return isAscending 
+                    ? responses.stream().sorted(comparator).collect(Collectors.toList())
+                    : responses.stream().sorted(comparator.reversed()).collect(Collectors.toList());
+        }
+        
+        // Fallback: return as-is
+        return responses;
     }
 
     /**
@@ -221,11 +390,96 @@ public class WorkShiftService {
     }
 
     /**
-     * Validate that shifts starting at or after 18:00 must be NIGHT category.
+     * Validate that shifts do not span across the 18:00 boundary.
+     * A shift is either fully NORMAL (ends <= 18:00) or fully NIGHT (starts >= 18:00).
+     * Shifts spanning across 18:00 are ambiguous and not allowed.
+     * 
+     * @param startTime Shift start time
+     * @param endTime Shift end time
+     * @throws InvalidCategoryException if shift spans the 18:00 boundary
      */
-    private void validateNightShiftCategory(LocalTime startTime, WorkShiftCategory category) {
-        if (startTime.compareTo(NIGHT_SHIFT_START) >= 0 && category != WorkShiftCategory.NIGHT) {
-            throw new InvalidCategoryException("Work shifts starting at or after 18:00 must be NIGHT category");
+    private void validateShiftDoesNotSpanBoundary(LocalTime startTime, LocalTime endTime) {
+        boolean startsBeforeBoundary = startTime.isBefore(NIGHT_SHIFT_START);
+        boolean endsAfterBoundary = endTime.isAfter(NIGHT_SHIFT_START);
+        
+        if (startsBeforeBoundary && endsAfterBoundary) {
+            throw new InvalidCategoryException(
+                String.format("Ca làm việc không được vượt qua ranh giới 18:00. " +
+                              "Ca của bạn: %s - %s. " +
+                              "Vui lòng tạo ca THƯỜNG (kết thúc trước hoặc đúng 18:00) " +
+                              "hoặc ca ĐÊM (bắt đầu từ 18:00 trở đi).", 
+                              startTime, endTime)
+            );
+        }
+    }
+
+    /**
+     * Determine time-of-day category from start time for shift ID validation.
+     * Uses the same logic as WorkShiftIdGenerator.
+     * - MORNING: starts between 08:00-11:59
+     * - AFTERNOON: starts between 12:00-17:59
+     * - EVENING: starts between 18:00-20:59
+     * 
+     * @param startTime Shift start time
+     * @return Time of day category (MORNING, AFTERNOON, EVENING)
+     */
+    private String determineTimeOfDayFromStartTime(LocalTime startTime) {
+        LocalTime afternoonStart = LocalTime.of(12, 0);
+        LocalTime eveningStart = LocalTime.of(18, 0);
+        
+        if (startTime.compareTo(eveningStart) >= 0) {
+            return "EVENING";
+        } else if (startTime.compareTo(afternoonStart) >= 0) {
+            return "AFTERNOON";
+        } else {
+            return "MORNING";
+        }
+    }
+
+    /**
+     * Determine the appropriate category based on time range.
+     * NIGHT if starts >= 18:00, otherwise NORMAL.
+     * This should only be called after validateShiftDoesNotSpanBoundary.
+     * 
+     * @param startTime Shift start time
+     * @param endTime Shift end time
+     * @return Auto-determined WorkShiftCategory
+     */
+    private WorkShiftCategory determineCategoryByTime(LocalTime startTime, LocalTime endTime) {
+        return startTime.compareTo(NIGHT_SHIFT_START) >= 0 
+                ? WorkShiftCategory.NIGHT 
+                : WorkShiftCategory.NORMAL;
+    }
+
+    /**
+     * Check if a work shift template is currently in use by employee schedules or registrations.
+     * Checks BOTH employee_shifts (full-time schedules) AND employee_shift_registrations (part-time).
+     * 
+     * @param workShiftId Work shift ID
+     * @return true if work shift is in use by any schedule or registration
+     */
+    private boolean isWorkShiftInUse(String workShiftId) {
+        boolean usedBySchedules = employeeShiftRepository.existsByWorkShiftId(workShiftId);
+        boolean usedByRegistrations = employeeShiftRegistrationRepository.existsByWorkShiftId(workShiftId);
+        return usedBySchedules || usedByRegistrations;
+    }
+
+    /**
+     * Get detailed usage count for a work shift (schedules + registrations).
+     * 
+     * @param workShiftId Work shift ID
+     * @return Usage count message showing schedules and registrations
+     */
+    private String getWorkShiftUsageDetails(String workShiftId) {
+        long scheduleCount = employeeShiftRepository.countByWorkShiftId(workShiftId);
+        long registrationCount = employeeShiftRegistrationRepository.countByWorkShiftId(workShiftId);
+        
+        if (scheduleCount > 0 && registrationCount > 0) {
+            return scheduleCount + " lịch làm việc và " + registrationCount + " đăng ký bán thời gian";
+        } else if (scheduleCount > 0) {
+            return scheduleCount + " lịch làm việc";
+        } else {
+            return registrationCount + " đăng ký bán thời gian";
         }
     }
 
