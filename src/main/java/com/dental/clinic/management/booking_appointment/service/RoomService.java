@@ -77,27 +77,33 @@ public class RoomService {
             return roomRepository.findAll(pageable).map(roomMapper::toResponse);
         }
 
-        // Apply filters
+        // Apply filters based on priority
         Page<Room> rooms;
 
         if (keyword != null && !keyword.trim().isEmpty()) {
-            // Search by keyword
-            if (isActive != null && isActive) {
-                rooms = roomRepository.searchActiveByCodeOrName(keyword, pageable);
+            // Search by keyword (highest priority)
+            if (isActive != null) {
+                if (isActive) {
+                    rooms = roomRepository.searchActiveByCodeOrName(keyword, pageable);
+                } else {
+                    // Search inactive rooms: Need custom query
+                    rooms = roomRepository.searchInactiveByCodeOrName(keyword, pageable);
+                }
             } else {
                 rooms = roomRepository.searchByCodeOrName(keyword, pageable);
             }
         } else if (roomType != null && !roomType.trim().isEmpty()) {
-            // Filter by type
-            if (isActive != null && isActive) {
-                rooms = roomRepository.findByRoomTypeAndIsActiveTrue(roomType, pageable);
+            // Filter by room type
+            if (isActive != null) {
+                rooms = roomRepository.findByRoomTypeAndIsActive(roomType, isActive, pageable);
             } else {
                 rooms = roomRepository.findByRoomType(roomType, pageable);
             }
-        } else if (isActive != null && isActive) {
-            // Filter by active only
-            rooms = roomRepository.findByIsActiveTrue(pageable);
+        } else if (isActive != null) {
+            // Filter by isActive only
+            rooms = roomRepository.findByIsActive(isActive, pageable);
         } else {
+            // No filters - return all
             rooms = roomRepository.findAll(pageable);
         }
 

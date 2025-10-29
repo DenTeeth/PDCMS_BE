@@ -37,6 +37,11 @@ public interface RoomRepository extends JpaRepository<Room, String> {
        Page<Room> findByIsActiveTrue(Pageable pageable);
 
        /**
+        * Find rooms by active status (with pagination)
+        */
+       Page<Room> findByIsActive(Boolean isActive, Pageable pageable);
+
+       /**
         * Find rooms by type
         */
        List<Room> findByRoomType(String roomType);
@@ -55,6 +60,11 @@ public interface RoomRepository extends JpaRepository<Room, String> {
         * Find active rooms by type (with pagination)
         */
        Page<Room> findByRoomTypeAndIsActiveTrue(String roomType, Pageable pageable);
+
+       /**
+        * Find rooms by type and active status (with pagination)
+        */
+       Page<Room> findByRoomTypeAndIsActive(String roomType, Boolean isActive, Pageable pageable);
 
        /**
         * Search rooms by code or name (case-insensitive)
@@ -87,4 +97,12 @@ public interface RoomRepository extends JpaRepository<Room, String> {
                      "LOWER(r.roomCode) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
                      "LOWER(r.roomName) LIKE LOWER(CONCAT('%', :keyword, '%')))")
        Page<Room> searchActiveByCodeOrName(String keyword, Pageable pageable);
+
+       /**
+        * Search inactive rooms by code or name (with pagination)
+        */
+       @Query("SELECT r FROM Room r WHERE r.isActive = false AND (" +
+                     "LOWER(r.roomCode) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+                     "LOWER(r.roomName) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+       Page<Room> searchInactiveByCodeOrName(String keyword, Pageable pageable);
 }
