@@ -2,12 +2,14 @@ package com.dental.clinic.management.booking_appointment.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Schema(description = "Room information response")
@@ -30,4 +32,7 @@ public class RoomResponse {
 
     @Schema(description = "Created timestamp", example = "2025-10-27T10:00:00")
     private LocalDateTime createdAt;
+
+    @Schema(description = "Updated timestamp", example = "2025-10-27T10:00:00")
+    private LocalDateTime updatedAt;
 }

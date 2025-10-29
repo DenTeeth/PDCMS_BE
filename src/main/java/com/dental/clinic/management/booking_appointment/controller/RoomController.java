@@ -33,36 +33,43 @@ public class RoomController {
     private final RoomService roomService;
 
     /**
-     * Get all rooms with pagination
+     * Get all rooms with pagination and filters
      *
      * @param page          page number (default: 0)
      * @param size          page size (default: 10, max: 100)
      * @param sortBy        field to sort by (default: roomId)
      * @param sortDirection sort direction ASC or DESC (default: ASC)
+     * @param isActive      filter by active status (optional)
+     * @param roomType      filter by room type (optional)
+     * @param keyword       search by code or name (optional)
      * @return paginated list of rooms
      */
     @GetMapping
     @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_ROOM + "')")
-    @Operation(summary = "Get all rooms", description = "Retrieve all rooms with pagination and sorting")
+    @Operation(summary = "Get all rooms with filters", description = "Retrieve all rooms with pagination, sorting and filters")
     @ApiMessage("Lấy danh sách phòng thành công")
     public ResponseEntity<Page<RoomResponse>> getAllRooms(
             @Parameter(description = "Page number (0-indexed)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size,
             @Parameter(description = "Sort by field") @RequestParam(defaultValue = "roomId") String sortBy,
-            @Parameter(description = "Sort direction") @RequestParam(defaultValue = "ASC") String sortDirection) {
+            @Parameter(description = "Sort direction") @RequestParam(defaultValue = "ASC") String sortDirection,
+            @Parameter(description = "Filter by active status") @RequestParam(required = false) Boolean isActive,
+            @Parameter(description = "Filter by room type") @RequestParam(required = false) String roomType,
+            @Parameter(description = "Search by code or name") @RequestParam(required = false) String keyword) {
 
-        Page<RoomResponse> rooms = roomService.getAllRooms(page, size, sortBy, sortDirection);
+        Page<RoomResponse> rooms = roomService.getAllRooms(page, size, sortBy, sortDirection, isActive, roomType,
+                keyword);
         return ResponseEntity.ok(rooms);
     }
 
     /**
-     * Get all active rooms (no pagination)
+     * Get all active rooms (no pagination, for dropdown/select options)
      *
      * @return list of active rooms
      */
     @GetMapping("/active")
     @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_ROOM + "')")
-    @Operation(summary = "Get all active rooms", description = "Retrieve all active rooms without pagination")
+    @Operation(summary = "Get all active rooms", description = "Retrieve all active rooms without pagination (for dropdowns)")
     @ApiMessage("Lấy danh sách phòng đang hoạt động thành công")
     public ResponseEntity<List<RoomResponse>> getAllActiveRooms() {
         List<RoomResponse> rooms = roomService.getAllActiveRooms();
@@ -84,61 +91,6 @@ public class RoomController {
 
         RoomResponse room = roomService.getRoomById(roomId);
         return ResponseEntity.ok(room);
-    }
-
-    /**
-     * Get room by code
-     *
-     * @param roomCode room code
-     * @return room details
-     */
-    @GetMapping("/code/{roomCode}")
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_ROOM + "')")
-    @Operation(summary = "Get room by code", description = "Retrieve room details by room code")
-    @ApiMessage("Lấy thông tin phòng thành công")
-    public ResponseEntity<RoomResponse> getRoomByCode(
-            @Parameter(description = "Room code") @PathVariable String roomCode) {
-
-        RoomResponse room = roomService.getRoomByCode(roomCode);
-        return ResponseEntity.ok(room);
-    }
-
-    /**
-     * Search rooms by keyword
-     *
-     * @param keyword    search keyword (searches in code and name)
-     * @param activeOnly filter only active rooms (default: false)
-     * @return list of matching rooms
-     */
-    @GetMapping("/search")
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_ROOM + "')")
-    @Operation(summary = "Search rooms", description = "Search rooms by code or name")
-    @ApiMessage("Tìm kiếm phòng thành công")
-    public ResponseEntity<List<RoomResponse>> searchRooms(
-            @Parameter(description = "Search keyword") @RequestParam String keyword,
-            @Parameter(description = "Filter only active rooms") @RequestParam(defaultValue = "false") boolean activeOnly) {
-
-        List<RoomResponse> rooms = roomService.searchRooms(keyword, activeOnly);
-        return ResponseEntity.ok(rooms);
-    }
-
-    /**
-     * Get rooms by type
-     *
-     * @param roomType   room type (STANDARD, XRAY, IMPLANT)
-     * @param activeOnly filter only active rooms (default: false)
-     * @return list of rooms with specified type
-     */
-    @GetMapping("/type/{roomType}")
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_ROOM + "')")
-    @Operation(summary = "Get rooms by type", description = "Retrieve rooms filtered by type")
-    @ApiMessage("Lấy danh sách phòng theo loại thành công")
-    public ResponseEntity<List<RoomResponse>> getRoomsByType(
-            @Parameter(description = "Room type") @PathVariable String roomType,
-            @Parameter(description = "Filter only active rooms") @RequestParam(defaultValue = "false") boolean activeOnly) {
-
-        List<RoomResponse> rooms = roomService.getRoomsByType(roomType, activeOnly);
-        return ResponseEntity.ok(rooms);
     }
 
     /**

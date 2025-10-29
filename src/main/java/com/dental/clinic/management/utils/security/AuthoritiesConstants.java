@@ -101,4 +101,10 @@ public final class AuthoritiesConstants {
     public static final String CREATE_ROOM = "CREATE_ROOM";
     public static final String UPDATE_ROOM = "UPDATE_ROOM";
     public static final String DELETE_ROOM = "DELETE_ROOM"; // soft delete
+
+    // Service Management Permissions
+    public static final String VIEW_SERVICE = "VIEW_SERVICE";
+    public static final String CREATE_SERVICE = "CREATE_SERVICE";
+    public static final String UPDATE_SERVICE = "UPDATE_SERVICE";
+    public static final String DELETE_SERVICE = "DELETE_SERVICE"; // soft delete
 }

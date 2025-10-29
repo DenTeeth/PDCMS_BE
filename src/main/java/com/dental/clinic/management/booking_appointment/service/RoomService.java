@@ -45,11 +45,22 @@ public class RoomService {
     }
 
     /**
-     * Get all rooms with pagination
+     * Get all rooms with pagination and filters
+     * Supports filtering by: isActive, roomType, keyword (search by code or name)
      */
     @Transactional(readOnly = true)
-    public Page<RoomResponse> getAllRooms(int page, int size, String sortBy, String sortDirection) {
-        log.debug("Request to get all rooms - page: {}, size: {}", page, size);
+    public Page<RoomResponse> getAllRooms(
+            int page,
+            int size,
+            String sortBy,
+            String sortDirection,
+            Boolean isActive,
+            String roomType,
+            String keyword) {
+
+        log.debug(
+                "Request to get all rooms - page: {}, size: {}, sortBy: {}, sortDirection: {}, isActive: {}, roomType: {}, keyword: {}",
+                page, size, sortBy, sortDirection, isActive, roomType, keyword);
 
         // Validate inputs
         page = Math.max(0, page);
@@ -61,12 +72,40 @@ public class RoomService {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
 
-        return roomRepository.findAll(pageable)
-                .map(roomMapper::toResponse);
+        // If no filters, return all
+        if (isActive == null && roomType == null && (keyword == null || keyword.trim().isEmpty())) {
+            return roomRepository.findAll(pageable).map(roomMapper::toResponse);
+        }
+
+        // Apply filters
+        Page<Room> rooms;
+
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            // Search by keyword
+            if (isActive != null && isActive) {
+                rooms = roomRepository.searchActiveByCodeOrName(keyword, pageable);
+            } else {
+                rooms = roomRepository.searchByCodeOrName(keyword, pageable);
+            }
+        } else if (roomType != null && !roomType.trim().isEmpty()) {
+            // Filter by type
+            if (isActive != null && isActive) {
+                rooms = roomRepository.findByRoomTypeAndIsActiveTrue(roomType, pageable);
+            } else {
+                rooms = roomRepository.findByRoomType(roomType, pageable);
+            }
+        } else if (isActive != null && isActive) {
+            // Filter by active only
+            rooms = roomRepository.findByIsActiveTrue(pageable);
+        } else {
+            rooms = roomRepository.findAll(pageable);
+        }
+
+        return rooms.map(roomMapper::toResponse);
     }
 
     /**
-     * Get all active rooms
+     * Get all active rooms (no pagination, for dropdown/select options)
      */
     @Transactional(readOnly = true)
     public List<RoomResponse> getAllActiveRooms() {
@@ -91,54 +130,6 @@ public class RoomService {
                         "notfound"));
 
         return roomMapper.toResponse(room);
-    }
-
-    /**
-     * Get room by code
-     */
-    @Transactional(readOnly = true)
-    public RoomResponse getRoomByCode(String roomCode) {
-        log.debug("Request to get room by code: {}", roomCode);
-
-        Room room = roomRepository.findByRoomCode(roomCode)
-                .orElseThrow(() -> new BadRequestAlertException(
-                        "Room not found with code: " + roomCode,
-                        "room",
-                        "notfound"));
-
-        return roomMapper.toResponse(room);
-    }
-
-    /**
-     * Search rooms by keyword
-     */
-    @Transactional(readOnly = true)
-    public List<RoomResponse> searchRooms(String keyword, boolean activeOnly) {
-        log.debug("Request to search rooms with keyword: {}, activeOnly: {}", keyword, activeOnly);
-
-        List<Room> rooms = activeOnly
-                ? roomRepository.searchActiveByCodeOrName(keyword)
-                : roomRepository.searchByCodeOrName(keyword);
-
-        return rooms.stream()
-                .map(roomMapper::toResponse)
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * Get rooms by type
-     */
-    @Transactional(readOnly = true)
-    public List<RoomResponse> getRoomsByType(String roomType, boolean activeOnly) {
-        log.debug("Request to get rooms by type: {}, activeOnly: {}", roomType, activeOnly);
-
-        List<Room> rooms = activeOnly
-                ? roomRepository.findByRoomTypeAndIsActiveTrue(roomType)
-                : roomRepository.findByRoomType(roomType);
-
-        return rooms.stream()
-                .map(roomMapper::toResponse)
-                .collect(Collectors.toList());
     }
 
     /**
