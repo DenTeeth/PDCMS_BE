@@ -77,7 +77,7 @@ public class EmployeeService {
      * @param sortDirection ASC or DESC
      * @return Page of EmployeeInfoResponse
      */
-    @PreAuthorize("hasRole('" + ADMIN + "')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('VIEW_EMPLOYEE')")
     public Page<EmployeeInfoResponse> getAllActiveEmployees(
             int page, int size, String sortBy, String sortDirection) {
 
