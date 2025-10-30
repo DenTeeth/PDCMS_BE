@@ -71,17 +71,20 @@ public class WorkShiftService {
         // Validation 2: Check for duplicate shift name (Lỗi 2)
         validateUniqueShiftName(request.getShiftName(), null);
 
-        // Validation 3: Validate duration (3-8 hours)
+        // Validation 3: Check for exact time match (Lỗi 1)
+        validateUniqueTimeRange(request.getStartTime(), request.getEndTime(), null);
+
+        // Validation 4: Validate duration (3-8 hours)
         double duration = calculateDuration(request.getStartTime(), request.getEndTime());
         validateDuration(duration);
 
-        // Validation 4: Validate working hours (8:00 - 21:00)
+        // Validation 5: Validate working hours (8:00 - 21:00)
         validateWorkingHours(request.getStartTime(), request.getEndTime());
 
-        // Validation 5: Validate morning/afternoon shifts don't start after 11:00
+        // Validation 6: Validate morning/afternoon shifts don't start after 11:00
         validateMorningAfternoonStartTime(request.getStartTime());
 
-        // Validation 6: Prevent shifts spanning across 18:00 boundary
+        // Validation 7: Prevent shifts spanning across 18:00 boundary
         validateShiftDoesNotSpanBoundary(request.getStartTime(), request.getEndTime());
 
         // Auto-generate category based on time range
@@ -139,6 +142,11 @@ public class WorkShiftService {
         // Check for duplicate shift name if name is being changed (Lỗi 2)
         if (request.getShiftName() != null && !request.getShiftName().equals(workShift.getShiftName())) {
             validateUniqueShiftName(finalShiftName, workShiftId);
+        }
+        
+        // Check for exact time match if time is being changed (Lỗi 1)
+        if (isTimeChanging) {
+            validateUniqueTimeRange(finalStartTime, finalEndTime, workShiftId);
         }
         
         double duration = calculateDuration(finalStartTime, finalEndTime);
@@ -232,6 +240,9 @@ public class WorkShiftService {
 
         // Validate không trùng tên với ca đang hoạt động (Lỗi 4)
         validateUniqueShiftName(workShift.getShiftName(), workShiftId);
+        
+        // Validate không trùng thời gian chính xác với ca đang hoạt động (Lỗi 1)
+        validateUniqueTimeRange(workShift.getStartTime(), workShift.getEndTime(), workShiftId);
 
         // Reactivate
         workShift.setIsActive(true);
