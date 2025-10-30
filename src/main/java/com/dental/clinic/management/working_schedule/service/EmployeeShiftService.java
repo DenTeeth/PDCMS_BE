@@ -3,7 +3,7 @@ package com.dental.clinic.management.working_schedule.service;
 import com.dental.clinic.management.employee.domain.Employee;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.exception.employee_shift.CannotCancelBatchShiftException;
-import com.dental.clinic.management.exception.employee_shift.CannotCancelBatchShiftException;
+import com.dental.clinic.management.exception.employee_shift.CannotCancelCompletedShiftException;
 import com.dental.clinic.management.exception.employee_shift.ExceedsMaxHoursException;
 import com.dental.clinic.management.exception.employee_shift.HolidayConflictException;
 import com.dental.clinic.management.exception.employee_shift.InvalidStatusTransitionException;
