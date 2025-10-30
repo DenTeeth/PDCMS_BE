@@ -195,6 +195,26 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handle exceeds maximum hours exception.
+     * Returns 400 Bad Request.
+     */
+    @ExceptionHandler(com.dental.clinic.management.exception.employee_shift.ExceedsMaxHoursException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleExceedsMaxHours(
+            RuntimeException ex,
+            HttpServletRequest request) {
+
+        log.warn("Exceeds max hours at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.BAD_REQUEST.value());
+        res.setError("EXCEEDS_MAX_HOURS");
+        res.setMessage(ex.getMessage());
+        res.setData(null);
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+    }
+
+    /**
      * Handle duplicate fixed shift registration exception.
      * Returns 409 Conflict.
      */

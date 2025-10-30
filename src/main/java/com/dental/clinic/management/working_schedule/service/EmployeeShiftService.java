@@ -3,7 +3,8 @@ package com.dental.clinic.management.working_schedule.service;
 import com.dental.clinic.management.employee.domain.Employee;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.exception.employee_shift.CannotCancelBatchShiftException;
-import com.dental.clinic.management.exception.employee_shift.CannotCancelCompletedShiftException;
+import com.dental.clinic.management.exception.employee_shift.CannotCancelBatchShiftException;
+import com.dental.clinic.management.exception.employee_shift.ExceedsMaxHoursException;
 import com.dental.clinic.management.exception.employee_shift.HolidayConflictException;
 import com.dental.clinic.management.exception.employee_shift.InvalidStatusTransitionException;
 import com.dental.clinic.management.exception.employee_shift.PastDateNotAllowedException;
@@ -35,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -349,7 +351,11 @@ public class EmployeeShiftService {
         List<EmployeeShift> existingShifts = employeeShiftRepository.findActiveShiftsByEmployeeAndDate(
                 employeeId, workDate);
 
-        // Check for time overlap with existing shifts
+        // Calculate new shift duration in minutes
+        long newShiftMinutes = Duration.between(newWorkShift.getStartTime(), newWorkShift.getEndTime()).toMinutes();
+
+        // Calculate total existing hours
+        long existingTotalMinutes = 0;
         for (EmployeeShift existingShift : existingShifts) {
             WorkShift existingWorkShift = existingShift.getWorkShift();
 
@@ -360,6 +366,19 @@ public class EmployeeShiftService {
                         newWorkShift.getStartTime(), newWorkShift.getEndTime(),
                         existingWorkShift.getStartTime(), existingWorkShift.getEndTime());
             }
+
+            // Calculate existing shift duration
+            long shiftMinutes = Duration.between(existingWorkShift.getStartTime(), 
+                                                 existingWorkShift.getEndTime()).toMinutes();
+            existingTotalMinutes += shiftMinutes;
+        }
+
+        // Check if total hours would exceed 8-hour limit
+        long totalMinutes = newShiftMinutes + existingTotalMinutes;
+        long totalHours = totalMinutes / 60;
+        
+        if (totalHours > 8) {
+            throw new ExceedsMaxHoursException(workDate, (int) totalHours);
         }
     }
 
