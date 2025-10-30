@@ -71,20 +71,17 @@ public class WorkShiftService {
         // Validation 2: Check for duplicate shift name (Lỗi 2)
         validateUniqueShiftName(request.getShiftName(), null);
 
-        // Validation 3: Check for duplicate time range (Lỗi 1)
-        validateUniqueTimeRange(request.getStartTime(), request.getEndTime(), null);
-
-        // Validation 4: Validate duration (3-8 hours)
+        // Validation 3: Validate duration (3-8 hours)
         double duration = calculateDuration(request.getStartTime(), request.getEndTime());
         validateDuration(duration);
 
-        // Validation 5: Validate working hours (8:00 - 21:00)
+        // Validation 4: Validate working hours (8:00 - 21:00)
         validateWorkingHours(request.getStartTime(), request.getEndTime());
 
-        // Validation 6: Validate morning/afternoon shifts don't start after 11:00
+        // Validation 5: Validate morning/afternoon shifts don't start after 11:00
         validateMorningAfternoonStartTime(request.getStartTime());
 
-        // Validation 7: Prevent shifts spanning across 18:00 boundary
+        // Validation 6: Prevent shifts spanning across 18:00 boundary
         validateShiftDoesNotSpanBoundary(request.getStartTime(), request.getEndTime());
 
         // Auto-generate category based on time range
@@ -142,11 +139,6 @@ public class WorkShiftService {
         // Check for duplicate shift name if name is being changed (Lỗi 2)
         if (request.getShiftName() != null && !request.getShiftName().equals(workShift.getShiftName())) {
             validateUniqueShiftName(finalShiftName, workShiftId);
-        }
-        
-        // Check for duplicate time range if time is being changed (Lỗi 1)
-        if (isTimeChanging) {
-            validateUniqueTimeRange(finalStartTime, finalEndTime, workShiftId);
         }
         
         double duration = calculateDuration(finalStartTime, finalEndTime);
@@ -240,9 +232,6 @@ public class WorkShiftService {
 
         // Validate không trùng tên với ca đang hoạt động (Lỗi 4)
         validateUniqueShiftName(workShift.getShiftName(), workShiftId);
-        
-        // Validate không trùng thời gian với ca đang hoạt động (Lỗi 4)
-        validateUniqueTimeRange(workShift.getStartTime(), workShift.getEndTime(), workShiftId);
 
         // Reactivate
         workShift.setIsActive(true);
@@ -415,13 +404,13 @@ public class WorkShiftService {
     }
     
     /**
-     * Validate unique time range among active shifts.
-     * Lỗi 1: Prevent overlapping or duplicate time ranges
+     * Validate exact time match (same start AND end time).
+     * ALLOWS overlapping shifts (for part-time and full-time flexibility).
+     * PREVENTS exact duplicates only.
      * 
-     * Business rules:
-     * - Night shift (18:00-21:00) can only exist once (minimum 3 hours)
-     * - No two active shifts can have exact same time range
-     * - No two active shifts can overlap
+     * Example:
+     * ✅ ALLOWED: Ca A (08:00-17:00) and Ca B (08:00-12:00) - overlapping is OK
+     * ❌ BLOCKED: Ca A (08:00-17:00) and Ca B (08:00-17:00) - exact match not allowed
      * 
      * @param startTime the start time to check
      * @param endTime the end time to check
@@ -437,36 +426,13 @@ public class WorkShiftService {
                     .collect(Collectors.toList());
         }
         
-        // Check for exact match or overlap
+        // Check for exact match ONLY (same start time AND end time)
         for (WorkShift shift : activeShifts) {
-            // Exact match (most critical - especially for night shift 18:00-21:00)
             if (shift.getStartTime().equals(startTime) && shift.getEndTime().equals(endTime)) {
-                // Special message for night shift
-                boolean isNightShift = startTime.equals(LocalTime.of(18, 0)) && 
-                                      endTime.equals(LocalTime.of(21, 0));
-                
-                if (isNightShift) {
-                    throw new DuplicateTimeRangeException(
-                        String.format("Đã tồn tại ca đêm từ %s đến %s (Ca: %s). " +
-                                     "Chỉ được phép có duy nhất một ca đêm này.", 
-                            startTime, endTime, shift.getShiftName())
-                    );
-                }
-                
                 throw new DuplicateTimeRangeException(
                     String.format("Đã tồn tại ca làm việc từ %s đến %s (Ca: %s). " +
-                                 "Không thể tạo hai ca cùng thời gian.", 
+                                 "Không thể tạo hai ca giống hệt nhau về thời gian.", 
                         startTime, endTime, shift.getShiftName())
-                );
-            }
-            
-            // Overlapping: new shift starts before existing ends AND new shift ends after existing starts
-            boolean overlaps = startTime.isBefore(shift.getEndTime()) && endTime.isAfter(shift.getStartTime());
-            if (overlaps) {
-                throw new DuplicateTimeRangeException(
-                    String.format("Ca làm việc %s-%s bị trùng lặp với ca '%s' (%s-%s). " +
-                                 "Các ca làm việc không được chồng chéo thời gian.", 
-                        startTime, endTime, shift.getShiftName(), shift.getStartTime(), shift.getEndTime())
                 );
             }
         }
