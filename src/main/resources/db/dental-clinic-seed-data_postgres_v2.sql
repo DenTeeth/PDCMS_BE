@@ -580,6 +580,65 @@ VALUES
 ('TOR251025003', 4, 'TOT003', 'WKS_MORNING_02', '2025-11-05', '2025-11-06', 'REJECTED', NOW(), 4)
 ON CONFLICT (request_id) DO NOTHING;
 
+-- ============================================
+-- SAMPLE OVERTIME REQUESTS (BE-304)
+-- ============================================
+-- Sample OT requests covering all statuses for FE testing
+-- PENDING, APPROVED, REJECTED, CANCELLED
+
+INSERT INTO overtime_requests (
+    request_id, employee_id, requested_by, work_date, work_shift_id, 
+    reason, status, approved_by, approved_at, rejected_reason, cancellation_reason, created_at
+)
+VALUES
+-- PENDING overtime requests (for testing approval/rejection/cancellation)
+('OTR251030005', 2, 2, '2025-11-18', 'WKS_AFTERNOON_02', 
+ 'Hoàn thành báo cáo cuối tháng', 'PENDING', NULL, NULL, NULL, NULL, NOW()),
+
+('OTR251030006', 3, 3, '2025-11-20', 'WKS_MORNING_01', 
+ 'Hỗ trợ dự án khẩn cấp', 'PENDING', NULL, NULL, NULL, NULL, NOW()),
+
+('OTR251030007', 4, 4, '2025-11-22', 'WKS_AFTERNOON_01', 
+ 'Hỗ trợ tiếp đón bệnh nhân ca tối', 'PENDING', NULL, NULL, NULL, NULL, NOW()),
+
+-- APPROVED overtime requests (with auto-created employee shifts)
+('OTR251030008', 5, 5, '2025-11-25', 'WKS_MORNING_02', 
+ 'Xử lý công việc kế toán tồn đọng', 'APPROVED', 7, NOW() - INTERVAL '2 days', NULL, NULL, NOW() - INTERVAL '3 days'),
+
+('OTR251030009', 6, 6, '2025-11-27', 'WKS_AFTERNOON_02', 
+ 'Chăm sóc bệnh nhân đặc biệt', 'APPROVED', 7, NOW() - INTERVAL '1 day', NULL, NULL, NOW() - INTERVAL '2 days'),
+
+-- REJECTED overtime request
+('OTR251030010', 2, 2, '2025-11-28', 'WKS_MORNING_01', 
+ 'Yêu cầu tăng ca thêm', 'REJECTED', 7, NOW() - INTERVAL '1 day', 'Đã đủ nhân sự cho ngày này', NULL, NOW() - INTERVAL '2 days'),
+
+-- CANCELLED overtime request (self-cancelled)
+('OTR251030011', 3, 3, '2025-11-30', 'WKS_AFTERNOON_01', 
+ 'Yêu cầu tăng ca cuối tháng', 'CANCELLED', NULL, NULL, NULL, 'Có việc đột xuất không thể tham gia', NOW() - INTERVAL '1 day')
+
+ON CONFLICT (request_id) DO NOTHING;
+
+-- Create corresponding employee shifts for APPROVED OT requests
+INSERT INTO employee_shifts (
+    employee_shift_id, created_at, created_by, is_overtime, notes, 
+    source, source_ot_request_id, status, updated_at, 
+    work_date, employee_id, work_shift_id
+)
+VALUES
+-- Auto-created shift for OTR251030008 (Accountant Tuan)
+('EMS251030003', NOW() - INTERVAL '2 days', 7, TRUE, 
+ 'Tạo từ yêu cầu OT OTR251030008 - Xử lý công việc kế toán tồn đọng',
+ 'OT_APPROVAL', 'OTR251030008', 'SCHEDULED', NULL,
+ '2025-11-25', 5, 'WKS_MORNING_02'),
+
+-- Auto-created shift for OTR251030009 (Nurse Hoa)
+('EMS251030004', NOW() - INTERVAL '1 day', 7, TRUE,
+ 'Tạo từ yêu cầu OT OTR251030009 - Chăm sóc bệnh nhân đặc biệt',
+ 'OT_APPROVAL', 'OTR251030009', 'SCHEDULED', NULL,
+ '2025-11-27', 6, 'WKS_AFTERNOON_02')
+
+ON CONFLICT (employee_shift_id) DO NOTHING;
+
 -- Sample renewals
 INSERT INTO shift_renewals (renewal_id, employee_id, work_shift_id, requested_date, status, created_at)
 VALUES
@@ -596,46 +655,46 @@ ON CONFLICT (renewal_id) DO NOTHING;
 -- employee_id mapping: 2=nhasi1, 3=nhasi2, 4=letan, 5=ketoan, 6=yta, 7=manager
 
 INSERT INTO employee_shifts (
-    employee_shift_id, employee_id, work_shift_id, work_date, 
-    status, source, is_overtime, notes, created_at, updated_at
+    employee_shift_id, created_at, created_by, is_overtime, notes, 
+    source, status, updated_at, work_date, employee_id, work_shift_id
 )
 VALUES
 -- November 2025 shifts (Current month for testing)
 -- Dr. Minh (employee_id=2) - SCHEDULED shifts
-('EMS251101001', 2, 'WKS_MORNING_01', '2025-11-03', 'SCHEDULED', 'MANUAL_ENTRY', FALSE, 'Ca sáng thứ 2', NOW(), NOW()),
-('EMS251101002', 2, 'WKS_AFTERNOON_01', '2025-11-04', 'SCHEDULED', 'MANUAL_ENTRY', FALSE, 'Ca chiều thứ 3', NOW(), NOW()),
-('EMS251101003', 2, 'WKS_MORNING_01', '2025-11-05', 'SCHEDULED', 'BATCH_JOB', FALSE, 'Ca tự động từ batch job', NOW(), NOW()),
+('EMS251101001', NOW(), NULL, FALSE, 'Ca sáng thứ 2', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-11-03', 2, 'WKS_MORNING_01'),
+('EMS251101002', NOW(), NULL, FALSE, 'Ca chiều thứ 3', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-11-04', 2, 'WKS_AFTERNOON_01'),
+('EMS251101003', NOW(), NULL, FALSE, 'Ca tự động từ batch job', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-05', 2, 'WKS_MORNING_01'),
 
 -- Dr. Lan (employee_id=3) - COMPLETED shifts
-('EMS251101004', 3, 'WKS_MORNING_01', '2025-11-01', 'COMPLETED', 'MANUAL_ENTRY', FALSE, 'Ca sáng đã hoàn thành', NOW(), NOW()),
-('EMS251101005', 3, 'WKS_AFTERNOON_01', '2025-11-02', 'COMPLETED', 'BATCH_JOB', FALSE, 'Ca chiều đã hoàn thành', NOW(), NOW()),
+('EMS251101004', NOW(), NULL, FALSE, 'Ca sáng đã hoàn thành', 'MANUAL_ENTRY', 'COMPLETED', NOW(), '2025-11-01', 3, 'WKS_MORNING_01'),
+('EMS251101005', NOW(), NULL, FALSE, 'Ca chiều đã hoàn thành', 'BATCH_JOB', 'COMPLETED', NOW(), '2025-11-02', 3, 'WKS_AFTERNOON_01'),
 
 -- Receptionist Mai (employee_id=4) - CANCELLED shifts
-('EMS251101006', 4, 'WKS_MORNING_02', '2025-11-03', 'CANCELLED', 'MANUAL_ENTRY', FALSE, 'Ca bị hủy do bận việc', NOW(), NOW()),
-('EMS251101007', 4, 'WKS_AFTERNOON_02', '2025-11-04', 'SCHEDULED', 'MANUAL_ENTRY', FALSE, 'Ca part-time chiều', NOW(), NOW()),
+('EMS251101006', NOW(), NULL, FALSE, 'Ca bị hủy do bận việc', 'MANUAL_ENTRY', 'CANCELLED', NOW(), '2025-11-03', 4, 'WKS_MORNING_02'),
+('EMS251101007', NOW(), NULL, FALSE, 'Ca part-time chiều', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-11-04', 4, 'WKS_AFTERNOON_02'),
 
 -- Accountant Tuan (employee_id=5) - Mixed statuses
-('EMS251101008', 5, 'WKS_MORNING_01', '2025-11-06', 'SCHEDULED', 'MANUAL_ENTRY', FALSE, 'Ca sáng thứ 4', NOW(), NOW()),
-('EMS251101009', 5, 'WKS_AFTERNOON_01', '2025-11-07', 'SCHEDULED', 'BATCH_JOB', FALSE, 'Ca chiều từ batch job', NOW(), NOW()),
-('EMS251101010', 5, 'WKS_MORNING_01', '2025-11-01', 'COMPLETED', 'MANUAL_ENTRY', FALSE, 'Ca đã hoàn thành', NOW(), NOW()),
+('EMS251101008', NOW(), NULL, FALSE, 'Ca sáng thứ 4', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-11-06', 5, 'WKS_MORNING_01'),
+('EMS251101009', NOW(), NULL, FALSE, 'Ca chiều từ batch job', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-07', 5, 'WKS_AFTERNOON_01'),
+('EMS251101010', NOW(), NULL, FALSE, 'Ca đã hoàn thành', 'MANUAL_ENTRY', 'COMPLETED', NOW(), '2025-11-01', 5, 'WKS_MORNING_01'),
 
 -- Nurse Hoa (employee_id=6) - ON_LEAVE status
-('EMS251101011', 6, 'WKS_MORNING_02', '2025-11-05', 'ON_LEAVE', 'BATCH_JOB', FALSE, 'Nghỉ phép có đăng ký', NOW(), NOW()),
-('EMS251101012', 6, 'WKS_AFTERNOON_02', '2025-11-06', 'SCHEDULED', 'MANUAL_ENTRY', FALSE, 'Ca part-time chiều', NOW(), NOW()),
+('EMS251101011', NOW(), NULL, FALSE, 'Nghỉ phép có đăng ký', 'BATCH_JOB', 'ON_LEAVE', NOW(), '2025-11-05', 6, 'WKS_MORNING_02'),
+('EMS251101012', NOW(), NULL, FALSE, 'Ca part-time chiều', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-11-06', 6, 'WKS_AFTERNOON_02'),
 
 -- Manager Quan (employee_id=7) - All permissions
-('EMS251101013', 7, 'WKS_MORNING_01', '2025-11-08', 'SCHEDULED', 'MANUAL_ENTRY', FALSE, 'Ca quản lý', NOW(), NOW()),
-('EMS251101014', 7, 'WKS_AFTERNOON_01', '2025-11-09', 'SCHEDULED', 'BATCH_JOB', FALSE, 'Ca quản lý từ batch job', NOW(), NOW()),
+('EMS251101013', NOW(), NULL, FALSE, 'Ca quản lý', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-11-08', 7, 'WKS_MORNING_01'),
+('EMS251101014', NOW(), NULL, FALSE, 'Ca quản lý từ batch job', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-09', 7, 'WKS_AFTERNOON_01'),
 
 -- December 2025 shifts (Future month)
-('EMS251201001', 2, 'WKS_MORNING_01', '2025-12-02', 'SCHEDULED', 'BATCH_JOB', FALSE, 'Ca tháng 12', NOW(), NOW()),
-('EMS251201002', 3, 'WKS_AFTERNOON_01', '2025-12-03', 'SCHEDULED', 'MANUAL_ENTRY', FALSE, 'Ca tháng 12', NOW(), NOW()),
-('EMS251201003', 5, 'WKS_MORNING_01', '2025-12-04', 'SCHEDULED', 'BATCH_JOB', FALSE, 'Ca tháng 12', NOW(), NOW()),
+('EMS251201001', NOW(), NULL, FALSE, 'Ca tháng 12', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-02', 2, 'WKS_MORNING_01'),
+('EMS251201002', NOW(), NULL, FALSE, 'Ca tháng 12', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-12-03', 3, 'WKS_AFTERNOON_01'),
+('EMS251201003', NOW(), NULL, FALSE, 'Ca tháng 12', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-04', 5, 'WKS_MORNING_01'),
 
 -- October 2025 shifts (Past month for historical data)
-('EMS251001001', 2, 'WKS_MORNING_01', '2025-10-15', 'COMPLETED', 'MANUAL_ENTRY', FALSE, 'Ca tháng trước đã hoàn thành', NOW(), NOW()),
-('EMS251001002', 3, 'WKS_AFTERNOON_01', '2025-10-16', 'COMPLETED', 'BATCH_JOB', FALSE, 'Ca tháng trước đã hoàn thành', NOW(), NOW()),
-('EMS251001003', 5, 'WKS_MORNING_01', '2025-10-17', 'CANCELLED', 'MANUAL_ENTRY', FALSE, 'Ca tháng trước bị hủy', NOW(), NOW())
+('EMS251001001', NOW(), NULL, FALSE, 'Ca tháng trước đã hoàn thành', 'MANUAL_ENTRY', 'COMPLETED', NOW(), '2025-10-15', 2, 'WKS_MORNING_01'),
+('EMS251001002', NOW(), NULL, FALSE, 'Ca tháng trước đã hoàn thành', 'BATCH_JOB', 'COMPLETED', NOW(), '2025-10-16', 3, 'WKS_AFTERNOON_01'),
+('EMS251001003', NOW(), NULL, FALSE, 'Ca tháng trước bị hủy', 'MANUAL_ENTRY', 'CANCELLED', NOW(), '2025-10-17', 5, 'WKS_MORNING_01')
 
 ON CONFLICT (employee_shift_id) DO NOTHING;
 

@@ -224,12 +224,20 @@ public class GlobalExceptionHandler {
             Exception ex,
             HttpServletRequest request) {
 
-        log.warn("Related resource not found at {}: {}", request.getRequestURI(), ex.getMessage());
+        // Extract clean message from ErrorResponseException
+        String cleanMessage;
+        if (ex instanceof org.springframework.web.ErrorResponseException errorResponseEx) {
+            cleanMessage = errorResponseEx.getBody().getDetail();
+            log.warn("Related resource not found at {}: {}", request.getRequestURI(), cleanMessage);
+        } else {
+            cleanMessage = ex.getMessage();
+            log.warn("Related resource not found at {}: {}", request.getRequestURI(), cleanMessage);
+        }
 
         FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
         res.setStatusCode(HttpStatus.NOT_FOUND.value());
         res.setError("RELATED_RESOURCE_NOT_FOUND");
-        res.setMessage(ex.getMessage());
+        res.setMessage(cleanMessage);
         res.setData(null);
 
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(res);
