@@ -1,0 +1,201 @@
+================================================================================
+BÁO CÁO SỬA LỖI VÀ BỔ SUNG LOGIC CHO HỆ THỐNG QUẢN LÝ CA LÀM VIỆC
+================================================================================
+
+📋 TỔNG QUAN
+Đã sửa 7 lỗi từ phản hồi của team FE và bổ sung 2 ràng buộc nghiệp vụ mới 
+cho hệ thống quản lý ca làm việc.
+
+================================================================================
+✅ CÁC LỖI ĐÃ SỬA
+================================================================================
+
+────────────────────────────────────────────────────────────────────────────────
+Lỗi 1: Cho phép tạo 2 ca trùng thời gian
+────────────────────────────────────────────────────────────────────────────────
+Vấn đề: Có thể tạo "Ca 1" 18h-21h và "Ca 2" 18h-21h mà không bị chặn.
+
+Giải pháp: 
+- Thêm validation kiểm tra trùng lặp thời gian cho tất cả ca đang hoạt động
+- Đặc biệt: Ca đêm 18:00-21:00 chỉ được phép tồn tại duy nhất (do yêu cầu 
+  tối thiểu 3 giờ và phòng khám đóng cửa lúc 21:00)
+- Kiểm tra cả trùng chính xác lẫn chồng chéo thời gian
+
+Thông báo lỗi:
+• Ca đêm: "Đã tồn tại ca đêm từ 18:00 đến 21:00 (Ca: X). Chỉ được phép có 
+  duy nhất một ca đêm này."
+• Ca thường: "Đã tồn tại ca làm việc từ X đến Y (Ca: Z). Không thể tạo hai 
+  ca cùng thời gian."
+• Chồng chéo: "Ca làm việc X-Y bị trùng lặp với ca 'Z' (A-B). Các ca làm 
+  việc không được chồng chéo thời gian."
+
+────────────────────────────────────────────────────────────────────────────────
+Lỗi 2: Cho phép tạo 2 ca trùng tên
+────────────────────────────────────────────────────────────────────────────────
+Vấn đề: Có thể tạo 2 ca khác giờ nhưng cùng tên "Ca tối".
+
+Giải pháp: 
+- Thêm validation kiểm tra trùng tên ca trong các ca đang hoạt động
+- Chỉ kiểm tra các ca active (không kiểm tra ca đã xóa)
+
+Thông báo lỗi: 
+"Tên ca làm việc '{tên}' đã tồn tại. Vui lòng chọn tên khác."
+
+────────────────────────────────────────────────────────────────────────────────
+Lỗi 3: Thông báo lỗi không rõ ràng khi tạo ca ngoài giờ hoạt động
+────────────────────────────────────────────────────────────────────────────────
+Vấn đề: Tạo ca 00h-3h chỉ báo lỗi chung chung, không nói rõ sai ở đâu.
+
+Giải pháp: 
+- Nâng cấp thông báo lỗi chi tiết hơn
+- Chỉ rõ vi phạm ở giờ bắt đầu hay giờ kết thúc
+- Gợi ý khung giờ hợp lệ
+
+Thông báo lỗi: 
+"Ca làm việc phải nằm trong giờ hoạt động của phòng khám (08:00 - 21:00). 
+Ca của bạn: X - Y. Giờ bắt đầu X quá sớm, vui lòng chọn từ 08:00 trở đi."
+
+────────────────────────────────────────────────────────────────────────────────
+Lỗi 4: Khôi phục ca đã xóa không kiểm tra trùng lặp
+────────────────────────────────────────────────────────────────────────────────
+Vấn đề: Đã có "Ca tối" 18h-21h đang hoạt động, vẫn cho phép khôi phục 
+"Ca 1" 18h-21h.
+
+Giải pháp: 
+- Thêm validation kiểm tra trùng tên và trùng thời gian trước khi khôi phục
+- Sử dụng cùng logic validation như khi tạo ca mới
+
+Kết quả: Khôi phục ca sẽ bị chặn nếu có xung đột với ca đang hoạt động.
+
+────────────────────────────────────────────────────────────────────────────────
+Lỗi 5: Không giải thích rõ về giờ nghỉ trưa
+────────────────────────────────────────────────────────────────────────────────
+Vấn đề: Tạo ca 12h-15h (đủ 3 tiếng) nhưng bị báo lỗi không đủ thời lượng, 
+không nói rõ là do giờ nghỉ trưa.
+
+Giải pháp: 
+- Thêm chú thích trong thông báo lỗi về giờ nghỉ trưa (12:00-13:00) không 
+  được tính vào thời gian làm việc
+
+Thông báo lỗi: 
+"Thời lượng ca làm việc phải từ 3 đến 8 giờ. Thực tế: X giờ. 
+Lưu ý: Giờ nghỉ trưa (12:00-13:00) không được tính vào thời gian làm việc."
+
+────────────────────────────────────────────────────────────────────────────────
+Lỗi 6: Thông báo lỗi bằng tiếng Anh khi giờ kết thúc trước giờ bắt đầu
+────────────────────────────────────────────────────────────────────────────────
+Vấn đề: Message "End time must be after start time" hiển thị bằng tiếng Anh.
+
+Giải pháp: Chuyển sang tiếng Việt.
+
+Thông báo lỗi: "Giờ kết thúc phải sau giờ bắt đầu"
+
+────────────────────────────────────────────────────────────────────────────────
+Lỗi 7: Validation các trường bắt buộc bằng tiếng Anh
+────────────────────────────────────────────────────────────────────────────────
+Vấn đề: Khi chưa điền tên ca hoặc chưa chọn giờ, thông báo lỗi hiển thị 
+bằng tiếng Anh.
+
+Giải pháp: Chuyển tất cả validation messages sang tiếng Việt.
+
+Thông báo lỗi:
+• "Tên ca làm việc không được để trống"
+• "Giờ bắt đầu không được để trống"
+• "Giờ kết thúc không được để trống"
+• "Tên ca làm việc không được vượt quá 100 ký tự"
+
+================================================================================
+🆕 RÀNG BUỘC NGHIỆP VỤ MỚI
+================================================================================
+
+────────────────────────────────────────────────────────────────────────────────
+Ràng buộc 1: Không cho phép bắt đầu ca từ 11:01 đến 12:59
+────────────────────────────────────────────────────────────────────────────────
+Lý do: Khoảng thời gian này quá gần hoặc trùng với giờ nghỉ trưa 
+(12:00-13:00), không đủ thời gian làm việc có hiệu quả.
+
+Ví dụ:
+❌ 11:15 → chỉ còn 45 phút đến giờ nghỉ trưa
+❌ 11:30 → chỉ còn 30 phút đến giờ nghỉ trưa
+❌ 12:00 → đúng giờ nghỉ trưa
+❌ 12:30 → vẫn trong giờ nghỉ trưa
+
+Thông báo lỗi: 
+"Ca làm việc không thể bắt đầu từ 11:01 đến 12:59. Giờ bắt đầu của bạn: X. 
+Khoảng thời gian này quá gần hoặc trùng với giờ nghỉ trưa (12:00-13:00). 
+Vui lòng chọn giờ bắt đầu từ 08:00 đến 11:00 (ca sáng), hoặc từ 13:00 đến 
+18:00 (ca chiều/đêm)."
+
+────────────────────────────────────────────────────────────────────────────────
+Ràng buộc 2: Không cho phép bắt đầu ca sau 18:00
+────────────────────────────────────────────────────────────────────────────────
+Lý do: Phòng khám đóng cửa lúc 21:00 và mỗi ca phải có tối thiểu 3 giờ làm 
+việc. Bắt đầu sau 18:00 sẽ không đủ 3 giờ trước khi đóng cửa.
+
+Ví dụ:
+❌ 18:01 → chỉ còn 2h59 phút đến 21:00 (không đủ 3 giờ)
+❌ 19:00 → chỉ còn 2 giờ đến 21:00
+❌ 20:00 → chỉ còn 1 giờ đến 21:00
+
+Thông báo lỗi: 
+"Ca làm việc không thể bắt đầu sau 18:00. Giờ bắt đầu của bạn: X. 
+Phòng khám đóng cửa lúc 21:00 và mỗi ca phải có tối thiểu 3 giờ làm việc. 
+Ca muộn nhất có thể bắt đầu là 18:00 (kết thúc 21:00 = 3 giờ)."
+
+================================================================================
+📊 KHUNG GIỜ BẮT ĐẦU HỢP LỆ
+================================================================================
+
+✅ Giờ bắt đầu hợp lệ:
+┌─────────────────────────────────────────────────────────────────────────┐
+│ 08:00 - 11:00  →  Ca sáng (có ít nhất 1 giờ trước giờ nghỉ trưa)      │
+│ 13:00 - 18:00  →  Ca chiều/đêm (bắt đầu sau giờ nghỉ trưa)            │
+└─────────────────────────────────────────────────────────────────────────┘
+
+❌ Giờ bắt đầu KHÔNG hợp lệ:
+┌─────────────────────────────────────────────────────────────────────────┐
+│ 11:01 - 12:59  →  Quá gần hoặc trùng giờ nghỉ trưa                    │
+│ Sau 18:00      →  Không đủ 3 giờ trước khi đóng cửa (21:00)           │
+└─────────────────────────────────────────────────────────────────────────┘
+
+================================================================================
+💡 VÍ DỤ CÁC CA HỢP LỆ
+================================================================================
+
+✅ Ca sáng:    08:00 - 12:00 (4 giờ)
+✅ Ca sáng:    08:00 - 16:00 (7 giờ sau khi trừ nghỉ trưa)
+✅ Ca sáng:    11:00 - 18:00 (6 giờ sau khi trừ nghỉ trưa)
+✅ Ca chiều:   13:00 - 18:00 (5 giờ)
+✅ Ca chiều:   13:00 - 21:00 (8 giờ)
+✅ Ca đêm:     18:00 - 21:00 (3 giờ - ca muộn nhất)
+
+================================================================================
+🚫 VÍ DỤ CÁC CA KHÔNG HỢP LỆ
+================================================================================
+
+❌ Ca lỗi 1:  11:30 - 18:00 → Bắt đầu quá gần giờ nghỉ trưa
+❌ Ca lỗi 2:  12:00 - 18:00 → Bắt đầu đúng giờ nghỉ trưa
+❌ Ca lỗi 3:  19:00 - 21:00 → Bắt đầu quá muộn (chỉ 2 giờ)
+❌ Ca lỗi 4:  00:00 - 03:00 → Ngoài giờ hoạt động phòng khám
+
+================================================================================
+📝 LƯU Ý CHO FE
+================================================================================
+
+1. Tất cả thông báo lỗi đã được chuyển sang tiếng Việt
+
+2. HTTP Status Codes:
+   • 400 BAD REQUEST: Lỗi validation (thời gian không hợp lệ, thiếu trường 
+     bắt buộc)
+   • 409 CONFLICT: Lỗi trùng lặp (trùng tên hoặc trùng thời gian)
+
+3. Format lỗi theo chuẩn RFC 7807 với các trường:
+   • status: HTTP status code
+   • title: Tiêu đề lỗi
+   • detail: Mô tả chi tiết
+   • errorCode: Mã lỗi (VD: DUPLICATE_SHIFT_NAME, DUPLICATE_TIME_RANGE)
+   • message: Thông báo lỗi tiếng Việt
+
+================================================================================
+Tất cả code đã compile thành công và sẵn sàng để test! 🚀
+================================================================================

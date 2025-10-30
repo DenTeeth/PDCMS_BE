@@ -68,14 +68,23 @@ public class WorkShiftService {
         // Validation 1: Validate time range
         validateTimeRange(request.getStartTime(), request.getEndTime());
 
-        // Validation 2: Validate duration (3-8 hours)
+        // Validation 2: Check for duplicate shift name (Lỗi 2)
+        validateUniqueShiftName(request.getShiftName(), null);
+
+        // Validation 3: Check for duplicate time range (Lỗi 1)
+        validateUniqueTimeRange(request.getStartTime(), request.getEndTime(), null);
+
+        // Validation 4: Validate duration (3-8 hours)
         double duration = calculateDuration(request.getStartTime(), request.getEndTime());
         validateDuration(duration);
 
-        // Validation 3: Validate working hours (8:00 - 21:00)
+        // Validation 5: Validate working hours (8:00 - 21:00)
         validateWorkingHours(request.getStartTime(), request.getEndTime());
 
-        // Validation 4: Prevent shifts spanning across 18:00 boundary
+        // Validation 6: Validate morning/afternoon shifts don't start after 11:00
+        validateMorningAfternoonStartTime(request.getStartTime());
+
+        // Validation 7: Prevent shifts spanning across 18:00 boundary
         validateShiftDoesNotSpanBoundary(request.getStartTime(), request.getEndTime());
 
         // Auto-generate category based on time range
@@ -125,14 +134,26 @@ public class WorkShiftService {
         // Determine final values (use new values if provided, otherwise keep existing)
         LocalTime finalStartTime = request.getStartTime() != null ? request.getStartTime() : workShift.getStartTime();
         LocalTime finalEndTime = request.getEndTime() != null ? request.getEndTime() : workShift.getEndTime();
+        String finalShiftName = request.getShiftName() != null ? request.getShiftName() : workShift.getShiftName();
 
         // Apply all validations with final values
         validateTimeRange(finalStartTime, finalEndTime);
+        
+        // Check for duplicate shift name if name is being changed (Lỗi 2)
+        if (request.getShiftName() != null && !request.getShiftName().equals(workShift.getShiftName())) {
+            validateUniqueShiftName(finalShiftName, workShiftId);
+        }
+        
+        // Check for duplicate time range if time is being changed (Lỗi 1)
+        if (isTimeChanging) {
+            validateUniqueTimeRange(finalStartTime, finalEndTime, workShiftId);
+        }
         
         double duration = calculateDuration(finalStartTime, finalEndTime);
         validateDuration(duration);
         
         validateWorkingHours(finalStartTime, finalEndTime);
+        validateMorningAfternoonStartTime(finalStartTime);
         validateShiftDoesNotSpanBoundary(finalStartTime, finalEndTime);
 
         // Auto-update category if time changed
@@ -213,9 +234,15 @@ public class WorkShiftService {
         // Check if already active
         if (Boolean.TRUE.equals(workShift.getIsActive())) {
             throw new IllegalStateException(
-                String.format("Work shift %s is already active", workShiftId)
+                String.format("Ca làm việc %s đã được kích hoạt rồi", workShiftId)
             );
         }
+
+        // Validate không trùng tên với ca đang hoạt động (Lỗi 4)
+        validateUniqueShiftName(workShift.getShiftName(), workShiftId);
+        
+        // Validate không trùng thời gian với ca đang hoạt động (Lỗi 4)
+        validateUniqueTimeRange(workShift.getStartTime(), workShift.getEndTime(), workShiftId);
 
         // Reactivate
         workShift.setIsActive(true);
@@ -358,33 +385,178 @@ public class WorkShiftService {
 
     /**
      * Validate that end time is after start time.
+     * Lỗi 6: Message tiếng Việt
      */
     private void validateTimeRange(LocalTime startTime, LocalTime endTime) {
         if (!endTime.isAfter(startTime)) {
-            throw new InvalidTimeRangeException();
+            throw new InvalidTimeRangeException("Giờ kết thúc phải sau giờ bắt đầu");
+        }
+    }
+    
+    /**
+     * Validate unique shift name among active shifts.
+     * Lỗi 2: Prevent duplicate shift names
+     * @param shiftName the shift name to check
+     * @param excludeWorkShiftId the work shift ID to exclude from check (for updates)
+     */
+    private void validateUniqueShiftName(String shiftName, String excludeWorkShiftId) {
+        List<WorkShift> existingShifts = workShiftRepository.findByShiftNameAndIsActive(shiftName, true);
+        
+        // Filter out the current shift if updating
+        if (excludeWorkShiftId != null) {
+            existingShifts = existingShifts.stream()
+                    .filter(shift -> !shift.getWorkShiftId().equals(excludeWorkShiftId))
+                    .collect(Collectors.toList());
+        }
+        
+        if (!existingShifts.isEmpty()) {
+            throw new DuplicateShiftNameException(shiftName);
+        }
+    }
+    
+    /**
+     * Validate unique time range among active shifts.
+     * Lỗi 1: Prevent overlapping or duplicate time ranges
+     * 
+     * Business rules:
+     * - Night shift (18:00-21:00) can only exist once (minimum 3 hours)
+     * - No two active shifts can have exact same time range
+     * - No two active shifts can overlap
+     * 
+     * @param startTime the start time to check
+     * @param endTime the end time to check
+     * @param excludeWorkShiftId the work shift ID to exclude from check (for updates)
+     */
+    private void validateUniqueTimeRange(LocalTime startTime, LocalTime endTime, String excludeWorkShiftId) {
+        List<WorkShift> activeShifts = workShiftRepository.findByIsActive(true);
+        
+        // Filter out the current shift if updating
+        if (excludeWorkShiftId != null) {
+            activeShifts = activeShifts.stream()
+                    .filter(shift -> !shift.getWorkShiftId().equals(excludeWorkShiftId))
+                    .collect(Collectors.toList());
+        }
+        
+        // Check for exact match or overlap
+        for (WorkShift shift : activeShifts) {
+            // Exact match (most critical - especially for night shift 18:00-21:00)
+            if (shift.getStartTime().equals(startTime) && shift.getEndTime().equals(endTime)) {
+                // Special message for night shift
+                boolean isNightShift = startTime.equals(LocalTime.of(18, 0)) && 
+                                      endTime.equals(LocalTime.of(21, 0));
+                
+                if (isNightShift) {
+                    throw new DuplicateTimeRangeException(
+                        String.format("Đã tồn tại ca đêm từ %s đến %s (Ca: %s). " +
+                                     "Chỉ được phép có duy nhất một ca đêm này.", 
+                            startTime, endTime, shift.getShiftName())
+                    );
+                }
+                
+                throw new DuplicateTimeRangeException(
+                    String.format("Đã tồn tại ca làm việc từ %s đến %s (Ca: %s). " +
+                                 "Không thể tạo hai ca cùng thời gian.", 
+                        startTime, endTime, shift.getShiftName())
+                );
+            }
+            
+            // Overlapping: new shift starts before existing ends AND new shift ends after existing starts
+            boolean overlaps = startTime.isBefore(shift.getEndTime()) && endTime.isAfter(shift.getStartTime());
+            if (overlaps) {
+                throw new DuplicateTimeRangeException(
+                    String.format("Ca làm việc %s-%s bị trùng lặp với ca '%s' (%s-%s). " +
+                                 "Các ca làm việc không được chồng chéo thời gian.", 
+                        startTime, endTime, shift.getShiftName(), shift.getStartTime(), shift.getEndTime())
+                );
+            }
         }
     }
 
     /**
      * Validate shift duration is between 3-8 hours.
+     * Lỗi 5: Message rõ ràng về giờ nghỉ trưa
      */
     private void validateDuration(double durationHours) {
         if (durationHours < MIN_DURATION_HOURS || durationHours > MAX_DURATION_HOURS) {
-            throw new InvalidShiftDurationException(
-                String.format("Thời lượng ca làm việc phải từ %.0f đến %.0f giờ. Thực tế: %.1f giờ",
-                    MIN_DURATION_HOURS, MAX_DURATION_HOURS, durationHours)
+            String message = String.format(
+                "Thời lượng ca làm việc phải từ %.0f đến %.0f giờ. Thực tế: %.1f giờ",
+                MIN_DURATION_HOURS, MAX_DURATION_HOURS, durationHours
             );
+            
+            // Lỗi 5: Thêm thông báo về giờ nghỉ trưa nếu ca bao gồm 12h-13h
+            if (durationHours < MIN_DURATION_HOURS) {
+                message += ". Lưu ý: Giờ nghỉ trưa (12:00-13:00) không được tính vào thời gian làm việc.";
+            }
+            
+            throw new InvalidShiftDurationException(message);
         }
     }
 
     /**
      * Validate that shift is within clinic working hours (8:00 - 21:00).
+     * Lỗi 3: Message rõ ràng hơn khi tạo ca ngoài giờ
      */
     private void validateWorkingHours(LocalTime startTime, LocalTime endTime) {
         if (startTime.isBefore(CLINIC_OPEN) || endTime.isAfter(CLINIC_CLOSE)) {
+            String message = String.format(
+                "Ca làm việc phải nằm trong giờ hoạt động của phòng khám (%s - %s). " +
+                "Ca của bạn: %s - %s",
+                CLINIC_OPEN, CLINIC_CLOSE, startTime, endTime
+            );
+            
+            // Lỗi 3: Thêm gợi ý cụ thể
+            if (startTime.isBefore(CLINIC_OPEN)) {
+                message += String.format(". Giờ bắt đầu %s quá sớm, vui lòng chọn từ %s trở đi.", 
+                    startTime, CLINIC_OPEN);
+            }
+            if (endTime.isAfter(CLINIC_CLOSE)) {
+                message += String.format(". Giờ kết thúc %s quá muộn, vui lòng chọn trước %s.", 
+                    endTime, CLINIC_CLOSE);
+            }
+            
+            throw new InvalidWorkingHoursException(message);
+        }
+    }
+
+    /**
+     * Validate that shifts do not start in invalid time ranges.
+     * 
+     * Invalid start times:
+     * 1. Between 11:01 and 12:59 (too close to or during lunch break)
+     * 2. After 18:00 (would require ending after 21:00 to meet 3-hour minimum)
+     * 
+     * Valid start times:
+     * - 08:00 to 11:00 (morning shifts)
+     * - 13:00 to 18:00 (afternoon/night shifts)
+     * 
+     * @param startTime Shift start time
+     * @throws InvalidWorkingHoursException if shift starts in invalid range
+     */
+    private void validateMorningAfternoonStartTime(LocalTime startTime) {
+        LocalTime maxMorningStart = LocalTime.of(11, 0);
+        LocalTime minAfternoonStart = LocalTime.of(13, 0);
+        LocalTime maxStartTimeForMinDuration = LocalTime.of(18, 0);
+        
+        // Rule 1: Check if start time is too close to lunch break (after 11:00 but before 13:00)
+        if (startTime.isAfter(maxMorningStart) && startTime.isBefore(minAfternoonStart)) {
             throw new InvalidWorkingHoursException(
-                String.format("Ca làm việc phải nằm trong giờ làm việc của phòng khám (%s - %s)",
-                    CLINIC_OPEN, CLINIC_CLOSE)
+                String.format("Ca làm việc không thể bắt đầu từ 11:01 đến 12:59. " +
+                             "Giờ bắt đầu của bạn: %s. " +
+                             "Khoảng thời gian này quá gần hoặc trùng với giờ nghỉ trưa (12:00-13:00). " +
+                             "Vui lòng chọn giờ bắt đầu từ 08:00 đến 11:00 (ca sáng), " +
+                             "hoặc từ 13:00 đến 18:00 (ca chiều/đêm).",
+                    startTime)
+            );
+        }
+        
+        // Rule 2: Check if start time is after 18:00 (would violate 3-hour minimum before 21:00 close)
+        if (startTime.isAfter(maxStartTimeForMinDuration)) {
+            throw new InvalidWorkingHoursException(
+                String.format("Ca làm việc không thể bắt đầu sau 18:00. " +
+                             "Giờ bắt đầu của bạn: %s. " +
+                             "Phòng khám đóng cửa lúc 21:00 và mỗi ca phải có tối thiểu 3 giờ làm việc. " +
+                             "Ca muộn nhất có thể bắt đầu là 18:00 (kết thúc 21:00 = 3 giờ).",
+                    startTime)
             );
         }
     }

@@ -59,4 +59,13 @@ public interface WorkShiftRepository extends JpaRepository<WorkShift, String>, J
      * @return List of work shifts with matching prefix
      */
     List<WorkShift> findByWorkShiftIdStartingWith(String prefix);
+
+    /**
+     * Find work shifts by shift name and active status.
+     * Used for duplicate name validation.
+     * @param shiftName the shift name to check
+     * @param isActive the active status
+     * @return List of work shifts matching the criteria
+     */
+    List<WorkShift> findByShiftNameAndIsActive(String shiftName, Boolean isActive);
 }

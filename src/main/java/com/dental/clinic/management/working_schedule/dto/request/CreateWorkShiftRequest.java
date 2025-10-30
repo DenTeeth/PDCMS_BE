@@ -19,14 +19,14 @@ import java.time.LocalTime;
 @AllArgsConstructor
 public class CreateWorkShiftRequest {
 
-    @NotBlank(message = "Shift name is required")
-    @Size(max = 100, message = "Shift name must not exceed 100 characters")
+    @NotBlank(message = "Tên ca làm việc không được để trống")
+    @Size(max = 100, message = "Tên ca làm việc không được vượt quá 100 ký tự")
     private String shiftName;
 
-    @NotNull(message = "Start time is required")
+    @NotNull(message = "Giờ bắt đầu không được để trống")
     private LocalTime startTime;
 
-    @NotNull(message = "End time is required")
+    @NotNull(message = "Giờ kết thúc không được để trống")
     private LocalTime endTime;
 
     // Category is removed - auto-generated based on startTime
