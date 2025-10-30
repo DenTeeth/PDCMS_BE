@@ -155,7 +155,11 @@ VALUES
 ('VIEW_SHIFTS_SUMMARY', 'VIEW_SHIFTS_SUMMARY', 'SCHEDULE_MANAGEMENT', 'Xem thống kê ca làm việc', 103, NULL, TRUE, NOW()),
 ('CREATE_SHIFTS', 'CREATE_SHIFTS', 'SCHEDULE_MANAGEMENT', 'Tạo ca làm việc thủ công', 104, NULL, TRUE, NOW()),
 ('UPDATE_SHIFTS', 'UPDATE_SHIFTS', 'SCHEDULE_MANAGEMENT', 'Cập nhật ca làm việc', 105, NULL, TRUE, NOW()),
-('DELETE_SHIFTS', 'DELETE_SHIFTS', 'SCHEDULE_MANAGEMENT', 'Hủy ca làm việc', 106, NULL, TRUE, NOW())
+('DELETE_SHIFTS', 'DELETE_SHIFTS', 'SCHEDULE_MANAGEMENT', 'Hủy ca làm việc', 106, NULL, TRUE, NOW()),
+-- Fixed shift registration management (BE-307 V2)
+('MANAGE_FIXED_REGISTRATIONS', 'MANAGE_FIXED_REGISTRATIONS', 'SCHEDULE_MANAGEMENT', 'Quản lý đăng ký ca cố định (tạo/sửa/xóa)', 107, NULL, TRUE, NOW()),
+('VIEW_FIXED_REGISTRATIONS_ALL', 'VIEW_FIXED_REGISTRATIONS_ALL', 'SCHEDULE_MANAGEMENT', 'Xem tất cả đăng ký ca cố định', 108, NULL, TRUE, NOW()),
+('VIEW_FIXED_REGISTRATIONS_OWN', 'VIEW_FIXED_REGISTRATIONS_OWN', 'SCHEDULE_MANAGEMENT', 'Xem đăng ký ca cố định của bản thân', 109, 'VIEW_FIXED_REGISTRATIONS_ALL', TRUE, NOW())
 ON CONFLICT (permission_id) DO NOTHING;
 
 -- MODULE 8: LEAVE_MANAGEMENT (MERGED: TIME_OFF + OVERTIME + TIME_OFF_MANAGEMENT)
@@ -293,6 +297,8 @@ VALUES
 -- Employee shift management (BE-302)
 ('ROLE_MANAGER', 'VIEW_SHIFTS_ALL'), ('ROLE_MANAGER', 'VIEW_SHIFTS_SUMMARY'),
 ('ROLE_MANAGER', 'CREATE_SHIFTS'), ('ROLE_MANAGER', 'UPDATE_SHIFTS'), ('ROLE_MANAGER', 'DELETE_SHIFTS'),
+-- Fixed shift registration management (BE-307 V2)
+('ROLE_MANAGER', 'MANAGE_FIXED_REGISTRATIONS'), ('ROLE_MANAGER', 'VIEW_FIXED_REGISTRATIONS_ALL'),
 -- LEAVE_MANAGEMENT (full management)
 ('ROLE_MANAGER', 'VIEW_LEAVE_ALL'),
 ('ROLE_MANAGER', 'APPROVE_TIME_OFF'), ('ROLE_MANAGER', 'REJECT_TIME_OFF'), ('ROLE_MANAGER', 'CANCEL_TIME_OFF_PENDING'),
@@ -444,6 +450,17 @@ VALUES
 ('ROLE_MANAGER', 'CANCEL_TIMEOFF_OWN')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
+-- Grant VIEW_FIXED_REGISTRATIONS_OWN to all employee roles (BE-307 V2) - Allow viewing own fixed registrations
+INSERT INTO role_permissions (role_id, permission_id)
+VALUES
+('ROLE_DOCTOR', 'VIEW_FIXED_REGISTRATIONS_OWN'),
+('ROLE_NURSE', 'VIEW_FIXED_REGISTRATIONS_OWN'),
+('ROLE_RECEPTIONIST', 'VIEW_FIXED_REGISTRATIONS_OWN'),
+('ROLE_ACCOUNTANT', 'VIEW_FIXED_REGISTRATIONS_OWN'),
+('ROLE_INVENTORY_MANAGER', 'VIEW_FIXED_REGISTRATIONS_OWN'),
+('ROLE_MANAGER', 'VIEW_FIXED_REGISTRATIONS_OWN')
+ON CONFLICT (role_id, permission_id) DO NOTHING;
+
 -- ============================================
 -- BƯỚC 5: TẠO CHUYÊN KHOA
 -- ============================================
@@ -521,10 +538,11 @@ VALUES
 (3, 3, 'EMP003', 'Lan', 'Trần Thị', '0902345678', '1988-08-20', '456 Lê Lợi, Q3, TPHCM', 'FULL_TIME', TRUE, NOW()),
 (4, 4, 'EMP004', 'Mai', 'Lê Thị', '0903456789', '1995-03-10', '789 Trần Hưng Đạo, Q5, TPHCM', 'FULL_TIME', TRUE, NOW()),
 (5, 5, 'EMP005', 'Tuấn', 'Hoàng Văn', '0904567890', '1992-07-25', '321 Hai Bà Trưng, Q1, TPHCM', 'FULL_TIME', TRUE, NOW()),
-(6, 6, 'EMP006', 'Hoa', 'Phạm Thị', '0906789012', '1992-06-15', '111 Lý Thường Kiệt, Q10, TPHCM', 'PART_TIME', TRUE, NOW()),
+-- Part-time employees (Schema V14)
+(6, 6, 'EMP006', 'Hoa', 'Phạm Thị', '0906789012', '1992-06-15', '111 Lý Thường Kiệt, Q10, TPHCM', 'PART_TIME_FIXED', TRUE, NOW()), -- Part-time có lịch cố định
 (7, 7, 'EMP007', 'Quân', 'Trần Minh', '0909999999', '1980-10-10', '77 Phạm Ngọc Thạch, Q3, TPHCM', 'FULL_TIME', TRUE, NOW()),
-(8, 11, 'EMP008', 'Linh', 'Nguyễn Thị', '0907777777', '1998-03-22', '234 Võ Thị Sáu, Q3, TPHCM', 'PART_TIME', TRUE, NOW()),
-(9, 12, 'EMP009', 'Trang', 'Võ Thị', '0908888888', '1999-07-18', '456 Điện Biên Phủ, Q3, TPHCM', 'PART_TIME', TRUE, NOW())
+(8, 11, 'EMP008', 'Linh', 'Nguyễn Thị', '0907777777', '1998-03-22', '234 Võ Thị Sáu, Q3, TPHCM', 'PART_TIME_FLEX', TRUE, NOW()), -- Part-time linh hoạt (đăng ký theo suất)
+(9, 12, 'EMP009', 'Trang', 'Võ Thị', '0908888888', '1999-07-18', '456 Điện Biên Phủ, Q3, TPHCM', 'PART_TIME_FIXED', TRUE, NOW()) -- Part-time có lịch cố định
 ON CONFLICT (employee_id) DO NOTHING;
 
 INSERT INTO employee_specializations (employee_id, specialization_id)
@@ -587,46 +605,46 @@ ON CONFLICT (request_id) DO NOTHING;
 -- PENDING, APPROVED, REJECTED, CANCELLED
 
 INSERT INTO overtime_requests (
-    request_id, employee_id, requested_by, work_date, work_shift_id, 
+    request_id, employee_id, requested_by, work_date, work_shift_id,
     reason, status, approved_by, approved_at, rejected_reason, cancellation_reason, created_at
 )
 VALUES
 -- PENDING overtime requests (for testing approval/rejection/cancellation)
-('OTR251030005', 2, 2, '2025-11-18', 'WKS_AFTERNOON_02', 
+('OTR251030005', 2, 2, '2025-11-18', 'WKS_AFTERNOON_02',
  'Hoàn thành báo cáo cuối tháng', 'PENDING', NULL, NULL, NULL, NULL, NOW()),
 
-('OTR251030006', 3, 3, '2025-11-20', 'WKS_MORNING_01', 
+('OTR251030006', 3, 3, '2025-11-20', 'WKS_MORNING_01',
  'Hỗ trợ dự án khẩn cấp', 'PENDING', NULL, NULL, NULL, NULL, NOW()),
 
-('OTR251030007', 4, 4, '2025-11-22', 'WKS_AFTERNOON_01', 
+('OTR251030007', 4, 4, '2025-11-22', 'WKS_AFTERNOON_01',
  'Hỗ trợ tiếp đón bệnh nhân ca tối', 'PENDING', NULL, NULL, NULL, NULL, NOW()),
 
 -- APPROVED overtime requests (with auto-created employee shifts)
-('OTR251030008', 5, 5, '2025-11-25', 'WKS_MORNING_02', 
+('OTR251030008', 5, 5, '2025-11-25', 'WKS_MORNING_02',
  'Xử lý công việc kế toán tồn đọng', 'APPROVED', 7, NOW() - INTERVAL '2 days', NULL, NULL, NOW() - INTERVAL '3 days'),
 
-('OTR251030009', 6, 6, '2025-11-27', 'WKS_AFTERNOON_02', 
+('OTR251030009', 6, 6, '2025-11-27', 'WKS_AFTERNOON_02',
  'Chăm sóc bệnh nhân đặc biệt', 'APPROVED', 7, NOW() - INTERVAL '1 day', NULL, NULL, NOW() - INTERVAL '2 days'),
 
 -- REJECTED overtime request
-('OTR251030010', 2, 2, '2025-11-28', 'WKS_MORNING_01', 
+('OTR251030010', 2, 2, '2025-11-28', 'WKS_MORNING_01',
  'Yêu cầu tăng ca thêm', 'REJECTED', 7, NOW() - INTERVAL '1 day', 'Đã đủ nhân sự cho ngày này', NULL, NOW() - INTERVAL '2 days'),
 
 -- CANCELLED overtime request (self-cancelled)
-('OTR251030011', 3, 3, '2025-11-30', 'WKS_AFTERNOON_01', 
+('OTR251030011', 3, 3, '2025-11-30', 'WKS_AFTERNOON_01',
  'Yêu cầu tăng ca cuối tháng', 'CANCELLED', NULL, NULL, NULL, 'Có việc đột xuất không thể tham gia', NOW() - INTERVAL '1 day')
 
 ON CONFLICT (request_id) DO NOTHING;
 
 -- Create corresponding employee shifts for APPROVED OT requests
 INSERT INTO employee_shifts (
-    employee_shift_id, created_at, created_by, is_overtime, notes, 
-    source, source_ot_request_id, status, updated_at, 
+    employee_shift_id, created_at, created_by, is_overtime, notes,
+    source, source_ot_request_id, status, updated_at,
     work_date, employee_id, work_shift_id
 )
 VALUES
 -- Auto-created shift for OTR251030008 (Accountant Tuan)
-('EMS251030003', NOW() - INTERVAL '2 days', 7, TRUE, 
+('EMS251030003', NOW() - INTERVAL '2 days', 7, TRUE,
  'Tạo từ yêu cầu OT OTR251030008 - Xử lý công việc kế toán tồn đọng',
  'OT_APPROVAL', 'OTR251030008', 'SCHEDULED', NULL,
  '2025-11-25', 5, 'WKS_MORNING_02'),
@@ -655,7 +673,7 @@ ON CONFLICT (renewal_id) DO NOTHING;
 -- employee_id mapping: 2=nhasi1, 3=nhasi2, 4=letan, 5=ketoan, 6=yta, 7=manager
 
 INSERT INTO employee_shifts (
-    employee_shift_id, created_at, created_by, is_overtime, notes, 
+    employee_shift_id, created_at, created_by, is_overtime, notes,
     source, status, updated_at, work_date, employee_id, work_shift_id
 )
 VALUES

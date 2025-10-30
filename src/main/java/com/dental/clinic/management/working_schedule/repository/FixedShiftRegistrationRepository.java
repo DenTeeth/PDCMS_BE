@@ -1,0 +1,85 @@
+package com.dental.clinic.management.working_schedule.repository;
+
+import com.dental.clinic.management.working_schedule.domain.FixedShiftRegistration;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * Repository for FixedShiftRegistration entity.
+ */
+@Repository
+public interface FixedShiftRegistrationRepository extends JpaRepository<FixedShiftRegistration, Integer> {
+
+    /**
+     * Find all active registrations for a specific employee.
+     *
+     * @param employeeId employee ID
+     * @return list of active registrations
+     */
+    @Query("SELECT fsr FROM FixedShiftRegistration fsr " +
+            "LEFT JOIN FETCH fsr.registrationDays " +
+            "LEFT JOIN FETCH fsr.workShift " +
+            "WHERE fsr.employee.employeeId = :employeeId " +
+            "AND fsr.isActive = true " +
+            "ORDER BY fsr.workShift.startTime ASC")
+    List<FixedShiftRegistration> findActiveByEmployeeId(@Param("employeeId") Integer employeeId);
+
+    /**
+     * Find a registration by ID with all related data fetched.
+     *
+     * @param registrationId registration ID
+     * @return optional registration
+     */
+    @Query("SELECT fsr FROM FixedShiftRegistration fsr " +
+            "LEFT JOIN FETCH fsr.registrationDays " +
+            "LEFT JOIN FETCH fsr.workShift " +
+            "LEFT JOIN FETCH fsr.employee " +
+            "WHERE fsr.registrationId = :registrationId")
+    Optional<FixedShiftRegistration> findByIdWithDetails(@Param("registrationId") Integer registrationId);
+
+    /**
+     * Check if an employee already has an active registration for a specific work
+     * shift.
+     * Used to prevent duplicate registrations.
+     *
+     * @param employeeId  employee ID
+     * @param workShiftId work shift ID
+     * @return true if duplicate exists
+     */
+    @Query("SELECT COUNT(fsr) > 0 FROM FixedShiftRegistration fsr " +
+            "WHERE fsr.employee.employeeId = :employeeId " +
+            "AND fsr.workShift.workShiftId = :workShiftId " +
+            "AND fsr.isActive = true")
+    boolean existsActiveByEmployeeAndWorkShift(
+            @Param("employeeId") Integer employeeId,
+            @Param("workShiftId") String workShiftId);
+
+    /**
+     * Find all active registrations (for admin view).
+     *
+     * @return list of all active registrations
+     */
+    @Query("SELECT fsr FROM FixedShiftRegistration fsr " +
+            "LEFT JOIN FETCH fsr.registrationDays " +
+            "LEFT JOIN FETCH fsr.workShift " +
+            "LEFT JOIN FETCH fsr.employee " +
+            "WHERE fsr.isActive = true " +
+            "ORDER BY fsr.employee.employeeId ASC, fsr.workShift.startTime ASC")
+    List<FixedShiftRegistration> findAllActive();
+
+    /**
+     * Count active registrations for an employee.
+     *
+     * @param employeeId employee ID
+     * @return count of active registrations
+     */
+    @Query("SELECT COUNT(fsr) FROM FixedShiftRegistration fsr " +
+            "WHERE fsr.employee.employeeId = :employeeId " +
+            "AND fsr.isActive = true")
+    long countActiveByEmployeeId(@Param("employeeId") Integer employeeId);
+}

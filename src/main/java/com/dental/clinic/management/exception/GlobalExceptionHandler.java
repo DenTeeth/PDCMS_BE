@@ -195,6 +195,86 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handle duplicate fixed shift registration exception.
+     * Returns 409 Conflict.
+     */
+    @ExceptionHandler(com.dental.clinic.management.exception.fixed_registration.DuplicateFixedShiftRegistrationException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleDuplicateFixedShiftRegistration(
+            RuntimeException ex,
+            HttpServletRequest request) {
+
+        log.warn("Duplicate fixed shift registration at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.CONFLICT.value());
+        res.setError("DUPLICATE_FIXED_SHIFT_REGISTRATION");
+        res.setMessage(ex.getMessage());
+        res.setData(null);
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(res);
+    }
+
+    /**
+     * Handle invalid employee type exception.
+     * Returns 409 Conflict.
+     */
+    @ExceptionHandler(com.dental.clinic.management.exception.fixed_registration.InvalidEmployeeTypeException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleInvalidEmployeeType(
+            RuntimeException ex,
+            HttpServletRequest request) {
+
+        log.warn("Invalid employee type at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.CONFLICT.value());
+        res.setError("INVALID_EMPLOYEE_TYPE");
+        res.setMessage(ex.getMessage());
+        res.setData(null);
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(res);
+    }
+
+    /**
+     * Handle fixed registration not found exception.
+     * Returns 404 Not Found.
+     */
+    @ExceptionHandler(com.dental.clinic.management.exception.fixed_registration.FixedRegistrationNotFoundException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleFixedRegistrationNotFound(
+            RuntimeException ex,
+            HttpServletRequest request) {
+
+        log.warn("Fixed registration not found at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.NOT_FOUND.value());
+        res.setError("FIXED_REGISTRATION_NOT_FOUND");
+        res.setMessage(ex.getMessage());
+        res.setData(null);
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(res);
+    }
+
+    /**
+     * Handle employee ID required exception.
+     * Returns 400 Bad Request.
+     */
+    @ExceptionHandler(com.dental.clinic.management.exception.fixed_registration.EmployeeIdRequiredException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleEmployeeIdRequired(
+            RuntimeException ex,
+            HttpServletRequest request) {
+
+        log.warn("Employee ID required at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.BAD_REQUEST.value());
+        res.setError("EMPLOYEE_ID_REQUIRED");
+        res.setMessage(ex.getMessage());
+        res.setData(null);
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+    }
+
+    /**
      * Handle holiday conflict exception.
      * Returns 409 Conflict.
      */
