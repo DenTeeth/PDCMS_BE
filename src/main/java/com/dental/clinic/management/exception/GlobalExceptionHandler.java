@@ -108,7 +108,7 @@ public class GlobalExceptionHandler {
 
         FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
         res.setStatusCode(status.value());
-        
+
         // Extract error code and message from ProblemDetail properties
         Object errorCodeProperty = ex.getBody().getProperties() != null
                 ? ex.getBody().getProperties().get("errorCode")
@@ -116,17 +116,19 @@ public class GlobalExceptionHandler {
         Object messageProperty = ex.getBody().getProperties() != null
                 ? ex.getBody().getProperties().get("message")
                 : null;
-        
-        // Set error code (use errorCode property if available, otherwise fallback to generic error)
-        res.setError(errorCodeProperty != null 
-                ? errorCodeProperty.toString() 
+
+        // Set error code (use errorCode property if available, otherwise fallback to
+        // generic error)
+        res.setError(errorCodeProperty != null
+                ? errorCodeProperty.toString()
                 : "error." + status.name().toLowerCase());
-        
-        // Set message (use message property if available, otherwise use detail from ProblemDetail)
-        res.setMessage(messageProperty != null 
-                ? messageProperty.toString() 
+
+        // Set message (use message property if available, otherwise use detail from
+        // ProblemDetail)
+        res.setMessage(messageProperty != null
+                ? messageProperty.toString()
                 : ex.getBody().getDetail());
-        
+
         res.setData(null);
 
         return ResponseEntity.status(status).body(res);
@@ -150,6 +152,46 @@ public class GlobalExceptionHandler {
         res.setData(null);
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(res);
+    }
+
+    /**
+     * Handle time overlap conflict exception.
+     * Returns 409 Conflict.
+     */
+    @ExceptionHandler(com.dental.clinic.management.exception.employee_shift.TimeOverlapConflictException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleTimeOverlapConflict(
+            RuntimeException ex,
+            HttpServletRequest request) {
+
+        log.warn("Time overlap conflict at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.CONFLICT.value());
+        res.setError("TIME_OVERLAP_CONFLICT");
+        res.setMessage(ex.getMessage());
+        res.setData(null);
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(res);
+    }
+
+    /**
+     * Handle past date not allowed exception.
+     * Returns 400 Bad Request.
+     */
+    @ExceptionHandler(com.dental.clinic.management.exception.employee_shift.PastDateNotAllowedException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handlePastDateNotAllowed(
+            RuntimeException ex,
+            HttpServletRequest request) {
+
+        log.warn("Past date not allowed at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.BAD_REQUEST.value());
+        res.setError("PAST_DATE_NOT_ALLOWED");
+        res.setMessage(ex.getMessage());
+        res.setData(null);
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
     }
 
     /**
@@ -217,8 +259,8 @@ public class GlobalExceptionHandler {
      * Returns 404 Not Found.
      */
     @ExceptionHandler({
-        com.dental.clinic.management.exception.employee_shift.RelatedResourceNotFoundException.class,
-        com.dental.clinic.management.exception.overtime.RelatedResourceNotFoundException.class
+            com.dental.clinic.management.exception.employee_shift.RelatedResourceNotFoundException.class,
+            com.dental.clinic.management.exception.overtime.RelatedResourceNotFoundException.class
     })
     public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleRelatedResourceNotFound(
             Exception ex,
@@ -343,8 +385,8 @@ public class GlobalExceptionHandler {
 
         // Special handling for date parameters in shift calendar endpoint
         String message;
-        if (request.getRequestURI().contains("/api/v1/shifts") && 
-            (ex.getParameterName().equals("start_date") || ex.getParameterName().equals("end_date"))) {
+        if (request.getRequestURI().contains("/api/v1/shifts") &&
+                (ex.getParameterName().equals("start_date") || ex.getParameterName().equals("end_date"))) {
             message = "Vui lòng cung cấp ngày bắt đầu và ngày kết thúc hợp lệ.";
         } else {
             message = "Missing required parameter: " + ex.getParameterName();
@@ -372,8 +414,8 @@ public class GlobalExceptionHandler {
 
         // Special handling for date parameters
         String message;
-        if (request.getRequestURI().contains("/api/v1/shifts") && 
-            (ex.getName().equals("startDate") || ex.getName().equals("endDate"))) {
+        if (request.getRequestURI().contains("/api/v1/shifts") &&
+                (ex.getName().equals("startDate") || ex.getName().equals("endDate"))) {
             message = "Định dạng ngày không hợp lệ. Vui lòng sử dụng định dạng YYYY-MM-DD.";
         } else {
             message = "Invalid parameter type: " + ex.getName();

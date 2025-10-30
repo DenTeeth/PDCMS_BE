@@ -6,10 +6,11 @@ import com.dental.clinic.management.exception.employee_shift.CannotCancelBatchSh
 import com.dental.clinic.management.exception.employee_shift.CannotCancelCompletedShiftException;
 import com.dental.clinic.management.exception.employee_shift.HolidayConflictException;
 import com.dental.clinic.management.exception.employee_shift.InvalidStatusTransitionException;
+import com.dental.clinic.management.exception.employee_shift.PastDateNotAllowedException;
 import com.dental.clinic.management.exception.employee_shift.RelatedResourceNotFoundException;
 import com.dental.clinic.management.exception.employee_shift.ShiftFinalizedException;
 import com.dental.clinic.management.exception.employee_shift.ShiftNotFoundException;
-import com.dental.clinic.management.exception.employee_shift.SlotConflictException;
+import com.dental.clinic.management.exception.employee_shift.TimeOverlapConflictException;
 import com.dental.clinic.management.utils.IdGenerator;
 import com.dental.clinic.management.working_schedule.domain.EmployeeShift;
 import com.dental.clinic.management.working_schedule.domain.WorkShift;
@@ -33,6 +34,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -58,13 +60,14 @@ public class EmployeeShiftService {
     /**
      * Get shift calendar for an employee with optional filters.
      *
-     * @param employeeId            employee ID to view shifts for (null = all employees if has permission)
-     * @param startDate             start date filter
-     * @param endDate               end date filter
-     * @param status                optional status filter
-     * @param currentEmployeeId     ID of the authenticated user
-     * @param hasViewAllPermission  whether user has VIEW_SHIFTS_ALL permission
-     * @param pageable              pagination parameters
+     * @param employeeId           employee ID to view shifts for (null = all
+     *                             employees if has permission)
+     * @param startDate            start date filter
+     * @param endDate              end date filter
+     * @param status               optional status filter
+     * @param currentEmployeeId    ID of the authenticated user
+     * @param hasViewAllPermission whether user has VIEW_SHIFTS_ALL permission
+     * @param pageable             pagination parameters
      * @return paginated list of shifts
      */
     @PreAuthorize("hasAnyAuthority('VIEW_SHIFTS_ALL', 'VIEW_SHIFTS_OWN')")
@@ -77,7 +80,8 @@ public class EmployeeShiftService {
             boolean hasViewAllPermission,
             Pageable pageable) {
 
-        // Check permission: user can only view their own shifts unless they have VIEW_SHIFTS_ALL
+        // Check permission: user can only view their own shifts unless they have
+        // VIEW_SHIFTS_ALL
         if (!hasViewAllPermission && !employeeId.equals(currentEmployeeId)) {
             throw new RelatedResourceNotFoundException("Bạn chỉ có thể xem lịch làm việc của chính mình");
         }
@@ -119,7 +123,7 @@ public class EmployeeShiftService {
     /**
      * Get shift summary for an employee grouped by date.
      *
-     * @param employeeId employee ID
+     * @param employeeId employee ID (null = all employees if has permission)
      * @param startDate  start date
      * @param endDate    end date
      * @return list of daily shift summaries
@@ -130,14 +134,21 @@ public class EmployeeShiftService {
             LocalDate startDate,
             LocalDate endDate) {
 
-        // Verify employee exists
-        if (!employeeRepository.existsById(employeeId)) {
+        // Verify employee exists if employeeId is provided
+        if (employeeId != null && !employeeRepository.existsById(employeeId)) {
             throw new RelatedResourceNotFoundException("Nhân viên không tồn tại");
         }
 
         // Get all shifts in date range
-        List<EmployeeShift> shifts = employeeShiftRepository.findByEmployeeAndDateRange(
-                employeeId, startDate, endDate);
+        List<EmployeeShift> shifts;
+        if (employeeId != null) {
+            // Get shifts for specific employee
+            shifts = employeeShiftRepository.findByEmployeeAndDateRange(
+                    employeeId, startDate, endDate);
+        } else {
+            // Get all shifts (for all employees)
+            shifts = employeeShiftRepository.findByDateRangeAndStatus(startDate, endDate, null);
+        }
 
         // Group by date
         Map<LocalDate, List<EmployeeShift>> shiftsByDate = shifts.stream()
@@ -150,8 +161,7 @@ public class EmployeeShiftService {
                     Map<ShiftStatus, Long> statusBreakdown = entry.getValue().stream()
                             .collect(Collectors.groupingBy(
                                     EmployeeShift::getStatus,
-                                    Collectors.counting()
-                            ));
+                                    Collectors.counting()));
 
                     return ShiftSummaryResponseDto.builder()
                             .workDate(entry.getKey())
@@ -166,9 +176,9 @@ public class EmployeeShiftService {
     /**
      * Get detailed information about a specific shift.
      *
-     * @param employeeShiftId       shift ID
-     * @param currentEmployeeId     ID of the authenticated user
-     * @param hasViewAllPermission  whether user has VIEW_SHIFTS_ALL permission
+     * @param employeeShiftId      shift ID
+     * @param currentEmployeeId    ID of the authenticated user
+     * @param hasViewAllPermission whether user has VIEW_SHIFTS_ALL permission
      * @return shift details
      */
     @PreAuthorize("hasAnyAuthority('VIEW_SHIFTS_ALL', 'VIEW_SHIFTS_OWN')")
@@ -179,9 +189,11 @@ public class EmployeeShiftService {
 
         // Find the shift
         EmployeeShift shift = employeeShiftRepository.findById(employeeShiftId)
-                .orElseThrow(() -> new ShiftNotFoundException("Không tìm thấy ca làm việc, hoặc bạn không có quyền xem."));
+                .orElseThrow(
+                        () -> new ShiftNotFoundException("Không tìm thấy ca làm việc, hoặc bạn không có quyền xem."));
 
-        // Check permission: user can only view their own shifts unless they have VIEW_SHIFTS_ALL
+        // Check permission: user can only view their own shifts unless they have
+        // VIEW_SHIFTS_ALL
         if (!hasViewAllPermission && !shift.getEmployee().getEmployeeId().equals(currentEmployeeId)) {
             throw new ShiftNotFoundException("Không tìm thấy ca làm việc, hoặc bạn không có quyền xem.");
         }
@@ -192,14 +204,14 @@ public class EmployeeShiftService {
     /**
      * Create a manual shift entry.
      *
-     * @param request       shift creation request
-     * @param createdBy     ID of the user creating the shift
+     * @param request   shift creation request
+     * @param createdBy ID of the user creating the shift
      * @return created shift details
      */
     @PreAuthorize("hasAuthority('CREATE_SHIFTS')")
     @Transactional
     public EmployeeShiftResponseDto createManualShift(CreateShiftRequestDto request, Integer createdBy) {
-        
+
         // Validate employee exists
         Employee employee = employeeRepository.findById(request.getEmployeeId())
                 .orElseThrow(() -> new RelatedResourceNotFoundException("Nhân viên không tồn tại"));
@@ -243,7 +255,7 @@ public class EmployeeShiftService {
     @PreAuthorize("hasAuthority('UPDATE_SHIFTS')")
     @Transactional
     public EmployeeShiftResponseDto updateShift(String employeeShiftId, UpdateShiftRequestDto request) {
-        
+
         // Find the shift
         EmployeeShift shift = employeeShiftRepository.findById(employeeShiftId)
                 .orElseThrow(() -> new ShiftNotFoundException("Không tìm thấy ca làm việc"));
@@ -284,7 +296,7 @@ public class EmployeeShiftService {
     @PreAuthorize("hasAuthority('DELETE_SHIFTS')")
     @Transactional
     public void cancelShift(String employeeShiftId) {
-        
+
         // Find the shift
         EmployeeShift shift = employeeShiftRepository.findById(employeeShiftId)
                 .orElseThrow(() -> new ShiftNotFoundException("Không tìm thấy ca làm việc"));
@@ -292,6 +304,11 @@ public class EmployeeShiftService {
         // Validate cancellation is allowed
         if (shift.getStatus() == ShiftStatus.COMPLETED) {
             throw new CannotCancelCompletedShiftException("Không thể hủy ca làm đã được hoàn thành.");
+        }
+
+        // Check if already cancelled (idempotency)
+        if (shift.getStatus() == ShiftStatus.CANCELLED) {
+            throw new InvalidStatusTransitionException("Ca làm việc này đã bị hủy trước đó.");
         }
 
         if (shift.getSource() == ShiftSource.BATCH_JOB || shift.getSource() == ShiftSource.REGISTRATION_JOB) {
@@ -313,19 +330,52 @@ public class EmployeeShiftService {
      * @param workShiftId work shift ID
      */
     private void validateShiftCreation(Integer employeeId, LocalDate workDate, String workShiftId) {
-        
+
+        // Check if work date is in the past
+        if (workDate.isBefore(LocalDate.now())) {
+            throw new PastDateNotAllowedException(workDate);
+        }
+
         // Check if work date is a holiday
         if (holidayDateRepository.isHoliday(workDate)) {
             throw new HolidayConflictException(workDate);
         }
 
-        // Check if shift already exists
-        boolean exists = employeeShiftRepository.existsByEmployeeAndDateAndShift(
-                employeeId, workDate, workShiftId);
+        // Get the new shift details
+        WorkShift newWorkShift = workShiftRepository.findById(workShiftId)
+                .orElseThrow(() -> new RelatedResourceNotFoundException("Ca làm việc không tồn tại"));
 
-        if (exists) {
-            throw new SlotConflictException("Nhân viên đã có ca làm việc trong thời gian này");
+        // Get all active shifts for this employee on this date
+        List<EmployeeShift> existingShifts = employeeShiftRepository.findActiveShiftsByEmployeeAndDate(
+                employeeId, workDate);
+
+        // Check for time overlap with existing shifts
+        for (EmployeeShift existingShift : existingShifts) {
+            WorkShift existingWorkShift = existingShift.getWorkShift();
+
+            // Check if time ranges overlap
+            if (isTimeOverlap(newWorkShift.getStartTime(), newWorkShift.getEndTime(),
+                    existingWorkShift.getStartTime(), existingWorkShift.getEndTime())) {
+                throw new TimeOverlapConflictException(
+                        newWorkShift.getStartTime(), newWorkShift.getEndTime(),
+                        existingWorkShift.getStartTime(), existingWorkShift.getEndTime());
+            }
         }
+    }
+
+    /**
+     * Check if two time ranges overlap.
+     *
+     * @param start1 start time of first range
+     * @param end1   end time of first range
+     * @param start2 start time of second range
+     * @param end2   end time of second range
+     * @return true if ranges overlap
+     */
+    private boolean isTimeOverlap(LocalTime start1, LocalTime end1, LocalTime start2, LocalTime end2) {
+        // Two time ranges overlap if:
+        // - start1 < end2 AND end1 > start2
+        return start1.isBefore(end2) && end1.isAfter(start2);
     }
 
     /**
@@ -335,7 +385,7 @@ public class EmployeeShiftService {
      * @param newStatus     new status to transition to
      */
     private void validateStatusTransition(ShiftStatus currentStatus, ShiftStatus newStatus) {
-        
+
         // Cannot change completed shifts
         if (currentStatus == ShiftStatus.COMPLETED) {
             throw new InvalidStatusTransitionException(

@@ -80,7 +80,8 @@ public interface EmployeeShiftRepository extends JpaRepository<EmployeeShift, St
                         @Param("endDate") LocalDate endDate);
 
         /**
-         * Update shift status for an employee within a date range and optional work shift.
+         * Update shift status for an employee within a date range and optional work
+         * shift.
          * Used when approving time-off or overtime requests.
          *
          * @param employeeId  the employee ID
@@ -104,7 +105,8 @@ public interface EmployeeShiftRepository extends JpaRepository<EmployeeShift, St
 
         /**
          * Check if a work shift template is in use by any employee schedules.
-         * Used to prevent modifying work shift hours when employees are already scheduled.
+         * Used to prevent modifying work shift hours when employees are already
+         * scheduled.
          *
          * @param workShiftId the work shift ID
          * @return true if the work shift is in use
@@ -241,4 +243,22 @@ public interface EmployeeShiftRepository extends JpaRepository<EmployeeShift, St
                         @Param("startDate") LocalDate startDate,
                         @Param("endDate") LocalDate endDate,
                         @Param("statuses") List<ShiftStatus> statuses);
+
+        /**
+         * Find all shifts for an employee on a specific date excluding cancelled
+         * shifts.
+         * Used for checking time overlap conflicts.
+         *
+         * @param employeeId employee ID
+         * @param workDate   work date
+         * @return list of active shifts (not cancelled)
+         */
+        @Query("SELECT es FROM EmployeeShift es " +
+                        "WHERE es.employee.employeeId = :employeeId " +
+                        "AND es.workDate = :workDate " +
+                        "AND es.status != 'CANCELLED' " +
+                        "ORDER BY es.workShift.startTime ASC")
+        List<EmployeeShift> findActiveShiftsByEmployeeAndDate(
+                        @Param("employeeId") Integer employeeId,
+                        @Param("workDate") LocalDate workDate);
 }
