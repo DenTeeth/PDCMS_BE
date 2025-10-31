@@ -7,7 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Request DTO for responding to a shift renewal.
+ * Employee can CONFIRM (accept renewal) or DECLINE (reject with reason).
  */
 @Data
 @NoArgsConstructor
@@ -17,4 +17,11 @@ public class RenewalResponseRequest {
     @NotBlank(message = "Action is required")
     @Pattern(regexp = "CONFIRMED|DECLINED", message = "Action must be either CONFIRMED or DECLINED")
     private String action; // "CONFIRMED" or "DECLINED"
+
+    /**
+     * Required when action = "DECLINED", optional when action = "CONFIRMED".
+     * Validation is done in service layer (cannot use @NotNull here due to
+     * conditional requirement).
+     */
+    private String declineReason;
 }

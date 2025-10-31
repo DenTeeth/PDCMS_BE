@@ -81,7 +81,7 @@ public class AdminLeaveBalanceService {
 
         // 1. Get all active employees
         List<Integer> activeEmployeeIds = employeeRepository.findAllActiveEmployeeIds();
-        
+
         // 2. Get balances with optional filter
         List<EmployeeLeaveBalance> allBalances;
         if (timeOffTypeId != null) {
@@ -318,7 +318,7 @@ public class AdminLeaveBalanceService {
                 }
 
             } catch (Exception e) {
-                log.error("Failed to process balance for employee {}: {} - {}", 
+                log.error("Failed to process balance for employee {}: {} - {}",
                         employeeId, e.getClass().getSimpleName(), e.getMessage(), e);
                 skippedCount++;
                 // Re-throw to see full error in response (for debugging)

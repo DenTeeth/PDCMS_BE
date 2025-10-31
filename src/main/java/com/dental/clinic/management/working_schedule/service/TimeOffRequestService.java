@@ -24,6 +24,7 @@ import com.dental.clinic.management.working_schedule.repository.LeaveBalanceHist
 import com.dental.clinic.management.working_schedule.repository.PartTimeSlotRepository;
 import com.dental.clinic.management.working_schedule.repository.TimeOffRequestRepository;
 import com.dental.clinic.management.working_schedule.repository.TimeOffTypeRepository;
+import com.dental.clinic.management.working_schedule.repository.WorkShiftRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -60,6 +61,7 @@ public class TimeOffRequestService {
         private final EmployeeShiftRepository employeeShiftRepository;
         private final FixedShiftRegistrationRepository fixedShiftRegistrationRepository;
         private final PartTimeSlotRepository partTimeSlotRepository;
+        private final WorkShiftRepository workShiftRepository;
 
         /**
          * GET /api/v1/time-off-requests
@@ -91,7 +93,13 @@ public class TimeOffRequestService {
                                         .orElseThrow(() -> new RuntimeException("User not authenticated"));
 
                         Integer currentEmployeeId = accountRepository.findOneByUsername(username)
-                                        .map(account -> account.getEmployee().getEmployeeId())
+                                        .map(account -> {
+                                                if (account.getEmployee() == null) {
+                                                        throw new RuntimeException("Account " + username
+                                                                        + " không có Employee liên kết.");
+                                                }
+                                                return account.getEmployee().getEmployeeId();
+                                        })
                                         .orElseThrow(() -> new RuntimeException(
                                                         "Employee not found for user: " + username));
 
@@ -130,7 +138,13 @@ public class TimeOffRequestService {
                                         .orElseThrow(() -> new RuntimeException("User not authenticated"));
 
                         Integer employeeId = accountRepository.findOneByUsername(username)
-                                        .map(account -> account.getEmployee().getEmployeeId())
+                                        .map(account -> {
+                                                if (account.getEmployee() == null) {
+                                                        throw new RuntimeException("Account " + username
+                                                                        + " không có Employee liên kết.");
+                                                }
+                                                return account.getEmployee().getEmployeeId();
+                                        })
                                         .orElseThrow(() -> new RuntimeException(
                                                         "Employee not found for user: " + username));
 
@@ -176,7 +190,8 @@ public class TimeOffRequestService {
                                         request.getStartDate(), request.getEndDate(), request.getWorkShiftId());
                 }
 
-                // 4. Business Rule: If half-day off (work_shift_id provided), start_date must equal
+                // 4. Business Rule: If half-day off (work_shift_id provided), start_date must
+                // equal
                 // end_date
                 if (request.getWorkShiftId() != null && !request.getStartDate().equals(request.getEndDate())) {
                         throw new InvalidDateRangeException(
@@ -195,10 +210,16 @@ public class TimeOffRequestService {
                                         request.getWorkShiftId());
 
                         if (!hasShift) {
+                                // Lấy shift name để hiển thị message rõ ràng hơn
+                                String shiftName = workShiftRepository.findById(request.getWorkShiftId())
+                                                .map(ws -> ws.getShiftName())
+                                                .orElse(request.getWorkShiftId());
+
                                 throw new ShiftNotFoundForLeaveException(
                                                 request.getEmployeeId(),
                                                 request.getStartDate().toString(),
-                                                request.getWorkShiftId());
+                                                request.getWorkShiftId(),
+                                                shiftName);
                         }
                 } else {
                         // Nghỉ cả ngày (full-day) - kiểm tra tất cả các ngày
@@ -215,8 +236,7 @@ public class TimeOffRequestService {
 
                         if (!hasAnyShift) {
                                 throw new ShiftNotFoundForLeaveException(
-                                                String.format("Không thể xin nghỉ. Nhân viên %d không có lịch làm việc vào những ngày từ %s đến %s.",
-                                                                request.getEmployeeId(),
+                                                String.format("Nhân viên không có lịch làm việc vào bất kỳ ngày nào từ %s đến %s. Vui lòng kiểm tra lịch làm việc trước khi đăng ký nghỉ phép.",
                                                                 request.getStartDate(),
                                                                 request.getEndDate()));
                         }
@@ -254,7 +274,13 @@ public class TimeOffRequestService {
                                 .orElseThrow(() -> new RuntimeException("User not authenticated"));
 
                 Integer requestedBy = accountRepository.findOneByUsername(username)
-                                .map(account -> account.getEmployee().getEmployeeId())
+                                .map(account -> {
+                                        if (account.getEmployee() == null) {
+                                                throw new RuntimeException(
+                                                                "Account " + username + " không có Employee liên kết.");
+                                        }
+                                        return account.getEmployee().getEmployeeId();
+                                })
                                 .orElseThrow(() -> new RuntimeException("Employee not found for user: " + username));
 
                 // 7. Generate request ID
@@ -331,7 +357,13 @@ public class TimeOffRequestService {
                                 .orElseThrow(() -> new RuntimeException("User not authenticated"));
 
                 Integer approvedBy = accountRepository.findOneByUsername(username)
-                                .map(account -> account.getEmployee().getEmployeeId())
+                                .map(account -> {
+                                        if (account.getEmployee() == null) {
+                                                throw new RuntimeException(
+                                                                "Account " + username + " không có Employee liên kết.");
+                                        }
+                                        return account.getEmployee().getEmployeeId();
+                                })
                                 .orElseThrow(() -> new RuntimeException("Employee not found for user: " + username));
 
                 // Update request
@@ -367,7 +399,13 @@ public class TimeOffRequestService {
                                 .orElseThrow(() -> new RuntimeException("User not authenticated"));
 
                 Integer approvedBy = accountRepository.findOneByUsername(username)
-                                .map(account -> account.getEmployee().getEmployeeId())
+                                .map(account -> {
+                                        if (account.getEmployee() == null) {
+                                                throw new RuntimeException(
+                                                                "Account " + username + " không có Employee liên kết.");
+                                        }
+                                        return account.getEmployee().getEmployeeId();
+                                })
                                 .orElseThrow(() -> new RuntimeException("Employee not found for user: " + username));
 
                 // Update request
@@ -391,7 +429,13 @@ public class TimeOffRequestService {
                                 .orElseThrow(() -> new RuntimeException("User not authenticated"));
 
                 Integer currentEmployeeId = accountRepository.findOneByUsername(username)
-                                .map(account -> account.getEmployee().getEmployeeId())
+                                .map(account -> {
+                                        if (account.getEmployee() == null) {
+                                                throw new RuntimeException(
+                                                                "Account " + username + " không có Employee liên kết.");
+                                        }
+                                        return account.getEmployee().getEmployeeId();
+                                })
                                 .orElseThrow(() -> new RuntimeException("Employee not found for user: " + username));
 
                 // Check permission
@@ -544,12 +588,14 @@ public class TimeOffRequestService {
         }
 
         /**
-         * [V14 Hybrid] Check if employee has a scheduled shift for the given date and work shift.
-         * This method queries BOTH fixed_shift_registrations AND part_time_registrations.
+         * [V14 Hybrid] Check if employee has a scheduled shift for the given date and
+         * work shift.
+         * This method queries BOTH fixed_shift_registrations AND
+         * part_time_registrations.
          *
-         * @param employeeId   the employee ID
-         * @param date         the date to check
-         * @param workShiftId  the work shift ID (can be null to check any shift)
+         * @param employeeId  the employee ID
+         * @param date        the date to check
+         * @param workShiftId the work shift ID (can be null to check any shift)
          * @return true if employee has a shift, false otherwise
          */
         private boolean checkEmployeeHasShift(Integer employeeId, LocalDate date, String workShiftId) {
@@ -567,7 +613,8 @@ public class TimeOffRequestService {
                                         if (date.isBefore(registration.getEffectiveFrom())) {
                                                 return false;
                                         }
-                                        if (registration.getEffectiveTo() != null && date.isAfter(registration.getEffectiveTo())) {
+                                        if (registration.getEffectiveTo() != null
+                                                        && date.isAfter(registration.getEffectiveTo())) {
                                                 return false;
                                         }
 
@@ -600,7 +647,8 @@ public class TimeOffRequestService {
                                 .stream()
                                 .anyMatch(slot -> {
                                         // Check if workShiftId matches (if specified)
-                                        if (workShiftId != null && !slot.getWorkShift().getWorkShiftId().equals(workShiftId)) {
+                                        if (workShiftId != null
+                                                        && !slot.getWorkShift().getWorkShiftId().equals(workShiftId)) {
                                                 return false;
                                         }
 
@@ -620,7 +668,8 @@ public class TimeOffRequestService {
                                                                 if (date.isBefore(reg.getEffectiveFrom())) {
                                                                         return false;
                                                                 }
-                                                                if (reg.getEffectiveTo() != null && date.isAfter(reg.getEffectiveTo())) {
+                                                                if (reg.getEffectiveTo() != null
+                                                                                && date.isAfter(reg.getEffectiveTo())) {
                                                                         return false;
                                                                 }
                                                                 return true;

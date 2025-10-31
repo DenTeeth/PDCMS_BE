@@ -1,8 +1,60 @@
 # 📘 TIME-OFF MANAGEMENT API TEST GUIDE (P5.1, P5.2, P6.1)
 
 **Version:** V14 Hybrid
-**Date:** 2025-10-30
+**Date:** 2025-10-31 (Updated)
 **Modules:** P5.1 (Time-Off Requests), P5.2 (Leave Balances), P6.1 (Time-Off Types)
+
+---
+
+## 🔄 CHANGELOG (2025-10-31)
+
+### ✅ Đã sửa và cập nhật:
+
+1. **Exception Message (SHIFT_NOT_FOUND_FOR_LEAVE):**
+
+   - ❌ OLD: "Không thể xin nghỉ. Nhân viên 5 không có lịch làm việc vào 2025-11-20 ca WKS_MORNING_02."
+   - ✅ NEW: "Nhân viên không có lịch làm việc vào ngày này. Vui lòng kiểm tra lịch làm việc trước khi đăng ký nghỉ phép. (Ngày: 2025-11-20, Ca: Ca sáng)"
+   - **Lý do:** Message chuyên nghiệp hơn, rõ ràng hơn cho FE, có thêm tên ca làm việc thay vì chỉ ID
+
+2. **Test Examples sử dụng đúng Seed Data:**
+
+   - ❌ OLD: Employee 5 test với `WKS_MORNING_02` (SAI - không có trong seed)
+   - ✅ NEW: Employee 5 test với `WKS_MORNING_01` (ĐÚNG - theo seed data)
+   - **Lý do:** Employee 5 (Tuấn Hoàng Văn) làm ca WKS_MORNING_01 từ Thứ 2-Thứ 7 (Mon-Sat)
+
+3. **Cập nhật Employee Information:**
+
+   - Bổ sung đầy đủ 9 employees từ seed data (trước đó chỉ có 5)
+   - Thêm cột Ghi chú để phân biệt employment_type và role
+
+4. **Validation Logic:**
+
+   - Giữ nguyên business logic V14 Hybrid (check từ cả fixed + part-time registrations)
+   - Message lỗi tiếng Việt chuyên nghiệp, dễ hiểu cho end-user
+
+5. **🐛 BUG FIX: NullPointerException khi APPROVE/REJECT/CANCEL request:**
+   - ❌ **Vấn đề:** `account.getEmployee().getEmployeeId()` gây NPE nếu Account không có Employee liên kết
+   - ✅ **Fix:** Thêm null check cho tất cả 6 vị trí trong `TimeOffRequestService`:
+     - `getAllRequests()` - LINE 96, 140
+     - `getRequestById()` - LINE 140
+     - `createRequest()` - LINE 275
+     - `handleApproval()` - LINE 357
+     - `handleRejection()` - LINE 382
+     - `handleCancellation()` - LINE 416
+   - **Error message rõ ràng:** "Account {username} không có Employee liên kết."
+   - **Impact:** Fix 500 Internal Server Error → Trả về message lỗi rõ ràng
+
+### 📌 Lưu ý quan trọng cho FE Team:
+
+- ⚠️ **Khi test API POST /api/v1/time-off-requests:**
+
+  - Employee 5 → Dùng `workShiftId: "WKS_MORNING_01"` (NOT WKS_MORNING_02)
+  - Employee 6 → Dùng `workShiftId: "WKS_MORNING_02"` vào Thứ 2, 4, 6
+  - Employee 8 (PART_TIME_FLEX) → Check part_time_registrations trước khi test
+
+- ✅ **Error SHIFT_NOT_FOUND_FOR_LEAVE (409):**
+  - Message giờ đã rõ ràng hơn với tên ca làm việc
+  - FE có thể hiển thị trực tiếp cho user không cần parse
 
 ---
 
@@ -34,13 +86,17 @@ Hệ thống quản lý nghỉ phép bao gồm 3 modules chính:
 
 ### Employees (từ seed data)
 
-| employee_id | Tên              | employment_type | account_id  | Ghi chú                     |
-| ----------- | ---------------- | --------------- | ----------- | --------------------------- |
-| 1           | Nguyễn Văn Admin | FULL_TIME       | 1 (admin)   | ROLE_ADMIN                  |
-| 2           | Trần Quản Lý     | FULL_TIME       | 2 (manager) | ROLE_MANAGER                |
-| 5           | Hoàng Thu Hương  | FULL_TIME       | 5           | ROLE_DOCTOR                 |
-| 6           | Lê Minh Tuấn     | PART_TIME_FIXED | 6           | ROLE_NURSE (có fixed shift) |
-| 8           | Võ Thị Mai       | PART_TIME_FLEX  | 8           | ROLE_RECEPTIONIST (flex)    |
+| employee_id | Tên                | employment_type | account_id  | Ghi chú                      |
+| ----------- | ------------------ | --------------- | ----------- | ---------------------------- |
+| 1           | Admin Hệ thống     | FULL_TIME       | 1 (admin)   | ROLE_ADMIN                   |
+| 2           | Minh Nguyễn Văn    | FULL_TIME       | 2 (manager) | ROLE_MANAGER (Nha sĩ)        |
+| 3           | Lan Trần Thị       | FULL_TIME       | 3           | ROLE_DOCTOR                  |
+| 4           | Mai Lê Thị         | FULL_TIME       | 4           | ROLE_RECEPTIONIST            |
+| 5           | Tuấn Hoàng Văn     | FULL_TIME       | 5           | ROLE_ACCOUNTANT              |
+| 6           | Hoa Phạm Thị       | PART_TIME_FIXED | 6           | ROLE_NURSE (có fixed shift)  |
+| 7           | Quản Lý Nguyễn Văn | FULL_TIME       | 7           | ROLE_MANAGER                 |
+| 8           | Linh Nguyễn Thị    | PART_TIME_FLEX  | 8           | ROLE_NURSE (flex)            |
+| 9           | Trang Võ Thị       | PART_TIME_FIXED | 9           | ROLE_NURSE (fixed part-time) |
 
 ### Time-Off Types (từ seed data)
 
@@ -54,13 +110,13 @@ Hệ thống quản lý nghỉ phép bao gồm 3 modules chính:
 
 ### Leave Balances 2025 (từ seed data)
 
-| employee_id | employee_name      | time_off_type_id | total_allotted | used | remaining |
-| ----------- | ------------------ | ---------------- | -------------- | ---- | --------- |
-| 1           | Admin Hệ thống     | ANNUAL_LEAVE     | 12.0           | 0.0  | 12.0      |
-| 2           | Minh Nguyễn Văn    | ANNUAL_LEAVE     | 12.0           | 2.5  | 9.5       |
-| 5           | Tuấn Hoàng Văn     | ANNUAL_LEAVE     | 12.0           | 3.5  | 8.5       |
-| 6           | Hoa Phạm Thị       | ANNUAL_LEAVE     | 6.0            | 1.0  | 5.0       |
-| 8           | Linh Nguyễn Thị    | ANNUAL_LEAVE     | 6.0            | 0.5  | 5.5       |
+| employee_id | employee_name   | time_off_type_id | total_allotted | used | remaining |
+| ----------- | --------------- | ---------------- | -------------- | ---- | --------- |
+| 1           | Admin Hệ thống  | ANNUAL_LEAVE     | 12.0           | 0.0  | 12.0      |
+| 2           | Minh Nguyễn Văn | ANNUAL_LEAVE     | 12.0           | 2.5  | 9.5       |
+| 5           | Tuấn Hoàng Văn  | ANNUAL_LEAVE     | 12.0           | 3.5  | 8.5       |
+| 6           | Hoa Phạm Thị    | ANNUAL_LEAVE     | 6.0            | 1.0  | 5.0       |
+| 8           | Linh Nguyễn Thị | ANNUAL_LEAVE     | 6.0            | 0.5  | 5.5       |
 
 ### Work Shifts (từ seed data)
 
@@ -630,7 +686,7 @@ Authorization: Bearer {employee_token}
         "timeOffTypeName": "Nghỉ phép năm",
         "startDate": "2025-11-20",
         "endDate": "2025-11-20",
-        "workShiftId": "WKS_MORNING_02",
+        "workShiftId": "WKS_MORNING_01",
         "reason": "Việc gia đình.",
         "status": "PENDING",
         "requestedBy": 5,
@@ -707,7 +763,7 @@ Authorization: Bearer {employee_token}
     "timeOffTypeId": "ANNUAL_LEAVE",
     "startDate": "2025-11-20",
     "endDate": "2025-11-20",
-    "workShiftId": "WKS_MORNING_02",
+    "workShiftId": "WKS_MORNING_01",
     "reason": "Việc gia đình.",
     "status": "PENDING"
   }
@@ -734,7 +790,7 @@ Authorization: Bearer {employee_token}
   "timeOffTypeId": "ANNUAL_LEAVE",
   "startDate": "2025-11-20",
   "endDate": "2025-11-20",
-  "workShiftId": "WKS_MORNING_02",
+  "workShiftId": "WKS_MORNING_01",
   "reason": "Việc gia đình."
 }
 ```
@@ -743,6 +799,7 @@ Authorization: Bearer {employee_token}
 
 - `workShiftId` = `null`: Nghỉ cả ngày (full-day)
 - `workShiftId` có giá trị: Nghỉ nửa ngày (half-day, 0.5 days)
+- **Lưu ý:** Employee 5 làm ca **WKS_MORNING_01** (từ seed data), không phải WKS_MORNING_02
 
 **Business Logic & Validation (Theo thứ tự):**
 
@@ -828,7 +885,7 @@ Lặp từng ngày từ start_date đến end_date:
     "timeOffTypeId": "ANNUAL_LEAVE",
     "startDate": "2025-11-20",
     "endDate": "2025-11-20",
-    "workShiftId": "WKS_MORNING_02",
+    "workShiftId": "WKS_MORNING_01",
     "reason": "Việc gia đình.",
     "status": "PENDING",
     "requestedBy": 5,
@@ -839,15 +896,28 @@ Lặp từng ngày từ start_date đến end_date:
 
 **Error Responses:**
 
-| Code                          | HTTP Status | Message                                                                                      |
-| ----------------------------- | ----------- | -------------------------------------------------------------------------------------------- |
-| EMPLOYEE_NOT_FOUND            | 404         | Không tìm thấy nhân viên với ID: {id}                                                        |
-| TIMEOFF_TYPE_NOT_FOUND        | 404         | Không tìm thấy loại nghỉ phép với ID: {id}                                                   |
-| INVALID_DATE_RANGE            | 400         | Ngày bắt đầu không được lớn hơn ngày kết thúc.                                               |
-| INVALID_DATE_RANGE            | 400         | Khi nghỉ theo ca, ngày bắt đầu và kết thúc phải giống nhau.                                  |
-| INSUFFICIENT_LEAVE_BALANCE    | 400         | Bạn không đủ ngày phép. Còn lại: 2.0 ngày, Yêu cầu: 3.0 ngày                                 |
-| **SHIFT_NOT_FOUND_FOR_LEAVE** | **409**     | **Không thể xin nghỉ. Nhân viên 5 không có lịch làm việc vào 2025-11-20 ca WKS_MORNING_02.** |
-| DUPLICATE_TIMEOFF_REQUEST     | 409         | Đã tồn tại một yêu cầu nghỉ phép trùng với khoảng thời gian này.                             |
+| Code                          | HTTP Status | Message                                                                                                         |
+| ----------------------------- | ----------- | --------------------------------------------------------------------------------------------------------------- |
+| EMPLOYEE_NOT_FOUND            | 404         | Không tìm thấy nhân viên với ID: {id}                                                                           |
+| TIMEOFF_TYPE_NOT_FOUND        | 404         | Không tìm thấy loại nghỉ phép với ID: {id}                                                                      |
+| INVALID_DATE_RANGE            | 400         | Ngày bắt đầu không được lớn hơn ngày kết thúc.                                                                  |
+| INVALID_DATE_RANGE            | 400         | Khi nghỉ theo ca, ngày bắt đầu và kết thúc phải giống nhau.                                                     |
+| INSUFFICIENT_LEAVE_BALANCE    | 400         | Bạn không đủ ngày phép. Còn lại: 2.0 ngày, Yêu cầu: 3.0 ngày                                                    |
+| **SHIFT_NOT_FOUND_FOR_LEAVE** | **409**     | **Nhân viên không có lịch làm việc vào ngày này. Vui lòng kiểm tra lịch làm việc trước khi đăng ký nghỉ phép.** |
+| DUPLICATE_TIMEOFF_REQUEST     | 409         | Đã tồn tại một yêu cầu nghỉ phép trùng với khoảng thời gian này.                                                |
+
+**Ví dụ lỗi SHIFT_NOT_FOUND_FOR_LEAVE (khi dùng sai shift):**
+
+```json
+{
+  "statusCode": 409,
+  "error": "SHIFT_NOT_FOUND_FOR_LEAVE",
+  "message": "Nhân viên không có lịch làm việc vào ngày này. Vui lòng kiểm tra lịch làm việc trước khi đăng ký nghỉ phép. (Ngày: 2025-11-20, Ca: Ca sáng)",
+  "data": null
+}
+```
+
+**Lý do lỗi:** Employee 5 làm ca **WKS_MORNING_01**, không làm ca WKS_MORNING_02. Phải check seed data trước khi test.
 
 ---
 
@@ -1170,8 +1240,8 @@ POST /api/v1/admin/leave-balances/adjust
 
 **Setup:**
 
-- employee_id = 5 (Hoàng Thu Hương, FULL_TIME, ROLE_DOCTOR)
-- Có fixed_shift_registration cho WKS_MORNING_02 vào thứ 2-6
+- employee_id = 5 (Tuấn Hoàng Văn, FULL_TIME, ROLE_ACCOUNTANT)
+- Có fixed_shift_registration cho WKS_MORNING_01 vào thứ 2-7 (Mon-Sat)
 - Có balance: total_allowed = 14.0, used = 0.0, remaining = 14.0
 
 **Steps:**
@@ -1180,7 +1250,7 @@ POST /api/v1/admin/leave-balances/adjust
 # 1. Login as employee 5
 POST /api/v1/auth/login
 {
-  "username": "hoangthuhuong",
+  "username": "tuanhoangvan",
   "password": "password123"
 }
 
@@ -1188,7 +1258,7 @@ POST /api/v1/auth/login
 GET /api/v1/time-off-types
 Authorization: Bearer {employee_token}
 
-# 3. Xin nghỉ nửa ca sáng ngày 20/11/2025 (Thứ 4)
+# 3. Xin nghỉ nửa ca sáng ngày 20/11/2025 (Thứ 5)
 POST /api/v1/time-off-requests
 Authorization: Bearer {employee_token}
 {
@@ -1196,13 +1266,13 @@ Authorization: Bearer {employee_token}
   "timeOffTypeId": "ANNUAL_LEAVE",
   "startDate": "2025-11-20",
   "endDate": "2025-11-20",
-  "workShiftId": "WKS_MORNING_02",
+  "workShiftId": "WKS_MORNING_01",
   "reason": "Đưa con đi khám bệnh."
 }
 
 # Expected: 201 CREATED
 # System đã check:
-# - ✅ Employee 5 có lịch WKS_MORNING_02 vào Thứ 4 (từ fixed_shift_registration)
+# - ✅ Employee 5 có lịch WKS_MORNING_01 vào Thứ 5 (từ fixed_shift_registration)
 # - ✅ Số dư phép đủ (14.0 >= 0.5)
 # - ✅ Không trùng request khác
 # → Tạo thành công với status = PENDING
@@ -1212,7 +1282,7 @@ GET /api/v1/time-off-requests/{request_id}
 
 # Expected:
 # - status = PENDING
-# - workShiftId = WKS_MORNING_02
+# - workShiftId = WKS_MORNING_01
 ```
 
 ---
@@ -1370,23 +1440,23 @@ POST /api/v1/time-off-requests
 
 ## 📋 ERROR CODE SUMMARY
 
-| Error Code                    | HTTP Status | Module   | Description                                                                    |
-| ----------------------------- | ----------- | -------- | ------------------------------------------------------------------------------ |
-| DUPLICATE_TYPE_CODE           | 409         | P6.1     | Mã loại nghỉ phép đã tồn tại                                                   |
-| TIMEOFF_TYPE_NOT_FOUND        | 404         | P6.1     | Không tìm thấy loại nghỉ phép                                                  |
-| TIMEOFF_TYPE_IN_USE           | 409         | P6.1     | Loại nghỉ phép đang được dùng bởi request PENDING                              |
-| MISSING_DEFAULT_DAYS          | 400         | P6.1     | requiresBalance = true nhưng thiếu defaultDaysPerYear                          |
-| INVALID_DEFAULT_DAYS          | 400         | P6.1     | requiresBalance = false nhưng vẫn set defaultDaysPerYear                       |
-| EMPLOYEE_NOT_FOUND            | 404         | P5.2     | Không tìm thấy nhân viên                                                       |
-| INVALID_BALANCE               | 400         | P5.2     | Số dư phép âm sau điều chỉnh                                                   |
-| INVALID_YEAR                  | 400         | P5.2     | Năm reset không hợp lệ                                                         |
-| INVALID_DATE_RANGE            | 400         | P5.1     | Ngày bắt đầu > kết thúc hoặc nghỉ nửa ngày sai                                 |
-| INSUFFICIENT_LEAVE_BALANCE    | 400         | P5.1     | Không đủ ngày phép                                                             |
-| **SHIFT_NOT_FOUND_FOR_LEAVE** | **409**     | **P5.1** | **Nhân viên không có lịch làm vào ngày/ca này**                                |
-| DUPLICATE_TIMEOFF_REQUEST     | 409         | P5.1     | Request trùng với yêu cầu khác                                                 |
-| TIMEOFF_REQUEST_NOT_FOUND     | 404         | P5.1     | Không tìm thấy yêu cầu nghỉ phép                                               |
-| INVALID_STATE_TRANSITION      | 409         | P5.1     | Chỉ cập nhật được request PENDING                                              |
-| FORBIDDEN                     | 403         | All      | Không có quyền thực hiện                                                       |
+| Error Code                    | HTTP Status | Module   | Description                                              |
+| ----------------------------- | ----------- | -------- | -------------------------------------------------------- |
+| DUPLICATE_TYPE_CODE           | 409         | P6.1     | Mã loại nghỉ phép đã tồn tại                             |
+| TIMEOFF_TYPE_NOT_FOUND        | 404         | P6.1     | Không tìm thấy loại nghỉ phép                            |
+| TIMEOFF_TYPE_IN_USE           | 409         | P6.1     | Loại nghỉ phép đang được dùng bởi request PENDING        |
+| MISSING_DEFAULT_DAYS          | 400         | P6.1     | requiresBalance = true nhưng thiếu defaultDaysPerYear    |
+| INVALID_DEFAULT_DAYS          | 400         | P6.1     | requiresBalance = false nhưng vẫn set defaultDaysPerYear |
+| EMPLOYEE_NOT_FOUND            | 404         | P5.2     | Không tìm thấy nhân viên                                 |
+| INVALID_BALANCE               | 400         | P5.2     | Số dư phép âm sau điều chỉnh                             |
+| INVALID_YEAR                  | 400         | P5.2     | Năm reset không hợp lệ                                   |
+| INVALID_DATE_RANGE            | 400         | P5.1     | Ngày bắt đầu > kết thúc hoặc nghỉ nửa ngày sai           |
+| INSUFFICIENT_LEAVE_BALANCE    | 400         | P5.1     | Không đủ ngày phép                                       |
+| **SHIFT_NOT_FOUND_FOR_LEAVE** | **409**     | **P5.1** | **Nhân viên không có lịch làm vào ngày/ca này**          |
+| DUPLICATE_TIMEOFF_REQUEST     | 409         | P5.1     | Request trùng với yêu cầu khác                           |
+| TIMEOFF_REQUEST_NOT_FOUND     | 404         | P5.1     | Không tìm thấy yêu cầu nghỉ phép                         |
+| INVALID_STATE_TRANSITION      | 409         | P5.1     | Chỉ cập nhật được request PENDING                        |
+| FORBIDDEN                     | 403         | All      | Không có quyền thực hiện                                 |
 
 ---
 

@@ -81,7 +81,7 @@ public class AdminLeaveBalanceController {
 
         log.info("Admin REST request to get leave balances for all employees in year {} for type {}",
                 cycleYear, timeOffTypeId);
-        
+
         AllEmployeesLeaveBalanceResponse response = balanceService.getAllEmployeesLeaveBalances(cycleYear, timeOffTypeId);
         return ResponseEntity.ok(response);
     }

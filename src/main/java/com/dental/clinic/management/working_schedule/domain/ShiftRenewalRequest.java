@@ -15,22 +15,28 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 /**
- * Entity representing a shift renewal request for part-time employees.
+ * Entity representing a shift renewal request for employees with FIXED shift
+ * registrations.
+ * Applies to: FULL_TIME and PART_TIME_FIXED employees.
  *
- * When a part-time employee's shift registration is about to expire,
- * the system automatically creates a renewal request inviting them to extend.
+ * When a fixed_shift_registration is about to expire (effective_to sắp đến),
+ * Job P8 automatically creates a renewal request inviting the employee to
+ * extend.
  *
- * ID Format: SRRYYMMDDSSS (e.g., SRR251022001)
- * - SRR: Shift Renewal Request prefix (3 chars)
- * - YYMMDD: Date (6 digits) - 251022 = Oct 22, 2025
- * - SSS: Daily sequence (001-999)
+ * Employee can respond via API P7:
+ * - CONFIRMED: System deactivates old registration and creates new one (audit
+ * trail)
+ * - DECLINED: Must provide decline_reason
+ *
+ * ID Format: SRR_YYYYMMDD_XXXXX (e.g., SRR_20251022_00001)
+ * - SRR: Shift Renewal Request prefix
+ * - YYYYMMDD: Creation date (8 digits)
+ * - XXXXX: Daily sequence (00001-99999)
  */
 @Entity
 @Table(name = "shift_renewal_requests", indexes = {
-        @Index(name = "idx_renewal_employee", columnList = "employee_id"),
-        @Index(name = "idx_renewal_status", columnList = "status"),
-        @Index(name = "idx_renewal_expires_at", columnList = "expires_at"),
-        @Index(name = "idx_renewal_expiring_registration", columnList = "expiring_registration_id")
+        @Index(name = "idx_renewal_employee_status", columnList = "employee_id, status"),
+        @Index(name = "idx_renewal_expires_at", columnList = "expires_at")
 })
 @Getter
 @Setter
@@ -49,21 +55,22 @@ public class ShiftRenewalRequest {
     }
 
     @Id
-    @Column(name = "renewal_id", length = 12)
+    @Column(name = "renewal_id", length = 20)
     @NotBlank(message = "Renewal ID is required")
-    @Size(max = 12, message = "Renewal ID must not exceed 12 characters")
-    private String renewalId; // Format: SRRYYMMDDSSS (e.g., SRR251022001)
+    @Size(max = 20, message = "Renewal ID must not exceed 20 characters")
+    private String renewalId; // Format: SRR_YYYYMMDD_XXXXX (e.g., SRR_20251022_00001)
 
     /**
-     * Reference to the original employee_shift_registration that is expiring.
+     * Changed from EmployeeShiftRegistration to FixedShiftRegistration.
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "expiring_registration_id", nullable = false)
     @NotNull(message = "Expiring registration is required")
-    private EmployeeShiftRegistration expiringRegistration;
+    private FixedShiftRegistration expiringRegistration;
 
     /**
-     * The part-time employee who needs to respond to this renewal.
+     * The employee who needs to respond to this renewal.
+     * Must be FULL_TIME or PART_TIME_FIXED (NOT PART_TIME_FLEX).
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "employee_id", nullable = false)
@@ -79,19 +86,20 @@ public class ShiftRenewalRequest {
     private RenewalStatus status = RenewalStatus.PENDING_ACTION;
 
     /**
-     * Message/invitation text for the employee.
-     */
-    @Column(name = "message", nullable = false, columnDefinition = "TEXT")
-    @NotBlank(message = "Message is required")
-    private String message;
-
-    /**
-     * Timestamp when this renewal invitation expires.
+     * Timestamp when this renewal invitation expires (deadline to respond).
      * After this time, employee can no longer respond.
+     * Usually set to 14 days before effective_to.
      */
     @Column(name = "expires_at", nullable = false)
     @NotNull(message = "Expiry time is required")
     private LocalDateTime expiresAt;
+
+    /**
+     * Required when status = DECLINED.
+     * NULL when status = PENDING_ACTION or CONFIRMED.
+     */
+    @Column(name = "decline_reason", columnDefinition = "TEXT")
+    private String declineReason;
 
     /**
      * Timestamp when employee confirmed or declined the renewal.
@@ -137,7 +145,7 @@ public class ShiftRenewalRequest {
 
     /**
      * Check if the renewal is still pending.
-     * 
+     *
      * @return true if status is PENDING_ACTION
      */
     @Transient
@@ -147,7 +155,7 @@ public class ShiftRenewalRequest {
 
     /**
      * Check if the renewal was confirmed.
-     * 
+     *
      * @return true if status is CONFIRMED
      */
     @Transient
@@ -157,7 +165,7 @@ public class ShiftRenewalRequest {
 
     /**
      * Check if the renewal was declined.
-     * 
+     *
      * @return true if status is DECLINED
      */
     @Transient
@@ -167,7 +175,7 @@ public class ShiftRenewalRequest {
 
     /**
      * Check if the renewal has expired.
-     * 
+     *
      * @return true if expires_at is in the past
      */
     @Transient
@@ -178,7 +186,7 @@ public class ShiftRenewalRequest {
 
     /**
      * Check if employee can still respond to this renewal.
-     * 
+     *
      * @return true if status is PENDING_ACTION and not expired
      */
     @Transient
@@ -188,7 +196,7 @@ public class ShiftRenewalRequest {
 
     /**
      * Check if this renewal belongs to a specific employee.
-     * 
+     *
      * @param employeeId the employee ID to check
      * @return true if the employee is the owner
      */

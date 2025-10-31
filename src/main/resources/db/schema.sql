@@ -88,7 +88,7 @@ CREATE TYPE overtime_requests_status_enum AS ENUM ('PENDING', 'APPROVED', 'REJEC
 
 CREATE TYPE time_off_requests_status_enum AS ENUM ('PENDING', 'APPROVED', 'REJECTED', 'CANCELLED');    message TEXT,
 
-CREATE TYPE shift_renewal_requests_status_enum AS ENUM ('PENDING_ACTION', 'CONFIRMED', 'DECLINED', 'EXPIRED');    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+CREATE TYPE shift_renewal_requests_status_enum AS ENUM ('PENDING_ACTION', 'CONFIRMED', 'FINALIZED', 'DECLINED', 'EXPIRED');    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
@@ -108,7 +108,7 @@ CREATE TYPE appointment_reason_code AS ENUM ('PREVIOUS_CASE_OVERRUN', 'DOCTOR_UN
 
     -- Check Constraints
 
--- Treatment Plan Enums    CONSTRAINT chk_renewal_status CHECK (status IN ('PENDING_ACTION', 'CONFIRMED', 'DECLINED', 'EXPIRED')),
+-- Treatment Plan Enums    CONSTRAINT chk_renewal_status CHECK (status IN ('PENDING_ACTION', 'CONFIRMED', 'FINALIZED', 'DECLINED', 'EXPIRED')),
 
 CREATE TYPE treatment_plan_status AS ENUM ('PENDING', 'ACTIVE', 'COMPLETED', 'CANCELLED');    CONSTRAINT chk_renewal_id_format CHECK (renewal_id ~ '^SRR[0-9]{9}$')
 
@@ -588,22 +588,33 @@ COMMENT ON COLUMN part_time_registrations.effective_to IS 'Kết thúc khi nào?
 CREATE INDEX active_employee_slot_idx ON part_time_registrations(employee_id, part_time_slot_id, is_active);
 
 -- Table: shift_renewal_requests
+-- Table shift_renewal_requests (P7/BE-307)
+-- Purpose: Manage renewal requests for FIXED shift registrations (FULL_TIME & PART_TIME_FIXED)
+-- Job P8 creates requests when effective_to is approaching
+-- Employees respond via API P7
 CREATE TABLE shift_renewal_requests (
     renewal_id VARCHAR(20) PRIMARY KEY,
     employee_id INTEGER NOT NULL,
-    expiring_registration_id INTEGER NOT NULL,
+    expiring_registration_id INTEGER NOT NULL, -- FK to fixed_shift_registrations
     status shift_renewal_requests_status_enum NOT NULL DEFAULT 'PENDING_ACTION',
-    expires_at TIMESTAMP NOT NULL,
+    expires_at TIMESTAMP NOT NULL, -- Deadline to respond
+    decline_reason TEXT, -- ⭐ V15 NEW: Required when DECLINED
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     confirmed_at TIMESTAMP,
 
     CONSTRAINT fk_renewal_employee FOREIGN KEY (employee_id)
         REFERENCES employees(employee_id) ON DELETE CASCADE,
     CONSTRAINT fk_renewal_registration FOREIGN KEY (expiring_registration_id)
-        REFERENCES part_time_registrations(registration_id) ON DELETE CASCADE
+        REFERENCES fixed_shift_registrations(registration_id) ON DELETE CASCADE -- ⭐ V15: Changed from part_time_registrations
 );
 
-COMMENT ON TABLE shift_renewal_requests IS 'Dành cho Luồng 2 (Part-time linh hoạt)';
+-- Indexes for shift_renewal_requests
+CREATE INDEX idx_renewal_employee_status ON shift_renewal_requests(employee_id, status);
+CREATE INDEX idx_renewal_expires_at ON shift_renewal_requests(expires_at);
+
+COMMENT ON TABLE shift_renewal_requests IS '⭐ V15: Dành cho Luồng 1 (Fixed shift registrations) - Gia hạn hợp đồng/lịch cố định';
+COMMENT ON COLUMN shift_renewal_requests.decline_reason IS 'V15: Lý do nhân viên từ chối gia hạn (required khi DECLINED)';
+COMMENT ON COLUMN shift_renewal_requests.expires_at IS 'Deadline phản hồi (thường 14 ngày trước khi hết hạn)';
 
 -- ============================================
 -- BẢNG KẾT QUẢ (DÙNG CHUNG)

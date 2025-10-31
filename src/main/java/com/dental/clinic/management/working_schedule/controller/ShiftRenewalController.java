@@ -20,17 +20,26 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * REST Controller for part-time employee shift renewal requests.
- *
+ * REST Controller for FIXED shift renewal requests (Luồng 1 employees only).
+ * <p>
+ * ARCHITECTURE (Hybrid Scheduling):
+ * - Luồng 1 (Fixed): Employees with full-time or fixed part-time schedules
+ * (fixed_shift_registrations)
+ * - Luồng 2 (Flex): Employees with flexible shift selections
+ * (part_time_registrations)
+ * <p>
+ * P7 (Shift Renewal Management) ONLY applies to Luồng 1 employees.
+ * <p>
  * Provides endpoints for:
  * - Viewing pending renewal invitations
- * - Responding to renewal requests (confirm/decline)
+ * - Responding to renewal requests (CONFIRMED: await admin finalization |
+ * DECLINED: require reason)
  */
 @RestController
 @RequestMapping("/api/v1/registrations/renewals")
 @RequiredArgsConstructor
 @Slf4j
-@Tag(name = "Shift Renewal", description = "APIs for part-time employee shift renewal management")
+@Tag(name = "Shift Renewal", description = "APIs for fixed shift renewal management (Luồng 1 only)")
 public class ShiftRenewalController {
 
     private final ShiftRenewalService renewalService;
@@ -59,16 +68,24 @@ public class ShiftRenewalController {
 
     /**
      * Respond to a shift renewal request.
+     * <p>
+     * BUSINESS LOGIC:
+     * - CONFIRMED: Update status only (old registration unchanged), await Admin
+     * finalization
+     * - DECLINED: Require decline_reason TEXT
+     * <p>
+     * Employee can either confirm (agree to renew) or decline the renewal.
+     * If confirmed, Admin will later finalize with custom effective_to date.
      *
-     * Employee can either confirm (extend registration) or decline the renewal.
-     * If confirmed, the original shift registration is extended by 3 months.
-     *
-     * @param renewalId the renewal request ID
-     * @param request   the response (CONFIRMED or DECLINED)
+     * @param renewalId the renewal request ID (VARCHAR(20) format:
+     *                  SRR_YYYYMMDD_XXXXX)
+     * @param request   the response (action: CONFIRMED|DECLINED, declineReason:
+     *                  required if DECLINED)
      * @return updated renewal request
      */
     @Operation(summary = "Respond to renewal request", description = "Confirm or decline a shift renewal invitation. " +
-            "Confirming will extend the shift registration by 3 months.", security = @SecurityRequirement(name = "bearerAuth"))
+            "CONFIRMED: Update status, await Admin finalization. " +
+            "DECLINED: Requires decline_reason.", security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully responded to renewal"),
             @ApiResponse(responseCode = "400", description = "Invalid request - Invalid action or request body"),

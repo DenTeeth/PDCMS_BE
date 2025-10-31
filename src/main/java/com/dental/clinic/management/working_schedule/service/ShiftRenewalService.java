@@ -2,21 +2,20 @@ package com.dental.clinic.management.working_schedule.service;
 
 import com.dental.clinic.management.employee.domain.Employee;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
-import com.dental.clinic.management.exception.InvalidRequestException;
-import com.dental.clinic.management.exception.ResourceNotFoundException;
+import com.dental.clinic.management.exception.EmployeeNotFoundException;
 import com.dental.clinic.management.utils.security.AuthoritiesConstants;
-import com.dental.clinic.management.working_schedule.domain.EmployeeShiftRegistration;
-import com.dental.clinic.management.working_schedule.domain.PartTimeSlot;
+import com.dental.clinic.management.working_schedule.domain.FixedRegistrationDay;
+import com.dental.clinic.management.working_schedule.domain.FixedShiftRegistration;
 import com.dental.clinic.management.working_schedule.domain.ShiftRenewalRequest;
-import com.dental.clinic.management.working_schedule.domain.WorkShift;
+import com.dental.clinic.management.working_schedule.dto.request.FinalizeRenewalRequest;
 import com.dental.clinic.management.working_schedule.dto.request.RenewalResponseRequest;
 import com.dental.clinic.management.working_schedule.dto.response.ShiftRenewalResponse;
 import com.dental.clinic.management.working_schedule.enums.RenewalStatus;
+import com.dental.clinic.management.working_schedule.exception.*;
 import com.dental.clinic.management.working_schedule.mapper.ShiftRenewalMapper;
-import com.dental.clinic.management.working_schedule.repository.EmployeeShiftRegistrationRepository;
-import com.dental.clinic.management.working_schedule.repository.PartTimeSlotRepository;
+import com.dental.clinic.management.working_schedule.repository.FixedRegistrationDayRepository;
+import com.dental.clinic.management.working_schedule.repository.FixedShiftRegistrationRepository;
 import com.dental.clinic.management.working_schedule.repository.ShiftRenewalRequestRepository;
-import com.dental.clinic.management.working_schedule.repository.WorkShiftRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -29,7 +28,22 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Service for handling shift renewal requests for part-time employees.
+ * Service for handling shift renewal requests for employees with FIXED shift
+ * registrations (Luồng 1).
+ * <p>
+ * - Luồng 1 (Fixed): Employees with full-time or fixed part-time schedules
+ * (fixed_shift_registrations)
+ * - Luồng 2 (Flex): Employees with flexible shift selections
+ * (part_time_registrations)
+ * <p>
+ * P7 (Shift Renewal Management) ONLY applies to Luồng 1 employees.
+ * <p>
+ * BUSINESS LOGIC:
+ * - When CONFIRMED: Deactivate old registration (is_active=FALSE) and CREATE
+ * new one with extended dates (audit trail)
+ * - When DECLINED: Require decline_reason TEXT
+ * - Use PESSIMISTIC_WRITE lock to prevent race conditions during concurrent
+ * responses
  */
 @Service
 @Slf4j
@@ -38,15 +52,15 @@ import java.util.stream.Collectors;
 public class ShiftRenewalService {
 
     private final ShiftRenewalRequestRepository renewalRepository;
-    private final EmployeeShiftRegistrationRepository registrationRepository;
-    private final PartTimeSlotRepository partTimeSlotRepository;
-    private final WorkShiftRepository workShiftRepository;
+    private final FixedShiftRegistrationRepository fixedRegistrationRepository;
+    private final FixedRegistrationDayRepository fixedRegistrationDayRepository;
     private final EmployeeRepository employeeRepository;
     private final ShiftRenewalMapper mapper;
 
     /**
      * Get all pending renewal requests for the current employee.
      * Only returns non-expired requests in PENDING_ACTION status.
+     * Only employees with fixed_shift_registrations can have renewal requests.
      *
      * @param employeeId the employee ID from token
      * @return list of pending renewals
@@ -68,15 +82,36 @@ public class ShiftRenewalService {
 
     /**
      * Respond to a renewal request (CONFIRMED or DECLINED).
-     * If CONFIRMED, automatically extend the original shift registration by 3
-     * months.
+     * INSERT new registration with extended dates, mark old as is_active=FALSE
+     * (audit trail).
+     * WORKFLOW:
+     * 1. Find renewal with PESSIMISTIC_WRITE lock (prevent concurrent updates)
+     * 2. Verify ownership (employee_id match)
+     * 3. Validate status = PENDING_ACTION
+     * 4. Validate not expired (expires_at > NOW)
+     * 5. If DECLINED: Require decline_reason (throw DeclineReasonRequiredException)
+     * 6. If CONFIRMED:
+     * - Lock fixed_shift_registration (FOR UPDATE via findByIdWithLock)
+     * - Check is_active = TRUE (throw RegistrationInactiveException)
+     * - Deactivate old: UPDATE is_active = FALSE
+     * - Create new: INSERT with effective_from = old_to + 1, effective_to = old_to
+     * + 1 year
+     * - Copy all registration_days from old to new
+     * 7. Update renewal: set status, confirmed_at, decline_reason (if DECLINED)
+     * 8. Commit transaction
      *
-     * @param renewalId  the renewal ID
+     * @param renewalId  the renewal ID (VARCHAR(20) format: SRR_YYYYMMDD_XXXXX)
      * @param employeeId the employee ID from token
-     * @param request    the response (CONFIRMED or DECLINED)
+     * @param request    the response (action: CONFIRMED|DECLINED, declineReason:
+     *                   TEXT if DECLINED)
      * @return updated renewal response
-     * @throws NotFoundException       if renewal not found
-     * @throws InvalidRequestException if invalid state or not owned by employee
+     * @throws RenewalNotFoundException       if renewal not found
+     * @throws NotRenewalOwnerException       if not owned by employee
+     * @throws InvalidRenewalStateException   if status != PENDING_ACTION
+     * @throws RenewalExpiredException        if expires_at <= NOW
+     * @throws DeclineReasonRequiredException if action=DECLINED and
+     *                                        declineReason=NULL
+     * @throws RegistrationInactiveException  if fixed registration is_active=FALSE
      */
     @PreAuthorize("hasAuthority('" + AuthoritiesConstants.RESPOND_RENEWAL_OWN + "')")
     @Transactional
@@ -84,40 +119,51 @@ public class ShiftRenewalService {
             String renewalId,
             Integer employeeId,
             RenewalResponseRequest request) {
-        log.info("Employee {} responding to renewal {}: {}", employeeId, renewalId, request.getAction());
+        log.info("Employee {} responding to renewal {}: action={}, hasDeclineReason={}",
+                employeeId, renewalId, request.getAction(), request.getDeclineReason() != null);
 
-        // 1. Find renewal and verify ownership
-        ShiftRenewalRequest renewal = renewalRepository.findByIdAndEmployeeId(renewalId, employeeId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "NOT_FOUND",
-                        String.format("Renewal request %s not found or not owned by employee %d", renewalId,
-                                employeeId)));
+        // 1. Find renewal WITH PESSIMISTIC_WRITE lock (SELECT FOR UPDATE)
+        ShiftRenewalRequest renewal = renewalRepository.findByIdWithLock(renewalId)
+                .orElseThrow(() -> new RenewalNotFoundException(renewalId));
 
-        // 2. Validate state
+        // 2. Verify ownership
+        if (!renewal.getEmployee().getEmployeeId().equals(employeeId)) {
+            throw new NotRenewalOwnerException(renewalId, employeeId);
+        }
+
+        // 3. Validate state: Must be PENDING_ACTION
         if (!renewal.isPending()) {
-            throw new InvalidRequestException(
-                    "INVALID_STATE",
-                    String.format("Renewal %s is not in PENDING_ACTION status (current: %s)",
-                            renewalId, renewal.getStatus()));
+            throw new InvalidRenewalStateException(renewalId, renewal.getStatus().name());
         }
 
+        // 4. Validate not expired
         if (renewal.isExpired()) {
-            throw new InvalidRequestException(
-                    "EXPIRED",
-                    String.format("Renewal %s has expired at %s", renewalId, renewal.getExpiresAt()));
+            throw new RenewalExpiredException(renewalId, renewal.getExpiresAt());
         }
 
-        // 3. Update renewal status
+        // 5. Determine new status
         RenewalStatus newStatus = "CONFIRMED".equals(request.getAction())
                 ? RenewalStatus.CONFIRMED
                 : RenewalStatus.DECLINED;
 
+        // 6. If DECLINED, validate decline_reason is provided
+        if (newStatus == RenewalStatus.DECLINED) {
+            if (request.getDeclineReason() == null || request.getDeclineReason().trim().isEmpty()) {
+                throw new DeclineReasonRequiredException();
+            }
+            renewal.setDeclineReason(request.getDeclineReason().trim());
+            log.info("Renewal {} DECLINED with reason: {}", renewalId, request.getDeclineReason());
+        }
+
+        // 7. Update renewal status and confirmed timestamp
         renewal.setStatus(newStatus);
         renewal.setConfirmedAt(LocalDateTime.now());
 
-        // 4. If CONFIRMED, extend the original registration by 3 months
+        // Do NOT auto-extend registration when CONFIRMED
+        // Old registration remains unchanged, awaiting Admin to finalize with custom
+        // effective_to
         if (newStatus == RenewalStatus.CONFIRMED) {
-            extendShiftRegistration(renewal.getExpiringRegistration());
+            log.info("Renewal {} CONFIRMED by employee. Awaiting Admin finalization.", renewalId);
         }
 
         ShiftRenewalRequest saved = renewalRepository.save(renewal);
@@ -127,63 +173,219 @@ public class ShiftRenewalService {
     }
 
     /**
-     * Extend shift registration by 3 months.
-     * Updates the effective_to date of the registration.
+     * ADMIN API: Finalize renewal with custom effective_to date.
+     * <p>
+     * WORKFLOW:
+     * 1. Find renewal by ID (must be CONFIRMED status)
+     * 2. Validate newEffectiveTo > old effective_to
+     * 3. Lock old registration with PESSIMISTIC_WRITE
+     * 4. Deactivate old: SET is_active = FALSE
+     * 5. Create new registration with admin-specified effective_to
+     * 6. Copy all registration_days
+     * 7. Update renewal status to FINALIZED
+     * <p>
+     * PERMISSION: MANAGE_FIXED_REGISTRATIONS (Admin only)
      *
-     * @param registration the registration to extend
+     * @param request FinalizeRenewalRequest with renewalRequestId and
+     *                newEffectiveTo
+     * @return ShiftRenewalResponse with FINALIZED status
+     * @throws RenewalNotFoundException        if renewal not found
+     * @throws NotConfirmedByEmployeeException if status != CONFIRMED
+     * @throws InvalidEffectiveToException     if newEffectiveTo <= old effective_to
+     * @throws RegistrationInactiveException   if old registration is_active=FALSE
      */
-    private void extendShiftRegistration(EmployeeShiftRegistration registration) {
-        if (registration.getEffectiveTo() == null) {
-            log.warn("Registration {} has no effective_to date, cannot extend",
-                    registration.getRegistrationId());
-            return;
+    @Transactional
+    public ShiftRenewalResponse finalizeRenewal(FinalizeRenewalRequest request) {
+        log.info("Admin finalizing renewal {}: newEffectiveTo={}",
+                request.getRenewalRequestId(), request.getNewEffectiveTo());
+
+        // 1. Find renewal (no need for lock here, employee already responded)
+        ShiftRenewalRequest renewal = renewalRepository.findById(request.getRenewalRequestId())
+                .orElseThrow(() -> new RenewalNotFoundException(request.getRenewalRequestId()));
+
+        // 2. Validate renewal status = CONFIRMED (employee must agree first)
+        if (renewal.getStatus() != RenewalStatus.CONFIRMED) {
+            throw new NotConfirmedByEmployeeException(
+                    request.getRenewalRequestId(),
+                    renewal.getStatus().name());
         }
 
-        LocalDate newEffectiveTo = registration.getEffectiveTo().plusMonths(3);
-        registration.setEffectiveTo(newEffectiveTo);
-        registrationRepository.save(registration);
+        FixedShiftRegistration oldRegistration = renewal.getExpiringRegistration();
+        Integer oldRegId = oldRegistration.getRegistrationId();
 
-        log.info("Extended registration {} from {} to {}",
-                registration.getRegistrationId(),
-                registration.getEffectiveTo().minusMonths(3),
-                newEffectiveTo);
+        // 3. Validate newEffectiveTo > old effective_to
+        LocalDate oldEffectiveTo = oldRegistration.getEffectiveTo();
+        if (request.getNewEffectiveTo().isBefore(oldEffectiveTo) ||
+                request.getNewEffectiveTo().isEqual(oldEffectiveTo)) {
+            throw new InvalidEffectiveToException(oldEffectiveTo, request.getNewEffectiveTo());
+        }
+
+        // 4. Lock old registration (SELECT FOR UPDATE)
+        FixedShiftRegistration lockedOldReg = fixedRegistrationRepository.findByIdWithLock(oldRegId)
+                .orElseThrow(() -> new RegistrationNotFoundException(oldRegId));
+
+        // 5. Validate old registration is still active
+        if (!lockedOldReg.getIsActive()) {
+            throw new RegistrationInactiveException(oldRegId);
+        }
+
+        // 6. Deactivate old registration (soft delete for audit trail)
+        lockedOldReg.setIsActive(false);
+        fixedRegistrationRepository.save(lockedOldReg);
+        log.info("Deactivated old registration {}", oldRegId);
+
+        // 7. Calculate new date range: old_to + 1 day → admin-specified date
+        LocalDate newEffectiveFrom = lockedOldReg.getEffectiveTo().plusDays(1);
+        LocalDate newEffectiveTo = request.getNewEffectiveTo();
+
+        // 8. Create new registration (INSERT) with admin-specified effective_to
+        FixedShiftRegistration newRegistration = new FixedShiftRegistration();
+        newRegistration.setWorkShift(lockedOldReg.getWorkShift());
+        newRegistration.setEmployee(lockedOldReg.getEmployee());
+        newRegistration.setEffectiveFrom(newEffectiveFrom);
+        newRegistration.setEffectiveTo(newEffectiveTo);
+        newRegistration.setIsActive(true);
+        newRegistration.setCreatedAt(LocalDateTime.now());
+        newRegistration.setUpdatedAt(LocalDateTime.now());
+
+        FixedShiftRegistration savedNewReg = fixedRegistrationRepository.save(newRegistration);
+        log.info("Created new registration {} (from {} to {})",
+                savedNewReg.getRegistrationId(), newEffectiveFrom, newEffectiveTo);
+
+        // 9. Copy all registration_days from old to new
+        copyRegistrationDays(lockedOldReg.getRegistrationId(), savedNewReg.getRegistrationId());
+
+        // 10. Update renewal status to FINALIZED
+        renewal.setStatus(RenewalStatus.FINALIZED);
+        ShiftRenewalRequest finalizedRenewal = renewalRepository.save(renewal);
+        log.info("Renewal {} finalized successfully", request.getRenewalRequestId());
+
+        return mapper.toResponse(finalizedRenewal);
     }
 
     /**
-     * Create a renewal request for an expiring registration.
-     * This method is called by the scheduled job to auto-create renewals.
+     * @deprecated Use finalizeRenewal() for Admin API instead.
+     *             NOTE: This method is kept for reference but no longer used.
+     *             Extension logic moved to Admin-controlled finalize API.
+     */
+    @Deprecated
+    private void createExtendedRegistration(FixedShiftRegistration oldRegistration) {
+        Integer oldRegId = oldRegistration.getRegistrationId();
+        log.info("Creating extended registration for old registration ID: {}", oldRegId);
+
+        // 1. Lock old registration (SELECT FOR UPDATE via refresh + lock)
+        FixedShiftRegistration lockedOldReg = fixedRegistrationRepository.findByIdWithLock(oldRegId)
+                .orElseThrow(() -> new RegistrationNotFoundException(oldRegId));
+
+        // 2. Validate old registration is still active
+        if (!lockedOldReg.getIsActive()) {
+            throw new RegistrationInactiveException(oldRegId);
+        }
+
+        // 3. Deactivate old registration (soft delete for audit trail)
+        lockedOldReg.setIsActive(false);
+        fixedRegistrationRepository.save(lockedOldReg);
+        log.info("Deactivated old registration {}", oldRegId);
+
+        // 4. Calculate new date range: old_to + 1 day → old_to + 1 year
+        LocalDate newEffectiveFrom = lockedOldReg.getEffectiveTo().plusDays(1);
+        LocalDate newEffectiveTo = lockedOldReg.getEffectiveTo().plusYears(1);
+
+        // 5. Create new registration (INSERT)
+        FixedShiftRegistration newRegistration = new FixedShiftRegistration();
+        newRegistration.setWorkShift(lockedOldReg.getWorkShift());
+        newRegistration.setEmployee(lockedOldReg.getEmployee());
+        newRegistration.setEffectiveFrom(newEffectiveFrom);
+        newRegistration.setEffectiveTo(newEffectiveTo);
+        newRegistration.setIsActive(true); // New registration is active
+        newRegistration.setCreatedAt(LocalDateTime.now());
+        newRegistration.setUpdatedAt(LocalDateTime.now());
+
+        FixedShiftRegistration savedNewReg = fixedRegistrationRepository.save(newRegistration);
+        log.info("Created new registration {} (from {} to {})",
+                savedNewReg.getRegistrationId(), newEffectiveFrom, newEffectiveTo);
+
+        // 6. Copy all registration_days from old to new
+        copyRegistrationDays(lockedOldReg.getRegistrationId(), savedNewReg.getRegistrationId());
+    }
+
+    /**
+     * Copy all fixed_registration_days from old fixed_shift_registration to new
+     * one.
+     * <p>
+     * SCHEMA: fixed_registration_days (
+     * registration_id INTEGER REFERENCES
+     * fixed_shift_registrations(registration_id),
+     * day_of_week VARCHAR(10) CHECK (day_of_week IN ('MONDAY', 'TUESDAY', ...)),
+     * PRIMARY KEY (registration_id, day_of_week)
+     * )
      *
-     * @param registrationId the expiring registration ID (String format
-     *                       ESRyymmddSSS)
+     * @param oldRegId the old registration ID
+     * @param newRegId the new registration ID
+     */
+    private void copyRegistrationDays(Integer oldRegId, Integer newRegId) {
+        // Find new FixedShiftRegistration to use in relationship
+        FixedShiftRegistration newReg = fixedRegistrationRepository.findById(newRegId)
+                .orElseThrow(() -> new RegistrationNotFoundException(newRegId));
+
+        // Find all days from old registration via repository
+        List<FixedRegistrationDay> oldDays = fixedRegistrationDayRepository.findAll().stream()
+                .filter(day -> day.getFixedShiftRegistration().getRegistrationId().equals(oldRegId))
+                .collect(Collectors.toList());
+
+        if (oldDays.isEmpty()) {
+            log.warn("No fixed_registration_days found for old registration {}, skipping copy", oldRegId);
+            return;
+        }
+
+        List<FixedRegistrationDay> newDays = oldDays.stream()
+                .map(oldDay -> {
+                    FixedRegistrationDay newDay = new FixedRegistrationDay();
+                    newDay.setFixedShiftRegistration(newReg);
+                    newDay.setDayOfWeek(oldDay.getDayOfWeek());
+                    return newDay;
+                })
+                .collect(Collectors.toList());
+
+        fixedRegistrationDayRepository.saveAll(newDays);
+        log.info("Copied {} fixed_registration_days from {} to {}", newDays.size(), oldRegId, newRegId);
+    }
+
+    /**
+     * Create a renewal request for an expiring fixed shift registration.
+     * This method is called by the scheduled job (P9) to auto-create renewals 14
+     * days before expiration.
+     * <p>
+     * Works with fixed_shift_registrations (INTEGER ID), not
+     * part_time_registrations (STRING ID).
+     *
+     * @param registrationId the expiring fixed_shift_registration ID (INTEGER)
      * @return created renewal response
-     * @throws NotFoundException if registration or employee not found
+     * @throws RegistrationNotFoundException if registration not found
+     * @throws InvalidRenewalStateException  if renewal already exists
      */
     @Transactional
-    public ShiftRenewalResponse createRenewalRequest(String registrationId) {
-        log.info("Creating renewal request for registration ID: {}", registrationId);
+    public ShiftRenewalResponse createRenewalRequest(Integer registrationId) {
+        log.info("Creating renewal request for fixed_shift_registration ID: {}", registrationId);
 
-        // 1. Find registration
-        EmployeeShiftRegistration registration = registrationRepository.findById(registrationId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "NOT_FOUND",
-                        String.format("Registration %s not found", registrationId)));
+        // 1. Find fixed shift registration
+        FixedShiftRegistration registration = fixedRegistrationRepository.findById(registrationId)
+                .orElseThrow(() -> new RegistrationNotFoundException(registrationId));
 
         // 2. Verify employee exists
-        Employee employee = employeeRepository.findById(registration.getEmployeeId())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "NOT_FOUND",
-                        String.format("Employee %d not found", registration.getEmployeeId())));
+        Employee employee = employeeRepository.findById(registration.getEmployee().getEmployeeId())
+                .orElseThrow(() -> new EmployeeNotFoundException(registration.getEmployee().getEmployeeId()));
 
-        // 3. Check if renewal already exists
+        // 3. Check if renewal already exists for this registration
         boolean exists = renewalRepository.existsByRegistrationIdAndStatus(
                 registrationId,
                 RenewalStatus.PENDING_ACTION);
 
         if (exists) {
             log.warn("Renewal request already exists for registration {}", registrationId);
-            throw new InvalidRequestException(
-                    "ALREADY_EXISTS",
-                    String.format("Renewal request already exists for registration %s", registrationId));
+            throw new InvalidRenewalStateException(
+                    "RENEWAL_EXISTS",
+                    String.format("Renewal request already exists for registration %d", registrationId));
         }
 
         // 4. Create renewal request
@@ -191,42 +393,14 @@ public class ShiftRenewalService {
         renewal.setExpiringRegistration(registration);
         renewal.setEmployee(employee);
         renewal.setStatus(RenewalStatus.PENDING_ACTION);
-        renewal.setExpiresAt(registration.getEffectiveTo().atTime(23, 59, 59)); // Expires on the registration end date
-        renewal.setMessage(buildRenewalMessage(registration));
+        // Expires at the end of registration's effective_to date
+        renewal.setExpiresAt(registration.getEffectiveTo().atTime(23, 59, 59));
+        // No static message field - will be generated dynamically in mapper
 
         ShiftRenewalRequest saved = renewalRepository.save(renewal);
         log.info("Created renewal request {} for registration {}", saved.getRenewalId(), registrationId);
 
         return mapper.toResponse(saved);
-    }
-
-    /**
-     * Build renewal message with shift details.
-     * 
-     * @param registration the expiring registration
-     * @return formatted message
-     */
-    private String buildRenewalMessage(EmployeeShiftRegistration registration) {
-        // V2: Get shift name from part_time_slot
-        String shiftName = "N/A";
-        if (registration.getPartTimeSlotId() != null) {
-            PartTimeSlot slot = partTimeSlotRepository.findById(registration.getPartTimeSlotId()).orElse(null);
-            if (slot != null && slot.getWorkShiftId() != null) {
-                WorkShift workShift = workShiftRepository.findById(slot.getWorkShiftId()).orElse(null);
-                if (workShift != null) {
-                    shiftName = workShift.getShiftName() + " - " + slot.getDayOfWeek();
-                }
-            }
-        }
-        
-        String expiryDate = registration.getEffectiveTo() != null
-                ? registration.getEffectiveTo().toString()
-                : "N/A";
-
-        return String.format(
-                "Lich dang ky ca [%s] cua ban se het han vao ngay %s. Ban co muon gia han khong?",
-                shiftName,
-                expiryDate);
     }
 
     /**

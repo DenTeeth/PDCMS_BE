@@ -731,6 +731,11 @@ VALUES
 (3, '2025-04-30', 'Reunification Day', 'Ngày Giải phóng miền Nam', 2025)
 ON CONFLICT (holiday_id) DO NOTHING;
 
+-- Reset sequence for holiday_dates to prevent duplicate key errors
+SELECT setval('holiday_dates_holiday_id_seq',
+    COALESCE((SELECT MAX(holiday_id) FROM holiday_dates), 0) + 1,
+    false);
+
 -- ============================================
 -- WORKING SCHEDULE SAMPLE DATA (BE-307 V2)
 -- ============================================
@@ -746,7 +751,7 @@ ON CONFLICT (holiday_id) DO NOTHING;
 
 -- Fixed registration for Dr. Minh (FULL_TIME) - Weekdays Morning Shift
 INSERT INTO fixed_shift_registrations (
-    registration_id, employee_id, work_shift_id, 
+    registration_id, employee_id, work_shift_id,
     effective_from, effective_to, is_active, created_at
 )
 VALUES
@@ -764,7 +769,7 @@ ON CONFLICT (registration_id, day_of_week) DO NOTHING;
 
 -- Fixed registration for Dr. Lan (FULL_TIME) - Weekdays Afternoon Shift
 INSERT INTO fixed_shift_registrations (
-    registration_id, employee_id, work_shift_id, 
+    registration_id, employee_id, work_shift_id,
     effective_from, effective_to, is_active, created_at
 )
 VALUES
@@ -782,7 +787,7 @@ ON CONFLICT (registration_id, day_of_week) DO NOTHING;
 
 -- Fixed registration for Receptionist Mai (FULL_TIME) - Weekdays Morning Part-time
 INSERT INTO fixed_shift_registrations (
-    registration_id, employee_id, work_shift_id, 
+    registration_id, employee_id, work_shift_id,
     effective_from, effective_to, is_active, created_at
 )
 VALUES
@@ -800,7 +805,7 @@ ON CONFLICT (registration_id, day_of_week) DO NOTHING;
 
 -- Fixed registration for Accountant Tuan (FULL_TIME) - Full week Morning
 INSERT INTO fixed_shift_registrations (
-    registration_id, employee_id, work_shift_id, 
+    registration_id, employee_id, work_shift_id,
     effective_from, effective_to, is_active, created_at
 )
 VALUES
@@ -819,7 +824,7 @@ ON CONFLICT (registration_id, day_of_week) DO NOTHING;
 
 -- Fixed registration for Nurse Hoa (PART_TIME_FIXED) - Monday, Wednesday, Friday Morning
 INSERT INTO fixed_shift_registrations (
-    registration_id, employee_id, work_shift_id, 
+    registration_id, employee_id, work_shift_id,
     effective_from, effective_to, is_active, created_at
 )
 VALUES
@@ -835,7 +840,7 @@ ON CONFLICT (registration_id, day_of_week) DO NOTHING;
 
 -- Fixed registration for Manager Quan (FULL_TIME) - Flexible schedule
 INSERT INTO fixed_shift_registrations (
-    registration_id, employee_id, work_shift_id, 
+    registration_id, employee_id, work_shift_id,
     effective_from, effective_to, is_active, created_at
 )
 VALUES
@@ -850,7 +855,7 @@ ON CONFLICT (registration_id, day_of_week) DO NOTHING;
 
 -- Fixed registration for Nurse Trang (PART_TIME_FIXED) - Tuesday, Thursday, Saturday Afternoon
 INSERT INTO fixed_shift_registrations (
-    registration_id, employee_id, work_shift_id, 
+    registration_id, employee_id, work_shift_id,
     effective_from, effective_to, is_active, created_at
 )
 VALUES
@@ -863,6 +868,11 @@ VALUES
 (7, 'THURSDAY'),
 (7, 'SATURDAY')
 ON CONFLICT (registration_id, day_of_week) DO NOTHING;
+
+-- Reset sequence for fixed_shift_registrations to prevent duplicate key errors
+SELECT setval('fixed_shift_registrations_registration_id_seq',
+    COALESCE((SELECT MAX(registration_id) FROM fixed_shift_registrations), 0) + 1,
+    false);
 
 -- ============================================
 -- LUỒNG 2: PART-TIME FLEX REGISTRATIONS
@@ -937,8 +947,8 @@ ON CONFLICT (slot_id) DO NOTHING;
 
 -- Reset sequence after manual inserts with explicit IDs
 -- This prevents "duplicate key value violates unique constraint" errors
-SELECT setval('part_time_slots_slot_id_seq', 
-              (SELECT COALESCE(MAX(slot_id), 0) + 1 FROM part_time_slots), 
+SELECT setval('part_time_slots_slot_id_seq',
+              (SELECT COALESCE(MAX(slot_id), 0) + 1 FROM part_time_slots),
               false);
 
 -- One FULL slot for testing SLOT_IS_FULL error
@@ -950,7 +960,7 @@ SELECT setval('part_time_slots_slot_id_seq',
 
 -- Linh claims TUESDAY Morning (slot_id=3)
 INSERT INTO employee_shift_registrations (
-    registration_id, employee_id, part_time_slot_id, 
+    registration_id, employee_id, part_time_slot_id,
     effective_from, effective_to, is_active
 )
 VALUES
@@ -959,7 +969,7 @@ ON CONFLICT (registration_id) DO NOTHING;
 
 -- Linh claims THURSDAY Afternoon (slot_id=8)
 INSERT INTO employee_shift_registrations (
-    registration_id, employee_id, part_time_slot_id, 
+    registration_id, employee_id, part_time_slot_id,
     effective_from, effective_to, is_active
 )
 VALUES
@@ -968,7 +978,7 @@ ON CONFLICT (registration_id) DO NOTHING;
 
 -- Linh claims SATURDAY Morning (slot_id=11)
 INSERT INTO employee_shift_registrations (
-    registration_id, employee_id, part_time_slot_id, 
+    registration_id, employee_id, part_time_slot_id,
     effective_from, effective_to, is_active
 )
 VALUES
@@ -1000,7 +1010,7 @@ ON CONFLICT (employee_id) DO NOTHING;
 
 -- Employee 10 (Minh) claims MONDAY Afternoon (slot_id=2)
 INSERT INTO employee_shift_registrations (
-    registration_id, employee_id, part_time_slot_id, 
+    registration_id, employee_id, part_time_slot_id,
     effective_from, effective_to, is_active
 )
 VALUES
@@ -1009,7 +1019,7 @@ ON CONFLICT (registration_id) DO NOTHING;
 
 -- Employee 10 (Minh) claims WEDNESDAY Morning (slot_id=5)
 INSERT INTO employee_shift_registrations (
-    registration_id, employee_id, part_time_slot_id, 
+    registration_id, employee_id, part_time_slot_id,
     effective_from, effective_to, is_active
 )
 VALUES
@@ -1018,7 +1028,7 @@ ON CONFLICT (registration_id) DO NOTHING;
 
 -- Employee 10 (Minh) claims MONDAY Morning (slot_id=1, quota=2) - First registration (1/2)
 INSERT INTO employee_shift_registrations (
-    registration_id, employee_id, part_time_slot_id, 
+    registration_id, employee_id, part_time_slot_id,
     effective_from, effective_to, is_active
 )
 VALUES
@@ -1027,7 +1037,7 @@ ON CONFLICT (registration_id) DO NOTHING;
 
 -- Employee 11 (Huong) claims MONDAY Morning slot (slot_id=1, quota=2) - Makes it FULL (2/2)
 INSERT INTO employee_shift_registrations (
-    registration_id, employee_id, part_time_slot_id, 
+    registration_id, employee_id, part_time_slot_id,
     effective_from, effective_to, is_active
 )
 VALUES
@@ -1036,7 +1046,7 @@ ON CONFLICT (registration_id) DO NOTHING;
 
 -- Employee 11 (Huong) also claims FRIDAY Morning (slot_id=9)
 INSERT INTO employee_shift_registrations (
-    registration_id, employee_id, part_time_slot_id, 
+    registration_id, employee_id, part_time_slot_id,
     effective_from, effective_to, is_active
 )
 VALUES
@@ -1046,7 +1056,7 @@ ON CONFLICT (registration_id) DO NOTHING;
 -- Cancelled registration example (Linh cancels SUNDAY)
 -- First claim SUNDAY Morning (slot_id=13)
 INSERT INTO employee_shift_registrations (
-    registration_id, employee_id, part_time_slot_id, 
+    registration_id, employee_id, part_time_slot_id,
     effective_from, effective_to, is_active
 )
 VALUES
@@ -1060,16 +1070,20 @@ ON CONFLICT (registration_id) DO NOTHING;
 -- when Hibernate tries to insert new records after database restart
 
 -- Reset accounts sequence
-SELECT setval('accounts_account_id_seq', 
-              (SELECT COALESCE(MAX(account_id), 0) + 1 FROM accounts), 
+SELECT setval('accounts_account_id_seq',
+              (SELECT COALESCE(MAX(account_id), 0) + 1 FROM accounts),
               false);
 
 -- Reset employees sequence
-SELECT setval('employees_employee_id_seq', 
-              (SELECT COALESCE(MAX(employee_id), 0) + 1 FROM employees), 
+SELECT setval('employees_employee_id_seq',
+              (SELECT COALESCE(MAX(employee_id), 0) + 1 FROM employees),
               false);
 
+-- Reset employee_shift_registrations sequence (VARCHAR primary key, no auto-increment needed)
+-- This table uses custom IDs like 'ESR251101001', so no sequence reset required
+
 -- Note: part_time_slots sequence is already reset after its inserts above
+-- Note: fixed_shift_registrations sequence is already reset after its inserts above
 
 -- ============================================
 -- SAMPLE DATA SUMMARY
@@ -1108,11 +1122,11 @@ SELECT setval('employees_employee_id_seq',
 -- ============================================
 
 -- Delete existing annual leave balances for 2025 to avoid duplicates
-DELETE FROM employee_leave_balances 
+DELETE FROM employee_leave_balances
 WHERE time_off_type_id = 'ANNUAL_LEAVE' AND cycle_year = 2025;
 
 INSERT INTO employee_leave_balances (
-    employee_id, time_off_type_id, cycle_year, 
+    employee_id, time_off_type_id, cycle_year,
     total_days_allowed, days_taken, notes
 )
 VALUES

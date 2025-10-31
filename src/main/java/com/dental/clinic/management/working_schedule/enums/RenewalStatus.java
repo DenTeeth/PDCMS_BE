@@ -2,7 +2,15 @@ package com.dental.clinic.management.working_schedule.enums;
 
 /**
  * Status for shift renewal requests.
- * Represents the lifecycle of a part-time employee's shift renewal invitation.
+ * Represents the lifecycle of a fixed shift employee's renewal invitation.
+ *
+ * Two-Step Workflow:
+ * 1. PENDING_ACTION: Created by Job P8, awaiting employee response
+ * 2. CONFIRMED: Employee agreed, awaiting admin finalization with custom
+ * duration
+ * 3. FINALIZED: Admin completed extension with custom effective_to date
+ * 4. DECLINED: Employee rejected
+ * 5. EXPIRED: Employee didn't respond in time
  */
 public enum RenewalStatus {
     /**
@@ -12,9 +20,18 @@ public enum RenewalStatus {
 
     /**
      * Employee confirmed the renewal.
-     * The original shift registration has been extended.
+     * Original registration is NOT modified yet.
+     * Awaiting Admin to finalize with custom effective_to date (3 months, 1 year,
+     * etc.).
      */
     CONFIRMED,
+
+    /**
+     * Admin has finalized the renewal (after employee CONFIRMED).
+     * New registration created with admin-specified effective_to date.
+     * Old registration deactivated (is_active=FALSE).
+     */
+    FINALIZED,
 
     /**
      * Employee declined the renewal.

@@ -13,9 +13,15 @@ public class ShiftNotFoundForLeaveException extends RuntimeException {
 
     public ShiftNotFoundForLeaveException(Integer employeeId, String date, String workShiftId) {
         super(String.format(
-                "Không thể xin nghỉ. Nhân viên %d không có lịch làm việc vào %s%s.",
-                employeeId,
+                "Nhân viên không có lịch làm việc vào ngày này. Vui lòng kiểm tra lịch làm việc trước khi đăng ký nghỉ phép.%s",
+                workShiftId != null ? String.format(" (Ca làm việc: %s, Ngày: %s)", workShiftId, date)
+                        : String.format(" (Ngày: %s)", date)));
+    }
+
+    public ShiftNotFoundForLeaveException(Integer employeeId, String date, String workShiftId, String shiftName) {
+        super(String.format(
+                "Nhân viên không có lịch làm việc vào ngày này. Vui lòng kiểm tra lịch làm việc trước khi đăng ký nghỉ phép. (Ngày: %s, Ca: %s)",
                 date,
-                workShiftId != null ? " ca " + workShiftId : ""));
+                shiftName != null ? shiftName : workShiftId));
     }
 }
