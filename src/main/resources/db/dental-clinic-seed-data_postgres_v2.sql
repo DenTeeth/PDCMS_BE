@@ -928,6 +928,12 @@ VALUES
 (14, 'WKS_AFTERNOON_02', 'SUNDAY', 1, FALSE, NOW()) -- Inactive slot for testing
 ON CONFLICT (slot_id) DO NOTHING;
 
+-- Reset sequence after manual inserts with explicit IDs
+-- This prevents "duplicate key value violates unique constraint" errors
+SELECT setval('part_time_slots_slot_id_seq', 
+              (SELECT COALESCE(MAX(slot_id), 0) + 1 FROM part_time_slots), 
+              false);
+
 -- One FULL slot for testing SLOT_IS_FULL error
 -- NOTE: Using slot_id=1 (MONDAY morning, quota=2) for "full slot" test scenario
 -- It will have 2 registrations to make it full
@@ -1039,6 +1045,24 @@ INSERT INTO employee_shift_registrations (
 VALUES
 ('ESR251101008', 8, 13, '2025-11-01', '2025-11-15', FALSE) -- Cancelled (is_active=false)
 ON CONFLICT (registration_id) DO NOTHING;
+
+-- ============================================
+-- RESET ALL SEQUENCES AFTER MANUAL INSERTS
+-- ============================================
+-- This prevents "duplicate key value violates unique constraint" errors
+-- when Hibernate tries to insert new records after database restart
+
+-- Reset accounts sequence
+SELECT setval('accounts_account_id_seq', 
+              (SELECT COALESCE(MAX(account_id), 0) + 1 FROM accounts), 
+              false);
+
+-- Reset employees sequence
+SELECT setval('employees_employee_id_seq', 
+              (SELECT COALESCE(MAX(employee_id), 0) + 1 FROM employees), 
+              false);
+
+-- Note: part_time_slots sequence is already reset after its inserts above
 
 -- ============================================
 -- SAMPLE DATA SUMMARY
