@@ -1,37 +1,33 @@
 package com.dental.clinic.management.working_schedule.dto.request;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Update request for TimeOffType - All fields are optional
+ * Only send the fields you want to update
+ */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class UpdateTimeOffTypeRequest {
 
-    @NotBlank(message = "typeName is required")
     private String typeName;
 
-    @NotBlank(message = "typeCode is required")
     private String typeCode;
 
     private String description;
 
-    @NotNull(message = "requiresBalance is required")
     private Boolean requiresBalance;
 
     private Double defaultDaysPerYear;
 
-    @NotNull(message = "isPaid is required")
     private Boolean isPaid;
 
-    @NotNull(message = "requiresApproval is required")
     private Boolean requiresApproval;
 
-    @NotNull(message = "isActive is required")
     private Boolean isActive;
 }

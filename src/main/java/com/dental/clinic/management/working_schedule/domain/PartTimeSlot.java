@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Entity representing a part-time slot that admin creates.
@@ -30,6 +32,10 @@ public class PartTimeSlot {
     @Column(name = "work_shift_id", length = 20, nullable = false)
     private String workShiftId;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "work_shift_id", insertable = false, updatable = false)
+    private WorkShift workShift;
+
     @Column(name = "day_of_week", length = 10, nullable = false)
     private String dayOfWeek; // MONDAY, TUESDAY, etc.
 
@@ -38,6 +44,10 @@ public class PartTimeSlot {
 
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
+
+    @OneToMany(fetch = FetchType.LAZY)
+    @JoinColumn(name = "part_time_slot_id", insertable = false, updatable = false)
+    private List<PartTimeRegistration> registrations = new ArrayList<>();
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

@@ -19,7 +19,9 @@ import com.dental.clinic.management.working_schedule.enums.TimeOffStatus;
 import com.dental.clinic.management.working_schedule.mapper.TimeOffRequestMapper;
 import com.dental.clinic.management.working_schedule.repository.EmployeeLeaveBalanceRepository;
 import com.dental.clinic.management.working_schedule.repository.EmployeeShiftRepository;
+import com.dental.clinic.management.working_schedule.repository.FixedShiftRegistrationRepository;
 import com.dental.clinic.management.working_schedule.repository.LeaveBalanceHistoryRepository;
+import com.dental.clinic.management.working_schedule.repository.PartTimeSlotRepository;
 import com.dental.clinic.management.working_schedule.repository.TimeOffRequestRepository;
 import com.dental.clinic.management.working_schedule.repository.TimeOffTypeRepository;
 
@@ -56,6 +58,8 @@ public class TimeOffRequestService {
         private final EmployeeLeaveBalanceRepository balanceRepository;
         private final LeaveBalanceHistoryRepository historyRepository;
         private final EmployeeShiftRepository employeeShiftRepository;
+        private final FixedShiftRegistrationRepository fixedShiftRegistrationRepository;
+        private final PartTimeSlotRepository partTimeSlotRepository;
 
         /**
          * GET /api/v1/time-off-requests
@@ -179,6 +183,43 @@ public class TimeOffRequestService {
                                         "Khi nghỉ theo ca, ngày bắt đầu và kết thúc phải giống nhau. " +
                                                         "Ngày bắt đầu: " + request.getStartDate() + ", Ngày kết thúc: "
                                                         + request.getEndDate());
+                }
+
+                // 4.5. [V14 Hybrid] Kiểm tra nhân viên có lịch làm việc không
+                // Query từ fixed_shift_registrations VÀ part_time_registrations
+                if (request.getWorkShiftId() != null) {
+                        // Nghỉ theo ca (half-day)
+                        boolean hasShift = checkEmployeeHasShift(
+                                        request.getEmployeeId(),
+                                        request.getStartDate(),
+                                        request.getWorkShiftId());
+
+                        if (!hasShift) {
+                                throw new ShiftNotFoundForLeaveException(
+                                                request.getEmployeeId(),
+                                                request.getStartDate().toString(),
+                                                request.getWorkShiftId());
+                        }
+                } else {
+                        // Nghỉ cả ngày (full-day) - kiểm tra tất cả các ngày
+                        LocalDate currentDate = request.getStartDate();
+                        boolean hasAnyShift = false;
+
+                        while (!currentDate.isAfter(request.getEndDate())) {
+                                if (checkEmployeeHasShift(request.getEmployeeId(), currentDate, null)) {
+                                        hasAnyShift = true;
+                                        break;
+                                }
+                                currentDate = currentDate.plusDays(1);
+                        }
+
+                        if (!hasAnyShift) {
+                                throw new ShiftNotFoundForLeaveException(
+                                                String.format("Không thể xin nghỉ. Nhân viên %d không có lịch làm việc vào những ngày từ %s đến %s.",
+                                                                request.getEmployeeId(),
+                                                                request.getStartDate(),
+                                                                request.getEndDate()));
+                        }
                 }
 
                 // 5. Check for conflicting requests
@@ -500,5 +541,100 @@ public class TimeOffRequestService {
                                         timeOffRequest.getRequestId(), e.getMessage(), e);
                         // Don't fail the entire transaction, just log the error
                 }
+        }
+
+        /**
+         * [V14 Hybrid] Check if employee has a scheduled shift for the given date and work shift.
+         * This method queries BOTH fixed_shift_registrations AND part_time_registrations.
+         *
+         * @param employeeId   the employee ID
+         * @param date         the date to check
+         * @param workShiftId  the work shift ID (can be null to check any shift)
+         * @return true if employee has a shift, false otherwise
+         */
+        private boolean checkEmployeeHasShift(Integer employeeId, LocalDate date, String workShiftId) {
+                log.debug("Checking if employee {} has shift on {} for work_shift_id: {}",
+                                employeeId, date, workShiftId);
+
+                // Get day of week (MONDAY, TUESDAY, etc.)
+                String dayOfWeek = date.getDayOfWeek().name();
+
+                // 1. Check FIXED_SHIFT_REGISTRATIONS (FULL_TIME & PART_TIME_FIXED)
+                boolean hasFixedShift = fixedShiftRegistrationRepository.findActiveByEmployeeId(employeeId)
+                                .stream()
+                                .anyMatch(registration -> {
+                                        // Check if date is within effective range
+                                        if (date.isBefore(registration.getEffectiveFrom())) {
+                                                return false;
+                                        }
+                                        if (registration.getEffectiveTo() != null && date.isAfter(registration.getEffectiveTo())) {
+                                                return false;
+                                        }
+
+                                        // Check if this day of week is in the registration
+                                        boolean hasDayOfWeek = registration.getRegistrationDays()
+                                                        .stream()
+                                                        .anyMatch(day -> day.getDayOfWeek().equals(dayOfWeek));
+
+                                        if (!hasDayOfWeek) {
+                                                return false;
+                                        }
+
+                                        // If workShiftId is specified, check if it matches
+                                        if (workShiftId != null) {
+                                                return registration.getWorkShift().getWorkShiftId().equals(workShiftId);
+                                        }
+
+                                        return true;
+                                });
+
+                if (hasFixedShift) {
+                        log.debug("Employee {} has FIXED shift on {} for work_shift_id: {}",
+                                        employeeId, date, workShiftId);
+                        return true;
+                }
+
+                // 2. Check PART_TIME_REGISTRATIONS (PART_TIME_FLEX)
+                // Query part_time_slots to find available slots for this employee
+                boolean hasPartTimeShift = partTimeSlotRepository.findByDayOfWeekAndIsActiveTrue(dayOfWeek)
+                                .stream()
+                                .anyMatch(slot -> {
+                                        // Check if workShiftId matches (if specified)
+                                        if (workShiftId != null && !slot.getWorkShift().getWorkShiftId().equals(workShiftId)) {
+                                                return false;
+                                        }
+
+                                        // Check if employee has claimed this slot
+                                        // This requires checking part_time_registrations table
+                                        // We need to check if there's an active registration for this employee and slot
+                                        // that covers the given date
+                                        return slot.getRegistrations()
+                                                        .stream()
+                                                        .anyMatch(reg -> {
+                                                                if (!reg.getEmployeeId().equals(employeeId)) {
+                                                                        return false;
+                                                                }
+                                                                if (!reg.getIsActive()) {
+                                                                        return false;
+                                                                }
+                                                                if (date.isBefore(reg.getEffectiveFrom())) {
+                                                                        return false;
+                                                                }
+                                                                if (reg.getEffectiveTo() != null && date.isAfter(reg.getEffectiveTo())) {
+                                                                        return false;
+                                                                }
+                                                                return true;
+                                                        });
+                                });
+
+                if (hasPartTimeShift) {
+                        log.debug("Employee {} has PART_TIME_FLEX shift on {} for work_shift_id: {}",
+                                        employeeId, date, workShiftId);
+                        return true;
+                }
+
+                log.debug("Employee {} has NO shift on {} for work_shift_id: {}",
+                                employeeId, date, workShiftId);
+                return false;
         }
 }

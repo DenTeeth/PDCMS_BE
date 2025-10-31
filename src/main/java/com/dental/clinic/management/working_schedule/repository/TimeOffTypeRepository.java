@@ -53,4 +53,14 @@ public interface TimeOffTypeRepository extends JpaRepository<TimeOffType, String
      * Find all time-off types filtered by active status
      */
     List<TimeOffType> findByIsActive(Boolean isActive);
+
+    /**
+     * Find all time-off types filtered by paid status
+     */
+    List<TimeOffType> findByIsPaid(Boolean isPaid);
+
+    /**
+     * Find all time-off types filtered by both active and paid status
+     */
+    List<TimeOffType> findByIsActiveAndIsPaid(Boolean isActive, Boolean isPaid);
 }

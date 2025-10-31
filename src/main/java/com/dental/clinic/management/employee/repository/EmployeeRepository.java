@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import com.dental.clinic.management.employee.domain.Employee;
@@ -59,4 +60,13 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer>, Jp
   List<Employee> findByEmploymentTypeAndIsActive(
       com.dental.clinic.management.employee.enums.EmploymentType employmentType,
       Boolean isActive);
+
+  /**
+   * Find all active employee IDs.
+   * Used for annual leave balance reset.
+   *
+   * @return List of employee IDs
+   */
+  @Query("SELECT e.employeeId FROM Employee e WHERE e.isActive = true")
+  List<Integer> findAllActiveEmployeeIds();
 }

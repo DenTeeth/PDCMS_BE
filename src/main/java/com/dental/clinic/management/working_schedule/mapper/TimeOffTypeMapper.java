@@ -24,6 +24,8 @@ public class TimeOffTypeMapper {
                 .typeCode(entity.getTypeCode())
                 .typeName(entity.getTypeName())
                 .description(entity.getDescription())
+                .requiresBalance(entity.getRequiresBalance())
+                .defaultDaysPerYear(entity.getDefaultDaysPerYear())
                 .isPaid(entity.getIsPaid())
                 .requiresApproval(entity.getRequiresApproval())
                 .isActive(entity.getIsActive())

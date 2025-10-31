@@ -304,7 +304,7 @@ VALUES
 ('ROLE_MANAGER', 'APPROVE_TIME_OFF'), ('ROLE_MANAGER', 'REJECT_TIME_OFF'), ('ROLE_MANAGER', 'CANCEL_TIME_OFF_PENDING'),
 ('ROLE_MANAGER', 'VIEW_OT_ALL'), ('ROLE_MANAGER', 'APPROVE_OT'), ('ROLE_MANAGER', 'REJECT_OT'), ('ROLE_MANAGER', 'CANCEL_OT_PENDING'),
 ('ROLE_MANAGER', 'APPROVE_OVERTIME'), ('ROLE_MANAGER', 'REJECT_OVERTIME'), ('ROLE_MANAGER', 'CANCEL_OVERTIME_PENDING'),
-('ROLE_MANAGER', 'VIEW_TIMEOFF_TYPE'), ('ROLE_MANAGER', 'CREATE_TIMEOFF_TYPE'),
+('ROLE_MANAGER', 'VIEW_TIMEOFF_TYPE'), ('ROLE_MANAGER', 'VIEW_TIMEOFF_TYPE_ALL'), ('ROLE_MANAGER', 'CREATE_TIMEOFF_TYPE'),
 ('ROLE_MANAGER', 'UPDATE_TIMEOFF_TYPE'), ('ROLE_MANAGER', 'DELETE_TIMEOFF_TYPE'),
 ('ROLE_MANAGER', 'VIEW_LEAVE_BALANCE_ALL'), ('ROLE_MANAGER', 'ADJUST_LEAVE_BALANCE'),
 -- SYSTEM_CONFIGURATION (limited)
@@ -565,19 +565,35 @@ VALUES
 ('WKS_AFTERNOON_02', 'Ca Part-time Chiều (13h-17h)', '13:00:00', '17:00:00', 'NORMAL', TRUE)
 ON CONFLICT (work_shift_id) DO NOTHING;
 
-INSERT INTO time_off_types (type_id, type_code, type_name, is_paid, requires_approval, requires_balance, is_active)
+-- Clean up old time_off_types with TOTxxx format
+DELETE FROM leave_balance_history WHERE balance_id IN (
+    SELECT balance_id FROM employee_leave_balances WHERE time_off_type_id LIKE 'TOT%'
+);
+DELETE FROM employee_leave_balances WHERE time_off_type_id LIKE 'TOT%';
+DELETE FROM time_off_types WHERE type_id LIKE 'TOT%';
+
+-- Insert time_off_types with type_id = type_code
+INSERT INTO time_off_types (type_id, type_code, type_name, is_paid, requires_approval, requires_balance, default_days_per_year, is_active)
 VALUES
-('TOT001', 'ANNUAL_LEAVE', 'Nghỉ phép năm (12 ngày/năm)', TRUE, TRUE, TRUE, TRUE),
-('TOT002', 'UNPAID_PERSONAL', 'Nghỉ việc riêng không lương', FALSE, TRUE, FALSE, TRUE),
-('TOT003', 'SICK_LEAVE', 'Nghỉ ốm có bảo hiểm xã hội', TRUE, TRUE, TRUE, TRUE),
-('TOT004', 'MATERNITY_LEAVE', 'Nghỉ thai sản (6 tháng)', TRUE, TRUE, FALSE, TRUE),
-('TOT005', 'PATERNITY_LEAVE', 'Nghỉ chăm con (5-14 ngày)', TRUE, TRUE, FALSE, TRUE),
-('TOT006', 'MARRIAGE_LEAVE', 'Nghỉ kết hôn (3 ngày)', TRUE, TRUE, FALSE, TRUE),
-('TOT007', 'BEREAVEMENT_LEAVE', 'Nghỉ tang lễ (1-3 ngày)', TRUE, TRUE, FALSE, TRUE),
-('TOT008', 'EMERGENCY_LEAVE', 'Nghỉ khẩn cấp', FALSE, TRUE, FALSE, TRUE),
-('TOT009', 'STUDY_LEAVE', 'Nghỉ học tập/đào tạo', TRUE, TRUE, FALSE, TRUE),
-('TOT010', 'COMPENSATORY_LEAVE', 'Nghỉ bù (sau làm thêm giờ)', TRUE, FALSE, FALSE, TRUE)
-ON CONFLICT (type_id) DO NOTHING;
+-- type_id = type_code for easier reference
+('ANNUAL_LEAVE', 'ANNUAL_LEAVE', 'Nghỉ phép năm', TRUE, TRUE, TRUE, 12.0, TRUE),
+('UNPAID_PERSONAL', 'UNPAID_PERSONAL', 'Nghỉ việc riêng không lương', FALSE, TRUE, FALSE, NULL, TRUE),
+('SICK_LEAVE', 'SICK_LEAVE', 'Nghỉ ốm có bảo hiểm xã hội', TRUE, TRUE, FALSE, NULL, TRUE),
+('MATERNITY_LEAVE', 'MATERNITY_LEAVE', 'Nghỉ thai sản (6 tháng)', TRUE, TRUE, FALSE, NULL, TRUE),
+('PATERNITY_LEAVE', 'PATERNITY_LEAVE', 'Nghỉ chăm con (5-14 ngày)', TRUE, TRUE, FALSE, NULL, TRUE),
+('MARRIAGE_LEAVE', 'MARRIAGE_LEAVE', 'Nghỉ kết hôn (3 ngày)', TRUE, TRUE, FALSE, NULL, TRUE),
+('BEREAVEMENT_LEAVE', 'BEREAVEMENT_LEAVE', 'Nghỉ tang lễ (1-3 ngày)', TRUE, TRUE, FALSE, NULL, TRUE),
+('EMERGENCY_LEAVE', 'EMERGENCY_LEAVE', 'Nghỉ khẩn cấp', FALSE, TRUE, FALSE, NULL, TRUE),
+('STUDY_LEAVE', 'STUDY_LEAVE', 'Nghỉ học tập/đào tạo', TRUE, TRUE, FALSE, NULL, TRUE),
+('COMPENSATORY_LEAVE', 'COMPENSATORY_LEAVE', 'Nghỉ bù (sau làm thêm giờ)', TRUE, FALSE, FALSE, NULL, TRUE)
+ON CONFLICT (type_id) DO UPDATE SET
+    type_code = EXCLUDED.type_code,
+    type_name = EXCLUDED.type_name,
+    is_paid = EXCLUDED.is_paid,
+    requires_approval = EXCLUDED.requires_approval,
+    requires_balance = EXCLUDED.requires_balance,
+    default_days_per_year = EXCLUDED.default_days_per_year,
+    is_active = EXCLUDED.is_active;
 
 -- Sequences sync
 SELECT setval(pg_get_serial_sequence('base_roles', 'base_role_id'), COALESCE((SELECT MAX(base_role_id) FROM base_roles), 0)+1, false);
@@ -593,9 +609,9 @@ SELECT setval(pg_get_serial_sequence('specializations', 'specialization_id'), CO
 -- Sample time-off requests
 INSERT INTO time_off_requests (request_id, employee_id, time_off_type_id, work_shift_id, start_date, end_date, status, requested_at, requested_by)
 VALUES
-('TOR251025001', 2, 'TOT001', 'WKS_MORNING_01', '2025-10-28', '2025-10-29', 'PENDING', NOW(), 2),
-('TOR251025002', 3, 'TOT002', 'WKS_AFTERNOON_01', '2025-11-02', '2025-11-02', 'APPROVED', NOW(), 3),
-('TOR251025003', 4, 'TOT003', 'WKS_MORNING_02', '2025-11-05', '2025-11-06', 'REJECTED', NOW(), 4)
+('TOR251025001', 2, 'ANNUAL_LEAVE', 'WKS_MORNING_01', '2025-10-28', '2025-10-29', 'PENDING', NOW(), 2),
+('TOR251025002', 3, 'SICK_LEAVE', 'WKS_AFTERNOON_01', '2025-11-02', '2025-11-02', 'APPROVED', NOW(), 3),
+('TOR251025003', 4, 'UNPAID_PERSONAL', 'WKS_MORNING_02', '2025-11-05', '2025-11-06', 'REJECTED', NOW(), 4)
 ON CONFLICT (request_id) DO NOTHING;
 
 -- ============================================
@@ -639,32 +655,23 @@ ON CONFLICT (request_id) DO NOTHING;
 -- Create corresponding employee shifts for APPROVED OT requests
 INSERT INTO employee_shifts (
     employee_shift_id, created_at, created_by, is_overtime, notes,
-    source, source_ot_request_id, status, updated_at,
+    source, source_off_request_id, source_ot_request_id, status, updated_at,
     work_date, employee_id, work_shift_id
 )
 VALUES
 -- Auto-created shift for OTR251030008 (Accountant Tuan)
 ('EMS251030003', NOW() - INTERVAL '2 days', 7, TRUE,
  'Tạo từ yêu cầu OT OTR251030008 - Xử lý công việc kế toán tồn đọng',
- 'OT_APPROVAL', 'OTR251030008', 'SCHEDULED', NULL,
+ 'OT_APPROVAL', NULL, 'OTR251030008', 'SCHEDULED', NULL,
  '2025-11-25', 5, 'WKS_MORNING_02'),
 
 -- Auto-created shift for OTR251030009 (Nurse Hoa)
 ('EMS251030004', NOW() - INTERVAL '1 day', 7, TRUE,
  'Tạo từ yêu cầu OT OTR251030009 - Chăm sóc bệnh nhân đặc biệt',
- 'OT_APPROVAL', 'OTR251030009', 'SCHEDULED', NULL,
+ 'OT_APPROVAL', NULL, 'OTR251030009', 'SCHEDULED', NULL,
  '2025-11-27', 6, 'WKS_AFTERNOON_02')
 
 ON CONFLICT (employee_shift_id) DO NOTHING;
-
--- Sample renewals
-INSERT INTO shift_renewals (renewal_id, employee_id, work_shift_id, requested_date, status, created_at)
-VALUES
-(1, 2, 'WKS_MORNING_01', '2025-11-10', 'PENDING', NOW()),
-(2, 3, 'WKS_AFTERNOON_01', '2025-11-12', 'APPROVED', NOW()),
-(3, 4, 'WKS_MORNING_02', '2025-11-15', 'REJECTED', NOW())
-ON CONFLICT (renewal_id) DO NOTHING;
-
 -- ============================================
 -- EMPLOYEE SHIFT SAMPLE DATA (BE-302)
 -- ============================================
@@ -717,11 +724,11 @@ VALUES
 ON CONFLICT (employee_shift_id) DO NOTHING;
 
 -- Sample holidays
-INSERT INTO holidays (holiday_id, holiday_date, name, description, is_active)
+INSERT INTO holiday_dates (holiday_id, holiday_date, holiday_name, description, year)
 VALUES
-(1, '2025-12-25', 'Christmas', 'Giáng Sinh', TRUE),
-(2, '2025-01-01', 'New Year', 'Tết Dương Lịch', TRUE),
-(3, '2025-04-30', 'Reunification Day', 'Ngày Giải phóng miền Nam', TRUE)
+(1, '2025-12-25', 'Christmas', 'Giáng Sinh', 2025),
+(2, '2025-01-01', 'New Year', 'Tết Dương Lịch', 2025),
+(3, '2025-04-30', 'Reunification Day', 'Ngày Giải phóng miền Nam', 2025)
 ON CONFLICT (holiday_id) DO NOTHING;
 
 -- ============================================
@@ -1092,6 +1099,49 @@ SELECT setval('employees_employee_id_seq',
 --   ✅ Cancelled registration (registration_id=8, is_active=false)
 --   ✅ Various effective dates for renewal testing
 -- ============================================
+
+-- ============================================
+-- EMPLOYEE LEAVE BALANCES - ANNUAL LEAVE (P5.2)
+-- ============================================
+-- Seed initial annual leave balances for all employees
+-- Each employee gets 12 days per year for 2025
+-- ============================================
+
+-- Delete existing annual leave balances for 2025 to avoid duplicates
+DELETE FROM employee_leave_balances 
+WHERE time_off_type_id = 'ANNUAL_LEAVE' AND cycle_year = 2025;
+
+INSERT INTO employee_leave_balances (
+    employee_id, time_off_type_id, cycle_year, 
+    total_days_allowed, days_taken, notes
+)
+VALUES
+-- Admin (employee_id=1) - 2025
+(1, 'ANNUAL_LEAVE', 2025, 12.0, 0.0, 'Phép năm 2025 - Khởi tạo'),
+
+-- Dr. Minh (employee_id=2) - 2025
+(2, 'ANNUAL_LEAVE', 2025, 12.0, 0.0, 'Phép năm 2025 - Khởi tạo'),
+
+-- Dr. Lan (employee_id=3) - 2025
+(3, 'ANNUAL_LEAVE', 2025, 12.0, 0.0, 'Phép năm 2025 - Khởi tạo'),
+
+-- Receptionist Mai (employee_id=4) - 2025
+(4, 'ANNUAL_LEAVE', 2025, 12.0, 0.0, 'Phép năm 2025 - Khởi tạo'),
+
+-- Accountant Tuan (employee_id=5) - 2025
+(5, 'ANNUAL_LEAVE', 2025, 12.0, 0.0, 'Phép năm 2025 - Khởi tạo'),
+
+-- Nurse Hoa (employee_id=6) - 2025
+(6, 'ANNUAL_LEAVE', 2025, 12.0, 0.0, 'Phép năm 2025 - Khởi tạo'),
+
+-- Manager Quan (employee_id=7) - 2025
+(7, 'ANNUAL_LEAVE', 2025, 12.0, 0.0, 'Phép năm 2025 - Khởi tạo'),
+
+-- Nurse Linh (employee_id=8) - 2025 (Part-time flex)
+(8, 'ANNUAL_LEAVE', 2025, 12.0, 0.0, 'Phép năm 2025 - Khởi tạo'),
+
+-- Nurse Trang (employee_id=9) - 2025 (Part-time fixed)
+(9, 'ANNUAL_LEAVE', 2025, 12.0, 0.0, 'Phép năm 2025 - Khởi tạo');
 
 -- ============================================
 -- HƯỚNG DẪN SỬ DỤNG

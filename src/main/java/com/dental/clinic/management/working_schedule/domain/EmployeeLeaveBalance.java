@@ -25,37 +25,39 @@ public class EmployeeLeaveBalance {
     @Column(name = "time_off_type_id", nullable = false, length = 50)
     private String timeOffTypeId;
 
-    @Column(name = "year", nullable = false)
+    @Column(name = "cycle_year", nullable = false)
     private Integer year;
 
-    @Column(name = "total_allotted", nullable = false)
+    @Column(name = "total_days_allowed", nullable = false)
     private Double totalAllotted;
 
-    @Column(name = "used", nullable = false)
+    @Column(name = "days_taken", nullable = false)
     @Builder.Default
     private Double used = 0.0;
 
-    @Column(name = "remaining", nullable = false)
+    @Transient
     private Double remaining;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    @Column(name = "notes", columnDefinition = "TEXT")
+    private String notes;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
-        if (remaining == null) {
-            remaining = totalAllotted - (used != null ? used : 0.0);
-        }
     }
 
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
-        remaining = totalAllotted - used;
+    }
+
+    @PostLoad
+    @PostPersist
+    @PostUpdate
+    protected void calculateRemaining() {
+        this.remaining = totalAllotted - used;
     }
 }

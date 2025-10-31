@@ -611,6 +611,106 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handle ShiftNotFoundForLeaveException (V14 Hybrid - P5.1).
+     * Returns 409 Conflict.
+     */
+    @ExceptionHandler(ShiftNotFoundForLeaveException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleShiftNotFoundForLeave(
+            ShiftNotFoundForLeaveException ex,
+            HttpServletRequest request) {
+
+        log.warn("Shift not found for leave request at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.CONFLICT.value());
+        res.setMessage(ex.getMessage());
+        res.setError("SHIFT_NOT_FOUND_FOR_LEAVE");
+        res.setData(null);
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(res);
+    }
+
+    /**
+     * Handle DuplicateTypeCodeException (P6.1).
+     * Returns 409 Conflict.
+     */
+    @ExceptionHandler(DuplicateTypeCodeException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleDuplicateTypeCode(
+            DuplicateTypeCodeException ex,
+            HttpServletRequest request) {
+
+        log.warn("Duplicate type code at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.CONFLICT.value());
+        res.setMessage(ex.getMessage());
+        res.setError("DUPLICATE_TYPE_CODE");
+        res.setData(null);
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(res);
+    }
+
+    /**
+     * Handle TimeOffTypeNotFoundException (P6.1).
+     * Returns 404 Not Found.
+     */
+    @ExceptionHandler(TimeOffTypeNotFoundException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleTimeOffTypeNotFound(
+            TimeOffTypeNotFoundException ex,
+            HttpServletRequest request) {
+
+        log.warn("Time-off type not found at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.NOT_FOUND.value());
+        res.setMessage(ex.getMessage());
+        res.setError("TIMEOFF_TYPE_NOT_FOUND");
+        res.setData(null);
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(res);
+    }
+
+    /**
+     * Handle TimeOffTypeInUseException (P6.1).
+     * Returns 409 Conflict.
+     */
+    @ExceptionHandler(TimeOffTypeInUseException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleTimeOffTypeInUse(
+            TimeOffTypeInUseException ex,
+            HttpServletRequest request) {
+
+        log.warn("Time-off type in use at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.CONFLICT.value());
+        res.setMessage(ex.getMessage());
+        res.setError("TIMEOFF_TYPE_IN_USE");
+        res.setData(null);
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(res);
+    }
+
+    /**
+     * Handle InvalidBalanceException (P5.2).
+     * Returns 400 Bad Request.
+     */
+    @ExceptionHandler(InvalidBalanceException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleInvalidBalance(
+            InvalidBalanceException ex,
+            HttpServletRequest request) {
+
+        log.warn("Invalid balance at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.BAD_REQUEST.value());
+        res.setMessage(ex.getMessage());
+        res.setError("INVALID_BALANCE");
+        res.setData(null);
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+    }
+
+    /**
      * Fallback handler for any other unexpected exceptions.
      * Returns 500 Internal Server Error.
      */

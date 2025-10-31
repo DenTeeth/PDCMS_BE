@@ -49,15 +49,28 @@ public class TimeOffTypeService {
     /**
      * GET /api/v1/admin/time-off-types
      * Lấy tất cả loại nghỉ phép (bao gồm inactive) - Admin view
+     * 
+     * @param isActive filter by active status (null = all, true = active only, false = inactive only)
+     * @param isPaid filter by paid status (null = all, true = paid only, false = unpaid only)
      */
-    public List<TimeOffTypeResponse> getAllTimeOffTypes(Boolean isActive) {
-        log.debug("Admin request to get all time-off types, isActive={}", isActive);
+    public List<TimeOffTypeResponse> getAllTimeOffTypes(Boolean isActive, Boolean isPaid) {
+        log.debug("Admin request to get all time-off types, isActive={}, isPaid={}", isActive, isPaid);
 
         List<TimeOffType> types;
-        if (isActive == null) {
+        
+        // Apply filters
+        if (isActive == null && isPaid == null) {
+            // No filters - get all
             types = typeRepository.findAll();
-        } else {
+        } else if (isActive != null && isPaid != null) {
+            // Both filters
+            types = typeRepository.findByIsActiveAndIsPaid(isActive, isPaid);
+        } else if (isActive != null) {
+            // Only isActive filter
             types = typeRepository.findByIsActive(isActive);
+        } else {
+            // Only isPaid filter
+            types = typeRepository.findByIsPaid(isPaid);
         }
 
         return types.stream()
@@ -91,6 +104,9 @@ public class TimeOffTypeService {
             throw new DuplicateTypeCodeException(request.getTypeCode());
         }
 
+        // Validate logic: requiresBalance và defaultDaysPerYear phải match
+        validateBalanceAndDefaultDays(request.getRequiresBalance(), request.getDefaultDaysPerYear());
+
         String typeId = idGenerator.generateId("TOT");
 
         TimeOffType type = TimeOffType.builder()
@@ -98,9 +114,11 @@ public class TimeOffTypeService {
                 .typeCode(request.getTypeCode())
                 .typeName(request.getTypeName())
                 .description(request.getDescription())
+                .requiresBalance(request.getRequiresBalance())
+                .defaultDaysPerYear(request.getDefaultDaysPerYear())
                 .isPaid(request.getIsPaid())
-                .requiresApproval(true) // Default
-                .isActive(true) // Auto-assign on creation
+                .requiresApproval(request.getRequiresApproval() != null ? request.getRequiresApproval() : true)
+                .isActive(request.getIsActive() != null ? request.getIsActive() : true)
                 .build();
 
         TimeOffType saved = typeRepository.save(type);
@@ -137,6 +155,14 @@ public class TimeOffTypeService {
             type.setDescription(request.getDescription());
         }
 
+        if (request.getRequiresBalance() != null) {
+            type.setRequiresBalance(request.getRequiresBalance());
+        }
+
+        if (request.getDefaultDaysPerYear() != null) {
+            type.setDefaultDaysPerYear(request.getDefaultDaysPerYear());
+        }
+
         if (request.getIsPaid() != null) {
             type.setIsPaid(request.getIsPaid());
         }
@@ -145,10 +171,47 @@ public class TimeOffTypeService {
             type.setRequiresApproval(request.getRequiresApproval());
         }
 
+        if (request.getIsActive() != null) {
+            type.setIsActive(request.getIsActive());
+        }
+
+        // Validate logic AFTER all updates: requiresBalance và defaultDaysPerYear phải match
+        validateBalanceAndDefaultDays(type.getRequiresBalance(), type.getDefaultDaysPerYear());
+
         TimeOffType updated = typeRepository.save(type);
         log.info("Updated time-off type: {}", typeId);
 
         return typeMapper.toResponse(updated);
+    }
+
+    /**
+     * Helper method: Validate requiresBalance và defaultDaysPerYear logic
+     * 
+     * Business Rules:
+     * - requiresBalance = true  → defaultDaysPerYear PHẢI có giá trị (để dùng cho annual reset)
+     * - requiresBalance = false → defaultDaysPerYear PHẢI null (vì không cần balance tracking)
+     */
+    private void validateBalanceAndDefaultDays(Boolean requiresBalance, Double defaultDaysPerYear) {
+        // Case 1: requiresBalance = true VÀ defaultDaysPerYear = null
+        if (Boolean.TRUE.equals(requiresBalance) && defaultDaysPerYear == null) {
+            throw new BadRequestAlertException(
+                "Loại nghỉ phép cần balance tracking (requiresBalance = true) PHẢI có defaultDaysPerYear để sử dụng cho annual reset. " +
+                "Vui lòng set defaultDaysPerYear (ví dụ: 12.0 cho 12 ngày phép/năm).",
+                "TimeOffType",
+                "MISSING_DEFAULT_DAYS"
+            );
+        }
+
+        // Case 2: requiresBalance = false VÀ defaultDaysPerYear != null
+        if (Boolean.FALSE.equals(requiresBalance) && defaultDaysPerYear != null) {
+            throw new BadRequestAlertException(
+                "Loại nghỉ phép không cần balance tracking (requiresBalance = false) KHÔNG thể có defaultDaysPerYear. " +
+                "Field defaultDaysPerYear chỉ dùng cho các loại nghỉ phép cần check số dư (requiresBalance = true). " +
+                "Vui lòng set defaultDaysPerYear = null.",
+                "TimeOffType",
+                "INVALID_DEFAULT_DAYS"
+            );
+        }
     }
 
     /**

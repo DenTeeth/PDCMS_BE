@@ -28,7 +28,7 @@ spring:
       mode: always
       data-locations: classpath:db/dental-clinic-seed-data_postgres_v2.sql
       encoding: UTF-8
-      continue-on-error: true
+      continue-on-error: false
 
   # ==============================
   # Mail Configuration (Email Verification & Password Reset)
