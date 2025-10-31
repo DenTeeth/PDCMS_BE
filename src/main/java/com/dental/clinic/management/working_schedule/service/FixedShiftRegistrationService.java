@@ -60,9 +60,9 @@ public class FixedShiftRegistrationService {
         Employee employee = employeeRepository.findById(request.getEmployeeId())
                 .orElseThrow(() -> new RelatedResourceNotFoundException("Nhân viên không tồn tại"));
 
-        // 2. Check employee type - MUST NOT be PART_TIME_FLEX or deprecated PART_TIME
+        // 2. Check employee type - ONLY allow FULL_TIME and PART_TIME_FIXED
         EmploymentType empType = employee.getEmploymentType();
-        if (empType == EmploymentType.PART_TIME_FLEX || empType == EmploymentType.PART_TIME) {
+        if (empType != EmploymentType.FULL_TIME && empType != EmploymentType.PART_TIME_FIXED) {
             throw new InvalidEmployeeTypeException();
         }
 
@@ -182,8 +182,9 @@ public class FixedShiftRegistrationService {
         FixedShiftRegistration registration = registrationRepository.findByIdWithDetails(registrationId)
                 .orElseThrow(() -> new FixedRegistrationNotFoundException(registrationId));
 
-        // 2. Check employee type - MUST NOT be PART_TIME_FLEX
-        if (registration.getEmployee().getEmploymentType() == EmploymentType.PART_TIME_FLEX) {
+        // 2. Check employee type - ONLY allow FULL_TIME and PART_TIME_FIXED
+        EmploymentType empType = registration.getEmployee().getEmploymentType();
+        if (empType != EmploymentType.FULL_TIME && empType != EmploymentType.PART_TIME_FIXED) {
             throw new InvalidEmployeeTypeException();
         }
 
