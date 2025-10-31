@@ -61,8 +61,36 @@ public interface EmployeeShiftRegistrationRepository extends JpaRepository<Emplo
          */
         List<EmployeeShiftRegistration> findByEmployeeIdAndIsActive(Integer employeeId, Boolean isActive);
 
-        /**
-         * Check if employee has any active registration.
-         */
-        boolean existsByEmployeeIdAndIsActive(Integer employeeId, Boolean isActive);
+    /**
+     * Check if employee has any active registration.
+     */
+    boolean existsByEmployeeIdAndIsActive(Integer employeeId, Boolean isActive);
+
+    /**
+     * Check if employee has claimed a part-time slot on a specific date and shift.
+     * Used to detect conflicts before creating overtime requests.
+     * Checks:
+     * 1. Registration is active (is_active = true)
+     * 2. Effective date range covers the work_date
+     * 3. The part_time_slot matches the day of week and shift
+     *
+     * @param employeeId  employee ID
+     * @param workDate    the date to check
+     * @param workShiftId work shift ID
+     * @return true if employee has a part-time registration on this date/shift
+     */
+    @Query(value = "SELECT COUNT(*) > 0 FROM employee_shift_registrations esr " +
+            "JOIN part_time_slots pts ON esr.part_time_slot_id = pts.slot_id " +
+            "WHERE esr.employee_id = :employeeId " +
+            "AND pts.work_shift_id = :workShiftId " +
+            "AND esr.is_active = true " +
+            "AND pts.is_active = true " +
+            "AND esr.effective_from <= :workDate " +
+            "AND (esr.effective_to IS NULL OR esr.effective_to >= :workDate) " +
+            "AND pts.day_of_week = TRIM(TO_CHAR(:workDate, 'DAY'))", 
+            nativeQuery = true)
+    boolean hasPartTimeScheduleOnDate(
+            @Param("employeeId") Integer employeeId,
+            @Param("workDate") java.time.LocalDate workDate,
+            @Param("workShiftId") String workShiftId);
 }

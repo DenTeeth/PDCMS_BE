@@ -113,4 +113,31 @@ public interface FixedShiftRegistrationRepository extends JpaRepository<FixedShi
     List<FixedShiftRegistration> findByEmployeeIdAndActiveStatus(
             @Param("employeeId") Integer employeeId,
             @Param("isActive") Boolean isActive);
+
+    /**
+     * Check if employee has a fixed schedule on a specific date and shift.
+     * Used to detect conflicts before creating overtime requests.
+     * Checks both:
+     * 1. Registration is active (is_active = true)
+     * 2. Effective date range covers the work_date
+     * 3. Registration days includes the day of week
+     * 4. Work shift matches
+     *
+     * @param employeeId  employee ID
+     * @param workDate    the date to check
+     * @param workShiftId work shift ID
+     * @return true if employee has a fixed schedule on this date/shift
+     */
+    @Query("SELECT COUNT(fsr) > 0 FROM FixedShiftRegistration fsr " +
+            "JOIN fsr.registrationDays rd " +
+            "WHERE fsr.employee.employeeId = :employeeId " +
+            "AND fsr.workShift.workShiftId = :workShiftId " +
+            "AND fsr.isActive = true " +
+            "AND fsr.effectiveFrom <= :workDate " +
+            "AND (fsr.effectiveTo IS NULL OR fsr.effectiveTo >= :workDate) " +
+            "AND rd.dayOfWeek = TRIM(FUNCTION('TO_CHAR', :workDate, 'DAY'))")
+    boolean hasFixedScheduleOnDate(
+            @Param("employeeId") Integer employeeId,
+            @Param("workDate") java.time.LocalDate workDate,
+            @Param("workShiftId") String workShiftId);
 }

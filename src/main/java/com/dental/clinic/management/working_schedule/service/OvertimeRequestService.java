@@ -2,6 +2,7 @@ package com.dental.clinic.management.working_schedule.service;
 
 import com.dental.clinic.management.employee.domain.Employee;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
+import com.dental.clinic.management.exception.employee_shift.SlotConflictException;
 import com.dental.clinic.management.exception.overtime.DuplicateOvertimeRequestException;
 import com.dental.clinic.management.exception.overtime.InvalidStateTransitionException;
 import com.dental.clinic.management.exception.overtime.OvertimeRequestNotFoundException;
@@ -19,7 +20,9 @@ import com.dental.clinic.management.working_schedule.enums.RequestStatus;
 import com.dental.clinic.management.working_schedule.enums.ShiftSource;
 import com.dental.clinic.management.working_schedule.enums.ShiftStatus;
 import com.dental.clinic.management.working_schedule.mapper.OvertimeRequestMapper;
+import com.dental.clinic.management.working_schedule.repository.EmployeeShiftRegistrationRepository;
 import com.dental.clinic.management.working_schedule.repository.EmployeeShiftRepository;
+import com.dental.clinic.management.working_schedule.repository.FixedShiftRegistrationRepository;
 import com.dental.clinic.management.working_schedule.repository.OvertimeRequestRepository;
 import com.dental.clinic.management.working_schedule.repository.WorkShiftRepository;
 import lombok.RequiredArgsConstructor;
@@ -49,6 +52,8 @@ public class OvertimeRequestService {
     private final WorkShiftRepository workShiftRepository;
     private final OvertimeRequestMapper overtimeRequestMapper;
     private final EmployeeShiftRepository employeeShiftRepository;
+    private final FixedShiftRegistrationRepository fixedShiftRegistrationRepository;
+    private final EmployeeShiftRegistrationRepository employeeShiftRegistrationRepository;
     private final IdGenerator idGenerator;
 
     /**
@@ -161,6 +166,10 @@ public class OvertimeRequestService {
         // Validation 2: Verify work shift exists
         WorkShift workShift = workShiftRepository.findById(dto.getWorkShiftId())
                 .orElseThrow(() -> new RelatedResourceNotFoundException("Ca làm việc", dto.getWorkShiftId()));
+
+        // Validation 2: Check for hybrid schedule conflicts
+        // Employee must NOT have a regular work schedule on this date/shift
+        validateNoScheduleConflict(targetEmployeeId, dto.getWorkDate(), dto.getWorkShiftId());
 
         // Validation 3: Work date must not be in the past
         if (dto.getWorkDate().isBefore(LocalDate.now())) {
@@ -386,5 +395,48 @@ public class OvertimeRequestService {
                     request.getRequestId(), e.getMessage(), e);
             // Don't fail the entire transaction, just log the error
         }
+    }
+
+    /**
+     * Validate that employee does NOT have a regular work schedule on the specified date and shift.
+     * Checks both Fixed and Part-Time schedules (Hybrid approach).
+     * 
+     * Luồng 1 (Fixed): Checks fixed_shift_registrations + fixed_registration_days
+     *   - For FULL_TIME and PART_TIME_FIXED employees
+     * 
+     * Luồng 2 (Flex): Checks part_time_registrations + part_time_slots
+     *   - For PART_TIME_FLEX employees
+     * 
+     * @param employeeId employee ID
+     * @param workDate the date to check
+     * @param workShiftId work shift ID
+     * @throws SlotConflictException if employee has a regular schedule on this date/shift
+     */
+    private void validateNoScheduleConflict(Integer employeeId, LocalDate workDate, String workShiftId) {
+        log.debug("Checking hybrid schedule conflicts for employee {} on {} shift {}", 
+                employeeId, workDate, workShiftId);
+
+        // Check Luồng 1: Fixed Schedule (FULL_TIME & PART_TIME_FIXED)
+        boolean hasFixedSchedule = fixedShiftRegistrationRepository.hasFixedScheduleOnDate(
+                employeeId, workDate, workShiftId);
+        
+        if (hasFixedSchedule) {
+            log.warn("Employee {} has fixed schedule on {} shift {} - cannot create OT request",
+                    employeeId, workDate, workShiftId);
+            throw new SlotConflictException("Nhân viên đã có lịch làm việc bình thường vào ca này.");
+        }
+
+        // Check Luồng 2: Part-Time Flexible Schedule (PART_TIME_FLEX)
+        boolean hasPartTimeSchedule = employeeShiftRegistrationRepository.hasPartTimeScheduleOnDate(
+                employeeId, workDate, workShiftId);
+        
+        if (hasPartTimeSchedule) {
+            log.warn("Employee {} has part-time schedule on {} shift {} - cannot create OT request",
+                    employeeId, workDate, workShiftId);
+            throw new SlotConflictException("Nhân viên đã có lịch làm việc bình thường vào ca này.");
+        }
+
+        log.debug("No schedule conflicts found for employee {} on {} shift {}", 
+                employeeId, workDate, workShiftId);
     }
 }
