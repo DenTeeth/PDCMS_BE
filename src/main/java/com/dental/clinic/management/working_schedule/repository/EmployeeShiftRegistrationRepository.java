@@ -87,7 +87,7 @@ public interface EmployeeShiftRegistrationRepository extends JpaRepository<Emplo
             "AND pts.is_active = true " +
             "AND esr.effective_from <= :workDate " +
             "AND (esr.effective_to IS NULL OR esr.effective_to >= :workDate) " +
-            "AND pts.day_of_week = TRIM(TO_CHAR(:workDate, 'DAY'))", 
+            "AND pts.day_of_week = UPPER(TRIM(TO_CHAR(CAST(:workDate AS DATE), 'DAY')))", 
             nativeQuery = true)
     boolean hasPartTimeScheduleOnDate(
             @Param("employeeId") Integer employeeId,

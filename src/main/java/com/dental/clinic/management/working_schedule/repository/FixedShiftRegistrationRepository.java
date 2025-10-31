@@ -135,7 +135,7 @@ public interface FixedShiftRegistrationRepository extends JpaRepository<FixedShi
             "AND fsr.isActive = true " +
             "AND fsr.effectiveFrom <= :workDate " +
             "AND (fsr.effectiveTo IS NULL OR fsr.effectiveTo >= :workDate) " +
-            "AND rd.dayOfWeek = TRIM(FUNCTION('TO_CHAR', :workDate, 'DAY'))")
+            "AND rd.dayOfWeek = UPPER(TRIM(FUNCTION('TO_CHAR', CAST(:workDate AS DATE), 'DAY')))")
     boolean hasFixedScheduleOnDate(
             @Param("employeeId") Integer employeeId,
             @Param("workDate") java.time.LocalDate workDate,
