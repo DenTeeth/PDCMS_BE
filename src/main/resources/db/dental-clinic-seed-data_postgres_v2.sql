@@ -725,6 +725,351 @@ VALUES
 ON CONFLICT (holiday_id) DO NOTHING;
 
 -- ============================================
+-- WORKING SCHEDULE SAMPLE DATA (BE-307 V2)
+-- ============================================
+-- Sample data for testing Hybrid Schedule System:
+-- - Luồng 1 (Fixed): fixed_shift_registrations + fixed_registration_days
+-- - Luồng 2 (Flex): part_time_slots + employee_shift_registrations
+-- ============================================
+
+-- ============================================
+-- LUỒNG 1: FIXED SHIFT REGISTRATIONS
+-- For FULL_TIME and PART_TIME_FIXED employees
+-- ============================================
+
+-- Fixed registration for Dr. Minh (FULL_TIME) - Weekdays Morning Shift
+INSERT INTO fixed_shift_registrations (
+    registration_id, employee_id, work_shift_id, 
+    effective_from, effective_to, is_active, created_at
+)
+VALUES
+(1, 2, 'WKS_MORNING_01', '2025-01-01', '2026-12-31', TRUE, NOW())
+ON CONFLICT (registration_id) DO NOTHING;
+
+INSERT INTO fixed_registration_days (registration_id, day_of_week)
+VALUES
+(1, 'MONDAY'),
+(1, 'TUESDAY'),
+(1, 'WEDNESDAY'),
+(1, 'THURSDAY'),
+(1, 'FRIDAY')
+ON CONFLICT (registration_id, day_of_week) DO NOTHING;
+
+-- Fixed registration for Dr. Lan (FULL_TIME) - Weekdays Afternoon Shift
+INSERT INTO fixed_shift_registrations (
+    registration_id, employee_id, work_shift_id, 
+    effective_from, effective_to, is_active, created_at
+)
+VALUES
+(2, 3, 'WKS_AFTERNOON_01', '2025-01-01', '2026-12-31', TRUE, NOW())
+ON CONFLICT (registration_id) DO NOTHING;
+
+INSERT INTO fixed_registration_days (registration_id, day_of_week)
+VALUES
+(2, 'MONDAY'),
+(2, 'TUESDAY'),
+(2, 'WEDNESDAY'),
+(2, 'THURSDAY'),
+(2, 'FRIDAY')
+ON CONFLICT (registration_id, day_of_week) DO NOTHING;
+
+-- Fixed registration for Receptionist Mai (FULL_TIME) - Weekdays Morning Part-time
+INSERT INTO fixed_shift_registrations (
+    registration_id, employee_id, work_shift_id, 
+    effective_from, effective_to, is_active, created_at
+)
+VALUES
+(3, 4, 'WKS_MORNING_02', '2025-11-01', '2026-10-31', TRUE, NOW())
+ON CONFLICT (registration_id) DO NOTHING;
+
+INSERT INTO fixed_registration_days (registration_id, day_of_week)
+VALUES
+(3, 'MONDAY'),
+(3, 'TUESDAY'),
+(3, 'WEDNESDAY'),
+(3, 'THURSDAY'),
+(3, 'FRIDAY')
+ON CONFLICT (registration_id, day_of_week) DO NOTHING;
+
+-- Fixed registration for Accountant Tuan (FULL_TIME) - Full week Morning
+INSERT INTO fixed_shift_registrations (
+    registration_id, employee_id, work_shift_id, 
+    effective_from, effective_to, is_active, created_at
+)
+VALUES
+(4, 5, 'WKS_MORNING_01', '2025-01-01', NULL, TRUE, NOW())
+ON CONFLICT (registration_id) DO NOTHING;
+
+INSERT INTO fixed_registration_days (registration_id, day_of_week)
+VALUES
+(4, 'MONDAY'),
+(4, 'TUESDAY'),
+(4, 'WEDNESDAY'),
+(4, 'THURSDAY'),
+(4, 'FRIDAY'),
+(4, 'SATURDAY')
+ON CONFLICT (registration_id, day_of_week) DO NOTHING;
+
+-- Fixed registration for Nurse Hoa (PART_TIME_FIXED) - Monday, Wednesday, Friday Morning
+INSERT INTO fixed_shift_registrations (
+    registration_id, employee_id, work_shift_id, 
+    effective_from, effective_to, is_active, created_at
+)
+VALUES
+(5, 6, 'WKS_MORNING_02', '2025-11-01', '2026-04-30', TRUE, NOW())
+ON CONFLICT (registration_id) DO NOTHING;
+
+INSERT INTO fixed_registration_days (registration_id, day_of_week)
+VALUES
+(5, 'MONDAY'),
+(5, 'WEDNESDAY'),
+(5, 'FRIDAY')
+ON CONFLICT (registration_id, day_of_week) DO NOTHING;
+
+-- Fixed registration for Manager Quan (FULL_TIME) - Flexible schedule
+INSERT INTO fixed_shift_registrations (
+    registration_id, employee_id, work_shift_id, 
+    effective_from, effective_to, is_active, created_at
+)
+VALUES
+(6, 7, 'WKS_MORNING_01', '2025-01-01', NULL, TRUE, NOW())
+ON CONFLICT (registration_id) DO NOTHING;
+
+INSERT INTO fixed_registration_days (registration_id, day_of_week)
+VALUES
+(6, 'TUESDAY'),
+(6, 'THURSDAY')
+ON CONFLICT (registration_id, day_of_week) DO NOTHING;
+
+-- Fixed registration for Nurse Trang (PART_TIME_FIXED) - Tuesday, Thursday, Saturday Afternoon
+INSERT INTO fixed_shift_registrations (
+    registration_id, employee_id, work_shift_id, 
+    effective_from, effective_to, is_active, created_at
+)
+VALUES
+(7, 9, 'WKS_AFTERNOON_02', '2025-11-01', '2026-10-31', TRUE, NOW())
+ON CONFLICT (registration_id) DO NOTHING;
+
+INSERT INTO fixed_registration_days (registration_id, day_of_week)
+VALUES
+(7, 'TUESDAY'),
+(7, 'THURSDAY'),
+(7, 'SATURDAY')
+ON CONFLICT (registration_id, day_of_week) DO NOTHING;
+
+-- ============================================
+-- LUỒNG 2: PART-TIME FLEX REGISTRATIONS
+-- For PART_TIME_FLEX employees
+-- ============================================
+
+-- STEP 1: Create Part-Time Slots (Admin creates available slots)
+-- Week schedule with varied quotas
+
+-- MONDAY Slots
+INSERT INTO part_time_slots (
+    slot_id, work_shift_id, day_of_week, quota, is_active, created_at
+)
+VALUES
+(1, 'WKS_MORNING_02', 'MONDAY', 2, TRUE, NOW()),
+(2, 'WKS_AFTERNOON_02', 'MONDAY', 3, TRUE, NOW())
+ON CONFLICT (slot_id) DO NOTHING;
+
+-- TUESDAY Slots
+INSERT INTO part_time_slots (
+    slot_id, work_shift_id, day_of_week, quota, is_active, created_at
+)
+VALUES
+(3, 'WKS_MORNING_02', 'TUESDAY', 2, TRUE, NOW()),
+(4, 'WKS_AFTERNOON_02', 'TUESDAY', 2, TRUE, NOW())
+ON CONFLICT (slot_id) DO NOTHING;
+
+-- WEDNESDAY Slots
+INSERT INTO part_time_slots (
+    slot_id, work_shift_id, day_of_week, quota, is_active, created_at
+)
+VALUES
+(5, 'WKS_MORNING_02', 'WEDNESDAY', 3, TRUE, NOW()),
+(6, 'WKS_AFTERNOON_02', 'WEDNESDAY', 2, TRUE, NOW())
+ON CONFLICT (slot_id) DO NOTHING;
+
+-- THURSDAY Slots
+INSERT INTO part_time_slots (
+    slot_id, work_shift_id, day_of_week, quota, is_active, created_at
+)
+VALUES
+(7, 'WKS_MORNING_02', 'THURSDAY', 2, TRUE, NOW()),
+(8, 'WKS_AFTERNOON_02', 'THURSDAY', 3, TRUE, NOW())
+ON CONFLICT (slot_id) DO NOTHING;
+
+-- FRIDAY Slots
+INSERT INTO part_time_slots (
+    slot_id, work_shift_id, day_of_week, quota, is_active, created_at
+)
+VALUES
+(9, 'WKS_MORNING_02', 'FRIDAY', 2, TRUE, NOW()),
+(10, 'WKS_AFTERNOON_02', 'FRIDAY', 2, TRUE, NOW())
+ON CONFLICT (slot_id) DO NOTHING;
+
+-- SATURDAY Slots (Higher quota for weekend)
+INSERT INTO part_time_slots (
+    slot_id, work_shift_id, day_of_week, quota, is_active, created_at
+)
+VALUES
+(11, 'WKS_MORNING_02', 'SATURDAY', 3, TRUE, NOW()),
+(12, 'WKS_AFTERNOON_02', 'SATURDAY', 3, TRUE, NOW())
+ON CONFLICT (slot_id) DO NOTHING;
+
+-- SUNDAY Slots (Limited availability)
+INSERT INTO part_time_slots (
+    slot_id, work_shift_id, day_of_week, quota, is_active, created_at
+)
+VALUES
+(13, 'WKS_MORNING_02', 'SUNDAY', 1, TRUE, NOW()),
+(14, 'WKS_AFTERNOON_02', 'SUNDAY', 1, FALSE, NOW()) -- Inactive slot for testing
+ON CONFLICT (slot_id) DO NOTHING;
+
+-- One FULL slot for testing SLOT_IS_FULL error
+-- NOTE: Using slot_id=1 (MONDAY morning, quota=2) for "full slot" test scenario
+-- It will have 2 registrations to make it full
+
+-- STEP 2: Employee Shift Registrations (Employees claim slots)
+-- Nurse Linh (employee_id=8, PART_TIME_FLEX) claims multiple slots
+
+-- Linh claims TUESDAY Morning (slot_id=3)
+INSERT INTO employee_shift_registrations (
+    registration_id, employee_id, part_time_slot_id, 
+    effective_from, effective_to, is_active
+)
+VALUES
+('ESR251101001', 8, 3, '2025-11-01', '2026-02-01', TRUE)
+ON CONFLICT (registration_id) DO NOTHING;
+
+-- Linh claims THURSDAY Afternoon (slot_id=8)
+INSERT INTO employee_shift_registrations (
+    registration_id, employee_id, part_time_slot_id, 
+    effective_from, effective_to, is_active
+)
+VALUES
+('ESR251101002', 8, 8, '2025-11-01', '2026-02-01', TRUE)
+ON CONFLICT (registration_id) DO NOTHING;
+
+-- Linh claims SATURDAY Morning (slot_id=11)
+INSERT INTO employee_shift_registrations (
+    registration_id, employee_id, part_time_slot_id, 
+    effective_from, effective_to, is_active
+)
+VALUES
+('ESR251101003', 8, 11, '2025-11-01', '2026-02-01', TRUE)
+ON CONFLICT (registration_id) DO NOTHING;
+
+-- Additional PART_TIME_FLEX employees for testing (create temporary test employees)
+-- Test Employee 10: PART_TIME_FLEX
+INSERT INTO accounts (account_id, username, password, email, status, role_id, created_at)
+VALUES
+(20, 'yta10', '$2a$10$RI1iV7k4XJFBWpQUCr.5L.ufNjjXlqvP0z1XrTiT8bKvYpHEtUQ8O', 'yta10@test.com', 'ACTIVE', 'ROLE_NURSE', NOW())
+ON CONFLICT (account_id) DO NOTHING;
+
+INSERT INTO employees (employee_id, account_id, employee_code, first_name, last_name, phone, date_of_birth, address, employment_type, is_active, created_at)
+VALUES
+(10, 20, 'EMP010', 'Minh', 'Lê Thị', '0909999999', '2000-01-15', '789 Nguyễn Huệ, Q1, TPHCM', 'PART_TIME_FLEX', TRUE, NOW())
+ON CONFLICT (employee_id) DO NOTHING;
+
+-- Test Employee 11: PART_TIME_FLEX
+INSERT INTO accounts (account_id, username, password, email, status, role_id, created_at)
+VALUES
+(21, 'yta11', '$2a$10$RI1iV7k4XJFBWpQUCr.5L.ufNjjXlqvP0z1XrTiT8bKvYpHEtUQ8O', 'yta11@test.com', 'ACTIVE', 'ROLE_NURSE', NOW())
+ON CONFLICT (account_id) DO NOTHING;
+
+INSERT INTO employees (employee_id, account_id, employee_code, first_name, last_name, phone, date_of_birth, address, employment_type, is_active, created_at)
+VALUES
+(11, 21, 'EMP011', 'Hương', 'Phạm Thị', '0901111111', '1999-05-20', '321 Lê Lợi, Q1, TPHCM', 'PART_TIME_FLEX', TRUE, NOW())
+ON CONFLICT (employee_id) DO NOTHING;
+
+-- Employee 10 (Minh) claims MONDAY Afternoon (slot_id=2)
+INSERT INTO employee_shift_registrations (
+    registration_id, employee_id, part_time_slot_id, 
+    effective_from, effective_to, is_active
+)
+VALUES
+('ESR251101004', 10, 2, '2025-11-01', '2026-02-01', TRUE)
+ON CONFLICT (registration_id) DO NOTHING;
+
+-- Employee 10 (Minh) claims WEDNESDAY Morning (slot_id=5)
+INSERT INTO employee_shift_registrations (
+    registration_id, employee_id, part_time_slot_id, 
+    effective_from, effective_to, is_active
+)
+VALUES
+('ESR251101005', 10, 5, '2025-11-01', '2026-02-01', TRUE)
+ON CONFLICT (registration_id) DO NOTHING;
+
+-- Employee 10 (Minh) claims MONDAY Morning (slot_id=1, quota=2) - First registration (1/2)
+INSERT INTO employee_shift_registrations (
+    registration_id, employee_id, part_time_slot_id, 
+    effective_from, effective_to, is_active
+)
+VALUES
+('ESR251101006', 10, 1, '2025-11-01', '2026-02-01', TRUE)
+ON CONFLICT (registration_id) DO NOTHING;
+
+-- Employee 11 (Huong) claims MONDAY Morning slot (slot_id=1, quota=2) - Makes it FULL (2/2)
+INSERT INTO employee_shift_registrations (
+    registration_id, employee_id, part_time_slot_id, 
+    effective_from, effective_to, is_active
+)
+VALUES
+('ESR251101007', 11, 1, '2025-11-01', '2026-02-01', TRUE)
+ON CONFLICT (registration_id) DO NOTHING;
+
+-- Employee 11 (Huong) also claims FRIDAY Morning (slot_id=9)
+INSERT INTO employee_shift_registrations (
+    registration_id, employee_id, part_time_slot_id, 
+    effective_from, effective_to, is_active
+)
+VALUES
+('ESR251101009', 11, 9, '2025-11-01', '2026-02-01', TRUE)
+ON CONFLICT (registration_id) DO NOTHING;
+
+-- Cancelled registration example (Linh cancels SUNDAY)
+-- First claim SUNDAY Morning (slot_id=13)
+INSERT INTO employee_shift_registrations (
+    registration_id, employee_id, part_time_slot_id, 
+    effective_from, effective_to, is_active
+)
+VALUES
+('ESR251101008', 8, 13, '2025-11-01', '2025-11-15', FALSE) -- Cancelled (is_active=false)
+ON CONFLICT (registration_id) DO NOTHING;
+
+-- ============================================
+-- SAMPLE DATA SUMMARY
+-- ============================================
+-- LUỒNG 1 (FIXED) - 7 registrations:
+--   - Dr. Minh (2): M-F Morning
+--   - Dr. Lan (3): M-F Afternoon
+--   - Receptionist Mai (4): M-F Morning Part-time
+--   - Accountant Tuan (5): M-Sa Morning
+--   - Nurse Hoa (6): M/W/F Morning Part-time (PART_TIME_FIXED)
+--   - Manager Quan (7): Tu/Th Morning
+--   - Nurse Trang (9): Tu/Th/Sa Afternoon Part-time (PART_TIME_FIXED)
+--
+-- LUỒNG 2 (FLEX) - 15 slots, 8 registrations:
+--   - 15 part-time slots created (14 active, 1 inactive)
+--   - Nurse Linh (8): 3 active registrations + 1 cancelled
+--   - Test Employee 10 (Minh): 2 active registrations
+--   - Test Employee 11 (Huong): 2 active registrations (1 makes slot FULL)
+--
+-- TESTING SCENARIOS:
+--   ✅ Fixed registrations for FULL_TIME and PART_TIME_FIXED
+--   ✅ Flex registrations for PART_TIME_FLEX
+--   ✅ Available slots with various quotas (1-3)
+--   ✅ Partially filled slots (remaining capacity > 0)
+--   ✅ FULL slot (slot_id=15, quota=1, registered=1)
+--   ✅ Inactive slot (slot_id=14, is_active=false)
+--   ✅ Cancelled registration (registration_id=8, is_active=false)
+--   ✅ Various effective dates for renewal testing
+-- ============================================
+
+-- ============================================
 -- HƯỚNG DẪN SỬ DỤNG
 -- ============================================
 --
