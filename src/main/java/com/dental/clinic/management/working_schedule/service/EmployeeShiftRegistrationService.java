@@ -1,6 +1,9 @@
 package com.dental.clinic.management.working_schedule.service;
 
 import com.dental.clinic.management.account.repository.AccountRepository;
+import com.dental.clinic.management.employee.domain.Employee;
+import com.dental.clinic.management.employee.enums.EmploymentType;
+import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.utils.security.SecurityUtil;
 import com.dental.clinic.management.working_schedule.domain.EmployeeShiftRegistration;
 import com.dental.clinic.management.working_schedule.domain.PartTimeSlot;
@@ -35,6 +38,7 @@ public class EmployeeShiftRegistrationService {
     private final PartTimeSlotRepository slotRepository;
     private final WorkShiftRepository workShiftRepository;
     private final AccountRepository accountRepository;
+    private final EmployeeRepository employeeRepository;
     private final EntityManager entityManager;
 
     /**
@@ -87,6 +91,20 @@ public class EmployeeShiftRegistrationService {
         Integer employeeId = getCurrentEmployeeId();
         log.info("Employee {} claiming slot {}", employeeId, request.getPartTimeSlotId());
 
+        // Validate employee exists and is PART_TIME_FLEX
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new IllegalStateException("Employee not found: " + employeeId));
+        
+        // Only PART_TIME_FLEX employees can claim flexible slots
+        if (employee.getEmploymentType() != EmploymentType.PART_TIME_FLEX && 
+            employee.getEmploymentType() != EmploymentType.PART_TIME) { // Support legacy PART_TIME
+            log.warn("Employee {} with type {} attempted to claim flexible slot", 
+                    employeeId, employee.getEmploymentType());
+            throw new IllegalArgumentException(
+                "Chỉ nhân viên PART_TIME_FLEX mới có thể đăng ký ca linh hoạt. " +
+                "Nhân viên FULL_TIME và PART_TIME_FIXED phải sử dụng đăng ký ca cố định.");
+        }
+
         // Validate effectiveFrom not in past
         if (request.getEffectiveFrom().isBefore(LocalDate.now())) {
             throw new IllegalArgumentException("Effective from date cannot be in the past");
@@ -107,13 +125,25 @@ public class EmployeeShiftRegistrationService {
             throw new SlotIsFullException(slot.getSlotId(), shiftName, slot.getDayOfWeek());
         }
 
-        // Check employee hasn't already registered this same slot (prevent duplicate registration of same slot)
-        boolean alreadyRegistered = registrationRepository.findByEmployeeIdAndIsActive(employeeId, true)
-                .stream()
-                .anyMatch(reg -> reg.getPartTimeSlotId().equals(slot.getSlotId()));
+        // Check for registration conflicts
+        List<EmployeeShiftRegistration> activeRegistrations = registrationRepository
+                .findByEmployeeIdAndIsActive(employeeId, true);
         
-        if (alreadyRegistered) {
-            throw new RegistrationConflictException(employeeId);
+        for (EmployeeShiftRegistration existingReg : activeRegistrations) {
+            // Check 1: Can't register the same slot twice
+            if (existingReg.getPartTimeSlotId().equals(slot.getSlotId())) {
+                throw new RegistrationConflictException(employeeId);
+            }
+            
+            // Check 2: Can't register conflicting time slots (same day + same shift)
+            PartTimeSlot existingSlot = slotRepository.findById(existingReg.getPartTimeSlotId()).orElse(null);
+            if (existingSlot != null) {
+                boolean sameDayAndShift = existingSlot.getDayOfWeek().equals(slot.getDayOfWeek()) &&
+                                         existingSlot.getWorkShiftId().equals(slot.getWorkShiftId());
+                if (sameDayAndShift) {
+                    throw new RegistrationConflictException(employeeId);
+                }
+            }
         }
 
         // Calculate effectiveTo (3 months from effectiveFrom)
