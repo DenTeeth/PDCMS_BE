@@ -82,4 +82,35 @@ public interface FixedShiftRegistrationRepository extends JpaRepository<FixedShi
             "WHERE fsr.employee.employeeId = :employeeId " +
             "AND fsr.isActive = true")
     long countActiveByEmployeeId(@Param("employeeId") Integer employeeId);
+
+    /**
+     * Find all registrations filtered by active status.
+     * 
+     * @param isActive filter by active status (null = all, true = active only, false = inactive only)
+     * @return list of registrations
+     */
+    @Query("SELECT fsr FROM FixedShiftRegistration fsr " +
+            "LEFT JOIN FETCH fsr.registrationDays " +
+            "LEFT JOIN FETCH fsr.workShift " +
+            "LEFT JOIN FETCH fsr.employee " +
+            "WHERE (:isActive IS NULL OR fsr.isActive = :isActive) " +
+            "ORDER BY fsr.employee.employeeId ASC, fsr.workShift.startTime ASC")
+    List<FixedShiftRegistration> findAllByActiveStatus(@Param("isActive") Boolean isActive);
+
+    /**
+     * Find registrations by employee ID filtered by active status.
+     * 
+     * @param employeeId employee ID
+     * @param isActive filter by active status (null = all, true = active only, false = inactive only)
+     * @return list of registrations
+     */
+    @Query("SELECT fsr FROM FixedShiftRegistration fsr " +
+            "LEFT JOIN FETCH fsr.registrationDays " +
+            "LEFT JOIN FETCH fsr.workShift " +
+            "WHERE fsr.employee.employeeId = :employeeId " +
+            "AND (:isActive IS NULL OR fsr.isActive = :isActive) " +
+            "ORDER BY fsr.workShift.startTime ASC")
+    List<FixedShiftRegistration> findByEmployeeIdAndActiveStatus(
+            @Param("employeeId") Integer employeeId,
+            @Param("isActive") Boolean isActive);
 }

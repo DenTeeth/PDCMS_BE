@@ -398,7 +398,7 @@ public class GlobalExceptionHandler {
 
         FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
         res.setStatusCode(HttpStatus.BAD_REQUEST.value());
-        res.setError("error.invalid.status.transition");
+        res.setError("INVALID_STATUS_TRANSITION");
         res.setMessage(ex.getMessage());
         res.setData(null);
 

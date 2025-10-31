@@ -19,6 +19,7 @@ import com.dental.clinic.management.working_schedule.repository.FixedShiftRegist
 import com.dental.clinic.management.working_schedule.repository.WorkShiftRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -59,8 +60,9 @@ public class FixedShiftRegistrationService {
         Employee employee = employeeRepository.findById(request.getEmployeeId())
                 .orElseThrow(() -> new RelatedResourceNotFoundException("Nhân viên không tồn tại"));
 
-        // 2. Check employee type - MUST NOT be PART_TIME_FLEX
-        if (employee.getEmploymentType() == EmploymentType.PART_TIME_FLEX) {
+        // 2. Check employee type - MUST NOT be PART_TIME_FLEX or deprecated PART_TIME
+        EmploymentType empType = employee.getEmploymentType();
+        if (empType == EmploymentType.PART_TIME_FLEX || empType == EmploymentType.PART_TIME) {
             throw new InvalidEmployeeTypeException();
         }
 
@@ -131,28 +133,31 @@ public class FixedShiftRegistrationService {
     public List<FixedRegistrationResponse> getFixedRegistrations(
             Integer employeeId,
             Integer currentEmployeeId,
-            boolean hasViewAllPermission) {
+            boolean hasViewAllPermission,
+            Boolean isActive) {
 
-        Integer effectiveEmployeeId;
+        List<FixedShiftRegistration> registrations;
 
         if (hasViewAllPermission) {
-            // Admin/Manager must provide employee_id
+            // Admin/Manager can view all or filter by employeeId and isActive
             if (employeeId == null) {
-                throw new EmployeeIdRequiredException();
+                // View all registrations
+                registrations = registrationRepository.findAllByActiveStatus(isActive);
+            } else {
+                // Filter by specific employee
+                if (!employeeRepository.existsById(employeeId)) {
+                    throw new RelatedResourceNotFoundException("Nhân viên không tồn tại");
+                }
+                registrations = registrationRepository.findByEmployeeIdAndActiveStatus(employeeId, isActive);
             }
-            effectiveEmployeeId = employeeId;
         } else {
-            // Regular employee can only view own registrations
-            effectiveEmployeeId = currentEmployeeId;
+            // Regular employee: cannot provide employeeId, use JWT token's employeeId
+            if (employeeId != null) {
+                throw new AccessDeniedException("Bạn không thể chỉ định employeeId. Hệ thống sẽ tự động lấy từ tài khoản của bạn.");
+            }
+            // Regular employees can only see their own active registrations
+            registrations = registrationRepository.findActiveByEmployeeId(currentEmployeeId);
         }
-
-        // Verify employee exists
-        if (!employeeRepository.existsById(effectiveEmployeeId)) {
-            throw new RelatedResourceNotFoundException("Nhân viên không tồn tại");
-        }
-
-        // Get registrations
-        List<FixedShiftRegistration> registrations = registrationRepository.findActiveByEmployeeId(effectiveEmployeeId);
 
         return registrations.stream()
                 .map(this::toResponse)

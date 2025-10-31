@@ -53,19 +53,20 @@ public class FixedShiftRegistrationController {
     /**
      * Get list of fixed shift registrations.
      *
-     * GET /api/v1/fixed-registrations?employee_id=123
+     * GET /api/v1/fixed-registrations?employeeId=123&isActive=true
      *
      * Authorization: Requires VIEW_FIXED_REGISTRATIONS_ALL or
      * VIEW_FIXED_REGISTRATIONS_OWN
      *
-     * @param employeeId     employee ID (required for VIEW_ALL, ignored for
-     *                       VIEW_OWN)
+     * @param employeeId     employee ID (optional for VIEW_ALL)
+     * @param isActive       filter by active status (null = all, true = active only, false = inactive only)
      * @param authentication authenticated user
      * @return list of registrations
      */
     @GetMapping
     public ResponseEntity<List<FixedRegistrationResponse>> getFixedRegistrations(
-            @RequestParam(name = "employee_id", required = false) Integer employeeId,
+            @RequestParam(name = "employeeId", required = false) Integer employeeId,
+            @RequestParam(name = "isActive", required = false) Boolean isActive,
             Authentication authentication) {
 
         // Get current user info
@@ -79,23 +80,23 @@ public class FixedShiftRegistrationController {
                 .contains(new SimpleGrantedAuthority("VIEW_FIXED_REGISTRATIONS_ALL"));
 
         List<FixedRegistrationResponse> registrations = fixedRegistrationService.getFixedRegistrations(
-                employeeId, currentEmployeeId, hasViewAllPermission);
+                employeeId, currentEmployeeId, hasViewAllPermission, isActive);
 
         return ResponseEntity.ok(registrations);
     }
 
     /**
-     * Update a fixed shift registration.
+     * Update a fixed shift registration (partial update).
      *
-     * PUT /api/v1/fixed-registrations/{registrationId}
+     * PATCH /api/v1/fixed-registrations/{registrationId}
      *
      * Authorization: Requires MANAGE_FIXED_REGISTRATIONS
      *
      * @param registrationId registration ID
-     * @param request        update request
+     * @param request        update request (all fields optional)
      * @return updated registration details
      */
-    @PutMapping("/{registrationId}")
+    @PatchMapping("/{registrationId}")
     public ResponseEntity<FixedRegistrationResponse> updateFixedRegistration(
             @PathVariable("registrationId") Integer registrationId,
             @Valid @RequestBody UpdateFixedRegistrationRequest request) {
