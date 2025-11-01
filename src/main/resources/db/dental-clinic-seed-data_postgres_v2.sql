@@ -48,16 +48,17 @@ ON CONFLICT (role_id) DO NOTHING;
 -- ============================================
 -- BƯỚC 3: TẠO CÁC QUYỀN (PERMISSIONS) - MERGED MODULES
 -- ============================================
--- 9 modules sau khi merge (giảm từ 12 modules):
+-- 10 modules sau khi merge (giảm từ 12 modules):
 -- 1. ACCOUNT (4 perms)
--- 2. EMPLOYEE (4 perms)
+-- 2. EMPLOYEE (6 perms)
 -- 3. PATIENT (4 perms)
 -- 4. TREATMENT (3 perms)
--- 5. APPOINTMENT (4 perms)
+-- 5. APPOINTMENT (5 perms)
 -- 6. CUSTOMER_MANAGEMENT (8 perms) = CONTACT + CONTACT_HISTORY
--- 7. SCHEDULE_MANAGEMENT (11 perms) = WORK_SHIFTS + REGISTRATION + SHIFT_RENEWAL
--- 8. LEAVE_MANAGEMENT (18 perms) = TIME_OFF + OVERTIME + TIME_OFF_MANAGEMENT
+-- 7. SCHEDULE_MANAGEMENT (27 perms) = WORK_SHIFTS + REGISTRATION + SHIFT_RENEWAL
+-- 8. LEAVE_MANAGEMENT (29 perms) = TIME_OFF + OVERTIME + TIME_OFF_MANAGEMENT
 -- 9. SYSTEM_CONFIGURATION (12 perms) = ROLE + PERMISSION + SPECIALIZATION
+-- 10. HOLIDAY (4 perms) = Holiday Management (NEW)
 --
 -- PATH FIELD REMOVED - FE handles routing independently
 -- ============================================
@@ -227,6 +228,15 @@ VALUES
 ('DELETE_SPECIALIZATION', 'DELETE_SPECIALIZATION', 'SYSTEM_CONFIGURATION', 'Xóa chuyên khoa', 223, NULL, TRUE, NOW())
 ON CONFLICT (permission_id) DO NOTHING;
 
+-- MODULE 10: HOLIDAY (Holiday Management)
+INSERT INTO permissions (permission_id, permission_name, module, description, display_order, parent_permission_id, is_active, created_at)
+VALUES
+('VIEW_HOLIDAY', 'VIEW_HOLIDAY', 'HOLIDAY', 'Xem danh sách ngày nghỉ lễ', 230, NULL, TRUE, NOW()),
+('CREATE_HOLIDAY', 'CREATE_HOLIDAY', 'HOLIDAY', 'Tạo ngày nghỉ lễ mới', 231, NULL, TRUE, NOW()),
+('UPDATE_HOLIDAY', 'UPDATE_HOLIDAY', 'HOLIDAY', 'Cập nhật ngày nghỉ lễ', 232, NULL, TRUE, NOW()),
+('DELETE_HOLIDAY', 'DELETE_HOLIDAY', 'HOLIDAY', 'Xóa ngày nghỉ lễ', 233, NULL, TRUE, NOW())
+ON CONFLICT (permission_id) DO NOTHING;
+
 -- ============================================
 -- BƯỚC 4: PHÂN QUYỀN CHO CÁC VAI TRÒ
 -- ============================================
@@ -245,7 +255,8 @@ VALUES
 ('ROLE_DOCTOR', 'VIEW_REGISTRATION_OWN'), ('ROLE_DOCTOR', 'VIEW_RENEWAL_OWN'), ('ROLE_DOCTOR', 'RESPOND_RENEWAL_OWN'),
 ('ROLE_DOCTOR', 'CREATE_REGISTRATION'),
 ('ROLE_DOCTOR', 'VIEW_LEAVE_OWN'), ('ROLE_DOCTOR', 'CREATE_TIME_OFF'), ('ROLE_DOCTOR', 'CREATE_OVERTIME'),
-('ROLE_DOCTOR', 'CANCEL_TIME_OFF_OWN'), ('ROLE_DOCTOR', 'CANCEL_OVERTIME_OWN')
+('ROLE_DOCTOR', 'CANCEL_TIME_OFF_OWN'), ('ROLE_DOCTOR', 'CANCEL_OVERTIME_OWN'),
+('ROLE_DOCTOR', 'VIEW_HOLIDAY')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 -- Nurse
@@ -255,7 +266,8 @@ VALUES
 ('ROLE_NURSE', 'VIEW_REGISTRATION_OWN'), ('ROLE_NURSE', 'VIEW_RENEWAL_OWN'), ('ROLE_NURSE', 'RESPOND_RENEWAL_OWN'),
 ('ROLE_NURSE', 'CREATE_REGISTRATION'),
 ('ROLE_NURSE', 'VIEW_LEAVE_OWN'), ('ROLE_NURSE', 'CREATE_TIME_OFF'), ('ROLE_NURSE', 'CREATE_OVERTIME'),
-('ROLE_NURSE', 'CANCEL_TIME_OFF_OWN'), ('ROLE_NURSE', 'CANCEL_OVERTIME_OWN')
+('ROLE_NURSE', 'CANCEL_TIME_OFF_OWN'), ('ROLE_NURSE', 'CANCEL_OVERTIME_OWN'),
+('ROLE_NURSE', 'VIEW_HOLIDAY')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 -- Receptionist
@@ -273,7 +285,8 @@ VALUES
 ('ROLE_RECEPTIONIST', 'VIEW_REGISTRATION_OWN'),
 ('ROLE_RECEPTIONIST', 'CREATE_REGISTRATION'),
 ('ROLE_RECEPTIONIST', 'VIEW_LEAVE_OWN'), ('ROLE_RECEPTIONIST', 'CREATE_TIME_OFF'), ('ROLE_RECEPTIONIST', 'CREATE_OVERTIME'),
-('ROLE_RECEPTIONIST', 'CANCEL_TIME_OFF_OWN'), ('ROLE_RECEPTIONIST', 'CANCEL_OVERTIME_OWN')
+('ROLE_RECEPTIONIST', 'CANCEL_TIME_OFF_OWN'), ('ROLE_RECEPTIONIST', 'CANCEL_OVERTIME_OWN'),
+('ROLE_RECEPTIONIST', 'VIEW_HOLIDAY')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 -- Manager (Full management permissions)
@@ -309,7 +322,9 @@ VALUES
 ('ROLE_MANAGER', 'VIEW_LEAVE_BALANCE_ALL'), ('ROLE_MANAGER', 'ADJUST_LEAVE_BALANCE'),
 -- SYSTEM_CONFIGURATION (limited)
 ('ROLE_MANAGER', 'VIEW_ROLE'), ('ROLE_MANAGER', 'VIEW_SPECIALIZATION'),
-('ROLE_MANAGER', 'CREATE_SPECIALIZATION'), ('ROLE_MANAGER', 'UPDATE_SPECIALIZATION')
+('ROLE_MANAGER', 'CREATE_SPECIALIZATION'), ('ROLE_MANAGER', 'UPDATE_SPECIALIZATION'),
+-- HOLIDAY
+('ROLE_MANAGER', 'VIEW_HOLIDAY')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 -- Accountant & Inventory Manager (LEAVE only)
@@ -317,8 +332,10 @@ INSERT INTO role_permissions (role_id, permission_id)
 VALUES
 ('ROLE_ACCOUNTANT', 'VIEW_LEAVE_OWN'), ('ROLE_ACCOUNTANT', 'CREATE_TIME_OFF'), ('ROLE_ACCOUNTANT', 'CREATE_OVERTIME'),
 ('ROLE_ACCOUNTANT', 'CANCEL_TIME_OFF_OWN'), ('ROLE_ACCOUNTANT', 'CANCEL_OVERTIME_OWN'),
+('ROLE_ACCOUNTANT', 'VIEW_HOLIDAY'),
 ('ROLE_INVENTORY_MANAGER', 'VIEW_LEAVE_OWN'), ('ROLE_INVENTORY_MANAGER', 'CREATE_TIME_OFF'), ('ROLE_INVENTORY_MANAGER', 'CREATE_OVERTIME'),
-('ROLE_INVENTORY_MANAGER', 'CANCEL_TIME_OFF_OWN'), ('ROLE_INVENTORY_MANAGER', 'CANCEL_OVERTIME_OWN')
+('ROLE_INVENTORY_MANAGER', 'CANCEL_TIME_OFF_OWN'), ('ROLE_INVENTORY_MANAGER', 'CANCEL_OVERTIME_OWN'),
+('ROLE_INVENTORY_MANAGER', 'VIEW_HOLIDAY')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 -- Patient (basic view only)
@@ -726,6 +743,9 @@ ON CONFLICT (employee_shift_id) DO NOTHING;
 -- ============================================
 -- HOLIDAY DEFINITIONS (New Schema with 2 tables)
 -- ============================================
+-- Production holidays: TET_2025, LIBERATION_DAY, LABOR_DAY, NATIONAL_DAY, NEW_YEAR, HUNG_KINGS
+-- Test holidays: MAINTENANCE_WEEK (for FE testing shift blocking)
+-- ============================================
 
 -- Step 1: Insert holiday definitions (one by one to avoid conflicts)
 INSERT INTO holiday_definitions (definition_id, holiday_name, holiday_type, description, created_at, updated_at)
@@ -755,44 +775,89 @@ ON CONFLICT (definition_id) DO NOTHING;
 -- Step 2: Insert holiday dates (specific dates for each definition)
 -- Tết Nguyên Đán 2025 (Jan 29 - Feb 4, 2025)
 INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2025-01-29', 'TET_2025', 'Ngày Tết Nguyên Đán (30 Tết)', NOW(), NOW());
+VALUES ('2025-01-29', 'TET_2025', 'Ngày Tết Nguyên Đán (30 Tết)', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
 
 INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2025-01-30', 'TET_2025', 'Mùng 1 Tết', NOW(), NOW());
+VALUES ('2025-01-30', 'TET_2025', 'Mùng 1 Tết', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
 
 INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2025-01-31', 'TET_2025', 'Mùng 2 Tết', NOW(), NOW());
+VALUES ('2025-01-31', 'TET_2025', 'Mùng 2 Tết', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
 
 INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2025-02-01', 'TET_2025', 'Mùng 3 Tết', NOW(), NOW());
+VALUES ('2025-02-01', 'TET_2025', 'Mùng 3 Tết', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
 
 INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2025-02-02', 'TET_2025', 'Mùng 4 Tết', NOW(), NOW());
+VALUES ('2025-02-02', 'TET_2025', 'Mùng 4 Tết', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
 
 INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2025-02-03', 'TET_2025', 'Mùng 5 Tết', NOW(), NOW());
+VALUES ('2025-02-03', 'TET_2025', 'Mùng 5 Tết', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
 
 INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2025-02-04', 'TET_2025', 'Mùng 6 Tết', NOW(), NOW());
+VALUES ('2025-02-04', 'TET_2025', 'Mùng 6 Tết', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
 
 -- Liberation Day & Labor Day (April 30 - May 1, 2025)
 INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2025-04-30', 'LIBERATION_DAY', 'Ngày Giải phóng miền Nam', NOW(), NOW());
+VALUES ('2025-04-30', 'LIBERATION_DAY', 'Ngày Giải phóng miền Nam', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
 
 INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2025-05-01', 'LABOR_DAY', 'Ngày Quốc tế Lao động', NOW(), NOW());
+VALUES ('2025-05-01', 'LABOR_DAY', 'Ngày Quốc tế Lao động', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
 
 -- Hung Kings Commemoration Day 2025 (April 18, 2025 - lunar March 10th)
 INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2025-04-18', 'HUNG_KINGS', 'Giỗ Tổ Hùng Vương', NOW(), NOW());
+VALUES ('2025-04-18', 'HUNG_KINGS', 'Giỗ Tổ Hùng Vương', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
 
 -- National Day (September 2, 2025)
 INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2025-09-02', 'NATIONAL_DAY', 'Quốc khánh Việt Nam', NOW(), NOW());
+VALUES ('2025-09-02', 'NATIONAL_DAY', 'Quốc khánh Việt Nam', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
 
 -- New Year (January 1, 2025)
 INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2025-01-01', 'NEW_YEAR', 'Tết Dương lịch 2025', NOW(), NOW());
+VALUES ('2025-01-01', 'NEW_YEAR', 'Tết Dương lịch 2025', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
+
+-- ============================================
+-- TEST DATA: MAINTENANCE_WEEK (For FE Testing)
+-- ============================================
+-- Purpose: Test holiday blocking functionality for shifts
+-- Use Case: FE can test shift creation blocking on holidays
+-- Dates: Next week (Monday, Wednesday, Friday)
+-- Note: These are example dates - update as needed for testing
+-- ============================================
+
+INSERT INTO holiday_definitions (definition_id, holiday_name, holiday_type, description, created_at, updated_at)
+VALUES ('MAINTENANCE_WEEK', 'System Maintenance Week', 'COMPANY', 'Scheduled system maintenance - For testing holiday blocking', NOW(), NOW())
+ON CONFLICT (definition_id) DO NOTHING;
+
+-- Add 3 maintenance days (Monday, Wednesday, Friday of a test week)
+-- Example: November 3, 5, 7, 2025
+INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
+VALUES ('2025-11-03', 'MAINTENANCE_WEEK', 'Monday maintenance - Test holiday blocking', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
+
+INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
+VALUES ('2025-11-05', 'MAINTENANCE_WEEK', 'Wednesday maintenance - Test holiday blocking', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
+
+INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
+VALUES ('2025-11-07', 'MAINTENANCE_WEEK', 'Friday maintenance - Test holiday blocking', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
+
+-- Expected Behavior:
+-- ✅ Creating shifts on 2025-11-04 (Tuesday) or 2025-11-06 (Thursday) should SUCCEED
+-- ❌ Creating shifts on 2025-11-03 (Monday), 2025-11-05 (Wednesday), or 2025-11-07 (Friday) should return 409 HOLIDAY_CONFLICT
+-- ✅ Time-off requests spanning these dates should SUCCEED (expected behavior)
+-- ✅ Batch jobs should SKIP these dates when auto-creating shifts
 
 -- ============================================
 -- WORKING SCHEDULE SAMPLE DATA (Schema V14 Hybrid)

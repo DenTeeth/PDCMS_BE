@@ -64,7 +64,7 @@ public class HolidayDefinitionController {
         return ResponseEntity.ok(responses);
     }
 
-    @PutMapping("/{definitionId}")
+    @PatchMapping("/{definitionId}")
     @PreAuthorize("hasAuthority('UPDATE_HOLIDAY')")
     @Operation(summary = "Update a holiday definition")
     public ResponseEntity<HolidayDefinitionResponse> updateHolidayDefinition(
