@@ -28,11 +28,17 @@ import java.util.stream.Collectors;
 /**
  * Job 1: Auto-create monthly schedule for full-time employees.
  *
- * Runs on the 20th of every month.
- * Creates shifts for the next month for all full-time employees.
- * Skips weekends (Saturday, Sunday) and holidays.
+ * ⚠️ DEPRECATED: Replaced by UnifiedScheduleSyncJob (P8)
+ * 
+ * This job has been superseded by the new unified sync job that handles
+ * BOTH Fixed and Flex schedules in a single daily run with 14-day window.
+ * 
+ * Kept for reference only. Do NOT enable this job.
+ * 
+ * @deprecated Use {@link UnifiedScheduleSyncJob} instead
  */
-@Component
+@Deprecated
+// @Component // DISABLED - replaced by UnifiedScheduleSyncJob
 @Slf4j
 @RequiredArgsConstructor
 public class MonthlyFullTimeScheduleJob {

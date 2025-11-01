@@ -13,15 +13,14 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * Job 5: Expire pending renewal requests that employees haven't responded to.
+ * Job P10: Auto-expire pending renewal requests that have passed their deadline.
  *
- * Runs every hour at the top of the hour (00 minutes).
- * Finds renewal requests with status PENDING_ACTION where responseDeadline has
- * passed.
- * Updates their status to EXPIRED and logs the expiration.
- *
- * This ensures that old renewal invitations don't stay in PENDING state forever
- * and allows HR/Admin to take appropriate action.
+ * Runs daily at 00:10 AM (after P9 creates new renewals).
+ * Marks renewal requests as EXPIRED if employees haven't responded before expires_at.
+ * 
+ * IMPROVEMENTS from old Job:
+ * - Timing optimized to 00:10 AM (daily is sufficient, hourly was overkill)
+ * - Runs after P9 for better workflow
  */
 @Component
 @Slf4j
@@ -31,16 +30,14 @@ public class ExpirePendingRenewalsJob {
     private final ShiftRenewalRequestRepository renewalRepository;
 
     /**
-     * Cron: 0 0 * * * ?
-     * - Runs at the top of every hour (e.g., 00:00, 01:00, 02:00, etc.)
+     * Cron: 0 10 0 * * ?
+     * - Runs at 00:10 AM every day (5 minutes after P9)
      * - Format: second minute hour day-of-month month day-of-week
-     *
-     * Alternative: Run daily at 2:00 AM with cron "0 0 2 * * ?"
      */
-    @Scheduled(cron = "0 0 * * * ?", zone = "Asia/Ho_Chi_Minh")
+    @Scheduled(cron = "0 10 0 * * ?", zone = "Asia/Ho_Chi_Minh")
     @Transactional
     public void expirePendingRenewals() {
-        log.info("=== Starting Expire Pending Renewals Job ===");
+        log.info("=== Starting Expire Pending Renewals Job (P10) ===");
 
         LocalDateTime now = LocalDateTime.now();
         log.info("Current time: {}", now);
@@ -86,17 +83,9 @@ public class ExpirePendingRenewalsJob {
                     renewal.setStatus(RenewalStatus.EXPIRED);
                     renewal.setConfirmedAt(now);
 
-                    // Add notes about automatic expiration
-                    String expirationNote = String.format(
-                            "Tự động hết hạn vào %s do nhân viên không phản hồi trước deadline %s",
-                            now, renewal.getExpiresAt());
-
-                    if (renewal.getMessage() != null && !renewal.getMessage().isBlank()) {
-                        renewal.setMessage(renewal.getMessage() + "\n" + expirationNote);
-                    } else {
-                        renewal.setMessage(expirationNote);
-                    }
-
+                    // Note: ShiftRenewalRequest doesn't have a 'message' field
+                    // Expiration is tracked via status and confirmedAt timestamp
+                    
                     renewalRepository.save(renewal);
                     successfullyExpired++;
 

@@ -167,4 +167,43 @@ public interface FixedShiftRegistrationRepository extends JpaRepository<FixedShi
                         @Param("employeeId") Integer employeeId,
                         @Param("workDate") java.time.LocalDate workDate,
                         @Param("workShiftId") String workShiftId);
+
+        /**
+         * Find all registrations expiring on a specific date.
+         * Used by DailyRenewalDetectionJob to detect registrations that need renewal.
+         * 
+         * @param effectiveTo the expiration date
+         * @param isActive filter by active status
+         * @return list of registrations expiring on the specified date
+         */
+        @Query("SELECT fsr FROM FixedShiftRegistration fsr " +
+                        "LEFT JOIN FETCH fsr.registrationDays " +
+                        "LEFT JOIN FETCH fsr.workShift " +
+                        "LEFT JOIN FETCH fsr.employee " +
+                        "WHERE fsr.effectiveTo = :effectiveTo " +
+                        "AND fsr.isActive = :isActive")
+        List<FixedShiftRegistration> findAllByEffectiveToAndIsActive(
+                        @Param("effectiveTo") java.time.LocalDate effectiveTo,
+                        @Param("isActive") Boolean isActive);
+
+        /**
+         * Find all registrations expiring within a date range.
+         * Used by DailyRenewalDetectionJob (P9) to find registrations needing renewal.
+         * 
+         * @param startDate beginning of expiry window
+         * @param endDate end of expiry window
+         * @param isActive filter by active status
+         * @return list of registrations expiring in the range
+         */
+        @Query("SELECT fsr FROM FixedShiftRegistration fsr " +
+                        "LEFT JOIN FETCH fsr.registrationDays " +
+                        "LEFT JOIN FETCH fsr.workShift " +
+                        "LEFT JOIN FETCH fsr.employee " +
+                        "WHERE fsr.effectiveTo BETWEEN :startDate AND :endDate " +
+                        "AND fsr.isActive = :isActive " +
+                        "AND fsr.effectiveTo IS NOT NULL")
+        List<FixedShiftRegistration> findByEffectiveToRange(
+                        @Param("startDate") java.time.LocalDate startDate,
+                        @Param("endDate") java.time.LocalDate endDate,
+                        @Param("isActive") Boolean isActive);
 }

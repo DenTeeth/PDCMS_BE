@@ -1,8 +1,8 @@
 package com.dental.clinic.management.scheduled;
 
-import com.dental.clinic.management.working_schedule.domain.EmployeeShiftRegistration;
+import com.dental.clinic.management.working_schedule.domain.FixedShiftRegistration;
 import com.dental.clinic.management.working_schedule.enums.RenewalStatus;
-import com.dental.clinic.management.working_schedule.repository.EmployeeShiftRegistrationRepository;
+import com.dental.clinic.management.working_schedule.repository.FixedShiftRegistrationRepository;
 import com.dental.clinic.management.working_schedule.repository.ShiftRenewalRequestRepository;
 import com.dental.clinic.management.working_schedule.service.ShiftRenewalService;
 import lombok.RequiredArgsConstructor;
@@ -15,56 +15,69 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * Job 3: Auto-detect expiring part-time registrations and create renewal
- * requests.
+ * Job P9: Auto-detect expiring FIXED shift registrations and create renewal requests.
  *
- * Runs daily at 01:00 AM.
- * Finds registrations expiring in 7 days and creates renewal invitations.
+ * Runs daily at 00:05 AM (after P8 sync job completes).
+ * Finds FIXED registrations (FULL_TIME/PART_TIME_FIXED) expiring in 14-28 days 
+ * and creates renewal invitations.
+ * 
+ * IMPROVEMENTS from old Job 3:
+ * - Window changed from 7 days to 14-28 days (more time for employee response)
+ * - Added NOT EXISTS check to prevent duplicate renewal requests
+ * - Runs after P8 sync for better data consistency
+ * 
+ * NOTE: Part-Time Flex registrations don't need renewal - they expire automatically (handled by P11).
  */
 @Component
 @Slf4j
 @RequiredArgsConstructor
 public class DailyRenewalDetectionJob {
 
-    private final EmployeeShiftRegistrationRepository registrationRepository;
+    private final FixedShiftRegistrationRepository registrationRepository;
     private final ShiftRenewalRequestRepository renewalRepository;
     private final ShiftRenewalService renewalService;
 
-    private static final int DAYS_BEFORE_EXPIRY = 7;
+    // Window: Find registrations expiring in 14-28 days
+    // This gives employees 14 days to respond before expiration
+    private static final int RENEWAL_WINDOW_START_DAYS = 14;
+    private static final int RENEWAL_WINDOW_END_DAYS = 28;
 
     /**
-     * Cron: 0 0 1 * * ?
-     * - Runs at 01:00 AM every day
+     * Cron: 0 5 0 * * ?
+     * - Runs at 00:05 AM every day (5 minutes after P8)
      * - Format: second minute hour day-of-month month day-of-week
      */
-    @Scheduled(cron = "0 0 1 * * ?", zone = "Asia/Ho_Chi_Minh")
+    @Scheduled(cron = "0 5 0 * * ?", zone = "Asia/Ho_Chi_Minh")
     @Transactional
     public void detectExpiringRegistrations() {
-        log.info("=== Starting Daily Renewal Detection Job ===");
+        log.info("=== Starting Daily Renewal Detection Job (P9) ===");
 
         LocalDate today = LocalDate.now();
-        LocalDate expiryDate = today.plusDays(DAYS_BEFORE_EXPIRY);
+        LocalDate windowStart = today.plusDays(RENEWAL_WINDOW_START_DAYS);
+        LocalDate windowEnd = today.plusDays(RENEWAL_WINDOW_END_DAYS);
 
-        log.info("Looking for registrations expiring on: {}", expiryDate);
+        log.info("Looking for FIXED registrations expiring between: {} and {}", 
+                windowStart, windowEnd);
 
         try {
             // VALIDATION: Check if registration repository is accessible
             long totalRegistrations = registrationRepository.count();
-            log.info("Validation passed: {} total registrations in database", totalRegistrations);
+            log.info("Validation passed: {} total FIXED registrations in database", totalRegistrations);
 
             if (totalRegistrations == 0) {
-                log.info("No registrations found in database. Job completed with no actions.");
+                log.info("No FIXED registrations found in database. Job completed with no actions.");
                 return;
             }
 
-            // 1. Find registrations expiring in 7 days
-            List<EmployeeShiftRegistration> expiringRegistrations = registrationRepository
-                    .findRegistrationsExpiringOn(expiryDate);
+            // Find FIXED registrations expiring in the window (14-28 days from now)
+            List<FixedShiftRegistration> expiringRegistrations = registrationRepository
+                    .findByEffectiveToRange(windowStart, windowEnd, true);
 
-            log.info("Found {} registrations expiring on {}", expiringRegistrations.size(), expiryDate);
+            log.info("Found {} FIXED registrations expiring in window [{} to {}]", 
+                    expiringRegistrations.size(), windowStart, windowEnd);
 
             if (expiringRegistrations.isEmpty()) {
-                log.info("No expiring registrations found. Job completed successfully.");
+                log.info("No expiring FIXED registrations found. Job completed successfully.");
                 return;
             }
 
@@ -73,25 +86,25 @@ public class DailyRenewalDetectionJob {
             int skippedAlreadyExists = 0;
             int skippedDueToErrors = 0;
 
-            for (EmployeeShiftRegistration registration : expiringRegistrations) {
+            for (FixedShiftRegistration registration : expiringRegistrations) {
                 try {
                     // VALIDATION: Check if registration has valid ID
-                    String registrationId = registration.getRegistrationId();
-                    if (registrationId == null || registrationId.isBlank()) {
+                    Integer registrationId = registration.getRegistrationId();
+                    if (registrationId == null) {
                         log.warn("Registration has invalid ID. Skipping.");
                         skippedDueToErrors++;
                         continue;
                     }
 
-                    // VALIDATION: Check if employee ID exists
-                    if (registration.getEmployeeId() == null) {
-                        log.warn("Registration {} has no employee ID. Skipping.", registrationId);
+                    // VALIDATION: Check if employee exists
+                    if (registration.getEmployee() == null || registration.getEmployee().getEmployeeId() == null) {
+                        log.warn("Registration {} has no employee. Skipping.", registrationId);
                         skippedDueToErrors++;
                         continue;
                     }
 
                     // Check if renewal already exists
-                    boolean alreadyExists = renewalRepository.existsByRegistrationIdAndStatus(
+                    boolean alreadyExists = renewalRepository.existsByExpiringRegistrationRegistrationIdAndStatus(
                             registrationId,
                             RenewalStatus.PENDING_ACTION);
 
@@ -105,8 +118,8 @@ public class DailyRenewalDetectionJob {
                     renewalService.createRenewalRequest(registrationId);
                     renewalsCreated++;
 
-                    log.info("Created renewal request for registration {} (Employee ID: {})",
-                            registrationId, registration.getEmployeeId());
+                    log.info("Created renewal request for FIXED registration {} (Employee ID: {})",
+                            registrationId, registration.getEmployee().getEmployeeId());
 
                 } catch (Exception e) {
                     log.error("Failed to create renewal for registration {}: {}",

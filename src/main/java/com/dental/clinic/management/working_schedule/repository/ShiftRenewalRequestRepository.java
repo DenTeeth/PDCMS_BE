@@ -111,4 +111,19 @@ public interface ShiftRenewalRequestRepository extends JpaRepository<ShiftRenewa
          * @return list of renewals for this registration
          */
         List<ShiftRenewalRequest> findByExpiringRegistrationRegistrationId(Integer registrationId);
+
+        /**
+         * Check if a renewal request exists for a specific registration ID and status.
+         * Alternative method name for DailyRenewalDetectionJob compatibility.
+         * 
+         * @param registrationId the expiring fixed registration ID (Integer)
+         * @param status the renewal status to check
+         * @return true if exists
+         */
+        @Query("SELECT COUNT(srr) > 0 FROM ShiftRenewalRequest srr " +
+                        "WHERE srr.expiringRegistration.registrationId = :registrationId " +
+                        "AND srr.status = :status")
+        boolean existsByExpiringRegistrationRegistrationIdAndStatus(
+                        @Param("registrationId") Integer registrationId,
+                        @Param("status") RenewalStatus status);
 }

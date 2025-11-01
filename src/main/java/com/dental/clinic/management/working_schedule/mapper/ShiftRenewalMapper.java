@@ -25,38 +25,43 @@ public class ShiftRenewalMapper {
 
         return ShiftRenewalResponse.builder()
                 .renewalId(entity.getRenewalId())
-                .expiringRegistrationId(entity.getExpiringRegistration().getRegistrationId() != null
-                        ? Integer.parseInt(entity.getExpiringRegistration().getRegistrationId())
-                        : null)
+                .expiringRegistrationId(entity.getExpiringRegistration().getRegistrationId())
                 .employeeId(entity.getEmployee().getEmployeeId())
                 .employeeName(entity.getEmployee().getFullName())
                 .status(entity.getStatus())
-                .message(entity.getMessage())
                 .expiresAt(entity.getExpiresAt())
                 .confirmedAt(entity.getConfirmedAt())
                 .createdAt(entity.getCreatedAt())
                 .effectiveFrom(entity.getExpiringRegistration().getEffectiveFrom())
                 .effectiveTo(entity.getExpiringRegistration().getEffectiveTo())
                 .shiftDetails(shiftDetails)
+                .declineReason(entity.getDeclineReason())
                 .build();
     }
 
     /**
      * Build shift details string from registration days.
-     * Example: "Slot ID: 123"
+     * Example: "Monday, Wednesday, Friday - Morning Shift"
      *
      * @param entity the renewal request entity
      * @return formatted shift details
      */
     private String buildShiftDetails(ShiftRenewalRequest entity) {
         if (entity.getExpiringRegistration() == null ||
-                entity.getExpiringRegistration().getPartTimeSlotId() == null) {
+                entity.getExpiringRegistration().getRegistrationDays() == null ||
+                entity.getExpiringRegistration().getRegistrationDays().isEmpty()) {
             return "N/A";
         }
 
-        // V2: Get slot details instead of registration days
-        // This would require injecting PartTimeSlotRepository and WorkShiftRepository
-        // For now, return simple format
-        return String.format("Slot ID: %d", entity.getExpiringRegistration().getPartTimeSlotId());
+        // Build details from FixedShiftRegistration's days
+        String days = entity.getExpiringRegistration().getRegistrationDays().stream()
+                .map(day -> day.getDayOfWeek().toString())
+                .collect(java.util.stream.Collectors.joining(", "));
+        
+        String shiftName = entity.getExpiringRegistration().getWorkShift() != null 
+                ? entity.getExpiringRegistration().getWorkShift().getShiftName() 
+                : "Unknown Shift";
+        
+        return String.format("%s - %s", days, shiftName);
     }
 }
