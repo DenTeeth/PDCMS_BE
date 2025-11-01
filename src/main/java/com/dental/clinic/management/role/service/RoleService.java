@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 
 import static com.dental.clinic.management.utils.security.AuthoritiesConstants.*;
 
-import com.dental.clinic.management.exception.BadRequestAlertException;
+import com.dental.clinic.management.exception.validation.BadRequestAlertException;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;

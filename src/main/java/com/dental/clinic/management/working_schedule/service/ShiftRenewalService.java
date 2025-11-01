@@ -2,7 +2,7 @@ package com.dental.clinic.management.working_schedule.service;
 
 import com.dental.clinic.management.employee.domain.Employee;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
-import com.dental.clinic.management.exception.EmployeeNotFoundException;
+import com.dental.clinic.management.exception.employee.EmployeeNotFoundException;
 import com.dental.clinic.management.utils.security.AuthoritiesConstants;
 import com.dental.clinic.management.working_schedule.domain.FixedRegistrationDay;
 import com.dental.clinic.management.working_schedule.domain.FixedShiftRegistration;

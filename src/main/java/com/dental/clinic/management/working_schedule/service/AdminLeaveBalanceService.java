@@ -2,9 +2,9 @@ package com.dental.clinic.management.working_schedule.service;
 
 import com.dental.clinic.management.account.repository.AccountRepository;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
-import com.dental.clinic.management.exception.EmployeeNotFoundException;
-import com.dental.clinic.management.exception.InvalidRequestException;
-import com.dental.clinic.management.exception.TimeOffTypeNotFoundException;
+import com.dental.clinic.management.exception.employee.EmployeeNotFoundException;
+import com.dental.clinic.management.exception.validation.InvalidRequestException;
+import com.dental.clinic.management.exception.time_off.TimeOffTypeNotFoundException;
 import com.dental.clinic.management.utils.security.SecurityUtil;
 import com.dental.clinic.management.working_schedule.domain.EmployeeLeaveBalance;
 import com.dental.clinic.management.working_schedule.domain.LeaveBalanceHistory;

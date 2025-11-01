@@ -14,7 +14,7 @@ import com.dental.clinic.management.customer_contact.mapper.CustomerContactMappe
 import com.dental.clinic.management.customer_contact.repository.CustomerContactRepository;
 import com.dental.clinic.management.employee.domain.Employee;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
-import com.dental.clinic.management.exception.BadRequestAlertException;
+import com.dental.clinic.management.exception.validation.BadRequestAlertException;
 import com.dental.clinic.management.patient.dto.request.CreatePatientRequest;
 import com.dental.clinic.management.patient.dto.response.PatientInfoResponse;
 import com.dental.clinic.management.patient.service.PatientService;

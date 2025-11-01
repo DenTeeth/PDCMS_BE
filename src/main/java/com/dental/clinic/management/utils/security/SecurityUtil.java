@@ -20,7 +20,7 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.stereotype.Component;
 
-import com.dental.clinic.management.exception.JwtValidationException;
+import com.dental.clinic.management.exception.authentication.JwtValidationException;
 
 @Component
 public class SecurityUtil {

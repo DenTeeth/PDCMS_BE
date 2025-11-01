@@ -33,14 +33,15 @@ import com.dental.clinic.management.authentication.dto.response.LoginResponse;
 import com.dental.clinic.management.authentication.dto.response.RefreshTokenResponse;
 import com.dental.clinic.management.authentication.repository.RefreshTokenRepository;
 import com.dental.clinic.management.employee.domain.Employee;
-import com.dental.clinic.management.exception.AccountNotFoundException;
-import com.dental.clinic.management.exception.AccountNotVerifiedException;
-import com.dental.clinic.management.exception.InvalidTokenException;
-import com.dental.clinic.management.exception.TokenExpiredException;
+import com.dental.clinic.management.exception.account.AccountNotFoundException;
+import com.dental.clinic.management.exception.account.AccountNotVerifiedException;
+import com.dental.clinic.management.exception.authentication.InvalidTokenException;
+import com.dental.clinic.management.exception.authentication.TokenExpiredException;
 import com.dental.clinic.management.permission.domain.Permission;
 import com.dental.clinic.management.role.domain.Role;
 import com.dental.clinic.management.utils.EmailService;
 import com.dental.clinic.management.utils.security.SecurityUtil;
+import com.dental.clinic.management.exception.account.BadCredentialsException;
 
 /**
  * Service layer for authentication & user identity operations.
@@ -210,7 +211,7 @@ public class AuthenticationService {
 
                 if (request.getRefreshToken() == null || request.getRefreshToken().isBlank()) {
                         log.warn("Refresh token is missing in request");
-                        throw new com.dental.clinic.management.exception.BadCredentialsException(
+                        throw new BadCredentialsException(
                                         "Refresh token is missing");
                 }
 
@@ -231,7 +232,7 @@ public class AuthenticationService {
                 // Check if account is active
                 if (!account.isActive()) {
                         log.warn("Account {} is not active", username);
-                        throw new com.dental.clinic.management.exception.BadCredentialsException(
+                        throw new BadCredentialsException(
                                         "Account is not active");
                 }
 

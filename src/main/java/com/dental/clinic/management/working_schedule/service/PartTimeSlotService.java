@@ -10,7 +10,7 @@ import com.dental.clinic.management.working_schedule.exception.SlotAlreadyExists
 import com.dental.clinic.management.working_schedule.exception.SlotNotFoundException;
 import com.dental.clinic.management.working_schedule.repository.PartTimeSlotRepository;
 import com.dental.clinic.management.working_schedule.repository.WorkShiftRepository;
-import com.dental.clinic.management.exception.WorkShiftNotFoundException;
+import com.dental.clinic.management.exception.work_shift.WorkShiftNotFoundException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

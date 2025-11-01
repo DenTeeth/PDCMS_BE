@@ -1,5 +1,13 @@
 package com.dental.clinic.management.exception;
 
+import com.dental.clinic.management.exception.account.AccountNotVerifiedException;
+import com.dental.clinic.management.exception.authentication.InvalidTokenException;
+import com.dental.clinic.management.exception.authentication.TokenExpiredException;
+import com.dental.clinic.management.exception.time_off.ShiftNotFoundForLeaveException;
+import com.dental.clinic.management.exception.time_off.TimeOffTypeInUseException;
+import com.dental.clinic.management.exception.time_off.TimeOffTypeNotFoundException;
+import com.dental.clinic.management.exception.validation.DuplicateTypeCodeException;
+import com.dental.clinic.management.exception.validation.InvalidBalanceException;
 import com.dental.clinic.management.utils.FormatRestResponse;
 
 import jakarta.servlet.http.HttpServletRequest;

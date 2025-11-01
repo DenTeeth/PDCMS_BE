@@ -2,7 +2,7 @@ package com.dental.clinic.management.account.service;
 
 import com.dental.clinic.management.account.domain.Account;
 import com.dental.clinic.management.role.domain.Role;
-import com.dental.clinic.management.exception.BadRequestAlertException;
+import com.dental.clinic.management.exception.validation.BadRequestAlertException;
 
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;

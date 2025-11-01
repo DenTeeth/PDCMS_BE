@@ -1,6 +1,14 @@
 package com.dental.clinic.management.working_schedule.service;
 
-import com.dental.clinic.management.exception.*;
+import com.dental.clinic.management.exception.shift.InvalidShiftDurationException;
+import com.dental.clinic.management.exception.work_shift.WorkShiftNotFoundException;
+import com.dental.clinic.management.exception.validation.CategoryChangeForbiddenException;
+import com.dental.clinic.management.exception.validation.DuplicateTimeRangeException;
+import com.dental.clinic.management.exception.validation.InvalidCategoryException;
+import com.dental.clinic.management.exception.validation.InvalidTimeRangeException;
+import com.dental.clinic.management.exception.validation.InvalidWorkingHoursException;
+import com.dental.clinic.management.exception.shift.ShiftInUseException;
+import com.dental.clinic.management.exception.shift.DuplicateShiftNameException;
 import com.dental.clinic.management.working_schedule.domain.WorkShift;
 import com.dental.clinic.management.working_schedule.dto.request.CreateWorkShiftRequest;
 import com.dental.clinic.management.working_schedule.dto.request.UpdateWorkShiftRequest;

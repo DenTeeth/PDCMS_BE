@@ -8,8 +8,8 @@ import com.dental.clinic.management.employee.dto.request.ReplaceEmployeeRequest;
 import com.dental.clinic.management.employee.dto.response.EmployeeInfoResponse;
 import com.dental.clinic.management.employee.mapper.EmployeeMapper;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
-import com.dental.clinic.management.exception.BadRequestAlertException;
-import com.dental.clinic.management.exception.EmployeeNotFoundException;
+import com.dental.clinic.management.exception.validation.BadRequestAlertException;
+import com.dental.clinic.management.exception.employee.EmployeeNotFoundException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -1,7 +1,7 @@
 package com.dental.clinic.management.permission.service;
 
-import com.dental.clinic.management.exception.BadRequestAlertException;
-import com.dental.clinic.management.exception.PermissionNotFoundException;
+import com.dental.clinic.management.exception.validation.BadRequestAlertException;
+import com.dental.clinic.management.exception.authorization.PermissionNotFoundException;
 import com.dental.clinic.management.permission.domain.Permission;
 import com.dental.clinic.management.permission.dto.request.CreatePermissionRequest;
 import com.dental.clinic.management.permission.dto.request.UpdatePermissionRequest;

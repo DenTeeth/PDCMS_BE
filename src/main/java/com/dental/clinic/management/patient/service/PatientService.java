@@ -1,6 +1,6 @@
 package com.dental.clinic.management.patient.service;
 
-import com.dental.clinic.management.exception.BadRequestAlertException;
+import com.dental.clinic.management.exception.validation.BadRequestAlertException;
 import com.dental.clinic.management.account.enums.AccountStatus;
 import com.dental.clinic.management.account.domain.Account;
 import com.dental.clinic.management.account.domain.AccountVerificationToken;
