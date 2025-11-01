@@ -15,6 +15,16 @@ import java.util.List;
 public interface PartTimeRegistrationRepository extends JpaRepository<PartTimeRegistration, Integer> {
 
     /**
+     * Find all registrations by employee ID (both active and inactive).
+     */
+    List<PartTimeRegistration> findByEmployeeId(Integer employeeId);
+
+    /**
+     * Find all active/inactive registrations by employee ID.
+     */
+    List<PartTimeRegistration> findByEmployeeIdAndIsActive(Integer employeeId, Boolean isActive);
+
+    /**
      * Find all active registrations that have expired (effective_to < today).
      * Used by CleanupExpiredFlexRegistrationsJob (P11) to deactivate ghost
      * occupants.

@@ -5,7 +5,7 @@ import com.dental.clinic.management.employee.domain.Employee;
 import com.dental.clinic.management.employee.enums.EmploymentType;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.utils.security.SecurityUtil;
-import com.dental.clinic.management.working_schedule.domain.EmployeeShiftRegistration;
+import com.dental.clinic.management.working_schedule.domain.PartTimeRegistration;
 import com.dental.clinic.management.working_schedule.domain.PartTimeSlot;
 import com.dental.clinic.management.working_schedule.domain.WorkShift;
 import com.dental.clinic.management.working_schedule.dto.request.CreateRegistrationRequest;
@@ -13,7 +13,7 @@ import com.dental.clinic.management.working_schedule.dto.request.UpdateEffective
 import com.dental.clinic.management.working_schedule.dto.response.AvailableSlotResponse;
 import com.dental.clinic.management.working_schedule.dto.response.RegistrationResponse;
 import com.dental.clinic.management.working_schedule.exception.*;
-import com.dental.clinic.management.working_schedule.repository.EmployeeShiftRegistrationRepository;
+import com.dental.clinic.management.working_schedule.repository.PartTimeRegistrationRepository;
 import com.dental.clinic.management.working_schedule.repository.PartTimeSlotRepository;
 import com.dental.clinic.management.working_schedule.repository.WorkShiftRepository;
 
@@ -26,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -34,7 +35,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class EmployeeShiftRegistrationService {
 
-    private final EmployeeShiftRegistrationRepository registrationRepository;
+    private final PartTimeRegistrationRepository registrationRepository;
     private final PartTimeSlotRepository slotRepository;
     private final WorkShiftRepository workShiftRepository;
     private final AccountRepository accountRepository;
@@ -50,10 +51,10 @@ public class EmployeeShiftRegistrationService {
         Integer employeeId = getCurrentEmployeeId();
         log.info("Fetching available slots for employee {}", employeeId);
 
-        // Get slots employee already registered
+        // Get slots employee already registered (from part_time_registrations)
         List<Long> registeredSlotIds = registrationRepository.findByEmployeeIdAndIsActive(employeeId, true)
                 .stream()
-                .map(EmployeeShiftRegistration::getPartTimeSlotId)
+                .map(PartTimeRegistration::getPartTimeSlotId)
                 .collect(Collectors.toList());
 
         // Get all active slots
@@ -63,7 +64,7 @@ public class EmployeeShiftRegistrationService {
                 .map(slot -> {
                     long registered = slotRepository.countActiveRegistrations(slot.getSlotId());
                     int remaining = slot.getQuota() - (int) registered;
-                    
+
                     if (remaining <= 0) {
                         return null; // Slot is full
                     }
@@ -94,15 +95,15 @@ public class EmployeeShiftRegistrationService {
         // Validate employee exists and is PART_TIME_FLEX
         Employee employee = employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new IllegalStateException("Employee not found: " + employeeId));
-        
+
         // Only PART_TIME_FLEX employees can claim flexible slots
-        if (employee.getEmploymentType() != EmploymentType.PART_TIME_FLEX && 
-            employee.getEmploymentType() != EmploymentType.PART_TIME) { // Support legacy PART_TIME
-            log.warn("Employee {} with type {} attempted to claim flexible slot", 
+        if (employee.getEmploymentType() != EmploymentType.PART_TIME_FLEX &&
+                employee.getEmploymentType() != EmploymentType.PART_TIME) { // Support legacy PART_TIME
+            log.warn("Employee {} with type {} attempted to claim flexible slot",
                     employeeId, employee.getEmploymentType());
             throw new IllegalArgumentException(
-                "Chỉ nhân viên PART_TIME_FLEX mới có thể đăng ký ca linh hoạt. " +
-                "Nhân viên FULL_TIME và PART_TIME_FIXED phải sử dụng đăng ký ca cố định.");
+                    "Chỉ nhân viên PART_TIME_FLEX mới có thể đăng ký ca linh hoạt. " +
+                            "Nhân viên FULL_TIME và PART_TIME_FIXED phải sử dụng đăng ký ca cố định.");
         }
 
         // Validate effectiveFrom not in past
@@ -111,8 +112,9 @@ public class EmployeeShiftRegistrationService {
         }
 
         // START TRANSACTION WITH PESSIMISTIC LOCK
-        PartTimeSlot slot = entityManager.find(PartTimeSlot.class, request.getPartTimeSlotId(), LockModeType.PESSIMISTIC_WRITE);
-        
+        PartTimeSlot slot = entityManager.find(PartTimeSlot.class, request.getPartTimeSlotId(),
+                LockModeType.PESSIMISTIC_WRITE);
+
         if (slot == null || !slot.getIsActive()) {
             throw new SlotNotFoundException(request.getPartTimeSlotId());
         }
@@ -126,20 +128,20 @@ public class EmployeeShiftRegistrationService {
         }
 
         // Check for registration conflicts
-        List<EmployeeShiftRegistration> activeRegistrations = registrationRepository
+        List<PartTimeRegistration> activeRegistrations = registrationRepository
                 .findByEmployeeIdAndIsActive(employeeId, true);
-        
-        for (EmployeeShiftRegistration existingReg : activeRegistrations) {
+
+        for (PartTimeRegistration existingReg : activeRegistrations) {
             // Check 1: Can't register the same slot twice
             if (existingReg.getPartTimeSlotId().equals(slot.getSlotId())) {
                 throw new RegistrationConflictException(employeeId);
             }
-            
+
             // Check 2: Can't register conflicting time slots (same day + same shift)
             PartTimeSlot existingSlot = slotRepository.findById(existingReg.getPartTimeSlotId()).orElse(null);
             if (existingSlot != null) {
                 boolean sameDayAndShift = existingSlot.getDayOfWeek().equals(slot.getDayOfWeek()) &&
-                                         existingSlot.getWorkShiftId().equals(slot.getWorkShiftId());
+                        existingSlot.getWorkShiftId().equals(slot.getWorkShiftId());
                 if (sameDayAndShift) {
                     throw new RegistrationConflictException(employeeId);
                 }
@@ -149,16 +151,18 @@ public class EmployeeShiftRegistrationService {
         // Calculate effectiveTo (3 months from effectiveFrom)
         LocalDate effectiveTo = request.getEffectiveFrom().plusMonths(3);
 
-        // Create registration
-        EmployeeShiftRegistration registration = new EmployeeShiftRegistration();
-        registration.setEmployeeId(employeeId);
-        registration.setPartTimeSlotId(slot.getSlotId());
-        registration.setEffectiveFrom(request.getEffectiveFrom());
-        registration.setEffectiveTo(effectiveTo);
-        registration.setIsActive(true);
+        // Create registration in part_time_registrations (Schema V14 - Luồng 2)
+        PartTimeRegistration registration = PartTimeRegistration.builder()
+                .employeeId(employeeId)
+                .partTimeSlotId(slot.getSlotId())
+                .effectiveFrom(request.getEffectiveFrom())
+                .effectiveTo(effectiveTo)
+                .isActive(true)
+                .build();
 
-        EmployeeShiftRegistration saved = registrationRepository.save(registration);
-        log.info("Registration {} created for employee {}", saved.getRegistrationId(), employeeId);
+        PartTimeRegistration saved = registrationRepository.save(registration);
+        log.info("Registration {} created for employee {} in part_time_registrations",
+                saved.getRegistrationId(), employeeId);
 
         return buildResponse(saved, slot);
     }
@@ -171,13 +175,14 @@ public class EmployeeShiftRegistrationService {
     public List<RegistrationResponse> getRegistrations(Integer filterEmployeeId) {
         boolean isAdmin = SecurityUtil.hasCurrentUserRole("ADMIN") ||
                 SecurityUtil.hasCurrentUserPermission("UPDATE_REGISTRATIONS_ALL");
-        
+
         log.info("Fetching registrations - admin: {}, filter: {}", isAdmin, filterEmployeeId);
 
-        List<EmployeeShiftRegistration> registrations;
+        List<PartTimeRegistration> registrations;
 
         if (isAdmin && filterEmployeeId != null) {
-            // Admin with filter sees ALL registrations (active + cancelled) for that employee
+            // Admin with filter sees ALL registrations (active + cancelled) for that
+            // employee
             registrations = registrationRepository.findByEmployeeId(filterEmployeeId);
         } else if (isAdmin) {
             registrations = registrationRepository.findAll();
@@ -199,31 +204,32 @@ public class EmployeeShiftRegistrationService {
      */
     @Transactional
     @PreAuthorize("hasAnyAuthority('UPDATE_REGISTRATIONS_ALL', 'CANCEL_REGISTRATION_OWN')")
-    public void cancelRegistration(String registrationId) {
+    public void cancelRegistration(Integer registrationId) {
         boolean isAdmin = SecurityUtil.hasCurrentUserRole("ADMIN") ||
                 SecurityUtil.hasCurrentUserPermission("UPDATE_REGISTRATIONS_ALL");
         Integer currentEmployeeId = getCurrentEmployeeId();
-        
+
         log.info("Cancelling registration {} by employee {}", registrationId, currentEmployeeId);
 
-        EmployeeShiftRegistration registration = registrationRepository.findById(registrationId)
-                .orElseThrow(() -> new RegistrationNotFoundException(registrationId));
+        PartTimeRegistration registration = registrationRepository.findById(registrationId)
+                .orElseThrow(() -> new RegistrationNotFoundException(registrationId.toString()));
 
         // Check ownership if not admin
         if (!isAdmin && !registration.getEmployeeId().equals(currentEmployeeId)) {
-            throw new RegistrationNotFoundException(registrationId); // Hide existence
+            throw new RegistrationNotFoundException(registrationId.toString()); // Hide existence
         }
 
         // Check if already cancelled
         if (!registration.getIsActive()) {
-            throw new RegistrationNotFoundException(registrationId); // Already cancelled
+            throw new RegistrationNotFoundException(registrationId.toString()); // Already cancelled
         }
 
         registration.setIsActive(false);
         registration.setEffectiveTo(LocalDate.now());
+        registration.setUpdatedAt(LocalDateTime.now());
         registrationRepository.save(registration);
 
-        log.info("Registration {} cancelled", registrationId);
+        log.info("Registration {} cancelled in part_time_registrations", registrationId);
     }
 
     /**
@@ -231,32 +237,33 @@ public class EmployeeShiftRegistrationService {
      */
     @Transactional
     @PreAuthorize("hasAuthority('UPDATE_REGISTRATIONS_ALL')")
-    public RegistrationResponse updateEffectiveTo(String registrationId, UpdateEffectiveToRequest request) {
+    public RegistrationResponse updateEffectiveTo(Integer registrationId, UpdateEffectiveToRequest request) {
         log.info("Updating effectiveTo for registration {}", registrationId);
 
-        EmployeeShiftRegistration registration = registrationRepository.findById(registrationId)
-                .orElseThrow(() -> new RegistrationNotFoundException(registrationId));
+        PartTimeRegistration registration = registrationRepository.findById(registrationId)
+                .orElseThrow(() -> new RegistrationNotFoundException(registrationId.toString()));
 
         registration.setEffectiveTo(request.getEffectiveTo());
-        EmployeeShiftRegistration updated = registrationRepository.save(registration);
+        registration.setUpdatedAt(LocalDateTime.now());
+        PartTimeRegistration updated = registrationRepository.save(registration);
 
         PartTimeSlot slot = slotRepository.findById(updated.getPartTimeSlotId()).orElse(null);
         return buildResponse(updated, slot);
     }
-    
+
     /**
      * Get current employee ID from security context.
      */
     private Integer getCurrentEmployeeId() {
         String username = SecurityUtil.getCurrentUserLogin()
                 .orElseThrow(() -> new RuntimeException("User not authenticated"));
-        
+
         return accountRepository.findOneByUsername(username)
                 .map(account -> account.getEmployee().getEmployeeId())
                 .orElseThrow(() -> new RuntimeException("Employee not found for user: " + username));
     }
 
-    private RegistrationResponse buildResponse(EmployeeShiftRegistration registration, PartTimeSlot slot) {
+    private RegistrationResponse buildResponse(PartTimeRegistration registration, PartTimeSlot slot) {
         String shiftName = "Unknown";
         String dayOfWeek = "Unknown";
 

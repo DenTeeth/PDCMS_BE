@@ -95,7 +95,7 @@ public class EmployeeShiftRegistrationController {
      * @return 204 No Content
      */
     @DeleteMapping("/{registrationId}")
-    public ResponseEntity<Void> cancelRegistration(@PathVariable String registrationId) {
+    public ResponseEntity<Void> cancelRegistration(@PathVariable Integer registrationId) {
         log.info("REST request to cancel registration {}", registrationId);
         registrationService.cancelRegistration(registrationId);
         return ResponseEntity.noContent().build();
@@ -108,12 +108,12 @@ public class EmployeeShiftRegistrationController {
      * Permission: MANAGE_REGISTRATIONS_ALL
      *
      * @param registrationId Registration ID
-     * @param request New effectiveTo date
+     * @param request        New effectiveTo date
      * @return Updated registration
      */
     @PatchMapping("/{registrationId}/effective-to")
     public ResponseEntity<RegistrationResponse> updateEffectiveTo(
-            @PathVariable String registrationId,
+            @PathVariable Integer registrationId,
             @Valid @RequestBody UpdateEffectiveToRequest request) {
         log.info("REST request to update effectiveTo for registration {}: {}", registrationId, request);
         RegistrationResponse response = registrationService.updateEffectiveTo(registrationId, request);

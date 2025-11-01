@@ -737,11 +737,11 @@ SELECT setval('holiday_dates_holiday_id_seq',
     false);
 
 -- ============================================
--- WORKING SCHEDULE SAMPLE DATA (BE-307 V2)
+-- WORKING SCHEDULE SAMPLE DATA (Schema V14 Hybrid)
 -- ============================================
 -- Sample data for testing Hybrid Schedule System:
 -- - Luồng 1 (Fixed): fixed_shift_registrations + fixed_registration_days
--- - Luồng 2 (Flex): part_time_slots + employee_shift_registrations
+-- - Luồng 2 (Flex): part_time_slots + part_time_registrations (UPDATED V14)
 -- ============================================
 
 -- ============================================
@@ -955,35 +955,34 @@ SELECT setval('part_time_slots_slot_id_seq',
 -- NOTE: Using slot_id=1 (MONDAY morning, quota=2) for "full slot" test scenario
 -- It will have 2 registrations to make it full
 
--- STEP 2: Employee Shift Registrations (Employees claim slots)
+-- STEP 2: Part-Time Registrations (Schema V14 - Luồng 2: part_time_registrations)
+-- Employees claim slots in the NEW table
+
 -- Nurse Linh (employee_id=8, PART_TIME_FLEX) claims multiple slots
 
 -- Linh claims TUESDAY Morning (slot_id=3)
-INSERT INTO employee_shift_registrations (
-    registration_id, employee_id, part_time_slot_id,
-    effective_from, effective_to, is_active
+INSERT INTO part_time_registrations (
+    employee_id, part_time_slot_id,
+    effective_from, effective_to, is_active, created_at, updated_at
 )
 VALUES
-('ESR251101001', 8, 3, '2025-11-01', '2026-02-01', TRUE)
-ON CONFLICT (registration_id) DO NOTHING;
+(8, 3, '2025-11-01', '2026-02-01', TRUE, NOW(), NOW());
 
 -- Linh claims THURSDAY Afternoon (slot_id=8)
-INSERT INTO employee_shift_registrations (
-    registration_id, employee_id, part_time_slot_id,
-    effective_from, effective_to, is_active
+INSERT INTO part_time_registrations (
+    employee_id, part_time_slot_id,
+    effective_from, effective_to, is_active, created_at, updated_at
 )
 VALUES
-('ESR251101002', 8, 8, '2025-11-01', '2026-02-01', TRUE)
-ON CONFLICT (registration_id) DO NOTHING;
+(8, 8, '2025-11-01', '2026-02-01', TRUE, NOW(), NOW());
 
 -- Linh claims SATURDAY Morning (slot_id=11)
-INSERT INTO employee_shift_registrations (
-    registration_id, employee_id, part_time_slot_id,
-    effective_from, effective_to, is_active
+INSERT INTO part_time_registrations (
+    employee_id, part_time_slot_id,
+    effective_from, effective_to, is_active, created_at, updated_at
 )
 VALUES
-('ESR251101003', 8, 11, '2025-11-01', '2026-02-01', TRUE)
-ON CONFLICT (registration_id) DO NOTHING;
+(8, 11, '2025-11-01', '2026-02-01', TRUE, NOW(), NOW());
 
 -- Additional PART_TIME_FLEX employees for testing (create temporary test employees)
 -- Test Employee 10: PART_TIME_FLEX
@@ -1009,59 +1008,53 @@ VALUES
 ON CONFLICT (employee_id) DO NOTHING;
 
 -- Employee 10 (Minh) claims MONDAY Afternoon (slot_id=2)
-INSERT INTO employee_shift_registrations (
-    registration_id, employee_id, part_time_slot_id,
-    effective_from, effective_to, is_active
+INSERT INTO part_time_registrations (
+    employee_id, part_time_slot_id,
+    effective_from, effective_to, is_active, created_at, updated_at
 )
 VALUES
-('ESR251101004', 10, 2, '2025-11-01', '2026-02-01', TRUE)
-ON CONFLICT (registration_id) DO NOTHING;
+(10, 2, '2025-11-01', '2026-02-01', TRUE, NOW(), NOW());
 
 -- Employee 10 (Minh) claims WEDNESDAY Morning (slot_id=5)
-INSERT INTO employee_shift_registrations (
-    registration_id, employee_id, part_time_slot_id,
-    effective_from, effective_to, is_active
+INSERT INTO part_time_registrations (
+    employee_id, part_time_slot_id,
+    effective_from, effective_to, is_active, created_at, updated_at
 )
 VALUES
-('ESR251101005', 10, 5, '2025-11-01', '2026-02-01', TRUE)
-ON CONFLICT (registration_id) DO NOTHING;
+(10, 5, '2025-11-01', '2026-02-01', TRUE, NOW(), NOW());
 
 -- Employee 10 (Minh) claims MONDAY Morning (slot_id=1, quota=2) - First registration (1/2)
-INSERT INTO employee_shift_registrations (
-    registration_id, employee_id, part_time_slot_id,
-    effective_from, effective_to, is_active
+INSERT INTO part_time_registrations (
+    employee_id, part_time_slot_id,
+    effective_from, effective_to, is_active, created_at, updated_at
 )
 VALUES
-('ESR251101006', 10, 1, '2025-11-01', '2026-02-01', TRUE)
-ON CONFLICT (registration_id) DO NOTHING;
+(10, 1, '2025-11-01', '2026-02-01', TRUE, NOW(), NOW());
 
 -- Employee 11 (Huong) claims MONDAY Morning slot (slot_id=1, quota=2) - Makes it FULL (2/2)
-INSERT INTO employee_shift_registrations (
-    registration_id, employee_id, part_time_slot_id,
-    effective_from, effective_to, is_active
+INSERT INTO part_time_registrations (
+    employee_id, part_time_slot_id,
+    effective_from, effective_to, is_active, created_at, updated_at
 )
 VALUES
-('ESR251101007', 11, 1, '2025-11-01', '2026-02-01', TRUE)
-ON CONFLICT (registration_id) DO NOTHING;
+(11, 1, '2025-11-01', '2026-02-01', TRUE, NOW(), NOW());
 
 -- Employee 11 (Huong) also claims FRIDAY Morning (slot_id=9)
-INSERT INTO employee_shift_registrations (
-    registration_id, employee_id, part_time_slot_id,
-    effective_from, effective_to, is_active
+INSERT INTO part_time_registrations (
+    employee_id, part_time_slot_id,
+    effective_from, effective_to, is_active, created_at, updated_at
 )
 VALUES
-('ESR251101009', 11, 9, '2025-11-01', '2026-02-01', TRUE)
-ON CONFLICT (registration_id) DO NOTHING;
+(11, 9, '2025-11-01', '2026-02-01', TRUE, NOW(), NOW());
 
 -- Cancelled registration example (Linh cancels SUNDAY)
 -- First claim SUNDAY Morning (slot_id=13)
-INSERT INTO employee_shift_registrations (
-    registration_id, employee_id, part_time_slot_id,
-    effective_from, effective_to, is_active
+INSERT INTO part_time_registrations (
+    employee_id, part_time_slot_id,
+    effective_from, effective_to, is_active, created_at, updated_at
 )
 VALUES
-('ESR251101008', 8, 13, '2025-11-01', '2025-11-15', FALSE) -- Cancelled (is_active=false)
-ON CONFLICT (registration_id) DO NOTHING;
+(8, 13, '2025-11-01', '2025-11-15', FALSE, NOW(), NOW()); -- Cancelled (is_active=false)
 
 -- ============================================
 -- RESET ALL SEQUENCES AFTER MANUAL INSERTS
@@ -1079,8 +1072,10 @@ SELECT setval('employees_employee_id_seq',
               (SELECT COALESCE(MAX(employee_id), 0) + 1 FROM employees),
               false);
 
--- Reset employee_shift_registrations sequence (VARCHAR primary key, no auto-increment needed)
--- This table uses custom IDs like 'ESR251101001', so no sequence reset required
+-- Reset part_time_registrations sequence (NEW - Schema V14)
+SELECT setval('part_time_registrations_registration_id_seq',
+              (SELECT COALESCE(MAX(registration_id), 0) + 1 FROM part_time_registrations),
+              false);
 
 -- Note: part_time_slots sequence is already reset after its inserts above
 -- Note: fixed_shift_registrations sequence is already reset after its inserts above

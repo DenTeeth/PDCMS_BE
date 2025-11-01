@@ -13,7 +13,8 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class RegistrationResponse {
 
-    private String registrationId;
+    private Integer registrationId; // Changed from String to Integer (Schema V14 - part_time_registrations uses
+                                    // SERIAL)
     private Integer employeeId;
     private Long partTimeSlotId;
     private String workShiftName;
