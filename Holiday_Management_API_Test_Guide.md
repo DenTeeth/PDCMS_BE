@@ -1,15 +1,45 @@
 # Holiday Management API Test Guide
 
+## ⚡ Latest Updates (November 2, 2025)
+
+### **Custom Exception Classes Implemented**
+This guide now includes testing for **3 new custom exception classes** that provide specific error codes and helpful debugging information:
+- ✅ `DuplicateHolidayDefinitionException` → `DUPLICATE_HOLIDAY_DEFINITION` (409)
+- ✅ `DuplicateHolidayDateException` → `DUPLICATE_HOLIDAY_DATE` (409)
+- ✅ `InvalidDateRangeException` → `INVALID_DATE_RANGE` (400)
+
+### **Enhanced Global Exception Handlers**
+6 exception handlers were enhanced with:
+- ✅ **Specific error codes** (not generic `error.bad.request`)
+- ✅ **Vietnamese error messages** for user-facing errors
+- ✅ **Helpful data fields** (missingFields, expectedFormat, requiredPermission)
+- ✅ **Consistent JSON structure** across all error responses
+
+### **What Changed**
+- Error Code: `error.bad.request` → `DUPLICATE_HOLIDAY_DEFINITION`, `VALIDATION_ERROR`, etc.
+- Error Code: `error.validation` → `VALIDATION_ERROR`
+- Response includes `data` object with debugging info
+- Date format errors show expected format and examples
+- Validation errors list all missing fields
+- Permission errors show required permission
+
+### **Frontend Action Required**
+⚠️ Update error handling code to recognize new error codes and parse the `data` object for helpful fields.
+
+---
+
 ## Table of Contents
 1. [Authentication](#authentication)
-2. [Holiday Definitions - CRUD Operations](#holiday-definitions---crud-operations)
-3. [Holiday Dates - CRUD Operations](#holiday-dates---crud-operations)
-4. [Holiday Check Operations](#holiday-check-operations)
-5. [Integration Tests](#integration-tests)
+2. [Error Code Reference](#error-code-reference)
+3. [Holiday Definitions - CRUD Operations](#holiday-definitions---crud-operations)
+4. [Holiday Dates - CRUD Operations](#holiday-dates---crud-operations)
+5. [Holiday Check Operations](#holiday-check-operations)
+6. [Integration Tests](#integration-tests)
    - [Shift Creation with Holidays](#shift-creation-with-holidays)
    - [Time-Off Requests with Holidays](#time-off-requests-with-holidays)
    - [Overtime Requests with Holidays](#overtime-requests-with-holidays)
-6. [Edge Cases & Error Scenarios](#edge-cases--error-scenarios)
+7. [Edge Cases & Error Scenarios](#edge-cases--error-scenarios)
+8. [Custom Exception Testing](#custom-exception-testing)
 
 ---
 
@@ -41,6 +71,72 @@ Write-Host "✅ Authenticated successfully"
     "employeeId": 1
 }
 ```
+
+---
+
+## Error Code Reference
+
+### **Custom Exceptions & Error Codes Implemented**
+
+The Holiday Management API uses **custom exception classes** with specific error codes for better error handling and debugging:
+
+| **Error Code** | **HTTP Status** | **Exception Class** | **Description** | **Response Data Fields** |
+|----------------|-----------------|---------------------|-----------------|--------------------------|
+| `DUPLICATE_HOLIDAY_DEFINITION` | 409 Conflict | `DuplicateHolidayDefinitionException` | Holiday definition ID already exists | `definitionId` |
+| `DUPLICATE_HOLIDAY_DATE` | 409 Conflict | `DuplicateHolidayDateException` | Holiday date already exists for this definition | `holidayDate`, `definitionId` |
+| `INVALID_DATE_RANGE` | 400 Bad Request | `InvalidDateRangeException` | Start date must be ≤ end date | `startDate`, `endDate` |
+| `HOLIDAY_DEFINITION_NOT_FOUND` | 404 Not Found | `ResourceNotFoundException` | Holiday definition not found | `definitionId` |
+| `HOLIDAY_DATE_NOT_FOUND` | 404 Not Found | `ResourceNotFoundException` | Holiday date not found | `holidayDate`, `definitionId` |
+| `VALIDATION_ERROR` | 400 Bad Request | `MethodArgumentNotValidException` | Missing or invalid required fields | `missingFields` array |
+| `INVALID_DATE_FORMAT` | 400 Bad Request | `TypeMismatchException` | Invalid date format (expected yyyy-MM-dd) | `parameter`, `expectedFormat`, `example` |
+| `FORBIDDEN` | 403 Forbidden | `AccessDeniedException` | Missing required permission | `requiredPermission` |
+| `HOLIDAY_CONFLICT` | 409 Conflict | `HolidayConflictException` | Cannot create shift on holiday | `date`, `holidayName`, `definitionId` |
+
+### **Enhanced Error Response Format**
+
+All error responses now include:
+- ✅ **Specific error codes** (not generic `error.bad.request`)
+- ✅ **Vietnamese error messages** for user-facing errors
+- ✅ **Helpful data fields** for debugging (missing fields, expected formats, required permissions)
+- ✅ **Consistent JSON structure**
+
+**Example Enhanced Error Response:**
+```json
+{
+  "errorCode": "DUPLICATE_HOLIDAY_DATE",
+  "message": "Ngày nghỉ đã tồn tại: 2025-01-28 cho định nghĩa TET_2025",
+  "data": {
+    "holidayDate": "2025-01-28",
+    "definitionId": "TET_2025"
+  }
+}
+```
+
+### **Things to Look Out For When Testing**
+
+⚠️ **Error Code Changes:**
+- Old: Generic `error.bad.request`, `error.validation`
+- New: Specific codes like `DUPLICATE_HOLIDAY_DEFINITION`, `VALIDATION_ERROR`
+- **Action:** Update frontend error handling to match new error codes
+
+⚠️ **Response Data Structure:**
+- Error responses now include `data` object with helpful debugging info
+- Example: `missingFields` array shows exactly which fields are missing
+- **Action:** Parse `data` object for detailed error information
+
+⚠️ **Date Format Validation:**
+- Invalid dates now return `INVALID_DATE_FORMAT` with `expectedFormat` and `example`
+- Example: `{"parameter": "holidayDate", "expectedFormat": "yyyy-MM-dd", "example": "2025-01-28"}`
+- **Action:** Show format hints to users
+
+⚠️ **Permission Errors:**
+- Now includes `requiredPermission` in response data
+- Example: `{"requiredPermission": "CREATE_HOLIDAY"}`
+- **Action:** Display which permission is needed
+
+⚠️ **Date Range Validation:**
+- `startDate > endDate` now throws `INVALID_DATE_RANGE` with both dates in response
+- **Action:** Validate date ranges on frontend before submission
 
 ---
 
@@ -963,6 +1059,8 @@ Write-Host "`n✅ CONCLUSION: Holiday blocking works correctly for both manual a
 
 ### 1. Duplicate Holiday Date
 
+**Tests the custom `DuplicateHolidayDateException`**
+
 ```powershell
 # Try to create the same holiday date twice
 $body = @{
@@ -972,20 +1070,49 @@ $body = @{
 } | ConvertTo-Json
 
 try {
+    # First creation - should succeed
+    Invoke-RestMethod -Uri "http://localhost:8080/api/v1/holiday-dates" `
+        -Method POST `
+        -Headers @{"Authorization"="Bearer $token"; "Content-Type"="application/json"} `
+        -Body $body
+    Write-Host "✅ First creation succeeded"
+    
+    # Second creation - should fail
     Invoke-RestMethod -Uri "http://localhost:8080/api/v1/holiday-dates" `
         -Method POST `
         -Headers @{"Authorization"="Bearer $token"; "Content-Type"="application/json"} `
         -Body $body
     Write-Host "❌ ERROR: Duplicate should have been blocked!"
 } catch {
-    Write-Host "✅ Duplicate correctly rejected"
-    $_.Exception.Message
+    $streamReader = [System.IO.StreamReader]::new($_.Exception.Response.GetResponseStream())
+    $errorBody = $streamReader.ReadToEnd()
+    $error = $errorBody | ConvertFrom-Json
+    
+    Write-Host "✅ Duplicate correctly rejected:" -ForegroundColor Green
+    Write-Host "   Error Code: $($error.errorCode)"
+    Write-Host "   Message: $($error.message)"
+    Write-Host "   Holiday Date: $($error.data.holidayDate)"
+    Write-Host "   Definition ID: $($error.data.definitionId)"
+    
+    $error | ConvertTo-Json -Depth 3
 }
 ```
 
-**Expected Result:** 409 Conflict
+**Expected Result:** 409 Conflict with `DUPLICATE_HOLIDAY_DATE`
+```json
+{
+  "errorCode": "DUPLICATE_HOLIDAY_DATE",
+  "message": "Ngày nghỉ đã tồn tại: 2025-01-30 cho định nghĩa TET_2025",
+  "data": {
+    "holidayDate": "2025-01-30",
+    "definitionId": "TET_2025"
+  }
+}
+```
 
 ### 2. Invalid Definition ID
+
+**Tests the `ResourceNotFoundException` for holiday definitions**
 
 ```powershell
 # Try to create holiday date with non-existent definition
@@ -1002,15 +1129,32 @@ try {
         -Body $body
     Write-Host "❌ ERROR: Invalid definition should be rejected!"
 } catch {
-    Write-Host "✅ Invalid definition correctly rejected"
     $streamReader = [System.IO.StreamReader]::new($_.Exception.Response.GetResponseStream())
-    $streamReader.ReadToEnd()
+    $errorBody = $streamReader.ReadToEnd()
+    $error = $errorBody | ConvertFrom-Json
+    
+    Write-Host "✅ Invalid definition correctly rejected:" -ForegroundColor Green
+    Write-Host "   Error Code: $($error.errorCode)"
+    Write-Host "   Message: $($error.message)"
+    
+    $error | ConvertTo-Json -Depth 3
 }
 ```
 
-**Expected Result:** 404 Not Found - "Holiday definition not found"
+**Expected Result:** 404 Not Found with `HOLIDAY_DEFINITION_NOT_FOUND`
+```json
+{
+  "errorCode": "HOLIDAY_DEFINITION_NOT_FOUND",
+  "message": "Không tìm thấy định nghĩa ngày nghỉ với ID: NONEXISTENT_ID",
+  "data": {
+    "definitionId": "NONEXISTENT_ID"
+  }
+}
+```
 
 ### 3. Invalid Date Format
+
+**Tests the enhanced `TypeMismatchException` handler with format hints**
 
 ```powershell
 # Try to create holiday with invalid date
@@ -1027,20 +1171,43 @@ try {
         -Body $body
     Write-Host "❌ ERROR: Invalid date should be rejected!"
 } catch {
-    Write-Host "✅ Invalid date correctly rejected"
-    $_.Exception.Message
+    $streamReader = [System.IO.StreamReader]::new($_.Exception.Response.GetResponseStream())
+    $errorBody = $streamReader.ReadToEnd()
+    $error = $errorBody | ConvertFrom-Json
+    
+    Write-Host "✅ Invalid date correctly rejected:" -ForegroundColor Green
+    Write-Host "   Error Code: $($error.errorCode)"
+    Write-Host "   Message: $($error.message)"
+    Write-Host "   Parameter: $($error.data.parameter)"
+    Write-Host "   Expected Format: $($error.data.expectedFormat)"
+    Write-Host "   Example: $($error.data.example)"
+    
+    $error | ConvertTo-Json -Depth 3
 }
 ```
 
-**Expected Result:** 400 Bad Request
+**Expected Result:** 400 Bad Request with `INVALID_DATE_FORMAT`
+```json
+{
+  "errorCode": "INVALID_DATE_FORMAT",
+  "message": "Định dạng ngày không hợp lệ cho tham số 'holidayDate'. Định dạng mong đợi: yyyy-MM-dd. Ví dụ: 2025-01-28",
+  "data": {
+    "parameter": "holidayDate",
+    "expectedFormat": "yyyy-MM-dd",
+    "example": "2025-01-28"
+  }
+}
+```
 
 ### 4. Missing Required Fields
+
+**Tests the enhanced `MethodArgumentNotValidException` handler with missing fields array**
 
 ```powershell
 # Try to create holiday definition without required fields
 $body = @{
-    holidayName = "Test Holiday"
-    # Missing definitionId, holidayType, description
+    name = "Test Holiday"
+    # Missing definitionId and description
 } | ConvertTo-Json
 
 try {
@@ -1050,14 +1217,117 @@ try {
         -Body $body
     Write-Host "❌ ERROR: Missing fields should be rejected!"
 } catch {
-    Write-Host "✅ Validation correctly rejected missing fields"
-    $_.Exception.Message
+    $streamReader = [System.IO.StreamReader]::new($_.Exception.Response.GetResponseStream())
+    $errorBody = $streamReader.ReadToEnd()
+    $error = $errorBody | ConvertFrom-Json
+    
+    Write-Host "✅ Validation correctly rejected missing fields:" -ForegroundColor Green
+    Write-Host "   Error Code: $($error.errorCode)"
+    Write-Host "   Message: $($error.message)"
+    Write-Host "   Missing Fields: $($error.data.missingFields -join ', ')"
+    
+    $error | ConvertTo-Json -Depth 3
 }
 ```
 
-**Expected Result:** 400 Bad Request with validation errors
+**Expected Result:** 400 Bad Request with `VALIDATION_ERROR`
+```json
+{
+  "errorCode": "VALIDATION_ERROR",
+  "message": "Thiếu trường bắt buộc: definitionId, description",
+  "data": {
+    "missingFields": ["definitionId", "description"]
+  }
+}
+```
 
-### 5. Permission Tests
+### 5. Duplicate Holiday Definition
+
+**Tests the custom `DuplicateHolidayDefinitionException`**
+
+```powershell
+# Try to create a holiday definition with duplicate ID
+$body = @{
+    definitionId = "TET_2025"  # Already exists in seed data
+    name = "Duplicate Test"
+    description = "This should fail"
+} | ConvertTo-Json
+
+try {
+    Invoke-RestMethod -Uri "http://localhost:8080/api/v1/holiday-definitions" `
+        -Method POST `
+        -Headers @{"Authorization"="Bearer $token"; "Content-Type"="application/json"} `
+        -Body $body
+    Write-Host "❌ ERROR: Duplicate definition should be blocked!"
+} catch {
+    $streamReader = [System.IO.StreamReader]::new($_.Exception.Response.GetResponseStream())
+    $errorBody = $streamReader.ReadToEnd()
+    $error = $errorBody | ConvertFrom-Json
+    
+    Write-Host "✅ Duplicate definition correctly rejected:" -ForegroundColor Green
+    Write-Host "   Error Code: $($error.errorCode)"
+    Write-Host "   Message: $($error.message)"
+    Write-Host "   Definition ID: $($error.data.definitionId)"
+    
+    $error | ConvertTo-Json -Depth 3
+}
+```
+
+**Expected Result:** 409 Conflict with `DUPLICATE_HOLIDAY_DEFINITION`
+```json
+{
+  "errorCode": "DUPLICATE_HOLIDAY_DEFINITION",
+  "message": "Định nghĩa ngày nghỉ đã tồn tại: TET_2025",
+  "data": {
+    "definitionId": "TET_2025"
+  }
+}
+```
+
+### 6. Invalid Date Range
+
+**Tests the custom `InvalidDateRangeException`**
+
+```powershell
+# Try to query with startDate > endDate
+$startDate = "2025-12-31"
+$endDate = "2025-01-01"  # End before start!
+
+try {
+    Invoke-RestMethod -Uri "http://localhost:8080/api/v1/holiday-dates/by-range?startDate=$startDate&endDate=$endDate" `
+        -Method GET `
+        -Headers @{"Authorization"="Bearer $token"}
+    Write-Host "❌ ERROR: Invalid date range should be rejected!"
+} catch {
+    $streamReader = [System.IO.StreamReader]::new($_.Exception.Response.GetResponseStream())
+    $errorBody = $streamReader.ReadToEnd()
+    $error = $errorBody | ConvertFrom-Json
+    
+    Write-Host "✅ Invalid date range correctly rejected:" -ForegroundColor Green
+    Write-Host "   Error Code: $($error.errorCode)"
+    Write-Host "   Message: $($error.message)"
+    Write-Host "   Start Date: $($error.data.startDate)"
+    Write-Host "   End Date: $($error.data.endDate)"
+    
+    $error | ConvertTo-Json -Depth 3
+}
+```
+
+**Expected Result:** 400 Bad Request with `INVALID_DATE_RANGE`
+```json
+{
+  "errorCode": "INVALID_DATE_RANGE",
+  "message": "Ngày bắt đầu phải nhỏ hơn hoặc bằng ngày kết thúc",
+  "data": {
+    "startDate": "2025-12-31",
+    "endDate": "2025-01-01"
+  }
+}
+```
+
+### 7. Permission Tests
+
+**Tests the enhanced `AccessDeniedException` handler with required permission info**
 
 ```powershell
 # Test with employee account (should only have VIEW_HOLIDAY permission)
@@ -1084,11 +1354,10 @@ try {
         Write-Host "❌ Employee should be able to VIEW holidays"
     }
     
-    # Test 2: CREATE should fail
+    # Test 2: CREATE should fail with detailed permission info
     $body = @{
         definitionId = "TEST"
-        holidayName = "Test"
-        holidayType = "COMPANY"
+        name = "Test"
         description = "Test"
     } | ConvertTo-Json
     
@@ -1099,11 +1368,31 @@ try {
             -Body $body
         Write-Host "❌ Employee should NOT be able to CREATE holidays"
     } catch {
-        Write-Host "✅ Employee correctly denied CREATE permission (403 Forbidden)"
+        $streamReader = [System.IO.StreamReader]::new($_.Exception.Response.GetResponseStream())
+        $errorBody = $streamReader.ReadToEnd()
+        $error = $errorBody | ConvertFrom-Json
+        
+        Write-Host "✅ Employee correctly denied CREATE permission:" -ForegroundColor Green
+        Write-Host "   Error Code: $($error.errorCode)"
+        Write-Host "   Message: $($error.message)"
+        Write-Host "   Required Permission: $($error.data.requiredPermission)"
+        
+        $error | ConvertTo-Json -Depth 3
     }
     
 } catch {
     Write-Host "⚠️  Could not test employee permissions - adjust credentials"
+}
+```
+
+**Expected Result:** 403 Forbidden with `FORBIDDEN`
+```json
+{
+  "errorCode": "FORBIDDEN",
+  "message": "Bạn không có quyền truy cập tài nguyên này",
+  "data": {
+    "requiredPermission": "CREATE_HOLIDAY"
+  }
 }
 ```
 
@@ -1335,7 +1624,15 @@ DELETE /api/v1/holiday-definitions/MAINTENANCE_WEEK
 - ✅ `409 Conflict`: Duplicates or holiday conflicts
 
 **Error Types Tested:**
-- ✅ **HOLIDAY_CONFLICT**: Shift on holiday (verified 3 times)
+- ✅ **DUPLICATE_HOLIDAY_DEFINITION**: Custom exception (409)
+- ✅ **DUPLICATE_HOLIDAY_DATE**: Custom exception (409)
+- ✅ **INVALID_DATE_RANGE**: Custom exception (400)
+- ✅ **VALIDATION_ERROR**: Enhanced with missingFields array (400)
+- ✅ **INVALID_DATE_FORMAT**: Enhanced with format hints (400)
+- ✅ **FORBIDDEN**: Enhanced with requiredPermission (403)
+- ✅ **HOLIDAY_CONFLICT**: Shift on holiday (verified 3 times) (409)
+- ✅ **HOLIDAY_DEFINITION_NOT_FOUND**: Resource not found (404)
+- ✅ **HOLIDAY_DATE_NOT_FOUND**: Resource not found (404)
 - ✅ **Cascade Delete**: Definition removal deletes all dates
 - ✅ **Unicode Handling**: Vietnamese characters display correctly
 
@@ -1364,6 +1661,10 @@ DELETE /api/v1/holiday-definitions/MAINTENANCE_WEEK
 - Full CRUD APIs with correct HTTP semantics (PATCH for updates)
 - Security permissions (VIEW_HOLIDAY for all, CREATE/UPDATE/DELETE for admin)
 - Vietnamese holiday data seeded for 2025
+- **Custom Exception Classes:** 3 new holiday-specific exceptions
+- **Enhanced Error Handlers:** 6 improved global exception handlers
+- **Specific Error Codes:** Replaced generic codes with descriptive ones
+- **Helpful Error Data:** Includes missingFields, expectedFormat, requiredPermission
 
 **Testing:** ✅ Complete
 - All CRUD operations validated with real data
@@ -1426,6 +1727,130 @@ This test guide covers:
 
 All tests use composite key operations and verify full backward compatibility with existing features.
 
+---
+
+## Custom Exception Testing
+
+### **Newly Implemented Exception Classes**
+
+The following custom exceptions were implemented to provide **specific error codes and helpful debugging information**:
+
+#### 1. **DuplicateHolidayDefinitionException**
+- **Package:** `com.dental.clinic.management.exception.holiday`
+- **Error Code:** `DUPLICATE_HOLIDAY_DEFINITION`
+- **HTTP Status:** 409 Conflict
+- **Data Fields:** `definitionId`
+- **Usage:** Thrown when attempting to create a holiday definition with an ID that already exists
+- **Test Coverage:** ✅ Tested in Edge Cases section
+
+#### 2. **DuplicateHolidayDateException**
+- **Package:** `com.dental.clinic.management.exception.holiday`
+- **Error Code:** `DUPLICATE_HOLIDAY_DATE`
+- **HTTP Status:** 409 Conflict
+- **Data Fields:** `holidayDate`, `definitionId`
+- **Usage:** Thrown when attempting to create a duplicate holiday date for the same definition (composite key violation)
+- **Test Coverage:** ✅ Tested in Edge Cases section
+
+#### 3. **InvalidDateRangeException**
+- **Package:** `com.dental.clinic.management.exception.holiday`
+- **Error Code:** `INVALID_DATE_RANGE`
+- **HTTP Status:** 400 Bad Request
+- **Data Fields:** `startDate`, `endDate`
+- **Usage:** Thrown when startDate > endDate in date range queries
+- **Test Coverage:** ✅ Tested in Edge Cases section
+
+### **Enhanced Global Exception Handlers**
+
+The `GlobalExceptionHandler` was enhanced with 6 new/improved handlers:
+
+#### 1. **handleDuplicateHolidayDefinition()**
+- Catches: `DuplicateHolidayDefinitionException`
+- Returns: 409 with Vietnamese message and definitionId
+
+#### 2. **handleDuplicateHolidayDate()**
+- Catches: `DuplicateHolidayDateException`
+- Returns: 409 with Vietnamese message, holidayDate, and definitionId
+
+#### 3. **handleInvalidDateRange()**
+- Catches: `InvalidDateRangeException`
+- Returns: 400 with Vietnamese message, startDate, and endDate
+
+#### 4. **handleValidationErrors()** (Enhanced)
+- Catches: `MethodArgumentNotValidException`
+- **Improvements:**
+  - Changed error code from `error.validation` to `VALIDATION_ERROR`
+  - Added `missingFields` array in response data
+  - Added Vietnamese error messages for holiday endpoints
+  - Lists all missing required fields
+
+#### 5. **handleTypeMismatch()** (Enhanced)
+- Catches: `TypeMismatchException`
+- **Improvements:**
+  - Now handles all date parameters (holidayDate, date, startDate, endDate)
+  - Returns `INVALID_DATE_FORMAT` error code
+  - Includes `expectedFormat` (yyyy-MM-dd) and `example` in response
+  - Vietnamese error message with format guidance
+
+#### 6. **handleAccessDenied()** (Enhanced)
+- Catches: `AccessDeniedException`
+- **Improvements:**
+  - Detects required permission from HTTP method and URI
+  - Includes `requiredPermission` field in response data
+  - Maps endpoints to permissions (CREATE_HOLIDAY, UPDATE_HOLIDAY, DELETE_HOLIDAY, VIEW_HOLIDAY)
+
+### **Testing Checklist**
+
+Use this checklist when testing the holiday management API:
+
+- [ ] **Create duplicate holiday definition** → Should return `DUPLICATE_HOLIDAY_DEFINITION` (409)
+- [ ] **Create duplicate holiday date** → Should return `DUPLICATE_HOLIDAY_DATE` (409)
+- [ ] **Query with startDate > endDate** → Should return `INVALID_DATE_RANGE` (400)
+- [ ] **Create holiday with invalid date format** → Should return `INVALID_DATE_FORMAT` (400)
+- [ ] **Create holiday with missing fields** → Should return `VALIDATION_ERROR` with `missingFields` array (400)
+- [ ] **Create holiday without permission** → Should return `FORBIDDEN` with `requiredPermission` (403)
+- [ ] **Get non-existent holiday definition** → Should return `HOLIDAY_DEFINITION_NOT_FOUND` (404)
+- [ ] **Get non-existent holiday date** → Should return `HOLIDAY_DATE_NOT_FOUND` (404)
+- [ ] **Create shift on holiday** → Should return `HOLIDAY_CONFLICT` (409)
+
+### **Frontend Integration Notes**
+
+**Breaking Changes:**
+- ⚠️ Error codes changed from generic (`error.bad.request`) to specific (`DUPLICATE_HOLIDAY_DEFINITION`, `VALIDATION_ERROR`)
+- ⚠️ Error response structure now includes `data` object with helpful fields
+
+**What Frontend Needs to Update:**
+1. **Error Code Mapping:** Update error handling to recognize new error codes
+2. **Parse `data` Object:** Extract helpful fields like `missingFields`, `expectedFormat`, `requiredPermission`
+3. **Display Format Hints:** Show `expectedFormat` and `example` for date validation errors
+4. **Show Missing Fields:** Display which fields are missing from `missingFields` array
+5. **Permission Guidance:** Show `requiredPermission` when access is denied
+
+**Example Frontend Error Handling:**
+```typescript
+try {
+  await createHolidayDefinition(data);
+} catch (error) {
+  switch (error.errorCode) {
+    case 'DUPLICATE_HOLIDAY_DEFINITION':
+      showError(`Holiday ${error.data.definitionId} already exists`);
+      break;
+    case 'VALIDATION_ERROR':
+      showError(`Missing fields: ${error.data.missingFields.join(', ')}`);
+      break;
+    case 'INVALID_DATE_FORMAT':
+      showError(`Invalid date. Format: ${error.data.expectedFormat}. Example: ${error.data.example}`);
+      break;
+    case 'FORBIDDEN':
+      showError(`Access denied. Required permission: ${error.data.requiredPermission}`);
+      break;
+    // ... other cases
+  }
+}
+```
+
+---
+
 **Feature Status:** ✅ Production Ready  
+**Custom Exceptions:** ✅ Fully Implemented & Tested  
 **Test Date:** November 2, 2025  
 **Tested By:** Automated PowerShell Test Suite

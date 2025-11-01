@@ -78,17 +78,45 @@ public class GlobalExceptionHandler {
 
         log.warn("Access denied at {}: {}", request.getRequestURI(), ex.getMessage());
 
+        // Extract required permission from request URI for holiday endpoints
+        String requiredPermission = null;
+        String method = request.getMethod();
+        
+        if (request.getRequestURI().contains("/api/v1/holiday")) {
+            if ("POST".equals(method)) {
+                requiredPermission = "CREATE_HOLIDAY";
+            } else if ("PATCH".equals(method) || "PUT".equals(method)) {
+                requiredPermission = "UPDATE_HOLIDAY";
+            } else if ("DELETE".equals(method)) {
+                requiredPermission = "DELETE_HOLIDAY";
+            } else if ("GET".equals(method)) {
+                requiredPermission = "VIEW_HOLIDAY";
+            }
+        }
+
         // Use Vietnamese message for consistent error responses
-        String message = ex.getMessage();
-        if (message == null || message.equals("Access Denied")) {
+        String message;
+        if (requiredPermission != null) {
+            message = "Không có quyền thực hiện thao tác này. Yêu cầu quyền: " + requiredPermission;
+        } else if (ex.getMessage() == null || ex.getMessage().equals("Access Denied")) {
             message = "Không tìm thấy tài nguyên hoặc bạn không có quyền truy cập.";
+        } else {
+            message = ex.getMessage();
         }
 
         FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
         res.setStatusCode(HttpStatus.FORBIDDEN.value());
         res.setMessage(message);
         res.setError("FORBIDDEN");
-        res.setData(null);
+        
+        // Add required permission to response data
+        if (requiredPermission != null) {
+            java.util.Map<String, Object> data = new java.util.HashMap<>();
+            data.put("requiredPermission", requiredPermission);
+            res.setData(data);
+        } else {
+            res.setData(null);
+        }
 
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(res);
     }
@@ -315,6 +343,71 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handle duplicate holiday definition exception.
+     * Returns 409 Conflict.
+     */
+    @ExceptionHandler(com.dental.clinic.management.exception.holiday.DuplicateHolidayDefinitionException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleDuplicateHolidayDefinition(
+            com.dental.clinic.management.exception.holiday.DuplicateHolidayDefinitionException ex,
+            HttpServletRequest request) {
+
+        log.warn("Duplicate holiday definition at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.CONFLICT.value());
+        res.setError("DUPLICATE_HOLIDAY_DEFINITION");
+        res.setMessage(ex.getMessage());
+        res.setData(null);
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(res);
+    }
+
+    /**
+     * Handle duplicate holiday date exception.
+     * Returns 409 Conflict.
+     */
+    @ExceptionHandler(com.dental.clinic.management.exception.holiday.DuplicateHolidayDateException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleDuplicateHolidayDate(
+            com.dental.clinic.management.exception.holiday.DuplicateHolidayDateException ex,
+            HttpServletRequest request) {
+
+        log.warn("Duplicate holiday date at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.CONFLICT.value());
+        res.setError("DUPLICATE_HOLIDAY_DATE");
+        res.setMessage(ex.getMessage());
+        res.setData(null);
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(res);
+    }
+
+    /**
+     * Handle invalid date range exception.
+     * Returns 400 Bad Request.
+     */
+    @ExceptionHandler(com.dental.clinic.management.exception.holiday.InvalidDateRangeException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleInvalidDateRange(
+            com.dental.clinic.management.exception.holiday.InvalidDateRangeException ex,
+            HttpServletRequest request) {
+
+        log.warn("Invalid date range at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.BAD_REQUEST.value());
+        res.setError("INVALID_DATE_RANGE");
+        res.setMessage(ex.getMessage());
+        
+        // Add start and end dates to response data
+        java.util.Map<String, Object> data = new java.util.HashMap<>();
+        data.put("startDate", ex.getStartDate().toString());
+        data.put("endDate", ex.getEndDate().toString());
+        res.setData(data);
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+    }
+
+    /**
      * Handle shift finalized exception.
      * Returns 409 Conflict.
      */
@@ -456,6 +549,14 @@ public class GlobalExceptionHandler {
 
         log.warn("Validation failed at {}: {}", request.getRequestURI(), ex.getMessage());
 
+        // Collect all field errors
+        java.util.List<String> missingFields = ex.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .map(error -> error.getField())
+                .collect(java.util.stream.Collectors.toList());
+
+        // Get first error message
         String errorMessage = ex.getBindingResult()
                 .getFieldErrors()
                 .stream()
@@ -463,11 +564,25 @@ public class GlobalExceptionHandler {
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .orElse("Validation failed");
 
+        // For holiday endpoints, provide Vietnamese message
+        if (request.getRequestURI().contains("/api/v1/holiday")) {
+            String fields = String.join(", ", missingFields);
+            errorMessage = "Thiếu thông tin bắt buộc: " + fields;
+        }
+
         FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
         res.setStatusCode(HttpStatus.BAD_REQUEST.value());
         res.setMessage(errorMessage);
-        res.setError("error.validation");
-        res.setData(null);
+        res.setError("VALIDATION_ERROR");
+        
+        // Add missing fields to response data
+        if (!missingFields.isEmpty()) {
+            java.util.Map<String, Object> data = new java.util.HashMap<>();
+            data.put("missingFields", missingFields);
+            res.setData(data);
+        } else {
+            res.setData(null);
+        }
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
     }
@@ -514,9 +629,13 @@ public class GlobalExceptionHandler {
 
         // Special handling for date parameters
         String message;
-        if (request.getRequestURI().contains("/api/v1/shifts") &&
-                (ex.getName().equals("startDate") || ex.getName().equals("endDate"))) {
-            message = "Định dạng ngày không hợp lệ. Vui lòng sử dụng định dạng YYYY-MM-DD.";
+        String errorCode = "INVALID_PARAMETER_TYPE";
+        
+        if (ex.getName().equals("startDate") || ex.getName().equals("endDate") || 
+            ex.getName().equals("holidayDate") || ex.getName().equals("date")) {
+            message = "Định dạng ngày không hợp lệ: " + ex.getValue() + 
+                     ". Định dạng yêu cầu: yyyy-MM-dd";
+            errorCode = "INVALID_DATE_FORMAT";
         } else {
             message = "Invalid parameter type: " + ex.getName();
         }
@@ -524,8 +643,17 @@ public class GlobalExceptionHandler {
         FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
         res.setStatusCode(HttpStatus.BAD_REQUEST.value());
         res.setMessage(message);
-        res.setError("INVALID_DATE_FORMAT");
-        res.setData(null);
+        res.setError(errorCode);
+        
+        // Add format info for date errors
+        if (errorCode.equals("INVALID_DATE_FORMAT")) {
+            java.util.Map<String, Object> data = new java.util.HashMap<>();
+            data.put("expectedFormat", "yyyy-MM-dd");
+            data.put("example", "2025-11-03");
+            res.setData(data);
+        } else {
+            res.setData(null);
+        }
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
     }

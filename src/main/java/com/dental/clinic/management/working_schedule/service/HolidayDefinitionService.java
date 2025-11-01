@@ -35,14 +35,14 @@ public class HolidayDefinitionService {
 
         // Check if definition ID already exists
         if (holidayDefinitionRepository.existsById(request.getDefinitionId())) {
-            throw new IllegalArgumentException(
-                "Holiday definition with ID '" + request.getDefinitionId() + "' already exists");
+            throw new com.dental.clinic.management.exception.holiday.DuplicateHolidayDefinitionException(
+                request.getDefinitionId());
         }
 
         // Check if holiday name already exists
         if (holidayDefinitionRepository.existsByHolidayName(request.getHolidayName())) {
-            throw new IllegalArgumentException(
-                "Holiday with name '" + request.getHolidayName() + "' already exists");
+            throw new com.dental.clinic.management.exception.holiday.DuplicateHolidayDefinitionException(
+                request.getHolidayName());
         }
 
         HolidayDefinition definition = holidayDefinitionMapper.toEntity(request);
@@ -109,8 +109,8 @@ public class HolidayDefinitionService {
         // Check if new name conflicts with another definition
         if (!definition.getHolidayName().equals(request.getHolidayName()) &&
             holidayDefinitionRepository.existsByHolidayName(request.getHolidayName())) {
-            throw new IllegalArgumentException(
-                "Holiday with name '" + request.getHolidayName() + "' already exists");
+            throw new com.dental.clinic.management.exception.holiday.DuplicateHolidayDefinitionException(
+                request.getHolidayName());
         }
 
         holidayDefinitionMapper.updateEntity(definition, request);

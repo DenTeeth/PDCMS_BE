@@ -46,9 +46,8 @@ public class HolidayDateService {
         // Check if this date already exists for this definition
         HolidayDateId id = new HolidayDateId(request.getHolidayDate(), request.getDefinitionId());
         if (holidayDateRepository.existsById(id)) {
-            throw new IllegalArgumentException(
-                "Holiday date " + request.getHolidayDate() + 
-                " already exists for definition: " + request.getDefinitionId());
+            throw new com.dental.clinic.management.exception.holiday.DuplicateHolidayDateException(
+                request.getHolidayDate(), request.getDefinitionId());
         }
 
         HolidayDate holidayDate = holidayDateMapper.toEntity(request);
@@ -97,6 +96,12 @@ public class HolidayDateService {
     @Transactional(readOnly = true)
     public List<HolidayDateResponse> getHolidayDatesByRange(LocalDate startDate, LocalDate endDate) {
         log.info("Fetching holiday dates between {} and {}", startDate, endDate);
+
+        // Validate date range
+        if (startDate.isAfter(endDate)) {
+            throw new com.dental.clinic.management.exception.holiday.InvalidDateRangeException(
+                startDate, endDate);
+        }
 
         return holidayDateRepository.findByDateRange(startDate, endDate)
             .stream()
