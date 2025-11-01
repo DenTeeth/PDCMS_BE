@@ -36,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 /**
@@ -171,25 +172,100 @@ public class OvertimeRequestService {
         // Employee must NOT have a regular work schedule on this date/shift
         validateNoScheduleConflict(targetEmployeeId, dto.getWorkDate(), dto.getWorkShiftId());
 
-        // Validation 3: Work date must not be in the past
-        if (dto.getWorkDate().isBefore(LocalDate.now())) {
+        // Validation 3: Work date and shift time must not be in the past
+        LocalDate today = LocalDate.now();
+        if (dto.getWorkDate().isBefore(today)) {
             log.warn("Cannot create overtime request for past date: {}", dto.getWorkDate());
             throw new IllegalArgumentException("Ngày làm việc không được là ngày trong quá khứ.");
         }
+        
+        // Validation 3.1: If workDate is today, check if shift has already ended
+        if (dto.getWorkDate().isEqual(today)) {
+            LocalTime now = java.time.LocalTime.now();
+            if (workShift.getEndTime().isBefore(now) || workShift.getEndTime().equals(now)) {
+                log.warn("Cannot create overtime request for shift that has already ended today. Shift ends at {}, current time: {}", 
+                         workShift.getEndTime(), now);
+                throw new IllegalArgumentException(
+                    String.format("Ca làm việc đã kết thúc (kết thúc lúc %s). Không thể tạo yêu cầu OT.", 
+                                  workShift.getEndTime())
+                );
+            }
+        }
 
-        // Validation 4: Check for conflicting requests
-        List<RequestStatus> conflictStatuses = List.of(RequestStatus.PENDING, RequestStatus.APPROVED);
-        boolean hasConflict = overtimeRequestRepository.existsConflictingRequest(
-                targetEmployeeId, dto.getWorkDate(), dto.getWorkShiftId(), conflictStatuses);
+        // Validation 4: Admin cannot use admin privilege to create OT for themselves (Lỗi 2)
+        // Security reason: Admin creating OT for themselves can self-approve → abuse of power
+        // Admin mode is when employeeId is explicitly provided in request
+        Employee requestedBy = getCurrentEmployee();
+        if (dto.getEmployeeId() != null && targetEmployeeId.equals(requestedBy.getEmployeeId())) {
+            log.warn("Admin {} attempted to use admin privilege to create overtime for themselves (security violation)", requestedBy.getEmployeeId());
+            throw new IllegalArgumentException("Admin không được tự phân công OT cho bản thân vì có thể tự approve (lộng quyền). Vui lòng nhờ quản lý khác phân công hoặc tạo yêu cầu như nhân viên thông thường.");
+        }
 
-        if (hasConflict) {
-            log.warn("Conflicting overtime request exists for employee {} on {} shift {}",
+        // Validation 5: Check for time-overlapping shifts on the same date (Lỗi 3)
+        // A person cannot work 2 shifts that overlap in time on the same day
+        List<RequestStatus> activeStatuses = List.of(RequestStatus.PENDING, RequestStatus.APPROVED);
+        List<OvertimeRequest> existingRequests = overtimeRequestRepository.findByEmployeeIdAndWorkDate(
+                targetEmployeeId, dto.getWorkDate());
+        
+        for (OvertimeRequest existingRequest : existingRequests) {
+            WorkShift existingShift = existingRequest.getWorkShift();
+            
+            // Check 1: Prevent spam after REJECTION (Lỗi 4)
+            // If employee was REJECTED for this exact shift, don't allow re-request
+            if (existingRequest.getStatus() == RequestStatus.REJECTED &&
+                existingShift.getWorkShiftId().equals(dto.getWorkShiftId())) {
+                log.warn("Employee {} attempted to re-request overtime for REJECTED shift {} on {}",
+                        targetEmployeeId, dto.getWorkShiftId(), dto.getWorkDate());
+                throw new IllegalArgumentException(
+                    String.format("Yêu cầu OT cho ca này đã bị từ chối trước đó (lý do: %s). Vui lòng liên hệ quản lý nếu cần thay đổi.",
+                        existingRequest.getRejectedReason() != null ? existingRequest.getRejectedReason() : "Không rõ")
+                );
+            }
+            
+            // Check 2: Prevent spam after CANCELLATION
+            // If employee CANCELLED this exact shift, don't allow immediate re-request
+            if (existingRequest.getStatus() == RequestStatus.CANCELLED &&
+                existingShift.getWorkShiftId().equals(dto.getWorkShiftId())) {
+                log.warn("Employee {} attempted to re-request overtime for CANCELLED shift {} on {}",
+                        targetEmployeeId, dto.getWorkShiftId(), dto.getWorkDate());
+                throw new IllegalArgumentException(
+                    String.format("Yêu cầu OT cho ca này đã bị hủy trước đó (lý do: %s). Vui lòng liên hệ quản lý nếu cần tạo lại.",
+                        existingRequest.getCancellationReason() != null ? existingRequest.getCancellationReason() : "Không rõ")
+                );
+            }
+            
+            // Check 3: Time-overlapping with PENDING or APPROVED requests
+            if (!activeStatuses.contains(existingRequest.getStatus())) {
+                continue; // Skip REJECTED/CANCELLED for time overlap check
+            }
+            
+            // Check if shifts overlap in time
+            boolean timeOverlap = !(workShift.getEndTime().isBefore(existingShift.getStartTime()) || 
+                                   workShift.getStartTime().isAfter(existingShift.getEndTime()));
+            
+            if (timeOverlap) {
+                log.warn("Time-overlapping overtime request exists for employee {} on {}. Existing shift: {} ({}-{}), New shift: {} ({}-{})",
+                        targetEmployeeId, dto.getWorkDate(),
+                        existingShift.getWorkShiftId(), existingShift.getStartTime(), existingShift.getEndTime(),
+                        workShift.getWorkShiftId(), workShift.getStartTime(), workShift.getEndTime());
+                throw new IllegalArgumentException(
+                    String.format("Nhân viên đã có ca OT trùng giờ trong ngày %s (ca %s: %s-%s). Không thể tạo ca OT mới (ca %s: %s-%s).",
+                        dto.getWorkDate(),
+                        existingShift.getShiftName(), existingShift.getStartTime(), existingShift.getEndTime(),
+                        workShift.getShiftName(), workShift.getStartTime(), workShift.getEndTime())
+                );
+            }
+        }
+
+        // Validation 6: Check for exact duplicate PENDING/APPROVED (same shift)
+        boolean hasExactDuplicate = overtimeRequestRepository.existsConflictingRequest(
+                targetEmployeeId, dto.getWorkDate(), dto.getWorkShiftId(), activeStatuses);
+
+        if (hasExactDuplicate) {
+            log.warn("Exact duplicate overtime request exists for employee {} on {} shift {}",
                     targetEmployeeId, dto.getWorkDate(), dto.getWorkShiftId());
             throw new DuplicateOvertimeRequestException(targetEmployeeId, dto.getWorkDate(), dto.getWorkShiftId());
         }
-
-        // Get current user as the requester
-        Employee requestedBy = getCurrentEmployee();
 
         // Create overtime request (ID will be auto-generated via @PrePersist)
         OvertimeRequest overtimeRequest = new OvertimeRequest();

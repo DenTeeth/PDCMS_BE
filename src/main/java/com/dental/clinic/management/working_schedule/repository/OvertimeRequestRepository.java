@@ -32,6 +32,21 @@ public interface OvertimeRequestRepository extends JpaRepository<OvertimeRequest
     Page<OvertimeRequest> findByEmployeeId(@Param("employeeId") Integer employeeId, Pageable pageable);
 
     /**
+     * Find all overtime requests for a specific employee on a specific date.
+     * Used for checking time-overlapping shifts.
+     * @param employeeId the employee ID
+     * @param workDate the work date
+     * @return list of overtime requests
+     */
+    @Query("SELECT ot FROM OvertimeRequest ot " +
+           "WHERE ot.employee.employeeId = :employeeId " +
+           "AND ot.workDate = :workDate")
+    List<OvertimeRequest> findByEmployeeIdAndWorkDate(
+        @Param("employeeId") Integer employeeId,
+        @Param("workDate") LocalDate workDate
+    );
+
+    /**
      * Find all overtime requests with optional filtering by status.
      * @param status optional status filter
      * @param pageable pagination information
