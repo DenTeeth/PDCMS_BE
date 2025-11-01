@@ -1,6 +1,7 @@
 package com.dental.clinic.management.working_schedule.repository;
 
 import com.dental.clinic.management.working_schedule.domain.HolidayDate;
+import com.dental.clinic.management.working_schedule.domain.HolidayDateId;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -11,17 +12,18 @@ import java.util.List;
 
 /**
  * Repository for HolidayDate entity.
+ * Uses composite key (HolidayDateId) instead of Long.
  */
 @Repository
-public interface HolidayDateRepository extends JpaRepository<HolidayDate, Long> {
+public interface HolidayDateRepository extends JpaRepository<HolidayDate, HolidayDateId> {
 
     /**
-     * Find all holidays for a specific year.
+     * Find all holidays for a specific definition.
      *
-     * @param year the year
-     * @return list of holidays
+     * @param definitionId the holiday definition ID
+     * @return list of holiday dates
      */
-    List<HolidayDate> findByYear(Integer year);
+    List<HolidayDate> findByDefinitionId(String definitionId);
 
     /**
      * Find all holidays within a date range.

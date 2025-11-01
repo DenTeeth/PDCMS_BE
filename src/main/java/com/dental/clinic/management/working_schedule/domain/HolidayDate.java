@@ -1,61 +1,74 @@
 package com.dental.clinic.management.working_schedule.domain;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
- * Entity representing a holiday date.
- * Used by scheduled jobs to skip creating shifts on holidays.
+ * Entity representing a specific holiday date.
+ * A holiday date belongs to a holiday definition (e.g., "Lunar New Year 2025").
+ * Uses composite primary key: (holiday_date + definition_id).
  */
 @Entity
-@Table(name = "holiday_dates", indexes = {
-        @Index(name = "idx_holiday_date", columnList = "holiday_date")
-})
+@Table(name = "holiday_dates")
+@IdClass(HolidayDateId.class)
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class HolidayDate {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "holiday_id")
-    private Long holidayId;
-
     /**
-     * The actual date of the holiday.
+     * The actual date of the holiday (part of composite PK).
      */
-    @Column(name = "holiday_date", nullable = false, unique = true)
+    @Id
+    @Column(name = "holiday_date", nullable = false)
     @NotNull(message = "Holiday date is required")
     private LocalDate holidayDate;
 
     /**
-     * Name of the holiday.
+     * Reference to the holiday definition ID (part of composite PK).
      */
-    @Column(name = "holiday_name", nullable = false, length = 200)
-    @NotBlank(message = "Holiday name is required")
-    @Size(max = 200, message = "Holiday name must not exceed 200 characters")
-    private String holidayName;
+    @Id
+    @Column(name = "definition_id", length = 20, nullable = false)
+    private String definitionId;
 
     /**
-     * Year this holiday applies to.
-     * Helps with querying holidays for a specific year.
+     * Many-to-One relationship with HolidayDefinition.
+     * Uses definitionId as foreign key.
      */
-    @Column(name = "year", nullable = false)
-    @NotNull(message = "Year is required")
-    private Integer year;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "definition_id", referencedColumnName = "definition_id",
+                insertable = false, updatable = false)
+    private HolidayDefinition holidayDefinition;
 
     /**
-     * Optional description.
+     * Optional description for this specific date.
+     * E.g., "First day of Tet", "Victory Day celebration"
      */
-    @Column(name = "description", columnDefinition = "TEXT")
+    @Column(name = "description", length = 500)
     private String description;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }

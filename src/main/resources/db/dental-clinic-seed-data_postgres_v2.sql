@@ -723,18 +723,46 @@ VALUES
 
 ON CONFLICT (employee_shift_id) DO NOTHING;
 
--- Sample holidays
-INSERT INTO holiday_dates (holiday_id, holiday_date, holiday_name, description, year)
-VALUES
-(1, '2025-12-25', 'Christmas', 'Giáng Sinh', 2025),
-(2, '2025-01-01', 'New Year', 'Tết Dương Lịch', 2025),
-(3, '2025-04-30', 'Reunification Day', 'Ngày Giải phóng miền Nam', 2025)
-ON CONFLICT (holiday_id) DO NOTHING;
+-- ============================================
+-- HOLIDAY DEFINITIONS (New Schema with 2 tables)
+-- ============================================
 
--- Reset sequence for holiday_dates to prevent duplicate key errors
-SELECT setval('holiday_dates_holiday_id_seq',
-    COALESCE((SELECT MAX(holiday_id) FROM holiday_dates), 0) + 1,
-    false);
+-- Step 1: Insert holiday definitions
+INSERT INTO holiday_definitions (definition_id, holiday_name, holiday_type, description, created_at, updated_at)
+VALUES
+('TET_2025', 'Tết Nguyên Đán 2025', 'NATIONAL', 'Lunar New Year 2025 - Vietnamese traditional holiday', NOW(), NOW()),
+('LIBERATION_DAY', 'Ngày Giải phóng miền Nam', 'NATIONAL', 'Reunification Day - April 30th', NOW(), NOW()),
+('LABOR_DAY', 'Ngày Quốc tế Lao động', 'NATIONAL', 'International Labor Day - May 1st', NOW(), NOW()),
+('NATIONAL_DAY', 'Ngày Quốc khánh', 'NATIONAL', 'Vietnam National Day - September 2nd', NOW(), NOW()),
+('NEW_YEAR', 'Tết Dương lịch', 'NATIONAL', 'Gregorian New Year', NOW(), NOW()),
+('HUNG_KINGS', 'Giỗ Tổ Hùng Vương', 'NATIONAL', 'Hung Kings Commemoration Day', NOW(), NOW())
+ON CONFLICT (definition_id) DO NOTHING;
+
+-- Step 2: Insert holiday dates (specific dates for each definition)
+INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
+VALUES
+-- Tết Nguyên Đán 2025 (Jan 29 - Feb 4, 2025)
+('2025-01-29', 'TET_2025', 'Ngày Tết Nguyên Đán (30 Tết)', NOW(), NOW()),
+('2025-01-30', 'TET_2025', 'Mùng 1 Tết', NOW(), NOW()),
+('2025-01-31', 'TET_2025', 'Mùng 2 Tết', NOW(), NOW()),
+('2025-02-01', 'TET_2025', 'Mùng 3 Tết', NOW(), NOW()),
+('2025-02-02', 'TET_2025', 'Mùng 4 Tết', NOW(), NOW()),
+('2025-02-03', 'TET_2025', 'Mùng 5 Tết', NOW(), NOW()),
+('2025-02-04', 'TET_2025', 'Mùng 6 Tết', NOW(), NOW()),
+
+-- Liberation Day & Labor Day (April 30 - May 1, 2025)
+('2025-04-30', 'LIBERATION_DAY', 'Ngày Giải phóng miền Nam', NOW(), NOW()),
+('2025-05-01', 'LABOR_DAY', 'Ngày Quốc tế Lao động', NOW(), NOW()),
+
+-- Hung Kings Commemoration Day 2025 (April 18, 2025 - lunar March 10th)
+('2025-04-18', 'HUNG_KINGS', 'Giỗ Tổ Hùng Vương', NOW(), NOW()),
+
+-- National Day (September 2, 2025)
+('2025-09-02', 'NATIONAL_DAY', 'Quốc khánh Việt Nam', NOW(), NOW()),
+
+-- New Year (January 1, 2025)
+('2025-01-01', 'NEW_YEAR', 'Tết Dương lịch 2025', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
 
 -- ============================================
 -- WORKING SCHEDULE SAMPLE DATA (Schema V14 Hybrid)
