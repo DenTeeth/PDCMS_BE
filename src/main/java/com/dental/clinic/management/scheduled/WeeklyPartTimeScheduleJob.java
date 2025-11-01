@@ -31,12 +31,12 @@ import java.util.stream.Collectors;
  * Job 2: Auto-create weekly schedule for part-time employees.
  *
  * ⚠️ DEPRECATED: Replaced by UnifiedScheduleSyncJob (P8)
- * 
+ *
  * This job has been superseded by the new unified sync job that handles
  * BOTH Fixed and Flex schedules in a single daily run.
- * 
+ *
  * Kept for reference only. Do NOT enable this job.
- * 
+ *
  * @deprecated Use {@link UnifiedScheduleSyncJob} instead
  */
 @Deprecated
@@ -144,14 +144,14 @@ public class WeeklyPartTimeScheduleJob {
 
                     // V2: Each registration is for ONE slot (one day), not multiple days
                     String slotDayStr = slot.getDayOfWeek();
-                    
+
                     if (slotDayStr == null || slotDayStr.isEmpty()) {
                         log.warn("Slot {} has no day configured. Skipping.",
                                 slot.getSlotId());
                         skippedDueToErrors++;
                         continue;
                     }
-                    
+
                     DayOfWeek registeredDay;
                     try {
                         registeredDay = DayOfWeek.valueOf(slotDayStr); // Convert String to enum
@@ -170,7 +170,7 @@ public class WeeklyPartTimeScheduleJob {
                     for (int i = 0; i < 7; i++) {
                         LocalDate candidateDate = nextMonday.plusDays(i);
                         DayOfWeek dayOfWeek = mapJavaDayToCustomDay(candidateDate.getDayOfWeek());
-                        
+
                         if (registeredDay.equals(dayOfWeek)) {
                             workDate = candidateDate;
                             break; // Found the matching day
@@ -214,7 +214,7 @@ public class WeeklyPartTimeScheduleJob {
                     shift.setNotes(String.format("Tạo tự động từ đăng ký %s", registration.getRegistrationId()));
 
                     shiftsToSave.add(shift);
-                    
+
                     log.info("Prepared 1 shift for employee {} on {} (Registration: {})",
                             employee.getEmployeeId(), workDate, registration.getRegistrationId());
                     totalShiftsCreated++;

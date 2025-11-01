@@ -171,9 +171,9 @@ public interface FixedShiftRegistrationRepository extends JpaRepository<FixedShi
         /**
          * Find all registrations expiring on a specific date.
          * Used by DailyRenewalDetectionJob to detect registrations that need renewal.
-         * 
+         *
          * @param effectiveTo the expiration date
-         * @param isActive filter by active status
+         * @param isActive    filter by active status
          * @return list of registrations expiring on the specified date
          */
         @Query("SELECT fsr FROM FixedShiftRegistration fsr " +
@@ -189,10 +189,10 @@ public interface FixedShiftRegistrationRepository extends JpaRepository<FixedShi
         /**
          * Find all registrations expiring within a date range.
          * Used by DailyRenewalDetectionJob (P9) to find registrations needing renewal.
-         * 
+         *
          * @param startDate beginning of expiry window
-         * @param endDate end of expiry window
-         * @param isActive filter by active status
+         * @param endDate   end of expiry window
+         * @param isActive  filter by active status
          * @return list of registrations expiring in the range
          */
         @Query("SELECT fsr FROM FixedShiftRegistration fsr " +

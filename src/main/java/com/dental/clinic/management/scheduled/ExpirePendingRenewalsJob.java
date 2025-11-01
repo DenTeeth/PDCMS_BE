@@ -13,11 +13,13 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * Job P10: Auto-expire pending renewal requests that have passed their deadline.
+ * Job P10: Auto-expire pending renewal requests that have passed their
+ * deadline.
  *
  * Runs daily at 00:10 AM (after P9 creates new renewals).
- * Marks renewal requests as EXPIRED if employees haven't responded before expires_at.
- * 
+ * Marks renewal requests as EXPIRED if employees haven't responded before
+ * expires_at.
+ *
  * IMPROVEMENTS from old Job:
  * - Timing optimized to 00:10 AM (daily is sufficient, hourly was overkill)
  * - Runs after P9 for better workflow
@@ -85,7 +87,7 @@ public class ExpirePendingRenewalsJob {
 
                     // Note: ShiftRenewalRequest doesn't have a 'message' field
                     // Expiration is tracked via status and confirmedAt timestamp
-                    
+
                     renewalRepository.save(renewal);
                     successfullyExpired++;
 

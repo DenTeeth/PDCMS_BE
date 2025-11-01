@@ -16,20 +16,23 @@ public interface PartTimeRegistrationRepository extends JpaRepository<PartTimeRe
 
     /**
      * Find all active registrations that have expired (effective_to < today).
-     * Used by CleanupExpiredFlexRegistrationsJob (P11) to deactivate ghost occupants.
-     * 
-     * This fixes a critical bug where expired registrations still count as "registered"
+     * Used by CleanupExpiredFlexRegistrationsJob (P11) to deactivate ghost
+     * occupants.
+     *
+     * This fixes a critical bug where expired registrations still count as
+     * "registered"
      * in API GET /api/v1/work-slots, making slots appear full when they're not.
-     * 
+     *
      * SQL Equivalent:
-     * SELECT * FROM part_time_registrations 
+     * SELECT * FROM part_time_registrations
      * WHERE is_active = true AND effective_to < CURRENT_DATE
-     * 
-     * @param isActive filter by active status (should be true to find expired but still active)
+     *
+     * @param isActive    filter by active status (should be true to find expired
+     *                    but still active)
      * @param effectiveTo date to compare against (should be today)
      * @return list of expired registrations still marked as active
      */
     List<PartTimeRegistration> findByIsActiveAndEffectiveToLessThan(
-            Boolean isActive, 
+            Boolean isActive,
             LocalDate effectiveTo);
 }

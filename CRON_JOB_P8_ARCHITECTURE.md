@@ -3,6 +3,7 @@
 ## 🎯 Tổng Quan
 
 Dự án đã được **CẢI TIẾN HOÀN TOÀN** hệ thống cron jobs:
+
 - ❌ **CŨ**: 2 jobs riêng biệt cho Fixed (Job 1) và Flex (Job 2)
 - ✅ **MỚI**: 1 job duy nhất đồng bộ cả 2 luồng (Job P8)
 
@@ -12,17 +13,21 @@ Dự án đã được **CẢI TIẾN HOÀN TOÀN** hệ thống cron jobs:
 
 ### **Job P8: UnifiedScheduleSyncJob** ⭐ (QUAN TRỌNG NHẤT)
 
-**File**: `UnifiedScheduleSyncJob.java`  
-**Status**: ✅ **ENABLED** (đang chạy)  
+**File**: `UnifiedScheduleSyncJob.java`
+**Status**: ✅ **ENABLED** (đang chạy)
 **Cron**: `0 1 0 * * ?` (00:01 AM hàng ngày)
 
 #### Mục Đích:
+
 Đọc lịch từ **CẢ 2 NGUỒN** và đồng bộ sang `employee_shifts`:
+
 1. **Luồng 1 (Fixed)**: `fixed_shift_registrations` + `fixed_registration_days`
 2. **Luồng 2 (Flex)**: `employee_shift_registrations` + `part_time_slots`
 
 #### Tại Sao Chạy Hàng Ngày?
+
 **Self-Healing Architecture** - Tự động sửa lỗi trong vòng 24 giờ:
+
 - Admin thay đổi lịch cố định (P5) → Hệ thống tự cập nhật `employee_shifts` trong 1 ngày
 - Part-time đăng ký thêm ca → Lịch thực tế được sync ngay ngày hôm sau
 - **KHÔNG CẦN** restart service hay chạy script thủ công
@@ -81,29 +86,32 @@ Dự án đã được **CẢI TIẾN HOÀN TOÀN** hệ thống cron jobs:
 ```
 
 #### Source Tags (Quan Trọng):
-| Source | Ý Nghĩa | Từ Nguồn Nào |
-|--------|---------|--------------|
-| `BATCH_JOB` | Từ lịch cố định | `fixed_shift_registrations` (Luồng 1) |
-| `REGISTRATION_JOB` | Từ lịch linh hoạt | `employee_shift_registrations` (Luồng 2) |
-| `OT_APPROVAL` | Từ overtime request được duyệt | Admin/Manager approve |
-| `MANUAL_ENTRY` | Tạo thủ công | Admin tạo trực tiếp |
+
+| Source             | Ý Nghĩa                        | Từ Nguồn Nào                             |
+| ------------------ | ------------------------------ | ---------------------------------------- |
+| `BATCH_JOB`        | Từ lịch cố định                | `fixed_shift_registrations` (Luồng 1)    |
+| `REGISTRATION_JOB` | Từ lịch linh hoạt              | `employee_shift_registrations` (Luồng 2) |
+| `OT_APPROVAL`      | Từ overtime request được duyệt | Admin/Manager approve                    |
+| `MANUAL_ENTRY`     | Tạo thủ công                   | Admin tạo trực tiếp                      |
 
 ---
 
 ## 🚫 Jobs Đã DEPRECATED
 
-### **Job 1: MonthlyFullTimeScheduleJob** ❌ 
+### **Job 1: MonthlyFullTimeScheduleJob** ❌
 
-**File**: `MonthlyFullTimeScheduleJob.java`  
-**Status**: ⛔ **DISABLED** (`// @Component`)  
+**File**: `MonthlyFullTimeScheduleJob.java`
+**Status**: ⛔ **DISABLED** (`// @Component`)
 **Lý do**: Thay thế bởi `UnifiedScheduleSyncJob`
 
 **Cũ**:
+
 - Chạy tháng 1 lần (ngày 20 hàng tháng, 02:00 AM)
 - Tạo lịch cho Full-Time employees cho 1 tháng tiếp theo
 - **Vấn đề**: Nếu admin đổi lịch giữa tháng → Phải đợi đến tháng sau mới sync
 
 **Mới** (P8):
+
 - Chạy **HÀNG NGÀY** với window 14 ngày
 - Tự động phát hiện thay đổi và cập nhật trong 24h
 - **Không cần chờ đến cuối tháng**
@@ -112,16 +120,18 @@ Dự án đã được **CẢI TIẾN HOÀN TOÀN** hệ thống cron jobs:
 
 ### **Job 2: WeeklyPartTimeScheduleJob** ❌
 
-**File**: `WeeklyPartTimeScheduleJob.java`  
-**Status**: ⛔ **DISABLED** (`// @Component`)  
+**File**: `WeeklyPartTimeScheduleJob.java`
+**Status**: ⛔ **DISABLED** (`// @Component`)
 **Lý do**: Thay thế bởi `UnifiedScheduleSyncJob`
 
 **Cũ**:
+
 - Chạy tuần 1 lần (Chủ Nhật, 01:00 AM)
 - Tạo lịch cho Part-Time Flex employees cho tuần tiếp theo
 - **Vấn đề**: Nếu part-time đăng ký ca mới giữa tuần → Phải đợi Chủ Nhật mới có lịch
 
 **Mới** (P8):
+
 - Chạy **HÀNG NGÀY** với window 14 ngày
 - Part-time đăng ký ca hôm nay → Lịch xuất hiện ngày mai
 - **Không cần chờ đến Chủ Nhật**
@@ -132,16 +142,18 @@ Dự án đã được **CẢI TIẾN HOÀN TOÀN** hệ thống cron jobs:
 
 ### **Job 3: DailyRenewalDetectionJob** ✅
 
-**File**: `DailyRenewalDetectionJob.java`  
-**Status**: ✅ **ENABLED**  
+**File**: `DailyRenewalDetectionJob.java`
+**Status**: ✅ **ENABLED**
 **Cron**: `0 0 1 * * ?` (01:00 AM hàng ngày)
 
-**Mục đích**: 
+**Mục đích**:
+
 - Phát hiện `fixed_shift_registrations` sắp hết hạn (7 ngày trước `effective_to`)
 - Tạo `shift_renewal_requests` để mời nhân viên gia hạn
 - **Chỉ áp dụng cho**: FULL_TIME và PART_TIME_FIXED (KHÔNG áp dụng cho PART_TIME_FLEX)
 
 **Business Logic**:
+
 ```sql
 -- Find registrations expiring in 7 days
 SELECT * FROM fixed_shift_registrations
@@ -155,6 +167,7 @@ WHERE effective_to = (CURRENT_DATE + INTERVAL '7 days')
 ```
 
 **Ví dụ**:
+
 - Hôm nay: 2025-11-08
 - Job phát hiện registration có `effective_to = 2025-11-15` (7 ngày nữa)
 - Tạo renewal request với `expires_at = 2025-11-13` (còn 2 ngày để nhân viên phản hồi)
@@ -163,15 +176,17 @@ WHERE effective_to = (CURRENT_DATE + INTERVAL '7 days')
 
 ### **Job 4: ExpirePendingRenewalsJob** ✅
 
-**File**: `ExpirePendingRenewalsJob.java`  
-**Status**: ✅ **ENABLED**  
+**File**: `ExpirePendingRenewalsJob.java`
+**Status**: ✅ **ENABLED**
 **Cron**: `0 30 1 * * ?` (01:30 AM hàng ngày)
 
 **Mục đích**:
+
 - Đánh dấu các renewal requests đã quá hạn
 - Chuyển `status` từ `PENDING_ACTION` → `EXPIRED`
 
 **Business Logic**:
+
 ```sql
 -- Find expired renewals
 UPDATE shift_renewal_requests
@@ -182,6 +197,7 @@ WHERE status = 'PENDING_ACTION'
 ```
 
 **Audit Trail**:
+
 - Status: `EXPIRED`
 - `confirmed_at`: Timestamp khi job chạy
 - HR/Admin có thể xem báo cáo nhân viên nào không phản hồi
@@ -190,11 +206,12 @@ WHERE status = 'PENDING_ACTION'
 
 ### **Job 5: AnnualLeaveBalanceResetJob** ✅
 
-**File**: `AnnualLeaveBalanceResetJob.java`  
-**Status**: ✅ **ENABLED**  
+**File**: `AnnualLeaveBalanceResetJob.java`
+**Status**: ✅ **ENABLED**
 **Cron**: `0 0 0 1 1 ?` (00:00 AM, ngày 1/1 hàng năm)
 
 **Mục đích**:
+
 - Reset số ngày phép năm cho tất cả nhân viên
 - Chạy vào đầu năm mới
 
@@ -202,15 +219,15 @@ WHERE status = 'PENDING_ACTION'
 
 ## 📈 So Sánh Kiến Trúc
 
-| Tiêu Chí | Cũ (Job 1 & 2) | Mới (Job P8) |
-|----------|----------------|--------------|
-| **Tần suất** | Tháng 1 lần (Full-Time)<br>Tuần 1 lần (Part-Time) | **Hàng ngày** |
-| **Sync window** | 30 ngày (Full-Time)<br>7 ngày (Part-Time) | **14 ngày** (cả 2 loại) |
-| **Self-healing** | ❌ Không | ✅ **Có** (24h auto-correct) |
-| **Admin đổi lịch** | Phải đợi job tiếp theo | **Tự động sync trong 1 ngày** |
-| **Độ phức tạp** | 2 jobs riêng biệt | **1 job duy nhất** |
-| **Trùng lặp code** | Cao (copy logic) | Thấp (reuse logic) |
-| **Maintenance** | Khó (2 nơi fix bug) | **Dễ** (1 nơi fix) |
+| Tiêu Chí           | Cũ (Job 1 & 2)                                    | Mới (Job P8)                  |
+| ------------------ | ------------------------------------------------- | ----------------------------- |
+| **Tần suất**       | Tháng 1 lần (Full-Time)<br>Tuần 1 lần (Part-Time) | **Hàng ngày**                 |
+| **Sync window**    | 30 ngày (Full-Time)<br>7 ngày (Part-Time)         | **14 ngày** (cả 2 loại)       |
+| **Self-healing**   | ❌ Không                                          | ✅ **Có** (24h auto-correct)  |
+| **Admin đổi lịch** | Phải đợi job tiếp theo                            | **Tự động sync trong 1 ngày** |
+| **Độ phức tạp**    | 2 jobs riêng biệt                                 | **1 job duy nhất**            |
+| **Trùng lặp code** | Cao (copy logic)                                  | Thấp (reuse logic)            |
+| **Maintenance**    | Khó (2 nơi fix bug)                               | **Dễ** (1 nơi fix)            |
 
 ---
 
@@ -226,6 +243,7 @@ WHERE status = 'PENDING_ACTION'
 ```
 
 **Lý do thứ tự**:
+
 1. **00:01 AM**: Sync lịch trước để có dữ liệu mới nhất
 2. **01:00 AM**: Phát hiện renewal sau khi đã sync
 3. **01:30 AM**: Expire renewals sau cùng
@@ -274,7 +292,7 @@ WHERE work_date >= CURRENT_DATE
 -- Expected: 0 (or old data)
 
 -- After job runs (00:01 AM)
-SELECT 
+SELECT
     work_date,
     COUNT(*) as shift_count
 FROM employee_shifts
@@ -311,6 +329,7 @@ WHERE work_date = '2025-12-25'
 ### Vấn Đề 1: Job Không Chạy
 
 **Kiểm tra**:
+
 ```java
 // UnifiedScheduleSyncJob.java
 @Component  // ← Phải có annotation này
@@ -323,6 +342,7 @@ public class UnifiedScheduleSyncJob {
 ```
 
 **Log expected**:
+
 ```
 2025-11-08 00:01:00 INFO  - === Starting Unified Schedule Sync Job (P8) ===
 2025-11-08 00:01:00 INFO  - Sync window: 2025-11-08 to 2025-11-21 (14 days)
@@ -336,6 +356,7 @@ public class UnifiedScheduleSyncJob {
 ### Vấn Đề 2: Shifts Không Được Tạo
 
 **Debug Checklist**:
+
 ```sql
 -- 1. Check work shifts exist
 SELECT COUNT(*) FROM work_shifts WHERE is_active = true;
@@ -371,6 +392,7 @@ WHERE fsr.is_active = true;
 **Nguyên nhân**: Job chạy 2 lần (lỗi config)
 
 **Kiểm tra**:
+
 ```sql
 SELECT employee_id, work_date, work_shift_id, COUNT(*)
 FROM employee_shifts
@@ -382,9 +404,10 @@ HAVING COUNT(*) > 1
 ```
 
 **Fix**: Ensure unique constraint exists
+
 ```sql
 ALTER TABLE employee_shifts
-ADD CONSTRAINT uk_employee_date_shift 
+ADD CONSTRAINT uk_employee_date_shift
 UNIQUE (employee_id, work_date, work_shift_id);
 ```
 
@@ -444,6 +467,7 @@ docker exec -i postgres-dental psql -U root -d dental_clinic_db \
 ### 1. Monitor Job Execution
 
 **Setup Logging**:
+
 ```yaml
 # application.yaml
 logging:
@@ -452,6 +476,7 @@ logging:
 ```
 
 **Expected Logs**:
+
 ```
 DEBUG - Processing 2025-11-08 (FRIDAY)
 DEBUG - Created 9 shifts for 2025-11-08 (7 Fixed, 2 Flex)
@@ -464,10 +489,11 @@ DEBUG - Created 5 shifts for 2025-11-09 (3 Fixed, 2 Flex)
 ### 2. Định Kỳ Kiểm Tra
 
 **Weekly Check** (mỗi Thứ 2):
+
 ```sql
 -- Verify 14-day coverage
-SELECT 
-    CASE 
+SELECT
+    CASE
         WHEN work_date = CURRENT_DATE THEN 'Today'
         WHEN work_date = CURRENT_DATE + 13 THEN 'Day 13 (Last)'
         ELSE TO_CHAR(work_date, 'Day DD/MM')
@@ -488,6 +514,7 @@ ORDER BY work_date;
 ### 3. Alert Nếu Job Fail
 
 **Setup Health Check** (Optional):
+
 ```java
 // Add to UnifiedScheduleSyncJob
 private LocalDateTime lastSuccessfulRun;
@@ -501,9 +528,10 @@ this.lastSuccessfulRun = LocalDateTime.now();
 ```
 
 **Monitor**:
+
 ```bash
 # Check if job ran in last 25 hours
-SELECT 
+SELECT
     NOW() - MAX(created_at) as time_since_last_sync
 FROM employee_shifts
 WHERE source IN ('BATCH_JOB', 'REGISTRATION_JOB')
@@ -517,16 +545,16 @@ WHERE source IN ('BATCH_JOB', 'REGISTRATION_JOB')
 
 ### Những Gì Đã Thay Đổi:
 
-✅ **1 Job thay vì 2**: Giảm complexity  
-✅ **Daily sync**: Self-healing trong 24h  
-✅ **14-day window**: Balance giữa performance và coverage  
-✅ **Clean architecture**: Dễ maintain, dễ extend  
+✅ **1 Job thay vì 2**: Giảm complexity
+✅ **Daily sync**: Self-healing trong 24h
+✅ **14-day window**: Balance giữa performance và coverage
+✅ **Clean architecture**: Dễ maintain, dễ extend
 
 ### Lợi Ích Cho Team:
 
-👨‍💼 **Admin**: Đổi lịch nhân viên → Tự động sync ngày hôm sau  
-👨‍⚕️ **Nhân viên**: Đăng ký ca part-time → Thấy lịch ngày hôm sau  
-👨‍💻 **Developer**: Chỉ cần maintain 1 file duy nhất  
-📊 **Business**: Dữ liệu luôn chính xác trong vòng 24h  
+👨‍💼 **Admin**: Đổi lịch nhân viên → Tự động sync ngày hôm sau
+👨‍⚕️ **Nhân viên**: Đăng ký ca part-time → Thấy lịch ngày hôm sau
+👨‍💻 **Developer**: Chỉ cần maintain 1 file duy nhất
+📊 **Business**: Dữ liệu luôn chính xác trong vòng 24h
 
 **No more manual fixes!** 🎉

@@ -57,11 +57,11 @@ public class ShiftRenewalMapper {
         String days = entity.getExpiringRegistration().getRegistrationDays().stream()
                 .map(day -> day.getDayOfWeek().toString())
                 .collect(java.util.stream.Collectors.joining(", "));
-        
-        String shiftName = entity.getExpiringRegistration().getWorkShift() != null 
-                ? entity.getExpiringRegistration().getWorkShift().getShiftName() 
+
+        String shiftName = entity.getExpiringRegistration().getWorkShift() != null
+                ? entity.getExpiringRegistration().getWorkShift().getShiftName()
                 : "Unknown Shift";
-        
+
         return String.format("%s - %s", days, shiftName);
     }
 }

@@ -15,18 +15,20 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * Job P9: Auto-detect expiring FIXED shift registrations and create renewal requests.
+ * Job P9: Auto-detect expiring FIXED shift registrations and create renewal
+ * requests.
  *
  * Runs daily at 00:05 AM (after P8 sync job completes).
- * Finds FIXED registrations (FULL_TIME/PART_TIME_FIXED) expiring in 14-28 days 
+ * Finds FIXED registrations (FULL_TIME/PART_TIME_FIXED) expiring in 14-28 days
  * and creates renewal invitations.
- * 
+ *
  * IMPROVEMENTS from old Job 3:
  * - Window changed from 7 days to 14-28 days (more time for employee response)
  * - Added NOT EXISTS check to prevent duplicate renewal requests
  * - Runs after P8 sync for better data consistency
- * 
- * NOTE: Part-Time Flex registrations don't need renewal - they expire automatically (handled by P11).
+ *
+ * NOTE: Part-Time Flex registrations don't need renewal - they expire
+ * automatically (handled by P11).
  */
 @Component
 @Slf4j
@@ -56,7 +58,7 @@ public class DailyRenewalDetectionJob {
         LocalDate windowStart = today.plusDays(RENEWAL_WINDOW_START_DAYS);
         LocalDate windowEnd = today.plusDays(RENEWAL_WINDOW_END_DAYS);
 
-        log.info("Looking for FIXED registrations expiring between: {} and {}", 
+        log.info("Looking for FIXED registrations expiring between: {} and {}",
                 windowStart, windowEnd);
 
         try {
@@ -73,7 +75,7 @@ public class DailyRenewalDetectionJob {
             List<FixedShiftRegistration> expiringRegistrations = registrationRepository
                     .findByEffectiveToRange(windowStart, windowEnd, true);
 
-            log.info("Found {} FIXED registrations expiring in window [{} to {}]", 
+            log.info("Found {} FIXED registrations expiring in window [{} to {}]",
                     expiringRegistrations.size(), windowStart, windowEnd);
 
             if (expiringRegistrations.isEmpty()) {
