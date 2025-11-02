@@ -23,12 +23,24 @@ public interface TimeOffRequestRepository extends JpaRepository<TimeOffRequest, 
         /**
          * Find time-off request by request_id
          */
-        Optional<TimeOffRequest> findByRequestId(String requestId);
+        @Query("SELECT t FROM TimeOffRequest t " +
+                        "LEFT JOIN FETCH t.employee " +
+                        "LEFT JOIN FETCH t.requestedByEmployee " +
+                        "LEFT JOIN FETCH t.approvedByEmployee " +
+                        "WHERE t.requestId = :requestId")
+        Optional<TimeOffRequest> findByRequestId(@Param("requestId") String requestId);
 
         /**
          * Find time-off request by request_id and employee_id (for ownership check)
          */
-        Optional<TimeOffRequest> findByRequestIdAndEmployeeId(String requestId, Integer employeeId);
+        @Query("SELECT t FROM TimeOffRequest t " +
+                        "LEFT JOIN FETCH t.employee " +
+                        "LEFT JOIN FETCH t.requestedByEmployee " +
+                        "LEFT JOIN FETCH t.approvedByEmployee " +
+                        "WHERE t.requestId = :requestId AND t.employeeId = :employeeId")
+        Optional<TimeOffRequest> findByRequestIdAndEmployeeId(
+                        @Param("requestId") String requestId,
+                        @Param("employeeId") Integer employeeId);
 
         /**
          * Find all time-off requests for a specific employee
@@ -54,7 +66,11 @@ public interface TimeOffRequestRepository extends JpaRepository<TimeOffRequest, 
                         "AND (" +
                         "  (:workShiftId IS NULL) OR " + // Full day off conflicts with any
                         "  (t.workShiftId IS NULL) OR " + // Any request conflicts with full day
-                        "  (t.workShiftId = :workShiftId AND t.startDate = :startDate AND t.endDate = :endDate)" + // Same work shift, same date
+                        "  (t.workShiftId = :workShiftId AND t.startDate = :startDate AND t.endDate = :endDate)" + // Same
+                                                                                                                   // work
+                                                                                                                   // shift,
+                                                                                                                   // same
+                                                                                                                   // date
                         ")")
         boolean existsConflictingRequest(
                         @Param("employeeId") Integer employeeId,
@@ -83,7 +99,10 @@ public interface TimeOffRequestRepository extends JpaRepository<TimeOffRequest, 
         /**
          * Advanced search with filters
          */
-        @Query("SELECT t FROM TimeOffRequest t " +
+        @Query("SELECT DISTINCT t FROM TimeOffRequest t " +
+                        "LEFT JOIN FETCH t.employee " +
+                        "LEFT JOIN FETCH t.requestedByEmployee " +
+                        "LEFT JOIN FETCH t.approvedByEmployee " +
                         "WHERE (:employeeId IS NULL OR t.employeeId = :employeeId) " +
                         "AND (:status IS NULL OR t.status = :status) " +
                         "AND (:startDate IS NULL OR t.startDate >= :startDate) " +

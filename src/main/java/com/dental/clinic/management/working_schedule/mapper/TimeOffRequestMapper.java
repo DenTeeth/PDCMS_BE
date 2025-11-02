@@ -1,5 +1,6 @@
 package com.dental.clinic.management.working_schedule.mapper;
 
+import com.dental.clinic.management.employee.domain.Employee;
 import com.dental.clinic.management.working_schedule.domain.TimeOffRequest;
 import com.dental.clinic.management.working_schedule.dto.response.TimeOffRequestResponse;
 
@@ -21,19 +22,37 @@ public class TimeOffRequestMapper {
 
         return TimeOffRequestResponse.builder()
                 .requestId(entity.getRequestId())
-                .employeeId(entity.getEmployeeId())
+                .employee(mapEmployeeBasicInfo(entity.getEmployee()))
+                .requestedBy(mapEmployeeBasicInfo(entity.getRequestedByEmployee()))
                 .timeOffTypeId(entity.getTimeOffTypeId())
                 .startDate(entity.getStartDate())
                 .endDate(entity.getEndDate())
                 .workShiftId(entity.getWorkShiftId())
                 .reason(entity.getReason())
                 .status(entity.getStatus())
-                .requestedBy(entity.getRequestedBy())
-                .requestedAt(entity.getRequestedAt())
-                .approvedBy(entity.getApprovedBy())
+                .approvedBy(entity.getApprovedByEmployee() != null
+                        ? mapEmployeeBasicInfo(entity.getApprovedByEmployee())
+                        : null)
                 .approvedAt(entity.getApprovedAt())
                 .rejectedReason(entity.getRejectedReason())
                 .cancellationReason(entity.getCancellationReason())
+                .requestedAt(entity.getRequestedAt())
+                .build();
+    }
+
+    /**
+     * Map Employee entity to basic info DTO.
+     */
+    private TimeOffRequestResponse.EmployeeBasicInfo mapEmployeeBasicInfo(Employee employee) {
+        if (employee == null) {
+            return null;
+        }
+        return TimeOffRequestResponse.EmployeeBasicInfo.builder()
+                .employeeId(employee.getEmployeeId())
+                .employeeCode(employee.getEmployeeCode())
+                .firstName(employee.getFirstName())
+                .lastName(employee.getLastName())
+                .fullName(employee.getFirstName() + " " + employee.getLastName())
                 .build();
     }
 }
