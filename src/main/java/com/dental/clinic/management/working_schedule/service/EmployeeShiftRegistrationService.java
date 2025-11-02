@@ -97,8 +97,7 @@ public class EmployeeShiftRegistrationService {
                 .orElseThrow(() -> new IllegalStateException("Employee not found: " + employeeId));
 
         // Only PART_TIME_FLEX employees can claim flexible slots
-        if (employee.getEmploymentType() != EmploymentType.PART_TIME_FLEX &&
-                employee.getEmploymentType() != EmploymentType.PART_TIME) { // Support legacy PART_TIME
+        if (employee.getEmploymentType() != EmploymentType.PART_TIME_FLEX) {
             log.warn("Employee {} with type {} attempted to claim flexible slot",
                     employeeId, employee.getEmploymentType());
             throw new IllegalArgumentException(

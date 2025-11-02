@@ -12,4 +12,3 @@ public enum EmploymentType {
     PART_TIME_FIXED,
     PART_TIME_FLEX
 }
-
