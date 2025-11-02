@@ -25,6 +25,12 @@ public interface PartTimeRegistrationRepository extends JpaRepository<PartTimeRe
     List<PartTimeRegistration> findByEmployeeIdAndIsActive(Integer employeeId, Boolean isActive);
 
     /**
+     * Find all registrations by slot ID and active status.
+     * Used to get list of employees registered for a specific slot.
+     */
+    List<PartTimeRegistration> findByPartTimeSlotIdAndIsActive(Long slotId, Boolean isActive);
+
+    /**
      * Find all active registrations that have expired (effective_to < today).
      * Used by CleanupExpiredFlexRegistrationsJob (P11) to deactivate ghost
      * occupants.

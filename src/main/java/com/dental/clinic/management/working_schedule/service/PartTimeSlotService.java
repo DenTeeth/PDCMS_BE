@@ -1,13 +1,18 @@
 package com.dental.clinic.management.working_schedule.service;
 
+import com.dental.clinic.management.employee.domain.Employee;
+import com.dental.clinic.management.employee.repository.EmployeeRepository;
+import com.dental.clinic.management.working_schedule.domain.PartTimeRegistration;
 import com.dental.clinic.management.working_schedule.domain.PartTimeSlot;
 import com.dental.clinic.management.working_schedule.domain.WorkShift;
 import com.dental.clinic.management.working_schedule.dto.request.CreatePartTimeSlotRequest;
 import com.dental.clinic.management.working_schedule.dto.request.UpdatePartTimeSlotRequest;
+import com.dental.clinic.management.working_schedule.dto.response.PartTimeSlotDetailResponse;
 import com.dental.clinic.management.working_schedule.dto.response.PartTimeSlotResponse;
 import com.dental.clinic.management.working_schedule.exception.QuotaViolationException;
 import com.dental.clinic.management.working_schedule.exception.SlotAlreadyExistsException;
 import com.dental.clinic.management.working_schedule.exception.SlotNotFoundException;
+import com.dental.clinic.management.working_schedule.repository.PartTimeRegistrationRepository;
 import com.dental.clinic.management.working_schedule.repository.PartTimeSlotRepository;
 import com.dental.clinic.management.working_schedule.repository.WorkShiftRepository;
 import com.dental.clinic.management.exception.work_shift.WorkShiftNotFoundException;
@@ -28,6 +33,8 @@ public class PartTimeSlotService {
 
     private final PartTimeSlotRepository partTimeSlotRepository;
     private final WorkShiftRepository workShiftRepository;
+    private final PartTimeRegistrationRepository registrationRepository;
+    private final EmployeeRepository employeeRepository;
 
     /**
      * Create a new part-time slot.
@@ -106,6 +113,52 @@ public class PartTimeSlotService {
         String shiftName = workShift != null ? workShift.getShiftName() : "Unknown";
 
         return buildResponse(updatedSlot, shiftName);
+    }
+
+    /**
+     * Get slot detail with list of registered employees.
+     */
+    @Transactional(readOnly = true)
+    @PreAuthorize("hasAuthority('MANAGE_WORK_SLOTS')")
+    public PartTimeSlotDetailResponse getSlotDetail(Long slotId) {
+        log.info("Fetching detail for slot {}", slotId);
+
+        PartTimeSlot slot = partTimeSlotRepository.findById(slotId)
+                .orElseThrow(() -> new SlotNotFoundException(slotId));
+
+        WorkShift workShift = workShiftRepository.findById(slot.getWorkShiftId()).orElse(null);
+        String shiftName = workShift != null ? workShift.getShiftName() : "Unknown";
+
+        // Get all active registrations for this slot
+        List<PartTimeRegistration> registrations = registrationRepository
+                .findByPartTimeSlotIdAndIsActive(slotId, true);
+
+        // Build employee info list
+        List<PartTimeSlotDetailResponse.RegisteredEmployeeInfo> employeeInfos = registrations.stream()
+                .map(reg -> {
+                    Employee employee = employeeRepository.findById(reg.getEmployeeId()).orElse(null);
+                    return PartTimeSlotDetailResponse.RegisteredEmployeeInfo.builder()
+                            .employeeId(reg.getEmployeeId())
+                            .employeeCode(employee != null ? employee.getEmployeeCode() : "Unknown")
+                            .employeeName(employee != null ? employee.getFullName() : "Unknown")
+                            .effectiveFrom(reg.getEffectiveFrom().toString())
+                            .effectiveTo(reg.getEffectiveTo().toString())
+                            .build();
+                })
+                .collect(Collectors.toList());
+
+        long registered = partTimeSlotRepository.countActiveRegistrations(slotId);
+
+        return PartTimeSlotDetailResponse.builder()
+                .slotId(slot.getSlotId())
+                .workShiftId(slot.getWorkShiftId())
+                .workShiftName(shiftName)
+                .dayOfWeek(slot.getDayOfWeek())
+                .quota(slot.getQuota())
+                .registered(registered)
+                .isActive(slot.getIsActive())
+                .registeredEmployees(employeeInfos)
+                .build();
     }
 
     private PartTimeSlotResponse buildResponse(PartTimeSlot slot, String shiftName) {

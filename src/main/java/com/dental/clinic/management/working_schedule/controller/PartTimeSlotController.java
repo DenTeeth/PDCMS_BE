@@ -47,6 +47,17 @@ public class PartTimeSlotController {
     }
 
     /**
+     * Get slot detail with list of registered employees.
+     */
+    @GetMapping("/{slotId}")
+    public ResponseEntity<com.dental.clinic.management.working_schedule.dto.response.PartTimeSlotDetailResponse> getSlotDetail(
+            @PathVariable Long slotId) {
+        log.info("GET /api/v1/work-slots/{} - Fetching slot detail", slotId);
+        var response = partTimeSlotService.getSlotDetail(slotId);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
      * Update a part-time slot (quota and isActive).
      */
     @PutMapping("/{slotId}")
