@@ -8,6 +8,8 @@ import com.dental.clinic.management.exception.time_off.TimeOffTypeInUseException
 import com.dental.clinic.management.exception.time_off.TimeOffTypeNotFoundException;
 import com.dental.clinic.management.exception.validation.DuplicateTypeCodeException;
 import com.dental.clinic.management.exception.validation.InvalidBalanceException;
+import com.dental.clinic.management.exception.warehouse.DuplicateSupplierException;
+import com.dental.clinic.management.exception.warehouse.SupplierNotFoundException;
 import com.dental.clinic.management.utils.FormatRestResponse;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -89,7 +91,7 @@ public class GlobalExceptionHandler {
         // Extract required permission from request URI for holiday endpoints
         String requiredPermission = null;
         String method = request.getMethod();
-        
+
         if (request.getRequestURI().contains("/api/v1/holiday")) {
             if ("POST".equals(method)) {
                 requiredPermission = "CREATE_HOLIDAY";
@@ -116,7 +118,7 @@ public class GlobalExceptionHandler {
         res.setStatusCode(HttpStatus.FORBIDDEN.value());
         res.setMessage(message);
         res.setError("FORBIDDEN");
-        
+
         // Add required permission to response data
         if (requiredPermission != null) {
             java.util.Map<String, Object> data = new java.util.HashMap<>();
@@ -405,7 +407,7 @@ public class GlobalExceptionHandler {
         res.setStatusCode(HttpStatus.BAD_REQUEST.value());
         res.setError("INVALID_DATE_RANGE");
         res.setMessage(ex.getMessage());
-        
+
         // Add start and end dates to response data
         java.util.Map<String, Object> data = new java.util.HashMap<>();
         data.put("startDate", ex.getStartDate().toString());
@@ -582,7 +584,7 @@ public class GlobalExceptionHandler {
         res.setStatusCode(HttpStatus.BAD_REQUEST.value());
         res.setMessage(errorMessage);
         res.setError("VALIDATION_ERROR");
-        
+
         // Add missing fields to response data
         if (!missingFields.isEmpty()) {
             java.util.Map<String, Object> data = new java.util.HashMap<>();
@@ -638,11 +640,11 @@ public class GlobalExceptionHandler {
         // Special handling for date parameters
         String message;
         String errorCode = "INVALID_PARAMETER_TYPE";
-        
-        if (ex.getName().equals("startDate") || ex.getName().equals("endDate") || 
-            ex.getName().equals("holidayDate") || ex.getName().equals("date")) {
-            message = "Định dạng ngày không hợp lệ: " + ex.getValue() + 
-                     ". Định dạng yêu cầu: yyyy-MM-dd";
+
+        if (ex.getName().equals("startDate") || ex.getName().equals("endDate") ||
+                ex.getName().equals("holidayDate") || ex.getName().equals("date")) {
+            message = "Định dạng ngày không hợp lệ: " + ex.getValue() +
+                    ". Định dạng yêu cầu: yyyy-MM-dd";
             errorCode = "INVALID_DATE_FORMAT";
         } else {
             message = "Invalid parameter type: " + ex.getName();
@@ -652,7 +654,7 @@ public class GlobalExceptionHandler {
         res.setStatusCode(HttpStatus.BAD_REQUEST.value());
         res.setMessage(message);
         res.setError(errorCode);
-        
+
         // Add format info for date errors
         if (errorCode.equals("INVALID_DATE_FORMAT")) {
             java.util.Map<String, Object> data = new java.util.HashMap<>();
@@ -844,6 +846,46 @@ public class GlobalExceptionHandler {
         res.setData(null);
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+    }
+
+    /**
+     * Handle SupplierNotFoundException (Warehouse).
+     * Returns 404 Not Found.
+     */
+    @ExceptionHandler(SupplierNotFoundException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleSupplierNotFound(
+            SupplierNotFoundException ex,
+            HttpServletRequest request) {
+
+        log.warn("Supplier not found at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.NOT_FOUND.value());
+        res.setMessage(ex.getMessage());
+        res.setError("SUPPLIER_NOT_FOUND");
+        res.setData(null);
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(res);
+    }
+
+    /**
+     * Handle DuplicateSupplierException (Warehouse).
+     * Returns 409 Conflict.
+     */
+    @ExceptionHandler(DuplicateSupplierException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleDuplicateSupplier(
+            DuplicateSupplierException ex,
+            HttpServletRequest request) {
+
+        log.warn("Duplicate supplier at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.CONFLICT.value());
+        res.setMessage(ex.getMessage());
+        res.setError("DUPLICATE_SUPPLIER");
+        res.setData(null);
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(res);
     }
 
     /**
