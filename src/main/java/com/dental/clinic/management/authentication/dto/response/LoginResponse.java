@@ -1,12 +1,9 @@
-
 package com.dental.clinic.management.authentication.dto.response;
 
 import java.util.List;
 import java.util.Map;
 
-import com.dental.clinic.management.authentication.dto.SidebarItemDTO;
 import com.dental.clinic.management.employee.enums.EmploymentType;
-import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * Login response với access token trong body và refresh token trong cookie.

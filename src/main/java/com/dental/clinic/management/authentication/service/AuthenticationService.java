@@ -26,7 +26,6 @@ import com.dental.clinic.management.account.enums.AccountStatus;
 import com.dental.clinic.management.account.repository.AccountRepository;
 import com.dental.clinic.management.account.repository.AccountVerificationTokenRepository;
 import com.dental.clinic.management.account.repository.PasswordResetTokenRepository;
-import com.dental.clinic.management.authentication.dto.SidebarItemDTO;
 import com.dental.clinic.management.authentication.dto.request.LoginRequest;
 import com.dental.clinic.management.authentication.dto.request.RefreshTokenRequest;
 import com.dental.clinic.management.authentication.dto.response.LoginResponse;
@@ -60,7 +59,6 @@ public class AuthenticationService {
         private final SecurityUtil securityUtil;
         private final AccountRepository accountRepository;
         private final RefreshTokenRepository refreshTokenRepository;
-        private final SidebarService sidebarService;
         private final AccountVerificationTokenRepository verificationTokenRepository;
         private final PasswordResetTokenRepository passwordResetTokenRepository;
         private final EmailService emailService;
@@ -71,7 +69,6 @@ public class AuthenticationService {
                         SecurityUtil securityUtil,
                         AccountRepository accountRepository,
                         RefreshTokenRepository refreshTokenRepository,
-                        SidebarService sidebarService,
                         AccountVerificationTokenRepository verificationTokenRepository,
                         PasswordResetTokenRepository passwordResetTokenRepository,
                         EmailService emailService,
@@ -80,7 +77,6 @@ public class AuthenticationService {
                 this.securityUtil = securityUtil;
                 this.accountRepository = accountRepository;
                 this.refreshTokenRepository = refreshTokenRepository;
-                this.sidebarService = sidebarService;
                 this.verificationTokenRepository = verificationTokenRepository;
                 this.passwordResetTokenRepository = passwordResetTokenRepository;
                 this.emailService = emailService;

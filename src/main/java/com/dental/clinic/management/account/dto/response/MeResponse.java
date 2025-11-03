@@ -1,6 +1,5 @@
 package com.dental.clinic.management.account.dto.response;
 
-import com.dental.clinic.management.authentication.dto.SidebarItemDTO;
 import com.dental.clinic.management.employee.enums.EmploymentType;
 import com.fasterxml.jackson.annotation.JsonInclude;
 

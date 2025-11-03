@@ -3,9 +3,14 @@ package com.dental.clinic.management.booking_appointment.service;
 import com.dental.clinic.management.booking_appointment.domain.Room;
 import com.dental.clinic.management.booking_appointment.dto.request.CreateRoomRequest;
 import com.dental.clinic.management.booking_appointment.dto.request.UpdateRoomRequest;
+import com.dental.clinic.management.booking_appointment.dto.request.UpdateRoomServicesRequest;
+import com.dental.clinic.management.booking_appointment.dto.response.CompatibleServiceDTO;
 import com.dental.clinic.management.booking_appointment.dto.response.RoomResponse;
+import com.dental.clinic.management.booking_appointment.dto.response.RoomServicesResponse;
 import com.dental.clinic.management.booking_appointment.mapper.RoomMapper;
+import com.dental.clinic.management.booking_appointment.repository.DentalServiceRepository;
 import com.dental.clinic.management.booking_appointment.repository.RoomRepository;
+import com.dental.clinic.management.booking_appointment.repository.RoomServiceRepository;
 import com.dental.clinic.management.exception.validation.BadRequestAlertException;
 import com.dental.clinic.management.utils.IdGenerator;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +39,8 @@ public class RoomService {
     private final RoomRepository roomRepository;
     private final RoomMapper roomMapper;
     private final IdGenerator idGenerator;
+    private final RoomServiceRepository roomServiceRepository;
+    private final DentalServiceRepository dentalServiceRepository;
 
     /**
      * Inject IdGenerator into Room entity after bean creation
@@ -241,5 +248,120 @@ public class RoomService {
         roomRepository.deleteById(roomId);
 
         log.info("Permanently deleted room with ID: {}", roomId);
+    }
+
+    /**
+     * Get all services compatible with a room (P1.5)
+     * Returns list of services that can be performed in this room
+     *
+     * @param roomCode The business key of the room (e.g., "P-01", "GHE-01")
+     * @return RoomServicesResponse containing room details and compatible services
+     */
+    @Transactional(readOnly = true)
+    public RoomServicesResponse getRoomServices(String roomCode) {
+        log.debug("Request to get services for room code: {}", roomCode);
+
+        // Find room by code
+        Room room = roomRepository.findByRoomCode(roomCode)
+                .orElseThrow(() -> new BadRequestAlertException(
+                        "Room not found with code: " + roomCode,
+                        "room",
+                        "notfound"));
+
+        // Get all room-service mappings for this room
+        List<com.dental.clinic.management.booking_appointment.domain.RoomService> roomServices = roomServiceRepository
+                .findByIdRoomId(room.getRoomId());
+
+        // Map to CompatibleServiceDTO
+        List<CompatibleServiceDTO> compatibleServices = roomServices.stream()
+                .map(rs -> CompatibleServiceDTO.builder()
+                        .serviceId(rs.getService().getServiceId().longValue())
+                        .serviceCode(rs.getService().getServiceCode())
+                        .serviceName(rs.getService().getServiceName())
+                        .price(rs.getService().getPrice())
+                        .build())
+                .collect(Collectors.toList());
+
+        log.info("Found {} compatible services for room: {}", compatibleServices.size(), roomCode);
+
+        return RoomServicesResponse.builder()
+                .roomId(Long.parseLong(room.getRoomId()))
+                .roomCode(room.getRoomCode())
+                .roomName(room.getRoomName())
+                .compatibleServices(compatibleServices)
+                .build();
+    }
+
+    /**
+     * Update services for a room (P1.6)
+     * Replaces all existing room-service mappings with new ones
+     *
+     * @param roomCode The business key of the room
+     * @param request  Contains list of service codes to assign
+     * @return Updated RoomServicesResponse
+     */
+    @Transactional
+    public RoomServicesResponse updateRoomServices(String roomCode, UpdateRoomServicesRequest request) {
+        log.debug("Request to update services for room code: {} with {} services",
+                roomCode, request.getServiceCodes().size());
+
+        // 1. Validate room exists
+        Room room = roomRepository.findByRoomCode(roomCode)
+                .orElseThrow(() -> new BadRequestAlertException(
+                        "Room not found with code: " + roomCode,
+                        "room",
+                        "notfound"));
+
+        // 2. Validate all serviceCodes exist
+        List<com.dental.clinic.management.booking_appointment.domain.DentalService> services = dentalServiceRepository
+                .findByServiceCodeIn(request.getServiceCodes());
+
+        if (services.size() != request.getServiceCodes().size()) {
+            // Find missing codes
+            List<String> foundCodes = services.stream()
+                    .map(com.dental.clinic.management.booking_appointment.domain.DentalService::getServiceCode)
+                    .collect(Collectors.toList());
+
+            List<String> missingCodes = request.getServiceCodes().stream()
+                    .filter(code -> !foundCodes.contains(code))
+                    .collect(Collectors.toList());
+
+            throw new BadRequestAlertException(
+                    "Service(s) not found with code(s): " + String.join(", ", missingCodes),
+                    "service",
+                    "notfound");
+        }
+
+        // 3. Validate all services are active
+        List<com.dental.clinic.management.booking_appointment.domain.DentalService> inactiveServices = services.stream()
+                .filter(s -> !s.getIsActive())
+                .collect(Collectors.toList());
+
+        if (!inactiveServices.isEmpty()) {
+            List<String> inactiveCodes = inactiveServices.stream()
+                    .map(com.dental.clinic.management.booking_appointment.domain.DentalService::getServiceCode)
+                    .collect(Collectors.toList());
+
+            throw new BadRequestAlertException(
+                    "Cannot assign inactive service(s): " + String.join(", ", inactiveCodes),
+                    "service",
+                    "inactive");
+        }
+
+        // 4. Delete all existing room-service mappings for this room
+        roomServiceRepository.deleteByIdRoomId(room.getRoomId());
+        roomServiceRepository.flush(); // Ensure delete is executed before insert
+
+        // 5. Create new room-service mappings
+        List<com.dental.clinic.management.booking_appointment.domain.RoomService> newRoomServices = services.stream()
+                .map(service -> new com.dental.clinic.management.booking_appointment.domain.RoomService(room, service))
+                .collect(Collectors.toList());
+
+        roomServiceRepository.saveAll(newRoomServices);
+
+        log.info("Updated room {} with {} services", roomCode, services.size());
+
+        // 6. Return updated response
+        return getRoomServices(roomCode);
     }
 }

@@ -147,23 +147,24 @@ public class DentalServiceService {
     }
 
     /**
-     * Update service
+     * Update service by service code
      */
     @Transactional
-    public ServiceResponse updateService(Integer serviceId, UpdateServiceRequest request) {
-        log.debug("Request to update service ID: {}", serviceId);
+    public ServiceResponse updateService(String serviceCode, UpdateServiceRequest request) {
+        log.debug("Request to update service code: {}", serviceCode);
 
-        // Find existing service
-        DentalService service = serviceRepository.findById(serviceId)
+        // Find existing service by code
+        DentalService service = serviceRepository.findByServiceCode(serviceCode)
                 .orElseThrow(() -> new BadRequestAlertException(
-                        "Service not found with ID: " + serviceId,
+                        "Service not found with code: " + serviceCode,
                         "service",
                         "notfound"));
 
         // Validate unique service code (if changed)
         if (request.getServiceCode() != null &&
                 !request.getServiceCode().equals(service.getServiceCode()) &&
-                serviceRepository.existsByServiceCodeAndServiceIdNot(request.getServiceCode(), serviceId)) {
+                serviceRepository.existsByServiceCodeAndServiceIdNot(request.getServiceCode(),
+                        service.getServiceId())) {
             throw new BadRequestAlertException(
                     "Service code already exists: " + request.getServiceCode(),
                     "service",
@@ -205,28 +206,28 @@ public class DentalServiceService {
 
         DentalService updatedService = serviceRepository.save(service);
 
-        log.info("Updated service ID: {}", serviceId);
+        log.info("Updated service code: {}", serviceCode);
 
         return serviceMapper.toResponse(updatedService);
     }
 
     /**
-     * Soft delete service (set isActive = false)
+     * Soft delete service by service code (set isActive = false)
      */
     @Transactional
-    public void deleteService(Integer serviceId) {
-        log.debug("Request to soft delete service ID: {}", serviceId);
+    public void deleteService(String serviceCode) {
+        log.debug("Request to soft delete service code: {}", serviceCode);
 
-        DentalService service = serviceRepository.findById(serviceId)
+        DentalService service = serviceRepository.findByServiceCode(serviceCode)
                 .orElseThrow(() -> new BadRequestAlertException(
-                        "Service not found with ID: " + serviceId,
+                        "Service not found with code: " + serviceCode,
                         "service",
                         "notfound"));
 
         service.setIsActive(false);
         serviceRepository.save(service);
 
-        log.info("Soft deleted service ID: {}", serviceId);
+        log.info("Soft deleted service code: {}", serviceCode);
     }
 
     /**

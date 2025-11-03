@@ -1,6 +1,5 @@
 package com.dental.clinic.management.booking_appointment.controller;
 
-import com.dental.clinic.management.booking_appointment.dto.request.CreateServiceRequest;
 import com.dental.clinic.management.booking_appointment.dto.request.UpdateServiceRequest;
 import com.dental.clinic.management.booking_appointment.dto.response.ServiceResponse;
 import com.dental.clinic.management.booking_appointment.service.DentalServiceService;
@@ -10,7 +9,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -43,15 +41,7 @@ public class ServiceController {
         return ResponseEntity.ok(services);
     }
 
-    @GetMapping("/{serviceId}")
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_SERVICE + "')")
-    @Operation(summary = "Get service by ID")
-    @ApiMessage("Lấy thông tin dịch vụ thành công")
-    public ResponseEntity<ServiceResponse> getServiceById(@PathVariable Integer serviceId) {
-        return ResponseEntity.ok(serviceService.getServiceById(serviceId));
-    }
-
-    @GetMapping("/code/{serviceCode}")
+    @GetMapping("/{serviceCode}")
     @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_SERVICE + "')")
     @Operation(summary = "Get service by code")
     @ApiMessage("Lấy thông tin dịch vụ thành công")
@@ -59,39 +49,22 @@ public class ServiceController {
         return ResponseEntity.ok(serviceService.getServiceByCode(serviceCode));
     }
 
-    @PostMapping
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + CREATE_SERVICE + "')")
-    @Operation(summary = "Create new service")
-    @ApiMessage("Tạo dịch vụ mới thành công")
-    public ResponseEntity<ServiceResponse> createService(@Valid @RequestBody CreateServiceRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(serviceService.createService(request));
-    }
-
-    @PutMapping("/{serviceId}")
+    @PutMapping("/{serviceCode}")
     @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + UPDATE_SERVICE + "')")
     @Operation(summary = "Update service")
     @ApiMessage("Cập nhật thông tin dịch vụ thành công")
     public ResponseEntity<ServiceResponse> updateService(
-            @PathVariable Integer serviceId,
+            @PathVariable String serviceCode,
             @Valid @RequestBody UpdateServiceRequest request) {
-        return ResponseEntity.ok(serviceService.updateService(serviceId, request));
+        return ResponseEntity.ok(serviceService.updateService(serviceCode, request));
     }
 
-    @PatchMapping("/{serviceId}/activate")
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + UPDATE_SERVICE + "')")
-    @Operation(summary = "Activate service")
-    @ApiMessage("Kích hoạt lại dịch vụ thành công")
-    public ResponseEntity<ServiceResponse> activateService(@PathVariable Integer serviceId) {
-        serviceService.activateService(serviceId);
-        return ResponseEntity.ok(serviceService.getServiceById(serviceId));
-    }
-
-    @DeleteMapping("/{serviceId}")
+    @DeleteMapping("/{serviceCode}")
     @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + DELETE_SERVICE + "')")
     @Operation(summary = "Delete service (soft delete)")
     @ApiMessage("Vô hiệu hóa dịch vụ thành công")
-    public ResponseEntity<Void> deleteService(@PathVariable Integer serviceId) {
-        serviceService.deleteService(serviceId);
+    public ResponseEntity<Void> deleteService(@PathVariable String serviceCode) {
+        serviceService.deleteService(serviceCode);
         return ResponseEntity.noContent().build();
     }
 }

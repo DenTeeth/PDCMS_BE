@@ -100,6 +100,7 @@ public final class AuthoritiesConstants {
     public static final String VIEW_ROOM = "VIEW_ROOM";
     public static final String CREATE_ROOM = "CREATE_ROOM";
     public static final String UPDATE_ROOM = "UPDATE_ROOM";
+    public static final String UPDATE_ROOM_SERVICES = "UPDATE_ROOM_SERVICES"; // V16: Assign services to rooms
     public static final String DELETE_ROOM = "DELETE_ROOM"; // soft delete
 
     // Service Management Permissions

@@ -2,7 +2,9 @@ package com.dental.clinic.management.booking_appointment.controller;
 
 import com.dental.clinic.management.booking_appointment.dto.request.CreateRoomRequest;
 import com.dental.clinic.management.booking_appointment.dto.request.UpdateRoomRequest;
+import com.dental.clinic.management.booking_appointment.dto.request.UpdateRoomServicesRequest;
 import com.dental.clinic.management.booking_appointment.dto.response.RoomResponse;
+import com.dental.clinic.management.booking_appointment.dto.response.RoomServicesResponse;
 import com.dental.clinic.management.booking_appointment.service.RoomService;
 import com.dental.clinic.management.utils.annotation.ApiMessage;
 import io.swagger.v3.oas.annotations.Operation;
@@ -160,5 +162,44 @@ public class RoomController {
 
         roomService.deleteRoom(roomId);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * P1.5: Get all services compatible with a room
+     * Returns the list of services that can be performed in this room
+     *
+     * @param roomCode room code (e.g., "P-01", "GHE-01")
+     * @return room details with list of compatible services
+     */
+    @GetMapping("/{roomCode}/services")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_ROOM + "')")
+    @Operation(summary = "Get room services (P1.5)", description = "Retrieve all services that can be performed in a specific room")
+    @ApiMessage("Lấy danh sách dịch vụ của phòng thành công")
+    public ResponseEntity<RoomServicesResponse> getRoomServices(
+            @Parameter(description = "Room code (business key)", example = "P-01") @PathVariable String roomCode) {
+
+        RoomServicesResponse response = roomService.getRoomServices(roomCode);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * P1.6: Update services for a room
+     * Replaces all existing room-service mappings with new ones
+     * Uses PUT (not PATCH) because it's an idempotent full replacement
+     *
+     * @param roomCode room code (e.g., "P-01", "GHE-01")
+     * @param request  contains list of service codes to assign
+     * @return updated room details with new list of compatible services
+     */
+    @PutMapping("/{roomCode}/services")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + UPDATE_ROOM_SERVICES + "')")
+    @Operation(summary = "Update room services (P1.6)", description = "Replace all services for a room. Validates that all services exist and are active.")
+    @ApiMessage("Cập nhật danh sách dịch vụ của phòng thành công")
+    public ResponseEntity<RoomServicesResponse> updateRoomServices(
+            @Parameter(description = "Room code (business key)", example = "P-01") @PathVariable String roomCode,
+            @Valid @RequestBody UpdateRoomServicesRequest request) {
+
+        RoomServicesResponse response = roomService.updateRoomServices(roomCode, request);
+        return ResponseEntity.ok(response);
     }
 }

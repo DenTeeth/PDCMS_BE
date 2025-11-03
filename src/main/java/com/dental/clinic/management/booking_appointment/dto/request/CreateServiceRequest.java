@@ -48,6 +48,7 @@ public class CreateServiceRequest {
     @Schema(description = "Specialization ID (nullable)", example = "1")
     private Integer specializationId;
 
+    @Builder.Default
     @Schema(description = "Active status", example = "true")
     private Boolean isActive = true;
 }

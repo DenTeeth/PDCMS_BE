@@ -925,7 +925,7 @@ COMMENT ON COLUMN services.default_buffer_minutes IS 'Thời gian đệm (phút)
 
 -- Table: rooms
 CREATE TABLE rooms (
-    room_id SERIAL PRIMARY KEY,
+    room_id VARCHAR(50) PRIMARY KEY,
     room_code VARCHAR(20) UNIQUE NOT NULL,
     room_name VARCHAR(100) NOT NULL,
     room_type VARCHAR(50),
@@ -937,6 +937,35 @@ COMMENT ON TABLE rooms IS 'Bảng Phòng/Ghế nha khoa - Tài nguyên hữu hì
 COMMENT ON COLUMN rooms.room_code IS 'VD: P1, GHE-01';
 COMMENT ON COLUMN rooms.room_name IS 'VD: Phòng tiểu phẫu, Ghế 01';
 COMMENT ON COLUMN rooms.room_type IS 'VD: STANDARD, SURGERY, XRAY';
+
+-- ============================================
+-- V16: BẢNG ROOM_SERVICES (Junction Table)
+-- ============================================
+-- Purpose: Define which services can be performed in which rooms
+-- Business Rule: A room can support multiple services, a service can be performed in multiple rooms
+-- Example: "Phòng Implant" can do "Cắm trụ Implant" and "Nâng xoang"
+-- ============================================
+
+CREATE TABLE room_services (
+    room_id VARCHAR(50) NOT NULL,
+    service_id INTEGER NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (room_id, service_id),
+
+    CONSTRAINT fk_room_services_room FOREIGN KEY (room_id)
+        REFERENCES rooms(room_id) ON DELETE CASCADE,
+    CONSTRAINT fk_room_services_service FOREIGN KEY (service_id)
+        REFERENCES services(service_id) ON DELETE CASCADE
+);
+
+-- Index to quickly find all rooms that can perform a specific service
+CREATE INDEX idx_room_services_service_id ON room_services(service_id);
+
+COMMENT ON TABLE room_services IS 'V16: Junction table - Khai báo dịch vụ nào được phép thực hiện ở phòng nào';
+COMMENT ON COLUMN room_services.room_id IS 'FK -> rooms.room_id';
+COMMENT ON COLUMN room_services.service_id IS 'FK -> services.service_id';
+COMMENT ON COLUMN room_services.created_at IS 'Thời điểm gán dịch vụ cho phòng';
 
 -- Table: appointments
 CREATE TABLE appointments (
