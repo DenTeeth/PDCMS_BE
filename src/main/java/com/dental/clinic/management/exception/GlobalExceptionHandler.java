@@ -10,6 +10,9 @@ import com.dental.clinic.management.exception.validation.DuplicateTypeCodeExcept
 import com.dental.clinic.management.exception.validation.InvalidBalanceException;
 import com.dental.clinic.management.exception.warehouse.DuplicateSupplierException;
 import com.dental.clinic.management.exception.warehouse.SupplierNotFoundException;
+import com.dental.clinic.management.exception.warehouse.DuplicateInventoryException;
+import com.dental.clinic.management.exception.warehouse.InventoryNotFoundException;
+import com.dental.clinic.management.exception.warehouse.InvalidWarehouseDataException;
 import com.dental.clinic.management.utils.FormatRestResponse;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -886,6 +889,66 @@ public class GlobalExceptionHandler {
         res.setData(null);
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(res);
+    }
+
+    /**
+     * Handle InventoryNotFoundException (Warehouse).
+     * Returns 404 Not Found.
+     */
+    @ExceptionHandler(InventoryNotFoundException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleInventoryNotFound(
+            InventoryNotFoundException ex,
+            HttpServletRequest request) {
+
+        log.warn("Inventory not found at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.NOT_FOUND.value());
+        res.setMessage(ex.getMessage());
+        res.setError("INVENTORY_NOT_FOUND");
+        res.setData(null);
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(res);
+    }
+
+    /**
+     * Handle DuplicateInventoryException (Warehouse).
+     * Returns 409 Conflict.
+     */
+    @ExceptionHandler(DuplicateInventoryException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleDuplicateInventory(
+            DuplicateInventoryException ex,
+            HttpServletRequest request) {
+
+        log.warn("Duplicate inventory at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.CONFLICT.value());
+        res.setMessage(ex.getMessage());
+        res.setError("DUPLICATE_INVENTORY");
+        res.setData(null);
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(res);
+    }
+
+    /**
+     * Handle InvalidWarehouseDataException (Warehouse).
+     * Returns 400 Bad Request.
+     */
+    @ExceptionHandler(InvalidWarehouseDataException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleInvalidWarehouseData(
+            InvalidWarehouseDataException ex,
+            HttpServletRequest request) {
+
+        log.warn("Invalid warehouse data at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.BAD_REQUEST.value());
+        res.setMessage(ex.getMessage());
+        res.setError("INVALID_WAREHOUSE_DATA");
+        res.setData(null);
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
     }
 
     /**

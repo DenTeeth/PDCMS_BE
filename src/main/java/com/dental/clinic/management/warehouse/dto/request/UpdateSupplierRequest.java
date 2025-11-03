@@ -1,6 +1,5 @@
 package com.dental.clinic.management.warehouse.dto.request;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -9,26 +8,21 @@ import lombok.NoArgsConstructor;
 
 /**
  * Request DTO for updating an existing supplier.
+ * Simplified update with basic contact info.
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class UpdateSupplierRequest {
 
-    @Size(max = 100, message = "Tên nhà cung cấp không được vượt quá 100 ký tự")
-    @JsonProperty("supplier_name")
+    @Size(max = 255, message = "Tên nhà cung cấp không được vượt quá 255 ký tự")
     private String supplierName;
 
     @Pattern(regexp = "^(\\+84|0)[0-9]{9,10}$", message = "Số điện thoại không hợp lệ")
-    @JsonProperty("phone_number")
     private String phoneNumber;
 
-    @JsonProperty("address")
+    private String email;
     private String address;
-
-    @JsonProperty("certification_number")
-    private String certificationNumber;
-
-    @JsonProperty("is_verified")
-    private Boolean isVerified;
+    private String status; // ACTIVE, INACTIVE, SUSPENDED
+    private String notes;
 }

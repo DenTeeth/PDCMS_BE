@@ -8,11 +8,10 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 /**
  * Entity representing a medical supplier.
- * Only ADMIN can create/update/delete suppliers.
+ * Strictly controlled for medical supply chain integrity.
  */
 @Entity
 @Table(name = "suppliers", uniqueConstraints = {
@@ -26,27 +25,30 @@ import java.util.UUID;
 public class Supplier {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "supplier_id", nullable = false)
-    private UUID supplierId;
+    private Long supplierId;
 
-    @Column(name = "supplier_name", length = 100, nullable = false)
+    @Column(name = "supplier_name", length = 255, nullable = false)
     @NotNull(message = "Tên nhà cung cấp không được để trống")
     private String supplierName;
 
-    @Column(name = "phone_number", length = 15, nullable = false)
+    @Column(name = "phone_number", length = 20, nullable = false)
     @NotNull(message = "Số điện thoại không được để trống")
     private String phoneNumber;
+
+    @Column(name = "email", length = 100)
+    private String email;
 
     @Column(name = "address", columnDefinition = "TEXT", nullable = false)
     @NotNull(message = "Địa chỉ không được để trống")
     private String address;
 
-    @Column(name = "certification_number", length = 50)
-    private String certificationNumber;
+    @Column(name = "status", length = 20, nullable = false)
+    private String status = "ACTIVE";
 
-    @Column(name = "is_verified", nullable = false)
-    private Boolean isVerified = false;
+    @Column(name = "notes", columnDefinition = "TEXT")
+    private String notes;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -59,8 +61,8 @@ public class Supplier {
         if (createdAt == null) {
             createdAt = LocalDateTime.now();
         }
-        if (isVerified == null) {
-            isVerified = false;
+        if (status == null) {
+            status = "ACTIVE";
         }
     }
 

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Mapper for Supplier entity and DTOs.
+ * Simplified mapping for basic supplier information.
  */
 @Component
 public class SupplierMapper {
@@ -19,8 +20,9 @@ public class SupplierMapper {
         Supplier supplier = new Supplier();
         supplier.setSupplierName(request.getSupplierName());
         supplier.setPhoneNumber(request.getPhoneNumber());
+        supplier.setEmail(request.getEmail());
         supplier.setAddress(request.getAddress());
-        supplier.setCertificationNumber(request.getCertificationNumber());
+        supplier.setNotes(request.getNotes());
         return supplier;
     }
 
@@ -34,14 +36,17 @@ public class SupplierMapper {
         if (request.getPhoneNumber() != null) {
             supplier.setPhoneNumber(request.getPhoneNumber());
         }
+        if (request.getEmail() != null) {
+            supplier.setEmail(request.getEmail());
+        }
         if (request.getAddress() != null) {
             supplier.setAddress(request.getAddress());
         }
-        if (request.getCertificationNumber() != null) {
-            supplier.setCertificationNumber(request.getCertificationNumber());
+        if (request.getStatus() != null) {
+            supplier.setStatus(request.getStatus());
         }
-        if (request.getIsVerified() != null) {
-            supplier.setIsVerified(request.getIsVerified());
+        if (request.getNotes() != null) {
+            supplier.setNotes(request.getNotes());
         }
     }
 
@@ -53,9 +58,10 @@ public class SupplierMapper {
                 .supplierId(supplier.getSupplierId())
                 .supplierName(supplier.getSupplierName())
                 .phoneNumber(supplier.getPhoneNumber())
+                .email(supplier.getEmail())
                 .address(supplier.getAddress())
-                .certificationNumber(supplier.getCertificationNumber())
-                .isVerified(supplier.getIsVerified())
+                .status(supplier.getStatus())
+                .notes(supplier.getNotes())
                 .createdAt(supplier.getCreatedAt())
                 .updatedAt(supplier.getUpdatedAt())
                 .build();
