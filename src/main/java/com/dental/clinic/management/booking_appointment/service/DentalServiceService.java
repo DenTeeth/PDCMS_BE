@@ -6,7 +6,7 @@ import com.dental.clinic.management.booking_appointment.dto.request.UpdateServic
 import com.dental.clinic.management.booking_appointment.dto.response.ServiceResponse;
 import com.dental.clinic.management.booking_appointment.mapper.ServiceMapper;
 import com.dental.clinic.management.booking_appointment.repository.DentalServiceRepository;
-import com.dental.clinic.management.exception.BadRequestAlertException;
+import com.dental.clinic.management.exception.validation.BadRequestAlertException;
 import com.dental.clinic.management.specialization.domain.Specialization;
 import com.dental.clinic.management.specialization.repository.SpecializationRepository;
 import lombok.RequiredArgsConstructor;
@@ -46,7 +46,8 @@ public class DentalServiceService {
             Integer specializationId,
             String keyword) {
 
-        log.debug("Request to get all services - page: {}, size: {}, sortBy: {}, sortDirection: {}, isActive: {}, specializationId: {}, keyword: {}",
+        log.debug(
+                "Request to get all services - page: {}, size: {}, sortBy: {}, sortDirection: {}, isActive: {}, specializationId: {}, keyword: {}",
                 page, size, sortBy, sortDirection, isActive, specializationId, keyword);
 
         // Validate and adjust page size
@@ -139,7 +140,8 @@ public class DentalServiceService {
 
         DentalService savedService = serviceRepository.save(service);
 
-        log.info("Created service with ID: {} and code: {}", savedService.getServiceId(), savedService.getServiceCode());
+        log.info("Created service with ID: {} and code: {}", savedService.getServiceId(),
+                savedService.getServiceCode());
 
         return serviceMapper.toResponse(savedService);
     }

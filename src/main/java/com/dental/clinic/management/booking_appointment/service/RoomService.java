@@ -6,7 +6,7 @@ import com.dental.clinic.management.booking_appointment.dto.request.UpdateRoomRe
 import com.dental.clinic.management.booking_appointment.dto.response.RoomResponse;
 import com.dental.clinic.management.booking_appointment.mapper.RoomMapper;
 import com.dental.clinic.management.booking_appointment.repository.RoomRepository;
-import com.dental.clinic.management.exception.BadRequestAlertException;
+import com.dental.clinic.management.exception.validation.BadRequestAlertException;
 import com.dental.clinic.management.utils.IdGenerator;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
