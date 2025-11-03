@@ -576,14 +576,16 @@ ON CONFLICT (account_id) DO NOTHING;
 -- BƯỚC 7: TẠO ROOMS (PHÒNG KHÁM/GHẾ NHA KHOA)
 -- ============================================
 -- Seed data cho các phòng khám/ghế nha khoa
+-- Note: room_id must be provided manually in SQL since @PrePersist only works with JPA save()
+-- Format: GHE + YYMMDD + sequence (e.g., GHE251103001)
 -- ============================================
 
-INSERT INTO rooms (room_code, room_name, room_type, is_active, created_at, updated_at)
+INSERT INTO rooms (room_id, room_code, room_name, room_type, is_active, created_at)
 VALUES
-('P-01', 'Phòng thường 1', 'STANDARD', TRUE, NOW(), NOW()),
-('P-02', 'Phòng thường 2', 'STANDARD', TRUE, NOW(), NOW()),
-('P-03', 'Phòng thường 3', 'STANDARD', TRUE, NOW(), NOW()),
-('P-04', 'Phòng Implant', 'IMPLANT', TRUE, NOW(), NOW())
+('GHE251103001', 'P-01', 'Phòng thường 1', 'STANDARD', TRUE, NOW()),
+('GHE251103002', 'P-02', 'Phòng thường 2', 'STANDARD', TRUE, NOW()),
+('GHE251103003', 'P-03', 'Phòng thường 3', 'STANDARD', TRUE, NOW()),
+('GHE251103004', 'P-04', 'Phòng Implant', 'IMPLANT', TRUE, NOW())
 ON CONFLICT (room_code) DO NOTHING;
 
 -- ============================================
