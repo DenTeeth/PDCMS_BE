@@ -106,6 +106,8 @@ CREATE TYPE appointment_action_type AS ENUM ('CREATE', 'DELAY', 'RESCHEDULE_SOUR
 
 CREATE TYPE appointment_reason_code AS ENUM ('PREVIOUS_CASE_OVERRUN', 'DOCTOR_UNAVAILABLE', 'EQUIPMENT_FAILURE', 'PATIENT_REQUEST', 'OPERATIONAL_REDIRECT', 'OTHER');
 
+CREATE TYPE appointment_participant_role_enum AS ENUM ('ASSISTANT', 'SECONDARY_DOCTOR', 'OBSERVER');
+
     -- Check Constraints
 
 -- Treatment Plan Enums    CONSTRAINT chk_renewal_status CHECK (status IN ('PENDING_ACTION', 'CONFIRMED', 'FINALIZED', 'DECLINED', 'EXPIRED')),
@@ -973,7 +975,7 @@ CREATE TABLE appointments (
     appointment_code VARCHAR(20) UNIQUE NOT NULL,
     patient_id INTEGER NOT NULL,
     employee_id INTEGER NOT NULL,
-    room_id INTEGER NOT NULL,
+    room_id VARCHAR(50) NOT NULL,
     appointment_start_time TIMESTAMP NOT NULL,
     appointment_end_time TIMESTAMP NOT NULL,
     expected_duration_minutes INTEGER NOT NULL,
@@ -1013,7 +1015,7 @@ CREATE INDEX idx_appt_rescheduled ON appointments(rescheduled_to_appointment_id)
 CREATE TABLE appointment_participants (
     appointment_id INTEGER,
     employee_id INTEGER,
-    role VARCHAR(50),
+    role appointment_participant_role_enum NOT NULL DEFAULT 'ASSISTANT',
 
     PRIMARY KEY (appointment_id, employee_id),
 
@@ -1025,7 +1027,7 @@ CREATE TABLE appointment_participants (
 
 COMMENT ON TABLE appointment_participants IS 'Lưu các nhân viên khác tham gia lịch hẹn (ngoài Bác sĩ chính)';
 COMMENT ON COLUMN appointment_participants.employee_id IS 'Nhân viên tham gia, VD: Phụ tá';
-COMMENT ON COLUMN appointment_participants.role IS 'Vai trò trong ca (ASSISTANT, SECONDARY_DOCTOR, ...)';
+COMMENT ON COLUMN appointment_participants.role IS 'Vai trò trong ca: ASSISTANT (phụ tá), SECONDARY_DOCTOR (bác sĩ phụ), OBSERVER (quan sát viên)';
 
 -- Table: appointment_services
 CREATE TABLE appointment_services (

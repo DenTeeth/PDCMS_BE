@@ -1427,3 +1427,110 @@ ON CONFLICT (service_code) DO NOTHING;
 --   - Default password: 123456 (must change on first login)
 --
 -- ============================================
+
+
+-- =====================================================
+-- BE-403: APPOINTMENT MANAGEMENT - TEST DATA
+-- =====================================================
+-- Purpose: Test data for P3.1 (Available Times) and P3.2 (Create Appointment)
+-- Coverage: Employees, Patients, Services, Rooms, Shifts, Room-Services, Specializations
+-- =====================================================
+
+-- 1. TEST SPECIALIZATIONS
+INSERT INTO specializations (specialization_id, specialization_code, specialization_name, description, is_active, created_at)
+VALUES
+    (901, 'TEST-IMPLANT', 'Test Implant Specialist', 'Chuyên khoa Cấy ghép Implant (Test)', true, CURRENT_TIMESTAMP),
+    (902, 'TEST-ORTHO', 'Test Orthodontics', 'Chuyên khoa Chỉnh nha (Test)', true, CURRENT_TIMESTAMP),
+    (903, 'TEST-GENERAL', 'Test General Dentistry', 'Nha khoa tổng quát (Test)', true, CURRENT_TIMESTAMP)
+ON CONFLICT (specialization_id) DO NOTHING;
+
+-- 2. TEST EMPLOYEES (Doctors & Assistants)
+INSERT INTO employees (employee_id, employee_code, full_name, email, phone, is_active, created_at)
+VALUES
+    (9001, 'TEST-DR-IMPLANT', 'Dr. Nguyen Van Implant (Test)', 'test.dr.implant@dental.com', '0901234001', true, CURRENT_TIMESTAMP),
+    (9002, 'TEST-DR-ORTHO', 'Dr. Tran Thi Ortho (Test)', 'test.dr.ortho@dental.com', '0901234002', true, CURRENT_TIMESTAMP),
+    (9003, 'TEST-DR-GENERAL', 'Dr. Le Van General (Test)', 'test.dr.general@dental.com', '0901234003', true, CURRENT_TIMESTAMP),
+    (9004, 'TEST-PT-001', 'Phu Ta Binh (Test)', 'test.pt.binh@dental.com', '0901234004', true, CURRENT_TIMESTAMP),
+    (9005, 'TEST-PT-002', 'Phu Ta An (Test)', 'test.pt.an@dental.com', '0901234005', true, CURRENT_TIMESTAMP)
+ON CONFLICT (employee_id) DO NOTHING;
+
+-- 3. EMPLOYEE SPECIALIZATIONS
+INSERT INTO employee_specializations (employee_id, specialization_id)
+VALUES
+    (9001, 901), (9001, 903), -- Dr Implant: Implant + General
+    (9002, 902),              -- Dr Ortho: Orthodontics
+    (9003, 903)               -- Dr General: General
+ON CONFLICT DO NOTHING;
+
+-- 4. TEST PATIENTS
+INSERT INTO patients (patient_id, patient_code, full_name, date_of_birth, gender, phone, email, is_active, created_at)
+VALUES
+    (9001, 'TEST-BN-001', 'Nguyen Van Test Patient A', '1985-05-15', 'male', '0912345001', 'test.patient.a@gmail.com', true, CURRENT_TIMESTAMP),
+    (9002, 'TEST-BN-002', 'Tran Thi Test Patient B', '1990-08-20', 'female', '0912345002', 'test.patient.b@gmail.com', true, CURRENT_TIMESTAMP),
+    (9003, 'TEST-BN-003', 'Le Van Test Patient C', '1978-12-10', 'male', '0912345003', 'test.patient.c@gmail.com', true, CURRENT_TIMESTAMP)
+ON CONFLICT (patient_id) DO NOTHING;
+
+-- 5. TEST SERVICES
+INSERT INTO services (service_id, service_code, service_name, specialization_id, default_duration_minutes, default_buffer_minutes, base_price, is_active, created_at)
+VALUES
+    (9001, 'TEST-SV-IMPLANT', 'Test: Cam tru Implant', 901, 60, 15, 15000000, true, CURRENT_TIMESTAMP),
+    (9002, 'TEST-SV-NANGXOANG', 'Test: Nang xoang', 901, 45, 15, 8000000, true, CURRENT_TIMESTAMP),
+    (9003, 'TEST-SV-SCALING', 'Test: Lay cao rang', 903, 30, 10, 500000, true, CURRENT_TIMESTAMP),
+    (9004, 'TEST-SV-BRACKET', 'Test: Nieng rang mac cai', 902, 90, 20, 25000000, true, CURRENT_TIMESTAMP)
+ON CONFLICT (service_id) DO NOTHING;
+
+-- 6. TEST ROOMS
+INSERT INTO rooms (room_id, room_code, room_name, room_type, is_active, created_at)
+VALUES
+    ('TEST-ROOM-IMPLANT-01', 'TEST-P-IMPLANT-01', 'Test: Phong Implant 01', 'SURGERY', true, CURRENT_TIMESTAMP),
+    ('TEST-ROOM-IMPLANT-02', 'TEST-P-IMPLANT-02', 'Test: Phong Implant 02', 'SURGERY', true, CURRENT_TIMESTAMP),
+    ('TEST-ROOM-GENERAL-01', 'TEST-P-GENERAL-01', 'Test: Phong Kham Tong Quat 01', 'STANDARD', true, CURRENT_TIMESTAMP),
+    ('TEST-ROOM-ORTHO-01', 'TEST-P-ORTHO-01', 'Test: Phong Chinh Nha 01', 'ORTHODONTICS', true, CURRENT_TIMESTAMP)
+ON CONFLICT (room_id) DO NOTHING;
+
+-- 7. ROOM-SERVICE COMPATIBILITY (V16)
+INSERT INTO room_services (room_id, service_id)
+VALUES
+    ('TEST-ROOM-IMPLANT-01', 9001), ('TEST-ROOM-IMPLANT-01', 9002),
+    ('TEST-ROOM-IMPLANT-02', 9001), ('TEST-ROOM-IMPLANT-02', 9002),
+    ('TEST-ROOM-GENERAL-01', 9003),
+    ('TEST-ROOM-ORTHO-01', 9004)
+ON CONFLICT DO NOTHING;
+
+-- 8. EMPLOYEE SHIFTS (Test date: 2025-11-15)
+INSERT INTO employee_shifts (employee_id, work_date, work_shift_id, created_at)
+SELECT 9001, DATE '2025-11-15', work_shift_id, CURRENT_TIMESTAMP FROM work_shifts WHERE shift_name = 'Full Day' OR (start_time = '08:00:00' AND end_time = '17:00:00') LIMIT 1 ON CONFLICT DO NOTHING;
+
+INSERT INTO employee_shifts (employee_id, work_date, work_shift_id, created_at)
+SELECT 9002, DATE '2025-11-15', work_shift_id, CURRENT_TIMESTAMP FROM work_shifts WHERE shift_name LIKE '%Morning%' OR (start_time = '08:00:00' AND end_time = '12:00:00') LIMIT 1 ON CONFLICT DO NOTHING;
+
+INSERT INTO employee_shifts (employee_id, work_date, work_shift_id, created_at)
+SELECT 9003, DATE '2025-11-15', work_shift_id, CURRENT_TIMESTAMP FROM work_shifts WHERE shift_name = 'Full Day' OR (start_time = '08:00:00' AND end_time = '17:00:00') LIMIT 1 ON CONFLICT DO NOTHING;
+
+INSERT INTO employee_shifts (employee_id, work_date, work_shift_id, created_at)
+SELECT 9004, DATE '2025-11-15', work_shift_id, CURRENT_TIMESTAMP FROM work_shifts WHERE shift_name = 'Full Day' OR (start_time = '08:00:00' AND end_time = '17:00:00') LIMIT 1 ON CONFLICT DO NOTHING;
+
+INSERT INTO employee_shifts (employee_id, work_date, work_shift_id, created_at)
+SELECT 9005, DATE '2025-11-15', work_shift_id, CURRENT_TIMESTAMP FROM work_shifts WHERE shift_name LIKE '%Afternoon%' OR (start_time = '13:00:00' AND end_time = '17:00:00') LIMIT 1 ON CONFLICT DO NOTHING;
+
+-- 9. EXISTING APPOINTMENT (Dr Implant busy 10:00-11:00)
+INSERT INTO appointments (appointment_code, patient_id, employee_id, room_id,
+                         appointment_start_time, appointment_end_time,
+                         expected_duration_minutes, status, created_at)
+VALUES
+    ('APT-TEST-EXISTING-001', 9001, 9001, 'TEST-ROOM-IMPLANT-01',
+     TIMESTAMP '2025-11-15 10:00:00', TIMESTAMP '2025-11-15 11:00:00',
+     60, 'SCHEDULED', CURRENT_TIMESTAMP)
+ON CONFLICT DO NOTHING;
+
+INSERT INTO appointment_services (appointment_id, service_id)
+SELECT a.appointment_id, 9001 FROM appointments a WHERE a.appointment_code = 'APT-TEST-EXISTING-001' ON CONFLICT DO NOTHING;
+
+-- =====================================================
+-- TEST SCENARIOS:
+-- 1. P3.1: GET /api/v1/appointments/available-times?date=2025-11-15&employeeCode=TEST-DR-IMPLANT&serviceCodes=TEST-SV-IMPLANT
+-- 2. P3.2: POST /api/v1/appointments { patientCode: "TEST-BN-002", employeeCode: "TEST-DR-IMPLANT", ... }
+-- 3. Conflict: Try 10:00-11:00 (Doctor busy)
+-- 4. Room incompatible: TEST-P-GENERAL-01 with TEST-SV-IMPLANT
+-- 5. Not qualified: TEST-DR-GENERAL with TEST-SV-IMPLANT
+-- =====================================================

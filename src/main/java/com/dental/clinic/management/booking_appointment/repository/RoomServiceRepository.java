@@ -42,7 +42,7 @@ public interface RoomServiceRepository extends JpaRepository<RoomService, RoomSe
      * <p>
      * <b>SQL Equivalent:</b>
      * </p>
-     * 
+     *
      * <pre>
      * SELECT rs.* FROM room_services rs
      * WHERE rs.room_id = :roomId
@@ -63,7 +63,7 @@ public interface RoomServiceRepository extends JpaRepository<RoomService, RoomSe
      * <p>
      * <b>SQL Equivalent:</b>
      * </p>
-     * 
+     *
      * <pre>
      * DELETE FROM room_services
      * WHERE room_id = :roomId
@@ -89,7 +89,7 @@ public interface RoomServiceRepository extends JpaRepository<RoomService, RoomSe
      * <p>
      * <b>SQL Equivalent:</b>
      * </p>
-     * 
+     *
      * <pre>
      * SELECT rs.* FROM room_services rs
      * WHERE rs.service_id = :serviceId
@@ -111,7 +111,7 @@ public interface RoomServiceRepository extends JpaRepository<RoomService, RoomSe
      * <p>
      * <b>SQL Equivalent:</b>
      * </p>
-     * 
+     *
      * <pre>
      * SELECT COUNT(*) > 0 FROM room_services
      * WHERE room_id = :roomId AND service_id = :serviceId
@@ -122,4 +122,34 @@ public interface RoomServiceRepository extends JpaRepository<RoomService, RoomSe
      * @return true if mapping exists, false otherwise
      */
     boolean existsByIdRoomIdAndIdServiceId(String roomId, Integer serviceId);
+
+    /**
+     * Find rooms that support ALL specified services.
+     * <p>
+     * Used by P3.1 (Available Times API) to find compatible rooms.
+     * A room is compatible only if it supports ALL requested services.
+     * </p>
+     *
+     * <p>
+     * <b>SQL Logic:</b>
+     * </p>
+     *
+     * <pre>
+     * SELECT room_id FROM room_services
+     * WHERE service_id IN (:serviceIds)
+     * GROUP BY room_id
+     * HAVING COUNT(DISTINCT service_id) = :serviceCount
+     * </pre>
+     *
+     * @param serviceIds   list of service IDs (all must be supported)
+     * @param serviceCount number of services (for HAVING clause)
+     * @return list of room IDs (String) that support ALL services
+     */
+    @Query("SELECT rs.id.roomId FROM RoomService rs " +
+            "WHERE rs.id.serviceId IN :serviceIds " +
+            "GROUP BY rs.id.roomId " +
+            "HAVING COUNT(DISTINCT rs.id.serviceId) = :serviceCount")
+    List<String> findRoomsSupportingAllServices(
+            @Param("serviceIds") List<Integer> serviceIds,
+            @Param("serviceCount") long serviceCount);
 }

@@ -28,8 +28,15 @@ public final class AuthoritiesConstants {
 
     // Appointment Permissions
     public static final String VIEW_APPOINTMENT = "VIEW_APPOINTMENT";
+    public static final String VIEW_APPOINTMENT_ALL = "VIEW_APPOINTMENT_ALL"; // View all clinic appointments (for
+                                                                              // Dashboard)
+    public static final String VIEW_APPOINTMENT_OWN = "VIEW_APPOINTMENT_OWN"; // View own appointments (Doctor/Patient)
     public static final String CREATE_APPOINTMENT = "CREATE_APPOINTMENT";
     public static final String UPDATE_APPOINTMENT = "UPDATE_APPOINTMENT";
+    public static final String UPDATE_APPOINTMENT_STATUS = "UPDATE_APPOINTMENT_STATUS"; // Change status (CHECKED_IN,
+                                                                                        // COMPLETED, etc.)
+    public static final String DELAY_APPOINTMENT = "DELAY_APPOINTMENT"; // Delay within same day
+    public static final String RESCHEDULE_APPOINTMENT = "RESCHEDULE_APPOINTMENT"; // Cancel and rebook to different day
     public static final String CANCEL_APPOINTMENT = "CANCEL_APPOINTMENT";
     public static final String DELETE_APPOINTMENT = "DELETE_APPOINTMENT";
 

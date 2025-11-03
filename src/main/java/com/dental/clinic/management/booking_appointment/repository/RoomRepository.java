@@ -105,4 +105,14 @@ public interface RoomRepository extends JpaRepository<Room, String> {
                      "LOWER(r.roomCode) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
                      "LOWER(r.roomName) LIKE LOWER(CONCAT('%', :keyword, '%')))")
        Page<Room> searchInactiveByCodeOrName(String keyword, Pageable pageable);
+
+       /**
+        * Find rooms by list of room IDs (for appointment availability)
+        */
+       List<Room> findByRoomIdIn(List<String> roomIds);
+
+       /**
+        * Find active rooms by list of room IDs (for appointment availability)
+        */
+       List<Room> findByRoomIdInAndIsActiveTrue(List<String> roomIds);
 }
