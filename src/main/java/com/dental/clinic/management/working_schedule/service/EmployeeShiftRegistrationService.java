@@ -263,10 +263,12 @@ public class EmployeeShiftRegistrationService {
     }
 
     private RegistrationResponse buildResponse(PartTimeRegistration registration, PartTimeSlot slot) {
+        String workShiftId = null;
         String shiftName = "Unknown";
         String dayOfWeek = "Unknown";
 
         if (slot != null) {
+            workShiftId = slot.getWorkShiftId();
             WorkShift workShift = workShiftRepository.findById(slot.getWorkShiftId()).orElse(null);
             shiftName = workShift != null ? workShift.getShiftName() : "Unknown";
             dayOfWeek = slot.getDayOfWeek();
@@ -276,6 +278,7 @@ public class EmployeeShiftRegistrationService {
                 .registrationId(registration.getRegistrationId())
                 .employeeId(registration.getEmployeeId())
                 .partTimeSlotId(registration.getPartTimeSlotId())
+                .workShiftId(workShiftId)
                 .workShiftName(shiftName)
                 .dayOfWeek(dayOfWeek)
                 .effectiveFrom(registration.getEffectiveFrom())

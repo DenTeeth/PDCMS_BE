@@ -17,6 +17,7 @@ public class RegistrationResponse {
                                     // SERIAL)
     private Integer employeeId;
     private Long partTimeSlotId;
+    private String workShiftId;
     private String workShiftName;
     private String dayOfWeek;
     private LocalDate effectiveFrom;
