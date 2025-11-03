@@ -198,7 +198,7 @@ public class OvertimeRequestService {
         Employee requestedBy = getCurrentEmployee();
         if (dto.getEmployeeId() != null && targetEmployeeId.equals(requestedBy.getEmployeeId())) {
             log.warn("Admin {} attempted to use admin privilege to create overtime for themselves (security violation)", requestedBy.getEmployeeId());
-            throw new IllegalArgumentException("Admin không được tự phân công OT cho bản thân vì có thể tự approve (lộng quyền). Vui lòng nhờ quản lý khác phân công hoặc tạo yêu cầu như nhân viên thông thường.");
+            throw new IllegalArgumentException("Không thể tự phân công OT cho bản thân.");
         }
 
         // Validation 5: Check for time-overlapping shifts on the same date (Lỗi 3)
