@@ -102,6 +102,15 @@ public class RoleService {
 
     @PreAuthorize("hasRole('" + ADMIN + "')")
     @Transactional(readOnly = true)
+    public List<RoleInfoResponse> getEmployeeAssignableRoles() {
+        List<Role> roles = roleRepository.findAllActiveRoles();
+        // Filter out ROLE_PATIENT - patients cannot be employees
+        List<Role> employeeRoles = roles.stream()
+                .filter(role -> !"ROLE_PATIENT".equals(role.getRoleName()))
+                .toList();
+        return roleMapper.toRoleInfoResponseList(employeeRoles);
+    }    @PreAuthorize("hasRole('" + ADMIN + "')")
+    @Transactional(readOnly = true)
     public RoleInfoResponse getRoleById(String roleId) {
         Role role = roleRepository.findById(roleId)
                 .orElseThrow(() -> new BadRequestAlertException("Role not found with ID: " + roleId, "role",

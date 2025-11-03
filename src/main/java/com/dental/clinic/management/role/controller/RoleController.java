@@ -51,10 +51,18 @@ public class RoleController {
     }
 
     @GetMapping("")
-    @Operation(summary = "Get all roles", description = "Retrieve all active roles")
+    @Operation(summary = "Get all roles", description = "Retrieve all active roles including ROLE_PATIENT")
     @ApiMessage("Get roles successfully")
     public ResponseEntity<List<RoleInfoResponse>> getAllRoles() {
         List<RoleInfoResponse> response = roleService.getAllRoles();
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/employee-assignable")
+    @Operation(summary = "Get roles for employee assignment", description = "Retrieve roles that can be assigned to employees (excludes ROLE_PATIENT)")
+    @ApiMessage("Get employee assignable roles successfully")
+    public ResponseEntity<List<RoleInfoResponse>> getEmployeeAssignableRoles() {
+        List<RoleInfoResponse> response = roleService.getEmployeeAssignableRoles();
         return ResponseEntity.ok(response);
     }
 
