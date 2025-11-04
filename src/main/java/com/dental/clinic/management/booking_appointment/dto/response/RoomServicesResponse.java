@@ -16,10 +16,10 @@ import java.util.List;
  * <p>
  * <b>Example JSON:</b>
  * </p>
- * 
+ *
  * <pre>
  * {
- *   "roomId": 4,
+ *   "roomId": "GHE251103004",
  *   "roomCode": "P-04",
  *   "roomName": "Phòng Implant",
  *   "compatibleServices": [
@@ -48,9 +48,9 @@ import java.util.List;
 public class RoomServicesResponse {
 
     /**
-     * Room ID (database primary key).
+     * Room ID (database primary key - VARCHAR).
      */
-    private Long roomId;
+    private String roomId;
 
     /**
      * Room code (business key, e.g., "P-04").

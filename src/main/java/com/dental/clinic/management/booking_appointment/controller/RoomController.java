@@ -96,6 +96,23 @@ public class RoomController {
     }
 
     /**
+     * Get room by room code (business key)
+     *
+     * @param roomCode room code (e.g., "P-01", "P-03")
+     * @return room details
+     */
+    @GetMapping("/code/{roomCode}")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_ROOM + "')")
+    @Operation(summary = "Get room by code", description = "Retrieve room details by room code (business key)")
+    @ApiMessage("Lấy thông tin phòng theo mã thành công")
+    public ResponseEntity<RoomResponse> getRoomByCode(
+            @Parameter(description = "Room code", example = "P-01") @PathVariable String roomCode) {
+
+        RoomResponse room = roomService.getRoomByCode(roomCode);
+        return ResponseEntity.ok(room);
+    }
+
+    /**
      * Create a new room
      *
      * @param request room creation data

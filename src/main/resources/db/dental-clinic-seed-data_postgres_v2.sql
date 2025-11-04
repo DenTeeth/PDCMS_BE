@@ -1463,6 +1463,50 @@ INSERT INTO services (service_code, service_name, description, default_duration_
 ON CONFLICT (service_code) DO NOTHING;
 
 -- ============================================
+-- ROOM-SERVICES MAPPINGS (V16)
+-- Map services to rooms based on room type compatibility
+-- NOTE: This MUST be placed AFTER services are inserted!
+-- LOGIC: IMPLANT room = ALL STANDARD services + IMPLANT-specific services
+-- ============================================
+INSERT INTO room_services (room_id, service_id, created_at)
+SELECT r.room_id, s.service_id, NOW()
+FROM rooms r
+CROSS JOIN services s
+WHERE
+    -- STANDARD rooms (P-01, P-02, P-03) - General services only
+    (r.room_type = 'STANDARD' AND s.service_code IN (
+        'GEN_EXAM', 'GEN_XRAY_PERI', 'SCALING_L1', 'SCALING_L2', 'SCALING_VIP',
+        'FILLING_COMP', 'FILLING_GAP', 'EXTRACT_MILK', 'EXTRACT_NORM',
+        'ENDO_TREAT_ANT', 'ENDO_TREAT_POST', 'ENDO_POST_CORE',
+        'BLEACH_ATHOME', 'BLEACH_INOFFICE',
+        'CROWN_PFM', 'CROWN_TITAN', 'CROWN_ZIR_KATANA', 'CROWN_ZIR_CERCON',
+        'CROWN_EMAX', 'CROWN_ZIR_LAVA', 'VENEER_EMAX', 'VENEER_LISI',
+        'INLAY_ONLAY_ZIR', 'INLAY_ONLAY_EMAX',
+        'PROS_CEMENT', 'DENTURE_CONSULT', 'DENTURE_TRYIN', 'DENTURE_DELIVERY',
+        'OTHER_DIAMOND', 'EMERG_PAIN', 'SURG_CHECKUP'
+    ))
+    OR
+    -- IMPLANT room (P-04) - ALL STANDARD services + IMPLANT-specific services
+    (r.room_type = 'IMPLANT' AND s.service_code IN (
+        -- ALL services from STANDARD rooms
+        'GEN_EXAM', 'GEN_XRAY_PERI', 'SCALING_L1', 'SCALING_L2', 'SCALING_VIP',
+        'FILLING_COMP', 'FILLING_GAP', 'EXTRACT_MILK', 'EXTRACT_NORM',
+        'ENDO_TREAT_ANT', 'ENDO_TREAT_POST', 'ENDO_POST_CORE',
+        'BLEACH_ATHOME', 'BLEACH_INOFFICE',
+        'CROWN_PFM', 'CROWN_TITAN', 'CROWN_ZIR_KATANA', 'CROWN_ZIR_CERCON',
+        'CROWN_EMAX', 'CROWN_ZIR_LAVA', 'VENEER_EMAX', 'VENEER_LISI',
+        'INLAY_ONLAY_ZIR', 'INLAY_ONLAY_EMAX',
+        'PROS_CEMENT', 'DENTURE_CONSULT', 'DENTURE_TRYIN', 'DENTURE_DELIVERY',
+        'OTHER_DIAMOND', 'EMERG_PAIN', 'SURG_CHECKUP',
+        -- PLUS Implant-specific services
+        'IMPL_CONSULT', 'IMPL_CT_SCAN', 'IMPL_SURGERY_KR', 'IMPL_SURGERY_EUUS',
+        'IMPL_BONE_GRAFT', 'IMPL_SINUS_LIFT', 'IMPL_HEALING',
+        'IMPL_IMPRESSION', 'IMPL_CROWN_TITAN', 'IMPL_CROWN_ZIR',
+        'EXTRACT_WISDOM_L1', 'EXTRACT_WISDOM_L2', 'OTHER_GINGIVECTOMY'
+    ))
+ON CONFLICT DO NOTHING;
+
+-- ============================================
 -- HƯỚNG DẪN SỬ DỤNG
 -- ============================================
 --

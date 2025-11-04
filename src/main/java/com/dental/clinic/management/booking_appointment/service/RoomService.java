@@ -146,6 +146,22 @@ public class RoomService {
     }
 
     /**
+     * Get room by room code (business key)
+     */
+    @Transactional(readOnly = true)
+    public RoomResponse getRoomByCode(String roomCode) {
+        log.debug("Request to get room by code: {}", roomCode);
+
+        Room room = roomRepository.findByRoomCode(roomCode)
+                .orElseThrow(() -> new BadRequestAlertException(
+                        "Room not found with code: " + roomCode,
+                        "room",
+                        "notfound"));
+
+        return roomMapper.toResponse(room);
+    }
+
+    /**
      * Create a new room
      */
     @Transactional
@@ -285,7 +301,7 @@ public class RoomService {
         log.info("Found {} compatible services for room: {}", compatibleServices.size(), roomCode);
 
         return RoomServicesResponse.builder()
-                .roomId(Long.parseLong(room.getRoomId()))
+                .roomId(room.getRoomId())
                 .roomCode(room.getRoomCode())
                 .roomName(room.getRoomName())
                 .compatibleServices(compatibleServices)
