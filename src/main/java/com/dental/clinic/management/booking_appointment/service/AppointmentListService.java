@@ -100,9 +100,16 @@ public class AppointmentListService {
         List<AppointmentStatus> statuses = buildStatusList(criteria);
 
         // Step 5: Build pageable
-        Sort sort = sortDirection.equalsIgnoreCase("DESC")
-                ? Sort.by(sortBy).descending()
-                : Sort.by(sortBy).ascending();
+        // CRITICAL FIX: For native queries, convert camelCase field names to snake_case
+        // Regular Sort uses entity field names (camelCase) which don't exist in native
+        // SQL
+        String snakeCaseSortBy = convertToSnakeCase(sortBy);
+        Sort sort;
+        if (sortDirection.equalsIgnoreCase("DESC")) {
+            sort = org.springframework.data.jpa.domain.JpaSort.unsafe(snakeCaseSortBy).descending();
+        } else {
+            sort = org.springframework.data.jpa.domain.JpaSort.unsafe(snakeCaseSortBy).ascending();
+        }
         Pageable pageable = PageRequest.of(page, size, sort);
 
         // Step 6: Execute query based on RBAC
@@ -131,10 +138,19 @@ public class AppointmentListService {
         } else {
             // Admin/Receptionist view: All appointments with optional filters
             log.info("Admin view: Using all filters (including patient name/phone search)");
+
+            // Convert List<AppointmentStatus> to String[] for native query
+            String[] statusArray = null;
+            if (statuses != null && !statuses.isEmpty()) {
+                statusArray = statuses.stream()
+                        .map(Enum::name)
+                        .toArray(String[]::new);
+            }
+
             appointments = appointmentRepository.findByFilters(
                     startDate,
                     endDate,
-                    statuses,
+                    statusArray, // ✅ Pass String[] instead of List
                     null, // patientId - TODO: resolve from patientCode if needed
                     null, // employeeId - TODO: resolve from employeeCode if needed
                     criteria.getRoomCode(),
@@ -368,5 +384,13 @@ public class AppointmentListService {
         }
 
         return 0L;
+    }
+
+    /**
+     * Convert camelCase to snake_case for native SQL queries
+     * Example: appointmentStartTime -> appointment_start_time
+     */
+    private String convertToSnakeCase(String camelCase) {
+        return camelCase.replaceAll("([a-z])([A-Z])", "$1_$2").toLowerCase();
     }
 }

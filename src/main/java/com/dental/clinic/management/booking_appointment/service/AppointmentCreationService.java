@@ -15,7 +15,6 @@ import com.dental.clinic.management.booking_appointment.enums.AppointmentActionT
 import com.dental.clinic.management.booking_appointment.enums.AppointmentParticipantRole;
 import com.dental.clinic.management.booking_appointment.enums.AppointmentStatus;
 import com.dental.clinic.management.booking_appointment.repository.*;
-import com.dental.clinic.management.customer_contact.service.CustomUserDetailsService.CustomUserPrincipal;
 import com.dental.clinic.management.employee.domain.Employee;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.specialization.domain.Specialization;
@@ -28,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -135,11 +135,9 @@ public class AppointmentCreationService {
         // ====================================================================
 
         /**
-         * Extract employee ID from SecurityContext (current logged-in user)
-         * Uses CustomUserPrincipal which contains Account with Employee relationship
+         * Extract employee ID from SecurityContext (current logged-in user via JWT)
          *
-         * @return Employee ID of current user
-         * @throws BadRequestAlertException if user not authenticated or not an employee
+         * @return Employee ID of current user, or 0 (SYSTEM) if admin account
          */
         private Integer getCurrentUserId() {
                 Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -150,21 +148,42 @@ public class AppointmentCreationService {
 
                 Object principal = authentication.getPrincipal();
 
-                if (!(principal instanceof CustomUserPrincipal)) {
+                // JWT-based authentication: principal is Jwt object
+                if (!(principal instanceof Jwt)) {
                         throw new BadRequestAlertException(
-                                        "Invalid authentication principal type",
+                                        "Invalid authentication principal type: " + principal.getClass().getName(),
                                         ENTITY_NAME,
                                         "INVALID_PRINCIPAL");
                 }
 
-                CustomUserPrincipal userPrincipal = (CustomUserPrincipal) principal;
-                Employee employee = userPrincipal.getAccount().getEmployee();
+                Jwt jwt = (Jwt) principal;
+                String username = jwt.getClaimAsString("sub");
+
+                if (username == null || username.isEmpty()) {
+                        throw new BadRequestAlertException(
+                                        "JWT does not contain username (sub claim)",
+                                        ENTITY_NAME,
+                                        "JWT_MISSING_USERNAME");
+                }
+
+                // Check if user has ADMIN role
+                List<String> roles = jwt.getClaimAsStringList("roles");
+                if (roles != null && roles.contains("ROLE_ADMIN")) {
+                        // Admin account - use SYSTEM employee (employee_id = 0)
+                        log.info("Admin account '{}' creating appointment. Using SYSTEM employee (employee_id=0)",
+                                        username);
+                        return 0;
+                }
+
+                // Lookup employee by account username
+                Employee employee = employeeRepository.findByAccount_Username(username).orElse(null);
 
                 if (employee == null) {
+                        // Account without employee - should not happen for non-admin
                         throw new BadRequestAlertException(
-                                        "Logged-in account is not associated with an employee",
+                                        "Account '" + username + "' does not have employee link",
                                         ENTITY_NAME,
-                                        "NOT_EMPLOYEE_ACCOUNT");
+                                        "ACCOUNT_NO_EMPLOYEE");
                 }
 
                 return employee.getEmployeeId();
@@ -484,29 +503,54 @@ public class AppointmentCreationService {
         // ====================================================================
 
         private void checkDoctorConflict(Employee doctor, LocalDateTime startTime, LocalDateTime endTime) {
-                boolean hasConflict = appointmentRepository.existsConflictForEmployee(
+                // Get actual conflicting appointments for detailed error message
+                List<AppointmentStatus> activeStatuses = List.of(
+                                AppointmentStatus.SCHEDULED,
+                                AppointmentStatus.CHECKED_IN,
+                                AppointmentStatus.IN_PROGRESS);
+
+                List<Appointment> conflicts = appointmentRepository.findByEmployeeAndTimeRange(
                                 doctor.getEmployeeId(),
                                 startTime,
-                                endTime);
+                                endTime,
+                                activeStatuses);
 
-                if (hasConflict) {
+                if (!conflicts.isEmpty()) {
+                        Appointment conflict = conflicts.get(0);
                         throw new BadRequestAlertException(
-                                        "Doctor " + doctor.getEmployeeCode()
-                                                        + " already has an appointment during this time",
+                                        String.format("Doctor %s already has an appointment during this time. " +
+                                                        "Conflicting appointment: %s (%s to %s)",
+                                                        doctor.getEmployeeCode(),
+                                                        conflict.getAppointmentCode(),
+                                                        conflict.getAppointmentStartTime(),
+                                                        conflict.getAppointmentEndTime()),
                                         ENTITY_NAME,
                                         "EMPLOYEE_SLOT_TAKEN");
                 }
         }
 
         private void checkRoomConflict(Room room, LocalDateTime startTime, LocalDateTime endTime) {
-                boolean hasConflict = appointmentRepository.existsConflictForRoom(
+                // Get actual conflicting appointments for detailed error message
+                List<AppointmentStatus> activeStatuses = List.of(
+                                AppointmentStatus.SCHEDULED,
+                                AppointmentStatus.CHECKED_IN,
+                                AppointmentStatus.IN_PROGRESS);
+
+                List<Appointment> conflicts = appointmentRepository.findByRoomAndTimeRange(
                                 room.getRoomId(),
                                 startTime,
-                                endTime);
+                                endTime,
+                                activeStatuses);
 
-                if (hasConflict) {
+                if (!conflicts.isEmpty()) {
+                        Appointment conflict = conflicts.get(0);
                         throw new BadRequestAlertException(
-                                        "Room " + room.getRoomCode() + " is already booked during this time",
+                                        String.format("Room %s is already booked during this time. " +
+                                                        "Conflicting appointment: %s (%s to %s)",
+                                                        room.getRoomCode(),
+                                                        conflict.getAppointmentCode(),
+                                                        conflict.getAppointmentStartTime(),
+                                                        conflict.getAppointmentEndTime()),
                                         ENTITY_NAME,
                                         "ROOM_SLOT_TAKEN");
                 }
@@ -576,6 +620,11 @@ public class AppointmentCreationService {
                         LocalDateTime startTime, LocalDateTime endTime,
                         int totalDuration, String notes, Integer createdById) {
                 Appointment appointment = new Appointment();
+
+                // Generate appointment code: APT-YYYYMMDD-XXX
+                String appointmentCode = generateAppointmentCode(startTime.toLocalDate());
+                appointment.setAppointmentCode(appointmentCode);
+
                 appointment.setPatientId(patient.getPatientId());
                 appointment.setEmployeeId(doctor.getEmployeeId());
                 appointment.setRoomId(room.getRoomId());
@@ -587,6 +636,31 @@ public class AppointmentCreationService {
                 appointment.setCreatedBy(createdById);
 
                 return appointmentRepository.save(appointment);
+        }
+
+        /**
+         * Generate unique appointment code: APT-YYYYMMDD-XXX
+         * Example: APT-20251115-001
+         */
+        private String generateAppointmentCode(LocalDate appointmentDate) {
+                String datePrefix = appointmentDate.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+                String codePrefix = "APT-" + datePrefix + "-";
+
+                // Find the highest sequence number for this date
+                String lastCode = appointmentRepository
+                                .findTopByAppointmentCodeStartingWithOrderByAppointmentCodeDesc(codePrefix)
+                                .map(Appointment::getAppointmentCode)
+                                .orElse(null);
+
+                int nextSequence = 1;
+                if (lastCode != null) {
+                        // Extract sequence number from APT-20251115-001 -> 001
+                        String sequencePart = lastCode.substring(lastCode.lastIndexOf("-") + 1);
+                        nextSequence = Integer.parseInt(sequencePart) + 1;
+                }
+
+                // Format with leading zeros: 001, 002, ..., 999
+                return codePrefix + String.format("%03d", nextSequence);
         }
 
         private void insertAppointmentServices(Appointment appointment, List<DentalService> services) {

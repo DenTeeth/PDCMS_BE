@@ -26,6 +26,13 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
         Optional<Appointment> findByAppointmentCode(String appointmentCode);
 
         /**
+         * Find last appointment code with prefix for sequence generation
+         * Example: findTopByAppointmentCodeStartingWith("APT-20251115-") ->
+         * "APT-20251115-003"
+         */
+        Optional<Appointment> findTopByAppointmentCodeStartingWithOrderByAppointmentCodeDesc(String codePrefix);
+
+        /**
          * Find all appointments for a specific employee within date range
          * Used for: Checking doctor's busy time slots
          *
@@ -131,25 +138,47 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
          * Supports: date range, status, patientId, employeeId, roomId
          *
          * CRITICAL IMPROVEMENT: Search by patient name/phone
-         * Uses JPQL with JOIN to patients table for LIKE search
+         *
+         * CRITICAL FIX: Use COALESCE to force type inference for PostgreSQL
          */
-        @Query("SELECT DISTINCT a FROM Appointment a " +
-                        "LEFT JOIN Patient p ON a.patientId = p.patientId " +
-                        "LEFT JOIN Employee e ON a.employeeId = e.employeeId " +
-                        "WHERE (:startDate IS NULL OR a.appointmentStartTime >= :startDate) " +
-                        "AND (:endDate IS NULL OR a.appointmentStartTime <= :endDate) " +
-                        "AND (:statuses IS NULL OR a.status IN :statuses) " +
-                        "AND (:patientId IS NULL OR a.patientId = :patientId) " +
-                        "AND (:employeeId IS NULL OR a.employeeId = :employeeId) " +
-                        "AND (:roomId IS NULL OR a.roomId = :roomId) " +
-                        "AND (:patientName IS NULL OR " +
-                        "     LOWER(CONCAT(p.firstName, ' ', p.lastName)) LIKE LOWER(CONCAT('%', :patientName, '%'))) "
+        @Query(value = "SELECT DISTINCT a.* FROM appointments a " +
+                        "LEFT JOIN patients p ON a.patient_id = p.patient_id " +
+                        "LEFT JOIN employees e ON a.employee_id = e.employee_id " +
+                        "WHERE (COALESCE(:startDate, NULL::timestamp) IS NULL OR a.appointment_start_time >= :startDate) "
                         +
-                        "AND (:patientPhone IS NULL OR p.phone LIKE CONCAT('%', :patientPhone, '%'))")
+                        "AND (COALESCE(:endDate, NULL::timestamp) IS NULL OR a.appointment_start_time <= :endDate) " +
+                        "AND (COALESCE(:statuses, NULL::text[]) IS NULL OR a.status = ANY(:statuses)) " +
+                        "AND (COALESCE(:patientId, NULL::integer) IS NULL OR a.patient_id = :patientId) " +
+                        "AND (COALESCE(:employeeId, NULL::integer) IS NULL OR a.employee_id = :employeeId) " +
+                        "AND (COALESCE(:roomId, NULL::varchar) IS NULL OR a.room_id = :roomId) " +
+                        "AND (COALESCE(:patientName, NULL::varchar) IS NULL OR " +
+                        "     LOWER((COALESCE(p.first_name, '') || ' ' || COALESCE(p.last_name, ''))::text) LIKE LOWER('%' || :patientName || '%')) "
+                        +
+                        "AND (COALESCE(:patientPhone, NULL::varchar) IS NULL OR p.phone LIKE '%' || :patientPhone || '%') "
+                        +
+                        "ORDER BY a.appointment_start_time", countQuery = "SELECT COUNT(DISTINCT a.appointment_id) FROM appointments a "
+                                        +
+                                        "LEFT JOIN patients p ON a.patient_id = p.patient_id " +
+                                        "LEFT JOIN employees e ON a.employee_id = e.employee_id " +
+                                        "WHERE (COALESCE(:startDate, NULL::timestamp) IS NULL OR a.appointment_start_time >= :startDate) "
+                                        +
+                                        "AND (COALESCE(:endDate, NULL::timestamp) IS NULL OR a.appointment_start_time <= :endDate) "
+                                        +
+                                        "AND (COALESCE(:statuses, NULL::text[]) IS NULL OR a.status = ANY(:statuses)) "
+                                        +
+                                        "AND (COALESCE(:patientId, NULL::integer) IS NULL OR a.patient_id = :patientId) "
+                                        +
+                                        "AND (COALESCE(:employeeId, NULL::integer) IS NULL OR a.employee_id = :employeeId) "
+                                        +
+                                        "AND (COALESCE(:roomId, NULL::varchar) IS NULL OR a.room_id = :roomId) " +
+                                        "AND (COALESCE(:patientName, NULL::varchar) IS NULL OR " +
+                                        "     LOWER((COALESCE(p.first_name, '') || ' ' || COALESCE(p.last_name, ''))::text) LIKE LOWER('%' || :patientName || '%')) "
+                                        +
+                                        "AND (COALESCE(:patientPhone, NULL::varchar) IS NULL OR p.phone LIKE '%' || :patientPhone || '%')", nativeQuery = true)
         Page<Appointment> findByFilters(
                         @Param("startDate") LocalDateTime startDate,
                         @Param("endDate") LocalDateTime endDate,
-                        @Param("statuses") List<AppointmentStatus> statuses,
+                        @Param("statuses") String[] statuses,
                         @Param("patientId") Integer patientId,
                         @Param("employeeId") Integer employeeId,
                         @Param("roomId") String roomId,
@@ -186,10 +215,14 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
          * - Should NOT see full medical history (handled by separate permission)
          * - Can only see basic info: time, doctor, patient name (no sensitive data)
          * - This is controlled by APPOINTMENT:VIEW_OWN permission
+         *
+         * FIXED: Use EXISTS subquery since AppointmentParticipant has composite key
          */
         @Query("SELECT DISTINCT a FROM Appointment a " +
-                        "LEFT JOIN AppointmentParticipant ap ON ap.appointmentId = a.appointmentId " +
-                        "WHERE (a.employeeId = :employeeId OR ap.employeeId = :employeeId) " +
+                        "WHERE (a.employeeId = :employeeId " +
+                        "   OR EXISTS (SELECT 1 FROM AppointmentParticipant ap " +
+                        "              WHERE ap.id.appointmentId = a.appointmentId " +
+                        "              AND ap.id.employeeId = :employeeId)) " +
                         "AND (:startDate IS NULL OR a.appointmentStartTime >= :startDate) " +
                         "AND (:endDate IS NULL OR a.appointmentStartTime <= :endDate) " +
                         "AND (:statuses IS NULL OR a.status IN :statuses)")
@@ -205,11 +238,14 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
          * Use case: "Cho tôi xem tất cả lịch Implant tuần này"
          *
          * Requires JOIN to appointment_services + services tables
+         * FIXED: Use EXISTS subquery since AppointmentService has composite key
+         * FIXED: Entity name is DentalService, not Service
          */
         @Query("SELECT DISTINCT a FROM Appointment a " +
-                        "JOIN AppointmentService asvc ON asvc.id.appointmentId = a.appointmentId " +
-                        "JOIN Service s ON asvc.id.serviceId = s.serviceId " +
-                        "WHERE s.serviceCode = :serviceCode " +
+                        "WHERE EXISTS (SELECT 1 FROM AppointmentService asvc " +
+                        "              JOIN DentalService s ON asvc.id.serviceId = s.serviceId " +
+                        "              WHERE asvc.id.appointmentId = a.appointmentId " +
+                        "              AND s.serviceCode = :serviceCode) " +
                         "AND (:startDate IS NULL OR a.appointmentStartTime >= :startDate) " +
                         "AND (:endDate IS NULL OR a.appointmentStartTime <= :endDate) " +
                         "AND (:statuses IS NULL OR a.status IN :statuses)")
