@@ -6,26 +6,26 @@ Permissions: CREATE_APPOINTMENT, VIEW_APPOINTMENT_ALL, VIEW_APPOINTMENT_OWN
 
 ## 📋 API SUMMARY
 
-| Endpoint | Method | Permission | Description |
-|----------|--------|------------|-------------|
-| `/available-times` | GET | CREATE_APPOINTMENT | Tìm slot trống cho lịch hẹn |
-| `/` | POST | CREATE_APPOINTMENT | Tạo lịch hẹn mới |
-| `/` | GET | VIEW_APPOINTMENT_ALL hoặc VIEW_APPOINTMENT_OWN | Dashboard - Danh sách lịch hẹn |
+| Endpoint           | Method | Permission                                     | Description                    |
+| ------------------ | ------ | ---------------------------------------------- | ------------------------------ |
+| `/available-times` | GET    | CREATE_APPOINTMENT                             | Tìm slot trống cho lịch hẹn    |
+| `/`                | POST   | CREATE_APPOINTMENT                             | Tạo lịch hẹn mới               |
+| `/`                | GET    | VIEW_APPOINTMENT_ALL hoặc VIEW_APPOINTMENT_OWN | Dashboard - Danh sách lịch hẹn |
 
 ## ⚠️ IMPLEMENTATION STATUS
 
-| Feature | Status | Notes |
-|---------|--------|-------|
-| ✅ Permission-based RBAC | DONE | Check "VIEW_APPOINTMENT_ALL" in authorities |
-| ✅ Search by Patient Name | DONE | JOIN patients, LIKE search |
-| ✅ Search by Patient Phone | DONE | LIKE phone search |
-| ✅ Filter by Service | DONE | JOIN appointment_services |
-| ✅ OBSERVER Role Security | DONE | Only see appointments they participate in |
-| ✅ DTO Mapping (Patient, Doctor, Room) | DONE | Basic version with N+1 warning |
-| ✅ DatePreset Enum | DONE | TODAY, THIS_WEEK, NEXT_7_DAYS, THIS_MONTH |
-| ✅ Computed Fields | DONE | computedStatus, minutesLate in response |
-| ⚠️ Patient RBAC Mapping | TODO | Need Patient.account relationship |
-| ⚠️ N+1 Query Optimization | TODO | Need batch loading |
+| Feature                                | Status | Notes                                       |
+| -------------------------------------- | ------ | ------------------------------------------- |
+| ✅ Permission-based RBAC               | DONE   | Check "VIEW_APPOINTMENT_ALL" in authorities |
+| ✅ Search by Patient Name              | DONE   | JOIN patients, LIKE search                  |
+| ✅ Search by Patient Phone             | DONE   | LIKE phone search                           |
+| ✅ Filter by Service                   | DONE   | JOIN appointment_services                   |
+| ✅ OBSERVER Role Security              | DONE   | Only see appointments they participate in   |
+| ✅ DTO Mapping (Patient, Doctor, Room) | DONE   | Basic version with N+1 warning              |
+| ✅ DatePreset Enum                     | DONE   | TODAY, THIS_WEEK, NEXT_7_DAYS, THIS_MONTH   |
+| ✅ Computed Fields                     | DONE   | computedStatus, minutesLate in response     |
+| ⚠️ Patient RBAC Mapping                | TODO   | Need Patient.account relationship           |
+| ⚠️ N+1 Query Optimization              | TODO   | Need batch loading                          |
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 GET AVAILABLE TIMES
@@ -129,9 +129,15 @@ Response 201:
   "patient": { "patientCode": "BN-1001", "fullName": "Đoàn Thanh Phong" },
   "doctor": { "employeeCode": "EMP001", "fullName": "Lê Anh Khoa" },
   "room": { "roomCode": "P-01", "roomName": "Phòng thường 1" },
-  "services": [{ "serviceCode": "GEN_EXAM", "serviceName": "Khám tổng quát & Tư vấn" }],
+  "services": [
+    { "serviceCode": "GEN_EXAM", "serviceName": "Khám tổng quát & Tư vấn" }
+  ],
   "participants": [
-    { "employeeCode": "EMP007", "fullName": "Đoàn Nguyễn Khôi Nguyên", "role": "ASSISTANT" }
+    {
+      "employeeCode": "EMP007",
+      "fullName": "Đoàn Nguyễn Khôi Nguyên",
+      "role": "ASSISTANT"
+    }
   ]
 }
 ```
@@ -147,6 +153,7 @@ Errors:
 Test Cases:
 
 ✅ Valid
+
 ```json
 {
   "patientCode": "BN-1001",
@@ -158,6 +165,7 @@ Test Cases:
 ```
 
 ✅ Multiple Services + Participant
+
 ```json
 {
   "patientCode": "BN-1002",
@@ -171,6 +179,7 @@ Test Cases:
 ```
 
 ✅ Part-time Dentist (Chiều)
+
 ```json
 {
   "patientCode": "BN-1003",
@@ -193,6 +202,7 @@ Endpoint:
 GET /api/v1/appointments
 
 Authorization (PERMISSION-BASED, NOT ROLE-BASED):
+
 - VIEW_APPOINTMENT_ALL: Lễ tân/Quản lý - Xem tất cả, dùng filters tự do
 - VIEW_APPOINTMENT_OWN: Bác sĩ/Y tá/OBSERVER/Bệnh nhân - Filters bị GHI ĐÈ
 
@@ -226,14 +236,14 @@ RBAC Logic (Permission-based):
 
 2. VIEW_APPOINTMENT_OWN + Employee (Bác sĩ/Y tá/OBSERVER):
    → Kiểm tra: auth.authorities contains "VIEW_APPOINTMENT_OWN"
-   → OVERRIDE: WHERE (appointments.employee_id = [my_employee_id] 
-                   OR EXISTS (participant where employee_id = [my_employee_id]))
+   → OVERRIDE: WHERE (appointments.employee_id = [my_employee_id]
+   OR EXISTS (participant where employee_id = [my_employee_id]))
    → PHỚT LỜI employeeCode từ client
    → ⚠️ OBSERVER (Thực tập sinh):
-      • Có quyền VIEW_APPOINTMENT_OWN
-      • Thấy appointments MÀ HỌ THAM GIA (role = OBSERVER trong participants)
-      • KHÔNG thấy toàn bộ appointments (security)
-      • Frontend cần thêm permission để xem medical history
+   • Có quyền VIEW_APPOINTMENT_OWN
+   • Thấy appointments MÀ HỌ THAM GIA (role = OBSERVER trong participants)
+   • KHÔNG thấy toàn bộ appointments (security)
+   • Frontend cần thêm permission để xem medical history
 
 3. VIEW_APPOINTMENT_OWN + Patient (Bệnh nhân):
    → Kiểm tra: auth.authorities contains "VIEW_APPOINTMENT_OWN"
@@ -253,29 +263,29 @@ Response 200:
       "appointmentStartTime": "2025-11-15T10:00:00",
       "appointmentEndTime": "2025-11-15T10:40:00",
       "expectedDurationMinutes": 40,
-      "patient": { 
-        "patientCode": "BN-1001", 
-        "fullName": "Đoàn Thanh Phong" 
+      "patient": {
+        "patientCode": "BN-1001",
+        "fullName": "Đoàn Thanh Phong"
       },
-      "doctor": { 
-        "employeeCode": "EMP001", 
-        "fullName": "Lê Anh Khoa" 
+      "doctor": {
+        "employeeCode": "EMP001",
+        "fullName": "Lê Anh Khoa"
       },
-      "room": { 
-        "roomCode": "P-01", 
-        "roomName": "Phòng thường 1" 
+      "room": {
+        "roomCode": "P-01",
+        "roomName": "Phòng thường 1"
       },
       "services": [
-        { 
-          "serviceCode": "GEN_EXAM", 
-          "serviceName": "Khám tổng quát & Tư vấn" 
+        {
+          "serviceCode": "GEN_EXAM",
+          "serviceName": "Khám tổng quát & Tư vấn"
         }
       ],
       "participants": [
-        { 
-          "employeeCode": "EMP007", 
-          "fullName": "Đoàn Nguyễn Khôi Nguyên", 
-          "role": "ASSISTANT" 
+        {
+          "employeeCode": "EMP007",
+          "fullName": "Đoàn Nguyễn Khôi Nguyên",
+          "role": "ASSISTANT"
         }
       ],
       "notes": "Khám tổng quát"
@@ -370,12 +380,14 @@ Token: Thực tập sinh Nguyễn Khánh Linh (username: linh.nk) với permissi
 → Expected: Trống ban đầu, sau khi add vào participant list mới thấy
 
 ✅ ⭐ OBSERVER - Thêm vào participant, verify thấy appointment
+
 1. Admin adds EMP012 to APT-20251115-001 as OBSERVER
 2. Login as linh.nk
 3. GET /api/v1/appointments?datePreset=TODAY
 4. Should return APT-20251115-001 in response
 
 ✅ ⭐ OBSERVER - Xóa khỏi participant, verify không còn thấy
+
 1. Admin removes EMP012 from APT-20251115-001
 2. Login as linh.nk
 3. GET /api/v1/appointments?datePreset=TODAY
@@ -419,20 +431,24 @@ Implementation Notes:
 ⚠️ CRITICAL IMPROVEMENTS (vs Initial Design):
 
 1. ✅ Search by Patient Name/Phone (FIXED)
+
    - JOIN patients table
    - LIKE search: LOWER(CONCAT(first_name, ' ', last_name)) LIKE '%search%'
    - Real-world use case: Lễ tân gõ "Lan" thay vì nhớ "BN-1234"
 
 2. ✅ Filter by Service Code (ADDED)
+
    - JOIN appointment_services + services
    - Use case: "Tháng này có bao nhiêu ca Implant?"
 
 3. ✅ Permission-based Auth (FIXED)
+
    - Check "VIEW_APPOINTMENT_ALL" in authorities
    - NOT check role_id
    - Data-driven: Easy to add new roles via database
 
 4. ✅ OBSERVER Role Security (CLARIFIED)
+
    - OBSERVER có permission VIEW_APPOINTMENT_OWN
    - CHỈ thấy appointments họ được mời tham gia
    - Principle of Least Privilege
@@ -440,23 +456,26 @@ Implementation Notes:
    - Test user: EMP012 - Nguyễn Khánh Linh (linh.nk)
 
 5. ✅ DatePreset Enum (IMPLEMENTED)
+
    - TODAY, THIS_WEEK, NEXT_7_DAYS, THIS_MONTH
    - Backend tự động tính dateFrom/dateTo
    - KHÔNG cần thay đổi DB Schema V16
    - Use case: Dashboard quick filters
 
 6. ✅ Computed Fields (IMPLEMENTED)
+
    - computedStatus: UPCOMING | LATE | IN_PROGRESS | CHECKED_IN | COMPLETED | CANCELLED
    - minutesLate: Số phút trễ (Duration.between)
    - Real-time calculation based on NOW()
    - Use case: Dashboard color coding (red for LATE)
 
 7. ⚠️ N+1 Query Warning (Noted - TODO)
+
    - Current: Load patient/employee per appointment (N+1)
    - TODO: Batch loading or @EntityGraph
    - Impact: Performance with 100+ appointments
 
-6. ⚠️ Patient RBAC Mapping (TODO)
+8. ⚠️ Patient RBAC Mapping (TODO)
    - Employee mapping: ✅ DONE (findByAccount_Username)
    - Patient mapping: ❌ TODO (need Patient.account relationship)
 

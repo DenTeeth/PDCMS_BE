@@ -97,12 +97,13 @@ VALUES
 ('ROLE_ADMIN', 'ROLE_ADMIN', 1, 'Quản trị viên hệ thống - Toàn quyền quản lý', FALSE, TRUE, NOW()),
 
 -- Employee Portal (base_role_id = 2)
-('ROLE_DOCTOR', 'ROLE_DOCTOR', 2, 'Bác sĩ nha khoa - Khám và điều trị bệnh nhân', TRUE, TRUE, NOW()),
+('ROLE_DENTIST', 'ROLE_DENTIST', 2, 'Bác sĩ nha khoa - Khám và điều trị bệnh nhân', TRUE, TRUE, NOW()),
 ('ROLE_NURSE', 'ROLE_NURSE', 2, 'Y tá - Hỗ trợ điều trị và chăm sóc bệnh nhân', TRUE, TRUE, NOW()),
 ('ROLE_RECEPTIONIST', 'ROLE_RECEPTIONIST', 2, 'Lễ tân - Tiếp đón và quản lý lịch hẹn', FALSE, TRUE, NOW()),
 ('ROLE_ACCOUNTANT', 'ROLE_ACCOUNTANT', 2, 'Kế toán - Quản lý tài chính và thanh toán', FALSE, TRUE, NOW()),
 ('ROLE_INVENTORY_MANAGER', 'ROLE_INVENTORY_MANAGER', 2, 'Quản lý kho - Quản lý vật tư và thuốc men', FALSE, TRUE, NOW()),
 ('ROLE_MANAGER', 'ROLE_MANAGER', 2, 'Quản lý - Quản lý vận hành và nhân sự', FALSE, TRUE, NOW()),
+('ROLE_DENTIST_INTERN', 'ROLE_DENTIST_INTERN', 2, 'Thực tập sinh nha khoa', FALSE, TRUE, NOW())
 
 -- Patient Portal (base_role_id = 3)
 ('ROLE_PATIENT', 'ROLE_PATIENT', 3, 'Bệnh nhân - Xem hồ sơ và đặt lịch khám', FALSE, TRUE, NOW())
@@ -166,11 +167,14 @@ ON CONFLICT (permission_id) DO NOTHING;
 -- MODULE 5: APPOINTMENT
 INSERT INTO permissions (permission_id, permission_name, module, description, display_order, parent_permission_id, is_active, created_at)
 VALUES
-('VIEW_APPOINTMENT', 'VIEW_APPOINTMENT', 'APPOINTMENT', 'Xem danh sách lịch hẹn', 50, NULL, TRUE, NOW()),
-('CREATE_APPOINTMENT', 'CREATE_APPOINTMENT', 'APPOINTMENT', 'Đặt lịch hẹn mới', 51, NULL, TRUE, NOW()),
-('UPDATE_APPOINTMENT', 'UPDATE_APPOINTMENT', 'APPOINTMENT', 'Cập nhật lịch hẹn', 52, NULL, TRUE, NOW()),
-('CANCEL_APPOINTMENT', 'CANCEL_APPOINTMENT', 'APPOINTMENT', 'Hủy lịch hẹn', 53, NULL, TRUE, NOW()),
-('DELETE_APPOINTMENT', 'DELETE_APPOINTMENT', 'APPOINTMENT', 'Xóa lịch hẹn', 54, NULL, TRUE, NOW())
+('VIEW_APPOINTMENT', 'VIEW_APPOINTMENT', 'APPOINTMENT', 'Xem danh sách lịch hẹn (deprecated - use VIEW_APPOINTMENT_ALL or VIEW_APPOINTMENT_OWN)', 50, NULL, TRUE, NOW()),
+-- ✅ NEW: RBAC-compliant permissions (P3.3)
+('VIEW_APPOINTMENT_ALL', 'VIEW_APPOINTMENT_ALL', 'APPOINTMENT', 'Xem TẤT CẢ lịch hẹn (Lễ tân/Quản lý)', 51, NULL, TRUE, NOW()),
+('VIEW_APPOINTMENT_OWN', 'VIEW_APPOINTMENT_OWN', 'APPOINTMENT', 'Chỉ xem lịch hẹn LIÊN QUAN (Bác sĩ/Y tá/Observer/Bệnh nhân)', 52, 'VIEW_APPOINTMENT_ALL', TRUE, NOW()),
+('CREATE_APPOINTMENT', 'CREATE_APPOINTMENT', 'APPOINTMENT', 'Đặt lịch hẹn mới', 53, NULL, TRUE, NOW()),
+('UPDATE_APPOINTMENT', 'UPDATE_APPOINTMENT', 'APPOINTMENT', 'Cập nhật lịch hẹn', 54, NULL, TRUE, NOW()),
+('CANCEL_APPOINTMENT', 'CANCEL_APPOINTMENT', 'APPOINTMENT', 'Hủy lịch hẹn', 55, NULL, TRUE, NOW()),
+('DELETE_APPOINTMENT', 'DELETE_APPOINTMENT', 'APPOINTMENT', 'Xóa lịch hẹn', 56, NULL, TRUE, NOW())
 ON CONFLICT (permission_id) DO NOTHING;
 
 -- MODULE 6: CUSTOMER_MANAGEMENT (MERGED: CONTACT + CONTACT_HISTORY)
@@ -336,7 +340,8 @@ INSERT INTO role_permissions (role_id, permission_id)
 VALUES
 ('ROLE_DOCTOR', 'VIEW_PATIENT'), ('ROLE_DOCTOR', 'UPDATE_PATIENT'),
 ('ROLE_DOCTOR', 'VIEW_TREATMENT'), ('ROLE_DOCTOR', 'CREATE_TREATMENT'), ('ROLE_DOCTOR', 'UPDATE_TREATMENT'),
-('ROLE_DOCTOR', 'VIEW_APPOINTMENT'),
+('ROLE_DOCTOR', 'VIEW_APPOINTMENT'), -- Deprecated
+('ROLE_DOCTOR', 'VIEW_APPOINTMENT_OWN'), -- ✅ NEW: Only see own appointments
 ('ROLE_DOCTOR', 'VIEW_REGISTRATION_OWN'), ('ROLE_DOCTOR', 'VIEW_RENEWAL_OWN'), ('ROLE_DOCTOR', 'RESPOND_RENEWAL_OWN'),
 ('ROLE_DOCTOR', 'CREATE_REGISTRATION'),
 ('ROLE_DOCTOR', 'VIEW_LEAVE_OWN'), ('ROLE_DOCTOR', 'CREATE_TIME_OFF'), ('ROLE_DOCTOR', 'CREATE_OVERTIME'),
@@ -347,7 +352,9 @@ ON CONFLICT (role_id, permission_id) DO NOTHING;
 -- Nurse
 INSERT INTO role_permissions (role_id, permission_id)
 VALUES
-('ROLE_NURSE', 'VIEW_PATIENT'), ('ROLE_NURSE', 'VIEW_TREATMENT'), ('ROLE_NURSE', 'VIEW_APPOINTMENT'),
+('ROLE_NURSE', 'VIEW_PATIENT'), ('ROLE_NURSE', 'VIEW_TREATMENT'),
+('ROLE_NURSE', 'VIEW_APPOINTMENT'), -- Deprecated
+('ROLE_NURSE', 'VIEW_APPOINTMENT_OWN'), -- ✅ NEW: Only see participating appointments
 ('ROLE_NURSE', 'VIEW_REGISTRATION_OWN'), ('ROLE_NURSE', 'VIEW_RENEWAL_OWN'), ('ROLE_NURSE', 'RESPOND_RENEWAL_OWN'),
 ('ROLE_NURSE', 'CREATE_REGISTRATION'),
 ('ROLE_NURSE', 'VIEW_LEAVE_OWN'), ('ROLE_NURSE', 'CREATE_TIME_OFF'), ('ROLE_NURSE', 'CREATE_OVERTIME'),
@@ -355,11 +362,27 @@ VALUES
 ('ROLE_NURSE', 'VIEW_HOLIDAY')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
+-- ✅ NEW: Dentist Intern (Thực tập sinh) - OBSERVER Role
+-- Principle of Least Privilege: Chỉ thấy appointments họ được mời quan sát
+INSERT INTO role_permissions (role_id, permission_id)
+VALUES
+('ROLE_DENTIST_INTERN', 'VIEW_APPOINTMENT_OWN'), -- Chỉ thấy appointments họ tham gia
+('ROLE_DENTIST_INTERN', 'VIEW_PATIENT'), -- Chỉ xem thông tin cơ bản bệnh nhân (không có medical history)
+('ROLE_DENTIST_INTERN', 'VIEW_REGISTRATION_OWN'), -- Xem ca làm của mình
+('ROLE_DENTIST_INTERN', 'CREATE_REGISTRATION'), -- Đăng ký ca làm
+('ROLE_DENTIST_INTERN', 'VIEW_LEAVE_OWN'), -- Xem nghỉ phép của mình
+('ROLE_DENTIST_INTERN', 'CREATE_TIME_OFF'), -- Tạo đơn xin nghỉ
+('ROLE_DENTIST_INTERN', 'CANCEL_TIME_OFF_OWN'), -- Hủy đơn nghỉ của mình
+('ROLE_DENTIST_INTERN', 'VIEW_HOLIDAY') -- Xem lịch nghỉ lễ
+ON CONFLICT (role_id, permission_id) DO NOTHING;
+
 -- Receptionist
 INSERT INTO role_permissions (role_id, permission_id)
 VALUES
 ('ROLE_RECEPTIONIST', 'VIEW_PATIENT'), ('ROLE_RECEPTIONIST', 'CREATE_PATIENT'), ('ROLE_RECEPTIONIST', 'UPDATE_PATIENT'),
-('ROLE_RECEPTIONIST', 'VIEW_APPOINTMENT'), ('ROLE_RECEPTIONIST', 'CREATE_APPOINTMENT'),
+('ROLE_RECEPTIONIST', 'VIEW_APPOINTMENT'), -- Deprecated
+('ROLE_RECEPTIONIST', 'VIEW_APPOINTMENT_ALL'), -- ✅ NEW: Xem TẤT CẢ lịch hẹn
+('ROLE_RECEPTIONIST', 'CREATE_APPOINTMENT'),
 ('ROLE_RECEPTIONIST', 'UPDATE_APPOINTMENT'), ('ROLE_RECEPTIONIST', 'DELETE_APPOINTMENT'),
 -- CUSTOMER_MANAGEMENT
 ('ROLE_RECEPTIONIST', 'VIEW_CONTACT'), ('ROLE_RECEPTIONIST', 'CREATE_CONTACT'),
@@ -575,14 +598,14 @@ ON CONFLICT (role_id, permission_id) DO NOTHING;
 -- ============================================
 INSERT INTO specializations (specialization_id, specialization_code, specialization_name, description, is_active, created_at)
 VALUES
-(1, 'SPEC001', 'Chỉnh nha', 'Orthodontics - Niềng răng, chỉnh hình răng mặt', TRUE, NOW()),
-(2, 'SPEC002', 'Nội nha', 'Endodontics - Điều trị tủy, chữa răng sâu', TRUE, NOW()),
-(3, 'SPEC003', 'Nha chu', 'Periodontics - Điều trị nướu, mô nha chu', TRUE, NOW()),
-(4, 'SPEC004', 'Phục hồi răng', 'Prosthodontics - Làm răng giả, cầu răng, implant', TRUE, NOW()),
-(5, 'SPEC005', 'Phẫu thuật hàm mặt', 'Oral Surgery - Nhổ răng khôn, phẫu thuật', TRUE, NOW()),
-(6, 'SPEC006', 'Nha khoa trẻ em', 'Pediatric Dentistry - Chuyên khoa nhi', TRUE, NOW()),
-(7, 'SPEC007', 'Răng thẩm mỹ', 'Cosmetic Dentistry - Tẩy trắng, bọc sứ', TRUE, NOW()),
-(8, 'SPEC-STANDARD', 'Y tế cơ bản', 'General Healthcare - Nhân viên y tế có chuyên môn cơ bản', TRUE, NOW()),
+(1, 'SPEC001', 'Nha khoa tổng quát', 'General Dentistry - Khám, cạo vôi, trám răng cơ bản', TRUE, NOW()),
+(2, 'SPEC002', 'Chỉnh nha', 'Orthodontics - Niềng răng, chỉnh hình răng mặt', TRUE, NOW()),
+(3, 'SPEC003', 'Nội nha', 'Endodontics - Điều trị tủy, chữa răng sâu', TRUE, NOW()),
+(4, 'SPEC004', 'Nha chu', 'Periodontics - Điều trị nướu, mô nha chu', TRUE, NOW()),
+(5, 'SPEC005', 'Phục hồi răng', 'Prosthodontics - Làm răng giả, cầu răng, implant', TRUE, NOW()),
+(6, 'SPEC006', 'Phẫu thuật hàm mặt', 'Oral Surgery - Nhổ răng khôn, phẫu thuật', TRUE, NOW()),
+(7, 'SPEC007', 'Nha khoa trẻ em', 'Pediatric Dentistry - Chuyên khoa nhi', TRUE, NOW()),
+(8, 'SPEC008', 'Răng thẩm mỹ', 'Cosmetic Dentistry - Tẩy trắng, bọc sứ', TRUE, NOW()),
 (9, 'SPEC-INTERN', 'Thực tập sinh', 'Intern/Trainee - Nhân viên đang đào tạo, học việc', TRUE, NOW())
 ON CONFLICT (specialization_id) DO NOTHING;
 
@@ -596,44 +619,59 @@ ON CONFLICT (specialization_id) DO NOTHING;
 
 INSERT INTO accounts (account_id, account_code, username, email, password, role_id, status, created_at)
 VALUES
--- Admin
-(1, 'ACC001', 'admin', 'admin@dentalclinic.com',
-'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_ADMIN', 'ACTIVE', NOW()),
+-- Dentists (Nha sĩ)
+(1, 'ACC001', 'khoa.la', 'khoa.la@dentalclinic.com',
+'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_DENTIST', 'ACTIVE', NOW()),
 
--- Employees
-(2, 'ACC002', 'nhasi1', 'nhasi1@dentalclinic.com',
-'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_DOCTOR', 'ACTIVE', NOW()),
+(2, 'ACC002', 'thai.tc', 'thai.tc@dentalclinic.com',
+'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_DENTIST', 'ACTIVE', NOW()),
 
-(3, 'ACC003', 'nhasi2', 'nhasi2@dentalclinic.com',
-'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_DOCTOR', 'ACTIVE', NOW()),
+(3, 'ACC003', 'jimmy.d', 'jimmy.d@dentalclinic.com',
+'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_DENTIST', 'ACTIVE', NOW()),
 
-(4, 'ACC004', 'letan', 'letan@dentalclinic.com',
+(4, 'ACC004', 'junya.o', 'junya.o@dentalclinic.com',
+'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_DENTIST', 'ACTIVE', NOW()),
+
+-- Staff
+(5, 'ACC005', 'thuan.dkb', 'thuan.dkb@dentalclinic.com',
 '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_RECEPTIONIST', 'ACTIVE', NOW()),
 
-(5, 'ACC005', 'ketoan', 'ketoan@dentalclinic.com',
+(6, 'ACC006', 'thanh.cq', 'thanh.cq@dentalclinic.com',
 '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_ACCOUNTANT', 'ACTIVE', NOW()),
 
-(6, 'ACC006', 'yta', 'yta@dentalclinic.com',
+-- Nurses (Y tá)
+(7, 'ACC007', 'nguyen.dnkn', 'nguyen.dnkn@dentalclinic.com',
 '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_NURSE', 'ACTIVE', NOW()),
 
-(7, 'ACC007', 'manager', 'manager@dentalclinic.com',
+(8, 'ACC008', 'khang.nttk', 'khang.nttk@dentalclinic.com',
+'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_NURSE', 'ACTIVE', NOW()),
+
+(9, 'ACC009', 'nhat.htqn', 'nhat.htqn@dentalclinic.com',
+'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_NURSE', 'ACTIVE', NOW()),
+
+(10, 'ACC010', 'chinh.nd', 'chinh.nd@dentalclinic.com',
+'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_NURSE', 'ACTIVE', NOW()),
+
+-- Manager
+(11, 'ACC011', 'quan.vnm', 'quan.vnm@dentalclinic.com',
 '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_MANAGER', 'ACTIVE', NOW()),
 
--- Patients (demo emails - ACTIVE status)
-(8, 'ACC008', 'benhnhan1', 'benhnhan1@email.com',
+-- Patients (Bệnh nhân)
+(12, 'ACC012', 'phong.dt', 'phong.dt@email.com',
 '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_PATIENT', 'ACTIVE', NOW()),
 
-(9, 'ACC009', 'benhnhan2', 'benhnhan2@email.com',
+(13, 'ACC013', 'phong.pv', 'phong.pv@email.com',
 '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_PATIENT', 'ACTIVE', NOW()),
 
-(10, 'ACC010', 'benhnhan3', 'benhnhan3@email.com',
+(14, 'ACC014', 'anh.nt', 'anh.nt@email.com',
 '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_PATIENT', 'ACTIVE', NOW()),
 
-(11, 'ACC011', 'yta2', 'yta2@dentalclinic.com',
-'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_NURSE', 'ACTIVE', NOW()),
+(15, 'ACC015', 'mit.bit', 'mit.bit@email.com',
+'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_PATIENT', 'ACTIVE', NOW()),
 
-(12, 'ACC012', 'yta3', 'yta3@dentalclinic.com',
-'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_NURSE', 'ACTIVE', NOW())
+-- ✅ NEW: Thực tập sinh (OBSERVER role for testing P3.3)
+(16, 'ACC016', 'linh.nk', 'linh.nk@dentalclinic.com',
+'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_DENTIST_INTERN', 'ACTIVE', NOW())
 
 ON CONFLICT (account_id) DO NOTHING;
 
@@ -650,7 +688,7 @@ VALUES
 ('GHE251103001', 'P-01', 'Phòng thường 1', 'STANDARD', TRUE, NOW()),
 ('GHE251103002', 'P-02', 'Phòng thường 2', 'STANDARD', TRUE, NOW()),
 ('GHE251103003', 'P-03', 'Phòng thường 3', 'STANDARD', TRUE, NOW()),
-('GHE251103004', 'P-04', 'Phòng Implant', 'IMPLANT', TRUE, NOW())
+('GHE251103004', 'P-04-IMPLANT', 'Phòng Implant', 'IMPLANT', TRUE, NOW())
 ON CONFLICT (room_code) DO NOTHING;
 
 -- ============================================
@@ -660,48 +698,56 @@ ON CONFLICT (room_code) DO NOTHING;
 
 INSERT INTO employees (employee_id, account_id, employee_code, first_name, last_name, phone, date_of_birth, address, employment_type, is_active, created_at)
 VALUES
-(1, 1, 'EMP001', 'Admin', 'Hệ thống', '0900000001', '1985-01-01', 'Phòng quản trị', 'FULL_TIME', TRUE, NOW()),
-(2, 2, 'EMP002', 'Minh', 'Nguyễn Văn', '0901234567', '1985-05-15', '123 Nguyễn Huệ, Q1, TPHCM', 'FULL_TIME', TRUE, NOW()),
-(3, 3, 'EMP003', 'Lan', 'Trần Thị', '0902345678', '1988-08-20', '456 Lê Lợi, Q3, TPHCM', 'FULL_TIME', TRUE, NOW()),
-(4, 4, 'EMP004', 'Mai', 'Lê Thị', '0903456789', '1995-03-10', '789 Trần Hưng Đạo, Q5, TPHCM', 'FULL_TIME', TRUE, NOW()),
-(5, 5, 'EMP005', 'Tuấn', 'Hoàng Văn', '0904567890', '1992-07-25', '321 Hai Bà Trưng, Q1, TPHCM', 'FULL_TIME', TRUE, NOW()),
--- Part-time employees (Schema V14)
-(6, 6, 'EMP006', 'Hoa', 'Phạm Thị', '0906789012', '1992-06-15', '111 Lý Thường Kiệt, Q10, TPHCM', 'PART_TIME_FIXED', TRUE, NOW()), -- Part-time có lịch cố định
-(7, 7, 'EMP007', 'Quân', 'Trần Minh', '0909999999', '1980-10-10', '77 Phạm Ngọc Thạch, Q3, TPHCM', 'FULL_TIME', TRUE, NOW()),
-(8, 11, 'EMP008', 'Linh', 'Nguyễn Thị', '0907777777', '1998-03-22', '234 Võ Thị Sáu, Q3, TPHCM', 'PART_TIME_FLEX', TRUE, NOW()), -- Part-time linh hoạt (đăng ký theo suất)
-(9, 12, 'EMP009', 'Trang', 'Võ Thị', '0908888888', '1999-07-18', '456 Điện Biên Phủ, Q3, TPHCM', 'PART_TIME_FIXED', TRUE, NOW()) -- Part-time có lịch cố định
+-- Dentists (Nha sĩ)
+(1, 1, 'EMP001', 'Lê Anh', 'Khoa', '0901111111', '1990-01-15', '123 Nguyễn Văn Cừ, Q5, TPHCM', 'FULL_TIME', TRUE, NOW()),
+(2, 2, 'EMP002', 'Trịnh Công', 'Thái', '0902222222', '1988-05-20', '456 Lý Thường Kiệt, Q10, TPHCM', 'FULL_TIME', TRUE, NOW()),
+(3, 3, 'EMP003', 'Jimmy', 'Donaldson', '0903333333', '1995-07-10', '789 Điện Biên Phủ, Q3, TPHCM', 'PART_TIME_FLEX', TRUE, NOW()),
+(4, 4, 'EMP004', 'Junya', 'Ota', '0904444444', '1992-11-25', '321 Võ Văn Tần, Q3, TPHCM', 'PART_TIME_FIXED', TRUE, NOW()),
+-- Staff (Nhân viên hỗ trợ)
+(5, 5, 'EMP005', 'Đinh Khắc Bá', 'Thuận', '0905555555', '1998-03-08', '111 Hai Bà Trưng, Q1, TPHCM', 'FULL_TIME', TRUE, NOW()), -- Lễ tân
+(6, 6, 'EMP006', 'Chu Quốc', 'Thành', '0906666666', '1985-12-15', '222 Trần Hưng Đạo, Q5, TPHCM', 'FULL_TIME', TRUE, NOW()), -- Kế toán
+-- Nurses (Y tá)
+(7, 7, 'EMP007', 'Đoàn Nguyễn Khôi', 'Nguyên', '0907777777', '1996-06-20', '333 Lê Lợi, Q1, TPHCM', 'FULL_TIME', TRUE, NOW()),
+(8, 8, 'EMP008', 'Nguyễn Trần Tuấn', 'Khang', '0908888888', '1997-08-18', '444 Pasteur, Q3, TPHCM', 'FULL_TIME', TRUE, NOW()),
+(9, 9, 'EMP009', 'Huỳnh Tấn Quang', 'Nhật', '0909999999', '1999-04-12', '555 Cách Mạng Tháng 8, Q10, TPHCM', 'PART_TIME_FIXED', TRUE, NOW()),
+(10, 10, 'EMP010', 'Ngô Đình', 'Chính', '0910101010', '2000-02-28', '666 Nguyễn Thị Minh Khai, Q3, TPHCM', 'PART_TIME_FLEX', TRUE, NOW()),
+-- Manager
+(11, 11, 'EMP011', 'Võ Nguyễn Minh', 'Quân', '0911111111', '1987-09-05', '777 Nguyễn Huệ, Q1, TPHCM', 'FULL_TIME', TRUE, NOW()),
+-- ✅ NEW: Thực tập sinh (OBSERVER for testing P3.3)
+(12, 16, 'EMP012', 'Nguyễn Khánh', 'Linh', '0912121212', '2003-05-15', '888 Võ Thị Sáu, Q3, TPHCM', 'PART_TIME_FLEX', TRUE, NOW())
 ON CONFLICT (employee_id) DO NOTHING;
 
 INSERT INTO employee_specializations (employee_id, specialization_id)
 VALUES
--- Doctors with their specialized fields
-(2, 1), (2, 7),  -- Bác sĩ Tâm: Chỉnh nha + Răng thẩm mỹ
-(3, 2), (3, 4),  -- Bác sĩ Dũng: Nội nha + Phục hồi răng
-(6, 6),          -- Bác sĩ Hạnh: Nha khoa trẻ em
-
--- Add STANDARD specialization to ALL medical staff (doctors, nurses, assistants)
--- This marks them as qualified healthcare workers who can participate in appointments
-(2, 8), -- Bác sĩ Tâm
-(3, 8), -- Bác sĩ Dũng
-(4, 8), -- Y tá Mai
-(5, 8), -- Y tá Hương
-(6, 8), -- Bác sĩ Hạnh
-(7, 8), -- Y tá Thảo
-(8, 8), -- Linh (Part-time flex)
-(9, 8)  -- Trang (Part-time fixed)
+-- Dentist 1: Lê Anh Khoa - Chỉnh nha + Phục hồi + STANDARD
+(1, 1), (1, 4), (1, 8),
+-- Dentist 2: Trịnh Công Thái - Nội nha + Răng thẩm mỹ + STANDARD
+(2, 2), (2, 7), (2, 8),
+-- Dentist 3: Jimmy Donaldson - Nha khoa trẻ em + STANDARD
+(3, 6), (3, 8),
+-- Dentist 4: Junya Ota - Phẫu thuật hàm mặt + STANDARD
+(4, 5), (4, 8),
+-- Nurses + Staff - Chỉ có STANDARD
+(7, 8), -- Y tá Nguyên
+(8, 8), -- Y tá Khang
+(9, 8), -- Y tá Nhật (Part-time fixed)
+(10, 8), -- Y tá Chính (Part-time flex)
+-- ✅ NEW: Thực tập sinh - INTERN specialization
+(12, 9) -- Thực tập sinh Linh
 ON CONFLICT (employee_id, specialization_id) DO NOTHING;
 
 INSERT INTO patients (patient_id, account_id, patient_code, first_name, last_name, email, phone, date_of_birth, address, gender, is_active, created_at, updated_at)
 VALUES
-(1, 8, 'PAT001', 'Khang', 'Nguyễn Văn', 'benhnhan1@email.com', '0911111111', '1990-01-15', '123 Lê Văn Việt, Q9, TPHCM', 'MALE', TRUE, NOW(), NOW()),
-(2, 9, 'PAT002', 'Lan', 'Trần Thị', 'benhnhan2@email.com', '0922222222', '1985-05-20', '456 Võ Văn Ngân, Thủ Đức, TPHCM', 'FEMALE', TRUE, NOW(), NOW()),
-(3, 10, 'PAT003', 'Đức', 'Lê Minh', 'benhnhan3@email.com', '0933333333', '1995-12-10', '789 Đường D2, Bình Thạnh, TPHCM', 'MALE', TRUE, NOW(), NOW())
+(1, 12, 'BN-1001', 'Đoàn Thanh', 'Phong', 'phong.dt@email.com', '0971111111', '1995-03-15', '123 Lê Văn Việt, Q9, TPHCM', 'MALE', TRUE, NOW(), NOW()),
+(2, 13, 'BN-1002', 'Phạm Văn', 'Phong', 'phong.pv@email.com', '0972222222', '1990-07-20', '456 Võ Văn Ngân, Thủ Đức, TPHCM', 'MALE', TRUE, NOW(), NOW()),
+(3, 14, 'BN-1003', 'Nguyễn Tuấn', 'Anh', 'anh.nt@email.com', '0973333333', '1988-11-10', '789 Đường D2, Bình Thạnh, TPHCM', 'MALE', TRUE, NOW(), NOW()),
+(4, 15, 'BN-1004', 'Mít tơ', 'Bít', 'mit.bit@email.com', '0974444444', '2000-01-01', '321 Nguyễn Thị Minh Khai, Q1, TPHCM', 'OTHER', TRUE, NOW(), NOW())
 ON CONFLICT (patient_id) DO NOTHING;
 
 INSERT INTO work_shifts (work_shift_id, shift_name, start_time, end_time, category, is_active)
 VALUES
-('WKS_MORNING_01', 'Ca Sáng (8h-16h)', '08:00:00', '16:00:00', 'NORMAL', TRUE),
-('WKS_AFTERNOON_01', 'Ca Chiều (13h-20h)', '13:00:00', '20:00:00', 'NORMAL', TRUE),
+('WKS_MORNING_01', 'Ca Sáng (8h-12h)', '08:00:00', '12:00:00', 'NORMAL', TRUE),
+('WKS_AFTERNOON_01', 'Ca Chiều (13h-17h)', '13:00:00', '17:00:00', 'NORMAL', TRUE),
 ('WKS_MORNING_02', 'Ca Part-time Sáng (8h-12h)', '08:00:00', '12:00:00', 'NORMAL', TRUE),
 ('WKS_AFTERNOON_02', 'Ca Part-time Chiều (13h-17h)', '13:00:00', '17:00:00', 'NORMAL', TRUE)
 ON CONFLICT (work_shift_id) DO NOTHING;
@@ -713,20 +759,22 @@ DELETE FROM leave_balance_history WHERE balance_id IN (
 DELETE FROM employee_leave_balances WHERE time_off_type_id LIKE 'TOT%';
 DELETE FROM time_off_types WHERE type_id LIKE 'TOT%';
 
--- Insert time_off_types with type_id = type_code
 INSERT INTO time_off_types (type_id, type_code, type_name, is_paid, requires_approval, requires_balance, default_days_per_year, is_active)
 VALUES
 -- type_id = type_code for easier reference
 ('ANNUAL_LEAVE', 'ANNUAL_LEAVE', 'Nghỉ phép năm', TRUE, TRUE, TRUE, 12.0, TRUE),
 ('UNPAID_PERSONAL', 'UNPAID_PERSONAL', 'Nghỉ việc riêng không lương', FALSE, TRUE, FALSE, NULL, TRUE),
-('SICK_LEAVE', 'SICK_LEAVE', 'Nghỉ ốm có bảo hiểm xã hội', TRUE, TRUE, FALSE, NULL, TRUE),
-('MATERNITY_LEAVE', 'MATERNITY_LEAVE', 'Nghỉ thai sản (6 tháng)', TRUE, TRUE, FALSE, NULL, TRUE),
-('PATERNITY_LEAVE', 'PATERNITY_LEAVE', 'Nghỉ chăm con (5-14 ngày)', TRUE, TRUE, FALSE, NULL, TRUE),
-('MARRIAGE_LEAVE', 'MARRIAGE_LEAVE', 'Nghỉ kết hôn (3 ngày)', TRUE, TRUE, FALSE, NULL, TRUE),
-('BEREAVEMENT_LEAVE', 'BEREAVEMENT_LEAVE', 'Nghỉ tang lễ (1-3 ngày)', TRUE, TRUE, FALSE, NULL, TRUE),
+('SICK_LEAVE', 'SICK_LEAVE', 'Nghỉ ốm có bảo hiểm xã hội', TRUE, TRUE, FALSE, 30.0, TRUE),
+('MATERNITY_LEAVE', 'MATERNITY_LEAVE', 'Nghỉ thai sản (6 tháng)', TRUE, TRUE, FALSE, 180.0, TRUE),
+('PATERNITY_LEAVE', 'PATERNITY_LEAVE', 'Nghỉ chăm con (khi vợ sinh)', TRUE, TRUE, FALSE, NULL, TRUE),
+('MARRIAGE_LEAVE', 'MARRIAGE_LEAVE', 'Nghỉ kết hôn', TRUE, TRUE, FALSE, 3.0, TRUE),
+('BEREAVEMENT_LEAVE', 'BEREAVEMENT_LEAVE', 'Nghỉ tang lễ', TRUE, TRUE, FALSE, 3.0, TRUE),
 ('EMERGENCY_LEAVE', 'EMERGENCY_LEAVE', 'Nghỉ khẩn cấp', FALSE, TRUE, FALSE, NULL, TRUE),
 ('STUDY_LEAVE', 'STUDY_LEAVE', 'Nghỉ học tập/đào tạo', TRUE, TRUE, FALSE, NULL, TRUE),
-('COMPENSATORY_LEAVE', 'COMPENSATORY_LEAVE', 'Nghỉ bù (sau làm thêm giờ)', TRUE, FALSE, FALSE, NULL, TRUE)
+('COMPENSATORY_LEAVE', 'COMPENSATORY_LEAVE', 'Nghỉ bù (sau làm thêm giờ)', TRUE, TRUE, TRUE, NULL, TRUE)
+('RECOVERY_LEAVE', 'RECOVERY_LEAVE', 'Nghỉ dưỡng sức phục hồi sau ốm', TRUE, TRUE, FALSE, 10.0, TRUE),
+('CONTRACEPTION_LEAVE', 'CONTRACEPTION_LEAVE', 'Nghỉ thực hiện biện pháp tránh thai', TRUE, TRUE, FALSE, 15.0, TRUE),
+('MILITARY_EXAM_LEAVE', 'MILITARY_EXAM_LEAVE', 'Nghỉ khám Nghĩa vụ quân sự', TRUE, TRUE, FALSE, NULL, TRUE)
 ON CONFLICT (type_id) DO UPDATE SET
     type_code = EXCLUDED.type_code,
     type_name = EXCLUDED.type_name,
@@ -1573,152 +1621,148 @@ VALUES
     (903, 'TEST-GENERAL', 'Test General Dentistry', 'Nha khoa tổng quát (Test)', true, CURRENT_TIMESTAMP)
 ON CONFLICT (specialization_id) DO NOTHING;
 
--- 1. TEST ACCOUNTS (for test employees)
--- Create accounts for test employees first (required by NOT NULL constraint)
-INSERT INTO accounts (account_id, account_code, username, email, password, role_id, status, created_at)
+-- ============================================
+-- TEST DATA FOR API TESTING (2025-11-15)
+-- ============================================
+-- All test data integrated into production data above
+-- Using: EMP001-EMP011, BN-1001 to BN-1004, Production services & rooms
+-- ============================================
+-- ============================================
+-- TEST DATA FOR API TESTING (2025-11-15)
+-- ============================================
+-- All test data integrated into production data above
+-- Using: EMP001-EMP011, BN-1001 to BN-1004, Production services & rooms
+-- ============================================
+
+-- 8. EMPLOYEE SHIFTS (Test date: 2025-11-15 - Thứ Bảy)
+
+-- 8. EMPLOYEE SHIFTS (Test date: 2025-11-15 - Thứ Bảy)
+-- Phòng khám KHÔNG làm Chủ nhật - muốn làm phải overtime
+-- Full-time: Ca Sáng (8h-12h) + Ca Chiều (13h-17h)
+-- Part-time fixed: Ca Part-time Sáng (8h-12h) hoặc Ca Part-time Chiều (13h-17h)
+-- Part-time flex: Đăng ký linh hoạt
+
+-- Dentist 1: Lê Anh Khoa (Full-time) - Ca Sáng
+INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
+SELECT 'EMS20251115001', 1, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
+FROM work_shifts WHERE shift_name = 'Ca Sáng (8h-12h)' LIMIT 1 ON CONFLICT DO NOTHING;
+
+-- Dentist 2: Trịnh Công Thái (Full-time) - Ca Sáng
+INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
+SELECT 'EMS20251115002', 2, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
+FROM work_shifts WHERE shift_name = 'Ca Sáng (8h-12h)' LIMIT 1 ON CONFLICT DO NOTHING;
+
+-- Dentist 3: Jimmy Donaldson (Part-time flex) - Ca Part-time Sáng
+INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
+SELECT 'EMS20251115003', 3, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
+FROM work_shifts WHERE shift_name = 'Ca Part-time Sáng (8h-12h)' LIMIT 1 ON CONFLICT DO NOTHING;
+
+-- Dentist 4: Junya Ota (Part-time fixed) - Ca Part-time Chiều
+INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
+SELECT 'EMS20251115004', 4, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
+FROM work_shifts WHERE shift_name = 'Ca Part-time Chiều (13h-17h)' LIMIT 1 ON CONFLICT DO NOTHING;
+
+-- Y tá 1: Đoàn Nguyễn Khôi Nguyên (Full-time) - Ca Sáng
+INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
+SELECT 'EMS20251115007', 7, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
+FROM work_shifts WHERE shift_name = 'Ca Sáng (8h-12h)' LIMIT 1 ON CONFLICT DO NOTHING;
+
+-- Y tá 2: Nguyễn Trần Tuấn Khang (Full-time) - Ca Chiều
+INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
+SELECT 'EMS20251115008', 8, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
+FROM work_shifts WHERE shift_name = 'Ca Chiều (13h-17h)' LIMIT 1 ON CONFLICT DO NOTHING;
+
+-- Y tá 3: Huỳnh Tấn Quang Nhật (Part-time fixed) - Ca Part-time Sáng
+INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
+SELECT 'EMS20251115009', 9, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
+FROM work_shifts WHERE shift_name = 'Ca Part-time Sáng (8h-12h)' LIMIT 1 ON CONFLICT DO NOTHING;
+
+-- Y tá 4: Ngô Đình Chính (Part-time flex) - Ca Part-time Chiều
+INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
+SELECT 'EMS20251115010', 10, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
+FROM work_shifts WHERE shift_name = 'Ca Part-time Chiều (13h-17h)' LIMIT 1 ON CONFLICT DO NOTHING;
+
+-- ============================================
+-- 9. SAMPLE APPOINTMENTS (Test date: 2025-11-04 - TODAY)
+-- For testing GET /api/v1/appointments with OBSERVER role
+-- ============================================
+
+-- APT-001: Lịch hẹn Ca Sáng - Bác sĩ Khoa + Y tá Nguyên + OBSERVER (EMP012)
+INSERT INTO appointments (
+    appointment_id, appointment_code, patient_id, employee_id, room_id,
+    appointment_start_time, appointment_end_time, expected_duration_minutes,
+    status, notes, created_by, created_at, updated_at
+) VALUES (
+    1, 'APT-20251104-001', 1, 1, 'P-01',
+    '2025-11-04 09:00:00', '2025-11-04 09:45:00', 45,
+    'SCHEDULED', 'Khám tổng quát + Lấy cao răng - Test OBSERVER', 'thuan.dk', NOW(), NOW()
+) ON CONFLICT (appointment_id) DO NOTHING;
+
+-- Services cho APT-001
+INSERT INTO appointment_services (appointment_service_id, appointment_id, service_id, created_at)
 VALUES
-    (9001, 'ACC9001', 'test_dr_implant', 'test.implant@dentalclinic.com', '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_DOCTOR', 'ACTIVE', CURRENT_TIMESTAMP),
-    (9002, 'ACC9002', 'test_dr_ortho', 'test.ortho@dentalclinic.com', '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_DOCTOR', 'ACTIVE', CURRENT_TIMESTAMP),
-    (9003, 'ACC9003', 'test_dr_general', 'test.general@dentalclinic.com', '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_DOCTOR', 'ACTIVE', CURRENT_TIMESTAMP),
-    (9004, 'ACC9004', 'test_assistant1', 'test.assistant1@dentalclinic.com', '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_NURSE', 'ACTIVE', CURRENT_TIMESTAMP),
-    (9005, 'ACC9005', 'test_assistant2', 'test.assistant2@dentalclinic.com', '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_NURSE', 'ACTIVE', CURRENT_TIMESTAMP)
-ON CONFLICT (account_id) DO NOTHING;
+    (1, 1, 'GEN_EXAM', NOW()),
+    (2, 1, 'SCALING_L1', NOW())
+ON CONFLICT (appointment_service_id) DO NOTHING;
 
--- 2. TEST EMPLOYEES (Doctors & Assistants)
--- Now create test employees with valid account_id references
-INSERT INTO employees (employee_id, account_id, employee_code, first_name, last_name, phone, date_of_birth, address, employment_type, is_active, created_at)
+-- Participants cho APT-001: Y tá + OBSERVER
+INSERT INTO appointment_participants (appointment_participant_id, appointment_id, employee_id, participant_role, created_at)
 VALUES
-    (9001, 9001, 'TEST-DR-IMPLANT', 'Nguyen Van', 'Implant (Test)', '0901234001', '1985-01-01', 'Test Address 1', 'FULL_TIME', true, CURRENT_TIMESTAMP),
-    (9002, 9002, 'TEST-DR-ORTHO', 'Tran Thi', 'Ortho (Test)', '0901234002', '1985-01-01', 'Test Address 2', 'FULL_TIME', true, CURRENT_TIMESTAMP),
-    (9003, 9003, 'TEST-DR-GENERAL', 'Le Van', 'General (Test)', '0901234003', '1985-01-01', 'Test Address 3', 'FULL_TIME', true, CURRENT_TIMESTAMP),
-    (9004, 9004, 'TEST-PT-001', 'Phu Ta', 'Binh (Test)', '0901234004', '1985-01-01', 'Test Address 4', 'FULL_TIME', true, CURRENT_TIMESTAMP),
-    (9005, 9005, 'TEST-PT-002', 'Phu Ta', 'An (Test)', '0901234005', '1985-01-01', 'Test Address 5', 'FULL_TIME', true, CURRENT_TIMESTAMP)
-ON CONFLICT (employee_id) DO NOTHING;
+    (1, 1, 7, 'ASSISTANT', NOW()),      -- EMP007 - Y tá Nguyên
+    (2, 1, 12, 'OBSERVER', NOW())        -- EMP012 - Thực tập sinh Linh (✅ TEST DATA)
+ON CONFLICT (appointment_participant_id) DO NOTHING;
 
--- 3. EMPLOYEE SPECIALIZATIONS
-INSERT INTO employee_specializations (employee_id, specialization_id)
-VALUES
-    (9001, 901), (9001, 903), -- Dr Implant: Implant + General
-    (9002, 902),              -- Dr Ortho: Orthodontics
-    (9003, 903)               -- Dr General: General
-ON CONFLICT DO NOTHING;
+-- APT-002: Lịch hẹn Ca Chiều - Bác sĩ Thái (KHÔNG có OBSERVER)
+INSERT INTO appointments (
+    appointment_id, appointment_code, patient_id, employee_id, room_id,
+    appointment_start_time, appointment_end_time, expected_duration_minutes,
+    status, notes, created_by, created_at, updated_at
+) VALUES (
+    2, 'APT-20251104-002', 2, 2, 'P-02',
+    '2025-11-04 14:00:00', '2025-11-04 14:30:00', 30,
+    'SCHEDULED', 'Khám tổng quát - NO OBSERVER', 'thuan.dk', NOW(), NOW()
+) ON CONFLICT (appointment_id) DO NOTHING;
 
--- 4. TEST PATIENTS
-INSERT INTO patients (patient_id, patient_code, first_name, last_name, date_of_birth, gender, phone, email, is_active, created_at)
-VALUES
-    (9001, 'TEST-BN-001', 'Nguyen Van', 'Test Patient A', '1985-05-15', 'MALE', '0912345001', 'test.patient.a@gmail.com', true, CURRENT_TIMESTAMP),
-    (9002, 'TEST-BN-002', 'Tran Thi', 'Test Patient B', '1990-08-20', 'FEMALE', '0912345002', 'test.patient.b@gmail.com', true, CURRENT_TIMESTAMP),
-    (9003, 'TEST-BN-003', 'Le Van', 'Test Patient C', '1978-12-10', 'MALE', '0912345003', 'test.patient.c@gmail.com', true, CURRENT_TIMESTAMP)
-ON CONFLICT (patient_id) DO NOTHING;
+-- Services cho APT-002
+INSERT INTO appointment_services (appointment_service_id, appointment_id, service_id, created_at)
+VALUES (3, 2, 'GEN_EXAM', NOW())
+ON CONFLICT (appointment_service_id) DO NOTHING;
 
--- 5. TEST SERVICES - REMOVED (Use production services instead)
--- Test services have been removed to avoid confusion
--- Use production service codes like: GEN_EXAM, IMPL_SURGERY_KR, SCALING_L1, etc.
+-- APT-003: Lịch hẹn LATE (quá giờ 15 phút) - Test computedStatus
+INSERT INTO appointments (
+    appointment_id, appointment_code, patient_id, employee_id, room_id,
+    appointment_start_time, appointment_end_time, expected_duration_minutes,
+    status, notes, created_by, created_at, updated_at
+) VALUES (
+    3, 'APT-20251104-003', 3, 1, 'P-01',
+    '2025-11-04 08:00:00', '2025-11-04 08:30:00', 30,
+    'SCHEDULED', 'Test LATE status - Bệnh nhân chưa check-in', 'thuan.dk', NOW(), NOW()
+) ON CONFLICT (appointment_id) DO NOTHING;
 
--- 6. TEST ROOMS
-INSERT INTO rooms (room_id, room_code, room_name, room_type, is_active, created_at)
-VALUES
-    ('TEST-ROOM-IMPLANT-01', 'TEST-P-IMPLANT-01', 'Test: Phong Implant 01', 'IMPLANT', true, CURRENT_TIMESTAMP),
-    ('TEST-ROOM-IMPLANT-02', 'TEST-P-IMPLANT-02', 'Test: Phong Implant 02', 'IMPLANT', true, CURRENT_TIMESTAMP),
-    ('TEST-ROOM-GENERAL-01', 'TEST-P-GENERAL-01', 'Test: Phong Kham Tong Quat 01', 'STANDARD', true, CURRENT_TIMESTAMP),
-    ('TEST-ROOM-ORTHO-01', 'TEST-P-ORTHO-01', 'Test: Phong Chinh Nha 01', 'STANDARD', true, CURRENT_TIMESTAMP)
-ON CONFLICT (room_id) DO NOTHING;
+-- Services cho APT-003
+INSERT INTO appointment_services (appointment_service_id, appointment_id, service_id, created_at)
+VALUES (4, 3, 'GEN_EXAM', NOW())
+ON CONFLICT (appointment_service_id) DO NOTHING;
 
--- 7. ROOM-SERVICE COMPATIBILITY (V16) - Use production service codes
--- Map test rooms to production services for realistic testing
-INSERT INTO room_services (room_id, service_id, created_at)
-SELECT tr.room_id, s.service_id, CURRENT_TIMESTAMP
-FROM (VALUES
-    ('TEST-ROOM-IMPLANT-01'),
-    ('TEST-ROOM-IMPLANT-02')
-) AS tr(room_id)
-CROSS JOIN services s
-WHERE s.service_code IN (
-    'GEN_EXAM', 'GEN_XRAY_PERI', 'SCALING_L1', 'SCALING_L2', 'SCALING_VIP',
-    'FILLING_COMP', 'FILLING_GAP', 'EXTRACT_MILK', 'EXTRACT_NORM',
-    'ENDO_TREAT_ANT', 'ENDO_TREAT_POST', 'ENDO_POST_CORE',
-    'BLEACH_ATHOME', 'BLEACH_INOFFICE',
-    'CROWN_PFM', 'CROWN_TITAN', 'CROWN_ZIR_KATANA', 'CROWN_ZIR_CERCON',
-    'CROWN_EMAX', 'CROWN_ZIR_LAVA', 'VENEER_EMAX', 'VENEER_LISI',
-    'INLAY_ONLAY_ZIR', 'INLAY_ONLAY_EMAX',
-    'PROS_CEMENT', 'DENTURE_CONSULT', 'DENTURE_TRYIN', 'DENTURE_DELIVERY',
-    'OTHER_DIAMOND', 'EMERG_PAIN', 'SURG_CHECKUP',
-    'IMPL_CONSULT', 'IMPL_CT_SCAN', 'IMPL_SURGERY_KR', 'IMPL_SURGERY_EUUS',
-    'IMPL_BONE_GRAFT', 'IMPL_SINUS_LIFT', 'IMPL_HEALING',
-    'IMPL_IMPRESSION', 'IMPL_CROWN_TITAN', 'IMPL_CROWN_ZIR',
-    'EXTRACT_WISDOM_L1', 'EXTRACT_WISDOM_L2', 'OTHER_GINGIVECTOMY'
-)
-ON CONFLICT DO NOTHING;
+-- Participants cho APT-003: Thực tập sinh Linh làm OBSERVER
+INSERT INTO appointment_participants (appointment_participant_id, appointment_id, employee_id, participant_role, created_at)
+VALUES (3, 3, 12, 'OBSERVER', NOW())
+ON CONFLICT (appointment_participant_id) DO NOTHING;
 
-INSERT INTO room_services (room_id, service_id, created_at)
-SELECT tr.room_id, s.service_id, CURRENT_TIMESTAMP
-FROM (VALUES
-    ('TEST-ROOM-GENERAL-01'),
-    ('TEST-ROOM-ORTHO-01')
-) AS tr(room_id)
-CROSS JOIN services s
-WHERE s.service_code IN (
-    'GEN_EXAM', 'GEN_XRAY_PERI', 'SCALING_L1', 'SCALING_L2', 'SCALING_VIP',
-    'FILLING_COMP', 'FILLING_GAP', 'EXTRACT_MILK', 'EXTRACT_NORM',
-    'ENDO_TREAT_ANT', 'ENDO_TREAT_POST', 'ENDO_POST_CORE',
-    'BLEACH_ATHOME', 'BLEACH_INOFFICE',
-    'CROWN_PFM', 'CROWN_TITAN', 'CROWN_ZIR_KATANA', 'CROWN_ZIR_CERCON',
-    'CROWN_EMAX', 'CROWN_ZIR_LAVA', 'VENEER_EMAX', 'VENEER_LISI',
-    'INLAY_ONLAY_ZIR', 'INLAY_ONLAY_EMAX',
-    'PROS_CEMENT', 'DENTURE_CONSULT', 'DENTURE_TRYIN', 'DENTURE_DELIVERY',
-    'OTHER_DIAMOND', 'EMERG_PAIN', 'SURG_CHECKUP'
-)
-ON CONFLICT DO NOTHING;
-
--- 8. EMPLOYEE SHIFTS (Test date: 2025-11-15)
--- Real employees for API testing (using 'Ca Sáng (8h-16h)' shift)
-INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
-SELECT 'EMS20251115001', 2, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP FROM work_shifts WHERE shift_name = 'Ca Sáng (8h-16h)' LIMIT 1 ON CONFLICT DO NOTHING;
-
-INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
-SELECT 'EMS20251115002', 3, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP FROM work_shifts WHERE shift_name = 'Ca Sáng (8h-16h)' LIMIT 1 ON CONFLICT DO NOTHING;
-
-INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
-SELECT 'EMS20251115003', 4, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP FROM work_shifts WHERE shift_name = 'Ca Sáng (8h-16h)' LIMIT 1 ON CONFLICT DO NOTHING;
-
-INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
-SELECT 'EMS20251115004', 5, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP FROM work_shifts WHERE shift_name = 'Ca Sáng (8h-16h)' LIMIT 1 ON CONFLICT DO NOTHING;
-
--- Test employees (for specialized tests)
-INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
-SELECT 'EMS251115901', 9001, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP FROM work_shifts WHERE shift_name = 'Ca Sáng (8h-16h)' LIMIT 1 ON CONFLICT DO NOTHING;
-
-INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
-SELECT 'EMS251115902', 9002, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP FROM work_shifts WHERE shift_name = 'Ca Part-time Sáng (8h-12h)' LIMIT 1 ON CONFLICT DO NOTHING;
-
-INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
-SELECT 'EMS251115903', 9003, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP FROM work_shifts WHERE shift_name = 'Ca Sáng (8h-16h)' LIMIT 1 ON CONFLICT DO NOTHING;
-
-INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
-SELECT 'EMS251115904', 9004, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP FROM work_shifts WHERE shift_name = 'Ca Sáng (8h-16h)' LIMIT 1 ON CONFLICT DO NOTHING;
-
-INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
-SELECT 'EMS251115905', 9005, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP FROM work_shifts WHERE shift_name = 'Ca Part-time Chiều (13h-17h)' LIMIT 1 ON CONFLICT DO NOTHING;
-
--- 9. EXISTING APPOINTMENT (Dr Implant busy 10:00-11:00)
--- TEMPORARILY COMMENTED OUT DUE TO COLUMN STATUS ERROR
--- INSERT INTO appointments (appointment_code, patient_id, employee_id, room_id,
---                          appointment_start_time, appointment_end_time,
---                          expected_duration_minutes, status, created_at)
--- VALUES
---     ('APT-TEST-EXISTING-001', 9001, 9001, 'TEST-ROOM-IMPLANT-01',
---      TIMESTAMP '2025-11-15 10:00:00', TIMESTAMP '2025-11-15 11:00:00',
---      60, 'SCHEDULED', CURRENT_TIMESTAMP)
--- ON CONFLICT (appointment_code) DO NOTHING;
-
--- INSERT INTO appointment_services (appointment_id, service_id)
--- SELECT a.appointment_id, 9001 FROM appointments a WHERE a.appointment_code = 'APT-TEST-EXISTING-001' ON CONFLICT DO NOTHING;
-
--- =====================================================
+-- ============================================
 -- TEST SCENARIOS:
--- 1. P3.1: GET /api/v1/appointments/available-times?date=2025-11-15&employeeCode=TEST-DR-IMPLANT&serviceCodes=TEST-SV-IMPLANT
--- 2. P3.2: POST /api/v1/appointments { patientCode: "TEST-BN-002", employeeCode: "TEST-DR-IMPLANT", ... }
--- 3. Conflict: Try 10:00-11:00 (Doctor busy)
--- 4. Room incompatible: TEST-P-GENERAL-01 with TEST-SV-IMPLANT
--- 5. Not qualified: TEST-DR-GENERAL with TEST-SV-IMPLANT
--- =====================================================
+-- ============================================
+-- 1. Login as linh.nk (OBSERVER):
+--    GET /api/v1/appointments?datePreset=TODAY
+--    → Should return: APT-20251104-001, APT-20251104-003 (2 appointments)
+--    → Should NOT return: APT-20251104-002 (not a participant)
+--
+-- 2. computedStatus test:
+--    APT-003 (08:00) → If NOW > 08:00 → computedStatus = "LATE"
+--    APT-001 (09:00) → If NOW < 09:00 → computedStatus = "UPCOMING"
+--
+-- 3. Remove OBSERVER from APT-001:
+--    DELETE FROM appointment_participants WHERE appointment_participant_id = 2
+--    → Login as linh.nk → Should only see APT-003
+-- ============================================
+
