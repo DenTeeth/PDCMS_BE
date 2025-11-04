@@ -146,11 +146,30 @@ public class AppointmentAvailabilityService {
      * Validate employee exists and is active
      */
     private com.dental.clinic.management.employee.domain.Employee validateEmployee(String employeeCode) {
-        return employeeRepository.findByEmployeeCodeAndIsActiveTrue(employeeCode)
+        com.dental.clinic.management.employee.domain.Employee employee = employeeRepository
+                .findByEmployeeCodeAndIsActiveTrue(employeeCode)
                 .orElseThrow(() -> new BadRequestAlertException(
                         "Employee not found or inactive: " + employeeCode,
                         "appointment",
                         "EMPLOYEE_NOT_FOUND"));
+
+        // CRITICAL: Validate employee has STANDARD specialization (ID 8) - is medical
+        // staff
+        // Admin/Receptionist without STANDARD (ID 8) cannot be assigned to appointments
+        boolean hasStandardSpecialization = employee.getSpecializations() != null &&
+                employee.getSpecializations().stream()
+                        .anyMatch(spec -> spec.getSpecializationId() == 8);
+
+        if (!hasStandardSpecialization) {
+            throw new BadRequestAlertException(
+                    "Employee must have STANDARD specialization (ID 8) to be assigned to appointments. " +
+                            "Employee " + employeeCode
+                            + " does not have STANDARD specialization (Admin/Receptionist cannot be assigned)",
+                    "appointment",
+                    "EMPLOYEE_NOT_MEDICAL_STAFF");
+        }
+
+        return employee;
     }
 
     /**
@@ -199,13 +218,36 @@ public class AppointmentAvailabilityService {
         }
 
         List<com.dental.clinic.management.employee.domain.Employee> participants = new ArrayList<>();
+        List<String> nonMedicalStaff = new ArrayList<>();
+
         for (String code : participantCodes) {
             var emp = employeeRepository.findByEmployeeCodeAndIsActiveTrue(code)
                     .orElseThrow(() -> new BadRequestAlertException(
                             "Participant not found or inactive: " + code,
                             "appointment",
                             "PARTICIPANT_NOT_FOUND"));
-            participants.add(emp);
+
+            // CRITICAL: Validate participant has STANDARD specialization (ID 8) - is
+            // medical staff
+            boolean hasStandardSpecialization = emp.getSpecializations() != null &&
+                    emp.getSpecializations().stream()
+                            .anyMatch(spec -> spec.getSpecializationId() == 8);
+
+            if (!hasStandardSpecialization) {
+                nonMedicalStaff.add(code);
+            } else {
+                participants.add(emp);
+            }
+        }
+
+        if (!nonMedicalStaff.isEmpty()) {
+            throw new BadRequestAlertException(
+                    "Participants must have STANDARD specialization (ID 8). " +
+                            "The following employees do not have STANDARD specialization (Admin/Receptionist cannot be participants): "
+                            +
+                            String.join(", ", nonMedicalStaff),
+                    "appointment",
+                    "PARTICIPANT_NOT_MEDICAL_STAFF");
         }
 
         return participants;

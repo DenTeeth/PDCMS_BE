@@ -575,7 +575,9 @@ VALUES
 (4, 'SPEC004', 'Phục hồi răng', 'Prosthodontics - Làm răng giả, cầu răng, implant', TRUE, NOW()),
 (5, 'SPEC005', 'Phẫu thuật hàm mặt', 'Oral Surgery - Nhổ răng khôn, phẫu thuật', TRUE, NOW()),
 (6, 'SPEC006', 'Nha khoa trẻ em', 'Pediatric Dentistry - Chuyên khoa nhi', TRUE, NOW()),
-(7, 'SPEC007', 'Răng thẩm mỹ', 'Cosmetic Dentistry - Tẩy trắng, bọc sứ', TRUE, NOW())
+(7, 'SPEC007', 'Răng thẩm mỹ', 'Cosmetic Dentistry - Tẩy trắng, bọc sứ', TRUE, NOW()),
+(8, 'SPEC-STANDARD', 'Y tế cơ bản', 'General Healthcare - Nhân viên y tế có chuyên môn cơ bản', TRUE, NOW()),
+(9, 'SPEC-INTERN', 'Thực tập sinh', 'Intern/Trainee - Nhân viên đang đào tạo, học việc', TRUE, NOW())
 ON CONFLICT (specialization_id) DO NOTHING;
 
 -- ============================================
@@ -666,7 +668,21 @@ ON CONFLICT (employee_id) DO NOTHING;
 
 INSERT INTO employee_specializations (employee_id, specialization_id)
 VALUES
-(2, 1), (2, 7), (3, 2), (3, 4), (6, 6)
+-- Doctors with their specialized fields
+(2, 1), (2, 7),  -- Bác sĩ Tâm: Chỉnh nha + Răng thẩm mỹ
+(3, 2), (3, 4),  -- Bác sĩ Dũng: Nội nha + Phục hồi răng
+(6, 6),          -- Bác sĩ Hạnh: Nha khoa trẻ em
+
+-- Add STANDARD specialization to ALL medical staff (doctors, nurses, assistants)
+-- This marks them as qualified healthcare workers who can participate in appointments
+(2, 8), -- Bác sĩ Tâm
+(3, 8), -- Bác sĩ Dũng
+(4, 8), -- Y tá Mai
+(5, 8), -- Y tá Hương
+(6, 8), -- Bác sĩ Hạnh
+(7, 8), -- Y tá Thảo
+(8, 8), -- Linh (Part-time flex)
+(9, 8)  -- Trang (Part-time fixed)
 ON CONFLICT (employee_id, specialization_id) DO NOTHING;
 
 INSERT INTO patients (patient_id, account_id, patient_code, first_name, last_name, email, phone, date_of_birth, address, gender, is_active, created_at, updated_at)
@@ -1384,58 +1400,60 @@ VALUES
 -- =============================================
 -- BƯỚC 1: INSERT DỊCH VỤ (SERVICES)
 -- =============================================
--- Giả định ID chuyên khoa:
--- NULL: Tổng quát (không cần chuyên khoa cụ thể)
+-- Chuyên khoa services:
+-- 8: Y tế cơ bản (STANDARD) - Dịch vụ tổng quát, không cần chuyên khoa đặc biệt
 -- 1: Chỉnh nha
--- 2: Implant
--- 3: Phục hình/Thẩm mỹ
--- 4: Tiểu phẫu
--- 5: Nội nha
+-- 2: Nội nha
+-- 3: Nha chu
+-- 4: Phục hồi răng
+-- 5: Phẫu thuật hàm mặt
+-- 6: Nha khoa trẻ em
+-- 7: Răng thẩm mỹ
 
 INSERT INTO services (service_code, service_name, description, default_duration_minutes, default_buffer_minutes, price, specialization_id, is_active, created_at) VALUES
--- Nha khoa tổng quát (A)
-('GEN_EXAM', 'Khám tổng quát & Tư vấn', 'Khám tổng quát, chụp X-quang phim nhỏ nếu cần thiết để chẩn đoán.', 30, 15, 100000, NULL, true, NOW()),
-('GEN_XRAY_PERI', 'Chụp X-Quang quanh chóp', 'Chụp phim X-quang nhỏ tại ghế.', 10, 5, 50000, NULL, true, NOW()),
-('SCALING_L1', 'Cạo vôi răng & Đánh bóng - Mức 1', 'Làm sạch vôi răng và mảng bám mức độ ít/trung bình.', 45, 15, 300000, NULL, true, NOW()),
-('SCALING_L2', 'Cạo vôi răng & Đánh bóng - Mức 2', 'Làm sạch vôi răng và mảng bám mức độ nhiều.', 60, 15, 400000, NULL, true, NOW()),
-('SCALING_VIP', 'Cạo vôi VIP không đau', 'Sử dụng máy rung siêu âm ít ê buốt.', 60, 15, 500000, NULL, true, NOW()),
-('FILLING_COMP', 'Trám răng Composite', 'Trám răng sâu, mẻ bằng vật liệu composite thẩm mỹ.', 45, 15, 400000, NULL, true, NOW()),
-('FILLING_GAP', 'Đắp kẽ răng thưa Composite', 'Đóng kẽ răng thưa nhỏ bằng composite.', 60, 15, 500000, 3, true, NOW()),
-('EXTRACT_MILK', 'Nhổ răng sữa', 'Nhổ răng sữa cho trẻ em.', 15, 15, 50000, NULL, true, NOW()),
-('EXTRACT_NORM', 'Nhổ răng thường', 'Nhổ răng vĩnh viễn đơn giản (không phải răng khôn).', 45, 15, 500000, NULL, true, NOW()),
-('EXTRACT_WISDOM_L1', 'Nhổ răng khôn mức 1 (Dễ)', 'Tiểu phẫu nhổ răng khôn mọc thẳng, ít phức tạp.', 60, 30, 1500000, 4, true, NOW()),
-('EXTRACT_WISDOM_L2', 'Nhổ răng khôn mức 2 (Khó)', 'Tiểu phẫu nhổ răng khôn mọc lệch, ngầm.', 90, 30, 2500000, 4, true, NOW()),
-('ENDO_TREAT_ANT', 'Điều trị tủy răng trước', 'Lấy tủy, làm sạch, trám bít ống tủy cho răng cửa/răng nanh.', 60, 15, 1500000, 5, true, NOW()),
-('ENDO_TREAT_POST', 'Điều trị tủy răng sau', 'Lấy tủy, làm sạch, trám bít ống tủy cho răng tiền cối/răng cối.', 75, 15, 2000000, 5, true, NOW()),
-('ENDO_POST_CORE', 'Đóng chốt tái tạo cùi răng', 'Đặt chốt vào ống tủy đã chữa để tăng cường lưu giữ cho mão sứ.', 45, 15, 500000, NULL, true, NOW()),
+-- Nha khoa tổng quát (A) - Sử dụng STANDARD (ID 8)
+('GEN_EXAM', 'Khám tổng quát & Tư vấn', 'Khám tổng quát, chụp X-quang phim nhỏ nếu cần thiết để chẩn đoán.', 30, 15, 100000, 8, true, NOW()),
+('GEN_XRAY_PERI', 'Chụp X-Quang quanh chóp', 'Chụp phim X-quang nhỏ tại ghế.', 10, 5, 50000, 8, true, NOW()),
+('SCALING_L1', 'Cạo vôi răng & Đánh bóng - Mức 1', 'Làm sạch vôi răng và mảng bám mức độ ít/trung bình.', 45, 15, 300000, 3, true, NOW()),
+('SCALING_L2', 'Cạo vôi răng & Đánh bóng - Mức 2', 'Làm sạch vôi răng và mảng bám mức độ nhiều.', 60, 15, 400000, 3, true, NOW()),
+('SCALING_VIP', 'Cạo vôi VIP không đau', 'Sử dụng máy rung siêu âm ít ê buốt.', 60, 15, 500000, 3, true, NOW()),
+('FILLING_COMP', 'Trám răng Composite', 'Trám răng sâu, mẻ bằng vật liệu composite thẩm mỹ.', 45, 15, 400000, 2, true, NOW()),
+('FILLING_GAP', 'Đắp kẽ răng thưa Composite', 'Đóng kẽ răng thưa nhỏ bằng composite.', 60, 15, 500000, 7, true, NOW()),
+('EXTRACT_MILK', 'Nhổ răng sữa', 'Nhổ răng sữa cho trẻ em.', 15, 15, 50000, 6, true, NOW()),
+('EXTRACT_NORM', 'Nhổ răng thường', 'Nhổ răng vĩnh viễn đơn giản (không phải răng khôn).', 45, 15, 500000, 5, true, NOW()),
+('EXTRACT_WISDOM_L1', 'Nhổ răng khôn mức 1 (Dễ)', 'Tiểu phẫu nhổ răng khôn mọc thẳng, ít phức tạp.', 60, 30, 1500000, 5, true, NOW()),
+('EXTRACT_WISDOM_L2', 'Nhổ răng khôn mức 2 (Khó)', 'Tiểu phẫu nhổ răng khôn mọc lệch, ngầm.', 90, 30, 2500000, 5, true, NOW()),
+('ENDO_TREAT_ANT', 'Điều trị tủy răng trước', 'Lấy tủy, làm sạch, trám bít ống tủy cho răng cửa/răng nanh.', 60, 15, 1500000, 2, true, NOW()),
+('ENDO_TREAT_POST', 'Điều trị tủy răng sau', 'Lấy tủy, làm sạch, trám bít ống tủy cho răng tiền cối/răng cối.', 75, 15, 2000000, 2, true, NOW()),
+('ENDO_POST_CORE', 'Đóng chốt tái tạo cùi răng', 'Đặt chốt vào ống tủy đã chữa để tăng cường lưu giữ cho mão sứ.', 45, 15, 500000, 4, true, NOW()),
 
 -- Thẩm mỹ & Phục hình (B)
-('BLEACH_ATHOME', 'Tẩy trắng răng tại nhà', 'Cung cấp máng và thuốc tẩy trắng tại nhà.', 30, 15, 800000, 3, true, NOW()),
-('BLEACH_INOFFICE', 'Tẩy trắng răng tại phòng (Laser)', 'Tẩy trắng bằng đèn chiếu hoặc laser.', 90, 15, 1200000, 3, true, NOW()),
+('BLEACH_ATHOME', 'Tẩy trắng răng tại nhà', 'Cung cấp máng và thuốc tẩy trắng tại nhà.', 30, 15, 800000, 7, true, NOW()),
+('BLEACH_INOFFICE', 'Tẩy trắng răng tại phòng (Laser)', 'Tẩy trắng bằng đèn chiếu hoặc laser.', 90, 15, 1200000, 7, true, NOW()),
 
 -- Răng sứ (Chia nhỏ từ Bảng 3)
-('CROWN_PFM', 'Mão răng sứ Kim loại thường', 'Mão sứ sườn kim loại Cr-Co hoặc Ni-Cr.', 60, 15, 1000000, 3, true, NOW()),
-('CROWN_TITAN', 'Mão răng sứ Titan', 'Mão sứ sườn hợp kim Titan.', 60, 15, 2500000, 3, true, NOW()),
-('CROWN_ZIR_KATANA', 'Mão răng toàn sứ Katana/Zir HT', 'Mão sứ 100% Zirconia phổ thông.', 60, 15, 3500000, 3, true, NOW()),
-('CROWN_ZIR_CERCON', 'Mão răng toàn sứ Cercon HT', 'Mão sứ 100% Zirconia cao cấp (Đức).', 60, 15, 5000000, 3, true, NOW()),
-('CROWN_EMAX', 'Mão răng sứ thủy tinh Emax', 'Mão sứ Lithium Disilicate thẩm mỹ cao.', 60, 15, 6000000, 3, true, NOW()),
-('CROWN_ZIR_LAVA', 'Mão răng toàn sứ Lava Plus', 'Mão sứ Zirconia đa lớp (Mỹ).', 60, 15, 8000000, 3, true, NOW()),
-('VENEER_EMAX', 'Mặt dán sứ Veneer Emax', 'Mặt dán sứ Lithium Disilicate mài răng tối thiểu.', 75, 15, 6000000, 3, true, NOW()),
-('VENEER_LISI', 'Mặt dán sứ Veneer Lisi Ultra', 'Mặt dán sứ Lithium Disilicate (Mỹ).', 75, 15, 8000000, 3, true, NOW()),
-('INLAY_ONLAY_ZIR', 'Trám sứ Inlay/Onlay Zirconia', 'Miếng trám gián tiếp bằng sứ Zirconia CAD/CAM.', 60, 15, 2000000, 3, true, NOW()),
-('INLAY_ONLAY_EMAX', 'Trám sứ Inlay/Onlay Emax', 'Miếng trám gián tiếp bằng sứ Emax Press.', 60, 15, 3000000, 3, true, NOW()),
+('CROWN_PFM', 'Mão răng sứ Kim loại thường', 'Mão sứ sườn kim loại Cr-Co hoặc Ni-Cr.', 60, 15, 1000000, 4, true, NOW()),
+('CROWN_TITAN', 'Mão răng sứ Titan', 'Mão sứ sườn hợp kim Titan.', 60, 15, 2500000, 4, true, NOW()),
+('CROWN_ZIR_KATANA', 'Mão răng toàn sứ Katana/Zir HT', 'Mão sứ 100% Zirconia phổ thông.', 60, 15, 3500000, 4, true, NOW()),
+('CROWN_ZIR_CERCON', 'Mão răng toàn sứ Cercon HT', 'Mão sứ 100% Zirconia cao cấp (Đức).', 60, 15, 5000000, 4, true, NOW()),
+('CROWN_EMAX', 'Mão răng sứ thủy tinh Emax', 'Mão sứ Lithium Disilicate thẩm mỹ cao.', 60, 15, 6000000, 4, true, NOW()),
+('CROWN_ZIR_LAVA', 'Mão răng toàn sứ Lava Plus', 'Mão sứ Zirconia đa lớp (Mỹ).', 60, 15, 8000000, 4, true, NOW()),
+('VENEER_EMAX', 'Mặt dán sứ Veneer Emax', 'Mặt dán sứ Lithium Disilicate mài răng tối thiểu.', 75, 15, 6000000, 7, true, NOW()),
+('VENEER_LISI', 'Mặt dán sứ Veneer Lisi Ultra', 'Mặt dán sứ Lithium Disilicate (Mỹ).', 75, 15, 8000000, 7, true, NOW()),
+('INLAY_ONLAY_ZIR', 'Trám sứ Inlay/Onlay Zirconia', 'Miếng trám gián tiếp bằng sứ Zirconia CAD/CAM.', 60, 15, 2000000, 4, true, NOW()),
+('INLAY_ONLAY_EMAX', 'Trám sứ Inlay/Onlay Emax', 'Miếng trám gián tiếp bằng sứ Emax Press.', 60, 15, 3000000, 4, true, NOW()),
 
 -- Cắm ghép Implant (C)
-('IMPL_CONSULT', 'Khám & Tư vấn Implant', 'Khám, đánh giá tình trạng xương, tư vấn kế hoạch.', 45, 15, 0, 2, true, NOW()),
-('IMPL_CT_SCAN', 'Chụp CT Cone Beam (Implant)', 'Chụp phim 3D phục vụ cắm ghép Implant.', 30, 15, 500000, 2, true, NOW()),
-('IMPL_SURGERY_KR', 'Phẫu thuật đặt trụ Implant Hàn Quốc', 'Phẫu thuật cắm trụ Implant (VD: Osstem, Biotem).', 90, 30, 15000000, 2, true, NOW()),
-('IMPL_SURGERY_EUUS', 'Phẫu thuật đặt trụ Implant Thụy Sĩ/Mỹ', 'Phẫu thuật cắm trụ Implant (VD: Straumann, Nobel).', 90, 30, 25000000, 2, true, NOW()),
-('IMPL_BONE_GRAFT', 'Ghép xương ổ răng', 'Phẫu thuật bổ sung xương cho vị trí cắm Implant.', 60, 30, 5000000, 2, true, NOW()),
-('IMPL_SINUS_LIFT', 'Nâng xoang hàm (Hở/Kín)', 'Phẫu thuật nâng xoang để cắm Implant hàm trên.', 75, 30, 8000000, 2, true, NOW()),
-('IMPL_HEALING', 'Gắn trụ lành thương (Healing Abutment)', 'Gắn trụ giúp nướu lành thương đúng hình dạng.', 20, 10, 500000, 2, true, NOW()),
-('IMPL_IMPRESSION', 'Lấy dấu Implant', 'Lấy dấu để làm răng sứ trên Implant.', 30, 15, 0, 2, true, NOW()),
-('IMPL_CROWN_TITAN', 'Mão sứ Titan trên Implant', 'Làm và gắn mão sứ Titan trên Abutment.', 45, 15, 3000000, 2, true, NOW()),
-('IMPL_CROWN_ZIR', 'Mão sứ Zirconia trên Implant', 'Làm và gắn mão sứ Zirconia trên Abutment.', 45, 15, 5000000, 2, true, NOW()),
+('IMPL_CONSULT', 'Khám & Tư vấn Implant', 'Khám, đánh giá tình trạng xương, tư vấn kế hoạch.', 45, 15, 0, 4, true, NOW()),
+('IMPL_CT_SCAN', 'Chụp CT Cone Beam (Implant)', 'Chụp phim 3D phục vụ cắm ghép Implant.', 30, 15, 500000, 4, true, NOW()),
+('IMPL_SURGERY_KR', 'Phẫu thuật đặt trụ Implant Hàn Quốc', 'Phẫu thuật cắm trụ Implant (VD: Osstem, Biotem).', 90, 30, 15000000, 4, true, NOW()),
+('IMPL_SURGERY_EUUS', 'Phẫu thuật đặt trụ Implant Thụy Sĩ/Mỹ', 'Phẫu thuật cắm trụ Implant (VD: Straumann, Nobel).', 90, 30, 25000000, 4, true, NOW()),
+('IMPL_BONE_GRAFT', 'Ghép xương ổ răng', 'Phẫu thuật bổ sung xương cho vị trí cắm Implant.', 60, 30, 5000000, 5, true, NOW()),
+('IMPL_SINUS_LIFT', 'Nâng xoang hàm (Hở/Kín)', 'Phẫu thuật nâng xoang để cắm Implant hàm trên.', 75, 30, 8000000, 5, true, NOW()),
+('IMPL_HEALING', 'Gắn trụ lành thương (Healing Abutment)', 'Gắn trụ giúp nướu lành thương đúng hình dạng.', 20, 10, 500000, 4, true, NOW()),
+('IMPL_IMPRESSION', 'Lấy dấu Implant', 'Lấy dấu để làm răng sứ trên Implant.', 30, 15, 0, 4, true, NOW()),
+('IMPL_CROWN_TITAN', 'Mão sứ Titan trên Implant', 'Làm và gắn mão sứ Titan trên Abutment.', 45, 15, 3000000, 4, true, NOW()),
+('IMPL_CROWN_ZIR', 'Mão sứ Zirconia trên Implant', 'Làm và gắn mão sứ Zirconia trên Abutment.', 45, 15, 5000000, 4, true, NOW()),
 
 -- Chỉnh nha (D)
 ('ORTHO_CONSULT', 'Khám & Tư vấn Chỉnh nha', 'Khám, phân tích phim, tư vấn kế hoạch niềng.', 45, 15, 0, 1, true, NOW()),
@@ -1450,16 +1468,16 @@ INSERT INTO services (service_code, service_name, description, default_duration_
 ('ORTHO_RETAINER_REMOV', 'Làm hàm duy trì tháo lắp', 'Lấy dấu và giao hàm duy trì (máng trong/Hawley).', 30, 15, 1000000, 1, true, NOW()),
 
 -- Dịch vụ Phục hình bổ sung (E)
-('PROS_CEMENT', 'Gắn sứ / Thử sứ (Lần 2)', 'Hẹn lần 2 để thử và gắn vĩnh viễn mão sứ, cầu răng, veneer.', 30, 15, 0, 3, true, NOW()),
-('DENTURE_CONSULT', 'Khám & Lấy dấu Hàm Tháo Lắp', 'Lấy dấu lần đầu để làm hàm giả tháo lắp.', 45, 15, 1000000, 3, true, NOW()),
-('DENTURE_TRYIN', 'Thử sườn/Thử răng Hàm Tháo Lắp', 'Hẹn thử khung kim loại hoặc thử răng sáp.', 30, 15, 0, 3, true, NOW()),
-('DENTURE_DELIVERY', 'Giao hàm & Chỉnh khớp cắn', 'Giao hàm hoàn thiện, chỉnh sửa các điểm vướng cộm.', 30, 15, 0, 3, true, NOW()),
+('PROS_CEMENT', 'Gắn sứ / Thử sứ (Lần 2)', 'Hẹn lần 2 để thử và gắn vĩnh viễn mão sứ, cầu răng, veneer.', 30, 15, 0, 4, true, NOW()),
+('DENTURE_CONSULT', 'Khám & Lấy dấu Hàm Tháo Lắp', 'Lấy dấu lần đầu để làm hàm giả tháo lắp.', 45, 15, 1000000, 4, true, NOW()),
+('DENTURE_TRYIN', 'Thử sườn/Thử răng Hàm Tháo Lắp', 'Hẹn thử khung kim loại hoặc thử răng sáp.', 30, 15, 0, 4, true, NOW()),
+('DENTURE_DELIVERY', 'Giao hàm & Chỉnh khớp cắn', 'Giao hàm hoàn thiện, chỉnh sửa các điểm vướng cộm.', 30, 15, 0, 4, true, NOW()),
 
 -- Dịch vụ khác (F)
-('OTHER_DIAMOND', 'Đính đá/kim cương lên răng', 'Gắn đá thẩm mỹ lên răng.', 30, 15, 300000, 3, true, NOW()),
-('OTHER_GINGIVECTOMY', 'Phẫu thuật cắt nướu (thẩm mỹ)', 'Làm dài thân răng, điều trị cười hở lợi.', 60, 30, 1000000, 4, true, NOW()),
-('EMERG_PAIN', 'Khám cấp cứu / Giảm đau', 'Khám và xử lý khẩn cấp các trường hợp đau nhức, sưng, chấn thương.', 30, 15, 150000, NULL, true, NOW()),
-('SURG_CHECKUP', 'Tái khám sau phẫu thuật / Cắt chỉ', 'Kiểm tra vết thương sau nhổ răng khôn, cắm Implant, cắt nướu.', 15, 10, 0, 4, true, NOW())
+('OTHER_DIAMOND', 'Đính đá/kim cương lên răng', 'Gắn đá thẩm mỹ lên răng.', 30, 15, 300000, 7, true, NOW()),
+('OTHER_GINGIVECTOMY', 'Phẫu thuật cắt nướu (thẩm mỹ)', 'Làm dài thân răng, điều trị cười hở lợi.', 60, 30, 1000000, 5, true, NOW()),
+('EMERG_PAIN', 'Khám cấp cứu / Giảm đau', 'Khám và xử lý khẩn cấp các trường hợp đau nhức, sưng, chấn thương.', 30, 15, 150000, 8, true, NOW()),
+('SURG_CHECKUP', 'Tái khám sau phẫu thuật / Cắt chỉ', 'Kiểm tra vết thương sau nhổ răng khôn, cắm Implant, cắt nướu.', 15, 10, 0, 5, true, NOW())
 ON CONFLICT (service_code) DO NOTHING;
 
 -- ============================================
@@ -1587,31 +1605,63 @@ VALUES
     (9003, 'TEST-BN-003', 'Le Van', 'Test Patient C', '1978-12-10', 'MALE', '0912345003', 'test.patient.c@gmail.com', true, CURRENT_TIMESTAMP)
 ON CONFLICT (patient_id) DO NOTHING;
 
--- 5. TEST SERVICES
-INSERT INTO services (service_id, service_code, service_name, specialization_id, default_duration_minutes, default_buffer_minutes, price, is_active, created_at)
-VALUES
-    (9001, 'TEST-SV-IMPLANT', 'Test: Cam tru Implant', 901, 60, 15, 15000000, true, CURRENT_TIMESTAMP),
-    (9002, 'TEST-SV-NANGXOANG', 'Test: Nang xoang', 901, 45, 15, 8000000, true, CURRENT_TIMESTAMP),
-    (9003, 'TEST-SV-SCALING', 'Test: Lay cao rang', 903, 30, 10, 500000, true, CURRENT_TIMESTAMP),
-    (9004, 'TEST-SV-BRACKET', 'Test: Nieng rang mac cai', 902, 90, 20, 25000000, true, CURRENT_TIMESTAMP)
-ON CONFLICT (service_id) DO NOTHING;
+-- 5. TEST SERVICES - REMOVED (Use production services instead)
+-- Test services have been removed to avoid confusion
+-- Use production service codes like: GEN_EXAM, IMPL_SURGERY_KR, SCALING_L1, etc.
 
 -- 6. TEST ROOMS
 INSERT INTO rooms (room_id, room_code, room_name, room_type, is_active, created_at)
 VALUES
-    ('TEST-ROOM-IMPLANT-01', 'TEST-P-IMPLANT-01', 'Test: Phong Implant 01', 'SURGERY', true, CURRENT_TIMESTAMP),
-    ('TEST-ROOM-IMPLANT-02', 'TEST-P-IMPLANT-02', 'Test: Phong Implant 02', 'SURGERY', true, CURRENT_TIMESTAMP),
+    ('TEST-ROOM-IMPLANT-01', 'TEST-P-IMPLANT-01', 'Test: Phong Implant 01', 'IMPLANT', true, CURRENT_TIMESTAMP),
+    ('TEST-ROOM-IMPLANT-02', 'TEST-P-IMPLANT-02', 'Test: Phong Implant 02', 'IMPLANT', true, CURRENT_TIMESTAMP),
     ('TEST-ROOM-GENERAL-01', 'TEST-P-GENERAL-01', 'Test: Phong Kham Tong Quat 01', 'STANDARD', true, CURRENT_TIMESTAMP),
-    ('TEST-ROOM-ORTHO-01', 'TEST-P-ORTHO-01', 'Test: Phong Chinh Nha 01', 'ORTHODONTICS', true, CURRENT_TIMESTAMP)
+    ('TEST-ROOM-ORTHO-01', 'TEST-P-ORTHO-01', 'Test: Phong Chinh Nha 01', 'STANDARD', true, CURRENT_TIMESTAMP)
 ON CONFLICT (room_id) DO NOTHING;
 
--- 7. ROOM-SERVICE COMPATIBILITY (V16)
+-- 7. ROOM-SERVICE COMPATIBILITY (V16) - Use production service codes
+-- Map test rooms to production services for realistic testing
 INSERT INTO room_services (room_id, service_id, created_at)
-VALUES
-    ('TEST-ROOM-IMPLANT-01', 9001, CURRENT_TIMESTAMP), ('TEST-ROOM-IMPLANT-01', 9002, CURRENT_TIMESTAMP),
-    ('TEST-ROOM-IMPLANT-02', 9001, CURRENT_TIMESTAMP), ('TEST-ROOM-IMPLANT-02', 9002, CURRENT_TIMESTAMP),
-    ('TEST-ROOM-GENERAL-01', 9003, CURRENT_TIMESTAMP),
-    ('TEST-ROOM-ORTHO-01', 9004, CURRENT_TIMESTAMP)
+SELECT tr.room_id, s.service_id, CURRENT_TIMESTAMP
+FROM (VALUES
+    ('TEST-ROOM-IMPLANT-01'),
+    ('TEST-ROOM-IMPLANT-02')
+) AS tr(room_id)
+CROSS JOIN services s
+WHERE s.service_code IN (
+    'GEN_EXAM', 'GEN_XRAY_PERI', 'SCALING_L1', 'SCALING_L2', 'SCALING_VIP',
+    'FILLING_COMP', 'FILLING_GAP', 'EXTRACT_MILK', 'EXTRACT_NORM',
+    'ENDO_TREAT_ANT', 'ENDO_TREAT_POST', 'ENDO_POST_CORE',
+    'BLEACH_ATHOME', 'BLEACH_INOFFICE',
+    'CROWN_PFM', 'CROWN_TITAN', 'CROWN_ZIR_KATANA', 'CROWN_ZIR_CERCON',
+    'CROWN_EMAX', 'CROWN_ZIR_LAVA', 'VENEER_EMAX', 'VENEER_LISI',
+    'INLAY_ONLAY_ZIR', 'INLAY_ONLAY_EMAX',
+    'PROS_CEMENT', 'DENTURE_CONSULT', 'DENTURE_TRYIN', 'DENTURE_DELIVERY',
+    'OTHER_DIAMOND', 'EMERG_PAIN', 'SURG_CHECKUP',
+    'IMPL_CONSULT', 'IMPL_CT_SCAN', 'IMPL_SURGERY_KR', 'IMPL_SURGERY_EUUS',
+    'IMPL_BONE_GRAFT', 'IMPL_SINUS_LIFT', 'IMPL_HEALING',
+    'IMPL_IMPRESSION', 'IMPL_CROWN_TITAN', 'IMPL_CROWN_ZIR',
+    'EXTRACT_WISDOM_L1', 'EXTRACT_WISDOM_L2', 'OTHER_GINGIVECTOMY'
+)
+ON CONFLICT DO NOTHING;
+
+INSERT INTO room_services (room_id, service_id, created_at)
+SELECT tr.room_id, s.service_id, CURRENT_TIMESTAMP
+FROM (VALUES
+    ('TEST-ROOM-GENERAL-01'),
+    ('TEST-ROOM-ORTHO-01')
+) AS tr(room_id)
+CROSS JOIN services s
+WHERE s.service_code IN (
+    'GEN_EXAM', 'GEN_XRAY_PERI', 'SCALING_L1', 'SCALING_L2', 'SCALING_VIP',
+    'FILLING_COMP', 'FILLING_GAP', 'EXTRACT_MILK', 'EXTRACT_NORM',
+    'ENDO_TREAT_ANT', 'ENDO_TREAT_POST', 'ENDO_POST_CORE',
+    'BLEACH_ATHOME', 'BLEACH_INOFFICE',
+    'CROWN_PFM', 'CROWN_TITAN', 'CROWN_ZIR_KATANA', 'CROWN_ZIR_CERCON',
+    'CROWN_EMAX', 'CROWN_ZIR_LAVA', 'VENEER_EMAX', 'VENEER_LISI',
+    'INLAY_ONLAY_ZIR', 'INLAY_ONLAY_EMAX',
+    'PROS_CEMENT', 'DENTURE_CONSULT', 'DENTURE_TRYIN', 'DENTURE_DELIVERY',
+    'OTHER_DIAMOND', 'EMERG_PAIN', 'SURG_CHECKUP'
+)
 ON CONFLICT DO NOTHING;
 
 -- 8. EMPLOYEE SHIFTS (Test date: 2025-11-15)

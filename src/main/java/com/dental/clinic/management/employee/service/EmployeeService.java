@@ -492,4 +492,31 @@ public class EmployeeService {
     public java.util.List<Specialization> getAllActiveSpecializations() {
         return specializationRepository.findAllActiveSpecializations();
     }
+
+    /**
+     * Get active medical staff only (employees with STANDARD specialization ID 8)
+     * Used for appointment doctor/participant selection
+     * Excludes Admin/Receptionist who don't have STANDARD specialization
+     *
+     * @return List of employees with STANDARD specialization (ID 8)
+     */
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + READ_ALL_EMPLOYEES + "')")
+    @Transactional(readOnly = true)
+    public java.util.List<EmployeeInfoResponse> getActiveMedicalStaff() {
+        java.util.List<Employee> employees = employeeRepository.findActiveEmployeesWithSpecializations();
+        return employees.stream()
+                .map(employeeMapper::toEmployeeInfoResponse)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    /**
+     * Check if employee is medical staff (has specializations)
+     *
+     * @param employeeId Employee ID
+     * @return True if employee has at least one specialization
+     */
+    @Transactional(readOnly = true)
+    public boolean isMedicalStaff(Integer employeeId) {
+        return employeeRepository.hasSpecializations(employeeId);
+    }
 }
