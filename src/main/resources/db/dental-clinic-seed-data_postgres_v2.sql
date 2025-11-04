@@ -62,7 +62,13 @@ CREATE TYPE balance_change_reason AS ENUM ('ANNUAL_RESET', 'APPROVED_REQUEST', '
 -- END ENUM TYPE DEFINITIONS
 -- ============================================
 
-
+-- ============================================
+-- SCHEMA UPDATES
+-- ============================================
+-- Note: Hibernate auto-creates tables with correct column names:
+-- - appointments.status as VARCHAR(50)
+-- - appointment_participants.participant_role as VARCHAR(50)
+-- No ALTER TABLE needed when dropping all tables and recreating from scratch.
 
 -- ============================================
 -- BƯỚC 1: TẠO BASE ROLES (3 loại cố định)
@@ -1665,20 +1671,34 @@ WHERE s.service_code IN (
 ON CONFLICT DO NOTHING;
 
 -- 8. EMPLOYEE SHIFTS (Test date: 2025-11-15)
+-- Real employees for API testing (using 'Ca Sáng (8h-16h)' shift)
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
-SELECT 'EMS251115901', 9001, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP FROM work_shifts WHERE shift_name = 'Full Day' OR (start_time = '08:00:00' AND end_time = '17:00:00') LIMIT 1 ON CONFLICT DO NOTHING;
+SELECT 'EMS20251115001', 2, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP FROM work_shifts WHERE shift_name = 'Ca Sáng (8h-16h)' LIMIT 1 ON CONFLICT DO NOTHING;
 
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
-SELECT 'EMS251115902', 9002, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP FROM work_shifts WHERE shift_name LIKE '%Morning%' OR (start_time = '08:00:00' AND end_time = '12:00:00') LIMIT 1 ON CONFLICT DO NOTHING;
+SELECT 'EMS20251115002', 3, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP FROM work_shifts WHERE shift_name = 'Ca Sáng (8h-16h)' LIMIT 1 ON CONFLICT DO NOTHING;
 
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
-SELECT 'EMS251115903', 9003, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP FROM work_shifts WHERE shift_name = 'Full Day' OR (start_time = '08:00:00' AND end_time = '17:00:00') LIMIT 1 ON CONFLICT DO NOTHING;
+SELECT 'EMS20251115003', 4, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP FROM work_shifts WHERE shift_name = 'Ca Sáng (8h-16h)' LIMIT 1 ON CONFLICT DO NOTHING;
 
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
-SELECT 'EMS251115904', 9004, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP FROM work_shifts WHERE shift_name = 'Full Day' OR (start_time = '08:00:00' AND end_time = '17:00:00') LIMIT 1 ON CONFLICT DO NOTHING;
+SELECT 'EMS20251115004', 5, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP FROM work_shifts WHERE shift_name = 'Ca Sáng (8h-16h)' LIMIT 1 ON CONFLICT DO NOTHING;
+
+-- Test employees (for specialized tests)
+INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
+SELECT 'EMS251115901', 9001, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP FROM work_shifts WHERE shift_name = 'Ca Sáng (8h-16h)' LIMIT 1 ON CONFLICT DO NOTHING;
 
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
-SELECT 'EMS251115905', 9005, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP FROM work_shifts WHERE shift_name LIKE '%Afternoon%' OR (start_time = '13:00:00' AND end_time = '17:00:00') LIMIT 1 ON CONFLICT DO NOTHING;
+SELECT 'EMS251115902', 9002, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP FROM work_shifts WHERE shift_name = 'Ca Part-time Sáng (8h-12h)' LIMIT 1 ON CONFLICT DO NOTHING;
+
+INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
+SELECT 'EMS251115903', 9003, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP FROM work_shifts WHERE shift_name = 'Ca Sáng (8h-16h)' LIMIT 1 ON CONFLICT DO NOTHING;
+
+INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
+SELECT 'EMS251115904', 9004, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP FROM work_shifts WHERE shift_name = 'Ca Sáng (8h-16h)' LIMIT 1 ON CONFLICT DO NOTHING;
+
+INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
+SELECT 'EMS251115905', 9005, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP FROM work_shifts WHERE shift_name = 'Ca Part-time Chiều (13h-17h)' LIMIT 1 ON CONFLICT DO NOTHING;
 
 -- 9. EXISTING APPOINTMENT (Dr Implant busy 10:00-11:00)
 -- TEMPORARILY COMMENTED OUT DUE TO COLUMN STATUS ERROR

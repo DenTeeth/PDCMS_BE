@@ -20,7 +20,7 @@ public class AppointmentParticipant {
     private AppointmentParticipantId id;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "role", columnDefinition = "appointment_participant_role_enum", nullable = false)
+    @Column(name = "participant_role", nullable = false)
     private AppointmentParticipantRole role = AppointmentParticipantRole.ASSISTANT;
 
     // Constructors

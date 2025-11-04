@@ -78,12 +78,30 @@ public class ServiceController {
         return ResponseEntity.ok(serviceService.updateService(serviceCode, request));
     }
 
-    @DeleteMapping("/{serviceCode}")
+    @DeleteMapping("/{serviceId}")
     @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + DELETE_SERVICE + "')")
-    @Operation(summary = "Delete service (soft delete)")
+    @Operation(summary = "Delete service by ID (soft delete - set isActive = false)", description = "Deactivate service using service ID. RESTful soft delete.")
     @ApiMessage("Vô hiệu hóa dịch vụ thành công")
-    public ResponseEntity<Void> deleteService(@PathVariable String serviceCode) {
-        serviceService.deleteService(serviceCode);
+    public ResponseEntity<Void> deleteService(@PathVariable Integer serviceId) {
+        serviceService.deleteServiceById(serviceId);
         return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/code/{serviceCode}")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + DELETE_SERVICE + "')")
+    @Operation(summary = "Delete service by code (soft delete - set isActive = false)", description = "Deactivate service using service code. RESTful soft delete.")
+    @ApiMessage("Vô hiệu hóa dịch vụ thành công")
+    public ResponseEntity<Void> deleteServiceByCode(@PathVariable String serviceCode) {
+        serviceService.deleteServiceByCode(serviceCode);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{serviceId}/toggle")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + UPDATE_SERVICE + "')")
+    @Operation(summary = "Toggle service active status (activate ↔ deactivate)", description = "RESTful way to activate or deactivate service. If active → set inactive, if inactive → set active. Returns updated service.")
+    @ApiMessage("Chuyển đổi trạng thái dịch vụ thành công")
+    public ResponseEntity<ServiceResponse> toggleServiceStatus(@PathVariable Integer serviceId) {
+        ServiceResponse response = serviceService.toggleServiceStatus(serviceId);
+        return ResponseEntity.ok(response);
     }
 }
