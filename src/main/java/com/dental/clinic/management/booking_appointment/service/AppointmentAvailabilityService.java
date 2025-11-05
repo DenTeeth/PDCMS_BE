@@ -469,7 +469,8 @@ public class AppointmentAvailabilityService {
                 .filter(room -> !appointmentRepository.existsConflictForRoom(
                         room.getRoomId(),
                         startTime,
-                        endTime))
+                        endTime,
+                        null)) // No appointment to exclude in availability check
                 .map(Room::getRoomCode)
                 .collect(Collectors.toList());
     }

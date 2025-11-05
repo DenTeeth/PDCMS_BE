@@ -153,16 +153,19 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
         /**
          * Check if time slot conflicts with existing appointments for a room
          *
-         * @param roomId Room ID (VARCHAR matching rooms.room_id)
+         * @param roomId        Room ID (VARCHAR matching rooms.room_id)
+         * @param appointmentId Optional appointment ID to exclude (for delay operation)
          */
         @Query("SELECT COUNT(a) > 0 FROM Appointment a " +
                         "WHERE a.roomId = :roomId " +
+                        "AND (:appointmentId IS NULL OR a.appointmentId != :appointmentId) " +
                         "AND a.status IN ('SCHEDULED', 'CHECKED_IN', 'IN_PROGRESS') " +
                         "AND ((a.appointmentStartTime < :endTime AND a.appointmentEndTime > :startTime))")
         boolean existsConflictForRoom(
                         @Param("roomId") String roomId,
                         @Param("startTime") LocalDateTime startTime,
-                        @Param("endTime") LocalDateTime endTime);
+                        @Param("endTime") LocalDateTime endTime,
+                        @Param("appointmentId") Integer appointmentId);
 
         /**
          * Check if time slot conflicts with existing appointments for a patient
