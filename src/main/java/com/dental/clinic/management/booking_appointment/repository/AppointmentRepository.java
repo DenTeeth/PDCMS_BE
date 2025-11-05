@@ -213,8 +213,8 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
                         "AND ((a.appointmentStartTime < :endTime AND a.appointmentEndTime > :startTime)) " +
                         "AND (a.employeeId = :employeeId " +
                         "     OR EXISTS (SELECT 1 FROM AppointmentParticipant ap " +
-                        "                WHERE ap.appointment.appointmentId = a.appointmentId " +
-                        "                AND ap.employee.employeeId = :employeeId))")
+                        "                WHERE ap.id.appointmentId = a.appointmentId " +
+                        "                AND ap.id.employeeId = :employeeId))")
         boolean existsConflictForParticipant(
                         @Param("employeeId") Integer employeeId,
                         @Param("startTime") LocalDateTime startTime,
