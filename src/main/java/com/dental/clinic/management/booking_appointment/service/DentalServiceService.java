@@ -212,10 +212,31 @@ public class DentalServiceService {
     }
 
     /**
-     * Soft delete service by service code (set isActive = false)
+     * Soft delete service by service ID (set isActive = false)
+     * RESTful DELETE endpoint using serviceId
      */
     @Transactional
-    public void deleteService(String serviceCode) {
+    public void deleteServiceById(Integer serviceId) {
+        log.debug("Request to soft delete service ID: {}", serviceId);
+
+        DentalService service = serviceRepository.findById(serviceId)
+                .orElseThrow(() -> new BadRequestAlertException(
+                        "Service not found with ID: " + serviceId,
+                        "service",
+                        "notfound"));
+
+        service.setIsActive(false);
+        serviceRepository.save(service);
+
+        log.info("Soft deleted service ID: {}", serviceId);
+    }
+
+    /**
+     * Soft delete service by service code (set isActive = false)
+     * Legacy endpoint for backward compatibility
+     */
+    @Transactional
+    public void deleteServiceByCode(String serviceCode) {
         log.debug("Request to soft delete service code: {}", serviceCode);
 
         DentalService service = serviceRepository.findByServiceCode(serviceCode)
@@ -228,6 +249,29 @@ public class DentalServiceService {
         serviceRepository.save(service);
 
         log.info("Soft deleted service code: {}", serviceCode);
+    }
+
+    /**
+     * Toggle service active status (activate ↔ deactivate)
+     * RESTful PATCH endpoint - returns updated service
+     */
+    @Transactional
+    public ServiceResponse toggleServiceStatus(Integer serviceId) {
+        log.debug("Request to toggle service status for ID: {}", serviceId);
+
+        DentalService service = serviceRepository.findById(serviceId)
+                .orElseThrow(() -> new BadRequestAlertException(
+                        "Service not found with ID: " + serviceId,
+                        "service",
+                        "notfound"));
+
+        // Toggle: if active → inactive, if inactive → active
+        boolean newStatus = !service.getIsActive();
+        service.setIsActive(newStatus);
+        DentalService savedService = serviceRepository.save(service);
+
+        log.info("Toggled service ID {} status to: {}", serviceId, newStatus);
+        return serviceMapper.toResponse(savedService);
     }
 
     /**

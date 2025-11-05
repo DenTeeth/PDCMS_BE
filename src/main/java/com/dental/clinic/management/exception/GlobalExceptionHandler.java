@@ -89,7 +89,7 @@ public class GlobalExceptionHandler {
         // Extract required permission from request URI for holiday endpoints
         String requiredPermission = null;
         String method = request.getMethod();
-        
+
         if (request.getRequestURI().contains("/api/v1/holiday")) {
             if ("POST".equals(method)) {
                 requiredPermission = "CREATE_HOLIDAY";
@@ -116,7 +116,7 @@ public class GlobalExceptionHandler {
         res.setStatusCode(HttpStatus.FORBIDDEN.value());
         res.setMessage(message);
         res.setError("FORBIDDEN");
-        
+
         // Add required permission to response data
         if (requiredPermission != null) {
             java.util.Map<String, Object> data = new java.util.HashMap<>();
@@ -162,14 +162,14 @@ public class GlobalExceptionHandler {
         ? errorCodeProperty.toString()
         : "error." + status.name().toLowerCase());
 
-    // Set message (use message property if available, otherwise use detail from ProblemDetail or exception message)
-    if (messageProperty != null) {
-        res.setMessage(messageProperty.toString());
-    } else if (body != null && body.getDetail() != null) {
-        res.setMessage(body.getDetail());
-    } else {
-        res.setMessage(ex.getMessage());
-    }
+        // CRITICAL FIX: Use title (detailed message) instead of messageProperty for
+        // user-facing messages
+        // The title contains detailed conflict information (e.g., "Room P-01 is already
+        // booked during this time. Conflicting appointment: APT-20251115-001")
+        // messageProperty only contains error code (e.g., "error.ROOM_SLOT_TAKEN")
+        res.setMessage(ex.getBody().getTitle() != null
+                ? ex.getBody().getTitle()
+                : (messageProperty != null ? messageProperty.toString() : ex.getBody().getDetail()));
 
     res.setData(null);
 
@@ -411,7 +411,7 @@ public class GlobalExceptionHandler {
         res.setStatusCode(HttpStatus.BAD_REQUEST.value());
         res.setError("INVALID_DATE_RANGE");
         res.setMessage(ex.getMessage());
-        
+
         // Add start and end dates to response data
         java.util.Map<String, Object> data = new java.util.HashMap<>();
         data.put("startDate", ex.getStartDate().toString());
@@ -588,7 +588,7 @@ public class GlobalExceptionHandler {
         res.setStatusCode(HttpStatus.BAD_REQUEST.value());
         res.setMessage(errorMessage);
         res.setError("VALIDATION_ERROR");
-        
+
         // Add missing fields to response data
         if (!missingFields.isEmpty()) {
             java.util.Map<String, Object> data = new java.util.HashMap<>();
@@ -644,11 +644,11 @@ public class GlobalExceptionHandler {
         // Special handling for date parameters
         String message;
         String errorCode = "INVALID_PARAMETER_TYPE";
-        
-        if (ex.getName().equals("startDate") || ex.getName().equals("endDate") || 
-            ex.getName().equals("holidayDate") || ex.getName().equals("date")) {
-            message = "Định dạng ngày không hợp lệ: " + ex.getValue() + 
-                     ". Định dạng yêu cầu: yyyy-MM-dd";
+
+        if (ex.getName().equals("startDate") || ex.getName().equals("endDate") ||
+                ex.getName().equals("holidayDate") || ex.getName().equals("date")) {
+            message = "Định dạng ngày không hợp lệ: " + ex.getValue() +
+                    ". Định dạng yêu cầu: yyyy-MM-dd";
             errorCode = "INVALID_DATE_FORMAT";
         } else {
             message = "Invalid parameter type: " + ex.getName();
@@ -658,7 +658,7 @@ public class GlobalExceptionHandler {
         res.setStatusCode(HttpStatus.BAD_REQUEST.value());
         res.setMessage(message);
         res.setError(errorCode);
-        
+
         // Add format info for date errors
         if (errorCode.equals("INVALID_DATE_FORMAT")) {
             java.util.Map<String, Object> data = new java.util.HashMap<>();

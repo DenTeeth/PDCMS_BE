@@ -319,20 +319,72 @@ class ServiceControllerTest {
         }
 
         @Test
-        @DisplayName("DELETE /api/v1/services/{serviceCode} - Soft delete service")
+        @DisplayName("DELETE /api/v1/services/code/{serviceCode} - Soft delete service by code")
         @WithMockUser(authorities = { "DELETE_SERVICE" })
-        void deleteService_ShouldReturnNoContent() throws Exception {
+        void deleteServiceByCode_ShouldReturnNoContent() throws Exception {
                 // Given
-                doNothing().when(serviceService).deleteService("SCALING_L1");
+                doNothing().when(serviceService).deleteServiceByCode("SCALING_L1");
 
                 // When & Then
-                mockMvc.perform(delete("/api/v1/services/{serviceCode}", "SCALING_L1")
+                mockMvc.perform(delete("/api/v1/services/code/{serviceCode}", "SCALING_L1")
                                 .with(csrf())
                                 .contentType(MediaType.APPLICATION_JSON))
                                 .andDo(print())
                                 .andExpect(status().isNoContent());
 
-                verify(serviceService, times(1)).deleteService("SCALING_L1");
+                verify(serviceService, times(1)).deleteServiceByCode("SCALING_L1");
+        }
+
+        @Test
+        @DisplayName("DELETE /api/v1/services/{serviceId} - Soft delete service by ID")
+        @WithMockUser(authorities = { "DELETE_SERVICE" })
+        void deleteServiceById_ShouldReturnNoContent() throws Exception {
+                // Given
+                doNothing().when(serviceService).deleteServiceById(1);
+
+                // When & Then
+                mockMvc.perform(delete("/api/v1/services/{serviceId}", 1)
+                                .with(csrf())
+                                .contentType(MediaType.APPLICATION_JSON))
+                                .andDo(print())
+                                .andExpect(status().isNoContent());
+
+                verify(serviceService, times(1)).deleteServiceById(1);
+        }
+
+        @Test
+        @DisplayName("PATCH /api/v1/services/{serviceId}/toggle - Toggle service status")
+        @WithMockUser(authorities = { "UPDATE_SERVICE" })
+        void toggleServiceStatus_ShouldReturnToggledService() throws Exception {
+                // Given - Service is currently active, will be toggled to inactive
+                ServiceResponse toggledService = ServiceResponse.builder()
+                                .serviceId(1)
+                                .serviceCode("SCALING_L1")
+                                .serviceName("Cạo vôi răng & Đánh bóng - Mức 1")
+                                .description("Làm sạch vôi răng và mảng bám mức độ ít/trung bình.")
+                                .defaultDurationMinutes(45)
+                                .defaultBufferMinutes(15)
+                                .price(new BigDecimal("300000"))
+                                .specializationId(null)
+                                .specializationName(null)
+                                .isActive(false) // Toggled to inactive
+                                .createdAt(LocalDateTime.now())
+                                .updatedAt(LocalDateTime.now())
+                                .build();
+
+                when(serviceService.toggleServiceStatus(1)).thenReturn(toggledService);
+
+                // When & Then
+                mockMvc.perform(patch("/api/v1/services/{serviceId}/toggle", 1)
+                                .with(csrf())
+                                .contentType(MediaType.APPLICATION_JSON))
+                                .andDo(print())
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.serviceId", is(1)))
+                                .andExpect(jsonPath("$.isActive", is(false)))
+                                .andExpect(jsonPath("$.serviceCode", is("SCALING_L1")));
+
+                verify(serviceService, times(1)).toggleServiceStatus(1);
         }
 
         @Test

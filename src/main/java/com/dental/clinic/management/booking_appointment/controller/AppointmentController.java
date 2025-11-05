@@ -1,18 +1,27 @@
 package com.dental.clinic.management.booking_appointment.controller;
 
+import com.dental.clinic.management.booking_appointment.dto.AppointmentFilterCriteria;
+import com.dental.clinic.management.booking_appointment.dto.AppointmentSummaryDTO;
 import com.dental.clinic.management.booking_appointment.dto.CreateAppointmentRequest;
 import com.dental.clinic.management.booking_appointment.dto.CreateAppointmentResponse;
+import com.dental.clinic.management.booking_appointment.dto.DatePreset;
 import com.dental.clinic.management.booking_appointment.dto.request.AvailableTimesRequest;
 import com.dental.clinic.management.booking_appointment.dto.response.AvailableTimesResponse;
 import com.dental.clinic.management.booking_appointment.service.AppointmentAvailabilityService;
 import com.dental.clinic.management.booking_appointment.service.AppointmentCreationService;
+import com.dental.clinic.management.booking_appointment.service.AppointmentListService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+import java.util.List;
 
 /**
  * REST Controller for Appointment Management APIs
@@ -27,6 +36,7 @@ public class AppointmentController {
 
     private final AppointmentAvailabilityService availabilityService;
     private final AppointmentCreationService creationService;
+    private final AppointmentListService listService;
 
     /**
      * P3.1: Find Available Time Slots
@@ -89,6 +99,90 @@ public class AppointmentController {
         CreateAppointmentResponse response = creationService.createAppointment(request);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    /**
+     * P3.3: Get Appointment List (Dashboard View)
+     *
+     * GET /api/v1/appointments
+     *
+     * Authorization & RBAC Logic:
+     * - Users with VIEW_APPOINTMENT_ALL (Receptionist/Admin):
+     * Can see all appointments, use all filters freely
+     *
+     * - Users with VIEW_APPOINTMENT_OWN (Doctor/Patient):
+     * Filters are OVERRIDDEN:
+     * - Patients: See only their own appointments
+     * - Doctors: See appointments where they are primary doctor OR participant
+     *
+     * Query Parameters:
+     * - page (default: 0): Page number
+     * - size (default: 10): Items per page
+     * - sortBy (default: appointmentStartTime): Sort field
+     * - sortDirection (default: ASC): Sort direction
+     * - datePreset (TODAY, THIS_WEEK, NEXT_7_DAYS, THIS_MONTH): Quick date filter
+     * - dateFrom (YYYY-MM-DD): Filter from date (inclusive)
+     * - dateTo (YYYY-MM-DD): Filter to date (inclusive)
+     * - today (boolean): Quick filter for today's appointments (DEPRECATED, use
+     * datePreset=TODAY)
+     * - status (array): Filter by status (SCHEDULED, CHECKED_IN, etc.)
+     * - patientCode (string): Filter by patient code (VIEW_ALL only)
+     * - patientName (string): Search by patient name (VIEW_ALL only)
+     * - patientPhone (string): Search by patient phone (VIEW_ALL only)
+     * - employeeCode (string): Filter by doctor code (VIEW_ALL only)
+     * - roomCode (string): Filter by room code
+     * - serviceCode (string): Filter by service code
+     *
+     * @return Paginated list of appointments with nested
+     *         patient/doctor/room/services/participants
+     */
+    @GetMapping
+    @PreAuthorize("hasAnyAuthority('VIEW_APPOINTMENT_ALL', 'VIEW_APPOINTMENT_OWN')")
+    public ResponseEntity<Page<AppointmentSummaryDTO>> getAppointments(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "appointmentStartTime") String sortBy,
+            @RequestParam(defaultValue = "ASC") String sortDirection,
+
+            // Date filters
+            @RequestParam(required = false) DatePreset datePreset,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFrom,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo,
+            @RequestParam(required = false) Boolean today,
+
+            // Status filter (can be multiple)
+            @RequestParam(required = false) List<String> status,
+
+            // Entity filters
+            @RequestParam(required = false) String patientCode,
+            @RequestParam(required = false) String patientName,
+            @RequestParam(required = false) String patientPhone,
+            @RequestParam(required = false) String employeeCode,
+            @RequestParam(required = false) String roomCode,
+            @RequestParam(required = false) String serviceCode) {
+
+        log.info("Fetching appointments: page={}, size={}, datePreset={}, dateFrom={}, dateTo={}, today={}, status={}",
+                page, size, datePreset, dateFrom, dateTo, today, status);
+
+        // Build filter criteria
+        AppointmentFilterCriteria criteria = AppointmentFilterCriteria.builder()
+                .datePreset(datePreset)
+                .dateFrom(dateFrom)
+                .dateTo(dateTo)
+                .today(today)
+                .status(status)
+                .patientCode(patientCode)
+                .patientName(patientName)
+                .patientPhone(patientPhone)
+                .employeeCode(employeeCode)
+                .roomCode(roomCode)
+                .serviceCode(serviceCode)
+                .build();
+
+        Page<AppointmentSummaryDTO> appointments = listService.getAppointments(
+                criteria, page, size, sortBy, sortDirection);
+
+        return ResponseEntity.ok(appointments);
     }
 
 }

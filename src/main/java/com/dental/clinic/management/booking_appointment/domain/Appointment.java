@@ -69,7 +69,7 @@ public class Appointment {
     private Integer expectedDurationMinutes;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, columnDefinition = "appointment_status_enum")
+    @Column(name = "status", nullable = false)
     private AppointmentStatus status = AppointmentStatus.SCHEDULED;
 
     @Column(name = "actual_start_time")
