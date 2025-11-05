@@ -33,12 +33,34 @@ public interface PartTimeSlotRepository extends JpaRepository<PartTimeSlot, Long
        List<PartTimeSlot> findByDayOfWeekAndIsActiveTrue(@Param("dayOfWeek") String dayOfWeek);
 
        /**
-        * Count active registrations for a slot (Schema V14 - part_time_registrations).
-        * Used to check quota before allowing new registrations.
+        * Count active registrations for a slot.
+        * 
+        * NEW SPECIFICATION: Only count APPROVED registrations.
+        * PENDING and REJECTED registrations do NOT count toward quota.
+        * 
+        * @deprecated Use countApprovedRegistrations() for accurate quota counting.
         */
+       @Deprecated
        @Query("SELECT COUNT(r) FROM PartTimeRegistration r " +
                      "WHERE r.partTimeSlotId = :slotId AND r.isActive = true")
        long countActiveRegistrations(@Param("slotId") Long slotId);
+       
+       /**
+        * NEW: Count approved registrations for a slot.
+        * This is the correct method for checking quota availability.
+        * 
+        * Only APPROVED registrations count toward quota.
+        * PENDING requests are still waiting for approval.
+        * REJECTED requests don't take up quota.
+        * 
+        * @param slotId The slot ID
+        * @return Number of approved (and active) registrations
+        */
+       @Query("SELECT COUNT(r) FROM PartTimeRegistration r " +
+                     "WHERE r.partTimeSlotId = :slotId " +
+                     "AND r.status = 'APPROVED' " +
+                     "AND r.isActive = true")
+       long countApprovedRegistrations(@Param("slotId") Long slotId);
 
        /**
         * Check if a work shift is being used by any part-time slots.

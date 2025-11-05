@@ -7,20 +7,56 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 
+/**
+ * Response DTO for part-time registrations.
+ * 
+ * NEW SPECIFICATION: Includes approval workflow fields.
+ */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class RegistrationResponse {
 
-    private Integer registrationId; // Changed from String to Integer (Schema V14 - part_time_registrations uses
-                                    // SERIAL)
+    private Integer registrationId;
     private Integer employeeId;
     private Long partTimeSlotId;
     private String workShiftId;
-    private String workShiftName;
+    private String shiftName; // More intuitive field name
     private String dayOfWeek;
     private LocalDate effectiveFrom;
     private LocalDate effectiveTo;
-    private Boolean isActive;
+    
+    /**
+     * Registration status: PENDING, APPROVED, REJECTED
+     */
+    private String status;
+    
+    /**
+     * The dates based on status:
+     * - PENDING: Requested dates awaiting approval
+     * - APPROVED: Accepted dates for work
+     * - REJECTED: Dates that were rejected
+     */
+    private java.util.List<LocalDate> dates;
+    
+    /**
+     * Rejection reason (only present if status = REJECTED)
+     */
+    private String reason;
+    
+    /**
+     * Manager name who processed this registration
+     */
+    private String processedBy;
+    
+    /**
+     * When the registration was processed
+     */
+    private String processedAt;
+    
+    /**
+     * When the registration was created
+     */
+    private String createdAt;
 }
