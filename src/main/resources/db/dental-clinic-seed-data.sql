@@ -1182,68 +1182,69 @@ SELECT setval('fixed_shift_registrations_registration_id_seq',
 
 -- STEP 1: Create Part-Time Slots (Admin creates available slots)
 -- Week schedule with varied quotas
+-- BE-403: Added effective_from, effective_to for dynamic quota system
 
 -- MONDAY Slots
 INSERT INTO part_time_slots (
-    slot_id, work_shift_id, day_of_week, quota, is_active, created_at
+    slot_id, work_shift_id, day_of_week, quota, is_active, effective_from, effective_to, created_at
 )
 VALUES
-(1, 'WKS_MORNING_02', 'MONDAY', 2, TRUE, NOW()),
-(2, 'WKS_AFTERNOON_02', 'MONDAY', 3, TRUE, NOW())
+(1, 'WKS_MORNING_02', 'MONDAY', 2, TRUE, '2025-11-04', '2026-02-04', NOW()),
+(2, 'WKS_AFTERNOON_02', 'MONDAY', 3, TRUE, '2025-11-04', '2026-02-04', NOW())
 ON CONFLICT (slot_id) DO NOTHING;
 
 -- TUESDAY Slots
 INSERT INTO part_time_slots (
-    slot_id, work_shift_id, day_of_week, quota, is_active, created_at
+    slot_id, work_shift_id, day_of_week, quota, is_active, effective_from, effective_to, created_at
 )
 VALUES
-(3, 'WKS_MORNING_02', 'TUESDAY', 2, TRUE, NOW()),
-(4, 'WKS_AFTERNOON_02', 'TUESDAY', 2, TRUE, NOW())
+(3, 'WKS_MORNING_02', 'TUESDAY', 2, TRUE, '2025-11-04', '2026-02-04', NOW()),
+(4, 'WKS_AFTERNOON_02', 'TUESDAY', 2, TRUE, '2025-11-04', '2026-02-04', NOW())
 ON CONFLICT (slot_id) DO NOTHING;
 
 -- WEDNESDAY Slots
 INSERT INTO part_time_slots (
-    slot_id, work_shift_id, day_of_week, quota, is_active, created_at
+    slot_id, work_shift_id, day_of_week, quota, is_active, effective_from, effective_to, created_at
 )
 VALUES
-(5, 'WKS_MORNING_02', 'WEDNESDAY', 3, TRUE, NOW()),
-(6, 'WKS_AFTERNOON_02', 'WEDNESDAY', 2, TRUE, NOW())
+(5, 'WKS_MORNING_02', 'WEDNESDAY', 3, TRUE, '2025-11-04', '2026-02-04', NOW()),
+(6, 'WKS_AFTERNOON_02', 'WEDNESDAY', 2, TRUE, '2025-11-04', '2026-02-04', NOW())
 ON CONFLICT (slot_id) DO NOTHING;
 
 -- THURSDAY Slots
 INSERT INTO part_time_slots (
-    slot_id, work_shift_id, day_of_week, quota, is_active, created_at
+    slot_id, work_shift_id, day_of_week, quota, is_active, effective_from, effective_to, created_at
 )
 VALUES
-(7, 'WKS_MORNING_02', 'THURSDAY', 2, TRUE, NOW()),
-(8, 'WKS_AFTERNOON_02', 'THURSDAY', 3, TRUE, NOW())
+(7, 'WKS_MORNING_02', 'THURSDAY', 2, TRUE, '2025-11-04', '2026-02-04', NOW()),
+(8, 'WKS_AFTERNOON_02', 'THURSDAY', 3, TRUE, '2025-11-04', '2026-02-04', NOW())
 ON CONFLICT (slot_id) DO NOTHING;
 
 -- FRIDAY Slots
 INSERT INTO part_time_slots (
-    slot_id, work_shift_id, day_of_week, quota, is_active, created_at
+    slot_id, work_shift_id, day_of_week, quota, is_active, effective_from, effective_to, created_at
 )
 VALUES
-(9, 'WKS_MORNING_02', 'FRIDAY', 2, TRUE, NOW()),
-(10, 'WKS_AFTERNOON_02', 'FRIDAY', 2, TRUE, NOW())
+(9, 'WKS_MORNING_02', 'FRIDAY', 2, TRUE, '2025-11-04', '2026-02-04', NOW()),
+(10, 'WKS_AFTERNOON_02', 'FRIDAY', 2, TRUE, '2025-11-04', '2026-02-04', NOW())
 ON CONFLICT (slot_id) DO NOTHING;
 
 -- SATURDAY Slots (Higher quota for weekend)
 INSERT INTO part_time_slots (
-    slot_id, work_shift_id, day_of_week, quota, is_active, created_at
+    slot_id, work_shift_id, day_of_week, quota, is_active, effective_from, effective_to, created_at
 )
 VALUES
-(11, 'WKS_MORNING_02', 'SATURDAY', 3, TRUE, NOW()),
-(12, 'WKS_AFTERNOON_02', 'SATURDAY', 3, TRUE, NOW())
+(11, 'WKS_MORNING_02', 'SATURDAY', 3, TRUE, '2025-11-04', '2026-02-04', NOW()),
+(12, 'WKS_AFTERNOON_02', 'SATURDAY', 3, TRUE, '2025-11-04', '2026-02-04', NOW())
 ON CONFLICT (slot_id) DO NOTHING;
 
 -- SUNDAY Slots (Limited availability)
 INSERT INTO part_time_slots (
-    slot_id, work_shift_id, day_of_week, quota, is_active, created_at
+    slot_id, work_shift_id, day_of_week, quota, is_active, effective_from, effective_to, created_at
 )
 VALUES
-(13, 'WKS_MORNING_02', 'SUNDAY', 1, TRUE, NOW()),
-(14, 'WKS_AFTERNOON_02', 'SUNDAY', 1, FALSE, NOW()) -- Inactive slot for testing
+(13, 'WKS_MORNING_02', 'SUNDAY', 1, TRUE, '2025-11-04', '2026-02-04', NOW()),
+(14, 'WKS_AFTERNOON_02', 'SUNDAY', 1, FALSE, '2025-11-04', '2026-02-04', NOW()) -- Inactive slot for testing
 ON CONFLICT (slot_id) DO NOTHING;
 
 -- Reset sequence after manual inserts with explicit IDs
@@ -1256,37 +1257,34 @@ SELECT setval('part_time_slots_slot_id_seq',
 -- NOTE: Using slot_id=1 (MONDAY morning, quota=2) for "full slot" test scenario
 -- It will have 2 registrations to make it full
 
--- STEP 2: Part-Time Registrations (Schema V14 - Luồng 2: part_time_registrations)
--- Employees claim slots in the NEW table
+-- STEP 2: Part-Time Registrations (BE-403: Dynamic Quota System)
+-- ============================================
+-- IMPORTANT: New Registration Flow (Updated for dayOfWeek API)
+-- ============================================
+-- Part-time registrations are now created through the API endpoint:
+-- POST /api/v1/registrations/part-time
+-- with body: {"partTimeSlotId": X, "effectiveFrom": "...", "effectiveTo": "...", "dayOfWeek": ["MONDAY", "THURSDAY"]}
+-- 
+-- The system will:
+-- 1. Calculate all dates matching the dayOfWeek within the date range
+-- 2. Check availability (quota) for each date
+-- 3. Create PENDING registration with only available dates
+-- 4. Manager approves/rejects via: PATCH /api/v1/admin/registrations/part-time/{id}/status
+--
+-- DO NOT manually insert APPROVED registrations - this bypasses quota validation!
+-- Use the API endpoints to ensure proper quota enforcement.
+-- ============================================
 
--- Nurse Linh (employee_id=8, PART_TIME_FLEX) claims multiple slots
+-- Example: To create test data, use API calls or create PENDING registrations and approve them properly
+-- Uncomment below if you need sample registrations for testing (but prefer API usage):
 
--- Linh claims TUESDAY Morning (slot_id=3)
-INSERT INTO part_time_registrations (
-    employee_id, part_time_slot_id,
-    effective_from, effective_to, is_active, created_at, updated_at
-)
-VALUES
-(8, 3, '2025-11-01', '2026-02-01', TRUE, NOW(), NOW());
+-- Nurse Linh (employee_id=8, PART_TIME_FLEX) - NO PRE-SEEDED REGISTRATIONS
+-- Users should create registrations via API to test the new dayOfWeek flow
 
--- Linh claims THURSDAY Afternoon (slot_id=8)
-INSERT INTO part_time_registrations (
-    employee_id, part_time_slot_id,
-    effective_from, effective_to, is_active, created_at, updated_at
-)
-VALUES
-(8, 8, '2025-11-01', '2026-02-01', TRUE, NOW(), NOW());
+-- Additional PART_TIME_FLEX employees for testing
+-- These employees have NO pre-seeded registrations - use API to create registrations for testing
 
--- Linh claims SATURDAY Morning (slot_id=11)
-INSERT INTO part_time_registrations (
-    employee_id, part_time_slot_id,
-    effective_from, effective_to, is_active, created_at, updated_at
-)
-VALUES
-(8, 11, '2025-11-01', '2026-02-01', TRUE, NOW(), NOW());
-
--- Additional PART_TIME_FLEX employees for testing (create temporary test employees)
--- Test Employee 10: PART_TIME_FLEX
+-- Test Employee 10: PART_TIME_FLEX (for multi-employee quota testing)
 INSERT INTO accounts (account_id, username, password, email, status, role_id, created_at)
 VALUES
 (20, 'yta10', '$2a$10$RI1iV7k4XJFBWpQUCr.5L.ufNjjXlqvP0z1XrTiT8bKvYpHEtUQ8O', 'yta10@test.com', 'ACTIVE', 'ROLE_NURSE', NOW())
@@ -1308,54 +1306,13 @@ VALUES
 (11, 21, 'EMP011', 'Hương', 'Phạm Thị', '0901111111', '1999-05-20', '321 Lê Lợi, Q1, TPHCM', 'PART_TIME_FLEX', TRUE, NOW())
 ON CONFLICT (employee_id) DO NOTHING;
 
--- Employee 10 (Minh) claims MONDAY Afternoon (slot_id=2)
-INSERT INTO part_time_registrations (
-    employee_id, part_time_slot_id,
-    effective_from, effective_to, is_active, created_at, updated_at
-)
-VALUES
-(10, 2, '2025-11-01', '2026-02-01', TRUE, NOW(), NOW());
-
--- Employee 10 (Minh) claims WEDNESDAY Morning (slot_id=5)
-INSERT INTO part_time_registrations (
-    employee_id, part_time_slot_id,
-    effective_from, effective_to, is_active, created_at, updated_at
-)
-VALUES
-(10, 5, '2025-11-01', '2026-02-01', TRUE, NOW(), NOW());
-
--- Employee 10 (Minh) claims MONDAY Morning (slot_id=1, quota=2) - First registration (1/2)
-INSERT INTO part_time_registrations (
-    employee_id, part_time_slot_id,
-    effective_from, effective_to, is_active, created_at, updated_at
-)
-VALUES
-(10, 1, '2025-11-01', '2026-02-01', TRUE, NOW(), NOW());
-
--- Employee 11 (Huong) claims MONDAY Morning slot (slot_id=1, quota=2) - Makes it FULL (2/2)
-INSERT INTO part_time_registrations (
-    employee_id, part_time_slot_id,
-    effective_from, effective_to, is_active, created_at, updated_at
-)
-VALUES
-(11, 1, '2025-11-01', '2026-02-01', TRUE, NOW(), NOW());
-
--- Employee 11 (Huong) also claims FRIDAY Morning (slot_id=9)
-INSERT INTO part_time_registrations (
-    employee_id, part_time_slot_id,
-    effective_from, effective_to, is_active, created_at, updated_at
-)
-VALUES
-(11, 9, '2025-11-01', '2026-02-01', TRUE, NOW(), NOW());
-
--- Cancelled registration example (Linh cancels SUNDAY)
--- First claim SUNDAY Morning (slot_id=13)
-INSERT INTO part_time_registrations (
-    employee_id, part_time_slot_id,
-    effective_from, effective_to, is_active, created_at, updated_at
-)
-VALUES
-(8, 13, '2025-11-01', '2025-11-15', FALSE, NOW(), NOW()); -- Cancelled (is_active=false)
+-- ============================================
+-- NO LEGACY REGISTRATIONS - Clean slate for testing new API flow
+-- ============================================
+-- All part-time registrations should be created via API endpoints:
+-- 1. Employee creates: POST /api/v1/registrations/part-time with dayOfWeek
+-- 2. Manager approves: PATCH /api/v1/admin/registrations/part-time/{id}/status
+-- This ensures proper quota validation and per-day tracking
 
 -- ============================================
 -- RESET ALL SEQUENCES AFTER MANUAL INSERTS
