@@ -240,7 +240,7 @@ public class AppointmentController {
          * PATCH /api/v1/appointments/{appointmentCode}/status
          *
          * This is the MOST CRITICAL API for daily clinic operations.
-         * 
+         *
          * Features:
          * - Pessimistic locking (SELECT FOR UPDATE) to prevent race conditions
          * - State machine validation with clear transition rules
@@ -260,15 +260,30 @@ public class AppointmentController {
          *
          * Request Body Examples:
          * - Check-in: {"status": "CHECKED_IN", "notes": "Đến trễ 10 phút"}
-         * - Cancel: {"status": "CANCELLED", "reasonCode": "PATIENT_REQUEST", "notes": "Bận đột xuất"}
+         * - Cancel: {"status": "CANCELLED", "reasonCode": "PATIENT_REQUEST", "notes":
+         * "Bận đột xuất"}
          * - No-show: {"status": "NO_SHOW", "notes": "Gọi 3 cuộc không nghe máy"}
          *
          * @param appointmentCode Unique appointment code
-         * @param request Status update request with status, reasonCode (for CANCELLED), notes
-         * @return 200 OK with updated appointment details (same structure as GET detail)
-         * @throws com.dental.clinic.management.exception.ResourceNotFoundException 404 if not found
-         * @throws com.dental.clinic.management.exception.BusinessException 409 if invalid state transition
-         * @throws com.dental.clinic.management.exception.BusinessException 400 if reasonCode missing for CANCELLED
+         * @param request         Status update request with status, reasonCode (for
+         *                        CANCELLED), notes
+         * @return 200 OK with updated appointment details (same structure as GET
+         *         detail)
+         * @throws com.dental.clinic.management.exception.ResourceNotFoundException 404
+         *                                                                          if
+         *                                                                          not
+         *                                                                          found
+         * @throws com.dental.clinic.management.exception.BusinessException         409
+         *                                                                          if
+         *                                                                          invalid
+         *                                                                          state
+         *                                                                          transition
+         * @throws com.dental.clinic.management.exception.BusinessException         400
+         *                                                                          if
+         *                                                                          reasonCode
+         *                                                                          missing
+         *                                                                          for
+         *                                                                          CANCELLED
          */
         @PatchMapping("/{appointmentCode}/status")
         @PreAuthorize("hasAuthority('UPDATE_APPOINTMENT_STATUS')")

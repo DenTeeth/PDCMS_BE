@@ -1286,7 +1286,7 @@ SELECT setval('part_time_slots_slot_id_seq',
 -- Part-time registrations are now created through the API endpoint:
 -- POST /api/v1/registrations/part-time
 -- with body: {"partTimeSlotId": X, "effectiveFrom": "...", "effectiveTo": "...", "dayOfWeek": ["MONDAY", "THURSDAY"]}
--- 
+--
 -- The system will:
 -- 1. Calculate all dates matching the dayOfWeek within the date range
 -- 2. Check availability (quota) for each date

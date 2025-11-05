@@ -7,7 +7,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Request DTO for updating appointment status (Check-in, In-Progress, Completed, Cancelled, No-Show).
+ * Request DTO for updating appointment status (Check-in, In-Progress,
+ * Completed, Cancelled, No-Show).
  * This is the most critical API for daily operations.
  */
 @Data

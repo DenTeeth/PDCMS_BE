@@ -103,8 +103,9 @@ public class AppointmentDetailService {
      * RBAC Logic:
      * - VIEW_APPOINTMENT_ALL: Can view any appointment
      * - VIEW_APPOINTMENT_OWN:
-     *   * Employee roles (DENTIST, NURSE, etc.): Check if user is doctor OR participant
-     *   * Patient role: Check if appointment.patientId == user's patientId
+     * * Employee roles (DENTIST, NURSE, etc.): Check if user is doctor OR
+     * participant
+     * * Patient role: Check if appointment.patientId == user's patientId
      *
      * @throws AccessDeniedException if user doesn't have permission
      */
@@ -149,10 +150,10 @@ public class AppointmentDetailService {
                 .anyMatch(grantedAuth -> {
                     String authority = grantedAuth.getAuthority();
                     return authority.equals("ROLE_DENTIST") ||
-                           authority.equals("ROLE_NURSE") ||
-                           authority.equals("ROLE_DENTIST_INTERN") ||
-                           authority.equals("ROLE_RECEPTIONIST") ||
-                           authority.equals("ROLE_MANAGER");
+                            authority.equals("ROLE_NURSE") ||
+                            authority.equals("ROLE_DENTIST_INTERN") ||
+                            authority.equals("ROLE_RECEPTIONIST") ||
+                            authority.equals("ROLE_MANAGER");
                 });
 
         if (isEmployeeRole) {
@@ -178,10 +179,12 @@ public class AppointmentDetailService {
             }
         } else {
             // Assume patient role - check if they own this appointment
-            // Note: For now, we skip patient check since Patient table doesn't have account_id mapping
+            // Note: For now, we skip patient check since Patient table doesn't have
+            // account_id mapping
             // In a real system, you'd need Patient.findByAccount_Username() or similar
             log.debug("Patient role detected - allowing access (patient validation not implemented)");
-            // TODO: Implement patient ownership check when Patient-Account mapping is available
+            // TODO: Implement patient ownership check when Patient-Account mapping is
+            // available
         }
 
         log.debug("RBAC check passed - access granted");

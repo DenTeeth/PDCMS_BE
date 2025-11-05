@@ -30,10 +30,11 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
         /**
          * Find appointment by code with PESSIMISTIC WRITE LOCK (SELECT ... FOR UPDATE)
          * CRITICAL: Use this method for status updates to prevent race conditions.
-         * 
-         * Use case: Two receptionists trying to check-in the same appointment simultaneously.
+         *
+         * Use case: Two receptionists trying to check-in the same appointment
+         * simultaneously.
          * Solution: First transaction locks the row, second waits until first commits.
-         * 
+         *
          * @param appointmentCode Unique appointment code
          * @return Locked appointment entity
          */

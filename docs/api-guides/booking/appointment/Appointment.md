@@ -6,13 +6,13 @@ Permissions: CREATE_APPOINTMENT, VIEW_APPOINTMENT_ALL, VIEW_APPOINTMENT_OWN
 
 ## 📋 API SUMMARY
 
-| Endpoint                        | Method | Permission                                     | Description                       |
-| ------------------------------- | ------ | ---------------------------------------------- | --------------------------------- |
-| `/available-times`              | GET    | CREATE_APPOINTMENT                             | Tìm slot trống cho lịch hẹn       |
-| `/`                             | POST   | CREATE_APPOINTMENT                             | Tạo lịch hẹn mới                  |
-| `/`                             | GET    | VIEW_APPOINTMENT_ALL hoặc VIEW_APPOINTMENT_OWN | Dashboard - Danh sách lịch hẹn    |
-| `/{appointmentCode}`            | GET    | VIEW_APPOINTMENT_ALL hoặc VIEW_APPOINTMENT_OWN | Chi tiết lịch hẹn                 |
-| `/{appointmentCode}/status`     | PATCH  | UPDATE_APPOINTMENT_STATUS                      | Cập nhật trạng thái lịch hẹn ⭐  |
+| Endpoint                    | Method | Permission                                     | Description                     |
+| --------------------------- | ------ | ---------------------------------------------- | ------------------------------- |
+| `/available-times`          | GET    | CREATE_APPOINTMENT                             | Tìm slot trống cho lịch hẹn     |
+| `/`                         | POST   | CREATE_APPOINTMENT                             | Tạo lịch hẹn mới                |
+| `/`                         | GET    | VIEW_APPOINTMENT_ALL hoặc VIEW_APPOINTMENT_OWN | Dashboard - Danh sách lịch hẹn  |
+| `/{appointmentCode}`        | GET    | VIEW_APPOINTMENT_ALL hoặc VIEW_APPOINTMENT_OWN | Chi tiết lịch hẹn               |
+| `/{appointmentCode}/status` | PATCH  | UPDATE_APPOINTMENT_STATUS                      | Cập nhật trạng thái lịch hẹn ⭐ |
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 GET AVAILABLE TIMES
@@ -903,7 +903,7 @@ IMPLEMENTATION NOTES (P3.4)
 
    - Token PHẢI chứa: account_id, base_role, patient_id (if patient), employee_id (if employee)
    - AccessDeniedException → Spring Security tự động trả về 403
-The AT command has been deprecated. Please use schtasks.exe instead.
+     The AT command has been deprecated. Please use schtasks.exe instead.
 
 The request is not supported.
 
@@ -917,6 +917,7 @@ Endpoint:
 PATCH /api/v1/appointments/{appointmentCode}/status
 
 Permission:
+
 - UPDATE_APPOINTMENT_STATUS
 
 Description:
@@ -1007,6 +1008,7 @@ Request Body (Case 5: Bệnh nhân không đến):
 ```
 
 Request Fields:
+
 - status (String Required) - CHECKED_IN | IN_PROGRESS | COMPLETED | CANCELLED | NO_SHOW
 - reasonCode (String) - Bắt buộc khi status=CANCELLED (VD: PATIENT_REQUEST, DOCTOR_UNAVAILABLE)
 - notes (String Optional) - Ghi chú thêm
@@ -1112,6 +1114,7 @@ Authorization: Bearer {{receptionist_token}}
 ```
 
 **Expected**: 200 OK
+
 - status = "CHECKED_IN"
 - actualStartTime = null (Chưa vào ghế)
 - actualEndTime = null
@@ -1133,6 +1136,7 @@ Authorization: Bearer {{doctor_token}}
 ```
 
 **Expected**: 200 OK
+
 - status = "IN_PROGRESS"
 - actualStartTime = "2025-11-04T09:05:00" (NOW - Thời điểm gọi API)
 - actualEndTime = null
@@ -1154,11 +1158,13 @@ Authorization: Bearer {{doctor_token}}
 ```
 
 **Expected**: 200 OK
+
 - status = "COMPLETED"
 - actualStartTime = "2025-11-04T09:05:00" (Từ step trước)
 - actualEndTime = "2025-11-04T09:50:00" (NOW - Thời điểm gọi API)
 
 **Business Metrics**:
+
 - Patient Wait Time = actualStartTime - (CHECKED_IN time)
 - Treatment Duration = actualEndTime - actualStartTime
 
@@ -1178,6 +1184,7 @@ Authorization: Bearer {{receptionist_token}}
 ```
 
 **Expected**: 200 OK
+
 - status = "CANCELLED"
 - cancellationReason = "PATIENT_REQUEST: Bệnh nhân gọi điện báo bận đột xuất"
 
@@ -1198,6 +1205,7 @@ Authorization: Bearer {{receptionist_token}}
 ```
 
 **Expected**: 200 OK
+
 - status = "NO_SHOW"
 
 **Use case**: Quá giờ hẹn 15 phút, lễ tân đánh dấu không đến.
@@ -1303,6 +1311,7 @@ Authorization: Bearer {{receptionist_token}}
 ```
 
 **Expected**: 200 OK
+
 - status = "CANCELLED"
 - cancellationReason = "PATIENT_REQUEST: Bệnh nhân đến rồi nhưng không muốn khám nữa"
 
@@ -1324,6 +1333,7 @@ Authorization: Bearer {{doctor_token}}
 ```
 
 **Expected**: 200 OK
+
 - status = "CANCELLED"
 - actualStartTime = "2025-11-04T09:05:00" (Vẫn giữ)
 - actualEndTime = null (Chưa hoàn thành)
@@ -1336,7 +1346,7 @@ IMPLEMENTATION NOTES (P3.5)
 
 1. SELECT FOR UPDATE (Pessimistic Locking)
 
-   - Query: SELECT * FROM appointments WHERE appointment_code = ? FOR UPDATE
+   - Query: SELECT \* FROM appointments WHERE appointment_code = ? FOR UPDATE
    - JPA: @Lock(LockModeType.PESSIMISTIC_WRITE)
    - Purpose: Ngăn 2 lễ tân/bác sĩ cùng update status một lúc
    - Transaction: MUST use @Transactional
@@ -1351,18 +1361,22 @@ IMPLEMENTATION NOTES (P3.5)
 3. Timestamp Update Logic (CRITICAL)
 
    CHECKED_IN (Lễ tân):
+
    - ❌ KHÔNG cập nhật actual_start_time
    - ✅ Bệnh nhân chỉ đến phòng chờ, chưa vào ghế
 
    IN_PROGRESS (Bác sĩ):
+
    - ✅ CẬP NHẬT actual_start_time = NOW()
    - ✅ Bắt đầu điều trị thực sự
 
    COMPLETED:
+
    - ✅ CẬP NHẬT actual_end_time = NOW()
    - ✅ Kết thúc điều trị
 
    Business Value:
+
    - Patient Wait Time = actual_start_time - (CHECKED_IN timestamp from audit log)
    - Treatment Duration = actual_end_time - actual_start_time
    - Chair Utilization = Treatment Duration / Expected Duration

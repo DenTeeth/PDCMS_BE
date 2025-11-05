@@ -27,7 +27,8 @@ import java.util.*;
  *
  * Features:
  * - Pessimistic locking (SELECT FOR UPDATE) to prevent race conditions
- * - State machine validation (SCHEDULED -> CHECKED_IN -> IN_PROGRESS -> COMPLETED)
+ * - State machine validation (SCHEDULED -> CHECKED_IN -> IN_PROGRESS ->
+ * COMPLETED)
  * - Auto-update actualStartTime/actualEndTime based on status transitions
  * - Comprehensive audit logging for compliance
  * - Business rule validation (e.g., CANCELLED requires reasonCode)
@@ -84,7 +85,8 @@ public class AppointmentStatusService {
      * @param request         Status update request
      * @return Updated appointment detail DTO (same as API 3.4)
      * @throws ResourceNotFoundException If appointment not found
-     * @throws BusinessException         If state transition invalid or business rule violated
+     * @throws BusinessException         If state transition invalid or business
+     *                                   rule violated
      */
     @Transactional
     public AppointmentDetailDTO updateStatus(String appointmentCode, UpdateAppointmentStatusRequest request) {
