@@ -1,15 +1,19 @@
 package com.dental.clinic.management.booking_appointment.controller;
 
+import com.dental.clinic.management.booking_appointment.dto.AppointmentDetailDTO;
 import com.dental.clinic.management.booking_appointment.dto.AppointmentFilterCriteria;
 import com.dental.clinic.management.booking_appointment.dto.AppointmentSummaryDTO;
 import com.dental.clinic.management.booking_appointment.dto.CreateAppointmentRequest;
 import com.dental.clinic.management.booking_appointment.dto.CreateAppointmentResponse;
 import com.dental.clinic.management.booking_appointment.dto.DatePreset;
+import com.dental.clinic.management.booking_appointment.dto.UpdateAppointmentStatusRequest;
 import com.dental.clinic.management.booking_appointment.dto.request.AvailableTimesRequest;
 import com.dental.clinic.management.booking_appointment.dto.response.AvailableTimesResponse;
 import com.dental.clinic.management.booking_appointment.service.AppointmentAvailabilityService;
 import com.dental.clinic.management.booking_appointment.service.AppointmentCreationService;
+import com.dental.clinic.management.booking_appointment.service.AppointmentDetailService;
 import com.dental.clinic.management.booking_appointment.service.AppointmentListService;
+import com.dental.clinic.management.booking_appointment.service.AppointmentStatusService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,155 +38,264 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AppointmentController {
 
-    private final AppointmentAvailabilityService availabilityService;
-    private final AppointmentCreationService creationService;
-    private final AppointmentListService listService;
+        private final AppointmentAvailabilityService availabilityService;
+        private final AppointmentCreationService creationService;
+        private final AppointmentListService listService;
+        private final AppointmentDetailService detailService;
+        private final AppointmentStatusService statusService;
 
-    /**
-     * P3.1: Find Available Time Slots
-     *
-     * GET /api/v1/appointments/available-times
-     *
-     * Business Logic:
-     * 1. Validate date (not in past)
-     * 2. Validate employee, services, participants exist and active
-     * 3. Calculate total duration (sum of service durations + buffers)
-     * 4. Check doctor specialization
-     * 5. Filter compatible rooms (room_services V16)
-     * 6. Find intersection of available time (doctor + assistants + rooms)
-     * 7. Split into slots and return with available rooms
-     *
-     * @param request Query parameters with date, employeeCode, serviceCodes,
-     *                participantCodes
-     * @return Available time slots with compatible room codes
-     */
-    @GetMapping("/available-times")
-    @PreAuthorize("hasAuthority('CREATE_APPOINTMENT')")
-    public ResponseEntity<AvailableTimesResponse> findAvailableTimes(
-            @Valid @ModelAttribute AvailableTimesRequest request) {
+        /**
+         * P3.1: Find Available Time Slots
+         *
+         * GET /api/v1/appointments/available-times
+         *
+         * Business Logic:
+         * 1. Validate date (not in past)
+         * 2. Validate employee, services, participants exist and active
+         * 3. Calculate total duration (sum of service durations + buffers)
+         * 4. Check doctor specialization
+         * 5. Filter compatible rooms (room_services V16)
+         * 6. Find intersection of available time (doctor + assistants + rooms)
+         * 7. Split into slots and return with available rooms
+         *
+         * @param request Query parameters with date, employeeCode, serviceCodes,
+         *                participantCodes
+         * @return Available time slots with compatible room codes
+         */
+        @GetMapping("/available-times")
+        @PreAuthorize("hasAuthority('CREATE_APPOINTMENT')")
+        public ResponseEntity<AvailableTimesResponse> findAvailableTimes(
+                        @Valid @ModelAttribute AvailableTimesRequest request) {
 
-        log.info("Finding available times for date={}, employeeCode={}, services={}",
-                request.getDate(), request.getEmployeeCode(), request.getServiceCodes());
+                log.info("Finding available times for date={}, employeeCode={}, services={}",
+                                request.getDate(), request.getEmployeeCode(), request.getServiceCodes());
 
-        AvailableTimesResponse response = availabilityService.findAvailableTimes(request);
+                AvailableTimesResponse response = availabilityService.findAvailableTimes(request);
 
-        return ResponseEntity.ok(response);
-    }
+                return ResponseEntity.ok(response);
+        }
 
-    /**
-     * P3.2: Create New Appointment
-     *
-     * POST /api/v1/appointments
-     *
-     * 9-Step Transactional Process:
-     * 1. Get creator from SecurityContext
-     * 2. Validate all resources (patient, doctor, room, services, participants)
-     * 3. Validate doctor specializations
-     * 4. Validate room compatibility (room_services V16)
-     * 5. Calculate duration and end time
-     * 6. Validate doctor and participant shifts
-     * 7. Check conflicts (doctor, room, patient, participants)
-     * 8. Insert appointment + services + participants + audit log
-     * 9. Return response with nested summaries
-     *
-     * @param request Create appointment request body
-     * @return 201 Created with appointment details
-     */
-    @PostMapping
-    @PreAuthorize("hasAuthority('CREATE_APPOINTMENT')")
-    public ResponseEntity<CreateAppointmentResponse> createAppointment(
-            @Valid @RequestBody CreateAppointmentRequest request) {
+        /**
+         * P3.2: Create New Appointment
+         *
+         * POST /api/v1/appointments
+         *
+         * 9-Step Transactional Process:
+         * 1. Get creator from SecurityContext
+         * 2. Validate all resources (patient, doctor, room, services, participants)
+         * 3. Validate doctor specializations
+         * 4. Validate room compatibility (room_services V16)
+         * 5. Calculate duration and end time
+         * 6. Validate doctor and participant shifts
+         * 7. Check conflicts (doctor, room, patient, participants)
+         * 8. Insert appointment + services + participants + audit log
+         * 9. Return response with nested summaries
+         *
+         * @param request Create appointment request body
+         * @return 201 Created with appointment details
+         */
+        @PostMapping
+        @PreAuthorize("hasAuthority('CREATE_APPOINTMENT')")
+        public ResponseEntity<CreateAppointmentResponse> createAppointment(
+                        @Valid @RequestBody CreateAppointmentRequest request) {
 
-        log.info("Creating appointment for patient={}, doctor={}, start={}",
-                request.getPatientCode(), request.getEmployeeCode(), request.getAppointmentStartTime());
+                log.info("Creating appointment for patient={}, doctor={}, start={}",
+                                request.getPatientCode(), request.getEmployeeCode(), request.getAppointmentStartTime());
 
-        CreateAppointmentResponse response = creationService.createAppointment(request);
+                CreateAppointmentResponse response = creationService.createAppointment(request);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
+                return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        }
 
-    /**
-     * P3.3: Get Appointment List (Dashboard View)
-     *
-     * GET /api/v1/appointments
-     *
-     * Authorization & RBAC Logic:
-     * - Users with VIEW_APPOINTMENT_ALL (Receptionist/Admin):
-     * Can see all appointments, use all filters freely
-     *
-     * - Users with VIEW_APPOINTMENT_OWN (Doctor/Patient):
-     * Filters are OVERRIDDEN:
-     * - Patients: See only their own appointments
-     * - Doctors: See appointments where they are primary doctor OR participant
-     *
-     * Query Parameters:
-     * - page (default: 0): Page number
-     * - size (default: 10): Items per page
-     * - sortBy (default: appointmentStartTime): Sort field
-     * - sortDirection (default: ASC): Sort direction
-     * - datePreset (TODAY, THIS_WEEK, NEXT_7_DAYS, THIS_MONTH): Quick date filter
-     * - dateFrom (YYYY-MM-DD): Filter from date (inclusive)
-     * - dateTo (YYYY-MM-DD): Filter to date (inclusive)
-     * - today (boolean): Quick filter for today's appointments (DEPRECATED, use
-     * datePreset=TODAY)
-     * - status (array): Filter by status (SCHEDULED, CHECKED_IN, etc.)
-     * - patientCode (string): Filter by patient code (VIEW_ALL only)
-     * - patientName (string): Search by patient name (VIEW_ALL only)
-     * - patientPhone (string): Search by patient phone (VIEW_ALL only)
-     * - employeeCode (string): Filter by doctor code (VIEW_ALL only)
-     * - roomCode (string): Filter by room code
-     * - serviceCode (string): Filter by service code
-     *
-     * @return Paginated list of appointments with nested
-     *         patient/doctor/room/services/participants
-     */
-    @GetMapping
-    @PreAuthorize("hasAnyAuthority('VIEW_APPOINTMENT_ALL', 'VIEW_APPOINTMENT_OWN')")
-    public ResponseEntity<Page<AppointmentSummaryDTO>> getAppointments(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "appointmentStartTime") String sortBy,
-            @RequestParam(defaultValue = "ASC") String sortDirection,
+        /**
+         * P3.3: Get Appointment List (Dashboard View)
+         *
+         * GET /api/v1/appointments
+         *
+         * Authorization & RBAC Logic:
+         * - Users with VIEW_APPOINTMENT_ALL (Receptionist/Admin):
+         * Can see all appointments, use all filters freely
+         *
+         * - Users with VIEW_APPOINTMENT_OWN (Doctor/Patient):
+         * Filters are OVERRIDDEN:
+         * - Patients: See only their own appointments
+         * - Doctors: See appointments where they are primary doctor OR participant
+         *
+         * Query Parameters:
+         * - page (default: 0): Page number
+         * - size (default: 10): Items per page
+         * - sortBy (default: appointmentStartTime): Sort field
+         * - sortDirection (default: ASC): Sort direction
+         * - datePreset (TODAY, THIS_WEEK, NEXT_7_DAYS, THIS_MONTH): Quick date filter
+         * - dateFrom (YYYY-MM-DD): Filter from date (inclusive)
+         * - dateTo (YYYY-MM-DD): Filter to date (inclusive)
+         * - today (boolean): Quick filter for today's appointments (DEPRECATED, use
+         * datePreset=TODAY)
+         * - status (array): Filter by status (SCHEDULED, CHECKED_IN, etc.)
+         * - patientCode (string): Filter by patient code (VIEW_ALL only)
+         * - patientName (string): Search by patient name (VIEW_ALL only)
+         * - patientPhone (string): Search by patient phone (VIEW_ALL only)
+         * - employeeCode (string): Filter by doctor code (VIEW_ALL only)
+         * - roomCode (string): Filter by room code
+         * - serviceCode (string): Filter by service code
+         *
+         * @return Paginated list of appointments with nested
+         *         patient/doctor/room/services/participants
+         */
+        @GetMapping
+        @PreAuthorize("hasAnyAuthority('VIEW_APPOINTMENT_ALL', 'VIEW_APPOINTMENT_OWN')")
+        public ResponseEntity<Page<AppointmentSummaryDTO>> getAppointments(
+                        @RequestParam(defaultValue = "0") int page,
+                        @RequestParam(defaultValue = "10") int size,
+                        @RequestParam(defaultValue = "appointmentStartTime") String sortBy,
+                        @RequestParam(defaultValue = "ASC") String sortDirection,
 
-            // Date filters
-            @RequestParam(required = false) DatePreset datePreset,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFrom,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo,
-            @RequestParam(required = false) Boolean today,
+                        // Date filters
+                        @RequestParam(required = false) DatePreset datePreset,
+                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFrom,
+                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo,
+                        @RequestParam(required = false) Boolean today,
 
-            // Status filter (can be multiple)
-            @RequestParam(required = false) List<String> status,
+                        // Status filter (can be multiple)
+                        @RequestParam(required = false) List<String> status,
 
-            // Entity filters
-            @RequestParam(required = false) String patientCode,
-            @RequestParam(required = false) String patientName,
-            @RequestParam(required = false) String patientPhone,
-            @RequestParam(required = false) String employeeCode,
-            @RequestParam(required = false) String roomCode,
-            @RequestParam(required = false) String serviceCode) {
+                        // Entity filters
+                        @RequestParam(required = false) String patientCode,
+                        @RequestParam(required = false) String patientName,
+                        @RequestParam(required = false) String patientPhone,
+                        @RequestParam(required = false) String employeeCode,
+                        @RequestParam(required = false) String roomCode,
+                        @RequestParam(required = false) String serviceCode) {
 
-        log.info("Fetching appointments: page={}, size={}, datePreset={}, dateFrom={}, dateTo={}, today={}, status={}",
-                page, size, datePreset, dateFrom, dateTo, today, status);
+                log.info("Fetching appointments: page={}, size={}, datePreset={}, dateFrom={}, dateTo={}, today={}, status={}",
+                                page, size, datePreset, dateFrom, dateTo, today, status);
 
-        // Build filter criteria
-        AppointmentFilterCriteria criteria = AppointmentFilterCriteria.builder()
-                .datePreset(datePreset)
-                .dateFrom(dateFrom)
-                .dateTo(dateTo)
-                .today(today)
-                .status(status)
-                .patientCode(patientCode)
-                .patientName(patientName)
-                .patientPhone(patientPhone)
-                .employeeCode(employeeCode)
-                .roomCode(roomCode)
-                .serviceCode(serviceCode)
-                .build();
+                // Build filter criteria
+                AppointmentFilterCriteria criteria = AppointmentFilterCriteria.builder()
+                                .datePreset(datePreset)
+                                .dateFrom(dateFrom)
+                                .dateTo(dateTo)
+                                .today(today)
+                                .status(status)
+                                .patientCode(patientCode)
+                                .patientName(patientName)
+                                .patientPhone(patientPhone)
+                                .employeeCode(employeeCode)
+                                .roomCode(roomCode)
+                                .serviceCode(serviceCode)
+                                .build();
 
-        Page<AppointmentSummaryDTO> appointments = listService.getAppointments(
-                criteria, page, size, sortBy, sortDirection);
+                Page<AppointmentSummaryDTO> appointments = listService.getAppointments(
+                                criteria, page, size, sortBy, sortDirection);
 
-        return ResponseEntity.ok(appointments);
-    }
+                return ResponseEntity.ok(appointments);
+        }
+
+        /**
+         * P3.4: Get Appointment Detail by Code
+         *
+         * GET /api/v1/appointments/{appointmentCode}
+         *
+         * Authorization & RBAC Logic:
+         * - Users with VIEW_APPOINTMENT_ALL (Receptionist/Admin):
+         * Can see any appointment details
+         *
+         * - Users with VIEW_APPOINTMENT_OWN (Doctor/Patient):
+         * - Patients: Can only view their own appointments
+         * - Doctors: Can view if they are primary doctor OR participant
+         *
+         * Response includes:
+         * - All fields from list view (AppointmentSummaryDTO)
+         * - Additional fields: actualStartTime, actualEndTime, createdBy, createdAt
+         * - Full patient info (with phone, DOB)
+         * - Services list
+         * - Participants list
+         *
+         * @param appointmentCode Unique appointment code (e.g., "APT-20251104-001")
+         * @return 200 OK with appointment details
+         * @throws com.dental.clinic.management.exception.ResourceNotFoundException 404
+         *                                                                          if
+         *                                                                          not
+         *                                                                          found
+         * @throws org.springframework.security.access.AccessDeniedException        403
+         *                                                                          if
+         *                                                                          no
+         *                                                                          permission
+         */
+        @GetMapping("/{appointmentCode}")
+        @PreAuthorize("hasAnyAuthority('VIEW_APPOINTMENT_ALL', 'VIEW_APPOINTMENT_OWN')")
+        public ResponseEntity<AppointmentDetailDTO> getAppointmentDetail(
+                        @PathVariable String appointmentCode) {
+
+                log.info("Fetching appointment detail for code: {}", appointmentCode);
+
+                AppointmentDetailDTO appointment = detailService.getAppointmentDetail(appointmentCode);
+
+                return ResponseEntity.ok(appointment);
+        }
+
+        /**
+         * P3.5: Update Appointment Status (Check-in, Complete, Cancel, No-Show)
+         *
+         * PATCH /api/v1/appointments/{appointmentCode}/status
+         *
+         * This is the MOST CRITICAL API for daily clinic operations.
+         *
+         * Features:
+         * - Pessimistic locking (SELECT FOR UPDATE) to prevent race conditions
+         * - State machine validation with clear transition rules
+         * - Auto-update actualStartTime/actualEndTime based on transitions
+         * - Comprehensive audit logging for compliance
+         *
+         * State Machine:
+         * - SCHEDULED → CHECKED_IN, CANCELLED, NO_SHOW
+         * - CHECKED_IN → IN_PROGRESS, CANCELLED
+         * - IN_PROGRESS → COMPLETED, CANCELLED
+         * - COMPLETED, CANCELLED, NO_SHOW → No transitions (terminal states)
+         *
+         * Timestamp Rules:
+         * - CHECKED_IN: No timestamp update (patient arrived, waiting)
+         * - IN_PROGRESS: Set actualStartTime = NOW() (treatment started)
+         * - COMPLETED: Set actualEndTime = NOW() (treatment finished)
+         *
+         * Request Body Examples:
+         * - Check-in: {"status": "CHECKED_IN", "notes": "Đến trễ 10 phút"}
+         * - Cancel: {"status": "CANCELLED", "reasonCode": "PATIENT_REQUEST", "notes":
+         * "Bận đột xuất"}
+         * - No-show: {"status": "NO_SHOW", "notes": "Gọi 3 cuộc không nghe máy"}
+         *
+         * @param appointmentCode Unique appointment code
+         * @param request         Status update request with status, reasonCode (for
+         *                        CANCELLED), notes
+         * @return 200 OK with updated appointment details (same structure as GET
+         *         detail)
+         * @throws com.dental.clinic.management.exception.ResourceNotFoundException 404
+         *                                                                          if
+         *                                                                          not
+         *                                                                          found
+         * @throws com.dental.clinic.management.exception.BusinessException         409
+         *                                                                          if
+         *                                                                          invalid
+         *                                                                          state
+         *                                                                          transition
+         * @throws com.dental.clinic.management.exception.BusinessException         400
+         *                                                                          if
+         *                                                                          reasonCode
+         *                                                                          missing
+         *                                                                          for
+         *                                                                          CANCELLED
+         */
+        @PatchMapping("/{appointmentCode}/status")
+        @PreAuthorize("hasAuthority('UPDATE_APPOINTMENT_STATUS')")
+        public ResponseEntity<AppointmentDetailDTO> updateAppointmentStatus(
+                        @PathVariable String appointmentCode,
+                        @Valid @RequestBody UpdateAppointmentStatusRequest request) {
+
+                log.info("Updating appointment status: code={}, newStatus={}", appointmentCode, request.getStatus());
+
+                AppointmentDetailDTO updatedAppointment = statusService.updateStatus(appointmentCode, request);
+
+                return ResponseEntity.ok(updatedAppointment);
+        }
 
 }

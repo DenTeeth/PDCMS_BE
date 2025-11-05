@@ -173,8 +173,9 @@ VALUES
 ('VIEW_APPOINTMENT_OWN', 'VIEW_APPOINTMENT_OWN', 'APPOINTMENT', 'Chỉ xem lịch hẹn LIÊN QUAN (Bác sĩ/Y tá/Observer/Bệnh nhân)', 52, 'VIEW_APPOINTMENT_ALL', TRUE, NOW()),
 ('CREATE_APPOINTMENT', 'CREATE_APPOINTMENT', 'APPOINTMENT', 'Đặt lịch hẹn mới', 53, NULL, TRUE, NOW()),
 ('UPDATE_APPOINTMENT', 'UPDATE_APPOINTMENT', 'APPOINTMENT', 'Cập nhật lịch hẹn', 54, NULL, TRUE, NOW()),
-('CANCEL_APPOINTMENT', 'CANCEL_APPOINTMENT', 'APPOINTMENT', 'Hủy lịch hẹn', 55, NULL, TRUE, NOW()),
-('DELETE_APPOINTMENT', 'DELETE_APPOINTMENT', 'APPOINTMENT', 'Xóa lịch hẹn', 56, NULL, TRUE, NOW())
+('UPDATE_APPOINTMENT_STATUS', 'UPDATE_APPOINTMENT_STATUS', 'APPOINTMENT', 'Cập nhật trạng thái lịch hẹn (Check-in, In-progress, Completed, Cancelled) - API 3.5', 55, NULL, TRUE, NOW()),
+('CANCEL_APPOINTMENT', 'CANCEL_APPOINTMENT', 'APPOINTMENT', 'Hủy lịch hẹn', 56, NULL, TRUE, NOW()),
+('DELETE_APPOINTMENT', 'DELETE_APPOINTMENT', 'APPOINTMENT', 'Xóa lịch hẹn', 57, NULL, TRUE, NOW())
 ON CONFLICT (permission_id) DO NOTHING;
 
 -- MODULE 6: CUSTOMER_MANAGEMENT (MERGED: CONTACT + CONTACT_HISTORY)
@@ -344,6 +345,7 @@ VALUES
 ('ROLE_DENTIST', 'VIEW_TREATMENT'), ('ROLE_DENTIST', 'CREATE_TREATMENT'), ('ROLE_DENTIST', 'UPDATE_TREATMENT'),
 ('ROLE_DENTIST', 'VIEW_APPOINTMENT'), -- Deprecated
 ('ROLE_DENTIST', 'VIEW_APPOINTMENT_OWN'), -- ✅ NEW: Only see own appointments
+('ROLE_DENTIST', 'UPDATE_APPOINTMENT_STATUS'), -- ✅ NEW API 3.5: Start, Complete treatment
 ('ROLE_DENTIST', 'VIEW_REGISTRATION_OWN'), ('ROLE_DENTIST', 'VIEW_RENEWAL_OWN'), ('ROLE_DENTIST', 'RESPOND_RENEWAL_OWN'),
 ('ROLE_DENTIST', 'CREATE_REGISTRATION'),
 ('ROLE_DENTIST', 'VIEW_LEAVE_OWN'), ('ROLE_DENTIST', 'CREATE_TIME_OFF'), ('ROLE_DENTIST', 'CREATE_OVERTIME'),
@@ -357,6 +359,7 @@ VALUES
 ('ROLE_NURSE', 'VIEW_PATIENT'), ('ROLE_NURSE', 'VIEW_TREATMENT'),
 ('ROLE_NURSE', 'VIEW_APPOINTMENT'), -- Deprecated
 ('ROLE_NURSE', 'VIEW_APPOINTMENT_OWN'), -- ✅ NEW: Only see participating appointments
+('ROLE_NURSE', 'UPDATE_APPOINTMENT_STATUS'), -- ✅ NEW API 3.5: Help check-in patients
 ('ROLE_NURSE', 'VIEW_REGISTRATION_OWN'), ('ROLE_NURSE', 'VIEW_RENEWAL_OWN'), ('ROLE_NURSE', 'RESPOND_RENEWAL_OWN'),
 ('ROLE_NURSE', 'CREATE_REGISTRATION'),
 ('ROLE_NURSE', 'VIEW_LEAVE_OWN'), ('ROLE_NURSE', 'CREATE_TIME_OFF'), ('ROLE_NURSE', 'CREATE_OVERTIME'),
@@ -385,7 +388,9 @@ VALUES
 ('ROLE_RECEPTIONIST', 'VIEW_APPOINTMENT'), -- Deprecated
 ('ROLE_RECEPTIONIST', 'VIEW_APPOINTMENT_ALL'), -- ✅ NEW: Xem TẤT CẢ lịch hẹn
 ('ROLE_RECEPTIONIST', 'CREATE_APPOINTMENT'),
-('ROLE_RECEPTIONIST', 'UPDATE_APPOINTMENT'), ('ROLE_RECEPTIONIST', 'DELETE_APPOINTMENT'),
+('ROLE_RECEPTIONIST', 'UPDATE_APPOINTMENT'),
+('ROLE_RECEPTIONIST', 'UPDATE_APPOINTMENT_STATUS'), -- ✅ NEW API 3.5: Check-in, In-progress, Complete
+('ROLE_RECEPTIONIST', 'DELETE_APPOINTMENT'),
 -- CUSTOMER_MANAGEMENT
 ('ROLE_RECEPTIONIST', 'VIEW_CONTACT'), ('ROLE_RECEPTIONIST', 'CREATE_CONTACT'),
 ('ROLE_RECEPTIONIST', 'UPDATE_CONTACT'), ('ROLE_RECEPTIONIST', 'DELETE_CONTACT'),
@@ -405,6 +410,8 @@ VALUES
 ('ROLE_MANAGER', 'VIEW_EMPLOYEE'), ('ROLE_MANAGER', 'CREATE_EMPLOYEE'),
 ('ROLE_MANAGER', 'UPDATE_EMPLOYEE'), ('ROLE_MANAGER', 'DELETE_EMPLOYEE'),
 ('ROLE_MANAGER', 'VIEW_PATIENT'), ('ROLE_MANAGER', 'VIEW_APPOINTMENT'),
+('ROLE_MANAGER', 'VIEW_APPOINTMENT_ALL'), -- ✅ See all appointments
+('ROLE_MANAGER', 'UPDATE_APPOINTMENT_STATUS'), -- ✅ NEW API 3.5: Full appointment status control
 -- CUSTOMER_MANAGEMENT
 ('ROLE_MANAGER', 'VIEW_CONTACT'), ('ROLE_MANAGER', 'CREATE_CONTACT'),
 ('ROLE_MANAGER', 'UPDATE_CONTACT'), ('ROLE_MANAGER', 'DELETE_CONTACT'),
@@ -623,60 +630,75 @@ ON CONFLICT (specialization_id) DO NOTHING;
 INSERT INTO accounts (account_id, account_code, username, email, password, role_id, status, created_at)
 VALUES
 -- Dentists (Nha sĩ)
-(1, 'ACC001', 'khoa.la', 'khoa.la@dentalclinic.com',
+-- EMP001 - Lê Anh Khoa - FULL_TIME (Cả sáng 08:00-12:00 và chiều 13:00-17:00)
+(1, 'ACC001', 'bacsi1', 'khoa.la@dentalclinic.com',
 '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_DENTIST', 'ACTIVE', NOW()),
 
-(2, 'ACC002', 'thai.tc', 'thai.tc@dentalclinic.com',
+-- EMP002 - Trịnh Công Thái - FULL_TIME (Cả sáng 08:00-12:00 và chiều 13:00-17:00)
+(2, 'ACC002', 'bacsi2', 'thai.tc@dentalclinic.com',
 '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_DENTIST', 'ACTIVE', NOW()),
 
-(3, 'ACC003', 'jimmy.d', 'jimmy.d@dentalclinic.com',
+-- EMP003 - Jimmy Donaldson - PART_TIME_FLEX (Chỉ sáng 08:00-12:00)
+(3, 'ACC003', 'bacsi3', 'jimmy.d@dentalclinic.com',
 '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_DENTIST', 'ACTIVE', NOW()),
 
-(4, 'ACC004', 'junya.o', 'junya.o@dentalclinic.com',
+-- EMP004 - Junya Ota - PART_TIME_FIXED (Chỉ chiều 13:00-17:00)
+(4, 'ACC004', 'bacsi4', 'junya.o@dentalclinic.com',
 '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_DENTIST', 'ACTIVE', NOW()),
 
 -- Staff
-(5, 'ACC005', 'thuan.dkb', 'thuan.dkb@dentalclinic.com',
+-- EMP005 - Đỗ Khánh Thuận - Lễ tân - FULL_TIME
+(5, 'ACC005', 'letan1', 'thuan.dkb@dentalclinic.com',
 '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_RECEPTIONIST', 'ACTIVE', NOW()),
 
-(6, 'ACC006', 'thanh.cq', 'thanh.cq@dentalclinic.com',
+-- EMP006 - Chử Quốc Thành - Kế toán - FULL_TIME
+(6, 'ACC006', 'ketoan1', 'thanh.cq@dentalclinic.com',
 '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_ACCOUNTANT', 'ACTIVE', NOW()),
 
 -- Nurses (Y tá)
-(7, 'ACC007', 'nguyen.dnkn', 'nguyen.dnkn@dentalclinic.com',
+-- EMP007 - Đoàn Nguyễn Khôi Nguyên - FULL_TIME (Cả sáng và chiều)
+(7, 'ACC007', 'yta1', 'nguyen.dnkn@dentalclinic.com',
 '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_NURSE', 'ACTIVE', NOW()),
 
-(8, 'ACC008', 'khang.nttk', 'khang.nttk@dentalclinic.com',
+-- EMP008 - Nguyễn Trần Tuấn Khang - FULL_TIME (Cả sáng và chiều)
+(8, 'ACC008', 'yta2', 'khang.nttk@dentalclinic.com',
 '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_NURSE', 'ACTIVE', NOW()),
 
-(9, 'ACC009', 'nhat.htqn', 'nhat.htqn@dentalclinic.com',
+-- EMP009 - Huỳnh Tấn Quang Nhật - PART_TIME_FIXED (Chỉ sáng 08:00-12:00)
+(9, 'ACC009', 'yta3', 'nhat.htqn@dentalclinic.com',
 '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_NURSE', 'ACTIVE', NOW()),
 
-(10, 'ACC010', 'chinh.nd', 'chinh.nd@dentalclinic.com',
+-- EMP010 - Ngô Đình Chính - PART_TIME_FLEX (Chỉ chiều 13:00-17:00)
+(10, 'ACC010', 'yta4', 'chinh.nd@dentalclinic.com',
 '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_NURSE', 'ACTIVE', NOW()),
 
 -- Manager
-(11, 'ACC011', 'quan.vnm', 'quan.vnm@dentalclinic.com',
+-- EMP011 - Võ Ngọc Minh Quân - Quản lý - FULL_TIME
+(11, 'ACC011', 'quanli1', 'quan.vnm@dentalclinic.com',
 '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_MANAGER', 'ACTIVE', NOW()),
 
 -- Patients (Bệnh nhân)
-(12, 'ACC012', 'phong.dt', 'phong.dt@email.com',
+-- Patient BN-1001 - Đoàn Thanh Phong
+(12, 'ACC012', 'benhnhan1', 'phong.dt@email.com',
 '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_PATIENT', 'ACTIVE', NOW()),
 
-(13, 'ACC013', 'phong.pv', 'phong.pv@email.com',
+-- Patient BN-1002 - Phạm Văn Phong
+(13, 'ACC013', 'benhnhan2', 'phong.pv@email.com',
 '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_PATIENT', 'ACTIVE', NOW()),
 
-(14, 'ACC014', 'anh.nt', 'anh.nt@email.com',
+-- Patient BN-1003 - Nguyễn Thị Anh
+(14, 'ACC014', 'benhnhan3', 'anh.nt@email.com',
 '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_PATIENT', 'ACTIVE', NOW()),
 
-(15, 'ACC015', 'mit.bit', 'mit.bit@email.com',
+-- Patient BN-1004 - Mít tơ bít
+(15, 'ACC015', 'benhnhan4', 'mit.bit@email.com',
 '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_PATIENT', 'ACTIVE', NOW()),
 
--- ✅ NEW: Thực tập sinh (OBSERVER role for testing P3.3)
-(16, 'ACC016', 'linh.nk', 'linh.nk@dentalclinic.com',
+-- EMP012 - Nguyễn Khánh Linh - Thực tập sinh - PART_TIME_FLEX
+(16, 'ACC016', 'thuctap1', 'linh.nk@dentalclinic.com',
 '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_DENTIST_INTERN', 'ACTIVE', NOW()),
 
--- ✅ ADMIN - System Administrator (username: admin, password: 123456)
+-- Admin account - Super user
 (17, 'ACC017', 'admin', 'admin@dentalclinic.com',
 '$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_ADMIN', 'ACTIVE', NOW())
 
@@ -1267,7 +1289,7 @@ SELECT setval('part_time_slots_slot_id_seq',
 -- Part-time registrations are now created through the API endpoint:
 -- POST /api/v1/registrations/part-time
 -- with body: {"partTimeSlotId": X, "effectiveFrom": "...", "effectiveTo": "...", "dayOfWeek": ["MONDAY", "THURSDAY"]}
--- 
+--
 -- The system will:
 -- 1. Calculate all dates matching the dayOfWeek within the date range
 -- 2. Check availability (quota) for each date

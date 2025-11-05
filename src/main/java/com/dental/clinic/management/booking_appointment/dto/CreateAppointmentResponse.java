@@ -80,6 +80,8 @@ public class CreateAppointmentResponse {
     public static class PatientSummary {
         private String patientCode;
         private String fullName;
+        private String phone; // For detail view
+        private java.time.LocalDate dateOfBirth; // For detail view
     }
 
     /**

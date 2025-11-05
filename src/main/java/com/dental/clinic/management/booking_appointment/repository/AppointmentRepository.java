@@ -2,9 +2,11 @@ package com.dental.clinic.management.booking_appointment.repository;
 
 import com.dental.clinic.management.booking_appointment.domain.Appointment;
 import com.dental.clinic.management.booking_appointment.enums.AppointmentStatus;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -24,6 +26,37 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
          * Find appointment by unique code
          */
         Optional<Appointment> findByAppointmentCode(String appointmentCode);
+
+        /**
+         * Find appointment by code with PESSIMISTIC WRITE LOCK (SELECT ... FOR UPDATE)
+         * CRITICAL: Use this method for status updates to prevent race conditions.
+         *
+         * Use case: Two receptionists trying to check-in the same appointment
+         * simultaneously.
+         * Solution: First transaction locks the row, second waits until first commits.
+         *
+         * @param appointmentCode Unique appointment code
+         * @return Locked appointment entity
+         */
+        @Lock(LockModeType.PESSIMISTIC_WRITE)
+        @Query("SELECT a FROM Appointment a WHERE a.appointmentCode = :appointmentCode")
+        Optional<Appointment> findByCodeForUpdate(@Param("appointmentCode") String appointmentCode);
+
+        /**
+         * Find appointment detail by code with JOIN FETCH
+         * Prevents N+1 queries by loading all related entities in one query
+         *
+         * NOTE: We DON'T use JOIN FETCH for AppointmentService and
+         * AppointmentParticipant
+         * because they are junction tables with composite keys.
+         * We load them separately using repository methods.
+         *
+         * @param appointmentCode Unique appointment code
+         * @return Appointment with basic info only
+         */
+        @Query("SELECT a FROM Appointment a " +
+                        "WHERE a.appointmentCode = :appointmentCode")
+        Optional<Appointment> findDetailByCode(@Param("appointmentCode") String appointmentCode);
 
         /**
          * Find last appointment code with prefix for sequence generation
