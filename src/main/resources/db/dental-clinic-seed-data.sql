@@ -592,14 +592,14 @@ ON CONFLICT (role_id, permission_id) DO NOTHING;
 -- ============================================
 INSERT INTO specializations (specialization_id, specialization_code, specialization_name, description, is_active, created_at)
 VALUES
-(1, 'SPEC001', 'Nha khoa tổng quát', 'General Dentistry - Khám, cạo vôi, trám răng cơ bản', TRUE, NOW()),
-(2, 'SPEC002', 'Chỉnh nha', 'Orthodontics - Niềng răng, chỉnh hình răng mặt', TRUE, NOW()),
-(3, 'SPEC003', 'Nội nha', 'Endodontics - Điều trị tủy, chữa răng sâu', TRUE, NOW()),
-(4, 'SPEC004', 'Nha chu', 'Periodontics - Điều trị nướu, mô nha chu', TRUE, NOW()),
-(5, 'SPEC005', 'Phục hồi răng', 'Prosthodontics - Làm răng giả, cầu răng, implant', TRUE, NOW()),
-(6, 'SPEC006', 'Phẫu thuật hàm mặt', 'Oral Surgery - Nhổ răng khôn, phẫu thuật', TRUE, NOW()),
-(7, 'SPEC007', 'Nha khoa trẻ em', 'Pediatric Dentistry - Chuyên khoa nhi', TRUE, NOW()),
-(8, 'SPEC008', 'Răng thẩm mỹ', 'Cosmetic Dentistry - Tẩy trắng, bọc sứ', TRUE, NOW()),
+(1, 'SPEC001', 'Chỉnh nha', 'Orthodontics - Niềng răng, chỉnh hình răng mặt', TRUE, NOW()),
+(2, 'SPEC002', 'Nội nha', 'Endodontics - Điều trị tủy, chữa răng sâu', TRUE, NOW()),
+(3, 'SPEC003', 'Nha chu', 'Periodontics - Điều trị nướu, mô nha chu', TRUE, NOW()),
+(4, 'SPEC004', 'Phục hồi răng', 'Prosthodontics - Làm răng giả, cầu răng, implant', TRUE, NOW()),
+(5, 'SPEC005', 'Phẫu thuật hàm mặt', 'Oral Surgery - Nhổ răng khôn, phẫu thuật', TRUE, NOW()),
+(6, 'SPEC006', 'Nha khoa trẻ em', 'Pediatric Dentistry - Chuyên khoa nhi', TRUE, NOW()),
+(7, 'SPEC007', 'Răng thẩm mỹ', 'Cosmetic Dentistry - Tẩy trắng, bọc sứ', TRUE, NOW()),
+(8, 'SPEC-STANDARD', 'STANDARD - Y tế cơ bản', 'Baseline medical qualification - Required for all doctors/nurses', TRUE, NOW()),
 (9, 'SPEC-INTERN', 'Thực tập sinh', 'Intern/Trainee - Nhân viên đang đào tạo, học việc', TRUE, NOW())
 ON CONFLICT (specialization_id) DO NOTHING;
 
@@ -734,15 +734,15 @@ ON CONFLICT (employee_id) DO NOTHING;
 
 INSERT INTO employee_specializations (employee_id, specialization_id)
 VALUES
--- Dentist 1: Lê Anh Khoa - Chỉnh nha + Phục hồi + STANDARD
-(1, 1), (1, 4), (1, 8),
--- Dentist 2: Trịnh Công Thái - Nội nha + Răng thẩm mỹ + STANDARD
+-- Dentist 1: Lê Anh Khoa - Chỉnh nha + Nha chu + Phục hồi + STANDARD (REQUIRED)
+(1, 1), (1, 3), (1, 4), (1, 8),
+-- Dentist 2: Trịnh Công Thái - Nội nha + Răng thẩm mỹ + STANDARD (REQUIRED)
 (2, 2), (2, 7), (2, 8),
--- Dentist 3: Jimmy Donaldson - Nha khoa trẻ em + STANDARD
+-- Dentist 3: Jimmy Donaldson - Nha khoa trẻ em + STANDARD (REQUIRED)
 (3, 6), (3, 8),
--- Dentist 4: Junya Ota - Phẫu thuật hàm mặt + STANDARD
-(4, 5), (4, 8),
--- Nurses + Staff - Chỉ có STANDARD
+-- Dentist 4: Junya Ota - Phẫu thuật hàm mặt + Phục hồi + STANDARD (REQUIRED)
+(4, 4), (4, 5), (4, 8),
+-- Nurses + Staff - STANDARD (REQUIRED for medical staff)
 (7, 8), -- Y tá Nguyên
 (8, 8), -- Y tá Khang
 (9, 8), -- Y tá Nhật (Part-time fixed)
@@ -911,9 +911,42 @@ VALUES
 ('EMS251101011', NOW(), NULL, FALSE, 'Nghỉ phép có đăng ký', 'BATCH_JOB', 'ON_LEAVE', NOW(), '2025-11-05', 6, 'WKS_MORNING_02'),
 ('EMS251101012', NOW(), NULL, FALSE, 'Ca part-time chiều', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-11-06', 6, 'WKS_AFTERNOON_02'),
 
--- Manager Quan (employee_id=7) - All permissions
-('EMS251101013', NOW(), NULL, FALSE, 'Ca quản lý', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-11-08', 7, 'WKS_MORNING_01'),
-('EMS251101014', NOW(), NULL, FALSE, 'Ca quản lý từ batch job', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-09', 7, 'WKS_AFTERNOON_01'),
+-- Manager Quan (employee_id=11) - All permissions (CHANGED from 7 to 11 - correct manager ID)
+('EMS251101013', NOW(), NULL, FALSE, 'Ca quản lý', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-11-10', 11, 'WKS_MORNING_01'),
+('EMS251101014', NOW(), NULL, FALSE, 'Ca quản lý từ batch job', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-11', 11, 'WKS_AFTERNOON_01'),
+
+-- ✅ NEW: Shifts for Nov 6-10 (FUTURE DATES for current testing 2025-11-06)
+-- EMP001 (Lê Anh Khoa) - DENTIST - NOW HAS SHIFTS!
+('EMS251106001', NOW(), NULL, FALSE, 'Ca sáng thứ 4 - BS Khoa', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-11-06', 1, 'WKS_MORNING_01'),
+('EMS251106002', NOW(), NULL, FALSE, 'Ca chiều thứ 4 - BS Khoa', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-11-06', 1, 'WKS_AFTERNOON_01'),
+('EMS251107001', NOW(), NULL, FALSE, 'Ca sáng thứ 5 - BS Khoa', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-07', 1, 'WKS_MORNING_01'),
+('EMS251108001', NOW(), NULL, FALSE, 'Ca sáng thứ 6 - BS Khoa', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-08', 1, 'WKS_MORNING_01'),
+('EMS251108002', NOW(), NULL, FALSE, 'Ca chiều thứ 6 - BS Khoa', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-08', 1, 'WKS_AFTERNOON_01'),
+
+-- EMP002 (Trịnh Công Thái) - DENTIST - Additional future shifts
+('EMS251106003', NOW(), NULL, FALSE, 'Ca sáng thứ 4 - BS Thái', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-11-06', 2, 'WKS_MORNING_01'),
+('EMS251107002', NOW(), NULL, FALSE, 'Ca chiều thứ 5 - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-07', 2, 'WKS_AFTERNOON_01'),
+('EMS251108003', NOW(), NULL, FALSE, 'Ca sáng thứ 6 - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-08', 2, 'WKS_MORNING_01'),
+
+-- EMP003 (Jimmy Donaldson) - DENTIST - Part-time flex
+('EMS251106004', NOW(), NULL, FALSE, 'Ca chiều thứ 4 - BS Jimmy', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-11-06', 3, 'WKS_AFTERNOON_01'),
+('EMS251107003', NOW(), NULL, FALSE, 'Ca sáng thứ 5 - BS Jimmy', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-07', 3, 'WKS_MORNING_01'),
+
+-- EMP004 (Junya Ota) - DENTIST - Part-time fixed
+('EMS251106005', NOW(), NULL, FALSE, 'Ca sáng thứ 4 - BS Junya', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-11-06', 4, 'WKS_MORNING_02'),
+('EMS251107004', NOW(), NULL, FALSE, 'Ca sáng thứ 5 - BS Junya', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-07', 4, 'WKS_MORNING_02'),
+
+-- EMP007 (Y tá Nguyên) - NURSE - Full shifts Nov 6-8
+('EMS251106006', NOW(), NULL, FALSE, 'Ca sáng thứ 4 - Y tá Nguyên', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-06', 7, 'WKS_MORNING_01'),
+('EMS251106007', NOW(), NULL, FALSE, 'Ca chiều thứ 4 - Y tá Nguyên', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-06', 7, 'WKS_AFTERNOON_01'),
+('EMS251107005', NOW(), NULL, FALSE, 'Ca sáng thứ 5 - Y tá Nguyên', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-07', 7, 'WKS_MORNING_01'),
+('EMS251108004', NOW(), NULL, FALSE, 'Ca sáng thứ 6 - Y tá Nguyên', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-08', 7, 'WKS_MORNING_01'),
+
+-- EMP008 (Y tá Khang) - NURSE - Full shifts Nov 6-8
+('EMS251106008', NOW(), NULL, FALSE, 'Ca sáng thứ 4 - Y tá Khang', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-06', 8, 'WKS_MORNING_01'),
+('EMS251106009', NOW(), NULL, FALSE, 'Ca chiều thứ 4 - Y tá Khang', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-06', 8, 'WKS_AFTERNOON_01'),
+('EMS251107006', NOW(), NULL, FALSE, 'Ca chiều thứ 5 - Y tá Khang', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-07', 8, 'WKS_AFTERNOON_01'),
+('EMS251108005', NOW(), NULL, FALSE, 'Ca chiều thứ 6 - Y tá Khang', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-08', 8, 'WKS_AFTERNOON_01'),
 
 -- December 2025 shifts (Future month)
 ('EMS251201001', NOW(), NULL, FALSE, 'Ca tháng 12', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-02', 2, 'WKS_MORNING_01'),
@@ -1429,15 +1462,16 @@ VALUES
 -- =============================================
 -- BƯỚC 1: INSERT DỊCH VỤ (SERVICES)
 -- =============================================
--- Chuyên khoa services:
--- 8: Y tế cơ bản (STANDARD) - Dịch vụ tổng quát, không cần chuyên khoa đặc biệt
--- 1: Chỉnh nha
--- 2: Nội nha
--- 3: Nha chu
--- 4: Phục hồi răng
--- 5: Phẫu thuật hàm mặt
--- 6: Nha khoa trẻ em
--- 7: Răng thẩm mỹ
+-- Specialization IDs mapping:
+-- 1: Chỉnh nha (Orthodontics)
+-- 2: Nội nha (Endodontics)
+-- 3: Nha chu (Periodontics)
+-- 4: Phục hồi răng (Prosthodontics)
+-- 5: Phẫu thuật hàm mặt (Oral Surgery)
+-- 6: Nha khoa trẻ em (Pediatric Dentistry)
+-- 7: Răng thẩm mỹ (Cosmetic Dentistry)
+-- 8: STANDARD - Y tế cơ bản (Required for all medical staff)
+-- =============================================
 
 INSERT INTO services (service_code, service_name, description, default_duration_minutes, default_buffer_minutes, price, specialization_id, is_active, created_at) VALUES
 -- Nha khoa tổng quát (A) - Sử dụng STANDARD (ID 8)
@@ -1706,6 +1740,109 @@ ON CONFLICT (appointment_id, service_id) DO NOTHING;
 -- Participants cho APT-003: Thực tập sinh Linh làm OBSERVER
 INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
 VALUES (3, 12, 'OBSERVER')  -- EMP012 - Thực tập sinh Linh
+ON CONFLICT (appointment_id, employee_id) DO NOTHING;
+
+-- ============================================
+-- ✅ NEW: FUTURE APPOINTMENTS (Nov 6-8, 2025) for current date testing
+-- ============================================
+
+-- APT-004: Nov 6 Morning - BS Khoa (EMP001) - NOW HAS SHIFT!
+INSERT INTO appointments (
+    appointment_id, appointment_code, patient_id, employee_id, room_id,
+    appointment_start_time, appointment_end_time, expected_duration_minutes,
+    status, notes, created_by, created_at, updated_at
+) VALUES (
+    4, 'APT-20251106-001', 1, 1, 'GHE251103001',
+    '2025-11-06 09:00:00', '2025-11-06 09:30:00', 30,
+    'SCHEDULED', 'Khám tổng quát - BS Khoa ca sáng', 5, NOW(), NOW()
+) ON CONFLICT (appointment_id) DO NOTHING;
+
+INSERT INTO appointment_services (appointment_id, service_id)
+VALUES (4, 1)  -- GEN_EXAM
+ON CONFLICT (appointment_id, service_id) DO NOTHING;
+
+INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
+VALUES (4, 7, 'ASSISTANT')  -- EMP007 - Y tá Nguyên
+ON CONFLICT (appointment_id, employee_id) DO NOTHING;
+
+-- APT-005: Nov 6 Afternoon - BS Thái (EMP002)
+INSERT INTO appointments (
+    appointment_id, appointment_code, patient_id, employee_id, room_id,
+    appointment_start_time, appointment_end_time, expected_duration_minutes,
+    status, notes, created_by, created_at, updated_at
+) VALUES (
+    5, 'APT-20251106-002', 2, 2, 'GHE251103002',
+    '2025-11-06 14:00:00', '2025-11-06 14:45:00', 45,
+    'SCHEDULED', 'Lấy cao răng + Khám - BS Thái ca chiều', 5, NOW(), NOW()
+) ON CONFLICT (appointment_id) DO NOTHING;
+
+INSERT INTO appointment_services (appointment_id, service_id)
+VALUES
+    (5, 1),  -- GEN_EXAM
+    (5, 3)   -- SCALING_L1
+ON CONFLICT (appointment_id, service_id) DO NOTHING;
+
+INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
+VALUES (5, 8, 'ASSISTANT')  -- EMP008 - Y tá Khang
+ON CONFLICT (appointment_id, employee_id) DO NOTHING;
+
+-- APT-006: Nov 7 Morning - BS Jimmy (EMP003)
+INSERT INTO appointments (
+    appointment_id, appointment_code, patient_id, employee_id, room_id,
+    appointment_start_time, appointment_end_time, expected_duration_minutes,
+    status, notes, created_by, created_at, updated_at
+) VALUES (
+    6, 'APT-20251107-001', 3, 3, 'GHE251103003',
+    '2025-11-07 10:00:00', '2025-11-07 10:30:00', 30,
+    'SCHEDULED', 'Khám nha khoa trẻ em - BS Jimmy', 5, NOW(), NOW()
+) ON CONFLICT (appointment_id) DO NOTHING;
+
+INSERT INTO appointment_services (appointment_id, service_id)
+VALUES (6, 1)  -- GEN_EXAM
+ON CONFLICT (appointment_id, service_id) DO NOTHING;
+
+INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
+VALUES (6, 7, 'ASSISTANT')  -- EMP007 - Y tá Nguyên
+ON CONFLICT (appointment_id, employee_id) DO NOTHING;
+
+-- APT-007: Nov 7 Afternoon - BS Thái (EMP002) - Can be used for reschedule testing
+INSERT INTO appointments (
+    appointment_id, appointment_code, patient_id, employee_id, room_id,
+    appointment_start_time, appointment_end_time, expected_duration_minutes,
+    status, notes, created_by, created_at, updated_at
+) VALUES (
+    7, 'APT-20251107-002', 4, 2, 'GHE251103002',
+    '2025-11-07 15:00:00', '2025-11-07 15:30:00', 30,
+    'SCHEDULED', 'Khám định kỳ - BN Mít tơ bít', 5, NOW(), NOW()
+) ON CONFLICT (appointment_id) DO NOTHING;
+
+INSERT INTO appointment_services (appointment_id, service_id)
+VALUES (7, 1)  -- GEN_EXAM
+ON CONFLICT (appointment_id, service_id) DO NOTHING;
+
+INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
+VALUES (7, 8, 'ASSISTANT')  -- EMP008 - Y tá Khang
+ON CONFLICT (appointment_id, employee_id) DO NOTHING;
+
+-- APT-008: Nov 8 Morning - BS Khoa (EMP001) - Multiple services
+INSERT INTO appointments (
+    appointment_id, appointment_code, patient_id, employee_id, room_id,
+    appointment_start_time, appointment_end_time, expected_duration_minutes,
+    status, notes, created_by, created_at, updated_at
+) VALUES (
+    8, 'APT-20251108-001', 2, 1, 'GHE251103001',
+    '2025-11-08 09:30:00', '2025-11-08 10:15:00', 45,
+    'SCHEDULED', 'Lấy cao răng nâng cao - BS Khoa', 5, NOW(), NOW()
+) ON CONFLICT (appointment_id) DO NOTHING;
+
+INSERT INTO appointment_services (appointment_id, service_id)
+VALUES
+    (8, 1),  -- GEN_EXAM
+    (8, 4)   -- SCALING_L2 (Advanced scaling)
+ON CONFLICT (appointment_id, service_id) DO NOTHING;
+
+INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
+VALUES (8, 7, 'ASSISTANT')  -- EMP007 - Y tá Nguyên
 ON CONFLICT (appointment_id, employee_id) DO NOTHING;
 
 -- Reset appointments sequence after seed data

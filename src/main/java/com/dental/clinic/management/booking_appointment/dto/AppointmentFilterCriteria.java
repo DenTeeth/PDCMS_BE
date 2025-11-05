@@ -116,6 +116,33 @@ public class AppointmentFilterCriteria {
      */
     private String serviceCode;
 
+    /**
+     * Combined search by code OR name: patient, doctor, employee (participant),
+     * room, or service
+     *
+     * Searches across:
+     * - Patient: patient_code OR full_name (first_name + last_name)
+     * - Doctor (primary): employee_code OR full_name
+     * - Participant (assistant/observer): employee_code OR full_name
+     * - Room: room_code OR room_name
+     * - Service: service_code OR service_name
+     *
+     * Examples:
+     * - "Nguyễn Văn A" → Finds patient by name
+     * - "BN-1001" → Finds patient by code
+     * - "Dr. An Khoa" → Finds appointments with this doctor
+     * - "Cạo vôi" → Finds appointments with this service
+     * - "P-01" → Finds appointments in this room
+     *
+     * This is a convenience parameter for frontend search bars.
+     * Uses ILIKE for case-insensitive partial matching.
+     * If provided, individual code filters (patientCode, employeeCode, etc.) are
+     * ignored.
+     *
+     * NOTE: Only works for users with VIEW_APPOINTMENT_ALL
+     */
+    private String searchCode;
+
     // ==================== INTERNAL FLAGS (Set by Service Layer)
     // ====================
 

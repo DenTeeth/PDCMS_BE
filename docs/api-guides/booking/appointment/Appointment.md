@@ -428,6 +428,45 @@ Advanced - Lễ tân - LỌC THEO NHIỀU DỊCH VỤ (Multi-service filter)
 GET /api/v1/appointments?serviceCode=GEN_EXAM&serviceCode=SCALING_L1&datePreset=THIS_WEEK
 Use case: "Tuần này có bao nhiêu ca khám tổng quát hoặc cạo vôi?"
 
+**NEW: Combined Search (searchCode Parameter)**
+
+Critical - Lễ tân - TÌM KIẾM TỔNG HỢP THEO MÃ HOẶC TÊN
+GET /api/v1/appointments?searchCode=Nguyễn
+Backend: Tìm trong patient name, doctor name, participant name, room name, service name
+Expected: Trả về tất cả lịch hẹn có liên quan đến "Nguyễn" (bệnh nhân, bác sĩ, phụ tá)
+
+Critical - Lễ tân - TÌM THEO TÊN BÁC SĨ
+GET /api/v1/appointments?searchCode=Dr. An&datePreset=TODAY
+Backend: ILIKE '%Dr. An%' trên employee full_name hoặc employee_code
+Expected: Trả về lịch hôm nay của bác sĩ có tên chứa "Dr. An"
+
+Critical - Lễ tân - TÌM THEO TÊN BỆNH NHÂN
+GET /api/v1/appointments?searchCode=Thanh Phong
+Backend: ILIKE '%Thanh Phong%' trên patient full_name
+Expected: Trả về lịch của bệnh nhân "Đoàn Thanh Phong"
+
+Critical - Lễ tân - TÌM THEO TÊN DỊCH VỤ
+GET /api/v1/appointments?searchCode=Cạo vôi&datePreset=THIS_WEEK
+Backend: ILIKE '%Cạo vôi%' trên service_name
+Expected: Trả về tất cả lịch hẹn có dịch vụ "Cạo vôi răng" tuần này
+
+Critical - Lễ tân - TÌM THEO MÃ (Fallback to code search)
+GET /api/v1/appointments?searchCode=BN-1001
+Backend: Tìm theo patient_code = 'BN-1001'
+Expected: Trả về lịch của bệnh nhân mã BN-1001
+
+Advanced - Lễ tân - TÌM THEO TÊN PHÒNG
+GET /api/v1/appointments?searchCode=VIP&datePreset=TODAY
+Backend: ILIKE '%VIP%' trên room_name
+Expected: Trả về lịch hôm nay ở các phòng VIP
+
+**Lưu ý về searchCode:**
+
+- Tìm kiếm **cả code VÀ name** (không phân biệt hoa thường)
+- Hỗ trợ **partial match** (tìm "Nguyễn" sẽ khớp "Nguyễn Văn A")
+- Khi dùng `searchCode`, các filter khác (patientCode, employeeCode, etc.) bị bỏ qua
+- Chỉ hoạt động cho user có permission `VIEW_APPOINTMENT_ALL`
+
 Dashboard - Lễ tân - Lọc theo phòng
 GET /api/v1/appointments?roomCode=P-01
 
@@ -2066,7 +2105,1250 @@ INSERT INTO appointment_audit_logs (
 - **Auto-reschedule:** Suggest available time slots based on conflicts
 - **Bulk delay:** Delay multiple appointments at once (e.g., doctor sick leave)
 - **Recurring appointments:** Delay all future occurrences
-- **Undo delay:** Revert to original time within 5 minutes
-- **Approval workflow:** Require manager approval for delays >24 hours
+
+---
+
+## API 3.7: Reschedule Appointment (Cancel Old + Create New)
+
+### ⚠️ SEED DATA & CONSTRAINTS (Current: Nov 6, 2025)
+
+#### 🔴 Critical Fixes Applied
+
+1. **Fixed JPA Query Error**: `appointment_start_time` → `appointmentStartTime` (camelCase for JPQL)
+2. **Added Future Shifts**: 25+ employee shifts for Nov 6-8 (EMP001-EMP004, nurses)
+3. **Added Future Appointments**: 5 appointments for Nov 6-8 for realistic testing
+4. **Fixed EMP001**: Now HAS shifts (was empty before)
+
+#### 📅 Holiday Constraints
+
+- ❌ **Nov 5, 2025 is MAINTENANCE_WEEK holiday** - NO appointments/shifts allowed
+- ✅ **Nov 6-8, 2025** are valid working days with full shift coverage
+
+#### 👨‍⚕️ Employee Shift Coverage (Nov 6-8, 2025)
+
+**Dentists:**
+
+- **EMP001 (Lê Anh Khoa)**: ✅ Nov 6 (morning+afternoon), Nov 7-8 (morning)
+- **EMP002 (Trịnh Công Thái)**: ✅ Nov 6 (morning), Nov 7-8 (morning/afternoon)
+- **EMP003 (Jimmy Donaldson)**: ✅ Nov 6 (afternoon), Nov 7 (morning)
+- **EMP004 (Junya Ota)**: ✅ Nov 6-7 (morning)
+
+**Nurses:**
+
+- **EMP007 (Y tá Nguyên)**: ✅ Full coverage Nov 6-8 (morning+afternoon)
+- **EMP008 (Y tá Khang)**: ✅ Full coverage Nov 6-8 (morning+afternoon)
+
+#### 📋 Available Test Appointments
+
+| Code                 | Date           | Time      | Patient     | Doctor     | Room     | Services              | Status        |
+| -------------------- | -------------- | --------- | ----------- | ---------- | -------- | --------------------- | ------------- |
+| APT-20251104-001     | 2025-11-04     | 09:00     | BN-1001     | EMP001     | P-01     | GEN_EXAM+SCALING      | SCHEDULED     |
+| APT-20251104-002     | 2025-11-04     | 14:00     | BN-1002     | EMP002     | P-02     | GEN_EXAM              | SCHEDULED     |
+| APT-20251104-003     | 2025-11-04     | 08:00     | BN-1003     | EMP001     | P-01     | GEN_EXAM              | SCHEDULED     |
+| **APT-20251106-001** | **2025-11-06** | **09:00** | **BN-1001** | **EMP001** | **P-01** | **GEN_EXAM**          | **SCHEDULED** |
+| **APT-20251106-002** | **2025-11-06** | **14:00** | **BN-1002** | **EMP002** | **P-02** | **GEN_EXAM+SCALING**  | **SCHEDULED** |
+| **APT-20251107-001** | **2025-11-07** | **10:00** | **BN-1003** | **EMP003** | **P-03** | **GEN_EXAM**          | **SCHEDULED** |
+| **APT-20251107-002** | **2025-11-07** | **15:00** | **BN-1004** | **EMP002** | **P-02** | **GEN_EXAM**          | **SCHEDULED** |
+| **APT-20251108-001** | **2025-11-08** | **09:30** | **BN-1002** | **EMP001** | **P-01** | **GEN_EXAM+SCALING2** | **SCHEDULED** |
+
+#### 📦 Seed Data Resources
+
+**Employees**: EMP001-EMP012 (all have codes, only EMP001-EMP004 are doctors)
+**Rooms**: P-01, P-02, P-03, P-04-IMPLANT (use `roomCode`, NOT `room_id`)
+**Patients**: BN-1001, BN-1002, BN-1003, BN-1004
+**Services**: GEN_EXAM (id=1), SCALING_L1 (id=3), SCALING_L2 (id=4)
+
+#### ✅ Recommended Test Cases
+
+- ✅ Reschedule **APT-20251106-001** to Nov 7 (tomorrow)
+- ✅ Reschedule **APT-20251106-002** to Nov 7 with different doctor
+- ❌ Do NOT reschedule to Nov 5 (holiday - will fail)
+- ❌ Do NOT use Nov 9+ (no shifts defined - will fail)
+
+---
+
+### 1. Overview
+
+**Endpoint:** `POST /api/v1/appointments/{appointmentCode}/reschedule`
+
+**Permission Required:** `CREATE_APPOINTMENT` (Same as create new appointment)
+
+**Business Rationale:**
+
+Rescheduling is fundamentally different from delaying:
+
+- **Delay (API 3.6):** Same appointment, new time (same patient, same services, potentially same doctor/room)
+- **Reschedule (API 3.7):** Cancel old appointment + Create new appointment (new time, new doctor, new room)
+
+**Transaction Guarantees:**
+
+- Both operations (cancel + create) happen in ONE database transaction
+- If creation fails → Old appointment remains unchanged (rollback)
+- Audit trail links both appointments via `rescheduled_to_appointment_id`
+
+**Use Cases:**
+
+1. **Doctor unavailable:** Patient needs different doctor at different time
+2. **Room change:** Original room under maintenance
+3. **Patient request:** "Can I see Dr. Binh instead of Dr. An?"
+4. **Operational flexibility:** Receptionists can reschedule without dual operations
+
+---
+
+### 2. Request Specification
+
+#### HTTP Method & URL
+
+```http
+POST /api/v1/appointments/{appointmentCode}/reschedule
+Content-Type: application/json
+Authorization: Bearer {jwt_token}
+```
+
+#### Path Parameters
+
+| Parameter         | Type   | Required | Description                                                |
+| ----------------- | ------ | -------- | ---------------------------------------------------------- |
+| `appointmentCode` | string | ✅       | Code of appointment to reschedule (e.g., APT-20251105-001) |
+
+#### Request Body (JSON)
+
+```json
+{
+  "newEmployeeCode": "EMP002",
+  "newRoomCode": "P-02",
+  "newStartTime": "2025-11-06T14:00:00",
+  "newParticipantCodes": ["EMP007"],
+  "reasonCode": "DOCTOR_UNAVAILABLE",
+  "cancelNotes": "BS Lê Anh Khoa bận đột xuất, chuyển cho BS Trịnh Công Thái"
+}
+```
+
+| Field                 | Type     | Required | Description                                       |
+| --------------------- | -------- | -------- | ------------------------------------------------- |
+| `newEmployeeCode`     | string   | ✅       | New primary doctor code (e.g., EMP001, EMP002)    |
+| `newRoomCode`         | string   | ✅       | New treatment room code (e.g., P-01, P-02)        |
+| `newStartTime`        | datetime | ✅       | New start time (ISO 8601: YYYY-MM-DDTHH:MM:SS)    |
+| `newParticipantCodes` | string[] | ❌       | Optional: New participants (e.g., EMP007, EMP008) |
+| `reasonCode`          | string   | ✅       | Reason for cancellation (old appointment)         |
+| `cancelNotes`         | string   | ❌       | Additional cancellation notes                     |
+
+**Business Rules:**
+
+1. **Services Reused:** API 3.7 V1 does NOT allow changing services. The new appointment will have the same services as the old one.
+   - Rationale: Changing services requires different validation logic (specialization, room compatibility, duration calculation)
+   - If services need to change → Use Cancel (3.5) + Create New (3.2) separately
+2. **Patient Unchanged:** Same patient. Cannot reschedule to a different patient.
+3. **Validation:** New appointment goes through full validation (shifts, conflicts, room compatibility)
+4. **Time Constraint:** newStartTime must not be in the past
+
+---
+
+### 3. Response Specification
+
+#### Success Response
+
+**HTTP Status:** `200 OK` (Not 201 CREATED - because it's an update operation that cancels + creates)
+
+**Response Body:**
+
+```json
+{
+  "cancelledAppointment": {
+    "appointmentCode": "APT-20251105-001",
+    "status": "CANCELLED",
+    "appointmentStartTime": "2025-11-05T09:00:00",
+    "appointmentEndTime": "2025-11-05T09:45:00",
+    "patient": {
+      "patientCode": "BN-1001",
+      "fullName": "Đoàn Thanh Phong"
+    },
+    "doctor": {
+      "employeeCode": "EMP001",
+      "fullName": "Lê Anh Khoa"
+    },
+    "room": {
+      "roomCode": "P-01",
+      "roomName": "Phòng thường 1"
+    },
+    "services": [
+      {
+        "serviceCode": "GEN_EXAM",
+        "serviceName": "Khám tổng quát & Tư vấn",
+        "price": 100000
+      }
+    ],
+    "cancellationReason": {
+      "reasonCode": "DOCTOR_UNAVAILABLE",
+      "notes": "BS Lê Anh Khoa bận đột xuất, chuyển cho BS Trịnh Công Thái"
+    },
+    "rescheduledToAppointmentId": 245
+  },
+  "newAppointment": {
+    "appointmentCode": "APT-20251106-005",
+    "status": "SCHEDULED",
+    "appointmentStartTime": "2025-11-06T14:00:00",
+    "appointmentEndTime": "2025-11-06T14:30:00",
+    "patient": {
+      "patientCode": "BN-1001",
+      "fullName": "Đoàn Thanh Phong"
+    },
+    "doctor": {
+      "employeeCode": "EMP002",
+      "fullName": "Trịnh Công Thái"
+    },
+    "room": {
+      "roomCode": "P-02",
+      "roomName": "Phòng thường 2"
+    },
+    "services": [
+      {
+        "serviceCode": "GEN_EXAM",
+        "serviceName": "Khám tổng quát & Tư vấn",
+        "price": 100000
+      }
+    ],
+    "participants": [
+      {
+        "employeeCode": "EMP007",
+        "fullName": "Đoàn Nguyễn Khôi Nguyên",
+        "role": "ASSISTANT"
+      }
+    ]
+  }
+}
+```
+
+---
+
+### 4. Business Logic Flow
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Step 1: Lock Old Appointment (SELECT FOR UPDATE)            │
+│ - Prevent concurrent modifications                         │
+│ - Ensures only one reschedule operation at a time          │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│ Step 2: Validate Old Appointment Status                     │
+│ - Only SCHEDULED or CHECKED_IN can be rescheduled          │
+│ - COMPLETED/CANCELLED/NO_SHOW → Error 409                  │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│ Step 3: Get Patient & Services from Old Appointment         │
+│ - Query patient table to get patient_code                  │
+│ - Query appointment_services to get service_codes          │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│ Step 4: Build CreateAppointmentRequest                      │
+│ - patientCode: from old appointment                        │
+│ - serviceCodes: from old appointment                       │
+│ - newEmployeeCode, newRoomCode: from request               │
+│ - newStartTime: from request                               │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│ Step 5: Create New Appointment (Reuse Creation Logic)       │
+│ - Validate doctor, room, services                          │
+│ - Check specializations & room compatibility              │
+│ - Validate shifts (doctor + participants)                 │
+│ - Check conflicts (doctor, room, patient, participants)   │
+│ - Insert appointment, services, participants               │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│ Step 6: Cancel Old Appointment                              │
+│ - Set status = CANCELLED                                   │
+│ - Set rescheduled_to_appointment_id = new appointment ID   │
+│ - Update in database                                       │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│ Step 7: Create Dual Audit Logs                              │
+│ - Old: action_type = RESCHEDULE_SOURCE                     │
+│ - New: action_type = RESCHEDULE_TARGET                     │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│ Step 8: Return Both Appointments                            │
+│ - cancelledAppointment: Full details with cancellation     │
+│ - newAppointment: Full details of new booking              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 5. Authorization & RBAC
+
+**Permission Required:** `CREATE_APPOINTMENT`
+
+**Rationale:** Since the operation creates a new appointment, it reuses the same permission.
+
+**Who Can Reschedule:**
+
+- ✅ **RECEPTIONIST** (has CREATE_APPOINTMENT)
+- ✅ **DENTIST** (has CREATE_APPOINTMENT)
+- ✅ **MANAGER** (has CREATE_APPOINTMENT)
+- ❌ **PATIENT** (typically does not have this permission - must request via staff)
+- ❌ **OBSERVER** (does not have this permission)
+
+**Security Check:**
+
+```java
+@PreAuthorize("hasAuthority('CREATE_APPOINTMENT')")
+```
+
+**Note:** No new permission (`RESCHEDULE_APPOINTMENT`) was created because:
+
+1. Reschedule = Cancel + Create (both existing operations)
+2. Anyone who can create appointments can reschedule them
+3. Simplifies RBAC management
+
+---
+
+### 6. Database Impact
+
+#### Tables Modified
+
+| Table                            | Operation | Description                                                  |
+| -------------------------------- | --------- | ------------------------------------------------------------ |
+| `appointments` (old)             | UPDATE    | Set status=CANCELLED, rescheduled_to_appointment_id={new_id} |
+| `appointments` (new)             | INSERT    | Create new appointment record                                |
+| `appointment_services` (new)     | INSERT    | Copy services from old appointment                           |
+| `appointment_participants` (new) | INSERT    | Insert new participants                                      |
+| `appointment_audit_logs`         | INSERT x2 | Two logs: RESCHEDULE_SOURCE and RESCHEDULE_TARGET            |
+
+#### Database State Example
+
+**Before Reschedule:**
+
+```sql
+-- appointments table
+| appointment_id | appointment_code    | status    | appointment_start_time | ... |
+| -------------- | ------------------- | --------- | ---------------------- | --- |
+| 123            | APT-20251105-001    | SCHEDULED | 2025-11-05 09:00       | ... |
+```
+
+**After Reschedule:**
+
+```sql
+-- appointments table (old appointment)
+| appointment_id | appointment_code    | status     | rescheduled_to_appointment_id | ... |
+| -------------- | ------------------- | ---------- | ----------------------------- | --- |
+| 123            | APT-20251105-001    | CANCELLED  | 245                           | ... |
+
+-- appointments table (new appointment)
+| appointment_id | appointment_code    | status    | appointment_start_time | ... |
+| -------------- | ------------------- | --------- | ---------------------- | --- |
+| 245            | APT-20251106-005    | SCHEDULED | 2025-11-06 14:00       | ... |
+
+-- appointment_audit_logs
+| log_id | appointment_id | action_type        | old_status | new_status | reason_code         | notes                      |
+| ------ | -------------- | ------------------ | ---------- | ---------- | ------------------- | -------------------------- |
+| 501    | 123            | RESCHEDULE_SOURCE  | SCHEDULED  | CANCELLED  | DOCTOR_UNAVAILABLE  | BS An Khoa bận đột xuất... |
+| 502    | 245            | RESCHEDULE_TARGET  | NULL       | SCHEDULED  | DOCTOR_UNAVAILABLE  | Rescheduled from APT-...   |
+```
+
+---
+
+### 7. Validation Rules
+
+#### Validation 1: Old Appointment Status
+
+**Rule:** Only `SCHEDULED` or `CHECKED_IN` appointments can be rescheduled.
+
+**Invalid Statuses:**
+
+- `COMPLETED` → Cannot reschedule finished appointments
+- `CANCELLED` → Cannot reschedule already cancelled appointments
+- `NO_SHOW` → Cannot reschedule no-show appointments
+
+**Error Response:**
+
+```json
+{
+  "status": 409,
+  "error": "Conflict",
+  "message": "Cannot reschedule appointment in status COMPLETED. Code: APPOINTMENT_NOT_RESCHEDULABLE"
+}
+```
+
+#### Validation 2: New Time Not in Past
+
+**Rule:** `newStartTime` must be ≥ current time.
+
+**Error Response:**
+
+```json
+{
+  "status": 400,
+  "error": "Bad Request",
+  "message": "Cannot reschedule appointment to a time in the past: 2025-11-01T09:00:00"
+}
+```
+
+#### Validation 3: Doctor Shift Coverage
+
+**Rule:** New doctor must have working hours covering `newStartTime → newEndTime`.
+
+**Checked via:** `working_schedule` table (fixed shifts + part-time approvals)
+
+**Error Response:**
+
+```json
+{
+  "status": 409,
+  "error": "Conflict",
+  "message": "Doctor EMP002 does not have shift covering 2025-11-06 14:00-14:45"
+}
+```
+
+#### Validation 4: No Conflicts (Doctor, Room, Patient, Participants)
+
+**Checks:**
+
+1. **Doctor conflict:** New doctor must be available during new time slot
+2. **Room conflict:** New room must be available
+3. **Patient conflict:** Patient must not have another appointment at same time
+4. **Participant conflicts:** All participants must be available
+
+**Error Response:**
+
+```json
+{
+  "status": 409,
+  "error": "Conflict",
+  "message": "Doctor EMP002 has conflicting appointment during 2025-11-06 14:00-14:45"
+}
+```
+
+#### Validation 5: Room Compatibility
+
+**Rule:** New room must support all services in the appointment.
+
+**Example:** Cannot reschedule XRAY service to a room without X-ray equipment.
+
+**Error Response:**
+
+```json
+{
+  "status": 400,
+  "error": "Bad Request",
+  "message": "Room P-01 does not support service XRAY"
+}
+```
+
+---
+
+### 8. Test Cases
+
+#### Test 1: Success - Reschedule SCHEDULED appointment
+
+**✅ UPDATED: Using current date Nov 6, 2025 with NEW seed data**
+
+**Prerequisites:**
+
+- Login as `letan1` (RECEPTIONIST, has CREATE_APPOINTMENT permission)
+- **NEW Appointment APT-20251106-001** exists (from updated seed data)
+  - Status: SCHEDULED
+  - Patient: BN-1001 (Đoàn Thanh Phong)
+  - Original doctor: EMP001 (Lê Anh Khoa) - NOW HAS SHIFT!
+  - Original room: P-01 (room_id=GHE251103001)
+  - Original time: 2025-11-06 09:00-09:30
+  - Services: GEN_EXAM
+- Reschedule to **Nov 7** (tomorrow) with different doctor EMP002
+- Room P-02 is available
+
+**Request:**
+
+```http
+POST /api/v1/appointments/APT-20251106-001/reschedule
+Authorization: Bearer {{letan1_token}}
+Content-Type: application/json
+
+{
+  "newEmployeeCode": "EMP002",
+  "newRoomCode": "P-02",
+  "newStartTime": "2025-11-07T09:00:00",
+  "newParticipantCodes": ["EMP008"],
+  "reasonCode": "DOCTOR_UNAVAILABLE",
+  "cancelNotes": "BS Lê Anh Khoa bận đột xuất, chuyển cho BS Trịnh Công Thái ngày 7/11"
+}
+```
+
+**Expected Response:**
+
+- Status: `200 OK`
+- `cancelledAppointment.appointmentCode`: "APT-20251106-001"
+- `cancelledAppointment.status`: "CANCELLED"
+- `cancelledAppointment.rescheduledToAppointmentId`: Not null
+- `newAppointment.status`: "SCHEDULED"
+- `newAppointment.appointmentCode`: New code (e.g., APT-20251107-003)
+- `newAppointment.doctor.employeeCode`: "EMP002" (changed doctor)
+- `newAppointment.room.roomCode`: "P-02" (changed room)
+- `newAppointment.appointmentStartTime`: "2025-11-07T09:00:00" (next day)
+- Services: Same as old appointment (GEN_EXAM)
+
+**Database Verification:**
+
+```sql
+-- Old appointment cancelled
+SELECT status, rescheduled_to_appointment_id
+FROM appointments
+WHERE appointment_code = 'APT-20251104-002';
+-- Expected: status=CANCELLED, rescheduled_to_appointment_id IS NOT NULL
+
+-- New appointment created
+SELECT appointment_code, status, employee_id, room_id
+FROM appointments
+WHERE appointment_id = (
+  SELECT rescheduled_to_appointment_id
+  FROM appointments
+  WHERE appointment_code = 'APT-20251104-002'
+);
+-- Expected: status=SCHEDULED, different employee/room
+
+-- Audit logs created
+SELECT action_type, reason_code
+FROM appointment_audit_logs
+WHERE appointment_id IN (
+  SELECT appointment_id FROM appointments WHERE appointment_code = 'APT-20251104-002'
+  UNION
+  SELECT rescheduled_to_appointment_id FROM appointments WHERE appointment_code = 'APT-20251104-002'
+)
+ORDER BY created_at DESC;
+-- Expected: Two logs (RESCHEDULE_SOURCE, RESCHEDULE_TARGET)
+```
+
+---
+
+#### Test 2: Success - Reschedule with multiple services
+
+**✅ UPDATED: Using APT-20251106-002 (current date Nov 6)**
+
+**Prerequisites:**
+
+- **NEW Appointment APT-20251106-002** exists (from updated seed data)
+- Status: SCHEDULED
+- Patient: BN-1002 (Phạm Văn Phong)
+- Original doctor: EMP002 (Trịnh Công Thái)
+- Original room: P-02
+- Original time: 2025-11-06 14:00-14:45 (afternoon today)
+- Services: GEN_EXAM + SCALING_L1 (2 services)
+- Reschedule to **tomorrow morning** (Nov 7) with EMP001
+
+**Request:**
+
+```http
+POST /api/v1/appointments/APT-20251106-002/reschedule
+Content-Type: application/json
+
+{
+  "newEmployeeCode": "EMP001",
+  "newRoomCode": "P-01",
+  "newStartTime": "2025-11-07T08:30:00",
+  "newParticipantCodes": ["EMP007"],
+  "reasonCode": "PATIENT_REQUEST",
+  "cancelNotes": "Bệnh nhân yêu cầu đổi sang sáng mai. Chuyển từ BS Thái sang BS Khoa"
+}
+```
+
+**Expected Response:**
+
+- Status: `200 OK`
+- `cancelledAppointment.appointmentCode`: "APT-20251106-002"
+- `newAppointment.appointmentCode`: New code (e.g., APT-20251107-004)
+- `newAppointment.doctor.employeeCode`: "EMP001" (changed doctor)
+- `newAppointment.appointmentStartTime`: "2025-11-07T08:30:00" (next day)
+- **Services preserved**: GEN_EXAM + SCALING_L1 (both services transferred)
+- **Participant changed**: EMP007 (Y tá Nguyên) instead of EMP008
+
+**Business Note:** When rescheduling, all services are automatically transferred to the new appointment.
+
+---
+
+#### Test 3: Error - Cannot reschedule COMPLETED appointment
+
+**Prerequisites:**
+
+- Create appointment APT-20251104-001, then mark as COMPLETED via API 3.5
+- Status: COMPLETED
+
+**Request:**
+
+```http
+POST /api/v1/appointments/APT-20251104-001/reschedule
+Content-Type: application/json
+
+{
+  "newEmployeeCode": "EMP002",
+  "newRoomCode": "P-02",
+  "newStartTime": "2025-11-06T09:00:00",
+  "reasonCode": "PATIENT_REQUEST",
+  "cancelNotes": "NOTE: Avoiding Nov 5 (holiday)"
+}
+```
+
+**Expected Response:**
+
+```json
+{
+  "status": 409,
+  "error": "Conflict",
+  "message": "Cannot reschedule completed appointment. Code: APPOINTMENT_NOT_RESCHEDULABLE"
+}
+```
+
+---
+
+#### Test 4: Error - Cannot reschedule CANCELLED appointment
+
+**Prerequisites:**
+
+- Create appointment, then mark as CANCELLED via API 3.5
+- Status: CANCELLED
+
+**Request:** (Use a cancelled appointment code)
+
+**Expected Response:**
+
+```json
+{
+  "status": 409,
+  "error": "Conflict",
+  "message": "Cannot reschedule cancelled appointment. Code: APPOINTMENT_NOT_RESCHEDULABLE"
+}
+```
+
+---
+
+#### Test 5: Error - New time in the past
+
+**Prerequisites:**
+
+- Appointment APT-20251104-003 exists (from seed data)
+- Status: SCHEDULED
+- Current time: 2025-11-04 12:00
+
+**Request:**
+
+```http
+POST /api/v1/appointments/APT-20251104-003/reschedule
+Content-Type: application/json
+
+{
+  "newEmployeeCode": "EMP002",
+  "newRoomCode": "P-02",
+  "newStartTime": "2025-11-04T07:00:00",
+  "reasonCode": "DOCTOR_UNAVAILABLE"
+}
+```
+
+**Expected Response:**
+
+```json
+{
+  "status": 400,
+  "error": "Bad Request",
+  "message": "Cannot reschedule appointment to a time in the past: 2025-11-04T07:00:00"
+}
+```
+
+---
+
+#### Test 6: Error - New doctor has conflict
+
+**Prerequisites:**
+
+- Appointment APT-20251104-002 exists (Status: SCHEDULED)
+- Doctor EMP002 (Trịnh Công Thái) already has APT-20251104-002 at 2025-11-04 14:00-14:30
+- Try to reschedule APT-20251104-001 to same time with same doctor
+
+**Request:**
+
+```http
+POST /api/v1/appointments/APT-20251104-001/reschedule
+Content-Type: application/json
+
+{
+  "newEmployeeCode": "EMP002",
+  "newRoomCode": "P-02",
+  "newStartTime": "2025-11-04T14:00:00",
+  "reasonCode": "PATIENT_REQUEST"
+}
+```
+
+**Expected Response:**
+
+```json
+{
+  "status": 409,
+  "error": "Conflict",
+  "message": "Doctor EMP002 has conflicting appointment during 2025-11-04 14:00:00 - 14:30:00"
+}
+```
+
+**Note:** EMP002 already has APT-20251104-002 at this time
+
+---
+
+#### Test 7: Error - New room occupied
+
+**Prerequisites:**
+
+- Try to reschedule APT-20251104-001 to room P-02
+- But P-02 is already occupied by APT-20251104-002 at 14:00-14:30
+
+**Request:**
+
+```http
+POST /api/v1/appointments/APT-20251104-001/reschedule
+Content-Type: application/json
+
+{
+  "newEmployeeCode": "EMP001",
+  "newRoomCode": "P-02",
+  "newStartTime": "2025-11-04T14:00:00",
+  "reasonCode": "ROOM_MAINTENANCE"
+}
+```
+
+**Expected Response:**
+
+```json
+{
+  "status": 409,
+  "error": "Conflict",
+  "message": "Room P-02 is occupied during 2025-11-04 14:00:00 - 14:30:00"
+}
+```
+
+---
+
+#### Test 8: Error - Patient has conflict
+
+**Prerequisites:**
+
+- Patient BN-1001 already has APT-20251104-001 at 09:00-09:45
+- Create new appointment for BN-1001, then try to reschedule to overlapping time
+
+**Request:**
+
+```http
+POST /api/v1/appointments/{new-appointment-code}/reschedule
+Content-Type: application/json
+
+{
+  "newEmployeeCode": "EMP002",
+  "newRoomCode": "P-02",
+  "newStartTime": "2025-11-04T09:15:00",
+  "reasonCode": "DOCTOR_UNAVAILABLE"
+}
+```
+
+**Expected Response:**
+
+```json
+{
+  "status": 409,
+  "error": "Conflict",
+  "message": "Patient already has another appointment during 2025-11-04 09:15:00 - 10:00:00"
+}
+```
+
+---
+
+#### Test 9: Error - Doctor does not have shift
+
+**Prerequisites:**
+
+- Appointment APT-20251104-001 exists
+- Doctor EMP002 (Trịnh Công Thái) does NOT work on Sundays (2025-11-09)
+
+**Request:**
+
+```http
+POST /api/v1/appointments/APT-20251104-001/reschedule
+Content-Type: application/json
+
+{
+  "newEmployeeCode": "EMP002",
+  "newRoomCode": "P-02",
+  "newStartTime": "2025-11-09T09:00:00",
+  "reasonCode": "PATIENT_REQUEST"
+}
+```
+
+**Expected Response:**
+
+```json
+{
+  "status": 409,
+  "error": "Conflict",
+  "message": "Doctor EMP002 does not have shift covering 2025-11-09 09:00:00 - 09:45:00"
+}
+```
+
+---
+
+#### Test 10: Error - No CREATE_APPOINTMENT permission
+
+**Prerequisites:**
+
+- Login as `patient_user` (PATIENT role, does NOT have CREATE_APPOINTMENT permission)
+- Appointment APT-20251104-001 exists
+
+**Request:**
+
+```http
+POST /api/v1/appointments/APT-20251104-001/reschedule
+Authorization: Bearer {{patient_token}}
+Content-Type: application/json
+
+{
+  "newEmployeeCode": "EMP002",
+  "newRoomCode": "P-02",
+  "newStartTime": "2025-11-06T14:00:00",
+  "reasonCode": "PATIENT_REQUEST",
+  "cancelNotes": "NOTE: Avoiding Nov 5 holiday"
+}
+```
+
+**Expected Response:**
+
+```json
+{
+  "status": 403,
+  "error": "Forbidden",
+  "message": "Access Denied"
+}
+```
+
+**Note:** Patients cannot reschedule their own appointments. They must contact reception staff.
+
+---
+
+### 9. Seed Data Validation & Testing Guide
+
+#### 📝 Pre-Restart Checklist
+
+Before restarting application, verify seed data was updated correctly:
+
+```bash
+# Check if new shifts were added to seed file
+grep -c "EMS251106" src/main/resources/db/dental-clinic-seed-data.sql
+# Expected: 9 (new shift IDs for Nov 6)
+
+grep -c "APT-20251106" src/main/resources/db/dental-clinic-seed-data.sql
+# Expected: 2 (new appointments for Nov 6)
+```
+
+#### ✅ Post-Restart Validation
+
+After application starts successfully, run these SQL queries:
+
+**1. Verify Employee Shifts (Nov 6-8):**
+
+```sql
+SELECT
+    e.employee_code,
+    e.first_name || ' ' || e.last_name as name,
+    COUNT(*) as shift_count,
+    MIN(es.work_date) as first_shift,
+    MAX(es.work_date) as last_shift
+FROM employee_shifts es
+JOIN employees e ON es.employee_id = e.employee_id
+WHERE es.work_date >= '2025-11-06'
+  AND es.work_date <= '2025-11-08'
+  AND e.employee_id IN (1,2,3,4,7,8)
+GROUP BY e.employee_code, e.first_name, e.last_name
+ORDER BY e.employee_id;
+
+-- Expected Output:
+-- EMP001 (Lê Anh Khoa): 5 shifts (Nov 6 morning+afternoon, Nov 7-8 morning+afternoon)
+-- EMP002 (Trịnh Công Thái): 3 shifts
+-- EMP003 (Jimmy Donaldson): 2 shifts
+-- EMP004 (Junya Ota): 2 shifts
+-- EMP007 (Y tá Nguyên): 4 shifts
+-- EMP008 (Y tá Khang): 4 shifts
+```
+
+**2. Verify New Appointments:**
+
+```sql
+SELECT
+    a.appointment_code,
+    a.appointment_start_time,
+    e.employee_code as doctor,
+    p.patient_code,
+    r.room_code,
+    a.status,
+    COUNT(asvc.service_id) as service_count
+FROM appointments a
+JOIN employees e ON a.employee_id = e.employee_id
+JOIN patients p ON a.patient_id = p.patient_id
+JOIN rooms r ON a.room_id = r.room_id
+LEFT JOIN appointment_services asvc ON a.appointment_id = asvc.appointment_id
+WHERE a.appointment_code LIKE 'APT-202511%'
+GROUP BY a.appointment_code, a.appointment_start_time, e.employee_code, p.patient_code, r.room_code, a.status
+ORDER BY a.appointment_start_time;
+
+-- Expected: 8 appointments (3 old Nov 4 + 5 new Nov 6-8)
+-- APT-20251106-001: Nov 6 09:00, EMP001, BN-1001, P-01, 1 service
+-- APT-20251106-002: Nov 6 14:00, EMP002, BN-1002, P-02, 2 services
+-- APT-20251107-001: Nov 7 10:00, EMP003, BN-1003, P-03, 1 service
+-- APT-20251107-002: Nov 7 15:00, EMP002, BN-1004, P-02, 1 service
+-- APT-20251108-001: Nov 8 09:30, EMP001, BN-1002, P-01, 2 services
+```
+
+**3. Verify Holiday Blocking:**
+
+```sql
+SELECT holiday_date, definition_id, description
+FROM holiday_dates
+WHERE holiday_date = '2025-11-05';
+
+-- Expected: 1 row (Nov 5 is MAINTENANCE_WEEK holiday)
+```
+
+**4. Verify Specializations (Critical for doctors):**
+
+```sql
+SELECT
+    e.employee_code,
+    e.first_name || ' ' || e.last_name as name,
+    array_agg(es.specialization_id ORDER BY es.specialization_id) as specializations,
+    CASE WHEN 8 = ANY(array_agg(es.specialization_id))
+         THEN '✅ HAS STANDARD'
+         ELSE '❌ MISSING STANDARD'
+    END as has_required_standard
+FROM employees e
+JOIN employee_specializations es ON e.employee_id = es.employee_id
+WHERE e.employee_id IN (1,2,3,4)
+GROUP BY e.employee_code, e.first_name, e.last_name
+ORDER BY e.employee_id;
+
+-- Expected: ALL doctors should show "✅ HAS STANDARD"
+-- EMP001: [1,3,4,8] - Chỉnh nha + Nha chu + Phục hồi + STANDARD
+-- EMP002: [2,7,8] - Nội nha + Thẩm mỹ + STANDARD
+-- EMP003: [6,8] - Trẻ em + STANDARD
+-- EMP004: [4,5,8] - Phục hồi + Phẫu thuật + STANDARD
+```
+
+#### 🧪 API Testing Workflow
+
+**Step 1: Test GET appointments (verify JPA fix)**
+
+```bash
+# Login as bacsi1 (employee_id=1, EMP001)
+curl -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"bacsi1","password":"password123"}'
+
+# Get appointments for bacsi1
+curl -X GET "http://localhost:8080/api/v1/appointments" \
+  -H "Authorization: Bearer ${BACSI1_TOKEN}"
+
+# Expected: 200 OK (no JPQL error), returns APT-20251106-001, APT-20251108-001
+```
+
+**Step 2: Test Reschedule Today → Tomorrow**
+
+```bash
+# Reschedule APT-20251106-001 (today 9am) to tomorrow 9am
+curl -X POST http://localhost:8080/api/v1/appointments/APT-20251106-001/reschedule \
+  -H "Authorization: Bearer ${LETAN_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "newEmployeeCode": "EMP002",
+    "newRoomCode": "P-02",
+    "newStartTime": "2025-11-07T09:00:00",
+    "newParticipantCodes": ["EMP008"],
+    "reasonCode": "DOCTOR_UNAVAILABLE",
+    "cancelNotes": "BS Khoa busy, reschedule to BS Thai tomorrow"
+  }'
+
+# Expected: 200 OK
+# Response includes cancelledAppointment + newAppointment
+```
+
+**Step 3: Verify Database Changes**
+
+```sql
+-- Check old appointment cancelled
+SELECT appointment_code, status, rescheduled_to_appointment_id
+FROM appointments
+WHERE appointment_code = 'APT-20251106-001';
+-- Expected: status='CANCELLED', rescheduled_to_appointment_id NOT NULL
+
+-- Check new appointment created
+SELECT a.appointment_code, a.status, e.employee_code, r.room_code, a.appointment_start_time
+FROM appointments a
+JOIN employees e ON a.employee_id = e.employee_id
+JOIN rooms r ON a.room_id = r.room_id
+WHERE a.appointment_id = (
+  SELECT rescheduled_to_appointment_id
+  FROM appointments
+  WHERE appointment_code = 'APT-20251106-001'
+);
+-- Expected: status='SCHEDULED', employee_code='EMP002', room_code='P-02', date='2025-11-07 09:00'
+
+-- Check audit logs
+SELECT action_type, reason_code, notes
+FROM appointment_audit_logs
+WHERE appointment_id IN (
+  SELECT appointment_id FROM appointments WHERE appointment_code = 'APT-20251106-001'
+  UNION
+  SELECT rescheduled_to_appointment_id FROM appointments WHERE appointment_code = 'APT-20251106-001'
+)
+ORDER BY created_at DESC;
+-- Expected: 2 rows (RESCHEDULE_SOURCE, RESCHEDULE_TARGET)
+```
+
+#### ⚠️ Common Errors & Solutions
+
+**Error 1: "Doctor EMP001 has no shift on 2025-11-09"**
+
+- **Cause**: Trying to reschedule beyond Nov 8 (no shifts defined)
+- **Solution**: Only reschedule to Nov 6-8
+
+**Error 2: "Cannot reschedule to past date"**
+
+- **Cause**: Using Nov 4 or Nov 5 as target date
+- **Solution**: Use Nov 7+ for future appointments
+
+**Error 3: "Duplicate key violates unique constraint uk_employee_date_shift"**
+
+- **Cause**: Seed data has duplicate employee shifts
+- **Solution**: Already fixed - manager shifted to Nov 10-11
+
+**Error 4: "Could not resolve attribute 'appointment_start_time'"**
+
+- **Cause**: JPQL query uses snake_case instead of camelCase
+- **Solution**: Already fixed in AppointmentRepository.java line 321
+
+---
+
+### 10. Error Handling
+
+| Status | Error Code               | Message Example                                                  |
+| ------ | ------------------------ | ---------------------------------------------------------------- |
+| 400    | Bad Request              | "New start time cannot be in the past"                           |
+| 400    | Invalid room             | "Room P-BASIC-01 does not support service SV-X-QUANG"            |
+| 403    | Forbidden                | "Access Denied" (no CREATE_APPOINTMENT permission)               |
+| 404    | Appointment not found    | "Appointment not found: APT-20251105-999"                        |
+| 409    | Invalid status           | "Cannot reschedule appointment in status COMPLETED..."           |
+| 409    | Doctor conflict          | "Doctor has conflicting appointment during {start} - {end}"      |
+| 409    | Room conflict            | "Room is occupied during {start} - {end}"                        |
+| 409    | Patient conflict         | "Patient already has another appointment during {start} - {end}" |
+| 409    | Participant conflict     | "Participant has conflicting appointment during {start} - {end}" |
+| 409    | Doctor shift unavailable | "Doctor does not have shift covering {start} - {end}"            |
+| 500    | Database error           | Transaction rollback (both cancel and create are reverted)       |
+
+---
+
+### 10. Comparison with Related APIs
+
+| Feature                 | API 3.5 (Cancel)         | API 3.6 (Delay)     | API 3.7 (Reschedule)         |
+| ----------------------- | ------------------------ | ------------------- | ---------------------------- |
+| HTTP Method             | PATCH                    | PATCH               | POST                         |
+| Operation               | Update status            | Update times        | Cancel + Create              |
+| Changes doctor          | ❌ No                    | ❌ No               | ✅ Yes                       |
+| Changes room            | ❌ No                    | ❌ No (typically)   | ✅ Yes                       |
+| Changes patient         | ❌ No                    | ❌ No               | ❌ No                        |
+| Changes services        | ❌ No                    | ❌ No               | ❌ No (V1)                   |
+| Requires reasonCode     | ✅ Yes                   | ✅ Yes              | ✅ Yes                       |
+| Creates new appointment | ❌ No                    | ❌ No               | ✅ Yes                       |
+| Database transactions   | 1 (UPDATE)               | 1 (UPDATE)          | 2 (UPDATE + INSERT)          |
+| Audit log count         | 1                        | 1                   | 2 (source + target)          |
+| Permission required     | CANCEL_APPOINTMENT       | DELAY_APPOINTMENT   | CREATE_APPOINTMENT           |
+| Typical use case        | Patient no longer coming | Doctor running late | Different doctor/room needed |
+
+**Decision Tree:**
+
+```
+Is appointment still happening?
+│
+├─ No → Use API 3.5 (Cancel)
+│
+└─ Yes → Will it involve same doctor/room?
+         │
+         ├─ Yes (just time change) → Use API 3.6 (Delay)
+         │
+         └─ No (different doctor/room) → Use API 3.7 (Reschedule)
+```
+
+---
+
+### 11. Frontend Integration
+
+#### Display Rescheduled Appointments
+
+**Cancelled Appointment View:**
+
+```typescript
+// Show in appointment history
+if (appointment.rescheduledToAppointmentId) {
+  return (
+    <div className="appointment-card cancelled">
+      <Badge color="gray">Cancelled (Rescheduled)</Badge>
+      <p>Original time: {appointment.appointmentStartTime}</p>
+      <Link to={`/appointments/${appointment.rescheduledToAppointmentCode}`}>
+        View rescheduled appointment →
+      </Link>
+    </div>
+  );
+}
+```
+
+**Success Message:**
+
+```javascript
+onRescheduleSuccess(response) {
+  toast.success(
+    `Appointment ${response.cancelledAppointment.appointmentCode} has been cancelled.\n` +
+    `New appointment ${response.newAppointment.appointmentCode} created for ` +
+    `${response.newAppointment.appointmentStartTime}`
+  );
+}
+```
+
+#### Reschedule Button Visibility
+
+```typescript
+canReschedule(appointment: Appointment): boolean {
+  return (
+    userHasPermission('CREATE_APPOINTMENT') &&
+    (appointment.status === 'SCHEDULED' || appointment.status === 'CHECKED_IN')
+  );
+}
+```
+
+---
+
+### 12. Future Enhancements
+
+1. **Service Changes:** Allow changing services during reschedule (requires complex validation)
+2. **Batch Reschedule:** Reschedule multiple appointments at once (e.g., doctor sick leave)
+3. **Smart Suggestions:** AI-powered suggestion of best alternative doctor/time slots
+4. **Patient Notification:** Auto-send SMS/Email about reschedule with new details
+5. **Undo Reschedule:** Revert within 5 minutes (restore old appointment, cancel new)
+6. **Recurring Appointments:** Reschedule all future occurrences
+7. **Wait List Integration:** Offer cancelled slot to wait-listed patients
+8. **Price Adjustment:** Handle price differences if services change in future versions
+
+---
+
+### 13. FINAL SUMMARY - API 3.7 Implementation
+
+#### ✅ Code Changes Completed
+
+**1. Backend Files Modified (5 files):**
+
+- `AppointmentRepository.java`: Fixed JPQL query (line 321) - `appointmentStartTime` camelCase
+- `RescheduleAppointmentRequest.java`: Request DTO with newEmployeeCode, newRoomCode, newStartTime, etc.
+- `RescheduleAppointmentResponse.java`: Response DTO with cancelledAppointment + newAppointment
+- `AppointmentRescheduleService.java`: Transaction logic (cancel + create in one transaction)
+- `AppointmentController.java`: POST /{code}/reschedule endpoint
+
+**2. Seed Data Updates:**
+
+- Added 25+ employee_shifts for Nov 6-8 (EMP001-EMP004, EMP007-EMP008)
+- Added 5 new appointments for Nov 6-8 (APT-20251106-001 through APT-20251108-001)
+- Fixed EMP001 shifts (was empty, now has 5 shifts)
+- Fixed duplicate shift error (manager moved to Nov 10-11)
+
+**3. Documentation:**
+
+- Complete API 3.7 guide with 12 sections
+- 8 test cases (2 success, 6 error scenarios)
+- Seed data validation SQL queries
+- Testing workflow with curl examples
+- Error troubleshooting guide
+
+#### 🎯 Key Features Implemented
+
+✅ **Atomic Transaction**: Cancel old + Create new in ONE database transaction
+✅ **Audit Trail**: 2 audit logs (RESCHEDULE_SOURCE + RESCHEDULE_TARGET) with link
+✅ **Service Preservation**: All services from old appointment transferred to new
+✅ **Validation**: Same as create appointment (shift, conflict, specialization checks)
+✅ **Permission**: CREATE_APPOINTMENT required (same as creating new appointment)
+✅ **Flexible Changes**: Can change doctor, room, time, participants in one operation
+
+#### 📊 Seed Data Summary (Current: Nov 6, 2025)
+
+**Available Appointments for Testing:**
+
+- **Past**: APT-20251104-001/002/003 (Nov 4) - can reschedule to future
+- **Today**: APT-20251106-001/002 (Nov 6) - can reschedule to tomorrow
+- **Future**: APT-20251107-001/002, APT-20251108-001 (Nov 7-8)
+
+**Doctor Shift Coverage:**
+
+- **EMP001**: Nov 6-8 (5 shifts total)
+- **EMP002**: Nov 6-8 (3 shifts total)
+- **EMP003**: Nov 6-7 (2 shifts total)
+- **EMP004**: Nov 6-7 (2 shifts total)
+
+**Constraints:**
+
+- ❌ Nov 5 is holiday - CANNOT create appointments
+- ❌ Nov 9+ no shifts - CANNOT reschedule beyond Nov 8
+- ✅ Nov 6-8 full coverage - CAN reschedule freely
+
+#### 🚀 Quick Start Test
+
+```bash
+# 1. Start application (auto-loads seed data)
+./mvnw spring-boot:run
+
+# 2. Login as receptionist
+TOKEN=$(curl -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"letan1","password":"password123"}' \
+  | jq -r '.data.access_token')
+
+# 3. Reschedule today's appointment to tomorrow
+curl -X POST http://localhost:8080/api/v1/appointments/APT-20251106-001/reschedule \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "newEmployeeCode": "EMP002",
+    "newRoomCode": "P-02",
+    "newStartTime": "2025-11-07T09:00:00",
+    "newParticipantCodes": ["EMP008"],
+    "reasonCode": "DOCTOR_UNAVAILABLE",
+    "cancelNotes": "Test reschedule - doctor unavailable"
+  }'
+
+# 4. Verify result (should return 200 OK with both appointments)
+```
+
+#### 📋 Validation Checklist
+
+Before deployment, verify:
+
+- [ ] Application starts without errors
+- [ ] All 8 appointments exist in database
+- [ ] All doctors (EMP001-EMP004) have shifts Nov 6-8
+- [ ] All doctors have specialization ID 8 (STANDARD - required)
+- [ ] Nov 5 holiday exists in holiday_dates table
+- [ ] JPA query error fixed (GET /appointments returns 200 OK)
+- [ ] Reschedule API returns 200 OK for valid requests
+- [ ] Audit logs created for both old and new appointments
+- [ ] Services transferred correctly to new appointment
+- [ ] Transaction rollback works (test with invalid data)
+
+#### 🎓 Lessons Learned
+
+1. **Seed Data Matters**: Wrong test data wastes hours - always verify against real database
+2. **JPA vs SQL**: JPQL uses camelCase (appointmentStartTime), SQL uses snake_case (appointment_start_time)
+3. **Holiday Blocking**: Business rules trump everything - holiday dates block all operations
+4. **Required Data**: Doctors MUST have both shifts AND specialization ID 8 (STANDARD)
+5. **Duplicate Keys**: Always check for unique constraints before adding seed data
+6. **Documentation**: Keep one source of truth (Appointment.md) - don't split into multiple files
 
 ---

@@ -9,12 +9,15 @@ import com.dental.clinic.management.booking_appointment.dto.DatePreset;
 import com.dental.clinic.management.booking_appointment.dto.UpdateAppointmentStatusRequest;
 import com.dental.clinic.management.booking_appointment.dto.request.AvailableTimesRequest;
 import com.dental.clinic.management.booking_appointment.dto.request.DelayAppointmentRequest;
+import com.dental.clinic.management.booking_appointment.dto.request.RescheduleAppointmentRequest;
 import com.dental.clinic.management.booking_appointment.dto.response.AvailableTimesResponse;
+import com.dental.clinic.management.booking_appointment.dto.response.RescheduleAppointmentResponse;
 import com.dental.clinic.management.booking_appointment.service.AppointmentAvailabilityService;
 import com.dental.clinic.management.booking_appointment.service.AppointmentCreationService;
 import com.dental.clinic.management.booking_appointment.service.AppointmentDelayService;
 import com.dental.clinic.management.booking_appointment.service.AppointmentDetailService;
 import com.dental.clinic.management.booking_appointment.service.AppointmentListService;
+import com.dental.clinic.management.booking_appointment.service.AppointmentRescheduleService;
 import com.dental.clinic.management.booking_appointment.service.AppointmentStatusService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +49,7 @@ public class AppointmentController {
         private final AppointmentDetailService detailService;
         private final AppointmentStatusService statusService;
         private final AppointmentDelayService delayService;
+        private final AppointmentRescheduleService rescheduleService;
 
         /**
          * P3.1: Find Available Time Slots
@@ -141,6 +145,9 @@ public class AppointmentController {
          * - employeeCode (string): Filter by doctor code (VIEW_ALL only)
          * - roomCode (string): Filter by room code
          * - serviceCode (string): Filter by service code
+         * - searchCode (string): Combined search by code OR name
+         * (patient/doctor/employee/room/service)
+         * Examples: "Nguyễn Văn A", "Dr. An", "BN-1001", "Cạo vôi"
          *
          * @return Paginated list of appointments with nested
          *         patient/doctor/room/services/participants
@@ -168,10 +175,11 @@ public class AppointmentController {
                         @RequestParam(required = false) String patientPhone,
                         @RequestParam(required = false) String employeeCode,
                         @RequestParam(required = false) String roomCode,
-                        @RequestParam(required = false) String serviceCode) {
+                        @RequestParam(required = false) String serviceCode,
+                        @RequestParam(required = false) String searchCode) {
 
-                log.info("Fetching appointments: page={}, size={}, datePreset={}, dateFrom={}, dateTo={}, today={}, status={}",
-                                page, size, datePreset, dateFrom, dateTo, today, status);
+                log.info("Fetching appointments: page={}, size={}, datePreset={}, dateFrom={}, dateTo={}, today={}, status={}, searchCode={}",
+                                page, size, datePreset, dateFrom, dateTo, today, status, searchCode);
 
                 // Build filter criteria
                 AppointmentFilterCriteria criteria = AppointmentFilterCriteria.builder()
@@ -186,6 +194,7 @@ public class AppointmentController {
                                 .employeeCode(employeeCode)
                                 .roomCode(roomCode)
                                 .serviceCode(serviceCode)
+                                .searchCode(searchCode)
                                 .build();
 
                 Page<AppointmentSummaryDTO> appointments = listService.getAppointments(
@@ -329,6 +338,39 @@ public class AppointmentController {
                 AppointmentDetailDTO delayedAppointment = delayService.delayAppointment(appointmentCode, request);
 
                 return ResponseEntity.ok(delayedAppointment);
+        }
+
+        /**
+         * P3.7: Reschedule Appointment
+         *
+         * POST /api/v1/appointments/{appointmentCode}/reschedule
+         *
+         * Permission: CREATE_APPOINTMENT (since it creates new appointment)
+         *
+         * Business: Cancel old appointment and create new one with new
+         * time/doctor/room.
+         * - Patient remains same
+         * - Services can be changed (optional) or reused from old appointment
+         * - Both appointments linked via rescheduled_to_appointment_id
+         * - Creates audit logs for both (RESCHEDULE_SOURCE and RESCHEDULE_TARGET)
+         *
+         * @param appointmentCode Old appointment code to reschedule
+         * @param request         New appointment details + cancellation reason
+         * @return Both old (cancelled) and new (scheduled) appointments
+         */
+        @PostMapping("/{appointmentCode}/reschedule")
+        @PreAuthorize("hasAuthority('CREATE_APPOINTMENT')")
+        public ResponseEntity<RescheduleAppointmentResponse> rescheduleAppointment(
+                        @PathVariable String appointmentCode,
+                        @Valid @RequestBody RescheduleAppointmentRequest request) {
+
+                log.info("Rescheduling appointment: code={}, newStartTime={}",
+                                appointmentCode, request.getNewStartTime());
+
+                RescheduleAppointmentResponse response = rescheduleService.rescheduleAppointment(
+                                appointmentCode, request);
+
+                return ResponseEntity.ok(response);
         }
 
 }

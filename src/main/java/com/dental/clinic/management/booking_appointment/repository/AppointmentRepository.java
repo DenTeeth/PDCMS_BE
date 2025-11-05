@@ -284,12 +284,17 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
          * Patient can only see their own appointments
          *
          * IMPROVEMENT: Also supports date/status filters
+         *
+         * CRITICAL FIX: Use COALESCE to avoid PostgreSQL "could not determine data
+         * type" error
+         * When startDate/endDate are NULL, PostgreSQL can't infer the type in JPQL
+         * queries
          */
         @Query("SELECT a FROM Appointment a " +
                         "WHERE a.patientId = :patientId " +
-                        "AND (:startDate IS NULL OR a.appointmentStartTime >= :startDate) " +
-                        "AND (:endDate IS NULL OR a.appointmentStartTime <= :endDate) " +
-                        "AND (:statuses IS NULL OR a.status IN :statuses)")
+                        "AND (COALESCE(:startDate, NULL) IS NULL OR a.appointmentStartTime >= :startDate) " +
+                        "AND (COALESCE(:endDate, NULL) IS NULL OR a.appointmentStartTime <= :endDate) " +
+                        "AND (COALESCE(:statuses, NULL) IS NULL OR a.status IN :statuses)")
         Page<Appointment> findByPatientIdWithFilters(
                         @Param("patientId") Integer patientId,
                         @Param("startDate") LocalDateTime startDate,
@@ -310,15 +315,20 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
          * - This is controlled by APPOINTMENT:VIEW_OWN permission
          *
          * FIXED: Use EXISTS subquery since AppointmentParticipant has composite key
+         * CRITICAL FIX: Use COALESCE to avoid PostgreSQL "could not determine data
+         * type" error
+         * When startDate/endDate are NULL, PostgreSQL can't infer the type in JPQL
+         * queries
          */
         @Query("SELECT DISTINCT a FROM Appointment a " +
                         "WHERE (a.employeeId = :employeeId " +
                         "   OR EXISTS (SELECT 1 FROM AppointmentParticipant ap " +
                         "              WHERE ap.id.appointmentId = a.appointmentId " +
                         "              AND ap.id.employeeId = :employeeId)) " +
-                        "AND (:startDate IS NULL OR a.appointmentStartTime >= :startDate) " +
-                        "AND (:endDate IS NULL OR a.appointmentStartTime <= :endDate) " +
-                        "AND (:statuses IS NULL OR a.status IN :statuses)")
+                        "AND (COALESCE(:startDate, NULL) IS NULL OR a.appointmentStartTime >= :startDate) " +
+                        "AND (COALESCE(:endDate, NULL) IS NULL OR a.appointmentStartTime <= :endDate) " +
+                        "AND (COALESCE(:statuses, NULL) IS NULL OR a.status IN :statuses) " +
+                        "ORDER BY a.appointmentStartTime ASC")
         Page<Appointment> findByEmployeeIdWithFilters(
                         @Param("employeeId") Integer employeeId,
                         @Param("startDate") LocalDateTime startDate,
@@ -347,5 +357,59 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
                         @Param("startDate") LocalDateTime startDate,
                         @Param("endDate") LocalDateTime endDate,
                         @Param("statuses") List<AppointmentStatus> statuses,
+                        Pageable pageable);
+
+        /**
+         * Combined search by code OR name: patient, doctor, employee (participant),
+         * room, or service
+         *
+         * This is a convenience method for frontend search bars.
+         * Searches across:
+         * - Patient: patient_code OR full_name (ILIKE for partial match)
+         * - Primary doctor: employee_code OR full_name
+         * - Room: room_code OR room_name
+         * - Participant: employee_code OR full_name
+         * - Service: service_code OR service_name
+         *
+         * Uses ILIKE for case-insensitive partial matching on names.
+         *
+         * Examples:
+         * - searchCode="Nguyễn" → Finds all patients/doctors with "Nguyễn" in name
+         * - searchCode="BN-1001" → Finds patient by exact code
+         * - searchCode="Cạo vôi" → Finds appointments with "Cạo vôi" service
+         *
+         * @param searchCode The code or name to search for (supports partial match on
+         *                   names)
+         */
+        @Query(value = "SELECT DISTINCT a.* FROM appointments a " +
+                        "LEFT JOIN patients p ON a.patient_id = p.patient_id " +
+                        "LEFT JOIN employees e ON a.employee_id = e.employee_id " +
+                        "LEFT JOIN rooms r ON a.room_id = r.room_id " +
+                        "LEFT JOIN appointment_participants ap ON a.appointment_id = ap.appointment_id " +
+                        "LEFT JOIN employees part_emp ON ap.employee_id = part_emp.employee_id " +
+                        "LEFT JOIN appointment_services asvc ON a.appointment_id = asvc.appointment_id " +
+                        "LEFT JOIN services s ON asvc.service_id = s.service_id " +
+                        "WHERE (:startDate::timestamp IS NULL OR a.appointment_start_time >= :startDate) " +
+                        "AND (:endDate::timestamp IS NULL OR a.appointment_start_time <= :endDate) " +
+                        "AND (COALESCE(CAST(:statuses AS text[]), NULL::text[]) IS NULL OR a.status::text = ANY(:statuses)) "
+                        +
+                        "AND (" +
+                        "    p.patient_code ILIKE '%' || :searchCode || '%' " +
+                        "    OR LOWER(CONCAT(p.first_name, ' ', p.last_name)) LIKE LOWER('%' || :searchCode || '%') " +
+                        "    OR e.employee_code ILIKE '%' || :searchCode || '%' " +
+                        "    OR LOWER(CONCAT(e.first_name, ' ', e.last_name)) LIKE LOWER('%' || :searchCode || '%') " +
+                        "    OR r.room_code ILIKE '%' || :searchCode || '%' " +
+                        "    OR LOWER(r.room_name) LIKE LOWER('%' || :searchCode || '%') " +
+                        "    OR part_emp.employee_code ILIKE '%' || :searchCode || '%' " +
+                        "    OR LOWER(CONCAT(part_emp.first_name, ' ', part_emp.last_name)) LIKE LOWER('%' || :searchCode || '%') "
+                        +
+                        "    OR s.service_code ILIKE '%' || :searchCode || '%' " +
+                        "    OR LOWER(s.service_name) LIKE LOWER('%' || :searchCode || '%') " +
+                        ")", nativeQuery = true)
+        Page<Appointment> findBySearchCode(
+                        @Param("startDate") LocalDateTime startDate,
+                        @Param("endDate") LocalDateTime endDate,
+                        @Param("statuses") String[] statuses,
+                        @Param("searchCode") String searchCode,
                         Pageable pageable);
 }

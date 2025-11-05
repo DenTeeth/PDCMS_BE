@@ -92,6 +92,22 @@ public class AppointmentListService {
         // Step 2.5: Apply DatePreset if provided (auto-calculate dateFrom/dateTo)
         applyDatePreset(criteria);
 
+        // Step 2.6: Handle combined searchCode parameter
+        if (criteria.getSearchCode() != null && !criteria.getSearchCode().isBlank()) {
+            if (!canViewAll) {
+                log.warn("User without VIEW_APPOINTMENT_ALL tried to use searchCode - ignoring");
+                criteria.setSearchCode(null);
+            } else {
+                log.info("Using combined searchCode: {}", criteria.getSearchCode());
+                // searchCode will be handled in repository query
+                // Clear individual code filters to avoid conflicts
+                criteria.setPatientCode(null);
+                criteria.setEmployeeCode(null);
+                criteria.setRoomCode(null);
+                criteria.setServiceCode(null);
+            }
+        }
+
         // Step 3: Build date range
         LocalDateTime startDate = buildStartDate(criteria);
         LocalDateTime endDate = buildEndDate(criteria);
@@ -100,32 +116,40 @@ public class AppointmentListService {
         List<AppointmentStatus> statuses = buildStatusList(criteria);
 
         // Step 5: Build pageable
-        // CRITICAL FIX: For native queries, convert camelCase field names to snake_case
-        // Regular Sort uses entity field names (camelCase) which don't exist in native
-        // SQL
+        // CRITICAL FIX: Native queries need snake_case, JPQL queries need camelCase
+        // Create TWO Pageable objects:
+        // - pageableNative: For native SQL queries (uses snake_case field names)
+        // - pageableJpql: For JPQL queries (uses camelCase entity field names)
+
         String snakeCaseSortBy = convertToSnakeCase(sortBy);
-        Sort sort;
+        Sort sortNative;
+        Sort sortJpql;
+
         if (sortDirection.equalsIgnoreCase("DESC")) {
-            sort = org.springframework.data.jpa.domain.JpaSort.unsafe(snakeCaseSortBy).descending();
+            sortNative = org.springframework.data.jpa.domain.JpaSort.unsafe(snakeCaseSortBy).descending();
+            sortJpql = Sort.by(Sort.Direction.DESC, sortBy);
         } else {
-            sort = org.springframework.data.jpa.domain.JpaSort.unsafe(snakeCaseSortBy).ascending();
+            sortNative = org.springframework.data.jpa.domain.JpaSort.unsafe(snakeCaseSortBy).ascending();
+            sortJpql = Sort.by(Sort.Direction.ASC, sortBy);
         }
-        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Pageable pageableNative = PageRequest.of(page, size, sortNative);
+        Pageable pageableJpql = PageRequest.of(page, size, sortJpql);
 
         // Step 6: Execute query based on RBAC
         Page<Appointment> appointments;
 
         if (criteria.getCurrentUserPatientId() != null) {
-            // Patient view: Only their appointments
+            // Patient view: Only their appointments (JPQL query)
             log.info("Patient view: Filtering by patientId={}", criteria.getCurrentUserPatientId());
             appointments = appointmentRepository.findByPatientIdWithFilters(
                     criteria.getCurrentUserPatientId(),
                     startDate,
                     endDate,
                     statuses,
-                    pageable);
+                    pageableJpql); // ✅ Use JPQL pageable (camelCase)
         } else if (criteria.getCurrentUserEmployeeId() != null) {
-            // Employee view: Where they are primary doctor OR participant
+            // Employee view: Where they are primary doctor OR participant (JPQL query)
             // This includes: Doctor, Nurse/Assistant, OBSERVER (thực tập sinh)
             log.info("Employee view: Filtering by employeeId={} (includes OBSERVER role)",
                     criteria.getCurrentUserEmployeeId());
@@ -134,9 +158,10 @@ public class AppointmentListService {
                     startDate,
                     endDate,
                     statuses,
-                    pageable);
+                    pageableJpql); // ✅ Use JPQL pageable (camelCase)
         } else {
-            // Admin/Receptionist view: All appointments with optional filters
+            // Admin/Receptionist view: All appointments with optional filters (NATIVE
+            // queries)
             log.info("Admin view: Using all filters (including patient name/phone search)");
 
             // Convert List<AppointmentStatus> to String[] for native query
@@ -147,16 +172,28 @@ public class AppointmentListService {
                         .toArray(String[]::new);
             }
 
-            appointments = appointmentRepository.findByFilters(
-                    startDate,
-                    endDate,
-                    statusArray, // ✅ Pass String[] instead of List
-                    null, // patientId - TODO: resolve from patientCode if needed
-                    null, // employeeId - TODO: resolve from employeeCode if needed
-                    criteria.getRoomCode(),
-                    criteria.getPatientName(), // ✅ NEW: Search by name
-                    criteria.getPatientPhone(), // ✅ NEW: Search by phone
-                    pageable);
+            // Check if using combined searchCode
+            if (criteria.getSearchCode() != null && !criteria.getSearchCode().isBlank()) {
+                log.info("Executing search with combined searchCode: {}", criteria.getSearchCode());
+                appointments = appointmentRepository.findBySearchCode(
+                        startDate,
+                        endDate,
+                        statusArray,
+                        criteria.getSearchCode(),
+                        pageableNative); // ✅ Use NATIVE pageable (snake_case)
+            } else {
+                log.info("Executing search with individual filters");
+                appointments = appointmentRepository.findByFilters(
+                        startDate,
+                        endDate,
+                        statusArray, // ✅ Pass String[] instead of List
+                        null, // patientId - TODO: resolve from patientCode if needed
+                        null, // employeeId - TODO: resolve from employeeCode if needed
+                        criteria.getRoomCode(),
+                        criteria.getPatientName(), // ✅ NEW: Search by name
+                        criteria.getPatientPhone(), // ✅ NEW: Search by phone
+                        pageableNative); // ✅ Use NATIVE pageable (snake_case)
+            }
         }
 
         // Step 7: Map to DTOs

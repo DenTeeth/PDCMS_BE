@@ -130,6 +130,52 @@ public class AppointmentCreationService {
                 return buildResponse(appointment, patient, doctor, room, services, participants);
         }
 
+        /**
+         * Internal method for creating appointment (returns entity instead of DTO).
+         * Used by reschedule service to reuse creation logic.
+         *
+         * @param request Appointment creation request
+         * @return Created Appointment entity
+         */
+        @Transactional
+        public Appointment createAppointmentInternal(CreateAppointmentRequest request) {
+                log.info("Creating appointment internally for patient: {}, doctor: {}",
+                                request.getPatientCode(), request.getEmployeeCode());
+
+                // Reuse all validation logic from main createAppointment method
+                Integer createdById = getCurrentUserId();
+
+                Patient patient = validatePatient(request.getPatientCode());
+                Employee doctor = validateDoctor(request.getEmployeeCode());
+                Room room = validateRoom(request.getRoomCode());
+                List<DentalService> services = validateServices(request.getServiceCodes());
+                List<Employee> participants = validateParticipants(request.getParticipantCodes());
+
+                validateDoctorSpecializations(doctor, services);
+                validateRoomCompatibility(room, services);
+
+                LocalDateTime startTime = LocalDateTime.parse(request.getAppointmentStartTime());
+                int totalDuration = calculateTotalDuration(services);
+                LocalDateTime endTime = startTime.plusMinutes(totalDuration);
+
+                validateDoctorShift(doctor, startTime, endTime);
+                validateParticipantShifts(participants, startTime, endTime);
+
+                checkDoctorConflict(doctor, startTime, endTime);
+                checkRoomConflict(room, startTime, endTime);
+                checkPatientConflict(patient, startTime, endTime);
+                checkParticipantConflicts(participants, startTime, endTime);
+
+                Appointment appointment = insertAppointment(patient, doctor, room, startTime, endTime,
+                                totalDuration, request.getNotes(), createdById);
+                insertAppointmentServices(appointment, services);
+                insertAppointmentParticipants(appointment, participants);
+                insertAuditLog(appointment, createdById);
+
+                log.info("Successfully created appointment internally: {}", appointment.getAppointmentCode());
+                return appointment;
+        }
+
         // ====================================================================
         // STEP 1: Get Current User
         // ====================================================================
