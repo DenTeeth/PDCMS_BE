@@ -1765,21 +1765,21 @@ INSERT INTO appointment_participants (appointment_id, employee_id, participant_r
 VALUES (4, 7, 'ASSISTANT')  -- EMP007 - Y tá Nguyên
 ON CONFLICT (appointment_id, employee_id) DO NOTHING;
 
--- APT-005: Nov 6 Afternoon - BS Thái (EMP002)
+-- APT-005: Nov 6 Afternoon - BS Lê Anh Khoa (EMP001) - ✅ FIXED: EMP001 has PERIODONTICS specialization
 INSERT INTO appointments (
     appointment_id, appointment_code, patient_id, employee_id, room_id,
     appointment_start_time, appointment_end_time, expected_duration_minutes,
     status, notes, created_by, created_at, updated_at
 ) VALUES (
-    5, 'APT-20251106-002', 2, 2, 'GHE251103002',
+    5, 'APT-20251106-002', 2, 1, 'GHE251103002',
     '2025-11-06 14:00:00', '2025-11-06 14:45:00', 45,
-    'SCHEDULED', 'Lấy cao răng + Khám - BS Thái ca chiều', 5, NOW(), NOW()
+    'SCHEDULED', 'Lấy cao răng + Khám - BS Khoa ca chiều', 5, NOW(), NOW()
 ) ON CONFLICT (appointment_id) DO NOTHING;
 
 INSERT INTO appointment_services (appointment_id, service_id)
 VALUES
     (5, 1),  -- GEN_EXAM
-    (5, 3)   -- SCALING_L1
+    (5, 3)   -- SCALING_L1 (requires specialization_id=3 PERIODONTICS, EMP001 has it)
 ON CONFLICT (appointment_id, service_id) DO NOTHING;
 
 INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)

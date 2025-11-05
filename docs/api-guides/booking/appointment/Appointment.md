@@ -2146,7 +2146,7 @@ INSERT INTO appointment_audit_logs (
 | APT-20251104-002     | 2025-11-04     | 14:00     | BN-1002     | EMP002     | P-02     | GEN_EXAM              | SCHEDULED     |
 | APT-20251104-003     | 2025-11-04     | 08:00     | BN-1003     | EMP001     | P-01     | GEN_EXAM              | SCHEDULED     |
 | **APT-20251106-001** | **2025-11-06** | **09:00** | **BN-1001** | **EMP001** | **P-01** | **GEN_EXAM**          | **SCHEDULED** |
-| **APT-20251106-002** | **2025-11-06** | **14:00** | **BN-1002** | **EMP002** | **P-02** | **GEN_EXAM+SCALING**  | **SCHEDULED** |
+| **APT-20251106-002** | **2025-11-06** | **14:00** | **BN-1002** | **EMP001** | **P-02** | **GEN_EXAM+SCALING**  | **SCHEDULED** |
 | **APT-20251107-001** | **2025-11-07** | **10:00** | **BN-1003** | **EMP003** | **P-03** | **GEN_EXAM**          | **SCHEDULED** |
 | **APT-20251107-002** | **2025-11-07** | **15:00** | **BN-1004** | **EMP002** | **P-02** | **GEN_EXAM**          | **SCHEDULED** |
 | **APT-20251108-001** | **2025-11-08** | **09:30** | **BN-1002** | **EMP001** | **P-01** | **GEN_EXAM+SCALING2** | **SCHEDULED** |
@@ -2161,7 +2161,7 @@ INSERT INTO appointment_audit_logs (
 #### ✅ Recommended Test Cases
 
 - ✅ Reschedule **APT-20251106-001** to Nov 7 (tomorrow)
-- ✅ Reschedule **APT-20251106-002** to Nov 7 with different doctor
+  -- ✅ Reschedule **APT-20251106-002** to Nov 7 with different doctor (example: from EMP001 → EMP002)
 - ❌ Do NOT reschedule to Nov 5 (holiday - will fail)
 - ❌ Do NOT use Nov 9+ (no shifts defined - will fail)
 
@@ -2634,11 +2634,11 @@ ORDER BY created_at DESC;
 - **NEW Appointment APT-20251106-002** exists (from updated seed data)
 - Status: SCHEDULED
 - Patient: BN-1002 (Phạm Văn Phong)
-- Original doctor: EMP002 (Trịnh Công Thái)
+- Original doctor: EMP001 (Lê Anh Khoa) -- NOTE: seed data corrected to EMP001 (has PERIODONTICS specialization)
 - Original room: P-02
 - Original time: 2025-11-06 14:00-14:45 (afternoon today)
 - Services: GEN_EXAM + SCALING_L1 (2 services)
-- Reschedule to **tomorrow morning** (Nov 7) with EMP001
+- Reschedule to **tomorrow morning** (Nov 7) with EMP002 (example: EMP001 → EMP002)
 
 **Request:**
 
@@ -2647,12 +2647,12 @@ POST /api/v1/appointments/APT-20251106-002/reschedule
 Content-Type: application/json
 
 {
-  "newEmployeeCode": "EMP001",
-  "newRoomCode": "P-01",
-  "newStartTime": "2025-11-07T08:30:00",
-  "newParticipantCodes": ["EMP007"],
+  "newEmployeeCode": "EMP002",
+  "newRoomCode": "P-02",
+  "newStartTime": "2025-11-07T09:00:00",
+  "newParticipantCodes": ["EMP008"],
   "reasonCode": "PATIENT_REQUEST",
-  "cancelNotes": "Bệnh nhân yêu cầu đổi sang sáng mai. Chuyển từ BS Thái sang BS Khoa"
+  "cancelNotes": "Bệnh nhân yêu cầu đổi sang sáng mai. Chuyển từ BS Khoa sang BS Thái"
 }
 ```
 
@@ -2661,10 +2661,10 @@ Content-Type: application/json
 - Status: `200 OK`
 - `cancelledAppointment.appointmentCode`: "APT-20251106-002"
 - `newAppointment.appointmentCode`: New code (e.g., APT-20251107-004)
-- `newAppointment.doctor.employeeCode`: "EMP001" (changed doctor)
-- `newAppointment.appointmentStartTime`: "2025-11-07T08:30:00" (next day)
+- `newAppointment.doctor.employeeCode`: "EMP002" (changed doctor)
+- `newAppointment.appointmentStartTime`: "2025-11-07T09:00:00" (next day)
 - **Services preserved**: GEN_EXAM + SCALING_L1 (both services transferred)
-- **Participant changed**: EMP007 (Y tá Nguyên) instead of EMP008
+- **Participant changed**: EMP008 (Y tá Khang) remains as participant in this example
 
 **Business Note:** When rescheduling, all services are automatically transferred to the new appointment.
 
@@ -2998,7 +2998,7 @@ ORDER BY a.appointment_start_time;
 
 -- Expected: 8 appointments (3 old Nov 4 + 5 new Nov 6-8)
 -- APT-20251106-001: Nov 6 09:00, EMP001, BN-1001, P-01, 1 service
--- APT-20251106-002: Nov 6 14:00, EMP002, BN-1002, P-02, 2 services
+-- APT-20251106-002: Nov 6 14:00, EMP001, BN-1002, P-02, 2 services
 -- APT-20251107-001: Nov 7 10:00, EMP003, BN-1003, P-03, 1 service
 -- APT-20251107-002: Nov 7 15:00, EMP002, BN-1004, P-02, 1 service
 -- APT-20251108-001: Nov 8 09:30, EMP001, BN-1002, P-01, 2 services
