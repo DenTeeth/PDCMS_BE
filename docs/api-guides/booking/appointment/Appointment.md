@@ -6,11 +6,13 @@ Permissions: CREATE_APPOINTMENT, VIEW_APPOINTMENT_ALL, VIEW_APPOINTMENT_OWN
 
 ## 📋 API SUMMARY
 
-| Endpoint           | Method | Permission                                     | Description                    |
-| ------------------ | ------ | ---------------------------------------------- | ------------------------------ |
-| `/available-times` | GET    | CREATE_APPOINTMENT                             | Tìm slot trống cho lịch hẹn    |
-| `/`                | POST   | CREATE_APPOINTMENT                             | Tạo lịch hẹn mới               |
-| `/`                | GET    | VIEW_APPOINTMENT_ALL hoặc VIEW_APPOINTMENT_OWN | Dashboard - Danh sách lịch hẹn |
+| Endpoint                        | Method | Permission                                     | Description                       |
+| ------------------------------- | ------ | ---------------------------------------------- | --------------------------------- |
+| `/available-times`              | GET    | CREATE_APPOINTMENT                             | Tìm slot trống cho lịch hẹn       |
+| `/`                             | POST   | CREATE_APPOINTMENT                             | Tạo lịch hẹn mới                  |
+| `/`                             | GET    | VIEW_APPOINTMENT_ALL hoặc VIEW_APPOINTMENT_OWN | Dashboard - Danh sách lịch hẹn    |
+| `/{appointmentCode}`            | GET    | VIEW_APPOINTMENT_ALL hoặc VIEW_APPOINTMENT_OWN | Chi tiết lịch hẹn                 |
+| `/{appointmentCode}/status`     | PATCH  | UPDATE_APPOINTMENT_STATUS                      | Cập nhật trạng thái lịch hẹn ⭐  |
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 GET AVAILABLE TIMES
@@ -609,3 +611,802 @@ Rooms:
 - P-02 (STANDARD) - Compatible với tất cả STANDARD services
 - P-03 (STANDARD) - Compatible với tất cả STANDARD services
 - P-04-IMPLANT (IMPLANT) - Compatible với IMPLANT + tất cả STANDARD services
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+GET APPOINTMENT DETAIL (P3.4)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Endpoint:
+GET /api/v1/appointments/{appointmentCode}
+
+Permission:
+
+- VIEW_APPOINTMENT_ALL: Có thể xem bất kỳ appointment nào
+- VIEW_APPOINTMENT_OWN:
+  - Patient chỉ xem được appointment của mình
+  - Employee chỉ xem được appointment mà họ là doctor HOẶC participant
+
+Response 200:
+
+```json
+{
+  "appointmentId": 1,
+  "appointmentCode": "APT-20251104-001",
+  "status": "SCHEDULED",
+  "computedStatus": "LATE",
+  "minutesLate": 74,
+  "appointmentStartTime": "2025-11-04T09:00:00",
+  "appointmentEndTime": "2025-11-04T09:45:00",
+  "expectedDurationMinutes": 45,
+  "actualStartTime": null,
+  "actualEndTime": null,
+  "cancellationReason": null,
+  "notes": "Bệnh nhân có tiền sử cao huyết áp",
+  "patient": {
+    "patientCode": "BN-1001",
+    "fullName": "Đoàn Thanh Phong",
+    "phone": "0909123456",
+    "dateOfBirth": "1990-01-01"
+  },
+  "doctor": {
+    "employeeCode": "EMP001",
+    "fullName": "Lê Anh Khoa"
+  },
+  "room": {
+    "roomCode": "P-01",
+    "roomName": "Room P-01"
+  },
+  "services": [
+    {
+      "serviceCode": "GEN_EXAM",
+      "serviceName": "Khám tổng quát & Tư vấn"
+    }
+  ],
+  "participants": [
+    {
+      "employeeCode": "EMP007",
+      "fullName": "Đoàn Nguyễn Khôi Nguyên",
+      "role": "ASSISTANT"
+    }
+  ],
+  "createdBy": "Đỗ Khánh Thuận",
+  "createdAt": "2025-11-03T14:00:00"
+}
+```
+
+Response 404 (Appointment Not Found):
+
+```json
+{
+  "type": "https://dental-clinic.com/problems/not-found",
+  "title": "Resource Not Found",
+  "status": 404,
+  "detail": "Appointment not found with code: APT-99999-999",
+  "errorCode": "APPOINTMENT_NOT_FOUND"
+}
+```
+
+Response 403 (Access Denied):
+
+```json
+{
+  "type": "about:blank",
+  "title": "Forbidden",
+  "status": 403,
+  "detail": "You can only view your own appointments"
+}
+```
+
+Test Cases:
+
+### Success Case 1: Admin/Receptionist xem bất kỳ appointment nào (VIEW_APPOINTMENT_ALL)
+
+**Login as**: admin (hoặc thuan.dk - Receptionist)
+
+```
+GET /api/v1/appointments/APT-20251104-001
+Authorization: Bearer {{admin_token}}
+```
+
+**Expected**: 200 OK với full details
+
+### Success Case 2: Patient xem appointment của chính mình (VIEW_APPOINTMENT_OWN)
+
+**Login as**: phong.dt (Bệnh nhân BN-1001)
+
+```
+GET /api/v1/appointments/APT-20251104-001
+Authorization: Bearer {{phong_token}}
+```
+
+**Pre-condition**: Appointment APT-20251104-001 phải thuộc về patient BN-1001
+
+**Expected**: 200 OK với full details
+
+### Success Case 3: Doctor xem appointment mà mình là bác sĩ chính (VIEW_APPOINTMENT_OWN)
+
+**Login as**: khoa.la (Doctor EMP001 - Lê Anh Khoa)
+
+```
+GET /api/v1/appointments/APT-20251104-001
+Authorization: Bearer {{khoa_token}}
+```
+
+**Pre-condition**: Appointment APT-20251104-001 phải có employeeId = EMP001
+
+**Expected**: 200 OK với full details
+
+### Success Case 4: Employee xem appointment mà mình là participant (VIEW_APPOINTMENT_OWN)
+
+**Login as**: nguyen.dnk (Nurse EMP007 - Đoàn Nguyễn Khôi Nguyên)
+
+```
+GET /api/v1/appointments/APT-20251104-001
+Authorization: Bearer {{nguyen_token}}
+```
+
+**Pre-condition**: Appointment APT-20251104-001 phải có EMP007 trong participants
+
+**Expected**: 200 OK với full details
+
+### Error Case 1: Patient cố gắng xem appointment của người khác (403 FORBIDDEN)
+
+**Login as**: phong.dt (Patient BN-1001)
+
+```
+GET /api/v1/appointments/APT-20251104-002
+Authorization: Bearer {{phong_token}}
+```
+
+**Pre-condition**: Appointment APT-20251104-002 thuộc về patient BN-1002 (không phải BN-1001)
+
+**Expected**: 403 FORBIDDEN
+
+```json
+{
+  "type": "about:blank",
+  "title": "Forbidden",
+  "status": 403,
+  "detail": "You can only view your own appointments"
+}
+```
+
+### Error Case 2: Employee không liên quan cố gắng xem appointment (403 FORBIDDEN)
+
+**Login as**: khoa.la (Doctor EMP001)
+
+```
+GET /api/v1/appointments/APT-20251104-003
+Authorization: Bearer {{khoa_token}}
+```
+
+**Pre-condition**:
+
+- Appointment APT-20251104-003 có employeeId = EMP002 (không phải EMP001)
+- EMP001 KHÔNG có trong participants của appointment này
+
+**Expected**: 403 FORBIDDEN
+
+```json
+{
+  "type": "about:blank",
+  "title": "Forbidden",
+  "status": 403,
+  "detail": "You can only view appointments where you are involved"
+}
+```
+
+### Error Case 3: Appointment không tồn tại (404 NOT FOUND)
+
+**Login as**: admin
+
+```
+GET /api/v1/appointments/APT-99999-999
+Authorization: Bearer {{admin_token}}
+```
+
+**Expected**: 404 NOT FOUND
+
+```json
+{
+  "type": "https://dental-clinic.com/problems/not-found",
+  "title": "Resource Not Found",
+  "status": 404,
+  "detail": "Appointment not found with code: APT-99999-999",
+  "errorCode": "APPOINTMENT_NOT_FOUND"
+}
+```
+
+### Edge Case 1: Appointment đã CANCELLED - Hiển thị cancellationReason
+
+**Login as**: admin
+
+```
+GET /api/v1/appointments/APT-CANCELLED-001
+Authorization: Bearer {{admin_token}}
+```
+
+**Pre-condition**:
+
+- Appointment có status = CANCELLED
+- Có audit log với actionType = CANCEL và notes = "Bệnh nhân hủy do bận đột xuất"
+
+**Expected**: 200 OK
+
+```json
+{
+  "appointmentCode": "APT-CANCELLED-001",
+  "status": "CANCELLED",
+  "computedStatus": "CANCELLED",
+  "cancellationReason": "PATIENT_REQUEST: Bệnh nhân hủy do bận đột xuất",
+  ...
+}
+```
+
+### Edge Case 2: Appointment đã COMPLETED - Hiển thị actualStartTime/actualEndTime
+
+**Login as**: admin
+
+```
+GET /api/v1/appointments/APT-COMPLETED-001
+Authorization: Bearer {{admin_token}}
+```
+
+**Pre-condition**: Appointment có status = COMPLETED
+
+**Expected**: 200 OK
+
+```json
+{
+  "appointmentCode": "APT-COMPLETED-001",
+  "status": "COMPLETED",
+  "computedStatus": "COMPLETED",
+  "appointmentStartTime": "2025-11-03T09:00:00",
+  "appointmentEndTime": "2025-11-03T09:45:00",
+  "actualStartTime": "2025-11-03T09:05:00",
+  "actualEndTime": "2025-11-03T09:50:00",
+  ...
+}
+```
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+IMPLEMENTATION NOTES (P3.4)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. RBAC Logic
+
+   - Kiểm tra permission VIEW_APPOINTMENT_ALL trước
+   - Nếu không có, check VIEW_APPOINTMENT_OWN:
+     - base_role = patient: So sánh patientId
+     - base_role = employee: Kiểm tra employeeId HOẶC participant
+
+2. Cancellation Reason
+
+   - Chỉ load khi status = CANCELLED
+   - Query appointment_audit_logs với actionType = CANCEL
+   - Ghép reasonCode + notes thành chuỗi
+   - Nếu không có audit log → cancellationReason = null
+
+3. Response Fields
+
+   - appointmentId: Internal PK (cho FE dễ reference)
+   - actualStartTime/actualEndTime: Từ DB (nullable)
+   - patient.phone, patient.dateOfBirth: Bổ sung cho detail view
+   - createdBy: Tên của employee (JOIN với employees table)
+
+4. Performance
+
+   - N+1 query acceptable cho detail view (1 appointment at a time)
+   - Future: Batch load participants nếu cần
+
+5. Security
+
+   - Token PHẢI chứa: account_id, base_role, patient_id (if patient), employee_id (if employee)
+   - AccessDeniedException → Spring Security tự động trả về 403
+The AT command has been deprecated. Please use schtasks.exe instead.
+
+The request is not supported.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PATCH UPDATE APPOINTMENT STATUS (P3.5)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⭐ CRITICAL API - Most important for daily clinic operations
+
+Endpoint:
+PATCH /api/v1/appointments/{appointmentCode}/status
+
+Permission:
+- UPDATE_APPOINTMENT_STATUS
+
+Description:
+Cập nhật trạng thái vận hành của lịch hẹn (Check-in, Bắt đầu khám, Hoàn thành, Hủy, Vắng mặt).
+API này sử dụng SELECT FOR UPDATE để tránh race condition khi nhiều lễ tân/bác sĩ cập nhật cùng lúc.
+
+⚙️ State Machine (CRITICAL - Must Follow):
+
+```
+SCHEDULED (Đã đặt lịch)
+   ├─> CHECKED_IN (Bệnh nhân đến, ngồi phòng chờ)
+   ├─> CANCELLED (Hủy lịch)
+   └─> NO_SHOW (Không đến)
+
+CHECKED_IN (Đã check-in)
+   ├─> IN_PROGRESS (Bác sĩ bắt đầu khám)
+   └─> CANCELLED (Hủy sau khi đã check-in)
+
+IN_PROGRESS (Đang khám)
+   ├─> COMPLETED (Hoàn thành)
+   └─> CANCELLED (Hủy giữa chừng - hiếm gặp)
+
+COMPLETED (Terminal state - không chuyển được)
+CANCELLED (Terminal state - không chuyển được)
+NO_SHOW (Terminal state - không chuyển được)
+```
+
+⏰ Timestamp Logic (CRITICAL):
+
+```
+SCHEDULED -> CHECKED_IN:
+   ❌ KHÔNG cập nhật actualStartTime
+   ✅ Bệnh nhân chỉ mới đến, chưa vào ghế
+
+CHECKED_IN -> IN_PROGRESS:
+   ✅ CẬP NHẬT actualStartTime = NOW()
+   ✅ Bác sĩ bắt đầu khám thực sự
+
+IN_PROGRESS -> COMPLETED:
+   ✅ CẬP NHẬT actualEndTime = NOW()
+   ✅ Kết thúc điều trị
+```
+
+Request Body (Case 1: Check-in):
+
+```json
+{
+  "status": "CHECKED_IN",
+  "notes": "Bệnh nhân đến đúng giờ"
+}
+```
+
+Request Body (Case 2: Bắt đầu khám):
+
+```json
+{
+  "status": "IN_PROGRESS",
+  "notes": "Bắt đầu khám"
+}
+```
+
+Request Body (Case 3: Hoàn thành):
+
+```json
+{
+  "status": "COMPLETED",
+  "notes": "Hoàn thành điều trị"
+}
+```
+
+Request Body (Case 4: Hủy lịch - REQUIRED reasonCode):
+
+```json
+{
+  "status": "CANCELLED",
+  "reasonCode": "PATIENT_REQUEST",
+  "notes": "Bệnh nhân báo bận đột xuất"
+}
+```
+
+Request Body (Case 5: Bệnh nhân không đến):
+
+```json
+{
+  "status": "NO_SHOW",
+  "notes": "Đã gọi 3 lần không nghe máy"
+}
+```
+
+Request Fields:
+- status (String Required) - CHECKED_IN | IN_PROGRESS | COMPLETED | CANCELLED | NO_SHOW
+- reasonCode (String) - Bắt buộc khi status=CANCELLED (VD: PATIENT_REQUEST, DOCTOR_UNAVAILABLE)
+- notes (String Optional) - Ghi chú thêm
+
+Response 200 (Same structure as API 3.4):
+
+```json
+{
+  "appointmentId": 1,
+  "appointmentCode": "APT-20251104-001",
+  "status": "IN_PROGRESS",
+  "computedStatus": "IN_PROGRESS",
+  "minutesLate": 0,
+  "appointmentStartTime": "2025-11-04T09:00:00",
+  "appointmentEndTime": "2025-11-04T09:45:00",
+  "expectedDurationMinutes": 45,
+  "actualStartTime": "2025-11-04T09:05:00",
+  "actualEndTime": null,
+  "cancellationReason": null,
+  "notes": "Bắt đầu khám",
+  "patient": {
+    "patientCode": "BN-1001",
+    "fullName": "Đoàn Thanh Phong",
+    "phone": "0909123456",
+    "dateOfBirth": "1990-01-01"
+  },
+  "doctor": {
+    "employeeCode": "EMP001",
+    "fullName": "Lê Anh Khoa"
+  },
+  "room": {
+    "roomCode": "P-01",
+    "roomName": "Room P-01"
+  },
+  "services": [
+    {
+      "serviceCode": "GEN_EXAM",
+      "serviceName": "Khám tổng quát & Tư vấn"
+    }
+  ],
+  "participants": [
+    {
+      "employeeCode": "EMP007",
+      "fullName": "Đoàn Nguyễn Khôi Nguyên",
+      "role": "ASSISTANT"
+    }
+  ],
+  "createdBy": "Đỗ Khánh Thuận",
+  "createdAt": "2025-11-03T14:00:00"
+}
+```
+
+Response 404 (Appointment Not Found):
+
+```json
+{
+  "type": "https://dental-clinic.com/problems/not-found",
+  "title": "Resource Not Found",
+  "status": 404,
+  "detail": "Appointment not found with code: APT-99999-999",
+  "errorCode": "APPOINTMENT_NOT_FOUND"
+}
+```
+
+Response 409 (Invalid State Transition):
+
+```json
+{
+  "type": "about:blank",
+  "title": "Business Rule Violation",
+  "status": 409,
+  "detail": "Cannot transition from COMPLETED to CHECKED_IN. Allowed transitions: []",
+  "errorCode": "INVALID_STATE_TRANSITION"
+}
+```
+
+Response 400 (Missing Reason Code):
+
+```json
+{
+  "type": "about:blank",
+  "title": "Bad Request",
+  "status": 400,
+  "detail": "Reason code is required when cancelling an appointment",
+  "errorCode": "REASON_CODE_REQUIRED"
+}
+```
+
+Test Cases:
+
+### Success Case 1: Lễ tân check-in bệnh nhân (SCHEDULED -> CHECKED_IN)
+
+**Login as**: thuan.dk (Receptionist)
+
+```
+PATCH /api/v1/appointments/APT-20251104-001/status
+Authorization: Bearer {{receptionist_token}}
+
+{
+  "status": "CHECKED_IN",
+  "notes": "Bệnh nhân đến đúng giờ"
+}
+```
+
+**Expected**: 200 OK
+- status = "CHECKED_IN"
+- actualStartTime = null (Chưa vào ghế)
+- actualEndTime = null
+
+**Use case**: Bệnh nhân đến phòng khám, lễ tân bấm check-in, bệnh nhân ngồi phòng chờ.
+
+### Success Case 2: Bác sĩ bắt đầu khám (CHECKED_IN -> IN_PROGRESS)
+
+**Login as**: khoa.la (Doctor EMP001)
+
+```
+PATCH /api/v1/appointments/APT-20251104-001/status
+Authorization: Bearer {{doctor_token}}
+
+{
+  "status": "IN_PROGRESS",
+  "notes": "Bắt đầu khám"
+}
+```
+
+**Expected**: 200 OK
+- status = "IN_PROGRESS"
+- actualStartTime = "2025-11-04T09:05:00" (NOW - Thời điểm gọi API)
+- actualEndTime = null
+
+**Use case**: Bệnh nhân vào ghế, bác sĩ bấm "Bắt đầu", hệ thống ghi thời gian khám thực tế.
+
+### Success Case 3: Bác sĩ hoàn thành khám (IN_PROGRESS -> COMPLETED)
+
+**Login as**: khoa.la (Doctor EMP001)
+
+```
+PATCH /api/v1/appointments/APT-20251104-001/status
+Authorization: Bearer {{doctor_token}}
+
+{
+  "status": "COMPLETED",
+  "notes": "Hoàn thành điều trị"
+}
+```
+
+**Expected**: 200 OK
+- status = "COMPLETED"
+- actualStartTime = "2025-11-04T09:05:00" (Từ step trước)
+- actualEndTime = "2025-11-04T09:50:00" (NOW - Thời điểm gọi API)
+
+**Business Metrics**:
+- Patient Wait Time = actualStartTime - (CHECKED_IN time)
+- Treatment Duration = actualEndTime - actualStartTime
+
+### Success Case 4: Lễ tân hủy lịch với lý do (SCHEDULED -> CANCELLED)
+
+**Login as**: thuan.dk (Receptionist)
+
+```
+PATCH /api/v1/appointments/APT-20251104-002/status
+Authorization: Bearer {{receptionist_token}}
+
+{
+  "status": "CANCELLED",
+  "reasonCode": "PATIENT_REQUEST",
+  "notes": "Bệnh nhân gọi điện báo bận đột xuất"
+}
+```
+
+**Expected**: 200 OK
+- status = "CANCELLED"
+- cancellationReason = "PATIENT_REQUEST: Bệnh nhân gọi điện báo bận đột xuất"
+
+**Audit Log**: INSERT với actionType = STATUS_CHANGE, reasonCode = PATIENT_REQUEST
+
+### Success Case 5: Lễ tân đánh dấu bệnh nhân không đến (SCHEDULED -> NO_SHOW)
+
+**Login as**: thuan.dk (Receptionist)
+
+```
+PATCH /api/v1/appointments/APT-20251104-003/status
+Authorization: Bearer {{receptionist_token}}
+
+{
+  "status": "NO_SHOW",
+  "notes": "Đã gọi 3 lần không nghe máy"
+}
+```
+
+**Expected**: 200 OK
+- status = "NO_SHOW"
+
+**Use case**: Quá giờ hẹn 15 phút, lễ tân đánh dấu không đến.
+
+### Error Case 1: Chuyển từ trạng thái cuối (COMPLETED -> CHECKED_IN)
+
+**Login as**: admin
+
+```
+PATCH /api/v1/appointments/APT-COMPLETED-001/status
+Authorization: Bearer {{admin_token}}
+
+{
+  "status": "CHECKED_IN"
+}
+```
+
+**Expected**: 409 CONFLICT
+
+```json
+{
+  "errorCode": "INVALID_STATE_TRANSITION",
+  "detail": "Cannot transition from COMPLETED to CHECKED_IN. Allowed transitions: []"
+}
+```
+
+**Reason**: COMPLETED là trạng thái cuối, không thể chuyển.
+
+### Error Case 2: Hủy lịch mà không có reasonCode
+
+**Login as**: thuan.dk (Receptionist)
+
+```
+PATCH /api/v1/appointments/APT-20251104-004/status
+Authorization: Bearer {{receptionist_token}}
+
+{
+  "status": "CANCELLED"
+}
+```
+
+**Expected**: 400 BAD REQUEST
+
+```json
+{
+  "errorCode": "REASON_CODE_REQUIRED",
+  "detail": "Reason code is required when cancelling an appointment"
+}
+```
+
+### Error Case 3: Bỏ qua bước check-in (SCHEDULED -> IN_PROGRESS)
+
+**Login as**: khoa.la (Doctor)
+
+```
+PATCH /api/v1/appointments/APT-20251104-005/status
+Authorization: Bearer {{doctor_token}}
+
+{
+  "status": "IN_PROGRESS"
+}
+```
+
+**Expected**: 409 CONFLICT
+
+```json
+{
+  "errorCode": "INVALID_STATE_TRANSITION",
+  "detail": "Cannot transition from SCHEDULED to IN_PROGRESS. Allowed transitions: [CHECKED_IN, CANCELLED, NO_SHOW]"
+}
+```
+
+**Reason**: Phải check-in trước khi bắt đầu khám.
+
+### Error Case 4: Appointment không tồn tại
+
+**Login as**: admin
+
+```
+PATCH /api/v1/appointments/APT-99999-999/status
+Authorization: Bearer {{admin_token}}
+
+{
+  "status": "CHECKED_IN"
+}
+```
+
+**Expected**: 404 NOT FOUND
+
+### Edge Case 1: Hủy sau khi đã check-in (CHECKED_IN -> CANCELLED)
+
+**Login as**: thuan.dk (Receptionist)
+
+```
+PATCH /api/v1/appointments/APT-20251104-006/status
+Authorization: Bearer {{receptionist_token}}
+
+{
+  "status": "CANCELLED",
+  "reasonCode": "PATIENT_REQUEST",
+  "notes": "Bệnh nhân đến rồi nhưng không muốn khám nữa"
+}
+```
+
+**Expected**: 200 OK
+- status = "CANCELLED"
+- cancellationReason = "PATIENT_REQUEST: Bệnh nhân đến rồi nhưng không muốn khám nữa"
+
+**Use case**: Bệnh nhân đã check-in nhưng sau đó từ chối khám.
+
+### Edge Case 2: Hủy giữa chừng (IN_PROGRESS -> CANCELLED)
+
+**Login as**: khoa.la (Doctor)
+
+```
+PATCH /api/v1/appointments/APT-20251104-007/status
+Authorization: Bearer {{doctor_token}}
+
+{
+  "status": "CANCELLED",
+  "reasonCode": "MEDICAL_EMERGENCY",
+  "notes": "Bệnh nhân có phản ứng dị ứng, chuyển cấp cứu"
+}
+```
+
+**Expected**: 200 OK
+- status = "CANCELLED"
+- actualStartTime = "2025-11-04T09:05:00" (Vẫn giữ)
+- actualEndTime = null (Chưa hoàn thành)
+
+**Use case**: Trường hợp khẩn cấp phải dừng điều trị.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+IMPLEMENTATION NOTES (P3.5)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. SELECT FOR UPDATE (Pessimistic Locking)
+
+   - Query: SELECT * FROM appointments WHERE appointment_code = ? FOR UPDATE
+   - JPA: @Lock(LockModeType.PESSIMISTIC_WRITE)
+   - Purpose: Ngăn 2 lễ tân/bác sĩ cùng update status một lúc
+   - Transaction: MUST use @Transactional
+
+2. State Machine Validation
+
+   - Hard-coded map: VALID_TRANSITIONS
+   - Example: SCHEDULED -> [CHECKED_IN, CANCELLED, NO_SHOW]
+   - Invalid transition → 409 CONFLICT
+   - Terminal states (COMPLETED, CANCELLED, NO_SHOW) → Empty set
+
+3. Timestamp Update Logic (CRITICAL)
+
+   CHECKED_IN (Lễ tân):
+   - ❌ KHÔNG cập nhật actual_start_time
+   - ✅ Bệnh nhân chỉ đến phòng chờ, chưa vào ghế
+
+   IN_PROGRESS (Bác sĩ):
+   - ✅ CẬP NHẬT actual_start_time = NOW()
+   - ✅ Bắt đầu điều trị thực sự
+
+   COMPLETED:
+   - ✅ CẬP NHẬT actual_end_time = NOW()
+   - ✅ Kết thúc điều trị
+
+   Business Value:
+   - Patient Wait Time = actual_start_time - (CHECKED_IN timestamp from audit log)
+   - Treatment Duration = actual_end_time - actual_start_time
+   - Chair Utilization = Treatment Duration / Expected Duration
+
+4. Business Rule Validation
+
+   - CANCELLED: reasonCode is REQUIRED
+   - Validation: Check before updating DB
+   - Error: 400 BAD_REQUEST
+
+5. Audit Logging
+
+   - Table: appointment_audit_logs
+   - Fields: action_type = STATUS_CHANGE, old_status, new_status, reason_code, notes, changed_by_employee_id
+   - Use case: Compliance, tracking who changed what
+
+6. Response Format
+
+   - Return full detail DTO (same as API 3.4)
+   - FE can immediately update UI without re-fetching
+   - Include actualStartTime, actualEndTime in response
+
+7. Security
+
+   - Permission: UPDATE_APPOINTMENT_STATUS
+   - Employee ID from token: auth.principal.username -> employees.account_id
+   - If not found → changed_by_employee_id = 0 (SYSTEM)
+
+8. Performance
+
+   - Pessimistic lock: Blocks concurrent updates on SAME appointment
+   - Does NOT block updates on DIFFERENT appointments
+   - Lock released on transaction commit/rollback
+
+9. Error Handling
+
+   - 404: Appointment not found
+   - 409: Invalid state transition
+   - 400: Missing reasonCode for CANCELLED
+   - 500: Database error (transaction rollback)
+
+10. Future Enhancements (Optional)
+
+    - CHECK_IN_TOO_EARLY validation (>30 minutes before scheduled time)
+    - Auto NO_SHOW after 15 minutes late
+    - SMS notification on status change
+    - WebSocket real-time update to dashboard
