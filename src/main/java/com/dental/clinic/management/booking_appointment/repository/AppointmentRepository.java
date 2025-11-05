@@ -164,6 +164,63 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
                         @Param("startTime") LocalDateTime startTime,
                         @Param("endTime") LocalDateTime endTime);
 
+        /**
+         * Check if time slot conflicts with existing appointments for a patient
+         * Used in delay appointment to prevent double-booking
+         *
+         * @param patientId     Patient ID
+         * @param appointmentId Current appointment ID (to exclude from check)
+         */
+        @Query("SELECT COUNT(a) > 0 FROM Appointment a " +
+                        "WHERE a.patientId = :patientId " +
+                        "AND (:appointmentId IS NULL OR a.appointmentId != :appointmentId) " +
+                        "AND a.status IN ('SCHEDULED', 'CHECKED_IN', 'IN_PROGRESS') " +
+                        "AND ((a.appointmentStartTime < :endTime AND a.appointmentEndTime > :startTime))")
+        boolean existsConflictForPatient(
+                        @Param("patientId") Integer patientId,
+                        @Param("startTime") LocalDateTime startTime,
+                        @Param("endTime") LocalDateTime endTime,
+                        @Param("appointmentId") Integer appointmentId);
+
+        /**
+         * Check if time slot conflicts with existing appointments for a doctor
+         * Used in delay appointment
+         *
+         * @param doctorId      Doctor employee ID
+         * @param appointmentId Current appointment ID (to exclude from check)
+         */
+        @Query("SELECT COUNT(a) > 0 FROM Appointment a " +
+                        "WHERE a.employeeId = :doctorId " +
+                        "AND (:appointmentId IS NULL OR a.appointmentId != :appointmentId) " +
+                        "AND a.status IN ('SCHEDULED', 'CHECKED_IN', 'IN_PROGRESS') " +
+                        "AND ((a.appointmentStartTime < :endTime AND a.appointmentEndTime > :startTime))")
+        boolean existsConflictForDoctor(
+                        @Param("doctorId") Integer doctorId,
+                        @Param("startTime") LocalDateTime startTime,
+                        @Param("endTime") LocalDateTime endTime,
+                        @Param("appointmentId") Integer appointmentId);
+
+        /**
+         * Check if time slot conflicts for a participant (nurse/assistant)
+         * Checks both as main doctor and as participant
+         *
+         * @param employeeId    Participant employee ID
+         * @param appointmentId Current appointment ID (to exclude from check)
+         */
+        @Query("SELECT COUNT(a) > 0 FROM Appointment a " +
+                        "WHERE (:appointmentId IS NULL OR a.appointmentId != :appointmentId) " +
+                        "AND a.status IN ('SCHEDULED', 'CHECKED_IN', 'IN_PROGRESS') " +
+                        "AND ((a.appointmentStartTime < :endTime AND a.appointmentEndTime > :startTime)) " +
+                        "AND (a.employeeId = :employeeId " +
+                        "     OR EXISTS (SELECT 1 FROM AppointmentParticipant ap " +
+                        "                WHERE ap.appointment.appointmentId = a.appointmentId " +
+                        "                AND ap.employee.employeeId = :employeeId))")
+        boolean existsConflictForParticipant(
+                        @Param("employeeId") Integer employeeId,
+                        @Param("startTime") LocalDateTime startTime,
+                        @Param("endTime") LocalDateTime endTime,
+                        @Param("appointmentId") Integer appointmentId);
+
         // ==================== DASHBOARD QUERIES (P3.3) ====================
 
         /**

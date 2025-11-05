@@ -2,16 +2,7 @@
 -- HỆ THỐNG QUẢN LÝ PHÒNG KHÁM NHA KHOA
 -- Dental Clinic Management System - Seed Data V2
 -- ============================================
--- UPDATED: Path fields removed, Modules merged, Email verification ready
--- Seeded accounts: ACTIVE status (skip verification for demo data)
--- New accounts: PENDING_VERIFICATION (require email verification)
--- ============================================
-
--- ============================================
 -- POSTGRESQL ENUM TYPE DEFINITIONS
--- ============================================
--- Creates all PostgreSQL ENUM types needed by the application
--- Must run BEFORE Hibernate creates tables
 -- ============================================
 
 -- Drop existing types if they exist (for clean re-initialization)
@@ -63,19 +54,11 @@ CREATE TYPE balance_change_reason AS ENUM ('ANNUAL_RESET', 'APPROVED_REQUEST', '
 -- ============================================
 
 -- ============================================
--- SCHEMA UPDATES
--- ============================================
--- Note: Hibernate auto-creates tables with correct column names:
--- - appointments.status as VARCHAR(50)
--- - appointment_participants.participant_role as VARCHAR(50)
--- No ALTER TABLE needed when dropping all tables and recreating from scratch.
 
 -- ============================================
 -- BƯỚC 1: TẠO BASE ROLES (3 loại cố định)
 -- ============================================
 -- Base roles xác định LAYOUT FE (AdminLayout/EmployeeLayout/PatientLayout)
--- FE tự xử lý routing, không cần path từ BE
--- ============================================
 
 INSERT INTO base_roles (base_role_id, base_role_name, description, is_active, created_at)
 VALUES
@@ -124,7 +107,6 @@ ON CONFLICT (role_id) DO NOTHING;
 -- 9. SYSTEM_CONFIGURATION (12 perms) = ROLE + PERMISSION + SPECIALIZATION
 -- 10. HOLIDAY (4 perms) = Holiday Management (NEW)
 --
--- PATH FIELD REMOVED - FE handles routing independently
 -- ============================================
 
 -- MODULE 1: ACCOUNT
@@ -174,8 +156,9 @@ VALUES
 ('CREATE_APPOINTMENT', 'CREATE_APPOINTMENT', 'APPOINTMENT', 'Đặt lịch hẹn mới', 53, NULL, TRUE, NOW()),
 ('UPDATE_APPOINTMENT', 'UPDATE_APPOINTMENT', 'APPOINTMENT', 'Cập nhật lịch hẹn', 54, NULL, TRUE, NOW()),
 ('UPDATE_APPOINTMENT_STATUS', 'UPDATE_APPOINTMENT_STATUS', 'APPOINTMENT', 'Cập nhật trạng thái lịch hẹn (Check-in, In-progress, Completed, Cancelled) - API 3.5', 55, NULL, TRUE, NOW()),
-('CANCEL_APPOINTMENT', 'CANCEL_APPOINTMENT', 'APPOINTMENT', 'Hủy lịch hẹn', 56, NULL, TRUE, NOW()),
-('DELETE_APPOINTMENT', 'DELETE_APPOINTMENT', 'APPOINTMENT', 'Xóa lịch hẹn', 57, NULL, TRUE, NOW())
+('DELAY_APPOINTMENT', 'DELAY_APPOINTMENT', 'APPOINTMENT', 'Hoãn lịch hẹn sang thời gian khác (chỉ SCHEDULED/CHECKED_IN) - API 3.6', 56, NULL, TRUE, NOW()),
+('CANCEL_APPOINTMENT', 'CANCEL_APPOINTMENT', 'APPOINTMENT', 'Hủy lịch hẹn', 57, NULL, TRUE, NOW()),
+('DELETE_APPOINTMENT', 'DELETE_APPOINTMENT', 'APPOINTMENT', 'Xóa lịch hẹn', 58, NULL, TRUE, NOW())
 ON CONFLICT (permission_id) DO NOTHING;
 
 -- MODULE 6: CUSTOMER_MANAGEMENT (MERGED: CONTACT + CONTACT_HISTORY)
@@ -344,6 +327,7 @@ VALUES
 ('ROLE_DENTIST', 'VIEW_APPOINTMENT'), -- Deprecated
 ('ROLE_DENTIST', 'VIEW_APPOINTMENT_OWN'), -- ✅ NEW: Only see own appointments
 ('ROLE_DENTIST', 'UPDATE_APPOINTMENT_STATUS'), -- ✅ NEW API 3.5: Start, Complete treatment
+('ROLE_DENTIST', 'DELAY_APPOINTMENT'), -- ✅ NEW API 3.6: Delay appointment when needed
 ('ROLE_DENTIST', 'VIEW_REGISTRATION_OWN'), ('ROLE_DENTIST', 'VIEW_RENEWAL_OWN'), ('ROLE_DENTIST', 'RESPOND_RENEWAL_OWN'),
 ('ROLE_DENTIST', 'CREATE_REGISTRATION'),
 ('ROLE_DENTIST', 'VIEW_LEAVE_OWN'), ('ROLE_DENTIST', 'CREATE_TIME_OFF'), ('ROLE_DENTIST', 'CREATE_OVERTIME'),
@@ -365,8 +349,6 @@ VALUES
 ('ROLE_NURSE', 'VIEW_HOLIDAY')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
--- ✅ NEW: Dentist Intern (Thực tập sinh) - OBSERVER Role
--- Principle of Least Privilege: Chỉ thấy appointments họ được mời quan sát
 INSERT INTO role_permissions (role_id, permission_id)
 VALUES
 ('ROLE_DENTIST_INTERN', 'VIEW_APPOINTMENT_OWN'), -- Chỉ thấy appointments họ tham gia
@@ -388,6 +370,7 @@ VALUES
 ('ROLE_RECEPTIONIST', 'CREATE_APPOINTMENT'),
 ('ROLE_RECEPTIONIST', 'UPDATE_APPOINTMENT'),
 ('ROLE_RECEPTIONIST', 'UPDATE_APPOINTMENT_STATUS'), -- ✅ NEW API 3.5: Check-in, In-progress, Complete
+('ROLE_RECEPTIONIST', 'DELAY_APPOINTMENT'), -- ✅ NEW API 3.6: Delay appointment for patients
 ('ROLE_RECEPTIONIST', 'DELETE_APPOINTMENT'),
 -- CUSTOMER_MANAGEMENT
 ('ROLE_RECEPTIONIST', 'VIEW_CONTACT'), ('ROLE_RECEPTIONIST', 'CREATE_CONTACT'),
@@ -410,6 +393,7 @@ VALUES
 ('ROLE_MANAGER', 'VIEW_PATIENT'), ('ROLE_MANAGER', 'VIEW_APPOINTMENT'),
 ('ROLE_MANAGER', 'VIEW_APPOINTMENT_ALL'), -- ✅ See all appointments
 ('ROLE_MANAGER', 'UPDATE_APPOINTMENT_STATUS'), -- ✅ NEW API 3.5: Full appointment status control
+('ROLE_MANAGER', 'DELAY_APPOINTMENT'), -- ✅ NEW API 3.6: Reschedule appointments
 -- CUSTOMER_MANAGEMENT
 ('ROLE_MANAGER', 'VIEW_CONTACT'), ('ROLE_MANAGER', 'CREATE_CONTACT'),
 ('ROLE_MANAGER', 'UPDATE_CONTACT'), ('ROLE_MANAGER', 'DELETE_CONTACT'),
@@ -1198,6 +1182,19 @@ SELECT setval('fixed_shift_registrations_registration_id_seq',
     false);
 
 -- ============================================
+-- SCHEMA MIGRATION: Add effective_from, effective_to to part_time_slots
+-- BE-403: Dynamic quota system for part-time flex scheduling
+-- ============================================
+ALTER TABLE part_time_slots
+ADD COLUMN IF NOT EXISTS effective_from DATE NOT NULL DEFAULT '2025-11-04',
+ADD COLUMN IF NOT EXISTS effective_to DATE NOT NULL DEFAULT '2026-02-04';
+
+-- Remove default values after adding columns
+ALTER TABLE part_time_slots
+ALTER COLUMN effective_from DROP DEFAULT,
+ALTER COLUMN effective_to DROP DEFAULT;
+
+-- ============================================
 -- LUỒNG 2: PART-TIME FLEX REGISTRATIONS
 -- For PART_TIME_FLEX employees
 -- ============================================
@@ -1377,16 +1374,6 @@ SELECT setval('part_time_registrations_registration_id_seq',
 --   - Nurse Linh (8): 3 active registrations + 1 cancelled
 --   - Test Employee 10 (Minh): 2 active registrations
 --   - Test Employee 11 (Huong): 2 active registrations (1 makes slot FULL)
---
--- TESTING SCENARIOS:
---   ✅ Fixed registrations for FULL_TIME and PART_TIME_FIXED
---   ✅ Flex registrations for PART_TIME_FLEX
---   ✅ Available slots with various quotas (1-3)
---   ✅ Partially filled slots (remaining capacity > 0)
---   ✅ FULL slot (slot_id=15, quota=1, registered=1)
---   ✅ Inactive slot (slot_id=14, is_active=false)
---   ✅ Cancelled registration (registration_id=8, is_active=false)
---   ✅ Various effective dates for renewal testing
 -- ============================================
 
 -- ============================================
@@ -1563,24 +1550,7 @@ WHERE
     ))
 ON CONFLICT DO NOTHING;
 
--- ============================================
--- HƯỚNG DẪN SỬ DỤNG
--- ============================================
---
--- 1. LOGIN (DEFAULT PASSWORD = "123456"):
---   admin / nhasi1 / nhasi2 / letan / manager / benhnhan1
---
--- 2. THAY ĐỔI QUAN TRỌNG:
---   - ĐÃ XÓA: path fields từ permissions, base_roles, roles
---   - FE tự xử lý routing dựa trên groupedPermissions
---   - BE chỉ trả về groupedPermissions (grouped by module)
---
--- 3. MODULES ĐÃ MERGE (12 → 9):
---   CUSTOMER_MANAGEMENT (8) = CONTACT + CONTACT_HISTORY
---   SCHEDULE_MANAGEMENT (11) = WORK_SHIFTS + REGISTRATION + SHIFT_RENEWAL
---   LEAVE_MANAGEMENT (18) = TIME_OFF + OVERTIME + TIME_OFF_MANAGEMENT
---   SYSTEM_CONFIGURATION (12) = ROLE + PERMISSION + SPECIALIZATION
---
+
 -- 4. EMAIL VERIFICATION:
 --   - Seeded accounts: ACTIVE (skip verification)
 --   - New accounts via API: PENDING_VERIFICATION (require email)
@@ -1590,10 +1560,6 @@ ON CONFLICT DO NOTHING;
 
 
 -- =====================================================
--- BE-403: APPOINTMENT MANAGEMENT - TEST DATA
--- =====================================================
--- Purpose: Test data for P3.1 (Available Times) and P3.2 (Create Appointment)
--- Coverage: Employees, Patients, Services, Rooms, Shifts, Room-Services, Specializations
 -- =====================================================
 
 -- Fix specialization_code length error
@@ -1605,22 +1571,7 @@ VALUES
     (902, 'TEST-ORTHO', 'Test Orthodontics', 'Chuyên khoa Chỉnh nha (Test)', true, CURRENT_TIMESTAMP),
     (903, 'TEST-GENERAL', 'Test General Dentistry', 'Nha khoa tổng quát (Test)', true, CURRENT_TIMESTAMP)
 ON CONFLICT (specialization_id) DO NOTHING;
-
--- ============================================
--- TEST DATA FOR API TESTING (2025-11-15)
--- ============================================
--- All test data integrated into production data above
--- Using: EMP001-EMP011, BN-1001 to BN-1004, Production services & rooms
--- ============================================
--- ============================================
--- TEST DATA FOR API TESTING (2025-11-15)
--- ============================================
--- All test data integrated into production data above
--- Using: EMP001-EMP011, BN-1001 to BN-1004, Production services & rooms
--- ============================================
-
--- 8. EMPLOYEE SHIFTS (Test date: 2025-11-15 - Thứ Bảy)
-
+-- =====================================================
 -- 8. EMPLOYEE SHIFTS (Test date: 2025-11-15 - Thứ Bảy)
 -- Phòng khám KHÔNG làm Chủ nhật - muốn làm phải overtime
 -- Full-time: Ca Sáng (8h-12h) + Ca Chiều (13h-17h)
@@ -1758,20 +1709,7 @@ ON CONFLICT (appointment_id, employee_id) DO NOTHING;
 SELECT setval('appointments_appointment_id_seq',
               (SELECT COALESCE(MAX(appointment_id), 0) FROM appointments) + 1,
               false);
-
--- TEST SCENARIOS:
--- 1. Login as linh.nk (OBSERVER):
---    GET /api/v1/appointments?datePreset=TODAY
---    Should return: APT-20251104-001, APT-20251104-003 (2 appointments)
---    Should NOT return: APT-20251104-002 (not a participant)
---
--- 2. computedStatus test:
---    APT-003 (08:00) - If NOW > 08:00 then computedStatus = "LATE"
---    APT-001 (09:00) - If NOW < 09:00 then computedStatus = "UPCOMING"
---
--- 3. Remove OBSERVER from APT-001:
---    DELETE FROM appointment_participants WHERE appointment_id=1 AND employee_id=12
---    Login as linh.nk - Should only see APT-003
+-- ============================================
 
 -- Fix appointment_audit_logs table if missing columns
 ALTER TABLE appointment_audit_logs

@@ -8,9 +8,11 @@ import com.dental.clinic.management.booking_appointment.dto.CreateAppointmentRes
 import com.dental.clinic.management.booking_appointment.dto.DatePreset;
 import com.dental.clinic.management.booking_appointment.dto.UpdateAppointmentStatusRequest;
 import com.dental.clinic.management.booking_appointment.dto.request.AvailableTimesRequest;
+import com.dental.clinic.management.booking_appointment.dto.request.DelayAppointmentRequest;
 import com.dental.clinic.management.booking_appointment.dto.response.AvailableTimesResponse;
 import com.dental.clinic.management.booking_appointment.service.AppointmentAvailabilityService;
 import com.dental.clinic.management.booking_appointment.service.AppointmentCreationService;
+import com.dental.clinic.management.booking_appointment.service.AppointmentDelayService;
 import com.dental.clinic.management.booking_appointment.service.AppointmentDetailService;
 import com.dental.clinic.management.booking_appointment.service.AppointmentListService;
 import com.dental.clinic.management.booking_appointment.service.AppointmentStatusService;
@@ -43,6 +45,7 @@ public class AppointmentController {
         private final AppointmentListService listService;
         private final AppointmentDetailService detailService;
         private final AppointmentStatusService statusService;
+        private final AppointmentDelayService delayService;
 
         /**
          * P3.1: Find Available Time Slots
@@ -296,6 +299,36 @@ public class AppointmentController {
                 AppointmentDetailDTO updatedAppointment = statusService.updateStatus(appointmentCode, request);
 
                 return ResponseEntity.ok(updatedAppointment);
+        }
+
+        /**
+         * P3.6: Delay Appointment
+         *
+         * PATCH /api/v1/appointments/{appointmentCode}/delay
+         *
+         * Permission: DELAY_APPOINTMENT
+         *
+         * Business Rules:
+         * - Only SCHEDULED or CHECKED_IN can be delayed
+         * - New start time must be after original
+         * - Checks conflicts for doctor, room, patient, participants
+         * - Creates audit log with DELAY action
+         *
+         * @param appointmentCode Appointment code (e.g., APT-20251115-001)
+         * @param request         newStartTime, reasonCode, notes
+         * @return Updated appointment detail
+         */
+        @PatchMapping("/{appointmentCode}/delay")
+        @PreAuthorize("hasAuthority('DELAY_APPOINTMENT')")
+        public ResponseEntity<AppointmentDetailDTO> delayAppointment(
+                        @PathVariable String appointmentCode,
+                        @Valid @RequestBody DelayAppointmentRequest request) {
+
+                log.info("Delaying appointment: code={}, newStartTime={}", appointmentCode, request.getNewStartTime());
+
+                AppointmentDetailDTO delayedAppointment = delayService.delayAppointment(appointmentCode, request);
+
+                return ResponseEntity.ok(delayedAppointment);
         }
 
 }

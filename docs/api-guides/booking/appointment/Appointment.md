@@ -1424,3 +1424,649 @@ IMPLEMENTATION NOTES (P3.5)
     - Auto NO_SHOW after 15 minutes late
     - SMS notification on status change
     - WebSocket real-time update to dashboard
+
+---
+
+## PATCH DELAY APPOINTMENT (P3.6)
+
+**Endpoint:** `PATCH /api/v1/appointments/{appointmentCode}/delay`
+
+**Permission:** `DELAY_APPOINTMENT`
+
+**Roles with Permission:**
+
+- RECEPTIONIST (reschedule for patients)
+- DENTIST (delay when needed)
+- MANAGER (full control)
+
+### 1. Overview
+
+Delay (reschedule) an appointment to a new time slot. This API:
+
+- Only works for SCHEDULED or CHECKED_IN appointments
+- Validates new time is after original time
+- Checks conflicts for doctor, room, patient, and participants
+- Creates audit log with DELAY action type
+- Preserves appointment status (still SCHEDULED/CHECKED_IN after delay)
+
+### 2. Business Rules
+
+1. **Status Validation:**
+
+   - Only `SCHEDULED` or `CHECKED_IN` can be delayed
+   - Terminal states (COMPLETED, CANCELLED, NO_SHOW) cannot be delayed
+   - IN_PROGRESS cannot be delayed (treatment already started)
+
+2. **Time Validation:**
+
+   - `newStartTime` MUST be after `appointmentStartTime`
+   - `newStartTime` should NOT be in the past
+   - Duration remains the same (`expectedDurationMinutes`)
+   - `newEndTime` = `newStartTime` + `expectedDurationMinutes`
+
+3. **Conflict Checking:**
+
+   - Doctor availability (no conflicting appointments)
+   - Room availability (not occupied)
+   - Patient availability (no double-booking)
+   - Participants availability (nurses, assistants)
+
+4. **Audit Trail:**
+   - Action type: `DELAY`
+   - Records `oldStartTime` and `newStartTime`
+   - Preserves `oldStatus` = `newStatus` (status unchanged)
+   - Includes `reasonCode` and `notes`
+
+### 3. Request
+
+#### Path Parameters
+
+- `appointmentCode` (string, required): Appointment code (e.g., "APT-20251115-001")
+
+#### Request Body
+
+```json
+{
+  "newStartTime": "2025-11-15T15:00:00",
+  "reasonCode": "PATIENT_REQUEST",
+  "notes": "Bệnh nhân yêu cầu hoãn vì bận việc đột xuất"
+}
+```
+
+#### Fields
+
+| Field          | Type                  | Required | Description                      |
+| -------------- | --------------------- | -------- | -------------------------------- |
+| `newStartTime` | LocalDateTime         | Yes      | New start time (ISO 8601 format) |
+| `reasonCode`   | AppointmentReasonCode | Yes      | Reason for delay (ENUM)          |
+| `notes`        | String                | No       | Additional explanation           |
+
+#### Valid Reason Codes for DELAY
+
+```java
+public enum AppointmentReasonCode {
+    PATIENT_REQUEST,        // Bệnh nhân yêu cầu
+    DOCTOR_EMERGENCY,       // Bác sĩ có việc khẩn cấp
+    EQUIPMENT_FAILURE,      // Thiết bị hỏng
+    TRAFFIC_DELAY,          // Kẹt xe
+    FAMILY_EMERGENCY,       // Gia đình có việc khẩn cấp
+    WEATHER_CONDITION,      // Thời tiết xấu
+    DOUBLE_BOOKING_ERROR,   // Nhầm lịch trùng
+    OTHER_REASON            // Lý do khác
+}
+```
+
+### 4. Response
+
+#### Success Response (200 OK)
+
+Returns full appointment detail (same as GET /{appointmentCode}):
+
+```json
+{
+  "appointmentId": 1,
+  "appointmentCode": "APT-20251115-001",
+  "appointmentStartTime": "2025-11-15T15:00:00",
+  "appointmentEndTime": "2025-11-15T15:45:00",
+  "status": "SCHEDULED",
+  "computedStatus": "SCHEDULED",
+  "patient": {
+    "patientId": 10,
+    "fullName": "Nguyễn Văn An",
+    "phone": "0909123456",
+    "dateOfBirth": "1990-05-15",
+    "gender": "MALE"
+  },
+  "doctor": {
+    "employeeId": 1,
+    "employeeCode": "EMP001",
+    "fullName": "Dr. Lê Thị Anh",
+    "specialization": "ORTHODONTICS"
+  },
+  "room": {
+    "roomId": "R001",
+    "roomName": "Phòng khám 1",
+    "roomType": "EXAMINATION"
+  },
+  "services": [
+    {
+      "serviceId": 1,
+      "serviceName": "Niềng răng",
+      "serviceDuration": 45
+    }
+  ],
+  "expectedDurationMinutes": 45,
+  "actualStartTime": null,
+  "actualEndTime": null,
+  "cancellationReason": null,
+  "participants": [],
+  "createdBy": "letan1",
+  "createdAt": "2025-11-14T09:00:00"
+}
+```
+
+#### Error Responses
+
+**400 Bad Request - New time in past**
+
+```json
+{
+  "timestamp": "2025-11-15T10:30:00",
+  "status": 400,
+  "error": "Bad Request",
+  "message": "Cannot delay appointment to a time in the past: 2025-11-14T14:00:00"
+}
+```
+
+**400 Bad Request - New time before original**
+
+```json
+{
+  "timestamp": "2025-11-15T10:30:00",
+  "status": 400,
+  "error": "Bad Request",
+  "message": "New start time (2025-11-15T07:00:00) must be after original start time (2025-11-15T08:00:00)"
+}
+```
+
+**403 Forbidden - No permission**
+
+```json
+{
+  "timestamp": "2025-11-15T10:30:00",
+  "status": 403,
+  "error": "Forbidden",
+  "message": "Access Denied"
+}
+```
+
+**404 Not Found**
+
+```json
+{
+  "timestamp": "2025-11-15T10:30:00",
+  "status": 404,
+  "error": "Not Found",
+  "message": "Appointment not found: APT-20251115-999"
+}
+```
+
+**409 Conflict - Invalid status**
+
+```json
+{
+  "timestamp": "2025-11-15T10:30:00",
+  "status": 409,
+  "error": "Conflict",
+  "message": "Cannot delay appointment in status COMPLETED. Only SCHEDULED or CHECKED_IN appointments can be delayed."
+}
+```
+
+**409 Conflict - Doctor unavailable**
+
+```json
+{
+  "timestamp": "2025-11-15T10:30:00",
+  "status": 409,
+  "error": "Conflict",
+  "message": "Doctor has conflicting appointment during 2025-11-15T15:00:00 - 2025-11-15T15:45:00"
+}
+```
+
+**409 Conflict - Room occupied**
+
+```json
+{
+  "timestamp": "2025-11-15T10:30:00",
+  "status": 409,
+  "error": "Conflict",
+  "message": "Room R001 is occupied during 2025-11-15T15:00:00 - 2025-11-15T15:45:00"
+}
+```
+
+**409 Conflict - Patient double-booked**
+
+```json
+{
+  "timestamp": "2025-11-15T10:30:00",
+  "status": 409,
+  "error": "Conflict",
+  "message": "Patient already has another appointment during 2025-11-15T15:00:00 - 2025-11-15T15:45:00"
+}
+```
+
+### 5. Test Cases
+
+#### Test 1: Success - RECEPTIONIST delays SCHEDULED appointment
+
+**Prerequisites:**
+
+- Login as `letan1` (RECEPTIONIST, has DELAY_APPOINTMENT permission)
+- Appointment APT-20251115-001 exists
+- Status: SCHEDULED
+- Original time: 2025-11-15 08:00
+- New time slot 15:00-15:45 is available (doctor, room, patient free)
+
+**Request:**
+
+```http
+PATCH /api/v1/appointments/APT-20251115-001/delay
+Authorization: Bearer {{letan1_token}}
+Content-Type: application/json
+
+{
+  "newStartTime": "2025-11-15T15:00:00",
+  "reasonCode": "PATIENT_REQUEST",
+  "notes": "Bệnh nhân yêu cầu hoãn vì bận việc đột xuất"
+}
+```
+
+**Expected Response:**
+
+- Status: `200 OK`
+- `appointmentStartTime`: "2025-11-15T15:00:00"
+- `appointmentEndTime`: "2025-11-15T15:45:00"
+- `status`: "SCHEDULED" (unchanged)
+- Audit log created with action=DELAY
+
+**Verification:**
+
+```sql
+-- Check appointment updated
+SELECT appointment_code, appointment_start_time, appointment_end_time, status
+FROM appointments
+WHERE appointment_code = 'APT-20251115-001';
+
+-- Check audit log
+SELECT action_type, old_start_time, new_start_time, reason_code, notes
+FROM appointment_audit_logs
+WHERE appointment_id = (SELECT appointment_id FROM appointments WHERE appointment_code = 'APT-20251115-001')
+ORDER BY created_at DESC
+LIMIT 1;
+```
+
+---
+
+#### Test 2: Success - DENTIST delays CHECKED_IN appointment
+
+**Prerequisites:**
+
+- Login as `letran` (DENTIST, has DELAY_APPOINTMENT permission)
+- Appointment APT-20251115-002 exists
+- Status: CHECKED_IN (patient waiting)
+- Original time: 2025-11-15 09:00
+- New time slot 10:00-10:45 is available
+
+**Request:**
+
+```http
+PATCH /api/v1/appointments/APT-20251115-002/delay
+Authorization: Bearer {{letran_token}}
+Content-Type: application/json
+
+{
+  "newStartTime": "2025-11-15T10:00:00",
+  "reasonCode": "DOCTOR_EMERGENCY",
+  "notes": "Bác sĩ bận xử lý ca khẩn cấp trước"
+}
+```
+
+**Expected Response:**
+
+- Status: `200 OK`
+- `status`: "CHECKED_IN" (unchanged)
+- Times updated correctly
+
+---
+
+#### Test 3: Error - Cannot delay COMPLETED appointment
+
+**Prerequisites:**
+
+- Appointment APT-20251114-001 exists
+- Status: COMPLETED
+- Login as `letan1`
+
+**Request:**
+
+```http
+PATCH /api/v1/appointments/APT-20251114-001/delay
+Authorization: Bearer {{letan1_token}}
+Content-Type: application/json
+
+{
+  "newStartTime": "2025-11-16T10:00:00",
+  "reasonCode": "PATIENT_REQUEST",
+  "notes": "Test"
+}
+```
+
+**Expected Response:**
+
+- Status: `409 Conflict`
+- Message: "Cannot delay appointment in status COMPLETED..."
+
+---
+
+#### Test 4: Error - New time before original
+
+**Prerequisites:**
+
+- Appointment APT-20251115-001 exists
+- Original time: 2025-11-15 08:00
+- Login as `letan1`
+
+**Request:**
+
+```http
+PATCH /api/v1/appointments/APT-20251115-001/delay
+Authorization: Bearer {{letan1_token}}
+Content-Type: application/json
+
+{
+  "newStartTime": "2025-11-15T07:00:00",
+  "reasonCode": "PATIENT_REQUEST",
+  "notes": "Test"
+}
+```
+
+**Expected Response:**
+
+- Status: `400 Bad Request`
+- Message: "New start time (07:00) must be after original start time (08:00)"
+
+---
+
+#### Test 5: Error - Doctor has conflicting appointment
+
+**Prerequisites:**
+
+- Appointment APT-20251115-001 exists (Dr. Lê Trần, 08:00-08:45)
+- Appointment APT-20251115-003 exists (Dr. Lê Trần, 15:00-15:45)
+- Login as `letan1`
+
+**Request:**
+
+```http
+PATCH /api/v1/appointments/APT-20251115-001/delay
+Authorization: Bearer {{letan1_token}}
+Content-Type: application/json
+
+{
+  "newStartTime": "2025-11-15T15:00:00",
+  "reasonCode": "PATIENT_REQUEST"
+}
+```
+
+**Expected Response:**
+
+- Status: `409 Conflict`
+- Message: "Doctor has conflicting appointment during 15:00 - 15:45"
+
+---
+
+#### Test 6: Error - Room occupied
+
+**Prerequisites:**
+
+- Appointment APT-20251115-001 exists (Room R001, 08:00-08:45)
+- Appointment APT-20251115-004 exists (Room R001, 15:00-16:00)
+- Login as `letan1`
+
+**Request:**
+
+```http
+PATCH /api/v1/appointments/APT-20251115-001/delay
+Authorization: Bearer {{letan1_token}}
+Content-Type: application/json
+
+{
+  "newStartTime": "2025-11-15T15:00:00",
+  "reasonCode": "EQUIPMENT_FAILURE"
+}
+```
+
+**Expected Response:**
+
+- Status: `409 Conflict`
+- Message: "Room R001 is occupied during 15:00 - 15:45"
+
+---
+
+#### Test 7: Error - Patient double-booked
+
+**Prerequisites:**
+
+- Patient Nguyễn Văn An has appointment APT-20251115-001 at 08:00
+- Same patient has appointment APT-20251115-005 at 15:00
+- Login as `letan1`
+
+**Request:**
+
+```http
+PATCH /api/v1/appointments/APT-20251115-001/delay
+Authorization: Bearer {{letan1_token}}
+Content-Type: application/json
+
+{
+  "newStartTime": "2025-11-15T15:00:00",
+  "reasonCode": "PATIENT_REQUEST"
+}
+```
+
+**Expected Response:**
+
+- Status: `409 Conflict`
+- Message: "Patient already has another appointment during 15:00 - 15:45"
+
+---
+
+#### Test 8: Error - No permission (PATIENT role)
+
+**Prerequisites:**
+
+- Login as `patient_user` (ROLE_PATIENT, does NOT have DELAY_APPOINTMENT)
+- Appointment APT-20251115-001 exists (owned by this patient)
+
+**Request:**
+
+```http
+PATCH /api/v1/appointments/APT-20251115-001/delay
+Authorization: Bearer {{patient_token}}
+Content-Type: application/json
+
+{
+  "newStartTime": "2025-11-15T15:00:00",
+  "reasonCode": "PATIENT_REQUEST"
+}
+```
+
+**Expected Response:**
+
+- Status: `403 Forbidden`
+- Message: "Access Denied"
+
+---
+
+#### Test 9: Edge Case - Delay to same day (cross date boundary warning)
+
+**Prerequisites:**
+
+- Appointment APT-20251115-001 exists at 2025-11-15 17:00
+- Delay to next day 2025-11-16 08:00
+- Login as `letan1`
+
+**Request:**
+
+```http
+PATCH /api/v1/appointments/APT-20251115-001/delay
+Authorization: Bearer {{letan1_token}}
+Content-Type: application/json
+
+{
+  "newStartTime": "2025-11-16T08:00:00",
+  "reasonCode": "PATIENT_REQUEST",
+  "notes": "Hoãn sang ngày mai"
+}
+```
+
+**Expected Response:**
+
+- Status: `200 OK`
+- Times updated successfully
+- Log contains warning: "Appointment delayed from 2025-11-15 to 2025-11-16 (crosses date boundary)"
+
+---
+
+#### Test 10: Success - Delay with participants (nurses)
+
+**Prerequisites:**
+
+- Appointment APT-20251115-001 has participants: Nurse A (08:00-08:45)
+- New time slot 15:00-15:45 is free for doctor, room, patient, AND Nurse A
+- Login as `letan1`
+
+**Request:**
+
+```http
+PATCH /api/v1/appointments/APT-20251115-001/delay
+Authorization: Bearer {{letan1_token}}
+Content-Type: application/json
+
+{
+  "newStartTime": "2025-11-15T15:00:00",
+  "reasonCode": "PATIENT_REQUEST"
+}
+```
+
+**Expected Response:**
+
+- Status: `200 OK`
+- All conflict checks passed (including participant)
+- Appointment delayed successfully
+
+**Verification:**
+
+```sql
+-- Check participants still assigned
+SELECT ap.employee_id, ap.participant_role
+FROM appointment_participants ap
+JOIN appointments a ON ap.appointment_id = a.appointment_id
+WHERE a.appointment_code = 'APT-20251115-001';
+```
+
+---
+
+### 6. Database Impact
+
+#### Tables Modified
+
+1. **appointments:**
+
+   - `appointment_start_time`: Updated to new start time
+   - `appointment_end_time`: Recalculated (start + duration)
+   - `status`: Unchanged (still SCHEDULED/CHECKED_IN)
+
+2. **appointment_audit_logs:**
+   - New row inserted:
+     - `action_type`: DELAY
+     - `old_status`: Same as current status
+     - `new_status`: Same as current status
+     - `old_start_time`: Original start time
+     - `new_start_time`: New start time
+     - `reason_code`: From request
+     - `notes`: From request
+     - `performed_by_employee_id`: Current employee ID
+
+#### Example Audit Log Entry
+
+```sql
+INSERT INTO appointment_audit_logs (
+    appointment_id,
+    action_type,
+    old_status,
+    new_status,
+    old_start_time,
+    new_start_time,
+    reason_code,
+    notes,
+    performed_by_employee_id,
+    created_at
+) VALUES (
+    1,
+    'DELAY',
+    'SCHEDULED',
+    'SCHEDULED',
+    '2025-11-15 08:00:00',
+    '2025-11-15 15:00:00',
+    'PATIENT_REQUEST',
+    'Bệnh nhân yêu cầu hoãn vì bận việc đột xuất',
+    1,
+    NOW()
+);
+```
+
+### 7. Security
+
+- **Permission:** `DELAY_APPOINTMENT`
+- **Roles:** RECEPTIONIST, DENTIST, MANAGER
+- **Employee ID extraction:** `auth.principal.username` → `employees.account_id`
+- **Pessimistic Lock:** Prevents concurrent modifications to same appointment
+
+### 8. Performance
+
+- **Pessimistic Lock:** `SELECT FOR UPDATE` blocks concurrent delays
+- **4 Conflict Queries:** Doctor, Room, Patient, Participants (N+1 for participants)
+- **Transaction:** All operations atomic (rollback on any conflict)
+- **Index Required:**
+  - `appointments(employee_id, status, appointment_start_time, appointment_end_time)`
+  - `appointments(room_id, status, appointment_start_time, appointment_end_time)`
+  - `appointments(patient_id, status, appointment_start_time, appointment_end_time)`
+  - `appointment_participants(appointment_id, employee_id)`
+
+### 9. Error Handling
+
+| Status | Scenario              | Message                                                          |
+| ------ | --------------------- | ---------------------------------------------------------------- |
+| 400    | New time in past      | "Cannot delay appointment to a time in the past: {newStartTime}" |
+| 400    | New time ≤ original   | "New start time must be after original start time"               |
+| 403    | No permission         | "Access Denied"                                                  |
+| 404    | Appointment not found | "Appointment not found: {appointmentCode}"                       |
+| 409    | Invalid status        | "Cannot delay appointment in status {status}..."                 |
+| 409    | Terminal state        | "Cannot delay appointment in terminal state: {status}"           |
+| 409    | Doctor conflict       | "Doctor has conflicting appointment during {start} - {end}"      |
+| 409    | Room conflict         | "Room {roomId} is occupied during {start} - {end}"               |
+| 409    | Patient conflict      | "Patient already has another appointment during {start} - {end}" |
+| 409    | Participant conflict  | "Participant (employeeId={id}) has conflicting appointment..."   |
+| 500    | Database error        | Transaction rollback                                             |
+
+### 10. Future Enhancements
+
+- **Notification:** Send SMS/Email to patient about schedule change
+- **Auto-reschedule:** Suggest available time slots based on conflicts
+- **Bulk delay:** Delay multiple appointments at once (e.g., doctor sick leave)
+- **Recurring appointments:** Delay all future occurrences
+- **Undo delay:** Revert to original time within 5 minutes
+- **Approval workflow:** Require manager approval for delays >24 hours
+
+---

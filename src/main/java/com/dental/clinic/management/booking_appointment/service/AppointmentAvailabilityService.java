@@ -112,6 +112,9 @@ public class AppointmentAvailabilityService {
                 totalDuration,
                 requestedDate);
 
+        // STEP 8: Sort by start time chronologically
+        slots.sort(Comparator.comparing(TimeSlotDTO::getStartTime));
+
         return AvailableTimesResponse.builder()
                 .totalDurationNeeded(totalDuration)
                 .availableSlots(slots)
