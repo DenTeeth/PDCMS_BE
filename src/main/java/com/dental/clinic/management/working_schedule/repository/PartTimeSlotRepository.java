@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import com.dental.clinic.management.working_schedule.enums.RegistrationStatus;
 
 import java.util.List;
 import java.util.Optional;
@@ -58,7 +59,7 @@ public interface PartTimeSlotRepository extends JpaRepository<PartTimeSlot, Long
         */
        @Query("SELECT COUNT(r) FROM PartTimeRegistration r " +
                      "WHERE r.partTimeSlotId = :slotId " +
-                     "AND r.status = 'APPROVED' " +
+                     "AND r.status = RegistrationStatus.APPROVED " +
                      "AND r.isActive = true")
        long countApprovedRegistrations(@Param("slotId") Long slotId);
 
