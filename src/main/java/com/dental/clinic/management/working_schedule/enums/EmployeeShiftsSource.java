@@ -6,25 +6,25 @@ package com.dental.clinic.management.working_schedule.enums;
 public enum EmployeeShiftsSource {
     /**
      * Created automatically by batch job for full-time employees.
-     * Từ job tự động tạo cho Full-time.
+     * TÃ¡Â»Â« job tÃ¡Â»Â± Ã„â€˜Ã¡Â»â„¢ng tÃ¡ÂºÂ¡o cho Full-time.
      */
     BATCH_JOB,
 
     /**
      * Created automatically by registration job for part-time employees.
-     * Từ job tự động tạo cho Part-time.
+     * TÃ¡Â»Â« job tÃ¡Â»Â± Ã„â€˜Ã¡Â»â„¢ng tÃ¡ÂºÂ¡o cho Part-time.
      */
     REGISTRATION_JOB,
 
     /**
      * Created from overtime approval.
-     * Từ việc duyệt OT.
+     * TÃ¡Â»Â« viÃ¡Â»â€¡c duyÃ¡Â»â€¡t OT.
      */
     OT_APPROVAL,
 
     /**
      * Created manually by manager/admin.
-     * Do quản lý/admin tạo thủ công.
+     * Do quÃ¡ÂºÂ£n lÃƒÂ½/admin tÃ¡ÂºÂ¡o thÃ¡Â»Â§ cÃƒÂ´ng.
      */
     MANUAL_ENTRY
 }

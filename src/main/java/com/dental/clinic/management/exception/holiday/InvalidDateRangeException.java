@@ -12,7 +12,7 @@ public class InvalidDateRangeException extends RuntimeException {
     private final LocalDate endDate;
 
     public InvalidDateRangeException(LocalDate startDate, LocalDate endDate) {
-        super("Ngày bắt đầu phải nhỏ hơn hoặc bằng ngày kết thúc");
+        super("NgÃƒÂ y bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u phÃ¡ÂºÂ£i nhÃ¡Â»Â hÃ†Â¡n hoÃ¡ÂºÂ·c bÃ¡ÂºÂ±ng ngÃƒÂ y kÃ¡ÂºÂ¿t thÃƒÂºc");
         this.startDate = startDate;
         this.endDate = endDate;
     }

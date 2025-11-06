@@ -21,7 +21,7 @@ import java.util.List;
  * Provides endpoints for creating, viewing, updating, and deleting fixed
  * schedules.
  *
- * Schema V14 - Luồng 1: Lịch Cố định (FULL_TIME & PART_TIME_FIXED)
+ * Schema V14 - LuÃ¡Â»â€œng 1: LÃ¡Â»â€¹ch CÃ¡Â»â€˜ Ã„â€˜Ã¡Â»â€¹nh (FULL_TIME & PART_TIME_FIXED)
  */
 @RestController
 @RequestMapping("/api/v1/fixed-registrations")

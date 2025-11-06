@@ -162,11 +162,11 @@ public class OvertimeRequestService {
 
         // Validation 1: Verify employee exists
         Employee employee = employeeRepository.findById(targetEmployeeId)
-                .orElseThrow(() -> new RelatedResourceNotFoundException("Nhân viên", targetEmployeeId));
+                .orElseThrow(() -> new RelatedResourceNotFoundException("NhÃƒÂ¢n viÃƒÂªn", targetEmployeeId));
 
         // Validation 2: Verify work shift exists
         WorkShift workShift = workShiftRepository.findById(dto.getWorkShiftId())
-                .orElseThrow(() -> new RelatedResourceNotFoundException("Ca làm việc", dto.getWorkShiftId()));
+                .orElseThrow(() -> new RelatedResourceNotFoundException("Ca lÃƒÂ m viÃ¡Â»â€¡c", dto.getWorkShiftId()));
 
         // Validation 2: Check for hybrid schedule conflicts
         // Employee must NOT have a regular work schedule on this date/shift
@@ -176,7 +176,7 @@ public class OvertimeRequestService {
         LocalDate today = LocalDate.now();
         if (dto.getWorkDate().isBefore(today)) {
             log.warn("Cannot create overtime request for past date: {}", dto.getWorkDate());
-            throw new IllegalArgumentException("Ngày làm việc không được là ngày trong quá khứ.");
+            throw new IllegalArgumentException("NgÃƒÂ y lÃƒÂ m viÃ¡Â»â€¡c khÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c lÃƒÂ  ngÃƒÂ y trong quÃƒÂ¡ khÃ¡Â»Â©.");
         }
         
         // Validation 3.1: If workDate is today, check if shift has already ended
@@ -186,22 +186,22 @@ public class OvertimeRequestService {
                 log.warn("Cannot create overtime request for shift that has already ended today. Shift ends at {}, current time: {}", 
                          workShift.getEndTime(), now);
                 throw new IllegalArgumentException(
-                    String.format("Ca làm việc đã kết thúc (kết thúc lúc %s). Không thể tạo yêu cầu OT.", 
+                    String.format("Ca lÃƒÂ m viÃ¡Â»â€¡c Ã„â€˜ÃƒÂ£ kÃ¡ÂºÂ¿t thÃƒÂºc (kÃ¡ÂºÂ¿t thÃƒÂºc lÃƒÂºc %s). KhÃƒÂ´ng thÃ¡Â»Æ’ tÃ¡ÂºÂ¡o yÃƒÂªu cÃ¡ÂºÂ§u OT.", 
                                   workShift.getEndTime())
                 );
             }
         }
 
-        // Validation 4: Admin cannot use admin privilege to create OT for themselves (Lỗi 2)
-        // Security reason: Admin creating OT for themselves can self-approve → abuse of power
+        // Validation 4: Admin cannot use admin privilege to create OT for themselves (LÃ¡Â»â€”i 2)
+        // Security reason: Admin creating OT for themselves can self-approve Ã¢â€ â€™ abuse of power
         // Admin mode is when employeeId is explicitly provided in request
         Employee requestedBy = getCurrentEmployee();
         if (dto.getEmployeeId() != null && targetEmployeeId.equals(requestedBy.getEmployeeId())) {
             log.warn("Admin {} attempted to use admin privilege to create overtime for themselves (security violation)", requestedBy.getEmployeeId());
-            throw new IllegalArgumentException("Không thể tự phân công OT cho bản thân.");
+            throw new IllegalArgumentException("KhÃƒÂ´ng thÃ¡Â»Æ’ tÃ¡Â»Â± phÃƒÂ¢n cÃƒÂ´ng OT cho bÃ¡ÂºÂ£n thÃƒÂ¢n.");
         }
 
-        // Validation 5: Check for time-overlapping shifts on the same date (Lỗi 3)
+        // Validation 5: Check for time-overlapping shifts on the same date (LÃ¡Â»â€”i 3)
         // A person cannot work 2 shifts that overlap in time on the same day
         List<RequestStatus> activeStatuses = List.of(RequestStatus.PENDING, RequestStatus.APPROVED);
         List<OvertimeRequest> existingRequests = overtimeRequestRepository.findByEmployeeIdAndWorkDate(
@@ -210,15 +210,15 @@ public class OvertimeRequestService {
         for (OvertimeRequest existingRequest : existingRequests) {
             WorkShift existingShift = existingRequest.getWorkShift();
             
-            // Check 1: Prevent spam after REJECTION (Lỗi 4)
+            // Check 1: Prevent spam after REJECTION (LÃ¡Â»â€”i 4)
             // If employee was REJECTED for this exact shift, don't allow re-request
             if (existingRequest.getStatus() == RequestStatus.REJECTED &&
                 existingShift.getWorkShiftId().equals(dto.getWorkShiftId())) {
                 log.warn("Employee {} attempted to re-request overtime for REJECTED shift {} on {}",
                         targetEmployeeId, dto.getWorkShiftId(), dto.getWorkDate());
                 throw new IllegalArgumentException(
-                    String.format("Yêu cầu OT cho ca này đã bị từ chối trước đó (lý do: %s). Vui lòng liên hệ quản lý nếu cần thay đổi.",
-                        existingRequest.getRejectedReason() != null ? existingRequest.getRejectedReason() : "Không rõ")
+                    String.format("YÃƒÂªu cÃ¡ÂºÂ§u OT cho ca nÃƒÂ y Ã„â€˜ÃƒÂ£ bÃ¡Â»â€¹ tÃ¡Â»Â« chÃ¡Â»â€˜i trÃ†Â°Ã¡Â»â€ºc Ã„â€˜ÃƒÂ³ (lÃƒÂ½ do: %s). Vui lÃƒÂ²ng liÃƒÂªn hÃ¡Â»â€¡ quÃ¡ÂºÂ£n lÃƒÂ½ nÃ¡ÂºÂ¿u cÃ¡ÂºÂ§n thay Ã„â€˜Ã¡Â»â€¢i.",
+                        existingRequest.getRejectedReason() != null ? existingRequest.getRejectedReason() : "KhÃƒÂ´ng rÃƒÂµ")
                 );
             }
             
@@ -229,8 +229,8 @@ public class OvertimeRequestService {
                 log.warn("Employee {} attempted to re-request overtime for CANCELLED shift {} on {}",
                         targetEmployeeId, dto.getWorkShiftId(), dto.getWorkDate());
                 throw new IllegalArgumentException(
-                    String.format("Yêu cầu OT cho ca này đã bị hủy trước đó (lý do: %s). Vui lòng liên hệ quản lý nếu cần tạo lại.",
-                        existingRequest.getCancellationReason() != null ? existingRequest.getCancellationReason() : "Không rõ")
+                    String.format("YÃƒÂªu cÃ¡ÂºÂ§u OT cho ca nÃƒÂ y Ã„â€˜ÃƒÂ£ bÃ¡Â»â€¹ hÃ¡Â»Â§y trÃ†Â°Ã¡Â»â€ºc Ã„â€˜ÃƒÂ³ (lÃƒÂ½ do: %s). Vui lÃƒÂ²ng liÃƒÂªn hÃ¡Â»â€¡ quÃ¡ÂºÂ£n lÃƒÂ½ nÃ¡ÂºÂ¿u cÃ¡ÂºÂ§n tÃ¡ÂºÂ¡o lÃ¡ÂºÂ¡i.",
+                        existingRequest.getCancellationReason() != null ? existingRequest.getCancellationReason() : "KhÃƒÂ´ng rÃƒÂµ")
                 );
             }
             
@@ -249,7 +249,7 @@ public class OvertimeRequestService {
                         existingShift.getWorkShiftId(), existingShift.getStartTime(), existingShift.getEndTime(),
                         workShift.getWorkShiftId(), workShift.getStartTime(), workShift.getEndTime());
                 throw new IllegalArgumentException(
-                    String.format("Nhân viên đã có ca OT trùng giờ trong ngày %s (ca %s: %s-%s). Không thể tạo ca OT mới (ca %s: %s-%s).",
+                    String.format("NhÃƒÂ¢n viÃƒÂªn Ã„â€˜ÃƒÂ£ cÃƒÂ³ ca OT trÃƒÂ¹ng giÃ¡Â»Â trong ngÃƒÂ y %s (ca %s: %s-%s). KhÃƒÂ´ng thÃ¡Â»Æ’ tÃ¡ÂºÂ¡o ca OT mÃ¡Â»â€ºi (ca %s: %s-%s).",
                         dto.getWorkDate(),
                         existingShift.getShiftName(), existingShift.getStartTime(), existingShift.getEndTime(),
                         workShift.getShiftName(), workShift.getStartTime(), workShift.getEndTime())
@@ -323,7 +323,7 @@ public class OvertimeRequestService {
             case APPROVED -> handleApproval(request, currentEmployee);
             case REJECTED -> handleRejection(request, dto, currentEmployee);
             case CANCELLED -> handleCancellation(request, dto, currentEmployee);
-            default -> throw new IllegalArgumentException("Trạng thái không hợp lệ: " + dto.getStatus());
+            default -> throw new IllegalArgumentException("TrÃ¡ÂºÂ¡ng thÃƒÂ¡i khÃƒÂ´ng hÃ¡Â»Â£p lÃ¡Â»â€¡: " + dto.getStatus());
         }
 
         OvertimeRequest updatedRequest = overtimeRequestRepository.save(request);
@@ -339,7 +339,7 @@ public class OvertimeRequestService {
         // Check permission
         if (!SecurityUtil.hasCurrentUserPermission("APPROVE_OT")) {
             log.warn("User {} does not have APPROVE_OT permission", approvedBy.getEmployeeId());
-            throw new AccessDeniedException("Bạn không có quyền duyệt yêu cầu OT.");
+            throw new AccessDeniedException("BÃ¡ÂºÂ¡n khÃƒÂ´ng cÃƒÂ³ quyÃ¡Â»Ân duyÃ¡Â»â€¡t yÃƒÂªu cÃ¡ÂºÂ§u OT.");
         }
 
         request.setStatus(RequestStatus.APPROVED);
@@ -359,12 +359,12 @@ public class OvertimeRequestService {
         // Check permission
         if (!SecurityUtil.hasCurrentUserPermission("REJECT_OT")) {
             log.warn("User {} does not have REJECT_OT permission", rejectedBy.getEmployeeId());
-            throw new AccessDeniedException("Bạn không có quyền từ chối yêu cầu OT.");
+            throw new AccessDeniedException("BÃ¡ÂºÂ¡n khÃƒÂ´ng cÃƒÂ³ quyÃ¡Â»Ân tÃ¡Â»Â« chÃ¡Â»â€˜i yÃƒÂªu cÃ¡ÂºÂ§u OT.");
         }
 
         // Validate reason is provided
         if (dto.getReason() == null || dto.getReason().isBlank()) {
-            throw new IllegalArgumentException("Lý do từ chối là bắt buộc.");
+            throw new IllegalArgumentException("LÃƒÂ½ do tÃ¡Â»Â« chÃ¡Â»â€˜i lÃƒÂ  bÃ¡ÂºÂ¯t buÃ¡Â»â„¢c.");
         }
 
         request.setStatus(RequestStatus.REJECTED);
@@ -381,7 +381,7 @@ public class OvertimeRequestService {
     private void handleCancellation(OvertimeRequest request, UpdateOvertimeStatusDTO dto, Employee cancelledBy) {
         // Validate reason is provided
         if (dto.getReason() == null || dto.getReason().isBlank()) {
-            throw new IllegalArgumentException("Lý do hủy là bắt buộc.");
+            throw new IllegalArgumentException("LÃƒÂ½ do hÃ¡Â»Â§y lÃƒÂ  bÃ¡ÂºÂ¯t buÃ¡Â»â„¢c.");
         }
 
         // Permission check: 
@@ -395,7 +395,7 @@ public class OvertimeRequestService {
         if (!canCancelOwn && !canCancelAny) {
             log.warn("User {} does not have permission to cancel overtime request {}",
                     cancelledBy.getEmployeeId(), request.getRequestId());
-            throw new AccessDeniedException("Bạn không có quyền hủy yêu cầu OT này.");
+            throw new AccessDeniedException("BÃ¡ÂºÂ¡n khÃƒÂ´ng cÃƒÂ³ quyÃ¡Â»Ân hÃ¡Â»Â§y yÃƒÂªu cÃ¡ÂºÂ§u OT nÃƒÂ y.");
         }
 
         request.setStatus(RequestStatus.CANCELLED);
@@ -412,11 +412,11 @@ public class OvertimeRequestService {
      */
     private Employee getCurrentEmployee() {
         String username = SecurityUtil.getCurrentUserLogin()
-                .orElseThrow(() -> new IllegalStateException("Không tìm thấy người dùng đang đăng nhập."));
+                .orElseThrow(() -> new IllegalStateException("KhÃƒÂ´ng tÃƒÂ¬m thÃ¡ÂºÂ¥y ngÃ†Â°Ã¡Â»Âi dÃƒÂ¹ng Ã„â€˜ang Ã„â€˜Ã„Æ’ng nhÃ¡ÂºÂ­p."));
 
         return employeeRepository.findByAccount_Username(username)
                 .orElseThrow(() -> new IllegalStateException(
-                        "Người dùng hiện tại không phải là nhân viên."));
+                        "NgÃ†Â°Ã¡Â»Âi dÃƒÂ¹ng hiÃ¡Â»â€¡n tÃ¡ÂºÂ¡i khÃƒÂ´ng phÃ¡ÂºÂ£i lÃƒÂ  nhÃƒÂ¢n viÃƒÂªn."));
     }
 
     /**
@@ -454,7 +454,7 @@ public class OvertimeRequestService {
             employeeShift.setIsOvertime(true); // Mark as overtime shift
             employeeShift.setCreatedBy(request.getApprovedBy().getEmployeeId()); // Track who approved (created shift)
             employeeShift.setSourceOtRequestId(request.getRequestId()); // Link to OT request
-            employeeShift.setNotes(String.format("Tạo từ yêu cầu OT %s - %s",
+            employeeShift.setNotes(String.format("TÃ¡ÂºÂ¡o tÃ¡Â»Â« yÃƒÂªu cÃ¡ÂºÂ§u OT %s - %s",
                     request.getRequestId(), request.getReason()));
 
             employeeShiftRepository.save(employeeShift);
@@ -477,10 +477,10 @@ public class OvertimeRequestService {
      * Validate that employee does NOT have a regular work schedule on the specified date and shift.
      * Checks both Fixed and Part-Time schedules (Hybrid approach).
      * 
-     * Luồng 1 (Fixed): Checks fixed_shift_registrations + fixed_registration_days
+     * LuÃ¡Â»â€œng 1 (Fixed): Checks fixed_shift_registrations + fixed_registration_days
      *   - For FULL_TIME and PART_TIME_FIXED employees
      * 
-     * Luồng 2 (Flex): Checks part_time_registrations + part_time_slots
+     * LuÃ¡Â»â€œng 2 (Flex): Checks part_time_registrations + part_time_slots
      *   - For PART_TIME_FLEX employees
      * 
      * @param employeeId employee ID
@@ -492,24 +492,24 @@ public class OvertimeRequestService {
         log.debug("Checking hybrid schedule conflicts for employee {} on {} shift {}", 
                 employeeId, workDate, workShiftId);
 
-        // Check Luồng 1: Fixed Schedule (FULL_TIME & PART_TIME_FIXED)
+        // Check LuÃ¡Â»â€œng 1: Fixed Schedule (FULL_TIME & PART_TIME_FIXED)
         boolean hasFixedSchedule = fixedShiftRegistrationRepository.hasFixedScheduleOnDate(
                 employeeId, workDate, workShiftId);
         
         if (hasFixedSchedule) {
             log.warn("Employee {} has fixed schedule on {} shift {} - cannot create OT request",
                     employeeId, workDate, workShiftId);
-            throw new SlotConflictException("Nhân viên đã có lịch làm việc bình thường vào ca này.");
+            throw new SlotConflictException("NhÃƒÂ¢n viÃƒÂªn Ã„â€˜ÃƒÂ£ cÃƒÂ³ lÃ¡Â»â€¹ch lÃƒÂ m viÃ¡Â»â€¡c bÃƒÂ¬nh thÃ†Â°Ã¡Â»Âng vÃƒÂ o ca nÃƒÂ y.");
         }
 
-        // Check Luồng 2: Part-Time Flexible Schedule (PART_TIME_FLEX)
+        // Check LuÃ¡Â»â€œng 2: Part-Time Flexible Schedule (PART_TIME_FLEX)
         boolean hasPartTimeSchedule = employeeShiftRegistrationRepository.hasPartTimeScheduleOnDate(
                 employeeId, workDate, workShiftId);
         
         if (hasPartTimeSchedule) {
             log.warn("Employee {} has part-time schedule on {} shift {} - cannot create OT request",
                     employeeId, workDate, workShiftId);
-            throw new SlotConflictException("Nhân viên đã có lịch làm việc bình thường vào ca này.");
+            throw new SlotConflictException("NhÃƒÂ¢n viÃƒÂªn Ã„â€˜ÃƒÂ£ cÃƒÂ³ lÃ¡Â»â€¹ch lÃƒÂ m viÃ¡Â»â€¡c bÃƒÂ¬nh thÃ†Â°Ã¡Â»Âng vÃƒÂ o ca nÃƒÂ y.");
         }
 
         log.debug("No schedule conflicts found for employee {} on {} shift {}", 

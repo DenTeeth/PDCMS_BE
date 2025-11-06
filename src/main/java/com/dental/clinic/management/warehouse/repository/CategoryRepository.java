@@ -7,16 +7,15 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Repository
-public interface CategoryRepository extends JpaRepository<Category, UUID> {
+public interface CategoryRepository extends JpaRepository<Category, Long> {
 
     List<Category> findByParentCategoryIsNull();
 
     List<Category> findByParentCategoryIsNullAndWarehouseType(WarehouseType warehouseType);
 
-    List<Category> findByParentCategory_CategoryId(UUID parentCategoryId);
+    List<Category> findByParentCategory_CategoryId(Long parentCategoryId);
 
     Optional<Category> findByCategoryNameAndWarehouseType(String categoryName, WarehouseType warehouseType);
 

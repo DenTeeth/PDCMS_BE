@@ -9,15 +9,14 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 @Repository
-public interface StorageTransactionRepository extends JpaRepository<StorageTransaction, UUID> {
+public interface StorageTransactionRepository extends JpaRepository<StorageTransaction, Long> {
 
     /**
      * Find all transactions for a batch.
      */
-    List<StorageTransaction> findByItemBatch_BatchIdOrderByTransactionDateDesc(UUID batchId);
+    List<StorageTransaction> findByItemBatch_BatchIdOrderByTransactionDateDesc(Long batchId);
 
     /**
      * Find transactions by type.
@@ -42,5 +41,5 @@ public interface StorageTransactionRepository extends JpaRepository<StorageTrans
     /**
      * Find transactions by performer.
      */
-    List<StorageTransaction> findByPerformedByOrderByTransactionDateDesc(UUID performedBy);
+    List<StorageTransaction> findByPerformedByOrderByTransactionDateDesc(Long performedBy);
 }

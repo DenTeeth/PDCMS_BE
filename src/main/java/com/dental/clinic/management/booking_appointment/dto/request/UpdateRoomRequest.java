@@ -19,7 +19,7 @@ public class UpdateRoomRequest {
     private String roomCode;
 
     @Size(max = 100, message = "Room name must not exceed 100 characters")
-    @Schema(description = "Room name", example = "Phòng 01")
+    @Schema(description = "Room name", example = "PhÃƒÂ²ng 01")
     private String roomName;
 
     @Size(max = 50, message = "Room type must not exceed 50 characters")

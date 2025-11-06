@@ -128,11 +128,11 @@ public class AppointmentFilterCriteria {
      * - Service: service_code OR service_name
      *
      * Examples:
-     * - "Nguyễn Văn A" → Finds patient by name
-     * - "BN-1001" → Finds patient by code
-     * - "Dr. An Khoa" → Finds appointments with this doctor
-     * - "Cạo vôi" → Finds appointments with this service
-     * - "P-01" → Finds appointments in this room
+     * - "NguyÃ¡Â»â€¦n VÃ„Æ’n A" Ã¢â€ â€™ Finds patient by name
+     * - "BN-1001" Ã¢â€ â€™ Finds patient by code
+     * - "Dr. An Khoa" Ã¢â€ â€™ Finds appointments with this doctor
+     * - "CÃ¡ÂºÂ¡o vÃƒÂ´i" Ã¢â€ â€™ Finds appointments with this service
+     * - "P-01" Ã¢â€ â€™ Finds appointments in this room
      *
      * This is a convenience parameter for frontend search bars.
      * Uses ILIKE for case-insensitive partial matching.

@@ -15,9 +15,9 @@ import java.util.List;
 /**
  * Job P11: Auto-deactivate expired Part-Time Flex registrations.
  *
- * ⭐ CRITICAL BUG FIX ⭐
+ * Ã¢Â­Â CRITICAL BUG FIX Ã¢Â­Â
  *
- * Schema V14 Hybrid - Luồng 2: Lịch Linh hoạt (Part-Time FLEX)
+ * Schema V14 Hybrid - LuÃ¡Â»â€œng 2: LÃ¡Â»â€¹ch Linh hoÃ¡ÂºÂ¡t (Part-Time FLEX)
  *
  * PROBLEM:
  * - Part-Time Flex employees register (claim) slots with effective_to = 3

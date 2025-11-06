@@ -24,9 +24,9 @@ public class WorkShiftInUseException extends RuntimeException {
 
     public WorkShiftInUseException(String shiftCode, int recurringCount, int scheduleCount) {
         super(String.format(
-                "Không thể xóa/vô hiệu hóa ca %s. Đang được sử dụng bởi: " +
-                        "%d lịch cố định, %d lịch làm việc. " +
-                        "Vui lòng chuyển sang ca khác trước.",
+                "KhÃƒÂ´ng thÃ¡Â»Æ’ xÃƒÂ³a/vÃƒÂ´ hiÃ¡Â»â€¡u hÃƒÂ³a ca %s. Ã„Âang Ã„â€˜Ã†Â°Ã¡Â»Â£c sÃ¡Â»Â­ dÃ¡Â»Â¥ng bÃ¡Â»Å¸i: " +
+                        "%d lÃ¡Â»â€¹ch cÃ¡Â»â€˜ Ã„â€˜Ã¡Â»â€¹nh, %d lÃ¡Â»â€¹ch lÃƒÂ m viÃ¡Â»â€¡c. " +
+                        "Vui lÃƒÂ²ng chuyÃ¡Â»Æ’n sang ca khÃƒÂ¡c trÃ†Â°Ã¡Â»â€ºc.",
                 shiftCode, recurringCount, scheduleCount));
     }
 

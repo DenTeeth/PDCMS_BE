@@ -22,7 +22,7 @@ public class CreateRoomRequest {
 
     @NotBlank(message = "Room name is required")
     @Size(max = 100, message = "Room name must not exceed 100 characters")
-    @Schema(description = "Room name", example = "Phòng 01", required = true)
+    @Schema(description = "Room name", example = "PhÃƒÂ²ng 01", required = true)
     private String roomName;
 
     @Size(max = 50, message = "Room type must not exceed 50 characters")

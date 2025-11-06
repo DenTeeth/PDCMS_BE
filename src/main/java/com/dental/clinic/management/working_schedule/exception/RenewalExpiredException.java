@@ -20,9 +20,9 @@ public class RenewalExpiredException extends ErrorResponseException {
     }
 
     private static ProblemDetail createProblemDetail(String renewalId, LocalDateTime expiresAt) {
-        String expiredDate = expiresAt != null ? expiresAt.format(FORMATTER) : "không xác định";
+        String expiredDate = expiresAt != null ? expiresAt.format(FORMATTER) : "khÃƒÂ´ng xÃƒÂ¡c Ã„â€˜Ã¡Â»â€¹nh";
         String message = String.format(
-                "Yêu cầu gia hạn %s đã hết hạn phản hồi (deadline: %s). Vui lòng liên hệ quản lý.",
+                "YÃƒÂªu cÃ¡ÂºÂ§u gia hÃ¡ÂºÂ¡n %s Ã„â€˜ÃƒÂ£ hÃ¡ÂºÂ¿t hÃ¡ÂºÂ¡n phÃ¡ÂºÂ£n hÃ¡Â»â€œi (deadline: %s). Vui lÃƒÂ²ng liÃƒÂªn hÃ¡Â»â€¡ quÃ¡ÂºÂ£n lÃƒÂ½.",
                 renewalId,
                 expiredDate);
 

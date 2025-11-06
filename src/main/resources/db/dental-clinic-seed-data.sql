@@ -312,32 +312,6 @@ VALUES
 ('DELETE_SERVICE', 'DELETE_SERVICE', 'SERVICE_MANAGEMENT', 'Vô hiệu hóa dịch vụ (soft delete)', 253, NULL, TRUE, NOW())
 ON CONFLICT (permission_id) DO NOTHING;
 
--- MODULE 13: WAREHOUSE_MANAGEMENT (Quản lý kho vật tư y tế)
-INSERT INTO permissions (permission_id, permission_name, module, description, display_order, parent_permission_id, is_active, created_at)
-VALUES
--- Category management
-('VIEW_WAREHOUSE_CATEGORY', 'VIEW_WAREHOUSE_CATEGORY', 'WAREHOUSE_MANAGEMENT', 'Xem danh mục vật tư', 260, NULL, TRUE, NOW()),
-('CREATE_WAREHOUSE_CATEGORY', 'CREATE_WAREHOUSE_CATEGORY', 'WAREHOUSE_MANAGEMENT', 'Tạo danh mục vật tư mới', 261, NULL, TRUE, NOW()),
-('UPDATE_WAREHOUSE_CATEGORY', 'UPDATE_WAREHOUSE_CATEGORY', 'WAREHOUSE_MANAGEMENT', 'Cập nhật danh mục vật tư', 262, NULL, TRUE, NOW()),
-('DELETE_WAREHOUSE_CATEGORY', 'DELETE_WAREHOUSE_CATEGORY', 'WAREHOUSE_MANAGEMENT', 'Xóa danh mục vật tư', 263, NULL, TRUE, NOW()),
--- Supplier management
-('VIEW_WAREHOUSE_SUPPLIER', 'VIEW_WAREHOUSE_SUPPLIER', 'WAREHOUSE_MANAGEMENT', 'Xem nhà cung cấp', 264, NULL, TRUE, NOW()),
-('CREATE_WAREHOUSE_SUPPLIER', 'CREATE_WAREHOUSE_SUPPLIER', 'WAREHOUSE_MANAGEMENT', 'Tạo nhà cung cấp mới', 265, NULL, TRUE, NOW()),
-('UPDATE_WAREHOUSE_SUPPLIER', 'UPDATE_WAREHOUSE_SUPPLIER', 'WAREHOUSE_MANAGEMENT', 'Cập nhật nhà cung cấp', 266, NULL, TRUE, NOW()),
-('DELETE_WAREHOUSE_SUPPLIER', 'DELETE_WAREHOUSE_SUPPLIER', 'WAREHOUSE_MANAGEMENT', 'Xóa nhà cung cấp', 267, NULL, TRUE, NOW()),
--- Item master management
-('VIEW_WAREHOUSE_ITEM', 'VIEW_WAREHOUSE_ITEM', 'WAREHOUSE_MANAGEMENT', 'Xem danh sách vật tư', 268, NULL, TRUE, NOW()),
-('CREATE_WAREHOUSE_ITEM', 'CREATE_WAREHOUSE_ITEM', 'WAREHOUSE_MANAGEMENT', 'Tạo vật tư mới', 269, NULL, TRUE, NOW()),
-('UPDATE_WAREHOUSE_ITEM', 'UPDATE_WAREHOUSE_ITEM', 'WAREHOUSE_MANAGEMENT', 'Cập nhật vật tư', 270, NULL, TRUE, NOW()),
-('DELETE_WAREHOUSE_ITEM', 'DELETE_WAREHOUSE_ITEM', 'WAREHOUSE_MANAGEMENT', 'Xóa vật tư', 271, NULL, TRUE, NOW()),
--- Transaction management
-('IMPORT_WAREHOUSE', 'IMPORT_WAREHOUSE', 'WAREHOUSE_MANAGEMENT', 'Nhập kho vật tư', 272, NULL, TRUE, NOW()),
-('EXPORT_WAREHOUSE', 'EXPORT_WAREHOUSE', 'WAREHOUSE_MANAGEMENT', 'Xuất kho vật tư', 273, NULL, TRUE, NOW()),
-('ADJUST_WAREHOUSE', 'ADJUST_WAREHOUSE', 'WAREHOUSE_MANAGEMENT', 'Điều chỉnh tồn kho', 274, NULL, TRUE, NOW()),
-('VIEW_WAREHOUSE_TRANSACTION', 'VIEW_WAREHOUSE_TRANSACTION', 'WAREHOUSE_MANAGEMENT', 'Xem lịch sử giao dịch kho', 275, NULL, TRUE, NOW()),
-('VIEW_WAREHOUSE_STATS', 'VIEW_WAREHOUSE_STATS', 'WAREHOUSE_MANAGEMENT', 'Xem thống kê kho', 276, NULL, TRUE, NOW())
-ON CONFLICT (permission_id) DO NOTHING;
-
 -- ============================================
 -- BƯỚC 4: PHÂN QUYỀN CHO CÁC VAI TRÒ
 -- ============================================
@@ -345,42 +319,6 @@ ON CONFLICT (permission_id) DO NOTHING;
 -- Admin có TẤT CẢ quyền
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT 'ROLE_ADMIN', permission_id FROM permissions WHERE is_active = TRUE
-ON CONFLICT (role_id, permission_id) DO NOTHING;
-
--- ROLE_INVENTORY_MANAGER - Full warehouse management permissions
-INSERT INTO role_permissions (role_id, permission_id)
-VALUES
--- Warehouse Category permissions
-('ROLE_INVENTORY_MANAGER', 'VIEW_WAREHOUSE_CATEGORY'),
-('ROLE_INVENTORY_MANAGER', 'CREATE_WAREHOUSE_CATEGORY'),
-('ROLE_INVENTORY_MANAGER', 'UPDATE_WAREHOUSE_CATEGORY'),
-('ROLE_INVENTORY_MANAGER', 'DELETE_WAREHOUSE_CATEGORY'),
--- Warehouse Supplier permissions
-('ROLE_INVENTORY_MANAGER', 'VIEW_WAREHOUSE_SUPPLIER'),
-('ROLE_INVENTORY_MANAGER', 'CREATE_WAREHOUSE_SUPPLIER'),
-('ROLE_INVENTORY_MANAGER', 'UPDATE_WAREHOUSE_SUPPLIER'),
-('ROLE_INVENTORY_MANAGER', 'DELETE_WAREHOUSE_SUPPLIER'),
--- Warehouse Item permissions
-('ROLE_INVENTORY_MANAGER', 'VIEW_WAREHOUSE_ITEM'),
-('ROLE_INVENTORY_MANAGER', 'CREATE_WAREHOUSE_ITEM'),
-('ROLE_INVENTORY_MANAGER', 'UPDATE_WAREHOUSE_ITEM'),
-('ROLE_INVENTORY_MANAGER', 'DELETE_WAREHOUSE_ITEM'),
--- Warehouse Transaction permissions
-('ROLE_INVENTORY_MANAGER', 'IMPORT_WAREHOUSE'),
-('ROLE_INVENTORY_MANAGER', 'EXPORT_WAREHOUSE'),
-('ROLE_INVENTORY_MANAGER', 'ADJUST_WAREHOUSE'),
-('ROLE_INVENTORY_MANAGER', 'VIEW_WAREHOUSE_TRANSACTION'),
-('ROLE_INVENTORY_MANAGER', 'VIEW_WAREHOUSE_STATS')
-ON CONFLICT (role_id, permission_id) DO NOTHING;
-
--- ROLE_MANAGER - View-only warehouse permissions
-INSERT INTO role_permissions (role_id, permission_id)
-VALUES
-('ROLE_MANAGER', 'VIEW_WAREHOUSE_CATEGORY'),
-('ROLE_MANAGER', 'VIEW_WAREHOUSE_SUPPLIER'),
-('ROLE_MANAGER', 'VIEW_WAREHOUSE_ITEM'),
-('ROLE_MANAGER', 'VIEW_WAREHOUSE_TRANSACTION'),
-('ROLE_MANAGER', 'VIEW_WAREHOUSE_STATS')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 -- Dentist (Fix: ROLE_DENTIST → ROLE_DENTIST)
@@ -661,8 +599,8 @@ VALUES
 (5, 'SPEC005', 'Phẫu thuật hàm mặt', 'Oral Surgery - Nhổ răng khôn, phẫu thuật', TRUE, NOW()),
 (6, 'SPEC006', 'Nha khoa trẻ em', 'Pediatric Dentistry - Chuyên khoa nhi', TRUE, NOW()),
 (7, 'SPEC007', 'Răng thẩm mỹ', 'Cosmetic Dentistry - Tẩy trắng, bọc sứ', TRUE, NOW()),
-(8, 'SPEC008', 'STANDARD - Y tế cơ bản', 'Baseline medical qualification - Required for all doctors/nurses', TRUE, NOW()),
-(9, 'SPEC009', 'Thực tập sinh', 'Intern/Trainee - Nhân viên đang đào tạo, học việc', TRUE, NOW())
+(8, 'SPEC-STANDARD', 'STANDARD - Y tế cơ bản', 'Baseline medical qualification - Required for all doctors/nurses', TRUE, NOW()),
+(9, 'SPEC-INTERN', 'Thực tập sinh', 'Intern/Trainee - Nhân viên đang đào tạo, học việc', TRUE, NOW())
 ON CONFLICT (specialization_id) DO NOTHING;
 
 -- ============================================
@@ -1925,220 +1863,130 @@ ADD COLUMN IF NOT EXISTS old_status VARCHAR(50),
 ADD COLUMN IF NOT EXISTS new_status VARCHAR(50);
 
 -- ============================================
--- WAREHOUSE MANAGEMENT - SAMPLE DATA
+-- WAREHOUSE MANAGEMENT - SEED DATA
 -- ============================================
--- Note: Warehouse tables use BIGSERIAL for IDs, not UUID
--- IDs are auto-generated, but we provide them explicitly for seed data
+-- Note: Uses auto-increment BIGSERIAL (1,2,3...) instead of UUID
 -- ============================================
 
--- ============================================
--- BƯỚC 15: WAREHOUSE CATEGORIES (Danh mục vật tư - cấu trúc cây)
--- ============================================
--- Note: Categories use BIGSERIAL ID (auto-increment from 1)
--- Temporarily disable trigger if exists, then insert with explicit IDs
-DO $$
-BEGIN
-    -- No trigger to disable for categories
-END $$;
-
--- Root categories (ID 1-3)
--- Sub-categories (ID 4-9)
--- Format: (category_code, category_name, parent_category_id, warehouse_type, description)
--- Skipping category_id, let database auto-generate from 1
-
-INSERT INTO categories (category_code, category_name, parent_category_id, warehouse_type, description, is_active, created_at)
+-- STEP 1: WAREHOUSE CATEGORIES (Hierarchical structure)
+-- Root categories first
+INSERT INTO categories (category_name, parent_category_id, warehouse_type, description, is_active, created_at, updated_at)
 VALUES
--- Root categories
-('CAT-DENTAL', 'Vật tư nha khoa', NULL, 'NORMAL', 'Danh mục gốc cho vật tư nha khoa', TRUE, NOW()),
-('CAT-MEDICINE', 'Thuốc và dược phẩm', NULL, 'COLD', 'Danh mục gốc cho thuốc (kho lạnh)', TRUE, NOW()),
-('CAT-CONSUME', 'Vật tư tiêu hao', NULL, 'NORMAL', 'Danh mục gốc cho vật tư tiêu hao', TRUE, NOW()),
+('Vật tư nha khoa', NULL, 'NORMAL', 'Danh mục gốc cho vật tư nha khoa', TRUE, NOW(), NOW()),
+('Thuốc và dược phẩm', NULL, 'COLD', 'Danh mục gốc cho thuốc (kho lạnh)', TRUE, NOW(), NOW()),
+('Vật tư tiêu hao', NULL, 'NORMAL', 'Danh mục gốc cho vật tư tiêu hao', TRUE, NOW(), NOW())
+ON CONFLICT DO NOTHING;
 
--- Sub-categories - Vật tư nha khoa (parent_id will be 1)
-('CAT-DENTAL-TOOLS', 'Dụng cụ nha khoa', 
- (SELECT category_id FROM categories WHERE category_code = 'CAT-DENTAL'), 
- 'NORMAL', 'Dụng cụ chuyên dụng', TRUE, NOW()),
- 
-('CAT-DENTAL-MATERIAL', 'Vật liệu nha khoa', 
- (SELECT category_id FROM categories WHERE category_code = 'CAT-DENTAL'), 
- 'NORMAL', 'Vật liệu trám, hàn', TRUE, NOW()),
+-- Child categories (assuming root IDs are 1,2,3)
+INSERT INTO categories (category_name, parent_category_id, warehouse_type, description, is_active, created_at, updated_at)
+SELECT category_name, parent_id, warehouse_type, description, TRUE, NOW(), NOW()
+FROM (VALUES
+    ('Dụng cụ nha khoa', (SELECT category_id FROM categories WHERE category_name = ''Vật tư nha khoa'' AND parent_category_id IS NULL), 'NORMAL', 'Dụng cụ chuyên dụng'),
+    ('Vật liệu nha khoa', (SELECT category_id FROM categories WHERE category_name = ''Vật tư nha khoa'' AND parent_category_id IS NULL), 'NORMAL', 'Vật liệu trám, hàn'),
+    ('Kháng sinh', (SELECT category_id FROM categories WHERE category_name = ''Thuốc và dược phẩm'' AND parent_category_id IS NULL), 'COLD', 'Kháng sinh dạng tiêm, uống'),
+    ('Thuốc gây tê', (SELECT category_id FROM categories WHERE category_name = ''Thuốc và dược phẩm'' AND parent_category_id IS NULL), 'COLD', 'Thuốc tê tại chỗ'),
+    ('Găng tay y tế', (SELECT category_id FROM categories WHERE category_name = ''Vật tư tiêu hao'' AND parent_category_id IS NULL), 'NORMAL', 'Găng tay cao su, nitrile'),
+    ('Khẩu trang', (SELECT category_id FROM categories WHERE category_name = ''Vật tư tiêu hao'' AND parent_category_id IS NULL), 'NORMAL', 'Khẩu trang y tế')
+) AS sub(category_name, parent_id, warehouse_type, description)
+WHERE NOT EXISTS (SELECT 1 FROM categories WHERE category_name = sub.category_name);
 
--- Sub-categories - Thuốc (parent_id will be 2)
-('CAT-MED-ANTIBIOTIC', 'Kháng sinh', 
- (SELECT category_id FROM categories WHERE category_code = 'CAT-MEDICINE'), 
- 'COLD', 'Kháng sinh dạng tiêm, uống', TRUE, NOW()),
- 
-('CAT-MED-ANESTHETIC', 'Thuốc gây tê', 
- (SELECT category_id FROM categories WHERE category_code = 'CAT-MEDICINE'), 
- 'COLD', 'Thuốc tê tại chỗ', TRUE, NOW()),
-
--- Sub-categories - Vật tư tiêu hao (parent_id will be 3)
-('CAT-CONS-GLOVE', 'Găng tay y tế', 
- (SELECT category_id FROM categories WHERE category_code = 'CAT-CONSUME'), 
- 'NORMAL', 'Găng tay cao su, nitrile', TRUE, NOW()),
- 
-('CAT-CONS-MASK', 'Khẩu trang', 
- (SELECT category_id FROM categories WHERE category_code = 'CAT-CONSUME'), 
- 'NORMAL', 'Khẩu trang y tế', TRUE, NOW())
-ON CONFLICT (category_code) DO NOTHING;
-
--- ============================================
--- BƯỚC 16: WAREHOUSE SUPPLIERS (Nhà cung cấp)
--- ============================================
-INSERT INTO suppliers (supplier_code, supplier_name, contact_person, contact_phone, contact_email, address, is_active, created_at)
+-- STEP 2: WAREHOUSE SUPPLIERS
+INSERT INTO suppliers (supplier_name, contact_person, phone, email, address, is_active, created_at, updated_at)
 VALUES
-('SUP-001', 'Công ty TNHH Vật tư Y tế Việt Nam', 
- 'Nguyễn Văn A', '0281234567', 'info@vtytevn.com', '123 Võ Văn Ngân, Thủ Đức, TPHCM', TRUE, NOW()),
- 
-('SUP-002', 'Công ty Dược phẩm Hà Nội', 
- 'Trần Thị B', '0243456789', 'sales@duocphamhn.com', '456 Láng Hạ, Đống Đa, Hà Nội', TRUE, NOW()),
- 
-('SUP-003', 'Nhà phân phối Dental Pro', 
- 'Lê Văn C', '0287654321', 'contact@dentalpro.vn', '789 Nguyễn Văn Linh, Q7, TPHCM', TRUE, NOW()),
- 
-('SUP-004', 'Medical Equipment & Supplies Ltd', 
- 'Phạm Thị D', '0284567890', 'info@mes.vn', '321 Điện Biên Phủ, Bình Thạnh, TPHCM', TRUE, NOW())
-ON CONFLICT (supplier_code) DO NOTHING;
+('Công ty TNHH Vật tư Y tế Việt Nam', 'Nguyễn Văn A', '0281234567', 'info@vtytevn.com', '123 Võ Văn Ngân, Thủ Đức, TPHCM', TRUE, NOW(), NOW()),
+('Công ty Dược phẩm Hà Nội', 'Trần Thị B', '0243456789', 'sales@duocphamhn.com', '456 Láng Hạ, Đống Đa, Hà Nội', TRUE, NOW(), NOW()),
+('Nhà phân phối Dental Pro', 'Lê Văn C', '0287654321', 'contact@dentalpro.vn', '789 Nguyễn Văn Linh, Q7, TPHCM', TRUE, NOW(), NOW()),
+('Medical Equipment & Supplies Ltd', 'Phạm Thị D', '0284567890', 'info@mes.vn', '321 Điện Biên Phủ, Bình Thạnh, TPHCM', TRUE, NOW(), NOW())
+ON CONFLICT (supplier_name) DO NOTHING;
 
--- ============================================
--- BƯỚC 17: WAREHOUSE ITEM MASTERS (Vật tư chính)
--- ============================================
-INSERT INTO item_masters (item_code, item_name, category_id, unit_of_measure, description, min_stock_level, max_stock_level, is_active, created_at)
-VALUES
--- Dental tools (category_id = 4: CAT-DENTAL-TOOLS)
-('ITEM-MIRROR-001', 'Gương nha khoa size 5', 
- (SELECT category_id FROM categories WHERE category_code = 'CAT-DENTAL-TOOLS'), 
- 'UNIT', 'Gương khám nha khoa inox', 10, 100, TRUE, NOW()),
- 
-('ITEM-PROBE-001', 'Que thăm dò nha khoa', 
- (SELECT category_id FROM categories WHERE category_code = 'CAT-DENTAL-TOOLS'), 
- 'UNIT', 'Que thăm dò inox 23cm', 20, 150, TRUE, NOW()),
+-- STEP 3: ITEM MASTERS
+INSERT INTO item_master (item_name, category_id, description, min_stock_level, max_stock_level, is_active, created_at, updated_at)
+SELECT item_name, (SELECT category_id FROM categories WHERE category_name = cat_name AND parent_category_id IS NOT NULL), description, min_stock, max_stock, TRUE, NOW(), NOW()
+FROM (VALUES
+    ('Gương nha khoa size 5', 'Dụng cụ nha khoa', 'Gương khám nha khoa inox', 10, 100),
+    ('Que thăm dò nha khoa', 'Dụng cụ nha khoa', 'Que thăm dò inox 23cm', 20, 150),
+    ('Composite trám răng màu A2', 'Vật liệu nha khoa', 'Composite 4g màu A2', 5, 50),
+    ('Xi măng GIC', 'Vật liệu nha khoa', 'Glass Ionomer Cement 15g', 10, 80),
+    ('Amoxicillin 500mg', 'Kháng sinh', 'Kháng sinh Amoxicillin viên nén 500mg (10 vỉ x 10 viên)', 20, 200),
+    ('Metronidazole 250mg', 'Kháng sinh', 'Kháng sinh Metronidazole 250mg (10 vỉ x 10 viên)', 15, 150),
+    ('Lidocaine 2% (20mg/ml)', 'Thuốc gây tê', 'Thuốc tê Lidocaine ống 2ml', 30, 300),
+    ('Articaine 4% + Epinephrine', 'Thuốc gây tê', 'Thuốc tê Articaine 1.7ml cartridge', 25, 250),
+    ('Găng tay Nitrile size M', 'Găng tay y tế', 'Găng tay nitrile không bột (100 chiếc/hộp)', 50, 500),
+    ('Khẩu trang y tế 3 lớp', 'Khẩu trang', 'Khẩu trang y tế kháng khuẩn (50 cái/hộp)', 100, 1000)
+) AS im(item_name, cat_name, description, min_stock, max_stock)
+WHERE NOT EXISTS (SELECT 1 FROM item_master WHERE item_name = im.item_name);
 
--- Dental materials (category_id = 5: CAT-DENTAL-MATERIAL)
-('ITEM-COMPOSITE-A2', 'Composite trám răng màu A2', 
- (SELECT category_id FROM categories WHERE category_code = 'CAT-DENTAL-MATERIAL'), 
- 'TUBE', 'Composite 4g màu A2', 5, 50, TRUE, NOW()),
- 
-('ITEM-CEMENT-GIC', 'Xi măng GIC', 
- (SELECT category_id FROM categories WHERE category_code = 'CAT-DENTAL-MATERIAL'), 
- 'BOTTLE', 'Glass Ionomer Cement 15g', 10, 80, TRUE, NOW()),
-
--- Antibiotics (category_id = 6: CAT-MED-ANTIBIOTIC)
-('ITEM-AMOXICILLIN-500', 'Amoxicillin 500mg', 
- (SELECT category_id FROM categories WHERE category_code = 'CAT-MED-ANTIBIOTIC'), 
- 'BOX', 'Kháng sinh Amoxicillin viên nén 500mg (10 vỉ x 10 viên)', 20, 200, TRUE, NOW()),
- 
-('ITEM-METRONIDAZOLE-250', 'Metronidazole 250mg', 
- (SELECT category_id FROM categories WHERE category_code = 'CAT-MED-ANTIBIOTIC'), 
- 'BOX', 'Kháng sinh Metronidazole 250mg (10 vỉ x 10 viên)', 15, 150, TRUE, NOW()),
-
--- Anesthetics (category_id = 7: CAT-MED-ANESTHETIC)
-('ITEM-LIDOCAINE-2', 'Lidocaine 2% (20mg/ml)', 
- (SELECT category_id FROM categories WHERE category_code = 'CAT-MED-ANESTHETIC'), 
- 'VIAL', 'Thuốc tê Lidocaine ống 2ml', 30, 300, TRUE, NOW()),
- 
-('ITEM-ARTICAINE-4', 'Articaine 4% + Epinephrine', 
- (SELECT category_id FROM categories WHERE category_code = 'CAT-MED-ANESTHETIC'), 
- 'VIAL', 'Thuốc tê Articaine 1.7ml cartridge', 25, 250, TRUE, NOW()),
-
--- Consumables (category_id = 8: CAT-CONS-GLOVE, 9: CAT-CONS-MASK)
-('ITEM-GLOVE-NITRILE-M', 'Găng tay Nitrile size M', 
- (SELECT category_id FROM categories WHERE category_code = 'CAT-CONS-GLOVE'), 
- 'BOX', 'Găng tay nitrile không bột (100 chiếc/hộp)', 50, 500, TRUE, NOW()),
- 
-('ITEM-MASK-3PLY', 'Khẩu trang y tế 3 lớp', 
- (SELECT category_id FROM categories WHERE category_code = 'CAT-CONS-MASK'), 
- 'BOX', 'Khẩu trang y tế kháng khuẩn (50 cái/hộp)', 100, 1000, TRUE, NOW())
-ON CONFLICT (item_code) DO NOTHING;
-
--- ============================================
--- BƯỚC 18: ITEM-SUPPLIER MAPPING (N-N)
--- ============================================
+-- STEP 4: ITEM-SUPPLIER MAPPING
 INSERT INTO item_suppliers (item_master_id, supplier_id)
 SELECT im.item_master_id, s.supplier_id
 FROM (VALUES
-    -- Dental tools - Supplier 001, 003
-    ('ITEM-MIRROR-001', 'SUP-001'),
-    ('ITEM-MIRROR-001', 'SUP-003'),
-    ('ITEM-PROBE-001', 'SUP-001'),
-    ('ITEM-PROBE-001', 'SUP-003'),
-    
-    -- Dental materials - Supplier 003
-    ('ITEM-COMPOSITE-A2', 'SUP-003'),
-    ('ITEM-CEMENT-GIC', 'SUP-003'),
-    
-    -- Antibiotics - Supplier 002
-    ('ITEM-AMOXICILLIN-500', 'SUP-002'),
-    ('ITEM-METRONIDAZOLE-250', 'SUP-002'),
-    
-    -- Anesthetics - Supplier 002
-    ('ITEM-LIDOCAINE-2', 'SUP-002'),
-    ('ITEM-ARTICAINE-4', 'SUP-002'),
-    
-    -- Consumables - Supplier 001, 004
-    ('ITEM-GLOVE-NITRILE-M', 'SUP-001'),
-    ('ITEM-GLOVE-NITRILE-M', 'SUP-004'),
-    ('ITEM-MASK-3PLY', 'SUP-001'),
-    ('ITEM-MASK-3PLY', 'SUP-004')
-) AS mapping(item_code, supplier_code)
-JOIN item_masters im ON im.item_code = mapping.item_code
-JOIN suppliers s ON s.supplier_code = mapping.supplier_code
-ON CONFLICT (item_master_id, supplier_id) DO NOTHING;
+    ('Gương nha khoa size 5', 'Công ty TNHH Vật tư Y tế Việt Nam'),
+    ('Gương nha khoa size 5', 'Nhà phân phối Dental Pro'),
+    ('Que thăm dò nha khoa', 'Công ty TNHH Vật tư Y tế Việt Nam'),
+    ('Que thăm dò nha khoa', 'Nhà phân phối Dental Pro'),
+    ('Composite trám răng màu A2', 'Nhà phân phối Dental Pro'),
+    ('Xi măng GIC', 'Nhà phân phối Dental Pro'),
+    ('Amoxicillin 500mg', 'Công ty Dược phẩm Hà Nội'),
+    ('Metronidazole 250mg', 'Công ty Dược phẩm Hà Nội'),
+    ('Lidocaine 2% (20mg/ml)', 'Công ty Dược phẩm Hà Nội'),
+    ('Articaine 4% + Epinephrine', 'Công ty Dược phẩm Hà Nội'),
+    ('Găng tay Nitrile size M', 'Công ty TNHH Vật tư Y tế Việt Nam'),
+    ('Găng tay Nitrile size M', 'Medical Equipment & Supplies Ltd'),
+    ('Khẩu trang y tế 3 lớp', 'Công ty TNHH Vật tư Y tế Việt Nam'),
+    ('Khẩu trang y tế 3 lớp', 'Medical Equipment & Supplies Ltd')
+) AS mapping(item_name, supplier_name)
+JOIN item_master im ON im.item_name = mapping.item_name
+JOIN suppliers s ON s.supplier_name = mapping.supplier_name
+WHERE NOT EXISTS (
+    SELECT 1 FROM item_suppliers
+    WHERE item_master_id = im.item_master_id AND supplier_id = s.supplier_id
+);
 
--- ============================================
--- BƯỚC 19: ITEM BATCHES (Lô hàng - FEFO tracking)
--- ============================================
-INSERT INTO item_batches (item_master_id, lot_number, quantity_in_stock, expiry_date, created_at)
-SELECT im.item_master_id, batch.lot_number, batch.quantity, batch.expiry_date, NOW()
+-- STEP 5: ITEM BATCHES (FEFO tracking)
+INSERT INTO item_batches (item_master_id, lot_number, quantity_on_hand, expiry_date, import_price, created_at, updated_at)
+SELECT im.item_master_id, batch.lot_number, batch.quantity, batch.expiry_date, batch.price, NOW(), NOW()
 FROM (VALUES
-    -- Dental tools (no expiry)
-    ('ITEM-MIRROR-001', 'LOT-MIRROR-2024-01', 50, NULL),
-    ('ITEM-PROBE-001', 'LOT-PROBE-2024-01', 80, NULL),
-    
-    -- Dental materials (có expiry)
-    ('ITEM-COMPOSITE-A2', 'LOT-COMP-2024-05', 20, '2026-05-31'),
-    ('ITEM-CEMENT-GIC', 'LOT-GIC-2024-03', 35, '2026-03-31'),
-    
-    -- Antibiotics (có expiry - FEFO critical)
-    ('ITEM-AMOXICILLIN-500', 'LOT-AMOX-2024-01', 50, '2026-01-31'),
-    ('ITEM-AMOXICILLIN-500', 'LOT-AMOX-2024-06', 100, '2026-06-30'),
-    ('ITEM-METRONIDAZOLE-250', 'LOT-METRO-2024-02', 60, '2026-02-28'),
-    
-    -- Anesthetics (có expiry - kho lạnh)
-    ('ITEM-LIDOCAINE-2', 'LOT-LIDO-2024-04', 150, '2025-12-31'),
-    ('ITEM-ARTICAINE-4', 'LOT-ARTI-2024-05', 120, '2026-05-31'),
-    
-    -- Consumables (no expiry)
-    ('ITEM-GLOVE-NITRILE-M', 'LOT-GLOVE-2024-10', 200, NULL),
-    ('ITEM-MASK-3PLY', 'LOT-MASK-2024-11', 500, NULL)
-) AS batch(item_code, lot_number, quantity, expiry_date)
-JOIN item_masters im ON im.item_code = batch.item_code
-ON CONFLICT (item_master_id, lot_number) DO NOTHING;
+    ('Gương nha khoa size 5', 'LOT-MIRROR-2024-01', 50, NULL, 15000),
+    ('Que thăm dò nha khoa', 'LOT-PROBE-2024-01', 80, NULL, 12000),
+    ('Composite trám răng màu A2', 'LOT-COMP-2024-05', 20, '2026-05-31', 85000),
+    ('Xi măng GIC', 'LOT-GIC-2024-03', 35, '2026-03-31', 65000),
+    ('Amoxicillin 500mg', 'LOT-AMOX-2024-01', 50, '2026-01-31', 45000),
+    ('Amoxicillin 500mg', 'LOT-AMOX-2024-06', 100, '2026-06-30', 45000),
+    ('Metronidazole 250mg', 'LOT-METRO-2024-02', 60, '2026-02-28', 38000),
+    ('Lidocaine 2% (20mg/ml)', 'LOT-LIDO-2024-04', 150, '2025-12-31', 25000),
+    ('Articaine 4% + Epinephrine', 'LOT-ARTI-2024-05', 120, '2026-05-31', 55000),
+    ('Găng tay Nitrile size M', 'LOT-GLOVE-2024-10', 200, NULL, 95000),
+    ('Khẩu trang y tế 3 lớp', 'LOT-MASK-2024-11', 500, NULL, 35000)
+) AS batch(item_name, lot_number, quantity, expiry_date, price)
+JOIN item_master im ON im.item_name = batch.item_name
+WHERE NOT EXISTS (
+    SELECT 1 FROM item_batches
+    WHERE item_master_id = im.item_master_id AND lot_number = batch.lot_number
+);
 
--- ============================================
--- BƯỚC 20: STORAGE TRANSACTIONS (Giao dịch kho - audit trail)
--- ============================================
--- Note: performed_by references employee_id (BIGINT)
--- Using employee_id = 0 (SYSTEM) for initial imports
-
-INSERT INTO storage_transactions (batch_id, transaction_type, quantity, transaction_date, performed_by, reference_code, notes, created_at)
-SELECT ib.batch_id, txn.txn_type, txn.quantity, txn.txn_date, 0, txn.ref_code, txn.notes, NOW()
+-- STEP 6: STORAGE TRANSACTIONS (Audit trail)
+-- Note: performed_by = 1 (assuming employee_id 1 exists - SYSTEM or ADMIN)
+INSERT INTO storage_transactions (batch_id, transaction_type, quantity, transaction_date, performed_by, notes, created_at)
+SELECT ib.batch_id, txn.txn_type, txn.quantity, txn.txn_date::timestamp, 1, txn.notes, NOW()
 FROM (VALUES
-    -- Initial IMPORT transactions
-    ('LOT-MIRROR-2024-01', 'IMPORT', 50, '2024-11-01 08:00:00', 'PO-2024-001', 'Nhập kho ban đầu - Gương nha khoa'),
-    ('LOT-PROBE-2024-01', 'IMPORT', 80, '2024-11-01 08:30:00', 'PO-2024-001', 'Nhập kho ban đầu - Que thăm dò'),
-    ('LOT-COMP-2024-05', 'IMPORT', 20, '2024-11-02 09:00:00', 'PO-2024-002', 'Nhập kho - Composite A2'),
-    ('LOT-AMOX-2024-01', 'IMPORT', 50, '2024-11-03 10:00:00', 'PO-2024-003', 'Nhập kho - Amoxicillin LOT cũ'),
-    ('LOT-AMOX-2024-06', 'IMPORT', 100, '2024-11-04 10:30:00', 'PO-2024-004', 'Nhập kho - Amoxicillin LOT mới'),
-    ('LOT-GLOVE-2024-10', 'IMPORT', 200, '2024-11-05 11:00:00', 'PO-2024-005', 'Nhập kho - Găng tay Nitrile'),
-    
-    -- Sample EXPORT transactions (sử dụng vật tư)
-    ('LOT-MIRROR-2024-01', 'EXPORT', -10, '2024-11-05 14:00:00', 'EXP-2024-001', 'Xuất kho sử dụng - Gương nha khoa'),
-    ('LOT-AMOX-2024-01', 'EXPORT', -5, '2024-11-05 15:00:00', 'EXP-2024-002', 'Xuất kho - Amoxicillin cho bệnh nhân (FEFO: LOT cũ trước)'),
-    
-    -- Sample ADJUST transaction (điều chỉnh tồn kho)
-    ('LOT-GLOVE-2024-10', 'ADJUST', -5, '2024-11-06 09:00:00', 'ADJ-2024-001', 'Điều chỉnh tồn kho - Găng tay bị rách khi kiểm kho')
-) AS txn(lot_number, txn_type, quantity, txn_date, ref_code, notes)
+    ('LOT-MIRROR-2024-01', 'IMPORT', 50, '2024-11-01 08:00:00', 'Nhập kho ban đầu - Gương nha khoa'),
+    ('LOT-PROBE-2024-01', 'IMPORT', 80, '2024-11-01 08:30:00', 'Nhập kho ban đầu - Que thăm dò'),
+    ('LOT-COMP-2024-05', 'IMPORT', 20, '2024-11-02 09:00:00', 'Nhập kho - Composite A2'),
+    ('LOT-AMOX-2024-01', 'IMPORT', 50, '2024-11-03 10:00:00', 'Nhập kho - Amoxicillin LOT cũ'),
+    ('LOT-AMOX-2024-06', 'IMPORT', 100, '2024-11-04 10:30:00', 'Nhập kho - Amoxicillin LOT mới'),
+    ('LOT-GLOVE-2024-10', 'IMPORT', 200, '2024-11-05 11:00:00', 'Nhập kho - Găng tay Nitrile'),
+    ('LOT-MIRROR-2024-01', 'EXPORT', -10, '2024-11-05 14:00:00', 'Xuất kho sử dụng - Gương nha khoa'),
+    ('LOT-AMOX-2024-01', 'EXPORT', -5, '2024-11-05 15:00:00', 'Xuất kho - Amoxicillin cho bệnh nhân (FEFO: LOT cũ trước)'),
+    ('LOT-GLOVE-2024-10', 'ADJUST', -5, '2024-11-06 09:00:00', 'Điều chỉnh tồn kho - Găng tay bị rách khi kiểm kho')
+) AS txn(lot_number, txn_type, quantity, txn_date, notes)
 JOIN item_batches ib ON ib.lot_number = txn.lot_number;
+
+-- Reset sequences
+SELECT setval('categories_category_id_seq', (SELECT COALESCE(MAX(category_id), 0) FROM categories) + 1, false);
+SELECT setval('suppliers_supplier_id_seq', (SELECT COALESCE(MAX(supplier_id), 0) FROM suppliers) + 1, false);
+SELECT setval('item_master_item_master_id_seq', (SELECT COALESCE(MAX(item_master_id), 0) FROM item_master) + 1, false);
+SELECT setval('item_batches_batch_id_seq', (SELECT COALESCE(MAX(batch_id), 0) FROM item_batches) + 1, false);
+SELECT setval('storage_transactions_transaction_id_seq', (SELECT COALESCE(MAX(transaction_id), 0) FROM storage_transactions) + 1, false);
 
 -- ============================================
 -- END OF WAREHOUSE SEED DATA

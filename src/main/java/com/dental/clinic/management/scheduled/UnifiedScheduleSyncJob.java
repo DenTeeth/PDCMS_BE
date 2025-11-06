@@ -42,8 +42,8 @@ import java.util.stream.Collectors;
  * 4. Skip holidays
  *
  * Source Tags:
- * - BATCH_JOB: From Fixed registrations (Luồng 1)
- * - REGISTRATION_JOB: From Flex registrations (Luồng 2)
+ * - BATCH_JOB: From Fixed registrations (LuÃ¡Â»â€œng 1)
+ * - REGISTRATION_JOB: From Flex registrations (LuÃ¡Â»â€œng 2)
  */
 @Component
 @Slf4j
@@ -178,11 +178,11 @@ public class UnifiedScheduleSyncJob {
         int createdCount = 0;
 
         try {
-            // QUERY 1: Get Fixed schedules (Luồng 1)
+            // QUERY 1: Get Fixed schedules (LuÃ¡Â»â€œng 1)
             List<EmployeeShift> fixedShifts = getFixedSchedules(targetDate, dayOfWeek);
             createdCount += fixedShifts.size();
 
-            // QUERY 2: Get Flex schedules (Luồng 2)
+            // QUERY 2: Get Flex schedules (LuÃ¡Â»â€œng 2)
             List<EmployeeShift> flexShifts = getFlexSchedules(targetDate, dayOfWeek);
             createdCount += flexShifts.size();
 

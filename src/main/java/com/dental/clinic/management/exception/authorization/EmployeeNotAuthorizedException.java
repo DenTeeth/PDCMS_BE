@@ -25,8 +25,8 @@ public class EmployeeNotAuthorizedException extends RuntimeException {
 
     public EmployeeNotAuthorizedException(String employeeCode, String operation) {
         super(String.format(
-                "Nhân viên %s không có quyền thực hiện: %s. " +
-                        "Chỉ có thể quản lý lịch của chính mình.",
+                "NhÃƒÂ¢n viÃƒÂªn %s khÃƒÂ´ng cÃƒÂ³ quyÃ¡Â»Ân thÃ¡Â»Â±c hiÃ¡Â»â€¡n: %s. " +
+                        "ChÃ¡Â»â€° cÃƒÂ³ thÃ¡Â»Æ’ quÃ¡ÂºÂ£n lÃƒÂ½ lÃ¡Â»â€¹ch cÃ¡Â»Â§a chÃƒÂ­nh mÃƒÂ¬nh.",
                 employeeCode, operation));
     }
 

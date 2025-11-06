@@ -31,7 +31,7 @@ public class RefreshToken {
     private Account account;
 
     @Column(name = "token_hash", nullable = false, unique = true, length = 512)
-    private String tokenHash; // SHA-512 hash của actual refresh token
+    private String tokenHash; // SHA-512 hash cÃ¡Â»Â§a actual refresh token
 
     @Column(name = "expires_at", nullable = false)
     private LocalDateTime expiresAt;

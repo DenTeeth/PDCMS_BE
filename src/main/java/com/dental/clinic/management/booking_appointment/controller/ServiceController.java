@@ -28,7 +28,7 @@ public class ServiceController {
     @GetMapping
     @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_SERVICE + "')")
     @Operation(summary = "Get all services with filters")
-    @ApiMessage("Lấy danh sách dịch vụ thành công")
+    @ApiMessage("LÃ¡ÂºÂ¥y danh sÃƒÂ¡ch dÃ¡Â»â€¹ch vÃ¡Â»Â¥ thÃƒÂ nh cÃƒÂ´ng")
     public ResponseEntity<Page<ServiceResponse>> getAllServices(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -46,7 +46,7 @@ public class ServiceController {
     @GetMapping("/code/{serviceCode}")
     @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_SERVICE + "')")
     @Operation(summary = "Get service by code")
-    @ApiMessage("Lấy thông tin dịch vụ theo mã thành công")
+    @ApiMessage("LÃ¡ÂºÂ¥y thÃƒÂ´ng tin dÃ¡Â»â€¹ch vÃ¡Â»Â¥ theo mÃƒÂ£ thÃƒÂ nh cÃƒÂ´ng")
     public ResponseEntity<ServiceResponse> getServiceByCode(@PathVariable String serviceCode) {
         return ResponseEntity.ok(serviceService.getServiceByCode(serviceCode));
     }
@@ -54,7 +54,7 @@ public class ServiceController {
     @GetMapping("/{serviceId}")
     @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_SERVICE + "')")
     @Operation(summary = "Get service by ID")
-    @ApiMessage("Lấy thông tin dịch vụ theo ID thành công")
+    @ApiMessage("LÃ¡ÂºÂ¥y thÃƒÂ´ng tin dÃ¡Â»â€¹ch vÃ¡Â»Â¥ theo ID thÃƒÂ nh cÃƒÂ´ng")
     public ResponseEntity<ServiceResponse> getServiceById(@PathVariable Integer serviceId) {
         return ResponseEntity.ok(serviceService.getServiceById(serviceId));
     }
@@ -62,7 +62,7 @@ public class ServiceController {
     @PostMapping
     @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + CREATE_SERVICE + "')")
     @Operation(summary = "Create new service")
-    @ApiMessage("Tạo dịch vụ mới thành công")
+    @ApiMessage("TÃ¡ÂºÂ¡o dÃ¡Â»â€¹ch vÃ¡Â»Â¥ mÃ¡Â»â€ºi thÃƒÂ nh cÃƒÂ´ng")
     public ResponseEntity<ServiceResponse> createService(@Valid @RequestBody CreateServiceRequest request) {
         ServiceResponse response = serviceService.createService(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -71,7 +71,7 @@ public class ServiceController {
     @PutMapping("/{serviceCode}")
     @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + UPDATE_SERVICE + "')")
     @Operation(summary = "Update service")
-    @ApiMessage("Cập nhật thông tin dịch vụ thành công")
+    @ApiMessage("CÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t thÃƒÂ´ng tin dÃ¡Â»â€¹ch vÃ¡Â»Â¥ thÃƒÂ nh cÃƒÂ´ng")
     public ResponseEntity<ServiceResponse> updateService(
             @PathVariable String serviceCode,
             @Valid @RequestBody UpdateServiceRequest request) {
@@ -81,7 +81,7 @@ public class ServiceController {
     @DeleteMapping("/{serviceId}")
     @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + DELETE_SERVICE + "')")
     @Operation(summary = "Delete service by ID (soft delete - set isActive = false)", description = "Deactivate service using service ID. RESTful soft delete.")
-    @ApiMessage("Vô hiệu hóa dịch vụ thành công")
+    @ApiMessage("VÃƒÂ´ hiÃ¡Â»â€¡u hÃƒÂ³a dÃ¡Â»â€¹ch vÃ¡Â»Â¥ thÃƒÂ nh cÃƒÂ´ng")
     public ResponseEntity<Void> deleteService(@PathVariable Integer serviceId) {
         serviceService.deleteServiceById(serviceId);
         return ResponseEntity.noContent().build();
@@ -90,7 +90,7 @@ public class ServiceController {
     @DeleteMapping("/code/{serviceCode}")
     @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + DELETE_SERVICE + "')")
     @Operation(summary = "Delete service by code (soft delete - set isActive = false)", description = "Deactivate service using service code. RESTful soft delete.")
-    @ApiMessage("Vô hiệu hóa dịch vụ thành công")
+    @ApiMessage("VÃƒÂ´ hiÃ¡Â»â€¡u hÃƒÂ³a dÃ¡Â»â€¹ch vÃ¡Â»Â¥ thÃƒÂ nh cÃƒÂ´ng")
     public ResponseEntity<Void> deleteServiceByCode(@PathVariable String serviceCode) {
         serviceService.deleteServiceByCode(serviceCode);
         return ResponseEntity.noContent().build();
@@ -98,8 +98,8 @@ public class ServiceController {
 
     @PatchMapping("/{serviceId}/toggle")
     @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + UPDATE_SERVICE + "')")
-    @Operation(summary = "Toggle service active status (activate ↔ deactivate)", description = "RESTful way to activate or deactivate service. If active → set inactive, if inactive → set active. Returns updated service.")
-    @ApiMessage("Chuyển đổi trạng thái dịch vụ thành công")
+    @Operation(summary = "Toggle service active status (activate Ã¢â€ â€ deactivate)", description = "RESTful way to activate or deactivate service. If active Ã¢â€ â€™ set inactive, if inactive Ã¢â€ â€™ set active. Returns updated service.")
+    @ApiMessage("ChuyÃ¡Â»Æ’n Ã„â€˜Ã¡Â»â€¢i trÃ¡ÂºÂ¡ng thÃƒÂ¡i dÃ¡Â»â€¹ch vÃ¡Â»Â¥ thÃƒÂ nh cÃƒÂ´ng")
     public ResponseEntity<ServiceResponse> toggleServiceStatus(@PathVariable Integer serviceId) {
         ServiceResponse response = serviceService.toggleServiceStatus(serviceId);
         return ResponseEntity.ok(response);

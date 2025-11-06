@@ -110,9 +110,9 @@ public class GlobalExceptionHandler {
         // Use Vietnamese message for consistent error responses
         String message;
         if (requiredPermission != null) {
-            message = "Không có quyền thực hiện thao tác này. Yêu cầu quyền: " + requiredPermission;
+            message = "KhÃƒÂ´ng cÃƒÂ³ quyÃ¡Â»Ân thÃ¡Â»Â±c hiÃ¡Â»â€¡n thao tÃƒÂ¡c nÃƒÂ y. YÃƒÂªu cÃ¡ÂºÂ§u quyÃ¡Â»Ân: " + requiredPermission;
         } else if (ex.getMessage() == null || ex.getMessage().equals("Access Denied")) {
-            message = "Không tìm thấy tài nguyên hoặc bạn không có quyền truy cập.";
+            message = "KhÃƒÂ´ng tÃƒÂ¬m thÃ¡ÂºÂ¥y tÃƒÂ i nguyÃƒÂªn hoÃ¡ÂºÂ·c bÃ¡ÂºÂ¡n khÃƒÂ´ng cÃƒÂ³ quyÃ¡Â»Ân truy cÃ¡ÂºÂ­p.";
         } else {
             message = ex.getMessage();
         }
@@ -586,7 +586,7 @@ public class GlobalExceptionHandler {
         // For holiday endpoints, provide Vietnamese message
         if (request.getRequestURI().contains("/api/v1/holiday")) {
             String fields = String.join(", ", missingFields);
-            errorMessage = "Thiếu thông tin bắt buộc: " + fields;
+            errorMessage = "ThiÃ¡ÂºÂ¿u thÃƒÂ´ng tin bÃ¡ÂºÂ¯t buÃ¡Â»â„¢c: " + fields;
         }
 
         FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
@@ -621,7 +621,7 @@ public class GlobalExceptionHandler {
         String message;
         if (request.getRequestURI().contains("/api/v1/shifts") &&
                 (ex.getParameterName().equals("start_date") || ex.getParameterName().equals("end_date"))) {
-            message = "Vui lòng cung cấp ngày bắt đầu và ngày kết thúc hợp lệ.";
+            message = "Vui lÃƒÂ²ng cung cÃ¡ÂºÂ¥p ngÃƒÂ y bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u vÃƒÂ  ngÃƒÂ y kÃ¡ÂºÂ¿t thÃƒÂºc hÃ¡Â»Â£p lÃ¡Â»â€¡.";
         } else {
             message = "Missing required parameter: " + ex.getParameterName();
         }
@@ -652,8 +652,8 @@ public class GlobalExceptionHandler {
 
         if (ex.getName().equals("startDate") || ex.getName().equals("endDate") ||
                 ex.getName().equals("holidayDate") || ex.getName().equals("date")) {
-            message = "Định dạng ngày không hợp lệ: " + ex.getValue() +
-                    ". Định dạng yêu cầu: yyyy-MM-dd";
+            message = "Ã„ÂÃ¡Â»â€¹nh dÃ¡ÂºÂ¡ng ngÃƒÂ y khÃƒÂ´ng hÃ¡Â»Â£p lÃ¡Â»â€¡: " + ex.getValue() +
+                    ". Ã„ÂÃ¡Â»â€¹nh dÃ¡ÂºÂ¡ng yÃƒÂªu cÃ¡ÂºÂ§u: yyyy-MM-dd";
             errorCode = "INVALID_DATE_FORMAT";
         } else {
             message = "Invalid parameter type: " + ex.getName();

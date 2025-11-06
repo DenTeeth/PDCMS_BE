@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.UUID;
+
 
 /**
  * Response DTO for Item Master summary with calculated stock levels.
@@ -16,10 +16,10 @@ import java.util.UUID;
 @AllArgsConstructor
 public class ItemMasterSummaryResponse {
 
-    private UUID id;
+    private Long id;
     private String itemName;
     private String description;
-    private UUID categoryId;
+    private Long categoryId;
     private String categoryName;
     private Integer minStockLevel;
     private Integer maxStockLevel;
@@ -30,3 +30,4 @@ public class ItemMasterSummaryResponse {
     private Integer activeBatchCount;
     private Integer expiringSoonCount;
 }
+

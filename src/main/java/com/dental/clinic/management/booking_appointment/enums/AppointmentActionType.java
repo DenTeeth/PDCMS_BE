@@ -8,32 +8,32 @@ package com.dental.clinic.management.booking_appointment.enums;
  */
 public enum AppointmentActionType {
     /**
-     * Appointment được tạo mới
+     * Appointment Ã„â€˜Ã†Â°Ã¡Â»Â£c tÃ¡ÂºÂ¡o mÃ¡Â»â€ºi
      */
     CREATE,
 
     /**
-     * Appointment bị delay (dời giờ trong cùng ngày)
+     * Appointment bÃ¡Â»â€¹ delay (dÃ¡Â»Âi giÃ¡Â»Â trong cÃƒÂ¹ng ngÃƒÂ y)
      */
     DELAY,
 
     /**
-     * Appointment nguồn bị reschedule (đổi sang ngày khác)
+     * Appointment nguÃ¡Â»â€œn bÃ¡Â»â€¹ reschedule (Ã„â€˜Ã¡Â»â€¢i sang ngÃƒÂ y khÃƒÂ¡c)
      */
     RESCHEDULE_SOURCE,
 
     /**
-     * Appointment mới được tạo từ reschedule
+     * Appointment mÃ¡Â»â€ºi Ã„â€˜Ã†Â°Ã¡Â»Â£c tÃ¡ÂºÂ¡o tÃ¡Â»Â« reschedule
      */
     RESCHEDULE_TARGET,
 
     /**
-     * Appointment bị hủy
+     * Appointment bÃ¡Â»â€¹ hÃ¡Â»Â§y
      */
     CANCEL,
 
     /**
-     * Thay đổi status (CHECKED_IN, IN_PROGRESS, COMPLETED, NO_SHOW)
+     * Thay Ã„â€˜Ã¡Â»â€¢i status (CHECKED_IN, IN_PROGRESS, COMPLETED, NO_SHOW)
      */
     STATUS_CHANGE
 }

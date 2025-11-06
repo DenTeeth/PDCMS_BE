@@ -14,17 +14,17 @@ import lombok.NoArgsConstructor;
 @Schema(description = "Request to reset password with token")
 public class ResetPasswordRequest {
 
-    @NotBlank(message = "Token không được để trống")
+    @NotBlank(message = "Token khÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c Ã„â€˜Ã¡Â»Æ’ trÃ¡Â»â€˜ng")
     @Schema(description = "Password reset token from email", example = "550e8400-e29b-41d4-a716-446655440000")
     private String token;
 
-    @NotBlank(message = "Mật khẩu mới không được để trống")
-    @Size(min = 6, max = 50, message = "Mật khẩu phải từ 6-50 ký tự")
-    @Pattern(regexp = "^(?=.*[0-9])(?=.*[a-zA-Z]).+$", message = "Mật khẩu phải chứa ít nhất 1 chữ cái và 1 chữ số")
+    @NotBlank(message = "MÃ¡ÂºÂ­t khÃ¡ÂºÂ©u mÃ¡Â»â€ºi khÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c Ã„â€˜Ã¡Â»Æ’ trÃ¡Â»â€˜ng")
+    @Size(min = 6, max = 50, message = "MÃ¡ÂºÂ­t khÃ¡ÂºÂ©u phÃ¡ÂºÂ£i tÃ¡Â»Â« 6-50 kÃƒÂ½ tÃ¡Â»Â±")
+    @Pattern(regexp = "^(?=.*[0-9])(?=.*[a-zA-Z]).+$", message = "MÃ¡ÂºÂ­t khÃ¡ÂºÂ©u phÃ¡ÂºÂ£i chÃ¡Â»Â©a ÃƒÂ­t nhÃ¡ÂºÂ¥t 1 chÃ¡Â»Â¯ cÃƒÂ¡i vÃƒÂ  1 chÃ¡Â»Â¯ sÃ¡Â»â€˜")
     @Schema(description = "New password (6-50 chars, must contain letters and numbers)", example = "NewPass123")
     private String newPassword;
 
-    @NotBlank(message = "Xác nhận mật khẩu không được để trống")
+    @NotBlank(message = "XÃƒÂ¡c nhÃ¡ÂºÂ­n mÃ¡ÂºÂ­t khÃ¡ÂºÂ©u khÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c Ã„â€˜Ã¡Â»Æ’ trÃ¡Â»â€˜ng")
     @Schema(description = "Confirm new password", example = "NewPass123")
     private String confirmPassword;
 }

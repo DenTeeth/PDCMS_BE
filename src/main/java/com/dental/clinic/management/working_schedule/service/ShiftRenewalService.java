@@ -29,14 +29,14 @@ import java.util.stream.Collectors;
 
 /**
  * Service for handling shift renewal requests for employees with FIXED shift
- * registrations (Luồng 1).
+ * registrations (LuÃ¡Â»â€œng 1).
  * <p>
- * - Luồng 1 (Fixed): Employees with full-time or fixed part-time schedules
+ * - LuÃ¡Â»â€œng 1 (Fixed): Employees with full-time or fixed part-time schedules
  * (fixed_shift_registrations)
- * - Luồng 2 (Flex): Employees with flexible shift selections
+ * - LuÃ¡Â»â€œng 2 (Flex): Employees with flexible shift selections
  * (part_time_registrations)
  * <p>
- * P7 (Shift Renewal Management) ONLY applies to Luồng 1 employees.
+ * P7 (Shift Renewal Management) ONLY applies to LuÃ¡Â»â€œng 1 employees.
  * <p>
  * BUSINESS LOGIC:
  * - When CONFIRMED: Deactivate old registration (is_active=FALSE) and CREATE
@@ -234,7 +234,7 @@ public class ShiftRenewalService {
         fixedRegistrationRepository.save(lockedOldReg);
         log.info("Deactivated old registration {}", oldRegId);
 
-        // 7. Calculate new date range: old_to + 1 day → admin-specified date
+        // 7. Calculate new date range: old_to + 1 day Ã¢â€ â€™ admin-specified date
         LocalDate newEffectiveFrom = lockedOldReg.getEffectiveTo().plusDays(1);
         LocalDate newEffectiveTo = request.getNewEffectiveTo();
 
@@ -287,7 +287,7 @@ public class ShiftRenewalService {
         fixedRegistrationRepository.save(lockedOldReg);
         log.info("Deactivated old registration {}", oldRegId);
 
-        // 4. Calculate new date range: old_to + 1 day → old_to + 1 year
+        // 4. Calculate new date range: old_to + 1 day Ã¢â€ â€™ old_to + 1 year
         LocalDate newEffectiveFrom = lockedOldReg.getEffectiveTo().plusDays(1);
         LocalDate newEffectiveTo = lockedOldReg.getEffectiveTo().plusYears(1);
 

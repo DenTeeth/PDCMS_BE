@@ -14,7 +14,7 @@ public class SlotIsFullException extends ErrorResponseException {
 
     private static ProblemDetail createProblemDetail(Long slotId, String shiftName, String dayOfWeek) {
         String message = String.format(
-            "Suất [%s - %s] đã đủ người đăng ký. Vui lòng chọn suất khác.",
+            "SuÃ¡ÂºÂ¥t [%s - %s] Ã„â€˜ÃƒÂ£ Ã„â€˜Ã¡Â»Â§ ngÃ†Â°Ã¡Â»Âi Ã„â€˜Ã„Æ’ng kÃƒÂ½. Vui lÃƒÂ²ng chÃ¡Â»Ân suÃ¡ÂºÂ¥t khÃƒÂ¡c.",
             shiftName, dayOfWeek
         );
 

@@ -18,18 +18,18 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
+
 
 @RestController
 @RequestMapping("/api/v3/warehouse")
 @RequiredArgsConstructor
-@Tag(name = "Warehouse - Transactions", description = "Quản lý xuất nhập kho (FEFO)")
+@Tag(name = "Warehouse - Transactions", description = "QuÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â£n lÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â½ xuÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â¥t nhÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â­p kho (FEFO)")
 public class WarehouseController {
 
     // TODO: Inject WarehouseService when created
 
     @PostMapping("/import")
-    @Operation(summary = "Nhập kho", description = "Tạo phiếu nhập kho (tự động tạo/cập nhật batch)")
+    @Operation(summary = "NhÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â­p kho", description = "TÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â¡o phiÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â¿u nhÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â­p kho (tÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€šÃ‚Â± ÃƒÆ’Ã¢â‚¬Å¾ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ng tÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â¡o/cÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â­p nhÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â­t batch)")
     public ResponseEntity<StorageTransactionResponse> createImportTransaction(
             @Valid @RequestBody CreateImportTransactionRequest request) {
         // TODO: Implement when WarehouseService is ready
@@ -37,7 +37,7 @@ public class WarehouseController {
     }
 
     @PostMapping("/export")
-    @Operation(summary = "Xuất kho", description = "Tạo phiếu xuất kho (FEFO - lô cũ nhất trước)")
+    @Operation(summary = "XuÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â¥t kho", description = "TÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â¡o phiÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â¿u xuÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â¥t kho (FEFO - lÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â´ cÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â© nhÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â¥t trÃƒÆ’Ã¢â‚¬Â Ãƒâ€šÃ‚Â°ÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â€šÂ¬Ã‚Âºc)")
     public ResponseEntity<StorageTransactionResponse> createExportTransaction(
             @Valid @RequestBody CreateExportTransactionRequest request) {
         // TODO: Implement when WarehouseService is ready
@@ -45,7 +45,7 @@ public class WarehouseController {
     }
 
     @PostMapping("/adjust")
-    @Operation(summary = "Điều chỉnh tồn kho", description = "Điều chỉnh số lượng tồn (ADJUSTMENT/DESTROY)")
+    @Operation(summary = "ÃƒÆ’Ã¢â‚¬Å¾Ãƒâ€šÃ‚ÂiÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€šÃ‚Âu chÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â°nh tÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œn kho", description = "ÃƒÆ’Ã¢â‚¬Å¾Ãƒâ€šÃ‚ÂiÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€šÃ‚Âu chÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â°nh sÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ lÃƒÆ’Ã¢â‚¬Â Ãƒâ€šÃ‚Â°ÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€šÃ‚Â£ng tÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œn (ADJUSTMENT/DESTROY)")
     public ResponseEntity<StorageTransactionResponse> createAdjustment(
             @Valid @RequestBody CreateAdjustmentRequest request) {
         // TODO: Implement when WarehouseService is ready
@@ -53,14 +53,14 @@ public class WarehouseController {
     }
 
     @GetMapping("/transactions/{transactionId}")
-    @Operation(summary = "Lấy thông tin giao dịch", description = "Lấy chi tiết giao dịch kho theo ID")
-    public ResponseEntity<StorageTransactionResponse> getTransactionById(@PathVariable UUID transactionId) {
+    @Operation(summary = "LÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â¥y thÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â´ng tin giao dÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¹ch", description = "LÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â¥y chi tiÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â¿t giao dÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¹ch kho theo ID")
+    public ResponseEntity<StorageTransactionResponse> getTransactionById(@PathVariable Long transactionId) {
         // TODO: Implement when WarehouseService is ready
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/transactions/history")
-    @Operation(summary = "Lịch sử giao dịch", description = "Lấy lịch sử giao dịch theo khoảng thời gian")
+    @Operation(summary = "LÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¹ch sÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€šÃ‚Â­ giao dÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¹ch", description = "LÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â¥y lÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¹ch sÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€šÃ‚Â­ giao dÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¹ch theo khoÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â£ng thÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€šÃ‚Âi gian")
     public ResponseEntity<List<StorageTransactionResponse>> getTransactionHistory(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
@@ -69,28 +69,28 @@ public class WarehouseController {
     }
 
     @GetMapping("/batches/item/{itemId}")
-    @Operation(summary = "Lấy batch theo vật tư", description = "Lấy danh sách batch của vật tư (FEFO order)")
-    public ResponseEntity<List<ItemBatchResponse>> getBatchesByItem(@PathVariable UUID itemId) {
+    @Operation(summary = "LÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â¥y batch theo vÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â­t tÃƒÆ’Ã¢â‚¬Â Ãƒâ€šÃ‚Â°", description = "LÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â¥y danh sÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡ch batch cÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€šÃ‚Â§a vÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â­t tÃƒÆ’Ã¢â‚¬Â Ãƒâ€šÃ‚Â° (FEFO order)")
+    public ResponseEntity<List<ItemBatchResponse>> getBatchesByItem(@PathVariable Long itemId) {
         // TODO: Implement when WarehouseService is ready
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/batches/expiring")
-    @Operation(summary = "Lấy batch sắp hết hạn", description = "Lấy danh sách batch sắp hết hạn (30 ngày)")
+    @Operation(summary = "LÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â¥y batch sÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â¯p hÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â¿t hÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â¡n", description = "LÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â¥y danh sÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡ch batch sÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â¯p hÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â¿t hÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â¡n (30 ngÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â y)")
     public ResponseEntity<List<ItemBatchResponse>> getExpiringBatches() {
         // TODO: Implement when WarehouseService is ready
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/stats/inventory")
-    @Operation(summary = "Thống kê tồn kho", description = "Tổng quan tồn kho theo danh mục")
+    @Operation(summary = "ThÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ng kÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Âª tÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œn kho", description = "TÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ng quan tÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œn kho theo danh mÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€šÃ‚Â¥c")
     public ResponseEntity<InventoryStatsResponse> getInventoryStats() {
         // TODO: Implement when WarehouseService is ready
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/stats/storage")
-    @Operation(summary = "Thống kê xuất nhập", description = "Thống kê giao dịch xuất nhập kho")
+    @Operation(summary = "ThÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ng kÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Âª xuÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â¥t nhÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â­p", description = "ThÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ng kÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Âª giao dÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¹ch xuÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â¥t nhÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â­p kho")
     public ResponseEntity<StorageStatsResponse> getStorageStats(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
@@ -99,7 +99,7 @@ public class WarehouseController {
     }
 
     @GetMapping("/reports/loss")
-    @Operation(summary = "Báo cáo hao hụt", description = "Báo cáo vật tư ADJUSTMENT + DESTROY")
+    @Operation(summary = "BÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡o cÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡o hao hÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€šÃ‚Â¥t", description = "BÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡o cÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡o vÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â­t tÃƒÆ’Ã¢â‚¬Â Ãƒâ€šÃ‚Â° ADJUSTMENT + DESTROY")
     public ResponseEntity<List<StorageTransactionResponse>> getLossReport(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
@@ -107,3 +107,4 @@ public class WarehouseController {
         return ResponseEntity.ok().build();
     }
 }
+

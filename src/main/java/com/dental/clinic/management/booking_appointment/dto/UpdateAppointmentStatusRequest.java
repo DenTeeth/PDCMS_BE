@@ -33,8 +33,8 @@ public class UpdateAppointmentStatusRequest {
     /**
      * Optional notes for the status change.
      * For CANCELLED: Detailed reason
-     * For CHECKED_IN: "Bệnh nhân đến trễ 10 phút"
-     * For NO_SHOW: "Đã gọi 3 cuộc không nghe máy"
+     * For CHECKED_IN: "BÃ¡Â»â€¡nh nhÃƒÂ¢n Ã„â€˜Ã¡ÂºÂ¿n trÃ¡Â»â€¦ 10 phÃƒÂºt"
+     * For NO_SHOW: "Ã„ÂÃƒÂ£ gÃ¡Â»Âi 3 cuÃ¡Â»â„¢c khÃƒÂ´ng nghe mÃƒÂ¡y"
      */
     private String notes;
 }

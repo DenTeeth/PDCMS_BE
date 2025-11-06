@@ -1,4 +1,4 @@
-﻿package com.dental.clinic.management.warehouse.service;
+package com.dental.clinic.management.warehouse.service;
 
 import com.dental.clinic.management.utils.security.AuthoritiesConstants;
 import com.dental.clinic.management.warehouse.domain.Supplier;
@@ -12,12 +12,14 @@ import com.dental.clinic.management.warehouse.repository.SupplierRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.UUID;
+
 import java.util.stream.Collectors;
 
 @Service
@@ -49,7 +51,7 @@ public class SupplierService {
     }
 
     @PreAuthorize("hasAuthority('" + AuthoritiesConstants.UPDATE_WAREHOUSE_SUPPLIER + "')")
-    public SupplierResponse updateSupplier(UUID id, UpdateSupplierRequest request) {
+    public SupplierResponse updateSupplier(Long id, UpdateSupplierRequest request) {
         log.debug("Updating supplier with ID: {}", id);
 
         Supplier supplier = supplierRepository.findById(id)
@@ -71,7 +73,7 @@ public class SupplierService {
 
     @Transactional(readOnly = true)
     @PreAuthorize("hasAuthority('" + AuthoritiesConstants.VIEW_WAREHOUSE_SUPPLIER + "')")
-    public SupplierResponse getSupplierById(UUID id) {
+    public SupplierResponse getSupplierById(Long id) {
         log.debug("Getting supplier with ID: {}", id);
 
         Supplier supplier = supplierRepository.findById(id)
@@ -95,13 +97,14 @@ public class SupplierService {
     public List<SupplierResponse> searchSuppliers(String keyword) {
         log.debug("Searching suppliers with keyword: {}", keyword);
 
-        return supplierRepository.searchByKeyword(keyword).stream()
+        return supplierRepository.searchByKeyword(keyword, PageRequest.of(0, 100))
+                .getContent().stream()
                 .map(supplierMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
     @PreAuthorize("hasAuthority('" + AuthoritiesConstants.DELETE_WAREHOUSE_SUPPLIER + "')")
-    public void deleteSupplier(UUID id) {
+    public void deleteSupplier(Long id) {
         log.debug("Deleting supplier with ID: {}", id);
 
         Supplier supplier = supplierRepository.findById(id)

@@ -19,7 +19,7 @@ import lombok.NoArgsConstructor;
  * Example (Reject):
  * {
  *   "status": "REJECTED",
- *   "reason": "Không đủ nhân sự trong thời gian này"
+ *   "reason": "KhÃƒÂ´ng Ã„â€˜Ã¡Â»Â§ nhÃƒÂ¢n sÃ¡Â»Â± trong thÃ¡Â»Âi gian nÃƒÂ y"
  * }
  */
 @Data
@@ -37,7 +37,7 @@ public class UpdateRegistrationStatusRequest {
 
     /**
      * Rejection reason (REQUIRED if status = REJECTED).
-     * Example: "Đã đủ nhân sự cho ca này"
+     * Example: "Ã„ÂÃƒÂ£ Ã„â€˜Ã¡Â»Â§ nhÃƒÂ¢n sÃ¡Â»Â± cho ca nÃƒÂ y"
      */
     private String reason;
 }

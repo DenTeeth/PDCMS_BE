@@ -12,10 +12,10 @@ import com.dental.clinic.management.working_schedule.dto.response.ShiftRegistrat
 public class ShiftRegistrationMapper {
 
     /**
-     * Phương thức chuyển đổi Entity đã được tải đầy đủ sang DTO.
+     * PhÃ†Â°Ã†Â¡ng thÃ¡Â»Â©c chuyÃ¡Â»Æ’n Ã„â€˜Ã¡Â»â€¢i Entity Ã„â€˜ÃƒÂ£ Ã„â€˜Ã†Â°Ã¡Â»Â£c tÃ¡ÂºÂ£i Ã„â€˜Ã¡ÂºÂ§y Ã„â€˜Ã¡Â»Â§ sang DTO.
      * 
-     * @param entity Đối tượng EmployeeShiftRegistration (đã có sẵn registrationDays
-     *               nhờ @EntityGraph)
+     * @param entity Ã„ÂÃ¡Â»â€˜i tÃ†Â°Ã¡Â»Â£ng EmployeeShiftRegistration (Ã„â€˜ÃƒÂ£ cÃƒÂ³ sÃ¡ÂºÂµn registrationDays
+     *               nhÃ¡Â»Â @EntityGraph)
      * @return ShiftRegistrationResponse DTO
      */
     public ShiftRegistrationResponse toShiftRegistrationResponse(EmployeeShiftRegistration entity) {

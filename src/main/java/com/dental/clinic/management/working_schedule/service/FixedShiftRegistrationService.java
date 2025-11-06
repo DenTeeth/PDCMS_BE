@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 /**
  * Service for managing fixed shift registrations (Full-Time & Part-Time Fixed
  * employees).
- * Schema V14 - Luồng 1: Lịch Cố định
+ * Schema V14 - LuÃ¡Â»â€œng 1: LÃ¡Â»â€¹ch CÃ¡Â»â€˜ Ã„â€˜Ã¡Â»â€¹nh
  */
 @Service
 @RequiredArgsConstructor
@@ -57,7 +57,7 @@ public class FixedShiftRegistrationService {
 
         // 1. Validate employee exists and get employee_type
         Employee employee = employeeRepository.findById(request.getEmployeeId())
-                .orElseThrow(() -> new RelatedResourceNotFoundException("Nhân viên không tồn tại"));
+                .orElseThrow(() -> new RelatedResourceNotFoundException("NhÃƒÂ¢n viÃƒÂªn khÃƒÂ´ng tÃ¡Â»â€œn tÃ¡ÂºÂ¡i"));
 
         // 2. Check employee type - ONLY allow FULL_TIME and PART_TIME_FIXED
         EmploymentType empType = employee.getEmploymentType();
@@ -67,22 +67,22 @@ public class FixedShiftRegistrationService {
 
         // 3. Validate work shift exists
         WorkShift workShift = workShiftRepository.findById(request.getWorkShiftId())
-                .orElseThrow(() -> new RelatedResourceNotFoundException("Ca làm việc không tồn tại"));
+                .orElseThrow(() -> new RelatedResourceNotFoundException("Ca lÃƒÂ m viÃ¡Â»â€¡c khÃƒÂ´ng tÃ¡Â»â€œn tÃ¡ÂºÂ¡i"));
 
         // 4. Validate effectiveFrom is not in the past
         if (request.getEffectiveFrom().isBefore(LocalDate.now())) {
-            throw new IllegalArgumentException("Ngày bắt đầu không được là quá khứ");
+            throw new IllegalArgumentException("NgÃƒÂ y bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u khÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c lÃƒÂ  quÃƒÂ¡ khÃ¡Â»Â©");
         }
 
         // 5. Validate daysOfWeek
         if (request.getDaysOfWeek() == null || request.getDaysOfWeek().isEmpty()) {
-            throw new IllegalArgumentException("Danh sách ngày làm việc không được rỗng");
+            throw new IllegalArgumentException("Danh sÃƒÂ¡ch ngÃƒÂ y lÃƒÂ m viÃ¡Â»â€¡c khÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c rÃ¡Â»â€”ng");
         }
 
         // Validate day of week values (1=Monday, 7=Sunday)
         for (Integer day : request.getDaysOfWeek()) {
             if (day < 1 || day > 7) {
-                throw new IllegalArgumentException("Ngày làm việc phải từ 1 (Thứ 2) đến 7 (Chủ nhật): " + day);
+                throw new IllegalArgumentException("NgÃƒÂ y lÃƒÂ m viÃ¡Â»â€¡c phÃ¡ÂºÂ£i tÃ¡Â»Â« 1 (ThÃ¡Â»Â© 2) Ã„â€˜Ã¡ÂºÂ¿n 7 (ChÃ¡Â»Â§ nhÃ¡ÂºÂ­t): " + day);
             }
         }
 
@@ -145,14 +145,14 @@ public class FixedShiftRegistrationService {
             } else {
                 // Filter by specific employee
                 if (!employeeRepository.existsById(employeeId)) {
-                    throw new RelatedResourceNotFoundException("Nhân viên không tồn tại");
+                    throw new RelatedResourceNotFoundException("NhÃƒÂ¢n viÃƒÂªn khÃƒÂ´ng tÃ¡Â»â€œn tÃ¡ÂºÂ¡i");
                 }
                 registrations = registrationRepository.findByEmployeeIdAndActiveStatus(employeeId, isActive);
             }
         } else {
             // Regular employee: cannot provide employeeId, use JWT token's employeeId
             if (employeeId != null) {
-                throw new AccessDeniedException("Bạn không thể chỉ định employeeId. Hệ thống sẽ tự động lấy từ tài khoản của bạn.");
+                throw new AccessDeniedException("BÃ¡ÂºÂ¡n khÃƒÂ´ng thÃ¡Â»Æ’ chÃ¡Â»â€° Ã„â€˜Ã¡Â»â€¹nh employeeId. HÃ¡Â»â€¡ thÃ¡Â»â€˜ng sÃ¡ÂºÂ½ tÃ¡Â»Â± Ã„â€˜Ã¡Â»â„¢ng lÃ¡ÂºÂ¥y tÃ¡Â»Â« tÃƒÂ i khoÃ¡ÂºÂ£n cÃ¡Â»Â§a bÃ¡ÂºÂ¡n.");
             }
             // Regular employees can only see their own active registrations
             registrations = registrationRepository.findActiveByEmployeeId(currentEmployeeId);
@@ -207,7 +207,7 @@ public class FixedShiftRegistrationService {
             // Validate day numbers
             for (Integer day : request.getDaysOfWeek()) {
                 if (day < 1 || day > 7) {
-                    throw new IllegalArgumentException("Ngày làm việc phải từ 1 (Thứ 2) đến 7 (Chủ nhật): " + day);
+                    throw new IllegalArgumentException("NgÃƒÂ y lÃƒÂ m viÃ¡Â»â€¡c phÃ¡ÂºÂ£i tÃ¡Â»Â« 1 (ThÃ¡Â»Â© 2) Ã„â€˜Ã¡ÂºÂ¿n 7 (ChÃ¡Â»Â§ nhÃ¡ÂºÂ­t): " + day);
                 }
             }
 

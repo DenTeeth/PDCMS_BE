@@ -13,7 +13,7 @@ public class RegistrationConflictException extends ErrorResponseException {
     }
 
     private static ProblemDetail createProblemDetail(Integer employeeId) {
-        String message = "Bạn đã có đăng ký ca làm việc active khác trùng giờ. Vui lòng hủy đăng ký cũ trước.";
+        String message = "BÃ¡ÂºÂ¡n Ã„â€˜ÃƒÂ£ cÃƒÂ³ Ã„â€˜Ã„Æ’ng kÃƒÂ½ ca lÃƒÂ m viÃ¡Â»â€¡c active khÃƒÂ¡c trÃƒÂ¹ng giÃ¡Â»Â. Vui lÃƒÂ²ng hÃ¡Â»Â§y Ã„â€˜Ã„Æ’ng kÃƒÂ½ cÃ…Â© trÃ†Â°Ã¡Â»â€ºc.";
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, message);
         problemDetail.setTitle("Registration Conflict");

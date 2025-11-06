@@ -7,13 +7,13 @@ package com.dental.clinic.management.working_schedule.enums;
 public enum WorkShiftCategory {
     /**
      * Normal work shift - standard working hours.
-     * Ca làm việc tiêu chuẩn.
+     * Ca lÃƒÂ m viÃ¡Â»â€¡c tiÃƒÂªu chuÃ¡ÂºÂ©n.
      */
     NORMAL,
 
     /**
      * Night shift - includes night shift allowance.
-     * Ca làm đêm - thêm phụ cấp.
+     * Ca lÃƒÂ m Ã„â€˜ÃƒÂªm - thÃƒÂªm phÃ¡Â»Â¥ cÃ¡ÂºÂ¥p.
      */
     NIGHT
 }

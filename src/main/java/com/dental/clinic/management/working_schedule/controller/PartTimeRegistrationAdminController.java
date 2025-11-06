@@ -96,7 +96,7 @@ public class PartTimeRegistrationAdminController {
      * Request Body:
      * {
      *   "status": "APPROVED",  // or "REJECTED"
-     *   "reason": "Lý do từ chối"  // Required only if REJECTED
+     *   "reason": "LÃƒÂ½ do tÃ¡Â»Â« chÃ¡Â»â€˜i"  // Required only if REJECTED
      * }
      * 
      * Validations:

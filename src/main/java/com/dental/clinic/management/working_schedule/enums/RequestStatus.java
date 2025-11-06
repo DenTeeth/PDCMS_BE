@@ -6,25 +6,25 @@ package com.dental.clinic.management.working_schedule.enums;
 public enum RequestStatus {
     /**
      * Request is pending approval.
-     * Yêu cầu đang chờ duyệt.
+     * YÃƒÂªu cÃ¡ÂºÂ§u Ã„â€˜ang chÃ¡Â»Â duyÃ¡Â»â€¡t.
      */
     PENDING,
 
     /**
      * Request has been approved.
-     * Yêu cầu đã được duyệt.
+     * YÃƒÂªu cÃ¡ÂºÂ§u Ã„â€˜ÃƒÂ£ Ã„â€˜Ã†Â°Ã¡Â»Â£c duyÃ¡Â»â€¡t.
      */
     APPROVED,
 
     /**
      * Request has been rejected.
-     * Yêu cầu đã bị từ chối.
+     * YÃƒÂªu cÃ¡ÂºÂ§u Ã„â€˜ÃƒÂ£ bÃ¡Â»â€¹ tÃ¡Â»Â« chÃ¡Â»â€˜i.
      */
     REJECTED,
 
     /**
      * Request was cancelled by the creator before approval.
-     * Yêu cầu đã bị người tạo hủy trước khi được duyệt.
+     * YÃƒÂªu cÃ¡ÂºÂ§u Ã„â€˜ÃƒÂ£ bÃ¡Â»â€¹ ngÃ†Â°Ã¡Â»Âi tÃ¡ÂºÂ¡o hÃ¡Â»Â§y trÃ†Â°Ã¡Â»â€ºc khi Ã„â€˜Ã†Â°Ã¡Â»Â£c duyÃ¡Â»â€¡t.
      */
     CANCELLED
 }

@@ -14,7 +14,7 @@ public class RegistrationInvalidStateException extends ErrorResponseException {
 
     private static ProblemDetail createProblemDetail(Integer registrationId, String currentStatus) {
         String message = String.format(
-                "Đăng ký %d không thể xử lý ở trạng thái hiện tại: %s.",
+                "Ã„ÂÃ„Æ’ng kÃƒÂ½ %d khÃƒÂ´ng thÃ¡Â»Æ’ xÃ¡Â»Â­ lÃƒÂ½ Ã¡Â»Å¸ trÃ¡ÂºÂ¡ng thÃƒÂ¡i hiÃ¡Â»â€¡n tÃ¡ÂºÂ¡i: %s.",
                 registrationId, currentStatus);
 
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, message);

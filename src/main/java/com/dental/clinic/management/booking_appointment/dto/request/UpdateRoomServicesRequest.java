@@ -70,11 +70,11 @@ public class UpdateRoomServicesRequest {
      * <b>Example values:</b>
      * </p>
      * <ul>
-     * <li>"IMPL_SURGERY_KR" → Phẫu thuật đặt trụ Implant Hàn Quốc</li>
-     * <li>"SCALING_L1" → Cạo vôi răng & Đánh bóng - Mức 1</li>
-     * <li>"GEN_EXAM" → Khám tổng quát & Tư vấn</li>
+     * <li>"IMPL_SURGERY_KR" Ã¢â€ â€™ PhÃ¡ÂºÂ«u thuÃ¡ÂºÂ­t Ã„â€˜Ã¡ÂºÂ·t trÃ¡Â»Â¥ Implant HÃƒÂ n QuÃ¡Â»â€˜c</li>
+     * <li>"SCALING_L1" Ã¢â€ â€™ CÃ¡ÂºÂ¡o vÃƒÂ´i rÃ„Æ’ng & Ã„ÂÃƒÂ¡nh bÃƒÂ³ng - MÃ¡Â»Â©c 1</li>
+     * <li>"GEN_EXAM" Ã¢â€ â€™ KhÃƒÂ¡m tÃ¡Â»â€¢ng quÃƒÂ¡t & TÃ†Â° vÃ¡ÂºÂ¥n</li>
      * </ul>
      */
-    @NotEmpty(message = "Danh sách mã dịch vụ không được rỗng")
+    @NotEmpty(message = "Danh sÃƒÂ¡ch mÃƒÂ£ dÃ¡Â»â€¹ch vÃ¡Â»Â¥ khÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c rÃ¡Â»â€”ng")
     private List<String> serviceCodes;
 }

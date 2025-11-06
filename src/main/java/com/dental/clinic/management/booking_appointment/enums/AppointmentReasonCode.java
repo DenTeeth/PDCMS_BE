@@ -8,32 +8,32 @@ package com.dental.clinic.management.booking_appointment.enums;
  */
 public enum AppointmentReasonCode {
     /**
-     * Ca trước bị kéo dài (overrun)
+     * Ca trÃ†Â°Ã¡Â»â€ºc bÃ¡Â»â€¹ kÃƒÂ©o dÃƒÂ i (overrun)
      */
     PREVIOUS_CASE_OVERRUN,
 
     /**
-     * Bác sĩ đột ngột không có mặt
+     * BÃƒÂ¡c sÃ„Â© Ã„â€˜Ã¡Â»â„¢t ngÃ¡Â»â„¢t khÃƒÂ´ng cÃƒÂ³ mÃ¡ÂºÂ·t
      */
     DOCTOR_UNAVAILABLE,
 
     /**
-     * Thiết bị hỏng hoặc đang bảo trì
+     * ThiÃ¡ÂºÂ¿t bÃ¡Â»â€¹ hÃ¡Â»Âng hoÃ¡ÂºÂ·c Ã„â€˜ang bÃ¡ÂºÂ£o trÃƒÂ¬
      */
     EQUIPMENT_FAILURE,
 
     /**
-     * Bệnh nhân yêu cầu thay đổi
+     * BÃ¡Â»â€¡nh nhÃƒÂ¢n yÃƒÂªu cÃ¡ÂºÂ§u thay Ã„â€˜Ã¡Â»â€¢i
      */
     PATIENT_REQUEST,
 
     /**
-     * Điều phối vận hành (phòng khám chủ động)
+     * Ã„ÂiÃ¡Â»Âu phÃ¡Â»â€˜i vÃ¡ÂºÂ­n hÃƒÂ nh (phÃƒÂ²ng khÃƒÂ¡m chÃ¡Â»Â§ Ã„â€˜Ã¡Â»â„¢ng)
      */
     OPERATIONAL_REDIRECT,
 
     /**
-     * Lý do khác
+     * LÃƒÂ½ do khÃƒÂ¡c
      */
     OTHER
 }

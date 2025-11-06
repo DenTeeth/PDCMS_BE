@@ -139,7 +139,7 @@ public class LeaveBalanceService {
                 .changedBy(null) // System action, no specific user
                 .changeAmount(defaultDays)
                 .reason(BalanceChangeReason.ANNUAL_RESET)
-                .notes(String.format("Cấp %s ngày nghỉ phép %s cho năm %d",
+                .notes(String.format("CÃ¡ÂºÂ¥p %s ngÃƒÂ y nghÃ¡Â»â€° phÃƒÂ©p %s cho nÃ„Æ’m %d",
                         defaultDays, timeOffType.getTypeName(), year))
                 .build();
 
@@ -176,7 +176,7 @@ public class LeaveBalanceService {
         EmployeeLeaveBalance balance = balanceRepository
                 .findByEmployeeIdAndTimeOffTypeIdAndYear(employeeId, timeOffTypeId, year)
                 .orElseThrow(() -> new IllegalArgumentException(
-                        String.format("Không tìm thấy số dư nghỉ phép cho nhân viên %d loại %s năm %d",
+                        String.format("KhÃƒÂ´ng tÃƒÂ¬m thÃ¡ÂºÂ¥y sÃ¡Â»â€˜ dÃ†Â° nghÃ¡Â»â€° phÃƒÂ©p cho nhÃƒÂ¢n viÃƒÂªn %d loÃ¡ÂºÂ¡i %s nÃ„Æ’m %d",
                                 employeeId, timeOffTypeId, year)));
 
         // Apply adjustment to total allotted
@@ -189,7 +189,7 @@ public class LeaveBalanceService {
                 .changedBy(changedBy)
                 .changeAmount(adjustment)
                 .reason(BalanceChangeReason.MANUAL_ADJUSTMENT)
-                .notes(reason != null ? reason : "Điều chỉnh thủ công")
+                .notes(reason != null ? reason : "Ã„ÂiÃ¡Â»Âu chÃ¡Â»â€°nh thÃ¡Â»Â§ cÃƒÂ´ng")
                 .build();
 
         historyRepository.save(history);

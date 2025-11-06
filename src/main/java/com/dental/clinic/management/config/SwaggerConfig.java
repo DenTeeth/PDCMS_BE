@@ -21,7 +21,7 @@ public class SwaggerConfig {
                                                 .title("Dental Clinic Management API")
                                                 .version("v1.0")
                                                 .description("API documentation for Dental Clinic Management System"))
-                                // Áp dụng Bearer token cho tất cả các endpoint
+                                // ÃƒÂp dÃ¡Â»Â¥ng Bearer token cho tÃ¡ÂºÂ¥t cÃ¡ÂºÂ£ cÃƒÂ¡c endpoint
                                 .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
                                 .components(new io.swagger.v3.oas.models.Components()
                                                 .addSecuritySchemes(securitySchemeName,

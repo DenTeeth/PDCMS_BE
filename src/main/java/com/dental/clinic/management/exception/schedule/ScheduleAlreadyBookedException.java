@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
  *
  * Rationale:
  * - Patient commitment protection
- * - Payment guarantee ("đăng ký lên ngồi là phải trả tiền")
+ * - Payment guarantee ("Ã„â€˜Ã„Æ’ng kÃƒÂ½ lÃƒÂªn ngÃ¡Â»â€œi lÃƒÂ  phÃ¡ÂºÂ£i trÃ¡ÂºÂ£ tiÃ¡Â»Ân")
  * - Prevent revenue loss
  */
 @ResponseStatus(HttpStatus.CONFLICT)
@@ -27,8 +27,8 @@ public class ScheduleAlreadyBookedException extends RuntimeException {
 
     public ScheduleAlreadyBookedException(String scheduleCode, int appointmentCount) {
         super(String.format(
-                "Không thể hủy lịch %s. Đã có %d lịch hẹn bệnh nhân. " +
-                        "Vui lòng hủy/chuyển lịch hẹn trước khi hủy ca làm việc.",
+                "KhÃƒÂ´ng thÃ¡Â»Æ’ hÃ¡Â»Â§y lÃ¡Â»â€¹ch %s. Ã„ÂÃƒÂ£ cÃƒÂ³ %d lÃ¡Â»â€¹ch hÃ¡ÂºÂ¹n bÃ¡Â»â€¡nh nhÃƒÂ¢n. " +
+                        "Vui lÃƒÂ²ng hÃ¡Â»Â§y/chuyÃ¡Â»Æ’n lÃ¡Â»â€¹ch hÃ¡ÂºÂ¹n trÃ†Â°Ã¡Â»â€ºc khi hÃ¡Â»Â§y ca lÃƒÂ m viÃ¡Â»â€¡c.",
                 scheduleCode, appointmentCount));
     }
 

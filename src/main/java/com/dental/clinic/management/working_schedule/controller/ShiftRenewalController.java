@@ -20,15 +20,15 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * REST Controller for FIXED shift renewal requests (Luồng 1 employees only).
+ * REST Controller for FIXED shift renewal requests (LuÃ¡Â»â€œng 1 employees only).
  * <p>
  * ARCHITECTURE (Hybrid Scheduling):
- * - Luồng 1 (Fixed): Employees with full-time or fixed part-time schedules
+ * - LuÃ¡Â»â€œng 1 (Fixed): Employees with full-time or fixed part-time schedules
  * (fixed_shift_registrations)
- * - Luồng 2 (Flex): Employees with flexible shift selections
+ * - LuÃ¡Â»â€œng 2 (Flex): Employees with flexible shift selections
  * (part_time_registrations)
  * <p>
- * P7 (Shift Renewal Management) ONLY applies to Luồng 1 employees.
+ * P7 (Shift Renewal Management) ONLY applies to LuÃ¡Â»â€œng 1 employees.
  * <p>
  * Provides endpoints for:
  * - Viewing pending renewal invitations
@@ -39,7 +39,7 @@ import java.util.List;
 @RequestMapping("/api/v1/registrations/renewals")
 @RequiredArgsConstructor
 @Slf4j
-@Tag(name = "Shift Renewal", description = "APIs for fixed shift renewal management (Luồng 1 only)")
+@Tag(name = "Shift Renewal", description = "APIs for fixed shift renewal management (LuÃ¡Â»â€œng 1 only)")
 public class ShiftRenewalController {
 
     private final ShiftRenewalService renewalService;

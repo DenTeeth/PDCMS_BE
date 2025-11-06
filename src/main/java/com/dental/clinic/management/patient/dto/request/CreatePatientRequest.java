@@ -15,28 +15,28 @@ import java.time.LocalDate;
 /**
  * DTO for creating a new patient
  *
- * FLOW 1: Patient CÓ ACCOUNT (có thể đăng nhập)
- * - Cung cấp: username, password + thông tin patient
- * - System tạo account + patient
+ * FLOW 1: Patient CÃƒâ€œ ACCOUNT (cÃƒÂ³ thÃ¡Â»Æ’ Ã„â€˜Ã„Æ’ng nhÃ¡ÂºÂ­p)
+ * - Cung cÃ¡ÂºÂ¥p: username, password + thÃƒÂ´ng tin patient
+ * - System tÃ¡ÂºÂ¡o account + patient
  *
- * FLOW 2: Patient KHÔNG ACCOUNT (chỉ lưu hồ sơ)
- * - Không cung cấp username/password
- * - System chỉ tạo patient (không tạo account)
+ * FLOW 2: Patient KHÃƒâ€NG ACCOUNT (chÃ¡Â»â€° lÃ†Â°u hÃ¡Â»â€œ sÃ†Â¡)
+ * - KhÃƒÂ´ng cung cÃ¡ÂºÂ¥p username/password
+ * - System chÃ¡Â»â€° tÃ¡ÂºÂ¡o patient (khÃƒÂ´ng tÃ¡ÂºÂ¡o account)
  */
 public class CreatePatientRequest {
 
-    // ===== ACCOUNT FIELDS (Optional - nếu muốn patient đăng nhập) =====
+    // ===== ACCOUNT FIELDS (Optional - nÃ¡ÂºÂ¿u muÃ¡Â»â€˜n patient Ã„â€˜Ã„Æ’ng nhÃ¡ÂºÂ­p) =====
 
     /**
      * Username for patient account (optional)
-     * Nếu cung cấp username → cần cả password và email
+     * NÃ¡ÂºÂ¿u cung cÃ¡ÂºÂ¥p username Ã¢â€ â€™ cÃ¡ÂºÂ§n cÃ¡ÂºÂ£ password vÃƒÂ  email
      */
     @Size(max = 50)
     private String username;
 
     /**
      * Password for patient account (optional)
-     * Bắt buộc nếu có username
+     * BÃ¡ÂºÂ¯t buÃ¡Â»â„¢c nÃ¡ÂºÂ¿u cÃƒÂ³ username
      */
     @Size(min = 8, max = 100)
     private String password;

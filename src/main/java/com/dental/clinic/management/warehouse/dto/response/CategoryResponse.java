@@ -7,7 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
-import java.util.UUID;
+
 
 /**
  * Response DTO for Category with hierarchical structure.
@@ -18,12 +18,13 @@ import java.util.UUID;
 @AllArgsConstructor
 public class CategoryResponse {
 
-    private UUID id;
+    private Long id;
     private String categoryName;
     private WarehouseType warehouseType;
-    private UUID parentCategoryId;
+    private Long parentCategoryId;
     private String parentCategoryName;
     private String description;
     private Integer itemCount;
     private List<CategoryResponse> subCategories;
 }
+

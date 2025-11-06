@@ -252,7 +252,7 @@ public class DentalServiceService {
     }
 
     /**
-     * Toggle service active status (activate ↔ deactivate)
+     * Toggle service active status (activate Ã¢â€ â€ deactivate)
      * RESTful PATCH endpoint - returns updated service
      */
     @Transactional
@@ -265,7 +265,7 @@ public class DentalServiceService {
                         "service",
                         "notfound"));
 
-        // Toggle: if active → inactive, if inactive → active
+        // Toggle: if active Ã¢â€ â€™ inactive, if inactive Ã¢â€ â€™ active
         boolean newStatus = !service.getIsActive();
         service.setIsActive(newStatus);
         DentalService savedService = serviceRepository.save(service);

@@ -24,10 +24,10 @@ public class CreateServiceRequest {
     private String serviceCode;
 
     @NotBlank(message = "Service name is required")
-    @Schema(description = "Service name", example = "Cạo vôi răng và Đánh bóng", required = true)
+    @Schema(description = "Service name", example = "CÃ¡ÂºÂ¡o vÃƒÂ´i rÃ„Æ’ng vÃƒÂ  Ã„ÂÃƒÂ¡nh bÃƒÂ³ng", required = true)
     private String serviceName;
 
-    @Schema(description = "Service description", example = "Lấy sạch vôi răng và mảng bám")
+    @Schema(description = "Service description", example = "LÃ¡ÂºÂ¥y sÃ¡ÂºÂ¡ch vÃƒÂ´i rÃ„Æ’ng vÃƒÂ  mÃ¡ÂºÂ£ng bÃƒÂ¡m")
     private String description;
 
     @NotNull(message = "Default duration is required")

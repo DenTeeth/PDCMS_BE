@@ -5,17 +5,17 @@ import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 
 /**
- * DatePreset Enum - Các tùy chọn lọc theo khoảng thời gian định sẵn
- * Backend tự động tính dateFrom/dateTo, KHÔNG cần thay đổi DB Schema
+ * DatePreset Enum - CÃƒÂ¡c tÃƒÂ¹y chÃ¡Â»Ân lÃ¡Â»Âc theo khoÃ¡ÂºÂ£ng thÃ¡Â»Âi gian Ã„â€˜Ã¡Â»â€¹nh sÃ¡ÂºÂµn
+ * Backend tÃ¡Â»Â± Ã„â€˜Ã¡Â»â„¢ng tÃƒÂ­nh dateFrom/dateTo, KHÃƒâ€NG cÃ¡ÂºÂ§n thay Ã„â€˜Ã¡Â»â€¢i DB Schema
  */
 public enum DatePreset {
-    TODAY, // Hôm nay
-    THIS_WEEK, // Tuần này (Monday -> Sunday)
-    NEXT_7_DAYS, // 7 ngày tiếp theo
-    THIS_MONTH; // Tháng này
+    TODAY, // HÃƒÂ´m nay
+    THIS_WEEK, // TuÃ¡ÂºÂ§n nÃƒÂ y (Monday -> Sunday)
+    NEXT_7_DAYS, // 7 ngÃƒÂ y tiÃ¡ÂºÂ¿p theo
+    THIS_MONTH; // ThÃƒÂ¡ng nÃƒÂ y
 
     /**
-     * Tính ngày bắt đầu dựa trên preset
+     * TÃƒÂ­nh ngÃƒÂ y bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u dÃ¡Â»Â±a trÃƒÂªn preset
      */
     public LocalDate getDateFrom() {
         LocalDate now = LocalDate.now();
@@ -28,7 +28,7 @@ public enum DatePreset {
     }
 
     /**
-     * Tính ngày kết thúc dựa trên preset
+     * TÃƒÂ­nh ngÃƒÂ y kÃ¡ÂºÂ¿t thÃƒÂºc dÃ¡Â»Â±a trÃƒÂªn preset
      */
     public LocalDate getDateTo() {
         LocalDate now = LocalDate.now();

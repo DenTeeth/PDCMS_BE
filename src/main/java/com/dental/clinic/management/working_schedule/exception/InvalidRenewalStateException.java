@@ -17,7 +17,7 @@ public class InvalidRenewalStateException extends ErrorResponseException {
 
     private static ProblemDetail createProblemDetail(String renewalId, String currentStatus) {
         String message = String.format(
-                "Không thể phản hồi yêu cầu gia hạn. Yêu cầu %s đang ở trạng thái %s (chỉ cho phép PENDING_ACTION).",
+                "KhÃƒÂ´ng thÃ¡Â»Æ’ phÃ¡ÂºÂ£n hÃ¡Â»â€œi yÃƒÂªu cÃ¡ÂºÂ§u gia hÃ¡ÂºÂ¡n. YÃƒÂªu cÃ¡ÂºÂ§u %s Ã„â€˜ang Ã¡Â»Å¸ trÃ¡ÂºÂ¡ng thÃƒÂ¡i %s (chÃ¡Â»â€° cho phÃƒÂ©p PENDING_ACTION).",
                 renewalId,
                 currentStatus);
 

@@ -78,7 +78,7 @@ public class TimeOffRequestService {
 
         /**
          * GET /api/v1/time-off-requests
-         * Lấy danh sách yêu cầu nghỉ phép với phân trang và bộ lọc
+         * LÃ¡ÂºÂ¥y danh sÃƒÂ¡ch yÃƒÂªu cÃ¡ÂºÂ§u nghÃ¡Â»â€° phÃƒÂ©p vÃ¡Â»â€ºi phÃƒÂ¢n trang vÃƒÂ  bÃ¡Â»â„¢ lÃ¡Â»Âc
          */
         @PreAuthorize("hasRole('" + AuthoritiesConstants.ADMIN + "') or " +
                         "hasAuthority('" + AuthoritiesConstants.VIEW_TIMEOFF_ALL + "') or " +
@@ -92,7 +92,7 @@ public class TimeOffRequestService {
 
                 log.debug("Request to get all time-off requests with filters");
 
-                // LUỒNG 1: Admin hoặc người dùng có quyền xem tất cả
+                // LUÃ¡Â»â€™NG 1: Admin hoÃ¡ÂºÂ·c ngÃ†Â°Ã¡Â»Âi dÃƒÂ¹ng cÃƒÂ³ quyÃ¡Â»Ân xem tÃ¡ÂºÂ¥t cÃ¡ÂºÂ£
                 if (SecurityUtil.hasCurrentUserRole(AuthoritiesConstants.ADMIN) ||
                                 SecurityUtil.hasCurrentUserPermission(AuthoritiesConstants.VIEW_TIMEOFF_ALL)) {
 
@@ -100,7 +100,7 @@ public class TimeOffRequestService {
                         return requestRepository.findWithFilters(employeeId, status, startDate, endDate, pageable)
                                         .map(requestMapper::toResponse);
                 }
-                // LUỒNG 2: Nhân viên chỉ có quyền VIEW_TIMEOFF_OWN
+                // LUÃ¡Â»â€™NG 2: NhÃƒÂ¢n viÃƒÂªn chÃ¡Â»â€° cÃƒÂ³ quyÃ¡Â»Ân VIEW_TIMEOFF_OWN
                 else {
                         String username = SecurityUtil.getCurrentUserLogin()
                                         .orElseThrow(() -> new RuntimeException("User not authenticated"));
@@ -109,7 +109,7 @@ public class TimeOffRequestService {
                                         .map(account -> {
                                                 if (account.getEmployee() == null) {
                                                         throw new RuntimeException("Account " + username
-                                                                        + " không có Employee liên kết.");
+                                                                        + " khÃƒÂ´ng cÃƒÂ³ Employee liÃƒÂªn kÃ¡ÂºÂ¿t.");
                                                 }
                                                 return account.getEmployee().getEmployeeId();
                                         })
@@ -128,7 +128,7 @@ public class TimeOffRequestService {
 
         /**
          * GET /api/v1/time-off-requests/{request_id}
-         * Xem chi tiết một yêu cầu nghỉ phép
+         * Xem chi tiÃ¡ÂºÂ¿t mÃ¡Â»â„¢t yÃƒÂªu cÃ¡ÂºÂ§u nghÃ¡Â»â€° phÃƒÂ©p
          */
         @PreAuthorize("hasRole('" + AuthoritiesConstants.ADMIN + "') or " +
                         "hasAuthority('" + AuthoritiesConstants.VIEW_TIMEOFF_ALL + "') or " +
@@ -136,7 +136,7 @@ public class TimeOffRequestService {
         public TimeOffRequestResponse getRequestById(String requestId) {
                 log.debug("Request to get time-off request: {}", requestId);
 
-                // LUỒNG 1: Admin hoặc người dùng có quyền xem tất cả
+                // LUÃ¡Â»â€™NG 1: Admin hoÃ¡ÂºÂ·c ngÃ†Â°Ã¡Â»Âi dÃƒÂ¹ng cÃƒÂ³ quyÃ¡Â»Ân xem tÃ¡ÂºÂ¥t cÃ¡ÂºÂ£
                 if (SecurityUtil.hasCurrentUserRole(AuthoritiesConstants.ADMIN) ||
                                 SecurityUtil.hasCurrentUserPermission(AuthoritiesConstants.VIEW_TIMEOFF_ALL)) {
 
@@ -145,7 +145,7 @@ public class TimeOffRequestService {
                                         .map(requestMapper::toResponse)
                                         .orElseThrow(() -> new TimeOffRequestNotFoundException(requestId));
                 }
-                // LUỒNG 2: Nhân viên chỉ có quyền VIEW_TIMEOFF_OWN (phải là chủ sở hữu)
+                // LUÃ¡Â»â€™NG 2: NhÃƒÂ¢n viÃƒÂªn chÃ¡Â»â€° cÃƒÂ³ quyÃ¡Â»Ân VIEW_TIMEOFF_OWN (phÃ¡ÂºÂ£i lÃƒÂ  chÃ¡Â»Â§ sÃ¡Â»Å¸ hÃ¡Â»Â¯u)
                 else {
                         String username = SecurityUtil.getCurrentUserLogin()
                                         .orElseThrow(() -> new RuntimeException("User not authenticated"));
@@ -154,7 +154,7 @@ public class TimeOffRequestService {
                                         .map(account -> {
                                                 if (account.getEmployee() == null) {
                                                         throw new RuntimeException("Account " + username
-                                                                        + " không có Employee liên kết.");
+                                                                        + " khÃƒÂ´ng cÃƒÂ³ Employee liÃƒÂªn kÃ¡ÂºÂ¿t.");
                                                 }
                                                 return account.getEmployee().getEmployeeId();
                                         })
@@ -173,7 +173,7 @@ public class TimeOffRequestService {
 
         /**
          * POST /api/v1/time-off-requests
-         * Tạo yêu cầu nghỉ phép mới
+         * TÃ¡ÂºÂ¡o yÃƒÂªu cÃ¡ÂºÂ§u nghÃ¡Â»â€° phÃƒÂ©p mÃ¡Â»â€ºi
          */
         @PreAuthorize("hasAuthority('" + AuthoritiesConstants.CREATE_TIMEOFF + "')")
         @Transactional
@@ -191,13 +191,13 @@ public class TimeOffRequestService {
                 // 3. Validate date range
                 if (request.getStartDate().isAfter(request.getEndDate())) {
                         throw new InvalidDateRangeException(
-                                        "Ngày bắt đầu không được lớn hơn ngày kết thúc. " +
-                                                        "Ngày bắt đầu: " + request.getStartDate() + ", Ngày kết thúc: "
+                                        "NgÃƒÂ y bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u khÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c lÃ¡Â»â€ºn hÃ†Â¡n ngÃƒÂ y kÃ¡ÂºÂ¿t thÃƒÂºc. " +
+                                                        "NgÃƒÂ y bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u: " + request.getStartDate() + ", NgÃƒÂ y kÃ¡ÂºÂ¿t thÃƒÂºc: "
                                                         + request.getEndDate());
                 }
 
-                // 3.5. Check leave balance CHỈ cho ANNUAL_LEAVE
-                // Các loại khác (SICK_LEAVE, UNPAID_PERSONAL) không cần check balance
+                // 3.5. Check leave balance CHÃ¡Â»Ë† cho ANNUAL_LEAVE
+                // CÃƒÂ¡c loÃ¡ÂºÂ¡i khÃƒÂ¡c (SICK_LEAVE, UNPAID_PERSONAL) khÃƒÂ´ng cÃ¡ÂºÂ§n check balance
                 if ("ANNUAL_LEAVE".equals(timeOffType.getTypeCode())) {
                         checkLeaveBalance(request.getEmployeeId(), request.getTimeOffTypeId(),
                                         request.getStartDate(), request.getEndDate(), request.getWorkShiftId());
@@ -208,22 +208,22 @@ public class TimeOffRequestService {
                 // end_date
                 if (request.getWorkShiftId() != null && !request.getStartDate().equals(request.getEndDate())) {
                         throw new InvalidDateRangeException(
-                                        "Khi nghỉ theo ca, ngày bắt đầu và kết thúc phải giống nhau. " +
-                                                        "Ngày bắt đầu: " + request.getStartDate() + ", Ngày kết thúc: "
+                                        "Khi nghÃ¡Â»â€° theo ca, ngÃƒÂ y bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u vÃƒÂ  kÃ¡ÂºÂ¿t thÃƒÂºc phÃ¡ÂºÂ£i giÃ¡Â»â€˜ng nhau. " +
+                                                        "NgÃƒÂ y bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u: " + request.getStartDate() + ", NgÃƒÂ y kÃ¡ÂºÂ¿t thÃƒÂºc: "
                                                         + request.getEndDate());
                 }
 
-                // 4.5. [V14 Hybrid] Kiểm tra nhân viên có lịch làm việc không
-                // Query từ fixed_shift_registrations VÀ part_time_registrations
+                // 4.5. [V14 Hybrid] KiÃ¡Â»Æ’m tra nhÃƒÂ¢n viÃƒÂªn cÃƒÂ³ lÃ¡Â»â€¹ch lÃƒÂ m viÃ¡Â»â€¡c khÃƒÂ´ng
+                // Query tÃ¡Â»Â« fixed_shift_registrations VÃƒâ‚¬ part_time_registrations
                 if (request.getWorkShiftId() != null) {
-                        // Nghỉ theo ca (half-day)
+                        // NghÃ¡Â»â€° theo ca (half-day)
                         boolean hasShift = checkEmployeeHasShift(
                                         request.getEmployeeId(),
                                         request.getStartDate(),
                                         request.getWorkShiftId());
 
                         if (!hasShift) {
-                                // Lấy shift name để hiển thị message rõ ràng hơn
+                                // LÃ¡ÂºÂ¥y shift name Ã„â€˜Ã¡Â»Æ’ hiÃ¡Â»Æ’n thÃ¡Â»â€¹ message rÃƒÂµ rÃƒÂ ng hÃ†Â¡n
                                 String shiftName = workShiftRepository.findById(request.getWorkShiftId())
                                                 .map(ws -> ws.getShiftName())
                                                 .orElse(request.getWorkShiftId());
@@ -235,7 +235,7 @@ public class TimeOffRequestService {
                                                 shiftName);
                         }
                 } else {
-                        // Nghỉ cả ngày (full-day) - kiểm tra tất cả các ngày
+                        // NghÃ¡Â»â€° cÃ¡ÂºÂ£ ngÃƒÂ y (full-day) - kiÃ¡Â»Æ’m tra tÃ¡ÂºÂ¥t cÃ¡ÂºÂ£ cÃƒÂ¡c ngÃƒÂ y
                         LocalDate currentDate = request.getStartDate();
                         boolean hasAnyShift = false;
 
@@ -249,7 +249,7 @@ public class TimeOffRequestService {
 
                         if (!hasAnyShift) {
                                 throw new ShiftNotFoundForLeaveException(
-                                                String.format("Nhân viên không có lịch làm việc vào bất kỳ ngày nào từ %s đến %s. Vui lòng kiểm tra lịch làm việc trước khi đăng ký nghỉ phép.",
+                                                String.format("NhÃƒÂ¢n viÃƒÂªn khÃƒÂ´ng cÃƒÂ³ lÃ¡Â»â€¹ch lÃƒÂ m viÃ¡Â»â€¡c vÃƒÂ o bÃ¡ÂºÂ¥t kÃ¡Â»Â³ ngÃƒÂ y nÃƒÂ o tÃ¡Â»Â« %s Ã„â€˜Ã¡ÂºÂ¿n %s. Vui lÃƒÂ²ng kiÃ¡Â»Æ’m tra lÃ¡Â»â€¹ch lÃƒÂ m viÃ¡Â»â€¡c trÃ†Â°Ã¡Â»â€ºc khi Ã„â€˜Ã„Æ’ng kÃƒÂ½ nghÃ¡Â»â€° phÃƒÂ©p.",
                                                                 request.getStartDate(),
                                                                 request.getEndDate()));
                         }
@@ -272,9 +272,9 @@ public class TimeOffRequestService {
                         if (!conflicts.isEmpty()) {
                                 TimeOffRequest conflict = conflicts.get(0);
                                 throw new DuplicateTimeOffRequestException(
-                                                String.format("Đã tồn tại một yêu cầu nghỉ phép trùng với khoảng thời gian này. "
+                                                String.format("Ã„ÂÃƒÂ£ tÃ¡Â»â€œn tÃ¡ÂºÂ¡i mÃ¡Â»â„¢t yÃƒÂªu cÃ¡ÂºÂ§u nghÃ¡Â»â€° phÃƒÂ©p trÃƒÂ¹ng vÃ¡Â»â€ºi khoÃ¡ÂºÂ£ng thÃ¡Â»Âi gian nÃƒÂ y. "
                                                                 +
-                                                                "Request ID: %s, Từ ngày: %s, Đến ngày: %s, Trạng thái: %s",
+                                                                "Request ID: %s, TÃ¡Â»Â« ngÃƒÂ y: %s, Ã„ÂÃ¡ÂºÂ¿n ngÃƒÂ y: %s, TrÃ¡ÂºÂ¡ng thÃƒÂ¡i: %s",
                                                                 conflict.getRequestId(),
                                                                 conflict.getStartDate(),
                                                                 conflict.getEndDate(),
@@ -290,7 +290,7 @@ public class TimeOffRequestService {
                                 .map(account -> {
                                         if (account.getEmployee() == null) {
                                                 throw new RuntimeException(
-                                                                "Account " + username + " không có Employee liên kết.");
+                                                                "Account " + username + " khÃƒÂ´ng cÃƒÂ³ Employee liÃƒÂªn kÃ¡ÂºÂ¿t.");
                                         }
                                         return account.getEmployee().getEmployeeId();
                                 })
@@ -328,7 +328,7 @@ public class TimeOffRequestService {
 
         /**
          * PATCH /api/v1/time-off-requests/{request_id}
-         * Cập nhật trạng thái yêu cầu (Duyệt/Từ chối/Hủy)
+         * CÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t trÃ¡ÂºÂ¡ng thÃƒÂ¡i yÃƒÂªu cÃ¡ÂºÂ§u (DuyÃ¡Â»â€¡t/TÃ¡Â»Â« chÃ¡Â»â€˜i/HÃ¡Â»Â§y)
          */
         @Transactional
         public TimeOffRequestResponse updateRequestStatus(String requestId, UpdateTimeOffStatusRequest request) {
@@ -341,8 +341,8 @@ public class TimeOffRequestService {
                 // 2. Check current status is PENDING
                 if (timeOffRequest.getStatus() != TimeOffStatus.PENDING) {
                         throw new InvalidStateTransitionException(
-                                        "Không thể cập nhật yêu cầu. Yêu cầu phải ở trạng thái PENDING. " +
-                                                        "Trạng thái hiện tại: " + timeOffRequest.getStatus());
+                                        "KhÃƒÂ´ng thÃ¡Â»Æ’ cÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t yÃƒÂªu cÃ¡ÂºÂ§u. YÃƒÂªu cÃ¡ÂºÂ§u phÃ¡ÂºÂ£i Ã¡Â»Å¸ trÃ¡ÂºÂ¡ng thÃƒÂ¡i PENDING. " +
+                                                        "TrÃ¡ÂºÂ¡ng thÃƒÂ¡i hiÃ¡Â»â€¡n tÃ¡ÂºÂ¡i: " + timeOffRequest.getStatus());
                 }
 
                 // 3. Handle different status updates
@@ -374,7 +374,7 @@ public class TimeOffRequestService {
                 if (!SecurityUtil.hasCurrentUserRole(AuthoritiesConstants.ADMIN) &&
                                 !SecurityUtil.hasCurrentUserPermission(AuthoritiesConstants.APPROVE_TIMEOFF)) {
                         throw new org.springframework.security.access.AccessDeniedException(
-                                        "Bạn không có quyền thực hiện hành động này.");
+                                        "BÃ¡ÂºÂ¡n khÃƒÂ´ng cÃƒÂ³ quyÃ¡Â»Ân thÃ¡Â»Â±c hiÃ¡Â»â€¡n hÃƒÂ nh Ã„â€˜Ã¡Â»â„¢ng nÃƒÂ y.");
                 }
 
                 // Get approver ID
@@ -385,7 +385,7 @@ public class TimeOffRequestService {
                                 .map(account -> {
                                         if (account.getEmployee() == null) {
                                                 throw new RuntimeException(
-                                                                "Account " + username + " không có Employee liên kết.");
+                                                                "Account " + username + " khÃƒÂ´ng cÃƒÂ³ Employee liÃƒÂªn kÃ¡ÂºÂ¿t.");
                                         }
                                         return account.getEmployee().getEmployeeId();
                                 })
@@ -411,12 +411,12 @@ public class TimeOffRequestService {
                 if (!SecurityUtil.hasCurrentUserRole(AuthoritiesConstants.ADMIN) &&
                                 !SecurityUtil.hasCurrentUserPermission(AuthoritiesConstants.REJECT_TIMEOFF)) {
                         throw new org.springframework.security.access.AccessDeniedException(
-                                        "Bạn không có quyền thực hiện hành động này.");
+                                        "BÃ¡ÂºÂ¡n khÃƒÂ´ng cÃƒÂ³ quyÃ¡Â»Ân thÃ¡Â»Â±c hiÃ¡Â»â€¡n hÃƒÂ nh Ã„â€˜Ã¡Â»â„¢ng nÃƒÂ y.");
                 }
 
                 // Reason is required
                 if (reason == null || reason.isBlank()) {
-                        throw new IllegalArgumentException("Lý do từ chối là bắt buộc.");
+                        throw new IllegalArgumentException("LÃƒÂ½ do tÃ¡Â»Â« chÃ¡Â»â€˜i lÃƒÂ  bÃ¡ÂºÂ¯t buÃ¡Â»â„¢c.");
                 }
 
                 // Get approver ID (person who rejected)
@@ -427,7 +427,7 @@ public class TimeOffRequestService {
                                 .map(account -> {
                                         if (account.getEmployee() == null) {
                                                 throw new RuntimeException(
-                                                                "Account " + username + " không có Employee liên kết.");
+                                                                "Account " + username + " khÃƒÂ´ng cÃƒÂ³ Employee liÃƒÂªn kÃ¡ÂºÂ¿t.");
                                         }
                                         return account.getEmployee().getEmployeeId();
                                 })
@@ -446,7 +446,7 @@ public class TimeOffRequestService {
         private void handleCancellation(TimeOffRequest timeOffRequest, String reason) {
                 // Reason is required
                 if (reason == null || reason.isBlank()) {
-                        throw new IllegalArgumentException("Lý do hủy là bắt buộc.");
+                        throw new IllegalArgumentException("LÃƒÂ½ do hÃ¡Â»Â§y lÃƒÂ  bÃ¡ÂºÂ¯t buÃ¡Â»â„¢c.");
                 }
 
                 // Get current user
@@ -457,7 +457,7 @@ public class TimeOffRequestService {
                                 .map(account -> {
                                         if (account.getEmployee() == null) {
                                                 throw new RuntimeException(
-                                                                "Account " + username + " không có Employee liên kết.");
+                                                                "Account " + username + " khÃƒÂ´ng cÃƒÂ³ Employee liÃƒÂªn kÃ¡ÂºÂ¿t.");
                                         }
                                         return account.getEmployee().getEmployeeId();
                                 })
@@ -473,7 +473,7 @@ public class TimeOffRequestService {
 
                 if (!isAdmin && !hasPendingPermission && !(isOwner && hasOwnPermission)) {
                         throw new org.springframework.security.access.AccessDeniedException(
-                                        "Bạn không có quyền thực hiện hành động này.");
+                                        "BÃ¡ÂºÂ¡n khÃƒÂ´ng cÃƒÂ³ quyÃ¡Â»Ân thÃ¡Â»Â±c hiÃ¡Â»â€¡n hÃƒÂ nh Ã„â€˜Ã¡Â»â„¢ng nÃƒÂ y.");
                 }
 
                 // Update request
@@ -493,7 +493,7 @@ public class TimeOffRequestService {
                                 .findByEmployeeIdAndTimeOffTypeIdAndYear(employeeId, timeOffTypeId, currentYear)
                                 .orElseThrow(() -> new InvalidRequestException(
                                                 "BALANCE_NOT_FOUND",
-                                                String.format("Không tìm thấy số dư nghỉ phép cho nhân viên %d và loại nghỉ %s trong năm %d",
+                                                String.format("KhÃƒÂ´ng tÃƒÂ¬m thÃ¡ÂºÂ¥y sÃ¡Â»â€˜ dÃ†Â° nghÃ¡Â»â€° phÃƒÂ©p cho nhÃƒÂ¢n viÃƒÂªn %d vÃƒÂ  loÃ¡ÂºÂ¡i nghÃ¡Â»â€° %s trong nÃ„Æ’m %d",
                                                                 employeeId, timeOffTypeId, currentYear)));
 
                 // Calculate days requested
@@ -532,8 +532,8 @@ public class TimeOffRequestService {
                 TimeOffType timeOffType = typeRepository.findById(timeOffRequest.getTimeOffTypeId())
                                 .orElseThrow(() -> new TimeOffTypeNotFoundException(timeOffRequest.getTimeOffTypeId()));
 
-                // CHỈ trừ số dư cho ANNUAL_LEAVE
-                // Các loại khác (SICK_LEAVE, UNPAID_PERSONAL) không trừ số dư
+                // CHÃ¡Â»Ë† trÃ¡Â»Â« sÃ¡Â»â€˜ dÃ†Â° cho ANNUAL_LEAVE
+                // CÃƒÂ¡c loÃ¡ÂºÂ¡i khÃƒÂ¡c (SICK_LEAVE, UNPAID_PERSONAL) khÃƒÂ´ng trÃ¡Â»Â« sÃ¡Â»â€˜ dÃ†Â°
                 if (!"ANNUAL_LEAVE".equals(timeOffType.getTypeCode())) {
                         log.info("Skipping balance deduction for type: {} ({})",
                                         timeOffType.getTypeCode(), timeOffType.getTypeName());
@@ -550,7 +550,7 @@ public class TimeOffRequestService {
                                                 currentYear)
                                 .orElseThrow(() -> new InvalidRequestException(
                                                 "BALANCE_NOT_FOUND",
-                                                String.format("Không tìm thấy số dư nghỉ phép cho nhân viên %d và loại nghỉ %s trong năm %d",
+                                                String.format("KhÃƒÂ´ng tÃƒÂ¬m thÃ¡ÂºÂ¥y sÃ¡Â»â€˜ dÃ†Â° nghÃ¡Â»â€° phÃƒÂ©p cho nhÃƒÂ¢n viÃƒÂªn %d vÃƒÂ  loÃ¡ÂºÂ¡i nghÃ¡Â»â€° %s trong nÃ„Æ’m %d",
                                                                 timeOffRequest.getEmployeeId(),
                                                                 timeOffRequest.getTimeOffTypeId(), currentYear)));
 
@@ -570,7 +570,7 @@ public class TimeOffRequestService {
                                 .changedBy(timeOffRequest.getApprovedBy())
                                 .changeAmount(daysToDeduct.negate().doubleValue()) // Negative for deduction
                                 .reason(BalanceChangeReason.APPROVED_REQUEST)
-                                .notes(String.format("Trừ %.1f ngày nghỉ phép do yêu cầu %s được phê duyệt",
+                                .notes(String.format("TrÃ¡Â»Â« %.1f ngÃƒÂ y nghÃ¡Â»â€° phÃƒÂ©p do yÃƒÂªu cÃ¡ÂºÂ§u %s Ã„â€˜Ã†Â°Ã¡Â»Â£c phÃƒÂª duyÃ¡Â»â€¡t",
                                                 daysToDeduct.doubleValue(), timeOffRequest.getRequestId()))
                                 .build();
 

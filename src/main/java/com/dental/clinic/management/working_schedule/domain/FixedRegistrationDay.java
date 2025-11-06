@@ -13,7 +13,7 @@ import java.io.Serializable;
  * Entity representing a day of the week for a fixed shift registration.
  * This is part of the composite pattern for fixed schedules.
  *
- * Schema V14 - Luồng 1: Lịch Cố định
+ * Schema V14 - LuÃ¡Â»â€œng 1: LÃ¡Â»â€¹ch CÃ¡Â»â€˜ Ã„â€˜Ã¡Â»â€¹nh
  */
 @Entity
 @Table(name = "fixed_registration_days")

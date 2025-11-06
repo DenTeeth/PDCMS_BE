@@ -23,3 +23,4 @@ public class InventoryStatsResponse {
     private Integer expiringSoonBatches;
     private BigDecimal totalInventoryValue;
 }
+

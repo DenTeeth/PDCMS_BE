@@ -147,7 +147,7 @@ public class AppointmentController {
          * - serviceCode (string): Filter by service code
          * - searchCode (string): Combined search by code OR name
          * (patient/doctor/employee/room/service)
-         * Examples: "Nguyễn Văn A", "Dr. An", "BN-1001", "Cạo vôi"
+         * Examples: "NguyÃ¡Â»â€¦n VÃ„Æ’n A", "Dr. An", "BN-1001", "CÃ¡ÂºÂ¡o vÃƒÂ´i"
          *
          * @return Paginated list of appointments with nested
          *         patient/doctor/room/services/participants
@@ -260,10 +260,10 @@ public class AppointmentController {
          * - Comprehensive audit logging for compliance
          *
          * State Machine:
-         * - SCHEDULED → CHECKED_IN, CANCELLED, NO_SHOW
-         * - CHECKED_IN → IN_PROGRESS, CANCELLED
-         * - IN_PROGRESS → COMPLETED, CANCELLED
-         * - COMPLETED, CANCELLED, NO_SHOW → No transitions (terminal states)
+         * - SCHEDULED Ã¢â€ â€™ CHECKED_IN, CANCELLED, NO_SHOW
+         * - CHECKED_IN Ã¢â€ â€™ IN_PROGRESS, CANCELLED
+         * - IN_PROGRESS Ã¢â€ â€™ COMPLETED, CANCELLED
+         * - COMPLETED, CANCELLED, NO_SHOW Ã¢â€ â€™ No transitions (terminal states)
          *
          * Timestamp Rules:
          * - CHECKED_IN: No timestamp update (patient arrived, waiting)
@@ -271,10 +271,10 @@ public class AppointmentController {
          * - COMPLETED: Set actualEndTime = NOW() (treatment finished)
          *
          * Request Body Examples:
-         * - Check-in: {"status": "CHECKED_IN", "notes": "Đến trễ 10 phút"}
+         * - Check-in: {"status": "CHECKED_IN", "notes": "Ã„ÂÃ¡ÂºÂ¿n trÃ¡Â»â€¦ 10 phÃƒÂºt"}
          * - Cancel: {"status": "CANCELLED", "reasonCode": "PATIENT_REQUEST", "notes":
-         * "Bận đột xuất"}
-         * - No-show: {"status": "NO_SHOW", "notes": "Gọi 3 cuộc không nghe máy"}
+         * "BÃ¡ÂºÂ­n Ã„â€˜Ã¡Â»â„¢t xuÃ¡ÂºÂ¥t"}
+         * - No-show: {"status": "NO_SHOW", "notes": "GÃ¡Â»Âi 3 cuÃ¡Â»â„¢c khÃƒÂ´ng nghe mÃƒÂ¡y"}
          *
          * @param appointmentCode Unique appointment code
          * @param request         Status update request with status, reasonCode (for

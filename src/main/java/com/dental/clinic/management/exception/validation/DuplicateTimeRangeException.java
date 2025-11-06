@@ -6,7 +6,7 @@ import org.springframework.web.ErrorResponseException;
 
 /**
  * Exception thrown when trying to create a work shift with overlapping or duplicate time range.
- * Lỗi 1: Duplicate time range validation
+ * LÃ¡Â»â€”i 1: Duplicate time range validation
  */
 public class DuplicateTimeRangeException extends ErrorResponseException {
 

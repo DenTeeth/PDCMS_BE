@@ -23,3 +23,4 @@ public class StorageStatsResponse {
     private BigDecimal totalExportValue;
     private BigDecimal totalLossValue;
 }
+

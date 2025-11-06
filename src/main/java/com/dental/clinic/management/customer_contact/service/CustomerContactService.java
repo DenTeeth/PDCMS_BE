@@ -42,14 +42,14 @@ public class CustomerContactService {
     private final ContactHistoryRepository historyRepository;
     private final ContactHistoryMapper historyMapper;
     private final EmployeeRepository employeeRepository;
-    private final PatientService patientService; // ← Thêm này
+    private final PatientService patientService; // Ã¢â€ Â ThÃƒÂªm nÃƒÂ y
 
     public CustomerContactService(CustomerContactRepository repository,
             CustomerContactMapper mapper,
             ContactHistoryRepository historyRepository,
             ContactHistoryMapper historyMapper,
             EmployeeRepository employeeRepository,
-            PatientService patientService) { // ← Thêm này
+            PatientService patientService) { // Ã¢â€ Â ThÃƒÂªm nÃƒÂ y
         this.repository = repository;
         this.mapper = mapper;
         this.historyRepository = historyRepository;
@@ -267,21 +267,21 @@ public class CustomerContactService {
                     "not_interested");
         }
 
-        // ✅ Tạo Patient thực sự
+        // Ã¢Å“â€¦ TÃ¡ÂºÂ¡o Patient thÃ¡Â»Â±c sÃ¡Â»Â±
         CreatePatientRequest patientRequest = new CreatePatientRequest();
 
-        // Map từ contact sang patient
+        // Map tÃ¡Â»Â« contact sang patient
         String[] names = contact.getFullName().split(" ", 2);
         patientRequest.setFirstName(names.length > 0 ? names[0] : contact.getFullName());
         patientRequest.setLastName(names.length > 1 ? names[1] : "");
         patientRequest.setEmail(contact.getEmail());
         patientRequest.setPhone(contact.getPhone());
-        // Set các field khác nếu cần...
+        // Set cÃƒÂ¡c field khÃƒÂ¡c nÃ¡ÂºÂ¿u cÃ¡ÂºÂ§n...
 
-        // Tạo patient
+        // TÃ¡ÂºÂ¡o patient
         PatientInfoResponse patient = patientService.createPatient(patientRequest);
 
-        // Link patient với contact
+        // Link patient vÃ¡Â»â€ºi contact
         contact.setConvertedPatientId(patient.getPatientId());
         contact.setStatus(CustomerContactStatus.CONVERTED);
 

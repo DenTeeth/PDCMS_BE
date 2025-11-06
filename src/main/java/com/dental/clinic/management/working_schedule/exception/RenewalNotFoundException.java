@@ -17,7 +17,7 @@ public class RenewalNotFoundException extends ErrorResponseException {
 
     private static ProblemDetail createProblemDetail(String renewalId) {
         String message = String.format(
-                "Không tìm thấy yêu cầu gia hạn với ID: %s.",
+                "KhÃƒÂ´ng tÃƒÂ¬m thÃ¡ÂºÂ¥y yÃƒÂªu cÃ¡ÂºÂ§u gia hÃ¡ÂºÂ¡n vÃ¡Â»â€ºi ID: %s.",
                 renewalId);
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, message);

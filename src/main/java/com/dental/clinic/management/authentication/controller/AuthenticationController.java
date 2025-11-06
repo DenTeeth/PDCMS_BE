@@ -50,34 +50,34 @@ public class AuthenticationController {
      */
     @PostMapping("/login")
     @Operation(summary = "User login", description = "Authenticate user with username/password and issue JWT access token with refresh token in HTTP-only cookie")
-    @ApiMessage("Đăng nhập thành công")
+    @ApiMessage("Ã„ÂÃ„Æ’ng nhÃ¡ÂºÂ­p thÃƒÂ nh cÃƒÂ´ng")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         LoginResponse loginResponse = authenticationService.login(request);
 
-        // Tạo response body - COPY ALL FIELDS từ loginResponse
+        // TÃ¡ÂºÂ¡o response body - COPY ALL FIELDS tÃ¡Â»Â« loginResponse
         LoginResponse responseBody = new LoginResponse(
                 loginResponse.getToken(),
                 loginResponse.getTokenExpiresAt(),
-                null, // Không trả refresh token trong body
-                0, // Không cần refresh token expiry
+                null, // KhÃƒÂ´ng trÃ¡ÂºÂ£ refresh token trong body
+                0, // KhÃƒÂ´ng cÃ¡ÂºÂ§n refresh token expiry
                 loginResponse.getUsername(),
                 loginResponse.getEmail(),
                 loginResponse.getRoles(),
                 loginResponse.getPermissions());
 
-        // Copy các fields quan trọng khác
+        // Copy cÃƒÂ¡c fields quan trÃ¡Â»Âng khÃƒÂ¡c
         responseBody.setBaseRole(loginResponse.getBaseRole());
         responseBody.setGroupedPermissions(loginResponse.getGroupedPermissions());
         responseBody.setEmploymentType(loginResponse.getEmploymentType());
         responseBody.setMustChangePassword(loginResponse.getMustChangePassword());
 
-        // Set refresh token vào HTTP-only cookie
+        // Set refresh token vÃƒÂ o HTTP-only cookie
         if (loginResponse.getRefreshToken() != null) {
             ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", loginResponse.getRefreshToken())
                     .httpOnly(true)
-                    .secure(false) // Set true khi dùng HTTPS
-                    .path("/") // Áp dụng cho toàn bộ API
-                    .maxAge(7 * 24 * 60 * 60) // 7 ngày
+                    .secure(false) // Set true khi dÃƒÂ¹ng HTTPS
+                    .path("/") // ÃƒÂp dÃ¡Â»Â¥ng cho toÃƒÂ n bÃ¡Â»â„¢ API
+                    .maxAge(7 * 24 * 60 * 60) // 7 ngÃƒÂ y
                     .build();
             return ResponseEntity.ok()
                     .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
@@ -102,19 +102,19 @@ public class AuthenticationController {
      */
     @PostMapping("/refresh-token")
     @Operation(summary = "Refresh access token", description = "Issue new access token using refresh token from HTTP-only cookie")
-    @ApiMessage("Làm mới access token")
+    @ApiMessage("LÃƒÂ m mÃ¡Â»â€ºi access token")
     public ResponseEntity<RefreshTokenResponse> refresh(
             @Parameter(description = "Refresh token from HTTP-only cookie", required = true) @CookieValue(value = "refreshToken", required = true) String refreshToken) {
         RefreshTokenRequest request = new RefreshTokenRequest(refreshToken);
         RefreshTokenResponse response = authenticationService.refreshToken(request);
 
-        // Set new refresh token vào HTTP-only cookie
+        // Set new refresh token vÃƒÂ o HTTP-only cookie
         if (response.getRefreshToken() != null) {
             ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", response.getRefreshToken())
                     .httpOnly(true)
-                    .secure(false) // Set true khi dùng HTTPS
+                    .secure(false) // Set true khi dÃƒÂ¹ng HTTPS
                     .path("/")
-                    .maxAge(7 * 24 * 60 * 60) // 7 ngày
+                    .maxAge(7 * 24 * 60 * 60) // 7 ngÃƒÂ y
                     .build();
             return ResponseEntity.ok()
                     .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
@@ -133,7 +133,7 @@ public class AuthenticationController {
      */
     @PostMapping("/logout")
     @Operation(summary = "User logout", description = "Invalidate access token and refresh token, clear refresh token cookie")
-    @ApiMessage("Đăng xuất thành công")
+    @ApiMessage("Ã„ÂÃ„Æ’ng xuÃ¡ÂºÂ¥t thÃƒÂ nh cÃƒÂ´ng")
     public ResponseEntity<Void> logout(
             @Parameter(description = "Authorization header with Bearer token") @RequestHeader(value = "Authorization", required = false) String authHeader,
             @Parameter(description = "Refresh token from HTTP-only cookie") @CookieValue(value = "refreshToken", required = false) String refreshToken) {
@@ -144,17 +144,17 @@ public class AuthenticationController {
             tokenBlacklistService.blacklistToken(accessToken);
         }
 
-        // Vô hiệu hóa refresh token trong database
+        // VÃƒÂ´ hiÃ¡Â»â€¡u hÃƒÂ³a refresh token trong database
         if (refreshToken != null) {
             authenticationService.logout(refreshToken);
         }
 
-        // Xóa refresh token cookie
+        // XÃƒÂ³a refresh token cookie
         ResponseCookie clearCookie = ResponseCookie.from("refreshToken", "")
                 .httpOnly(true)
-                .secure(false) // Set true khi dùng HTTPS
+                .secure(false) // Set true khi dÃƒÂ¹ng HTTPS
                 .path("/")
-                .maxAge(0) // Xóa cookie
+                .maxAge(0) // XÃƒÂ³a cookie
                 .build();
 
         return ResponseEntity.ok()
@@ -169,7 +169,7 @@ public class AuthenticationController {
      */
     @GetMapping("/my-permissions")
     @Operation(summary = "Get my permissions grouped by module", description = "Get all permissions of the currently authenticated user, grouped by module")
-    @ApiMessage("Lấy danh sách quyền thành công")
+    @ApiMessage("LÃ¡ÂºÂ¥y danh sÃƒÂ¡ch quyÃ¡Â»Ân thÃƒÂ nh cÃƒÂ´ng")
     public ResponseEntity<java.util.Map<String, java.util.List<String>>> getMyPermissions() {
         String username = org.springframework.security.core.context.SecurityContextHolder.getContext()
                 .getAuthentication().getName();
@@ -192,7 +192,7 @@ public class AuthenticationController {
      */
     @GetMapping("/verify-email")
     @Operation(summary = "Verify email address", description = "Verify email address using token sent via email. This endpoint is called when user clicks verification link in email.")
-    @ApiMessage("Xác thực email thành công")
+    @ApiMessage("XÃƒÂ¡c thÃ¡Â»Â±c email thÃƒÂ nh cÃƒÂ´ng")
     public ResponseEntity<Void> verifyEmail(
             @Parameter(description = "Verification token from email", required = true) @RequestParam String token) {
         authenticationService.verifyEmail(token);
@@ -211,7 +211,7 @@ public class AuthenticationController {
      */
     @PostMapping("/resend-verification")
     @Operation(summary = "Resend verification email", description = "Resend verification email to user if they didn't receive it or token expired")
-    @ApiMessage("Đã gửi lại email xác thực")
+    @ApiMessage("Ã„ÂÃƒÂ£ gÃ¡Â»Â­i lÃ¡ÂºÂ¡i email xÃƒÂ¡c thÃ¡Â»Â±c")
     public ResponseEntity<Void> resendVerification(
             @Valid @RequestBody com.dental.clinic.management.authentication.dto.ResendVerificationRequest request) {
         authenticationService.resendVerificationEmail(request.getEmail());
@@ -230,7 +230,7 @@ public class AuthenticationController {
      */
     @PostMapping("/forgot-password")
     @Operation(summary = "Forgot password", description = "Initiate password reset process. Sends password reset email to user.")
-    @ApiMessage("Đã gửi email đặt lại mật khẩu")
+    @ApiMessage("Ã„ÂÃƒÂ£ gÃ¡Â»Â­i email Ã„â€˜Ã¡ÂºÂ·t lÃ¡ÂºÂ¡i mÃ¡ÂºÂ­t khÃ¡ÂºÂ©u")
     public ResponseEntity<Void> forgotPassword(
             @Valid @RequestBody com.dental.clinic.management.authentication.dto.ForgotPasswordRequest request) {
         authenticationService.forgotPassword(request.getEmail());
@@ -257,7 +257,7 @@ public class AuthenticationController {
      */
     @PostMapping("/reset-password")
     @Operation(summary = "Reset password", description = "Reset password using token from email. User must provide new password and confirm password.")
-    @ApiMessage("Đặt lại mật khẩu thành công")
+    @ApiMessage("Ã„ÂÃ¡ÂºÂ·t lÃ¡ÂºÂ¡i mÃ¡ÂºÂ­t khÃ¡ÂºÂ©u thÃƒÂ nh cÃƒÂ´ng")
     public ResponseEntity<Void> resetPassword(
             @Valid @RequestBody com.dental.clinic.management.authentication.dto.ResetPasswordRequest request) {
         authenticationService.resetPassword(request.getToken(), request.getNewPassword(),

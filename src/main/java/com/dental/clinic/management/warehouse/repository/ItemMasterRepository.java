@@ -7,19 +7,18 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Repository
-public interface ItemMasterRepository extends JpaRepository<ItemMaster, UUID> {
+public interface ItemMasterRepository extends JpaRepository<ItemMaster, Long> {
 
     Optional<ItemMaster> findByItemName(String itemName);
 
     boolean existsByItemName(String itemName);
 
-    List<ItemMaster> findByCategory_CategoryId(UUID categoryId);
+    List<ItemMaster> findByCategory_CategoryId(Long categoryId);
 
     List<ItemMaster> findByItemNameContainingIgnoreCase(String keyword);
 
     @Query("SELECT DISTINCT im FROM ItemMaster im JOIN im.compatibleSuppliers s WHERE s.supplierId = :supplierId")
-    List<ItemMaster> findByCompatibleSupplierId(UUID supplierId);
+    List<ItemMaster> findByCompatibleSupplierId(Long supplierId);
 }

@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 /**
  * Job 2: Auto-create weekly schedule for part-time employees.
  *
- * ⚠️ DEPRECATED: Replaced by UnifiedScheduleSyncJob (P8)
+ * Ã¢Å¡Â Ã¯Â¸Â DEPRECATED: Replaced by UnifiedScheduleSyncJob (P8)
  *
  * This job has been superseded by the new unified sync job that handles
  * BOTH Fixed and Flex schedules in a single daily run.
@@ -210,7 +210,7 @@ public class WeeklyPartTimeScheduleJob {
                     shift.setStatus(ShiftStatus.SCHEDULED);
                     shift.setIsOvertime(false); // Regular shift, not overtime
                     // Note: sourceOffRequestId would be set here if this was from time-off renewal
-                    shift.setNotes(String.format("Tạo tự động từ đăng ký %s", registration.getRegistrationId()));
+                    shift.setNotes(String.format("TÃ¡ÂºÂ¡o tÃ¡Â»Â± Ã„â€˜Ã¡Â»â„¢ng tÃ¡Â»Â« Ã„â€˜Ã„Æ’ng kÃƒÂ½ %s", registration.getRegistrationId()));
 
                     shiftsToSave.add(shift);
 

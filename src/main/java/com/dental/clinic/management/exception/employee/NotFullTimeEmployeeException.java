@@ -22,8 +22,8 @@ public class NotFullTimeEmployeeException extends RuntimeException {
 
     public NotFullTimeEmployeeException(String employeeCode, String employmentType) {
         super(String.format(
-                "Nhân viên %s (loại: %s) không được tạo lịch cố định. " +
-                        "Chỉ nhân viên FULL_TIME mới có lịch tuần cố định.",
+                "NhÃƒÂ¢n viÃƒÂªn %s (loÃ¡ÂºÂ¡i: %s) khÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c tÃ¡ÂºÂ¡o lÃ¡Â»â€¹ch cÃ¡Â»â€˜ Ã„â€˜Ã¡Â»â€¹nh. " +
+                        "ChÃ¡Â»â€° nhÃƒÂ¢n viÃƒÂªn FULL_TIME mÃ¡Â»â€ºi cÃƒÂ³ lÃ¡Â»â€¹ch tuÃ¡ÂºÂ§n cÃ¡Â»â€˜ Ã„â€˜Ã¡Â»â€¹nh.",
                 employeeCode, employmentType));
     }
 

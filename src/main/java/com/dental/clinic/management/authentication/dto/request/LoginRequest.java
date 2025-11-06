@@ -4,10 +4,10 @@ import jakarta.validation.constraints.NotBlank;
 
 public class LoginRequest {
 
-    @NotBlank(message = "Username không được để trống")
+    @NotBlank(message = "Username khÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c Ã„â€˜Ã¡Â»Æ’ trÃ¡Â»â€˜ng")
     private String username;
 
-    @NotBlank(message = "Password không được để trống")
+    @NotBlank(message = "Password khÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c Ã„â€˜Ã¡Â»Æ’ trÃ¡Â»â€˜ng")
     private String password;
 
     // Constructors

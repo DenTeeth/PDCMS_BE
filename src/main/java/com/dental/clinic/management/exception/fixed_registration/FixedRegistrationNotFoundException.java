@@ -6,6 +6,6 @@ package com.dental.clinic.management.exception.fixed_registration;
 public class FixedRegistrationNotFoundException extends RuntimeException {
 
     public FixedRegistrationNotFoundException(Integer registrationId) {
-        super(String.format("Không tìm thấy lịch cố định với ID: %d", registrationId));
+        super(String.format("KhÃƒÂ´ng tÃƒÂ¬m thÃ¡ÂºÂ¥y lÃ¡Â»â€¹ch cÃ¡Â»â€˜ Ã„â€˜Ã¡Â»â€¹nh vÃ¡Â»â€ºi ID: %d", registrationId));
     }
 }

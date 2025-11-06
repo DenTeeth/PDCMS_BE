@@ -21,7 +21,7 @@ public class InvalidEffectiveToException extends ErrorResponseException {
 
     private static ProblemDetail createProblemDetail(LocalDate oldEffectiveTo, LocalDate newEffectiveTo) {
         String message = String.format(
-                "Ngày kết thúc mới (%s) phải sau ngày kết thúc cũ (%s).",
+                "NgÃƒÂ y kÃ¡ÂºÂ¿t thÃƒÂºc mÃ¡Â»â€ºi (%s) phÃ¡ÂºÂ£i sau ngÃƒÂ y kÃ¡ÂºÂ¿t thÃƒÂºc cÃ…Â© (%s).",
                 newEffectiveTo,
                 oldEffectiveTo);
 

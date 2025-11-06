@@ -14,7 +14,7 @@ public class DuplicateShiftCodeException extends ErrorResponseException {
     }
 
     private static ProblemDetail asProblemDetail(String shiftCode) {
-        String message = String.format("Mã ca làm việc '%s' đã tồn tại. Vui lòng sử dụng mã khác.", shiftCode);
+        String message = String.format("MÃƒÂ£ ca lÃƒÂ m viÃ¡Â»â€¡c '%s' Ã„â€˜ÃƒÂ£ tÃ¡Â»â€œn tÃ¡ÂºÂ¡i. Vui lÃƒÂ²ng sÃ¡Â»Â­ dÃ¡Â»Â¥ng mÃƒÂ£ khÃƒÂ¡c.", shiftCode);
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, message);
         problemDetail.setTitle("Duplicate Shift Code");
         problemDetail.setProperty("errorCode", "DUPLICATE_SHIFT_CODE");

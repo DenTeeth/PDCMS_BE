@@ -1,4 +1,4 @@
-﻿package com.dental.clinic.management.warehouse.mapper;
+package com.dental.clinic.management.warehouse.mapper;
 
 import com.dental.clinic.management.warehouse.domain.Supplier;
 import com.dental.clinic.management.warehouse.dto.request.CreateSupplierRequest;
@@ -64,4 +64,5 @@ public class SupplierMapper {
             .build();
     }
 }
+
 

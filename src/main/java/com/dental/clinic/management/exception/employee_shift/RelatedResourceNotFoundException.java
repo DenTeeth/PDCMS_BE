@@ -7,7 +7,7 @@ package com.dental.clinic.management.exception.employee_shift;
 public class RelatedResourceNotFoundException extends RuntimeException {
 
     public RelatedResourceNotFoundException(String resourceType, String resourceId) {
-        super(String.format("Không tìm thấy %s với ID: %s", resourceType, resourceId));
+        super(String.format("KhÃƒÂ´ng tÃƒÂ¬m thÃ¡ÂºÂ¥y %s vÃ¡Â»â€ºi ID: %s", resourceType, resourceId));
     }
 
     public RelatedResourceNotFoundException(String message) {

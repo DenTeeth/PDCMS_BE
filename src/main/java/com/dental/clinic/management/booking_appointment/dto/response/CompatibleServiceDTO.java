@@ -22,7 +22,7 @@ import java.math.BigDecimal;
  * {
  *   "serviceId": 35,
  *   "serviceCode": "IMPL_SURGERY_KR",
- *   "serviceName": "Phẫu thuật đặt trụ Implant Hàn Quốc",
+ *   "serviceName": "PhÃ¡ÂºÂ«u thuÃ¡ÂºÂ­t Ã„â€˜Ã¡ÂºÂ·t trÃ¡Â»Â¥ Implant HÃƒÂ n QuÃ¡Â»â€˜c",
  *   "price": 15000000
  * }
  * </pre>

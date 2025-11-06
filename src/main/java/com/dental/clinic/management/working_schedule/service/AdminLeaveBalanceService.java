@@ -193,7 +193,7 @@ public class AdminLeaveBalanceService {
         if (remaining < 0) {
             throw new InvalidRequestException(
                     "INVALID_BALANCE",
-                    String.format("Số dư phép không thể âm sau khi điều chỉnh. " +
+                    String.format("SÃ¡Â»â€˜ dÃ†Â° phÃƒÂ©p khÃƒÂ´ng thÃ¡Â»Æ’ ÃƒÂ¢m sau khi Ã„â€˜iÃ¡Â»Âu chÃ¡Â»â€°nh. " +
                             "Total allowed: %.1f, Used: %.1f, Remaining: %.1f",
                             balance.getTotalAllotted(), balance.getUsed(), remaining));
         }
@@ -215,7 +215,7 @@ public class AdminLeaveBalanceService {
                 .changedBy(changedBy)
                 .changeAmount(request.getChangeAmount())
                 .reason(BalanceChangeReason.MANUAL_ADJUSTMENT)
-                .notes(request.getNotes() != null ? request.getNotes() : "Điều chỉnh thủ công")
+                .notes(request.getNotes() != null ? request.getNotes() : "Ã„ÂiÃ¡Â»Âu chÃ¡Â»â€°nh thÃ¡Â»Â§ cÃƒÂ´ng")
                 .build();
 
         historyRepository.save(history);
@@ -237,7 +237,7 @@ public class AdminLeaveBalanceService {
         if (request.getCycleYear() < currentYear - 1 || request.getCycleYear() > currentYear + 2) {
             throw new InvalidRequestException(
                     "INVALID_YEAR",
-                    String.format("Năm reset không hợp lệ: %d. Chỉ cho phép từ %d đến %d",
+                    String.format("NÃ„Æ’m reset khÃƒÂ´ng hÃ¡Â»Â£p lÃ¡Â»â€¡: %d. ChÃ¡Â»â€° cho phÃƒÂ©p tÃ¡Â»Â« %d Ã„â€˜Ã¡ÂºÂ¿n %d",
                             request.getCycleYear(), currentYear - 1, currentYear + 2));
         }
 
@@ -302,8 +302,8 @@ public class AdminLeaveBalanceService {
                         .changedBy(1) // System action (admin user ID)
                         .changeAmount(request.getDefaultAllowance())
                         .reason(BalanceChangeReason.ANNUAL_RESET)
-                        .notes(String.format("%s %.1f ngày nghỉ phép %s cho năm %d",
-                                isUpdate ? "Reset về" : "Cấp",
+                        .notes(String.format("%s %.1f ngÃƒÂ y nghÃ¡Â»â€° phÃƒÂ©p %s cho nÃ„Æ’m %d",
+                                isUpdate ? "Reset vÃ¡Â»Â" : "CÃ¡ÂºÂ¥p",
                                 request.getDefaultAllowance(),
                                 timeOffType.getTypeName(),
                                 request.getCycleYear()))
@@ -330,7 +330,7 @@ public class AdminLeaveBalanceService {
                 createdCount, updatedCount, skippedCount);
 
         Map<String, Object> result = new HashMap<>();
-        result.put("message", "Annual reset hoàn tất");
+        result.put("message", "Annual reset hoÃƒÂ n tÃ¡ÂºÂ¥t");
         result.put("cycle_year", request.getCycleYear());
         result.put("time_off_type_id", request.getApplyToTypeId());
         result.put("default_allowance", request.getDefaultAllowance());

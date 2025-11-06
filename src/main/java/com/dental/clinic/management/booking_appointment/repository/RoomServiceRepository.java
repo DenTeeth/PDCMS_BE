@@ -20,9 +20,9 @@ import java.util.List;
  * <b>Key Operations:</b>
  * </p>
  * <ul>
- * <li>Find all services compatible with a room → GET API</li>
- * <li>Delete all room-service mappings → PUT API (bulk replace)</li>
- * <li>Save all new room-service mappings → PUT API (bulk replace)</li>
+ * <li>Find all services compatible with a room Ã¢â€ â€™ GET API</li>
+ * <li>Delete all room-service mappings Ã¢â€ â€™ PUT API (bulk replace)</li>
+ * <li>Save all new room-service mappings Ã¢â€ â€™ PUT API (bulk replace)</li>
  * </ul>
  *
  * @since V16

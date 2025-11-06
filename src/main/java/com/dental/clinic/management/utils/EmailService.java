@@ -40,23 +40,23 @@ public class EmailService {
 
             helper.setFrom(fromEmail);
             helper.setTo(toEmail);
-            helper.setSubject("Xác thực tài khoản - Phòng khám nha khoa");
+            helper.setSubject("XÃƒÂ¡c thÃ¡Â»Â±c tÃƒÂ i khoÃ¡ÂºÂ£n - PhÃƒÂ²ng khÃƒÂ¡m nha khoa");
 
             String htmlContent = String.format(
                     """
                             <html>
                             <body style="font-family: Arial, sans-serif;">
-                                <h2>Xin chào %s,</h2>
-                                <p>Cảm ơn bạn đã đăng ký tài khoản tại Phòng khám nha khoa của chúng tôi.</p>
-                                <p>Vui lòng nhấn vào link bên dưới để xác thực email của bạn:</p>
-                                <p><a href="%s" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Xác thực email</a></p>
-                                <p>Hoặc copy link sau vào trình duyệt:</p>
+                                <h2>Xin chÃƒÂ o %s,</h2>
+                                <p>CÃ¡ÂºÂ£m Ã†Â¡n bÃ¡ÂºÂ¡n Ã„â€˜ÃƒÂ£ Ã„â€˜Ã„Æ’ng kÃƒÂ½ tÃƒÂ i khoÃ¡ÂºÂ£n tÃ¡ÂºÂ¡i PhÃƒÂ²ng khÃƒÂ¡m nha khoa cÃ¡Â»Â§a chÃƒÂºng tÃƒÂ´i.</p>
+                                <p>Vui lÃƒÂ²ng nhÃ¡ÂºÂ¥n vÃƒÂ o link bÃƒÂªn dÃ†Â°Ã¡Â»â€ºi Ã„â€˜Ã¡Â»Æ’ xÃƒÂ¡c thÃ¡Â»Â±c email cÃ¡Â»Â§a bÃ¡ÂºÂ¡n:</p>
+                                <p><a href="%s" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">XÃƒÂ¡c thÃ¡Â»Â±c email</a></p>
+                                <p>HoÃ¡ÂºÂ·c copy link sau vÃƒÂ o trÃƒÂ¬nh duyÃ¡Â»â€¡t:</p>
                                 <p>%s</p>
-                                <p><strong>Lưu ý:</strong> Link này sẽ hết hạn sau 24 giờ.</p>
-                                <p>Nếu bạn không yêu cầu đăng ký tài khoản này, vui lòng bỏ qua email này.</p>
+                                <p><strong>LÃ†Â°u ÃƒÂ½:</strong> Link nÃƒÂ y sÃ¡ÂºÂ½ hÃ¡ÂºÂ¿t hÃ¡ÂºÂ¡n sau 24 giÃ¡Â»Â.</p>
+                                <p>NÃ¡ÂºÂ¿u bÃ¡ÂºÂ¡n khÃƒÂ´ng yÃƒÂªu cÃ¡ÂºÂ§u Ã„â€˜Ã„Æ’ng kÃƒÂ½ tÃƒÂ i khoÃ¡ÂºÂ£n nÃƒÂ y, vui lÃƒÂ²ng bÃ¡Â»Â qua email nÃƒÂ y.</p>
                                 <br>
-                                <p>Trân trọng,</p>
-                                <p>Đội ngũ Phòng khám nha khoa</p>
+                                <p>TrÃƒÂ¢n trÃ¡Â»Âng,</p>
+                                <p>Ã„ÂÃ¡Â»â„¢i ngÃ…Â© PhÃƒÂ²ng khÃƒÂ¡m nha khoa</p>
                             </body>
                             </html>
                             """,
@@ -65,10 +65,10 @@ public class EmailService {
             helper.setText(htmlContent, true);
 
             mailSender.send(message);
-            logger.info("✅ Verification email sent to: {}", toEmail);
+            logger.info("Ã¢Å“â€¦ Verification email sent to: {}", toEmail);
 
         } catch (MessagingException e) {
-            logger.error("❌ Failed to send verification email to {}: {}", toEmail, e.getMessage());
+            logger.error("Ã¢ÂÅ’ Failed to send verification email to {}: {}", toEmail, e.getMessage());
         }
     }
 
@@ -85,23 +85,23 @@ public class EmailService {
 
             helper.setFrom(fromEmail);
             helper.setTo(toEmail);
-            helper.setSubject("Đặt lại mật khẩu - Phòng khám nha khoa");
+            helper.setSubject("Ã„ÂÃ¡ÂºÂ·t lÃ¡ÂºÂ¡i mÃ¡ÂºÂ­t khÃ¡ÂºÂ©u - PhÃƒÂ²ng khÃƒÂ¡m nha khoa");
 
             String htmlContent = String.format(
                     """
                             <html>
                             <body style="font-family: Arial, sans-serif;">
-                                <h2>Xin chào %s,</h2>
-                                <p>Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn.</p>
-                                <p>Vui lòng nhấn vào link bên dưới để đặt lại mật khẩu:</p>
-                                <p><a href="%s" style="background-color: #2196F3; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Đặt lại mật khẩu</a></p>
-                                <p>Hoặc copy link sau vào trình duyệt:</p>
+                                <h2>Xin chÃƒÂ o %s,</h2>
+                                <p>ChÃƒÂºng tÃƒÂ´i nhÃ¡ÂºÂ­n Ã„â€˜Ã†Â°Ã¡Â»Â£c yÃƒÂªu cÃ¡ÂºÂ§u Ã„â€˜Ã¡ÂºÂ·t lÃ¡ÂºÂ¡i mÃ¡ÂºÂ­t khÃ¡ÂºÂ©u cho tÃƒÂ i khoÃ¡ÂºÂ£n cÃ¡Â»Â§a bÃ¡ÂºÂ¡n.</p>
+                                <p>Vui lÃƒÂ²ng nhÃ¡ÂºÂ¥n vÃƒÂ o link bÃƒÂªn dÃ†Â°Ã¡Â»â€ºi Ã„â€˜Ã¡Â»Æ’ Ã„â€˜Ã¡ÂºÂ·t lÃ¡ÂºÂ¡i mÃ¡ÂºÂ­t khÃ¡ÂºÂ©u:</p>
+                                <p><a href="%s" style="background-color: #2196F3; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Ã„ÂÃ¡ÂºÂ·t lÃ¡ÂºÂ¡i mÃ¡ÂºÂ­t khÃ¡ÂºÂ©u</a></p>
+                                <p>HoÃ¡ÂºÂ·c copy link sau vÃƒÂ o trÃƒÂ¬nh duyÃ¡Â»â€¡t:</p>
                                 <p>%s</p>
-                                <p><strong>Lưu ý:</strong> Link này sẽ hết hạn sau 1 giờ và chỉ sử dụng được 1 lần.</p>
-                                <p>Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này. Tài khoản của bạn vẫn an toàn.</p>
+                                <p><strong>LÃ†Â°u ÃƒÂ½:</strong> Link nÃƒÂ y sÃ¡ÂºÂ½ hÃ¡ÂºÂ¿t hÃ¡ÂºÂ¡n sau 1 giÃ¡Â»Â vÃƒÂ  chÃ¡Â»â€° sÃ¡Â»Â­ dÃ¡Â»Â¥ng Ã„â€˜Ã†Â°Ã¡Â»Â£c 1 lÃ¡ÂºÂ§n.</p>
+                                <p>NÃ¡ÂºÂ¿u bÃ¡ÂºÂ¡n khÃƒÂ´ng yÃƒÂªu cÃ¡ÂºÂ§u Ã„â€˜Ã¡ÂºÂ·t lÃ¡ÂºÂ¡i mÃ¡ÂºÂ­t khÃ¡ÂºÂ©u, vui lÃƒÂ²ng bÃ¡Â»Â qua email nÃƒÂ y. TÃƒÂ i khoÃ¡ÂºÂ£n cÃ¡Â»Â§a bÃ¡ÂºÂ¡n vÃ¡ÂºÂ«n an toÃƒÂ n.</p>
                                 <br>
-                                <p>Trân trọng,</p>
-                                <p>Đội ngũ Phòng khám nha khoa</p>
+                                <p>TrÃƒÂ¢n trÃ¡Â»Âng,</p>
+                                <p>Ã„ÂÃ¡Â»â„¢i ngÃ…Â© PhÃƒÂ²ng khÃƒÂ¡m nha khoa</p>
                             </body>
                             </html>
                             """,
@@ -110,10 +110,10 @@ public class EmailService {
             helper.setText(htmlContent, true);
 
             mailSender.send(message);
-            logger.info("✅ Password reset email sent to: {}", toEmail);
+            logger.info("Ã¢Å“â€¦ Password reset email sent to: {}", toEmail);
 
         } catch (MessagingException e) {
-            logger.error("❌ Failed to send password reset email to {}: {}", toEmail, e.getMessage());
+            logger.error("Ã¢ÂÅ’ Failed to send password reset email to {}: {}", toEmail, e.getMessage());
         }
     }
 
@@ -130,10 +130,10 @@ public class EmailService {
             message.setText(text);
 
             mailSender.send(message);
-            logger.info("✅ Simple email sent to: {}", toEmail);
+            logger.info("Ã¢Å“â€¦ Simple email sent to: {}", toEmail);
 
         } catch (Exception e) {
-            logger.error("❌ Failed to send simple email to {}: {}", toEmail, e.getMessage());
+            logger.error("Ã¢ÂÅ’ Failed to send simple email to {}: {}", toEmail, e.getMessage());
         }
     }
 }

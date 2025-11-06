@@ -110,7 +110,7 @@ public class OvertimeRequestController {
      * {
      *   "workDate": "2025-11-15",
      *   "workShiftId": "WKS_NIGHT_01",
-     *   "reason": "Hoàn thành sổ sách tối"
+     *   "reason": "HoÃƒÂ n thÃƒÂ nh sÃ¡Â»â€¢ sÃƒÂ¡ch tÃ¡Â»â€˜i"
      * }
      * 
      * Example Request Body (Admin creates for employee):
@@ -118,7 +118,7 @@ public class OvertimeRequestController {
      *   "employeeId": 5,
      *   "workDate": "2025-11-15",
      *   "workShiftId": "WKS_NIGHT_01",
-     *   "reason": "Hoàn thành sổ sách tối"
+     *   "reason": "HoÃƒÂ n thÃƒÂ nh sÃ¡Â»â€¢ sÃƒÂ¡ch tÃ¡Â»â€˜i"
      * }
      * 
      * Validations:
@@ -169,13 +169,13 @@ public class OvertimeRequestController {
      * Reject:
      * {
      *   "status": "REJECTED",
-     *   "reason": "Không đủ ngân sách."
+     *   "reason": "KhÃƒÂ´ng Ã„â€˜Ã¡Â»Â§ ngÃƒÂ¢n sÃƒÂ¡ch."
      * }
      * 
      * Cancel:
      * {
      *   "status": "CANCELLED",
-     *   "reason": "Thay đổi kế hoạch."
+     *   "reason": "Thay Ã„â€˜Ã¡Â»â€¢i kÃ¡ÂºÂ¿ hoÃ¡ÂºÂ¡ch."
      * }
      * 
      * Business Rules:

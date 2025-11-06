@@ -6,6 +6,6 @@ package com.dental.clinic.management.exception.fixed_registration;
 public class EmployeeIdRequiredException extends RuntimeException {
 
     public EmployeeIdRequiredException() {
-        super("Vui lòng cung cấp employee_id để xem.");
+        super("Vui lÃƒÂ²ng cung cÃ¡ÂºÂ¥p employee_id Ã„â€˜Ã¡Â»Æ’ xem.");
     }
 }

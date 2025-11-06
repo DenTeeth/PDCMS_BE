@@ -94,7 +94,7 @@ public class EmployeeShiftController {
                         // return 403
                         if (employeeId != null && !employeeId.equals(currentEmployeeId)) {
                                 throw new org.springframework.security.access.AccessDeniedException(
-                                                "Không tìm thấy tài nguyên hoặc bạn không có quyền truy cập.");
+                                                "KhÃƒÂ´ng tÃƒÂ¬m thÃ¡ÂºÂ¥y tÃƒÂ i nguyÃƒÂªn hoÃ¡ÂºÂ·c bÃ¡ÂºÂ¡n khÃƒÂ´ng cÃƒÂ³ quyÃ¡Â»Ân truy cÃ¡ÂºÂ­p.");
                         }
                         // Auto-set to current employee for VIEW_SHIFTS_OWN users
                         effectiveEmployeeId = currentEmployeeId;

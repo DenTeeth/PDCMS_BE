@@ -30,16 +30,16 @@ public class AdminLeaveBalanceController {
 
     /**
      * GET /api/v1/admin/leave-balances
-     * Lấy số dư phép của TẤT CẢ nhân viên (Admin Dashboard)
+     * LÃ¡ÂºÂ¥y sÃ¡Â»â€˜ dÃ†Â° phÃƒÂ©p cÃ¡Â»Â§a TÃ¡ÂºÂ¤T CÃ¡ÂºÂ¢ nhÃƒÂ¢n viÃƒÂªn (Admin Dashboard)
      *
      * Authorization: VIEW_LEAVE_BALANCE_ALL
      *
      * Query Params:
-     * - cycle_year (integer, optional): Lọc theo năm. Mặc định là năm hiện tại
-     * - time_off_type_id (string, optional): Lọc theo một loại phép cụ thể (ví dụ: ANNUAL_LEAVE)
+     * - cycle_year (integer, optional): LÃ¡Â»Âc theo nÃ„Æ’m. MÃ¡ÂºÂ·c Ã„â€˜Ã¡Â»â€¹nh lÃƒÂ  nÃ„Æ’m hiÃ¡Â»â€¡n tÃ¡ÂºÂ¡i
+     * - time_off_type_id (string, optional): LÃ¡Â»Âc theo mÃ¡Â»â„¢t loÃ¡ÂºÂ¡i phÃƒÂ©p cÃ¡Â»Â¥ thÃ¡Â»Æ’ (vÃƒÂ­ dÃ¡Â»Â¥: ANNUAL_LEAVE)
      *
      * Response:
-     * - 200 OK: Trả về danh sách "ví phép" của TẤT CẢ nhân viên
+     * - 200 OK: TrÃ¡ÂºÂ£ vÃ¡Â»Â danh sÃƒÂ¡ch "vÃƒÂ­ phÃƒÂ©p" cÃ¡Â»Â§a TÃ¡ÂºÂ¤T CÃ¡ÂºÂ¢ nhÃƒÂ¢n viÃƒÂªn
      *
      * Response Body:
      * {
@@ -50,10 +50,10 @@ public class AdminLeaveBalanceController {
      *   "data": [
      *     {
      *       "employee_id": 5,
-     *       "employee_name": "Hoàng Văn Tuấn",
+     *       "employee_name": "HoÃƒÂ ng VÃ„Æ’n TuÃ¡ÂºÂ¥n",
      *       "balances": [
      *         {
-     *           "time_off_type_name": "Nghỉ phép năm",
+     *           "time_off_type_name": "NghÃ¡Â»â€° phÃƒÂ©p nÃ„Æ’m",
      *           "total_days_allowed": 12.0,
      *           "days_taken": 3.5,
      *           "days_remaining": 8.5
@@ -88,15 +88,15 @@ public class AdminLeaveBalanceController {
 
     /**
      * GET /api/v1/admin/employees/{employee_id}/leave-balances
-     * Lấy số dư phép của một nhân viên
+     * LÃ¡ÂºÂ¥y sÃ¡Â»â€˜ dÃ†Â° phÃƒÂ©p cÃ¡Â»Â§a mÃ¡Â»â„¢t nhÃƒÂ¢n viÃƒÂªn
      *
      * Authorization: VIEW_LEAVE_BALANCE_ALL
      *
      * Query Params:
-     * - cycle_year (integer, optional): Năm muốn xem. Nếu để trống, mặc định là năm hiện tại
+     * - cycle_year (integer, optional): NÃ„Æ’m muÃ¡Â»â€˜n xem. NÃ¡ÂºÂ¿u Ã„â€˜Ã¡Â»Æ’ trÃ¡Â»â€˜ng, mÃ¡ÂºÂ·c Ã„â€˜Ã¡Â»â€¹nh lÃƒÂ  nÃ„Æ’m hiÃ¡Â»â€¡n tÃ¡ÂºÂ¡i
      *
      * Response:
-     * - 200 OK: Trả về danh sách "ví phép" của nhân viên
+     * - 200 OK: TrÃ¡ÂºÂ£ vÃ¡Â»Â danh sÃƒÂ¡ch "vÃƒÂ­ phÃƒÂ©p" cÃ¡Â»Â§a nhÃƒÂ¢n viÃƒÂªn
      * - 404 NOT_FOUND: EMPLOYEE_NOT_FOUND
      *
      * Response Body:
@@ -108,7 +108,7 @@ public class AdminLeaveBalanceController {
      *       "balance_id": 101,
      *       "time_off_type": {
      *         "type_id": "ANNUAL_LEAVE",
-     *         "type_name": "Nghỉ phép năm",
+     *         "type_name": "NghÃ¡Â»â€° phÃƒÂ©p nÃ„Æ’m",
      *         "is_paid": true
      *       },
      *       "total_days_allowed": 12.0,
@@ -141,7 +141,7 @@ public class AdminLeaveBalanceController {
 
     /**
      * POST /api/v1/admin/leave-balances/adjust
-     * Điều chỉnh số dư phép (Cộng/Trừ thủ công)
+     * Ã„ÂiÃ¡Â»Âu chÃ¡Â»â€°nh sÃ¡Â»â€˜ dÃ†Â° phÃƒÂ©p (CÃ¡Â»â„¢ng/TrÃ¡Â»Â« thÃ¡Â»Â§ cÃƒÂ´ng)
      *
      * Authorization: ADJUST_LEAVE_BALANCE
      *
@@ -150,22 +150,22 @@ public class AdminLeaveBalanceController {
      *   "employee_id": 5,
      *   "time_off_type_id": "ANNUAL_LEAVE",
      *   "cycle_year": 2025,
-     *   "change_amount": 1.5,    // Số dương: cộng, Số âm: trừ
-     *   "notes": "Thưởng 1.5 ngày phép do hoàn thành xuất sắc dự án."
+     *   "change_amount": 1.5,    // SÃ¡Â»â€˜ dÃ†Â°Ã†Â¡ng: cÃ¡Â»â„¢ng, SÃ¡Â»â€˜ ÃƒÂ¢m: trÃ¡Â»Â«
+     *   "notes": "ThÃ†Â°Ã¡Â»Å¸ng 1.5 ngÃƒÂ y phÃƒÂ©p do hoÃƒÂ n thÃƒÂ nh xuÃ¡ÂºÂ¥t sÃ¡ÂºÂ¯c dÃ¡Â»Â± ÃƒÂ¡n."
      * }
      *
      * Business Logic:
-     * - Validate employee_id và time_off_type_id phải tồn tại
-     * - Tìm balance_id tương ứng trong employee_leave_balances
-     * - Nếu không tìm thấy: Tự động tạo record mới (với total_days_allowed = 0, days_taken = 0)
-     * - Nếu change_amount > 0: UPDATE total_days_allowed = total_days_allowed + change_amount
-     * - Nếu change_amount < 0: UPDATE days_taken = days_taken + abs(change_amount)
-     * - Kiểm tra số dư mới (total_days_allowed - days_taken) >= 0
-     * - INSERT vào leave_balance_history
+     * - Validate employee_id vÃƒÂ  time_off_type_id phÃ¡ÂºÂ£i tÃ¡Â»â€œn tÃ¡ÂºÂ¡i
+     * - TÃƒÂ¬m balance_id tÃ†Â°Ã†Â¡ng Ã¡Â»Â©ng trong employee_leave_balances
+     * - NÃ¡ÂºÂ¿u khÃƒÂ´ng tÃƒÂ¬m thÃ¡ÂºÂ¥y: TÃ¡Â»Â± Ã„â€˜Ã¡Â»â„¢ng tÃ¡ÂºÂ¡o record mÃ¡Â»â€ºi (vÃ¡Â»â€ºi total_days_allowed = 0, days_taken = 0)
+     * - NÃ¡ÂºÂ¿u change_amount > 0: UPDATE total_days_allowed = total_days_allowed + change_amount
+     * - NÃ¡ÂºÂ¿u change_amount < 0: UPDATE days_taken = days_taken + abs(change_amount)
+     * - KiÃ¡Â»Æ’m tra sÃ¡Â»â€˜ dÃ†Â° mÃ¡Â»â€ºi (total_days_allowed - days_taken) >= 0
+     * - INSERT vÃƒÂ o leave_balance_history
      *
      * Response:
-     * - 200 OK: Điều chỉnh thành công
-     * - 400 BAD_REQUEST: INVALID_BALANCE (số dư âm sau điều chỉnh)
+     * - 200 OK: Ã„ÂiÃ¡Â»Âu chÃ¡Â»â€°nh thÃƒÂ nh cÃƒÂ´ng
+     * - 400 BAD_REQUEST: INVALID_BALANCE (sÃ¡Â»â€˜ dÃ†Â° ÃƒÂ¢m sau Ã„â€˜iÃ¡Â»Âu chÃ¡Â»â€°nh)
      * - 404 NOT_FOUND: RELATED_RESOURCE_NOT_FOUND
      *
      * @param request the adjustment request
@@ -181,7 +181,7 @@ public class AdminLeaveBalanceController {
         balanceService.adjustLeaveBalance(request);
 
         return ResponseEntity.ok(Map.of(
-                "message", "Điều chỉnh số dư phép thành công",
+                "message", "Ã„ÂiÃ¡Â»Âu chÃ¡Â»â€°nh sÃ¡Â»â€˜ dÃ†Â° phÃƒÂ©p thÃƒÂ nh cÃƒÂ´ng",
                 "employee_id", request.getEmployeeId(),
                 "time_off_type_id", request.getTimeOffTypeId(),
                 "cycle_year", request.getCycleYear(),
@@ -191,7 +191,7 @@ public class AdminLeaveBalanceController {
 
     /**
      * POST /api/v1/admin/leave-balances/annual-reset
-     * CRON JOB - Tự động reset ngày nghỉ khi sang năm mới
+     * CRON JOB - TÃ¡Â»Â± Ã„â€˜Ã¡Â»â„¢ng reset ngÃƒÂ y nghÃ¡Â»â€° khi sang nÃ„Æ’m mÃ¡Â»â€ºi
      *
      * Authorization: ADMIN only
      *
@@ -202,20 +202,20 @@ public class AdminLeaveBalanceController {
      *   "default_allowance": 12.0
      * }
      *
-     * Logic của Job (chạy ngầm):
-     * - Lấy danh sách tất cả nhân viên đang is_active = true
-     * - Lặp qua từng employee_id:
-     *   - Kiểm tra xem đã có employee_leave_balances cho apply_to_type_id và cycle_year chưa
-     *   - Nếu CHƯA có:
-     *     - INSERT record mới (total_days_allowed = default_allowance, days_taken = 0)
-     *     - INSERT vào leave_balance_history (reason: 'ANNUAL_RESET')
-     *   - Nếu CÓ RỒI:
-     *     - Bỏ qua (log "Đã tồn tại") để tránh cộng dồn phép
+     * Logic cÃ¡Â»Â§a Job (chÃ¡ÂºÂ¡y ngÃ¡ÂºÂ§m):
+     * - LÃ¡ÂºÂ¥y danh sÃƒÂ¡ch tÃ¡ÂºÂ¥t cÃ¡ÂºÂ£ nhÃƒÂ¢n viÃƒÂªn Ã„â€˜ang is_active = true
+     * - LÃ¡ÂºÂ·p qua tÃ¡Â»Â«ng employee_id:
+     *   - KiÃ¡Â»Æ’m tra xem Ã„â€˜ÃƒÂ£ cÃƒÂ³ employee_leave_balances cho apply_to_type_id vÃƒÂ  cycle_year chÃ†Â°a
+     *   - NÃ¡ÂºÂ¿u CHÃ†Â¯A cÃƒÂ³:
+     *     - INSERT record mÃ¡Â»â€ºi (total_days_allowed = default_allowance, days_taken = 0)
+     *     - INSERT vÃƒÂ o leave_balance_history (reason: 'ANNUAL_RESET')
+     *   - NÃ¡ÂºÂ¿u CÃƒâ€œ RÃ¡Â»â€™I:
+     *     - BÃ¡Â»Â qua (log "Ã„ÂÃƒÂ£ tÃ¡Â»â€œn tÃ¡ÂºÂ¡i") Ã„â€˜Ã¡Â»Æ’ trÃƒÂ¡nh cÃ¡Â»â„¢ng dÃ¡Â»â€œn phÃƒÂ©p
      *
      * Response:
-     * - 200 OK: Reset thành công
+     * - 200 OK: Reset thÃƒÂ nh cÃƒÂ´ng
      * - 400 BAD_REQUEST: INVALID_YEAR
-     * - 409 CONFLICT: JOB_ALREADY_RUN (nếu chạy lại cho cùng năm)
+     * - 409 CONFLICT: JOB_ALREADY_RUN (nÃ¡ÂºÂ¿u chÃ¡ÂºÂ¡y lÃ¡ÂºÂ¡i cho cÃƒÂ¹ng nÃ„Æ’m)
      *
      * @param request the annual reset request
      * @return success message with statistics

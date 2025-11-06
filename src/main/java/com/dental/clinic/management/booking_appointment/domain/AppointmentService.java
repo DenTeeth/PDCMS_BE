@@ -6,8 +6,8 @@ import java.util.Objects;
 
 /**
  * AppointmentService Entity
- * Junction table: Một lịch hẹn có thể bao gồm nhiều dịch vụ
- * VD: "Cạo vôi" + "Trám răng" trong cùng 1 ca
+ * Junction table: MÃ¡Â»â„¢t lÃ¡Â»â€¹ch hÃ¡ÂºÂ¹n cÃƒÂ³ thÃ¡Â»Æ’ bao gÃ¡Â»â€œm nhiÃ¡Â»Âu dÃ¡Â»â€¹ch vÃ¡Â»Â¥
+ * VD: "CÃ¡ÂºÂ¡o vÃƒÂ´i" + "TrÃƒÂ¡m rÃ„Æ’ng" trong cÃƒÂ¹ng 1 ca
  */
 @Entity
 @Table(name = "appointment_services")

@@ -19,7 +19,7 @@ import java.util.List;
  * This is the template that defines which shifts an employee works on which
  * days of the week.
  *
- * Schema V14 - Luồng 1: Lịch Cố định
+ * Schema V14 - LuÃ¡Â»â€œng 1: LÃ¡Â»â€¹ch CÃ¡Â»â€˜ Ã„â€˜Ã¡Â»â€¹nh
  */
 @Entity
 @Table(name = "fixed_shift_registrations", indexes = {

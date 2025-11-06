@@ -75,7 +75,7 @@ public class CreateAppointmentRequest {
 
     /**
      * Optional notes from receptionist
-     * Example: "Bệnh nhân có tiền sử cao huyết áp"
+     * Example: "BÃ¡Â»â€¡nh nhÃƒÂ¢n cÃƒÂ³ tiÃ¡Â»Ân sÃ¡Â»Â­ cao huyÃ¡ÂºÂ¿t ÃƒÂ¡p"
      */
     private String notes;
 }

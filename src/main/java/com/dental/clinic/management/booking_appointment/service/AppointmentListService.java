@@ -147,10 +147,10 @@ public class AppointmentListService {
                     startDate,
                     endDate,
                     statuses,
-                    pageableJpql); // ✅ Use JPQL pageable (camelCase)
+                    pageableJpql); // Ã¢Å“â€¦ Use JPQL pageable (camelCase)
         } else if (criteria.getCurrentUserEmployeeId() != null) {
             // Employee view: Where they are primary doctor OR participant (JPQL query)
-            // This includes: Doctor, Nurse/Assistant, OBSERVER (thực tập sinh)
+            // This includes: Doctor, Nurse/Assistant, OBSERVER (thÃ¡Â»Â±c tÃ¡ÂºÂ­p sinh)
             log.info("Employee view: Filtering by employeeId={} (includes OBSERVER role)",
                     criteria.getCurrentUserEmployeeId());
             appointments = appointmentRepository.findByEmployeeIdWithFilters(
@@ -158,7 +158,7 @@ public class AppointmentListService {
                     startDate,
                     endDate,
                     statuses,
-                    pageableJpql); // ✅ Use JPQL pageable (camelCase)
+                    pageableJpql); // Ã¢Å“â€¦ Use JPQL pageable (camelCase)
         } else {
             // Admin/Receptionist view: All appointments with optional filters (NATIVE
             // queries)
@@ -180,19 +180,19 @@ public class AppointmentListService {
                         endDate,
                         statusArray,
                         criteria.getSearchCode(),
-                        pageableNative); // ✅ Use NATIVE pageable (snake_case)
+                        pageableNative); // Ã¢Å“â€¦ Use NATIVE pageable (snake_case)
             } else {
                 log.info("Executing search with individual filters");
                 appointments = appointmentRepository.findByFilters(
                         startDate,
                         endDate,
-                        statusArray, // ✅ Pass String[] instead of List
+                        statusArray, // Ã¢Å“â€¦ Pass String[] instead of List
                         null, // patientId - TODO: resolve from patientCode if needed
                         null, // employeeId - TODO: resolve from employeeCode if needed
                         criteria.getRoomCode(),
-                        criteria.getPatientName(), // ✅ NEW: Search by name
-                        criteria.getPatientPhone(), // ✅ NEW: Search by phone
-                        pageableNative); // ✅ Use NATIVE pageable (snake_case)
+                        criteria.getPatientName(), // Ã¢Å“â€¦ NEW: Search by name
+                        criteria.getPatientPhone(), // Ã¢Å“â€¦ NEW: Search by phone
+                        pageableNative); // Ã¢Å“â€¦ Use NATIVE pageable (snake_case)
             }
         }
 
@@ -243,8 +243,8 @@ public class AppointmentListService {
      * If datePreset is set, it OVERRIDES manual dateFrom/dateTo
      *
      * Example:
-     * - datePreset=TODAY → dateFrom=2025-11-04, dateTo=2025-11-04
-     * - datePreset=THIS_WEEK → dateFrom=Monday, dateTo=Sunday
+     * - datePreset=TODAY Ã¢â€ â€™ dateFrom=2025-11-04, dateTo=2025-11-04
+     * - datePreset=THIS_WEEK Ã¢â€ â€™ dateFrom=Monday, dateTo=Sunday
      */
     private void applyDatePreset(AppointmentFilterCriteria criteria) {
         if (criteria.getDatePreset() != null) {

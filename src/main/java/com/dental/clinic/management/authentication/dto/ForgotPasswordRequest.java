@@ -13,8 +13,8 @@ import lombok.NoArgsConstructor;
 @Schema(description = "Request to initiate password reset")
 public class ForgotPasswordRequest {
 
-    @NotBlank(message = "Email không được để trống")
-    @Email(message = "Email không hợp lệ")
+    @NotBlank(message = "Email khÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c Ã„â€˜Ã¡Â»Æ’ trÃ¡Â»â€˜ng")
+    @Email(message = "Email khÃƒÂ´ng hÃ¡Â»Â£p lÃ¡Â»â€¡")
     @Schema(description = "Email address for password reset", example = "user@example.com")
     private String email;
 }

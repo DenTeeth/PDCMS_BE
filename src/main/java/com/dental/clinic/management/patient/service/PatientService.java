@@ -165,10 +165,10 @@ public class PatientService {
     /**
      * Create new patient with account
      *
-     * FLOW: Tạo Patient → Tự động tạo Account mới
-     * - Admin/Receptionist tạo patient
-     * - System tự động tạo account với username/password
-     * - Patient có thể đăng nhập xem hồ sơ
+     * FLOW: TÃ¡ÂºÂ¡o Patient Ã¢â€ â€™ TÃ¡Â»Â± Ã„â€˜Ã¡Â»â„¢ng tÃ¡ÂºÂ¡o Account mÃ¡Â»â€ºi
+     * - Admin/Receptionist tÃ¡ÂºÂ¡o patient
+     * - System tÃ¡Â»Â± Ã„â€˜Ã¡Â»â„¢ng tÃ¡ÂºÂ¡o account vÃ¡Â»â€ºi username/password
+     * - Patient cÃƒÂ³ thÃ¡Â»Æ’ Ã„â€˜Ã„Æ’ng nhÃ¡ÂºÂ­p xem hÃ¡Â»â€œ sÃ†Â¡
      *
      * @param request patient information including username/password
      * @return PatientInfoResponse
@@ -230,7 +230,7 @@ public class PatientService {
 
             // Send verification email asynchronously
             emailService.sendVerificationEmail(account.getEmail(), account.getUsername(), verificationToken.getToken());
-            log.info("✅ Verification email sent to: {}", account.getEmail());
+            log.info("Ã¢Å“â€¦ Verification email sent to: {}", account.getEmail());
         } else {
             log.debug("Creating patient without account (no username/password provided)");
         }

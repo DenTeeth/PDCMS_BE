@@ -21,7 +21,7 @@ public class InvalidShiftDurationException extends ErrorResponseException {
     }
 
     public InvalidShiftDurationException(int actualHours) {
-        this(String.format("Thời lượng ca làm việc không hợp lệ: %d giờ. Yêu cầu: 3-8 giờ", actualHours));
+        this(String.format("ThÃ¡Â»Âi lÃ†Â°Ã¡Â»Â£ng ca lÃƒÂ m viÃ¡Â»â€¡c khÃƒÂ´ng hÃ¡Â»Â£p lÃ¡Â»â€¡: %d giÃ¡Â»Â. YÃƒÂªu cÃ¡ÂºÂ§u: 3-8 giÃ¡Â»Â", actualHours));
     }
 
     private static ProblemDetail asProblemDetail(String message) {

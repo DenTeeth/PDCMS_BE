@@ -14,7 +14,7 @@ public class CorsConfig {
         public CorsConfigurationSource corsConfigurationSource() {
                 CorsConfiguration configuration = new CorsConfiguration();
 
-                // Production và Development origins
+                // Production vÃƒÂ  Development origins
                 configuration.setAllowedOrigins(Arrays.asList(
                                 "http://localhost:3000" // Development
                 // "https://yourdomain.com", // Production
@@ -33,7 +33,7 @@ public class CorsConfig {
 
                 configuration.setExposedHeaders(Arrays.asList(
                                 "Authorization",
-                                "Set-Cookie" // Cho phép frontend đọc Set-Cookie
+                                "Set-Cookie" // Cho phÃƒÂ©p frontend Ã„â€˜Ã¡Â»Âc Set-Cookie
                 ));
 
                 configuration.setAllowCredentials(true);

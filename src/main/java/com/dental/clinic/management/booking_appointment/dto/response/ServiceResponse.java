@@ -23,10 +23,10 @@ public class ServiceResponse {
     @Schema(description = "Service code", example = "SV-CAOVOI")
     private String serviceCode;
 
-    @Schema(description = "Service name", example = "Cạo vôi răng và Đánh bóng")
+    @Schema(description = "Service name", example = "CÃ¡ÂºÂ¡o vÃƒÂ´i rÃ„Æ’ng vÃƒÂ  Ã„ÂÃƒÂ¡nh bÃƒÂ³ng")
     private String serviceName;
 
-    @Schema(description = "Service description", example = "Lấy sạch vôi răng...")
+    @Schema(description = "Service description", example = "LÃ¡ÂºÂ¥y sÃ¡ÂºÂ¡ch vÃƒÂ´i rÃ„Æ’ng...")
     private String description;
 
     @Schema(description = "Default duration in minutes", example = "30")
@@ -41,7 +41,7 @@ public class ServiceResponse {
     @Schema(description = "Specialization ID", example = "1")
     private Integer specializationId;
 
-    @Schema(description = "Specialization name", example = "Chỉnh nha")
+    @Schema(description = "Specialization name", example = "ChÃ¡Â»â€°nh nha")
     private String specializationName;
 
     @Schema(description = "Active status", example = "true")

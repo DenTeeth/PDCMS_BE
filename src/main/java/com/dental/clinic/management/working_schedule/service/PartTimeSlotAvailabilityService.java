@@ -72,15 +72,15 @@ public class PartTimeSlotAvailabilityService {
      * - Doctor B registered: 9/11 to 30/11 (covers all 6 days)
      * 
      * Check availability 9/11-16/11:
-     * - 14/11 (Fri): Doctor A + Doctor B = 2/2 → FULL
-     * - 15/11 (Sat): Doctor A + Doctor B = 2/2 → FULL
+     * - 14/11 (Fri): Doctor A + Doctor B = 2/2 Ã¢â€ â€™ FULL
+     * - 15/11 (Sat): Doctor A + Doctor B = 2/2 Ã¢â€ â€™ FULL
      * Result: NOT AVAILABLE (at least one day is full)
      * 
      * Check availability 17/11-30/11:
-     * - 21/11 (Fri): Only Doctor B = 1/2 → HAS SPACE
-     * - 22/11 (Sat): Only Doctor B = 1/2 → HAS SPACE
-     * - 28/11 (Fri): Only Doctor B = 1/2 → HAS SPACE
-     * - 29/11 (Sat): Only Doctor B = 1/2 → HAS SPACE
+     * - 21/11 (Fri): Only Doctor B = 1/2 Ã¢â€ â€™ HAS SPACE
+     * - 22/11 (Sat): Only Doctor B = 1/2 Ã¢â€ â€™ HAS SPACE
+     * - 28/11 (Fri): Only Doctor B = 1/2 Ã¢â€ â€™ HAS SPACE
+     * - 29/11 (Sat): Only Doctor B = 1/2 Ã¢â€ â€™ HAS SPACE
      * Result: AVAILABLE (all days have space)
      * 
      * @param slotId Slot ID
@@ -311,9 +311,9 @@ public class PartTimeSlotAvailabilityService {
             // Vietnamese month names
             String monthName = getVietnameseMonthName(currentMonth.getMonthValue());
             if (availableDates == 0) {
-                monthStatuses.add(monthName + " ĐẦY");
+                monthStatuses.add(monthName + " Ã„ÂÃ¡ÂºÂ¦Y");
             } else {
-                monthStatuses.add(monthName + " (" + availableDates + "/" + totalDates + " còn trống)");
+                monthStatuses.add(monthName + " (" + availableDates + "/" + totalDates + " cÃƒÂ²n trÃ¡Â»â€˜ng)");
             }
 
             currentMonth = currentMonth.plusMonths(1);
@@ -405,18 +405,18 @@ public class PartTimeSlotAvailabilityService {
      */
     private String getVietnameseMonthName(int monthValue) {
         switch (monthValue) {
-            case 1: return "T1";   // Tháng 1 (January)
-            case 2: return "T2";   // Tháng 2 (February)
-            case 3: return "T3";   // Tháng 3 (March)
-            case 4: return "T4";   // Tháng 4 (April)
-            case 5: return "T5";   // Tháng 5 (May)
-            case 6: return "T6";   // Tháng 6 (June)
-            case 7: return "T7";   // Tháng 7 (July)
-            case 8: return "T8";   // Tháng 8 (August)
-            case 9: return "T9";   // Tháng 9 (September)
-            case 10: return "T10"; // Tháng 10 (October)
-            case 11: return "T11"; // Tháng 11 (November)
-            case 12: return "T12"; // Tháng 12 (December)
+            case 1: return "T1";   // ThÃƒÂ¡ng 1 (January)
+            case 2: return "T2";   // ThÃƒÂ¡ng 2 (February)
+            case 3: return "T3";   // ThÃƒÂ¡ng 3 (March)
+            case 4: return "T4";   // ThÃƒÂ¡ng 4 (April)
+            case 5: return "T5";   // ThÃƒÂ¡ng 5 (May)
+            case 6: return "T6";   // ThÃƒÂ¡ng 6 (June)
+            case 7: return "T7";   // ThÃƒÂ¡ng 7 (July)
+            case 8: return "T8";   // ThÃƒÂ¡ng 8 (August)
+            case 9: return "T9";   // ThÃƒÂ¡ng 9 (September)
+            case 10: return "T10"; // ThÃƒÂ¡ng 10 (October)
+            case 11: return "T11"; // ThÃƒÂ¡ng 11 (November)
+            case 12: return "T12"; // ThÃƒÂ¡ng 12 (December)
             default: return "T" + monthValue;
         }
     }

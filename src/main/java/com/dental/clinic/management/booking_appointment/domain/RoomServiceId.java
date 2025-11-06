@@ -21,9 +21,9 @@ import java.util.Objects;
  * <b>Business Context:</b>
  * </p>
  * <ul>
- * <li>Example: "Phòng Implant P-04" can do "Cắm trụ Implant" and "Nâng
+ * <li>Example: "PhÃƒÂ²ng Implant P-04" can do "CÃ¡ÂºÂ¯m trÃ¡Â»Â¥ Implant" and "NÃƒÂ¢ng
  * xoang"</li>
- * <li>Example: "Dịch vụ Cạo vôi" can be performed in "P-01", "P-02",
+ * <li>Example: "DÃ¡Â»â€¹ch vÃ¡Â»Â¥ CÃ¡ÂºÂ¡o vÃƒÂ´i" can be performed in "P-01", "P-02",
  * "P-03"</li>
  * </ul>
  *

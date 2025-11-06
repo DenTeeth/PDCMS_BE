@@ -86,7 +86,7 @@ public class AppointmentAvailabilityService {
             return AvailableTimesResponse.builder()
                     .totalDurationNeeded(totalDuration)
                     .availableSlots(Collections.emptyList())
-                    .message("Không có phòng nào hỗ trợ các dịch vụ này")
+                    .message("KhÃƒÂ´ng cÃƒÂ³ phÃƒÂ²ng nÃƒÂ o hÃ¡Â»â€” trÃ¡Â»Â£ cÃƒÂ¡c dÃ¡Â»â€¹ch vÃ¡Â»Â¥ nÃƒÂ y")
                     .build();
         }
 

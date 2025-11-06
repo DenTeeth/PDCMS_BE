@@ -18,7 +18,7 @@ public class RegistrationNotFoundException extends ErrorResponseException {
 
     /**
      * Constructor for Integer registration ID (fixed_shift_registrations: INTEGER).
-     * Added to support Luồng 1 fixed shift registrations.
+     * Added to support LuÃ¡Â»â€œng 1 fixed shift registrations.
      */
     public RegistrationNotFoundException(Integer registrationId) {
         super(HttpStatus.NOT_FOUND, createProblemDetail(String.valueOf(registrationId)), null);
@@ -26,7 +26,7 @@ public class RegistrationNotFoundException extends ErrorResponseException {
 
     private static ProblemDetail createProblemDetail(String registrationId) {
         String message = String.format(
-                "Không tìm thấy đăng ký với ID: %s.",
+                "KhÃƒÂ´ng tÃƒÂ¬m thÃ¡ÂºÂ¥y Ã„â€˜Ã„Æ’ng kÃƒÂ½ vÃ¡Â»â€ºi ID: %s.",
                 registrationId);
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, message);

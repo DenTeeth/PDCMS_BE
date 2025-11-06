@@ -49,7 +49,7 @@ public class RoomController {
     @GetMapping
     @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_ROOM + "')")
     @Operation(summary = "Get all rooms with filters", description = "Retrieve all rooms with pagination, sorting and filters")
-    @ApiMessage("Lấy danh sách phòng thành công")
+    @ApiMessage("LÃ¡ÂºÂ¥y danh sÃƒÂ¡ch phÃƒÂ²ng thÃƒÂ nh cÃƒÂ´ng")
     public ResponseEntity<Page<RoomResponse>> getAllRooms(
             @Parameter(description = "Page number (0-indexed)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size,
@@ -72,7 +72,7 @@ public class RoomController {
     @GetMapping("/active")
     @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_ROOM + "')")
     @Operation(summary = "Get all active rooms", description = "Retrieve all active rooms without pagination (for dropdowns)")
-    @ApiMessage("Lấy danh sách phòng đang hoạt động thành công")
+    @ApiMessage("LÃ¡ÂºÂ¥y danh sÃƒÂ¡ch phÃƒÂ²ng Ã„â€˜ang hoÃ¡ÂºÂ¡t Ã„â€˜Ã¡Â»â„¢ng thÃƒÂ nh cÃƒÂ´ng")
     public ResponseEntity<List<RoomResponse>> getAllActiveRooms() {
         List<RoomResponse> rooms = roomService.getAllActiveRooms();
         return ResponseEntity.ok(rooms);
@@ -87,7 +87,7 @@ public class RoomController {
     @GetMapping("/{roomId}")
     @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_ROOM + "')")
     @Operation(summary = "Get room by ID", description = "Retrieve room details by room ID")
-    @ApiMessage("Lấy thông tin phòng thành công")
+    @ApiMessage("LÃ¡ÂºÂ¥y thÃƒÂ´ng tin phÃƒÂ²ng thÃƒÂ nh cÃƒÂ´ng")
     public ResponseEntity<RoomResponse> getRoomById(
             @Parameter(description = "Room ID") @PathVariable String roomId) {
 
@@ -104,7 +104,7 @@ public class RoomController {
     @GetMapping("/code/{roomCode}")
     @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_ROOM + "')")
     @Operation(summary = "Get room by code", description = "Retrieve room details by room code (business key)")
-    @ApiMessage("Lấy thông tin phòng theo mã thành công")
+    @ApiMessage("LÃ¡ÂºÂ¥y thÃƒÂ´ng tin phÃƒÂ²ng theo mÃƒÂ£ thÃƒÂ nh cÃƒÂ´ng")
     public ResponseEntity<RoomResponse> getRoomByCode(
             @Parameter(description = "Room code", example = "P-01") @PathVariable String roomCode) {
 
@@ -121,7 +121,7 @@ public class RoomController {
     @PostMapping
     @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + CREATE_ROOM + "')")
     @Operation(summary = "Create new room", description = "Create a new room/chair in the clinic")
-    @ApiMessage("Tạo phòng mới thành công")
+    @ApiMessage("TÃ¡ÂºÂ¡o phÃƒÂ²ng mÃ¡Â»â€ºi thÃƒÂ nh cÃƒÂ´ng")
     public ResponseEntity<RoomResponse> createRoom(@Valid @RequestBody CreateRoomRequest request) {
         RoomResponse room = roomService.createRoom(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(room);
@@ -137,7 +137,7 @@ public class RoomController {
     @PutMapping("/{roomId}")
     @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + UPDATE_ROOM + "')")
     @Operation(summary = "Update room", description = "Update room information")
-    @ApiMessage("Cập nhật thông tin phòng thành công")
+    @ApiMessage("CÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t thÃƒÂ´ng tin phÃƒÂ²ng thÃƒÂ nh cÃƒÂ´ng")
     public ResponseEntity<RoomResponse> updateRoom(
             @Parameter(description = "Room ID") @PathVariable String roomId,
             @Valid @RequestBody UpdateRoomRequest request) {
@@ -156,7 +156,7 @@ public class RoomController {
     @DeleteMapping("/{roomId}/permanent")
     @PreAuthorize("hasRole('" + ADMIN + "')")
     @Operation(summary = "Permanently delete room", description = "Permanently delete a room from database (Admin only)")
-    @ApiMessage("Xóa vĩnh viễn phòng thành công")
+    @ApiMessage("XÃƒÂ³a vÃ„Â©nh viÃ¡Â»â€¦n phÃƒÂ²ng thÃƒÂ nh cÃƒÂ´ng")
     public ResponseEntity<Void> permanentlyDeleteRoom(
             @Parameter(description = "Room ID") @PathVariable String roomId) {
 
@@ -173,7 +173,7 @@ public class RoomController {
     @DeleteMapping("/{roomId}")
     @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + DELETE_ROOM + "')")
     @Operation(summary = "Delete room (soft delete)", description = "Deactivate a room by setting isActive to false")
-    @ApiMessage("Xóa phòng thành công")
+    @ApiMessage("XÃƒÂ³a phÃƒÂ²ng thÃƒÂ nh cÃƒÂ´ng")
     public ResponseEntity<Void> deleteRoom(
             @Parameter(description = "Room ID") @PathVariable String roomId) {
 
@@ -191,7 +191,7 @@ public class RoomController {
     @GetMapping("/{roomCode}/services")
     @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_ROOM + "')")
     @Operation(summary = "Get room services (P1.5)", description = "Retrieve all services that can be performed in a specific room")
-    @ApiMessage("Lấy danh sách dịch vụ của phòng thành công")
+    @ApiMessage("LÃ¡ÂºÂ¥y danh sÃƒÂ¡ch dÃ¡Â»â€¹ch vÃ¡Â»Â¥ cÃ¡Â»Â§a phÃƒÂ²ng thÃƒÂ nh cÃƒÂ´ng")
     public ResponseEntity<RoomServicesResponse> getRoomServices(
             @Parameter(description = "Room code (business key)", example = "P-01") @PathVariable String roomCode) {
 
@@ -211,7 +211,7 @@ public class RoomController {
     @PutMapping("/{roomCode}/services")
     @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + UPDATE_ROOM_SERVICES + "')")
     @Operation(summary = "Update room services (P1.6)", description = "Replace all services for a room. Validates that all services exist and are active.")
-    @ApiMessage("Cập nhật danh sách dịch vụ của phòng thành công")
+    @ApiMessage("CÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t danh sÃƒÂ¡ch dÃ¡Â»â€¹ch vÃ¡Â»Â¥ cÃ¡Â»Â§a phÃƒÂ²ng thÃƒÂ nh cÃƒÂ´ng")
     public ResponseEntity<RoomServicesResponse> updateRoomServices(
             @Parameter(description = "Room code (business key)", example = "P-01") @PathVariable String roomCode,
             @Valid @RequestBody UpdateRoomServicesRequest request) {

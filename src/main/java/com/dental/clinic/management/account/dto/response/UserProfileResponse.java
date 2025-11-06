@@ -21,7 +21,7 @@ public class UserProfileResponse {
     private String username;
     private String email;
     private String accountStatus;
-    private List<String> roles; // Có roles nhưng không có permissions
+    private List<String> roles; // CÃƒÂ³ roles nhÃ†Â°ng khÃƒÂ´ng cÃƒÂ³ permissions
 
     // Personal info
     private String fullName;

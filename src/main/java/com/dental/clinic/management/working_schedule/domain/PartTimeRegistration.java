@@ -60,7 +60,7 @@ public class PartTimeRegistration {
 
     /**
      * Reason for rejection (required if status = REJECTED).
-     * Example: "Không đủ nhân sự trong thời gian này"
+     * Example: "KhÃƒÂ´ng Ã„â€˜Ã¡Â»Â§ nhÃƒÂ¢n sÃ¡Â»Â± trong thÃ¡Â»Âi gian nÃƒÂ y"
      */
     @Column(name = "reason", columnDefinition = "TEXT")
     private String reason;

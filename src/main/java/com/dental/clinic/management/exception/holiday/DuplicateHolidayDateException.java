@@ -12,7 +12,7 @@ public class DuplicateHolidayDateException extends RuntimeException {
     private final String definitionId;
 
     public DuplicateHolidayDateException(LocalDate holidayDate, String definitionId) {
-        super(String.format("Ngày nghỉ đã tồn tại: %s cho định nghĩa %s", holidayDate, definitionId));
+        super(String.format("NgÃƒÂ y nghÃ¡Â»â€° Ã„â€˜ÃƒÂ£ tÃ¡Â»â€œn tÃ¡ÂºÂ¡i: %s cho Ã„â€˜Ã¡Â»â€¹nh nghÃ„Â©a %s", holidayDate, definitionId));
         this.holidayDate = holidayDate;
         this.definitionId = definitionId;
     }

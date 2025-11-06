@@ -22,13 +22,13 @@ public class InvalidStateTransitionException extends ErrorResponseException {
 
     private static ProblemDetail asProblemDetail(String requestId, RequestStatus currentStatus, RequestStatus attemptedStatus) {
         String message = String.format(
-            "Không thể cập nhật yêu cầu %s từ trạng thái %s sang %s. Yêu cầu phải ở trạng thái PENDING.",
+            "KhÃƒÂ´ng thÃ¡Â»Æ’ cÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t yÃƒÂªu cÃ¡ÂºÂ§u %s tÃ¡Â»Â« trÃ¡ÂºÂ¡ng thÃƒÂ¡i %s sang %s. YÃƒÂªu cÃ¡ÂºÂ§u phÃ¡ÂºÂ£i Ã¡Â»Å¸ trÃ¡ÂºÂ¡ng thÃƒÂ¡i PENDING.",
             requestId, currentStatus, attemptedStatus
         );
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, message);
         problemDetail.setTitle("Invalid State Transition");
         problemDetail.setProperty("code", "INVALID_STATE_TRANSITION");
-        problemDetail.setProperty("message", "Không thể cập nhật yêu cầu. Yêu cầu phải ở trạng thái PENDING.");
+        problemDetail.setProperty("message", "KhÃƒÂ´ng thÃ¡Â»Æ’ cÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t yÃƒÂªu cÃ¡ÂºÂ§u. YÃƒÂªu cÃ¡ÂºÂ§u phÃ¡ÂºÂ£i Ã¡Â»Å¸ trÃ¡ÂºÂ¡ng thÃƒÂ¡i PENDING.");
         problemDetail.setProperty("currentStatus", currentStatus.name());
         problemDetail.setProperty("attemptedStatus", attemptedStatus.name());
         return problemDetail;

@@ -16,13 +16,13 @@ import com.dental.clinic.management.employee.enums.EmploymentType;
 /**
  * DTO for creating a new employee
  *
- * FLOW: Tạo Employee → Tự động tạo Account
- * - Admin cung cấp: username, email, password + thông tin employee
- * - System tự động tạo account và employee
+ * FLOW: TÃ¡ÂºÂ¡o Employee Ã¢â€ â€™ TÃ¡Â»Â± Ã„â€˜Ã¡Â»â„¢ng tÃ¡ÂºÂ¡o Account
+ * - Admin cung cÃ¡ÂºÂ¥p: username, email, password + thÃƒÂ´ng tin employee
+ * - System tÃ¡Â»Â± Ã„â€˜Ã¡Â»â„¢ng tÃ¡ÂºÂ¡o account vÃƒÂ  employee
  */
 public class CreateEmployeeRequest {
 
-    // Account information (REQUIRED - sẽ tạo account mới)
+    // Account information (REQUIRED - sÃ¡ÂºÂ½ tÃ¡ÂºÂ¡o account mÃ¡Â»â€ºi)
     @NotBlank(message = "Username is required")
     @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
     private String username;

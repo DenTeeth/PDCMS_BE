@@ -16,15 +16,15 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class CreateShiftRequestDto {
 
-    @NotNull(message = "employee_id không được để trống")
+    @NotNull(message = "employee_id khÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c Ã„â€˜Ã¡Â»Æ’ trÃ¡Â»â€˜ng")
     @JsonProperty("employee_id")
     private Integer employeeId;
 
-    @NotNull(message = "work_date không được để trống")
+    @NotNull(message = "work_date khÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c Ã„â€˜Ã¡Â»Æ’ trÃ¡Â»â€˜ng")
     @JsonProperty("work_date")
     private LocalDate workDate;
 
-    @NotNull(message = "work_shift_id không được để trống")
+    @NotNull(message = "work_shift_id khÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c Ã„â€˜Ã¡Â»Æ’ trÃ¡Â»â€˜ng")
     @JsonProperty("work_shift_id")
     private String workShiftId;
 

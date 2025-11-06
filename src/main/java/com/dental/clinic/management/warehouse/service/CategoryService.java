@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.UUID;
+
 import java.util.stream.Collectors;
 
 /**
@@ -56,7 +56,7 @@ public class CategoryService {
      * Update an existing category.
      */
     @PreAuthorize("hasAuthority('" + AuthoritiesConstants.UPDATE_WAREHOUSE_CATEGORY + "')")
-    public CategoryResponse updateCategory(UUID id, UpdateCategoryRequest request) {
+    public CategoryResponse updateCategory(Long id, UpdateCategoryRequest request) {
         log.debug("Updating category with ID: {}", id);
 
         Category category = categoryRepository.findById(id)
@@ -82,7 +82,7 @@ public class CategoryService {
      */
     @Transactional(readOnly = true)
     @PreAuthorize("hasAuthority('" + AuthoritiesConstants.VIEW_WAREHOUSE_CATEGORY + "')")
-    public CategoryResponse getCategoryById(UUID id) {
+    public CategoryResponse getCategoryById(Long id) {
         log.debug("Getting category with ID: {}", id);
 
         Category category = categoryRepository.findById(id)
@@ -121,7 +121,7 @@ public class CategoryService {
      * Delete category.
      */
     @PreAuthorize("hasAuthority('" + AuthoritiesConstants.DELETE_WAREHOUSE_CATEGORY + "')")
-    public void deleteCategory(UUID id) {
+    public void deleteCategory(Long id) {
         log.debug("Deleting category with ID: {}", id);
 
         Category category = categoryRepository.findById(id)
@@ -141,3 +141,4 @@ public class CategoryService {
         log.info("Deleted category with ID: {}", id);
     }
 }
+

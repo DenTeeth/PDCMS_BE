@@ -10,19 +10,19 @@ package com.dental.clinic.management.booking_appointment.enums;
 public enum AppointmentParticipantRole {
 
     /**
-     * Phụ tá - Assistant helping during the procedure
+     * PhÃ¡Â»Â¥ tÃƒÂ¡ - Assistant helping during the procedure
      * Default role when creating appointment with participantCodes
      */
     ASSISTANT,
 
     /**
-     * Bác sĩ phụ - Secondary doctor assisting the primary doctor
+     * BÃƒÂ¡c sÃ„Â© phÃ¡Â»Â¥ - Secondary doctor assisting the primary doctor
      * Example: Complex surgeries requiring multiple doctors
      */
     SECONDARY_DOCTOR,
 
     /**
-     * Quan sát viên - Observer (e.g., trainee, student)
+     * Quan sÃƒÂ¡t viÃƒÂªn - Observer (e.g., trainee, student)
      * Does not actively participate in the procedure
      */
     OBSERVER

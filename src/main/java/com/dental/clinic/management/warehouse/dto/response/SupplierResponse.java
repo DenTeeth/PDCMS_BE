@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
+
 
 /**
  * Response DTO for Supplier.
@@ -17,7 +17,7 @@ import java.util.UUID;
 @AllArgsConstructor
 public class SupplierResponse {
 
-    private UUID id;
+    private Long id;
     private String supplierName;
     private String contactPerson;
     private String phone;
@@ -27,3 +27,4 @@ public class SupplierResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
+

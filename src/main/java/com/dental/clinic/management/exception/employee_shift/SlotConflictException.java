@@ -8,7 +8,7 @@ import java.time.LocalDate;
  */
 public class SlotConflictException extends RuntimeException {
 
-    private static final String DEFAULT_MESSAGE = "Ca làm việc đã tồn tại cho nhân viên %d vào ngày %s, ca %s";
+    private static final String DEFAULT_MESSAGE = "Ca lÃƒÂ m viÃ¡Â»â€¡c Ã„â€˜ÃƒÂ£ tÃ¡Â»â€œn tÃ¡ÂºÂ¡i cho nhÃƒÂ¢n viÃƒÂªn %d vÃƒÂ o ngÃƒÂ y %s, ca %s";
 
     public SlotConflictException(Integer employeeId, LocalDate workDate, String workShiftName) {
         super(String.format(DEFAULT_MESSAGE, employeeId, workDate, workShiftName));

@@ -8,13 +8,13 @@ import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
 /**
- * Appointment Entity - Lịch hẹn trung tâm
- * Khóa tài nguyên: Bác sĩ chính + Ghế/Phòng
+ * Appointment Entity - LÃ¡Â»â€¹ch hÃ¡ÂºÂ¹n trung tÃƒÂ¢m
+ * KhÃƒÂ³a tÃƒÂ i nguyÃƒÂªn: BÃƒÂ¡c sÃ„Â© chÃƒÂ­nh + GhÃ¡ÂºÂ¿/PhÃƒÂ²ng
  *
  * Design Notes:
- * - Sử dụng INTEGER foreign keys để tương thích với schema hiện tại
- * - API layer sẽ nhận/trả codes (employeeCode, roomCode)
- * - Service layer resolve codes -> IDs trước khi persist
+ * - SÃ¡Â»Â­ dÃ¡Â»Â¥ng INTEGER foreign keys Ã„â€˜Ã¡Â»Æ’ tÃ†Â°Ã†Â¡ng thÃƒÂ­ch vÃ¡Â»â€ºi schema hiÃ¡Â»â€¡n tÃ¡ÂºÂ¡i
+ * - API layer sÃ¡ÂºÂ½ nhÃ¡ÂºÂ­n/trÃ¡ÂºÂ£ codes (employeeCode, roomCode)
+ * - Service layer resolve codes -> IDs trÃ†Â°Ã¡Â»â€ºc khi persist
  */
 @Entity
 @Table(name = "appointments")
@@ -33,24 +33,24 @@ public class Appointment {
 
     /**
      * Foreign key to patients table
-     * API nhận patientId (hoặc patientCode nếu cần)
+     * API nhÃ¡ÂºÂ­n patientId (hoÃ¡ÂºÂ·c patientCode nÃ¡ÂºÂ¿u cÃ¡ÂºÂ§n)
      */
     @NotNull(message = "Patient ID is required")
     @Column(name = "patient_id", nullable = false)
     private Integer patientId;
 
     /**
-     * Foreign key to employees table - Bác sĩ CHÍNH
-     * API nhận employeeCode (String), service layer resolve -> employeeId
+     * Foreign key to employees table - BÃƒÂ¡c sÃ„Â© CHÃƒÂNH
+     * API nhÃ¡ÂºÂ­n employeeCode (String), service layer resolve -> employeeId
      */
     @NotNull(message = "Employee ID is required")
     @Column(name = "employee_id", nullable = false)
     private Integer employeeId;
 
     /**
-     * Foreign key to rooms table - Ghế/Phòng CHÍNH
+     * Foreign key to rooms table - GhÃ¡ÂºÂ¿/PhÃƒÂ²ng CHÃƒÂNH
      * Schema: room_id VARCHAR(50) matching rooms.room_id
-     * API nhận roomCode (String), service layer resolve -> roomId (String)
+     * API nhÃ¡ÂºÂ­n roomCode (String), service layer resolve -> roomId (String)
      */
     @NotNull(message = "Room ID is required")
     @Column(name = "room_id", nullable = false, length = 50)
@@ -79,7 +79,7 @@ public class Appointment {
     private LocalDateTime actualEndTime;
 
     /**
-     * Self-referencing FK - appointment này được reschedule sang appointment nào
+     * Self-referencing FK - appointment nÃƒÂ y Ã„â€˜Ã†Â°Ã¡Â»Â£c reschedule sang appointment nÃƒÂ o
      */
     @Column(name = "rescheduled_to_appointment_id")
     private Integer rescheduledToAppointmentId;
@@ -88,7 +88,7 @@ public class Appointment {
     private String notes;
 
     /**
-     * FK to employees - Lễ tân tạo lịch hẹn này
+     * FK to employees - LÃ¡Â»â€¦ tÃƒÂ¢n tÃ¡ÂºÂ¡o lÃ¡Â»â€¹ch hÃ¡ÂºÂ¹n nÃƒÂ y
      */
     @Column(name = "created_by")
     private Integer createdBy;

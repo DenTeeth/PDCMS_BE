@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.UUID;
+
 
 /**
  * Response DTO for Item Batch with expiry and stock information.
@@ -19,8 +19,8 @@ import java.util.UUID;
 @AllArgsConstructor
 public class ItemBatchResponse {
 
-    private UUID id;
-    private UUID itemMasterId;
+    private Long id;
+    private Long itemMasterId;
     private String itemName;
     private String lotNumber;
     private LocalDate expiryDate;
@@ -34,3 +34,4 @@ public class ItemBatchResponse {
     private Integer daysUntilExpiry;
     private BigDecimal totalValue; // quantityOnHand * importPrice
 }
+

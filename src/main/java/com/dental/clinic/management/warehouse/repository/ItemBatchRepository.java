@@ -9,22 +9,21 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Repository
-public interface ItemBatchRepository extends JpaRepository<ItemBatch, UUID> {
+public interface ItemBatchRepository extends JpaRepository<ItemBatch, Long> {
 
     /**
      * Find batch by item master ID and lot number (UNIQUE constraint).
      */
-    Optional<ItemBatch> findByItemMaster_ItemMasterIdAndLotNumber(UUID itemMasterId, String lotNumber);
+    Optional<ItemBatch> findByItemMaster_ItemMasterIdAndLotNumber(Long itemMasterId, String lotNumber);
 
     /**
      * Find all batches for an item master with stock available, sorted by FEFO.
      */
     @Query("SELECT ib FROM ItemBatch ib WHERE ib.itemMaster.itemMasterId = :itemMasterId " +
             "AND ib.quantityOnHand > 0 ORDER BY ib.expiryDate ASC NULLS LAST")
-    List<ItemBatch> findAvailableBatchesByItemMasterIdOrderByExpiryAsc(@Param("itemMasterId") UUID itemMasterId);
+    List<ItemBatch> findAvailableBatchesByItemMasterIdOrderByExpiryAsc(@Param("itemMasterId") Long itemMasterId);
 
     /**
      * Find expiring batches (within days threshold).
@@ -44,5 +43,5 @@ public interface ItemBatchRepository extends JpaRepository<ItemBatch, UUID> {
     /**
      * Find all batches for an item master.
      */
-    List<ItemBatch> findByItemMaster_ItemMasterId(UUID itemMasterId);
+    List<ItemBatch> findByItemMaster_ItemMasterId(Long itemMasterId);
 }

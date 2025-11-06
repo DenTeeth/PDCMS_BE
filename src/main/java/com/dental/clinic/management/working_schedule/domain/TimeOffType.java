@@ -38,7 +38,7 @@ public class TimeOffType {
 
     @Column(name = "is_paid", nullable = false)
     @Builder.Default
-    private Boolean isPaid = true; // true = có lương, false = không lương
+    private Boolean isPaid = true; // true = cÃƒÂ³ lÃ†Â°Ã†Â¡ng, false = khÃƒÂ´ng lÃ†Â°Ã†Â¡ng
 
     @Column(name = "requires_approval", nullable = false)
     @Builder.Default

@@ -7,10 +7,10 @@ import java.util.Objects;
 
 /**
  * AppointmentParticipant Entity
- * Lưu các nhân viên khác tham gia lịch hẹn (ngoài Bác sĩ chính)
- * VD: Phụ tá, Bác sĩ phụ, Quan sát viên
+ * LÃ†Â°u cÃƒÂ¡c nhÃƒÂ¢n viÃƒÂªn khÃƒÂ¡c tham gia lÃ¡Â»â€¹ch hÃ¡ÂºÂ¹n (ngoÃƒÂ i BÃƒÂ¡c sÃ„Â© chÃƒÂ­nh)
+ * VD: PhÃ¡Â»Â¥ tÃƒÂ¡, BÃƒÂ¡c sÃ„Â© phÃ¡Â»Â¥, Quan sÃƒÂ¡t viÃƒÂªn
  *
- * Default role: ASSISTANT khi tạo appointment mới
+ * Default role: ASSISTANT khi tÃ¡ÂºÂ¡o appointment mÃ¡Â»â€ºi
  */
 @Entity
 @Table(name = "appointment_participants")

@@ -9,7 +9,7 @@ public class DuplicateHolidayDefinitionException extends RuntimeException {
     private final String definitionId;
 
     public DuplicateHolidayDefinitionException(String definitionId) {
-        super(String.format("Định nghĩa ngày nghỉ đã tồn tại: %s", definitionId));
+        super(String.format("Ã„ÂÃ¡Â»â€¹nh nghÃ„Â©a ngÃƒÂ y nghÃ¡Â»â€° Ã„â€˜ÃƒÂ£ tÃ¡Â»â€œn tÃ¡ÂºÂ¡i: %s", definitionId));
         this.definitionId = definitionId;
     }
 

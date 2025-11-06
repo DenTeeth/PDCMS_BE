@@ -9,11 +9,10 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Entity representing a product category with hierarchical structure.
- * Supports parent-child relationships (e.g., "Thuốc" -> "Thuốc kháng sinh").
+ * Supports parent-child relationships (e.g., "ThuÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“c" -> "ThuÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“c khÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡ng sinh").
  * Categories are specific to warehouse types (COLD or NORMAL).
  */
 @Entity
@@ -28,12 +27,12 @@ import java.util.UUID;
 public class Category {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "category_id", nullable = false)
-    private UUID categoryId;
+    private Long categoryId;
 
     @Column(name = "category_name", length = 100, nullable = false)
-    @NotNull(message = "Tên danh mục không được để trống")
+    @NotNull(message = "TÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Âªn danh mÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€šÃ‚Â¥c khÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â´ng ÃƒÆ’Ã¢â‚¬Å¾ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ÃƒÆ’Ã¢â‚¬Â Ãƒâ€šÃ‚Â°ÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€šÃ‚Â£c ÃƒÆ’Ã¢â‚¬Å¾ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€ Ã¢â‚¬â„¢ trÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ng")
     private String categoryName;
 
     @Column(name = "description", length = 500)
@@ -41,7 +40,7 @@ public class Category {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "warehouse_type", nullable = false, length = 20)
-    @NotNull(message = "Loại kho không được để trống")
+    @NotNull(message = "LoÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â¡i kho khÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â´ng ÃƒÆ’Ã¢â‚¬Å¾ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ÃƒÆ’Ã¢â‚¬Â Ãƒâ€šÃ‚Â°ÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€šÃ‚Â£c ÃƒÆ’Ã¢â‚¬Å¾ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€ Ã¢â‚¬â„¢ trÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ng")
     private WarehouseType warehouseType;
 
     // === HIERARCHICAL STRUCTURE ===
@@ -86,7 +85,7 @@ public class Category {
     /**
      * Get ID (alias for categoryId for consistency with mappers).
      */
-    public UUID getId() {
+    public Long getId() {
         return categoryId;
     }
 
