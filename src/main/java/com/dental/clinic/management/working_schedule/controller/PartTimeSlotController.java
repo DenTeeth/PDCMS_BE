@@ -146,4 +146,42 @@ public class PartTimeSlotController {
         PartTimeSlotResponse response = partTimeSlotService.updateSlot(slotId, request);
         return ResponseEntity.ok(response);
     }
+
+    /**
+     * DELETE /api/v1/work-slots/{slotId}
+     * Delete (deactivate) a work slot.
+     * Soft delete - sets isActive = false.
+     * Existing registrations remain unchanged.
+     * 
+     * Permission: MANAGE_WORK_SLOTS
+     * 
+     * @param slotId Slot ID to delete
+     * @return 204 No Content
+     */
+    @DeleteMapping("/{slotId}")
+    public ResponseEntity<Void> deleteSlot(@PathVariable Long slotId) {
+        log.info("DELETE /api/v1/work-slots/{} - Deactivating slot", slotId);
+        partTimeSlotService.deleteSlot(slotId);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * GET /api/v1/work-slots/statistics
+     * Get comprehensive statistics for all work slots.
+     * Provides dashboard metrics including:
+     * - Total slots (active/inactive)
+     * - Total registrations (approved/pending/rejected)
+     * - Quota capacity and utilization
+     * - Per-shift and per-day breakdowns
+     * 
+     * Permission: MANAGE_WORK_SLOTS
+     * 
+     * @return Statistics response with comprehensive metrics
+     */
+    @GetMapping("/statistics")
+    public ResponseEntity<com.dental.clinic.management.working_schedule.dto.response.SlotStatisticsResponse> getStatistics() {
+        log.info("GET /api/v1/work-slots/statistics - Fetching slot statistics");
+        var statistics = partTimeSlotService.getSlotStatistics();
+        return ResponseEntity.ok(statistics);
+    }
 }

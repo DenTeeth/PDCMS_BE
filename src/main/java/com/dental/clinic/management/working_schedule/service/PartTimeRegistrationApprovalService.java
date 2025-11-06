@@ -1,5 +1,7 @@
 package com.dental.clinic.management.working_schedule.service;
 
+import com.dental.clinic.management.employee.domain.Employee;
+import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.working_schedule.domain.PartTimeRegistration;
 import com.dental.clinic.management.working_schedule.domain.PartTimeSlot;
 import com.dental.clinic.management.working_schedule.enums.RegistrationStatus;
@@ -36,6 +38,7 @@ public class PartTimeRegistrationApprovalService {
     private final PartTimeRegistrationRepository registrationRepository;
     private final PartTimeSlotRepository slotRepository;
     private final PartTimeSlotAvailabilityService availabilityService;
+    private final EmployeeRepository employeeRepository;
 
     /**
      * Approve a pending registration.
@@ -247,5 +250,117 @@ public class PartTimeRegistrationApprovalService {
             log.debug("Cannot approve registration {}: {}", registrationId, e.getMessage());
             return false;
         }
+    }
+
+    /**
+     * Bulk approve multiple registrations.
+     * Each registration is validated individually.
+     * Returns success/failure details for each registration.
+     * 
+     * @param registrationIds List of registration IDs to approve
+     * @param managerId The manager performing bulk approval
+     * @return Bulk approval result with success/failure details
+     */
+    @Transactional
+    public com.dental.clinic.management.working_schedule.dto.response.BulkApproveResponse bulkApprove(
+            List<Integer> registrationIds, Integer managerId) {
+        log.info("Bulk approving {} registrations by manager {}", registrationIds.size(), managerId);
+        
+        java.util.List<Integer> successfulIds = new java.util.ArrayList<>();
+        java.util.List<com.dental.clinic.management.working_schedule.dto.response.BulkApproveResponse.FailureDetail> failures = new java.util.ArrayList<>();
+        
+        for (Integer registrationId : registrationIds) {
+            try {
+                // Attempt to approve each registration
+                approveRegistration(registrationId, managerId);
+                successfulIds.add(registrationId);
+                log.info("Successfully approved registration {}", registrationId);
+            } catch (Exception e) {
+                // Capture failure with reason
+                log.warn("Failed to approve registration {}: {}", registrationId, e.getMessage());
+                failures.add(com.dental.clinic.management.working_schedule.dto.response.BulkApproveResponse.FailureDetail.builder()
+                        .registrationId(registrationId)
+                        .reason(e.getMessage())
+                        .build());
+            }
+        }
+        
+        return com.dental.clinic.management.working_schedule.dto.response.BulkApproveResponse.builder()
+                .totalRequested(registrationIds.size())
+                .successCount(successfulIds.size())
+                .failureCount(failures.size())
+                .successfulIds(successfulIds)
+                .failures(failures)
+                .build();
+    }
+
+    /**
+     * Get detailed history/audit information for a registration.
+     * Shows lifecycle from creation to approval/rejection/cancellation.
+     * 
+     * @param registrationId The registration ID
+     * @return Registration history with timeline and processor info
+     */
+    @Transactional(readOnly = true)
+    public com.dental.clinic.management.working_schedule.dto.response.RegistrationHistoryResponse getRegistrationHistory(Integer registrationId) {
+        log.info("Fetching history for registration {}", registrationId);
+        
+        PartTimeRegistration registration = registrationRepository.findById(registrationId)
+                .orElseThrow(() -> new RegistrationNotFoundException(registrationId));
+        
+        // Get slot info
+        PartTimeSlot slot = slotRepository.findById(registration.getPartTimeSlotId())
+                .orElseThrow(() -> new SlotNotFoundException(registration.getPartTimeSlotId()));
+        
+        // Get employee info
+        Employee employee = employeeRepository.findById(registration.getEmployeeId())
+                .orElseThrow(() -> new IllegalStateException("Employee not found: " + registration.getEmployeeId()));
+        
+        // Build history response
+        com.dental.clinic.management.working_schedule.dto.response.RegistrationHistoryResponse.RegistrationHistoryResponseBuilder historyBuilder = 
+            com.dental.clinic.management.working_schedule.dto.response.RegistrationHistoryResponse.builder()
+                .registrationId(registration.getRegistrationId())
+                .employeeId(employee.getEmployeeId())
+                .employeeName(employee.getFullName())
+                .employeeCode(employee.getEmployeeCode())
+                .slotId(slot.getSlotId())
+                .workShiftName(slot.getWorkShift() != null ? slot.getWorkShift().getShiftName() : "N/A")
+                .dayOfWeek(slot.getDayOfWeek())
+                .effectiveFrom(registration.getEffectiveFrom())
+                .effectiveTo(registration.getEffectiveTo())
+                .status(registration.getStatus())
+                .createdAt(registration.getCreatedAt())
+                .isActive(registration.getIsActive());
+        
+        // Add processor info if processed
+        if (registration.getProcessedBy() != null && registration.getProcessedAt() != null) {
+            historyBuilder
+                    .processedAt(registration.getProcessedAt())
+                    .processedById(registration.getProcessedBy());
+            
+            // Get processor name (optional - could be null if employee deleted)
+            try {
+                Employee processor = employeeRepository.findById(registration.getProcessedBy()).orElse(null);
+                if (processor != null) {
+                    historyBuilder
+                            .processedByName(processor.getFullName())
+                            .processedByCode(processor.getEmployeeCode());
+                }
+            } catch (Exception e) {
+                log.warn("Could not fetch processor info for registration {}", registrationId);
+            }
+        }
+        
+        // Add reason if rejected
+        if (registration.getStatus() == RegistrationStatus.REJECTED && registration.getReason() != null) {
+            historyBuilder.reason(registration.getReason());
+        }
+        
+        // Add cancellation info if inactive
+        if (!registration.getIsActive() && registration.getUpdatedAt() != null) {
+            historyBuilder.cancelledAt(registration.getUpdatedAt());
+        }
+        
+        return historyBuilder.build();
     }
 }

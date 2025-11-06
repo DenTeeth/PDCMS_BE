@@ -212,6 +212,144 @@ public class PartTimeSlotService {
                 .build();
     }
 
+    /**
+     * Delete/deactivate a work slot (soft delete).
+     * Sets isActive = false so employees can no longer register.
+     * Existing registrations remain unchanged.
+     */
+    @Transactional
+    @PreAuthorize("hasAuthority('MANAGE_WORK_SLOTS')")
+    public void deleteSlot(Long slotId) {
+        log.info("Deleting (deactivating) slot {}", slotId);
+        
+        PartTimeSlot slot = partTimeSlotRepository.findById(slotId)
+                .orElseThrow(() -> new SlotNotFoundException(slotId));
+        
+        if (!slot.getIsActive()) {
+            log.warn("Slot {} is already inactive", slotId);
+            throw new IllegalStateException("Slot is already deactivated");
+        }
+        
+        // Soft delete - set isActive to false
+        slot.setIsActive(false);
+        partTimeSlotRepository.save(slot);
+        
+        log.info("Slot {} deactivated successfully. Existing registrations remain unchanged.", slotId);
+    }
+
+    /**
+     * Get statistics for all work slots.
+     * Provides dashboard metrics including utilization and capacity.
+     */
+    @Transactional(readOnly = true)
+    @PreAuthorize("hasAuthority('MANAGE_WORK_SLOTS')")
+    public com.dental.clinic.management.working_schedule.dto.response.SlotStatisticsResponse getSlotStatistics() {
+        log.info("Generating slot statistics");
+        
+        // Get all slots
+        List<PartTimeSlot> allSlots = partTimeSlotRepository.findAll();
+        List<PartTimeSlot> activeSlots = allSlots.stream()
+                .filter(PartTimeSlot::getIsActive)
+                .collect(Collectors.toList());
+        List<PartTimeSlot> inactiveSlots = allSlots.stream()
+                .filter(slot -> !slot.getIsActive())
+                .collect(Collectors.toList());
+        
+        // Calculate total statistics
+        long totalQuotaCapacity = activeSlots.stream()
+                .mapToLong(PartTimeSlot::getQuota)
+                .sum();
+        
+        long totalApprovedRegistrations = activeSlots.stream()
+                .mapToLong(slot -> partTimeSlotRepository.countApprovedRegistrations(slot.getSlotId()))
+                .sum();
+        
+        long totalPendingRegistrations = registrationRepository.countByStatusAndIsActive(
+                com.dental.clinic.management.working_schedule.enums.RegistrationStatus.PENDING, true);
+        
+        long totalRejectedRegistrations = registrationRepository.countByStatusAndIsActive(
+                com.dental.clinic.management.working_schedule.enums.RegistrationStatus.REJECTED, true);
+        
+        long totalAvailableCapacity = totalQuotaCapacity - totalApprovedRegistrations;
+        
+        double averageUtilization = totalQuotaCapacity > 0 
+                ? (totalApprovedRegistrations * 100.0 / totalQuotaCapacity) 
+                : 0.0;
+        
+        // Calculate per-shift statistics
+        java.util.Map<String, java.util.List<PartTimeSlot>> slotsByShift = activeSlots.stream()
+                .collect(Collectors.groupingBy(PartTimeSlot::getWorkShiftId));
+        
+        List<com.dental.clinic.management.working_schedule.dto.response.SlotStatisticsResponse.ShiftStatistics> shiftStats = 
+                slotsByShift.entrySet().stream()
+                .map(entry -> {
+                    String shiftId = entry.getKey();
+                    List<PartTimeSlot> slots = entry.getValue();
+                    
+                    // Get shift name
+                    String shiftName = slots.isEmpty() ? "Unknown" : 
+                            (slots.get(0).getWorkShift() != null ? slots.get(0).getWorkShift().getShiftName() : "Shift " + shiftId);
+                    
+                    long quota = slots.stream().mapToLong(PartTimeSlot::getQuota).sum();
+                    long approved = slots.stream()
+                            .mapToLong(slot -> partTimeSlotRepository.countApprovedRegistrations(slot.getSlotId()))
+                            .sum();
+                    long available = quota - approved;
+                    double utilization = quota > 0 ? (approved * 100.0 / quota) : 0.0;
+                    
+                    return com.dental.clinic.management.working_schedule.dto.response.SlotStatisticsResponse.ShiftStatistics.builder()
+                            .shiftName(shiftName)
+                            .totalSlots(slots.size())
+                            .totalQuota(quota)
+                            .approvedRegistrations(approved)
+                            .availableCapacity(available)
+                            .utilizationPercentage(Math.round(utilization * 100.0) / 100.0)
+                            .build();
+                })
+                .collect(Collectors.toList());
+        
+        // Calculate per-day statistics
+        java.util.Map<String, List<PartTimeSlot>> slotsByDay = activeSlots.stream()
+                .collect(Collectors.groupingBy(PartTimeSlot::getDayOfWeek));
+        
+        List<com.dental.clinic.management.working_schedule.dto.response.SlotStatisticsResponse.DayStatistics> dayStats = 
+                slotsByDay.entrySet().stream()
+                .map(entry -> {
+                    String day = entry.getKey();
+                    List<PartTimeSlot> slots = entry.getValue();
+                    
+                    long quota = slots.stream().mapToLong(PartTimeSlot::getQuota).sum();
+                    long approved = slots.stream()
+                            .mapToLong(slot -> partTimeSlotRepository.countApprovedRegistrations(slot.getSlotId()))
+                            .sum();
+                    long available = quota - approved;
+                    double utilization = quota > 0 ? (approved * 100.0 / quota) : 0.0;
+                    
+                    return com.dental.clinic.management.working_schedule.dto.response.SlotStatisticsResponse.DayStatistics.builder()
+                            .dayOfWeek(day)
+                            .totalSlots(slots.size())
+                            .totalQuota(quota)
+                            .approvedRegistrations(approved)
+                            .availableCapacity(available)
+                            .utilizationPercentage(Math.round(utilization * 100.0) / 100.0)
+                            .build();
+                })
+                .collect(Collectors.toList());
+        
+        return com.dental.clinic.management.working_schedule.dto.response.SlotStatisticsResponse.builder()
+                .totalActiveSlots(activeSlots.size())
+                .totalInactiveSlots(inactiveSlots.size())
+                .totalApprovedRegistrations(totalApprovedRegistrations)
+                .totalPendingRegistrations(totalPendingRegistrations)
+                .totalRejectedRegistrations(totalRejectedRegistrations)
+                .totalQuotaCapacity(totalQuotaCapacity)
+                .totalAvailableCapacity(totalAvailableCapacity)
+                .averageUtilizationPercentage(Math.round(averageUtilization * 100.0) / 100.0)
+                .shiftStatistics(shiftStats)
+                .dayStatistics(dayStats)
+                .build();
+    }
+
     private PartTimeSlotResponse buildResponse(PartTimeSlot slot, String shiftName) {
         // NEW: Count only APPROVED registrations
         long registered = partTimeSlotRepository.countApprovedRegistrations(slot.getSlotId());

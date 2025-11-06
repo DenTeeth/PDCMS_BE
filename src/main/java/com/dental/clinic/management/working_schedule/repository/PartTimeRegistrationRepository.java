@@ -144,4 +144,10 @@ public interface PartTimeRegistrationRepository extends JpaRepository<PartTimeRe
     List<PartTimeRegistration> findByIsActiveAndEffectiveToLessThan(
             Boolean isActive,
             LocalDate effectiveTo);
+
+    /**
+     * Count registrations by status and active flag.
+     * Used for statistics/dashboard.
+     */
+    long countByStatusAndIsActive(RegistrationStatus status, Boolean isActive);
 }

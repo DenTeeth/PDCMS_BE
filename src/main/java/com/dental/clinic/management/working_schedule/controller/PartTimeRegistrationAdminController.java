@@ -191,6 +191,73 @@ public class PartTimeRegistrationAdminController {
     }
 
     /**
+     * GET /api/v1/admin/registrations/part-time-flex/{registrationId}/history
+     * Get detailed history/audit log for a registration.
+     * Shows lifecycle: creation → approval/rejection → cancellation
+     * 
+     * Permission: MANAGE_PART_TIME_REGISTRATIONS
+     * 
+     * @param registrationId Registration ID
+     * @return Registration history with timeline and processor info
+     */
+    @GetMapping("/{registrationId}/history")
+    @PreAuthorize("hasAuthority('MANAGE_PART_TIME_REGISTRATIONS')")
+    public ResponseEntity<com.dental.clinic.management.working_schedule.dto.response.RegistrationHistoryResponse> getRegistrationHistory(
+            @PathVariable Integer registrationId) {
+        log.info("Admin fetching history for registration {}", registrationId);
+        var history = approvalService.getRegistrationHistory(registrationId);
+        return ResponseEntity.ok(history);
+    }
+
+    /**
+     * POST /api/v1/admin/registrations/part-time-flex/bulk-approve
+     * Approve multiple registrations at once.
+     * Each registration is validated individually.
+     * 
+     * Permission: MANAGE_PART_TIME_REGISTRATIONS
+     * 
+     * Request Body:
+     * {
+     *   "registrationIds": [1, 2, 3, 4]
+     * }
+     * 
+     * Response:
+     * {
+     *   "totalRequested": 4,
+     *   "successCount": 3,
+     *   "failureCount": 1,
+     *   "successfulIds": [1, 2, 3],
+     *   "failures": [
+     *     {
+     *       "registrationId": 4,
+     *       "reason": "Quota would be exceeded"
+     *     }
+     *   ]
+     * }
+     * 
+     * @param request Bulk approve request with registration IDs
+     * @return Bulk approval result with success/failure details
+     */
+    @PostMapping("/bulk-approve")
+    @PreAuthorize("hasAuthority('MANAGE_PART_TIME_REGISTRATIONS')")
+    public ResponseEntity<com.dental.clinic.management.working_schedule.dto.response.BulkApproveResponse> bulkApprove(
+            @Valid @RequestBody com.dental.clinic.management.working_schedule.dto.request.BulkApproveRequest request) {
+        log.info("Admin bulk approving {} registrations", request.getRegistrationIds().size());
+        
+        // Get current manager ID from employee table
+        String username = SecurityUtil.getCurrentUserLogin()
+                .orElseThrow(() -> new RuntimeException("User not authenticated"));
+        Integer managerId = employeeRepository.findByAccount_Username(username)
+                .map(employee -> employee.getEmployeeId())
+                .orElseThrow(() -> new RuntimeException("Employee not found for user: " + username));
+        
+        var result = approvalService.bulkApprove(request.getRegistrationIds(), managerId);
+        
+        log.info("Bulk approve completed: {} succeeded, {} failed", result.getSuccessCount(), result.getFailureCount());
+        return ResponseEntity.ok(result);
+    }
+
+    /**
      * Response DTO for can-approve check.
      */
     public record CanApproveResponse(boolean canApprove, String reason) {}
