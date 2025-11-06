@@ -1,55 +1,61 @@
 package com.dental.clinic.management.warehouse.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 /**
- * Entity representing a medical supplier.
- * Strictly controlled for medical supply chain integrity.
+ * Entity representing a supplier (nhà cung cấp).
+ * Suppliers have N-N relationship with ItemMaster (one supplier can provide
+ * many items).
  */
 @Entity
 @Table(name = "suppliers", uniqueConstraints = {
-        @UniqueConstraint(name = "uk_supplier_name", columnNames = { "supplier_name" }),
-        @UniqueConstraint(name = "uk_supplier_phone", columnNames = { "phone_number" })
+        @UniqueConstraint(name = "uk_supplier_name", columnNames = "supplier_name")
 })
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Supplier {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "supplier_id", nullable = false)
-    private Long supplierId;
+    private UUID supplierId;
 
-    @Column(name = "supplier_name", length = 255, nullable = false)
-    @NotNull(message = "Tên nhà cung cấp không được để trống")
+    @Column(name = "supplier_name", length = 100, nullable = false)
+    @NotBlank(message = "Tên nhà cung cấp không được để trống")
     private String supplierName;
 
-    @Column(name = "phone_number", length = 20, nullable = false)
-    @NotNull(message = "Số điện thoại không được để trống")
-    private String phoneNumber;
+    @Column(name = "contact_person", length = 50)
+    private String contactPerson;
+
+    @Column(name = "phone", length = 20)
+    private String phone;
 
     @Column(name = "email", length = 100)
+    @Email(message = "Email không hợp lệ")
     private String email;
 
-    @Column(name = "address", columnDefinition = "TEXT", nullable = false)
-    @NotNull(message = "Địa chỉ không được để trống")
+    @Column(name = "address", columnDefinition = "TEXT")
     private String address;
 
-    @Column(name = "status", length = 20, nullable = false)
-    private String status = "ACTIVE";
+    // === RELATIONSHIP: Items (N-N) - Mapped by ItemMaster ===
+    @ManyToMany(mappedBy = "compatibleSuppliers")
+    @JsonIgnore
+    @Builder.Default
+    private List<ItemMaster> compatibleItems = new ArrayList<>();
 
-    @Column(name = "notes", columnDefinition = "TEXT")
-    private String notes;
-
+    // === AUDIT FIELDS ===
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -61,9 +67,7 @@ public class Supplier {
         if (createdAt == null) {
             createdAt = LocalDateTime.now();
         }
-        if (status == null) {
-            status = "ACTIVE";
-        }
+        updatedAt = LocalDateTime.now();
     }
 
     @PreUpdate

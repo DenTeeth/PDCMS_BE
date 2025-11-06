@@ -1,18 +1,19 @@
 package com.dental.clinic.management.warehouse.domain;
 
 import com.dental.clinic.management.warehouse.enums.WarehouseType;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
- * Entity representing a product category.
+ * Entity representing a product category with hierarchical structure.
+ * Supports parent-child relationships (e.g., "Thuốc" -> "Thuốc kháng sinh").
  * Categories are specific to warehouse types (COLD or NORMAL).
  */
 @Entity
@@ -23,6 +24,7 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Category {
 
     @Id
@@ -39,6 +41,18 @@ public class Category {
     @NotNull(message = "Loại kho không được để trống")
     private WarehouseType warehouseType;
 
+    // === HIERARCHICAL STRUCTURE ===
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_category_id")
+    @JsonIgnore
+    private Category parentCategory;
+
+    @OneToMany(mappedBy = "parentCategory", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    @Builder.Default
+    private List<Category> subCategories = new ArrayList<>();
+
+    // === AUDIT FIELDS ===
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -50,10 +64,30 @@ public class Category {
         if (createdAt == null) {
             createdAt = LocalDateTime.now();
         }
+        updatedAt = LocalDateTime.now();
     }
 
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+
+    // === HELPER METHODS ===
+    public boolean isRootCategory() {
+        return parentCategory == null;
+    }
+
+    public boolean hasSubCategories() {
+        return subCategories != null && !subCategories.isEmpty();
+    }
+
+    public void addSubCategory(Category subCategory) {
+        subCategories.add(subCategory);
+        subCategory.setParentCategory(this);
+    }
+
+    public void removeSubCategory(Category subCategory) {
+        subCategories.remove(subCategory);
+        subCategory.setParentCategory(null);
     }
 }
