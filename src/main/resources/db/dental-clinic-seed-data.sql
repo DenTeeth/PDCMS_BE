@@ -1238,23 +1238,14 @@ ALTER COLUMN effective_to DROP DEFAULT;
 -- STEP 1: Create Part-Time Slots (Admin creates available slots)
 -- Week schedule with varied quotas
 -- BE-403: Added effective_from, effective_to for dynamic quota system
+-- REDUCED TO 5 SLOTS FOR CLEANER TESTING
 
 -- MONDAY Slots
 INSERT INTO part_time_slots (
     slot_id, work_shift_id, day_of_week, quota, is_active, effective_from, effective_to, created_at
 )
 VALUES
-(1, 'WKS_MORNING_02', 'MONDAY', 2, TRUE, '2025-11-04', '2026-02-04', NOW()),
-(2, 'WKS_AFTERNOON_02', 'MONDAY', 3, TRUE, '2025-11-04', '2026-02-04', NOW())
-ON CONFLICT (slot_id) DO NOTHING;
-
--- TUESDAY Slots
-INSERT INTO part_time_slots (
-    slot_id, work_shift_id, day_of_week, quota, is_active, effective_from, effective_to, created_at
-)
-VALUES
-(3, 'WKS_MORNING_02', 'TUESDAY', 2, TRUE, '2025-11-04', '2026-02-04', NOW()),
-(4, 'WKS_AFTERNOON_02', 'TUESDAY', 2, TRUE, '2025-11-04', '2026-02-04', NOW())
+(1, 'WKS_MORNING_02', 'MONDAY', 2, TRUE, '2025-11-04', '2026-02-04', NOW())
 ON CONFLICT (slot_id) DO NOTHING;
 
 -- WEDNESDAY Slots
@@ -1262,17 +1253,7 @@ INSERT INTO part_time_slots (
     slot_id, work_shift_id, day_of_week, quota, is_active, effective_from, effective_to, created_at
 )
 VALUES
-(5, 'WKS_MORNING_02', 'WEDNESDAY', 3, TRUE, '2025-11-04', '2026-02-04', NOW()),
-(6, 'WKS_AFTERNOON_02', 'WEDNESDAY', 2, TRUE, '2025-11-04', '2026-02-04', NOW())
-ON CONFLICT (slot_id) DO NOTHING;
-
--- THURSDAY Slots
-INSERT INTO part_time_slots (
-    slot_id, work_shift_id, day_of_week, quota, is_active, effective_from, effective_to, created_at
-)
-VALUES
-(7, 'WKS_MORNING_02', 'THURSDAY', 2, TRUE, '2025-11-04', '2026-02-04', NOW()),
-(8, 'WKS_AFTERNOON_02', 'THURSDAY', 3, TRUE, '2025-11-04', '2026-02-04', NOW())
+(2, 'WKS_AFTERNOON_02', 'WEDNESDAY', 2, TRUE, '2025-11-04', '2026-02-04', NOW())
 ON CONFLICT (slot_id) DO NOTHING;
 
 -- FRIDAY Slots
@@ -1280,8 +1261,7 @@ INSERT INTO part_time_slots (
     slot_id, work_shift_id, day_of_week, quota, is_active, effective_from, effective_to, created_at
 )
 VALUES
-(9, 'WKS_MORNING_02', 'FRIDAY', 2, TRUE, '2025-11-04', '2026-02-04', NOW()),
-(10, 'WKS_AFTERNOON_02', 'FRIDAY', 2, TRUE, '2025-11-04', '2026-02-04', NOW())
+(3, 'WKS_MORNING_02', 'FRIDAY', 2, TRUE, '2025-11-04', '2026-02-04', NOW())
 ON CONFLICT (slot_id) DO NOTHING;
 
 -- SATURDAY Slots (Higher quota for weekend)
@@ -1289,17 +1269,15 @@ INSERT INTO part_time_slots (
     slot_id, work_shift_id, day_of_week, quota, is_active, effective_from, effective_to, created_at
 )
 VALUES
-(11, 'WKS_MORNING_02', 'SATURDAY', 3, TRUE, '2025-11-04', '2026-02-04', NOW()),
-(12, 'WKS_AFTERNOON_02', 'SATURDAY', 3, TRUE, '2025-11-04', '2026-02-04', NOW())
+(4, 'WKS_AFTERNOON_02', 'SATURDAY', 3, TRUE, '2025-11-04', '2026-02-04', NOW())
 ON CONFLICT (slot_id) DO NOTHING;
 
--- SUNDAY Slots (Limited availability)
+-- SUNDAY Slots (Inactive slot for testing)
 INSERT INTO part_time_slots (
     slot_id, work_shift_id, day_of_week, quota, is_active, effective_from, effective_to, created_at
 )
 VALUES
-(13, 'WKS_MORNING_02', 'SUNDAY', 1, TRUE, '2025-11-04', '2026-02-04', NOW()),
-(14, 'WKS_AFTERNOON_02', 'SUNDAY', 1, FALSE, '2025-11-04', '2026-02-04', NOW()) -- Inactive slot for testing
+(5, 'WKS_MORNING_02', 'SUNDAY', 1, FALSE, '2025-11-04', '2026-02-04', NOW())
 ON CONFLICT (slot_id) DO NOTHING;
 
 -- Reset sequence after manual inserts with explicit IDs
@@ -1405,11 +1383,11 @@ SELECT setval('part_time_registrations_registration_id_seq',
 --   - Manager Quan (7): Tu/Th Morning
 --   - Nurse Trang (9): Tu/Th/Sa Afternoon Part-time (PART_TIME_FIXED)
 --
--- LUỒNG 2 (FLEX) - 15 slots, 8 registrations:
---   - 15 part-time slots created (14 active, 1 inactive)
---   - Nurse Linh (8): 3 active registrations + 1 cancelled
---   - Test Employee 10 (Minh): 2 active registrations
---   - Test Employee 11 (Huong): 2 active registrations (1 makes slot FULL)
+-- LUỒNG 2 (FLEX) - 5 slots (REDUCED FOR CLEANER TESTING):
+--   - 5 part-time slots created (4 active, 1 inactive)
+--   - Monday Morning, Wednesday Afternoon, Friday Morning, Saturday Afternoon (active)
+--   - Sunday Morning (inactive for testing)
+--   - NO pre-seeded registrations - use API to create test data
 -- ============================================
 
 -- ============================================
@@ -1617,62 +1595,62 @@ ON CONFLICT (specialization_id) DO NOTHING;
 
 -- Dentist 1: Lê Anh Khoa (Full-time) - Ca Sáng
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
-SELECT 'EMS20251115001', 1, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
+SELECT 'EMS251115001', 1, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
 FROM work_shifts WHERE shift_name = 'Ca Sáng (8h-12h)' LIMIT 1 ON CONFLICT DO NOTHING;
 
 -- Dentist 1: Lê Anh Khoa (Full-time) - Ca Chiều
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
-SELECT 'EMS20251115001B', 1, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
+SELECT 'EMS251115001B', 1, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
 FROM work_shifts WHERE shift_name = 'Ca Chiều (13h-17h)' LIMIT 1 ON CONFLICT DO NOTHING;
 
 -- Dentist 2: Trịnh Công Thái (Full-time) - Ca Sáng
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
-SELECT 'EMS20251115002', 2, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
+SELECT 'EMS251115002', 2, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
 FROM work_shifts WHERE shift_name = 'Ca Sáng (8h-12h)' LIMIT 1 ON CONFLICT DO NOTHING;
 
 -- Dentist 2: Trịnh Công Thái (Full-time) - Ca Chiều
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
-SELECT 'EMS20251115002B', 2, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
+SELECT 'EMS251115002B', 2, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
 FROM work_shifts WHERE shift_name = 'Ca Chiều (13h-17h)' LIMIT 1 ON CONFLICT DO NOTHING;
 
 -- Dentist 3: Jimmy Donaldson (Part-time flex) - Ca Part-time Sáng
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
-SELECT 'EMS20251115003', 3, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
+SELECT 'EMS251115003', 3, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
 FROM work_shifts WHERE shift_name = 'Ca Part-time Sáng (8h-12h)' LIMIT 1 ON CONFLICT DO NOTHING;
 
 -- Dentist 4: Junya Ota (Part-time fixed) - Ca Part-time Chiều
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
-SELECT 'EMS20251115004', 4, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
+SELECT 'EMS251115004', 4, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
 FROM work_shifts WHERE shift_name = 'Ca Part-time Chiều (13h-17h)' LIMIT 1 ON CONFLICT DO NOTHING;
 
 -- Y tá 1: Đoàn Nguyễn Khôi Nguyên (Full-time) - Ca Sáng
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
-SELECT 'EMS20251115007', 7, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
+SELECT 'EMS251115007', 7, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
 FROM work_shifts WHERE shift_name = 'Ca Sáng (8h-12h)' LIMIT 1 ON CONFLICT DO NOTHING;
 
 -- Y tá 1: Đoàn Nguyễn Khôi Nguyên (Full-time) - Ca Chiều
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
-SELECT 'EMS20251115007B', 7, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
+SELECT 'EMS251115007B', 7, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
 FROM work_shifts WHERE shift_name = 'Ca Chiều (13h-17h)' LIMIT 1 ON CONFLICT DO NOTHING;
 
 -- Y tá 2: Nguyễn Trần Tuấn Khang (Full-time) - Ca Sáng
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
-SELECT 'EMS20251115008A', 8, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
+SELECT 'EMS251115008A', 8, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
 FROM work_shifts WHERE shift_name = 'Ca Sáng (8h-12h)' LIMIT 1 ON CONFLICT DO NOTHING;
 
 -- Y tá 2: Nguyễn Trần Tuấn Khang (Full-time) - Ca Chiều
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
-SELECT 'EMS20251115008', 8, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
+SELECT 'EMS251115008', 8, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
 FROM work_shifts WHERE shift_name = 'Ca Chiều (13h-17h)' LIMIT 1 ON CONFLICT DO NOTHING;
 
 -- Y tá 3: Huỳnh Tấn Quang Nhật (Part-time fixed) - Ca Part-time Sáng
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
-SELECT 'EMS20251115009', 9, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
+SELECT 'EMS251115009', 9, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
 FROM work_shifts WHERE shift_name = 'Ca Part-time Sáng (8h-12h)' LIMIT 1 ON CONFLICT DO NOTHING;
 
 -- Y tá 4: Ngô Đình Chính (Part-time flex) - Ca Part-time Chiều
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
-SELECT 'EMS20251115010', 10, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
+SELECT 'EMS251115010', 10, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
 FROM work_shifts WHERE shift_name = 'Ca Part-time Chiều (13h-17h)' LIMIT 1 ON CONFLICT DO NOTHING;
 
 -- ============================================

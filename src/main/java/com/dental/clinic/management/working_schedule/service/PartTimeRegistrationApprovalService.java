@@ -39,6 +39,7 @@ public class PartTimeRegistrationApprovalService {
     private final PartTimeSlotRepository slotRepository;
     private final PartTimeSlotAvailabilityService availabilityService;
     private final EmployeeRepository employeeRepository;
+    private final EmployeeShiftService employeeShiftService;
 
     /**
      * Approve a pending registration.
@@ -115,7 +116,28 @@ public class PartTimeRegistrationApprovalService {
         registration.setProcessedAt(LocalDateTime.now());
         registrationRepository.save(registration);
 
-        log.info("Registration {} approved by manager {}", registrationId, managerId);
+        // INTEGRATION POINT: Create employee shifts for all working days
+        List<LocalDate> workingDays;
+        if (registration.getRequestedDates() != null && !registration.getRequestedDates().isEmpty()) {
+            workingDays = java.util.List.copyOf(registration.getRequestedDates());
+        } else {
+            workingDays = availabilityService.getWorkingDays(
+                    slot,
+                    registration.getEffectiveFrom(),
+                    registration.getEffectiveTo()
+            );
+        }
+
+        // Create shifts automatically
+        employeeShiftService.createShiftsForApprovedRegistration(
+                registration.getEmployeeId(),
+                slot.getWorkShift().getWorkShiftId(),
+                workingDays,
+                managerId
+        );
+
+        log.info("Registration {} approved by manager {} with {} shifts created", 
+                registrationId, managerId, workingDays.size());
     }
 
     /**

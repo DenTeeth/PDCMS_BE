@@ -417,4 +417,71 @@ public class EmployeeShiftService {
                     "Không thể thay đổi trạng thái của ca làm việc đã hủy");
         }
     }
+
+    /**
+     * Create employee shifts for an approved part-time registration.
+     * Generates individual shift records for each working day.
+     * 
+     * This is called automatically when a manager approves a part-time registration.
+     * 
+     * @param employeeId Employee ID who registered
+     * @param workShiftId Work shift ID from the slot
+     * @param workingDays List of dates to create shifts for
+     * @param managerId Manager who approved (recorded as createdBy)
+     * @return List of created shifts
+     */
+    @Transactional
+    public List<EmployeeShift> createShiftsForApprovedRegistration(
+            Integer employeeId,
+            String workShiftId,
+            List<LocalDate> workingDays,
+            Integer managerId) {
+        
+        log.info("Creating {} shifts for employee {} after registration approval", 
+                workingDays.size(), employeeId);
+
+        // Validate employee exists
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new RelatedResourceNotFoundException("Nhân viên không tồn tại"));
+
+        // Validate work shift exists
+        WorkShift workShift = workShiftRepository.findById(workShiftId)
+                .orElseThrow(() -> new RelatedResourceNotFoundException("Ca làm việc không tồn tại"));
+
+        List<EmployeeShift> createdShifts = new java.util.ArrayList<>();
+
+        for (LocalDate workDate : workingDays) {
+            // Check if shift already exists (avoid duplicates)
+            boolean exists = employeeShiftRepository.existsByEmployeeAndDateAndShift(
+                    employeeId, workDate, workShiftId);
+            
+            if (exists) {
+                log.warn("Shift already exists for employee {} on {} - skipping", employeeId, workDate);
+                continue;
+            }
+
+            // Generate shift ID with format: EMS + YYMMDD + SEQ
+            String employeeShiftId = idGenerator.generateId("EMS");
+
+            // Create new shift
+            EmployeeShift newShift = new EmployeeShift();
+            newShift.setEmployeeShiftId(employeeShiftId);
+            newShift.setEmployee(employee);
+            newShift.setWorkShift(workShift);
+            newShift.setWorkDate(workDate);
+            newShift.setStatus(ShiftStatus.SCHEDULED);
+            newShift.setSource(ShiftSource.REGISTRATION_JOB); // Mark as created from registration
+            newShift.setIsOvertime(false);
+            newShift.setCreatedBy(managerId);
+            newShift.setNotes("Tạo tự động từ đăng ký bán thời gian");
+
+            EmployeeShift savedShift = employeeShiftRepository.save(newShift);
+            createdShifts.add(savedShift);
+            
+            log.debug("Created shift {} for date {}", employeeShiftId, workDate);
+        }
+
+        log.info("Successfully created {} shifts for employee {}", createdShifts.size(), employeeId);
+        return createdShifts;
+    }
 }
