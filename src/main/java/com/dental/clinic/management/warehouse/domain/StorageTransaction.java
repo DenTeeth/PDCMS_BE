@@ -62,9 +62,9 @@ public class StorageTransaction {
     private LocalDateTime transactionDate;
 
     // === TRACKING ===
-    @Column(name = "performed_by", length = 50, nullable = false)
+    @Column(name = "performed_by", nullable = false)
     @NotNull(message = "Người thực hiện không được để trống")
-    private String performedBy;
+    private UUID performedBy;
 
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
@@ -95,6 +95,21 @@ public class StorageTransaction {
     }
 
     // === HELPER METHODS ===
+
+    /**
+     * Get ID (alias for transactionId for consistency with mappers).
+     */
+    public UUID getId() {
+        return transactionId;
+    }
+
+    /**
+     * Get batch (alias for itemBatch).
+     */
+    public ItemBatch getBatch() {
+        return itemBatch;
+    }
+
     public boolean isImport() {
         return transactionType == TransactionType.IMPORT;
     }

@@ -46,6 +46,12 @@ public class ItemMaster {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
+    @Column(name = "min_stock_level")
+    private Integer minStockLevel;
+
+    @Column(name = "max_stock_level")
+    private Integer maxStockLevel;
+
     // === RELATIONSHIP: Category ===
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
@@ -87,6 +93,14 @@ public class ItemMaster {
     }
 
     // === HELPER METHODS ===
+
+    /**
+     * Get ID (alias for itemMasterId for consistency with mappers).
+     */
+    public UUID getId() {
+        return itemMasterId;
+    }
+
     public void addSupplier(Supplier supplier) {
         compatibleSuppliers.add(supplier);
         supplier.getCompatibleItems().add(this);

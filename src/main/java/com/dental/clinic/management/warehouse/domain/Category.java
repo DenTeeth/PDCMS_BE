@@ -32,9 +32,12 @@ public class Category {
     @Column(name = "category_id", nullable = false)
     private UUID categoryId;
 
-    @Column(name = "category_name", length = 50, nullable = false)
+    @Column(name = "category_name", length = 100, nullable = false)
     @NotNull(message = "Tên danh mục không được để trống")
     private String categoryName;
+
+    @Column(name = "description", length = 500)
+    private String description;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "warehouse_type", nullable = false, length = 20)
@@ -51,6 +54,12 @@ public class Category {
     @JsonIgnore
     @Builder.Default
     private List<Category> subCategories = new ArrayList<>();
+
+    // === RELATIONSHIP WITH ITEM MASTERS ===
+    @OneToMany(mappedBy = "category", fetch = FetchType.LAZY)
+    @JsonIgnore
+    @Builder.Default
+    private List<com.dental.clinic.management.warehouse.domain.ItemMaster> itemMasters = new ArrayList<>();
 
     // === AUDIT FIELDS ===
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -73,6 +82,14 @@ public class Category {
     }
 
     // === HELPER METHODS ===
+
+    /**
+     * Get ID (alias for categoryId for consistency with mappers).
+     */
+    public UUID getId() {
+        return categoryId;
+    }
+
     public boolean isRootCategory() {
         return parentCategory == null;
     }

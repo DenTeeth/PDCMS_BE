@@ -115,4 +115,26 @@ public final class AuthoritiesConstants {
     public static final String CREATE_SERVICE = "CREATE_SERVICE";
     public static final String UPDATE_SERVICE = "UPDATE_SERVICE";
     public static final String DELETE_SERVICE = "DELETE_SERVICE"; // soft delete
+
+    // Warehouse Management Permissions
+    public static final String VIEW_WAREHOUSE_CATEGORY = "VIEW_WAREHOUSE_CATEGORY";
+    public static final String CREATE_WAREHOUSE_CATEGORY = "CREATE_WAREHOUSE_CATEGORY";
+    public static final String UPDATE_WAREHOUSE_CATEGORY = "UPDATE_WAREHOUSE_CATEGORY";
+    public static final String DELETE_WAREHOUSE_CATEGORY = "DELETE_WAREHOUSE_CATEGORY";
+
+    public static final String VIEW_WAREHOUSE_SUPPLIER = "VIEW_WAREHOUSE_SUPPLIER";
+    public static final String CREATE_WAREHOUSE_SUPPLIER = "CREATE_WAREHOUSE_SUPPLIER";
+    public static final String UPDATE_WAREHOUSE_SUPPLIER = "UPDATE_WAREHOUSE_SUPPLIER";
+    public static final String DELETE_WAREHOUSE_SUPPLIER = "DELETE_WAREHOUSE_SUPPLIER";
+
+    public static final String VIEW_WAREHOUSE_ITEM = "VIEW_WAREHOUSE_ITEM";
+    public static final String CREATE_WAREHOUSE_ITEM = "CREATE_WAREHOUSE_ITEM";
+    public static final String UPDATE_WAREHOUSE_ITEM = "UPDATE_WAREHOUSE_ITEM";
+    public static final String DELETE_WAREHOUSE_ITEM = "DELETE_WAREHOUSE_ITEM";
+
+    public static final String IMPORT_WAREHOUSE = "IMPORT_WAREHOUSE";
+    public static final String EXPORT_WAREHOUSE = "EXPORT_WAREHOUSE";
+    public static final String ADJUST_WAREHOUSE = "ADJUST_WAREHOUSE";
+    public static final String VIEW_WAREHOUSE_TRANSACTION = "VIEW_WAREHOUSE_TRANSACTION";
+    public static final String VIEW_WAREHOUSE_STATS = "VIEW_WAREHOUSE_STATS";
 }

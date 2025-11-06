@@ -183,8 +183,7 @@ public class AppointmentDetailService {
             // account_id mapping
             // In a real system, you'd need Patient.findByAccount_Username() or similar
             log.debug("Patient role detected - allowing access (patient validation not implemented)");
-            // TODO: Implement patient ownership check when Patient-Account mapping is
-            // available
+
         }
 
         log.debug("RBAC check passed - access granted");

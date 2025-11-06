@@ -1,0 +1,2 @@
+﻿DROP TABLE IF EXISTS item_suppliers CASCADE;
+DROP TABLE IF EXISTS suppliers CASCADE;

@@ -74,4 +74,20 @@ public class Supplier {
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
+
+    // === HELPER METHODS ===
+
+    /**
+     * Get ID (alias for supplierId for consistency with mappers).
+     */
+    public UUID getId() {
+        return supplierId;
+    }
+
+    /**
+     * Get supplied items (alias for compatibleItems).
+     */
+    public List<ItemMaster> getSuppliedItems() {
+        return compatibleItems;
+    }
 }

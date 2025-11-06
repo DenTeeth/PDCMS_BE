@@ -101,6 +101,14 @@ public class ItemBatch {
     }
 
     // === HELPER METHODS ===
+
+    /**
+     * Get ID (alias for batchId for consistency with mappers).
+     */
+    public UUID getId() {
+        return batchId;
+    }
+
     public boolean isExpired() {
         return expiryDate != null && expiryDate.isBefore(LocalDate.now());
     }
