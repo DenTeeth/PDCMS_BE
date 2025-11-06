@@ -892,4 +892,186 @@ public class GlobalExceptionHandler {
         // If we couldn't unwrap to a known ErrorResponseException, fall back to generic handler
         return handleGenericException(ex, request);
     }
+
+    // ============================================
+    // PART-TIME FLEX REGISTRATION ERROR HANDLERS
+    // ============================================
+
+    /**
+     * Handle InvalidDayOfWeekException.
+     * Returns 400 Bad Request with list of invalid and valid days.
+     */
+    @ExceptionHandler(com.dental.clinic.management.working_schedule.exception.InvalidDayOfWeekException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleInvalidDayOfWeek(
+            com.dental.clinic.management.working_schedule.exception.InvalidDayOfWeekException ex,
+            HttpServletRequest request) {
+
+        log.warn("Invalid day of week at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.BAD_REQUEST.value());
+        res.setMessage(ex.getMessage());
+        res.setError("INVALID_DAY_OF_WEEK");
+
+        java.util.Map<String, Object> data = new java.util.HashMap<>();
+        data.put("invalidDays", ex.getInvalidDays());
+        data.put("validDays", ex.getValidDays());
+        res.setData(data);
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+    }
+
+    /**
+     * Handle DateOutsideSlotRangeException.
+     * Returns 400 Bad Request with slot and requested date ranges.
+     */
+    @ExceptionHandler(com.dental.clinic.management.working_schedule.exception.DateOutsideSlotRangeException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleDateOutsideSlotRange(
+            com.dental.clinic.management.working_schedule.exception.DateOutsideSlotRangeException ex,
+            HttpServletRequest request) {
+
+        log.warn("Date outside slot range at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.BAD_REQUEST.value());
+        res.setMessage(ex.getMessage());
+        res.setError("DATE_OUTSIDE_SLOT_RANGE");
+
+        java.util.Map<String, Object> data = new java.util.HashMap<>();
+        data.put("slotEffectiveFrom", ex.getSlotEffectiveFrom().toString());
+        data.put("slotEffectiveTo", ex.getSlotEffectiveTo().toString());
+        data.put("requestedFrom", ex.getRequestedFrom().toString());
+        data.put("requestedTo", ex.getRequestedTo().toString());
+        res.setData(data);
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+    }
+
+    /**
+     * Handle NoWorkingDaysFoundException.
+     * Returns 400 Bad Request with requested days and date range.
+     */
+    @ExceptionHandler(com.dental.clinic.management.working_schedule.exception.NoWorkingDaysFoundException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleNoWorkingDaysFound(
+            com.dental.clinic.management.working_schedule.exception.NoWorkingDaysFoundException ex,
+            HttpServletRequest request) {
+
+        log.warn("No working days found at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.BAD_REQUEST.value());
+        res.setMessage(ex.getMessage());
+        res.setError("NO_WORKING_DAYS_FOUND");
+
+        java.util.Map<String, Object> data = new java.util.HashMap<>();
+        data.put("requestedDays", ex.getRequestedDays());
+        data.put("effectiveFrom", ex.getEffectiveFrom().toString());
+        data.put("effectiveTo", ex.getEffectiveTo().toString());
+        data.put("suggestion", "Try expanding your date range or selecting different days of the week");
+        res.setData(data);
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+    }
+
+    /**
+     * Handle PastDateNotAllowedException.
+     * Returns 400 Bad Request with provided date and minimum allowed date.
+     */
+    @ExceptionHandler(com.dental.clinic.management.working_schedule.exception.PastDateNotAllowedException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handlePastDateNotAllowedForRegistration(
+            com.dental.clinic.management.working_schedule.exception.PastDateNotAllowedException ex,
+            HttpServletRequest request) {
+
+        log.warn("Past date not allowed at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.BAD_REQUEST.value());
+        res.setMessage(ex.getMessage());
+        res.setError("PAST_DATE_NOT_ALLOWED");
+
+        java.util.Map<String, Object> data = new java.util.HashMap<>();
+        data.put("providedDate", ex.getProvidedDate().toString());
+        data.put("minimumDate", ex.getMinimumDate().toString());
+        res.setData(data);
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+    }
+
+    /**
+     * Handle InvalidDateRangeException.
+     * Returns 400 Bad Request with effectiveFrom and effectiveTo dates.
+     */
+    @ExceptionHandler(com.dental.clinic.management.working_schedule.exception.InvalidDateRangeException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleInvalidDateRange(
+            com.dental.clinic.management.working_schedule.exception.InvalidDateRangeException ex,
+            HttpServletRequest request) {
+
+        log.warn("Invalid date range at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.BAD_REQUEST.value());
+        res.setMessage(ex.getMessage());
+        res.setError("INVALID_DATE_RANGE");
+
+        java.util.Map<String, Object> data = new java.util.HashMap<>();
+        data.put("effectiveFrom", ex.getEffectiveFrom().toString());
+        data.put("effectiveTo", ex.getEffectiveTo().toString());
+        res.setData(data);
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+    }
+
+    /**
+     * Handle RegistrationConflictException (enhanced version).
+     * Returns 409 Conflict with conflicting dates and existing registration ID.
+     */
+    @ExceptionHandler(com.dental.clinic.management.working_schedule.exception.RegistrationConflictException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleRegistrationConflict(
+            com.dental.clinic.management.working_schedule.exception.RegistrationConflictException ex,
+            HttpServletRequest request) {
+
+        log.warn("Registration conflict at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.CONFLICT.value());
+        res.setMessage(ex.getMessage());
+        res.setError("REGISTRATION_CONFLICT");
+
+        if (ex.getConflictingDates() != null && ex.getExistingRegistrationId() != null) {
+            java.util.Map<String, Object> data = new java.util.HashMap<>();
+            data.put("conflictingDates", ex.getConflictingDates().stream()
+                    .map(java.time.LocalDate::toString)
+                    .collect(java.util.stream.Collectors.toList()));
+            data.put("existingRegistrationId", ex.getExistingRegistrationId());
+            res.setData(data);
+        } else {
+            res.setData(null);
+        }
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(res);
+    }
+
+    /**
+     * Handle InvalidEmployeeTypeForFlexRegistrationException.
+     * Returns 403 Forbidden with employee type and required type.
+     */
+    @ExceptionHandler(com.dental.clinic.management.working_schedule.exception.InvalidEmployeeTypeForFlexRegistrationException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleInvalidEmployeeTypeForFlexRegistration(
+            com.dental.clinic.management.working_schedule.exception.InvalidEmployeeTypeForFlexRegistrationException ex,
+            HttpServletRequest request) {
+
+        log.warn("Invalid employee type for flex registration at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.FORBIDDEN.value());
+        res.setMessage(ex.getMessage());
+        res.setError("INVALID_EMPLOYEE_TYPE");
+
+        java.util.Map<String, Object> data = new java.util.HashMap<>();
+        data.put("employeeType", ex.getEmployeeType().toString());
+        data.put("requiredType", ex.getRequiredType().toString());
+        res.setData(data);
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(res);
+    }
 }

@@ -245,14 +245,14 @@ public class EmployeeShiftRegistrationService {
         if (employee.getEmploymentType() != EmploymentType.PART_TIME_FLEX) {
             log.warn("Employee {} with type {} attempted to claim flexible slot",
                     employeeId, employee.getEmploymentType());
-            throw new IllegalArgumentException(
-                    "Chỉ nhân viên PART_TIME_FLEX mới có thể đăng ký ca linh hoạt. " +
-                            "Nhân viên FULL_TIME và PART_TIME_FIXED phải sử dụng đăng ký ca cố định.");
+            throw new InvalidEmployeeTypeForFlexRegistrationException(
+                    employee.getEmploymentType(), 
+                    EmploymentType.PART_TIME_FLEX);
         }
 
         // Validate dates
         if (request.getEffectiveFrom().isBefore(LocalDate.now())) {
-            throw new IllegalArgumentException("Effective from date cannot be in the past");
+            throw new PastDateNotAllowedException(request.getEffectiveFrom());
         }
 
         if (request.getEffectiveTo() == null) {
@@ -260,7 +260,7 @@ public class EmployeeShiftRegistrationService {
         }
 
         if (request.getEffectiveTo().isBefore(request.getEffectiveFrom())) {
-            throw new IllegalArgumentException("Effective to must be after effective from");
+            throw new InvalidDateRangeException(request.getEffectiveFrom(), request.getEffectiveTo());
         }
 
         // Validate slot exists and is active
@@ -285,21 +285,25 @@ public class EmployeeShiftRegistrationService {
                     request.getEffectiveTo()
             );
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid day of week provided: " + e.getMessage());
+            // Extract invalid day names from the error message if possible
+            throw new InvalidDayOfWeekException(request.getDayOfWeek());
         }
 
         if (datesToCheck.isEmpty()) {
-            throw new IllegalArgumentException(
-                    String.format("No working days found for days %s between %s and %s",
-                            request.getDayOfWeek(), request.getEffectiveFrom(), request.getEffectiveTo()));
+            throw new NoWorkingDaysFoundException(
+                    request.getDayOfWeek(),
+                    request.getEffectiveFrom(),
+                    request.getEffectiveTo());
         }
 
         // Validate all calculated dates are within slot's effective range
         for (java.time.LocalDate d : datesToCheck) {
             if (d.isBefore(slot.getEffectiveFrom()) || d.isAfter(slot.getEffectiveTo())) {
-                throw new IllegalArgumentException(
-                        String.format("Date %s falls outside slot effective range (%s to %s)",
-                                d, slot.getEffectiveFrom(), slot.getEffectiveTo()));
+                throw new DateOutsideSlotRangeException(
+                        slot.getEffectiveFrom(),
+                        slot.getEffectiveTo(),
+                        request.getEffectiveFrom(),
+                        request.getEffectiveTo());
             }
         }
 
@@ -334,16 +338,13 @@ public class EmployeeShiftRegistrationService {
         boolean isPartial = !fullDates.isEmpty();
 
         // NEW: Validate dates are within slot's effective range
-        if (request.getEffectiveFrom().isBefore(slot.getEffectiveFrom())) {
-            throw new IllegalArgumentException(
-                    String.format("Registration start date cannot be before slot start date (%s)", 
-                            slot.getEffectiveFrom()));
-        }
-
-        if (request.getEffectiveTo().isAfter(slot.getEffectiveTo())) {
-            throw new IllegalArgumentException(
-                    String.format("Registration end date cannot be after slot end date (%s)", 
-                            slot.getEffectiveTo()));
+        if (request.getEffectiveFrom().isBefore(slot.getEffectiveFrom()) ||
+                request.getEffectiveTo().isAfter(slot.getEffectiveTo())) {
+            throw new DateOutsideSlotRangeException(
+                    slot.getEffectiveFrom(),
+                    slot.getEffectiveTo(),
+                    request.getEffectiveFrom(),
+                    request.getEffectiveTo());
         }
 
         // Check for conflicting APPROVED registrations
