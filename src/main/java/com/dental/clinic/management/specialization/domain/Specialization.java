@@ -28,8 +28,8 @@ public class Specialization {
     private Integer specializationId;
 
     @NotBlank
-    @Size(max = 10)
-    @Column(name = "specialization_code", unique = true, nullable = false, length = 10)
+    @Size(max = 20)
+    @Column(name = "specialization_code", unique = true, nullable = false, length = 20)
     private String specializationCode;
 
     @NotBlank
