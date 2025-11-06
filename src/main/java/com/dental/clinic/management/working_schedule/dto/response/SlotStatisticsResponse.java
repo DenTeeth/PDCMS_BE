@@ -53,9 +53,9 @@ public class SlotStatisticsResponse {
     private long totalAvailableCapacity;
     
     /**
-     * Average utilization percentage across all slots
+     * Average staffing percentage across all slots (how much of needed quota is filled)
      */
-    private double averageUtilizationPercentage;
+    private double averageStaffingPercentage;
     
     /**
      * Statistics per shift (morning, afternoon, evening)
@@ -80,7 +80,7 @@ public class SlotStatisticsResponse {
         private long totalQuota;
         private long approvedRegistrations;
         private long availableCapacity;
-        private double utilizationPercentage;
+        private double staffingPercentage;
     }
     
     /**
@@ -96,6 +96,6 @@ public class SlotStatisticsResponse {
         private long totalQuota;
         private long approvedRegistrations;
         private long availableCapacity;
-        private double utilizationPercentage;
+        private double staffingPercentage;
     }
 }

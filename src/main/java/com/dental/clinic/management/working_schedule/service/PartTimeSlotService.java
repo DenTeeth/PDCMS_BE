@@ -295,7 +295,7 @@ public class PartTimeSlotService {
                             .mapToLong(slot -> partTimeSlotRepository.countApprovedRegistrations(slot.getSlotId()))
                             .sum();
                     long available = quota - approved;
-                    double utilization = quota > 0 ? (approved * 100.0 / quota) : 0.0;
+                    double staffing = quota > 0 ? (approved * 100.0 / quota) : 0.0;
                     
                     return com.dental.clinic.management.working_schedule.dto.response.SlotStatisticsResponse.ShiftStatistics.builder()
                             .shiftName(shiftName)
@@ -303,7 +303,7 @@ public class PartTimeSlotService {
                             .totalQuota(quota)
                             .approvedRegistrations(approved)
                             .availableCapacity(available)
-                            .utilizationPercentage(Math.round(utilization * 100.0) / 100.0)
+                            .staffingPercentage(Math.round(staffing * 100.0) / 100.0)
                             .build();
                 })
                 .collect(Collectors.toList());
@@ -323,7 +323,7 @@ public class PartTimeSlotService {
                             .mapToLong(slot -> partTimeSlotRepository.countApprovedRegistrations(slot.getSlotId()))
                             .sum();
                     long available = quota - approved;
-                    double utilization = quota > 0 ? (approved * 100.0 / quota) : 0.0;
+                    double staffing = quota > 0 ? (approved * 100.0 / quota) : 0.0;
                     
                     return com.dental.clinic.management.working_schedule.dto.response.SlotStatisticsResponse.DayStatistics.builder()
                             .dayOfWeek(day)
@@ -331,7 +331,7 @@ public class PartTimeSlotService {
                             .totalQuota(quota)
                             .approvedRegistrations(approved)
                             .availableCapacity(available)
-                            .utilizationPercentage(Math.round(utilization * 100.0) / 100.0)
+                            .staffingPercentage(Math.round(staffing * 100.0) / 100.0)
                             .build();
                 })
                 .collect(Collectors.toList());
@@ -344,7 +344,7 @@ public class PartTimeSlotService {
                 .totalRejectedRegistrations(totalRejectedRegistrations)
                 .totalQuotaCapacity(totalQuotaCapacity)
                 .totalAvailableCapacity(totalAvailableCapacity)
-                .averageUtilizationPercentage(Math.round(averageUtilization * 100.0) / 100.0)
+                .averageStaffingPercentage(Math.round(averageUtilization * 100.0) / 100.0)
                 .shiftStatistics(shiftStats)
                 .dayStatistics(dayStats)
                 .build();
