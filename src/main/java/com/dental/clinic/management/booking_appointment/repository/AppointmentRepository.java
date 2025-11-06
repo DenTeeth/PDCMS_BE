@@ -389,8 +389,10 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
                         "LEFT JOIN employees part_emp ON ap.employee_id = part_emp.employee_id " +
                         "LEFT JOIN appointment_services asvc ON a.appointment_id = asvc.appointment_id " +
                         "LEFT JOIN services s ON asvc.service_id = s.service_id " +
-                        "WHERE (:startDate::timestamp IS NULL OR a.appointment_start_time >= :startDate) " +
-                        "AND (:endDate::timestamp IS NULL OR a.appointment_start_time <= :endDate) " +
+                        "WHERE (CAST(:startDate AS timestamp) IS NULL OR a.appointment_start_time >= CAST(:startDate AS timestamp)) "
+                        +
+                        "AND (CAST(:endDate AS timestamp) IS NULL OR a.appointment_start_time <= CAST(:endDate AS timestamp)) "
+                        +
                         "AND (COALESCE(CAST(:statuses AS text[]), NULL::text[]) IS NULL OR a.status::text = ANY(:statuses)) "
                         +
                         "AND (" +
