@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
  * - Require reason for rejection
  */
 @RestController
-@RequestMapping("/api/v1/admin/registrations/part-time")
+@RequestMapping("/api/v1/admin/registrations/part-time-flex")
 @RequiredArgsConstructor
 @Slf4j
 public class PartTimeRegistrationAdminController {
@@ -40,7 +40,7 @@ public class PartTimeRegistrationAdminController {
     private final com.dental.clinic.management.working_schedule.repository.PartTimeRegistrationRepository registrationRepository;
 
     /**
-     * GET /api/v1/admin/registrations/part-time
+     * GET /api/v1/admin/registrations/part-time-flex
      * Get all registration requests (with optional status filter).
      * 
      * Permission: MANAGE_PART_TIME_REGISTRATIONS
@@ -88,7 +88,7 @@ public class PartTimeRegistrationAdminController {
     }
 
     /**
-     * PATCH /api/v1/admin/registrations/part-time/{registrationId}/status
+     * PATCH /api/v1/admin/registrations/part-time-flex/{registrationId}/status
      * Approve or reject a registration request.
      * 
      * Permission: MANAGE_PART_TIME_REGISTRATIONS
@@ -154,7 +154,7 @@ public class PartTimeRegistrationAdminController {
     }
 
     /**
-     * GET /api/v1/admin/registrations/part-time/{registrationId}
+     * GET /api/v1/admin/registrations/part-time-flex/{registrationId}
      * Return a single registration. Visible to admins or the owning employee.
      */
     @GetMapping("/{registrationId}")
@@ -165,7 +165,7 @@ public class PartTimeRegistrationAdminController {
     }
 
     /**
-     * GET /api/v1/admin/registrations/part-time/{registrationId}/can-approve
+     * GET /api/v1/admin/registrations/part-time-flex/{registrationId}/can-approve
      * Check if a registration can be approved (quota validation).
      * 
      * Permission: MANAGE_PART_TIME_REGISTRATIONS

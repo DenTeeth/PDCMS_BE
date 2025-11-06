@@ -25,7 +25,7 @@ import java.util.List;
  * - Only APPROVED registrations count toward quota
  */
 @RestController
-@RequestMapping("/api/v1/registrations/part-time")
+@RequestMapping("/api/v1/registrations/part-time-flex")
 @RequiredArgsConstructor
 @Slf4j
 public class EmployeeShiftRegistrationController {
@@ -33,7 +33,7 @@ public class EmployeeShiftRegistrationController {
     private final EmployeeShiftRegistrationService registrationService;
 
     /**
-     * GET /api/v1/registrations/part-time/available-slots
+     * GET /api/v1/registrations/part-time-flex/available-slots
      * Get available slots for employee to register (NEW: dynamic quota).
      *
      * Permission: VIEW_AVAILABLE_SLOTS

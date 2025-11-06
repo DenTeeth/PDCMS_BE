@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 /**
  * Request DTO for approving or rejecting a part-time registration.
  * 
- * Used by managers in: PATCH /api/v1/admin/registrations/part-time/{id}/status
+ * Used by managers in: PATCH /api/v1/admin/registrations/part-time-flex/{id}/status
  * 
  * Example (Approve):
  * {
