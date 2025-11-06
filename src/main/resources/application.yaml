@@ -14,7 +14,7 @@ spring:
   # JPA Configuration
   jpa:
     hibernate:
-      ddl-auto: update # Back to update mode
+      ddl-auto: update
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
@@ -25,8 +25,8 @@ spring:
   # SQL Init Configuration - Auto-run seed data
   sql:
     init:
-      mode: always # RE-ENABLED after schema fix
-      data-locations: classpath:db/dental-clinic-seed-data_postgres_v2.sql
+      mode: always
+      data-locations: classpath:db/dental-clinic-seed-data.sql
       encoding: UTF-8
       continue-on-error: false
 
