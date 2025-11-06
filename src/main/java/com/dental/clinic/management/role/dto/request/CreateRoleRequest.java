@@ -1,6 +1,7 @@
 package com.dental.clinic.management.role.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public class CreateRoleRequest {
@@ -15,6 +16,9 @@ public class CreateRoleRequest {
 
     @Size(max = 500, message = "Description must not exceed 500 characters")
     private String description;
+
+    @NotNull(message = "Base role ID is required")
+    private Integer baseRoleId;
 
     private Boolean requiresSpecialization = false;
 
@@ -57,5 +61,13 @@ public class CreateRoleRequest {
 
     public void setRequiresSpecialization(Boolean requiresSpecialization) {
         this.requiresSpecialization = requiresSpecialization;
+    }
+
+    public Integer getBaseRoleId() {
+        return baseRoleId;
+    }
+
+    public void setBaseRoleId(Integer baseRoleId) {
+        this.baseRoleId = baseRoleId;
     }
 }

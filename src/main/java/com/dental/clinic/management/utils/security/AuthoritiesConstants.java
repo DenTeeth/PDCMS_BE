@@ -28,8 +28,15 @@ public final class AuthoritiesConstants {
 
     // Appointment Permissions
     public static final String VIEW_APPOINTMENT = "VIEW_APPOINTMENT";
+    public static final String VIEW_APPOINTMENT_ALL = "VIEW_APPOINTMENT_ALL"; // View all clinic appointments (for
+                                                                              // Dashboard)
+    public static final String VIEW_APPOINTMENT_OWN = "VIEW_APPOINTMENT_OWN"; // View own appointments (Doctor/Patient)
     public static final String CREATE_APPOINTMENT = "CREATE_APPOINTMENT";
     public static final String UPDATE_APPOINTMENT = "UPDATE_APPOINTMENT";
+    public static final String UPDATE_APPOINTMENT_STATUS = "UPDATE_APPOINTMENT_STATUS"; // Change status (CHECKED_IN,
+                                                                                        // COMPLETED, etc.)
+    public static final String DELAY_APPOINTMENT = "DELAY_APPOINTMENT"; // Delay within same day
+    public static final String RESCHEDULE_APPOINTMENT = "RESCHEDULE_APPOINTMENT"; // Cancel and rebook to different day
     public static final String CANCEL_APPOINTMENT = "CANCEL_APPOINTMENT";
     public static final String DELETE_APPOINTMENT = "DELETE_APPOINTMENT";
 
@@ -95,4 +102,17 @@ public final class AuthoritiesConstants {
     // Shift Renewal Permissions
     public static final String VIEW_RENEWAL_OWN = "VIEW_RENEWAL_OWN";
     public static final String RESPOND_RENEWAL_OWN = "RESPOND_RENEWAL_OWN";
+
+    // Room Management Permissions
+    public static final String VIEW_ROOM = "VIEW_ROOM";
+    public static final String CREATE_ROOM = "CREATE_ROOM";
+    public static final String UPDATE_ROOM = "UPDATE_ROOM";
+    public static final String UPDATE_ROOM_SERVICES = "UPDATE_ROOM_SERVICES"; // V16: Assign services to rooms
+    public static final String DELETE_ROOM = "DELETE_ROOM"; // soft delete
+
+    // Service Management Permissions
+    public static final String VIEW_SERVICE = "VIEW_SERVICE";
+    public static final String CREATE_SERVICE = "CREATE_SERVICE";
+    public static final String UPDATE_SERVICE = "UPDATE_SERVICE";
+    public static final String DELETE_SERVICE = "DELETE_SERVICE"; // soft delete
 }

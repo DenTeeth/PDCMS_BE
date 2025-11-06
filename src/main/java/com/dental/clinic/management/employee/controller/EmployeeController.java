@@ -1,6 +1,5 @@
 package com.dental.clinic.management.employee.controller;
 
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -192,7 +191,7 @@ public class EmployeeController {
 
   /**
    * Get all active specializations
-   * 
+   *
    * @return List of active specializations
    */
   @GetMapping("/specializations")
@@ -201,5 +200,20 @@ public class EmployeeController {
   public ResponseEntity<java.util.List<Specialization>> getAllSpecializations() {
     java.util.List<Specialization> specializations = employeeService.getAllActiveSpecializations();
     return ResponseEntity.ok(specializations);
+  }
+
+  /**
+   * Get active medical staff only (employees with specializations)
+   * Used for appointment doctor/participant selection dropdown
+   * Excludes Admin/Receptionist who don't have medical specializations
+   *
+   * @return List of medical staff (doctors, nurses, assistants)
+   */
+  @GetMapping("/medical-staff")
+  @Operation(summary = "Get medical staff for appointments", description = "Get active employees with specializations (excludes admin/receptionist)")
+  @ApiMessage("Get medical staff successfully")
+  public ResponseEntity<java.util.List<EmployeeInfoResponse>> getActiveMedicalStaff() {
+    java.util.List<EmployeeInfoResponse> medicalStaff = employeeService.getActiveMedicalStaff();
+    return ResponseEntity.ok(medicalStaff);
   }
 }

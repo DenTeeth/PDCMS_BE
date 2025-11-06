@@ -144,35 +144,41 @@ public class GlobalExceptionHandler {
             ErrorResponseException ex,
             HttpServletRequest request) {
 
-        HttpStatus status = HttpStatus.valueOf(ex.getStatusCode().value());
-        log.warn("{} exception at {}: {}", status, request.getRequestURI(), ex.getBody().getTitle());
+    HttpStatus status = HttpStatus.valueOf(ex.getStatusCode().value());
 
-        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
-        res.setStatusCode(status.value());
+    // Defensive extraction of ProblemDetail body (may be null in some cases)
+    org.springframework.http.ProblemDetail body = ex.getBody();
+    String title = body != null ? body.getTitle() : null;
+    log.warn("{} exception at {}: {}", status, request.getRequestURI(), title != null ? title : ex.getMessage());
 
-        // Extract error code and message from ProblemDetail properties
-        Object errorCodeProperty = ex.getBody().getProperties() != null
-                ? ex.getBody().getProperties().get("errorCode")
-                : null;
-        Object messageProperty = ex.getBody().getProperties() != null
-                ? ex.getBody().getProperties().get("message")
-                : null;
+    FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+    res.setStatusCode(status.value());
 
-        // Set error code (use errorCode property if available, otherwise fallback to
-        // generic error)
-        res.setError(errorCodeProperty != null
-                ? errorCodeProperty.toString()
-                : "error." + status.name().toLowerCase());
+    // Extract error code and message from ProblemDetail properties if available
+    Object errorCodeProperty = null;
+    Object messageProperty = null;
+    if (body != null && body.getProperties() != null) {
+        errorCodeProperty = body.getProperties().get("errorCode");
+        messageProperty = body.getProperties().get("message");
+    }
 
-        // Set message (use message property if available, otherwise use detail from
-        // ProblemDetail)
-        res.setMessage(messageProperty != null
-                ? messageProperty.toString()
-                : ex.getBody().getDetail());
+    // Set error code (use errorCode property if available, otherwise fallback to generic error)
+    res.setError(errorCodeProperty != null
+        ? errorCodeProperty.toString()
+        : "error." + status.name().toLowerCase());
 
-        res.setData(null);
+        // CRITICAL FIX: Use title (detailed message) instead of messageProperty for
+        // user-facing messages
+        // The title contains detailed conflict information (e.g., "Room P-01 is already
+        // booked during this time. Conflicting appointment: APT-20251115-001")
+        // messageProperty only contains error code (e.g., "error.ROOM_SLOT_TAKEN")
+        res.setMessage(ex.getBody().getTitle() != null
+                ? ex.getBody().getTitle()
+                : (messageProperty != null ? messageProperty.toString() : ex.getBody().getDetail()));
 
-        return ResponseEntity.status(status).body(res);
+    res.setData(null);
+
+    return ResponseEntity.status(status).body(res);
     }
 
     /**
@@ -968,5 +974,27 @@ public class GlobalExceptionHandler {
         res.setData(null);
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(res);
+    }
+
+    /**
+     * Handle TransactionSystemException which may wrap ErrorResponseException thrown inside
+     * transactional boundaries. Unwrap and delegate to the ErrorResponseException handler
+     * when possible so the original 4xx response is preserved.
+     */
+    @ExceptionHandler(org.springframework.transaction.TransactionSystemException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleTransactionSystemException(
+            org.springframework.transaction.TransactionSystemException ex,
+            HttpServletRequest request) {
+
+        Throwable cause = ex.getRootCause();
+        while (cause != null) {
+            if (cause instanceof org.springframework.web.ErrorResponseException ere) {
+                return handleErrorResponseException((org.springframework.web.ErrorResponseException) ere, request);
+            }
+            cause = cause.getCause();
+        }
+
+        // If we couldn't unwrap to a known ErrorResponseException, fall back to generic handler
+        return handleGenericException(ex, request);
     }
 }

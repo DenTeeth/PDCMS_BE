@@ -503,9 +503,13 @@ Authorization: Bearer <employee_token_for_employee_1>
 **Request:**
 
 ```bash
-PATCH /api/v1/time-off-requests/TOR251020001/approve
+PATCH /api/v1/time-off-requests/TOR251020001
 Authorization: Bearer <manager_token>
 Content-Type: application/json
+
+{
+  "status": "APPROVED"
+}
 ```
 
 **Expected Response:** `200 OK`
@@ -536,8 +540,13 @@ Content-Type: application/json
 **Request:**
 
 ```bash
-PATCH /api/v1/time-off-requests/TOR251020002/approve
+PATCH /api/v1/time-off-requests/TOR251020002
 Authorization: Bearer <employee_token>
+Content-Type: application/json
+
+{
+  "status": "APPROVED"
+}
 ```
 
 **Expected Response:** `403 FORBIDDEN`
@@ -559,11 +568,16 @@ Authorization: Bearer <employee_token>
 **Request:**
 
 ```bash
-PATCH /api/v1/time-off-requests/TOR251020001/approve
+PATCH /api/v1/time-off-requests/TOR251020001
 Authorization: Bearer <manager_token>
+Content-Type: application/json
+
+{
+  "status": "APPROVED"
+}
 ```
 
-**Expected Response:** `400 BAD REQUEST`
+**Expected Response:** `400 BAD REQUEST` or `409 CONFLICT`
 
 ```json
 {
@@ -584,12 +598,13 @@ Authorization: Bearer <manager_token>
 **Request:**
 
 ```bash
-PATCH /api/v1/time-off-requests/TOR251020002/reject
+PATCH /api/v1/time-off-requests/TOR251020002
 Authorization: Bearer <manager_token>
 Content-Type: application/json
 
 {
-  "rejectedReason": "Không đủ nhân sự trong thời gian này. Vui lòng chọn ngày khác."
+  "status": "REJECTED",
+  "reason": "Không đủ nhân sự trong thời gian này. Vui lòng chọn ngày khác."
 }
 ```
 
@@ -610,24 +625,24 @@ Content-Type: application/json
 **Validation:**
 
 - ✅ Status changed to REJECTED
-- ✅ rejectedReason is saved
+- ✅ rejectedReason (from request.reason) is saved
 - ✅ Leave balance is NOT deducted
 
 ---
 
-#### Test Case 4.2: Error - Missing rejectedReason
+#### Test Case 4.2: Error - Missing reason when rejecting
 
 **Objective:** Reject request without providing reason
 
 **Request:**
 
 ```bash
-PATCH /api/v1/time-off-requests/TOR251020003/reject
+PATCH /api/v1/time-off-requests/TOR251020003
 Authorization: Bearer <manager_token>
 Content-Type: application/json
 
 {
-  "rejectedReason": ""
+  "status": "REJECTED"
 }
 ```
 
@@ -636,7 +651,7 @@ Content-Type: application/json
 ```json
 {
   "status": 400,
-  "message": "rejectedReason is required when rejecting a request",
+  "message": "reason is required when status is REJECTED or CANCELLED",
   "timestamp": "2025-10-20T11:20:00"
 }
 ```
@@ -652,12 +667,13 @@ Content-Type: application/json
 **Request:**
 
 ```bash
-PATCH /api/v1/time-off-requests/TOR251020003/cancel
+PATCH /api/v1/time-off-requests/TOR251020003
 Authorization: Bearer <employee_token>
 Content-Type: application/json
 
 {
-  "cancellationReason": "Đã có kế hoạch khác, không cần nghỉ nữa"
+  "status": "CANCELLED",
+  "reason": "Đã có kế hoạch khác, không cần nghỉ nữa"
 }
 ```
 
@@ -686,12 +702,13 @@ Content-Type: application/json
 **Request:**
 
 ```bash
-PATCH /api/v1/time-off-requests/TOR251020004/cancel
+PATCH /api/v1/time-off-requests/TOR251020004
 Authorization: Bearer <manager_token>
 Content-Type: application/json
 
 {
-  "cancellationReason": "Yêu cầu bị hủy bởi quản lý do lý do khẩn cấp"
+  "status": "CANCELLED",
+  "reason": "Yêu cầu bị hủy bởi quản lý do lý do khẩn cấp"
 }
 ```
 
@@ -706,16 +723,17 @@ Content-Type: application/json
 **Request:**
 
 ```bash
-PATCH /api/v1/time-off-requests/TOR251020001/cancel
+PATCH /api/v1/time-off-requests/TOR251020001
 Authorization: Bearer <employee_token>
 Content-Type: application/json
 
 {
-  "cancellationReason": "Đổi ý"
+  "status": "CANCELLED",
+  "reason": "Đổi ý"
 }
 ```
 
-**Expected Response:** `400 BAD REQUEST`
+**Expected Response:** `400 BAD REQUEST` or `409 CONFLICT`
 
 ```json
 {

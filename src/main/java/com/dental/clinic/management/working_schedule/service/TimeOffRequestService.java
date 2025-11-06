@@ -34,6 +34,8 @@ import com.dental.clinic.management.working_schedule.repository.TimeOffRequestRe
 import com.dental.clinic.management.working_schedule.repository.TimeOffTypeRepository;
 import com.dental.clinic.management.working_schedule.repository.WorkShiftRepository;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -70,6 +72,9 @@ public class TimeOffRequestService {
         private final FixedShiftRegistrationRepository fixedShiftRegistrationRepository;
         private final PartTimeSlotRepository partTimeSlotRepository;
         private final WorkShiftRepository workShiftRepository;
+
+        @PersistenceContext
+        private EntityManager entityManager;
 
         /**
          * GET /api/v1/time-off-requests
@@ -310,9 +315,15 @@ public class TimeOffRequestService {
                                 .build();
 
                 TimeOffRequest savedRequest = requestRepository.save(timeOffRequest);
+                requestRepository.flush(); // Force flush to DB
+                entityManager.clear(); // Clear persistence context to force fresh fetch
                 log.info("Created time-off request: {}", savedRequest.getRequestId());
 
-                return requestMapper.toResponse(savedRequest);
+                // Reload to fetch relationships (employee, requestedBy, approvedBy)
+                TimeOffRequest reloadedRequest = requestRepository.findByRequestId(savedRequest.getRequestId())
+                                .orElseThrow(() -> new TimeOffRequestNotFoundException(savedRequest.getRequestId()));
+
+                return requestMapper.toResponse(reloadedRequest);
         }
 
         /**
@@ -344,9 +355,15 @@ public class TimeOffRequestService {
 
                 // 4. Save and return
                 TimeOffRequest updatedRequest = requestRepository.save(timeOffRequest);
+                requestRepository.flush(); // Force flush to DB
+                entityManager.clear(); // Clear persistence context to force fresh fetch
                 log.info("Updated time-off request {} to status: {}", requestId, request.getStatus());
 
-                return requestMapper.toResponse(updatedRequest);
+                // Reload to fetch relationships (employee, requestedBy, approvedBy)
+                TimeOffRequest reloadedRequest = requestRepository.findByRequestId(updatedRequest.getRequestId())
+                                .orElseThrow(() -> new TimeOffRequestNotFoundException(updatedRequest.getRequestId()));
+
+                return requestMapper.toResponse(reloadedRequest);
         }
 
         /**

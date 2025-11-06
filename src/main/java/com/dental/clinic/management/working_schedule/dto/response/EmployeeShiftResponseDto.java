@@ -45,6 +45,9 @@ public class EmployeeShiftResponseDto {
     @JsonProperty("created_by")
     private Integer createdBy;
 
+    @JsonProperty("created_by_name")
+    private String createdByName;
+
     @JsonProperty("source_ot_request_id")
     private String sourceOtRequestId;
 

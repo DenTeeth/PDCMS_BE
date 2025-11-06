@@ -13,6 +13,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import com.dental.clinic.management.working_schedule.service.PartTimeSlotAvailabilityService;
+import com.dental.clinic.management.working_schedule.domain.PartTimeSlot;
+import com.dental.clinic.management.working_schedule.repository.PartTimeSlotRepository;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 /**
  * REST controller for Part-time Slot Management (Admin).
@@ -24,6 +33,8 @@ import java.util.List;
 public class PartTimeSlotController {
 
     private final PartTimeSlotService partTimeSlotService;
+    private final PartTimeSlotAvailabilityService availabilityService;
+    private final PartTimeSlotRepository slotRepository;
 
     /**
      * Create a new part-time slot.
@@ -44,6 +55,84 @@ public class PartTimeSlotController {
         log.info("GET /api/v1/work-slots - Fetching all slots");
         List<PartTimeSlotResponse> responses = partTimeSlotService.getAllSlots();
         return ResponseEntity.ok(responses);
+    }
+
+    /**
+     * Get slot detail with list of registered employees.
+     */
+    @GetMapping("/{slotId}")
+    public ResponseEntity<com.dental.clinic.management.working_schedule.dto.response.PartTimeSlotDetailResponse> getSlotDetail(
+            @PathVariable Long slotId) {
+        log.info("GET /api/v1/work-slots/{} - Fetching slot detail", slotId);
+        var response = partTimeSlotService.getSlotDetail(slotId);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * GET /api/v1/work-slots/{slotId}/registered?date=yyyy-MM-dd
+     * Return the count of APPROVED registrations that cover the given date for the slot.
+     * Allowed for managers who manage part-time registrations or admins managing work slots.
+     */
+    @GetMapping("/{slotId}/registered")
+    public ResponseEntity<java.util.Map<String, Object>> getRegisteredCountForDate(
+            @PathVariable Long slotId,
+            @RequestParam String date) {
+
+        LocalDate targetDate = LocalDate.parse(date);
+        long count = availabilityService.getRegisteredCountForDate(slotId, targetDate);
+
+        java.util.Map<String, Object> body = new java.util.HashMap<>();
+        body.put("slotId", slotId);
+        body.put("date", targetDate.toString());
+        body.put("registered", count);
+
+        return ResponseEntity.ok(body);
+    }
+
+    /**
+     * GET /api/v1/work-slots/{slotId}/availability?from=yyyy-MM-dd&to=yyyy-MM-dd
+     * Returns per-day registered counts and availability flags for the slot's working days.
+     */
+    @GetMapping("/{slotId}/availability")
+    @PreAuthorize("hasAnyAuthority('VIEW_AVAILABLE_SLOTS','MANAGE_PART_TIME_REGISTRATIONS','MANAGE_WORK_SLOTS')")
+    public ResponseEntity<?> getAvailability(
+            @PathVariable Long slotId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
+    ) {
+        PartTimeSlot slot = slotRepository.findById(slotId).orElse(null);
+        if (slot == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        List<LocalDate> days = availabilityService.getWorkingDays(slot, from, to);
+        List<Map<String, Object>> details = new ArrayList<>();
+
+        boolean anyAvailable = false;
+        boolean allAvailable = true;
+
+        for (LocalDate d : days) {
+            long registered = availabilityService.getRegisteredCountForDate(slotId, d);
+            boolean available = registered < slot.getQuota();
+            if (available) anyAvailable = true; else allAvailable = false;
+
+            Map<String, Object> m = new HashMap<>();
+            m.put("date", d.toString());
+            m.put("registered", registered);
+            m.put("quota", slot.getQuota());
+            m.put("available", available);
+            details.add(m);
+        }
+
+        Map<String, Object> resp = new HashMap<>();
+        resp.put("slotId", slotId);
+        resp.put("from", from.toString());
+        resp.put("to", to.toString());
+        resp.put("anyAvailable", anyAvailable);
+        resp.put("allAvailable", allAvailable);
+        resp.put("details", details);
+
+        return ResponseEntity.ok(resp);
     }
 
     /**

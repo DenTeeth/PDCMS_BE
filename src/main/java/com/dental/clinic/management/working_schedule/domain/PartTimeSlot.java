@@ -6,18 +6,23 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Entity representing a part-time slot that admin creates.
- * Defines clinic's needs (e.g., "Need 2 people for Morning shift on Tuesday").
+ * Defines clinic's needs (e.g., "Need 2 people for Morning shift on Friday & Saturday").
+ * 
+ * NEW SPECIFICATION (Dynamic Quota):
+ * - effectiveFrom/effectiveTo: Flexible date range (not fixed 3 months)
+ * - dayOfWeek: Multiple days (e.g., FRIDAY, SATURDAY)
+ * - quota: Number of people needed PER DAY
+ * - Employees can register for flexible periods within the slot's effective range
  */
 @Entity
-@Table(name = "part_time_slots", 
-       uniqueConstraints = @UniqueConstraint(name = "unique_shift_day", 
-                                             columnNames = {"work_shift_id", "day_of_week"}))
+@Table(name = "part_time_slots")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -36,9 +41,32 @@ public class PartTimeSlot {
     @JoinColumn(name = "work_shift_id", insertable = false, updatable = false)
     private WorkShift workShift;
 
-    @Column(name = "day_of_week", length = 10, nullable = false)
-    private String dayOfWeek; // MONDAY, TUESDAY, etc.
+    /**
+     * Multiple days of week this slot is available.
+     * Example: ["FRIDAY", "SATURDAY"]
+     * Stored as comma-separated string in DB: "FRIDAY,SATURDAY"
+     */
+    @Column(name = "day_of_week", nullable = false)
+    private String dayOfWeek; // Will be migrated to support multiple values
 
+    /**
+     * Start date of slot availability.
+     * Example: 2025-11-09
+     */
+    @Column(name = "effective_from", nullable = false)
+    private LocalDate effectiveFrom;
+
+    /**
+     * End date of slot availability.
+     * Example: 2025-11-30
+     */
+    @Column(name = "effective_to", nullable = false)
+    private LocalDate effectiveTo;
+
+    /**
+     * Number of people needed PER DAY for this slot.
+     * Example: quota=2 means 2 people needed on EACH working day.
+     */
     @Column(name = "quota", nullable = false)
     private Integer quota = 1;
 

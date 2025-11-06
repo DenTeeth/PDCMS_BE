@@ -1,14 +1,19 @@
 package com.dental.clinic.management.working_schedule.mapper;
 
+import com.dental.clinic.management.account.repository.AccountRepository;
 import com.dental.clinic.management.working_schedule.domain.EmployeeShift;
 import com.dental.clinic.management.working_schedule.dto.response.EmployeeShiftResponseDto;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
  * Mapper for EmployeeShift entity to DTOs.
  */
 @Component
+@RequiredArgsConstructor
 public class EmployeeShiftMapper {
+
+    private final AccountRepository accountRepository;
 
     /**
      * Convert EmployeeShift entity to response DTO.
@@ -21,6 +26,19 @@ public class EmployeeShiftMapper {
             return null;
         }
 
+        // Fetch creator name
+        String createdByName = null;
+        if (shift.getCreatedBy() != null) {
+            createdByName = accountRepository.findById(shift.getCreatedBy())
+                    .map(account -> {
+                        if (account.getEmployee() != null) {
+                            return account.getEmployee().getFullName();
+                        }
+                        return account.getUsername();
+                    })
+                    .orElse("Unknown");
+        }
+
         return EmployeeShiftResponseDto.builder()
                 .employeeShiftId(shift.getEmployeeShiftId())
                 .employee(mapEmployeeBasic(shift))
@@ -30,6 +48,7 @@ public class EmployeeShiftMapper {
                 .status(shift.getStatus())
                 .isOvertime(shift.getIsOvertime())
                 .createdBy(shift.getCreatedBy())
+                .createdByName(createdByName)
                 .sourceOtRequestId(shift.getSourceOtRequestId())
                 .sourceOffRequestId(shift.getSourceOffRequestId())
                 .notes(shift.getNotes())

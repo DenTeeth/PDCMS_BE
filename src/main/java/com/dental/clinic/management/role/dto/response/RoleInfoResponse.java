@@ -6,6 +6,8 @@ public class RoleInfoResponse {
     private String roleId;
     private String roleName;
     private String description;
+    private Integer baseRoleId;
+    private String baseRoleName;
     private Boolean requiresSpecialization;
     private Boolean isActive;
     private LocalDateTime createdAt;
@@ -68,5 +70,21 @@ public class RoleInfoResponse {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public Integer getBaseRoleId() {
+        return baseRoleId;
+    }
+
+    public void setBaseRoleId(Integer baseRoleId) {
+        this.baseRoleId = baseRoleId;
+    }
+
+    public String getBaseRoleName() {
+        return baseRoleName;
+    }
+
+    public void setBaseRoleName(String baseRoleName) {
+        this.baseRoleName = baseRoleName;
     }
 }

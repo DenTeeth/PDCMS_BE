@@ -1,5 +1,6 @@
 package com.dental.clinic.management.working_schedule.domain;
 
+import com.dental.clinic.management.employee.domain.Employee;
 import com.dental.clinic.management.utils.IdGenerator;
 import com.dental.clinic.management.working_schedule.enums.TimeOffStatus;
 import jakarta.persistence.*;
@@ -34,6 +35,10 @@ public class TimeOffRequest {
     @Column(name = "employee_id", nullable = false)
     private Integer employeeId;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "employee_id", insertable = false, updatable = false)
+    private Employee employee;
+
     @Column(name = "time_off_type_id", nullable = false, length = 50)
     private String timeOffTypeId;
 
@@ -57,11 +62,19 @@ public class TimeOffRequest {
     @Column(name = "requested_by", nullable = false)
     private Integer requestedBy; // User ID from token
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "requested_by", insertable = false, updatable = false)
+    private Employee requestedByEmployee;
+
     @Column(name = "requested_at", nullable = false)
     private LocalDateTime requestedAt;
 
     @Column(name = "approved_by")
     private Integer approvedBy;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "approved_by", insertable = false, updatable = false)
+    private Employee approvedByEmployee;
 
     @Column(name = "approved_at")
     private LocalDateTime approvedAt;
