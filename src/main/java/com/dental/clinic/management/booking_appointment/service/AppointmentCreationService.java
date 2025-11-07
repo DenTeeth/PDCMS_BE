@@ -667,7 +667,7 @@ public class AppointmentCreationService {
                         int totalDuration, String notes, Integer createdById) {
                 Appointment appointment = new Appointment();
 
-                // Generate appointment code: APT-YYYYMMDD-XXX
+                // Generate appointment code: APT-YYYYMMDD-SEQ
                 String appointmentCode = generateAppointmentCode(startTime.toLocalDate());
                 appointment.setAppointmentCode(appointmentCode);
 
@@ -685,7 +685,7 @@ public class AppointmentCreationService {
         }
 
         /**
-         * Generate unique appointment code: APT-YYYYMMDD-XXX
+         * Generate unique appointment code: APT-YYYYMMDD-SEQ
          * Example: APT-20251115-001
          */
         private String generateAppointmentCode(LocalDate appointmentDate) {
