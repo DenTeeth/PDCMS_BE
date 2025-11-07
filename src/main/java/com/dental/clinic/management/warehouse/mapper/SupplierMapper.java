@@ -47,22 +47,19 @@ public class SupplierMapper {
             return null;
         }
 
-        Integer suppliedItemCount = supplier.getSuppliedItems() != null 
-            ? supplier.getSuppliedItems().size() 
-            : 0;
+        Integer suppliedItemCount = supplier.getSuppliedItems() != null
+                ? supplier.getSuppliedItems().size()
+                : 0;
 
-        return SupplierResponse.builder()
-            .id(supplier.getId())
-            .supplierName(supplier.getSupplierName())
-            .contactPerson(supplier.getContactPerson())
-            .phone(supplier.getPhone())
-            .email(supplier.getEmail())
-            .address(supplier.getAddress())
-            .suppliedItemCount(suppliedItemCount)
-            .createdAt(supplier.getCreatedAt())
-            .updatedAt(supplier.getUpdatedAt())
-            .build();
+        return new SupplierResponse(
+                supplier.getId(),
+                supplier.getSupplierName(),
+                supplier.getContactPerson(),
+                supplier.getPhone(),
+                supplier.getEmail(),
+                supplier.getAddress(),
+                suppliedItemCount,
+                supplier.getCreatedAt(),
+                supplier.getUpdatedAt());
     }
 }
-
-

@@ -10,8 +10,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -20,10 +20,12 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * REST Controller for FIXED shift renewal requests (LuÃ¡Â»â€œng 1 employees only).
+ * REST Controller for FIXED shift renewal requests (LuÃ¡Â»â€œng 1 employees
+ * only).
  * <p>
  * ARCHITECTURE (Hybrid Scheduling):
- * - LuÃ¡Â»â€œng 1 (Fixed): Employees with full-time or fixed part-time schedules
+ * - LuÃ¡Â»â€œng 1 (Fixed): Employees with full-time or fixed part-time
+ * schedules
  * (fixed_shift_registrations)
  * - LuÃ¡Â»â€œng 2 (Flex): Employees with flexible shift selections
  * (part_time_registrations)
@@ -37,12 +39,16 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/v1/registrations/renewals")
-@RequiredArgsConstructor
-@Slf4j
 @Tag(name = "Shift Renewal", description = "APIs for fixed shift renewal management (LuÃ¡Â»â€œng 1 only)")
 public class ShiftRenewalController {
 
+    private static final Logger log = LoggerFactory.getLogger(ShiftRenewalController.class);
+
     private final ShiftRenewalService renewalService;
+
+    public ShiftRenewalController(ShiftRenewalService renewalService) {
+        this.renewalService = renewalService;
+    }
 
     /**
      * Get all pending renewal requests for the authenticated employee.

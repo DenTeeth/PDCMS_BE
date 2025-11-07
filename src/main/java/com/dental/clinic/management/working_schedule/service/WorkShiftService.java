@@ -21,8 +21,8 @@ import com.dental.clinic.management.working_schedule.repository.PartTimeSlotRepo
 import com.dental.clinic.management.working_schedule.repository.WorkShiftRepository;
 import com.dental.clinic.management.working_schedule.utils.WorkShiftIdGenerator;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -40,31 +40,42 @@ import java.util.stream.Collectors;
  * Implements all business logic and validation rules.
  */
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class WorkShiftService {
+
+    private static final Logger log = LoggerFactory.getLogger(WorkShiftService.class);
 
     private final WorkShiftRepository workShiftRepository;
     private final EmployeeShiftRepository employeeShiftRepository;
     private final PartTimeSlotRepository partTimeSlotRepository;
     private final WorkShiftMapper workShiftMapper;
 
+    public WorkShiftService(WorkShiftRepository workShiftRepository,
+            EmployeeShiftRepository employeeShiftRepository,
+            PartTimeSlotRepository partTimeSlotRepository,
+            WorkShiftMapper workShiftMapper) {
+        this.workShiftRepository = workShiftRepository;
+        this.employeeShiftRepository = employeeShiftRepository;
+        this.partTimeSlotRepository = partTimeSlotRepository;
+        this.workShiftMapper = workShiftMapper;
+    }
+
     // Clinic working hours: 8:00 AM to 9:00 PM
     private static final LocalTime CLINIC_OPEN = LocalTime.of(8, 0);
     private static final LocalTime CLINIC_CLOSE = LocalTime.of(21, 0);
     private static final LocalTime NIGHT_SHIFT_START = LocalTime.of(18, 0);
-    
+
     // Lunch break: 12:00 PM to 1:00 PM (not counted as work hours)
     private static final LocalTime LUNCH_BREAK_START = LocalTime.of(12, 0);
     private static final LocalTime LUNCH_BREAK_END = LocalTime.of(13, 0);
     private static final double LUNCH_BREAK_HOURS = 1.0;
-    
+
     private static final double MIN_DURATION_HOURS = 3.0;
     private static final double MAX_DURATION_HOURS = 8.0;
 
     /**
      * Create a new work shift.
      * Category is auto-generated based on time range.
+     * 
      * @param request CreateWorkShiftRequest
      * @return WorkShiftResponse
      */
@@ -97,7 +108,8 @@ public class WorkShiftService {
 
         // Auto-generate category based on time range
         WorkShiftCategory autoCategory = determineCategoryByTime(request.getStartTime(), request.getEndTime());
-        log.info("Auto-generated category: {} for shift {}-{}", autoCategory, request.getStartTime(), request.getEndTime());
+        log.info("Auto-generated category: {} for shift {}-{}", autoCategory, request.getStartTime(),
+                request.getEndTime());
 
         // Generate work shift ID
         String generatedId = generateWorkShiftId(request.getStartTime(), request.getEndTime());
@@ -107,18 +119,20 @@ public class WorkShiftService {
         WorkShift workShift = workShiftMapper.toEntity(request);
         workShift.setWorkShiftId(generatedId);
         workShift.setCategory(autoCategory); // Set auto-generated category
-        
+
         WorkShift savedWorkShift = workShiftRepository.save(workShift);
 
-        log.info("Successfully created work shift: {} with category: {}", savedWorkShift.getWorkShiftId(), savedWorkShift.getCategory());
+        log.info("Successfully created work shift: {} with category: {}", savedWorkShift.getWorkShiftId(),
+                savedWorkShift.getCategory());
         return workShiftMapper.toResponse(savedWorkShift);
     }
 
     /**
      * Update an existing work shift.
      * Category is auto-updated based on time changes.
+     * 
      * @param workShiftId Work shift ID
-     * @param request UpdateWorkShiftRequest
+     * @param request     UpdateWorkShiftRequest
      * @return WorkShiftResponse
      */
     @Transactional
@@ -132,8 +146,9 @@ public class WorkShiftService {
 
         // Check if time is being changed
         boolean isTimeChanging = request.getStartTime() != null || request.getEndTime() != null;
-        
-        // Prevent time changes if work shift is in use by employee schedules OR registrations
+
+        // Prevent time changes if work shift is in use by employee schedules OR
+        // registrations
         if (isTimeChanging && isWorkShiftInUse(workShiftId)) {
             String usageDetails = getWorkShiftUsageDetails(workShiftId);
             throw new ShiftInUseException(workShiftId, usageDetails);
@@ -146,20 +161,20 @@ public class WorkShiftService {
 
         // Apply all validations with final values
         validateTimeRange(finalStartTime, finalEndTime);
-        
+
         // Check for duplicate shift name if name is being changed (LÃ¡Â»â€”i 2)
         if (request.getShiftName() != null && !request.getShiftName().equals(workShift.getShiftName())) {
             validateUniqueShiftName(finalShiftName, workShiftId);
         }
-        
+
         // Check for exact time match if time is being changed (LÃ¡Â»â€”i 1)
         if (isTimeChanging) {
             validateUniqueTimeRange(finalStartTime, finalEndTime, workShiftId);
         }
-        
+
         double duration = calculateDuration(finalStartTime, finalEndTime);
         validateDuration(duration);
-        
+
         validateWorkingHours(finalStartTime, finalEndTime);
         validateMorningAfternoonStartTime(finalStartTime);
         validateShiftDoesNotSpanBoundary(finalStartTime, finalEndTime);
@@ -167,31 +182,30 @@ public class WorkShiftService {
         // Auto-update category if time changed
         if (isTimeChanging) {
             WorkShiftCategory newCategory = determineCategoryByTime(finalStartTime, finalEndTime);
-            
+
             // Prevent category changes that would conflict with shift ID semantic meaning
             if (workShift.getCategory() != newCategory) {
                 throw new CategoryChangeForbiddenException(
-                    workShiftId, 
-                    workShift.getCategory().toString(), 
-                    newCategory.toString()
-                );
+                        workShiftId,
+                        workShift.getCategory().toString(),
+                        newCategory.toString());
             }
-            
+
             // Prevent time-of-day changes that conflict with shift ID prefix
             // Example: WKS_MORNING_03 cannot be updated to afternoon hours (14:00-18:00)
             String expectedTimeOfDay = WorkShiftIdGenerator.extractTimeOfDay(workShiftId);
             String actualTimeOfDay = determineTimeOfDayFromStartTime(finalStartTime);
-            
+
             if (expectedTimeOfDay != null && !expectedTimeOfDay.equals(actualTimeOfDay)) {
                 throw new TimeOfDayMismatchException(workShiftId, expectedTimeOfDay, actualTimeOfDay);
             }
-            
+
             log.info("Category remains {} after time update", workShift.getCategory());
         }
 
         // Update entity
         workShiftMapper.updateEntity(workShift, request);
-        
+
         WorkShift updatedWorkShift = workShiftRepository.save(workShift);
 
         log.info("Successfully updated work shift: {} with category: {}", workShiftId, updatedWorkShift.getCategory());
@@ -201,6 +215,7 @@ public class WorkShiftService {
     /**
      * Delete (soft delete) a work shift.
      * Prevents deletion if work shift is in use by employee schedules.
+     * 
      * @param workShiftId Work shift ID
      */
     @Transactional
@@ -227,6 +242,7 @@ public class WorkShiftService {
 
     /**
      * Reactivate a soft-deleted work shift (Issue 7).
+     * 
      * @param workShiftId Work shift ID
      * @return WorkShiftResponse
      */
@@ -242,14 +258,16 @@ public class WorkShiftService {
         // Check if already active
         if (Boolean.TRUE.equals(workShift.getIsActive())) {
             throw new IllegalStateException(
-                String.format("Ca lÃƒÂ m viÃ¡Â»â€¡c %s Ã„â€˜ÃƒÂ£ Ã„â€˜Ã†Â°Ã¡Â»Â£c kÃƒÂ­ch hoÃ¡ÂºÂ¡t rÃ¡Â»â€œi", workShiftId)
-            );
+                    String.format("Ca lÃƒÂ m viÃ¡Â»â€¡c %s Ã„â€˜ÃƒÂ£ Ã„â€˜Ã†Â°Ã¡Â»Â£c kÃƒÂ­ch hoÃ¡ÂºÂ¡t rÃ¡Â»â€œi",
+                            workShiftId));
         }
 
-        // Validate khÃƒÂ´ng trÃƒÂ¹ng tÃƒÂªn vÃ¡Â»â€ºi ca Ã„â€˜ang hoÃ¡ÂºÂ¡t Ã„â€˜Ã¡Â»â„¢ng (LÃ¡Â»â€”i 4)
+        // Validate khÃƒÂ´ng trÃƒÂ¹ng tÃƒÂªn vÃ¡Â»â€ºi ca Ã„â€˜ang hoÃ¡ÂºÂ¡t
+        // Ã„â€˜Ã¡Â»â„¢ng (LÃ¡Â»â€”i 4)
         validateUniqueShiftName(workShift.getShiftName(), workShiftId);
-        
-        // Validate khÃƒÂ´ng trÃƒÂ¹ng thÃ¡Â»Âi gian chÃƒÂ­nh xÃƒÂ¡c vÃ¡Â»â€ºi ca Ã„â€˜ang hoÃ¡ÂºÂ¡t Ã„â€˜Ã¡Â»â„¢ng (LÃ¡Â»â€”i 1)
+
+        // Validate khÃƒÂ´ng trÃƒÂ¹ng thÃ¡Â»Âi gian chÃƒÂ­nh xÃƒÂ¡c vÃ¡Â»â€ºi ca
+        // Ã„â€˜ang hoÃ¡ÂºÂ¡t Ã„â€˜Ã¡Â»â„¢ng (LÃ¡Â»â€”i 1)
         validateUniqueTimeRange(workShift.getStartTime(), workShift.getEndTime(), workShiftId);
 
         // Reactivate
@@ -262,61 +280,61 @@ public class WorkShiftService {
 
     /**
      * Get all work shifts with advanced filtering, searching, and sorting.
-     * @param isActive Optional filter by active status
-     * @param category Optional filter by category (NORMAL/NIGHT)
-     * @param search Optional search keyword for shift name
-     * @param sortBy Optional sort field (startTime, category, shiftName)
+     * 
+     * @param isActive      Optional filter by active status
+     * @param category      Optional filter by category (NORMAL/NIGHT)
+     * @param search        Optional search keyword for shift name
+     * @param sortBy        Optional sort field (startTime, category, shiftName)
      * @param sortDirection Optional sort direction (ASC/DESC), defaults to ASC
      * @return List of WorkShiftResponse
      */
     @Transactional(readOnly = true)
     @PreAuthorize("hasAuthority('VIEW_WORK_SHIFTS')")
     public List<WorkShiftResponse> getAllWorkShifts(
-            Boolean isActive, 
+            Boolean isActive,
             WorkShiftCategory category,
             String search,
             String sortBy,
             String sortDirection) {
-        
-        log.info("Fetching work shifts - isActive: {}, category: {}, search: {}, sortBy: {}, sortDirection: {}", 
-                 isActive, category, search, sortBy, sortDirection);
+
+        log.info("Fetching work shifts - isActive: {}, category: {}, search: {}, sortBy: {}, sortDirection: {}",
+                isActive, category, search, sortBy, sortDirection);
 
         // Build dynamic query using Specification (Issue 11, 12)
         Specification<WorkShift> spec = (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
-            
+
             // Filter by isActive
             if (isActive != null) {
                 predicates.add(criteriaBuilder.equal(root.get("isActive"), isActive));
             }
-            
+
             // Filter by category
             if (category != null) {
                 predicates.add(criteriaBuilder.equal(root.get("category"), category));
             }
-            
+
             // Search by shift name (case-insensitive)
             if (search != null && !search.trim().isEmpty()) {
                 predicates.add(criteriaBuilder.like(
-                    criteriaBuilder.lower(root.get("shiftName")), 
-                    "%" + search.toLowerCase() + "%"
-                ));
+                        criteriaBuilder.lower(root.get("shiftName")),
+                        "%" + search.toLowerCase() + "%"));
             }
-            
+
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
 
         // Execute query
         List<WorkShift> workShifts = workShiftRepository.findAll(spec);
-        
+
         // Convert to response DTOs
         List<WorkShiftResponse> responses = workShifts.stream()
                 .map(workShiftMapper::toResponse)
                 .collect(Collectors.toList());
-        
+
         // Apply sorting (Issue 10, 12)
         responses = applySorting(responses, sortBy, sortDirection);
-        
+
         log.info("Retrieved {} work shifts", responses.size());
         return responses;
     }
@@ -325,54 +343,56 @@ public class WorkShiftService {
      * Apply sorting to work shift responses.
      * Default: Sort by startTime ASC, then category (NORMAL before NIGHT).
      * 
-     * @param responses List of work shift responses
-     * @param sortBy Sort field (startTime, category, shiftName, or null for default)
+     * @param responses     List of work shift responses
+     * @param sortBy        Sort field (startTime, category, shiftName, or null for
+     *                      default)
      * @param sortDirection Sort direction (ASC/DESC, or null for ASC)
      * @return Sorted list
      */
     private List<WorkShiftResponse> applySorting(
-            List<WorkShiftResponse> responses, 
-            String sortBy, 
+            List<WorkShiftResponse> responses,
+            String sortBy,
             String sortDirection) {
-        
+
         boolean isAscending = sortDirection == null || sortDirection.equalsIgnoreCase("ASC");
-        
+
         if (sortBy == null || sortBy.equalsIgnoreCase("startTime")) {
             // Default: Sort by startTime, then category
             Comparator<WorkShiftResponse> comparator = Comparator
                     .comparing(WorkShiftResponse::getStartTime)
                     .thenComparing(WorkShiftResponse::getCategory);
-            
-            return isAscending 
+
+            return isAscending
                     ? responses.stream().sorted(comparator).collect(Collectors.toList())
                     : responses.stream().sorted(comparator.reversed()).collect(Collectors.toList());
-            
+
         } else if (sortBy.equalsIgnoreCase("category")) {
             // Sort by category, then startTime
             Comparator<WorkShiftResponse> comparator = Comparator
                     .comparing(WorkShiftResponse::getCategory)
                     .thenComparing(WorkShiftResponse::getStartTime);
-            
-            return isAscending 
+
+            return isAscending
                     ? responses.stream().sorted(comparator).collect(Collectors.toList())
                     : responses.stream().sorted(comparator.reversed()).collect(Collectors.toList());
-            
+
         } else if (sortBy.equalsIgnoreCase("shiftName")) {
             // Sort by shift name
             Comparator<WorkShiftResponse> comparator = Comparator
                     .comparing(WorkShiftResponse::getShiftName);
-            
-            return isAscending 
+
+            return isAscending
                     ? responses.stream().sorted(comparator).collect(Collectors.toList())
                     : responses.stream().sorted(comparator.reversed()).collect(Collectors.toList());
         }
-        
+
         // Fallback: return as-is
         return responses;
     }
 
     /**
      * Get work shift by ID.
+     * 
      * @param workShiftId Work shift ID
      * @return WorkShiftResponse
      */
@@ -397,62 +417,69 @@ public class WorkShiftService {
      */
     private void validateTimeRange(LocalTime startTime, LocalTime endTime) {
         if (!endTime.isAfter(startTime)) {
-            throw new InvalidTimeRangeException("GiÃ¡Â»Â kÃ¡ÂºÂ¿t thÃƒÂºc phÃ¡ÂºÂ£i sau giÃ¡Â»Â bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u");
+            throw new InvalidTimeRangeException(
+                    "GiÃ¡Â»Â kÃ¡ÂºÂ¿t thÃƒÂºc phÃ¡ÂºÂ£i sau giÃ¡Â»Â bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u");
         }
     }
-    
+
     /**
      * Validate unique shift name among active shifts.
      * LÃ¡Â»â€”i 2: Prevent duplicate shift names
-     * @param shiftName the shift name to check
-     * @param excludeWorkShiftId the work shift ID to exclude from check (for updates)
+     * 
+     * @param shiftName          the shift name to check
+     * @param excludeWorkShiftId the work shift ID to exclude from check (for
+     *                           updates)
      */
     private void validateUniqueShiftName(String shiftName, String excludeWorkShiftId) {
         List<WorkShift> existingShifts = workShiftRepository.findByShiftNameAndIsActive(shiftName, true);
-        
+
         // Filter out the current shift if updating
         if (excludeWorkShiftId != null) {
             existingShifts = existingShifts.stream()
                     .filter(shift -> !shift.getWorkShiftId().equals(excludeWorkShiftId))
                     .collect(Collectors.toList());
         }
-        
+
         if (!existingShifts.isEmpty()) {
             throw new DuplicateShiftNameException(shiftName);
         }
     }
-    
+
     /**
      * Validate exact time match (same start AND end time).
      * ALLOWS overlapping shifts (for part-time and full-time flexibility).
      * PREVENTS exact duplicates only.
      * 
      * Example:
-     * Ã¢Å“â€¦ ALLOWED: Ca A (08:00-17:00) and Ca B (08:00-12:00) - overlapping is OK
-     * Ã¢ÂÅ’ BLOCKED: Ca A (08:00-17:00) and Ca B (08:00-17:00) - exact match not allowed
+     * Ã¢Å“â€¦ ALLOWED: Ca A (08:00-17:00) and Ca B (08:00-12:00) - overlapping is
+     * OK
+     * Ã¢ÂÅ’ BLOCKED: Ca A (08:00-17:00) and Ca B (08:00-17:00) - exact match not
+     * allowed
      * 
-     * @param startTime the start time to check
-     * @param endTime the end time to check
-     * @param excludeWorkShiftId the work shift ID to exclude from check (for updates)
+     * @param startTime          the start time to check
+     * @param endTime            the end time to check
+     * @param excludeWorkShiftId the work shift ID to exclude from check (for
+     *                           updates)
      */
     private void validateUniqueTimeRange(LocalTime startTime, LocalTime endTime, String excludeWorkShiftId) {
         List<WorkShift> activeShifts = workShiftRepository.findByIsActive(true);
-        
+
         // Filter out the current shift if updating
         if (excludeWorkShiftId != null) {
             activeShifts = activeShifts.stream()
                     .filter(shift -> !shift.getWorkShiftId().equals(excludeWorkShiftId))
                     .collect(Collectors.toList());
         }
-        
+
         // Check for exact match ONLY (same start time AND end time)
         for (WorkShift shift : activeShifts) {
             if (shift.getStartTime().equals(startTime) && shift.getEndTime().equals(endTime)) {
                 throw new DuplicateTimeRangeException(
-                    String.format("Ã„ÂÃƒÂ£ tÃ¡Â»â€œn tÃ¡ÂºÂ¡i ca lÃƒÂ m viÃ¡Â»â€¡c tÃ¡Â»Â« %s Ã„â€˜Ã¡ÂºÂ¿n %s (Ca: %s). " +
-                                 "KhÃƒÂ´ng thÃ¡Â»Æ’ tÃ¡ÂºÂ¡o hai ca giÃ¡Â»â€˜ng hÃ¡Â»â€¡t nhau vÃ¡Â»Â thÃ¡Â»Âi gian.", 
-                        startTime, endTime, shift.getShiftName())
-                );
+                        String.format(
+                                "Ã„ÂÃƒÂ£ tÃ¡Â»â€œn tÃ¡ÂºÂ¡i ca lÃƒÂ m viÃ¡Â»â€¡c tÃ¡Â»Â« %s Ã„â€˜Ã¡ÂºÂ¿n %s (Ca: %s). "
+                                        +
+                                        "KhÃƒÂ´ng thÃ¡Â»Æ’ tÃ¡ÂºÂ¡o hai ca giÃ¡Â»â€˜ng hÃ¡Â»â€¡t nhau vÃ¡Â»Â thÃ¡Â»Âi gian.",
+                                startTime, endTime, shift.getShiftName()));
             }
         }
     }
@@ -464,15 +491,15 @@ public class WorkShiftService {
     private void validateDuration(double durationHours) {
         if (durationHours < MIN_DURATION_HOURS || durationHours > MAX_DURATION_HOURS) {
             String message = String.format(
-                "ThÃ¡Â»Âi lÃ†Â°Ã¡Â»Â£ng ca lÃƒÂ m viÃ¡Â»â€¡c phÃ¡ÂºÂ£i tÃ¡Â»Â« %.0f Ã„â€˜Ã¡ÂºÂ¿n %.0f giÃ¡Â»Â. ThÃ¡Â»Â±c tÃ¡ÂºÂ¿: %.1f giÃ¡Â»Â",
-                MIN_DURATION_HOURS, MAX_DURATION_HOURS, durationHours
-            );
-            
-            // LÃ¡Â»â€”i 5: ThÃƒÂªm thÃƒÂ´ng bÃƒÂ¡o vÃ¡Â»Â giÃ¡Â»Â nghÃ¡Â»â€° trÃ†Â°a nÃ¡ÂºÂ¿u ca bao gÃ¡Â»â€œm 12h-13h
+                    "ThÃ¡Â»Âi lÃ†Â°Ã¡Â»Â£ng ca lÃƒÂ m viÃ¡Â»â€¡c phÃ¡ÂºÂ£i tÃ¡Â»Â« %.0f Ã„â€˜Ã¡ÂºÂ¿n %.0f giÃ¡Â»Â. ThÃ¡Â»Â±c tÃ¡ÂºÂ¿: %.1f giÃ¡Â»Â",
+                    MIN_DURATION_HOURS, MAX_DURATION_HOURS, durationHours);
+
+            // LÃ¡Â»â€”i 5: ThÃƒÂªm thÃƒÂ´ng bÃƒÂ¡o vÃ¡Â»Â giÃ¡Â»Â nghÃ¡Â»â€° trÃ†Â°a
+            // nÃ¡ÂºÂ¿u ca bao gÃ¡Â»â€œm 12h-13h
             if (durationHours < MIN_DURATION_HOURS) {
                 message += ". LÃ†Â°u ÃƒÂ½: GiÃ¡Â»Â nghÃ¡Â»â€° trÃ†Â°a (12:00-13:00) khÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c tÃƒÂ­nh vÃƒÂ o thÃ¡Â»Âi gian lÃƒÂ m viÃ¡Â»â€¡c.";
             }
-            
+
             throw new InvalidShiftDurationException(message);
         }
     }
@@ -484,21 +511,23 @@ public class WorkShiftService {
     private void validateWorkingHours(LocalTime startTime, LocalTime endTime) {
         if (startTime.isBefore(CLINIC_OPEN) || endTime.isAfter(CLINIC_CLOSE)) {
             String message = String.format(
-                "Ca lÃƒÂ m viÃ¡Â»â€¡c phÃ¡ÂºÂ£i nÃ¡ÂºÂ±m trong giÃ¡Â»Â hoÃ¡ÂºÂ¡t Ã„â€˜Ã¡Â»â„¢ng cÃ¡Â»Â§a phÃƒÂ²ng khÃƒÂ¡m (%s - %s). " +
-                "Ca cÃ¡Â»Â§a bÃ¡ÂºÂ¡n: %s - %s",
-                CLINIC_OPEN, CLINIC_CLOSE, startTime, endTime
-            );
-            
+                    "Ca lÃƒÂ m viÃ¡Â»â€¡c phÃ¡ÂºÂ£i nÃ¡ÂºÂ±m trong giÃ¡Â»Â hoÃ¡ÂºÂ¡t Ã„â€˜Ã¡Â»â„¢ng cÃ¡Â»Â§a phÃƒÂ²ng khÃƒÂ¡m (%s - %s). "
+                            +
+                            "Ca cÃ¡Â»Â§a bÃ¡ÂºÂ¡n: %s - %s",
+                    CLINIC_OPEN, CLINIC_CLOSE, startTime, endTime);
+
             // LÃ¡Â»â€”i 3: ThÃƒÂªm gÃ¡Â»Â£i ÃƒÂ½ cÃ¡Â»Â¥ thÃ¡Â»Æ’
             if (startTime.isBefore(CLINIC_OPEN)) {
-                message += String.format(". GiÃ¡Â»Â bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u %s quÃƒÂ¡ sÃ¡Â»â€ºm, vui lÃƒÂ²ng chÃ¡Â»Ân tÃ¡Â»Â« %s trÃ¡Â»Å¸ Ã„â€˜i.", 
-                    startTime, CLINIC_OPEN);
+                message += String.format(
+                        ". GiÃ¡Â»Â bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u %s quÃƒÂ¡ sÃ¡Â»â€ºm, vui lÃƒÂ²ng chÃ¡Â»Ân tÃ¡Â»Â« %s trÃ¡Â»Å¸ Ã„â€˜i.",
+                        startTime, CLINIC_OPEN);
             }
             if (endTime.isAfter(CLINIC_CLOSE)) {
-                message += String.format(". GiÃ¡Â»Â kÃ¡ÂºÂ¿t thÃƒÂºc %s quÃƒÂ¡ muÃ¡Â»â„¢n, vui lÃƒÂ²ng chÃ¡Â»Ân trÃ†Â°Ã¡Â»â€ºc %s.", 
-                    endTime, CLINIC_CLOSE);
+                message += String.format(
+                        ". GiÃ¡Â»Â kÃ¡ÂºÂ¿t thÃƒÂºc %s quÃƒÂ¡ muÃ¡Â»â„¢n, vui lÃƒÂ²ng chÃ¡Â»Ân trÃ†Â°Ã¡Â»â€ºc %s.",
+                        endTime, CLINIC_CLOSE);
             }
-            
+
             throw new InvalidWorkingHoursException(message);
         }
     }
@@ -521,52 +550,59 @@ public class WorkShiftService {
         LocalTime maxMorningStart = LocalTime.of(11, 0);
         LocalTime minAfternoonStart = LocalTime.of(13, 0);
         LocalTime maxStartTimeForMinDuration = LocalTime.of(18, 0);
-        
-        // Rule 1: Check if start time is too close to lunch break (after 11:00 but before 13:00)
+
+        // Rule 1: Check if start time is too close to lunch break (after 11:00 but
+        // before 13:00)
         if (startTime.isAfter(maxMorningStart) && startTime.isBefore(minAfternoonStart)) {
             throw new InvalidWorkingHoursException(
-                String.format("Ca lÃƒÂ m viÃ¡Â»â€¡c khÃƒÂ´ng thÃ¡Â»Æ’ bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u tÃ¡Â»Â« 11:01 Ã„â€˜Ã¡ÂºÂ¿n 12:59. " +
-                             "GiÃ¡Â»Â bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u cÃ¡Â»Â§a bÃ¡ÂºÂ¡n: %s. " +
-                             "KhoÃ¡ÂºÂ£ng thÃ¡Â»Âi gian nÃƒÂ y quÃƒÂ¡ gÃ¡ÂºÂ§n hoÃ¡ÂºÂ·c trÃƒÂ¹ng vÃ¡Â»â€ºi giÃ¡Â»Â nghÃ¡Â»â€° trÃ†Â°a (12:00-13:00). " +
-                             "Vui lÃƒÂ²ng chÃ¡Â»Ân giÃ¡Â»Â bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u tÃ¡Â»Â« 08:00 Ã„â€˜Ã¡ÂºÂ¿n 11:00 (ca sÃƒÂ¡ng), " +
-                             "hoÃ¡ÂºÂ·c tÃ¡Â»Â« 13:00 Ã„â€˜Ã¡ÂºÂ¿n 18:00 (ca chiÃ¡Â»Âu/Ã„â€˜ÃƒÂªm).",
-                    startTime)
-            );
+                    String.format(
+                            "Ca lÃƒÂ m viÃ¡Â»â€¡c khÃƒÂ´ng thÃ¡Â»Æ’ bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u tÃ¡Â»Â« 11:01 Ã„â€˜Ã¡ÂºÂ¿n 12:59. "
+                                    +
+                                    "GiÃ¡Â»Â bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u cÃ¡Â»Â§a bÃ¡ÂºÂ¡n: %s. " +
+                                    "KhoÃ¡ÂºÂ£ng thÃ¡Â»Âi gian nÃƒÂ y quÃƒÂ¡ gÃ¡ÂºÂ§n hoÃ¡ÂºÂ·c trÃƒÂ¹ng vÃ¡Â»â€ºi giÃ¡Â»Â nghÃ¡Â»â€° trÃ†Â°a (12:00-13:00). "
+                                    +
+                                    "Vui lÃƒÂ²ng chÃ¡Â»Ân giÃ¡Â»Â bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u tÃ¡Â»Â« 08:00 Ã„â€˜Ã¡ÂºÂ¿n 11:00 (ca sÃƒÂ¡ng), "
+                                    +
+                                    "hoÃ¡ÂºÂ·c tÃ¡Â»Â« 13:00 Ã„â€˜Ã¡ÂºÂ¿n 18:00 (ca chiÃ¡Â»Âu/Ã„â€˜ÃƒÂªm).",
+                            startTime));
         }
-        
-        // Rule 2: Check if start time is after 18:00 (would violate 3-hour minimum before 21:00 close)
+
+        // Rule 2: Check if start time is after 18:00 (would violate 3-hour minimum
+        // before 21:00 close)
         if (startTime.isAfter(maxStartTimeForMinDuration)) {
             throw new InvalidWorkingHoursException(
-                String.format("Ca lÃƒÂ m viÃ¡Â»â€¡c khÃƒÂ´ng thÃ¡Â»Æ’ bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u sau 18:00. " +
-                             "GiÃ¡Â»Â bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u cÃ¡Â»Â§a bÃ¡ÂºÂ¡n: %s. " +
-                             "PhÃƒÂ²ng khÃƒÂ¡m Ã„â€˜ÃƒÂ³ng cÃ¡Â»Â­a lÃƒÂºc 21:00 vÃƒÂ  mÃ¡Â»â€”i ca phÃ¡ÂºÂ£i cÃƒÂ³ tÃ¡Â»â€˜i thiÃ¡Â»Æ’u 3 giÃ¡Â»Â lÃƒÂ m viÃ¡Â»â€¡c. " +
-                             "Ca muÃ¡Â»â„¢n nhÃ¡ÂºÂ¥t cÃƒÂ³ thÃ¡Â»Æ’ bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u lÃƒÂ  18:00 (kÃ¡ÂºÂ¿t thÃƒÂºc 21:00 = 3 giÃ¡Â»Â).",
-                    startTime)
-            );
+                    String.format("Ca lÃƒÂ m viÃ¡Â»â€¡c khÃƒÂ´ng thÃ¡Â»Æ’ bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u sau 18:00. " +
+                            "GiÃ¡Â»Â bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u cÃ¡Â»Â§a bÃ¡ÂºÂ¡n: %s. " +
+                            "PhÃƒÂ²ng khÃƒÂ¡m Ã„â€˜ÃƒÂ³ng cÃ¡Â»Â­a lÃƒÂºc 21:00 vÃƒÂ  mÃ¡Â»â€”i ca phÃ¡ÂºÂ£i cÃƒÂ³ tÃ¡Â»â€˜i thiÃ¡Â»Æ’u 3 giÃ¡Â»Â lÃƒÂ m viÃ¡Â»â€¡c. "
+                            +
+                            "Ca muÃ¡Â»â„¢n nhÃ¡ÂºÂ¥t cÃƒÂ³ thÃ¡Â»Æ’ bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u lÃƒÂ  18:00 (kÃ¡ÂºÂ¿t thÃƒÂºc 21:00 = 3 giÃ¡Â»Â).",
+                            startTime));
         }
     }
 
     /**
      * Validate that shifts do not span across the 18:00 boundary.
-     * A shift is either fully NORMAL (ends <= 18:00) or fully NIGHT (starts >= 18:00).
+     * A shift is either fully NORMAL (ends <= 18:00) or fully NIGHT (starts >=
+     * 18:00).
      * Shifts spanning across 18:00 are ambiguous and not allowed.
      * 
      * @param startTime Shift start time
-     * @param endTime Shift end time
+     * @param endTime   Shift end time
      * @throws InvalidCategoryException if shift spans the 18:00 boundary
      */
     private void validateShiftDoesNotSpanBoundary(LocalTime startTime, LocalTime endTime) {
         boolean startsBeforeBoundary = startTime.isBefore(NIGHT_SHIFT_START);
         boolean endsAfterBoundary = endTime.isAfter(NIGHT_SHIFT_START);
-        
+
         if (startsBeforeBoundary && endsAfterBoundary) {
             throw new InvalidCategoryException(
-                String.format("Ca lÃƒÂ m viÃ¡Â»â€¡c khÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c vÃ†Â°Ã¡Â»Â£t qua ranh giÃ¡Â»â€ºi 18:00. " +
-                              "Ca cÃ¡Â»Â§a bÃ¡ÂºÂ¡n: %s - %s. " +
-                              "Vui lÃƒÂ²ng tÃ¡ÂºÂ¡o ca THÃ†Â¯Ã¡Â»Å“NG (kÃ¡ÂºÂ¿t thÃƒÂºc trÃ†Â°Ã¡Â»â€ºc hoÃ¡ÂºÂ·c Ã„â€˜ÃƒÂºng 18:00) " +
-                              "hoÃ¡ÂºÂ·c ca Ã„ÂÃƒÅ M (bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u tÃ¡Â»Â« 18:00 trÃ¡Â»Å¸ Ã„â€˜i).", 
-                              startTime, endTime)
-            );
+                    String.format(
+                            "Ca lÃƒÂ m viÃ¡Â»â€¡c khÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c vÃ†Â°Ã¡Â»Â£t qua ranh giÃ¡Â»â€ºi 18:00. " +
+                                    "Ca cÃ¡Â»Â§a bÃ¡ÂºÂ¡n: %s - %s. " +
+                                    "Vui lÃƒÂ²ng tÃ¡ÂºÂ¡o ca THÃ†Â¯Ã¡Â»Å“NG (kÃ¡ÂºÂ¿t thÃƒÂºc trÃ†Â°Ã¡Â»â€ºc hoÃ¡ÂºÂ·c Ã„â€˜ÃƒÂºng 18:00) "
+                                    +
+                                    "hoÃ¡ÂºÂ·c ca Ã„ÂÃƒÅ M (bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u tÃ¡Â»Â« 18:00 trÃ¡Â»Å¸ Ã„â€˜i).",
+                            startTime, endTime));
         }
     }
 
@@ -583,7 +619,7 @@ public class WorkShiftService {
     private String determineTimeOfDayFromStartTime(LocalTime startTime) {
         LocalTime afternoonStart = LocalTime.of(12, 0);
         LocalTime eveningStart = LocalTime.of(18, 0);
-        
+
         if (startTime.compareTo(eveningStart) >= 0) {
             return "EVENING";
         } else if (startTime.compareTo(afternoonStart) >= 0) {
@@ -599,18 +635,20 @@ public class WorkShiftService {
      * This should only be called after validateShiftDoesNotSpanBoundary.
      * 
      * @param startTime Shift start time
-     * @param endTime Shift end time
+     * @param endTime   Shift end time
      * @return Auto-determined WorkShiftCategory
      */
     private WorkShiftCategory determineCategoryByTime(LocalTime startTime, LocalTime endTime) {
-        return startTime.compareTo(NIGHT_SHIFT_START) >= 0 
-                ? WorkShiftCategory.NIGHT 
+        return startTime.compareTo(NIGHT_SHIFT_START) >= 0
+                ? WorkShiftCategory.NIGHT
                 : WorkShiftCategory.NORMAL;
     }
 
     /**
-     * Check if a work shift template is currently in use by employee schedules or part-time slots.
-     * V2: Checks BOTH employee_shifts (full-time schedules) AND part_time_slots (which link to registrations).
+     * Check if a work shift template is currently in use by employee schedules or
+     * part-time slots.
+     * V2: Checks BOTH employee_shifts (full-time schedules) AND part_time_slots
+     * (which link to registrations).
      * 
      * @param workShiftId Work shift ID
      * @return true if work shift is in use by any schedule or slot
@@ -631,7 +669,7 @@ public class WorkShiftService {
     private String getWorkShiftUsageDetails(String workShiftId) {
         long scheduleCount = employeeShiftRepository.countByWorkShiftId(workShiftId);
         long slotCount = partTimeSlotRepository.countByWorkShiftId(workShiftId);
-        
+
         if (scheduleCount > 0 && slotCount > 0) {
             return scheduleCount + " lÃ¡Â»â€¹ch lÃƒÂ m viÃ¡Â»â€¡c vÃƒÂ  " + slotCount + " slot bÃƒÂ¡n thÃ¡Â»Âi gian";
         } else if (scheduleCount > 0) {
@@ -648,21 +686,21 @@ public class WorkShiftService {
     private double calculateDuration(LocalTime startTime, LocalTime endTime) {
         long startSeconds = startTime.toSecondOfDay();
         long endSeconds = endTime.toSecondOfDay();
-        
+
         // Handle case where shift crosses midnight
         if (endSeconds <= startSeconds) {
             endSeconds += 24 * 3600;
         }
-        
+
         long durationSeconds = endSeconds - startSeconds;
         double durationHours = durationSeconds / 3600.0;
-        
+
         // Subtract lunch break if shift spans across it
         // Lunch break: 11:00 - 12:00 (1 hour)
         if (isShiftSpanningLunchBreak(startTime, endTime)) {
             durationHours -= LUNCH_BREAK_HOURS;
         }
-        
+
         return durationHours;
     }
 
@@ -684,17 +722,16 @@ public class WorkShiftService {
     private String generateWorkShiftId(LocalTime startTime, LocalTime endTime) {
         // Determine the time of day category from the generator
         String timeOfDay = WorkShiftIdGenerator.extractTimeOfDay(
-            WorkShiftIdGenerator.generateShiftId(startTime, endTime, 1)
-        );
-        
+                WorkShiftIdGenerator.generateShiftId(startTime, endTime, 1));
+
         if (timeOfDay == null) {
             timeOfDay = "SHIFT"; // Fallback
         }
-        
+
         // Find all existing shifts with this time of day prefix
         String prefix = "WKS_" + timeOfDay + "_";
         List<WorkShift> existingShifts = workShiftRepository.findByWorkShiftIdStartingWith(prefix);
-        
+
         // Determine next sequence number
         int maxSequence = 0;
         for (WorkShift shift : existingShifts) {
@@ -707,7 +744,7 @@ public class WorkShiftService {
                 // Skip if not a valid number
             }
         }
-        
+
         int nextSequence = maxSequence + 1;
         return WorkShiftIdGenerator.generateShiftId(startTime, endTime, nextSequence);
     }

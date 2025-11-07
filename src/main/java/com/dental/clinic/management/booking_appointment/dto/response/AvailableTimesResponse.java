@@ -1,10 +1,5 @@
 package com.dental.clinic.management.booking_appointment.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.util.List;
 
 /**
@@ -12,10 +7,6 @@ import java.util.List;
  *
  * Returns list of available slots with compatible rooms for each slot
  */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class AvailableTimesResponse {
 
     /**
@@ -33,7 +24,41 @@ public class AvailableTimesResponse {
 
     /**
      * Optional: Message if no slots found
-     * Example: "KhÃƒÂ´ng cÃƒÂ³ phÃƒÂ²ng nÃƒÂ o hÃ¡Â»â€” trÃ¡Â»Â£ cÃƒÂ¡c dÃ¡Â»â€¹ch vÃ¡Â»Â¥ nÃƒÂ y"
+     * Example: "KhÃƒÂ´ng cÃƒÂ³ phÃƒÂ²ng nÃƒÂ o hÃ¡Â»â€” trÃ¡Â»Â£ cÃƒÂ¡c dÃ¡Â»â€¹ch
+     * vÃ¡Â»Â¥ nÃƒÂ y"
      */
     private String message;
+
+    public AvailableTimesResponse() {
+    }
+
+    public AvailableTimesResponse(Integer totalDurationNeeded, List<TimeSlotDTO> availableSlots, String message) {
+        this.totalDurationNeeded = totalDurationNeeded;
+        this.availableSlots = availableSlots;
+        this.message = message;
+    }
+
+    public Integer getTotalDurationNeeded() {
+        return totalDurationNeeded;
+    }
+
+    public void setTotalDurationNeeded(Integer totalDurationNeeded) {
+        this.totalDurationNeeded = totalDurationNeeded;
+    }
+
+    public List<TimeSlotDTO> getAvailableSlots() {
+        return availableSlots;
+    }
+
+    public void setAvailableSlots(List<TimeSlotDTO> availableSlots) {
+        this.availableSlots = availableSlots;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
 }

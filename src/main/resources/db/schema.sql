@@ -24,11 +24,6 @@ CREATE TYPE day_of_week AS ENUM ('MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', '
 CREATE TYPE holiday_type AS ENUM ('NATIONAL', 'COMPANY');
 CREATE TYPE time_off_status AS ENUM ('PENDING', 'APPROVED', 'REJECTED', 'CANCELLED');
 
--- Warehouse Management ENUMs
-CREATE TYPE warehouse_type AS ENUM ('COLD', 'NORMAL');
-CREATE TYPE transaction_type AS ENUM ('IMPORT', 'EXPORT', 'ADJUST', 'DESTROY');
-CREATE TYPE unit_of_measure AS ENUM ('UNIT', 'BOX', 'BOTTLE', 'VIAL', 'TUBE', 'STRIP', 'PACK');
-
 -- ============================================
 -- CORE TABLES
 -- ============================================
@@ -322,90 +317,6 @@ CREATE TABLE holiday_dates (
 );
 
 -- ============================================
--- WAREHOUSE MANAGEMENT (Quản lý kho vật tư y tế)
--- ============================================
-
--- Categories (Danh mục vật tư - cấu trúc cây)
-CREATE TABLE categories (
-    category_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    category_code VARCHAR(50) UNIQUE NOT NULL,
-    category_name VARCHAR(255) NOT NULL,
-    parent_category_id UUID REFERENCES categories(category_id) ON DELETE SET NULL,
-    warehouse_type VARCHAR(20) NOT NULL,
-    description TEXT,
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT chk_warehouse_type CHECK (warehouse_type IN ('COLD', 'NORMAL'))
-);
-
--- Suppliers (Nhà cung cấp)
-CREATE TABLE suppliers (
-    supplier_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    supplier_code VARCHAR(50) UNIQUE NOT NULL,
-    supplier_name VARCHAR(255) NOT NULL,
-    contact_person VARCHAR(100),
-    contact_phone VARCHAR(20),
-    contact_email VARCHAR(255),
-    address TEXT,
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Item Masters (Vật tư chính - master data)
-CREATE TABLE item_masters (
-    item_master_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    item_code VARCHAR(50) UNIQUE NOT NULL,
-    item_name VARCHAR(255) NOT NULL,
-    category_id UUID NOT NULL REFERENCES categories(category_id),
-    unit_of_measure VARCHAR(20) NOT NULL,
-    description TEXT,
-    min_stock_level INTEGER DEFAULT 0,
-    max_stock_level INTEGER DEFAULT 1000,
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT chk_unit_of_measure CHECK (unit_of_measure IN ('UNIT', 'BOX', 'BOTTLE', 'VIAL', 'TUBE', 'STRIP', 'PACK')),
-    CONSTRAINT chk_stock_levels CHECK (min_stock_level >= 0 AND max_stock_level >= min_stock_level)
-);
-
--- Item-Supplier Mapping (N-N relationship)
-CREATE TABLE item_suppliers (
-    item_master_id UUID NOT NULL REFERENCES item_masters(item_master_id) ON DELETE CASCADE,
-    supplier_id UUID NOT NULL REFERENCES suppliers(supplier_id) ON DELETE CASCADE,
-    PRIMARY KEY (item_master_id, supplier_id)
-);
-
--- Item Batches (Lô hàng - FEFO inventory tracking)
-CREATE TABLE item_batches (
-    batch_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    item_master_id UUID NOT NULL REFERENCES item_masters(item_master_id),
-    lot_number VARCHAR(100) NOT NULL,
-    quantity_in_stock INTEGER NOT NULL DEFAULT 0,
-    expiry_date DATE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT chk_quantity CHECK (quantity_in_stock >= 0),
-    CONSTRAINT uq_item_lot UNIQUE (item_master_id, lot_number)
-);
-
--- Storage Transactions (Giao dịch kho - audit trail)
-CREATE TABLE storage_transactions (
-    transaction_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    batch_id UUID NOT NULL REFERENCES item_batches(batch_id),
-    transaction_type VARCHAR(20) NOT NULL,
-    quantity INTEGER NOT NULL,
-    transaction_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    performed_by UUID NOT NULL,
-    reference_code VARCHAR(100),
-    notes TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT chk_transaction_type CHECK (transaction_type IN ('IMPORT', 'EXPORT', 'ADJUST', 'DESTROY')),
-    CONSTRAINT chk_transaction_quantity CHECK (quantity <> 0)
-);
-
--- ============================================
 -- INDEXES FOR PERFORMANCE
 -- ============================================
 
@@ -422,16 +333,6 @@ CREATE INDEX idx_employee_shifts_employee ON employee_shifts(employee_id);
 CREATE INDEX idx_employee_shifts_date ON employee_shifts(work_date);
 CREATE INDEX idx_time_off_requests_employee ON time_off_requests(employee_id);
 CREATE INDEX idx_time_off_requests_status ON time_off_requests(status);
-
--- Warehouse indexes
-CREATE INDEX idx_categories_parent ON categories(parent_category_id);
-CREATE INDEX idx_categories_warehouse_type ON categories(warehouse_type);
-CREATE INDEX idx_item_masters_category ON item_masters(category_id);
-CREATE INDEX idx_item_batches_item_master ON item_batches(item_master_id);
-CREATE INDEX idx_item_batches_expiry ON item_batches(expiry_date);
-CREATE INDEX idx_storage_transactions_batch ON storage_transactions(batch_id);
-CREATE INDEX idx_storage_transactions_type ON storage_transactions(transaction_type);
-CREATE INDEX idx_storage_transactions_date ON storage_transactions(transaction_date);
 
 -- ============================================
 -- END OF SCHEMA

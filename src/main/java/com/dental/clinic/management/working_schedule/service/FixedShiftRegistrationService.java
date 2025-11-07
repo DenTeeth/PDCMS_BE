@@ -16,8 +16,8 @@ import com.dental.clinic.management.working_schedule.dto.request.UpdateFixedRegi
 import com.dental.clinic.management.working_schedule.dto.response.FixedRegistrationResponse;
 import com.dental.clinic.management.working_schedule.repository.FixedShiftRegistrationRepository;
 import com.dental.clinic.management.working_schedule.repository.WorkShiftRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -34,14 +34,22 @@ import java.util.stream.Collectors;
  * Schema V14 - LuÃ¡Â»â€œng 1: LÃ¡Â»â€¹ch CÃ¡Â»â€˜ Ã„â€˜Ã¡Â»â€¹nh
  */
 @Service
-@RequiredArgsConstructor
-@Slf4j
 @Transactional(readOnly = true)
 public class FixedShiftRegistrationService {
+
+    private static final Logger log = LoggerFactory.getLogger(FixedShiftRegistrationService.class);
 
     private final FixedShiftRegistrationRepository registrationRepository;
     private final EmployeeRepository employeeRepository;
     private final WorkShiftRepository workShiftRepository;
+
+    public FixedShiftRegistrationService(FixedShiftRegistrationRepository registrationRepository,
+            EmployeeRepository employeeRepository,
+            WorkShiftRepository workShiftRepository) {
+        this.registrationRepository = registrationRepository;
+        this.employeeRepository = employeeRepository;
+        this.workShiftRepository = workShiftRepository;
+    }
 
     /**
      * Create a fixed shift registration for an employee.

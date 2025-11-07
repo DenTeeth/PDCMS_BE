@@ -1,14 +1,14 @@
 spring:
   application:
     name: Dental Clinic Management - Test
-  
+
   # Test Database Configuration (H2 in-memory)
   datasource:
     url: jdbc:h2:mem:testdb
     username: sa
-    password: 
+    password:
     driver-class-name: org.h2.Driver
-  
+
   # JPA Configuration for Testing
   jpa:
     hibernate:

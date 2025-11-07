@@ -16,8 +16,8 @@ import com.dental.clinic.management.working_schedule.mapper.ShiftRenewalMapper;
 import com.dental.clinic.management.working_schedule.repository.FixedRegistrationDayRepository;
 import com.dental.clinic.management.working_schedule.repository.FixedShiftRegistrationRepository;
 import com.dental.clinic.management.working_schedule.repository.ShiftRenewalRequestRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,7 +31,8 @@ import java.util.stream.Collectors;
  * Service for handling shift renewal requests for employees with FIXED shift
  * registrations (LuÃ¡Â»â€œng 1).
  * <p>
- * - LuÃ¡Â»â€œng 1 (Fixed): Employees with full-time or fixed part-time schedules
+ * - LuÃ¡Â»â€œng 1 (Fixed): Employees with full-time or fixed part-time
+ * schedules
  * (fixed_shift_registrations)
  * - LuÃ¡Â»â€œng 2 (Flex): Employees with flexible shift selections
  * (part_time_registrations)
@@ -46,16 +47,28 @@ import java.util.stream.Collectors;
  * responses
  */
 @Service
-@Slf4j
-@RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class ShiftRenewalService {
+
+    private static final Logger log = LoggerFactory.getLogger(ShiftRenewalService.class);
 
     private final ShiftRenewalRequestRepository renewalRepository;
     private final FixedShiftRegistrationRepository fixedRegistrationRepository;
     private final FixedRegistrationDayRepository fixedRegistrationDayRepository;
     private final EmployeeRepository employeeRepository;
     private final ShiftRenewalMapper mapper;
+
+    public ShiftRenewalService(ShiftRenewalRequestRepository renewalRepository,
+            FixedShiftRegistrationRepository fixedRegistrationRepository,
+            FixedRegistrationDayRepository fixedRegistrationDayRepository,
+            EmployeeRepository employeeRepository,
+            ShiftRenewalMapper mapper) {
+        this.renewalRepository = renewalRepository;
+        this.fixedRegistrationRepository = fixedRegistrationRepository;
+        this.fixedRegistrationDayRepository = fixedRegistrationDayRepository;
+        this.employeeRepository = employeeRepository;
+        this.mapper = mapper;
+    }
 
     /**
      * Get all pending renewal requests for the current employee.

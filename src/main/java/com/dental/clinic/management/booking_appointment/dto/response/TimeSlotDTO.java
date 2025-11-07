@@ -1,10 +1,5 @@
 package com.dental.clinic.management.booking_appointment.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -12,10 +7,6 @@ import java.util.List;
  * Time Slot DTO
  * Represents a specific time slot with available compatible rooms
  */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class TimeSlotDTO {
 
     /**
@@ -39,4 +30,37 @@ public class TimeSlotDTO {
      * Example: "Peak hour - may have delays"
      */
     private String note;
+
+    public TimeSlotDTO() {
+    }
+
+    public TimeSlotDTO(LocalDateTime startTime, List<String> availableCompatibleRoomCodes, String note) {
+        this.startTime = startTime;
+        this.availableCompatibleRoomCodes = availableCompatibleRoomCodes;
+        this.note = note;
+    }
+
+    public LocalDateTime getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(LocalDateTime startTime) {
+        this.startTime = startTime;
+    }
+
+    public List<String> getAvailableCompatibleRoomCodes() {
+        return availableCompatibleRoomCodes;
+    }
+
+    public void setAvailableCompatibleRoomCodes(List<String> availableCompatibleRoomCodes) {
+        this.availableCompatibleRoomCodes = availableCompatibleRoomCodes;
+    }
+
+    public String getNote() {
+        return note;
+    }
+
+    public void setNote(String note) {
+        this.note = note;
+    }
 }

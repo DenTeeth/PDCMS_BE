@@ -36,8 +36,8 @@ import com.dental.clinic.management.working_schedule.repository.WorkShiftReposit
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -55,10 +55,10 @@ import java.util.List;
  * Service for managing time-off requests
  */
 @Service
-@RequiredArgsConstructor
-@Slf4j
 @Transactional(readOnly = true)
 public class TimeOffRequestService {
+
+        private static final Logger log = LoggerFactory.getLogger(TimeOffRequestService.class);
 
         private final TimeOffRequestRepository requestRepository;
         private final TimeOffTypeRepository typeRepository;
@@ -76,9 +76,36 @@ public class TimeOffRequestService {
         @PersistenceContext
         private EntityManager entityManager;
 
+        public TimeOffRequestService(TimeOffRequestRepository requestRepository,
+                        TimeOffTypeRepository typeRepository,
+                        EmployeeRepository employeeRepository,
+                        AccountRepository accountRepository,
+                        TimeOffRequestMapper requestMapper,
+                        IdGenerator idGenerator,
+                        EmployeeLeaveBalanceRepository balanceRepository,
+                        LeaveBalanceHistoryRepository historyRepository,
+                        EmployeeShiftRepository employeeShiftRepository,
+                        FixedShiftRegistrationRepository fixedShiftRegistrationRepository,
+                        PartTimeSlotRepository partTimeSlotRepository,
+                        WorkShiftRepository workShiftRepository) {
+                this.requestRepository = requestRepository;
+                this.typeRepository = typeRepository;
+                this.employeeRepository = employeeRepository;
+                this.accountRepository = accountRepository;
+                this.requestMapper = requestMapper;
+                this.idGenerator = idGenerator;
+                this.balanceRepository = balanceRepository;
+                this.historyRepository = historyRepository;
+                this.employeeShiftRepository = employeeShiftRepository;
+                this.fixedShiftRegistrationRepository = fixedShiftRegistrationRepository;
+                this.partTimeSlotRepository = partTimeSlotRepository;
+                this.workShiftRepository = workShiftRepository;
+        }
+
         /**
          * GET /api/v1/time-off-requests
-         * LÃ¡ÂºÂ¥y danh sÃƒÂ¡ch yÃƒÂªu cÃ¡ÂºÂ§u nghÃ¡Â»â€° phÃƒÂ©p vÃ¡Â»â€ºi phÃƒÂ¢n trang vÃƒÂ  bÃ¡Â»â„¢ lÃ¡Â»Âc
+         * LÃ¡ÂºÂ¥y danh sÃƒÂ¡ch yÃƒÂªu cÃ¡ÂºÂ§u nghÃ¡Â»â€° phÃƒÂ©p vÃ¡Â»â€ºi phÃƒÂ¢n
+         * trang vÃƒÂ  bÃ¡Â»â„¢ lÃ¡Â»Âc
          */
         @PreAuthorize("hasRole('" + AuthoritiesConstants.ADMIN + "') or " +
                         "hasAuthority('" + AuthoritiesConstants.VIEW_TIMEOFF_ALL + "') or " +
@@ -92,7 +119,8 @@ public class TimeOffRequestService {
 
                 log.debug("Request to get all time-off requests with filters");
 
-                // LUÃ¡Â»â€™NG 1: Admin hoÃ¡ÂºÂ·c ngÃ†Â°Ã¡Â»Âi dÃƒÂ¹ng cÃƒÂ³ quyÃ¡Â»Ân xem tÃ¡ÂºÂ¥t cÃ¡ÂºÂ£
+                // LUÃ¡Â»â€™NG 1: Admin hoÃ¡ÂºÂ·c ngÃ†Â°Ã¡Â»Âi dÃƒÂ¹ng cÃƒÂ³ quyÃ¡Â»Ân xem
+                // tÃ¡ÂºÂ¥t cÃ¡ÂºÂ£
                 if (SecurityUtil.hasCurrentUserRole(AuthoritiesConstants.ADMIN) ||
                                 SecurityUtil.hasCurrentUserPermission(AuthoritiesConstants.VIEW_TIMEOFF_ALL)) {
 
@@ -136,7 +164,8 @@ public class TimeOffRequestService {
         public TimeOffRequestResponse getRequestById(String requestId) {
                 log.debug("Request to get time-off request: {}", requestId);
 
-                // LUÃ¡Â»â€™NG 1: Admin hoÃ¡ÂºÂ·c ngÃ†Â°Ã¡Â»Âi dÃƒÂ¹ng cÃƒÂ³ quyÃ¡Â»Ân xem tÃ¡ÂºÂ¥t cÃ¡ÂºÂ£
+                // LUÃ¡Â»â€™NG 1: Admin hoÃ¡ÂºÂ·c ngÃ†Â°Ã¡Â»Âi dÃƒÂ¹ng cÃƒÂ³ quyÃ¡Â»Ân xem
+                // tÃ¡ÂºÂ¥t cÃ¡ÂºÂ£
                 if (SecurityUtil.hasCurrentUserRole(AuthoritiesConstants.ADMIN) ||
                                 SecurityUtil.hasCurrentUserPermission(AuthoritiesConstants.VIEW_TIMEOFF_ALL)) {
 
@@ -145,7 +174,8 @@ public class TimeOffRequestService {
                                         .map(requestMapper::toResponse)
                                         .orElseThrow(() -> new TimeOffRequestNotFoundException(requestId));
                 }
-                // LUÃ¡Â»â€™NG 2: NhÃƒÂ¢n viÃƒÂªn chÃ¡Â»â€° cÃƒÂ³ quyÃ¡Â»Ân VIEW_TIMEOFF_OWN (phÃ¡ÂºÂ£i lÃƒÂ  chÃ¡Â»Â§ sÃ¡Â»Å¸ hÃ¡Â»Â¯u)
+                // LUÃ¡Â»â€™NG 2: NhÃƒÂ¢n viÃƒÂªn chÃ¡Â»â€° cÃƒÂ³ quyÃ¡Â»Ân VIEW_TIMEOFF_OWN
+                // (phÃ¡ÂºÂ£i lÃƒÂ  chÃ¡Â»Â§ sÃ¡Â»Å¸ hÃ¡Â»Â¯u)
                 else {
                         String username = SecurityUtil.getCurrentUserLogin()
                                         .orElseThrow(() -> new RuntimeException("User not authenticated"));
@@ -191,13 +221,16 @@ public class TimeOffRequestService {
                 // 3. Validate date range
                 if (request.getStartDate().isAfter(request.getEndDate())) {
                         throw new InvalidDateRangeException(
-                                        "NgÃƒÂ y bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u khÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c lÃ¡Â»â€ºn hÃ†Â¡n ngÃƒÂ y kÃ¡ÂºÂ¿t thÃƒÂºc. " +
-                                                        "NgÃƒÂ y bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u: " + request.getStartDate() + ", NgÃƒÂ y kÃ¡ÂºÂ¿t thÃƒÂºc: "
+                                        "NgÃƒÂ y bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u khÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c lÃ¡Â»â€ºn hÃ†Â¡n ngÃƒÂ y kÃ¡ÂºÂ¿t thÃƒÂºc. "
+                                                        +
+                                                        "NgÃƒÂ y bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u: " + request.getStartDate()
+                                                        + ", NgÃƒÂ y kÃ¡ÂºÂ¿t thÃƒÂºc: "
                                                         + request.getEndDate());
                 }
 
                 // 3.5. Check leave balance CHÃ¡Â»Ë† cho ANNUAL_LEAVE
-                // CÃƒÂ¡c loÃ¡ÂºÂ¡i khÃƒÂ¡c (SICK_LEAVE, UNPAID_PERSONAL) khÃƒÂ´ng cÃ¡ÂºÂ§n check balance
+                // CÃƒÂ¡c loÃ¡ÂºÂ¡i khÃƒÂ¡c (SICK_LEAVE, UNPAID_PERSONAL) khÃƒÂ´ng cÃ¡ÂºÂ§n
+                // check balance
                 if ("ANNUAL_LEAVE".equals(timeOffType.getTypeCode())) {
                         checkLeaveBalance(request.getEmployeeId(), request.getTimeOffTypeId(),
                                         request.getStartDate(), request.getEndDate(), request.getWorkShiftId());
@@ -208,12 +241,15 @@ public class TimeOffRequestService {
                 // end_date
                 if (request.getWorkShiftId() != null && !request.getStartDate().equals(request.getEndDate())) {
                         throw new InvalidDateRangeException(
-                                        "Khi nghÃ¡Â»â€° theo ca, ngÃƒÂ y bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u vÃƒÂ  kÃ¡ÂºÂ¿t thÃƒÂºc phÃ¡ÂºÂ£i giÃ¡Â»â€˜ng nhau. " +
-                                                        "NgÃƒÂ y bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u: " + request.getStartDate() + ", NgÃƒÂ y kÃ¡ÂºÂ¿t thÃƒÂºc: "
+                                        "Khi nghÃ¡Â»â€° theo ca, ngÃƒÂ y bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u vÃƒÂ  kÃ¡ÂºÂ¿t thÃƒÂºc phÃ¡ÂºÂ£i giÃ¡Â»â€˜ng nhau. "
+                                                        +
+                                                        "NgÃƒÂ y bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u: " + request.getStartDate()
+                                                        + ", NgÃƒÂ y kÃ¡ÂºÂ¿t thÃƒÂºc: "
                                                         + request.getEndDate());
                 }
 
-                // 4.5. [V14 Hybrid] KiÃ¡Â»Æ’m tra nhÃƒÂ¢n viÃƒÂªn cÃƒÂ³ lÃ¡Â»â€¹ch lÃƒÂ m viÃ¡Â»â€¡c khÃƒÂ´ng
+                // 4.5. [V14 Hybrid] KiÃ¡Â»Æ’m tra nhÃƒÂ¢n viÃƒÂªn cÃƒÂ³ lÃ¡Â»â€¹ch lÃƒÂ m
+                // viÃ¡Â»â€¡c khÃƒÂ´ng
                 // Query tÃ¡Â»Â« fixed_shift_registrations VÃƒâ‚¬ part_time_registrations
                 if (request.getWorkShiftId() != null) {
                         // NghÃ¡Â»â€° theo ca (half-day)
@@ -223,7 +259,8 @@ public class TimeOffRequestService {
                                         request.getWorkShiftId());
 
                         if (!hasShift) {
-                                // LÃ¡ÂºÂ¥y shift name Ã„â€˜Ã¡Â»Æ’ hiÃ¡Â»Æ’n thÃ¡Â»â€¹ message rÃƒÂµ rÃƒÂ ng hÃ†Â¡n
+                                // LÃ¡ÂºÂ¥y shift name Ã„â€˜Ã¡Â»Æ’ hiÃ¡Â»Æ’n thÃ¡Â»â€¹ message rÃƒÂµ rÃƒÂ ng
+                                // hÃ†Â¡n
                                 String shiftName = workShiftRepository.findById(request.getWorkShiftId())
                                                 .map(ws -> ws.getShiftName())
                                                 .orElse(request.getWorkShiftId());
@@ -235,7 +272,8 @@ public class TimeOffRequestService {
                                                 shiftName);
                         }
                 } else {
-                        // NghÃ¡Â»â€° cÃ¡ÂºÂ£ ngÃƒÂ y (full-day) - kiÃ¡Â»Æ’m tra tÃ¡ÂºÂ¥t cÃ¡ÂºÂ£ cÃƒÂ¡c ngÃƒÂ y
+                        // NghÃ¡Â»â€° cÃ¡ÂºÂ£ ngÃƒÂ y (full-day) - kiÃ¡Â»Æ’m tra tÃ¡ÂºÂ¥t cÃ¡ÂºÂ£ cÃƒÂ¡c
+                        // ngÃƒÂ y
                         LocalDate currentDate = request.getStartDate();
                         boolean hasAnyShift = false;
 
@@ -290,7 +328,8 @@ public class TimeOffRequestService {
                                 .map(account -> {
                                         if (account.getEmployee() == null) {
                                                 throw new RuntimeException(
-                                                                "Account " + username + " khÃƒÂ´ng cÃƒÂ³ Employee liÃƒÂªn kÃ¡ÂºÂ¿t.");
+                                                                "Account " + username
+                                                                                + " khÃƒÂ´ng cÃƒÂ³ Employee liÃƒÂªn kÃ¡ÂºÂ¿t.");
                                         }
                                         return account.getEmployee().getEmployeeId();
                                 })
@@ -328,7 +367,8 @@ public class TimeOffRequestService {
 
         /**
          * PATCH /api/v1/time-off-requests/{request_id}
-         * CÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t trÃ¡ÂºÂ¡ng thÃƒÂ¡i yÃƒÂªu cÃ¡ÂºÂ§u (DuyÃ¡Â»â€¡t/TÃ¡Â»Â« chÃ¡Â»â€˜i/HÃ¡Â»Â§y)
+         * CÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t trÃ¡ÂºÂ¡ng thÃƒÂ¡i yÃƒÂªu cÃ¡ÂºÂ§u (DuyÃ¡Â»â€¡t/TÃ¡Â»Â«
+         * chÃ¡Â»â€˜i/HÃ¡Â»Â§y)
          */
         @Transactional
         public TimeOffRequestResponse updateRequestStatus(String requestId, UpdateTimeOffStatusRequest request) {
@@ -341,8 +381,10 @@ public class TimeOffRequestService {
                 // 2. Check current status is PENDING
                 if (timeOffRequest.getStatus() != TimeOffStatus.PENDING) {
                         throw new InvalidStateTransitionException(
-                                        "KhÃƒÂ´ng thÃ¡Â»Æ’ cÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t yÃƒÂªu cÃ¡ÂºÂ§u. YÃƒÂªu cÃ¡ÂºÂ§u phÃ¡ÂºÂ£i Ã¡Â»Å¸ trÃ¡ÂºÂ¡ng thÃƒÂ¡i PENDING. " +
-                                                        "TrÃ¡ÂºÂ¡ng thÃƒÂ¡i hiÃ¡Â»â€¡n tÃ¡ÂºÂ¡i: " + timeOffRequest.getStatus());
+                                        "KhÃƒÂ´ng thÃ¡Â»Æ’ cÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t yÃƒÂªu cÃ¡ÂºÂ§u. YÃƒÂªu cÃ¡ÂºÂ§u phÃ¡ÂºÂ£i Ã¡Â»Å¸ trÃ¡ÂºÂ¡ng thÃƒÂ¡i PENDING. "
+                                                        +
+                                                        "TrÃ¡ÂºÂ¡ng thÃƒÂ¡i hiÃ¡Â»â€¡n tÃ¡ÂºÂ¡i: "
+                                                        + timeOffRequest.getStatus());
                 }
 
                 // 3. Handle different status updates
@@ -385,7 +427,8 @@ public class TimeOffRequestService {
                                 .map(account -> {
                                         if (account.getEmployee() == null) {
                                                 throw new RuntimeException(
-                                                                "Account " + username + " khÃƒÂ´ng cÃƒÂ³ Employee liÃƒÂªn kÃ¡ÂºÂ¿t.");
+                                                                "Account " + username
+                                                                                + " khÃƒÂ´ng cÃƒÂ³ Employee liÃƒÂªn kÃ¡ÂºÂ¿t.");
                                         }
                                         return account.getEmployee().getEmployeeId();
                                 })
@@ -427,7 +470,8 @@ public class TimeOffRequestService {
                                 .map(account -> {
                                         if (account.getEmployee() == null) {
                                                 throw new RuntimeException(
-                                                                "Account " + username + " khÃƒÂ´ng cÃƒÂ³ Employee liÃƒÂªn kÃ¡ÂºÂ¿t.");
+                                                                "Account " + username
+                                                                                + " khÃƒÂ´ng cÃƒÂ³ Employee liÃƒÂªn kÃ¡ÂºÂ¿t.");
                                         }
                                         return account.getEmployee().getEmployeeId();
                                 })
@@ -457,7 +501,8 @@ public class TimeOffRequestService {
                                 .map(account -> {
                                         if (account.getEmployee() == null) {
                                                 throw new RuntimeException(
-                                                                "Account " + username + " khÃƒÂ´ng cÃƒÂ³ Employee liÃƒÂªn kÃ¡ÂºÂ¿t.");
+                                                                "Account " + username
+                                                                                + " khÃƒÂ´ng cÃƒÂ³ Employee liÃƒÂªn kÃ¡ÂºÂ¿t.");
                                         }
                                         return account.getEmployee().getEmployeeId();
                                 })
@@ -533,7 +578,8 @@ public class TimeOffRequestService {
                                 .orElseThrow(() -> new TimeOffTypeNotFoundException(timeOffRequest.getTimeOffTypeId()));
 
                 // CHÃ¡Â»Ë† trÃ¡Â»Â« sÃ¡Â»â€˜ dÃ†Â° cho ANNUAL_LEAVE
-                // CÃƒÂ¡c loÃ¡ÂºÂ¡i khÃƒÂ¡c (SICK_LEAVE, UNPAID_PERSONAL) khÃƒÂ´ng trÃ¡Â»Â« sÃ¡Â»â€˜ dÃ†Â°
+                // CÃƒÂ¡c loÃ¡ÂºÂ¡i khÃƒÂ¡c (SICK_LEAVE, UNPAID_PERSONAL) khÃƒÂ´ng trÃ¡Â»Â«
+                // sÃ¡Â»â€˜ dÃ†Â°
                 if (!"ANNUAL_LEAVE".equals(timeOffType.getTypeCode())) {
                         log.info("Skipping balance deduction for type: {} ({})",
                                         timeOffType.getTypeCode(), timeOffType.getTypeName());
@@ -570,7 +616,8 @@ public class TimeOffRequestService {
                                 .changedBy(timeOffRequest.getApprovedBy())
                                 .changeAmount(daysToDeduct.negate().doubleValue()) // Negative for deduction
                                 .reason(BalanceChangeReason.APPROVED_REQUEST)
-                                .notes(String.format("TrÃ¡Â»Â« %.1f ngÃƒÂ y nghÃ¡Â»â€° phÃƒÂ©p do yÃƒÂªu cÃ¡ÂºÂ§u %s Ã„â€˜Ã†Â°Ã¡Â»Â£c phÃƒÂª duyÃ¡Â»â€¡t",
+                                .notes(String.format(
+                                                "TrÃ¡Â»Â« %.1f ngÃƒÂ y nghÃ¡Â»â€° phÃƒÂ©p do yÃƒÂªu cÃ¡ÂºÂ§u %s Ã„â€˜Ã†Â°Ã¡Â»Â£c phÃƒÂª duyÃ¡Â»â€¡t",
                                                 daysToDeduct.doubleValue(), timeOffRequest.getRequestId()))
                                 .build();
 

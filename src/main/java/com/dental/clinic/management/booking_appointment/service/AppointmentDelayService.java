@@ -12,8 +12,8 @@ import com.dental.clinic.management.booking_appointment.repository.AppointmentPa
 import com.dental.clinic.management.booking_appointment.repository.AppointmentRepository;
 import com.dental.clinic.management.employee.domain.Employee;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -35,15 +35,27 @@ import java.util.List;
  * - Creates audit log with DELAY action
  */
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class AppointmentDelayService {
+
+        private static final Logger log = LoggerFactory.getLogger(AppointmentDelayService.class);
 
         private final AppointmentRepository appointmentRepository;
         private final AppointmentParticipantRepository participantRepository;
         private final AppointmentAuditLogRepository auditLogRepository;
         private final EmployeeRepository employeeRepository;
         private final AppointmentDetailService detailService;
+
+        public AppointmentDelayService(AppointmentRepository appointmentRepository,
+                        AppointmentParticipantRepository participantRepository,
+                        AppointmentAuditLogRepository auditLogRepository,
+                        EmployeeRepository employeeRepository,
+                        AppointmentDetailService detailService) {
+                this.appointmentRepository = appointmentRepository;
+                this.participantRepository = participantRepository;
+                this.auditLogRepository = auditLogRepository;
+                this.employeeRepository = employeeRepository;
+                this.detailService = detailService;
+        }
 
         /**
          * Delay appointment to new time slot with conflict checking.

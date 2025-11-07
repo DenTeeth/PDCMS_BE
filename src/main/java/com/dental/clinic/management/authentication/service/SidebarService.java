@@ -3,8 +3,8 @@ package com.dental.clinic.management.authentication.service;
 import com.dental.clinic.management.authentication.dto.SidebarItemDTO;
 import com.dental.clinic.management.permission.domain.Permission;
 import com.dental.clinic.management.permission.repository.PermissionRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,11 +21,15 @@ import java.util.stream.Collectors;
  * Implements parent-child filtering logic and module grouping.
  */
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class SidebarService {
 
+    private static final Logger log = LoggerFactory.getLogger(SidebarService.class);
+
     private final PermissionRepository permissionRepository;
+
+    public SidebarService(PermissionRepository permissionRepository) {
+        this.permissionRepository = permissionRepository;
+    }
 
     /**
      * Generate sidebar structure for a given role.

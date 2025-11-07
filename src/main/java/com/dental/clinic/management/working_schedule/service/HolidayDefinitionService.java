@@ -7,8 +7,8 @@ import com.dental.clinic.management.working_schedule.dto.response.HolidayDefinit
 import com.dental.clinic.management.working_schedule.enums.HolidayType;
 import com.dental.clinic.management.working_schedule.mapper.HolidayDefinitionMapper;
 import com.dental.clinic.management.working_schedule.repository.HolidayDefinitionRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,13 +19,19 @@ import java.util.stream.Collectors;
  * Service for managing holiday definitions.
  */
 @Service
-@RequiredArgsConstructor
-@Slf4j
 @Transactional
 public class HolidayDefinitionService {
 
+    private static final Logger log = LoggerFactory.getLogger(HolidayDefinitionService.class);
+
     private final HolidayDefinitionRepository holidayDefinitionRepository;
     private final HolidayDefinitionMapper holidayDefinitionMapper;
+
+    public HolidayDefinitionService(HolidayDefinitionRepository holidayDefinitionRepository,
+            HolidayDefinitionMapper holidayDefinitionMapper) {
+        this.holidayDefinitionRepository = holidayDefinitionRepository;
+        this.holidayDefinitionMapper = holidayDefinitionMapper;
+    }
 
     /**
      * Create a new holiday definition.
@@ -36,13 +42,13 @@ public class HolidayDefinitionService {
         // Check if definition ID already exists
         if (holidayDefinitionRepository.existsById(request.getDefinitionId())) {
             throw new com.dental.clinic.management.exception.holiday.DuplicateHolidayDefinitionException(
-                request.getDefinitionId());
+                    request.getDefinitionId());
         }
 
         // Check if holiday name already exists
         if (holidayDefinitionRepository.existsByHolidayName(request.getHolidayName())) {
             throw new com.dental.clinic.management.exception.holiday.DuplicateHolidayDefinitionException(
-                request.getHolidayName());
+                    request.getHolidayName());
         }
 
         HolidayDefinition definition = holidayDefinitionMapper.toEntity(request);
@@ -58,11 +64,11 @@ public class HolidayDefinitionService {
     @Transactional(readOnly = true)
     public List<HolidayDefinitionResponse> getAllHolidayDefinitions() {
         log.info("Fetching all holiday definitions");
-        
+
         return holidayDefinitionRepository.findAll()
-            .stream()
-            .map(holidayDefinitionMapper::toResponse)
-            .collect(Collectors.toList());
+                .stream()
+                .map(holidayDefinitionMapper::toResponse)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -73,9 +79,9 @@ public class HolidayDefinitionService {
         log.info("Fetching holiday definition: {}", definitionId);
 
         HolidayDefinition definition = holidayDefinitionRepository.findById(definitionId)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                "HOLIDAY_DEFINITION_NOT_FOUND",
-                "Holiday definition not found with ID: " + definitionId));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "HOLIDAY_DEFINITION_NOT_FOUND",
+                        "Holiday definition not found with ID: " + definitionId));
 
         return holidayDefinitionMapper.toResponse(definition);
     }
@@ -88,9 +94,9 @@ public class HolidayDefinitionService {
         log.info("Fetching holiday definitions by type: {}", holidayType);
 
         return holidayDefinitionRepository.findByHolidayType(holidayType)
-            .stream()
-            .map(holidayDefinitionMapper::toResponse)
-            .collect(Collectors.toList());
+                .stream()
+                .map(holidayDefinitionMapper::toResponse)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -98,19 +104,19 @@ public class HolidayDefinitionService {
      */
     public HolidayDefinitionResponse updateHolidayDefinition(
             String definitionId, HolidayDefinitionRequest request) {
-        
+
         log.info("Updating holiday definition: {}", definitionId);
 
         HolidayDefinition definition = holidayDefinitionRepository.findById(definitionId)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                "HOLIDAY_DEFINITION_NOT_FOUND",
-                "Holiday definition not found with ID: " + definitionId));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "HOLIDAY_DEFINITION_NOT_FOUND",
+                        "Holiday definition not found with ID: " + definitionId));
 
         // Check if new name conflicts with another definition
         if (!definition.getHolidayName().equals(request.getHolidayName()) &&
-            holidayDefinitionRepository.existsByHolidayName(request.getHolidayName())) {
+                holidayDefinitionRepository.existsByHolidayName(request.getHolidayName())) {
             throw new com.dental.clinic.management.exception.holiday.DuplicateHolidayDefinitionException(
-                request.getHolidayName());
+                    request.getHolidayName());
         }
 
         holidayDefinitionMapper.updateEntity(definition, request);
@@ -128,16 +134,15 @@ public class HolidayDefinitionService {
         log.info("Deleting holiday definition: {}", definitionId);
 
         HolidayDefinition definition = holidayDefinitionRepository.findById(definitionId)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                "HOLIDAY_DEFINITION_NOT_FOUND",
-                "Holiday definition not found with ID: " + definitionId));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "HOLIDAY_DEFINITION_NOT_FOUND",
+                        "Holiday definition not found with ID: " + definitionId));
 
-        int datesCount = definition.getHolidayDates() != null ? 
-                         definition.getHolidayDates().size() : 0;
+        int datesCount = definition.getHolidayDates() != null ? definition.getHolidayDates().size() : 0;
 
         holidayDefinitionRepository.delete(definition);
 
-        log.info("Holiday definition deleted: {} (with {} associated dates)", 
-                 definitionId, datesCount);
+        log.info("Holiday definition deleted: {} (with {} associated dates)",
+                definitionId, datesCount);
     }
 }

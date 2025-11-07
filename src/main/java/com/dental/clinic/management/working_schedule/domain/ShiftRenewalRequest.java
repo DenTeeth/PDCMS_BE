@@ -7,10 +7,6 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.time.LocalDateTime;
 
@@ -19,7 +15,8 @@ import java.time.LocalDateTime;
  * registrations.
  * Applies to: FULL_TIME and PART_TIME_FIXED employees.
  *
- * When a fixed_shift_registration is about to expire (effective_to sÃ¡ÂºÂ¯p Ã„â€˜Ã¡ÂºÂ¿n),
+ * When a fixed_shift_registration is about to expire (effective_to sÃ¡ÂºÂ¯p
+ * Ã„â€˜Ã¡ÂºÂ¿n),
  * Job P8 automatically creates a renewal request inviting the employee to
  * extend.
  *
@@ -38,10 +35,6 @@ import java.time.LocalDateTime;
         @Index(name = "idx_renewal_employee_status", columnList = "employee_id, status"),
         @Index(name = "idx_renewal_expires_at", columnList = "expires_at")
 })
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
 public class ShiftRenewalRequest {
 
     private static final String ID_PREFIX = "SRR";

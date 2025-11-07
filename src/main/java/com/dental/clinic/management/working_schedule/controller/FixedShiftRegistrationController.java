@@ -7,7 +7,6 @@ import com.dental.clinic.management.working_schedule.dto.request.UpdateFixedRegi
 import com.dental.clinic.management.working_schedule.dto.response.FixedRegistrationResponse;
 import com.dental.clinic.management.working_schedule.service.FixedShiftRegistrationService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -21,107 +20,115 @@ import java.util.List;
  * Provides endpoints for creating, viewing, updating, and deleting fixed
  * schedules.
  *
- * Schema V14 - LuÃ¡Â»â€œng 1: LÃ¡Â»â€¹ch CÃ¡Â»â€˜ Ã„â€˜Ã¡Â»â€¹nh (FULL_TIME & PART_TIME_FIXED)
+ * Schema V14 - LuÃ¡Â»â€œng 1: LÃ¡Â»â€¹ch CÃ¡Â»â€˜ Ã„â€˜Ã¡Â»â€¹nh (FULL_TIME &
+ * PART_TIME_FIXED)
  */
 @RestController
 @RequestMapping("/api/v1/fixed-registrations")
-@RequiredArgsConstructor
 public class FixedShiftRegistrationController {
 
-    private final FixedShiftRegistrationService fixedRegistrationService;
-    private final EmployeeRepository employeeRepository;
+        private final FixedShiftRegistrationService fixedRegistrationService;
+        private final EmployeeRepository employeeRepository;
 
-    /**
-     * Create a fixed shift registration.
-     *
-     * POST /api/v1/fixed-registrations
-     *
-     * Authorization: Requires MANAGE_FIXED_REGISTRATIONS
-     *
-     * @param request creation request
-     * @return created registration details
-     */
-    @PostMapping
-    public ResponseEntity<FixedRegistrationResponse> createFixedRegistration(
-            @Valid @RequestBody CreateFixedRegistrationRequest request) {
+        public FixedShiftRegistrationController(FixedShiftRegistrationService fixedRegistrationService,
+                        EmployeeRepository employeeRepository) {
+                this.fixedRegistrationService = fixedRegistrationService;
+                this.employeeRepository = employeeRepository;
+        }
 
-        FixedRegistrationResponse response = fixedRegistrationService.createFixedRegistration(request);
+        /**
+         * Create a fixed shift registration.
+         *
+         * POST /api/v1/fixed-registrations
+         *
+         * Authorization: Requires MANAGE_FIXED_REGISTRATIONS
+         *
+         * @param request creation request
+         * @return created registration details
+         */
+        @PostMapping
+        public ResponseEntity<FixedRegistrationResponse> createFixedRegistration(
+                        @Valid @RequestBody CreateFixedRegistrationRequest request) {
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
+                FixedRegistrationResponse response = fixedRegistrationService.createFixedRegistration(request);
 
-    /**
-     * Get list of fixed shift registrations.
-     *
-     * GET /api/v1/fixed-registrations?employeeId=123&isActive=true
-     *
-     * Authorization: Requires VIEW_FIXED_REGISTRATIONS_ALL or
-     * VIEW_FIXED_REGISTRATIONS_OWN
-     *
-     * @param employeeId     employee ID (optional for VIEW_ALL)
-     * @param isActive       filter by active status (null = all, true = active only, false = inactive only)
-     * @param authentication authenticated user
-     * @return list of registrations
-     */
-    @GetMapping
-    public ResponseEntity<List<FixedRegistrationResponse>> getFixedRegistrations(
-            @RequestParam(name = "employeeId", required = false) Integer employeeId,
-            @RequestParam(name = "isActive", required = false) Boolean isActive,
-            Authentication authentication) {
+                return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        }
 
-        // Get current user info
-        String username = SecurityUtil.getCurrentUserLogin()
-                .orElseThrow(() -> new RuntimeException("User not authenticated"));
-        Integer currentEmployeeId = employeeRepository.findByAccount_Username(username)
-                .map(employee -> employee.getEmployeeId())
-                .orElseThrow(() -> new RuntimeException("Employee not found for user: " + username));
+        /**
+         * Get list of fixed shift registrations.
+         *
+         * GET /api/v1/fixed-registrations?employeeId=123&isActive=true
+         *
+         * Authorization: Requires VIEW_FIXED_REGISTRATIONS_ALL or
+         * VIEW_FIXED_REGISTRATIONS_OWN
+         *
+         * @param employeeId     employee ID (optional for VIEW_ALL)
+         * @param isActive       filter by active status (null = all, true = active
+         *                       only, false = inactive only)
+         * @param authentication authenticated user
+         * @return list of registrations
+         */
+        @GetMapping
+        public ResponseEntity<List<FixedRegistrationResponse>> getFixedRegistrations(
+                        @RequestParam(name = "employeeId", required = false) Integer employeeId,
+                        @RequestParam(name = "isActive", required = false) Boolean isActive,
+                        Authentication authentication) {
 
-        boolean hasViewAllPermission = authentication.getAuthorities()
-                .contains(new SimpleGrantedAuthority("VIEW_FIXED_REGISTRATIONS_ALL"));
+                // Get current user info
+                String username = SecurityUtil.getCurrentUserLogin()
+                                .orElseThrow(() -> new RuntimeException("User not authenticated"));
+                Integer currentEmployeeId = employeeRepository.findByAccount_Username(username)
+                                .map(employee -> employee.getEmployeeId())
+                                .orElseThrow(() -> new RuntimeException("Employee not found for user: " + username));
 
-        List<FixedRegistrationResponse> registrations = fixedRegistrationService.getFixedRegistrations(
-                employeeId, currentEmployeeId, hasViewAllPermission, isActive);
+                boolean hasViewAllPermission = authentication.getAuthorities()
+                                .contains(new SimpleGrantedAuthority("VIEW_FIXED_REGISTRATIONS_ALL"));
 
-        return ResponseEntity.ok(registrations);
-    }
+                List<FixedRegistrationResponse> registrations = fixedRegistrationService.getFixedRegistrations(
+                                employeeId, currentEmployeeId, hasViewAllPermission, isActive);
 
-    /**
-     * Update a fixed shift registration (partial update).
-     *
-     * PATCH /api/v1/fixed-registrations/{registrationId}
-     *
-     * Authorization: Requires MANAGE_FIXED_REGISTRATIONS
-     *
-     * @param registrationId registration ID
-     * @param request        update request (all fields optional)
-     * @return updated registration details
-     */
-    @PatchMapping("/{registrationId}")
-    public ResponseEntity<FixedRegistrationResponse> updateFixedRegistration(
-            @PathVariable("registrationId") Integer registrationId,
-            @Valid @RequestBody UpdateFixedRegistrationRequest request) {
+                return ResponseEntity.ok(registrations);
+        }
 
-        FixedRegistrationResponse response = fixedRegistrationService.updateFixedRegistration(registrationId, request);
+        /**
+         * Update a fixed shift registration (partial update).
+         *
+         * PATCH /api/v1/fixed-registrations/{registrationId}
+         *
+         * Authorization: Requires MANAGE_FIXED_REGISTRATIONS
+         *
+         * @param registrationId registration ID
+         * @param request        update request (all fields optional)
+         * @return updated registration details
+         */
+        @PatchMapping("/{registrationId}")
+        public ResponseEntity<FixedRegistrationResponse> updateFixedRegistration(
+                        @PathVariable("registrationId") Integer registrationId,
+                        @Valid @RequestBody UpdateFixedRegistrationRequest request) {
 
-        return ResponseEntity.ok(response);
-    }
+                FixedRegistrationResponse response = fixedRegistrationService.updateFixedRegistration(registrationId,
+                                request);
 
-    /**
-     * Delete (soft delete) a fixed shift registration.
-     *
-     * DELETE /api/v1/fixed-registrations/{registrationId}
-     *
-     * Authorization: Requires MANAGE_FIXED_REGISTRATIONS
-     *
-     * @param registrationId registration ID
-     * @return no content
-     */
-    @DeleteMapping("/{registrationId}")
-    public ResponseEntity<Void> deleteFixedRegistration(
-            @PathVariable("registrationId") Integer registrationId) {
+                return ResponseEntity.ok(response);
+        }
 
-        fixedRegistrationService.deleteFixedRegistration(registrationId);
+        /**
+         * Delete (soft delete) a fixed shift registration.
+         *
+         * DELETE /api/v1/fixed-registrations/{registrationId}
+         *
+         * Authorization: Requires MANAGE_FIXED_REGISTRATIONS
+         *
+         * @param registrationId registration ID
+         * @return no content
+         */
+        @DeleteMapping("/{registrationId}")
+        public ResponseEntity<Void> deleteFixedRegistration(
+                        @PathVariable("registrationId") Integer registrationId) {
 
-        return ResponseEntity.noContent().build();
-    }
+                fixedRegistrationService.deleteFixedRegistration(registrationId);
+
+                return ResponseEntity.noContent().build();
+        }
 }

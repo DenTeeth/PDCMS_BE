@@ -16,8 +16,8 @@ import com.dental.clinic.management.working_schedule.repository.PartTimeSlotRepo
 import com.dental.clinic.management.working_schedule.repository.WorkShiftRepository;
 import com.dental.clinic.management.exception.work_shift.WorkShiftNotFoundException;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,14 +26,24 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class PartTimeSlotService {
+
+    private static final Logger log = LoggerFactory.getLogger(PartTimeSlotService.class);
 
     private final PartTimeSlotRepository partTimeSlotRepository;
     private final WorkShiftRepository workShiftRepository;
     private final PartTimeRegistrationRepository registrationRepository;
     private final EmployeeRepository employeeRepository;
+
+    public PartTimeSlotService(PartTimeSlotRepository partTimeSlotRepository,
+            WorkShiftRepository workShiftRepository,
+            PartTimeRegistrationRepository registrationRepository,
+            EmployeeRepository employeeRepository) {
+        this.partTimeSlotRepository = partTimeSlotRepository;
+        this.workShiftRepository = workShiftRepository;
+        this.registrationRepository = registrationRepository;
+        this.employeeRepository = employeeRepository;
+    }
 
     /**
      * Create a new part-time slot.
@@ -46,9 +56,9 @@ public class PartTimeSlotService {
     @Transactional
     @PreAuthorize("hasAuthority('MANAGE_WORK_SLOTS')")
     public PartTimeSlotResponse createSlot(CreatePartTimeSlotRequest request) {
-        log.info("Creating part-time slot: shift={}, days={}, effectiveFrom={}, effectiveTo={}, quota={}", 
-                 request.getWorkShiftId(), request.getDayOfWeek(), 
-                 request.getEffectiveFrom(), request.getEffectiveTo(), request.getQuota());
+        log.info("Creating part-time slot: shift={}, days={}, effectiveFrom={}, effectiveTo={}, quota={}",
+                request.getWorkShiftId(), request.getDayOfWeek(),
+                request.getEffectiveFrom(), request.getEffectiveTo(), request.getQuota());
 
         // Validate work shift exists
         WorkShift workShift = workShiftRepository.findById(request.getWorkShiftId())
@@ -68,8 +78,10 @@ public class PartTimeSlotService {
         String normalizedDayOfWeek = request.getDayOfWeek().toUpperCase().trim();
         validateDaysOfWeek(normalizedDayOfWeek);
 
-        // Note: We no longer check for unique constraint since slots can have same shift+day
-        // but different date ranges. The combination of shift+day+dates should be unique.
+        // Note: We no longer check for unique constraint since slots can have same
+        // shift+day
+        // but different date ranges. The combination of shift+day+dates should be
+        // unique.
         // This validation could be added if needed.
 
         // Create slot
@@ -82,9 +94,9 @@ public class PartTimeSlotService {
         slot.setIsActive(true);
 
         PartTimeSlot savedSlot = partTimeSlotRepository.save(slot);
-        log.info("Created slot with ID: {} for days {} from {} to {}", 
-                 savedSlot.getSlotId(), normalizedDayOfWeek, 
-                 request.getEffectiveFrom(), request.getEffectiveTo());
+        log.info("Created slot with ID: {} for days {} from {} to {}",
+                savedSlot.getSlotId(), normalizedDayOfWeek,
+                request.getEffectiveFrom(), request.getEffectiveTo());
 
         return buildResponse(savedSlot, workShift.getShiftName());
     }
@@ -103,11 +115,11 @@ public class PartTimeSlotService {
             if (trimmedDay.isEmpty()) {
                 throw new IllegalArgumentException("Day of week cannot be empty");
             }
-            
+
             try {
                 java.time.DayOfWeek.valueOf(trimmedDay);
             } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException("Invalid day of week: " + trimmedDay + 
+                throw new IllegalArgumentException("Invalid day of week: " + trimmedDay +
                         ". Valid values: MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY");
             }
 

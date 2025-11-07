@@ -2,20 +2,15 @@ package com.dental.clinic.management.working_schedule.domain;
 
 import com.dental.clinic.management.working_schedule.enums.RegistrationStatus;
 import jakarta.persistence.*;
-import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Set;
-import jakarta.persistence.ElementCollection;
-import jakarta.persistence.CollectionTable;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Column;
-import jakarta.persistence.Version;
 
 /**
  * Entity for part_time_registrations table.
- * Represents a PART_TIME_FLEX employee's registration request for a flexible slot.
+ * Represents a PART_TIME_FLEX employee's registration request for a flexible
+ * slot.
  * 
  * NEW SPECIFICATION (Approval Workflow):
  * - status: PENDING (waiting approval), APPROVED (can work), REJECTED (denied)
@@ -25,11 +20,6 @@ import jakarta.persistence.Version;
  */
 @Entity
 @Table(name = "part_time_registrations")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class PartTimeRegistration {
 
     @Id
@@ -55,7 +45,6 @@ public class PartTimeRegistration {
      */
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
-    @Builder.Default
     private RegistrationStatus status = RegistrationStatus.PENDING;
 
     /**
@@ -76,13 +65,12 @@ public class PartTimeRegistration {
      */
     @Column(name = "processed_at")
     private LocalDateTime processedAt;
-
     /**
      * Soft delete flag (for cancellations).
      * Note: Cancelled registrations still keep their status (APPROVED/PENDING).
      */
     @Column(name = "is_active", nullable = false)
-    @Builder.Default
+    private Boolean isActive = true;
     private Boolean isActive = true;
 
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -92,8 +80,10 @@ public class PartTimeRegistration {
     private LocalDateTime updatedAt;
 
     /**
-     * Optimistic locking version to protect concurrent approval flows from overbooking.
-     * This is a simple optimistic lock; the approval flow will retry on optimistic locking failures.
+     * Optimistic locking version to protect concurrent approval flows from
+     * overbooking.
+     * This is a simple optimistic lock; the approval flow will retry on optimistic
+     * locking failures.
      */
     @Version
     @Column(name = "version", nullable = false)

@@ -3,17 +3,19 @@ package com.dental.clinic.management.working_schedule.mapper;
 import com.dental.clinic.management.account.repository.AccountRepository;
 import com.dental.clinic.management.working_schedule.domain.EmployeeShift;
 import com.dental.clinic.management.working_schedule.dto.response.EmployeeShiftResponseDto;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
  * Mapper for EmployeeShift entity to DTOs.
  */
 @Component
-@RequiredArgsConstructor
 public class EmployeeShiftMapper {
 
     private final AccountRepository accountRepository;
+
+    public EmployeeShiftMapper(AccountRepository accountRepository) {
+        this.accountRepository = accountRepository;
+    }
 
     /**
      * Convert EmployeeShift entity to response DTO.
@@ -68,8 +70,8 @@ public class EmployeeShiftMapper {
         return EmployeeShiftResponseDto.EmployeeBasicDto.builder()
                 .employeeId(shift.getEmployee().getEmployeeId())
                 .fullName(shift.getEmployee().getFullName())
-                .position(shift.getEmployee().getEmploymentType() != null 
-                        ? shift.getEmployee().getEmploymentType().name() 
+                .position(shift.getEmployee().getEmploymentType() != null
+                        ? shift.getEmployee().getEmploymentType().name()
                         : null)
                 .build();
     }
@@ -85,11 +87,11 @@ public class EmployeeShiftMapper {
         return EmployeeShiftResponseDto.WorkShiftBasicDto.builder()
                 .workShiftId(shift.getWorkShift().getWorkShiftId())
                 .shiftName(shift.getWorkShift().getShiftName())
-                .startTime(shift.getWorkShift().getStartTime() != null 
-                        ? shift.getWorkShift().getStartTime().toString() 
+                .startTime(shift.getWorkShift().getStartTime() != null
+                        ? shift.getWorkShift().getStartTime().toString()
                         : null)
-                .endTime(shift.getWorkShift().getEndTime() != null 
-                        ? shift.getWorkShift().getEndTime().toString() 
+                .endTime(shift.getWorkShift().getEndTime() != null
+                        ? shift.getWorkShift().getEndTime().toString()
                         : null)
                 .build();
     }

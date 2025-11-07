@@ -2,10 +2,6 @@ package com.dental.clinic.management.working_schedule.domain;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -18,10 +14,6 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "holiday_dates")
 @IdClass(HolidayDateId.class)
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
 public class HolidayDate {
 
     /**
@@ -44,8 +36,7 @@ public class HolidayDate {
      * Uses definitionId as foreign key.
      */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "definition_id", referencedColumnName = "definition_id",
-                insertable = false, updatable = false)
+    @JoinColumn(name = "definition_id", referencedColumnName = "definition_id", insertable = false, updatable = false)
     private HolidayDefinition holidayDefinition;
 
     /**
@@ -60,6 +51,67 @@ public class HolidayDate {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    public HolidayDate() {
+    }
+
+    public HolidayDate(LocalDate holidayDate, String definitionId, HolidayDefinition holidayDefinition,
+            String description, LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this.holidayDate = holidayDate;
+        this.definitionId = definitionId;
+        this.holidayDefinition = holidayDefinition;
+        this.description = description;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+
+    public LocalDate getHolidayDate() {
+        return holidayDate;
+    }
+
+    public void setHolidayDate(LocalDate holidayDate) {
+        this.holidayDate = holidayDate;
+    }
+
+    public String getDefinitionId() {
+        return definitionId;
+    }
+
+    public void setDefinitionId(String definitionId) {
+        this.definitionId = definitionId;
+    }
+
+    public HolidayDefinition getHolidayDefinition() {
+        return holidayDefinition;
+    }
+
+    public void setHolidayDefinition(HolidayDefinition holidayDefinition) {
+        this.holidayDefinition = holidayDefinition;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 
     @PrePersist
     protected void onCreate() {

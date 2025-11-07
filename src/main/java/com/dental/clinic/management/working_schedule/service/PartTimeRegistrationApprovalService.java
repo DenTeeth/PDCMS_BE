@@ -9,8 +9,8 @@ import com.dental.clinic.management.working_schedule.exception.QuotaExceededExce
 import com.dental.clinic.management.working_schedule.exception.SlotNotFoundException;
 import com.dental.clinic.management.working_schedule.repository.PartTimeRegistrationRepository;
 import com.dental.clinic.management.working_schedule.repository.PartTimeSlotRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.dao.OptimisticLockingFailureException;
@@ -29,13 +29,21 @@ import java.util.List;
  * - Only APPROVED registrations count toward quota
  */
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class PartTimeRegistrationApprovalService {
+
+    private static final Logger log = LoggerFactory.getLogger(PartTimeRegistrationApprovalService.class);
 
     private final PartTimeRegistrationRepository registrationRepository;
     private final PartTimeSlotRepository slotRepository;
     private final PartTimeSlotAvailabilityService availabilityService;
+
+    public PartTimeRegistrationApprovalService(PartTimeRegistrationRepository registrationRepository,
+            PartTimeSlotRepository slotRepository,
+            PartTimeSlotAvailabilityService availabilityService) {
+        this.registrationRepository = registrationRepository;
+        this.slotRepository = slotRepository;
+        this.availabilityService = availabilityService;
+    }
 
     /**
      * Approve a pending registration.
@@ -46,14 +54,15 @@ public class PartTimeRegistrationApprovalService {
      * 3. Quota must not be exceeded for ANY working day
      * 
      * @param registrationId The registration ID
-     * @param managerId The manager approving
+     * @param managerId      The manager approving
      * @throws RegistrationNotFoundException if not found or not pending
-     * @throws IllegalStateException if quota would be exceeded
+     * @throws IllegalStateException         if quota would be exceeded
      */
     public void approveRegistration(Integer registrationId, Integer managerId) {
         log.info("Manager {} approving registration {}", managerId, registrationId);
 
-        // Retry loop for optimistic locking races. We'll attempt the transactional approve up to 3 times.
+        // Retry loop for optimistic locking races. We'll attempt the transactional
+        // approve up to 3 times.
         int maxAttempts = 3;
         int attempt = 0;
         while (true) {
@@ -63,7 +72,8 @@ public class PartTimeRegistrationApprovalService {
                 // success
                 return;
             } catch (OptimisticLockingFailureException e) {
-                log.warn("Optimistic locking failure on approve attempt {}/{} for registration {}: {}", attempt, maxAttempts, registrationId, e.getMessage());
+                log.warn("Optimistic locking failure on approve attempt {}/{} for registration {}: {}", attempt,
+                        maxAttempts, registrationId, e.getMessage());
                 if (attempt >= maxAttempts) {
                     // rethrow as runtime so caller sees failure
                     throw e;
@@ -82,7 +92,8 @@ public class PartTimeRegistrationApprovalService {
 
     /**
      * Single transactional attempt to validate and approve a registration.
-     * Keeping this method @Transactional ensures each attempt runs in its own transaction
+     * Keeping this method @Transactional ensures each attempt runs in its own
+     * transaction
      * so optimistic locking is effective.
      */
     @Transactional
@@ -119,10 +130,10 @@ public class PartTimeRegistrationApprovalService {
      * Reject a pending registration.
      * 
      * @param registrationId The registration ID
-     * @param managerId The manager rejecting
-     * @param reason The rejection reason (REQUIRED)
+     * @param managerId      The manager rejecting
+     * @param reason         The rejection reason (REQUIRED)
      * @throws RegistrationNotFoundException if not found or not pending
-     * @throws IllegalArgumentException if reason is empty
+     * @throws IllegalArgumentException      if reason is empty
      */
     @Transactional
     public void rejectRegistration(Integer registrationId, Integer managerId, String reason) {
@@ -165,7 +176,7 @@ public class PartTimeRegistrationApprovalService {
      * - Check each day: if any has 2+ approved, reject
      * 
      * @param registration The registration to approve
-     * @param slot The slot being registered for
+     * @param slot         The slot being registered for
      * @throws IllegalStateException if quota would be exceeded
      */
     private void validateQuotaBeforeApproval(PartTimeRegistration registration, PartTimeSlot slot) {
@@ -176,15 +187,13 @@ public class PartTimeRegistrationApprovalService {
             workingDays = availabilityService.getWorkingDays(
                     slot,
                     registration.getEffectiveFrom(),
-                    registration.getEffectiveTo()
-            );
+                    registration.getEffectiveTo());
         }
 
         for (LocalDate workingDay : workingDays) {
             long currentRegistered = availabilityService.getRegisteredCountForDate(
                     slot.getSlotId(),
-                    workingDay
-            );
+                    workingDay);
 
             if (currentRegistered >= slot.getQuota()) {
                 // throw structured exception so GlobalExceptionHandler returns 409 with details
@@ -229,14 +238,14 @@ public class PartTimeRegistrationApprovalService {
         try {
             PartTimeRegistration registration = registrationRepository.findById(registrationId)
                     .orElse(null);
-            
+
             if (registration == null || registration.getStatus() != RegistrationStatus.PENDING) {
                 return false;
             }
 
             PartTimeSlot slot = slotRepository.findById(registration.getPartTimeSlotId())
                     .orElse(null);
-            
+
             if (slot == null || !slot.getIsActive()) {
                 return false;
             }

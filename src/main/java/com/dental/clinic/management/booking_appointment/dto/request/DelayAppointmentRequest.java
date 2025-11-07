@@ -2,10 +2,6 @@ package com.dental.clinic.management.booking_appointment.dto.request;
 
 import com.dental.clinic.management.booking_appointment.enums.AppointmentReasonCode;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
@@ -13,10 +9,6 @@ import java.time.LocalDateTime;
  * Request DTO for delaying an appointment to a new time slot.
  * API: PATCH /api/v1/appointments/{appointmentCode}/delay
  */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class DelayAppointmentRequest {
 
     /**
@@ -39,4 +31,37 @@ public class DelayAppointmentRequest {
      * Optional but recommended for audit trail.
      */
     private String notes;
+
+    public DelayAppointmentRequest() {
+    }
+
+    public DelayAppointmentRequest(LocalDateTime newStartTime, AppointmentReasonCode reasonCode, String notes) {
+        this.newStartTime = newStartTime;
+        this.reasonCode = reasonCode;
+        this.notes = notes;
+    }
+
+    public LocalDateTime getNewStartTime() {
+        return newStartTime;
+    }
+
+    public void setNewStartTime(LocalDateTime newStartTime) {
+        this.newStartTime = newStartTime;
+    }
+
+    public AppointmentReasonCode getReasonCode() {
+        return reasonCode;
+    }
+
+    public void setReasonCode(AppointmentReasonCode reasonCode) {
+        this.reasonCode = reasonCode;
+    }
+
+    public String getNotes() {
+        return notes;
+    }
+
+    public void setNotes(String notes) {
+        this.notes = notes;
+    }
 }

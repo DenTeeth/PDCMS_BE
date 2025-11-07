@@ -6,8 +6,8 @@ import com.dental.clinic.management.working_schedule.dto.response.PartTimeSlotRe
 import com.dental.clinic.management.working_schedule.service.PartTimeSlotService;
 
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -28,13 +28,21 @@ import org.springframework.security.access.prepost.PreAuthorize;
  */
 @RestController
 @RequestMapping("/api/v1/work-slots")
-@RequiredArgsConstructor
-@Slf4j
 public class PartTimeSlotController {
+
+    private static final Logger log = LoggerFactory.getLogger(PartTimeSlotController.class);
 
     private final PartTimeSlotService partTimeSlotService;
     private final PartTimeSlotAvailabilityService availabilityService;
     private final PartTimeSlotRepository slotRepository;
+
+    public PartTimeSlotController(PartTimeSlotService partTimeSlotService,
+            PartTimeSlotAvailabilityService availabilityService,
+            PartTimeSlotRepository slotRepository) {
+        this.partTimeSlotService = partTimeSlotService;
+        this.availabilityService = availabilityService;
+        this.slotRepository = slotRepository;
+    }
 
     /**
      * Create a new part-time slot.
@@ -70,8 +78,10 @@ public class PartTimeSlotController {
 
     /**
      * GET /api/v1/work-slots/{slotId}/registered?date=yyyy-MM-dd
-     * Return the count of APPROVED registrations that cover the given date for the slot.
-     * Allowed for managers who manage part-time registrations or admins managing work slots.
+     * Return the count of APPROVED registrations that cover the given date for the
+     * slot.
+     * Allowed for managers who manage part-time registrations or admins managing
+     * work slots.
      */
     @GetMapping("/{slotId}/registered")
     public ResponseEntity<java.util.Map<String, Object>> getRegisteredCountForDate(
@@ -91,15 +101,15 @@ public class PartTimeSlotController {
 
     /**
      * GET /api/v1/work-slots/{slotId}/availability?from=yyyy-MM-dd&to=yyyy-MM-dd
-     * Returns per-day registered counts and availability flags for the slot's working days.
+     * Returns per-day registered counts and availability flags for the slot's
+     * working days.
      */
     @GetMapping("/{slotId}/availability")
     @PreAuthorize("hasAnyAuthority('VIEW_AVAILABLE_SLOTS','MANAGE_PART_TIME_REGISTRATIONS','MANAGE_WORK_SLOTS')")
     public ResponseEntity<?> getAvailability(
             @PathVariable Long slotId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
-    ) {
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
         PartTimeSlot slot = slotRepository.findById(slotId).orElse(null);
         if (slot == null) {
             return ResponseEntity.notFound().build();
@@ -114,7 +124,10 @@ public class PartTimeSlotController {
         for (LocalDate d : days) {
             long registered = availabilityService.getRegisteredCountForDate(slotId, d);
             boolean available = registered < slot.getQuota();
-            if (available) anyAvailable = true; else allAvailable = false;
+            if (available)
+                anyAvailable = true;
+            else
+                allAvailable = false;
 
             Map<String, Object> m = new HashMap<>();
             m.put("date", d.toString());

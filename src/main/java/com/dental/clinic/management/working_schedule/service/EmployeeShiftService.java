@@ -25,8 +25,8 @@ import com.dental.clinic.management.working_schedule.mapper.EmployeeShiftMapper;
 import com.dental.clinic.management.working_schedule.repository.EmployeeShiftRepository;
 import com.dental.clinic.management.working_schedule.repository.HolidayDateRepository;
 import com.dental.clinic.management.working_schedule.repository.WorkShiftRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -47,10 +47,10 @@ import java.util.stream.Collectors;
  * Handles shift creation, updates, cancellation, and calendar queries.
  */
 @Service
-@RequiredArgsConstructor
-@Slf4j
 @Transactional(readOnly = true)
 public class EmployeeShiftService {
+
+    private static final Logger log = LoggerFactory.getLogger(EmployeeShiftService.class);
 
     private final EmployeeShiftRepository employeeShiftRepository;
     private final EmployeeRepository employeeRepository;
@@ -58,6 +58,20 @@ public class EmployeeShiftService {
     private final HolidayDateRepository holidayDateRepository;
     private final EmployeeShiftMapper employeeShiftMapper;
     private final IdGenerator idGenerator;
+
+    public EmployeeShiftService(EmployeeShiftRepository employeeShiftRepository,
+            EmployeeRepository employeeRepository,
+            WorkShiftRepository workShiftRepository,
+            HolidayDateRepository holidayDateRepository,
+            EmployeeShiftMapper employeeShiftMapper,
+            IdGenerator idGenerator) {
+        this.employeeShiftRepository = employeeShiftRepository;
+        this.employeeRepository = employeeRepository;
+        this.workShiftRepository = workShiftRepository;
+        this.holidayDateRepository = holidayDateRepository;
+        this.employeeShiftMapper = employeeShiftMapper;
+        this.idGenerator = idGenerator;
+    }
 
     /**
      * Get shift calendar for an employee with optional filters.
@@ -85,7 +99,8 @@ public class EmployeeShiftService {
         // Check permission: user can only view their own shifts unless they have
         // VIEW_SHIFTS_ALL
         if (!hasViewAllPermission && !employeeId.equals(currentEmployeeId)) {
-            throw new RelatedResourceNotFoundException("BÃ¡ÂºÂ¡n chÃ¡Â»â€° cÃƒÂ³ thÃ¡Â»Æ’ xem lÃ¡Â»â€¹ch lÃƒÂ m viÃ¡Â»â€¡c cÃ¡Â»Â§a chÃƒÂ­nh mÃƒÂ¬nh");
+            throw new RelatedResourceNotFoundException(
+                    "BÃ¡ÂºÂ¡n chÃ¡Â»â€° cÃƒÂ³ thÃ¡Â»Æ’ xem lÃ¡Â»â€¹ch lÃƒÂ m viÃ¡Â»â€¡c cÃ¡Â»Â§a chÃƒÂ­nh mÃƒÂ¬nh");
         }
 
         // Query shifts with filters
@@ -97,7 +112,8 @@ public class EmployeeShiftService {
         } else {
             // Get all shifts in date range (only allowed with VIEW_SHIFTS_ALL)
             if (!hasViewAllPermission) {
-                throw new RelatedResourceNotFoundException("BÃ¡ÂºÂ¡n chÃ¡Â»â€° cÃƒÂ³ thÃ¡Â»Æ’ xem lÃ¡Â»â€¹ch lÃƒÂ m viÃ¡Â»â€¡c cÃ¡Â»Â§a chÃƒÂ­nh mÃƒÂ¬nh");
+                throw new RelatedResourceNotFoundException(
+                        "BÃ¡ÂºÂ¡n chÃ¡Â»â€° cÃƒÂ³ thÃ¡Â»Æ’ xem lÃ¡Â»â€¹ch lÃƒÂ m viÃ¡Â»â€¡c cÃ¡Â»Â§a chÃƒÂ­nh mÃƒÂ¬nh");
             }
             allShifts = employeeShiftRepository.findByDateRangeAndStatus(startDate, endDate, null);
         }
@@ -192,12 +208,14 @@ public class EmployeeShiftService {
         // Find the shift
         EmployeeShift shift = employeeShiftRepository.findById(employeeShiftId)
                 .orElseThrow(
-                        () -> new ShiftNotFoundException("KhÃƒÂ´ng tÃƒÂ¬m thÃ¡ÂºÂ¥y ca lÃƒÂ m viÃ¡Â»â€¡c, hoÃ¡ÂºÂ·c bÃ¡ÂºÂ¡n khÃƒÂ´ng cÃƒÂ³ quyÃ¡Â»Ân xem."));
+                        () -> new ShiftNotFoundException(
+                                "KhÃƒÂ´ng tÃƒÂ¬m thÃ¡ÂºÂ¥y ca lÃƒÂ m viÃ¡Â»â€¡c, hoÃ¡ÂºÂ·c bÃ¡ÂºÂ¡n khÃƒÂ´ng cÃƒÂ³ quyÃ¡Â»Ân xem."));
 
         // Check permission: user can only view their own shifts unless they have
         // VIEW_SHIFTS_ALL
         if (!hasViewAllPermission && !shift.getEmployee().getEmployeeId().equals(currentEmployeeId)) {
-            throw new ShiftNotFoundException("KhÃƒÂ´ng tÃƒÂ¬m thÃ¡ÂºÂ¥y ca lÃƒÂ m viÃ¡Â»â€¡c, hoÃ¡ÂºÂ·c bÃ¡ÂºÂ¡n khÃƒÂ´ng cÃƒÂ³ quyÃ¡Â»Ân xem.");
+            throw new ShiftNotFoundException(
+                    "KhÃƒÂ´ng tÃƒÂ¬m thÃ¡ÂºÂ¥y ca lÃƒÂ m viÃ¡Â»â€¡c, hoÃ¡ÂºÂ·c bÃ¡ÂºÂ¡n khÃƒÂ´ng cÃƒÂ³ quyÃ¡Â»Ân xem.");
         }
 
         return employeeShiftMapper.toResponseDto(shift);
@@ -220,7 +238,8 @@ public class EmployeeShiftService {
 
         // Validate work shift exists
         WorkShift workShift = workShiftRepository.findById(request.getWorkShiftId())
-                .orElseThrow(() -> new RelatedResourceNotFoundException("Ca lÃƒÂ m viÃ¡Â»â€¡c khÃƒÂ´ng tÃ¡Â»â€œn tÃ¡ÂºÂ¡i"));
+                .orElseThrow(
+                        () -> new RelatedResourceNotFoundException("Ca lÃƒÂ m viÃ¡Â»â€¡c khÃƒÂ´ng tÃ¡Â»â€œn tÃ¡ÂºÂ¡i"));
 
         // Validate shift creation (check for conflicts)
         validateShiftCreation(employee.getEmployeeId(), request.getWorkDate(), workShift.getWorkShiftId());
@@ -264,7 +283,8 @@ public class EmployeeShiftService {
 
         // Check if shift is finalized (cannot update completed or cancelled shifts)
         if (shift.getStatus() == ShiftStatus.COMPLETED || shift.getStatus() == ShiftStatus.CANCELLED) {
-            throw new ShiftFinalizedException("KhÃƒÂ´ng thÃ¡Â»Æ’ cÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t ca lÃƒÂ m Ã„â€˜ÃƒÂ£ hoÃƒÂ n thÃƒÂ nh hoÃ¡ÂºÂ·c Ã„â€˜ÃƒÂ£ bÃ¡Â»â€¹ hÃ¡Â»Â§y.");
+            throw new ShiftFinalizedException(
+                    "KhÃƒÂ´ng thÃ¡Â»Æ’ cÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t ca lÃƒÂ m Ã„â€˜ÃƒÂ£ hoÃƒÂ n thÃƒÂ nh hoÃ¡ÂºÂ·c Ã„â€˜ÃƒÂ£ bÃ¡Â»â€¹ hÃ¡Â»Â§y.");
         }
 
         // Update status if provided and valid
@@ -305,12 +325,14 @@ public class EmployeeShiftService {
 
         // Validate cancellation is allowed
         if (shift.getStatus() == ShiftStatus.COMPLETED) {
-            throw new CannotCancelCompletedShiftException("KhÃƒÂ´ng thÃ¡Â»Æ’ hÃ¡Â»Â§y ca lÃƒÂ m Ã„â€˜ÃƒÂ£ Ã„â€˜Ã†Â°Ã¡Â»Â£c hoÃƒÂ n thÃƒÂ nh.");
+            throw new CannotCancelCompletedShiftException(
+                    "KhÃƒÂ´ng thÃ¡Â»Æ’ hÃ¡Â»Â§y ca lÃƒÂ m Ã„â€˜ÃƒÂ£ Ã„â€˜Ã†Â°Ã¡Â»Â£c hoÃƒÂ n thÃƒÂ nh.");
         }
 
         // Check if already cancelled (idempotency)
         if (shift.getStatus() == ShiftStatus.CANCELLED) {
-            throw new InvalidStatusTransitionException("Ca lÃƒÂ m viÃ¡Â»â€¡c nÃƒÂ y Ã„â€˜ÃƒÂ£ bÃ¡Â»â€¹ hÃ¡Â»Â§y trÃ†Â°Ã¡Â»â€ºc Ã„â€˜ÃƒÂ³.");
+            throw new InvalidStatusTransitionException(
+                    "Ca lÃƒÂ m viÃ¡Â»â€¡c nÃƒÂ y Ã„â€˜ÃƒÂ£ bÃ¡Â»â€¹ hÃ¡Â»Â§y trÃ†Â°Ã¡Â»â€ºc Ã„â€˜ÃƒÂ³.");
         }
 
         if (shift.getSource() == ShiftSource.BATCH_JOB || shift.getSource() == ShiftSource.REGISTRATION_JOB) {
@@ -345,7 +367,8 @@ public class EmployeeShiftService {
 
         // Get the new shift details
         WorkShift newWorkShift = workShiftRepository.findById(workShiftId)
-                .orElseThrow(() -> new RelatedResourceNotFoundException("Ca lÃƒÂ m viÃ¡Â»â€¡c khÃƒÂ´ng tÃ¡Â»â€œn tÃ¡ÂºÂ¡i"));
+                .orElseThrow(
+                        () -> new RelatedResourceNotFoundException("Ca lÃƒÂ m viÃ¡Â»â€¡c khÃƒÂ´ng tÃ¡Â»â€œn tÃ¡ÂºÂ¡i"));
 
         // Get all active shifts for this employee on this date
         List<EmployeeShift> existingShifts = employeeShiftRepository.findActiveShiftsByEmployeeAndDate(
@@ -368,15 +391,15 @@ public class EmployeeShiftService {
             }
 
             // Calculate existing shift duration
-            long shiftMinutes = Duration.between(existingWorkShift.getStartTime(), 
-                                                 existingWorkShift.getEndTime()).toMinutes();
+            long shiftMinutes = Duration.between(existingWorkShift.getStartTime(),
+                    existingWorkShift.getEndTime()).toMinutes();
             existingTotalMinutes += shiftMinutes;
         }
 
         // Check if total hours would exceed 8-hour limit
         long totalMinutes = newShiftMinutes + existingTotalMinutes;
         long totalHours = totalMinutes / 60;
-        
+
         if (totalHours > 8) {
             throw new ExceedsMaxHoursException(workDate, (int) totalHours);
         }

@@ -2,9 +2,6 @@ package com.dental.clinic.management.booking_appointment.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.util.Objects;
@@ -21,9 +18,11 @@ import java.util.Objects;
  * <b>Business Context:</b>
  * </p>
  * <ul>
- * <li>Example: "PhÃƒÂ²ng Implant P-04" can do "CÃ¡ÂºÂ¯m trÃ¡Â»Â¥ Implant" and "NÃƒÂ¢ng
+ * <li>Example: "PhÃƒÂ²ng Implant P-04" can do "CÃ¡ÂºÂ¯m trÃ¡Â»Â¥ Implant" and
+ * "NÃƒÂ¢ng
  * xoang"</li>
- * <li>Example: "DÃ¡Â»â€¹ch vÃ¡Â»Â¥ CÃ¡ÂºÂ¡o vÃƒÂ´i" can be performed in "P-01", "P-02",
+ * <li>Example: "DÃ¡Â»â€¹ch vÃ¡Â»Â¥ CÃ¡ÂºÂ¡o vÃƒÂ´i" can be performed in "P-01",
+ * "P-02",
  * "P-03"</li>
  * </ul>
  *
@@ -31,9 +30,6 @@ import java.util.Objects;
  * @see RoomService
  */
 @Embeddable
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class RoomServiceId implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -52,6 +48,30 @@ public class RoomServiceId implements Serializable {
      */
     @Column(name = "service_id", nullable = false)
     private Integer serviceId;
+
+    public RoomServiceId() {
+    }
+
+    public RoomServiceId(String roomId, Integer serviceId) {
+        this.roomId = roomId;
+        this.serviceId = serviceId;
+    }
+
+    public String getRoomId() {
+        return roomId;
+    }
+
+    public void setRoomId(String roomId) {
+        this.roomId = roomId;
+    }
+
+    public Integer getServiceId() {
+        return serviceId;
+    }
+
+    public void setServiceId(Integer serviceId) {
+        this.serviceId = serviceId;
+    }
 
     /**
      * Override equals to compare composite keys.

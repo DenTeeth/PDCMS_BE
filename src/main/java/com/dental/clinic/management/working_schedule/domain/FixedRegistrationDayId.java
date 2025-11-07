@@ -63,30 +63,6 @@ public class FixedRegistrationDay {
         private Integer fixedShiftRegistration;
         private String dayOfWeek;
 
-        public FixedRegistrationDayId() {
-        }
-
-        public FixedRegistrationDayId(Integer fixedShiftRegistration, String dayOfWeek) {
-            this.fixedShiftRegistration = fixedShiftRegistration;
-            this.dayOfWeek = dayOfWeek;
-        }
-
-        public Integer getFixedShiftRegistration() {
-            return fixedShiftRegistration;
-        }
-
-        public void setFixedShiftRegistration(Integer fixedShiftRegistration) {
-            this.fixedShiftRegistration = fixedShiftRegistration;
-        }
-
-        public String getDayOfWeek() {
-            return dayOfWeek;
-        }
-
-        public void setDayOfWeek(String dayOfWeek) {
-            this.dayOfWeek = dayOfWeek;
-        }
-
         @Override
         public boolean equals(Object o) {
             if (this == o)

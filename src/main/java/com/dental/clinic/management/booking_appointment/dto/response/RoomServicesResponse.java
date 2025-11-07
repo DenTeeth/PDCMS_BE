@@ -1,10 +1,5 @@
 package com.dental.clinic.management.booking_appointment.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.util.List;
 
 /**
@@ -41,10 +36,6 @@ import java.util.List;
  *
  * @since V16
  */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class RoomServicesResponse {
 
     /**
@@ -67,4 +58,47 @@ public class RoomServicesResponse {
      * Empty list if no services assigned.
      */
     private List<CompatibleServiceDTO> compatibleServices;
+
+    public RoomServicesResponse() {
+    }
+
+    public RoomServicesResponse(String roomId, String roomCode, String roomName,
+            List<CompatibleServiceDTO> compatibleServices) {
+        this.roomId = roomId;
+        this.roomCode = roomCode;
+        this.roomName = roomName;
+        this.compatibleServices = compatibleServices;
+    }
+
+    public String getRoomId() {
+        return roomId;
+    }
+
+    public void setRoomId(String roomId) {
+        this.roomId = roomId;
+    }
+
+    public String getRoomCode() {
+        return roomCode;
+    }
+
+    public void setRoomCode(String roomCode) {
+        this.roomCode = roomCode;
+    }
+
+    public String getRoomName() {
+        return roomName;
+    }
+
+    public void setRoomName(String roomName) {
+        this.roomName = roomName;
+    }
+
+    public List<CompatibleServiceDTO> getCompatibleServices() {
+        return compatibleServices;
+    }
+
+    public void setCompatibleServices(List<CompatibleServiceDTO> compatibleServices) {
+        this.compatibleServices = compatibleServices;
+    }
 }

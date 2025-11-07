@@ -13,7 +13,6 @@ import com.dental.clinic.management.booking_appointment.repository.RoomRepositor
 import com.dental.clinic.management.booking_appointment.repository.RoomServiceRepository;
 import com.dental.clinic.management.exception.validation.BadRequestAlertException;
 import com.dental.clinic.management.utils.IdGenerator;
-import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -31,7 +30,6 @@ import java.util.stream.Collectors;
  * Service for managing rooms
  */
 @Service
-@RequiredArgsConstructor
 public class RoomService {
 
     private static final Logger log = LoggerFactory.getLogger(RoomService.class);
@@ -41,6 +39,16 @@ public class RoomService {
     private final IdGenerator idGenerator;
     private final RoomServiceRepository roomServiceRepository;
     private final DentalServiceRepository dentalServiceRepository;
+
+    public RoomService(RoomRepository roomRepository, RoomMapper roomMapper,
+            IdGenerator idGenerator, RoomServiceRepository roomServiceRepository,
+            DentalServiceRepository dentalServiceRepository) {
+        this.roomRepository = roomRepository;
+        this.roomMapper = roomMapper;
+        this.idGenerator = idGenerator;
+        this.roomServiceRepository = roomServiceRepository;
+        this.dentalServiceRepository = dentalServiceRepository;
+    }
 
     /**
      * Inject IdGenerator into Room entity after bean creation
@@ -290,22 +298,20 @@ public class RoomService {
 
         // Map to CompatibleServiceDTO
         List<CompatibleServiceDTO> compatibleServices = roomServices.stream()
-                .map(rs -> CompatibleServiceDTO.builder()
-                        .serviceId(rs.getService().getServiceId().longValue())
-                        .serviceCode(rs.getService().getServiceCode())
-                        .serviceName(rs.getService().getServiceName())
-                        .price(rs.getService().getPrice())
-                        .build())
+                .map(rs -> new CompatibleServiceDTO(
+                        rs.getService().getServiceId().longValue(),
+                        rs.getService().getServiceCode(),
+                        rs.getService().getServiceName(),
+                        rs.getService().getPrice()))
                 .collect(Collectors.toList());
 
         log.info("Found {} compatible services for room: {}", compatibleServices.size(), roomCode);
 
-        return RoomServicesResponse.builder()
-                .roomId(room.getRoomId())
-                .roomCode(room.getRoomCode())
-                .roomName(room.getRoomName())
-                .compatibleServices(compatibleServices)
-                .build();
+        return new RoomServicesResponse(
+                room.getRoomId(),
+                room.getRoomCode(),
+                room.getRoomName(),
+                compatibleServices);
     }
 
     /**

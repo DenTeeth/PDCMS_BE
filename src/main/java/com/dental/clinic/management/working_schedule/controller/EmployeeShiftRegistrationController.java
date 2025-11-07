@@ -7,8 +7,8 @@ import com.dental.clinic.management.working_schedule.dto.response.RegistrationRe
 import com.dental.clinic.management.working_schedule.dto.response.SlotDetailResponse;
 import com.dental.clinic.management.working_schedule.service.EmployeeShiftRegistrationService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,11 +26,15 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/v1/registrations/part-time-flex")
-@RequiredArgsConstructor
-@Slf4j
 public class EmployeeShiftRegistrationController {
 
+    private static final Logger log = LoggerFactory.getLogger(EmployeeShiftRegistrationController.class);
+
     private final EmployeeShiftRegistrationService registrationService;
+
+    public EmployeeShiftRegistrationController(EmployeeShiftRegistrationService registrationService) {
+        this.registrationService = registrationService;
+    }
 
     /**
      * GET /api/v1/registrations/part-time-flex/available-slots
@@ -82,9 +86,9 @@ public class EmployeeShiftRegistrationController {
      *
      * Request Body:
      * {
-     *   "partTimeSlotId": 1,
-     *   "effectiveFrom": "2025-11-01",
-     *   "effectiveTo": "2025-11-17"
+     * "partTimeSlotId": 1,
+     * "effectiveFrom": "2025-11-01",
+     * "effectiveTo": "2025-11-17"
      * }
      *
      * @param request Registration details with flexible dates

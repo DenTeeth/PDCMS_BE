@@ -2,10 +2,6 @@ package com.dental.clinic.management.working_schedule.domain;
 
 import com.dental.clinic.management.working_schedule.enums.HolidayType;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -17,10 +13,6 @@ import java.util.List;
  */
 @Entity
 @Table(name = "holiday_definitions")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
 public class HolidayDefinition {
 
     @Id
@@ -48,13 +40,79 @@ public class HolidayDefinition {
      * CascadeType.ALL: When deleting definition, all dates are deleted.
      * orphanRemoval: When removing a date from the list, it's deleted from DB.
      */
-    @OneToMany(
-        mappedBy = "holidayDefinition",
-        cascade = CascadeType.ALL,
-        orphanRemoval = true,
-        fetch = FetchType.LAZY
-    )
+    @OneToMany(mappedBy = "holidayDefinition", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<HolidayDate> holidayDates = new ArrayList<>();
+
+    public HolidayDefinition() {
+    }
+
+    public HolidayDefinition(String definitionId, String holidayName, HolidayType holidayType,
+            String description, LocalDateTime createdAt, LocalDateTime updatedAt,
+            List<HolidayDate> holidayDates) {
+        this.definitionId = definitionId;
+        this.holidayName = holidayName;
+        this.holidayType = holidayType;
+        this.description = description;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+        this.holidayDates = holidayDates;
+    }
+
+    public String getDefinitionId() {
+        return definitionId;
+    }
+
+    public void setDefinitionId(String definitionId) {
+        this.definitionId = definitionId;
+    }
+
+    public String getHolidayName() {
+        return holidayName;
+    }
+
+    public void setHolidayName(String holidayName) {
+        this.holidayName = holidayName;
+    }
+
+    public HolidayType getHolidayType() {
+        return holidayType;
+    }
+
+    public void setHolidayType(HolidayType holidayType) {
+        this.holidayType = holidayType;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public List<HolidayDate> getHolidayDates() {
+        return holidayDates;
+    }
+
+    public void setHolidayDates(List<HolidayDate> holidayDates) {
+        this.holidayDates = holidayDates;
+    }
 
     /**
      * Helper method to add a holiday date.

@@ -18,8 +18,8 @@ import com.dental.clinic.management.working_schedule.repository.PartTimeRegistra
 import com.dental.clinic.management.working_schedule.repository.PartTimeSlotRepository;
 import com.dental.clinic.management.working_schedule.repository.WorkShiftRepository;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,9 +30,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class EmployeeShiftRegistrationService {
+
+    private static final Logger log = LoggerFactory.getLogger(EmployeeShiftRegistrationService.class);
 
     private final PartTimeRegistrationRepository registrationRepository;
     private final PartTimeSlotRepository slotRepository;
@@ -40,6 +40,20 @@ public class EmployeeShiftRegistrationService {
     private final AccountRepository accountRepository;
     private final EmployeeRepository employeeRepository;
     private final PartTimeSlotAvailabilityService availabilityService;
+
+    public EmployeeShiftRegistrationService(PartTimeRegistrationRepository registrationRepository,
+            PartTimeSlotRepository slotRepository,
+            WorkShiftRepository workShiftRepository,
+            AccountRepository accountRepository,
+            EmployeeRepository employeeRepository,
+            PartTimeSlotAvailabilityService availabilityService) {
+        this.registrationRepository = registrationRepository;
+        this.slotRepository = slotRepository;
+        this.workShiftRepository = workShiftRepository;
+        this.accountRepository = accountRepository;
+        this.employeeRepository = employeeRepository;
+        this.availabilityService = availabilityService;
+    }
 
     /**
      * Get available slots for employee to claim.
@@ -67,8 +81,10 @@ public class EmployeeShiftRegistrationService {
         LocalDate today = LocalDate.now();
 
         // Get all active slots with availability
-        // IMPORTANT: Show ALL slots that have space, even if employee already has registrations
-        // Reason: Employee may want to register for different date ranges (e.g., Nov vs Dec)
+        // IMPORTANT: Show ALL slots that have space, even if employee already has
+        // registrations
+        // Reason: Employee may want to register for different date ranges (e.g., Nov vs
+        // Dec)
         return slotRepository.findAll().stream()
                 .filter(slot -> slot.getIsActive())
                 .filter(slot -> slot.getEffectiveTo().isAfter(today)) // Don't show expired slots
@@ -87,15 +103,14 @@ public class EmployeeShiftRegistrationService {
                     // Calculate date counts
                     LocalDate startDate = slot.getEffectiveFrom().isBefore(today) ? today : slot.getEffectiveFrom();
                     List<LocalDate> workingDays = availabilityService.getWorkingDays(
-                            slot, 
-                            startDate, 
-                            slot.getEffectiveTo()
-                    );
-                    
+                            slot,
+                            startDate,
+                            slot.getEffectiveTo());
+
                     int totalDatesAvailable = 0; // registered < quota
-                    int totalDatesEmpty = 0;     // registered == 0
-                    int totalDatesFull = 0;      // registered == quota
-                    
+                    int totalDatesEmpty = 0; // registered == 0
+                    int totalDatesFull = 0; // registered == quota
+
                     for (LocalDate date : workingDays) {
                         long registered = availabilityService.getRegisteredCountForDate(slot.getSlotId(), date);
                         if (registered >= slot.getQuota()) {
@@ -110,11 +125,10 @@ public class EmployeeShiftRegistrationService {
 
                     // Generate availability summary
                     String summary = availabilityService.generateAvailabilitySummary(
-                            slot.getSlotId(), 
+                            slot.getSlotId(),
                             slot.getQuota(),
-                            startDate, 
-                            slot.getEffectiveTo()
-                    );
+                            startDate,
+                            slot.getEffectiveTo());
 
                     return AvailableSlotResponse.builder()
                             .slotId(slot.getSlotId())
@@ -137,24 +151,25 @@ public class EmployeeShiftRegistrationService {
      * Check if a slot has ANY day with availability in the FUTURE.
      * Used to show slot in available list.
      * 
-     * Returns true if at least ONE working day FROM TODAY ONWARDS has registered < quota.
+     * Returns true if at least ONE working day FROM TODAY ONWARDS has registered <
+     * quota.
      * 
-     * IMPORTANT: Only checks future dates, not past dates (past dates may be full but irrelevant)
+     * IMPORTANT: Only checks future dates, not past dates (past dates may be full
+     * but irrelevant)
      * 
      * @param slot The part-time slot
      * @return true if any future day has space
      */
     private boolean hasAnyDayWithAvailability(PartTimeSlot slot) {
         LocalDate today = LocalDate.now();
-        
+
         // Check from today onwards (not past dates)
         LocalDate startDate = slot.getEffectiveFrom().isBefore(today) ? today : slot.getEffectiveFrom();
-        
+
         List<LocalDate> workingDays = availabilityService.getWorkingDays(
-                slot, 
-                startDate, 
-                slot.getEffectiveTo()
-        );
+                slot,
+                startDate,
+                slot.getEffectiveTo());
 
         for (LocalDate workingDay : workingDays) {
             long registered = availabilityService.getRegisteredCountForDate(slot.getSlotId(), workingDay);
@@ -179,37 +194,34 @@ public class EmployeeShiftRegistrationService {
     @PreAuthorize("hasAuthority('VIEW_AVAILABLE_SLOTS')")
     public SlotDetailResponse getSlotDetail(Long slotId) {
         log.info("Fetching slot detail for slot {}", slotId);
-        
+
         PartTimeSlot slot = slotRepository.findById(slotId)
                 .orElseThrow(() -> new IllegalArgumentException("Slot not found: " + slotId));
-        
+
         if (!slot.getIsActive()) {
             throw new IllegalArgumentException("Slot is not active");
         }
-        
+
         LocalDate today = LocalDate.now();
         LocalDate startDate = slot.getEffectiveFrom().isBefore(today) ? today : slot.getEffectiveFrom();
-        
+
         WorkShift workShift = workShiftRepository.findById(slot.getWorkShiftId()).orElse(null);
         String shiftName = workShift != null ? workShift.getShiftName() : "Unknown";
-        
+
         // Calculate overall remaining
         long minRegistered = availabilityService.getMinimumRegisteredCount(
-                slot.getSlotId(), 
-                startDate, 
-                slot.getEffectiveTo()
-        );
+                slot.getSlotId(),
+                startDate,
+                slot.getEffectiveTo());
         int overallRemaining = Math.max(0, slot.getQuota() - (int) minRegistered);
-        
+
         // Generate monthly breakdown
-        List<SlotDetailResponse.MonthlyAvailability> monthlyBreakdown = 
-                availabilityService.generateMonthlyAvailability(
-                        slot.getSlotId(), 
-                        slot,
-                        startDate, 
-                        slot.getEffectiveTo()
-                );
-        
+        List<SlotDetailResponse.MonthlyAvailability> monthlyBreakdown = availabilityService.generateMonthlyAvailability(
+                slot.getSlotId(),
+                slot,
+                startDate,
+                slot.getEffectiveTo());
+
         return SlotDetailResponse.builder()
                 .slotId(slot.getSlotId())
                 .shiftName(shiftName)
@@ -238,15 +250,17 @@ public class EmployeeShiftRegistrationService {
         log.info("Employee {} submitting registration request for slot {}", employeeId, request.getPartTimeSlotId());
 
         // Validate employee exists and is PART_TIME_FLEX
-    Employee employee = employeeRepository.findById(employeeId)
-        .orElseThrow(() -> new com.dental.clinic.management.exception.employee.EmployeeNotFoundException(employeeId));
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new com.dental.clinic.management.exception.employee.EmployeeNotFoundException(
+                        employeeId));
 
         // Only PART_TIME_FLEX employees can claim flexible slots
         if (employee.getEmploymentType() != EmploymentType.PART_TIME_FLEX) {
             log.warn("Employee {} with type {} attempted to claim flexible slot",
                     employeeId, employee.getEmploymentType());
             throw new IllegalArgumentException(
-                    "ChÃ¡Â»â€° nhÃƒÂ¢n viÃƒÂªn PART_TIME_FLEX mÃ¡Â»â€ºi cÃƒÂ³ thÃ¡Â»Æ’ Ã„â€˜Ã„Æ’ng kÃƒÂ½ ca linh hoÃ¡ÂºÂ¡t. " +
+                    "ChÃ¡Â»â€° nhÃƒÂ¢n viÃƒÂªn PART_TIME_FLEX mÃ¡Â»â€ºi cÃƒÂ³ thÃ¡Â»Æ’ Ã„â€˜Ã„Æ’ng kÃƒÂ½ ca linh hoÃ¡ÂºÂ¡t. "
+                            +
                             "NhÃƒÂ¢n viÃƒÂªn FULL_TIME vÃƒÂ  PART_TIME_FIXED phÃ¡ÂºÂ£i sÃ¡Â»Â­ dÃ¡Â»Â¥ng Ã„â€˜Ã„Æ’ng kÃƒÂ½ ca cÃ¡Â»â€˜ Ã„â€˜Ã¡Â»â€¹nh.");
         }
 
@@ -267,9 +281,9 @@ public class EmployeeShiftRegistrationService {
         PartTimeSlot slot = slotRepository.findById(request.getPartTimeSlotId())
                 .orElseThrow(() -> new SlotNotFoundException(request.getPartTimeSlotId()));
 
-    if (!slot.getIsActive()) {
-        throw new com.dental.clinic.management.working_schedule.exception.SlotInactiveException(slot.getSlotId());
-    }
+        if (!slot.getIsActive()) {
+            throw new com.dental.clinic.management.working_schedule.exception.SlotInactiveException(slot.getSlotId());
+        }
 
         // Per new requirement: dayOfWeek MUST be provided by PART_TIME_FLEX employees.
         if (request.getDayOfWeek() == null || request.getDayOfWeek().isEmpty()) {
@@ -282,8 +296,7 @@ public class EmployeeShiftRegistrationService {
             datesToCheck = availabilityService.getWorkingDaysFromDayNames(
                     request.getDayOfWeek(),
                     request.getEffectiveFrom(),
-                    request.getEffectiveTo()
-            );
+                    request.getEffectiveTo());
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Invalid day of week provided: " + e.getMessage());
         }
@@ -316,50 +329,54 @@ public class EmployeeShiftRegistrationService {
             }
         }
 
-        // If none of the requested dates are available, reject the whole submission (existing behavior)
+        // If none of the requested dates are available, reject the whole submission
+        // (existing behavior)
         if (availableDates.isEmpty()) {
             StringBuilder sb = new StringBuilder();
-            sb.append(String.format("SuÃ¡ÂºÂ¥t %d Ã„â€˜ÃƒÂ£ Ã„â€˜Ã¡ÂºÂ§y cho toÃƒÂ n bÃ¡Â»â„¢ cÃƒÂ¡c ngÃƒÂ y yÃƒÂªu cÃ¡ÂºÂ§u. Chi tiÃ¡ÂºÂ¿t ngÃƒÂ y:\n", slot.getSlotId()));
+            sb.append(String.format(
+                    "SuÃ¡ÂºÂ¥t %d Ã„â€˜ÃƒÂ£ Ã„â€˜Ã¡ÂºÂ§y cho toÃƒÂ n bÃ¡Â»â„¢ cÃƒÂ¡c ngÃƒÂ y yÃƒÂªu cÃ¡ÂºÂ§u. Chi tiÃ¡ÂºÂ¿t ngÃƒÂ y:\n",
+                    slot.getSlotId()));
             for (java.time.LocalDate d : datesToCheck) {
                 long reg = availabilityService.getRegisteredCountForDate(slot.getSlotId(), d);
                 sb.append(String.format("%s : %d/%d\n", d.toString(), reg, slot.getQuota()));
             }
 
             throw new com.dental.clinic.management.working_schedule.exception.QuotaExceededOnSubmissionException(
-                    slot.getSlotId(), request.getEffectiveFrom(), request.getEffectiveTo(), sb.toString()
-            );
+                    slot.getSlotId(), request.getEffectiveFrom(), request.getEffectiveTo(), sb.toString());
         }
 
-        // If some dates are full but some are available, accept only the available dates (partial acceptance).
+        // If some dates are full but some are available, accept only the available
+        // dates (partial acceptance).
         boolean isPartial = !fullDates.isEmpty();
 
         // NEW: Validate dates are within slot's effective range
         if (request.getEffectiveFrom().isBefore(slot.getEffectiveFrom())) {
             throw new IllegalArgumentException(
-                    String.format("Registration start date cannot be before slot start date (%s)", 
+                    String.format("Registration start date cannot be before slot start date (%s)",
                             slot.getEffectiveFrom()));
         }
 
         if (request.getEffectiveTo().isAfter(slot.getEffectiveTo())) {
             throw new IllegalArgumentException(
-                    String.format("Registration end date cannot be after slot end date (%s)", 
+                    String.format("Registration end date cannot be after slot end date (%s)",
                             slot.getEffectiveTo()));
         }
 
         // Check for conflicting APPROVED registrations
-        log.info("Ã°Å¸â€Â [CONFLICT CHECK] Starting conflict validation for employeeId={}, slotId={}", 
+        log.info("Ã°Å¸â€Â [CONFLICT CHECK] Starting conflict validation for employeeId={}, slotId={}",
                 employeeId, slot.getSlotId());
         List<PartTimeRegistration> approvedRegistrations = registrationRepository
-                .findByEmployeeIdAndIsActiveAndStatus(employeeId, true, 
+                .findByEmployeeIdAndIsActiveAndStatus(employeeId, true,
                         com.dental.clinic.management.working_schedule.enums.RegistrationStatus.APPROVED);
-        log.info("Ã°Å¸â€Â [CONFLICT CHECK] Found {} APPROVED registrations for employeeId={}", 
+        log.info("Ã°Å¸â€Â [CONFLICT CHECK] Found {} APPROVED registrations for employeeId={}",
                 approvedRegistrations.size(), employeeId);
 
         for (PartTimeRegistration existingReg : approvedRegistrations) {
-            log.info("Ã°Å¸â€Â [CONFLICT CHECK] Checking existing registration: id={}, slotId={}, period={} to {}", 
-                    existingReg.getRegistrationId(), existingReg.getPartTimeSlotId(), 
+            log.info("Ã°Å¸â€Â [CONFLICT CHECK] Checking existing registration: id={}, slotId={}, period={} to {}",
+                    existingReg.getRegistrationId(), existingReg.getPartTimeSlotId(),
                     existingReg.getEffectiveFrom(), existingReg.getEffectiveTo());
-            // Build set of dates for existing registration (respecting per-day or legacy range)
+            // Build set of dates for existing registration (respecting per-day or legacy
+            // range)
             java.util.Set<java.time.LocalDate> existingDates;
             if (existingReg.getRequestedDates() != null && !existingReg.getRequestedDates().isEmpty()) {
                 existingDates = existingReg.getRequestedDates();
@@ -378,7 +395,7 @@ public class EmployeeShiftRegistrationService {
 
             // Check 1: Can't have overlapping approved registrations for same slot
             if (existingReg.getPartTimeSlotId().equals(slot.getSlotId())) {
-                log.info("Ã°Å¸â€Â [CONFLICT CHECK] Same slot detected (slotId={}). Checking date overlap...", 
+                log.info("Ã°Å¸â€Â [CONFLICT CHECK] Same slot detected (slotId={}). Checking date overlap...",
                         slot.getSlotId());
                 log.info("Ã°Å¸â€Â [CONFLICT CHECK] Existing dates: {}", existingDates);
                 log.info("Ã°Å¸â€Â [CONFLICT CHECK] Requested dates: {}", requestedSet);
@@ -396,7 +413,8 @@ public class EmployeeShiftRegistrationService {
             if (existingSlot != null) {
                 boolean sameShift = existingSlot.getWorkShiftId().equals(slot.getWorkShiftId());
                 if (sameShift) {
-                    // If any requested date falls on the same day that existing registration covers -> conflict
+                    // If any requested date falls on the same day that existing registration covers
+                    // -> conflict
                     java.util.Set<java.time.LocalDate> intersection = new java.util.HashSet<>(requestedSet);
                     intersection.retainAll(existingDates);
                     if (!intersection.isEmpty()) {
@@ -406,27 +424,27 @@ public class EmployeeShiftRegistrationService {
             }
         }
 
-    // Create registration with PENDING status for the accepted dates only
-    PartTimeRegistration registration = PartTimeRegistration.builder()
-        .employeeId(employeeId)
-        .partTimeSlotId(slot.getSlotId())
-        .effectiveFrom(request.getEffectiveFrom())
-        .effectiveTo(request.getEffectiveTo()) // keep original range
-        .status(com.dental.clinic.management.working_schedule.enums.RegistrationStatus.PENDING)
-        .isActive(true)
-        .build();
+        // Create registration with PENDING status for the accepted dates only
+        PartTimeRegistration registration = PartTimeRegistration.builder()
+                .employeeId(employeeId)
+                .partTimeSlotId(slot.getSlotId())
+                .effectiveFrom(request.getEffectiveFrom())
+                .effectiveTo(request.getEffectiveTo()) // keep original range
+                .status(com.dental.clinic.management.working_schedule.enums.RegistrationStatus.PENDING)
+                .isActive(true)
+                .build();
 
-    // Persist only the accepted (available) dates
-    registration.setRequestedDates(new java.util.HashSet<>(availableDates));
+        // Persist only the accepted (available) dates
+        registration.setRequestedDates(new java.util.HashSet<>(availableDates));
 
-    PartTimeRegistration saved = registrationRepository.save(registration);
-    log.info("Registration {} submitted by employee {} - status: PENDING (partialAccepted={})",
-        saved.getRegistrationId(), employeeId, isPartial);
+        PartTimeRegistration saved = registrationRepository.save(registration);
+        log.info("Registration {} submitted by employee {} - status: PENDING (partialAccepted={})",
+                saved.getRegistrationId(), employeeId, isPartial);
 
-    // Build response - dates array will contain only the accepted dates
-    RegistrationResponse response = buildResponse(saved, slot);
+        // Build response - dates array will contain only the accepted dates
+        RegistrationResponse response = buildResponse(saved, slot);
 
-    return response;
+        return response;
     }
 
     /**
@@ -462,7 +480,8 @@ public class EmployeeShiftRegistrationService {
     }
 
     /**
-     * Get a single registration by id. Throws RegistrationNotFoundException if missing or not visible to caller.
+     * Get a single registration by id. Throws RegistrationNotFoundException if
+     * missing or not visible to caller.
      */
     @Transactional(readOnly = true)
     @PreAuthorize("hasAnyAuthority('UPDATE_REGISTRATIONS_ALL', 'VIEW_REGISTRATION_OWN', 'MANAGE_PART_TIME_REGISTRATIONS')")
@@ -471,12 +490,15 @@ public class EmployeeShiftRegistrationService {
                 SecurityUtil.hasCurrentUserPermission("UPDATE_REGISTRATIONS_ALL");
 
         PartTimeRegistration registration = registrationRepository.findById(registrationId)
-                .orElseThrow(() -> new com.dental.clinic.management.working_schedule.exception.RegistrationNotFoundException(registrationId.toString()));
+                .orElseThrow(
+                        () -> new com.dental.clinic.management.working_schedule.exception.RegistrationNotFoundException(
+                                registrationId.toString()));
 
         if (!isAdmin) {
             Integer currentEmployeeId = getCurrentEmployeeId();
             if (!registration.getEmployeeId().equals(currentEmployeeId)) {
-                throw new com.dental.clinic.management.working_schedule.exception.RegistrationNotFoundException(registrationId.toString());
+                throw new com.dental.clinic.management.working_schedule.exception.RegistrationNotFoundException(
+                        registrationId.toString());
             }
         }
 
@@ -561,9 +583,13 @@ public class EmployeeShiftRegistrationService {
         }
 
         // Get appropriate dates based on status
-        java.util.List<LocalDate> dates = registration.getRequestedDates() != null && !registration.getRequestedDates().isEmpty()
-                ? new java.util.ArrayList<>(registration.getRequestedDates())
-                : (slot != null ? availabilityService.getWorkingDays(slot, registration.getEffectiveFrom(), registration.getEffectiveTo()) : null);
+        java.util.List<LocalDate> dates = registration.getRequestedDates() != null
+                && !registration.getRequestedDates().isEmpty()
+                        ? new java.util.ArrayList<>(registration.getRequestedDates())
+                        : (slot != null
+                                ? availabilityService.getWorkingDays(slot, registration.getEffectiveFrom(),
+                                        registration.getEffectiveTo())
+                                : null);
 
         // Get manager name if processed
         String processedByName = null;

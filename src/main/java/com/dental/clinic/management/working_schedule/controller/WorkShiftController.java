@@ -1,8 +1,8 @@
 package com.dental.clinic.management.working_schedule.controller;
 
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,17 +21,22 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/v1/work-shifts")
-@RequiredArgsConstructor
-@Slf4j
 public class WorkShiftController {
 
+    private static final Logger log = LoggerFactory.getLogger(WorkShiftController.class);
+
     private final WorkShiftService workShiftService;
+
+    public WorkShiftController(WorkShiftService workShiftService) {
+        this.workShiftService = workShiftService;
+    }
 
     /**
      * Create a new work shift.
      * 
      * @param request CreateWorkShiftRequest containing shift details
-     * @return WorkShiftResponse with created shift information including auto-generated ID
+     * @return WorkShiftResponse with created shift information including
+     *         auto-generated ID
      */
     @PostMapping
 
@@ -47,7 +52,7 @@ public class WorkShiftController {
      * Update an existing work shift.
      * 
      * @param workShiftId The ID of the work shift to update
-     * @param request UpdateWorkShiftRequest containing fields to update
+     * @param request     UpdateWorkShiftRequest containing fields to update
      * @return WorkShiftResponse with updated shift information
      */
     @PatchMapping("/{workShiftId}")
@@ -92,12 +97,16 @@ public class WorkShiftController {
     }
 
     /**
-     * Get all work shifts with advanced filtering, searching, and sorting (Issues 10, 11, 12).
+     * Get all work shifts with advanced filtering, searching, and sorting (Issues
+     * 10, 11, 12).
      * 
-     * @param isActive Optional filter for active/inactive shifts (null = all shifts)
-     * @param category Optional filter by category (NORMAL/NIGHT)
-     * @param search Optional search keyword for shift name (case-insensitive)
-     * @param sortBy Optional sort field (startTime, category, shiftName). Default: startTime
+     * @param isActive      Optional filter for active/inactive shifts (null = all
+     *                      shifts)
+     * @param category      Optional filter by category (NORMAL/NIGHT)
+     * @param search        Optional search keyword for shift name
+     *                      (case-insensitive)
+     * @param sortBy        Optional sort field (startTime, category, shiftName).
+     *                      Default: startTime
      * @param sortDirection Optional sort direction (ASC/DESC). Default: ASC
      * @return List of WorkShiftResponse
      */
@@ -109,13 +118,13 @@ public class WorkShiftController {
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String sortBy,
             @RequestParam(required = false) String sortDirection) {
-        
-        log.info("Fetching work shifts - isActive: {}, category: {}, search: '{}', sortBy: {}, sortDirection: {}", 
-                 isActive, category, search, sortBy, sortDirection);
-        
+
+        log.info("Fetching work shifts - isActive: {}, category: {}, search: '{}', sortBy: {}, sortDirection: {}",
+                isActive, category, search, sortBy, sortDirection);
+
         List<WorkShiftResponse> responses = workShiftService.getAllWorkShifts(
                 isActive, category, search, sortBy, sortDirection);
-        
+
         log.info("Retrieved {} work shifts", responses.size());
         return ResponseEntity.ok(responses);
     }

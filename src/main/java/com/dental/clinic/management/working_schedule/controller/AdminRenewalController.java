@@ -10,8 +10,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -28,12 +28,16 @@ import org.springframework.web.bind.annotation.*;
  */
 @RestController
 @RequestMapping("/api/v1/admin/registrations/renewals")
-@RequiredArgsConstructor
-@Slf4j
 @Tag(name = "Admin - Shift Renewal", description = "Admin APIs for finalizing shift renewal requests")
 public class AdminRenewalController {
 
+        private static final Logger log = LoggerFactory.getLogger(AdminRenewalController.class);
+
         private final ShiftRenewalService renewalService;
+
+        public AdminRenewalController(ShiftRenewalService renewalService) {
+                this.renewalService = renewalService;
+        }
 
         /**
          * Finalize a renewal request with custom effective_to date.

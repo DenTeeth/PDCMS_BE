@@ -2,8 +2,8 @@ package com.dental.clinic.management.scheduled;
 
 import com.dental.clinic.management.working_schedule.domain.PartTimeRegistration;
 import com.dental.clinic.management.working_schedule.repository.PartTimeRegistrationRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,11 +45,15 @@ import java.util.List;
  * Runs daily at 00:15 AM (after P8, P9, P10 complete).
  */
 @Component
-@Slf4j
-@RequiredArgsConstructor
 public class CleanupExpiredFlexRegistrationsJob {
 
+    private static final Logger log = LoggerFactory.getLogger(CleanupExpiredFlexRegistrationsJob.class);
+
     private final PartTimeRegistrationRepository registrationRepository;
+
+    public CleanupExpiredFlexRegistrationsJob(PartTimeRegistrationRepository registrationRepository) {
+        this.registrationRepository = registrationRepository;
+    }
 
     /**
      * Cron: 0 15 0 * * ?

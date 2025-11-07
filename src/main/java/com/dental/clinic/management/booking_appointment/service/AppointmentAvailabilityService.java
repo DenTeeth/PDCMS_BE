@@ -16,8 +16,8 @@ import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.exception.validation.BadRequestAlertException;
 import com.dental.clinic.management.working_schedule.domain.EmployeeShift;
 import com.dental.clinic.management.working_schedule.repository.EmployeeShiftRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,10 +39,10 @@ import java.util.stream.Collectors;
  * 6. Find intersection (doctor + assistants + rooms available)
  * 7. Split into slots and return with available rooms
  */
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class AppointmentAvailabilityService {
+
+    private static final Logger log = LoggerFactory.getLogger(AppointmentAvailabilityService.class);
 
     private final AppointmentRepository appointmentRepository;
     private final AppointmentParticipantRepository participantRepository;
@@ -51,6 +51,22 @@ public class AppointmentAvailabilityService {
     private final RoomServiceRepository roomServiceRepository;
     private final EmployeeRepository employeeRepository;
     private final EmployeeShiftRepository shiftRepository;
+
+    public AppointmentAvailabilityService(AppointmentRepository appointmentRepository,
+            AppointmentParticipantRepository participantRepository,
+            DentalServiceRepository serviceRepository,
+            RoomRepository roomRepository,
+            RoomServiceRepository roomServiceRepository,
+            EmployeeRepository employeeRepository,
+            EmployeeShiftRepository shiftRepository) {
+        this.appointmentRepository = appointmentRepository;
+        this.participantRepository = participantRepository;
+        this.serviceRepository = serviceRepository;
+        this.roomRepository = roomRepository;
+        this.roomServiceRepository = roomServiceRepository;
+        this.employeeRepository = employeeRepository;
+        this.shiftRepository = shiftRepository;
+    }
 
     private static final int SLOT_INTERVAL_MINUTES = 15; // Split slots every 15 minutes
     private static final List<AppointmentStatus> BUSY_STATUSES = Arrays.asList(

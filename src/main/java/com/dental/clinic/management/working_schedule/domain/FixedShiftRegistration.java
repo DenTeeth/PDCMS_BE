@@ -3,10 +3,6 @@ package com.dental.clinic.management.working_schedule.domain;
 import com.dental.clinic.management.employee.domain.Employee;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -25,10 +21,6 @@ import java.util.List;
 @Table(name = "fixed_shift_registrations", indexes = {
         @Index(name = "idx_fixed_shift_employee", columnList = "employee_id, work_shift_id, is_active")
 })
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
 public class FixedShiftRegistration {
 
     /**
@@ -96,6 +88,96 @@ public class FixedShiftRegistration {
      */
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    public FixedShiftRegistration() {
+    }
+
+    public FixedShiftRegistration(Integer registrationId, Employee employee, WorkShift workShift,
+                                  LocalDate effectiveFrom, LocalDate effectiveTo, Boolean isActive,
+                                  List<FixedRegistrationDay> registrationDays, LocalDateTime createdAt,
+                                  LocalDateTime updatedAt) {
+        this.registrationId = registrationId;
+        this.employee = employee;
+        this.workShift = workShift;
+        this.effectiveFrom = effectiveFrom;
+        this.effectiveTo = effectiveTo;
+        this.isActive = isActive;
+        this.registrationDays = registrationDays;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+
+    public Integer getRegistrationId() {
+        return registrationId;
+    }
+
+    public void setRegistrationId(Integer registrationId) {
+        this.registrationId = registrationId;
+    }
+
+    public Employee getEmployee() {
+        return employee;
+    }
+
+    public void setEmployee(Employee employee) {
+        this.employee = employee;
+    }
+
+    public WorkShift getWorkShift() {
+        return workShift;
+    }
+
+    public void setWorkShift(WorkShift workShift) {
+        this.workShift = workShift;
+    }
+
+    public LocalDate getEffectiveFrom() {
+        return effectiveFrom;
+    }
+
+    public void setEffectiveFrom(LocalDate effectiveFrom) {
+        this.effectiveFrom = effectiveFrom;
+    }
+
+    public LocalDate getEffectiveTo() {
+        return effectiveTo;
+    }
+
+    public void setEffectiveTo(LocalDate effectiveTo) {
+        this.effectiveTo = effectiveTo;
+    }
+
+    public Boolean getIsActive() {
+        return isActive;
+    }
+
+    public void setIsActive(Boolean isActive) {
+        this.isActive = isActive;
+    }
+
+    public List<FixedRegistrationDay> getRegistrationDays() {
+        return registrationDays;
+    }
+
+    public void setRegistrationDays(List<FixedRegistrationDay> registrationDays) {
+        this.registrationDays = registrationDays;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 
     @PrePersist
     protected void onCreate() {

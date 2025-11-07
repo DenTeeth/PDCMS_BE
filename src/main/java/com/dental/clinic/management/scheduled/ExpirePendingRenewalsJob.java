@@ -3,8 +3,8 @@ package com.dental.clinic.management.scheduled;
 import com.dental.clinic.management.working_schedule.domain.ShiftRenewalRequest;
 import com.dental.clinic.management.working_schedule.enums.RenewalStatus;
 import com.dental.clinic.management.working_schedule.repository.ShiftRenewalRequestRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,11 +25,15 @@ import java.util.List;
  * - Runs after P9 for better workflow
  */
 @Component
-@Slf4j
-@RequiredArgsConstructor
 public class ExpirePendingRenewalsJob {
 
+    private static final Logger log = LoggerFactory.getLogger(ExpirePendingRenewalsJob.class);
+
     private final ShiftRenewalRequestRepository renewalRepository;
+
+    public ExpirePendingRenewalsJob(ShiftRenewalRequestRepository renewalRepository) {
+        this.renewalRepository = renewalRepository;
+    }
 
     /**
      * Cron: 0 10 0 * * ?

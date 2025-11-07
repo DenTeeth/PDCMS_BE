@@ -1,10 +1,6 @@
 package com.dental.clinic.management.working_schedule.domain;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -13,20 +9,18 @@ import java.util.List;
 
 /**
  * Entity representing a part-time slot that admin creates.
- * Defines clinic's needs (e.g., "Need 2 people for Morning shift on Friday & Saturday").
+ * Defines clinic's needs (e.g., "Need 2 people for Morning shift on Friday &
+ * Saturday").
  * 
  * NEW SPECIFICATION (Dynamic Quota):
  * - effectiveFrom/effectiveTo: Flexible date range (not fixed 3 months)
  * - dayOfWeek: Multiple days (e.g., FRIDAY, SATURDAY)
  * - quota: Number of people needed PER DAY
- * - Employees can register for flexible periods within the slot's effective range
+ * - Employees can register for flexible periods within the slot's effective
+ * range
  */
 @Entity
 @Table(name = "part_time_slots")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
 public class PartTimeSlot {
 
     @Id
@@ -82,6 +76,113 @@ public class PartTimeSlot {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    public PartTimeSlot() {
+    }
+
+    public PartTimeSlot(Long slotId, String workShiftId, WorkShift workShift, String dayOfWeek,
+            LocalDate effectiveFrom, LocalDate effectiveTo, Integer quota, Boolean isActive,
+            List<PartTimeRegistration> registrations, LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this.slotId = slotId;
+        this.workShiftId = workShiftId;
+        this.workShift = workShift;
+        this.dayOfWeek = dayOfWeek;
+        this.effectiveFrom = effectiveFrom;
+        this.effectiveTo = effectiveTo;
+        this.quota = quota;
+        this.isActive = isActive;
+        this.registrations = registrations;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+
+    public Long getSlotId() {
+        return slotId;
+    }
+
+    public void setSlotId(Long slotId) {
+        this.slotId = slotId;
+    }
+
+    public String getWorkShiftId() {
+        return workShiftId;
+    }
+
+    public void setWorkShiftId(String workShiftId) {
+        this.workShiftId = workShiftId;
+    }
+
+    public WorkShift getWorkShift() {
+        return workShift;
+    }
+
+    public void setWorkShift(WorkShift workShift) {
+        this.workShift = workShift;
+    }
+
+    public String getDayOfWeek() {
+        return dayOfWeek;
+    }
+
+    public void setDayOfWeek(String dayOfWeek) {
+        this.dayOfWeek = dayOfWeek;
+    }
+
+    public LocalDate getEffectiveFrom() {
+        return effectiveFrom;
+    }
+
+    public void setEffectiveFrom(LocalDate effectiveFrom) {
+        this.effectiveFrom = effectiveFrom;
+    }
+
+    public LocalDate getEffectiveTo() {
+        return effectiveTo;
+    }
+
+    public void setEffectiveTo(LocalDate effectiveTo) {
+        this.effectiveTo = effectiveTo;
+    }
+
+    public Integer getQuota() {
+        return quota;
+    }
+
+    public void setQuota(Integer quota) {
+        this.quota = quota;
+    }
+
+    public Boolean getIsActive() {
+        return isActive;
+    }
+
+    public void setIsActive(Boolean isActive) {
+        this.isActive = isActive;
+    }
+
+    public List<PartTimeRegistration> getRegistrations() {
+        return registrations;
+    }
+
+    public void setRegistrations(List<PartTimeRegistration> registrations) {
+        this.registrations = registrations;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 
     @PrePersist
     protected void onCreate() {

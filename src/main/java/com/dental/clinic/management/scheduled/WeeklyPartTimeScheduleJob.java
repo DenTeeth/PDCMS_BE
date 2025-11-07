@@ -15,8 +15,8 @@ import com.dental.clinic.management.working_schedule.repository.EmployeeShiftRep
 import com.dental.clinic.management.working_schedule.repository.HolidayDateRepository;
 import com.dental.clinic.management.working_schedule.repository.PartTimeSlotRepository;
 import com.dental.clinic.management.working_schedule.repository.WorkShiftRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,9 +40,9 @@ import java.util.stream.Collectors;
  */
 @Deprecated
 // @Component // DISABLED - replaced by UnifiedScheduleSyncJob
-@Slf4j
-@RequiredArgsConstructor
 public class WeeklyPartTimeScheduleJob {
+
+    private static final Logger log = LoggerFactory.getLogger(WeeklyPartTimeScheduleJob.class);
 
     private final EmployeeShiftRegistrationRepository registrationRepository;
     private final EmployeeShiftRepository shiftRepository;
@@ -51,6 +51,22 @@ public class WeeklyPartTimeScheduleJob {
     private final HolidayDateRepository holidayRepository;
     private final EmployeeRepository employeeRepository;
     private final IdGenerator idGenerator;
+
+    public WeeklyPartTimeScheduleJob(EmployeeShiftRegistrationRepository registrationRepository,
+            EmployeeShiftRepository shiftRepository,
+            WorkShiftRepository workShiftRepository,
+            PartTimeSlotRepository partTimeSlotRepository,
+            HolidayDateRepository holidayRepository,
+            EmployeeRepository employeeRepository,
+            IdGenerator idGenerator) {
+        this.registrationRepository = registrationRepository;
+        this.shiftRepository = shiftRepository;
+        this.workShiftRepository = workShiftRepository;
+        this.partTimeSlotRepository = partTimeSlotRepository;
+        this.holidayRepository = holidayRepository;
+        this.employeeRepository = employeeRepository;
+        this.idGenerator = idGenerator;
+    }
 
     /**
      * Cron: 0 0 1 ? * SUN
@@ -210,7 +226,8 @@ public class WeeklyPartTimeScheduleJob {
                     shift.setStatus(ShiftStatus.SCHEDULED);
                     shift.setIsOvertime(false); // Regular shift, not overtime
                     // Note: sourceOffRequestId would be set here if this was from time-off renewal
-                    shift.setNotes(String.format("TÃ¡ÂºÂ¡o tÃ¡Â»Â± Ã„â€˜Ã¡Â»â„¢ng tÃ¡Â»Â« Ã„â€˜Ã„Æ’ng kÃƒÂ½ %s", registration.getRegistrationId()));
+                    shift.setNotes(String.format("TÃ¡ÂºÂ¡o tÃ¡Â»Â± Ã„â€˜Ã¡Â»â„¢ng tÃ¡Â»Â« Ã„â€˜Ã„Æ’ng kÃƒÂ½ %s",
+                            registration.getRegistrationId()));
 
                     shiftsToSave.add(shift);
 

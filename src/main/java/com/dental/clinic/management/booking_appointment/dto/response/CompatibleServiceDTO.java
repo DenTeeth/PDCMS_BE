@@ -1,10 +1,5 @@
 package com.dental.clinic.management.booking_appointment.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.math.BigDecimal;
 
 /**
@@ -29,10 +24,6 @@ import java.math.BigDecimal;
  *
  * @since V16
  */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class CompatibleServiceDTO {
 
     /**
@@ -54,4 +45,46 @@ public class CompatibleServiceDTO {
      * Service price in VND.
      */
     private BigDecimal price;
+
+    public CompatibleServiceDTO() {
+    }
+
+    public CompatibleServiceDTO(Long serviceId, String serviceCode, String serviceName, BigDecimal price) {
+        this.serviceId = serviceId;
+        this.serviceCode = serviceCode;
+        this.serviceName = serviceName;
+        this.price = price;
+    }
+
+    public Long getServiceId() {
+        return serviceId;
+    }
+
+    public void setServiceId(Long serviceId) {
+        this.serviceId = serviceId;
+    }
+
+    public String getServiceCode() {
+        return serviceCode;
+    }
+
+    public void setServiceCode(String serviceCode) {
+        this.serviceCode = serviceCode;
+    }
+
+    public String getServiceName() {
+        return serviceName;
+    }
+
+    public void setServiceName(String serviceName) {
+        this.serviceName = serviceName;
+    }
+
+    public BigDecimal getPrice() {
+        return price;
+    }
+
+    public void setPrice(BigDecimal price) {
+        this.price = price;
+    }
 }

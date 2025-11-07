@@ -4,10 +4,6 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.time.LocalTime;
 
@@ -19,15 +15,11 @@ import com.dental.clinic.management.working_schedule.enums.WorkShiftCategory;
  */
 @Entity
 @Table(name = "work_shifts", indexes = {
-    @Index(name = "idx_work_shift_is_active", columnList = "is_active"),
-    @Index(name = "idx_work_shift_category", columnList = "category"),
-    @Index(name = "idx_work_shift_start_time", columnList = "start_time"),
-    @Index(name = "idx_work_shift_active_category", columnList = "is_active, category")
+        @Index(name = "idx_work_shift_is_active", columnList = "is_active"),
+        @Index(name = "idx_work_shift_category", columnList = "category"),
+        @Index(name = "idx_work_shift_start_time", columnList = "start_time"),
+        @Index(name = "idx_work_shift_active_category", columnList = "is_active, category")
 })
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
 public class WorkShift {
 
     @Id
@@ -57,9 +49,71 @@ public class WorkShift {
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 
+    public WorkShift() {
+    }
+
+    public WorkShift(String workShiftId, String shiftName, LocalTime startTime, LocalTime endTime,
+            WorkShiftCategory category, Boolean isActive) {
+        this.workShiftId = workShiftId;
+        this.shiftName = shiftName;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.category = category;
+        this.isActive = isActive;
+    }
+
+    public String getWorkShiftId() {
+        return workShiftId;
+    }
+
+    public void setWorkShiftId(String workShiftId) {
+        this.workShiftId = workShiftId;
+    }
+
+    public String getShiftName() {
+        return shiftName;
+    }
+
+    public void setShiftName(String shiftName) {
+        this.shiftName = shiftName;
+    }
+
+    public LocalTime getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(LocalTime startTime) {
+        this.startTime = startTime;
+    }
+
+    public LocalTime getEndTime() {
+        return endTime;
+    }
+
+    public void setEndTime(LocalTime endTime) {
+        this.endTime = endTime;
+    }
+
+    public WorkShiftCategory getCategory() {
+        return category;
+    }
+
+    public void setCategory(WorkShiftCategory category) {
+        this.category = category;
+    }
+
+    public Boolean getIsActive() {
+        return isActive;
+    }
+
+    public void setIsActive(Boolean isActive) {
+        this.isActive = isActive;
+    }
+
     /**
      * Calculate the duration of the shift in hours.
      * Excludes lunch break (11:00-12:00) if the shift spans across it.
+     * 
      * @return Duration in hours (decimal)
      */
     @Transient
@@ -67,26 +121,26 @@ public class WorkShift {
         if (startTime == null || endTime == null) {
             return 0.0;
         }
-        
+
         long startSeconds = startTime.toSecondOfDay();
         long endSeconds = endTime.toSecondOfDay();
-        
+
         // Handle case where shift crosses midnight
         if (endSeconds <= startSeconds) {
             endSeconds += 24 * 3600; // Add 24 hours
         }
-        
+
         long durationSeconds = endSeconds - startSeconds;
         double durationHours = durationSeconds / 3600.0; // Convert to hours
-        
+
         // Subtract lunch break (12:00-13:00) if shift spans across it
         LocalTime lunchStart = LocalTime.of(12, 0);
         LocalTime lunchEnd = LocalTime.of(13, 0);
-        
+
         if (!startTime.isAfter(lunchStart) && !endTime.isBefore(lunchEnd)) {
             durationHours -= 1.0; // Subtract 1 hour for lunch break
         }
-        
+
         return durationHours;
     }
 }

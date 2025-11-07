@@ -9,8 +9,8 @@ import com.dental.clinic.management.booking_appointment.repository.DentalService
 import com.dental.clinic.management.exception.validation.BadRequestAlertException;
 import com.dental.clinic.management.specialization.domain.Specialization;
 import com.dental.clinic.management.specialization.repository.SpecializationRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -22,13 +22,21 @@ import org.springframework.transaction.annotation.Transactional;
  * Service layer for managing dental services
  */
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class DentalServiceService {
+
+    private static final Logger log = LoggerFactory.getLogger(DentalServiceService.class);
 
     private final DentalServiceRepository serviceRepository;
     private final SpecializationRepository specializationRepository;
     private final ServiceMapper serviceMapper;
+
+    public DentalServiceService(DentalServiceRepository serviceRepository,
+            SpecializationRepository specializationRepository,
+            ServiceMapper serviceMapper) {
+        this.serviceRepository = serviceRepository;
+        this.specializationRepository = specializationRepository;
+        this.serviceMapper = serviceMapper;
+    }
 
     private static final int MAX_PAGE_SIZE = 100;
     private static final int DEFAULT_PAGE_SIZE = 10;

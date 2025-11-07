@@ -5,8 +5,8 @@ import com.dental.clinic.management.working_schedule.enums.RenewalStatus;
 import com.dental.clinic.management.working_schedule.repository.FixedShiftRegistrationRepository;
 import com.dental.clinic.management.working_schedule.repository.ShiftRenewalRequestRepository;
 import com.dental.clinic.management.working_schedule.service.ShiftRenewalService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,13 +31,21 @@ import java.util.List;
  * automatically (handled by P11).
  */
 @Component
-@Slf4j
-@RequiredArgsConstructor
 public class DailyRenewalDetectionJob {
+
+    private static final Logger log = LoggerFactory.getLogger(DailyRenewalDetectionJob.class);
 
     private final FixedShiftRegistrationRepository registrationRepository;
     private final ShiftRenewalRequestRepository renewalRepository;
     private final ShiftRenewalService renewalService;
+
+    public DailyRenewalDetectionJob(FixedShiftRegistrationRepository registrationRepository,
+            ShiftRenewalRequestRepository renewalRepository,
+            ShiftRenewalService renewalService) {
+        this.registrationRepository = registrationRepository;
+        this.renewalRepository = renewalRepository;
+        this.renewalService = renewalService;
+    }
 
     // Window: Find registrations expiring in 14-28 days
     // This gives employees 14 days to respond before expiration

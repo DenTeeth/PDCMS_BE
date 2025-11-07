@@ -14,8 +14,8 @@ import com.dental.clinic.management.working_schedule.mapper.TimeOffTypeMapper;
 import com.dental.clinic.management.working_schedule.repository.TimeOffRequestRepository;
 import com.dental.clinic.management.working_schedule.repository.TimeOffTypeRepository;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,19 +26,30 @@ import java.util.stream.Collectors;
  * Service for managing time-off types
  */
 @Service
-@RequiredArgsConstructor
-@Slf4j
 @Transactional(readOnly = true)
 public class TimeOffTypeService {
+
+    private static final Logger log = LoggerFactory.getLogger(TimeOffTypeService.class);
 
     private final TimeOffTypeRepository typeRepository;
     private final TimeOffRequestRepository requestRepository;
     private final TimeOffTypeMapper typeMapper;
     private final IdGenerator idGenerator;
 
+    public TimeOffTypeService(TimeOffTypeRepository typeRepository,
+            TimeOffRequestRepository requestRepository,
+            TimeOffTypeMapper typeMapper,
+            IdGenerator idGenerator) {
+        this.typeRepository = typeRepository;
+        this.requestRepository = requestRepository;
+        this.typeMapper = typeMapper;
+        this.idGenerator = idGenerator;
+    }
+
     /**
      * GET /api/v1/time-off-types
-     * LÃ¡ÂºÂ¥y danh sÃƒÂ¡ch tÃ¡ÂºÂ¥t cÃ¡ÂºÂ£ cÃƒÂ¡c loÃ¡ÂºÂ¡i hÃƒÂ¬nh nghÃ¡Â»â€° phÃƒÂ©p Ã„â€˜ang hoÃ¡ÂºÂ¡t Ã„â€˜Ã¡Â»â„¢ng
+     * LÃ¡ÂºÂ¥y danh sÃƒÂ¡ch tÃ¡ÂºÂ¥t cÃ¡ÂºÂ£ cÃƒÂ¡c loÃ¡ÂºÂ¡i hÃƒÂ¬nh nghÃ¡Â»â€°
+     * phÃƒÂ©p Ã„â€˜ang hoÃ¡ÂºÂ¡t Ã„â€˜Ã¡Â»â„¢ng
      */
     public List<TimeOffTypeResponse> getActiveTimeOffTypes() {
         log.debug("Request to get all active time-off types");
@@ -51,16 +62,19 @@ public class TimeOffTypeService {
 
     /**
      * GET /api/v1/admin/time-off-types
-     * LÃ¡ÂºÂ¥y tÃ¡ÂºÂ¥t cÃ¡ÂºÂ£ loÃ¡ÂºÂ¡i nghÃ¡Â»â€° phÃƒÂ©p (bao gÃ¡Â»â€œm inactive) - Admin view
+     * LÃ¡ÂºÂ¥y tÃ¡ÂºÂ¥t cÃ¡ÂºÂ£ loÃ¡ÂºÂ¡i nghÃ¡Â»â€° phÃƒÂ©p (bao gÃ¡Â»â€œm
+     * inactive) - Admin view
      * 
-     * @param isActive filter by active status (null = all, true = active only, false = inactive only)
-     * @param isPaid filter by paid status (null = all, true = paid only, false = unpaid only)
+     * @param isActive filter by active status (null = all, true = active only,
+     *                 false = inactive only)
+     * @param isPaid   filter by paid status (null = all, true = paid only, false =
+     *                 unpaid only)
      */
     public List<TimeOffTypeResponse> getAllTimeOffTypes(Boolean isActive, Boolean isPaid) {
         log.debug("Admin request to get all time-off types, isActive={}, isPaid={}", isActive, isPaid);
 
         List<TimeOffType> types;
-        
+
         // Apply filters
         if (isActive == null && isPaid == null) {
             // No filters - get all
@@ -178,7 +192,8 @@ public class TimeOffTypeService {
             type.setIsActive(request.getIsActive());
         }
 
-        // Validate logic AFTER all updates: requiresBalance vÃƒÂ  defaultDaysPerYear phÃ¡ÂºÂ£i match
+        // Validate logic AFTER all updates: requiresBalance vÃƒÂ  defaultDaysPerYear
+        // phÃ¡ÂºÂ£i match
         validateBalanceAndDefaultDays(type.getRequiresBalance(), type.getDefaultDaysPerYear());
 
         TimeOffType updated = typeRepository.save(type);
@@ -191,35 +206,39 @@ public class TimeOffTypeService {
      * Helper method: Validate requiresBalance vÃƒÂ  defaultDaysPerYear logic
      * 
      * Business Rules:
-     * - requiresBalance = true  Ã¢â€ â€™ defaultDaysPerYear PHÃ¡ÂºÂ¢I cÃƒÂ³ giÃƒÂ¡ trÃ¡Â»â€¹ (Ã„â€˜Ã¡Â»Æ’ dÃƒÂ¹ng cho annual reset)
-     * - requiresBalance = false Ã¢â€ â€™ defaultDaysPerYear PHÃ¡ÂºÂ¢I null (vÃƒÂ¬ khÃƒÂ´ng cÃ¡ÂºÂ§n balance tracking)
+     * - requiresBalance = true Ã¢â€ â€™ defaultDaysPerYear PHÃ¡ÂºÂ¢I cÃƒÂ³ giÃƒÂ¡
+     * trÃ¡Â»â€¹ (Ã„â€˜Ã¡Â»Æ’ dÃƒÂ¹ng cho annual reset)
+     * - requiresBalance = false Ã¢â€ â€™ defaultDaysPerYear PHÃ¡ÂºÂ¢I null (vÃƒÂ¬
+     * khÃƒÂ´ng cÃ¡ÂºÂ§n balance tracking)
      */
     private void validateBalanceAndDefaultDays(Boolean requiresBalance, Double defaultDaysPerYear) {
         // Case 1: requiresBalance = true VÃƒâ‚¬ defaultDaysPerYear = null
         if (Boolean.TRUE.equals(requiresBalance) && defaultDaysPerYear == null) {
             throw new BadRequestAlertException(
-                "LoÃ¡ÂºÂ¡i nghÃ¡Â»â€° phÃƒÂ©p cÃ¡ÂºÂ§n balance tracking (requiresBalance = true) PHÃ¡ÂºÂ¢I cÃƒÂ³ defaultDaysPerYear Ã„â€˜Ã¡Â»Æ’ sÃ¡Â»Â­ dÃ¡Â»Â¥ng cho annual reset. " +
-                "Vui lÃƒÂ²ng set defaultDaysPerYear (vÃƒÂ­ dÃ¡Â»Â¥: 12.0 cho 12 ngÃƒÂ y phÃƒÂ©p/nÃ„Æ’m).",
-                "TimeOffType",
-                "MISSING_DEFAULT_DAYS"
-            );
+                    "LoÃ¡ÂºÂ¡i nghÃ¡Â»â€° phÃƒÂ©p cÃ¡ÂºÂ§n balance tracking (requiresBalance = true) PHÃ¡ÂºÂ¢I cÃƒÂ³ defaultDaysPerYear Ã„â€˜Ã¡Â»Æ’ sÃ¡Â»Â­ dÃ¡Â»Â¥ng cho annual reset. "
+                            +
+                            "Vui lÃƒÂ²ng set defaultDaysPerYear (vÃƒÂ­ dÃ¡Â»Â¥: 12.0 cho 12 ngÃƒÂ y phÃƒÂ©p/nÃ„Æ’m).",
+                    "TimeOffType",
+                    "MISSING_DEFAULT_DAYS");
         }
 
         // Case 2: requiresBalance = false VÃƒâ‚¬ defaultDaysPerYear != null
         if (Boolean.FALSE.equals(requiresBalance) && defaultDaysPerYear != null) {
             throw new BadRequestAlertException(
-                "LoÃ¡ÂºÂ¡i nghÃ¡Â»â€° phÃƒÂ©p khÃƒÂ´ng cÃ¡ÂºÂ§n balance tracking (requiresBalance = false) KHÃƒâ€NG thÃ¡Â»Æ’ cÃƒÂ³ defaultDaysPerYear. " +
-                "Field defaultDaysPerYear chÃ¡Â»â€° dÃƒÂ¹ng cho cÃƒÂ¡c loÃ¡ÂºÂ¡i nghÃ¡Â»â€° phÃƒÂ©p cÃ¡ÂºÂ§n check sÃ¡Â»â€˜ dÃ†Â° (requiresBalance = true). " +
-                "Vui lÃƒÂ²ng set defaultDaysPerYear = null.",
-                "TimeOffType",
-                "INVALID_DEFAULT_DAYS"
-            );
+                    "LoÃ¡ÂºÂ¡i nghÃ¡Â»â€° phÃƒÂ©p khÃƒÂ´ng cÃ¡ÂºÂ§n balance tracking (requiresBalance = false) KHÃƒâ€NG thÃ¡Â»Æ’ cÃƒÂ³ defaultDaysPerYear. "
+                            +
+                            "Field defaultDaysPerYear chÃ¡Â»â€° dÃƒÂ¹ng cho cÃƒÂ¡c loÃ¡ÂºÂ¡i nghÃ¡Â»â€° phÃƒÂ©p cÃ¡ÂºÂ§n check sÃ¡Â»â€˜ dÃ†Â° (requiresBalance = true). "
+                            +
+                            "Vui lÃƒÂ²ng set defaultDaysPerYear = null.",
+                    "TimeOffType",
+                    "INVALID_DEFAULT_DAYS");
         }
     }
 
     /**
      * DELETE /api/v1/admin/time-off-types/{typeId}
-     * VÃƒÂ´ hiÃ¡Â»â€¡u hÃƒÂ³a/KÃƒÂ­ch hoÃ¡ÂºÂ¡t lÃ¡ÂºÂ¡i loÃ¡ÂºÂ¡i nghÃ¡Â»â€° phÃƒÂ©p (soft delete)
+     * VÃƒÂ´ hiÃ¡Â»â€¡u hÃƒÂ³a/KÃƒÂ­ch hoÃ¡ÂºÂ¡t lÃ¡ÂºÂ¡i loÃ¡ÂºÂ¡i nghÃ¡Â»â€°
+     * phÃƒÂ©p (soft delete)
      */
     @Transactional
     public TimeOffTypeResponse toggleTimeOffTypeActive(String typeId) {

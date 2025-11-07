@@ -11,8 +11,8 @@ import com.dental.clinic.management.booking_appointment.repository.AppointmentAu
 import com.dental.clinic.management.booking_appointment.repository.AppointmentRepository;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.exception.ResourceNotFoundException;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -34,14 +34,24 @@ import java.util.*;
  * - Business rule validation (e.g., CANCELLED requires reasonCode)
  */
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class AppointmentStatusService {
+
+    private static final Logger log = LoggerFactory.getLogger(AppointmentStatusService.class);
 
     private final AppointmentRepository appointmentRepository;
     private final AppointmentAuditLogRepository auditLogRepository;
     private final EmployeeRepository employeeRepository;
     private final AppointmentDetailService detailService;
+
+    public AppointmentStatusService(AppointmentRepository appointmentRepository,
+            AppointmentAuditLogRepository auditLogRepository,
+            EmployeeRepository employeeRepository,
+            AppointmentDetailService detailService) {
+        this.appointmentRepository = appointmentRepository;
+        this.auditLogRepository = auditLogRepository;
+        this.employeeRepository = employeeRepository;
+        this.detailService = detailService;
+    }
 
     /**
      * Valid state transitions map.

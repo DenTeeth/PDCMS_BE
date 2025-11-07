@@ -58,17 +58,15 @@ public class CategoryMapper {
                 ? category.getItemMasters().size()
                 : 0;
 
-        return CategoryResponse.builder()
-                .id(category.getId())
-                .categoryName(category.getCategoryName())
-                .warehouseType(category.getWarehouseType())
-                .parentCategoryId(category.getParentCategory() != null ? category.getParentCategory().getId() : null)
-                .parentCategoryName(
-                        category.getParentCategory() != null ? category.getParentCategory().getCategoryName() : null)
-                .description(category.getDescription())
-                .itemCount(itemCount)
-                .subCategories(null) // Not included in simple response
-                .build();
+        return new CategoryResponse(
+                category.getId(),
+                category.getCategoryName(),
+                category.getWarehouseType(),
+                category.getParentCategory() != null ? category.getParentCategory().getId() : null,
+                category.getParentCategory() != null ? category.getParentCategory().getCategoryName() : null,
+                category.getDescription(),
+                itemCount,
+                null); // Not included in simple response
     }
 
     /**
@@ -92,4 +90,3 @@ public class CategoryMapper {
         return response;
     }
 }
-

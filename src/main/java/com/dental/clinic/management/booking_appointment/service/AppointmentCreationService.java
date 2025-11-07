@@ -23,8 +23,8 @@ import com.dental.clinic.management.working_schedule.repository.EmployeeShiftRep
 import com.dental.clinic.management.exception.validation.BadRequestAlertException;
 import com.dental.clinic.management.patient.domain.Patient;
 import com.dental.clinic.management.patient.repository.PatientRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -53,10 +53,10 @@ import java.util.stream.Collectors;
  * 8. Insert appointment + services + participants + audit log
  * 9. Return response with nested summaries
  */
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class AppointmentCreationService {
+
+        private static final Logger log = LoggerFactory.getLogger(AppointmentCreationService.class);
 
         private final PatientRepository patientRepository;
         private final EmployeeRepository employeeRepository;
@@ -68,6 +68,28 @@ public class AppointmentCreationService {
         private final AppointmentServiceRepository appointmentServiceRepository;
         private final AppointmentParticipantRepository appointmentParticipantRepository;
         private final AppointmentAuditLogRepository appointmentAuditLogRepository;
+
+        public AppointmentCreationService(PatientRepository patientRepository,
+                        EmployeeRepository employeeRepository,
+                        RoomRepository roomRepository,
+                        DentalServiceRepository dentalServiceRepository,
+                        RoomServiceRepository roomServiceRepository,
+                        EmployeeShiftRepository employeeShiftRepository,
+                        AppointmentRepository appointmentRepository,
+                        AppointmentServiceRepository appointmentServiceRepository,
+                        AppointmentParticipantRepository appointmentParticipantRepository,
+                        AppointmentAuditLogRepository appointmentAuditLogRepository) {
+                this.patientRepository = patientRepository;
+                this.employeeRepository = employeeRepository;
+                this.roomRepository = roomRepository;
+                this.dentalServiceRepository = dentalServiceRepository;
+                this.roomServiceRepository = roomServiceRepository;
+                this.employeeShiftRepository = employeeShiftRepository;
+                this.appointmentRepository = appointmentRepository;
+                this.appointmentServiceRepository = appointmentServiceRepository;
+                this.appointmentParticipantRepository = appointmentParticipantRepository;
+                this.appointmentAuditLogRepository = appointmentAuditLogRepository;
+        }
 
         private static final DateTimeFormatter ISO_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
         private static final String ENTITY_NAME = "appointment";

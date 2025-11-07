@@ -8,8 +8,8 @@ import com.dental.clinic.management.booking_appointment.enums.AppointmentStatus;
 import com.dental.clinic.management.booking_appointment.repository.AppointmentRepository;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.patient.repository.PatientRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -36,15 +36,23 @@ import java.util.stream.Collectors;
  * - Pagination and sorting
  * - DTO mapping with nested summaries
  */
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class AppointmentListService {
+
+    private static final Logger log = LoggerFactory.getLogger(AppointmentListService.class);
 
     private final AppointmentRepository appointmentRepository;
     private final PatientRepository patientRepository;
     private final EmployeeRepository employeeRepository;
     // TODO: Add RoomRepository, ServiceRepository, AppointmentParticipantRepository
+
+    public AppointmentListService(AppointmentRepository appointmentRepository,
+            PatientRepository patientRepository,
+            EmployeeRepository employeeRepository) {
+        this.appointmentRepository = appointmentRepository;
+        this.patientRepository = patientRepository;
+        this.employeeRepository = employeeRepository;
+    }
 
     /**
      * Get paginated appointment list with RBAC filtering

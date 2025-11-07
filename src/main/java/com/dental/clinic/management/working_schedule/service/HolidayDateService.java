@@ -8,8 +8,8 @@ import com.dental.clinic.management.working_schedule.dto.response.HolidayDateRes
 import com.dental.clinic.management.working_schedule.mapper.HolidayDateMapper;
 import com.dental.clinic.management.working_schedule.repository.HolidayDateRepository;
 import com.dental.clinic.management.working_schedule.repository.HolidayDefinitionRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,33 +21,41 @@ import java.util.stream.Collectors;
  * Service for managing holiday dates.
  */
 @Service
-@RequiredArgsConstructor
-@Slf4j
 @Transactional
 public class HolidayDateService {
+
+    private static final Logger log = LoggerFactory.getLogger(HolidayDateService.class);
 
     private final HolidayDateRepository holidayDateRepository;
     private final HolidayDefinitionRepository holidayDefinitionRepository;
     private final HolidayDateMapper holidayDateMapper;
 
+    public HolidayDateService(HolidayDateRepository holidayDateRepository,
+            HolidayDefinitionRepository holidayDefinitionRepository,
+            HolidayDateMapper holidayDateMapper) {
+        this.holidayDateRepository = holidayDateRepository;
+        this.holidayDefinitionRepository = holidayDefinitionRepository;
+        this.holidayDateMapper = holidayDateMapper;
+    }
+
     /**
      * Create a new holiday date.
      */
     public HolidayDateResponse createHolidayDate(HolidayDateRequest request) {
-        log.info("Creating holiday date: {} for definition: {}", 
-                 request.getHolidayDate(), request.getDefinitionId());
+        log.info("Creating holiday date: {} for definition: {}",
+                request.getHolidayDate(), request.getDefinitionId());
 
         // Validate that definition exists
         holidayDefinitionRepository.findById(request.getDefinitionId())
-            .orElseThrow(() -> new ResourceNotFoundException(
-                "HOLIDAY_DEFINITION_NOT_FOUND",
-                "Holiday definition not found with ID: " + request.getDefinitionId()));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "HOLIDAY_DEFINITION_NOT_FOUND",
+                        "Holiday definition not found with ID: " + request.getDefinitionId()));
 
         // Check if this date already exists for this definition
         HolidayDateId id = new HolidayDateId(request.getHolidayDate(), request.getDefinitionId());
         if (holidayDateRepository.existsById(id)) {
             throw new com.dental.clinic.management.exception.holiday.DuplicateHolidayDateException(
-                request.getHolidayDate(), request.getDefinitionId());
+                    request.getHolidayDate(), request.getDefinitionId());
         }
 
         HolidayDate holidayDate = holidayDateMapper.toEntity(request);
@@ -63,11 +71,11 @@ public class HolidayDateService {
     @Transactional(readOnly = true)
     public List<HolidayDateResponse> getAllHolidayDates() {
         log.info("Fetching all holiday dates");
-        
+
         return holidayDateRepository.findAll()
-            .stream()
-            .map(holidayDateMapper::toResponse)
-            .collect(Collectors.toList());
+                .stream()
+                .map(holidayDateMapper::toResponse)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -80,14 +88,14 @@ public class HolidayDateService {
         // Validate that definition exists
         if (!holidayDefinitionRepository.existsById(definitionId)) {
             throw new ResourceNotFoundException(
-                "HOLIDAY_DEFINITION_NOT_FOUND",
-                "Holiday definition not found with ID: " + definitionId);
+                    "HOLIDAY_DEFINITION_NOT_FOUND",
+                    "Holiday definition not found with ID: " + definitionId);
         }
 
         return holidayDateRepository.findByDefinitionId(definitionId)
-            .stream()
-            .map(holidayDateMapper::toResponse)
-            .collect(Collectors.toList());
+                .stream()
+                .map(holidayDateMapper::toResponse)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -100,13 +108,13 @@ public class HolidayDateService {
         // Validate date range
         if (startDate.isAfter(endDate)) {
             throw new com.dental.clinic.management.exception.holiday.InvalidDateRangeException(
-                startDate, endDate);
+                    startDate, endDate);
         }
 
         return holidayDateRepository.findByDateRange(startDate, endDate)
-            .stream()
-            .map(holidayDateMapper::toResponse)
-            .collect(Collectors.toList());
+                .stream()
+                .map(holidayDateMapper::toResponse)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -118,9 +126,9 @@ public class HolidayDateService {
 
         HolidayDateId id = new HolidayDateId(holidayDate, definitionId);
         HolidayDate date = holidayDateRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                "HOLIDAY_DATE_NOT_FOUND",
-                "Holiday date not found: " + holidayDate + " for definition: " + definitionId));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "HOLIDAY_DATE_NOT_FOUND",
+                        "Holiday date not found: " + holidayDate + " for definition: " + definitionId));
 
         return holidayDateMapper.toResponse(date);
     }
@@ -130,14 +138,14 @@ public class HolidayDateService {
      */
     public HolidayDateResponse updateHolidayDate(
             LocalDate holidayDate, String definitionId, HolidayDateRequest request) {
-        
+
         log.info("Updating holiday date: {} for definition: {}", holidayDate, definitionId);
 
         HolidayDateId id = new HolidayDateId(holidayDate, definitionId);
         HolidayDate date = holidayDateRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                "HOLIDAY_DATE_NOT_FOUND",
-                "Holiday date not found: " + holidayDate + " for definition: " + definitionId));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "HOLIDAY_DATE_NOT_FOUND",
+                        "Holiday date not found: " + holidayDate + " for definition: " + definitionId));
 
         holidayDateMapper.updateEntity(date, request);
         HolidayDate updatedDate = holidayDateRepository.save(date);
@@ -155,8 +163,8 @@ public class HolidayDateService {
         HolidayDateId id = new HolidayDateId(holidayDate, definitionId);
         if (!holidayDateRepository.existsById(id)) {
             throw new ResourceNotFoundException(
-                "HOLIDAY_DATE_NOT_FOUND",
-                "Holiday date not found: " + holidayDate + " for definition: " + definitionId);
+                    "HOLIDAY_DATE_NOT_FOUND",
+                    "Holiday date not found: " + holidayDate + " for definition: " + definitionId);
         }
 
         holidayDateRepository.deleteById(id);

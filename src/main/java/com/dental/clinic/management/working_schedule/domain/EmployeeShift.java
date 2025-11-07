@@ -5,10 +5,6 @@ import com.dental.clinic.management.working_schedule.enums.ShiftSource;
 import com.dental.clinic.management.working_schedule.enums.ShiftStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -31,10 +27,6 @@ import java.time.LocalDateTime;
                 "work_shift_id" })
 })
 @org.hibernate.annotations.Check(constraints = "source IN ('BATCH_JOB', 'REGISTRATION_JOB', 'OT_APPROVAL', 'MANUAL_ENTRY')")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
 public class EmployeeShift {
 
     /**

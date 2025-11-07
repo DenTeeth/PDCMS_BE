@@ -6,7 +6,6 @@ import com.dental.clinic.management.working_schedule.service.HolidayDateService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,18 +21,21 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/v1/holiday-dates")
-@RequiredArgsConstructor
 @Tag(name = "Holiday Dates", description = "APIs for managing specific holiday dates")
 public class HolidayDateController {
 
     private final HolidayDateService holidayDateService;
+
+    public HolidayDateController(HolidayDateService holidayDateService) {
+        this.holidayDateService = holidayDateService;
+    }
 
     @PostMapping
     @PreAuthorize("hasAuthority('CREATE_HOLIDAY')")
     @Operation(summary = "Create a new holiday date")
     public ResponseEntity<HolidayDateResponse> createHolidayDate(
             @Valid @RequestBody HolidayDateRequest request) {
-        
+
         HolidayDateResponse response = holidayDateService.createHolidayDate(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -51,7 +53,7 @@ public class HolidayDateController {
     @Operation(summary = "Get all holiday dates for a specific definition")
     public ResponseEntity<List<HolidayDateResponse>> getHolidayDatesByDefinition(
             @PathVariable String definitionId) {
-        
+
         List<HolidayDateResponse> responses = holidayDateService.getHolidayDatesByDefinition(definitionId);
         return ResponseEntity.ok(responses);
     }
@@ -62,7 +64,7 @@ public class HolidayDateController {
     public ResponseEntity<List<HolidayDateResponse>> getHolidayDatesByRange(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
-        
+
         List<HolidayDateResponse> responses = holidayDateService.getHolidayDatesByRange(startDate, endDate);
         return ResponseEntity.ok(responses);
     }
@@ -73,7 +75,7 @@ public class HolidayDateController {
     public ResponseEntity<HolidayDateResponse> getHolidayDate(
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate holidayDate,
             @PathVariable String definitionId) {
-        
+
         HolidayDateResponse response = holidayDateService.getHolidayDate(holidayDate, definitionId);
         return ResponseEntity.ok(response);
     }
@@ -85,7 +87,7 @@ public class HolidayDateController {
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate holidayDate,
             @PathVariable String definitionId,
             @Valid @RequestBody HolidayDateRequest request) {
-        
+
         HolidayDateResponse response = holidayDateService.updateHolidayDate(holidayDate, definitionId, request);
         return ResponseEntity.ok(response);
     }
@@ -96,7 +98,7 @@ public class HolidayDateController {
     public ResponseEntity<Void> deleteHolidayDate(
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate holidayDate,
             @PathVariable String definitionId) {
-        
+
         holidayDateService.deleteHolidayDate(holidayDate, definitionId);
         return ResponseEntity.noContent().build();
     }
@@ -106,7 +108,7 @@ public class HolidayDateController {
     @Operation(summary = "Check if a specific date is a holiday")
     public ResponseEntity<Map<String, Boolean>> checkIfHoliday(
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        
+
         boolean isHoliday = holidayDateService.isHoliday(date);
         return ResponseEntity.ok(Map.of("isHoliday", isHoliday));
     }

@@ -15,8 +15,8 @@ import com.dental.clinic.management.booking_appointment.repository.AppointmentSe
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.exception.ResourceNotFoundException;
 import com.dental.clinic.management.patient.repository.PatientRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -40,10 +40,10 @@ import java.util.Optional;
  * - Compute dynamic fields (computedStatus, minutesLate)
  * - Return detailed DTO
  */
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class AppointmentDetailService {
+
+    private static final Logger log = LoggerFactory.getLogger(AppointmentDetailService.class);
 
     private final AppointmentRepository appointmentRepository;
     private final PatientRepository patientRepository;
@@ -51,6 +51,20 @@ public class AppointmentDetailService {
     private final AppointmentServiceRepository appointmentServiceRepository;
     private final AppointmentParticipantRepository appointmentParticipantRepository;
     private final AppointmentAuditLogRepository appointmentAuditLogRepository;
+
+    public AppointmentDetailService(AppointmentRepository appointmentRepository,
+            PatientRepository patientRepository,
+            EmployeeRepository employeeRepository,
+            AppointmentServiceRepository appointmentServiceRepository,
+            AppointmentParticipantRepository appointmentParticipantRepository,
+            AppointmentAuditLogRepository appointmentAuditLogRepository) {
+        this.appointmentRepository = appointmentRepository;
+        this.patientRepository = patientRepository;
+        this.employeeRepository = employeeRepository;
+        this.appointmentServiceRepository = appointmentServiceRepository;
+        this.appointmentParticipantRepository = appointmentParticipantRepository;
+        this.appointmentAuditLogRepository = appointmentAuditLogRepository;
+    }
 
     /**
      * Get appointment detail by code with RBAC check

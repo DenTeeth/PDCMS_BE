@@ -1,8 +1,8 @@
 package com.dental.clinic.management.scheduled;
 
 import com.dental.clinic.management.working_schedule.service.LeaveBalanceService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,11 +14,15 @@ import org.springframework.transaction.annotation.Transactional;
  * Resets and creates new annual leave balances for all active employees.
  */
 @Component
-@Slf4j
-@RequiredArgsConstructor
 public class AnnualLeaveBalanceResetJob {
 
+    private static final Logger log = LoggerFactory.getLogger(AnnualLeaveBalanceResetJob.class);
+
     private final LeaveBalanceService leaveBalanceService;
+
+    public AnnualLeaveBalanceResetJob(LeaveBalanceService leaveBalanceService) {
+        this.leaveBalanceService = leaveBalanceService;
+    }
 
     /**
      * Cron: 0 1 0 1 1 ?

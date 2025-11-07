@@ -6,8 +6,8 @@ import com.dental.clinic.management.working_schedule.dto.request.UpdateTimeOffTy
 import com.dental.clinic.management.working_schedule.dto.response.TimeOffTypeResponse;
 import com.dental.clinic.management.working_schedule.service.TimeOffTypeService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -21,11 +21,15 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/v1/admin/time-off-types")
-@RequiredArgsConstructor
-@Slf4j
 public class AdminTimeOffTypeController {
 
+    private static final Logger log = LoggerFactory.getLogger(AdminTimeOffTypeController.class);
+
     private final TimeOffTypeService typeService;
+
+    public AdminTimeOffTypeController(TimeOffTypeService typeService) {
+        this.typeService = typeService;
+    }
 
     /**
      * GET /api/v1/admin/time-off-types
@@ -35,13 +39,15 @@ public class AdminTimeOffTypeController {
      *
      * Query Params:
      * - is_active (boolean, optional): LÃ¡Â»Âc theo trÃ¡ÂºÂ¡ng thÃƒÂ¡i
-     * - is_paid (boolean, optional): LÃ¡Â»Âc theo loÃ¡ÂºÂ¡i cÃƒÂ³ lÃ†Â°Ã†Â¡ng/khÃƒÂ´ng lÃ†Â°Ã†Â¡ng
+     * - is_paid (boolean, optional): LÃ¡Â»Âc theo loÃ¡ÂºÂ¡i cÃƒÂ³
+     * lÃ†Â°Ã†Â¡ng/khÃƒÂ´ng lÃ†Â°Ã†Â¡ng
      *
      * Response:
-     * - 200 OK: TrÃ¡ÂºÂ£ vÃ¡Â»Â danh sÃƒÂ¡ch tÃ¡ÂºÂ¥t cÃ¡ÂºÂ£ loÃ¡ÂºÂ¡i nghÃ¡Â»â€° phÃƒÂ©p (kÃ¡Â»Æ’ cÃ¡ÂºÂ£ inactive)
+     * - 200 OK: TrÃ¡ÂºÂ£ vÃ¡Â»Â danh sÃƒÂ¡ch tÃ¡ÂºÂ¥t cÃ¡ÂºÂ£ loÃ¡ÂºÂ¡i nghÃ¡Â»â€°
+     * phÃƒÂ©p (kÃ¡Â»Æ’ cÃ¡ÂºÂ£ inactive)
      *
      * @param isActive filter by active status (optional)
-     * @param isPaid filter by paid status (optional)
+     * @param isPaid   filter by paid status (optional)
      * @return List of TimeOffTypeResponse
      */
     @GetMapping
@@ -85,9 +91,9 @@ public class AdminTimeOffTypeController {
      *
      * Request Body:
      * {
-     *   "type_code": "UNPAID_LEAVE",
-     *   "type_name": "NghÃ¡Â»â€° khÃƒÂ´ng lÃ†Â°Ã†Â¡ng",
-     *   "is_paid": false
+     * "type_code": "UNPAID_LEAVE",
+     * "type_name": "NghÃ¡Â»â€° khÃƒÂ´ng lÃ†Â°Ã†Â¡ng",
+     * "is_paid": false
      * }
      *
      * Business Logic:
@@ -118,9 +124,10 @@ public class AdminTimeOffTypeController {
      *
      * Authorization: UPDATE_TIMEOFF_TYPE
      *
-     * Request Body (chÃ¡Â»â€° gÃ¡Â»Â­i cÃƒÂ¡c trÃ†Â°Ã¡Â»Âng cÃ¡ÂºÂ§n cÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t):
+     * Request Body (chÃ¡Â»â€° gÃ¡Â»Â­i cÃƒÂ¡c trÃ†Â°Ã¡Â»Âng cÃ¡ÂºÂ§n cÃ¡ÂºÂ­p
+     * nhÃ¡ÂºÂ­t):
      * {
-     *   "type_name": "NghÃ¡Â»â€° khÃƒÂ´ng lÃ†Â°Ã†Â¡ng (ViÃ¡Â»â€¡c riÃƒÂªng)"
+     * "type_name": "NghÃ¡Â»â€° khÃƒÂ´ng lÃ†Â°Ã†Â¡ng (ViÃ¡Â»â€¡c riÃƒÂªng)"
      * }
      *
      * Business Logic:
@@ -131,7 +138,7 @@ public class AdminTimeOffTypeController {
      * - 404 NOT_FOUND: TIMEOFF_TYPE_NOT_FOUND
      * - 409 CONFLICT: DUPLICATE_TYPE_CODE
      *
-     * @param typeId the time-off type ID
+     * @param typeId  the time-off type ID
      * @param request the update request
      * @return TimeOffTypeResponse
      */
@@ -148,14 +155,16 @@ public class AdminTimeOffTypeController {
 
     /**
      * DELETE /api/v1/admin/time-off-types/{type_id}
-     * VÃƒÂ´ hiÃ¡Â»â€¡u hÃƒÂ³a / KÃƒÂ­ch hoÃ¡ÂºÂ¡t lÃ¡ÂºÂ¡i LoÃ¡ÂºÂ¡i nghÃ¡Â»â€° phÃƒÂ©p (Toggle is_active)
+     * VÃƒÂ´ hiÃ¡Â»â€¡u hÃƒÂ³a / KÃƒÂ­ch hoÃ¡ÂºÂ¡t lÃ¡ÂºÂ¡i LoÃ¡ÂºÂ¡i nghÃ¡Â»â€°
+     * phÃƒÂ©p (Toggle is_active)
      *
      * Authorization: DELETE_TIMEOFF_TYPE
      *
      * Business Logic:
      * - Soft delete: Ã„ÂÃ¡ÂºÂ£o ngÃ†Â°Ã¡Â»Â£c is_active (true <-> false)
-     * - NÃ¡ÂºÂ¿u Ã„â€˜ang vÃƒÂ´ hiÃ¡Â»â€¡u hÃƒÂ³a (true -> false), kiÃ¡Â»Æ’m tra xem cÃƒÂ³ request PENDING nÃƒÂ o
-     *   Ã„â€˜ang dÃƒÂ¹ng type_id nÃƒÂ y khÃƒÂ´ng
+     * - NÃ¡ÂºÂ¿u Ã„â€˜ang vÃƒÂ´ hiÃ¡Â»â€¡u hÃƒÂ³a (true -> false), kiÃ¡Â»Æ’m tra
+     * xem cÃƒÂ³ request PENDING nÃƒÂ o
+     * Ã„â€˜ang dÃƒÂ¹ng type_id nÃƒÂ y khÃƒÂ´ng
      * - NÃ¡ÂºÂ¿u cÃƒÂ³, trÃ¡ÂºÂ£ vÃ¡Â»Â lÃ¡Â»â€”i 409 CONFLICT
      *
      * Response:

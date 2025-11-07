@@ -5,13 +5,13 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
-import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * Entity representing storage transactions (sÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ cÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡i kho).
+ * Entity representing storage transactions (sÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢
+ * cÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡i kho).
  * Records all warehouse movements: IMPORT, EXPORT, ADJUST, DESTROY.
  * 
  * Business Rules:
@@ -26,11 +26,6 @@ import java.time.LocalDateTime;
         @Index(name = "idx_transaction_type", columnList = "transaction_type"),
         @Index(name = "idx_transaction_date", columnList = "transaction_date")
 })
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class StorageTransaction {
 
     @Id
@@ -91,6 +86,108 @@ public class StorageTransaction {
         if (unitPrice != null && quantity != null) {
             totalValue = unitPrice.multiply(BigDecimal.valueOf(quantity));
         }
+    }
+
+    // === CONSTRUCTORS ===
+
+    public StorageTransaction() {
+    }
+
+    public StorageTransaction(Long transactionId, ItemBatch itemBatch, TransactionType transactionType,
+            Integer quantity, LocalDateTime transactionDate, Long performedBy, String notes,
+            BigDecimal unitPrice, BigDecimal totalValue, LocalDateTime createdAt) {
+        this.transactionId = transactionId;
+        this.itemBatch = itemBatch;
+        this.transactionType = transactionType;
+        this.quantity = quantity;
+        this.transactionDate = transactionDate;
+        this.performedBy = performedBy;
+        this.notes = notes;
+        this.unitPrice = unitPrice;
+        this.totalValue = totalValue;
+        this.createdAt = createdAt;
+    }
+
+    // === GETTERS AND SETTERS ===
+
+    public Long getTransactionId() {
+        return transactionId;
+    }
+
+    public void setTransactionId(Long transactionId) {
+        this.transactionId = transactionId;
+    }
+
+    public ItemBatch getItemBatch() {
+        return itemBatch;
+    }
+
+    public void setItemBatch(ItemBatch itemBatch) {
+        this.itemBatch = itemBatch;
+    }
+
+    public TransactionType getTransactionType() {
+        return transactionType;
+    }
+
+    public void setTransactionType(TransactionType transactionType) {
+        this.transactionType = transactionType;
+    }
+
+    public Integer getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
+    }
+
+    public LocalDateTime getTransactionDate() {
+        return transactionDate;
+    }
+
+    public void setTransactionDate(LocalDateTime transactionDate) {
+        this.transactionDate = transactionDate;
+    }
+
+    public Long getPerformedBy() {
+        return performedBy;
+    }
+
+    public void setPerformedBy(Long performedBy) {
+        this.performedBy = performedBy;
+    }
+
+    public String getNotes() {
+        return notes;
+    }
+
+    public void setNotes(String notes) {
+        this.notes = notes;
+    }
+
+    public BigDecimal getUnitPrice() {
+        return unitPrice;
+    }
+
+    public void setUnitPrice(BigDecimal unitPrice) {
+        this.unitPrice = unitPrice;
+    }
+
+    public BigDecimal getTotalValue() {
+        return totalValue;
+    }
+
+    public void setTotalValue(BigDecimal totalValue) {
+        this.totalValue = totalValue;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 
     // === HELPER METHODS ===

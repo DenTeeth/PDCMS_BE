@@ -7,8 +7,8 @@ import com.dental.clinic.management.working_schedule.enums.DayOfWeek;
 import com.dental.clinic.management.working_schedule.enums.ShiftSource;
 import com.dental.clinic.management.working_schedule.enums.ShiftStatus;
 import com.dental.clinic.management.working_schedule.repository.*;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,9 +46,9 @@ import java.util.stream.Collectors;
  * - REGISTRATION_JOB: From Flex registrations (LuÃ¡Â»â€œng 2)
  */
 @Component
-@Slf4j
-@RequiredArgsConstructor
 public class UnifiedScheduleSyncJob {
+
+    private static final Logger log = LoggerFactory.getLogger(UnifiedScheduleSyncJob.class);
 
     private final FixedShiftRegistrationRepository fixedRegistrationRepo;
     private final EmployeeShiftRegistrationRepository flexRegistrationRepo;
@@ -58,6 +58,24 @@ public class UnifiedScheduleSyncJob {
     private final WorkShiftRepository workShiftRepo;
     private final EmployeeRepository employeeRepo;
     private final IdGenerator idGenerator;
+
+    public UnifiedScheduleSyncJob(FixedShiftRegistrationRepository fixedRegistrationRepo,
+            EmployeeShiftRegistrationRepository flexRegistrationRepo,
+            PartTimeSlotRepository partTimeSlotRepo,
+            EmployeeShiftRepository employeeShiftRepo,
+            HolidayDateRepository holidayRepo,
+            WorkShiftRepository workShiftRepo,
+            EmployeeRepository employeeRepo,
+            IdGenerator idGenerator) {
+        this.fixedRegistrationRepo = fixedRegistrationRepo;
+        this.flexRegistrationRepo = flexRegistrationRepo;
+        this.partTimeSlotRepo = partTimeSlotRepo;
+        this.employeeShiftRepo = employeeShiftRepo;
+        this.holidayRepo = holidayRepo;
+        this.workShiftRepo = workShiftRepo;
+        this.employeeRepo = employeeRepo;
+        this.idGenerator = idGenerator;
+    }
 
     private static final int SYNC_WINDOW_DAYS = 14; // 14-day lookahead window
 

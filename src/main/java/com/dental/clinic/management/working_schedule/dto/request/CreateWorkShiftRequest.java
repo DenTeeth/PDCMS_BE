@@ -3,9 +3,6 @@ package com.dental.clinic.management.working_schedule.dto.request;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.time.LocalTime;
 
@@ -14,9 +11,6 @@ import java.time.LocalTime;
  * Note: shiftId and category are auto-generated based on time range.
  * Category is no longer sent in request - it's determined by start time.
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class CreateWorkShiftRequest {
 
     @NotBlank(message = "TÃƒÂªn ca lÃƒÂ m viÃ¡Â»â€¡c khÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c Ã„â€˜Ã¡Â»Æ’ trÃ¡Â»â€˜ng")
@@ -26,8 +20,41 @@ public class CreateWorkShiftRequest {
     @NotNull(message = "GiÃ¡Â»Â bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u khÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c Ã„â€˜Ã¡Â»Æ’ trÃ¡Â»â€˜ng")
     private LocalTime startTime;
 
-    @NotNull(message = "GiÃ¡Â»Â kÃ¡ÂºÂ¿t thÃƒÂºc khÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c Ã„â€˜Ã¡Â»Æ’ trÃ¡Â»â€˜ng")
+    @NotNull(message = "GiÃ¡Â»Â kÃ¡ÂºÂ¿t thÃƒÂºc khÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c Ã„â€˜Ã¡Â»Æ' trÃ¡Â»â€˜ng")
     private LocalTime endTime;
+
+    public CreateWorkShiftRequest() {
+    }
+
+    public CreateWorkShiftRequest(String shiftName, LocalTime startTime, LocalTime endTime) {
+        this.shiftName = shiftName;
+        this.startTime = startTime;
+        this.endTime = endTime;
+    }
+
+    public String getShiftName() {
+        return shiftName;
+    }
+
+    public void setShiftName(String shiftName) {
+        this.shiftName = shiftName;
+    }
+
+    public LocalTime getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(LocalTime startTime) {
+        this.startTime = startTime;
+    }
+
+    public LocalTime getEndTime() {
+        return endTime;
+    }
+
+    public void setEndTime(LocalTime endTime) {
+        this.endTime = endTime;
+    }
 
     // Category is removed - auto-generated based on startTime
     // NORMAL: startTime < 18:00 AND endTime <= 18:00

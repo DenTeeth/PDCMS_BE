@@ -1,20 +1,12 @@
 package com.dental.clinic.management.working_schedule.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.util.List;
 
 /**
  * Response DTO for employee leave balances (P5.2)
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class EmployeeLeaveBalanceResponse {
 
     @JsonProperty("employee_id")
@@ -25,4 +17,38 @@ public class EmployeeLeaveBalanceResponse {
 
     @JsonProperty("balances")
     private List<LeaveBalanceDetailResponse> balances;
+
+    public EmployeeLeaveBalanceResponse() {
+    }
+
+    public EmployeeLeaveBalanceResponse(Integer employeeId, Integer cycleYear,
+            List<LeaveBalanceDetailResponse> balances) {
+        this.employeeId = employeeId;
+        this.cycleYear = cycleYear;
+        this.balances = balances;
+    }
+
+    public Integer getEmployeeId() {
+        return employeeId;
+    }
+
+    public void setEmployeeId(Integer employeeId) {
+        this.employeeId = employeeId;
+    }
+
+    public Integer getCycleYear() {
+        return cycleYear;
+    }
+
+    public void setCycleYear(Integer cycleYear) {
+        this.cycleYear = cycleYear;
+    }
+
+    public List<LeaveBalanceDetailResponse> getBalances() {
+        return balances;
+    }
+
+    public void setBalances(List<LeaveBalanceDetailResponse> balances) {
+        this.balances = balances;
+    }
 }

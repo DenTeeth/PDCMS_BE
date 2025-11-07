@@ -19,8 +19,8 @@ import com.dental.clinic.management.working_schedule.enums.BalanceChangeReason;
 import com.dental.clinic.management.working_schedule.repository.EmployeeLeaveBalanceRepository;
 import com.dental.clinic.management.working_schedule.repository.LeaveBalanceHistoryRepository;
 import com.dental.clinic.management.working_schedule.repository.TimeOffTypeRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,16 +36,28 @@ import java.util.stream.Collectors;
  * Service for Admin Leave Balance Management (P5.2)
  */
 @Service
-@RequiredArgsConstructor
-@Slf4j
 @Transactional(readOnly = true)
 public class AdminLeaveBalanceService {
+
+    private static final Logger log = LoggerFactory.getLogger(AdminLeaveBalanceService.class);
 
     private final EmployeeLeaveBalanceRepository balanceRepository;
     private final LeaveBalanceHistoryRepository historyRepository;
     private final EmployeeRepository employeeRepository;
     private final TimeOffTypeRepository timeOffTypeRepository;
     private final AccountRepository accountRepository;
+
+    public AdminLeaveBalanceService(EmployeeLeaveBalanceRepository balanceRepository,
+            LeaveBalanceHistoryRepository historyRepository,
+            EmployeeRepository employeeRepository,
+            TimeOffTypeRepository timeOffTypeRepository,
+            AccountRepository accountRepository) {
+        this.balanceRepository = balanceRepository;
+        this.historyRepository = historyRepository;
+        this.employeeRepository = employeeRepository;
+        this.timeOffTypeRepository = timeOffTypeRepository;
+        this.accountRepository = accountRepository;
+    }
 
     /**
      * Get leave balances for an employee in a specific year

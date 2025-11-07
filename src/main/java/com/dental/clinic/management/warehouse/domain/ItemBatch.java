@@ -5,7 +5,6 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
-import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -14,14 +13,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Entity representing actual inventory batches (lÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â´ hÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ng thÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€šÃ‚Â±c tÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â¿).
+ * Entity representing actual inventory batches (lÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â´
+ * hÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ng thÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€šÃ‚Â±c
+ * tÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â¿).
  * This is where ACTUAL stock quantities are stored.
  * 
  * Business Rules:
  * - UNIQUE(item_master_id, lot_number) - One item can have multiple batches
  * with different lot numbers
  * - FEFO (First Expired, First Out) - Sort by expiry_date ASC when exporting
- * - import_price is used to calculate loss (thÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â¥t thoÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡t)
+ * - import_price is used to calculate loss (thÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â¥t
+ * thoÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡t)
  * - expiry_date is NULLABLE (for non-perishable items like instruments)
  */
 @Entity
@@ -31,11 +33,6 @@ import java.util.List;
         @Index(name = "idx_batch_expiry", columnList = "expiry_date"),
         @Index(name = "idx_batch_quantity", columnList = "quantity_on_hand")
 })
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class ItemBatch {
 
     @Id
@@ -46,13 +43,13 @@ public class ItemBatch {
     // === RELATIONSHIP: ItemMaster ===
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "item_master_id", nullable = false)
-    @NotNull(message = "VÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â­t tÃƒÆ’Ã¢â‚¬Â Ãƒâ€šÃ‚Â° khÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â´ng ÃƒÆ’Ã¢â‚¬Å¾ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ÃƒÆ’Ã¢â‚¬Â Ãƒâ€šÃ‚Â°ÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€šÃ‚Â£c ÃƒÆ’Ã¢â‚¬Å¾ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€ Ã¢â‚¬â„¢ trÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ng")
+    @NotNull(message = "Item master cannot be empty")
     @JsonIgnore
     private ItemMaster itemMaster;
 
     // === BATCH INFORMATION ===
     @Column(name = "lot_number", length = 50, nullable = false)
-    @NotBlank(message = "SÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ lÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â´ khÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â´ng ÃƒÆ’Ã¢â‚¬Å¾ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ÃƒÆ’Ã¢â‚¬Â Ãƒâ€šÃ‚Â°ÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€šÃ‚Â£c ÃƒÆ’Ã¢â‚¬Å¾ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€ Ã¢â‚¬â„¢ trÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ng")
+    @NotBlank(message = "Lot number cannot be empty")
     private String lotNumber;
 
     @Column(name = "expiry_date")
@@ -60,20 +57,18 @@ public class ItemBatch {
 
     // === STOCK TRACKING ===
     @Column(name = "quantity_on_hand", nullable = false)
-    @NotNull(message = "SÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ lÃƒÆ’Ã¢â‚¬Â Ãƒâ€šÃ‚Â°ÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€šÃ‚Â£ng tÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œn kho khÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â´ng ÃƒÆ’Ã¢â‚¬Å¾ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ÃƒÆ’Ã¢â‚¬Â Ãƒâ€šÃ‚Â°ÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€šÃ‚Â£c ÃƒÆ’Ã¢â‚¬Å¾ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€ Ã¢â‚¬â„¢ trÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ng")
-    @PositiveOrZero(message = "SÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ lÃƒÆ’Ã¢â‚¬Â Ãƒâ€šÃ‚Â°ÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€šÃ‚Â£ng tÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œn kho khÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â´ng ÃƒÆ’Ã¢â‚¬Å¾ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ÃƒÆ’Ã¢â‚¬Â Ãƒâ€šÃ‚Â°ÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€šÃ‚Â£c ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢m")
-    @Builder.Default
+    @NotNull(message = "Quantity on hand cannot be empty")
+    @PositiveOrZero(message = "Quantity on hand must be non-negative")
     private Integer quantityOnHand = 0;
 
     // === PRICING (for loss calculation) ===
     @Column(name = "import_price", precision = 10, scale = 2, nullable = false)
-    @NotNull(message = "GiÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡ nhÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â­p khÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â´ng ÃƒÆ’Ã¢â‚¬Å¾ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ÃƒÆ’Ã¢â‚¬Â Ãƒâ€šÃ‚Â°ÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€šÃ‚Â£c ÃƒÆ’Ã¢â‚¬Å¾ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€ Ã¢â‚¬â„¢ trÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ng")
+    @NotNull(message = "Import price cannot be empty")
     private BigDecimal importPrice;
 
     // === RELATIONSHIP: Transactions ===
     @OneToMany(mappedBy = "itemBatch", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
-    @Builder.Default
     private List<StorageTransaction> transactions = new ArrayList<>();
 
     // === AUDIT FIELDS ===
@@ -97,6 +92,99 @@ public class ItemBatch {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+
+    // === CONSTRUCTORS ===
+
+    public ItemBatch() {
+    }
+
+    public ItemBatch(Long batchId, ItemMaster itemMaster, String lotNumber, LocalDate expiryDate,
+            Integer quantityOnHand, BigDecimal importPrice, List<StorageTransaction> transactions,
+            LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this.batchId = batchId;
+        this.itemMaster = itemMaster;
+        this.lotNumber = lotNumber;
+        this.expiryDate = expiryDate;
+        this.quantityOnHand = quantityOnHand;
+        this.importPrice = importPrice;
+        this.transactions = transactions;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+
+    // === GETTERS AND SETTERS ===
+
+    public Long getBatchId() {
+        return batchId;
+    }
+
+    public void setBatchId(Long batchId) {
+        this.batchId = batchId;
+    }
+
+    public ItemMaster getItemMaster() {
+        return itemMaster;
+    }
+
+    public void setItemMaster(ItemMaster itemMaster) {
+        this.itemMaster = itemMaster;
+    }
+
+    public String getLotNumber() {
+        return lotNumber;
+    }
+
+    public void setLotNumber(String lotNumber) {
+        this.lotNumber = lotNumber;
+    }
+
+    public LocalDate getExpiryDate() {
+        return expiryDate;
+    }
+
+    public void setExpiryDate(LocalDate expiryDate) {
+        this.expiryDate = expiryDate;
+    }
+
+    public Integer getQuantityOnHand() {
+        return quantityOnHand;
+    }
+
+    public void setQuantityOnHand(Integer quantityOnHand) {
+        this.quantityOnHand = quantityOnHand;
+    }
+
+    public BigDecimal getImportPrice() {
+        return importPrice;
+    }
+
+    public void setImportPrice(BigDecimal importPrice) {
+        this.importPrice = importPrice;
+    }
+
+    public List<StorageTransaction> getTransactions() {
+        return transactions;
+    }
+
+    public void setTransactions(List<StorageTransaction> transactions) {
+        this.transactions = transactions;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 
     // === HELPER METHODS ===

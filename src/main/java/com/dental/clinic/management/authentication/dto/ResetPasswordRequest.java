@@ -4,27 +4,54 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 @Schema(description = "Request to reset password with token")
 public class ResetPasswordRequest {
 
-    @NotBlank(message = "Token khÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c Ã„â€˜Ã¡Â»Æ’ trÃ¡Â»â€˜ng")
+    @NotBlank(message = "Token cannot be empty")
     @Schema(description = "Password reset token from email", example = "550e8400-e29b-41d4-a716-446655440000")
     private String token;
 
-    @NotBlank(message = "MÃ¡ÂºÂ­t khÃ¡ÂºÂ©u mÃ¡Â»â€ºi khÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c Ã„â€˜Ã¡Â»Æ’ trÃ¡Â»â€˜ng")
-    @Size(min = 6, max = 50, message = "MÃ¡ÂºÂ­t khÃ¡ÂºÂ©u phÃ¡ÂºÂ£i tÃ¡Â»Â« 6-50 kÃƒÂ½ tÃ¡Â»Â±")
-    @Pattern(regexp = "^(?=.*[0-9])(?=.*[a-zA-Z]).+$", message = "MÃ¡ÂºÂ­t khÃ¡ÂºÂ©u phÃ¡ÂºÂ£i chÃ¡Â»Â©a ÃƒÂ­t nhÃ¡ÂºÂ¥t 1 chÃ¡Â»Â¯ cÃƒÂ¡i vÃƒÂ  1 chÃ¡Â»Â¯ sÃ¡Â»â€˜")
+    @NotBlank(message = "New password cannot be empty")
+    @Size(min = 6, max = 50, message = "Password must be between 6-50 characters")
+    @Pattern(regexp = "^(?=.*[0-9])(?=.*[a-zA-Z]).+$", message = "Password must contain at least 1 letter and 1 number")
     @Schema(description = "New password (6-50 chars, must contain letters and numbers)", example = "NewPass123")
     private String newPassword;
 
-    @NotBlank(message = "XÃƒÂ¡c nhÃ¡ÂºÂ­n mÃ¡ÂºÂ­t khÃ¡ÂºÂ©u khÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c Ã„â€˜Ã¡Â»Æ’ trÃ¡Â»â€˜ng")
+    @NotBlank(message = "Confirm password cannot be empty")
     @Schema(description = "Confirm new password", example = "NewPass123")
     private String confirmPassword;
+
+    public ResetPasswordRequest() {
+    }
+
+    public ResetPasswordRequest(String token, String newPassword, String confirmPassword) {
+        this.token = token;
+        this.newPassword = newPassword;
+        this.confirmPassword = confirmPassword;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
+    }
+
+    public String getNewPassword() {
+        return newPassword;
+    }
+
+    public void setNewPassword(String newPassword) {
+        this.newPassword = newPassword;
+    }
+
+    public String getConfirmPassword() {
+        return confirmPassword;
+    }
+
+    public void setConfirmPassword(String confirmPassword) {
+        this.confirmPassword = confirmPassword;
+    }
 }

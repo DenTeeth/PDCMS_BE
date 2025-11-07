@@ -9,7 +9,6 @@ import com.dental.clinic.management.working_schedule.dto.response.ShiftSummaryRe
 import com.dental.clinic.management.working_schedule.enums.ShiftStatus;
 import com.dental.clinic.management.working_schedule.service.EmployeeShiftService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -38,11 +37,16 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/v1/shifts")
-@RequiredArgsConstructor
 public class EmployeeShiftController {
 
         private final EmployeeShiftService employeeShiftService;
         private final EmployeeRepository employeeRepository;
+
+        public EmployeeShiftController(EmployeeShiftService employeeShiftService,
+                        EmployeeRepository employeeRepository) {
+                this.employeeShiftService = employeeShiftService;
+                this.employeeRepository = employeeRepository;
+        }
 
         /**
          * Get shift calendar with filters and pagination.

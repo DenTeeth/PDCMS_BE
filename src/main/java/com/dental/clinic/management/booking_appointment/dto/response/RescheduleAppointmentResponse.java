@@ -1,10 +1,6 @@
 package com.dental.clinic.management.booking_appointment.dto.response;
 
 import com.dental.clinic.management.booking_appointment.dto.AppointmentDetailDTO;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 /**
  * Response DTO for reschedule appointment operation.
@@ -13,10 +9,6 @@ import lombok.NoArgsConstructor;
  * This helps frontend display clear message:
  * "Appointment APT-001 has been cancelled and rescheduled to APT-005"
  */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class RescheduleAppointmentResponse {
 
     /**
@@ -31,4 +23,29 @@ public class RescheduleAppointmentResponse {
      * This is the active appointment with new time/doctor/room.
      */
     private AppointmentDetailDTO newAppointment;
+
+    public RescheduleAppointmentResponse() {
+    }
+
+    public RescheduleAppointmentResponse(AppointmentDetailDTO cancelledAppointment,
+            AppointmentDetailDTO newAppointment) {
+        this.cancelledAppointment = cancelledAppointment;
+        this.newAppointment = newAppointment;
+    }
+
+    public AppointmentDetailDTO getCancelledAppointment() {
+        return cancelledAppointment;
+    }
+
+    public void setCancelledAppointment(AppointmentDetailDTO cancelledAppointment) {
+        this.cancelledAppointment = cancelledAppointment;
+    }
+
+    public AppointmentDetailDTO getNewAppointment() {
+        return newAppointment;
+    }
+
+    public void setNewAppointment(AppointmentDetailDTO newAppointment) {
+        this.newAppointment = newAppointment;
+    }
 }

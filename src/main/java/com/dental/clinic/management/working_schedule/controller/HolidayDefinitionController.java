@@ -20,18 +20,21 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/v1/holiday-definitions")
-@RequiredArgsConstructor
 @Tag(name = "Holiday Definitions", description = "APIs for managing holiday definitions")
 public class HolidayDefinitionController {
 
     private final HolidayDefinitionService holidayDefinitionService;
+
+    public HolidayDefinitionController(HolidayDefinitionService holidayDefinitionService) {
+        this.holidayDefinitionService = holidayDefinitionService;
+    }
 
     @PostMapping
     @PreAuthorize("hasAuthority('CREATE_HOLIDAY')")
     @Operation(summary = "Create a new holiday definition")
     public ResponseEntity<HolidayDefinitionResponse> createHolidayDefinition(
             @Valid @RequestBody HolidayDefinitionRequest request) {
-        
+
         HolidayDefinitionResponse response = holidayDefinitionService.createHolidayDefinition(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -49,7 +52,7 @@ public class HolidayDefinitionController {
     @Operation(summary = "Get holiday definition by ID")
     public ResponseEntity<HolidayDefinitionResponse> getHolidayDefinitionById(
             @PathVariable String definitionId) {
-        
+
         HolidayDefinitionResponse response = holidayDefinitionService.getHolidayDefinitionById(definitionId);
         return ResponseEntity.ok(response);
     }
@@ -59,7 +62,7 @@ public class HolidayDefinitionController {
     @Operation(summary = "Get holiday definitions by type")
     public ResponseEntity<List<HolidayDefinitionResponse>> getHolidayDefinitionsByType(
             @PathVariable HolidayType holidayType) {
-        
+
         List<HolidayDefinitionResponse> responses = holidayDefinitionService.getHolidayDefinitionsByType(holidayType);
         return ResponseEntity.ok(responses);
     }
@@ -70,7 +73,7 @@ public class HolidayDefinitionController {
     public ResponseEntity<HolidayDefinitionResponse> updateHolidayDefinition(
             @PathVariable String definitionId,
             @Valid @RequestBody HolidayDefinitionRequest request) {
-        
+
         HolidayDefinitionResponse response = holidayDefinitionService.updateHolidayDefinition(definitionId, request);
         return ResponseEntity.ok(response);
     }

@@ -11,8 +11,8 @@ import com.dental.clinic.management.working_schedule.enums.ShiftStatus;
 import com.dental.clinic.management.working_schedule.repository.EmployeeShiftRepository;
 import com.dental.clinic.management.working_schedule.repository.HolidayDateRepository;
 import com.dental.clinic.management.working_schedule.repository.WorkShiftRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,15 +38,27 @@ import java.util.stream.Collectors;
  */
 @Deprecated
 // @Component // DISABLED - replaced by UnifiedScheduleSyncJob
-@Slf4j
-@RequiredArgsConstructor
 public class MonthlyFullTimeScheduleJob {
+
+    private static final Logger log = LoggerFactory.getLogger(MonthlyFullTimeScheduleJob.class);
 
     private final EmployeeRepository employeeRepository;
     private final EmployeeShiftRepository shiftRepository;
     private final WorkShiftRepository workShiftRepository;
     private final HolidayDateRepository holidayRepository;
     private final IdGenerator idGenerator;
+
+    public MonthlyFullTimeScheduleJob(EmployeeRepository employeeRepository,
+            EmployeeShiftRepository shiftRepository,
+            WorkShiftRepository workShiftRepository,
+            HolidayDateRepository holidayRepository,
+            IdGenerator idGenerator) {
+        this.employeeRepository = employeeRepository;
+        this.shiftRepository = shiftRepository;
+        this.workShiftRepository = workShiftRepository;
+        this.holidayRepository = holidayRepository;
+        this.idGenerator = idGenerator;
+    }
 
     /**
      * Cron: 0 0 2 20 * ?

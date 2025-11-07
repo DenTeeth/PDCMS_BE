@@ -4,14 +4,14 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Entity representing an item master (danh mÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€šÃ‚Â¥c vÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â­t tÃƒÆ’Ã¢â‚¬Â Ãƒâ€šÃ‚Â°).
+ * Entity representing an item master (danh mÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€šÃ‚Â¥c
+ * vÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â­t tÃƒÆ’Ã¢â‚¬Â Ãƒâ€šÃ‚Â°).
  * This is the "template" for items, actual stock is tracked in ItemBatch.
  * 
  * Business Rules:
@@ -26,11 +26,6 @@ import java.util.List;
         @Index(name = "idx_item_category", columnList = "category_id"),
         @Index(name = "idx_item_name", columnList = "item_name")
 })
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class ItemMaster {
 
     @Id
@@ -62,13 +57,11 @@ public class ItemMaster {
     @ManyToMany
     @JoinTable(name = "item_suppliers", joinColumns = @JoinColumn(name = "item_master_id"), inverseJoinColumns = @JoinColumn(name = "supplier_id"))
     @JsonIgnore
-    @Builder.Default
     private List<Supplier> compatibleSuppliers = new ArrayList<>();
 
     // === RELATIONSHIP: Batches (One Item Master -> Many Batches) ===
     @OneToMany(mappedBy = "itemMaster", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
-    @Builder.Default
     private List<ItemBatch> batches = new ArrayList<>();
 
     // === AUDIT FIELDS ===
@@ -89,6 +82,108 @@ public class ItemMaster {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+
+    // === CONSTRUCTORS ===
+
+    public ItemMaster() {
+    }
+
+    public ItemMaster(Long itemMasterId, String itemName, String description, Integer minStockLevel,
+            Integer maxStockLevel, Category category, List<Supplier> compatibleSuppliers,
+            List<ItemBatch> batches, LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this.itemMasterId = itemMasterId;
+        this.itemName = itemName;
+        this.description = description;
+        this.minStockLevel = minStockLevel;
+        this.maxStockLevel = maxStockLevel;
+        this.category = category;
+        this.compatibleSuppliers = compatibleSuppliers;
+        this.batches = batches;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+
+    // === GETTERS AND SETTERS ===
+
+    public Long getItemMasterId() {
+        return itemMasterId;
+    }
+
+    public void setItemMasterId(Long itemMasterId) {
+        this.itemMasterId = itemMasterId;
+    }
+
+    public String getItemName() {
+        return itemName;
+    }
+
+    public void setItemName(String itemName) {
+        this.itemName = itemName;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public Integer getMinStockLevel() {
+        return minStockLevel;
+    }
+
+    public void setMinStockLevel(Integer minStockLevel) {
+        this.minStockLevel = minStockLevel;
+    }
+
+    public Integer getMaxStockLevel() {
+        return maxStockLevel;
+    }
+
+    public void setMaxStockLevel(Integer maxStockLevel) {
+        this.maxStockLevel = maxStockLevel;
+    }
+
+    public Category getCategory() {
+        return category;
+    }
+
+    public void setCategory(Category category) {
+        this.category = category;
+    }
+
+    public List<Supplier> getCompatibleSuppliers() {
+        return compatibleSuppliers;
+    }
+
+    public void setCompatibleSuppliers(List<Supplier> compatibleSuppliers) {
+        this.compatibleSuppliers = compatibleSuppliers;
+    }
+
+    public List<ItemBatch> getBatches() {
+        return batches;
+    }
+
+    public void setBatches(List<ItemBatch> batches) {
+        this.batches = batches;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 
     // === HELPER METHODS ===

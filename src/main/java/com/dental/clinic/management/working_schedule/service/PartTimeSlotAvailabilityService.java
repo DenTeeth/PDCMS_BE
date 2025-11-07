@@ -4,8 +4,8 @@ import com.dental.clinic.management.working_schedule.domain.PartTimeSlot;
 import com.dental.clinic.management.working_schedule.enums.RegistrationStatus;
 import com.dental.clinic.management.working_schedule.repository.PartTimeRegistrationRepository;
 import com.dental.clinic.management.working_schedule.repository.PartTimeSlotRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -27,12 +27,18 @@ import java.util.stream.Collectors;
  * - Determine if slot is AVAILABLE based on actual working days
  */
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class PartTimeSlotAvailabilityService {
+
+    private static final Logger log = LoggerFactory.getLogger(PartTimeSlotAvailabilityService.class);
 
     private final PartTimeSlotRepository slotRepository;
     private final PartTimeRegistrationRepository registrationRepository;
+
+    public PartTimeSlotAvailabilityService(PartTimeSlotRepository slotRepository,
+            PartTimeRegistrationRepository registrationRepository) {
+        this.slotRepository = slotRepository;
+        this.registrationRepository = registrationRepository;
+    }
 
     /**
      * Calculate how many approved employees are registered for a specific date.
@@ -43,18 +49,18 @@ public class PartTimeSlotAvailabilityService {
      * Result: 1 employee
      * 
      * @param slotId The slot ID
-     * @param date The specific date to check
+     * @param date   The specific date to check
      * @return Number of approved employees covering that date
      */
     @Transactional(readOnly = true)
     @PreAuthorize("hasAuthority('VIEW_AVAILABLE_SLOTS') or hasAuthority('VIEW_REGISTRATION_OWN') or hasAuthority('MANAGE_PART_TIME_REGISTRATIONS') or hasAuthority('MANAGE_WORK_SLOTS')")
     public long getRegisteredCountForDate(Long slotId, LocalDate date) {
-    return registrationRepository.countBySlotAndDate(
-        slotId,
-        date,
-        RegistrationStatus.APPROVED,
-        true // isActive
-    );
+        return registrationRepository.countBySlotAndDate(
+                slotId,
+                date,
+                RegistrationStatus.APPROVED,
+                true // isActive
+        );
     }
 
     /**
@@ -83,9 +89,9 @@ public class PartTimeSlotAvailabilityService {
      * - 29/11 (Sat): Only Doctor B = 1/2 Ã¢â€ â€™ HAS SPACE
      * Result: AVAILABLE (all days have space)
      * 
-     * @param slotId Slot ID
+     * @param slotId    Slot ID
      * @param startDate Start of desired registration period
-     * @param endDate End of desired registration period
+     * @param endDate   End of desired registration period
      * @return true if ALL working days have space (registered < quota)
      */
     @Transactional(readOnly = true)
@@ -102,7 +108,7 @@ public class PartTimeSlotAvailabilityService {
 
         // Get actual working days based on day_of_week constraint
         List<LocalDate> workingDays = getWorkingDays(slot, startDate, endDate);
-        
+
         if (workingDays.isEmpty()) {
             log.warn("No working days found for slot {} between {} and {}", slotId, startDate, endDate);
             return false;
@@ -113,56 +119,59 @@ public class PartTimeSlotAvailabilityService {
         for (LocalDate workingDay : workingDays) {
             long registered = getRegisteredCountForDate(slotId, workingDay);
             if (registered >= slot.getQuota()) {
-                log.debug("Slot {} is FULL on {}: {}/{} (rejecting entire range)", 
-                         slotId, workingDay, registered, slot.getQuota());
+                log.debug("Slot {} is FULL on {}: {}/{} (rejecting entire range)",
+                        slotId, workingDay, registered, slot.getQuota());
                 return false; // Even one full day makes the slot unavailable
             }
         }
 
-        log.debug("Slot {} is AVAILABLE for range {}-{}: all {} days have space", 
-                 slotId, startDate, endDate, workingDays.size());
+        log.debug("Slot {} is AVAILABLE for range {}-{}: all {} days have space",
+                slotId, startDate, endDate, workingDays.size());
         return true; // All days have space
     }
 
     /**
-     * Get list of actual working days within a date range based on slot's day_of_week.
+     * Get list of actual working days within a date range based on slot's
+     * day_of_week.
      * 
      * Example:
      * - Slot day_of_week: "FRIDAY,SATURDAY"
      * - Range: 2025-11-09 to 2025-11-30
-     * - Result: [2025-11-14, 2025-11-15, 2025-11-21, 2025-11-22, 2025-11-28, 2025-11-29]
+     * - Result: [2025-11-14, 2025-11-15, 2025-11-21, 2025-11-22, 2025-11-28,
+     * 2025-11-29]
      * 
-     * @param slot The part-time slot
+     * @param slot      The part-time slot
      * @param startDate Start date (inclusive)
-     * @param endDate End date (inclusive)
+     * @param endDate   End date (inclusive)
      * @return List of working dates
      */
     public List<LocalDate> getWorkingDays(PartTimeSlot slot, LocalDate startDate, LocalDate endDate) {
         // Parse day_of_week (supports comma-separated: "FRIDAY,SATURDAY")
         List<DayOfWeek> allowedDays = parseDaysOfWeek(slot.getDayOfWeek());
-        
+
         List<LocalDate> workingDays = new ArrayList<>();
         LocalDate current = startDate;
-        
+
         while (!current.isAfter(endDate)) {
             if (allowedDays.contains(current.getDayOfWeek())) {
                 workingDays.add(current);
             }
             current = current.plusDays(1);
         }
-        
-        log.debug("Working days for slot {}: {} days between {} and {}", 
-                  slot.getSlotId(), workingDays.size(), startDate, endDate);
+
+        log.debug("Working days for slot {}: {} days between {} and {}",
+                slot.getSlotId(), workingDays.size(), startDate, endDate);
         return workingDays;
     }
 
     /**
      * Calculate all dates within a range that fall on specified days of the week.
-     * Used when employee specifies which days they can work (e.g., MONDAY, THURSDAY).
+     * Used when employee specifies which days they can work (e.g., MONDAY,
+     * THURSDAY).
      * 
-     * @param dayNames List of day names (e.g., ["MONDAY", "THURSDAY"])
+     * @param dayNames  List of day names (e.g., ["MONDAY", "THURSDAY"])
      * @param startDate Start date of range
-     * @param endDate End date of range
+     * @param endDate   End date of range
      * @return List of dates matching the specified days of week
      */
     public List<LocalDate> getWorkingDaysFromDayNames(List<String> dayNames, LocalDate startDate, LocalDate endDate) {
@@ -187,8 +196,8 @@ public class PartTimeSlotAvailabilityService {
             current = current.plusDays(1);
         }
 
-        log.debug("Calculated {} working days for days {} between {} and {}", 
-                  workingDays.size(), dayNames, startDate, endDate);
+        log.debug("Calculated {} working days for days {} between {} and {}",
+                workingDays.size(), dayNames, startDate, endDate);
         return workingDays;
     }
 
@@ -218,9 +227,9 @@ public class PartTimeSlotAvailabilityService {
      * Get the minimum registered count across all working days in a range.
      * Used to determine overall slot availability status.
      * 
-     * @param slotId Slot ID
+     * @param slotId    Slot ID
      * @param startDate Start date
-     * @param endDate End date
+     * @param endDate   End date
      * @return Minimum registered count (the day with fewest registrations)
      */
     @Transactional(readOnly = true)
@@ -245,9 +254,9 @@ public class PartTimeSlotAvailabilityService {
      * Get the maximum registered count across all working days in a range.
      * Used to check if any day is over quota.
      * 
-     * @param slotId Slot ID
+     * @param slotId    Slot ID
      * @param startDate Start date
-     * @param endDate End date
+     * @param endDate   End date
      * @return Maximum registered count (the fullest day)
      */
     @Transactional(readOnly = true)
@@ -272,10 +281,10 @@ public class PartTimeSlotAvailabilityService {
      * Generate a simple availability summary text for display in the slot list.
      * Example: "December FULL, January has space"
      * 
-     * @param slotId Slot ID
-     * @param quota Slot quota
+     * @param slotId    Slot ID
+     * @param quota     Slot quota
      * @param startDate Start date
-     * @param endDate End date
+     * @param endDate   End date
      * @return Human-readable summary string
      */
     @Transactional(readOnly = true)
@@ -300,7 +309,7 @@ public class PartTimeSlotAvailabilityService {
             List<LocalDate> workingDays = getWorkingDays(slot, monthStart, monthEnd);
             int totalDates = workingDays.size();
             int availableDates = 0;
-            
+
             for (LocalDate date : workingDays) {
                 long registered = getRegisteredCountForDate(slotId, date);
                 if (registered < quota) {
@@ -325,19 +334,18 @@ public class PartTimeSlotAvailabilityService {
     /**
      * Generate monthly availability breakdown for detailed slot view.
      * 
-     * @param slotId Slot ID
-     * @param slot Slot entity
+     * @param slotId    Slot ID
+     * @param slot      Slot entity
      * @param startDate Start date
-     * @param endDate End date
+     * @param endDate   End date
      * @return List of monthly availability information
      */
     @Transactional(readOnly = true)
-    public List<com.dental.clinic.management.working_schedule.dto.response.SlotDetailResponse.MonthlyAvailability> 
-            generateMonthlyAvailability(Long slotId, PartTimeSlot slot, LocalDate startDate, LocalDate endDate) {
-        
-        List<com.dental.clinic.management.working_schedule.dto.response.SlotDetailResponse.MonthlyAvailability> result = 
-                new java.util.ArrayList<>();
-        
+    public List<com.dental.clinic.management.working_schedule.dto.response.SlotDetailResponse.MonthlyAvailability> generateMonthlyAvailability(
+            Long slotId, PartTimeSlot slot, LocalDate startDate, LocalDate endDate) {
+
+        List<com.dental.clinic.management.working_schedule.dto.response.SlotDetailResponse.MonthlyAvailability> result = new java.util.ArrayList<>();
+
         LocalDate currentMonth = startDate.withDayOfMonth(1);
         LocalDate endMonth = endDate.withDayOfMonth(1);
 
@@ -353,9 +361,9 @@ public class PartTimeSlotAvailabilityService {
 
             // Count dates by availability status
             int totalDatesAvailable = 0; // registered < quota
-            int totalDatesPartial = 0;   // 0 < registered < quota
-            int totalDatesFull = 0;      // registered == quota
-            
+            int totalDatesPartial = 0; // 0 < registered < quota
+            int totalDatesFull = 0; // registered == quota
+
             for (LocalDate date : workingDays) {
                 long registered = getRegisteredCountForDate(slotId, date);
                 if (registered >= slot.getQuota()) {
@@ -377,11 +385,12 @@ public class PartTimeSlotAvailabilityService {
                 status = "AVAILABLE";
             }
 
-            String monthName = currentMonth.getMonth().toString().substring(0, 1) + 
-                              currentMonth.getMonth().toString().substring(1).toLowerCase() + 
-                              " " + currentMonth.getYear();
+            String monthName = currentMonth.getMonth().toString().substring(0, 1) +
+                    currentMonth.getMonth().toString().substring(1).toLowerCase() +
+                    " " + currentMonth.getYear();
 
-            result.add(com.dental.clinic.management.working_schedule.dto.response.SlotDetailResponse.MonthlyAvailability.builder()
+            result.add(com.dental.clinic.management.working_schedule.dto.response.SlotDetailResponse.MonthlyAvailability
+                    .builder()
                     .month(currentMonth.toString().substring(0, 7)) // YYYY-MM
                     .monthName(monthName)
                     .totalDatesAvailable(totalDatesAvailable)
@@ -405,19 +414,32 @@ public class PartTimeSlotAvailabilityService {
      */
     private String getVietnameseMonthName(int monthValue) {
         switch (monthValue) {
-            case 1: return "T1";   // ThÃƒÂ¡ng 1 (January)
-            case 2: return "T2";   // ThÃƒÂ¡ng 2 (February)
-            case 3: return "T3";   // ThÃƒÂ¡ng 3 (March)
-            case 4: return "T4";   // ThÃƒÂ¡ng 4 (April)
-            case 5: return "T5";   // ThÃƒÂ¡ng 5 (May)
-            case 6: return "T6";   // ThÃƒÂ¡ng 6 (June)
-            case 7: return "T7";   // ThÃƒÂ¡ng 7 (July)
-            case 8: return "T8";   // ThÃƒÂ¡ng 8 (August)
-            case 9: return "T9";   // ThÃƒÂ¡ng 9 (September)
-            case 10: return "T10"; // ThÃƒÂ¡ng 10 (October)
-            case 11: return "T11"; // ThÃƒÂ¡ng 11 (November)
-            case 12: return "T12"; // ThÃƒÂ¡ng 12 (December)
-            default: return "T" + monthValue;
+            case 1:
+                return "T1"; // ThÃƒÂ¡ng 1 (January)
+            case 2:
+                return "T2"; // ThÃƒÂ¡ng 2 (February)
+            case 3:
+                return "T3"; // ThÃƒÂ¡ng 3 (March)
+            case 4:
+                return "T4"; // ThÃƒÂ¡ng 4 (April)
+            case 5:
+                return "T5"; // ThÃƒÂ¡ng 5 (May)
+            case 6:
+                return "T6"; // ThÃƒÂ¡ng 6 (June)
+            case 7:
+                return "T7"; // ThÃƒÂ¡ng 7 (July)
+            case 8:
+                return "T8"; // ThÃƒÂ¡ng 8 (August)
+            case 9:
+                return "T9"; // ThÃƒÂ¡ng 9 (September)
+            case 10:
+                return "T10"; // ThÃƒÂ¡ng 10 (October)
+            case 11:
+                return "T11"; // ThÃƒÂ¡ng 11 (November)
+            case 12:
+                return "T12"; // ThÃƒÂ¡ng 12 (December)
+            default:
+                return "T" + monthValue;
         }
     }
 }
