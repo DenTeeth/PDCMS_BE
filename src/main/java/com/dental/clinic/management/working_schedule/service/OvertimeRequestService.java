@@ -290,7 +290,7 @@ public class OvertimeRequestService {
      * - REJECTED: Requires REJECT_OT permission, reason is required
      * - CANCELLED: Requires CANCEL_OT_OWN (for own requests) or CANCEL_OT_PENDING
      * (for managing), reason is required
-     * - Auto-creates EmployeeShift when APPROVED (TODO: implement in Phase 6)
+     * - Auto-creates EmployeeShift when APPROVED ✅ IMPLEMENTED
      *
      * @param requestId the overtime request ID
      * @param dto       update status DTO
