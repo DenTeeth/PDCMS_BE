@@ -7,6 +7,7 @@ import com.dental.clinic.management.working_schedule.domain.PartTimeSlot;
 import com.dental.clinic.management.working_schedule.enums.RegistrationStatus;
 import com.dental.clinic.management.working_schedule.exception.RegistrationNotFoundException;
 import com.dental.clinic.management.working_schedule.exception.RegistrationInvalidStateException;
+import com.dental.clinic.management.working_schedule.exception.RegistrationConflictException;
 import com.dental.clinic.management.working_schedule.exception.QuotaExceededException;
 import com.dental.clinic.management.working_schedule.exception.SlotNotFoundException;
 import com.dental.clinic.management.working_schedule.repository.PartTimeRegistrationRepository;
@@ -107,8 +108,14 @@ public class PartTimeRegistrationApprovalService {
             throw new RegistrationInvalidStateException(registrationId, "SLOT_INACTIVE");
         }
 
+        // FIX BUG #1: Check for overlapping registrations (same employee, same slot)
+        validateNoOverlappingRegistrations(registration, slot);
+
         // Validate quota for all working days
         validateQuotaBeforeApproval(registration, slot);
+
+        // FIX BUG #3: Check for existing employee shifts before approval
+        validateNoExistingShifts(registration, slot);
 
         // Approve
         registration.setStatus(RegistrationStatus.APPROVED);
@@ -384,5 +391,159 @@ public class PartTimeRegistrationApprovalService {
         }
         
         return historyBuilder.build();
+    }
+
+    /**
+     * FIX BUG #1: Validate that approving this registration won't conflict with other 
+     * PENDING or APPROVED registrations for the same employee and same slot.
+     * 
+     * This prevents scenarios like:
+     * - Registration A: 9/11-21/12 (APPROVED)
+     * - Registration B: 7/11-7/1 (PENDING) ← should be rejected due to overlap
+     * 
+     * @param registration The registration to approve
+     * @param slot The slot being registered for
+     * @throws RegistrationConflictException if there are overlapping registrations
+     */
+    private void validateNoOverlappingRegistrations(PartTimeRegistration registration, PartTimeSlot slot) {
+        // Get all PENDING and APPROVED registrations for this employee and slot (excluding current registration)
+        List<PartTimeRegistration> existingRegistrations = registrationRepository
+                .findByEmployeeIdAndIsActiveAndStatus(registration.getEmployeeId(), true, RegistrationStatus.APPROVED);
+        
+        // Also check PENDING registrations (to prevent approving 2 overlapping pending requests)
+        List<PartTimeRegistration> pendingRegistrations = registrationRepository
+                .findByEmployeeIdAndIsActiveAndStatus(registration.getEmployeeId(), true, RegistrationStatus.PENDING);
+        
+        existingRegistrations.addAll(pendingRegistrations);
+        
+        // Filter to only registrations for the same slot and exclude current registration
+        List<PartTimeRegistration> sameSlotRegistrations = existingRegistrations.stream()
+                .filter(r -> r.getPartTimeSlotId().equals(registration.getPartTimeSlotId()))
+                .filter(r -> !r.getRegistrationId().equals(registration.getRegistrationId()))
+                .collect(java.util.stream.Collectors.toList());
+
+        if (sameSlotRegistrations.isEmpty()) {
+            return; // No conflicts
+        }
+
+        // Calculate working days for the registration being approved
+        List<LocalDate> requestedDates;
+        if (registration.getRequestedDates() != null && !registration.getRequestedDates().isEmpty()) {
+            requestedDates = new java.util.ArrayList<>(registration.getRequestedDates());
+        } else {
+            requestedDates = availabilityService.getWorkingDays(
+                    slot, 
+                    registration.getEffectiveFrom(), 
+                    registration.getEffectiveTo()
+            );
+        }
+
+        // Check for date overlaps with each existing registration
+        for (PartTimeRegistration existing : sameSlotRegistrations) {
+            List<LocalDate> existingDates;
+            if (existing.getRequestedDates() != null && !existing.getRequestedDates().isEmpty()) {
+                existingDates = new java.util.ArrayList<>(existing.getRequestedDates());
+            } else {
+                existingDates = availabilityService.getWorkingDays(
+                        slot, 
+                        existing.getEffectiveFrom(), 
+                        existing.getEffectiveTo()
+                );
+            }
+
+            // Find overlapping dates
+            List<LocalDate> overlappingDates = requestedDates.stream()
+                    .filter(existingDates::contains)
+                    .sorted()
+                    .collect(java.util.stream.Collectors.toList());
+
+            if (!overlappingDates.isEmpty()) {
+                // FIX BUG #1 & #2: Throw exception with clear, detailed message
+                log.warn("Registration conflict detected: {} overlapping dates between registration {} (PENDING) and {} ({})", 
+                        overlappingDates.size(), registration.getRegistrationId(), 
+                        existing.getRegistrationId(), existing.getStatus());
+                
+                throw new RegistrationConflictException(overlappingDates, existing.getRegistrationId());
+            }
+        }
+    }
+
+    /**
+     * FIX BUG #3: Validate that the employee doesn't already have existing shifts
+     * that conflict with the registration being approved.
+     * 
+     * This prevents creating duplicate shifts when an employee already has
+     * a shift scheduled for the same date and same work shift.
+     * 
+     * @param registration The registration to approve
+     * @param slot The slot being registered for
+     * @throws IllegalStateException if there are conflicting existing shifts
+     */
+    private void validateNoExistingShifts(PartTimeRegistration registration, PartTimeSlot slot) {
+        // Calculate working days for the registration
+        List<LocalDate> requestedDates;
+        if (registration.getRequestedDates() != null && !registration.getRequestedDates().isEmpty()) {
+            requestedDates = new java.util.ArrayList<>(registration.getRequestedDates());
+        } else {
+            requestedDates = availabilityService.getWorkingDays(
+                    slot, 
+                    registration.getEffectiveFrom(), 
+                    registration.getEffectiveTo()
+            );
+        }
+
+        // Check each working day for existing shifts
+        List<LocalDate> conflictingDates = new java.util.ArrayList<>();
+        String workShiftId = slot.getWorkShift().getWorkShiftId();
+
+        for (LocalDate workDate : requestedDates) {
+            boolean exists = employeeShiftService.existsByEmployeeAndDateAndShift(
+                    registration.getEmployeeId(), 
+                    workDate, 
+                    workShiftId
+            );
+            
+            if (exists) {
+                conflictingDates.add(workDate);
+            }
+        }
+
+        if (!conflictingDates.isEmpty()) {
+            String errorMessage = String.format(
+                    "Không thể duyệt đăng ký này. Nhân viên ID %d đã có ca làm việc (%s) vào %d ngày: %s. " +
+                    "Các ca làm việc này phải được xóa trước khi duyệt đăng ký mới.",
+                    registration.getEmployeeId(),
+                    slot.getWorkShift().getShiftName(),
+                    conflictingDates.size(),
+                    formatDateList(conflictingDates)
+            );
+            
+            log.warn("Existing shifts conflict detected for employee {} on {} dates", 
+                    registration.getEmployeeId(), conflictingDates.size());
+            
+            throw new IllegalStateException(errorMessage);
+        }
+    }
+
+    /**
+     * Format a list of dates for user-friendly error messages.
+     * Shows first few dates and total count if list is long.
+     */
+    private String formatDateList(List<LocalDate> dates) {
+        if (dates == null || dates.isEmpty()) {
+            return "";
+        }
+        
+        if (dates.size() <= 5) {
+            return dates.stream()
+                    .map(LocalDate::toString)
+                    .collect(java.util.stream.Collectors.joining(", "));
+        } else {
+            String first5 = dates.stream()
+                    .limit(5)
+                    .map(LocalDate::toString)
+                    .collect(java.util.stream.Collectors.joining(", "));
+            return first5 + String.format(" (và %d ngày khác)", dates.size() - 5);
+        }
     }
 }

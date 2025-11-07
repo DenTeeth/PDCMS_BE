@@ -484,4 +484,17 @@ public class EmployeeShiftService {
         log.info("Successfully created {} shifts for employee {}", createdShifts.size(), employeeId);
         return createdShifts;
     }
+
+    /**
+     * Check if an employee shift exists for a specific employee, date, and work shift.
+     * Used to prevent duplicate shift creation during registration approval.
+     * 
+     * @param employeeId Employee ID
+     * @param workDate Work date
+     * @param workShiftId Work shift ID
+     * @return true if shift exists, false otherwise
+     */
+    public boolean existsByEmployeeAndDateAndShift(Integer employeeId, LocalDate workDate, String workShiftId) {
+        return employeeShiftRepository.existsByEmployeeAndDateAndShift(employeeId, workDate, workShiftId);
+    }
 }

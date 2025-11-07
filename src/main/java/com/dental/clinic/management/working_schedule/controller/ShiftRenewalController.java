@@ -59,10 +59,10 @@ public class ShiftRenewalController {
     })
     @GetMapping("/pending")
     public ResponseEntity<List<ShiftRenewalResponse>> getPendingRenewals() {
-        Integer employeeId = getAuthenticatedEmployeeId();
-        log.info("GET /api/v1/registrations/renewals/pending - Employee ID: {}", employeeId);
+        String username = getAuthenticatedUsername();
+        log.info("GET /api/v1/registrations/renewals/pending - Username: {}", username);
 
-        List<ShiftRenewalResponse> renewals = renewalService.getPendingRenewals(employeeId);
+        List<ShiftRenewalResponse> renewals = renewalService.getPendingRenewals(username);
         return ResponseEntity.ok(renewals);
     }
 
@@ -99,37 +99,38 @@ public class ShiftRenewalController {
             @Parameter(description = "Renewal request ID", required = true) @PathVariable("renewal_id") String renewalId,
 
             @Parameter(description = "Response action (CONFIRMED or DECLINED)", required = true) @Valid @RequestBody RenewalResponseRequest request) {
-        Integer employeeId = getAuthenticatedEmployeeId();
-        log.info("PATCH /api/v1/registrations/renewals/{}/respond - Employee ID: {}, Action: {}",
-                renewalId, employeeId, request.getAction());
+        String username = getAuthenticatedUsername();
+        log.info("PATCH /api/v1/registrations/renewals/{}/respond - Username: {}, Action: {}",
+                renewalId, username, request.getAction());
 
         ShiftRenewalResponse response = renewalService.respondToRenewal(
                 renewalId,
-                employeeId,
+                username,
                 request);
 
         return ResponseEntity.ok(response);
     }
 
     /**
-     * Get the authenticated employee ID from the security context.
+     * Get the authenticated username from the security context.
+     * This is the username stored in JWT token's "sub" field.
      *
-     * @return employee ID
-     * @throws RuntimeException if employee ID cannot be extracted
+     * @return username
+     * @throws RuntimeException if authentication context is not found
      */
-    private Integer getAuthenticatedEmployeeId() {
+    private String getAuthenticatedUsername() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || authentication.getPrincipal() == null) {
             throw new RuntimeException("Authentication context not found");
         }
 
-        // Assuming the employee ID is stored in the principal
-        // Adjust this based on your authentication implementation
-        try {
-            return Integer.parseInt(authentication.getName());
-        } catch (NumberFormatException e) {
-            log.error("Failed to parse employee ID from authentication: {}", authentication.getName());
-            throw new RuntimeException("Invalid employee ID in authentication context");
+        // authentication.getName() returns the username from JWT's "sub" field
+        String username = authentication.getName();
+        if (username == null || username.trim().isEmpty()) {
+            throw new RuntimeException("Username not found in authentication context");
         }
+
+        log.debug("Extracted username from token: {}", username);
+        return username;
     }
 }

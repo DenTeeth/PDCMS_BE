@@ -1,5 +1,6 @@
 package com.dental.clinic.management.working_schedule.service;
 
+import com.dental.clinic.management.account.repository.AccountRepository;
 import com.dental.clinic.management.employee.domain.Employee;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.exception.employee.EmployeeNotFoundException;
@@ -55,6 +56,7 @@ public class ShiftRenewalService {
     private final FixedShiftRegistrationRepository fixedRegistrationRepository;
     private final FixedRegistrationDayRepository fixedRegistrationDayRepository;
     private final EmployeeRepository employeeRepository;
+    private final AccountRepository accountRepository;
     private final ShiftRenewalMapper mapper;
 
     /**
@@ -62,12 +64,15 @@ public class ShiftRenewalService {
      * Only returns non-expired requests in PENDING_ACTION status.
      * Only employees with fixed_shift_registrations can have renewal requests.
      *
-     * @param employeeId the employee ID from token
+     * @param username the username from JWT token (sub field)
      * @return list of pending renewals
      */
     @PreAuthorize("hasAuthority('" + AuthoritiesConstants.VIEW_RENEWAL_OWN + "')")
-    public List<ShiftRenewalResponse> getPendingRenewals(Integer employeeId) {
-        log.info("Getting pending renewals for employee ID: {}", employeeId);
+    public List<ShiftRenewalResponse> getPendingRenewals(String username) {
+        log.info("Getting pending renewals for username: {}", username);
+
+        // Convert username to employee ID
+        Integer employeeId = getEmployeeIdFromUsername(username);
 
         List<ShiftRenewalRequest> renewals = renewalRepository.findPendingByEmployeeId(
                 employeeId,
@@ -101,7 +106,7 @@ public class ShiftRenewalService {
      * 8. Commit transaction
      *
      * @param renewalId  the renewal ID (VARCHAR(20) format: SRR_YYYYMMDD_XXXXX)
-     * @param employeeId the employee ID from token
+     * @param username   the username from JWT token (sub field)
      * @param request    the response (action: CONFIRMED|DECLINED, declineReason:
      *                   TEXT if DECLINED)
      * @return updated renewal response
@@ -117,10 +122,13 @@ public class ShiftRenewalService {
     @Transactional
     public ShiftRenewalResponse respondToRenewal(
             String renewalId,
-            Integer employeeId,
+            String username,
             RenewalResponseRequest request) {
-        log.info("Employee {} responding to renewal {}: action={}, hasDeclineReason={}",
-                employeeId, renewalId, request.getAction(), request.getDeclineReason() != null);
+        log.info("Username {} responding to renewal {}: action={}, hasDeclineReason={}",
+                username, renewalId, request.getAction(), request.getDeclineReason() != null);
+
+        // Convert username to employee ID
+        Integer employeeId = getEmployeeIdFromUsername(username);
 
         // 1. Find renewal WITH PESSIMISTIC_WRITE lock (SELECT FOR UPDATE)
         ShiftRenewalRequest renewal = renewalRepository.findByIdWithLock(renewalId)
@@ -423,5 +431,32 @@ public class ShiftRenewalService {
 
         log.info("Marked {} renewals as EXPIRED", expiredRenewals.size());
         return expiredRenewals.size();
+    }
+
+    /**
+     * Helper method to convert username from JWT token to employee ID.
+     * <p>
+     * WORKFLOW:
+     * 1. Find account by username
+     * 2. Get associated employee
+     * 3. Return employee ID
+     *
+     * @param username the username from JWT token (sub field)
+     * @return employee ID
+     * @throws RuntimeException if user not authenticated or employee not found
+     */
+    private Integer getEmployeeIdFromUsername(String username) {
+        if (username == null || username.trim().isEmpty()) {
+            throw new RuntimeException("Username cannot be null or empty");
+        }
+
+        return accountRepository.findOneByUsername(username)
+                .map(account -> {
+                    if (account.getEmployee() == null) {
+                        throw new RuntimeException("No employee associated with user: " + username);
+                    }
+                    return account.getEmployee().getEmployeeId();
+                })
+                .orElseThrow(() -> new RuntimeException("Account not found for username: " + username));
     }
 }

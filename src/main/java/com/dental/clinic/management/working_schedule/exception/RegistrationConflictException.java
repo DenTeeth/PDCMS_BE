@@ -13,8 +13,7 @@ public class RegistrationConflictException extends RuntimeException {
     private final Integer existingRegistrationId;
 
     public RegistrationConflictException(List<LocalDate> conflictingDates, Integer existingRegistrationId) {
-        super(String.format("Bạn đã có đăng ký được duyệt cho ca làm việc này vào các ngày: %s (Registration ID: %d)",
-                formatDates(conflictingDates), existingRegistrationId));
+        super(buildMessage(conflictingDates, existingRegistrationId));
         this.conflictingDates = conflictingDates;
         this.existingRegistrationId = existingRegistrationId;
     }
@@ -26,13 +25,26 @@ public class RegistrationConflictException extends RuntimeException {
         this.existingRegistrationId = null;
     }
 
-    private static String formatDates(List<LocalDate> dates) {
+    private static String buildMessage(List<LocalDate> dates, Integer registrationId) {
         if (dates == null || dates.isEmpty()) {
-            return "";
+            return String.format("Bạn đã có đăng ký được duyệt cho ca làm việc này (Registration ID: %d)", registrationId);
         }
-        return String.join(", ", dates.stream()
-                .map(LocalDate::toString)
-                .toArray(String[]::new));
+        
+        String dateStr;
+        if (dates.size() <= 5) {
+            dateStr = String.join(", ", dates.stream()
+                    .map(LocalDate::toString)
+                    .toArray(String[]::new));
+        } else {
+            String first5 = String.join(", ", dates.stream()
+                    .limit(5)
+                    .map(LocalDate::toString)
+                    .toArray(String[]::new));
+            dateStr = first5 + String.format(" (và %d ngày khác)", dates.size() - 5);
+        }
+        
+        return String.format("Bạn đã có đăng ký được duyệt cho ca làm việc này vào %d ngày: %s (Registration ID: %d)",
+                dates.size(), dateStr, registrationId);
     }
 
     public List<LocalDate> getConflictingDates() {
