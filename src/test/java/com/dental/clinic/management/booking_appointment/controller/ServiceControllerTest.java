@@ -3,7 +3,7 @@ package com.dental.clinic.management.booking_appointment.controller;
 import com.dental.clinic.management.booking_appointment.dto.request.CreateServiceRequest;
 import com.dental.clinic.management.booking_appointment.dto.request.UpdateServiceRequest;
 import com.dental.clinic.management.booking_appointment.dto.response.ServiceResponse;
-import com.dental.clinic.management.booking_appointment.service.DentalServiceService;
+import com.dental.clinic.management.booking_appointment.service.AppointmentDentalServiceService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -47,7 +47,7 @@ class ServiceControllerTest {
         private ObjectMapper objectMapper;
 
         @MockBean
-        private DentalServiceService serviceService;
+        private AppointmentDentalServiceService serviceService;
 
         private ServiceResponse serviceResponse1;
         private ServiceResponse serviceResponse2;
