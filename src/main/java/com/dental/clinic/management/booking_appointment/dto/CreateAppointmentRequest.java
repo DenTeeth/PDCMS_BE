@@ -1,7 +1,7 @@
 package com.dental.clinic.management.booking_appointment.dto;
 
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,7 +11,15 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 
 /**
- * Request DTO for creating a new appointment (P3.2)
+ * Request DTO for creating a new appointment (P3.2 - V2 with Treatment Plan Integration)
+ *
+ * V2 Changes:
+ * - Added patientPlanItemIds field for Treatment Plan booking mode
+ * - XOR validation: must provide EITHER serviceCodes OR patientPlanItemIds (not both, not neither)
+ *
+ * Two Booking Modes:
+ * 1. Standalone Booking (Luồng 1 - Đặt lẻ): Provide serviceCodes
+ * 2. Treatment Plan Booking (Luồng 2 - Đặt theo lộ trình): Provide patientPlanItemIds
  *
  * Business Rules:
  * - All codes must exist and be active
@@ -19,6 +27,7 @@ import java.util.List;
  * - Room must support all services (room_services)
  * - appointmentStartTime must be in future and during doctor's shift
  * - No conflicts for doctor, room, patient, or participants
+ * - (NEW) If using patientPlanItemIds: items must be READY_FOR_BOOKING and belong to patient
  */
 @Data
 @Builder
@@ -49,12 +58,31 @@ public class CreateAppointmentRequest {
     private String roomCode;
 
     /**
-     * List of service codes to be performed
+     * List of service codes to be performed (Luồng 1: Standalone Booking)
      * All must exist and be active
      * Example: ["SV-IMPLANT", "SV-NANGXOANG"]
+     * NOTE: Must provide EITHER this OR patientPlanItemIds (XOR validation)
      */
-    @NotEmpty(message = "At least one service code is required")
     private List<String> serviceCodes;
+
+    /**
+     * List of patient plan item IDs (Luồng 2: Treatment Plan Booking) - NEW V2
+     * Items must be in READY_FOR_BOOKING status and belong to the patient in request
+     * Example: [101, 102, 103]
+     * NOTE: Must provide EITHER this OR serviceCodes (XOR validation)
+     */
+    private List<Long> patientPlanItemIds;
+
+    /**
+     * XOR Validation: Must provide EITHER serviceCodes OR patientPlanItemIds, not both and not neither
+     * This ensures clear separation between standalone booking and treatment plan booking
+     */
+    @AssertTrue(message = "Must provide either serviceCodes or patientPlanItemIds, not both and not neither")
+    private boolean isValidBookingType() {
+        boolean hasServiceCodes = serviceCodes != null && !serviceCodes.isEmpty();
+        boolean hasPlanItems = patientPlanItemIds != null && !patientPlanItemIds.isEmpty();
+        return hasServiceCodes ^ hasPlanItems; // XOR: exactly one must be true
+    }
 
     /**
      * Start time of appointment in ISO 8601 format

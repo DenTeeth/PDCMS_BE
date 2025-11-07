@@ -3,7 +3,7 @@ package com.dental.clinic.management.booking_appointment.controller;
 import com.dental.clinic.management.booking_appointment.dto.request.CreateServiceRequest;
 import com.dental.clinic.management.booking_appointment.dto.request.UpdateServiceRequest;
 import com.dental.clinic.management.booking_appointment.dto.response.ServiceResponse;
-import com.dental.clinic.management.booking_appointment.service.DentalServiceService;
+import com.dental.clinic.management.booking_appointment.service.AppointmentDentalServiceService;
 import com.dental.clinic.management.utils.annotation.ApiMessage;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -23,7 +23,7 @@ import static com.dental.clinic.management.utils.security.AuthoritiesConstants.*
 @Tag(name = "Service Management", description = "APIs for managing dental clinic services")
 public class ServiceController {
 
-    private final DentalServiceService serviceService;
+    private final AppointmentDentalServiceService serviceService;
 
     @GetMapping
     @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_SERVICE + "')")

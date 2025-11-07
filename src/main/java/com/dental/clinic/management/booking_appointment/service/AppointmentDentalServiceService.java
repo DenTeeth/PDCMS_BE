@@ -19,12 +19,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Service layer for managing dental services
+ * Service layer for managing dental services (Appointment Booking Module)
+ * Note: Renamed from DentalServiceService to avoid bean name conflict with Service Module
  */
-@Service
+@Service("appointmentDentalServiceService")
 @RequiredArgsConstructor
 @Slf4j
-public class DentalServiceService {
+public class AppointmentDentalServiceService {
 
     private final DentalServiceRepository serviceRepository;
     private final SpecializationRepository specializationRepository;

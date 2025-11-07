@@ -453,7 +453,9 @@ ON CONFLICT (role_id, permission_id) DO NOTHING;
 INSERT INTO role_permissions (role_id, permission_id)
 VALUES
 ('ROLE_PATIENT', 'VIEW_PATIENT'), ('ROLE_PATIENT', 'VIEW_TREATMENT'),
-('ROLE_PATIENT', 'VIEW_APPOINTMENT'), ('ROLE_PATIENT', 'CREATE_APPOINTMENT')
+('ROLE_PATIENT', 'VIEW_APPOINTMENT'), -- Deprecated (use VIEW_APPOINTMENT_OWN)
+('ROLE_PATIENT', 'VIEW_APPOINTMENT_OWN'), -- ✅ NEW: Patient can view their own appointments
+('ROLE_PATIENT', 'CREATE_APPOINTMENT')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 -- Grant basic Overtime permissions to all employee roles (idempotent)
@@ -1436,11 +1438,27 @@ VALUES
 (9, 'ANNUAL_LEAVE', 2025, 12.0, 0.0, 'Phép năm 2025 - Khởi tạo');
 
 -- =============================================
--- SEED DATA CHO SERVICES & TREATMENT PLANS
+-- SEED DATA CHO SERVICES & TREATMENT PLANS (V17)
 -- =============================================
 
 -- =============================================
--- BƯỚC 1: INSERT DỊCH VỤ (SERVICES)
+-- BƯỚC 1: INSERT SERVICE CATEGORIES (V17)
+-- =============================================
+-- Category grouping for services with display ordering
+-- Used by FE to organize service selection UI
+-- =============================================
+
+INSERT INTO service_categories (category_code, category_name, display_order, is_active, created_at) VALUES
+('A_GENERAL', 'A. Nha khoa tổng quát', 1, true, NOW()),
+('B_COSMETIC', 'B. Thẩm mỹ & Phục hình', 2, true, NOW()),
+('C_IMPLANT', 'C. Cắm ghép Implant', 3, true, NOW()),
+('D_ORTHO', 'D. Chỉnh nha', 4, true, NOW()),
+('E_PROS_DENTURE', 'E. Phục hình Tháo lắp', 5, true, NOW()),
+('F_OTHER', 'F. Dịch vụ khác', 6, true, NOW())
+ON CONFLICT (category_code) DO NOTHING;
+
+-- =============================================
+-- BƯỚC 2: INSERT DỊCH VỤ (SERVICES) - V17 UPDATED
 -- =============================================
 -- Specialization IDs mapping:
 -- 1: Chỉnh nha (Orthodontics)
@@ -1451,77 +1469,110 @@ VALUES
 -- 6: Nha khoa trẻ em (Pediatric Dentistry)
 -- 7: Răng thẩm mỹ (Cosmetic Dentistry)
 -- 8: STANDARD - Y tế cơ bản (Required for all medical staff)
+--
+-- V17 Changes:
+-- - Added category_id (FK to service_categories)
+-- - Added display_order (for ordering within category)
 -- =============================================
 
-INSERT INTO services (service_code, service_name, description, default_duration_minutes, default_buffer_minutes, price, specialization_id, is_active, created_at) VALUES
--- Nha khoa tổng quát (A) - Sử dụng STANDARD (ID 8)
-('GEN_EXAM', 'Khám tổng quát & Tư vấn', 'Khám tổng quát, chụp X-quang phim nhỏ nếu cần thiết để chẩn đoán.', 30, 15, 100000, 8, true, NOW()),
-('GEN_XRAY_PERI', 'Chụp X-Quang quanh chóp', 'Chụp phim X-quang nhỏ tại ghế.', 10, 5, 50000, 8, true, NOW()),
-('SCALING_L1', 'Cạo vôi răng & Đánh bóng - Mức 1', 'Làm sạch vôi răng và mảng bám mức độ ít/trung bình.', 45, 15, 300000, 3, true, NOW()),
-('SCALING_L2', 'Cạo vôi răng & Đánh bóng - Mức 2', 'Làm sạch vôi răng và mảng bám mức độ nhiều.', 60, 15, 400000, 3, true, NOW()),
-('SCALING_VIP', 'Cạo vôi VIP không đau', 'Sử dụng máy rung siêu âm ít ê buốt.', 60, 15, 500000, 3, true, NOW()),
-('FILLING_COMP', 'Trám răng Composite', 'Trám răng sâu, mẻ bằng vật liệu composite thẩm mỹ.', 45, 15, 400000, 2, true, NOW()),
-('FILLING_GAP', 'Đắp kẽ răng thưa Composite', 'Đóng kẽ răng thưa nhỏ bằng composite.', 60, 15, 500000, 7, true, NOW()),
-('EXTRACT_MILK', 'Nhổ răng sữa', 'Nhổ răng sữa cho trẻ em.', 15, 15, 50000, 6, true, NOW()),
-('EXTRACT_NORM', 'Nhổ răng thường', 'Nhổ răng vĩnh viễn đơn giản (không phải răng khôn).', 45, 15, 500000, 5, true, NOW()),
-('EXTRACT_WISDOM_L1', 'Nhổ răng khôn mức 1 (Dễ)', 'Tiểu phẫu nhổ răng khôn mọc thẳng, ít phức tạp.', 60, 30, 1500000, 5, true, NOW()),
-('EXTRACT_WISDOM_L2', 'Nhổ răng khôn mức 2 (Khó)', 'Tiểu phẫu nhổ răng khôn mọc lệch, ngầm.', 90, 30, 2500000, 5, true, NOW()),
-('ENDO_TREAT_ANT', 'Điều trị tủy răng trước', 'Lấy tủy, làm sạch, trám bít ống tủy cho răng cửa/răng nanh.', 60, 15, 1500000, 2, true, NOW()),
-('ENDO_TREAT_POST', 'Điều trị tủy răng sau', 'Lấy tủy, làm sạch, trám bít ống tủy cho răng tiền cối/răng cối.', 75, 15, 2000000, 2, true, NOW()),
-('ENDO_POST_CORE', 'Đóng chốt tái tạo cùi răng', 'Đặt chốt vào ống tủy đã chữa để tăng cường lưu giữ cho mão sứ.', 45, 15, 500000, 4, true, NOW()),
+INSERT INTO services (service_code, service_name, description, default_duration_minutes, default_buffer_minutes, price, specialization_id, category_id, display_order, is_active, created_at)
+SELECT
+    vals.service_code,
+    vals.service_name,
+    vals.description,
+    vals.default_duration_minutes,
+    vals.default_buffer_minutes,
+    vals.price,
+    vals.specialization_id,
+    sc.category_id,
+    vals.display_order,
+    vals.is_active,
+    vals.created_at
+FROM (VALUES
+INSERT INTO services (service_code, service_name, description, default_duration_minutes, default_buffer_minutes, price, specialization_id, category_id, display_order, is_active, created_at)
+SELECT
+    vals.service_code,
+    vals.service_name,
+    vals.description,
+    vals.default_duration_minutes,
+    vals.default_buffer_minutes,
+    vals.price,
+    vals.specialization_id,
+    sc.category_id,
+    vals.display_order,
+    vals.is_active,
+    vals.created_at
+FROM (VALUES
+-- A. Nha khoa tổng quát (category_code = 'A_GENERAL')
+('GEN_EXAM', 'Khám tổng quát & Tư vấn', 'Khám tổng quát, chụp X-quang phim nhỏ nếu cần thiết để chẩn đoán.', 30, 15, 100000, 8, 'A_GENERAL', 1, true, NOW()),
+('GEN_XRAY_PERI', 'Chụp X-Quang quanh chóp', 'Chụp phim X-quang nhỏ tại ghế.', 10, 5, 50000, 8, 'A_GENERAL', 2, true, NOW()),
+('SCALING_L1', 'Cạo vôi răng & Đánh bóng - Mức 1', 'Làm sạch vôi răng và mảng bám mức độ ít/trung bình.', 45, 15, 300000, 3, 'A_GENERAL', 3, true, NOW()),
+('SCALING_L2', 'Cạo vôi răng & Đánh bóng - Mức 2', 'Làm sạch vôi răng và mảng bám mức độ nhiều.', 60, 15, 400000, 3, 'A_GENERAL', 4, true, NOW()),
+('SCALING_VIP', 'Cạo vôi VIP không đau', 'Sử dụng máy rung siêu âm ít ê buốt.', 60, 15, 500000, 3, 'A_GENERAL', 5, true, NOW()),
+('FILLING_COMP', 'Trám răng Composite', 'Trám răng sâu, mẻ bằng vật liệu composite thẩm mỹ.', 45, 15, 400000, 2, 'A_GENERAL', 6, true, NOW()),
+('FILLING_GAP', 'Đắp kẽ răng thưa Composite', 'Đóng kẽ răng thưa nhỏ bằng composite.', 60, 15, 500000, 7, 'A_GENERAL', 7, true, NOW()),
+('EXTRACT_MILK', 'Nhổ răng sữa', 'Nhổ răng sữa cho trẻ em.', 15, 15, 50000, 6, 'A_GENERAL', 8, true, NOW()),
+('EXTRACT_NORM', 'Nhổ răng thường', 'Nhổ răng vĩnh viễn đơn giản (không phải răng khôn).', 45, 15, 500000, 5, 'A_GENERAL', 9, true, NOW()),
+('EXTRACT_WISDOM_L1', 'Nhổ răng khôn mức 1 (Dễ)', 'Tiểu phẫu nhổ răng khôn mọc thẳng, ít phức tạp.', 60, 30, 1500000, 5, 'A_GENERAL', 10, true, NOW()),
+('EXTRACT_WISDOM_L2', 'Nhổ răng khôn mức 2 (Khó)', 'Tiểu phẫu nhổ răng khôn mọc lệch, ngầm.', 90, 30, 2500000, 5, 'A_GENERAL', 11, true, NOW()),
+('ENDO_TREAT_ANT', 'Điều trị tủy răng trước', 'Lấy tủy, làm sạch, trám bít ống tủy cho răng cửa/răng nanh.', 60, 15, 1500000, 2, 'A_GENERAL', 12, true, NOW()),
+('ENDO_TREAT_POST', 'Điều trị tủy răng sau', 'Lấy tủy, làm sạch, trám bít ống tủy cho răng tiền cối/răng cối.', 75, 15, 2000000, 2, 'A_GENERAL', 13, true, NOW()),
+('ENDO_POST_CORE', 'Đóng chốt tái tạo cùi răng', 'Đặt chốt vào ống tủy đã chữa để tăng cường lưu giữ cho mão sứ.', 45, 15, 500000, 4, 'A_GENERAL', 14, true, NOW()),
 
--- Thẩm mỹ & Phục hình (B)
-('BLEACH_ATHOME', 'Tẩy trắng răng tại nhà', 'Cung cấp máng và thuốc tẩy trắng tại nhà.', 30, 15, 800000, 7, true, NOW()),
-('BLEACH_INOFFICE', 'Tẩy trắng răng tại phòng (Laser)', 'Tẩy trắng bằng đèn chiếu hoặc laser.', 90, 15, 1200000, 7, true, NOW()),
+-- B. Thẩm mỹ & Phục hình (category_code = 'B_COSMETIC')
+('BLEACH_ATHOME', 'Tẩy trắng răng tại nhà', 'Cung cấp máng và thuốc tẩy trắng tại nhà.', 30, 15, 800000, 7, 'B_COSMETIC', 1, true, NOW()),
+('BLEACH_INOFFICE', 'Tẩy trắng răng tại phòng (Laser)', 'Tẩy trắng bằng đèn chiếu hoặc laser.', 90, 15, 1200000, 7, 'B_COSMETIC', 2, true, NOW()),
+('CROWN_PFM', 'Mão răng sứ Kim loại thường', 'Mão sứ sườn kim loại Cr-Co hoặc Ni-Cr.', 60, 15, 1000000, 4, 'B_COSMETIC', 3, true, NOW()),
+('CROWN_TITAN', 'Mão răng sứ Titan', 'Mão sứ sườn hợp kim Titan.', 60, 15, 2500000, 4, 'B_COSMETIC', 4, true, NOW()),
+('CROWN_ZIR_KATANA', 'Mão răng toàn sứ Katana/Zir HT', 'Mão sứ 100% Zirconia phổ thông.', 60, 15, 3500000, 4, 'B_COSMETIC', 5, true, NOW()),
+('CROWN_ZIR_CERCON', 'Mão răng toàn sứ Cercon HT', 'Mão sứ 100% Zirconia cao cấp (Đức).', 60, 15, 5000000, 4, 'B_COSMETIC', 6, true, NOW()),
+('CROWN_EMAX', 'Mão răng sứ thủy tinh Emax', 'Mão sứ Lithium Disilicate thẩm mỹ cao.', 60, 15, 6000000, 4, 'B_COSMETIC', 7, true, NOW()),
+('CROWN_ZIR_LAVA', 'Mão răng toàn sứ Lava Plus', 'Mão sứ Zirconia đa lớp (Mỹ).', 60, 15, 8000000, 4, 'B_COSMETIC', 8, true, NOW()),
+('VENEER_EMAX', 'Mặt dán sứ Veneer Emax', 'Mặt dán sứ Lithium Disilicate mài răng tối thiểu.', 75, 15, 6000000, 7, 'B_COSMETIC', 9, true, NOW()),
+('VENEER_LISI', 'Mặt dán sứ Veneer Lisi Ultra', 'Mặt dán sứ Lithium Disilicate (Mỹ).', 75, 15, 8000000, 7, 'B_COSMETIC', 10, true, NOW()),
+('INLAY_ONLAY_ZIR', 'Trám sứ Inlay/Onlay Zirconia', 'Miếng trám gián tiếp bằng sứ Zirconia CAD/CAM.', 60, 15, 2000000, 4, 'B_COSMETIC', 11, true, NOW()),
+('INLAY_ONLAY_EMAX', 'Trám sứ Inlay/Onlay Emax', 'Miếng trám gián tiếp bằng sứ Emax Press.', 60, 15, 3000000, 4, 'B_COSMETIC', 12, true, NOW()),
 
--- Răng sứ (Chia nhỏ từ Bảng 3)
-('CROWN_PFM', 'Mão răng sứ Kim loại thường', 'Mão sứ sườn kim loại Cr-Co hoặc Ni-Cr.', 60, 15, 1000000, 4, true, NOW()),
-('CROWN_TITAN', 'Mão răng sứ Titan', 'Mão sứ sườn hợp kim Titan.', 60, 15, 2500000, 4, true, NOW()),
-('CROWN_ZIR_KATANA', 'Mão răng toàn sứ Katana/Zir HT', 'Mão sứ 100% Zirconia phổ thông.', 60, 15, 3500000, 4, true, NOW()),
-('CROWN_ZIR_CERCON', 'Mão răng toàn sứ Cercon HT', 'Mão sứ 100% Zirconia cao cấp (Đức).', 60, 15, 5000000, 4, true, NOW()),
-('CROWN_EMAX', 'Mão răng sứ thủy tinh Emax', 'Mão sứ Lithium Disilicate thẩm mỹ cao.', 60, 15, 6000000, 4, true, NOW()),
-('CROWN_ZIR_LAVA', 'Mão răng toàn sứ Lava Plus', 'Mão sứ Zirconia đa lớp (Mỹ).', 60, 15, 8000000, 4, true, NOW()),
-('VENEER_EMAX', 'Mặt dán sứ Veneer Emax', 'Mặt dán sứ Lithium Disilicate mài răng tối thiểu.', 75, 15, 6000000, 7, true, NOW()),
-('VENEER_LISI', 'Mặt dán sứ Veneer Lisi Ultra', 'Mặt dán sứ Lithium Disilicate (Mỹ).', 75, 15, 8000000, 7, true, NOW()),
-('INLAY_ONLAY_ZIR', 'Trám sứ Inlay/Onlay Zirconia', 'Miếng trám gián tiếp bằng sứ Zirconia CAD/CAM.', 60, 15, 2000000, 4, true, NOW()),
-('INLAY_ONLAY_EMAX', 'Trám sứ Inlay/Onlay Emax', 'Miếng trám gián tiếp bằng sứ Emax Press.', 60, 15, 3000000, 4, true, NOW()),
+-- C. Cắm ghép Implant (category_code = 'C_IMPLANT')
+('IMPL_CONSULT', 'Khám & Tư vấn Implant', 'Khám, đánh giá tình trạng xương, tư vấn kế hoạch.', 45, 15, 0, 4, 'C_IMPLANT', 1, true, NOW()),
+('IMPL_CT_SCAN', 'Chụp CT Cone Beam (Implant)', 'Chụp phim 3D phục vụ cắm ghép Implant.', 30, 15, 500000, 4, 'C_IMPLANT', 2, true, NOW()),
+('IMPL_SURGERY_KR', 'Phẫu thuật đặt trụ Implant Hàn Quốc', 'Phẫu thuật cắm trụ Implant (VD: Osstem, Biotem).', 90, 30, 15000000, 4, 'C_IMPLANT', 3, true, NOW()),
+('IMPL_SURGERY_EUUS', 'Phẫu thuật đặt trụ Implant Thụy Sĩ/Mỹ', 'Phẫu thuật cắm trụ Implant (VD: Straumann, Nobel).', 90, 30, 25000000, 4, 'C_IMPLANT', 4, true, NOW()),
+('IMPL_BONE_GRAFT', 'Ghép xương ổ răng', 'Phẫu thuật bổ sung xương cho vị trí cắm Implant.', 60, 30, 5000000, 5, 'C_IMPLANT', 5, true, NOW()),
+('IMPL_SINUS_LIFT', 'Nâng xoang hàm (Hở/Kín)', 'Phẫu thuật nâng xoang để cắm Implant hàm trên.', 75, 30, 8000000, 5, 'C_IMPLANT', 6, true, NOW()),
+('IMPL_HEALING', 'Gắn trụ lành thương (Healing Abutment)', 'Gắn trụ giúp nướu lành thương đúng hình dạng.', 20, 10, 500000, 4, 'C_IMPLANT', 7, true, NOW()),
+('IMPL_IMPRESSION', 'Lấy dấu Implant', 'Lấy dấu để làm răng sứ trên Implant.', 30, 15, 0, 4, 'C_IMPLANT', 8, true, NOW()),
+('IMPL_CROWN_TITAN', 'Mão sứ Titan trên Implant', 'Làm và gắn mão sứ Titan trên Abutment.', 45, 15, 3000000, 4, 'C_IMPLANT', 9, true, NOW()),
+('IMPL_CROWN_ZIR', 'Mão sứ Zirconia trên Implant', 'Làm và gắn mão sứ Zirconia trên Abutment.', 45, 15, 5000000, 4, 'C_IMPLANT', 10, true, NOW()),
 
--- Cắm ghép Implant (C)
-('IMPL_CONSULT', 'Khám & Tư vấn Implant', 'Khám, đánh giá tình trạng xương, tư vấn kế hoạch.', 45, 15, 0, 4, true, NOW()),
-('IMPL_CT_SCAN', 'Chụp CT Cone Beam (Implant)', 'Chụp phim 3D phục vụ cắm ghép Implant.', 30, 15, 500000, 4, true, NOW()),
-('IMPL_SURGERY_KR', 'Phẫu thuật đặt trụ Implant Hàn Quốc', 'Phẫu thuật cắm trụ Implant (VD: Osstem, Biotem).', 90, 30, 15000000, 4, true, NOW()),
-('IMPL_SURGERY_EUUS', 'Phẫu thuật đặt trụ Implant Thụy Sĩ/Mỹ', 'Phẫu thuật cắm trụ Implant (VD: Straumann, Nobel).', 90, 30, 25000000, 4, true, NOW()),
-('IMPL_BONE_GRAFT', 'Ghép xương ổ răng', 'Phẫu thuật bổ sung xương cho vị trí cắm Implant.', 60, 30, 5000000, 5, true, NOW()),
-('IMPL_SINUS_LIFT', 'Nâng xoang hàm (Hở/Kín)', 'Phẫu thuật nâng xoang để cắm Implant hàm trên.', 75, 30, 8000000, 5, true, NOW()),
-('IMPL_HEALING', 'Gắn trụ lành thương (Healing Abutment)', 'Gắn trụ giúp nướu lành thương đúng hình dạng.', 20, 10, 500000, 4, true, NOW()),
-('IMPL_IMPRESSION', 'Lấy dấu Implant', 'Lấy dấu để làm răng sứ trên Implant.', 30, 15, 0, 4, true, NOW()),
-('IMPL_CROWN_TITAN', 'Mão sứ Titan trên Implant', 'Làm và gắn mão sứ Titan trên Abutment.', 45, 15, 3000000, 4, true, NOW()),
-('IMPL_CROWN_ZIR', 'Mão sứ Zirconia trên Implant', 'Làm và gắn mão sứ Zirconia trên Abutment.', 45, 15, 5000000, 4, true, NOW()),
+-- D. Chỉnh nha (category_code = 'D_ORTHO')
+('ORTHO_CONSULT', 'Khám & Tư vấn Chỉnh nha', 'Khám, phân tích phim, tư vấn kế hoạch niềng.', 45, 15, 0, 1, 'D_ORTHO', 1, true, NOW()),
+('ORTHO_FILMS', 'Chụp Phim Chỉnh nha (Pano, Ceph)', 'Chụp phim X-quang Toàn cảnh và Sọ nghiêng.', 30, 15, 500000, 1, 'D_ORTHO', 2, true, NOW()),
+('ORTHO_BRACES_ON', 'Gắn mắc cài kim loại/sứ', 'Gắn bộ mắc cài lên răng.', 90, 30, 5000000, 1, 'D_ORTHO', 3, true, NOW()),
+('ORTHO_ADJUST', 'Tái khám Chỉnh nha / Siết niềng', 'Điều chỉnh dây cung, thay thun định kỳ.', 30, 15, 500000, 1, 'D_ORTHO', 4, true, NOW()),
+('ORTHO_INVIS_SCAN', 'Scan mẫu hàm Invisalign', 'Scan 3D mẫu hàm để gửi làm khay Invisalign.', 45, 15, 1000000, 1, 'D_ORTHO', 5, true, NOW()),
+('ORTHO_INVIS_ATTACH', 'Gắn Attachment Invisalign', 'Gắn các điểm tạo lực trên răng cho Invisalign.', 60, 15, 2000000, 1, 'D_ORTHO', 6, true, NOW()),
+('ORTHO_MINIVIS', 'Cắm Mini-vis Chỉnh nha', 'Phẫu thuật nhỏ cắm vít hỗ trợ niềng răng.', 45, 15, 1500000, 1, 'D_ORTHO', 7, true, NOW()),
+('ORTHO_BRACES_OFF', 'Tháo mắc cài & Vệ sinh', 'Tháo bỏ mắc cài sau khi kết thúc niềng.', 60, 15, 1000000, 1, 'D_ORTHO', 8, true, NOW()),
+('ORTHO_RETAINER_FIXED', 'Gắn hàm duy trì cố định', 'Dán dây duy trì mặt trong răng.', 30, 15, 1000000, 1, 'D_ORTHO', 9, true, NOW()),
+('ORTHO_RETAINER_REMOV', 'Làm hàm duy trì tháo lắp', 'Lấy dấu và giao hàm duy trì (máng trong/Hawley).', 30, 15, 1000000, 1, 'D_ORTHO', 10, true, NOW()),
 
--- Chỉnh nha (D)
-('ORTHO_CONSULT', 'Khám & Tư vấn Chỉnh nha', 'Khám, phân tích phim, tư vấn kế hoạch niềng.', 45, 15, 0, 1, true, NOW()),
-('ORTHO_FILMS', 'Chụp Phim Chỉnh nha (Pano, Ceph)', 'Chụp phim X-quang Toàn cảnh và Sọ nghiêng.', 30, 15, 500000, 1, true, NOW()),
-('ORTHO_BRACES_ON', 'Gắn mắc cài kim loại/sứ', 'Gắn bộ mắc cài lên răng.', 90, 30, 5000000, 1, true, NOW()),
-('ORTHO_ADJUST', 'Tái khám Chỉnh nha / Siết niềng', 'Điều chỉnh dây cung, thay thun định kỳ.', 30, 15, 500000, 1, true, NOW()),
-('ORTHO_INVIS_SCAN', 'Scan mẫu hàm Invisalign', 'Scan 3D mẫu hàm để gửi làm khay Invisalign.', 45, 15, 1000000, 1, true, NOW()),
-('ORTHO_INVIS_ATTACH', 'Gắn Attachment Invisalign', 'Gắn các điểm tạo lực trên răng cho Invisalign.', 60, 15, 2000000, 1, true, NOW()),
-('ORTHO_MINIVIS', 'Cắm Mini-vis Chỉnh nha', 'Phẫu thuật nhỏ cắm vít hỗ trợ niềng răng.', 45, 15, 1500000, 1, true, NOW()),
-('ORTHO_BRACES_OFF', 'Tháo mắc cài & Vệ sinh', 'Tháo bỏ mắc cài sau khi kết thúc niềng.', 60, 15, 1000000, 1, true, NOW()),
-('ORTHO_RETAINER_FIXED', 'Gắn hàm duy trì cố định', 'Dán dây duy trì mặt trong răng.', 30, 15, 1000000, 1, true, NOW()),
-('ORTHO_RETAINER_REMOV', 'Làm hàm duy trì tháo lắp', 'Lấy dấu và giao hàm duy trì (máng trong/Hawley).', 30, 15, 1000000, 1, true, NOW()),
+-- E. Phục hình Tháo lắp (category_code = 'E_PROS_DENTURE')
+('PROS_CEMENT', 'Gắn sứ / Thử sứ (Lần 2)', 'Hẹn lần 2 để thử và gắn vĩnh viễn mão sứ, cầu răng, veneer.', 30, 15, 0, 4, 'E_PROS_DENTURE', 1, true, NOW()),
+('DENTURE_CONSULT', 'Khám & Lấy dấu Hàm Tháo Lắp', 'Lấy dấu lần đầu để làm hàm giả tháo lắp.', 45, 15, 1000000, 4, 'E_PROS_DENTURE', 2, true, NOW()),
+('DENTURE_TRYIN', 'Thử sườn/Thử răng Hàm Tháo Lắp', 'Hẹn thử khung kim loại hoặc thử răng sáp.', 30, 15, 0, 4, 'E_PROS_DENTURE', 3, true, NOW()),
+('DENTURE_DELIVERY', 'Giao hàm & Chỉnh khớp cắn', 'Giao hàm hoàn thiện, chỉnh sửa các điểm vướng cộm.', 30, 15, 0, 4, 'E_PROS_DENTURE', 4, true, NOW()),
 
--- Dịch vụ Phục hình bổ sung (E)
-('PROS_CEMENT', 'Gắn sứ / Thử sứ (Lần 2)', 'Hẹn lần 2 để thử và gắn vĩnh viễn mão sứ, cầu răng, veneer.', 30, 15, 0, 4, true, NOW()),
-('DENTURE_CONSULT', 'Khám & Lấy dấu Hàm Tháo Lắp', 'Lấy dấu lần đầu để làm hàm giả tháo lắp.', 45, 15, 1000000, 4, true, NOW()),
-('DENTURE_TRYIN', 'Thử sườn/Thử răng Hàm Tháo Lắp', 'Hẹn thử khung kim loại hoặc thử răng sáp.', 30, 15, 0, 4, true, NOW()),
-('DENTURE_DELIVERY', 'Giao hàm & Chỉnh khớp cắn', 'Giao hàm hoàn thiện, chỉnh sửa các điểm vướng cộm.', 30, 15, 0, 4, true, NOW()),
-
--- Dịch vụ khác (F)
-('OTHER_DIAMOND', 'Đính đá/kim cương lên răng', 'Gắn đá thẩm mỹ lên răng.', 30, 15, 300000, 7, true, NOW()),
-('OTHER_GINGIVECTOMY', 'Phẫu thuật cắt nướu (thẩm mỹ)', 'Làm dài thân răng, điều trị cười hở lợi.', 60, 30, 1000000, 5, true, NOW()),
-('EMERG_PAIN', 'Khám cấp cứu / Giảm đau', 'Khám và xử lý khẩn cấp các trường hợp đau nhức, sưng, chấn thương.', 30, 15, 150000, 8, true, NOW()),
-('SURG_CHECKUP', 'Tái khám sau phẫu thuật / Cắt chỉ', 'Kiểm tra vết thương sau nhổ răng khôn, cắm Implant, cắt nướu.', 15, 10, 0, 5, true, NOW())
-ON CONFLICT (service_code) DO NOTHING;
+-- F. Dịch vụ khác (category_code = 'F_OTHER')
+('OTHER_DIAMOND', 'Đính đá/kim cương lên răng', 'Gắn đá thẩm mỹ lên răng.', 30, 15, 300000, 7, 'F_OTHER', 1, true, NOW()),
+('OTHER_GINGIVECTOMY', 'Phẫu thuật cắt nướu (thẩm mỹ)', 'Làm dài thân răng, điều trị cười hở lợi.', 60, 30, 1000000, 5, 'F_OTHER', 2, true, NOW()),
+('EMERG_PAIN', 'Khám cấp cứu / Giảm đau', 'Khám và xử lý khẩn cấp các trường hợp đau nhức, sưng, chấn thương.', 30, 15, 150000, 8, 'F_OTHER', 3, true, NOW()),
+('SURG_CHECKUP', 'Tái khám sau phẫu thuật / Cắt chỉ', 'Kiểm tra vết thương sau nhổ răng khôn, cắm Implant, cắt nướu.', 15, 10, 0, 5, 'F_OTHER', 4, true, NOW())
+) AS vals(service_code, service_name, description, default_duration_minutes, default_buffer_minutes, price, specialization_id, category_code_ref, display_order, is_active, created_at)
+LEFT JOIN service_categories sc ON sc.category_code = vals.category_code_ref
+ON CONFLICT (service_code) DO UPDATE SET
+    category_id = EXCLUDED.category_id,
+    display_order = EXCLUDED.display_order;
 
 -- ============================================
 -- ROOM-SERVICES MAPPINGS (V16)
@@ -1566,6 +1617,235 @@ WHERE
         'EXTRACT_WISDOM_L1', 'EXTRACT_WISDOM_L2', 'OTHER_GINGIVECTOMY'
     ))
 ON CONFLICT DO NOTHING;
+
+-- =============================================
+-- BƯỚC 3: INSERT TREATMENT PLAN TEMPLATES
+-- =============================================
+-- Treatment Plan Templates for common dental procedures
+-- Used by doctors to create structured treatment plans
+-- =============================================
+
+-- Template 1: Niềng răng mắc cài kim loại (2 năm - 24 tái khám)
+INSERT INTO treatment_plan_templates (template_code, template_name, description, estimated_duration_days, total_price, is_active, created_at)
+VALUES ('TPL_ORTHO_METAL', 'Niềng răng mắc cài kim loại trọn gói 2 năm', 
+        'Gói điều trị chỉnh nha toàn diện với mắc cài kim loại, bao gồm 24 lần tái khám siết niềng định kỳ.', 
+        730, 30000000, true, NOW())
+ON CONFLICT (template_code) DO NOTHING;
+
+-- Template 2: Implant Hàn Quốc (6 tháng)
+INSERT INTO treatment_plan_templates (template_code, template_name, description, estimated_duration_days, total_price, is_active, created_at)
+VALUES ('TPL_IMPLANT_OSSTEM', 'Cấy ghép Implant Hàn Quốc (Osstem) - Trọn gói', 
+        'Gói cấy ghép Implant hoàn chỉnh từ phẫu thuật đến gắn răng sứ, sử dụng trụ Osstem Hàn Quốc.', 
+        180, 19000000, true, NOW())
+ON CONFLICT (template_code) DO NOTHING;
+
+-- Template 3: Bọc răng sứ Cercon HT (7 ngày)
+INSERT INTO treatment_plan_templates (template_code, template_name, description, estimated_duration_days, total_price, is_active, created_at)
+VALUES ('TPL_CROWN_CERCON', 'Bọc răng sứ Cercon HT - 1 răng', 
+        'Gói bọc răng sứ toàn sứ Cercon HT cao cấp, bao gồm điều trị tủy (nếu cần) và gắn răng sứ.', 
+        7, 5000000, true, NOW())
+ON CONFLICT (template_code) DO NOTHING;
+
+-- =============================================
+-- BƯỚC 4: INSERT TEMPLATE PHASES (Giai đoạn điều trị)
+-- =============================================
+
+-- TPL_ORTHO_METAL: 4 giai đoạn
+INSERT INTO template_phases (template_id, phase_number, phase_name, estimated_duration_days, created_at)
+SELECT t.template_id, 1, 'Giai đoạn 1: Khám & Chuẩn bị', 14, NOW()
+FROM treatment_plan_templates t WHERE t.template_code = 'TPL_ORTHO_METAL'
+ON CONFLICT (template_id, phase_number) DO NOTHING;
+
+INSERT INTO template_phases (template_id, phase_number, phase_name, estimated_duration_days, created_at)
+SELECT t.template_id, 2, 'Giai đoạn 2: Gắn mắc cài', 1, NOW()
+FROM treatment_plan_templates t WHERE t.template_code = 'TPL_ORTHO_METAL'
+ON CONFLICT (template_id, phase_number) DO NOTHING;
+
+INSERT INTO template_phases (template_id, phase_number, phase_name, estimated_duration_days, created_at)
+SELECT t.template_id, 3, 'Giai đoạn 3: Điều chỉnh định kỳ (24 tháng)', 715, NOW()
+FROM treatment_plan_templates t WHERE t.template_code = 'TPL_ORTHO_METAL'
+ON CONFLICT (template_id, phase_number) DO NOTHING;
+
+INSERT INTO template_phases (template_id, phase_number, phase_name, estimated_duration_days, created_at)
+SELECT t.template_id, 4, 'Giai đoạn 4: Tháo niềng & Duy trì', 0, NOW()
+FROM treatment_plan_templates t WHERE t.template_code = 'TPL_ORTHO_METAL'
+ON CONFLICT (template_id, phase_number) DO NOTHING;
+
+-- TPL_IMPLANT_OSSTEM: 3 giai đoạn
+INSERT INTO template_phases (template_id, phase_number, phase_name, estimated_duration_days, created_at)
+SELECT t.template_id, 1, 'Giai đoạn 1: Khám & Chẩn đoán hình ảnh', 7, NOW()
+FROM treatment_plan_templates t WHERE t.template_code = 'TPL_IMPLANT_OSSTEM'
+ON CONFLICT (template_id, phase_number) DO NOTHING;
+
+INSERT INTO template_phases (template_id, phase_number, phase_name, estimated_duration_days, created_at)
+SELECT t.template_id, 2, 'Giai đoạn 2: Phẫu thuật cắm Implant', 120, NOW()
+FROM treatment_plan_templates t WHERE t.template_code = 'TPL_IMPLANT_OSSTEM'
+ON CONFLICT (template_id, phase_number) DO NOTHING;
+
+INSERT INTO template_phases (template_id, phase_number, phase_name, estimated_duration_days, created_at)
+SELECT t.template_id, 3, 'Giai đoạn 3: Làm & Gắn răng sứ', 14, NOW()
+FROM treatment_plan_templates t WHERE t.template_code = 'TPL_IMPLANT_OSSTEM'
+ON CONFLICT (template_id, phase_number) DO NOTHING;
+
+-- TPL_CROWN_CERCON: 2 giai đoạn
+INSERT INTO template_phases (template_id, phase_number, phase_name, estimated_duration_days, created_at)
+SELECT t.template_id, 1, 'Giai đoạn 1: Điều trị tủy & Chuẩn bị', 3, NOW()
+FROM treatment_plan_templates t WHERE t.template_code = 'TPL_CROWN_CERCON'
+ON CONFLICT (template_id, phase_number) DO NOTHING;
+
+INSERT INTO template_phases (template_id, phase_number, phase_name, estimated_duration_days, created_at)
+SELECT t.template_id, 2, 'Giai đoạn 2: Lấy dấu & Gắn sứ', 4, NOW()
+FROM treatment_plan_templates t WHERE t.template_code = 'TPL_CROWN_CERCON'
+ON CONFLICT (template_id, phase_number) DO NOTHING;
+
+-- =============================================
+-- BƯỚC 5: INSERT TEMPLATE PHASE SERVICES (Dịch vụ trong từng giai đoạn)
+-- =============================================
+
+-- TPL_ORTHO_METAL - Phase 1: Khám & Chuẩn bị
+INSERT INTO template_phase_services (phase_id, service_id, quantity, estimated_time_minutes, created_at)
+SELECT tp.phase_id, s.service_id, 1, 45, NOW()
+FROM template_phases tp
+JOIN treatment_plan_templates t ON tp.template_id = t.template_id
+JOIN services s ON s.service_code = 'ORTHO_CONSULT'
+WHERE t.template_code = 'TPL_ORTHO_METAL' AND tp.phase_number = 1
+ON CONFLICT (phase_id, service_id) DO NOTHING;
+
+INSERT INTO template_phase_services (phase_id, service_id, quantity, estimated_time_minutes, created_at)
+SELECT tp.phase_id, s.service_id, 1, 30, NOW()
+FROM template_phases tp
+JOIN treatment_plan_templates t ON tp.template_id = t.template_id
+JOIN services s ON s.service_code = 'ORTHO_FILMS'
+WHERE t.template_code = 'TPL_ORTHO_METAL' AND tp.phase_number = 1
+ON CONFLICT (phase_id, service_id) DO NOTHING;
+
+INSERT INTO template_phase_services (phase_id, service_id, quantity, estimated_time_minutes, created_at)
+SELECT tp.phase_id, s.service_id, 1, 60, NOW()
+FROM template_phases tp
+JOIN treatment_plan_templates t ON tp.template_id = t.template_id
+JOIN services s ON s.service_code = 'SCALING_L1'
+WHERE t.template_code = 'TPL_ORTHO_METAL' AND tp.phase_number = 1
+ON CONFLICT (phase_id, service_id) DO NOTHING;
+
+-- TPL_ORTHO_METAL - Phase 2: Gắn mắc cài
+INSERT INTO template_phase_services (phase_id, service_id, quantity, estimated_time_minutes, created_at)
+SELECT tp.phase_id, s.service_id, 1, 90, NOW()
+FROM template_phases tp
+JOIN treatment_plan_templates t ON tp.template_id = t.template_id
+JOIN services s ON s.service_code = 'ORTHO_BRACES_ON'
+WHERE t.template_code = 'TPL_ORTHO_METAL' AND tp.phase_number = 2
+ON CONFLICT (phase_id, service_id) DO NOTHING;
+
+-- TPL_ORTHO_METAL - Phase 3: Tái khám 24 lần (quantity = 24)
+INSERT INTO template_phase_services (phase_id, service_id, quantity, estimated_time_minutes, created_at)
+SELECT tp.phase_id, s.service_id, 24, 30, NOW()
+FROM template_phases tp
+JOIN treatment_plan_templates t ON tp.template_id = t.template_id
+JOIN services s ON s.service_code = 'ORTHO_ADJUST'
+WHERE t.template_code = 'TPL_ORTHO_METAL' AND tp.phase_number = 3
+ON CONFLICT (phase_id, service_id) DO NOTHING;
+
+-- TPL_ORTHO_METAL - Phase 4: Tháo niềng & Duy trì
+INSERT INTO template_phase_services (phase_id, service_id, quantity, estimated_time_minutes, created_at)
+SELECT tp.phase_id, s.service_id, 1, 60, NOW()
+FROM template_phases tp
+JOIN treatment_plan_templates t ON tp.template_id = t.template_id
+JOIN services s ON s.service_code = 'ORTHO_BRACES_OFF'
+WHERE t.template_code = 'TPL_ORTHO_METAL' AND tp.phase_number = 4
+ON CONFLICT (phase_id, service_id) DO NOTHING;
+
+INSERT INTO template_phase_services (phase_id, service_id, quantity, estimated_time_minutes, created_at)
+SELECT tp.phase_id, s.service_id, 1, 30, NOW()
+FROM template_phases tp
+JOIN treatment_plan_templates t ON tp.template_id = t.template_id
+JOIN services s ON s.service_code = 'ORTHO_RETAINER_REMOV'
+WHERE t.template_code = 'TPL_ORTHO_METAL' AND tp.phase_number = 4
+ON CONFLICT (phase_id, service_id) DO NOTHING;
+
+-- TPL_IMPLANT_OSSTEM - Phase 1: Khám & Chẩn đoán
+INSERT INTO template_phase_services (phase_id, service_id, quantity, estimated_time_minutes, created_at)
+SELECT tp.phase_id, s.service_id, 1, 45, NOW()
+FROM template_phases tp
+JOIN treatment_plan_templates t ON tp.template_id = t.template_id
+JOIN services s ON s.service_code = 'IMPL_CONSULT'
+WHERE t.template_code = 'TPL_IMPLANT_OSSTEM' AND tp.phase_number = 1
+ON CONFLICT (phase_id, service_id) DO NOTHING;
+
+INSERT INTO template_phase_services (phase_id, service_id, quantity, estimated_time_minutes, created_at)
+SELECT tp.phase_id, s.service_id, 1, 30, NOW()
+FROM template_phases tp
+JOIN treatment_plan_templates t ON tp.template_id = t.template_id
+JOIN services s ON s.service_code = 'IMPL_CT_SCAN'
+WHERE t.template_code = 'TPL_IMPLANT_OSSTEM' AND tp.phase_number = 1
+ON CONFLICT (phase_id, service_id) DO NOTHING;
+
+-- TPL_IMPLANT_OSSTEM - Phase 2: Phẫu thuật
+INSERT INTO template_phase_services (phase_id, service_id, quantity, estimated_time_minutes, created_at)
+SELECT tp.phase_id, s.service_id, 1, 90, NOW()
+FROM template_phases tp
+JOIN treatment_plan_templates t ON tp.template_id = t.template_id
+JOIN services s ON s.service_code = 'IMPL_SURGERY_KR'
+WHERE t.template_code = 'TPL_IMPLANT_OSSTEM' AND tp.phase_number = 2
+ON CONFLICT (phase_id, service_id) DO NOTHING;
+
+INSERT INTO template_phase_services (phase_id, service_id, quantity, estimated_time_minutes, created_at)
+SELECT tp.phase_id, s.service_id, 1, 20, NOW()
+FROM template_phases tp
+JOIN treatment_plan_templates t ON tp.template_id = t.template_id
+JOIN services s ON s.service_code = 'IMPL_HEALING'
+WHERE t.template_code = 'TPL_IMPLANT_OSSTEM' AND tp.phase_number = 2
+ON CONFLICT (phase_id, service_id) DO NOTHING;
+
+-- TPL_IMPLANT_OSSTEM - Phase 3: Làm răng sứ
+INSERT INTO template_phase_services (phase_id, service_id, quantity, estimated_time_minutes, created_at)
+SELECT tp.phase_id, s.service_id, 1, 30, NOW()
+FROM template_phases tp
+JOIN treatment_plan_templates t ON tp.template_id = t.template_id
+JOIN services s ON s.service_code = 'IMPL_IMPRESSION'
+WHERE t.template_code = 'TPL_IMPLANT_OSSTEM' AND tp.phase_number = 3
+ON CONFLICT (phase_id, service_id) DO NOTHING;
+
+INSERT INTO template_phase_services (phase_id, service_id, quantity, estimated_time_minutes, created_at)
+SELECT tp.phase_id, s.service_id, 1, 45, NOW()
+FROM template_phases tp
+JOIN treatment_plan_templates t ON tp.template_id = t.template_id
+JOIN services s ON s.service_code = 'IMPL_CROWN_ZIR'
+WHERE t.template_code = 'TPL_IMPLANT_OSSTEM' AND tp.phase_number = 3
+ON CONFLICT (phase_id, service_id) DO NOTHING;
+
+-- TPL_CROWN_CERCON - Phase 1: Điều trị tủy
+INSERT INTO template_phase_services (phase_id, service_id, quantity, estimated_time_minutes, created_at)
+SELECT tp.phase_id, s.service_id, 1, 75, NOW()
+FROM template_phases tp
+JOIN treatment_plan_templates t ON tp.template_id = t.template_id
+JOIN services s ON s.service_code = 'ENDO_TREAT_POST'
+WHERE t.template_code = 'TPL_CROWN_CERCON' AND tp.phase_number = 1
+ON CONFLICT (phase_id, service_id) DO NOTHING;
+
+INSERT INTO template_phase_services (phase_id, service_id, quantity, estimated_time_minutes, created_at)
+SELECT tp.phase_id, s.service_id, 1, 45, NOW()
+FROM template_phases tp
+JOIN treatment_plan_templates t ON tp.template_id = t.template_id
+JOIN services s ON s.service_code = 'ENDO_POST_CORE'
+WHERE t.template_code = 'TPL_CROWN_CERCON' AND tp.phase_number = 1
+ON CONFLICT (phase_id, service_id) DO NOTHING;
+
+-- TPL_CROWN_CERCON - Phase 2: Lấy dấu & Gắn sứ
+INSERT INTO template_phase_services (phase_id, service_id, quantity, estimated_time_minutes, created_at)
+SELECT tp.phase_id, s.service_id, 1, 60, NOW()
+FROM template_phases tp
+JOIN treatment_plan_templates t ON tp.template_id = t.template_id
+JOIN services s ON s.service_code = 'CROWN_ZIR_CERCON'
+WHERE t.template_code = 'TPL_CROWN_CERCON' AND tp.phase_number = 2
+ON CONFLICT (phase_id, service_id) DO NOTHING;
+
+INSERT INTO template_phase_services (phase_id, service_id, quantity, estimated_time_minutes, created_at)
+SELECT tp.phase_id, s.service_id, 1, 30, NOW()
+FROM template_phases tp
+JOIN treatment_plan_templates t ON tp.template_id = t.template_id
+JOIN services s ON s.service_code = 'PROS_CEMENT'
+WHERE t.template_code = 'TPL_CROWN_CERCON' AND tp.phase_number = 2
+ON CONFLICT (phase_id, service_id) DO NOTHING;
 
 
 -- 4. EMAIL VERIFICATION:
