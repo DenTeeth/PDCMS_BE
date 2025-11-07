@@ -9,7 +9,7 @@ import com.dental.clinic.management.booking_appointment.domain.DentalService;
 import com.dental.clinic.management.booking_appointment.domain.Room;
 import com.dental.clinic.management.booking_appointment.repository.AppointmentRepository;
 import com.dental.clinic.management.booking_appointment.repository.AppointmentParticipantRepository;
-import com.dental.clinic.management.booking_appointment.repository.DentalServiceRepository;
+import com.dental.clinic.management.booking_appointment.repository.BookingDentalServiceRepository;
 import com.dental.clinic.management.booking_appointment.repository.RoomRepository;
 import com.dental.clinic.management.booking_appointment.repository.RoomServiceRepository;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
@@ -46,7 +46,7 @@ public class AppointmentAvailabilityService {
 
     private final AppointmentRepository appointmentRepository;
     private final AppointmentParticipantRepository participantRepository;
-    private final DentalServiceRepository serviceRepository;
+    private final BookingDentalServiceRepository serviceRepository;
     private final RoomRepository roomRepository;
     private final RoomServiceRepository roomServiceRepository;
     private final EmployeeRepository employeeRepository;

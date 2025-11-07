@@ -1489,20 +1489,6 @@ SELECT
     vals.is_active,
     vals.created_at
 FROM (VALUES
-INSERT INTO services (service_code, service_name, description, default_duration_minutes, default_buffer_minutes, price, specialization_id, category_id, display_order, is_active, created_at)
-SELECT
-    vals.service_code,
-    vals.service_name,
-    vals.description,
-    vals.default_duration_minutes,
-    vals.default_buffer_minutes,
-    vals.price,
-    vals.specialization_id,
-    sc.category_id,
-    vals.display_order,
-    vals.is_active,
-    vals.created_at
-FROM (VALUES
 -- A. Nha khoa tổng quát (category_code = 'A_GENERAL')
 ('GEN_EXAM', 'Khám tổng quát & Tư vấn', 'Khám tổng quát, chụp X-quang phim nhỏ nếu cần thiết để chẩn đoán.', 30, 15, 100000, 8, 'A_GENERAL', 1, true, NOW()),
 ('GEN_XRAY_PERI', 'Chụp X-Quang quanh chóp', 'Chụp phim X-quang nhỏ tại ghế.', 10, 5, 50000, 8, 'A_GENERAL', 2, true, NOW()),
@@ -1621,6 +1607,13 @@ ON CONFLICT DO NOTHING;
 -- =============================================
 -- BƯỚC 3: INSERT TREATMENT PLAN TEMPLATES
 -- =============================================
+-- TEMPORARILY COMMENTED OUT - TreatmentPlanTemplate entity not yet created
+-- Uncomment when the following entities are implemented:
+-- - TreatmentPlanTemplate
+-- - TemplatePhase  
+-- - TemplatePhaseService
+-- =============================================
+/*
 -- Treatment Plan Templates for common dental procedures
 -- Used by doctors to create structured treatment plans
 -- =============================================
@@ -2109,6 +2102,8 @@ ON CONFLICT (appointment_id, employee_id) DO NOTHING;
 SELECT setval('appointments_appointment_id_seq',
               (SELECT COALESCE(MAX(appointment_id), 0) FROM appointments) + 1,
               false);
+*/
+-- END OF COMMENTED TEMPLATE SECTION
 -- ============================================
 
 -- Fix appointment_audit_logs table if missing columns

@@ -49,7 +49,7 @@ public class AppointmentRescheduleService {
 
     private final AppointmentRepository appointmentRepository;
     private final AppointmentServiceRepository appointmentServiceRepository;
-    private final com.dental.clinic.management.booking_appointment.repository.DentalServiceRepository dentalServiceRepository;
+    private final com.dental.clinic.management.booking_appointment.repository.BookingDentalServiceRepository dentalServiceRepository;
     private final com.dental.clinic.management.patient.repository.PatientRepository patientRepository;
     private final AppointmentParticipantRepository participantRepository;
     private final AppointmentAuditLogRepository auditLogRepository;

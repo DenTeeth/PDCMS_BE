@@ -8,7 +8,7 @@ import com.dental.clinic.management.booking_appointment.dto.response.CompatibleS
 import com.dental.clinic.management.booking_appointment.dto.response.RoomResponse;
 import com.dental.clinic.management.booking_appointment.dto.response.RoomServicesResponse;
 import com.dental.clinic.management.booking_appointment.mapper.RoomMapper;
-import com.dental.clinic.management.booking_appointment.repository.DentalServiceRepository;
+import com.dental.clinic.management.booking_appointment.repository.BookingDentalServiceRepository;
 import com.dental.clinic.management.booking_appointment.repository.RoomRepository;
 import com.dental.clinic.management.booking_appointment.repository.RoomServiceRepository;
 import com.dental.clinic.management.exception.validation.BadRequestAlertException;
@@ -40,7 +40,7 @@ public class RoomService {
     private final RoomMapper roomMapper;
     private final IdGenerator idGenerator;
     private final RoomServiceRepository roomServiceRepository;
-    private final DentalServiceRepository dentalServiceRepository;
+    private final BookingDentalServiceRepository dentalServiceRepository;
 
     /**
      * Inject IdGenerator into Room entity after bean creation

@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import static com.dental.clinic.management.utils.security.AuthoritiesConstants.*;
 
 @RestController
-@RequestMapping("/api/v1/services")
+@RequestMapping("/api/v1/booking/services")
 @RequiredArgsConstructor
 @Tag(name = "Service Management", description = "APIs for managing dental clinic services")
 public class ServiceController {

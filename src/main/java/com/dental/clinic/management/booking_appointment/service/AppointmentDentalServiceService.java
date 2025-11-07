@@ -5,7 +5,7 @@ import com.dental.clinic.management.booking_appointment.dto.request.CreateServic
 import com.dental.clinic.management.booking_appointment.dto.request.UpdateServiceRequest;
 import com.dental.clinic.management.booking_appointment.dto.response.ServiceResponse;
 import com.dental.clinic.management.booking_appointment.mapper.ServiceMapper;
-import com.dental.clinic.management.booking_appointment.repository.DentalServiceRepository;
+import com.dental.clinic.management.booking_appointment.repository.BookingDentalServiceRepository;
 import com.dental.clinic.management.exception.validation.BadRequestAlertException;
 import com.dental.clinic.management.specialization.domain.Specialization;
 import com.dental.clinic.management.specialization.repository.SpecializationRepository;
@@ -27,7 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class AppointmentDentalServiceService {
 
-    private final DentalServiceRepository serviceRepository;
+    private final BookingDentalServiceRepository serviceRepository;
     private final SpecializationRepository specializationRepository;
     private final ServiceMapper serviceMapper;
 

@@ -18,6 +18,7 @@ import com.dental.clinic.management.booking_appointment.enums.AppointmentActionT
 import com.dental.clinic.management.booking_appointment.enums.AppointmentParticipantRole;
 import com.dental.clinic.management.booking_appointment.enums.AppointmentStatus;
 import com.dental.clinic.management.booking_appointment.repository.*;
+import com.dental.clinic.management.booking_appointment.repository.BookingDentalServiceRepository;
 import com.dental.clinic.management.employee.domain.Employee;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.specialization.domain.Specialization;
@@ -64,7 +65,7 @@ public class AppointmentCreationService {
         private final PatientRepository patientRepository;
         private final EmployeeRepository employeeRepository;
         private final RoomRepository roomRepository;
-        private final DentalServiceRepository dentalServiceRepository;
+        private final BookingDentalServiceRepository dentalServiceRepository;
         private final RoomServiceRepository roomServiceRepository;
         private final EmployeeShiftRepository employeeShiftRepository;
         private final AppointmentRepository appointmentRepository;

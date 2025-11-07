@@ -16,8 +16,9 @@ import java.time.LocalDateTime;
 /**
  * DentalService entity - Represents dental services (treatments)
  * Used for appointment scheduling and treatment planning
+ * Entity name explicitly set to avoid conflict with service.domain.DentalService
  */
-@Entity
+@Entity(name = "BookingDentalService")
 @Table(name = "services")
 @Getter
 @Setter
