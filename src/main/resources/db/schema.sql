@@ -1,10 +1,15 @@
 -- ============================================
--- DENTAL CLINIC MANAGEMENT SYSTEM - SCHEMA V2 CLEAN
--- Date: 2025-11-04
+-- DENTAL CLINIC MANAGEMENT SYSTEM - SCHEMA V17
+-- Date: 2025-11-06
 -- PostgreSQL Database Schema
 -- ============================================
 -- NOTE: Hibernate auto-creates tables from @Entity classes
 -- This file is for reference and manual database setup only
+-- ============================================
+-- CHANGES IN V17:
+-- - Added service_categories table for grouping services
+-- - Added category_id (FK) and display_order to services table
+-- - Purpose: Support grouped menu API for frontend booking
 -- ============================================
 
 -- ============================================
@@ -131,6 +136,23 @@ CREATE TABLE patients (
 );
 
 -- Services (Dịch vụ nha khoa)
+-- ============================================
+-- SERVICE MANAGEMENT TABLES (V17 UPDATE)
+-- ============================================
+
+-- Service Categories (V17: Nhóm dịch vụ cho menu FE)
+CREATE TABLE service_categories (
+    category_id BIGSERIAL PRIMARY KEY,
+    category_code VARCHAR(50) UNIQUE NOT NULL,
+    category_name VARCHAR(255) NOT NULL,
+    display_order INTEGER NOT NULL DEFAULT 0,
+    description TEXT,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Services (Dịch vụ đơn lẻ - V17: Added category_id, display_order)
 CREATE TABLE services (
     service_id BIGSERIAL PRIMARY KEY,
     service_code VARCHAR(50) UNIQUE NOT NULL,
@@ -139,11 +161,16 @@ CREATE TABLE services (
     default_duration_minutes INTEGER NOT NULL,
     default_buffer_minutes INTEGER DEFAULT 0,
     price DECIMAL(15,2),
+    category_id BIGINT REFERENCES service_categories(category_id) ON DELETE SET NULL,
+    display_order INTEGER NOT NULL DEFAULT 0,
     specialization_id INTEGER REFERENCES specializations(specialization_id),
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE INDEX idx_services_category ON services(category_id);
+CREATE INDEX idx_services_specialization ON services(specialization_id);
 
 -- Rooms (Phòng khám)
 CREATE TABLE rooms (
