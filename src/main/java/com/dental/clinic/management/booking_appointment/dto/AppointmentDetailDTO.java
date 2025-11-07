@@ -1,10 +1,5 @@
 package com.dental.clinic.management.booking_appointment.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -18,10 +13,6 @@ import java.util.List;
  * - cancellationReason (from audit log if status = CANCELLED)
  * - createdBy, createdAt
  */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class AppointmentDetailDTO {
 
     /**
@@ -128,4 +119,191 @@ public class AppointmentDetailDTO {
      * Timestamp when this appointment was created
      */
     private LocalDateTime createdAt;
+
+    public AppointmentDetailDTO() {
+    }
+
+    public AppointmentDetailDTO(Integer appointmentId, String appointmentCode, String status,
+            String computedStatus, Long minutesLate, LocalDateTime appointmentStartTime,
+            LocalDateTime appointmentEndTime, Integer expectedDurationMinutes,
+            LocalDateTime actualStartTime, LocalDateTime actualEndTime,
+            String cancellationReason, String notes,
+            CreateAppointmentResponse.PatientSummary patient,
+            CreateAppointmentResponse.DoctorSummary doctor,
+            CreateAppointmentResponse.RoomSummary room,
+            List<CreateAppointmentResponse.ServiceSummary> services,
+            List<CreateAppointmentResponse.ParticipantSummary> participants,
+            String createdBy, LocalDateTime createdAt) {
+        this.appointmentId = appointmentId;
+        this.appointmentCode = appointmentCode;
+        this.status = status;
+        this.computedStatus = computedStatus;
+        this.minutesLate = minutesLate;
+        this.appointmentStartTime = appointmentStartTime;
+        this.appointmentEndTime = appointmentEndTime;
+        this.expectedDurationMinutes = expectedDurationMinutes;
+        this.actualStartTime = actualStartTime;
+        this.actualEndTime = actualEndTime;
+        this.cancellationReason = cancellationReason;
+        this.notes = notes;
+        this.patient = patient;
+        this.doctor = doctor;
+        this.room = room;
+        this.services = services;
+        this.participants = participants;
+        this.createdBy = createdBy;
+        this.createdAt = createdAt;
+    }
+
+    public Integer getAppointmentId() {
+        return appointmentId;
+    }
+
+    public void setAppointmentId(Integer appointmentId) {
+        this.appointmentId = appointmentId;
+    }
+
+    public String getAppointmentCode() {
+        return appointmentCode;
+    }
+
+    public void setAppointmentCode(String appointmentCode) {
+        this.appointmentCode = appointmentCode;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getComputedStatus() {
+        return computedStatus;
+    }
+
+    public void setComputedStatus(String computedStatus) {
+        this.computedStatus = computedStatus;
+    }
+
+    public Long getMinutesLate() {
+        return minutesLate;
+    }
+
+    public void setMinutesLate(Long minutesLate) {
+        this.minutesLate = minutesLate;
+    }
+
+    public LocalDateTime getAppointmentStartTime() {
+        return appointmentStartTime;
+    }
+
+    public void setAppointmentStartTime(LocalDateTime appointmentStartTime) {
+        this.appointmentStartTime = appointmentStartTime;
+    }
+
+    public LocalDateTime getAppointmentEndTime() {
+        return appointmentEndTime;
+    }
+
+    public void setAppointmentEndTime(LocalDateTime appointmentEndTime) {
+        this.appointmentEndTime = appointmentEndTime;
+    }
+
+    public Integer getExpectedDurationMinutes() {
+        return expectedDurationMinutes;
+    }
+
+    public void setExpectedDurationMinutes(Integer expectedDurationMinutes) {
+        this.expectedDurationMinutes = expectedDurationMinutes;
+    }
+
+    public LocalDateTime getActualStartTime() {
+        return actualStartTime;
+    }
+
+    public void setActualStartTime(LocalDateTime actualStartTime) {
+        this.actualStartTime = actualStartTime;
+    }
+
+    public LocalDateTime getActualEndTime() {
+        return actualEndTime;
+    }
+
+    public void setActualEndTime(LocalDateTime actualEndTime) {
+        this.actualEndTime = actualEndTime;
+    }
+
+    public String getCancellationReason() {
+        return cancellationReason;
+    }
+
+    public void setCancellationReason(String cancellationReason) {
+        this.cancellationReason = cancellationReason;
+    }
+
+    public String getNotes() {
+        return notes;
+    }
+
+    public void setNotes(String notes) {
+        this.notes = notes;
+    }
+
+    public CreateAppointmentResponse.PatientSummary getPatient() {
+        return patient;
+    }
+
+    public void setPatient(CreateAppointmentResponse.PatientSummary patient) {
+        this.patient = patient;
+    }
+
+    public CreateAppointmentResponse.DoctorSummary getDoctor() {
+        return doctor;
+    }
+
+    public void setDoctor(CreateAppointmentResponse.DoctorSummary doctor) {
+        this.doctor = doctor;
+    }
+
+    public CreateAppointmentResponse.RoomSummary getRoom() {
+        return room;
+    }
+
+    public void setRoom(CreateAppointmentResponse.RoomSummary room) {
+        this.room = room;
+    }
+
+    public List<CreateAppointmentResponse.ServiceSummary> getServices() {
+        return services;
+    }
+
+    public void setServices(List<CreateAppointmentResponse.ServiceSummary> services) {
+        this.services = services;
+    }
+
+    public List<CreateAppointmentResponse.ParticipantSummary> getParticipants() {
+        return participants;
+    }
+
+    public void setParticipants(List<CreateAppointmentResponse.ParticipantSummary> participants) {
+        this.participants = participants;
+    }
+
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
 }

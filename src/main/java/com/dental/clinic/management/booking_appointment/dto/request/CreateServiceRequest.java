@@ -4,18 +4,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.*;
 
 import java.math.BigDecimal;
 
 /**
  * Request DTO for creating a new dental service
  */
-@Getter
-@Setter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 @Schema(description = "Request body for creating a new service")
 public class CreateServiceRequest {
 
@@ -48,7 +42,86 @@ public class CreateServiceRequest {
     @Schema(description = "Specialization ID (nullable)", example = "1")
     private Integer specializationId;
 
-    @Builder.Default
     @Schema(description = "Active status", example = "true")
     private Boolean isActive = true;
+
+    public CreateServiceRequest() {
+    }
+
+    public CreateServiceRequest(String serviceCode, String serviceName, String description,
+            Integer defaultDurationMinutes, Integer defaultBufferMinutes,
+            BigDecimal price, Integer specializationId, Boolean isActive) {
+        this.serviceCode = serviceCode;
+        this.serviceName = serviceName;
+        this.description = description;
+        this.defaultDurationMinutes = defaultDurationMinutes;
+        this.defaultBufferMinutes = defaultBufferMinutes;
+        this.price = price;
+        this.specializationId = specializationId;
+        this.isActive = isActive;
+    }
+
+    public String getServiceCode() {
+        return serviceCode;
+    }
+
+    public void setServiceCode(String serviceCode) {
+        this.serviceCode = serviceCode;
+    }
+
+    public String getServiceName() {
+        return serviceName;
+    }
+
+    public void setServiceName(String serviceName) {
+        this.serviceName = serviceName;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public Integer getDefaultDurationMinutes() {
+        return defaultDurationMinutes;
+    }
+
+    public void setDefaultDurationMinutes(Integer defaultDurationMinutes) {
+        this.defaultDurationMinutes = defaultDurationMinutes;
+    }
+
+    public Integer getDefaultBufferMinutes() {
+        return defaultBufferMinutes;
+    }
+
+    public void setDefaultBufferMinutes(Integer defaultBufferMinutes) {
+        this.defaultBufferMinutes = defaultBufferMinutes;
+    }
+
+    public BigDecimal getPrice() {
+        return price;
+    }
+
+    public void setPrice(BigDecimal price) {
+        this.price = price;
+    }
+
+    public Integer getSpecializationId() {
+        return specializationId;
+    }
+
+    public void setSpecializationId(Integer specializationId) {
+        this.specializationId = specializationId;
+    }
+
+    public Boolean getIsActive() {
+        return isActive;
+    }
+
+    public void setIsActive(Boolean isActive) {
+        this.isActive = isActive;
+    }
 }

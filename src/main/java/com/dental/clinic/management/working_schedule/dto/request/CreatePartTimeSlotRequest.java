@@ -3,10 +3,6 @@ package com.dental.clinic.management.working_schedule.dto.request;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.time.LocalDate;
 
 /**
@@ -26,9 +22,6 @@ import java.time.LocalDate;
  *   "quota": 2
  * }
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class CreatePartTimeSlotRequest {
 
     @NotBlank(message = "Work shift ID is required")

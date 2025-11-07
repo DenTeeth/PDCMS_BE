@@ -3,15 +3,7 @@ package com.dental.clinic.management.booking_appointment.dto.request;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 @Schema(description = "Request to create a new room")
 public class CreateRoomRequest {
 
@@ -28,4 +20,37 @@ public class CreateRoomRequest {
     @Size(max = 50, message = "Room type must not exceed 50 characters")
     @Schema(description = "Room type", example = "STANDARD", allowableValues = { "STANDARD", "XRAY", "IMPLANT" })
     private String roomType;
+
+    public CreateRoomRequest() {
+    }
+
+    public CreateRoomRequest(String roomCode, String roomName, String roomType) {
+        this.roomCode = roomCode;
+        this.roomName = roomName;
+        this.roomType = roomType;
+    }
+
+    public String getRoomCode() {
+        return roomCode;
+    }
+
+    public void setRoomCode(String roomCode) {
+        this.roomCode = roomCode;
+    }
+
+    public String getRoomName() {
+        return roomName;
+    }
+
+    public void setRoomName(String roomName) {
+        this.roomName = roomName;
+    }
+
+    public String getRoomType() {
+        return roomType;
+    }
+
+    public void setRoomType(String roomType) {
+        this.roomType = roomType;
+    }
 }

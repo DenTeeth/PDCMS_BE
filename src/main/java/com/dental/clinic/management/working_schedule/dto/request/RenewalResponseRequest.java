@@ -2,16 +2,9 @@ package com.dental.clinic.management.working_schedule.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 /**
  * Employee can CONFIRM (accept renewal) or DECLINE (reject with reason).
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class RenewalResponseRequest {
 
     @NotBlank(message = "Action is required")

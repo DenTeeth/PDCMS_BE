@@ -3,10 +3,6 @@ package com.dental.clinic.management.booking_appointment.dto.request;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.util.List;
 
@@ -20,10 +16,6 @@ import java.util.List;
  * 4. Filter compatible rooms (room_services)
  * 5. Find intersection of available time (doctor + assistants + rooms)
  */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class AvailableTimesRequest {
 
     /**
@@ -59,4 +51,47 @@ public class AvailableTimesRequest {
      * Will be used to check their availability in the intersection algorithm
      */
     private List<String> participantCodes;
+
+    public AvailableTimesRequest() {
+    }
+
+    public AvailableTimesRequest(String date, String employeeCode, List<String> serviceCodes,
+            List<String> participantCodes) {
+        this.date = date;
+        this.employeeCode = employeeCode;
+        this.serviceCodes = serviceCodes;
+        this.participantCodes = participantCodes;
+    }
+
+    public String getDate() {
+        return date;
+    }
+
+    public void setDate(String date) {
+        this.date = date;
+    }
+
+    public String getEmployeeCode() {
+        return employeeCode;
+    }
+
+    public void setEmployeeCode(String employeeCode) {
+        this.employeeCode = employeeCode;
+    }
+
+    public List<String> getServiceCodes() {
+        return serviceCodes;
+    }
+
+    public void setServiceCodes(List<String> serviceCodes) {
+        this.serviceCodes = serviceCodes;
+    }
+
+    public List<String> getParticipantCodes() {
+        return participantCodes;
+    }
+
+    public void setParticipantCodes(List<String> participantCodes) {
+        this.participantCodes = participantCodes;
+    }
 }

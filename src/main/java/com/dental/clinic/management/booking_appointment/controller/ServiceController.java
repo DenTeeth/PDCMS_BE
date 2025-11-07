@@ -8,7 +8,6 @@ import com.dental.clinic.management.utils.annotation.ApiMessage;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,11 +18,14 @@ import static com.dental.clinic.management.utils.security.AuthoritiesConstants.*
 
 @RestController
 @RequestMapping("/api/v1/services")
-@RequiredArgsConstructor
 @Tag(name = "Service Management", description = "APIs for managing dental clinic services")
 public class ServiceController {
 
     private final DentalServiceService serviceService;
+
+    public ServiceController(DentalServiceService serviceService) {
+        this.serviceService = serviceService;
+    }
 
     @GetMapping
     @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_SERVICE + "')")

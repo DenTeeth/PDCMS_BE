@@ -1,16 +1,7 @@
 package com.dental.clinic.management.working_schedule.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.util.List;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class PartTimeSlotDetailResponse {
 
     private Long slotId;
@@ -22,11 +13,7 @@ public class PartTimeSlotDetailResponse {
     private Boolean isActive;
     private List<RegisteredEmployeeInfo> registeredEmployees;
 
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class RegisteredEmployeeInfo {
+                    public static class RegisteredEmployeeInfo {
         private Integer employeeId;
         private String employeeCode;
         private String employeeName;

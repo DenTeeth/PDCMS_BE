@@ -1,10 +1,5 @@
 package com.dental.clinic.management.working_schedule.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.time.LocalDate;
 
 /**
@@ -12,10 +7,6 @@ import java.time.LocalDate;
  * 
  * NEW SPECIFICATION: Includes effective date range.
  */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class PartTimeSlotResponse {
 
     private Long slotId;

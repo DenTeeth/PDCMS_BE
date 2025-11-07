@@ -2,10 +2,6 @@ package com.dental.clinic.management.working_schedule.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 /**
  * Request DTO for approving or rejecting a part-time registration.
  * 
@@ -22,9 +18,6 @@ import lombok.NoArgsConstructor;
  *   "reason": "KhÃƒÂ´ng Ã„â€˜Ã¡Â»Â§ nhÃƒÂ¢n sÃ¡Â»Â± trong thÃ¡Â»Âi gian nÃƒÂ y"
  * }
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class UpdateRegistrationStatusRequest {
 
     /**

@@ -2,11 +2,6 @@ package com.dental.clinic.management.working_schedule.dto.response;
 
 import com.dental.clinic.management.working_schedule.enums.RequestStatus;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -15,10 +10,6 @@ import java.time.LocalDateTime;
  * Lighter version for GET /api/v1/overtime-requests (paginated list)
  * Contains only essential information for list view.
  */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class OvertimeRequestListResponse {
 
     private String requestId;

@@ -1,11 +1,7 @@
 package com.dental.clinic.management.booking_appointment.domain;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
-
 import java.time.LocalDateTime;
 
 /**
@@ -15,15 +11,23 @@ import java.time.LocalDateTime;
  * Defines which services can be performed in which rooms.
  * </p>
  *
- * <p><b>Business Rules:</b></p>
+ * <p>
+ * <b>Business Rules:</b>
+ * </p>
  * <ul>
- *   <li>A room can support multiple services (e.g., "PhÃƒÂ²ng Implant" Ã¢â€ â€™ Implant + Bone Graft)</li>
- *   <li>A service can be performed in multiple rooms (e.g., "CÃ¡ÂºÂ¡o vÃƒÂ´i" Ã¢â€ â€™ P-01, P-02, P-03)</li>
- *   <li>Only active services should be assigned to rooms</li>
- *   <li>Receptionist uses this to validate room-service compatibility when booking appointments</li>
+ * <li>A room can support multiple services (e.g., "PhÃƒÂ²ng Implant" Ã¢â€ â€™
+ * Implant + Bone Graft)</li>
+ * <li>A service can be performed in multiple rooms (e.g., "CÃ¡ÂºÂ¡o vÃƒÂ´i"
+ * Ã¢â€ â€™ P-01, P-02, P-03)</li>
+ * <li>Only active services should be assigned to rooms</li>
+ * <li>Receptionist uses this to validate room-service compatibility when
+ * booking appointments</li>
  * </ul>
  *
- * <p><b>Example Data:</b></p>
+ * <p>
+ * <b>Example Data:</b>
+ * </p>
+ * 
  * <pre>
  * room_id | service_id | service_name       | room_name
  * --------|------------|-------------------|------------------
@@ -40,9 +44,6 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "room_services")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class RoomService {
 
     /**
@@ -85,6 +86,16 @@ public class RoomService {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    public RoomService() {
+    }
+
+    public RoomService(RoomServiceId id, Room room, DentalService service, LocalDateTime createdAt) {
+        this.id = id;
+        this.room = room;
+        this.service = service;
+        this.createdAt = createdAt;
+    }
+
     /**
      * Convenience constructor to create a new room-service mapping.
      *
@@ -95,5 +106,37 @@ public class RoomService {
         this.room = room;
         this.service = service;
         this.id = new RoomServiceId(room.getRoomId(), service.getServiceId());
+    }
+
+    public RoomServiceId getId() {
+        return id;
+    }
+
+    public void setId(RoomServiceId id) {
+        this.id = id;
+    }
+
+    public Room getRoom() {
+        return room;
+    }
+
+    public void setRoom(Room room) {
+        this.room = room;
+    }
+
+    public DentalService getService() {
+        return service;
+    }
+
+    public void setService(DentalService service) {
+        this.service = service;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 }

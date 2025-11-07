@@ -1,10 +1,6 @@
 package com.dental.clinic.management.working_schedule.dto.request;
 
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.time.LocalDate;
 import java.util.List;
 
@@ -34,9 +30,6 @@ import java.util.List;
  *   "dayOfWeek": ["TUESDAY", "FRIDAY"]
  * }
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class CreateRegistrationRequest {
 
     @NotNull(message = "Part-time slot ID is required")

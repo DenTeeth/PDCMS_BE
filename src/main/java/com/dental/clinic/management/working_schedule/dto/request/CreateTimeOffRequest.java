@@ -1,18 +1,11 @@
 package com.dental.clinic.management.working_schedule.dto.request;
 
 import jakarta.validation.constraints.NotNull;
-import lombok.*;
-
 import java.time.LocalDate;
 
 /**
  * Request DTO for creating new time-off request
  */
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class CreateTimeOffRequest {
 
     @NotNull(message = "Employee ID is required")

@@ -4,10 +4,6 @@ import com.dental.clinic.management.booking_appointment.enums.AppointmentActionT
 import com.dental.clinic.management.booking_appointment.enums.AppointmentReasonCode;
 import com.dental.clinic.management.booking_appointment.enums.AppointmentStatus;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
@@ -26,10 +22,6 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "appointment_audit_logs")
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class AppointmentAuditLog {
 
     @Id
@@ -117,6 +109,143 @@ public class AppointmentAuditLog {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    public AppointmentAuditLog() {
+    }
+
+    public AppointmentAuditLog(Integer logId, Integer appointmentId, Integer performedByEmployeeId,
+            AppointmentActionType actionType, AppointmentReasonCode reasonCode,
+            String oldValue, String newValue, LocalDateTime oldStartTime,
+            LocalDateTime newStartTime, AppointmentStatus oldStatus,
+            AppointmentStatus newStatus, String notes, LocalDateTime actionTimestamp,
+            LocalDateTime createdAt) {
+        this.logId = logId;
+        this.appointmentId = appointmentId;
+        this.performedByEmployeeId = performedByEmployeeId;
+        this.actionType = actionType;
+        this.reasonCode = reasonCode;
+        this.oldValue = oldValue;
+        this.newValue = newValue;
+        this.oldStartTime = oldStartTime;
+        this.newStartTime = newStartTime;
+        this.oldStatus = oldStatus;
+        this.newStatus = newStatus;
+        this.notes = notes;
+        this.actionTimestamp = actionTimestamp;
+        this.createdAt = createdAt;
+    }
+
+    public Integer getLogId() {
+        return logId;
+    }
+
+    public void setLogId(Integer logId) {
+        this.logId = logId;
+    }
+
+    public Integer getAppointmentId() {
+        return appointmentId;
+    }
+
+    public void setAppointmentId(Integer appointmentId) {
+        this.appointmentId = appointmentId;
+    }
+
+    public Integer getPerformedByEmployeeId() {
+        return performedByEmployeeId;
+    }
+
+    public void setPerformedByEmployeeId(Integer performedByEmployeeId) {
+        this.performedByEmployeeId = performedByEmployeeId;
+    }
+
+    public AppointmentActionType getActionType() {
+        return actionType;
+    }
+
+    public void setActionType(AppointmentActionType actionType) {
+        this.actionType = actionType;
+    }
+
+    public AppointmentReasonCode getReasonCode() {
+        return reasonCode;
+    }
+
+    public void setReasonCode(AppointmentReasonCode reasonCode) {
+        this.reasonCode = reasonCode;
+    }
+
+    public String getOldValue() {
+        return oldValue;
+    }
+
+    public void setOldValue(String oldValue) {
+        this.oldValue = oldValue;
+    }
+
+    public String getNewValue() {
+        return newValue;
+    }
+
+    public void setNewValue(String newValue) {
+        this.newValue = newValue;
+    }
+
+    public LocalDateTime getOldStartTime() {
+        return oldStartTime;
+    }
+
+    public void setOldStartTime(LocalDateTime oldStartTime) {
+        this.oldStartTime = oldStartTime;
+    }
+
+    public LocalDateTime getNewStartTime() {
+        return newStartTime;
+    }
+
+    public void setNewStartTime(LocalDateTime newStartTime) {
+        this.newStartTime = newStartTime;
+    }
+
+    public AppointmentStatus getOldStatus() {
+        return oldStatus;
+    }
+
+    public void setOldStatus(AppointmentStatus oldStatus) {
+        this.oldStatus = oldStatus;
+    }
+
+    public AppointmentStatus getNewStatus() {
+        return newStatus;
+    }
+
+    public void setNewStatus(AppointmentStatus newStatus) {
+        this.newStatus = newStatus;
+    }
+
+    public String getNotes() {
+        return notes;
+    }
+
+    public void setNotes(String notes) {
+        this.notes = notes;
+    }
+
+    public LocalDateTime getActionTimestamp() {
+        return actionTimestamp;
+    }
+
+    public void setActionTimestamp(LocalDateTime actionTimestamp) {
+        this.actionTimestamp = actionTimestamp;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
 
     @PrePersist
     protected void onCreate() {

@@ -11,7 +11,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,11 +27,14 @@ import static com.dental.clinic.management.utils.security.AuthoritiesConstants.*
  */
 @RestController
 @RequestMapping("/api/v1/rooms")
-@RequiredArgsConstructor
 @Tag(name = "Room Management", description = "APIs for managing dental clinic rooms and chairs")
 public class RoomController {
 
     private final RoomService roomService;
+
+    public RoomController(RoomService roomService) {
+        this.roomService = roomService;
+    }
 
     /**
      * Get all rooms with pagination and filters

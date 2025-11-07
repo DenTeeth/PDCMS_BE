@@ -3,10 +3,6 @@ package com.dental.clinic.management.booking_appointment.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.util.List;
 
@@ -20,10 +16,6 @@ import java.util.List;
  * - appointmentStartTime must be in future and during doctor's shift
  * - No conflicts for doctor, room, patient, or participants
  */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class CreateAppointmentRequest {
 
     /**
@@ -75,7 +67,78 @@ public class CreateAppointmentRequest {
 
     /**
      * Optional notes from receptionist
-     * Example: "BÃ¡Â»â€¡nh nhÃƒÂ¢n cÃƒÂ³ tiÃ¡Â»Ân sÃ¡Â»Â­ cao huyÃ¡ÂºÂ¿t ÃƒÂ¡p"
+     * Example: "BÃ¡Â»â€¡nh nhÃƒÂ¢n cÃƒÂ³ tiÃ¡Â»Ân sÃ¡Â»Â­ cao huyÃ¡ÂºÂ¿t ÃƒÂ¡p"
      */
     private String notes;
+
+    public CreateAppointmentRequest() {
+    }
+
+    public CreateAppointmentRequest(String patientCode, String employeeCode, String roomCode,
+            List<String> serviceCodes, String appointmentStartTime,
+            List<String> participantCodes, String notes) {
+        this.patientCode = patientCode;
+        this.employeeCode = employeeCode;
+        this.roomCode = roomCode;
+        this.serviceCodes = serviceCodes;
+        this.appointmentStartTime = appointmentStartTime;
+        this.participantCodes = participantCodes;
+        this.notes = notes;
+    }
+
+    public String getPatientCode() {
+        return patientCode;
+    }
+
+    public void setPatientCode(String patientCode) {
+        this.patientCode = patientCode;
+    }
+
+    public String getEmployeeCode() {
+        return employeeCode;
+    }
+
+    public void setEmployeeCode(String employeeCode) {
+        this.employeeCode = employeeCode;
+    }
+
+    public String getRoomCode() {
+        return roomCode;
+    }
+
+    public void setRoomCode(String roomCode) {
+        this.roomCode = roomCode;
+    }
+
+    public List<String> getServiceCodes() {
+        return serviceCodes;
+    }
+
+    public void setServiceCodes(List<String> serviceCodes) {
+        this.serviceCodes = serviceCodes;
+    }
+
+    public String getAppointmentStartTime() {
+        return appointmentStartTime;
+    }
+
+    public void setAppointmentStartTime(String appointmentStartTime) {
+        this.appointmentStartTime = appointmentStartTime;
+    }
+
+    public List<String> getParticipantCodes() {
+        return participantCodes;
+    }
+
+    public void setParticipantCodes(List<String> participantCodes) {
+        this.participantCodes = participantCodes;
+    }
+
+    public String getNotes() {
+        return notes;
+    }
+
+    public void setNotes(String notes) {
+        this.notes = notes;
+    }
 }

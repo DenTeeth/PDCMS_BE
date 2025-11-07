@@ -8,8 +8,8 @@ import com.dental.clinic.management.warehouse.dto.response.CategoryResponse;
 import com.dental.clinic.management.warehouse.exception.CategoryNotFoundException;
 import com.dental.clinic.management.warehouse.mapper.CategoryMapper;
 import com.dental.clinic.management.warehouse.repository.CategoryRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,13 +22,18 @@ import java.util.stream.Collectors;
  * Service for Category management.
  */
 @Service
-@Slf4j
-@RequiredArgsConstructor
 @Transactional
 public class CategoryService {
 
+    private static final Logger log = LoggerFactory.getLogger(CategoryService.class);
+
     private final CategoryRepository categoryRepository;
     private final CategoryMapper categoryMapper;
+
+    public CategoryService(CategoryRepository categoryRepository, CategoryMapper categoryMapper) {
+        this.categoryRepository = categoryRepository;
+        this.categoryMapper = categoryMapper;
+    }
 
     /**
      * Create a new category.
@@ -141,4 +146,3 @@ public class CategoryService {
         log.info("Deleted category with ID: {}", id);
     }
 }
-

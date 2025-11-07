@@ -1,20 +1,12 @@
 package com.dental.clinic.management.booking_appointment.dto;
 
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 /**
  * Request DTO for updating appointment status (Check-in, In-Progress,
  * Completed, Cancelled, No-Show).
  * This is the most critical API for daily operations.
  */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class UpdateAppointmentStatusRequest {
 
     /**
@@ -34,7 +26,40 @@ public class UpdateAppointmentStatusRequest {
      * Optional notes for the status change.
      * For CANCELLED: Detailed reason
      * For CHECKED_IN: "BÃ¡Â»â€¡nh nhÃƒÂ¢n Ã„â€˜Ã¡ÂºÂ¿n trÃ¡Â»â€¦ 10 phÃƒÂºt"
-     * For NO_SHOW: "Ã„ÂÃƒÂ£ gÃ¡Â»Âi 3 cuÃ¡Â»â„¢c khÃƒÂ´ng nghe mÃƒÂ¡y"
+     * For NO_SHOW: "Ã„ÂÃƒÂ£ gÃ¡Â»Âi 3 cuÃ¡Â»â„¢c khÃƒÂ´ng nghe mÃƒÂ¡y"
      */
     private String notes;
+
+    public UpdateAppointmentStatusRequest() {
+    }
+
+    public UpdateAppointmentStatusRequest(String status, String reasonCode, String notes) {
+        this.status = status;
+        this.reasonCode = reasonCode;
+        this.notes = notes;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getReasonCode() {
+        return reasonCode;
+    }
+
+    public void setReasonCode(String reasonCode) {
+        this.reasonCode = reasonCode;
+    }
+
+    public String getNotes() {
+        return notes;
+    }
+
+    public void setNotes(String notes) {
+        this.notes = notes;
+    }
 }

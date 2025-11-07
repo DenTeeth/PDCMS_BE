@@ -7,8 +7,8 @@ import com.dental.clinic.management.warehouse.service.SupplierService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,12 +17,16 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v3/warehouse/suppliers")
-@RequiredArgsConstructor
-@Slf4j
 @Tag(name = "Warehouse - Suppliers", description = "APIs for managing medical suppliers")
 public class SupplierController {
 
+    private static final Logger log = LoggerFactory.getLogger(SupplierController.class);
+
     private final SupplierService supplierService;
+
+    public SupplierController(SupplierService supplierService) {
+        this.supplierService = supplierService;
+    }
 
     /**
      * Create a new supplier.

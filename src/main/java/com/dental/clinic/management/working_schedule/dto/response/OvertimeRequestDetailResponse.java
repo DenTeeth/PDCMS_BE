@@ -2,11 +2,6 @@ package com.dental.clinic.management.working_schedule.dto.response;
 
 import com.dental.clinic.management.working_schedule.enums.RequestStatus;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -15,10 +10,6 @@ import java.time.LocalTime;
  * DTO for detailed overtime request response.
  * Used for GET /api/v1/overtime-requests/{request_id}
  */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class OvertimeRequestDetailResponse {
 
     private String requestId;
@@ -51,11 +42,7 @@ public class OvertimeRequestDetailResponse {
     /**
      * Basic employee information for overtime request.
      */
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class EmployeeBasicInfo {
+                    public static class EmployeeBasicInfo {
         private Integer employeeId;
         private String employeeCode;
         private String firstName;
@@ -66,11 +53,7 @@ public class OvertimeRequestDetailResponse {
     /**
      * Work shift information for overtime request.
      */
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class WorkShiftInfo {
+                    public static class WorkShiftInfo {
         private String workShiftId;
         private String shiftName;
         private LocalTime startTime;

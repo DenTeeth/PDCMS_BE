@@ -5,10 +5,6 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -19,10 +15,6 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "services")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
 public class DentalService {
 
     @Id
@@ -68,6 +60,114 @@ public class DentalService {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    public DentalService() {
+    }
+
+    public DentalService(Integer serviceId, String serviceCode, String serviceName, String description,
+            Integer defaultDurationMinutes, Integer defaultBufferMinutes, BigDecimal price,
+            Specialization specialization, Boolean isActive, LocalDateTime createdAt,
+            LocalDateTime updatedAt) {
+        this.serviceId = serviceId;
+        this.serviceCode = serviceCode;
+        this.serviceName = serviceName;
+        this.description = description;
+        this.defaultDurationMinutes = defaultDurationMinutes;
+        this.defaultBufferMinutes = defaultBufferMinutes;
+        this.price = price;
+        this.specialization = specialization;
+        this.isActive = isActive;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+
+    public Integer getServiceId() {
+        return serviceId;
+    }
+
+    public void setServiceId(Integer serviceId) {
+        this.serviceId = serviceId;
+    }
+
+    public String getServiceCode() {
+        return serviceCode;
+    }
+
+    public void setServiceCode(String serviceCode) {
+        this.serviceCode = serviceCode;
+    }
+
+    public String getServiceName() {
+        return serviceName;
+    }
+
+    public void setServiceName(String serviceName) {
+        this.serviceName = serviceName;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public Integer getDefaultDurationMinutes() {
+        return defaultDurationMinutes;
+    }
+
+    public void setDefaultDurationMinutes(Integer defaultDurationMinutes) {
+        this.defaultDurationMinutes = defaultDurationMinutes;
+    }
+
+    public Integer getDefaultBufferMinutes() {
+        return defaultBufferMinutes;
+    }
+
+    public void setDefaultBufferMinutes(Integer defaultBufferMinutes) {
+        this.defaultBufferMinutes = defaultBufferMinutes;
+    }
+
+    public BigDecimal getPrice() {
+        return price;
+    }
+
+    public void setPrice(BigDecimal price) {
+        this.price = price;
+    }
+
+    public Specialization getSpecialization() {
+        return specialization;
+    }
+
+    public void setSpecialization(Specialization specialization) {
+        this.specialization = specialization;
+    }
+
+    public Boolean getIsActive() {
+        return isActive;
+    }
+
+    public void setIsActive(Boolean isActive) {
+        this.isActive = isActive;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
@@ -86,8 +186,10 @@ public class DentalService {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof DentalService)) return false;
+        if (this == o)
+            return true;
+        if (!(o instanceof DentalService))
+            return false;
         DentalService that = (DentalService) o;
         return serviceId != null && serviceId.equals(that.getServiceId());
     }

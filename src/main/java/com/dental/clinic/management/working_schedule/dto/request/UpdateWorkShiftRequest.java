@@ -1,10 +1,6 @@
 package com.dental.clinic.management.working_schedule.dto.request;
 
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.time.LocalTime;
 
 /**
@@ -12,9 +8,6 @@ import java.time.LocalTime;
  * All fields are optional.
  * Category is removed - auto-updated based on time changes.
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class UpdateWorkShiftRequest {
 
     @Size(max = 100, message = "TÃƒÂªn ca lÃƒÂ m viÃ¡Â»â€¡c khÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c vÃ†Â°Ã¡Â»Â£t quÃƒÂ¡ 100 kÃƒÂ½ tÃ¡Â»Â±")

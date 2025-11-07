@@ -1,10 +1,6 @@
 package com.dental.clinic.management.booking_appointment.dto.request;
 
 import jakarta.validation.constraints.NotEmpty;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.util.List;
 
@@ -53,10 +49,6 @@ import java.util.List;
  *
  * @since V16
  */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class UpdateRoomServicesRequest {
 
     /**
@@ -70,11 +62,28 @@ public class UpdateRoomServicesRequest {
      * <b>Example values:</b>
      * </p>
      * <ul>
-     * <li>"IMPL_SURGERY_KR" Ã¢â€ â€™ PhÃ¡ÂºÂ«u thuÃ¡ÂºÂ­t Ã„â€˜Ã¡ÂºÂ·t trÃ¡Â»Â¥ Implant HÃƒÂ n QuÃ¡Â»â€˜c</li>
-     * <li>"SCALING_L1" Ã¢â€ â€™ CÃ¡ÂºÂ¡o vÃƒÂ´i rÃ„Æ’ng & Ã„ÂÃƒÂ¡nh bÃƒÂ³ng - MÃ¡Â»Â©c 1</li>
-     * <li>"GEN_EXAM" Ã¢â€ â€™ KhÃƒÂ¡m tÃ¡Â»â€¢ng quÃƒÂ¡t & TÃ†Â° vÃ¡ÂºÂ¥n</li>
+     * <li>"IMPL_SURGERY_KR" Ã¢â€ â€™ PhÃ¡ÂºÂ«u thuÃ¡ÂºÂ­t Ã„â€˜Ã¡ÂºÂ·t trÃ¡Â»Â¥
+     * Implant HÃƒÂ n QuÃ¡Â»â€˜c</li>
+     * <li>"SCALING_L1" Ã¢â€ â€™ CÃ¡ÂºÂ¡o vÃƒÂ´i rÃ„Æ’ng & Ã„ÂÃƒÂ¡nh bÃƒÂ³ng -
+     * MÃ¡Â»Â©c 1</li>
+     * <li>"GEN_EXAM" Ã¢â€ â€™ KhÃƒÂ¡m tÃ¡Â»â€¢ng quÃƒÂ¡t & TÃ†Â° vÃ¡ÂºÂ¥n</li>
      * </ul>
      */
-    @NotEmpty(message = "Danh sÃƒÂ¡ch mÃƒÂ£ dÃ¡Â»â€¹ch vÃ¡Â»Â¥ khÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c rÃ¡Â»â€”ng")
+    @NotEmpty(message = "Service codes list cannot be empty")
     private List<String> serviceCodes;
+
+    public UpdateRoomServicesRequest() {
+    }
+
+    public UpdateRoomServicesRequest(List<String> serviceCodes) {
+        this.serviceCodes = serviceCodes;
+    }
+
+    public List<String> getServiceCodes() {
+        return serviceCodes;
+    }
+
+    public void setServiceCodes(List<String> serviceCodes) {
+        this.serviceCodes = serviceCodes;
+    }
 }

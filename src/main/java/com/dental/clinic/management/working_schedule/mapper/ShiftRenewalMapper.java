@@ -23,20 +23,22 @@ public class ShiftRenewalMapper {
 
         String shiftDetails = buildShiftDetails(entity);
 
-        return ShiftRenewalResponse.builder()
-                .renewalId(entity.getRenewalId())
-                .expiringRegistrationId(entity.getExpiringRegistration().getRegistrationId())
-                .employeeId(entity.getEmployee().getEmployeeId())
-                .employeeName(entity.getEmployee().getFullName())
-                .status(entity.getStatus())
-                .expiresAt(entity.getExpiresAt())
-                .confirmedAt(entity.getConfirmedAt())
-                .createdAt(entity.getCreatedAt())
-                .effectiveFrom(entity.getExpiringRegistration().getEffectiveFrom())
-                .effectiveTo(entity.getExpiringRegistration().getEffectiveTo())
-                .shiftDetails(shiftDetails)
-                .declineReason(entity.getDeclineReason())
-                .build();
+        return new ShiftRenewalResponse(
+                entity.getRenewalId(),
+                entity.getExpiringRegistration().getRegistrationId(),
+                entity.getEmployee().getEmployeeId(),
+                entity.getEmployee().getFullName(),
+                entity.getStatus(),
+                entity.getExpiresAt(),
+                entity.getConfirmedAt(),
+                entity.getCreatedAt(),
+                entity.getDeclineReason(),
+                entity.getExpiringRegistration().getEffectiveFrom(),
+                entity.getExpiringRegistration().getEffectiveTo(),
+                null, // workShiftName - not set in original
+                shiftDetails,
+                null // message - not set in original
+        );
     }
 
     /**

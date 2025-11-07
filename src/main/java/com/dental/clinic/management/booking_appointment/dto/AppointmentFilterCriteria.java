@@ -1,10 +1,5 @@
 package com.dental.clinic.management.booking_appointment.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.time.LocalDate;
 import java.util.List;
 
@@ -17,10 +12,6 @@ import java.util.List;
  * - Users with VIEW_APPOINTMENT_OWN: patientCode/employeeCode filters are
  * OVERRIDDEN
  */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class AppointmentFilterCriteria {
 
     // ==================== DATE FILTERS ====================
@@ -150,7 +141,6 @@ public class AppointmentFilterCriteria {
      * Internal flag: User has VIEW_APPOINTMENT_ALL permission
      * Set by service layer during RBAC check
      */
-    @Builder.Default
     private Boolean canViewAll = false;
 
     /**
@@ -164,4 +154,150 @@ public class AppointmentFilterCriteria {
      * Used to override patientCode filter for VIEW_APPOINTMENT_OWN
      */
     private Integer currentUserPatientId;
+
+    public AppointmentFilterCriteria() {
+    }
+
+    public AppointmentFilterCriteria(DatePreset datePreset, LocalDate dateFrom, LocalDate dateTo,
+            Boolean today, List<String> status, String patientCode,
+            String patientName, String patientPhone, String employeeCode,
+            String roomCode, String serviceCode, String searchCode,
+            Boolean canViewAll, Integer currentUserEmployeeId,
+            Integer currentUserPatientId) {
+        this.datePreset = datePreset;
+        this.dateFrom = dateFrom;
+        this.dateTo = dateTo;
+        this.today = today;
+        this.status = status;
+        this.patientCode = patientCode;
+        this.patientName = patientName;
+        this.patientPhone = patientPhone;
+        this.employeeCode = employeeCode;
+        this.roomCode = roomCode;
+        this.serviceCode = serviceCode;
+        this.searchCode = searchCode;
+        this.canViewAll = canViewAll;
+        this.currentUserEmployeeId = currentUserEmployeeId;
+        this.currentUserPatientId = currentUserPatientId;
+    }
+
+    public DatePreset getDatePreset() {
+        return datePreset;
+    }
+
+    public void setDatePreset(DatePreset datePreset) {
+        this.datePreset = datePreset;
+    }
+
+    public LocalDate getDateFrom() {
+        return dateFrom;
+    }
+
+    public void setDateFrom(LocalDate dateFrom) {
+        this.dateFrom = dateFrom;
+    }
+
+    public LocalDate getDateTo() {
+        return dateTo;
+    }
+
+    public void setDateTo(LocalDate dateTo) {
+        this.dateTo = dateTo;
+    }
+
+    public Boolean getToday() {
+        return today;
+    }
+
+    public void setToday(Boolean today) {
+        this.today = today;
+    }
+
+    public List<String> getStatus() {
+        return status;
+    }
+
+    public void setStatus(List<String> status) {
+        this.status = status;
+    }
+
+    public String getPatientCode() {
+        return patientCode;
+    }
+
+    public void setPatientCode(String patientCode) {
+        this.patientCode = patientCode;
+    }
+
+    public String getPatientName() {
+        return patientName;
+    }
+
+    public void setPatientName(String patientName) {
+        this.patientName = patientName;
+    }
+
+    public String getPatientPhone() {
+        return patientPhone;
+    }
+
+    public void setPatientPhone(String patientPhone) {
+        this.patientPhone = patientPhone;
+    }
+
+    public String getEmployeeCode() {
+        return employeeCode;
+    }
+
+    public void setEmployeeCode(String employeeCode) {
+        this.employeeCode = employeeCode;
+    }
+
+    public String getRoomCode() {
+        return roomCode;
+    }
+
+    public void setRoomCode(String roomCode) {
+        this.roomCode = roomCode;
+    }
+
+    public String getServiceCode() {
+        return serviceCode;
+    }
+
+    public void setServiceCode(String serviceCode) {
+        this.serviceCode = serviceCode;
+    }
+
+    public String getSearchCode() {
+        return searchCode;
+    }
+
+    public void setSearchCode(String searchCode) {
+        this.searchCode = searchCode;
+    }
+
+    public Boolean getCanViewAll() {
+        return canViewAll;
+    }
+
+    public void setCanViewAll(Boolean canViewAll) {
+        this.canViewAll = canViewAll;
+    }
+
+    public Integer getCurrentUserEmployeeId() {
+        return currentUserEmployeeId;
+    }
+
+    public void setCurrentUserEmployeeId(Integer currentUserEmployeeId) {
+        this.currentUserEmployeeId = currentUserEmployeeId;
+    }
+
+    public Integer getCurrentUserPatientId() {
+        return currentUserPatientId;
+    }
+
+    public void setCurrentUserPatientId(Integer currentUserPatientId) {
+        this.currentUserPatientId = currentUserPatientId;
+    }
 }

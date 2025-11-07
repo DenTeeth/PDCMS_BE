@@ -9,8 +9,8 @@ import com.dental.clinic.management.warehouse.exception.DuplicateSupplierExcepti
 import com.dental.clinic.management.warehouse.exception.SupplierNotFoundException;
 import com.dental.clinic.management.warehouse.mapper.SupplierMapper;
 import com.dental.clinic.management.warehouse.repository.SupplierRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -23,13 +23,18 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@Slf4j
-@RequiredArgsConstructor
 @Transactional
 public class SupplierService {
 
+    private static final Logger log = LoggerFactory.getLogger(SupplierService.class);
+
     private final SupplierRepository supplierRepository;
     private final SupplierMapper supplierMapper;
+
+    public SupplierService(SupplierRepository supplierRepository, SupplierMapper supplierMapper) {
+        this.supplierRepository = supplierRepository;
+        this.supplierMapper = supplierMapper;
+    }
 
     @PreAuthorize("hasAuthority('" + AuthoritiesConstants.CREATE_WAREHOUSE_SUPPLIER + "')")
     public SupplierResponse createSupplier(CreateSupplierRequest request) {

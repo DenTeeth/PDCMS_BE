@@ -2,18 +2,11 @@ package com.dental.clinic.management.working_schedule.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.time.LocalDate;
 
 /**
  * Request DTO for creating a manual employee shift.
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class CreateShiftRequestDto {
 
     @NotNull(message = "employee_id khÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c Ã„â€˜Ã¡Â»Æ’ trÃ¡Â»â€˜ng")

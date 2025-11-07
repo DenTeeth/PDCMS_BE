@@ -51,14 +51,13 @@ public class WorkShiftMapper {
      * Includes calculated durationHours.
      */
     public WorkShiftResponse toResponse(WorkShift workShift) {
-        return WorkShiftResponse.builder()
-                .workShiftId(workShift.getWorkShiftId())
-                .shiftName(workShift.getShiftName())
-                .startTime(workShift.getStartTime())
-                .endTime(workShift.getEndTime())
-                .category(workShift.getCategory())
-                .isActive(workShift.getIsActive())
-                .durationHours(workShift.getDurationHours())
-                .build();
+        return new WorkShiftResponse(
+                workShift.getWorkShiftId(),
+                workShift.getShiftName(),
+                workShift.getStartTime(),
+                workShift.getEndTime(),
+                workShift.getCategory(),
+                workShift.getIsActive(),
+                workShift.getDurationHours());
     }
 }

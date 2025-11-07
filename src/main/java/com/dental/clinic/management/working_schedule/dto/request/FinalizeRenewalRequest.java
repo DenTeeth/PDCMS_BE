@@ -2,11 +2,6 @@ package com.dental.clinic.management.working_schedule.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
 import java.time.LocalDate;
 
 /**
@@ -23,10 +18,6 @@ import java.time.LocalDate;
  * - Standard extension: 1 year contract renewal
  * - Custom extension: 6 months based on project duration
  */
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
 public class FinalizeRenewalRequest {
 
     /**

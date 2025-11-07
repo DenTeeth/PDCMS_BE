@@ -20,8 +20,8 @@ import com.dental.clinic.management.booking_appointment.service.AppointmentListS
 import com.dental.clinic.management.booking_appointment.service.AppointmentRescheduleService;
 import com.dental.clinic.management.booking_appointment.service.AppointmentStatusService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -37,11 +37,11 @@ import java.util.List;
  * Handles appointment scheduling, availability checking, and lifecycle
  * management
  */
-@Slf4j
 @RestController
 @RequestMapping("/api/v1/appointments")
-@RequiredArgsConstructor
 public class AppointmentController {
+
+        private static final Logger log = LoggerFactory.getLogger(AppointmentController.class);
 
         private final AppointmentAvailabilityService availabilityService;
         private final AppointmentCreationService creationService;
@@ -50,6 +50,22 @@ public class AppointmentController {
         private final AppointmentStatusService statusService;
         private final AppointmentDelayService delayService;
         private final AppointmentRescheduleService rescheduleService;
+
+        public AppointmentController(AppointmentAvailabilityService availabilityService,
+                        AppointmentCreationService creationService,
+                        AppointmentListService listService,
+                        AppointmentDetailService detailService,
+                        AppointmentStatusService statusService,
+                        AppointmentDelayService delayService,
+                        AppointmentRescheduleService rescheduleService) {
+                this.availabilityService = availabilityService;
+                this.creationService = creationService;
+                this.listService = listService;
+                this.detailService = detailService;
+                this.statusService = statusService;
+                this.delayService = delayService;
+                this.rescheduleService = rescheduleService;
+        }
 
         /**
          * P3.1: Find Available Time Slots
@@ -182,20 +198,23 @@ public class AppointmentController {
                                 page, size, datePreset, dateFrom, dateTo, today, status, searchCode);
 
                 // Build filter criteria
-                AppointmentFilterCriteria criteria = AppointmentFilterCriteria.builder()
-                                .datePreset(datePreset)
-                                .dateFrom(dateFrom)
-                                .dateTo(dateTo)
-                                .today(today)
-                                .status(status)
-                                .patientCode(patientCode)
-                                .patientName(patientName)
-                                .patientPhone(patientPhone)
-                                .employeeCode(employeeCode)
-                                .roomCode(roomCode)
-                                .serviceCode(serviceCode)
-                                .searchCode(searchCode)
-                                .build();
+                AppointmentFilterCriteria criteria = new AppointmentFilterCriteria(
+                                datePreset,
+                                dateFrom,
+                                dateTo,
+                                today,
+                                status,
+                                patientCode,
+                                patientName,
+                                patientPhone,
+                                employeeCode,
+                                roomCode,
+                                serviceCode,
+                                searchCode,
+                                false, // canViewAll - will be set by service layer
+                                null, // currentUserEmployeeId - will be set by service layer
+                                null // currentUserPatientId - will be set by service layer
+                );
 
                 Page<AppointmentSummaryDTO> appointments = listService.getAppointments(
                                 criteria, page, size, sortBy, sortDirection);
@@ -271,10 +290,12 @@ public class AppointmentController {
          * - COMPLETED: Set actualEndTime = NOW() (treatment finished)
          *
          * Request Body Examples:
-         * - Check-in: {"status": "CHECKED_IN", "notes": "Ã„ÂÃ¡ÂºÂ¿n trÃ¡Â»â€¦ 10 phÃƒÂºt"}
+         * - Check-in: {"status": "CHECKED_IN", "notes": "Ã„ÂÃ¡ÂºÂ¿n trÃ¡Â»â€¦ 10
+         * phÃƒÂºt"}
          * - Cancel: {"status": "CANCELLED", "reasonCode": "PATIENT_REQUEST", "notes":
          * "BÃ¡ÂºÂ­n Ã„â€˜Ã¡Â»â„¢t xuÃ¡ÂºÂ¥t"}
-         * - No-show: {"status": "NO_SHOW", "notes": "GÃ¡Â»Âi 3 cuÃ¡Â»â„¢c khÃƒÂ´ng nghe mÃƒÂ¡y"}
+         * - No-show: {"status": "NO_SHOW", "notes": "GÃ¡Â»Âi 3 cuÃ¡Â»â„¢c khÃƒÂ´ng
+         * nghe mÃƒÂ¡y"}
          *
          * @param appointmentCode Unique appointment code
          * @param request         Status update request with status, reasonCode (for
