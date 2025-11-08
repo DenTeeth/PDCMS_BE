@@ -214,4 +214,101 @@ public class OvertimeRequest {
     public boolean isRequestedBy(Integer employeeId) {
         return requestedBy != null && requestedBy.getEmployeeId().equals(employeeId);
     }
+
+    // Getters and Setters
+    public String getRequestId() {
+        return requestId;
+    }
+
+    public void setRequestId(String requestId) {
+        this.requestId = requestId;
+    }
+
+    public Employee getEmployee() {
+        return employee;
+    }
+
+    public void setEmployee(Employee employee) {
+        this.employee = employee;
+    }
+
+    public Employee getRequestedBy() {
+        return requestedBy;
+    }
+
+    public void setRequestedBy(Employee requestedBy) {
+        this.requestedBy = requestedBy;
+    }
+
+    public LocalDate getWorkDate() {
+        return workDate;
+    }
+
+    public void setWorkDate(LocalDate workDate) {
+        this.workDate = workDate;
+    }
+
+    public WorkShift getWorkShift() {
+        return workShift;
+    }
+
+    public void setWorkShift(WorkShift workShift) {
+        this.workShift = workShift;
+    }
+
+    public String getReason() {
+        return reason;
+    }
+
+    public void setReason(String reason) {
+        this.reason = reason;
+    }
+
+    public RequestStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(RequestStatus status) {
+        this.status = status;
+    }
+
+    public Employee getApprovedBy() {
+        return approvedBy;
+    }
+
+    public void setApprovedBy(Employee approvedBy) {
+        this.approvedBy = approvedBy;
+    }
+
+    public LocalDateTime getApprovedAt() {
+        return approvedAt;
+    }
+
+    public void setApprovedAt(LocalDateTime approvedAt) {
+        this.approvedAt = approvedAt;
+    }
+
+    public String getRejectedReason() {
+        return rejectedReason;
+    }
+
+    public void setRejectedReason(String rejectedReason) {
+        this.rejectedReason = rejectedReason;
+    }
+
+    public String getCancellationReason() {
+        return cancellationReason;
+    }
+
+    public void setCancellationReason(String cancellationReason) {
+        this.cancellationReason = cancellationReason;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
 }

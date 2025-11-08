@@ -197,4 +197,77 @@ public class ShiftRenewalRequest {
     public boolean isOwnedBy(Integer employeeId) {
         return employee != null && employee.getEmployeeId().equals(employeeId);
     }
+
+    // Getters and Setters
+    public String getRenewalId() {
+        return renewalId;
+    }
+
+    public void setRenewalId(String renewalId) {
+        this.renewalId = renewalId;
+    }
+
+    public FixedShiftRegistration getExpiringRegistration() {
+        return expiringRegistration;
+    }
+
+    public void setExpiringRegistration(FixedShiftRegistration expiringRegistration) {
+        this.expiringRegistration = expiringRegistration;
+    }
+
+    public Employee getEmployee() {
+        return employee;
+    }
+
+    public void setEmployee(Employee employee) {
+        this.employee = employee;
+    }
+
+    public RenewalStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(RenewalStatus status) {
+        this.status = status;
+    }
+
+    public LocalDateTime getExpiresAt() {
+        return expiresAt;
+    }
+
+    public void setExpiresAt(LocalDateTime expiresAt) {
+        this.expiresAt = expiresAt;
+    }
+
+    public String getDeclineReason() {
+        return declineReason;
+    }
+
+    public void setDeclineReason(String declineReason) {
+        this.declineReason = declineReason;
+    }
+
+    public LocalDateTime getConfirmedAt() {
+        return confirmedAt;
+    }
+
+    public void setConfirmedAt(LocalDateTime confirmedAt) {
+        this.confirmedAt = confirmedAt;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 }

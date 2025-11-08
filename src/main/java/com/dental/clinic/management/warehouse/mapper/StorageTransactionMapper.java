@@ -18,23 +18,23 @@ public class StorageTransactionMapper {
             return null;
         }
 
-        return StorageTransactionResponse.builder()
-                .id(transaction.getId())
-                .batchId(transaction.getBatch() != null ? transaction.getBatch().getId() : null)
-                .itemName(transaction.getBatch() != null && transaction.getBatch().getItemMaster() != null
+        return new StorageTransactionResponse(
+                transaction.getId(),
+                transaction.getBatch() != null ? transaction.getBatch().getId() : null,
+                transaction.getBatch() != null && transaction.getBatch().getItemMaster() != null
                         ? transaction.getBatch().getItemMaster().getItemName()
-                        : null)
-                .lotNumber(transaction.getBatch() != null ? transaction.getBatch().getLotNumber() : null)
-                .transactionType(transaction.getTransactionType())
-                .quantity(transaction.getQuantity())
-                .unitPrice(transaction.getUnitPrice())
-                .totalValue(transaction.getTotalValue())
-                .transactionDate(transaction.getTransactionDate())
-                .performedBy(transaction.getPerformedBy())
-                .performedByName(null) // Will be populated by service layer with employee name
-                .notes(transaction.getNotes())
-                .createdAt(transaction.getCreatedAt())
-                .build();
+                        : null,
+                transaction.getBatch() != null ? transaction.getBatch().getLotNumber() : null,
+                transaction.getTransactionType(),
+                transaction.getQuantity(),
+                transaction.getUnitPrice(),
+                transaction.getTotalValue(),
+                transaction.getTransactionDate(),
+                transaction.getPerformedBy(),
+                null, // Will be populated by service layer with employee name
+                transaction.getNotes(),
+                transaction.getCreatedAt()
+        );
     }
 }
 

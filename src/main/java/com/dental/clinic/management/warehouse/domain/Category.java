@@ -11,9 +11,7 @@ import java.util.List;
 
 /**
  * Entity representing a product category with hierarchical structure.
- * Supports parent-child relationships (e.g.,
- * "ThuÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“c" ->
- * "ThuÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“c khÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡ng sinh").
+ * Supports parent-child relationships (e.g., "Electronics" -> "Mobile Phones")
  * Categories are specific to warehouse types (COLD or NORMAL).
  */
 @Entity
@@ -28,7 +26,7 @@ public class Category {
     private Long categoryId;
 
     @Column(name = "category_name", length = 100, nullable = false)
-    @NotNull(message = "TÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Âªn danh mÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€šÃ‚Â¥c khÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â´ng ÃƒÆ’Ã¢â‚¬Å¾ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ÃƒÆ’Ã¢â‚¬Â Ãƒâ€šÃ‚Â°ÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€šÃ‚Â£c ÃƒÆ’Ã¢â‚¬Å¾ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€ Ã¢â‚¬â„¢ trÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ng")
+    @NotNull(message = "Tên danh mục không được để trống")
     private String categoryName;
 
     @Column(name = "description", length = 500)
@@ -36,7 +34,7 @@ public class Category {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "warehouse_type", nullable = false, length = 20)
-    @NotNull(message = "LoÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â¡i kho khÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â´ng ÃƒÆ’Ã¢â‚¬Å¾ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ÃƒÆ’Ã¢â‚¬Â Ãƒâ€šÃ‚Â°ÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€šÃ‚Â£c ÃƒÆ’Ã¢â‚¬Å¾ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€ Ã¢â‚¬â„¢ trÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ng")
+    @NotNull(message = "Loại kho khống được sử dụng cho danh mục này")
     private WarehouseType warehouseType;
 
     // === HIERARCHICAL STRUCTURE ===

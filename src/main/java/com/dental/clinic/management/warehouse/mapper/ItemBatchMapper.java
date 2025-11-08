@@ -41,20 +41,20 @@ public class ItemBatchMapper {
                 ? batch.getImportPrice().multiply(BigDecimal.valueOf(batch.getQuantityOnHand()))
                 : BigDecimal.ZERO;
 
-        return ItemBatchResponse.builder()
-                .id(batch.getId())
-                .itemMasterId(batch.getItemMaster() != null ? batch.getItemMaster().getId() : null)
-                .itemName(batch.getItemMaster() != null ? batch.getItemMaster().getItemName() : null)
-                .lotNumber(batch.getLotNumber())
-                .expiryDate(batch.getExpiryDate())
-                .quantityOnHand(batch.getQuantityOnHand())
-                .importPrice(batch.getImportPrice())
-                .createdAt(batch.getCreatedAt())
-                .isExpired(isExpired)
-                .isExpiringSoon(isExpiringSoon)
-                .daysUntilExpiry(daysUntilExpiry)
-                .totalValue(totalValue)
-                .build();
+        return new ItemBatchResponse(
+                batch.getId(),
+                batch.getItemMaster() != null ? batch.getItemMaster().getId() : null,
+                batch.getItemMaster() != null ? batch.getItemMaster().getItemName() : null,
+                batch.getLotNumber(),
+                batch.getExpiryDate(),
+                batch.getQuantityOnHand(),
+                batch.getImportPrice(),
+                batch.getCreatedAt(),
+                isExpired,
+                isExpiringSoon,
+                daysUntilExpiry,
+                totalValue
+        );
     }
 }
 

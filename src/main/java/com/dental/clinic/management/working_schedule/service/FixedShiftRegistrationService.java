@@ -65,7 +65,7 @@ public class FixedShiftRegistrationService {
 
         // 1. Validate employee exists and get employee_type
         Employee employee = employeeRepository.findById(request.getEmployeeId())
-                .orElseThrow(() -> new RelatedResourceNotFoundException("NhÃƒÂ¢n viÃƒÂªn khÃƒÂ´ng tÃ¡Â»â€œn tÃ¡ÂºÂ¡i"));
+                .orElseThrow(() -> new RelatedResourceNotFoundException("Nhân viên không tồn tại"));
 
         // 2. Check employee type - ONLY allow FULL_TIME and PART_TIME_FIXED
         EmploymentType empType = employee.getEmploymentType();
@@ -75,22 +75,27 @@ public class FixedShiftRegistrationService {
 
         // 3. Validate work shift exists
         WorkShift workShift = workShiftRepository.findById(request.getWorkShiftId())
-                .orElseThrow(() -> new RelatedResourceNotFoundException("Ca lÃƒÂ m viÃ¡Â»â€¡c khÃƒÂ´ng tÃ¡Â»â€œn tÃ¡ÂºÂ¡i"));
+                .orElseThrow(
+                        () -> new RelatedResourceNotFoundException("Ca làm việc không tồn tại"));
 
         // 4. Validate effectiveFrom is not in the past
         if (request.getEffectiveFrom().isBefore(LocalDate.now())) {
-            throw new IllegalArgumentException("NgÃƒÂ y bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u khÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c lÃƒÂ  quÃƒÂ¡ khÃ¡Â»Â©");
+            throw new IllegalArgumentException(
+                    "Ngày bắt đầu không được là quá khứ");
         }
 
         // 5. Validate daysOfWeek
         if (request.getDaysOfWeek() == null || request.getDaysOfWeek().isEmpty()) {
-            throw new IllegalArgumentException("Danh sÃƒÂ¡ch ngÃƒÂ y lÃƒÂ m viÃ¡Â»â€¡c khÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c rÃ¡Â»â€”ng");
+            throw new IllegalArgumentException(
+                    "Danh sách ngày làm việc không được rỗng");
         }
 
         // Validate day of week values (1=Monday, 7=Sunday)
         for (Integer day : request.getDaysOfWeek()) {
             if (day < 1 || day > 7) {
-                throw new IllegalArgumentException("NgÃƒÂ y lÃƒÂ m viÃ¡Â»â€¡c phÃ¡ÂºÂ£i tÃ¡Â»Â« 1 (ThÃ¡Â»Â© 2) Ã„â€˜Ã¡ÂºÂ¿n 7 (ChÃ¡Â»Â§ nhÃ¡ÂºÂ­t): " + day);
+                throw new IllegalArgumentException(
+                        "Ngày làm việc phải từ 1 (Thứ 2) đến 7 (Chủ nhật): "
+                                + day);
             }
         }
 
@@ -153,14 +158,15 @@ public class FixedShiftRegistrationService {
             } else {
                 // Filter by specific employee
                 if (!employeeRepository.existsById(employeeId)) {
-                    throw new RelatedResourceNotFoundException("NhÃƒÂ¢n viÃƒÂªn khÃƒÂ´ng tÃ¡Â»â€œn tÃ¡ÂºÂ¡i");
+                    throw new RelatedResourceNotFoundException("Nhân viên không tồn tại");
                 }
                 registrations = registrationRepository.findByEmployeeIdAndActiveStatus(employeeId, isActive);
             }
         } else {
             // Regular employee: cannot provide employeeId, use JWT token's employeeId
             if (employeeId != null) {
-                throw new AccessDeniedException("BÃ¡ÂºÂ¡n khÃƒÂ´ng thÃ¡Â»Æ’ chÃ¡Â»â€° Ã„â€˜Ã¡Â»â€¹nh employeeId. HÃ¡Â»â€¡ thÃ¡Â»â€˜ng sÃ¡ÂºÂ½ tÃ¡Â»Â± Ã„â€˜Ã¡Â»â„¢ng lÃ¡ÂºÂ¥y tÃ¡Â»Â« tÃƒÂ i khoÃ¡ÂºÂ£n cÃ¡Â»Â§a bÃ¡ÂºÂ¡n.");
+                throw new AccessDeniedException(
+                        "Bạn không thể chỉ định employeeId. Hãy thử nghiệm sẽ tự động lấy từ tài khoản của bạn.");
             }
             // Regular employees can only see their own active registrations
             registrations = registrationRepository.findActiveByEmployeeId(currentEmployeeId);
@@ -215,7 +221,9 @@ public class FixedShiftRegistrationService {
             // Validate day numbers
             for (Integer day : request.getDaysOfWeek()) {
                 if (day < 1 || day > 7) {
-                    throw new IllegalArgumentException("NgÃƒÂ y lÃƒÂ m viÃ¡Â»â€¡c phÃ¡ÂºÂ£i tÃ¡Â»Â« 1 (ThÃ¡Â»Â© 2) Ã„â€˜Ã¡ÂºÂ¿n 7 (ChÃ¡Â»Â§ nhÃ¡ÂºÂ­t): " + day);
+                    throw new IllegalArgumentException(
+                            "Ngày làm việc phải từ 1 (Thứ 2) đến 7 (Chủ nhật): "
+                                    + day);
                 }
             }
 
@@ -271,17 +279,16 @@ public class FixedShiftRegistrationService {
         String employeeName = registration.getEmployee().getFirstName() + " " +
                 registration.getEmployee().getLastName();
 
-        return FixedRegistrationResponse.builder()
-                .registrationId(registration.getRegistrationId())
-                .employeeId(registration.getEmployee().getEmployeeId())
-                .employeeName(employeeName)
-                .workShiftId(registration.getWorkShift().getWorkShiftId())
-                .workShiftName(registration.getWorkShift().getShiftName())
-                .daysOfWeek(daysOfWeek)
-                .effectiveFrom(registration.getEffectiveFrom())
-                .effectiveTo(registration.getEffectiveTo())
-                .isActive(registration.getIsActive())
-                .build();
+        return new FixedRegistrationResponse(
+                registration.getRegistrationId(),
+                registration.getEmployee().getEmployeeId(),
+                employeeName,
+                registration.getWorkShift().getWorkShiftId(),
+                registration.getWorkShift().getShiftName(),
+                daysOfWeek,
+                registration.getEffectiveFrom(),
+                registration.getEffectiveTo(),
+                registration.getIsActive());
     }
 
     /**

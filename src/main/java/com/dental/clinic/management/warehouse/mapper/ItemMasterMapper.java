@@ -87,19 +87,19 @@ public class ItemMasterMapper {
                         .count()
                 : 0;
 
-        return ItemMasterSummaryResponse.builder()
-                .id(itemMaster.getId())
-                .itemName(itemMaster.getItemName())
-                .description(itemMaster.getDescription())
-                .categoryId(itemMaster.getCategory() != null ? itemMaster.getCategory().getId() : null)
-                .categoryName(itemMaster.getCategory() != null ? itemMaster.getCategory().getCategoryName() : null)
-                .minStockLevel(itemMaster.getMinStockLevel())
-                .maxStockLevel(itemMaster.getMaxStockLevel())
-                .totalQuantityOnHand(totalQuantity)
-                .stockStatus(stockStatus)
-                .activeBatchCount(activeBatchCount)
-                .expiringSoonCount(expiringSoonCount)
-                .build();
+        return new ItemMasterSummaryResponse(
+                itemMaster.getId(),
+                itemMaster.getItemName(),
+                itemMaster.getDescription(),
+                itemMaster.getCategory() != null ? itemMaster.getCategory().getId() : null,
+                itemMaster.getCategory() != null ? itemMaster.getCategory().getCategoryName() : null,
+                itemMaster.getMinStockLevel(),
+                itemMaster.getMaxStockLevel(),
+                totalQuantity,
+                stockStatus,
+                activeBatchCount,
+                expiringSoonCount
+        );
     }
 
     /**

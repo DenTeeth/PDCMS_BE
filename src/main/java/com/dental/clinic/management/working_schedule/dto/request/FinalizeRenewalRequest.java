@@ -44,4 +44,30 @@ public class FinalizeRenewalRequest {
      */
     @NotNull(message = "New effective_to date is required")
     private LocalDate newEffectiveTo;
+
+    // Constructors
+    public FinalizeRenewalRequest() {
+    }
+
+    public FinalizeRenewalRequest(String renewalRequestId, LocalDate newEffectiveTo) {
+        this.renewalRequestId = renewalRequestId;
+        this.newEffectiveTo = newEffectiveTo;
+    }
+
+    // Getters and Setters
+    public String getRenewalRequestId() {
+        return renewalRequestId;
+    }
+
+    public void setRenewalRequestId(String renewalRequestId) {
+        this.renewalRequestId = renewalRequestId;
+    }
+
+    public LocalDate getNewEffectiveTo() {
+        return newEffectiveTo;
+    }
+
+    public void setNewEffectiveTo(LocalDate newEffectiveTo) {
+        this.newEffectiveTo = newEffectiveTo;
+    }
 }

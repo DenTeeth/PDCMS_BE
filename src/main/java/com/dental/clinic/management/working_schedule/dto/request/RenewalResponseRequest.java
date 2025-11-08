@@ -2,6 +2,7 @@ package com.dental.clinic.management.working_schedule.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
+
 /**
  * Employee can CONFIRM (accept renewal) or DECLINE (reject with reason).
  */
@@ -17,4 +18,30 @@ public class RenewalResponseRequest {
      * conditional requirement).
      */
     private String declineReason;
+
+    // Constructors
+    public RenewalResponseRequest() {
+    }
+
+    public RenewalResponseRequest(String action, String declineReason) {
+        this.action = action;
+        this.declineReason = declineReason;
+    }
+
+    // Getters and Setters
+    public String getAction() {
+        return action;
+    }
+
+    public void setAction(String action) {
+        this.action = action;
+    }
+
+    public String getDeclineReason() {
+        return declineReason;
+    }
+
+    public void setDeclineReason(String declineReason) {
+        this.declineReason = declineReason;
+    }
 }

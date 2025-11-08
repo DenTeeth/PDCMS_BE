@@ -330,10 +330,11 @@ public class AppointmentListService {
         try {
             var patient = patientRepository.findById(appointment.getPatientId()).orElse(null);
             if (patient != null) {
-                patientSummary = CreateAppointmentResponse.PatientSummary.builder()
-                        .patientCode(patient.getPatientCode())
-                        .fullName(patient.getFirstName() + " " + patient.getLastName())
-                        .build();
+                patientSummary = new CreateAppointmentResponse.PatientSummary(
+                        patient.getPatientCode(),
+                        patient.getFirstName() + " " + patient.getLastName(),
+                        null,
+                        null);
             }
         } catch (Exception e) {
             log.warn("Failed to load patient for appointmentId={}: {}",
@@ -344,10 +345,9 @@ public class AppointmentListService {
         try {
             var employee = employeeRepository.findById(appointment.getEmployeeId()).orElse(null);
             if (employee != null) {
-                doctorSummary = CreateAppointmentResponse.DoctorSummary.builder()
-                        .employeeCode(employee.getEmployeeCode())
-                        .fullName(employee.getFirstName() + " " + employee.getLastName())
-                        .build();
+                doctorSummary = new CreateAppointmentResponse.DoctorSummary(
+                        employee.getEmployeeCode(),
+                        employee.getFirstName() + " " + employee.getLastName());
             }
         } catch (Exception e) {
             log.warn("Failed to load employee for appointmentId={}: {}",
@@ -355,31 +355,29 @@ public class AppointmentListService {
         }
 
         // TODO: Load room, services, participants
-        CreateAppointmentResponse.RoomSummary roomSummary = CreateAppointmentResponse.RoomSummary.builder()
-                .roomCode(appointment.getRoomId())
-                .roomName("Room " + appointment.getRoomId()) // TODO: Load from RoomRepository
-                .build();
+        CreateAppointmentResponse.RoomSummary roomSummary = new CreateAppointmentResponse.RoomSummary(
+                appointment.getRoomId(),
+                "Room " + appointment.getRoomId());
 
         // Compute dynamic fields based on current time
         LocalDateTime now = LocalDateTime.now();
         String computedStatus = calculateComputedStatus(appointment, now);
         Long minutesLate = calculateMinutesLate(appointment, now);
 
-        return AppointmentSummaryDTO.builder()
-                .appointmentCode(appointment.getAppointmentCode())
-                .status(appointment.getStatus().name())
-                .computedStatus(computedStatus)
-                .minutesLate(minutesLate)
-                .appointmentStartTime(appointment.getAppointmentStartTime())
-                .appointmentEndTime(appointment.getAppointmentEndTime())
-                .expectedDurationMinutes(appointment.getExpectedDurationMinutes())
-                .patient(patientSummary)
-                .doctor(doctorSummary)
-                .room(roomSummary)
-                .services(new ArrayList<>()) // TODO: Load from AppointmentServiceRepository
-                .participants(new ArrayList<>()) // TODO: Load from AppointmentParticipantRepository
-                .notes(appointment.getNotes())
-                .build();
+        return new AppointmentSummaryDTO(
+                appointment.getAppointmentCode(),
+                appointment.getStatus().name(),
+                computedStatus,
+                minutesLate,
+                appointment.getAppointmentStartTime(),
+                appointment.getAppointmentEndTime(),
+                appointment.getExpectedDurationMinutes(),
+                patientSummary,
+                doctorSummary,
+                roomSummary,
+                new ArrayList<>(),
+                new ArrayList<>(),
+                appointment.getNotes());
     }
 
     /**

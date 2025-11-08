@@ -199,46 +199,42 @@ public class PartTimeSlotService {
         List<PartTimeSlotDetailResponse.RegisteredEmployeeInfo> employeeInfos = registrations.stream()
                 .map(reg -> {
                     Employee employee = employeeRepository.findById(reg.getEmployeeId()).orElse(null);
-                    return PartTimeSlotDetailResponse.RegisteredEmployeeInfo.builder()
-                            .employeeId(reg.getEmployeeId())
-                            .employeeCode(employee != null ? employee.getEmployeeCode() : "Unknown")
-                            .employeeName(employee != null ? employee.getFullName() : "Unknown")
-                            .effectiveFrom(reg.getEffectiveFrom().toString())
-                            .effectiveTo(reg.getEffectiveTo().toString())
-                            .build();
+                    return new PartTimeSlotDetailResponse.RegisteredEmployeeInfo(
+                            reg.getEmployeeId(),
+                            employee != null ? employee.getEmployeeCode() : "Unknown",
+                            employee != null ? employee.getFullName() : "Unknown",
+                            reg.getEffectiveFrom().toString(),
+                            reg.getEffectiveTo().toString());
                 })
                 .collect(Collectors.toList());
 
         // NEW: Count only APPROVED registrations
         long registered = partTimeSlotRepository.countApprovedRegistrations(slotId);
 
-        return PartTimeSlotDetailResponse.builder()
-                .slotId(slot.getSlotId())
-                .workShiftId(slot.getWorkShiftId())
-                .workShiftName(shiftName)
-                .dayOfWeek(slot.getDayOfWeek())
-                .quota(slot.getQuota())
-                .registered(registered)
-                .isActive(slot.getIsActive())
-                .registeredEmployees(employeeInfos)
-                .build();
+        return new PartTimeSlotDetailResponse(
+                slot.getSlotId(),
+                slot.getWorkShiftId(),
+                shiftName,
+                slot.getDayOfWeek(),
+                slot.getQuota(),
+                registered,
+                slot.getIsActive(),
+                employeeInfos);
     }
 
     private PartTimeSlotResponse buildResponse(PartTimeSlot slot, String shiftName) {
         // NEW: Count only APPROVED registrations
         long registered = partTimeSlotRepository.countApprovedRegistrations(slot.getSlotId());
 
-        return PartTimeSlotResponse.builder()
-                .slotId(slot.getSlotId())
-                .workShiftId(slot.getWorkShiftId())
-                .workShiftName(shiftName)
-                .dayOfWeek(slot.getDayOfWeek())
-                .quota(slot.getQuota())
-                .registered(registered)
-                .isActive(slot.getIsActive())
-                // NEW: Include effective date range
-                .effectiveFrom(slot.getEffectiveFrom())
-                .effectiveTo(slot.getEffectiveTo())
-                .build();
+        return new PartTimeSlotResponse(
+                slot.getSlotId(),
+                slot.getWorkShiftId(),
+                shiftName,
+                slot.getDayOfWeek(),
+                slot.getQuota(),
+                registered,
+                slot.getIsActive(),
+                slot.getEffectiveFrom(),
+                slot.getEffectiveTo());
     }
 }

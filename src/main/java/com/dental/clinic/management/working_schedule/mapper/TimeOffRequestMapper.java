@@ -20,24 +20,23 @@ public class TimeOffRequestMapper {
             return null;
         }
 
-        return TimeOffRequestResponse.builder()
-                .requestId(entity.getRequestId())
-                .employee(mapEmployeeBasicInfo(entity.getEmployee()))
-                .requestedBy(mapEmployeeBasicInfo(entity.getRequestedByEmployee()))
-                .timeOffTypeId(entity.getTimeOffTypeId())
-                .startDate(entity.getStartDate())
-                .endDate(entity.getEndDate())
-                .workShiftId(entity.getWorkShiftId())
-                .reason(entity.getReason())
-                .status(entity.getStatus())
-                .approvedBy(entity.getApprovedByEmployee() != null
+        return new TimeOffRequestResponse(
+                entity.getRequestId(),
+                mapEmployeeBasicInfo(entity.getEmployee()),
+                mapEmployeeBasicInfo(entity.getRequestedByEmployee()),
+                entity.getTimeOffTypeId(),
+                entity.getStartDate(),
+                entity.getEndDate(),
+                entity.getWorkShiftId(),
+                entity.getReason(),
+                entity.getStatus(),
+                entity.getApprovedByEmployee() != null
                         ? mapEmployeeBasicInfo(entity.getApprovedByEmployee())
-                        : null)
-                .approvedAt(entity.getApprovedAt())
-                .rejectedReason(entity.getRejectedReason())
-                .cancellationReason(entity.getCancellationReason())
-                .requestedAt(entity.getRequestedAt())
-                .build();
+                        : null,
+                entity.getApprovedAt(),
+                entity.getRejectedReason(),
+                entity.getCancellationReason(),
+                entity.getRequestedAt());
     }
 
     /**
@@ -47,12 +46,11 @@ public class TimeOffRequestMapper {
         if (employee == null) {
             return null;
         }
-        return TimeOffRequestResponse.EmployeeBasicInfo.builder()
-                .employeeId(employee.getEmployeeId())
-                .employeeCode(employee.getEmployeeCode())
-                .firstName(employee.getFirstName())
-                .lastName(employee.getLastName())
-                .fullName(employee.getFirstName() + " " + employee.getLastName())
-                .build();
+        return new TimeOffRequestResponse.EmployeeBasicInfo(
+                employee.getEmployeeId(),
+                employee.getEmployeeCode(),
+                employee.getFirstName(),
+                employee.getLastName(),
+                employee.getFirstName() + " " + employee.getLastName());
     }
 }

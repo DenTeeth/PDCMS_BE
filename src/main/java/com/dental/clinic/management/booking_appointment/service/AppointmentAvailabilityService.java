@@ -99,11 +99,10 @@ public class AppointmentAvailabilityService {
         var compatibleRooms = findCompatibleRooms(serviceIds);
 
         if (compatibleRooms.isEmpty()) {
-            return AvailableTimesResponse.builder()
-                    .totalDurationNeeded(totalDuration)
-                    .availableSlots(Collections.emptyList())
-                    .message("KhÃƒÂ´ng cÃƒÂ³ phÃƒÂ²ng nÃƒÂ o hÃ¡Â»â€” trÃ¡Â»Â£ cÃƒÂ¡c dÃ¡Â»â€¹ch vÃ¡Â»Â¥ nÃƒÂ y")
-                    .build();
+            return new AvailableTimesResponse(
+                    totalDuration,
+                    Collections.emptyList(),
+                    "No rooms available that support these services");
         }
 
         log.debug("Found {} compatible rooms", compatibleRooms.size());
@@ -131,10 +130,7 @@ public class AppointmentAvailabilityService {
         // STEP 8: Sort by start time chronologically
         slots.sort(Comparator.comparing(TimeSlotDTO::getStartTime));
 
-        return AvailableTimesResponse.builder()
-                .totalDurationNeeded(totalDuration)
-                .availableSlots(slots)
-                .build();
+        return new AvailableTimesResponse(totalDuration, slots, null);
     }
 
     /**
@@ -459,10 +455,7 @@ public class AppointmentAvailabilityService {
                         slotTime.plusMinutes(totalDuration));
 
                 if (!availableRoomCodes.isEmpty()) {
-                    slots.add(TimeSlotDTO.builder()
-                            .startTime(slotTime)
-                            .availableCompatibleRoomCodes(availableRoomCodes)
-                            .build());
+                    slots.add(new TimeSlotDTO(slotTime, availableRoomCodes, null));
                 }
 
                 slotTime = slotTime.plusMinutes(SLOT_INTERVAL_MINUTES);

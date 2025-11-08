@@ -771,37 +771,44 @@ public class AppointmentCreationService {
                         Employee doctor, Room room,
                         List<DentalService> services,
                         List<Employee> participants) {
-                return CreateAppointmentResponse.builder()
-                                .appointmentCode(appointment.getAppointmentCode())
-                                .status(appointment.getStatus().name())
-                                .appointmentStartTime(appointment.getAppointmentStartTime())
-                                .appointmentEndTime(appointment.getAppointmentEndTime())
-                                .expectedDurationMinutes(appointment.getExpectedDurationMinutes())
-                                .patient(PatientSummary.builder()
-                                                .patientCode(patient.getPatientCode())
-                                                .fullName(patient.getFullName())
-                                                .build())
-                                .doctor(DoctorSummary.builder()
-                                                .employeeCode(doctor.getEmployeeCode())
-                                                .fullName(doctor.getFullName())
-                                                .build())
-                                .room(RoomSummary.builder()
-                                                .roomCode(room.getRoomCode())
-                                                .roomName(room.getRoomName())
-                                                .build())
-                                .services(services.stream()
-                                                .map(s -> ServiceSummary.builder()
-                                                                .serviceCode(s.getServiceCode())
-                                                                .serviceName(s.getServiceName())
-                                                                .build())
-                                                .collect(Collectors.toList()))
-                                .participants(participants.stream()
-                                                .map(p -> ParticipantSummary.builder()
-                                                                .employeeCode(p.getEmployeeCode())
-                                                                .fullName(p.getFullName())
-                                                                .role(AppointmentParticipantRole.ASSISTANT)
-                                                                .build())
-                                                .collect(Collectors.toList()))
-                                .build();
+
+                CreateAppointmentResponse.PatientSummary patientSummary = new CreateAppointmentResponse.PatientSummary(
+                                patient.getPatientCode(),
+                                patient.getFullName(),
+                                patient.getPhone(),
+                                patient.getDateOfBirth());
+
+                CreateAppointmentResponse.DoctorSummary doctorSummary = new CreateAppointmentResponse.DoctorSummary(
+                                doctor.getEmployeeCode(),
+                                doctor.getFullName());
+
+                CreateAppointmentResponse.RoomSummary roomSummary = new CreateAppointmentResponse.RoomSummary(
+                                room.getRoomCode(),
+                                room.getRoomName());
+
+                List<CreateAppointmentResponse.ServiceSummary> serviceSummaries = services.stream()
+                                .map(s -> new CreateAppointmentResponse.ServiceSummary(
+                                                s.getServiceCode(),
+                                                s.getServiceName()))
+                                .collect(Collectors.toList());
+
+                List<CreateAppointmentResponse.ParticipantSummary> participantSummaries = participants.stream()
+                                .map(p -> new CreateAppointmentResponse.ParticipantSummary(
+                                                p.getEmployeeCode(),
+                                                p.getFullName(),
+                                                AppointmentParticipantRole.ASSISTANT))
+                                .collect(Collectors.toList());
+
+                return new CreateAppointmentResponse(
+                                appointment.getAppointmentCode(),
+                                appointment.getStatus().name(),
+                                appointment.getAppointmentStartTime(),
+                                appointment.getAppointmentEndTime(),
+                                appointment.getExpectedDurationMinutes(),
+                                patientSummary,
+                                doctorSummary,
+                                roomSummary,
+                                serviceSummaries,
+                                participantSummaries);
         }
 }

@@ -258,16 +258,16 @@ public class WorkShiftService {
         // Check if already active
         if (Boolean.TRUE.equals(workShift.getIsActive())) {
             throw new IllegalStateException(
-                    String.format("Ca lÃƒÂ m viÃ¡Â»â€¡c %s Ã„â€˜ÃƒÂ£ Ã„â€˜Ã†Â°Ã¡Â»Â£c kÃƒÂ­ch hoÃ¡ÂºÂ¡t rÃ¡Â»â€œi",
+                    String.format("Ca làm việc %s đã được kích hoạt rồi",
                             workShiftId));
         }
 
-        // Validate khÃƒÂ´ng trÃƒÂ¹ng tÃƒÂªn vÃ¡Â»â€ºi ca Ã„â€˜ang hoÃ¡ÂºÂ¡t
-        // Ã„â€˜Ã¡Â»â„¢ng (LÃ¡Â»â€”i 4)
+        // Validate không trùng tên với ca đang hoạt động
+        // Đang (Lỗi 4)
         validateUniqueShiftName(workShift.getShiftName(), workShiftId);
 
-        // Validate khÃƒÂ´ng trÃƒÂ¹ng thÃ¡Â»Âi gian chÃƒÂ­nh xÃƒÂ¡c vÃ¡Â»â€ºi ca
-        // Ã„â€˜ang hoÃ¡ÂºÂ¡t Ã„â€˜Ã¡Â»â„¢ng (LÃ¡Â»â€”i 1)
+        // Validate không trùng thời gian chính xác với ca
+        // Đang hoạt động (Lỗi 1)
         validateUniqueTimeRange(workShift.getStartTime(), workShift.getEndTime(), workShiftId);
 
         // Reactivate
@@ -418,7 +418,7 @@ public class WorkShiftService {
     private void validateTimeRange(LocalTime startTime, LocalTime endTime) {
         if (!endTime.isAfter(startTime)) {
             throw new InvalidTimeRangeException(
-                    "GiÃ¡Â»Â kÃ¡ÂºÂ¿t thÃƒÂºc phÃ¡ÂºÂ£i sau giÃ¡Â»Â bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u");
+                    "Giá trị kết thúc phải sau giá trị bắt đầu");
         }
     }
 
@@ -476,9 +476,9 @@ public class WorkShiftService {
             if (shift.getStartTime().equals(startTime) && shift.getEndTime().equals(endTime)) {
                 throw new DuplicateTimeRangeException(
                         String.format(
-                                "Ã„ÂÃƒÂ£ tÃ¡Â»â€œn tÃ¡ÂºÂ¡i ca lÃƒÂ m viÃ¡Â»â€¡c tÃ¡Â»Â« %s Ã„â€˜Ã¡ÂºÂ¿n %s (Ca: %s). "
+                                "Đã tồn tại làm việc từ %s đến %s (Ca: %s). "
                                         +
-                                        "KhÃƒÂ´ng thÃ¡Â»Æ’ tÃ¡ÂºÂ¡o hai ca giÃ¡Â»â€˜ng hÃ¡Â»â€¡t nhau vÃ¡Â»Â thÃ¡Â»Âi gian.",
+                                        "Không thể tạo hai ca giống hệt nhau về thời gian.",
                                 startTime, endTime, shift.getShiftName()));
             }
         }
@@ -486,18 +486,18 @@ public class WorkShiftService {
 
     /**
      * Validate shift duration is between 3-8 hours.
-     * LÃ¡Â»â€”i 5: Message rÃƒÂµ rÃƒÂ ng vÃ¡Â»Â giÃ¡Â»Â nghÃ¡Â»â€° trÃ†Â°a
+     * Lỗi 5: Message rõ ràng về giá trị nghỉ phép trước
      */
     private void validateDuration(double durationHours) {
         if (durationHours < MIN_DURATION_HOURS || durationHours > MAX_DURATION_HOURS) {
             String message = String.format(
-                    "ThÃ¡Â»Âi lÃ†Â°Ã¡Â»Â£ng ca lÃƒÂ m viÃ¡Â»â€¡c phÃ¡ÂºÂ£i tÃ¡Â»Â« %.0f Ã„â€˜Ã¡ÂºÂ¿n %.0f giÃ¡Â»Â. ThÃ¡Â»Â±c tÃ¡ÂºÂ¿: %.1f giÃ¡Â»Â",
+                    "Thời lượng ca làm việc phải từ %.0f đến %.0f giờ. Thực tế: %.1f giờ",
                     MIN_DURATION_HOURS, MAX_DURATION_HOURS, durationHours);
 
-            // LÃ¡Â»â€”i 5: ThÃƒÂªm thÃƒÂ´ng bÃƒÂ¡o vÃ¡Â»Â giÃ¡Â»Â nghÃ¡Â»â€° trÃ†Â°a
-            // nÃ¡ÂºÂ¿u ca bao gÃ¡Â»â€œm 12h-13h
+            // Lỗi 5: Thêm thông báo về giá trị nghỉ phép trước
+            // nếu ca bao gồm 12h-13h
             if (durationHours < MIN_DURATION_HOURS) {
-                message += ". LÃ†Â°u ÃƒÂ½: GiÃ¡Â»Â nghÃ¡Â»â€° trÃ†Â°a (12:00-13:00) khÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c tÃƒÂ­nh vÃƒÂ o thÃ¡Â»Âi gian lÃƒÂ m viÃ¡Â»â€¡c.";
+                message += ". Lưu ý: Giá trị nghỉ phép trước (12:00-13:00) không được tính vào thời gian làm việc.";
             }
 
             throw new InvalidShiftDurationException(message);
@@ -506,25 +506,25 @@ public class WorkShiftService {
 
     /**
      * Validate that shift is within clinic working hours (8:00 - 21:00).
-     * LÃ¡Â»â€”i 3: Message rÃƒÂµ rÃƒÂ ng hÃ†Â¡n khi tÃ¡ÂºÂ¡o ca ngoÃƒÂ i giÃ¡Â»Â
+     * Lỗi 3: Message rõ ràng hơn khi tạo ca ngoài giờ
      */
     private void validateWorkingHours(LocalTime startTime, LocalTime endTime) {
         if (startTime.isBefore(CLINIC_OPEN) || endTime.isAfter(CLINIC_CLOSE)) {
             String message = String.format(
-                    "Ca lÃƒÂ m viÃ¡Â»â€¡c phÃ¡ÂºÂ£i nÃ¡ÂºÂ±m trong giÃ¡Â»Â hoÃ¡ÂºÂ¡t Ã„â€˜Ã¡Â»â„¢ng cÃ¡Â»Â§a phÃƒÂ²ng khÃƒÂ¡m (%s - %s). "
+                    "Ca làm việc phải nằm trong giờ hoạt động của phòng khám (%s - %s). "
                             +
-                            "Ca cÃ¡Â»Â§a bÃ¡ÂºÂ¡n: %s - %s",
+                            "Ca của bạn: %s - %s",
                     CLINIC_OPEN, CLINIC_CLOSE, startTime, endTime);
 
-            // LÃ¡Â»â€”i 3: ThÃƒÂªm gÃ¡Â»Â£i ÃƒÂ½ cÃ¡Â»Â¥ thÃ¡Â»Æ’
+            // Lỗi 3: Thêm gợi ý ca làm việc ngoài giờ
             if (startTime.isBefore(CLINIC_OPEN)) {
                 message += String.format(
-                        ". GiÃ¡Â»Â bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u %s quÃƒÂ¡ sÃ¡Â»â€ºm, vui lÃƒÂ²ng chÃ¡Â»Ân tÃ¡Â»Â« %s trÃ¡Â»Å¸ Ã„â€˜i.",
+                        ". Giờ bắt đầu %s quá sớm, vui lòng chọn từ %s trở đi.",
                         startTime, CLINIC_OPEN);
             }
             if (endTime.isAfter(CLINIC_CLOSE)) {
                 message += String.format(
-                        ". GiÃ¡Â»Â kÃ¡ÂºÂ¿t thÃƒÂºc %s quÃƒÂ¡ muÃ¡Â»â„¢n, vui lÃƒÂ²ng chÃ¡Â»Ân trÃ†Â°Ã¡Â»â€ºc %s.",
+                        ". Giờ kết thúc %s quá muộn, vui lòng chọn trước %s.",
                         endTime, CLINIC_CLOSE);
             }
 
@@ -556,14 +556,14 @@ public class WorkShiftService {
         if (startTime.isAfter(maxMorningStart) && startTime.isBefore(minAfternoonStart)) {
             throw new InvalidWorkingHoursException(
                     String.format(
-                            "Ca lÃƒÂ m viÃ¡Â»â€¡c khÃƒÂ´ng thÃ¡Â»Æ’ bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u tÃ¡Â»Â« 11:01 Ã„â€˜Ã¡ÂºÂ¿n 12:59. "
+                            "Ca làm việc không thể bắt đầu từ 11:01 đến 12:59. "
                                     +
-                                    "GiÃ¡Â»Â bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u cÃ¡Â»Â§a bÃ¡ÂºÂ¡n: %s. " +
-                                    "KhoÃ¡ÂºÂ£ng thÃ¡Â»Âi gian nÃƒÂ y quÃƒÂ¡ gÃ¡ÂºÂ§n hoÃ¡ÂºÂ·c trÃƒÂ¹ng vÃ¡Â»â€ºi giÃ¡Â»Â nghÃ¡Â»â€° trÃ†Â°a (12:00-13:00). "
+                                    "Giờ bắt đầu của bạn: %s. " +
+                                    "Khoảng thời gian này quá gần hoặc trùng với giờ nghỉ trưa (12:00-13:00). "
                                     +
-                                    "Vui lÃƒÂ²ng chÃ¡Â»Ân giÃ¡Â»Â bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u tÃ¡Â»Â« 08:00 Ã„â€˜Ã¡ÂºÂ¿n 11:00 (ca sÃƒÂ¡ng), "
+                                    "Vui lòng chọn giờ bắt đầu từ 08:00 đến 11:00 (ca sáng), "
                                     +
-                                    "hoÃ¡ÂºÂ·c tÃ¡Â»Â« 13:00 Ã„â€˜Ã¡ÂºÂ¿n 18:00 (ca chiÃ¡Â»Âu/Ã„â€˜ÃƒÂªm).",
+                                    "hoặc từ 13:00 đến 18:00 (ca chiều/tối).",
                             startTime));
         }
 
@@ -571,11 +571,11 @@ public class WorkShiftService {
         // before 21:00 close)
         if (startTime.isAfter(maxStartTimeForMinDuration)) {
             throw new InvalidWorkingHoursException(
-                    String.format("Ca lÃƒÂ m viÃ¡Â»â€¡c khÃƒÂ´ng thÃ¡Â»Æ’ bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u sau 18:00. " +
-                            "GiÃ¡Â»Â bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u cÃ¡Â»Â§a bÃ¡ÂºÂ¡n: %s. " +
-                            "PhÃƒÂ²ng khÃƒÂ¡m Ã„â€˜ÃƒÂ³ng cÃ¡Â»Â­a lÃƒÂºc 21:00 vÃƒÂ  mÃ¡Â»â€”i ca phÃ¡ÂºÂ£i cÃƒÂ³ tÃ¡Â»â€˜i thiÃ¡Â»Æ’u 3 giÃ¡Â»Â lÃƒÂ m viÃ¡Â»â€¡c. "
+                    String.format("Ca làm việc không thể bắt đầu sau 18:00. " +
+                            "Giờ bắt đầu của bạn: %s. " +
+                            "Phòng khám đóng cửa lúc 21:00 và mọi ca phải có tối thiểu 3 giờ làm việc. "
                             +
-                            "Ca muÃ¡Â»â„¢n nhÃ¡ÂºÂ¥t cÃƒÂ³ thÃ¡Â»Æ’ bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u lÃƒÂ  18:00 (kÃ¡ÂºÂ¿t thÃƒÂºc 21:00 = 3 giÃ¡Â»Â).",
+                            "Ca muốn nhất có thể bắt đầu là 18:00 (kết thúc 21:00 = 3 giờ).",
                             startTime));
         }
     }
@@ -597,11 +597,10 @@ public class WorkShiftService {
         if (startsBeforeBoundary && endsAfterBoundary) {
             throw new InvalidCategoryException(
                     String.format(
-                            "Ca lÃƒÂ m viÃ¡Â»â€¡c khÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c vÃ†Â°Ã¡Â»Â£t qua ranh giÃ¡Â»â€ºi 18:00. " +
-                                    "Ca cÃ¡Â»Â§a bÃ¡ÂºÂ¡n: %s - %s. " +
-                                    "Vui lÃƒÂ²ng tÃ¡ÂºÂ¡o ca THÃ†Â¯Ã¡Â»Å“NG (kÃ¡ÂºÂ¿t thÃƒÂºc trÃ†Â°Ã¡Â»â€ºc hoÃ¡ÂºÂ·c Ã„â€˜ÃƒÂºng 18:00) "
-                                    +
-                                    "hoÃ¡ÂºÂ·c ca Ã„ÂÃƒÅ M (bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u tÃ¡Â»Â« 18:00 trÃ¡Â»Å¸ Ã„â€˜i).",
+                            "Ca làm việc không thể vượt qua ranh giới 18:00. " +
+                                    "Ca của bạn: %s  %s. " +
+                                    "Vui lòng tạo ca THƯỜNG (kết thúc trước 18:00) " +
+                                    "hoặc ca ĐÊM (bắt đầu từ 18:00 trở đi).",
                             startTime, endTime));
         }
     }
@@ -671,11 +670,11 @@ public class WorkShiftService {
         long slotCount = partTimeSlotRepository.countByWorkShiftId(workShiftId);
 
         if (scheduleCount > 0 && slotCount > 0) {
-            return scheduleCount + " lÃ¡Â»â€¹ch lÃƒÂ m viÃ¡Â»â€¡c vÃƒÂ  " + slotCount + " slot bÃƒÂ¡n thÃ¡Â»Âi gian";
+            return scheduleCount + " lịch làm việc và " + slotCount + " slot bán thời gian";
         } else if (scheduleCount > 0) {
-            return scheduleCount + " lÃ¡Â»â€¹ch lÃƒÂ m viÃ¡Â»â€¡c";
+            return scheduleCount + " lịch làm việc";
         } else {
-            return slotCount + " slot bÃƒÂ¡n thÃ¡Â»Âi gian";
+            return slotCount + " slot bán thời gian";
         }
     }
 

@@ -37,7 +37,7 @@ public class SupplierController {
      */
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'WAREHOUSE_MANAGER')")
-    @Operation(summary = "TÃ¡ÂºÂ¡o nhÃƒÂ  cung cÃ¡ÂºÂ¥p mÃ¡Â»â€ºi", description = "TÃ¡ÂºÂ¡o thÃƒÂ´ng tin nhÃƒÂ  cung cÃ¡ÂºÂ¥p vÃ¡ÂºÂ­t tÃ†Â°")
+    @Operation(summary = "Tạo nhà cung cấp mới", description = "Tạo thông tin nhà cung cấp và vật tư")
     public ResponseEntity<SupplierResponse> createSupplier(
             @Valid @RequestBody CreateSupplierRequest request) {
         log.info("REST request to create supplier: {}", request.getSupplierName());
@@ -58,7 +58,7 @@ public class SupplierController {
      */
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'WAREHOUSE_MANAGER', 'WAREHOUSE_STAFF')")
-    @Operation(summary = "LÃ¡ÂºÂ¥y tÃ¡ÂºÂ¥t cÃ¡ÂºÂ£ nhÃƒÂ  cung cÃ¡ÂºÂ¥p", description = "LÃ¡ÂºÂ¥y danh sÃƒÂ¡ch tÃ¡ÂºÂ¥t cÃ¡ÂºÂ£ nhÃƒÂ  cung cÃ¡ÂºÂ¥p")
+    @Operation(summary = "Lấy tất cả nhà cung cấp", description = "Lấy danh sách tất cả nhà cung cấp")
     public ResponseEntity<Page<SupplierResponse>> getAllSuppliers(
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "10") int size,
@@ -82,7 +82,7 @@ public class SupplierController {
      */
     @GetMapping("/search")
     @PreAuthorize("hasAnyRole('ADMIN', 'WAREHOUSE_MANAGER', 'WAREHOUSE_STAFF')")
-    @Operation(summary = "TÃƒÂ¬m kiÃ¡ÂºÂ¿m nhÃƒÂ  cung cÃ¡ÂºÂ¥p", description = "TÃƒÂ¬m kiÃ¡ÂºÂ¿m nhÃƒÂ  cung cÃ¡ÂºÂ¥p theo tÃƒÂªn, email, sÃ¡Â»â€˜ Ã„â€˜iÃ¡Â»â€¡n thoÃ¡ÂºÂ¡i")
+    @Operation(summary = "Tìm kiếm nhà cung cấp", description = "Tìm kiếm nhà cung cấp theo tên, email, số điện thoại")
     public ResponseEntity<Page<SupplierResponse>> searchSuppliers(
             @RequestParam(name = "keyword", required = false) String keyword,
             @RequestParam(name = "page", defaultValue = "0") int page,
@@ -101,7 +101,7 @@ public class SupplierController {
      */
     @GetMapping("/{supplierId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'WAREHOUSE_MANAGER', 'WAREHOUSE_STAFF')")
-    @Operation(summary = "LÃ¡ÂºÂ¥y thÃƒÂ´ng tin nhÃƒÂ  cung cÃ¡ÂºÂ¥p", description = "LÃ¡ÂºÂ¥y chi tiÃ¡ÂºÂ¿t nhÃƒÂ  cung cÃ¡ÂºÂ¥p theo ID")
+    @Operation(summary = "Lấy thông tin nhà cung cấp", description = "Lấy chi tiết nhà cung cấp theo ID")
     public ResponseEntity<SupplierResponse> getSupplierById(@PathVariable Long supplierId) {
         log.info("REST request to get supplier by ID: {}", supplierId);
         SupplierResponse response = supplierService.getSupplierById(supplierId);
@@ -118,7 +118,7 @@ public class SupplierController {
      */
     @PutMapping("/{supplierId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'WAREHOUSE_MANAGER')")
-    @Operation(summary = "CÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t nhÃƒÂ  cung cÃ¡ÂºÂ¥p", description = "CÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t thÃƒÂ´ng tin nhÃƒÂ  cung cÃ¡ÂºÂ¥p")
+    @Operation(summary = "Cập nhật nhà cung cấp", description = "Cập nhật thông tin nhà cung cấp")
     public ResponseEntity<SupplierResponse> updateSupplier(
             @PathVariable Long supplierId,
             @Valid @RequestBody UpdateSupplierRequest request) {
@@ -136,7 +136,7 @@ public class SupplierController {
      */
     @DeleteMapping("/{supplierId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'WAREHOUSE_MANAGER')")
-    @Operation(summary = "XÃƒÂ³a nhÃƒÂ  cung cÃ¡ÂºÂ¥p", description = "XÃƒÂ³a nhÃƒÂ  cung cÃ¡ÂºÂ¥p (kiÃ¡Â»Æ’m tra rÃƒÂ ng buÃ¡Â»â„¢c)")
+    @Operation(summary = "Xóa nhà cung cấp", description = "Xóa nhà cung cấp (kiểm tra ràng buộc)")
     public ResponseEntity<Void> deleteSupplier(@PathVariable Long supplierId) {
         log.info("REST request to delete supplier: {}", supplierId);
         supplierService.deleteSupplier(supplierId);

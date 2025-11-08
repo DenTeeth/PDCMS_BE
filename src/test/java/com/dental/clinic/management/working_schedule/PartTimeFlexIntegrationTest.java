@@ -23,182 +23,179 @@ import static org.junit.jupiter.api.Assertions.*;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 public class PartTimeFlexIntegrationTest {
 
-    @Autowired
-    private PartTimeSlotRepository slotRepository;
+        @Autowired
+        private PartTimeSlotRepository slotRepository;
 
-    @Autowired
-    private PartTimeRegistrationRepository registrationRepository;
+        @Autowired
+        private PartTimeRegistrationRepository registrationRepository;
 
-    @Autowired
-    private PartTimeSlotAvailabilityService availabilityService;
+        @Autowired
+        private PartTimeSlotAvailabilityService availabilityService;
 
-    @Autowired
-    private PartTimeRegistrationApprovalService approvalService;
+        @Autowired
+        private PartTimeRegistrationApprovalService approvalService;
 
-    /**
-     * Scenario from spec:
-     * - Slot: FRIDAY,SATURDAY, 2025-11-09 -> 2025-11-30, quota=2
-     * - Doctor A: APPROVED 2025-11-09 -> 2025-11-16 (covers 14,15)
-     * - Doctor B: APPROVED 2025-11-09 -> 2025-11-30 (covers all 6 days)
-     * Assertions: 14/11 -> 2, 21/11 -> 1
-     */
-    @Test
-    @Transactional
-    public void testPerDayCountsWithApprovedRegistrations() {
-        PartTimeSlot slot = new PartTimeSlot();
-        slot.setWorkShiftId("WKS_MORNING_01");
-        slot.setDayOfWeek("FRIDAY,SATURDAY");
-        slot.setEffectiveFrom(LocalDate.of(2025,11,9));
-        slot.setEffectiveTo(LocalDate.of(2025,11,30));
-        slot.setQuota(2);
-        slot.setIsActive(true);
-        slotRepository.save(slot);
+        /**
+         * Scenario from spec:
+         * - Slot: FRIDAY,SATURDAY, 2025-11-09 -> 2025-11-30, quota=2
+         * - Doctor A: APPROVED 2025-11-09 -> 2025-11-16 (covers 14,15)
+         * - Doctor B: APPROVED 2025-11-09 -> 2025-11-30 (covers all 6 days)
+         * Assertions: 14/11 -> 2, 21/11 -> 1
+         */
+        @Test
+        @Transactional
+        public void testPerDayCountsWithApprovedRegistrations() {
+                PartTimeSlot slot = new PartTimeSlot();
+                slot.setWorkShiftId("WKS_MORNING_01");
+                slot.setDayOfWeek("FRIDAY,SATURDAY");
+                slot.setEffectiveFrom(LocalDate.of(2025, 11, 9));
+                slot.setEffectiveTo(LocalDate.of(2025, 11, 30));
+                slot.setQuota(2);
+                slot.setIsActive(true);
+                slotRepository.save(slot);
 
-        // Doctor A: covers 14/11 and 15/11
-        PartTimeRegistration a = PartTimeRegistration.builder()
-                .employeeId(1)
-                .partTimeSlotId(slot.getSlotId())
-                .effectiveFrom(LocalDate.of(2025,11,9))
-                .effectiveTo(LocalDate.of(2025,11,16))
-                .status(RegistrationStatus.APPROVED)
-                .isActive(true)
-                .requestedDates(Set.of(LocalDate.of(2025,11,14), LocalDate.of(2025,11,15)))
-                .build();
-        registrationRepository.save(a);
+                // Doctor A: covers 14/11 and 15/11
+                PartTimeRegistration a = new PartTimeRegistration();
+                a.setEmployeeId(1);
+                a.setPartTimeSlotId(slot.getSlotId());
+                a.setEffectiveFrom(LocalDate.of(2025, 11, 9));
+                a.setEffectiveTo(LocalDate.of(2025, 11, 16));
+                a.setStatus(RegistrationStatus.APPROVED);
+                a.setIsActive(true);
+                a.setRequestedDates(Set.of(LocalDate.of(2025, 11, 14), LocalDate.of(2025, 11, 15)));
+                registrationRepository.save(a);
 
-        // Doctor B: covers all FRIDAY/SATURDAY in range
-        PartTimeRegistration b = PartTimeRegistration.builder()
-                .employeeId(2)
-                .partTimeSlotId(slot.getSlotId())
-                .effectiveFrom(LocalDate.of(2025,11,9))
-                .effectiveTo(LocalDate.of(2025,11,30))
-                .status(RegistrationStatus.APPROVED)
-                .isActive(true)
-                .requestedDates(Set.of(
-                        LocalDate.of(2025,11,14), LocalDate.of(2025,11,15),
-                        LocalDate.of(2025,11,21), LocalDate.of(2025,11,22),
-                        LocalDate.of(2025,11,28), LocalDate.of(2025,11,29)
-                ))
-                .build();
-        registrationRepository.save(b);
+                // Doctor B: covers all FRIDAY/SATURDAY in range
+                PartTimeRegistration b = new PartTimeRegistration();
+                b.setEmployeeId(2);
+                b.setPartTimeSlotId(slot.getSlotId());
+                b.setEffectiveFrom(LocalDate.of(2025, 11, 9));
+                b.setEffectiveTo(LocalDate.of(2025, 11, 30));
+                b.setStatus(RegistrationStatus.APPROVED);
+                b.setIsActive(true);
+                b.setRequestedDates(Set.of(
+                                LocalDate.of(2025, 11, 14), LocalDate.of(2025, 11, 15),
+                                LocalDate.of(2025, 11, 21), LocalDate.of(2025, 11, 22),
+                                LocalDate.of(2025, 11, 28), LocalDate.of(2025, 11, 29)));
+                registrationRepository.save(b);
 
-        long count14 = availabilityService.getRegisteredCountForDate(slot.getSlotId(), LocalDate.of(2025,11,14));
-        long count21 = availabilityService.getRegisteredCountForDate(slot.getSlotId(), LocalDate.of(2025,11,21));
+                long count14 = availabilityService.getRegisteredCountForDate(slot.getSlotId(),
+                                LocalDate.of(2025, 11, 14));
+                long count21 = availabilityService.getRegisteredCountForDate(slot.getSlotId(),
+                                LocalDate.of(2025, 11, 21));
 
-        assertEquals(2L, count14, "14-Nov should have 2 approved registrations");
-        assertEquals(1L, count21, "21-Nov should have 1 approved registration");
-    }
+                assertEquals(2L, count14, "14-Nov should have 2 approved registrations");
+                assertEquals(1L, count21, "21-Nov should have 1 approved registration");
+        }
 
-    /**
-     * Test that approval is blocked when any day in requestedDates is full.
-     */
-    @Test
-    @Transactional
-    public void testApproveBlockedWhenFull() {
-        PartTimeSlot slot = new PartTimeSlot();
-        slot.setWorkShiftId("WKS_MORNING_01");
-        slot.setDayOfWeek("FRIDAY,SATURDAY");
-        slot.setEffectiveFrom(LocalDate.of(2025,11,9));
-        slot.setEffectiveTo(LocalDate.of(2025,11,30));
-        slot.setQuota(2);
-        slot.setIsActive(true);
-        slotRepository.save(slot);
+        /**
+         * Test that approval is blocked when any day in requestedDates is full.
+         */
+        @Test
+        @Transactional
+        public void testApproveBlockedWhenFull() {
+                PartTimeSlot slot = new PartTimeSlot();
+                slot.setWorkShiftId("WKS_MORNING_01");
+                slot.setDayOfWeek("FRIDAY,SATURDAY");
+                slot.setEffectiveFrom(LocalDate.of(2025, 11, 9));
+                slot.setEffectiveTo(LocalDate.of(2025, 11, 30));
+                slot.setQuota(2);
+                slot.setIsActive(true);
+                slotRepository.save(slot);
 
-        // Fill slot for 14/11 and 15/11 by two approved registrations
-        PartTimeRegistration a = PartTimeRegistration.builder()
-                .employeeId(1)
-                .partTimeSlotId(slot.getSlotId())
-                .effectiveFrom(LocalDate.of(2025,11,9))
-                .effectiveTo(LocalDate.of(2025,11,16))
-                .status(RegistrationStatus.APPROVED)
-                .isActive(true)
-                .requestedDates(Set.of(LocalDate.of(2025,11,14), LocalDate.of(2025,11,15)))
-                .build();
-        registrationRepository.save(a);
+                // Fill slot for 14/11 and 15/11 by two approved registrations
+                PartTimeRegistration a = new PartTimeRegistration();
+                a.setEmployeeId(1);
+                a.setPartTimeSlotId(slot.getSlotId());
+                a.setEffectiveFrom(LocalDate.of(2025, 11, 9));
+                a.setEffectiveTo(LocalDate.of(2025, 11, 16));
+                a.setStatus(RegistrationStatus.APPROVED);
+                a.setIsActive(true);
+                a.setRequestedDates(Set.of(LocalDate.of(2025, 11, 14), LocalDate.of(2025, 11, 15)));
+                registrationRepository.save(a);
 
-        PartTimeRegistration b = PartTimeRegistration.builder()
-                .employeeId(2)
-                .partTimeSlotId(slot.getSlotId())
-                .effectiveFrom(LocalDate.of(2025,11,9))
-                .effectiveTo(LocalDate.of(2025,11,30))
-                .status(RegistrationStatus.APPROVED)
-                .isActive(true)
-                .requestedDates(Set.of(
-                        LocalDate.of(2025,11,14), LocalDate.of(2025,11,15),
-                        LocalDate.of(2025,11,21), LocalDate.of(2025,11,22),
-                        LocalDate.of(2025,11,28), LocalDate.of(2025,11,29)
-                ))
-                .build();
-        registrationRepository.save(b);
+                PartTimeRegistration b = new PartTimeRegistration();
+                b.setEmployeeId(2);
+                b.setPartTimeSlotId(slot.getSlotId());
+                b.setEffectiveFrom(LocalDate.of(2025, 11, 9));
+                b.setEffectiveTo(LocalDate.of(2025, 11, 30));
+                b.setStatus(RegistrationStatus.APPROVED);
+                b.setIsActive(true);
+                b.setRequestedDates(Set.of(
+                                LocalDate.of(2025, 11, 14), LocalDate.of(2025, 11, 15),
+                                LocalDate.of(2025, 11, 21), LocalDate.of(2025, 11, 22),
+                                LocalDate.of(2025, 11, 28), LocalDate.of(2025, 11, 29)));
+                registrationRepository.save(b);
 
-        // New pending registration (employee 3) requesting 14 and 15 — should be blocked
-        PartTimeRegistration pending = PartTimeRegistration.builder()
-                .employeeId(3)
-                .partTimeSlotId(slot.getSlotId())
-                .effectiveFrom(LocalDate.of(2025,11,9))
-                .effectiveTo(LocalDate.of(2025,11,16))
-                .status(RegistrationStatus.PENDING)
-                .isActive(true)
-                .requestedDates(Set.of(LocalDate.of(2025,11,14), LocalDate.of(2025,11,15)))
-                .build();
-        PartTimeRegistration saved = registrationRepository.save(pending);
+                // New pending registration (employee 3) requesting 14 and 15 — should be
+                // blocked
+                PartTimeRegistration pending = new PartTimeRegistration();
+                pending.setEmployeeId(3);
+                pending.setPartTimeSlotId(slot.getSlotId());
+                pending.setEffectiveFrom(LocalDate.of(2025, 11, 9));
+                pending.setEffectiveTo(LocalDate.of(2025, 11, 16));
+                pending.setStatus(RegistrationStatus.PENDING);
+                pending.setIsActive(true);
+                pending.setRequestedDates(Set.of(LocalDate.of(2025, 11, 14), LocalDate.of(2025, 11, 15)));
+                PartTimeRegistration saved = registrationRepository.save(pending);
 
-        assertFalse(approvalService.canApprove(saved.getRegistrationId()), "Should not be approvable because some days are full");
+                assertFalse(approvalService.canApprove(saved.getRegistrationId()),
+                                "Should not be approvable because some days are full");
 
-        assertThrows(QuotaExceededException.class, () -> {
-            approvalService.approveRegistration(saved.getRegistrationId(), 999);
-        });
-    }
+                assertThrows(QuotaExceededException.class, () -> {
+                        approvalService.approveRegistration(saved.getRegistrationId(), 999);
+                });
+        }
 
-    /**
-     * Test that approval is allowed for a pending registration that requests only later dates which have space.
-     */
-    @Test
-    @Transactional
-    public void testApproveAllowedForLaterRange() {
-        PartTimeSlot slot = new PartTimeSlot();
-        slot.setWorkShiftId("WKS_MORNING_01");
-        slot.setDayOfWeek("FRIDAY,SATURDAY");
-        slot.setEffectiveFrom(LocalDate.of(2025,11,9));
-        slot.setEffectiveTo(LocalDate.of(2025,11,30));
-        slot.setQuota(2);
-        slot.setIsActive(true);
-        slotRepository.save(slot);
+        /**
+         * Test that approval is allowed for a pending registration that requests only
+         * later dates which have space.
+         */
+        @Test
+        @Transactional
+        public void testApproveAllowedForLaterRange() {
+                PartTimeSlot slot = new PartTimeSlot();
+                slot.setWorkShiftId("WKS_MORNING_01");
+                slot.setDayOfWeek("FRIDAY,SATURDAY");
+                slot.setEffectiveFrom(LocalDate.of(2025, 11, 9));
+                slot.setEffectiveTo(LocalDate.of(2025, 11, 30));
+                slot.setQuota(2);
+                slot.setIsActive(true);
+                slotRepository.save(slot);
 
-        // Only Doctor B is approved for whole period
-        PartTimeRegistration b = PartTimeRegistration.builder()
-                .employeeId(2)
-                .partTimeSlotId(slot.getSlotId())
-                .effectiveFrom(LocalDate.of(2025,11,9))
-                .effectiveTo(LocalDate.of(2025,11,30))
-                .status(RegistrationStatus.APPROVED)
-                .isActive(true)
-                .requestedDates(Set.of(
-                        LocalDate.of(2025,11,14), LocalDate.of(2025,11,15),
-                        LocalDate.of(2025,11,21), LocalDate.of(2025,11,22),
-                        LocalDate.of(2025,11,28), LocalDate.of(2025,11,29)
-                ))
-                .build();
-        registrationRepository.save(b);
+                // Only Doctor B is approved for whole period
+                PartTimeRegistration b = new PartTimeRegistration();
+                b.setEmployeeId(2);
+                b.setPartTimeSlotId(slot.getSlotId());
+                b.setEffectiveFrom(LocalDate.of(2025, 11, 9));
+                b.setEffectiveTo(LocalDate.of(2025, 11, 30));
+                b.setStatus(RegistrationStatus.APPROVED);
+                b.setIsActive(true);
+                b.setRequestedDates(Set.of(
+                                LocalDate.of(2025, 11, 14), LocalDate.of(2025, 11, 15),
+                                LocalDate.of(2025, 11, 21), LocalDate.of(2025, 11, 22),
+                                LocalDate.of(2025, 11, 28), LocalDate.of(2025, 11, 29)));
+                registrationRepository.save(b);
 
-        // Pending registration for 21/11 & 22/11 (these should have only 1 registered -> space)
-        PartTimeRegistration pending = PartTimeRegistration.builder()
-                .employeeId(4)
-                .partTimeSlotId(slot.getSlotId())
-                .effectiveFrom(LocalDate.of(2025,11,17))
-                .effectiveTo(LocalDate.of(2025,11,30))
-                .status(RegistrationStatus.PENDING)
-                .isActive(true)
-                .requestedDates(Set.of(LocalDate.of(2025,11,21), LocalDate.of(2025,11,22)))
-                .build();
-        PartTimeRegistration saved = registrationRepository.save(pending);
+                // Pending registration for 21/11 & 22/11 (these should have only 1 registered
+                // -> space)
+                PartTimeRegistration pending = new PartTimeRegistration();
+                pending.setEmployeeId(4);
+                pending.setPartTimeSlotId(slot.getSlotId());
+                pending.setEffectiveFrom(LocalDate.of(2025, 11, 17));
+                pending.setEffectiveTo(LocalDate.of(2025, 11, 30));
+                pending.setStatus(RegistrationStatus.PENDING);
+                pending.setIsActive(true);
+                pending.setRequestedDates(Set.of(LocalDate.of(2025, 11, 21), LocalDate.of(2025, 11, 22)));
+                PartTimeRegistration saved = registrationRepository.save(pending);
 
-        assertTrue(approvalService.canApprove(saved.getRegistrationId()), "Should be approvable because all requested days have space");
+                assertTrue(approvalService.canApprove(saved.getRegistrationId()),
+                                "Should be approvable because all requested days have space");
 
-        // Approve should succeed (no exception)
-        approvalService.approveRegistration(saved.getRegistrationId(), 1000);
+                // Approve should succeed (no exception)
+                approvalService.approveRegistration(saved.getRegistrationId(), 1000);
 
-        PartTimeRegistration after = registrationRepository.findById(saved.getRegistrationId()).orElseThrow();
-        assertEquals(RegistrationStatus.APPROVED, after.getStatus());
-    }
+                PartTimeRegistration after = registrationRepository.findById(saved.getRegistrationId()).orElseThrow();
+                assertEquals(RegistrationStatus.APPROVED, after.getStatus());
+        }
 }

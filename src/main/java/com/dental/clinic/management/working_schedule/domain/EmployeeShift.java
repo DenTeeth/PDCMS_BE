@@ -140,4 +140,109 @@ public class EmployeeShift {
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
+
+    // Getters and Setters
+    public String getEmployeeShiftId() {
+        return employeeShiftId;
+    }
+
+    public void setEmployeeShiftId(String employeeShiftId) {
+        this.employeeShiftId = employeeShiftId;
+    }
+
+    public Employee getEmployee() {
+        return employee;
+    }
+
+    public void setEmployee(Employee employee) {
+        this.employee = employee;
+    }
+
+    public LocalDate getWorkDate() {
+        return workDate;
+    }
+
+    public void setWorkDate(LocalDate workDate) {
+        this.workDate = workDate;
+    }
+
+    public WorkShift getWorkShift() {
+        return workShift;
+    }
+
+    public void setWorkShift(WorkShift workShift) {
+        this.workShift = workShift;
+    }
+
+    public Boolean getIsOvertime() {
+        return isOvertime;
+    }
+
+    public void setIsOvertime(Boolean isOvertime) {
+        this.isOvertime = isOvertime;
+    }
+
+    public ShiftStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(ShiftStatus status) {
+        this.status = status;
+    }
+
+    public ShiftSource getSource() {
+        return source;
+    }
+
+    public void setSource(ShiftSource source) {
+        this.source = source;
+    }
+
+    public String getSourceOtRequestId() {
+        return sourceOtRequestId;
+    }
+
+    public void setSourceOtRequestId(String sourceOtRequestId) {
+        this.sourceOtRequestId = sourceOtRequestId;
+    }
+
+    public String getSourceOffRequestId() {
+        return sourceOffRequestId;
+    }
+
+    public void setSourceOffRequestId(String sourceOffRequestId) {
+        this.sourceOffRequestId = sourceOffRequestId;
+    }
+
+    public Integer getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(Integer createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public String getNotes() {
+        return notes;
+    }
+
+    public void setNotes(String notes) {
+        this.notes = notes;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 }

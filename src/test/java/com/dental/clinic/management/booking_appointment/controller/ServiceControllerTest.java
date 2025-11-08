@@ -57,54 +57,31 @@ class ServiceControllerTest {
         @BeforeEach
         void setUp() {
                 // Sample ServiceResponse objects
-                serviceResponse1 = ServiceResponse.builder()
-                                .serviceId(1)
-                                .serviceCode("SCALING_L1")
-                                .serviceName("Cạo vôi răng & Đánh bóng - Mức 1")
-                                .description("Làm sạch vôi răng và mảng bám mức độ ít/trung bình.")
-                                .defaultDurationMinutes(45)
-                                .defaultBufferMinutes(15)
-                                .price(new BigDecimal("300000"))
-                                .specializationId(null)
-                                .specializationName(null)
-                                .isActive(true)
-                                .createdAt(LocalDateTime.now())
-                                .updatedAt(LocalDateTime.now())
-                                .build();
+                LocalDateTime now = LocalDateTime.now();
+                serviceResponse1 = new ServiceResponse(1, "SCALING_L1", "Cạo vôi răng & Đánh bóng - Mức 1",
+                                "Làm sạch vôi răng và mảng bám mức độ ít/trung bình.",
+                                45, 15, new BigDecimal("300000"), null, null, true, now, now);
 
-                serviceResponse2 = ServiceResponse.builder()
-                                .serviceId(2)
-                                .serviceCode("CROWN_TITAN")
-                                .serviceName("Mão răng sứ Titan")
-                                .description("Mão sứ sườn hợp kim Titan.")
-                                .defaultDurationMinutes(60)
-                                .defaultBufferMinutes(15)
-                                .price(new BigDecimal("2500000"))
-                                .specializationId(3)
-                                .specializationName("Răng thẩm mỹ")
-                                .isActive(true)
-                                .createdAt(LocalDateTime.now())
-                                .updatedAt(LocalDateTime.now())
-                                .build();
+                serviceResponse2 = new ServiceResponse(2, "CROWN_TITAN", "Mão răng sứ Titan",
+                                "Mão sứ sườn hợp kim Titan.",
+                                60, 15, new BigDecimal("2500000"), 3, "Răng thẩm mỹ", true, now, now);
 
                 // Sample CreateServiceRequest
-                createRequest = CreateServiceRequest.builder()
-                                .serviceCode("FILLING_COMP")
-                                .serviceName("Trám răng Composite")
-                                .description("Trám răng sâu, mẻ bằng vật liệu composite thẩm mỹ.")
-                                .defaultDurationMinutes(45)
-                                .defaultBufferMinutes(15)
-                                .price(new BigDecimal("400000"))
-                                .specializationId(null)
-                                .isActive(true)
-                                .build();
+                createRequest = new CreateServiceRequest();
+                createRequest.setServiceCode("FILLING_COMP");
+                createRequest.setServiceName("Trám răng Composite");
+                createRequest.setDescription("Trám răng sâu, mẻ bằng vật liệu composite thẩm mỹ.");
+                createRequest.setDefaultDurationMinutes(45);
+                createRequest.setDefaultBufferMinutes(15);
+                createRequest.setPrice(new BigDecimal("400000"));
+                createRequest.setSpecializationId(null);
+                createRequest.setIsActive(true);
 
                 // Sample UpdateServiceRequest
-                updateRequest = UpdateServiceRequest.builder()
-                                .serviceName("Cạo vôi răng & Đánh bóng - Mức 1 (Đã cập nhật)")
-                                .price(new BigDecimal("350000"))
-                                .isActive(true)
-                                .build();
+                updateRequest = new UpdateServiceRequest();
+                updateRequest.setServiceName("Cạo vôi răng & Đánh bóng - Mức 1 (Đã cập nhật)");
+                updateRequest.setPrice(new BigDecimal("350000"));
+                updateRequest.setIsActive(true);
         }
 
         @Test
@@ -224,20 +201,10 @@ class ServiceControllerTest {
         @WithMockUser(authorities = { "CREATE_SERVICE" })
         void createService_ShouldReturnCreatedService() throws Exception {
                 // Given
-                ServiceResponse createdService = ServiceResponse.builder()
-                                .serviceId(3)
-                                .serviceCode("FILLING_COMP")
-                                .serviceName("Trám răng Composite")
-                                .description("Trám răng sâu, mẻ bằng vật liệu composite thẩm mỹ.")
-                                .defaultDurationMinutes(45)
-                                .defaultBufferMinutes(15)
-                                .price(new BigDecimal("400000"))
-                                .specializationId(null)
-                                .specializationName(null)
-                                .isActive(true)
-                                .createdAt(LocalDateTime.now())
-                                .updatedAt(LocalDateTime.now())
-                                .build();
+                LocalDateTime now = LocalDateTime.now();
+                ServiceResponse createdService = new ServiceResponse(3, "FILLING_COMP", "Trám răng Composite",
+                                "Trám răng sâu, mẻ bằng vật liệu composite thẩm mỹ.",
+                                45, 15, new BigDecimal("400000"), null, null, true, now, now);
 
                 when(serviceService.createService(any(CreateServiceRequest.class))).thenReturn(createdService);
 
@@ -261,14 +228,13 @@ class ServiceControllerTest {
         @WithMockUser(authorities = { "CREATE_SERVICE" })
         void createService_WithInvalidData_ShouldReturnBadRequest() throws Exception {
                 // Given - negative price
-                CreateServiceRequest invalidRequest = CreateServiceRequest.builder()
-                                .serviceCode("TEST")
-                                .serviceName("Test Service")
-                                .defaultDurationMinutes(30)
-                                .defaultBufferMinutes(10)
-                                .price(new BigDecimal("-100")) // Invalid: negative price
-                                .isActive(true)
-                                .build();
+                CreateServiceRequest invalidRequest = new CreateServiceRequest();
+                invalidRequest.setServiceCode("TEST");
+                invalidRequest.setServiceName("Test Service");
+                invalidRequest.setDefaultDurationMinutes(30);
+                invalidRequest.setDefaultBufferMinutes(10);
+                invalidRequest.setPrice(new BigDecimal("-100")); // Invalid: negative price
+                invalidRequest.setIsActive(true);
 
                 // When & Then
                 mockMvc.perform(post("/api/v1/services")
@@ -286,20 +252,11 @@ class ServiceControllerTest {
         @WithMockUser(authorities = { "UPDATE_SERVICE" })
         void updateService_ShouldReturnUpdatedService() throws Exception {
                 // Given
-                ServiceResponse updatedService = ServiceResponse.builder()
-                                .serviceId(1)
-                                .serviceCode("SCALING_L1")
-                                .serviceName("Cạo vôi răng & Đánh bóng - Mức 1 (Đã cập nhật)")
-                                .description("Làm sạch vôi răng và mảng bám mức độ ít/trung bình.")
-                                .defaultDurationMinutes(45)
-                                .defaultBufferMinutes(15)
-                                .price(new BigDecimal("350000"))
-                                .specializationId(null)
-                                .specializationName(null)
-                                .isActive(true)
-                                .createdAt(LocalDateTime.now())
-                                .updatedAt(LocalDateTime.now())
-                                .build();
+                LocalDateTime now = LocalDateTime.now();
+                ServiceResponse updatedService = new ServiceResponse(1, "SCALING_L1",
+                                "Cạo vôi răng & Đánh bóng - Mức 1 (Đã cập nhật)",
+                                "Làm sạch vôi răng và mảng bám mức độ ít/trung bình.",
+                                45, 15, new BigDecimal("350000"), null, null, true, now, now);
 
                 when(serviceService.updateService(eq("SCALING_L1"), any(UpdateServiceRequest.class)))
                                 .thenReturn(updatedService);
@@ -357,20 +314,11 @@ class ServiceControllerTest {
         @WithMockUser(authorities = { "UPDATE_SERVICE" })
         void toggleServiceStatus_ShouldReturnToggledService() throws Exception {
                 // Given - Service is currently active, will be toggled to inactive
-                ServiceResponse toggledService = ServiceResponse.builder()
-                                .serviceId(1)
-                                .serviceCode("SCALING_L1")
-                                .serviceName("Cạo vôi răng & Đánh bóng - Mức 1")
-                                .description("Làm sạch vôi răng và mảng bám mức độ ít/trung bình.")
-                                .defaultDurationMinutes(45)
-                                .defaultBufferMinutes(15)
-                                .price(new BigDecimal("300000"))
-                                .specializationId(null)
-                                .specializationName(null)
-                                .isActive(false) // Toggled to inactive
-                                .createdAt(LocalDateTime.now())
-                                .updatedAt(LocalDateTime.now())
-                                .build();
+                LocalDateTime now = LocalDateTime.now();
+                ServiceResponse toggledService = new ServiceResponse(1, "SCALING_L1",
+                                "Cạo vôi răng & Đánh bóng - Mức 1",
+                                "Làm sạch vôi răng và mảng bám mức độ ít/trung bình.",
+                                45, 15, new BigDecimal("300000"), null, null, false, now, now); // Toggled to inactive
 
                 when(serviceService.toggleServiceStatus(1)).thenReturn(toggledService);
 
@@ -392,20 +340,11 @@ class ServiceControllerTest {
         @WithMockUser(authorities = { "UPDATE_SERVICE" })
         void activateService_ShouldReturnActivatedService() throws Exception {
                 // Given
-                ServiceResponse activatedService = ServiceResponse.builder()
-                                .serviceId(1)
-                                .serviceCode("SCALING_L1")
-                                .serviceName("Cạo vôi răng & Đánh bóng - Mức 1")
-                                .description("Làm sạch vôi răng và mảng bám mức độ ít/trung bình.")
-                                .defaultDurationMinutes(45)
-                                .defaultBufferMinutes(15)
-                                .price(new BigDecimal("300000"))
-                                .specializationId(null)
-                                .specializationName(null)
-                                .isActive(true) // Now active
-                                .createdAt(LocalDateTime.now())
-                                .updatedAt(LocalDateTime.now())
-                                .build();
+                LocalDateTime now = LocalDateTime.now();
+                ServiceResponse activatedService = new ServiceResponse(1, "SCALING_L1",
+                                "Cạo vôi răng & Đánh bóng - Mức 1",
+                                "Làm sạch vôi răng và mảng bám mức độ ít/trung bình.",
+                                45, 15, new BigDecimal("300000"), null, null, true, now, now); // Now active
 
                 doNothing().when(serviceService).activateService(1);
                 when(serviceService.getServiceById(1)).thenReturn(activatedService);
@@ -428,17 +367,9 @@ class ServiceControllerTest {
         @WithMockUser(authorities = { "UPDATE_SERVICE" })
         void activateService_ShouldMatchCorrectEndpoint() throws Exception {
                 // Given
-                ServiceResponse activatedService = ServiceResponse.builder()
-                                .serviceId(109)
-                                .serviceCode("TEST_SERVICE")
-                                .serviceName("Test Service")
-                                .isActive(true)
-                                .price(new BigDecimal("100000"))
-                                .defaultDurationMinutes(30)
-                                .defaultBufferMinutes(10)
-                                .createdAt(LocalDateTime.now())
-                                .updatedAt(LocalDateTime.now())
-                                .build();
+                LocalDateTime now = LocalDateTime.now();
+                ServiceResponse activatedService = new ServiceResponse(109, "TEST_SERVICE", "Test Service",
+                                null, 30, 10, new BigDecimal("100000"), null, null, true, now, now);
 
                 doNothing().when(serviceService).activateService(109);
                 when(serviceService.getServiceById(109)).thenReturn(activatedService);

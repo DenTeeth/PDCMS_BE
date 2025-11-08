@@ -25,6 +25,69 @@ public class CreateTimeOffRequest {
     @NotNull(message = "Reason is required")
     private String reason;
 
+    // Constructors
+    public CreateTimeOffRequest() {
+    }
+
+    public CreateTimeOffRequest(Integer employeeId, String timeOffTypeId, LocalDate startDate,
+            LocalDate endDate, String workShiftId, String reason) {
+        this.employeeId = employeeId;
+        this.timeOffTypeId = timeOffTypeId;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.workShiftId = workShiftId;
+        this.reason = reason;
+    }
+
+    // Getters and Setters
+    public Integer getEmployeeId() {
+        return employeeId;
+    }
+
+    public void setEmployeeId(Integer employeeId) {
+        this.employeeId = employeeId;
+    }
+
+    public String getTimeOffTypeId() {
+        return timeOffTypeId;
+    }
+
+    public void setTimeOffTypeId(String timeOffTypeId) {
+        this.timeOffTypeId = timeOffTypeId;
+    }
+
+    public LocalDate getStartDate() {
+        return startDate;
+    }
+
+    public void setStartDate(LocalDate startDate) {
+        this.startDate = startDate;
+    }
+
+    public LocalDate getEndDate() {
+        return endDate;
+    }
+
+    public void setEndDate(LocalDate endDate) {
+        this.endDate = endDate;
+    }
+
+    public String getWorkShiftId() {
+        return workShiftId;
+    }
+
+    public void setWorkShiftId(String workShiftId) {
+        this.workShiftId = workShiftId;
+    }
+
+    public String getReason() {
+        return reason;
+    }
+
+    public void setReason(String reason) {
+        this.reason = reason;
+    }
+
     @Override
     public String toString() {
         return "CreateTimeOffRequest{" +

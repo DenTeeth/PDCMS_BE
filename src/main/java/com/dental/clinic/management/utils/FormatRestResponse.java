@@ -34,12 +34,13 @@ public class FormatRestResponse implements ResponseBodyAdvice<Object> {
         HttpServletResponse servletResponse = ((ServletServerHttpResponse) response).getServletResponse();
         int status = servletResponse.getStatus();
 
-        // KhÃƒÂ´ng format nÃ¡ÂºÂ¿u lÃƒÂ  String hoÃ¡ÂºÂ·c error response
+        // format nÃ¡ÂºÂ¿u lÃƒÂng hoÃ¡ÂºÂ·c error response
         if (body instanceof String || status >= 400) {
             return body;
         }
 
-        // KhÃƒÂ´ng format nÃ¡ÂºÂ¿u Ã„â€˜ÃƒÂ£ lÃƒÂ  RestResponse Ã„â€˜Ã¡Â»Æ’ trÃƒÂ¡nh nested wrapper
+        // format nÃ¡ÂºÂ¿u Ã„â€˜ÃƒÂ£ lÃƒÂ  RestResponse Ã„â€˜Ã¡Â»Æ’ trÃƒÂ¡Â»â€¡nh nested
+        // wrapper
         if (body instanceof RestResponse) {
             return body;
         }

@@ -54,7 +54,7 @@ public class AccountController {
      */
     @GetMapping("/me")
     @Operation(summary = "Get current user context", description = "Retrieve complete user context including role, permissions, sidebar, and navigation info")
-    @ApiMessage("LÃ¡ÂºÂ¥y thÃƒÂ´ng tin ngÃ†Â°Ã¡Â»Âi dÃƒÂ¹ng hiÃ¡Â»â€¡n tÃ¡ÂºÂ¡i thÃƒÂ nh cÃƒÂ´ng")
+    @ApiMessage("LÃ¡ÂºÂ¥y thÃƒÂ´ng tin ngÃ†Â°Ã¡Â»Âi dÃƒÂ¹ng hiá»ƒn táº¡i thÃƒÂ nh cÃƒÂ´ng")
     public ResponseEntity<MeResponse> getMe(@Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
         String username = jwt.getClaimAsString("sub");
         MeResponse meResponse = authenticationService.getMe(username);
@@ -77,7 +77,7 @@ public class AccountController {
      */
     @GetMapping("/profile")
     @Operation(summary = "Get user profile", description = "Retrieve personal profile information of the currently authenticated user")
-    @ApiMessage("LÃ¡ÂºÂ¥y thÃƒÂ´ng tin profile cÃƒÂ¡ nhÃƒÂ¢n thÃƒÂ nh cÃƒÂ´ng")
+    @ApiMessage("LÃ¡ÂºÂ¥y thÃƒÂ´ng tin profile cÃƒÂ h ÃƒÂ¢n thÃƒÂ nh cÃƒÂ´ng")
     public ResponseEntity<UserProfileResponse> getProfile(@Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
         String username = jwt.getClaimAsString("sub");
         UserProfileResponse userProfile = authenticationService.getUserProfile(username);
@@ -102,7 +102,7 @@ public class AccountController {
      */
     @GetMapping("/permissions")
     @Operation(summary = "Get user permissions", description = "Retrieve all permissions of the currently authenticated user")
-    @ApiMessage("LÃ¡ÂºÂ¥y quyÃ¡Â»Ân hÃ¡ÂºÂ¡n ngÃ†Â°Ã¡Â»Âi dÃƒÂ¹ng thÃƒÂ nh cÃƒÂ´ng")
+    @ApiMessage("Lấy quyền hạn người dùng thành công")
     public ResponseEntity<UserPermissionsResponse> getPermissions(
             @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
         String username = jwt.getClaimAsString("sub");
@@ -127,7 +127,7 @@ public class AccountController {
      */
     @GetMapping("/info")
     @Operation(summary = "Get complete user info", description = "Retrieve complete user information including roles and permissions")
-    @ApiMessage("LÃ¡ÂºÂ¥y thÃƒÂ´ng tin Ã„â€˜Ã¡ÂºÂ§y Ã„â€˜Ã¡Â»Â§ ngÃ†Â°Ã¡Â»Âi dÃƒÂ¹ng thÃƒÂ nh cÃƒÂ´ng")
+    @ApiMessage("LÃ¡ÂºÂ¥y thÃƒÂ´ng tin ngÃ†Â°Ã¡Â»Âi dÃƒÂ¹ng thÃƒÂ nh cÃƒÂ´ng")
     public ResponseEntity<UserInfoResponse> getInfo(@Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
         String username = jwt.getClaimAsString("sub");
         UserInfoResponse userInfo = authenticationService.getUserInfo(username);

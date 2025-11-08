@@ -130,18 +130,17 @@ public class EmployeeShiftRegistrationService {
                             startDate,
                             slot.getEffectiveTo());
 
-                    return AvailableSlotResponse.builder()
-                            .slotId(slot.getSlotId())
-                            .shiftName(shiftName)
-                            .dayOfWeek(slot.getDayOfWeek())
-                            .totalDatesAvailable(totalDatesAvailable)
-                            .totalDatesEmpty(totalDatesEmpty)
-                            .totalDatesFull(totalDatesFull)
-                            .effectiveFrom(slot.getEffectiveFrom())
-                            .effectiveTo(slot.getEffectiveTo())
-                            .quota(slot.getQuota())
-                            .availabilitySummary(summary)
-                            .build();
+                    return new AvailableSlotResponse(
+                            slot.getSlotId(),
+                            shiftName,
+                            slot.getDayOfWeek(),
+                            totalDatesAvailable,
+                            totalDatesEmpty,
+                            totalDatesFull,
+                            slot.getEffectiveFrom(),
+                            slot.getEffectiveTo(),
+                            slot.getQuota(),
+                            summary);
                 })
                 .filter(response -> response != null)
                 .collect(Collectors.toList());
@@ -222,16 +221,15 @@ public class EmployeeShiftRegistrationService {
                 startDate,
                 slot.getEffectiveTo());
 
-        return SlotDetailResponse.builder()
-                .slotId(slot.getSlotId())
-                .shiftName(shiftName)
-                .dayOfWeek(slot.getDayOfWeek())
-                .quota(slot.getQuota())
-                .effectiveFrom(slot.getEffectiveFrom())
-                .effectiveTo(slot.getEffectiveTo())
-                .overallRemaining(overallRemaining)
-                .availabilityByMonth(monthlyBreakdown)
-                .build();
+        return new SlotDetailResponse(
+                slot.getSlotId(),
+                shiftName,
+                slot.getDayOfWeek(),
+                slot.getQuota(),
+                slot.getEffectiveFrom(),
+                slot.getEffectiveTo(),
+                overallRemaining,
+                monthlyBreakdown);
     }
 
     /**
@@ -425,17 +423,21 @@ public class EmployeeShiftRegistrationService {
         }
 
         // Create registration with PENDING status for the accepted dates only
-        PartTimeRegistration registration = PartTimeRegistration.builder()
-                .employeeId(employeeId)
-                .partTimeSlotId(slot.getSlotId())
-                .effectiveFrom(request.getEffectiveFrom())
-                .effectiveTo(request.getEffectiveTo()) // keep original range
-                .status(com.dental.clinic.management.working_schedule.enums.RegistrationStatus.PENDING)
-                .isActive(true)
-                .build();
-
-        // Persist only the accepted (available) dates
-        registration.setRequestedDates(new java.util.HashSet<>(availableDates));
+        PartTimeRegistration registration = new PartTimeRegistration(
+                null, // registrationId - auto-generated
+                employeeId,
+                slot.getSlotId(),
+                request.getEffectiveFrom(),
+                request.getEffectiveTo(),
+                com.dental.clinic.management.working_schedule.enums.RegistrationStatus.PENDING,
+                null, // reason
+                null, // processedBy
+                null, // processedAt
+                true, // isActive
+                null, // createdAt - set by @PrePersist
+                null, // updatedAt - set by @PrePersist
+                0L, // version
+                new java.util.HashSet<>(availableDates)); // requestedDates
 
         PartTimeRegistration saved = registrationRepository.save(registration);
         log.info("Registration {} submitted by employee {} - status: PENDING (partialAccepted={})",
@@ -598,22 +600,21 @@ public class EmployeeShiftRegistrationService {
             processedByName = manager != null ? manager.getFullName() : "Unknown Manager";
         }
 
-        return RegistrationResponse.builder()
-                .registrationId(registration.getRegistrationId())
-                .employeeId(registration.getEmployeeId())
-                .partTimeSlotId(registration.getPartTimeSlotId())
-                .workShiftId(workShiftId)
-                .shiftName(shiftName)
-                .dayOfWeek(dayOfWeek)
-                .effectiveFrom(registration.getEffectiveFrom())
-                .effectiveTo(registration.getEffectiveTo())
-                .status(registration.getStatus() != null ? registration.getStatus().name() : null)
-                .dates(dates)
-                .reason(registration.getReason())
-                .processedBy(processedByName)
-                .processedAt(registration.getProcessedAt() != null ? registration.getProcessedAt().toString() : null)
-                .createdAt(registration.getCreatedAt() != null ? registration.getCreatedAt().toString() : null)
-                .build();
+        return new RegistrationResponse(
+                registration.getRegistrationId(),
+                registration.getEmployeeId(),
+                registration.getPartTimeSlotId(),
+                workShiftId,
+                shiftName,
+                dayOfWeek,
+                registration.getEffectiveFrom(),
+                registration.getEffectiveTo(),
+                registration.getStatus() != null ? registration.getStatus().name() : null,
+                dates,
+                registration.getReason(),
+                processedByName,
+                registration.getProcessedAt() != null ? registration.getProcessedAt().toString() : null,
+                registration.getCreatedAt() != null ? registration.getCreatedAt().toString() : null);
     }
 
     /**

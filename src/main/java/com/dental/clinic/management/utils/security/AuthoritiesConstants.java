@@ -3,7 +3,7 @@ package com.dental.clinic.management.utils.security;
 public final class AuthoritiesConstants {
 
     private AuthoritiesConstants() {
-    } // ngÃ„Æ’n khÃƒÂ´ng cho new
+    } // ngăn không cho new
 
     // Roles
     public static final String ADMIN = "ROLE_ADMIN";

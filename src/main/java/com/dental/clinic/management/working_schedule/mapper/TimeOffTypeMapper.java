@@ -19,16 +19,15 @@ public class TimeOffTypeMapper {
             return null;
         }
 
-        return TimeOffTypeResponse.builder()
-                .typeId(entity.getTypeId())
-                .typeCode(entity.getTypeCode())
-                .typeName(entity.getTypeName())
-                .description(entity.getDescription())
-                .requiresBalance(entity.getRequiresBalance())
-                .defaultDaysPerYear(entity.getDefaultDaysPerYear())
-                .isPaid(entity.getIsPaid())
-                .requiresApproval(entity.getRequiresApproval())
-                .isActive(entity.getIsActive())
-                .build();
+        return new TimeOffTypeResponse(
+                entity.getTypeId(),
+                entity.getTypeCode(),
+                entity.getTypeName(),
+                entity.getDescription(),
+                entity.getRequiresBalance(),
+                entity.getDefaultDaysPerYear(),
+                entity.getIsPaid(),
+                entity.getRequiresApproval(),
+                entity.getIsActive());
     }
 }

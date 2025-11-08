@@ -7,8 +7,8 @@ import jakarta.validation.constraints.NotBlank;
 @Schema(description = "Request to resend email verification")
 public class ResendVerificationRequest {
 
-    @NotBlank(message = "Email khÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c Ã„â€˜Ã¡Â»Æ' trÃ¡Â»â€˜ng")
-    @Email(message = "Email khÃƒÂ´ng hÃ¡Â»Â£p lÃ¡Â»â€¡")
+    @NotBlank(message = "Email không được để trống")
+    @Email(message = "Email không hợp lệ")
     @Schema(description = "Email address to resend verification", example = "user@example.com")
     private String email;
 

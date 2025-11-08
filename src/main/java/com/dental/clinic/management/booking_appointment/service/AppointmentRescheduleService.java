@@ -120,10 +120,10 @@ public class AppointmentRescheduleService {
                                 oldAppointmentCode, newAppointment.getAppointmentCode());
 
                 // STEP 8: Return both appointments
-                return RescheduleAppointmentResponse.builder()
-                                .cancelledAppointment(detailService.getAppointmentDetail(oldAppointmentCode))
-                                .newAppointment(detailService.getAppointmentDetail(newAppointment.getAppointmentCode()))
-                                .build();
+                AppointmentDetailDTO cancelledDetail = detailService.getAppointmentDetail(oldAppointmentCode);
+                AppointmentDetailDTO newDetail = detailService
+                                .getAppointmentDetail(newAppointment.getAppointmentCode());
+                return new RescheduleAppointmentResponse(cancelledDetail, newDetail);
         }
 
         /**
@@ -209,15 +209,15 @@ public class AppointmentRescheduleService {
                         String patientCode,
                         List<String> serviceCodes) {
 
-                return CreateAppointmentRequest.builder()
-                                .patientCode(patientCode)
-                                .employeeCode(request.getNewEmployeeCode())
-                                .roomCode(request.getNewRoomCode())
-                                .appointmentStartTime(request.getNewStartTime().toString())
-                                .serviceCodes(serviceCodes)
-                                .participantCodes(request.getNewParticipantCodes())
-                                .notes("Rescheduled from previous appointment")
-                                .build();
+                CreateAppointmentRequest createRequest = new CreateAppointmentRequest();
+                createRequest.setPatientCode(patientCode);
+                createRequest.setEmployeeCode(request.getNewEmployeeCode());
+                createRequest.setRoomCode(request.getNewRoomCode());
+                createRequest.setAppointmentStartTime(request.getNewStartTime().toString());
+                createRequest.setServiceCodes(serviceCodes);
+                createRequest.setParticipantCodes(request.getNewParticipantCodes());
+                createRequest.setNotes("Rescheduled from previous appointment");
+                return createRequest;
         }
 
         /**
@@ -247,27 +247,25 @@ public class AppointmentRescheduleService {
                 Integer performedByEmployeeId = getCurrentEmployeeId();
 
                 // Audit log for OLD appointment (RESCHEDULE_SOURCE)
-                AppointmentAuditLog oldLog = AppointmentAuditLog.builder()
-                                .appointmentId(oldAppointment.getAppointmentId())
-                                .actionType(AppointmentActionType.RESCHEDULE_SOURCE)
-                                .oldStatus(AppointmentStatus.SCHEDULED) // or CHECKED_IN
-                                .newStatus(AppointmentStatus.CANCELLED)
-                                .reasonCode(request.getReasonCode())
-                                .notes(request.getCancelNotes())
-                                .performedByEmployeeId(performedByEmployeeId)
-                                .build();
+                AppointmentAuditLog oldLog = new AppointmentAuditLog();
+                oldLog.setAppointmentId(oldAppointment.getAppointmentId());
+                oldLog.setActionType(AppointmentActionType.RESCHEDULE_SOURCE);
+                oldLog.setOldStatus(AppointmentStatus.SCHEDULED);
+                oldLog.setNewStatus(AppointmentStatus.CANCELLED);
+                oldLog.setReasonCode(request.getReasonCode());
+                oldLog.setNotes(request.getCancelNotes());
+                oldLog.setPerformedByEmployeeId(performedByEmployeeId);
                 auditLogRepository.save(oldLog);
 
                 // Audit log for NEW appointment (RESCHEDULE_TARGET)
-                AppointmentAuditLog newLog = AppointmentAuditLog.builder()
-                                .appointmentId(newAppointment.getAppointmentId())
-                                .actionType(AppointmentActionType.RESCHEDULE_TARGET)
-                                .oldStatus(null) // New appointment has no old status
-                                .newStatus(AppointmentStatus.SCHEDULED)
-                                .reasonCode(request.getReasonCode())
-                                .notes("Rescheduled from " + oldAppointment.getAppointmentCode())
-                                .performedByEmployeeId(performedByEmployeeId)
-                                .build();
+                AppointmentAuditLog newLog = new AppointmentAuditLog();
+                newLog.setAppointmentId(newAppointment.getAppointmentId());
+                newLog.setActionType(AppointmentActionType.RESCHEDULE_TARGET);
+                newLog.setOldStatus(null);
+                newLog.setNewStatus(AppointmentStatus.SCHEDULED);
+                newLog.setReasonCode(request.getReasonCode());
+                newLog.setNotes("Rescheduled from " + oldAppointment.getAppointmentCode());
+                newLog.setPerformedByEmployeeId(performedByEmployeeId);
                 auditLogRepository.save(newLog);
 
                 log.info("Created audit logs for reschedule operation");

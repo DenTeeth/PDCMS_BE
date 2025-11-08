@@ -100,7 +100,7 @@ public class EmployeeShiftService {
         // VIEW_SHIFTS_ALL
         if (!hasViewAllPermission && !employeeId.equals(currentEmployeeId)) {
             throw new RelatedResourceNotFoundException(
-                    "BÃ¡ÂºÂ¡n chÃ¡Â»â€° cÃƒÂ³ thÃ¡Â»Æ’ xem lÃ¡Â»â€¹ch lÃƒÂ m viÃ¡Â»â€¡c cÃ¡Â»Â§a chÃƒÂ­nh mÃƒÂ¬nh");
+                    "Bạn chỉ có quyền xem lịch làm việc của chính mình");
         }
 
         // Query shifts with filters
@@ -113,7 +113,7 @@ public class EmployeeShiftService {
             // Get all shifts in date range (only allowed with VIEW_SHIFTS_ALL)
             if (!hasViewAllPermission) {
                 throw new RelatedResourceNotFoundException(
-                        "BÃ¡ÂºÂ¡n chÃ¡Â»â€° cÃƒÂ³ thÃ¡Â»Æ’ xem lÃ¡Â»â€¹ch lÃƒÂ m viÃ¡Â»â€¡c cÃ¡Â»Â§a chÃƒÂ­nh mÃƒÂ¬nh");
+                        "Bạn chỉ có quyền xem lịch làm việc của chính mình");
             }
             allShifts = employeeShiftRepository.findByDateRangeAndStatus(startDate, endDate, null);
         }
@@ -154,7 +154,7 @@ public class EmployeeShiftService {
 
         // Verify employee exists if employeeId is provided
         if (employeeId != null && !employeeRepository.existsById(employeeId)) {
-            throw new RelatedResourceNotFoundException("NhÃƒÂ¢n viÃƒÂªn khÃƒÂ´ng tÃ¡Â»â€œn tÃ¡ÂºÂ¡i");
+            throw new RelatedResourceNotFoundException("Nhân viên không tồn tại");
         }
 
         // Get all shifts in date range
@@ -181,11 +181,10 @@ public class EmployeeShiftService {
                                     EmployeeShift::getStatus,
                                     Collectors.counting()));
 
-                    return ShiftSummaryResponseDto.builder()
-                            .workDate(entry.getKey())
-                            .totalShifts((long) entry.getValue().size())
-                            .statusBreakdown(statusBreakdown)
-                            .build();
+                    return new ShiftSummaryResponseDto(
+                            entry.getKey(),
+                            (long) entry.getValue().size(),
+                            statusBreakdown);
                 })
                 .sorted(Comparator.comparing(ShiftSummaryResponseDto::getWorkDate))
                 .collect(Collectors.toList());
@@ -209,13 +208,13 @@ public class EmployeeShiftService {
         EmployeeShift shift = employeeShiftRepository.findById(employeeShiftId)
                 .orElseThrow(
                         () -> new ShiftNotFoundException(
-                                "KhÃƒÂ´ng tÃƒÂ¬m thÃ¡ÂºÂ¥y ca lÃƒÂ m viÃ¡Â»â€¡c, hoÃ¡ÂºÂ·c bÃ¡ÂºÂ¡n khÃƒÂ´ng cÃƒÂ³ quyÃ¡Â»Ân xem."));
+                                "Không tìm thấy ca làm việc, hoặc bạn không có quyền xem."));
 
         // Check permission: user can only view their own shifts unless they have
         // VIEW_SHIFTS_ALL
         if (!hasViewAllPermission && !shift.getEmployee().getEmployeeId().equals(currentEmployeeId)) {
             throw new ShiftNotFoundException(
-                    "KhÃƒÂ´ng tÃƒÂ¬m thÃ¡ÂºÂ¥y ca lÃƒÂ m viÃ¡Â»â€¡c, hoÃ¡ÂºÂ·c bÃ¡ÂºÂ¡n khÃƒÂ´ng cÃƒÂ³ quyÃ¡Â»Ân xem.");
+                    "Không tìm thấy ca làm việc, hoặc bạn không có quyền xem.");
         }
 
         return employeeShiftMapper.toResponseDto(shift);
@@ -234,12 +233,12 @@ public class EmployeeShiftService {
 
         // Validate employee exists
         Employee employee = employeeRepository.findById(request.getEmployeeId())
-                .orElseThrow(() -> new RelatedResourceNotFoundException("NhÃƒÂ¢n viÃƒÂªn khÃƒÂ´ng tÃ¡Â»â€œn tÃ¡ÂºÂ¡i"));
+                .orElseThrow(() -> new RelatedResourceNotFoundException("Nhân viên không tồn tại"));
 
         // Validate work shift exists
         WorkShift workShift = workShiftRepository.findById(request.getWorkShiftId())
                 .orElseThrow(
-                        () -> new RelatedResourceNotFoundException("Ca lÃƒÂ m viÃ¡Â»â€¡c khÃƒÂ´ng tÃ¡Â»â€œn tÃ¡ÂºÂ¡i"));
+                        () -> new RelatedResourceNotFoundException("Ca làm việc không tồn tại"));
 
         // Validate shift creation (check for conflicts)
         validateShiftCreation(employee.getEmployeeId(), request.getWorkDate(), workShift.getWorkShiftId());
@@ -279,12 +278,12 @@ public class EmployeeShiftService {
 
         // Find the shift
         EmployeeShift shift = employeeShiftRepository.findById(employeeShiftId)
-                .orElseThrow(() -> new ShiftNotFoundException("KhÃƒÂ´ng tÃƒÂ¬m thÃ¡ÂºÂ¥y ca lÃƒÂ m viÃ¡Â»â€¡c"));
+                .orElseThrow(() -> new ShiftNotFoundException("Không tìm thấy ca làm việc"));
 
         // Check if shift is finalized (cannot update completed or cancelled shifts)
         if (shift.getStatus() == ShiftStatus.COMPLETED || shift.getStatus() == ShiftStatus.CANCELLED) {
             throw new ShiftFinalizedException(
-                    "KhÃƒÂ´ng thÃ¡Â»Æ’ cÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t ca lÃƒÂ m Ã„â€˜ÃƒÂ£ hoÃƒÂ n thÃƒÂ nh hoÃ¡ÂºÂ·c Ã„â€˜ÃƒÂ£ bÃ¡Â»â€¹ hÃ¡Â»Â§y.");
+                    "Không thể cập nhật ca làm việc đã hoàn thành hoặc đã bị hủy.");
         }
 
         // Update status if provided and valid
@@ -292,7 +291,7 @@ public class EmployeeShiftService {
             // Cannot manually set status to ON_LEAVE
             if (request.getStatus() == ShiftStatus.ON_LEAVE) {
                 throw new InvalidStatusTransitionException(
-                        "KhÃƒÂ´ng thÃ¡Â»Æ’ cÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t thÃ¡Â»Â§ cÃƒÂ´ng trÃ¡ÂºÂ¡ng thÃƒÂ¡i thÃƒÂ nh ON_LEAVE. Vui lÃƒÂ²ng tÃ¡ÂºÂ¡o yÃƒÂªu cÃ¡ÂºÂ§u nghÃ¡Â»â€° phÃƒÂ©p.");
+                        "Không thể cập nhật trạng thái thành ON_LEAVE. Vui lòng tạo yêu cầu phép.");
             }
             validateStatusTransition(shift.getStatus(), request.getStatus());
             shift.setStatus(request.getStatus());
@@ -321,23 +320,23 @@ public class EmployeeShiftService {
 
         // Find the shift
         EmployeeShift shift = employeeShiftRepository.findById(employeeShiftId)
-                .orElseThrow(() -> new ShiftNotFoundException("KhÃƒÂ´ng tÃƒÂ¬m thÃ¡ÂºÂ¥y ca lÃƒÂ m viÃ¡Â»â€¡c"));
+                .orElseThrow(() -> new ShiftNotFoundException("Không tìm thấy ca làm việc"));
 
         // Validate cancellation is allowed
         if (shift.getStatus() == ShiftStatus.COMPLETED) {
             throw new CannotCancelCompletedShiftException(
-                    "KhÃƒÂ´ng thÃ¡Â»Æ’ hÃ¡Â»Â§y ca lÃƒÂ m Ã„â€˜ÃƒÂ£ Ã„â€˜Ã†Â°Ã¡Â»Â£c hoÃƒÂ n thÃƒÂ nh.");
+                    "Không thể hủy ca làm việc đã hoàn thành.");
         }
 
         // Check if already cancelled (idempotency)
         if (shift.getStatus() == ShiftStatus.CANCELLED) {
             throw new InvalidStatusTransitionException(
-                    "Ca lÃƒÂ m viÃ¡Â»â€¡c nÃƒÂ y Ã„â€˜ÃƒÂ£ bÃ¡Â»â€¹ hÃ¡Â»Â§y trÃ†Â°Ã¡Â»â€ºc Ã„â€˜ÃƒÂ³.");
+                    "Ca làm việc này đã bị hủy trước đó.");
         }
 
         if (shift.getSource() == ShiftSource.BATCH_JOB || shift.getSource() == ShiftSource.REGISTRATION_JOB) {
             throw new CannotCancelBatchShiftException(
-                    "KhÃƒÂ´ng thÃ¡Â»Æ’ hÃ¡Â»Â§y ca lÃƒÂ m mÃ¡ÂºÂ·c Ã„â€˜Ã¡Â»â€¹nh cÃ¡Â»Â§a nhÃƒÂ¢n viÃƒÂªn Full-time. Vui lÃƒÂ²ng tÃ¡ÂºÂ¡o yÃƒÂªu cÃ¡ÂºÂ§u nghÃ¡Â»â€° phÃƒÂ©p.");
+                    "Không thể hủy ca làm mặc định của nhân viên Full-time. Vui lòng tạo yêu cầu phép.");
         }
 
         // Cancel the shift
@@ -368,7 +367,7 @@ public class EmployeeShiftService {
         // Get the new shift details
         WorkShift newWorkShift = workShiftRepository.findById(workShiftId)
                 .orElseThrow(
-                        () -> new RelatedResourceNotFoundException("Ca lÃƒÂ m viÃ¡Â»â€¡c khÃƒÂ´ng tÃ¡Â»â€œn tÃ¡ÂºÂ¡i"));
+                        () -> new RelatedResourceNotFoundException("Ca làm việc không tồn tại"));
 
         // Get all active shifts for this employee on this date
         List<EmployeeShift> existingShifts = employeeShiftRepository.findActiveShiftsByEmployeeAndDate(
@@ -431,13 +430,13 @@ public class EmployeeShiftService {
         // Cannot change completed shifts
         if (currentStatus == ShiftStatus.COMPLETED) {
             throw new InvalidStatusTransitionException(
-                    "KhÃƒÂ´ng thÃ¡Â»Æ’ thay Ã„â€˜Ã¡Â»â€¢i trÃ¡ÂºÂ¡ng thÃƒÂ¡i cÃ¡Â»Â§a ca lÃƒÂ m viÃ¡Â»â€¡c Ã„â€˜ÃƒÂ£ hoÃƒÂ n thÃƒÂ nh");
+                    "Không thể thay đổi trạng thái của ca làm việc đã hoàn thành");
         }
 
         // Cannot change cancelled shifts
         if (currentStatus == ShiftStatus.CANCELLED) {
             throw new InvalidStatusTransitionException(
-                    "KhÃƒÂ´ng thÃ¡Â»Æ’ thay Ã„â€˜Ã¡Â»â€¢i trÃ¡ÂºÂ¡ng thÃƒÂ¡i cÃ¡Â»Â§a ca lÃƒÂ m viÃ¡Â»â€¡c Ã„â€˜ÃƒÂ£ hÃ¡Â»Â§y");
+                    "Không thể thay đổi trạng thái của ca làm việc đã bị hủy");
         }
     }
 }

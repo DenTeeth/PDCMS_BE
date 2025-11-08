@@ -110,4 +110,141 @@ public class PartTimeRegistration {
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
+
+    // Constructors
+    public PartTimeRegistration() {
+    }
+
+    public PartTimeRegistration(Integer registrationId, Integer employeeId, Long partTimeSlotId,
+            LocalDate effectiveFrom, LocalDate effectiveTo, RegistrationStatus status,
+            String reason, Integer processedBy, LocalDateTime processedAt, Boolean isActive,
+            LocalDateTime createdAt, LocalDateTime updatedAt, Long version, Set<LocalDate> requestedDates) {
+        this.registrationId = registrationId;
+        this.employeeId = employeeId;
+        this.partTimeSlotId = partTimeSlotId;
+        this.effectiveFrom = effectiveFrom;
+        this.effectiveTo = effectiveTo;
+        this.status = status;
+        this.reason = reason;
+        this.processedBy = processedBy;
+        this.processedAt = processedAt;
+        this.isActive = isActive;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+        this.version = version;
+        this.requestedDates = requestedDates;
+    }
+
+    // Getters and Setters
+    public Integer getRegistrationId() {
+        return registrationId;
+    }
+
+    public void setRegistrationId(Integer registrationId) {
+        this.registrationId = registrationId;
+    }
+
+    public Integer getEmployeeId() {
+        return employeeId;
+    }
+
+    public void setEmployeeId(Integer employeeId) {
+        this.employeeId = employeeId;
+    }
+
+    public Long getPartTimeSlotId() {
+        return partTimeSlotId;
+    }
+
+    public void setPartTimeSlotId(Long partTimeSlotId) {
+        this.partTimeSlotId = partTimeSlotId;
+    }
+
+    public LocalDate getEffectiveFrom() {
+        return effectiveFrom;
+    }
+
+    public void setEffectiveFrom(LocalDate effectiveFrom) {
+        this.effectiveFrom = effectiveFrom;
+    }
+
+    public LocalDate getEffectiveTo() {
+        return effectiveTo;
+    }
+
+    public void setEffectiveTo(LocalDate effectiveTo) {
+        this.effectiveTo = effectiveTo;
+    }
+
+    public RegistrationStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(RegistrationStatus status) {
+        this.status = status;
+    }
+
+    public String getReason() {
+        return reason;
+    }
+
+    public void setReason(String reason) {
+        this.reason = reason;
+    }
+
+    public Integer getProcessedBy() {
+        return processedBy;
+    }
+
+    public void setProcessedBy(Integer processedBy) {
+        this.processedBy = processedBy;
+    }
+
+    public LocalDateTime getProcessedAt() {
+        return processedAt;
+    }
+
+    public void setProcessedAt(LocalDateTime processedAt) {
+        this.processedAt = processedAt;
+    }
+
+    public Boolean getIsActive() {
+        return isActive;
+    }
+
+    public void setIsActive(Boolean isActive) {
+        this.isActive = isActive;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
+    }
+
+    public Set<LocalDate> getRequestedDates() {
+        return requestedDates;
+    }
+
+    public void setRequestedDates(Set<LocalDate> requestedDates) {
+        this.requestedDates = requestedDates;
+    }
 }

@@ -13,17 +13,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Entity representing actual inventory batches (lÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â´
- * hÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ng thÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€šÃ‚Â±c
- * tÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â¿).
+ * Entity representing actual inventory batches
  * This is where ACTUAL stock quantities are stored.
  * 
  * Business Rules:
  * - UNIQUE(item_master_id, lot_number) - One item can have multiple batches
  * with different lot numbers
  * - FEFO (First Expired, First Out) - Sort by expiry_date ASC when exporting
- * - import_price is used to calculate loss (thÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â¥t
- * thoÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡t)
+ * - import_price is used to calculate loss (thất thoát)
  * - expiry_date is NULLABLE (for non-perishable items like instruments)
  */
 @Entity

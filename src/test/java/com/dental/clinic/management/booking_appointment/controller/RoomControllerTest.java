@@ -39,282 +39,251 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc(addFilters = false) // Disable security filters for testing
 class RoomControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+        @Autowired
+        private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+        @Autowired
+        private ObjectMapper objectMapper;
 
-    @MockBean
-    private RoomService roomService;
+        @MockBean
+        private RoomService roomService;
 
-    private RoomResponse roomResponse1;
-    private RoomResponse roomResponse2;
-    private CreateRoomRequest createRequest;
-    private UpdateRoomRequest updateRequest;
+        private RoomResponse roomResponse1;
+        private RoomResponse roomResponse2;
+        private CreateRoomRequest createRequest;
+        private UpdateRoomRequest updateRequest;
 
-    @BeforeEach
-    void setUp() {
-        // Sample RoomResponse objects
-        roomResponse1 = RoomResponse.builder()
-                .roomId("ROOM001")
-                .roomCode("P-01")
-                .roomName("Phòng thường 1")
-                .roomType("STANDARD")
-                .isActive(true)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
+        @BeforeEach
+        void setUp() {
+                // Sample RoomResponse objects
+                LocalDateTime now = LocalDateTime.now();
+                roomResponse1 = new RoomResponse("ROOM001", "P-01", "Phòng thường 1", "STANDARD", true, now, now);
 
-        roomResponse2 = RoomResponse.builder()
-                .roomId("ROOM002")
-                .roomCode("P-02")
-                .roomName("Phòng Implant")
-                .roomType("IMPLANT")
-                .isActive(true)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
+                roomResponse2 = new RoomResponse("ROOM002", "P-02", "Phòng Implant", "IMPLANT", true, now, now);
 
-        // Sample CreateRoomRequest
-        createRequest = CreateRoomRequest.builder()
-                .roomCode("P-03")
-                .roomName("Phòng VIP")
-                .roomType("VIP")
-                .build();
+                // Sample CreateRoomRequest
+                createRequest = new CreateRoomRequest();
+                createRequest.setRoomCode("P-03");
+                createRequest.setRoomName("Phòng VIP");
+                createRequest.setRoomType("VIP");
 
-        // Sample UpdateRoomRequest
-        updateRequest = UpdateRoomRequest.builder()
-                .roomName("Phòng thường 1 - Đã sửa")
-                .roomType("STANDARD")
-                .isActive(true)
-                .build();
-    }
+                // Sample UpdateRoomRequest
+                updateRequest = new UpdateRoomRequest();
+                updateRequest.setRoomName("Phòng thường 1 - Đã sửa");
+                updateRequest.setRoomType("STANDARD");
+                updateRequest.setIsActive(true);
+        }
 
-    @Test
-    @DisplayName("GET /api/v1/rooms - Get all rooms with pagination")
-    @WithMockUser(authorities = { "VIEW_ROOM" })
-    void getAllRooms_ShouldReturnPagedRooms() throws Exception {
-        // Given
-        Page<RoomResponse> page = new PageImpl<>(Arrays.asList(roomResponse1, roomResponse2));
-        when(roomService.getAllRooms(anyInt(), anyInt(), anyString(), anyString(),
-                isNull(), isNull(), isNull())).thenReturn(page);
+        @Test
+        @DisplayName("GET /api/v1/rooms - Get all rooms with pagination")
+        @WithMockUser(authorities = { "VIEW_ROOM" })
+        void getAllRooms_ShouldReturnPagedRooms() throws Exception {
+                // Given
+                Page<RoomResponse> page = new PageImpl<>(Arrays.asList(roomResponse1, roomResponse2));
+                when(roomService.getAllRooms(anyInt(), anyInt(), anyString(), anyString(),
+                                isNull(), isNull(), isNull())).thenReturn(page);
 
-        // When & Then
-        mockMvc.perform(get("/api/v1/rooms")
-                .param("page", "0")
-                .param("size", "10")
-                .param("sortBy", "roomId")
-                .param("sortDirection", "ASC")
-                .contentType(MediaType.APPLICATION_JSON))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content", hasSize(2)))
-                .andExpect(jsonPath("$.content[0].roomCode", is("P-01")))
-                .andExpect(jsonPath("$.content[0].roomName", is("Phòng thường 1")))
-                .andExpect(jsonPath("$.content[1].roomCode", is("P-02")));
+                // When & Then
+                mockMvc.perform(get("/api/v1/rooms")
+                                .param("page", "0")
+                                .param("size", "10")
+                                .param("sortBy", "roomId")
+                                .param("sortDirection", "ASC")
+                                .contentType(MediaType.APPLICATION_JSON))
+                                .andDo(print())
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.content", hasSize(2)))
+                                .andExpect(jsonPath("$.content[0].roomCode", is("P-01")))
+                                .andExpect(jsonPath("$.content[0].roomName", is("Phòng thường 1")))
+                                .andExpect(jsonPath("$.content[1].roomCode", is("P-02")));
 
-        verify(roomService, times(1)).getAllRooms(0, 10, "roomId", "ASC", null, null, null);
-    }
+                verify(roomService, times(1)).getAllRooms(0, 10, "roomId", "ASC", null, null, null);
+        }
 
-    @Test
-    @DisplayName("GET /api/v1/rooms - Get rooms with filters")
-    @WithMockUser(authorities = { "VIEW_ROOM" })
-    void getAllRooms_WithFilters_ShouldReturnFilteredRooms() throws Exception {
-        // Given
-        Page<RoomResponse> page = new PageImpl<>(List.of(roomResponse1));
-        when(roomService.getAllRooms(anyInt(), anyInt(), anyString(), anyString(),
-                eq(true), eq("STANDARD"), eq("phòng"))).thenReturn(page);
+        @Test
+        @DisplayName("GET /api/v1/rooms - Get rooms with filters")
+        @WithMockUser(authorities = { "VIEW_ROOM" })
+        void getAllRooms_WithFilters_ShouldReturnFilteredRooms() throws Exception {
+                // Given
+                Page<RoomResponse> page = new PageImpl<>(List.of(roomResponse1));
+                when(roomService.getAllRooms(anyInt(), anyInt(), anyString(), anyString(),
+                                eq(true), eq("STANDARD"), eq("phòng"))).thenReturn(page);
 
-        // When & Then
-        mockMvc.perform(get("/api/v1/rooms")
-                .param("page", "0")
-                .param("size", "10")
-                .param("isActive", "true")
-                .param("roomType", "STANDARD")
-                .param("keyword", "phòng")
-                .contentType(MediaType.APPLICATION_JSON))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content", hasSize(1)))
-                .andExpect(jsonPath("$.content[0].roomType", is("STANDARD")));
+                // When & Then
+                mockMvc.perform(get("/api/v1/rooms")
+                                .param("page", "0")
+                                .param("size", "10")
+                                .param("isActive", "true")
+                                .param("roomType", "STANDARD")
+                                .param("keyword", "phòng")
+                                .contentType(MediaType.APPLICATION_JSON))
+                                .andDo(print())
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.content", hasSize(1)))
+                                .andExpect(jsonPath("$.content[0].roomType", is("STANDARD")));
 
-        verify(roomService, times(1)).getAllRooms(0, 10, "roomId", "ASC", true, "STANDARD", "phòng");
-    }
+                verify(roomService, times(1)).getAllRooms(0, 10, "roomId", "ASC", true, "STANDARD", "phòng");
+        }
 
-    @Test
-    @DisplayName("GET /api/v1/rooms/active - Get all active rooms")
-    @WithMockUser(authorities = { "VIEW_ROOM" })
-    void getAllActiveRooms_ShouldReturnActiveRoomsList() throws Exception {
-        // Given
-        List<RoomResponse> activeRooms = Arrays.asList(roomResponse1, roomResponse2);
-        when(roomService.getAllActiveRooms()).thenReturn(activeRooms);
+        @Test
+        @DisplayName("GET /api/v1/rooms/active - Get all active rooms")
+        @WithMockUser(authorities = { "VIEW_ROOM" })
+        void getAllActiveRooms_ShouldReturnActiveRoomsList() throws Exception {
+                // Given
+                List<RoomResponse> activeRooms = Arrays.asList(roomResponse1, roomResponse2);
+                when(roomService.getAllActiveRooms()).thenReturn(activeRooms);
 
-        // When & Then
-        mockMvc.perform(get("/api/v1/rooms/active")
-                .contentType(MediaType.APPLICATION_JSON))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[0].isActive", is(true)))
-                .andExpect(jsonPath("$[1].isActive", is(true)));
+                // When & Then
+                mockMvc.perform(get("/api/v1/rooms/active")
+                                .contentType(MediaType.APPLICATION_JSON))
+                                .andDo(print())
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$", hasSize(2)))
+                                .andExpect(jsonPath("$[0].isActive", is(true)))
+                                .andExpect(jsonPath("$[1].isActive", is(true)));
 
-        verify(roomService, times(1)).getAllActiveRooms();
-    }
+                verify(roomService, times(1)).getAllActiveRooms();
+        }
 
-    @Test
-    @DisplayName("GET /api/v1/rooms/{roomId} - Get room by ID")
-    @WithMockUser(authorities = { "VIEW_ROOM" })
-    void getRoomById_ShouldReturnRoom() throws Exception {
-        // Given
-        when(roomService.getRoomById("ROOM001")).thenReturn(roomResponse1);
+        @Test
+        @DisplayName("GET /api/v1/rooms/{roomId} - Get room by ID")
+        @WithMockUser(authorities = { "VIEW_ROOM" })
+        void getRoomById_ShouldReturnRoom() throws Exception {
+                // Given
+                when(roomService.getRoomById("ROOM001")).thenReturn(roomResponse1);
 
-        // When & Then
-        mockMvc.perform(get("/api/v1/rooms/{roomId}", "ROOM001")
-                .contentType(MediaType.APPLICATION_JSON))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.roomId", is("ROOM001")))
-                .andExpect(jsonPath("$.roomCode", is("P-01")))
-                .andExpect(jsonPath("$.roomName", is("Phòng thường 1")));
+                // When & Then
+                mockMvc.perform(get("/api/v1/rooms/{roomId}", "ROOM001")
+                                .contentType(MediaType.APPLICATION_JSON))
+                                .andDo(print())
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.roomId", is("ROOM001")))
+                                .andExpect(jsonPath("$.roomCode", is("P-01")))
+                                .andExpect(jsonPath("$.roomName", is("Phòng thường 1")));
 
-        verify(roomService, times(1)).getRoomById("ROOM001");
-    }
+                verify(roomService, times(1)).getRoomById("ROOM001");
+        }
 
-    @Test
-    @DisplayName("POST /api/v1/rooms - Create new room")
-    @WithMockUser(authorities = { "CREATE_ROOM" })
-    void createRoom_ShouldReturnCreatedRoom() throws Exception {
-        // Given
-        RoomResponse createdRoom = RoomResponse.builder()
-                .roomId("ROOM003")
-                .roomCode("P-03")
-                .roomName("Phòng VIP")
-                .roomType("VIP")
-                .isActive(true)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
+        @Test
+        @DisplayName("POST /api/v1/rooms - Create new room")
+        @WithMockUser(authorities = { "CREATE_ROOM" })
+        void createRoom_ShouldReturnCreatedRoom() throws Exception {
+                // Given
+                LocalDateTime now = LocalDateTime.now();
+                RoomResponse createdRoom = new RoomResponse("ROOM003", "P-03", "Phòng VIP", "VIP", true, now, now);
 
-        when(roomService.createRoom(any(CreateRoomRequest.class))).thenReturn(createdRoom);
+                when(roomService.createRoom(any(CreateRoomRequest.class))).thenReturn(createdRoom);
 
-        // When & Then
-        mockMvc.perform(post("/api/v1/rooms")
-                .with(csrf())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(createRequest)))
-                .andDo(print())
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.roomId", is("ROOM003")))
-                .andExpect(jsonPath("$.roomCode", is("P-03")))
-                .andExpect(jsonPath("$.roomName", is("Phòng VIP")))
-                .andExpect(jsonPath("$.roomType", is("VIP")));
+                // When & Then
+                mockMvc.perform(post("/api/v1/rooms")
+                                .with(csrf())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(createRequest)))
+                                .andDo(print())
+                                .andExpect(status().isCreated())
+                                .andExpect(jsonPath("$.roomId", is("ROOM003")))
+                                .andExpect(jsonPath("$.roomCode", is("P-03")))
+                                .andExpect(jsonPath("$.roomName", is("Phòng VIP")))
+                                .andExpect(jsonPath("$.roomType", is("VIP")));
 
-        verify(roomService, times(1)).createRoom(any(CreateRoomRequest.class));
-    }
+                verify(roomService, times(1)).createRoom(any(CreateRoomRequest.class));
+        }
 
-    @Test
-    @DisplayName("POST /api/v1/rooms - Create room with invalid data should fail")
-    @WithMockUser(authorities = { "CREATE_ROOM" })
-    void createRoom_WithInvalidData_ShouldReturnBadRequest() throws Exception {
-        // Given - empty roomCode
-        CreateRoomRequest invalidRequest = CreateRoomRequest.builder()
-                .roomCode("")
-                .roomName("Test")
-                .roomType("STANDARD")
-                .build();
+        @Test
+        @DisplayName("POST /api/v1/rooms - Create room with invalid data should fail")
+        @WithMockUser(authorities = { "CREATE_ROOM" })
+        void createRoom_WithInvalidData_ShouldReturnBadRequest() throws Exception {
+                // Given - empty roomCode
+                CreateRoomRequest invalidRequest = new CreateRoomRequest();
+                invalidRequest.setRoomCode("");
+                invalidRequest.setRoomName("Test");
+                invalidRequest.setRoomType("STANDARD");
 
-        // When & Then
-        mockMvc.perform(post("/api/v1/rooms")
-                .with(csrf())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(invalidRequest)))
-                .andDo(print())
-                .andExpect(status().isBadRequest());
+                // When & Then
+                mockMvc.perform(post("/api/v1/rooms")
+                                .with(csrf())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(invalidRequest)))
+                                .andDo(print())
+                                .andExpect(status().isBadRequest());
 
-        verify(roomService, never()).createRoom(any(CreateRoomRequest.class));
-    }
+                verify(roomService, never()).createRoom(any(CreateRoomRequest.class));
+        }
 
-    @Test
-    @DisplayName("PUT /api/v1/rooms/{roomId} - Update room")
-    @WithMockUser(authorities = { "UPDATE_ROOM" })
-    void updateRoom_ShouldReturnUpdatedRoom() throws Exception {
-        // Given
-        RoomResponse updatedRoom = RoomResponse.builder()
-                .roomId("ROOM001")
-                .roomCode("P-01")
-                .roomName("Phòng thường 1 - Đã sửa")
-                .roomType("STANDARD")
-                .isActive(true)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
+        @Test
+        @DisplayName("PUT /api/v1/rooms/{roomId} - Update room")
+        @WithMockUser(authorities = { "UPDATE_ROOM" })
+        void updateRoom_ShouldReturnUpdatedRoom() throws Exception {
+                // Given
+                LocalDateTime now = LocalDateTime.now();
+                RoomResponse updatedRoom = new RoomResponse("ROOM001", "P-01", "Phòng thường 1 - Đã sửa", "STANDARD",
+                                true, now, now);
 
-        when(roomService.updateRoom(eq("ROOM001"), any(UpdateRoomRequest.class))).thenReturn(updatedRoom);
+                when(roomService.updateRoom(eq("ROOM001"), any(UpdateRoomRequest.class))).thenReturn(updatedRoom);
 
-        // When & Then
-        mockMvc.perform(put("/api/v1/rooms/{roomId}", "ROOM001")
-                .with(csrf())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(updateRequest)))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.roomId", is("ROOM001")))
-                .andExpect(jsonPath("$.roomName", is("Phòng thường 1 - Đã sửa")));
+                // When & Then
+                mockMvc.perform(put("/api/v1/rooms/{roomId}", "ROOM001")
+                                .with(csrf())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(updateRequest)))
+                                .andDo(print())
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.roomId", is("ROOM001")))
+                                .andExpect(jsonPath("$.roomName", is("Phòng thường 1 - Đã sửa")));
 
-        verify(roomService, times(1)).updateRoom(eq("ROOM001"), any(UpdateRoomRequest.class));
-    }
+                verify(roomService, times(1)).updateRoom(eq("ROOM001"), any(UpdateRoomRequest.class));
+        }
 
-    @Test
-    @DisplayName("DELETE /api/v1/rooms/{roomId} - Soft delete room")
-    @WithMockUser(authorities = { "DELETE_ROOM" })
-    void deleteRoom_ShouldReturnNoContent() throws Exception {
-        // Given
-        doNothing().when(roomService).deleteRoom("ROOM001");
+        @Test
+        @DisplayName("DELETE /api/v1/rooms/{roomId} - Soft delete room")
+        @WithMockUser(authorities = { "DELETE_ROOM" })
+        void deleteRoom_ShouldReturnNoContent() throws Exception {
+                // Given
+                doNothing().when(roomService).deleteRoom("ROOM001");
 
-        // When & Then
-        mockMvc.perform(delete("/api/v1/rooms/{roomId}", "ROOM001")
-                .with(csrf())
-                .contentType(MediaType.APPLICATION_JSON))
-                .andDo(print())
-                .andExpect(status().isNoContent());
+                // When & Then
+                mockMvc.perform(delete("/api/v1/rooms/{roomId}", "ROOM001")
+                                .with(csrf())
+                                .contentType(MediaType.APPLICATION_JSON))
+                                .andDo(print())
+                                .andExpect(status().isNoContent());
 
-        verify(roomService, times(1)).deleteRoom("ROOM001");
-    }
+                verify(roomService, times(1)).deleteRoom("ROOM001");
+        }
 
-    @Test
-    @DisplayName("DELETE /api/v1/rooms/{roomId}/permanent - Permanently delete room")
-    @WithMockUser(roles = { "ADMIN" })
-    void permanentlyDeleteRoom_ShouldReturnNoContent() throws Exception {
-        // Given
-        doNothing().when(roomService).permanentlyDeleteRoom("ROOM001");
+        @Test
+        @DisplayName("DELETE /api/v1/rooms/{roomId}/permanent - Permanently delete room")
+        @WithMockUser(roles = { "ADMIN" })
+        void permanentlyDeleteRoom_ShouldReturnNoContent() throws Exception {
+                // Given
+                doNothing().when(roomService).permanentlyDeleteRoom("ROOM001");
 
-        // When & Then
-        mockMvc.perform(delete("/api/v1/rooms/{roomId}/permanent", "ROOM001")
-                .with(csrf())
-                .contentType(MediaType.APPLICATION_JSON))
-                .andDo(print())
-                .andExpect(status().isNoContent());
+                // When & Then
+                mockMvc.perform(delete("/api/v1/rooms/{roomId}/permanent", "ROOM001")
+                                .with(csrf())
+                                .contentType(MediaType.APPLICATION_JSON))
+                                .andDo(print())
+                                .andExpect(status().isNoContent());
 
-        verify(roomService, times(1)).permanentlyDeleteRoom("ROOM001");
-    }
+                verify(roomService, times(1)).permanentlyDeleteRoom("ROOM001");
+        }
 
-    @Test
-    @DisplayName("DELETE /api/v1/rooms/{roomId}/permanent - Order matters for path matching")
-    @WithMockUser(roles = { "ADMIN" })
-    void permanentDelete_ShouldMatchCorrectEndpoint() throws Exception {
-        // Given
-        doNothing().when(roomService).permanentlyDeleteRoom("ROOM001");
+        @Test
+        @DisplayName("DELETE /api/v1/rooms/{roomId}/permanent - Order matters for path matching")
+        @WithMockUser(roles = { "ADMIN" })
+        void permanentDelete_ShouldMatchCorrectEndpoint() throws Exception {
+                // Given
+                doNothing().when(roomService).permanentlyDeleteRoom("ROOM001");
 
-        // When & Then - This should match /permanent endpoint, NOT /{roomId}
-        mockMvc.perform(delete("/api/v1/rooms/{roomId}/permanent", "ROOM001")
-                .with(csrf())
-                .contentType(MediaType.APPLICATION_JSON))
-                .andDo(print())
-                .andExpect(status().isNoContent());
+                // When & Then - This should match /permanent endpoint, NOT /{roomId}
+                mockMvc.perform(delete("/api/v1/rooms/{roomId}/permanent", "ROOM001")
+                                .with(csrf())
+                                .contentType(MediaType.APPLICATION_JSON))
+                                .andDo(print())
+                                .andExpect(status().isNoContent());
 
-        // Verify that permanentlyDeleteRoom was called, NOT deleteRoom
-        verify(roomService, times(1)).permanentlyDeleteRoom("ROOM001");
-        verify(roomService, never()).deleteRoom(anyString());
-    }
+                // Verify that permanentlyDeleteRoom was called, NOT deleteRoom
+                verify(roomService, times(1)).permanentlyDeleteRoom("ROOM001");
+                verify(roomService, never()).deleteRoom(anyString());
+        }
 }

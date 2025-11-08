@@ -6,7 +6,7 @@ import java.util.Map;
 import com.dental.clinic.management.employee.enums.EmploymentType;
 
 /**
- * Login response vÃ¡Â»â€ºi access token trong body vÃƒÂ  refresh token trong cookie.
+ * Login response vào access token trong body và refresh token trong cookie.
  */
 // @JsonInclude(JsonInclude.Include.NON_NULL) // Commented out for debugging -
 // fields should always be present

@@ -389,16 +389,15 @@ public class PartTimeSlotAvailabilityService {
                     currentMonth.getMonth().toString().substring(1).toLowerCase() +
                     " " + currentMonth.getYear();
 
-            result.add(com.dental.clinic.management.working_schedule.dto.response.SlotDetailResponse.MonthlyAvailability
-                    .builder()
-                    .month(currentMonth.toString().substring(0, 7)) // YYYY-MM
-                    .monthName(monthName)
-                    .totalDatesAvailable(totalDatesAvailable)
-                    .totalDatesPartial(totalDatesPartial)
-                    .totalDatesFull(totalDatesFull)
-                    .status(status)
-                    .totalWorkingDays(totalWorkingDays)
-                    .build());
+            result.add(
+                    new com.dental.clinic.management.working_schedule.dto.response.SlotDetailResponse.MonthlyAvailability(
+                            currentMonth.toString().substring(0, 7), // month: YYYY-MM
+                            monthName,
+                            totalDatesAvailable,
+                            totalDatesPartial,
+                            totalDatesFull,
+                            status,
+                            totalWorkingDays));
 
             currentMonth = currentMonth.plusMonths(1);
         }
@@ -415,29 +414,29 @@ public class PartTimeSlotAvailabilityService {
     private String getVietnameseMonthName(int monthValue) {
         switch (monthValue) {
             case 1:
-                return "T1"; // ThÃƒÂ¡ng 1 (January)
+                return "T1"; // Tháng 1 (January)
             case 2:
-                return "T2"; // ThÃƒÂ¡ng 2 (February)
+                return "T2"; // Tháng 2 (February)
             case 3:
-                return "T3"; // ThÃƒÂ¡ng 3 (March)
+                return "T3"; // Tháng 3 (March)
             case 4:
-                return "T4"; // ThÃƒÂ¡ng 4 (April)
+                return "T4"; // Tháng 4 (April)
             case 5:
-                return "T5"; // ThÃƒÂ¡ng 5 (May)
+                return "T5"; // Tháng 5 (May)
             case 6:
-                return "T6"; // ThÃƒÂ¡ng 6 (June)
+                return "T6"; // Tháng 6 (June)
             case 7:
-                return "T7"; // ThÃƒÂ¡ng 7 (July)
+                return "T7"; // Tháng 7 (July)
             case 8:
-                return "T8"; // ThÃƒÂ¡ng 8 (August)
+                return "T8"; // Tháng 8 (August)
             case 9:
-                return "T9"; // ThÃƒÂ¡ng 9 (September)
+                return "T9"; // Tháng 9 (September)
             case 10:
-                return "T10"; // ThÃƒÂ¡ng 10 (October)
+                return "T10"; // Tháng 10 (October)
             case 11:
-                return "T11"; // ThÃƒÂ¡ng 11 (November)
+                return "T11"; // Tháng 11 (November)
             case 12:
-                return "T12"; // ThÃƒÂ¡ng 12 (December)
+                return "T12"; // Tháng 12 (December)
             default:
                 return "T" + monthValue;
         }

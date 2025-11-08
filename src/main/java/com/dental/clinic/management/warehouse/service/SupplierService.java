@@ -12,8 +12,10 @@ import com.dental.clinic.management.warehouse.repository.SupplierRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -89,23 +91,34 @@ public class SupplierService {
 
     @Transactional(readOnly = true)
     @PreAuthorize("hasAuthority('" + AuthoritiesConstants.VIEW_WAREHOUSE_SUPPLIER + "')")
-    public List<SupplierResponse> getAllSuppliers() {
-        log.debug("Getting all suppliers");
+    public Page<SupplierResponse> getAllSuppliers(int page, int size, String sortBy, String sortDirection) {
+        log.debug("Getting all suppliers: page={}, size={}, sortBy={}, sortDirection={}", page, size, sortBy,
+                sortDirection);
 
-        return supplierRepository.findAll().stream()
-                .map(supplierMapper::toResponse)
-                .collect(Collectors.toList());
+        // Default sorting by createdAt if sortBy is not provided
+        String sortField = (sortBy != null && !sortBy.isEmpty()) ? sortBy : "createdAt";
+        Sort.Direction direction = "ASC".equalsIgnoreCase(sortDirection) ? Sort.Direction.ASC : Sort.Direction.DESC;
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortField));
+
+        return supplierRepository.findAll(pageable)
+                .map(supplierMapper::toResponse);
     }
 
     @Transactional(readOnly = true)
     @PreAuthorize("hasAuthority('" + AuthoritiesConstants.VIEW_WAREHOUSE_SUPPLIER + "')")
-    public List<SupplierResponse> searchSuppliers(String keyword) {
-        log.debug("Searching suppliers with keyword: {}", keyword);
+    public Page<SupplierResponse> searchSuppliers(String keyword, int page, int size) {
+        log.debug("Searching suppliers with keyword: {}, page={}, size={}", keyword, page, size);
 
-        return supplierRepository.searchByKeyword(keyword, PageRequest.of(0, 100))
-                .getContent().stream()
-                .map(supplierMapper::toResponse)
-                .collect(Collectors.toList());
+        Pageable pageable = PageRequest.of(page, size);
+
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return supplierRepository.findAll(pageable)
+                    .map(supplierMapper::toResponse);
+        }
+
+        return supplierRepository.searchByKeyword(keyword, pageable)
+                .map(supplierMapper::toResponse);
     }
 
     @PreAuthorize("hasAuthority('" + AuthoritiesConstants.DELETE_WAREHOUSE_SUPPLIER + "')")

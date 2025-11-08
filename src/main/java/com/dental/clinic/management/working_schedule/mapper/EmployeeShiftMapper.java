@@ -41,22 +41,21 @@ public class EmployeeShiftMapper {
                     .orElse("Unknown");
         }
 
-        return EmployeeShiftResponseDto.builder()
-                .employeeShiftId(shift.getEmployeeShiftId())
-                .employee(mapEmployeeBasic(shift))
-                .workDate(shift.getWorkDate())
-                .workShift(mapWorkShiftBasic(shift))
-                .source(shift.getSource())
-                .status(shift.getStatus())
-                .isOvertime(shift.getIsOvertime())
-                .createdBy(shift.getCreatedBy())
-                .createdByName(createdByName)
-                .sourceOtRequestId(shift.getSourceOtRequestId())
-                .sourceOffRequestId(shift.getSourceOffRequestId())
-                .notes(shift.getNotes())
-                .createdAt(shift.getCreatedAt())
-                .updatedAt(shift.getUpdatedAt())
-                .build();
+        return new EmployeeShiftResponseDto(
+                shift.getEmployeeShiftId(),
+                mapEmployeeBasic(shift),
+                shift.getWorkDate(),
+                mapWorkShiftBasic(shift),
+                shift.getSource(),
+                shift.getStatus(),
+                shift.getIsOvertime(),
+                shift.getCreatedBy(),
+                createdByName,
+                shift.getSourceOtRequestId(),
+                shift.getSourceOffRequestId(),
+                shift.getNotes(),
+                shift.getCreatedAt(),
+                shift.getUpdatedAt());
     }
 
     /**
@@ -67,13 +66,12 @@ public class EmployeeShiftMapper {
             return null;
         }
 
-        return EmployeeShiftResponseDto.EmployeeBasicDto.builder()
-                .employeeId(shift.getEmployee().getEmployeeId())
-                .fullName(shift.getEmployee().getFullName())
-                .position(shift.getEmployee().getEmploymentType() != null
+        return new EmployeeShiftResponseDto.EmployeeBasicDto(
+                shift.getEmployee().getEmployeeId(),
+                shift.getEmployee().getFullName(),
+                shift.getEmployee().getEmploymentType() != null
                         ? shift.getEmployee().getEmploymentType().name()
-                        : null)
-                .build();
+                        : null);
     }
 
     /**
@@ -84,15 +82,14 @@ public class EmployeeShiftMapper {
             return null;
         }
 
-        return EmployeeShiftResponseDto.WorkShiftBasicDto.builder()
-                .workShiftId(shift.getWorkShift().getWorkShiftId())
-                .shiftName(shift.getWorkShift().getShiftName())
-                .startTime(shift.getWorkShift().getStartTime() != null
+        return new EmployeeShiftResponseDto.WorkShiftBasicDto(
+                shift.getWorkShift().getWorkShiftId(),
+                shift.getWorkShift().getShiftName(),
+                shift.getWorkShift().getStartTime() != null
                         ? shift.getWorkShift().getStartTime().toString()
-                        : null)
-                .endTime(shift.getWorkShift().getEndTime() != null
+                        : null,
+                shift.getWorkShift().getEndTime() != null
                         ? shift.getWorkShift().getEndTime().toString()
-                        : null)
-                .build();
+                        : null);
     }
 }

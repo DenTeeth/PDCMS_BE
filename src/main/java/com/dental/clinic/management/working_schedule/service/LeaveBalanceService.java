@@ -144,14 +144,13 @@ public class LeaveBalanceService {
         balance = balanceRepository.save(balance);
 
         // Create history record
-        LeaveBalanceHistory history = LeaveBalanceHistory.builder()
-                .balanceId(balance.getBalanceId())
-                .changedBy(null) // System action, no specific user
-                .changeAmount(defaultDays)
-                .reason(BalanceChangeReason.ANNUAL_RESET)
-                .notes(String.format("CÃ¡ÂºÂ¥p %s ngÃƒÂ y nghÃ¡Â»â€° phÃƒÂ©p %s cho nÃ„Æ’m %d",
-                        defaultDays, timeOffType.getTypeName(), year))
-                .build();
+        LeaveBalanceHistory history = new LeaveBalanceHistory();
+        history.setBalanceId(balance.getBalanceId());
+        history.setChangedBy(null); // System action, no specific user
+        history.setChangeAmount(defaultDays);
+        history.setReason(BalanceChangeReason.ANNUAL_RESET);
+        history.setNotes(String.format("CÃ¡ÂºÂ¥p %s ngÃƒÂ y nghÃ¡Â»â€° phÃƒÂ©p %s cho nÃ„Æ'm %d",
+                defaultDays, timeOffType.getTypeName(), year));
 
         historyRepository.save(history);
 
@@ -195,13 +194,12 @@ public class LeaveBalanceService {
         balanceRepository.save(balance);
 
         // Record in history
-        LeaveBalanceHistory history = LeaveBalanceHistory.builder()
-                .balanceId(balance.getBalanceId())
-                .changedBy(changedBy)
-                .changeAmount(adjustment)
-                .reason(BalanceChangeReason.MANUAL_ADJUSTMENT)
-                .notes(reason != null ? reason : "Ã„ÂiÃ¡Â»Âu chÃ¡Â»â€°nh thÃ¡Â»Â§ cÃƒÂ´ng")
-                .build();
+        LeaveBalanceHistory history = new LeaveBalanceHistory();
+        history.setBalanceId(balance.getBalanceId());
+        history.setChangedBy(changedBy);
+        history.setChangeAmount(adjustment);
+        history.setReason(BalanceChangeReason.MANUAL_ADJUSTMENT);
+        history.setNotes(reason != null ? reason : "Ã„ÂiÃ¡Â»Âu chÃ¡Â»â€°nh thÃ¡Â»Â§ cÃƒÂ´ng");
 
         historyRepository.save(history);
 

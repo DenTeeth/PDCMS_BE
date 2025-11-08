@@ -18,22 +18,21 @@ public class OvertimeRequestMapper {
      * Includes all related information (employee, shift, approver).
      */
     public OvertimeRequestDetailResponse toDetailResponse(OvertimeRequest overtimeRequest) {
-        return OvertimeRequestDetailResponse.builder()
-                .requestId(overtimeRequest.getRequestId())
-                .employee(mapEmployeeBasicInfo(overtimeRequest.getEmployee()))
-                .requestedBy(mapEmployeeBasicInfo(overtimeRequest.getRequestedBy()))
-                .workDate(overtimeRequest.getWorkDate())
-                .workShift(mapWorkShiftInfo(overtimeRequest.getWorkShift()))
-                .reason(overtimeRequest.getReason())
-                .status(overtimeRequest.getStatus())
-                .approvedBy(overtimeRequest.getApprovedBy() != null 
-                    ? mapEmployeeBasicInfo(overtimeRequest.getApprovedBy()) 
-                    : null)
-                .approvedAt(overtimeRequest.getApprovedAt())
-                .rejectedReason(overtimeRequest.getRejectedReason())
-                .cancellationReason(overtimeRequest.getCancellationReason())
-                .createdAt(overtimeRequest.getCreatedAt())
-                .build();
+        return new OvertimeRequestDetailResponse(
+                overtimeRequest.getRequestId(),
+                mapEmployeeBasicInfo(overtimeRequest.getEmployee()),
+                mapEmployeeBasicInfo(overtimeRequest.getRequestedBy()),
+                overtimeRequest.getWorkDate(),
+                mapWorkShiftInfo(overtimeRequest.getWorkShift()),
+                overtimeRequest.getReason(),
+                overtimeRequest.getStatus(),
+                overtimeRequest.getApprovedBy() != null
+                        ? mapEmployeeBasicInfo(overtimeRequest.getApprovedBy())
+                        : null,
+                overtimeRequest.getApprovedAt(),
+                overtimeRequest.getRejectedReason(),
+                overtimeRequest.getCancellationReason(),
+                overtimeRequest.getCreatedAt());
     }
 
     /**
@@ -45,18 +44,17 @@ public class OvertimeRequestMapper {
         Employee requestedBy = overtimeRequest.getRequestedBy();
         WorkShift workShift = overtimeRequest.getWorkShift();
 
-        return OvertimeRequestListResponse.builder()
-                .requestId(overtimeRequest.getRequestId())
-                .employeeId(employee.getEmployeeId())
-                .employeeCode(employee.getEmployeeCode())
-                .employeeName(employee.getFirstName() + " " + employee.getLastName())
-                .workDate(overtimeRequest.getWorkDate())
-                .workShiftId(workShift.getWorkShiftId())
-                .shiftName(workShift.getShiftName())
-                .status(overtimeRequest.getStatus())
-                .requestedByName(requestedBy.getFirstName() + " " + requestedBy.getLastName())
-                .createdAt(overtimeRequest.getCreatedAt())
-                .build();
+        return new OvertimeRequestListResponse(
+                overtimeRequest.getRequestId(),
+                employee.getEmployeeId(),
+                employee.getEmployeeCode(),
+                employee.getFirstName() + " " + employee.getLastName(),
+                overtimeRequest.getWorkDate(),
+                workShift.getWorkShiftId(),
+                workShift.getShiftName(),
+                overtimeRequest.getStatus(),
+                requestedBy.getFirstName() + " " + requestedBy.getLastName(),
+                overtimeRequest.getCreatedAt());
     }
 
     /**
@@ -66,13 +64,12 @@ public class OvertimeRequestMapper {
         if (employee == null) {
             return null;
         }
-        return OvertimeRequestDetailResponse.EmployeeBasicInfo.builder()
-                .employeeId(employee.getEmployeeId())
-                .employeeCode(employee.getEmployeeCode())
-                .firstName(employee.getFirstName())
-                .lastName(employee.getLastName())
-                .fullName(employee.getFirstName() + " " + employee.getLastName())
-                .build();
+        return new OvertimeRequestDetailResponse.EmployeeBasicInfo(
+                employee.getEmployeeId(),
+                employee.getEmployeeCode(),
+                employee.getFirstName(),
+                employee.getLastName(),
+                employee.getFirstName() + " " + employee.getLastName());
     }
 
     /**
@@ -82,12 +79,11 @@ public class OvertimeRequestMapper {
         if (workShift == null) {
             return null;
         }
-        return OvertimeRequestDetailResponse.WorkShiftInfo.builder()
-                .workShiftId(workShift.getWorkShiftId())
-                .shiftName(workShift.getShiftName())
-                .startTime(workShift.getStartTime())
-                .endTime(workShift.getEndTime())
-                .durationHours(workShift.getDurationHours())
-                .build();
+        return new OvertimeRequestDetailResponse.WorkShiftInfo(
+                workShift.getWorkShiftId(),
+                workShift.getShiftName(),
+                workShift.getStartTime(),
+                workShift.getEndTime(),
+                workShift.getDurationHours());
     }
 }

@@ -224,17 +224,16 @@ public class AppointmentDelayService {
 
                 Integer performedByEmployeeId = getCurrentEmployeeId();
 
-                AppointmentAuditLog auditLog = AppointmentAuditLog.builder()
-                                .appointmentId(appointment.getAppointmentId())
-                                .actionType(AppointmentActionType.DELAY)
-                                .oldStatus(appointment.getStatus()) // Status unchanged (still SCHEDULED/CHECKED_IN)
-                                .newStatus(appointment.getStatus())
-                                .reasonCode(request.getReasonCode())
-                                .notes(request.getNotes())
-                                .performedByEmployeeId(performedByEmployeeId)
-                                .oldStartTime(oldStartTime)
-                                .newStartTime(newStartTime)
-                                .build();
+                AppointmentAuditLog auditLog = new AppointmentAuditLog();
+                auditLog.setAppointmentId(appointment.getAppointmentId());
+                auditLog.setActionType(AppointmentActionType.DELAY);
+                auditLog.setOldStatus(appointment.getStatus());
+                auditLog.setNewStatus(appointment.getStatus());
+                auditLog.setReasonCode(request.getReasonCode());
+                auditLog.setNotes(request.getNotes());
+                auditLog.setPerformedByEmployeeId(performedByEmployeeId);
+                auditLog.setOldStartTime(oldStartTime);
+                auditLog.setNewStartTime(newStartTime);
 
                 auditLogRepository.save(auditLog);
                 log.info("Created DELAY audit log for appointment {}", appointment.getAppointmentCode());

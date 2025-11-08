@@ -212,12 +212,11 @@ public class AppointmentDetailService {
         try {
             var patient = patientRepository.findById(appointment.getPatientId()).orElse(null);
             if (patient != null) {
-                patientSummary = CreateAppointmentResponse.PatientSummary.builder()
-                        .patientCode(patient.getPatientCode())
-                        .fullName(patient.getFirstName() + " " + patient.getLastName())
-                        .phone(patient.getPhone())
-                        .dateOfBirth(patient.getDateOfBirth())
-                        .build();
+                patientSummary = new CreateAppointmentResponse.PatientSummary(
+                        patient.getPatientCode(),
+                        patient.getFirstName() + " " + patient.getLastName(),
+                        patient.getPhone(),
+                        patient.getDateOfBirth());
             }
         } catch (Exception e) {
             log.warn("Failed to load patient: {}", e.getMessage());
@@ -228,20 +227,18 @@ public class AppointmentDetailService {
         try {
             var employee = employeeRepository.findById(appointment.getEmployeeId()).orElse(null);
             if (employee != null) {
-                doctorSummary = CreateAppointmentResponse.DoctorSummary.builder()
-                        .employeeCode(employee.getEmployeeCode())
-                        .fullName(employee.getFirstName() + " " + employee.getLastName())
-                        .build();
+                doctorSummary = new CreateAppointmentResponse.DoctorSummary(
+                        employee.getEmployeeCode(),
+                        employee.getFirstName() + " " + employee.getLastName());
             }
         } catch (Exception e) {
             log.warn("Failed to load doctor: {}", e.getMessage());
         }
 
         // TODO: Load room from RoomRepository
-        CreateAppointmentResponse.RoomSummary roomSummary = CreateAppointmentResponse.RoomSummary.builder()
-                .roomCode(appointment.getRoomId())
-                .roomName("Room " + appointment.getRoomId())
-                .build();
+        CreateAppointmentResponse.RoomSummary roomSummary = new CreateAppointmentResponse.RoomSummary(
+                appointment.getRoomId(),
+                "Room " + appointment.getRoomId());
 
         // Load services
         List<CreateAppointmentResponse.ServiceSummary> services = new ArrayList<>();
@@ -264,11 +261,10 @@ public class AppointmentDetailService {
             for (AppointmentParticipant ap : appointmentParticipants) {
                 var participantEmployee = employeeRepository.findById(ap.getId().getEmployeeId()).orElse(null);
                 if (participantEmployee != null) {
-                    participants.add(CreateAppointmentResponse.ParticipantSummary.builder()
-                            .employeeCode(participantEmployee.getEmployeeCode())
-                            .fullName(participantEmployee.getFirstName() + " " + participantEmployee.getLastName())
-                            .role(ap.getRole())
-                            .build());
+                    participants.add(new CreateAppointmentResponse.ParticipantSummary(
+                            participantEmployee.getEmployeeCode(),
+                            participantEmployee.getFirstName() + " " + participantEmployee.getLastName(),
+                            ap.getRole()));
                 }
             }
         } catch (Exception e) {
@@ -325,27 +321,26 @@ public class AppointmentDetailService {
         String computedStatus = calculateComputedStatus(appointment, now);
         Long minutesLate = calculateMinutesLate(appointment, now);
 
-        return AppointmentDetailDTO.builder()
-                .appointmentId(appointment.getAppointmentId())
-                .appointmentCode(appointment.getAppointmentCode())
-                .status(appointment.getStatus().name())
-                .computedStatus(computedStatus)
-                .minutesLate(minutesLate)
-                .appointmentStartTime(appointment.getAppointmentStartTime())
-                .appointmentEndTime(appointment.getAppointmentEndTime())
-                .expectedDurationMinutes(appointment.getExpectedDurationMinutes())
-                .actualStartTime(appointment.getActualStartTime())
-                .actualEndTime(appointment.getActualEndTime())
-                .cancellationReason(cancellationReason)
-                .notes(appointment.getNotes())
-                .patient(patientSummary)
-                .doctor(doctorSummary)
-                .room(roomSummary)
-                .services(services)
-                .participants(participants)
-                .createdBy(createdByName)
-                .createdAt(appointment.getCreatedAt())
-                .build();
+        return new AppointmentDetailDTO(
+                appointment.getAppointmentId(),
+                appointment.getAppointmentCode(),
+                appointment.getStatus().name(),
+                computedStatus,
+                minutesLate,
+                appointment.getAppointmentStartTime(),
+                appointment.getAppointmentEndTime(),
+                appointment.getExpectedDurationMinutes(),
+                appointment.getActualStartTime(),
+                appointment.getActualEndTime(),
+                cancellationReason,
+                appointment.getNotes(),
+                patientSummary,
+                doctorSummary,
+                roomSummary,
+                services,
+                participants,
+                createdByName,
+                appointment.getCreatedAt());
     }
 
     /**

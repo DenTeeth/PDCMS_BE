@@ -338,7 +338,8 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
 
         /**
          * NEW: Find appointments by service code
-         * Use case: "Cho tÃƒÂ´i xem tÃ¡ÂºÂ¥t cÃ¡ÂºÂ£ lÃ¡Â»â€¹ch Implant tuÃ¡ÂºÂ§n nÃƒÂ y"
+         * Use case: "Cho tÃƒÂ´i xem tÃ¡ÂºÂ¥t cÃ¡ÂºÂ£ lÃ¡Â»â€¹ch Implant tuÃ¡ÂºÂ§n
+         * nÃƒÂ y"
          *
          * Requires JOIN to appointment_services + services tables
          * FIXED: Use EXISTS subquery since AppointmentService has composite key
@@ -374,9 +375,11 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
          * Uses ILIKE for case-insensitive partial matching on names.
          *
          * Examples:
-         * - searchCode="NguyÃ¡Â»â€¦n" Ã¢â€ â€™ Finds all patients/doctors with "NguyÃ¡Â»â€¦n" in name
+         * - searchCode="NguyÃ¡Â»â€¦n" Ã¢â€ â€™ Finds all patients/doctors with
+         * "NguyÃ¡Â»â€¦n" in name
          * - searchCode="BN-1001" Ã¢â€ â€™ Finds patient by exact code
-         * - searchCode="CÃ¡ÂºÂ¡o vÃƒÂ´i" Ã¢â€ â€™ Finds appointments with "CÃ¡ÂºÂ¡o vÃƒÂ´i" service
+         * - searchCode="CÃ¡ÂºÂ¡o vÃƒÂ´i" Ã¢â€ â€™ Finds appointments with "CÃ¡ÂºÂ¡o
+         * vÃƒÂ´i" service
          *
          * @param searchCode The code or name to search for (supports partial match on
          *                   names)

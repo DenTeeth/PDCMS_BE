@@ -15,11 +15,11 @@ import java.time.LocalDate;
  * 
  * Example:
  * {
- *   "workShiftId": "WKS_MORNING_01",
- *   "dayOfWeek": "FRIDAY,SATURDAY",
- *   "effectiveFrom": "2025-11-09",
- *   "effectiveTo": "2025-11-30",
- *   "quota": 2
+ * "workShiftId": "WKS_MORNING_01",
+ * "dayOfWeek": "FRIDAY,SATURDAY",
+ * "effectiveFrom": "2025-11-09",
+ * "effectiveTo": "2025-11-30",
+ * "quota": 2
  * }
  */
 public class CreatePartTimeSlotRequest {
@@ -58,4 +58,58 @@ public class CreatePartTimeSlotRequest {
     @NotNull(message = "Quota is required")
     @Min(value = 1, message = "Quota must be at least 1")
     private Integer quota;
+
+    // Constructors
+    public CreatePartTimeSlotRequest() {
+    }
+
+    public CreatePartTimeSlotRequest(String workShiftId, String dayOfWeek, LocalDate effectiveFrom,
+            LocalDate effectiveTo, Integer quota) {
+        this.workShiftId = workShiftId;
+        this.dayOfWeek = dayOfWeek;
+        this.effectiveFrom = effectiveFrom;
+        this.effectiveTo = effectiveTo;
+        this.quota = quota;
+    }
+
+    // Getters and Setters
+    public String getWorkShiftId() {
+        return workShiftId;
+    }
+
+    public void setWorkShiftId(String workShiftId) {
+        this.workShiftId = workShiftId;
+    }
+
+    public String getDayOfWeek() {
+        return dayOfWeek;
+    }
+
+    public void setDayOfWeek(String dayOfWeek) {
+        this.dayOfWeek = dayOfWeek;
+    }
+
+    public LocalDate getEffectiveFrom() {
+        return effectiveFrom;
+    }
+
+    public void setEffectiveFrom(LocalDate effectiveFrom) {
+        this.effectiveFrom = effectiveFrom;
+    }
+
+    public LocalDate getEffectiveTo() {
+        return effectiveTo;
+    }
+
+    public void setEffectiveTo(LocalDate effectiveTo) {
+        this.effectiveTo = effectiveTo;
+    }
+
+    public Integer getQuota() {
+        return quota;
+    }
+
+    public void setQuota(Integer quota) {
+        this.quota = quota;
+    }
 }

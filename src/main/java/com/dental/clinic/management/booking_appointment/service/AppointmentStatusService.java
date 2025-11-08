@@ -223,16 +223,15 @@ public class AppointmentStatusService {
             }
         }
 
-        AppointmentAuditLog auditLog = AppointmentAuditLog.builder()
-                .appointmentId(appointment.getAppointmentId())
-                .actionType(AppointmentActionType.STATUS_CHANGE)
-                .oldStatus(oldStatus)
-                .newStatus(newStatus)
-                .reasonCode(reasonCodeEnum)
-                .notes(request.getNotes())
-                .performedByEmployeeId(changedByEmployeeId)
-                .createdAt(now)
-                .build();
+        AppointmentAuditLog auditLog = new AppointmentAuditLog();
+        auditLog.setAppointmentId(appointment.getAppointmentId());
+        auditLog.setActionType(AppointmentActionType.STATUS_CHANGE);
+        auditLog.setOldStatus(oldStatus);
+        auditLog.setNewStatus(newStatus);
+        auditLog.setReasonCode(reasonCodeEnum);
+        auditLog.setNotes(request.getNotes());
+        auditLog.setPerformedByEmployeeId(changedByEmployeeId);
+        auditLog.setCreatedAt(now);
 
         auditLogRepository.save(auditLog);
         log.info("Created audit log: appointmentId={}, {} -> {}, changedBy={}",
