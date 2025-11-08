@@ -45,8 +45,8 @@ import com.dental.clinic.management.exception.account.BadCredentialsException;
 /**
  * Service layer for authentication & user identity operations.
  * <p>
- * ChÃ¡Â»Â©c nÃ„Æ’ng: xÃƒÂ¡c thÃ¡Â»Â±c, phÃƒÂ¡t hÃƒÂ nh access/refresh token, lÃƒÂ m mÃ¡Â»â€ºi access token,
- * lÃ¡ÂºÂ¥y thÃƒÂ´ng tin ngÃ†Â°Ã¡Â»Âi dÃƒÂ¹ng.
+ * Chức năng: xác thực, phát hành access/refresh token, làm mới access token,
+ * lấy thông tin người dùng.
  * </p>
  */
 @Service
@@ -94,12 +94,12 @@ public class AuthenticationService {
          *                                                                             fails
          */
         public LoginResponse login(LoginRequest request) {
-                // XÃƒÂ¡c thÃ¡Â»Â±c thÃƒÂ´ng tin Ã„â€˜Ã„Æ’ng nhÃ¡ÂºÂ­p - throws BadCredentialsException if fails
+                // Xác thực thông tin đăng nhập - throws BadCredentialsException if fails
                 authenticationManager.authenticate(
                                 new UsernamePasswordAuthenticationToken(request.getUsername(),
                                                 request.getPassword()));
 
-                // LÃ¡ÂºÂ¥y thÃƒÂ´ng tin tÃƒÂ i khoÃ¡ÂºÂ£n kÃƒÂ¨m role vÃƒÂ  quyÃ¡Â»Ân hÃ¡ÂºÂ¡n
+                // Lấy thông tin tài khoản kèm role và quyền hạn
                 Account account = accountRepository.findByUsernameWithRoleAndPermissions(request.getUsername())
                                 .orElseThrow(() -> new org.springframework.security.authentication.BadCredentialsException(
                                                 "Account not found"));
@@ -109,13 +109,13 @@ public class AuthenticationService {
                 if (account.getStatus() == AccountStatus.PENDING_VERIFICATION) {
                         log.warn("Login attempt for unverified account: {}", account.getUsername());
                         throw new AccountNotVerifiedException(
-                                        "TÃƒÂ i khoÃ¡ÂºÂ£n chÃ†Â°a Ã„â€˜Ã†Â°Ã¡Â»Â£c xÃƒÂ¡c thÃ¡Â»Â±c. Vui lÃƒÂ²ng kiÃ¡Â»Æ’m tra email Ã„â€˜Ã¡Â»Æ’ xÃƒÂ¡c thÃ¡Â»Â±c tÃƒÂ i khoÃ¡ÂºÂ£n.");
+                                        "Tài khoản chưa được xác thực. Vui lòng kiểm tra email để xác thực tài khoản.");
                 }
 
                 Role role = account.getRole();
                 String roleName = role.getRoleName();
 
-                // LÃ¡ÂºÂ¥y tÃ¡ÂºÂ¥t cÃ¡ÂºÂ£ quyÃ¡Â»Ân hÃ¡ÂºÂ¡n tÃ¡Â»Â« role
+                // Lấy tất cả quyền hạn từ role
                 List<String> permissionIds = role.getPermissions().stream()
                                 .map(Permission::getPermissionId)
                                 .distinct()
@@ -127,7 +127,7 @@ public class AuthenticationService {
                                                 Permission::getModule,
                                                 Collectors.mapping(Permission::getPermissionId, Collectors.toList())));
 
-                // TÃ¡ÂºÂ¡o JWT token chÃ¡Â»Â©a thÃƒÂ´ng tin user
+                // Tạo JWT token chứa thông tin user
                 String accessToken = securityUtil.createAccessToken(account.getUsername(),
                                 List.of(roleName), permissionIds);
                 String refreshToken = securityUtil.createRefreshToken(account.getUsername());
@@ -211,14 +211,14 @@ public class AuthenticationService {
                                         "Refresh token is missing");
                 }
 
-                // GiÃ¡ÂºÂ£i mÃƒÂ£ vÃƒÂ  kiÃ¡Â»Æ’m tra refresh token
+                // Giải mã và kiểm tra refresh token
                 // JwtException will be caught by GlobalExceptionHandler and return 401
                 log.debug("Decoding refresh token");
                 var jwt = securityUtil.decodeRefreshToken(request.getRefreshToken());
                 String username = jwt.getSubject();
                 log.debug("Refresh token decoded successfully for user: {}", username);
 
-                // LÃ¡ÂºÂ¥y thÃƒÂ´ng tin tÃƒÂ i khoÃ¡ÂºÂ£n vÃ¡Â»â€ºi role/permissions
+                // Lấy thông tin tài khoản với role/permissions
                 Account account = accountRepository.findByUsernameWithRoleAndPermissions(username)
                                 .orElseThrow(() -> {
                                         log.error("Account not found for username: {}", username);
@@ -238,12 +238,12 @@ public class AuthenticationService {
                 List<String> permissions = role.getPermissions().stream()
                                 .map(Permission::getPermissionId).distinct().collect(Collectors.toList());
 
-                // TÃ¡ÂºÂ¡o access token mÃ¡Â»â€ºi
+                // Tạo access token mới
                 String newAccess = securityUtil.createAccessToken(username, roles, permissions);
                 long now = Instant.now().getEpochSecond();
                 long accessExp = now + securityUtil.getAccessTokenValiditySeconds();
 
-                // TÃ¡ÂºÂ¡o refresh token mÃ¡Â»â€ºi (refresh token rotation for security)
+                // Tạo refresh token mới (refresh token rotation for security)
                 String newRefresh = securityUtil.createRefreshToken(username);
                 long refreshExp = now + securityUtil.getRefreshTokenValiditySeconds();
 
@@ -295,18 +295,18 @@ public class AuthenticationService {
                 response.setEmail(account.getEmail());
                 response.setAccountStatus(account.getStatus() != null ? account.getStatus().name() : null);
 
-                // LÃ¡ÂºÂ¥y vai trÃƒÂ²
+                // Lấy vai trò
                 Role role = account.getRole();
                 response.setRoles(List.of(role.getRoleName()));
 
-                // LÃ¡ÂºÂ¥y tÃ¡ÂºÂ¥t cÃ¡ÂºÂ£ quyÃ¡Â»Ân hÃ¡ÂºÂ¡n tÃ¡Â»Â« role
+                // Lấy tất cả quyền hạn từ role
                 List<String> permissions = role.getPermissions().stream()
                                 .map(Permission::getPermissionId)
                                 .distinct()
                                 .collect(Collectors.toList());
                 response.setPermissions(permissions);
 
-                // ThÃƒÂ´ng tin chi tiÃ¡ÂºÂ¿t nÃ¡ÂºÂ¿u employee cÃƒÂ³ profile
+                // Thông tin chi tiết nếu employee có profile
                 if (account.getEmployee() != null) {
                         Employee profile = account.getEmployee();
                         response.setFullName(profile.getFullName());
@@ -315,7 +315,7 @@ public class AuthenticationService {
                         response.setDateOfBirth(
                                         profile.getDateOfBirth() != null ? profile.getDateOfBirth().toString() : null);
 
-                        // LÃ¡ÂºÂ¥y chuyÃƒÂªn khoa chÃƒÂ­nh (nÃ¡ÂºÂ¿u cÃƒÂ³)
+                        // Lấy chuyên khoa (nếu có)
                         if (!profile.getSpecializations().isEmpty()) {
                                 response.setSpecializationName(
                                                 profile.getSpecializations().iterator().next().getSpecializationName());
@@ -344,11 +344,11 @@ public class AuthenticationService {
                 response.setEmail(account.getEmail());
                 response.setAccountStatus(account.getStatus() != null ? account.getStatus().name() : null);
 
-                // LÃ¡ÂºÂ¥y vai trÃƒÂ²
+                // Lấy vai trò
                 Role role = account.getRole();
                 response.setRoles(List.of(role.getRoleName()));
 
-                // ThÃƒÂ´ng tin chi tiÃ¡ÂºÂ¿t nÃ¡ÂºÂ¿u employee cÃƒÂ³ profile
+                // Thông tin chi tiết nếu employee có profile
                 if (account.getEmployee() != null) {
                         Employee profile = account.getEmployee();
                         response.setFullName(profile.getFullName());
@@ -357,7 +357,7 @@ public class AuthenticationService {
                         response.setDateOfBirth(
                                         profile.getDateOfBirth() != null ? profile.getDateOfBirth().toString() : null);
 
-                        // LÃ¡ÂºÂ¥y chuyÃƒÂªn khoa chÃƒÂ­nh (nÃ¡ÂºÂ¿u cÃƒÂ³)
+                        // Lấy chuyên khoa chính (nếu có)
                         if (!profile.getSpecializations().isEmpty()) {
                                 response.setSpecializationName(
                                                 profile.getSpecializations().iterator().next().getSpecializationName());
@@ -380,7 +380,7 @@ public class AuthenticationService {
                 Account account = accountRepository.findByUsernameWithRoleAndPermissions(username)
                                 .orElseThrow(() -> new AccountNotFoundException(username));
 
-                // LÃ¡ÂºÂ¥y tÃ¡ÂºÂ¥t cÃ¡ÂºÂ£ quyÃ¡Â»Ân hÃ¡ÂºÂ¡n tÃ¡Â»Â« role
+                // Lấy tất cả quyền hạn từ role
                 List<String> permissions = account.getRole().getPermissions().stream()
                                 .map(Permission::getPermissionId)
                                 .distinct()
@@ -459,7 +459,7 @@ public class AuthenticationService {
          */
         public void logout(String refreshToken) {
                 if (refreshToken == null || refreshToken.isBlank()) {
-                        return; // KhÃƒÂ´ng cÃƒÂ³ token Ã„â€˜Ã¡Â»Æ’ xÃƒÂ³a
+                        return; // Không có token để xóa
                 }
 
                 try {
@@ -559,19 +559,20 @@ public class AuthenticationService {
                 log.info("Verifying email with token: {}", token);
 
                 AccountVerificationToken verificationToken = verificationTokenRepository.findByToken(token)
-                                .orElseThrow(() -> new InvalidTokenException("Token xÃƒÂ¡c thÃ¡Â»Â±c khÃƒÂ´ng hÃ¡Â»Â£p lÃ¡Â»â€¡"));
+                                .orElseThrow(() -> new InvalidTokenException(
+                                                "Token xác thực không hợp lệ"));
 
                 if (verificationToken.isExpired()) {
                         log.warn("Verification token expired for account: {}",
                                         verificationToken.getAccount().getUsername());
                         throw new TokenExpiredException(
-                                        "Token xÃƒÂ¡c thÃ¡Â»Â±c Ã„â€˜ÃƒÂ£ hÃ¡ÂºÂ¿t hÃ¡ÂºÂ¡n. Vui lÃƒÂ²ng yÃƒÂªu cÃ¡ÂºÂ§u gÃ¡Â»Â­i lÃ¡ÂºÂ¡i email xÃƒÂ¡c thÃ¡Â»Â±c.");
+                                        "Token xác thực đã hết hạn. Vui lòng yêu cầu gửi lại email xác thực.");
                 }
 
                 if (verificationToken.isVerified()) {
                         log.warn("Token already verified for account: {}",
                                         verificationToken.getAccount().getUsername());
-                        throw new InvalidTokenException("Token nÃƒÂ y Ã„â€˜ÃƒÂ£ Ã„â€˜Ã†Â°Ã¡Â»Â£c sÃ¡Â»Â­ dÃ¡Â»Â¥ng");
+                        throw new InvalidTokenException("Token này đã được sử dụng");
                 }
 
                 Account account = verificationToken.getAccount();
@@ -581,7 +582,7 @@ public class AuthenticationService {
                 verificationToken.setVerifiedAt(LocalDateTime.now());
                 verificationTokenRepository.save(verificationToken);
 
-                log.info("Ã¢Å“â€¦ Email verified successfully for account: {}", account.getUsername());
+                log.info("… Email verified successfully for account: {}", account.getUsername());
         }
 
         /**
@@ -594,11 +595,13 @@ public class AuthenticationService {
                 log.info("Resending verification email to: {}", email);
 
                 Account account = accountRepository.findByEmail(email)
-                                .orElseThrow(() -> new AccountNotFoundException("Email khÃƒÂ´ng tÃ¡Â»â€œn tÃ¡ÂºÂ¡i trong hÃ¡Â»â€¡ thÃ¡Â»â€˜ng"));
+                                .orElseThrow(() -> new AccountNotFoundException(
+                                                "Email không tồn tại trong hệ thống"));
 
                 if (account.getStatus() == AccountStatus.ACTIVE) {
                         log.warn("Account already verified: {}", email);
-                        throw new IllegalArgumentException("TÃƒÂ i khoÃ¡ÂºÂ£n Ã„â€˜ÃƒÂ£ Ã„â€˜Ã†Â°Ã¡Â»Â£c xÃƒÂ¡c thÃ¡Â»Â±c");
+                        throw new IllegalArgumentException(
+                                        "Tài khoản này đã được xác thực");
                 }
 
                 // Delete old verification tokens
@@ -612,7 +615,7 @@ public class AuthenticationService {
                 emailService.sendVerificationEmail(account.getEmail(), account.getUsername(),
                                 verificationToken.getToken());
 
-                log.info("Ã¢Å“â€¦ Verification email resent to: {}", email);
+                log.info("… Verification email resent to: {}", email);
         }
 
         /**
@@ -625,7 +628,8 @@ public class AuthenticationService {
                 log.info("Password reset requested for email: {}", email);
 
                 Account account = accountRepository.findByEmail(email)
-                                .orElseThrow(() -> new AccountNotFoundException("Email khÃƒÂ´ng tÃ¡Â»â€œn tÃ¡ÂºÂ¡i trong hÃ¡Â»â€¡ thÃ¡Â»â€˜ng"));
+                                .orElseThrow(() -> new AccountNotFoundException(
+                                                "Email không tồn tại trong hệ thống"));
 
                 // Delete old password reset tokens
                 passwordResetTokenRepository.deleteByAccount(account);
@@ -637,7 +641,7 @@ public class AuthenticationService {
                 // Send password reset email
                 emailService.sendPasswordResetEmail(account.getEmail(), account.getUsername(), resetToken.getToken());
 
-                log.info("Ã¢Å“â€¦ Password reset email sent to: {}", email);
+                log.info("… Password reset email sent to: {}", email);
         }
 
         /**
@@ -654,22 +658,23 @@ public class AuthenticationService {
                 log.info("Resetting password with token: {}", token);
 
                 if (!newPassword.equals(confirmPassword)) {
-                        throw new IllegalArgumentException("MÃ¡ÂºÂ­t khÃ¡ÂºÂ©u xÃƒÂ¡c nhÃ¡ÂºÂ­n khÃƒÂ´ng khÃ¡Â»â€ºp");
+                        throw new IllegalArgumentException("Mật khẩu xác nhận không khớp");
                 }
 
                 PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(token)
-                                .orElseThrow(() -> new InvalidTokenException("Token Ã„â€˜Ã¡ÂºÂ·t lÃ¡ÂºÂ¡i mÃ¡ÂºÂ­t khÃ¡ÂºÂ©u khÃƒÂ´ng hÃ¡Â»Â£p lÃ¡Â»â€¡"));
+                                .orElseThrow(() -> new InvalidTokenException(
+                                                "Token đã hết hạn hoặc không hợp lệ"));
 
                 if (resetToken.isExpired()) {
                         log.warn("Password reset token expired for account: {}", resetToken.getAccount().getUsername());
                         throw new TokenExpiredException(
-                                        "Token Ã„â€˜Ã¡ÂºÂ·t lÃ¡ÂºÂ¡i mÃ¡ÂºÂ­t khÃ¡ÂºÂ©u Ã„â€˜ÃƒÂ£ hÃ¡ÂºÂ¿t hÃ¡ÂºÂ¡n. Vui lÃƒÂ²ng yÃƒÂªu cÃ¡ÂºÂ§u Ã„â€˜Ã¡ÂºÂ·t lÃ¡ÂºÂ¡i mÃ¡ÂºÂ­t khÃ¡ÂºÂ©u mÃ¡Â»â€ºi.");
+                                        "Token đã hết hạn. Vui lòng yêu cầu tạo lại mật khẩu mới.");
                 }
 
                 if (resetToken.isUsed()) {
                         log.warn("Password reset token already used for account: {}",
                                         resetToken.getAccount().getUsername());
-                        throw new InvalidTokenException("Token nÃƒÂ y Ã„â€˜ÃƒÂ£ Ã„â€˜Ã†Â°Ã¡Â»Â£c sÃ¡Â»Â­ dÃ¡Â»Â¥ng");
+                        throw new InvalidTokenException("Token này đã được sử dụng");
                 }
 
                 Account account = resetToken.getAccount();
@@ -681,6 +686,6 @@ public class AuthenticationService {
                 resetToken.setUsedAt(LocalDateTime.now());
                 passwordResetTokenRepository.save(resetToken);
 
-                log.info("Ã¢Å“â€¦ Password reset successfully for account: {}", account.getUsername());
+                log.info("… Password reset successfully for account: {}", account.getUsername());
         }
 }

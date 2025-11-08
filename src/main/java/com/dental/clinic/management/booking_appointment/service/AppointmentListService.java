@@ -166,7 +166,7 @@ public class AppointmentListService {
                     startDate,
                     endDate,
                     statuses,
-                    pageableJpql); // Ã¢Å“â€¦ Use JPQL pageable (camelCase)
+                    pageableJpql); // … Use JPQL pageable (camelCase)
         } else {
             // Admin/Receptionist view: All appointments with optional filters (NATIVE
             // queries)
@@ -188,7 +188,7 @@ public class AppointmentListService {
                         endDate,
                         statusArray,
                         criteria.getSearchCode(),
-                        pageableNative); // Ã¢Å“â€¦ Use NATIVE pageable (snake_case)
+                        pageableNative); // … Use NATIVE pageable (snake_case)
             } else {
                 log.info("Executing search with individual filters");
                 appointments = appointmentRepository.findByFilters(
@@ -251,8 +251,8 @@ public class AppointmentListService {
      * If datePreset is set, it OVERRIDES manual dateFrom/dateTo
      *
      * Example:
-     * - datePreset=TODAY Ã¢â€ â€™ dateFrom=2025-11-04, dateTo=2025-11-04
-     * - datePreset=THIS_WEEK Ã¢â€ â€™ dateFrom=Monday, dateTo=Sunday
+     * - datePreset=TODAY → dateFrom=2025-11-04, dateTo=2025-11-04
+     * - datePreset=THIS_WEEK → dateFrom=Monday, dateTo=Sunday
      */
     private void applyDatePreset(AppointmentFilterCriteria criteria) {
         if (criteria.getDatePreset() != null) {

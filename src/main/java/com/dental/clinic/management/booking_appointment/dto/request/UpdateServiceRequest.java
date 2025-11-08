@@ -14,10 +14,10 @@ public class UpdateServiceRequest {
     @Schema(description = "Unique service code", example = "SV-CAOVOI-UPDATED")
     private String serviceCode;
 
-    @Schema(description = "Service name", example = "CÃ¡ÂºÂ¡o vÃƒÂ´i rÃ„Æ’ng vÃƒÂ  Ã„ÂÃƒÂ¡nh bÃƒÂ³ng (VIP)")
+    @Schema(description = "Service name", example = "Cạo vôi răng và Đánh bóng (VIP)")
     private String serviceName;
 
-    @Schema(description = "Service description", example = "LÃ¡ÂºÂ¥y sÃ¡ÂºÂ¡ch vÃƒÂ´i rÃ„Æ’ng vÃ¡Â»â€ºi cÃƒÂ´ng nghÃ¡Â»â€¡ mÃ¡Â»â€ºi")
+    @Schema(description = "Service description", example = "Lấy sách vôi răng và mạng bám")
     private String description;
 
     @Min(value = 1, message = "Duration must be at least 1 minute")

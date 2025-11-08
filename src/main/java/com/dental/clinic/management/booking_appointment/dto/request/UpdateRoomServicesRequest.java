@@ -62,11 +62,9 @@ public class UpdateRoomServicesRequest {
      * <b>Example values:</b>
      * </p>
      * <ul>
-     * <li>"IMPL_SURGERY_KR" Ã¢â€ â€™ PhÃ¡ÂºÂ«u thuÃ¡ÂºÂ­t Ã„â€˜Ã¡ÂºÂ·t trÃ¡Â»Â¥
-     * Implant HÃƒÂ n QuÃ¡Â»â€˜c</li>
-     * <li>"SCALING_L1" Ã¢â€ â€™ CÃ¡ÂºÂ¡o vÃƒÂ´i rÃ„Æ’ng & Ã„ÂÃƒÂ¡nh bÃƒÂ³ng -
-     * MÃ¡Â»Â©c 1</li>
-     * <li>"GEN_EXAM" Ã¢â€ â€™ KhÃƒÂ¡m tÃ¡Â»â€¢ng quÃƒÂ¡t & TÃ†Â° vÃ¡ÂºÂ¥n</li>
+     * <li>"IMPL_SURGERY_KR" &#x2014; Phẫu thuật Implant Hàn Quốc</li>
+     * <li>"SCALING_L1" &#x2014; Cạo vôi răng & Đánh bóng - Mức 1</li>
+     * <li>"GEN_EXAM" &#x2014; Khám tổng quát & Tư vấn</li>
      * </ul>
      */
     @NotEmpty(message = "Service codes list cannot be empty")

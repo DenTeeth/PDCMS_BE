@@ -24,8 +24,8 @@ public class AvailableTimesResponse {
 
     /**
      * Optional: Message if no slots found
-     * Example: "KhÃƒÂ´ng cÃƒÂ³ phÃƒÂ²ng nÃƒÂ o hÃ¡Â»â€” trÃ¡Â»Â£ cÃƒÂ¡c dÃ¡Â»â€¹ch
-     * vÃ¡Â»Â¥ nÃƒÂ y"
+     * Example: "Không có phòng nào hỗ trợ các dịch
+     * vụ này"
      */
     private String message;
 

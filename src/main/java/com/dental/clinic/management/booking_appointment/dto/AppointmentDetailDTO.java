@@ -75,7 +75,7 @@ public class AppointmentDetailDTO {
     /**
      * Cancellation reason (from appointment_audit_logs)
      * Only populated when status = CANCELLED
-     * Example: "BÃ¡Â»â€¡nh nhÃƒÂ¢n hÃ¡Â»Â§y do bÃ¡ÂºÂ­n Ã„â€˜Ã¡Â»â„¢t xuÃ¡ÂºÂ¥t"
+     * Example: "Bệnh nhân hủy do Đặt xuất"
      */
     private String cancellationReason;
 
@@ -111,7 +111,7 @@ public class AppointmentDetailDTO {
 
     /**
      * Full name of the user who created this appointment
-     * Example: "LÃ¡Â»â€¦ tÃƒÂ¢n An"
+     * Example: "Lê Văn An"
      */
     private String createdBy;
 

@@ -43,7 +43,7 @@ public class AccountController {
      * Returns comprehensive user info including role, permissions, sidebar,
      * homePath, and employmentType.
      *
-     * @param jwt injected JWT bearer token (lÃ¡ÂºÂ¥y username tÃ¡Â»Â« claim "sub")
+     * @param jwt injected JWT bearer token (lấy username từ claim "sub")
      * @return 200 OK with {@link MeResponse} containing complete user context
      * @throws com.dental.clinic.management.exception.AccountNotFoundException if
      *                                                                         the
@@ -54,7 +54,7 @@ public class AccountController {
      */
     @GetMapping("/me")
     @Operation(summary = "Get current user context", description = "Retrieve complete user context including role, permissions, sidebar, and navigation info")
-    @ApiMessage("LÃ¡ÂºÂ¥y thÃƒÂ´ng tin ngÃ†Â°Ã¡Â»Âi dÃƒÂ¹ng hiá»ƒn táº¡i thÃƒÂ nh cÃƒÂ´ng")
+    @ApiMessage("Lấy thông tin người dùng hiện tại thành công")
     public ResponseEntity<MeResponse> getMe(@Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
         String username = jwt.getClaimAsString("sub");
         MeResponse meResponse = authenticationService.getMe(username);
@@ -65,7 +65,7 @@ public class AccountController {
      * Get the personal profile of the currently authenticated user.
      * {@code GET /api/v1/account/profile}
      *
-     * @param jwt injected JWT bearer token (lÃ¡ÂºÂ¥y username tÃ¡Â»Â« claim "sub")
+     * @param jwt injected JWT bearer token (lấy username từ claim "sub")
      * @return 200 OK with {@link UserProfileResponse} containing personal info and
      *         roles
      * @throws com.dental.clinic.management.exception.AccountNotFoundException if
@@ -77,7 +77,7 @@ public class AccountController {
      */
     @GetMapping("/profile")
     @Operation(summary = "Get user profile", description = "Retrieve personal profile information of the currently authenticated user")
-    @ApiMessage("LÃ¡ÂºÂ¥y thÃƒÂ´ng tin profile cÃƒÂ h ÃƒÂ¢n thÃƒÂ nh cÃƒÂ´ng")
+    @ApiMessage("Lấy thông tin profile của người dùng thành công")
     public ResponseEntity<UserProfileResponse> getProfile(@Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
         String username = jwt.getClaimAsString("sub");
         UserProfileResponse userProfile = authenticationService.getUserProfile(username);
@@ -90,7 +90,7 @@ public class AccountController {
      * {@code GET /api/v1/account/permissions}
      * </p>
      *
-     * @param jwt injected JWT bearer token (lÃ¡ÂºÂ¥y username tÃ¡Â»Â« claim "sub")
+     * @param jwt injected JWT bearer token (lấy username từ claim "sub")
      * @return 200 OK with {@link UserPermissionsResponse} containing permissions
      *         only
      * @throws com.dental.clinic.management.exception.AccountNotFoundException if
@@ -116,7 +116,7 @@ public class AccountController {
      * {@code GET /api/v1/account/info}
      * </p>
      *
-     * @param jwt injected JWT bearer token (lÃ¡ÂºÂ¥y username tÃ¡Â»Â« claim "sub")
+     * @param jwt injected JWT bearer token (lấy username từ claim "sub")
      * @return 200 OK with {@link UserInfoResponse} containing complete user info
      * @throws com.dental.clinic.management.exception.AccountNotFoundException if
      *                                                                         the
@@ -127,7 +127,7 @@ public class AccountController {
      */
     @GetMapping("/info")
     @Operation(summary = "Get complete user info", description = "Retrieve complete user information including roles and permissions")
-    @ApiMessage("LÃ¡ÂºÂ¥y thÃƒÂ´ng tin ngÃ†Â°Ã¡Â»Âi dÃƒÂ¹ng thÃƒÂ nh cÃƒÂ´ng")
+    @ApiMessage("Lấy thông tin người dùng hiện hành thành công")
     public ResponseEntity<UserInfoResponse> getInfo(@Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
         String username = jwt.getClaimAsString("sub");
         UserInfoResponse userInfo = authenticationService.getUserInfo(username);

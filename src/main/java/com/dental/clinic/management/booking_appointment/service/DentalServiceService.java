@@ -273,7 +273,7 @@ public class DentalServiceService {
                         "service",
                         "notfound"));
 
-        // Toggle: if active Ã¢â€ â€™ inactive, if inactive Ã¢â€ â€™ active
+        // Toggle: if active → inactive, if inactive → active
         boolean newStatus = !service.getIsActive();
         service.setIsActive(newStatus);
         DentalService savedService = serviceRepository.save(service);

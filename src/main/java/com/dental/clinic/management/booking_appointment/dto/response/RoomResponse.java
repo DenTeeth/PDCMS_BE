@@ -13,7 +13,7 @@ public class RoomResponse {
     @Schema(description = "Room code", example = "P1")
     private String roomCode;
 
-    @Schema(description = "Room name", example = "PhÃƒÂ²ng 01")
+    @Schema(description = "Room name", example = "Phòng 01")
     private String roomName;
 
     @Schema(description = "Room type", example = "STANDARD")

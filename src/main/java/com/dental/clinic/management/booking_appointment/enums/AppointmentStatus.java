@@ -10,32 +10,32 @@ package com.dental.clinic.management.booking_appointment.enums;
  */
 public enum AppointmentStatus {
     /**
-     * Initial status - Appointment Ã„â€˜ÃƒÂ£ Ã„â€˜Ã†Â°Ã¡Â»Â£c Ã„â€˜Ã¡ÂºÂ·t lÃ¡Â»â€¹ch
+     * Initial status - Appointment được lên lịch
      */
     SCHEDULED,
 
     /**
-     * BÃ¡Â»â€¡nh nhÃƒÂ¢n Ã„â€˜ÃƒÂ£ check-in tÃ¡ÂºÂ¡i lÃ¡Â»â€¦ tÃƒÂ¢n
+     * Bệnh nhân đã check-in tại phòng khám
      */
     CHECKED_IN,
 
     /**
-     * BÃƒÂ¡c sÃ„Â© Ã„â€˜ÃƒÂ£ bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u Ã„â€˜iÃ¡Â»Âu trÃ¡Â»â€¹
+     * Bác sĩ đã bắt đầu điều trị
      */
     IN_PROGRESS,
 
     /**
-     * HoÃƒÂ n thÃƒÂ nh Ã„â€˜iÃ¡Â»Âu trÃ¡Â»â€¹
+     * Hoàn thành điều trị
      */
     COMPLETED,
 
     /**
-     * Appointment bÃ¡Â»â€¹ hÃ¡Â»Â§y (bÃ¡Â»Å¸i bÃ¡Â»â€¡nh nhÃƒÂ¢n hoÃ¡ÂºÂ·c phÃƒÂ²ng khÃƒÂ¡m)
+     * Appointment bị hủy (bởi bệnh nhân hoặc phòng khám)
      */
     CANCELLED,
 
     /**
-     * BÃ¡Â»â€¡nh nhÃƒÂ¢n khÃƒÂ´ng Ã„â€˜Ã¡ÂºÂ¿n (no-show)
+     * Bệnh nhân không đến (no-show)
      */
     NO_SHOW
 }
