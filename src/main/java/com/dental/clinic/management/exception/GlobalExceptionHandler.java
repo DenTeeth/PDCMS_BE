@@ -693,6 +693,26 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handle IllegalStateException (business logic violations).
+     * Returns 409 Conflict - used for validation failures like overlapping registrations or existing shifts.
+     */
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleIllegalState(
+            IllegalStateException ex,
+            HttpServletRequest request) {
+
+        log.warn("Business rule violation at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.CONFLICT.value());
+        res.setMessage(ex.getMessage() != null ? ex.getMessage() : "Business rule violation");
+        res.setError("error.conflict");
+        res.setData(null);
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(res);
+    }
+
+    /**
      * Handle AccountNotVerifiedException.
      * Returns 403 Forbidden.
      */
