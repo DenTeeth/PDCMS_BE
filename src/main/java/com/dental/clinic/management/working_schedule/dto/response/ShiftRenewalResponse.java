@@ -27,15 +27,15 @@ public class ShiftRenewalResponse {
     // Additional information about the expiring FIXED registration
     private LocalDate effectiveFrom;
     private LocalDate effectiveTo;
-    private String workShiftName; // e.g., "Ca sÃƒÂ¡ng" (from work_shift table)
-    private String shiftDetails; // e.g., "Monday, Wednesday (Ca sÃƒÂ¡ng)"
+    private String workShiftName; // e.g., "Ca sáng" (from work_shift table)
+    private String shiftDetails; // e.g., "Monday, Wednesday (Ca sáng)"
 
     /**
      * Dynamic message for FE to display.
-     * Format: "HÃ¡Â»Â£p Ã„â€˜Ã¡Â»â€œng/LÃ¡Â»â€¹ch lÃƒÂ m viÃ¡Â»â€¡c cÃ¡Â»â€˜
-     * Ã„â€˜Ã¡Â»â€¹nh [shiftName] cÃ¡Â»Â§a bÃ¡ÂºÂ¡n sÃ¡ÂºÂ½ hÃ¡ÂºÂ¿t hÃ¡ÂºÂ¡n vÃƒÂ o
-     * ngÃƒÂ y [date].
-     * BÃ¡ÂºÂ¡n cÃƒÂ³ muÃ¡Â»â€˜n gia hÃ¡ÂºÂ¡n thÃƒÂªm [1 thÃƒÂ¡ng] khÃƒÂ´ng?"
+     * Format: "Hợp lệ/Đã lịch làm việc của bạn sẽ hết hạn vào
+     * Định nghĩa [shiftName] của bạn sẽ hết hạn vào
+     * ngày [date].
+     * Bạn có muốn gia hạn thêm [1 tháng] không?"
      */
     private String message;
 

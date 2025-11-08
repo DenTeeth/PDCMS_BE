@@ -27,7 +27,7 @@ public class InvalidWorkingHoursException extends RuntimeException {
 
     public InvalidWorkingHoursException(LocalTime startTime, LocalTime endTime) {
         super(String.format(
-                "GiÃ¡Â»Â lÃƒÂ m viÃ¡Â»â€¡c khÃƒÂ´ng hÃ¡Â»Â£p lÃ¡Â»â€¡: %s - %s. PhÃ¡ÂºÂ£i trong khung giÃ¡Â»Â: 08:00 - 21:00",
+                "Giờ làm việc không hợp lệ: %s - %s. Phải trong khung giờ: 08:00 - 21:00",
                 startTime, endTime));
     }
 

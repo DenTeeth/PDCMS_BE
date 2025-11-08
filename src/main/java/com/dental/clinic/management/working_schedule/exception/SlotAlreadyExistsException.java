@@ -14,9 +14,8 @@ public class SlotAlreadyExistsException extends ErrorResponseException {
 
     private static ProblemDetail createProblemDetail(String workShiftId, String dayOfWeek) {
         String message = String.format(
-            "SuÃ¡ÂºÂ¥t lÃƒÂ m viÃ¡Â»â€¡c cho ca '%s' vÃƒÂ o '%s' Ã„â€˜ÃƒÂ£ tÃ¡Â»â€œn tÃ¡ÂºÂ¡i. Vui lÃƒÂ²ng chÃ¡Â»Ân ca hoÃ¡ÂºÂ·c ngÃƒÂ y khÃƒÂ¡c.",
-            workShiftId, dayOfWeek
-        );
+                "Suất làm việc cho ca '%s' vào '%s' đã tồn tại. Vui lòng chọn ca hoặc ngày khác.",
+                workShiftId, dayOfWeek);
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, message);
         problemDetail.setTitle("Slot Already Exists");

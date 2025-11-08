@@ -14,9 +14,8 @@ public class QuotaViolationException extends ErrorResponseException {
 
     private static ProblemDetail createProblemDetail(Long slotId, int newQuota, long currentRegistered) {
         String message = String.format(
-            "KhÃƒÂ´ng thÃ¡Â»Æ’ giÃ¡ÂºÂ£m quota xuÃ¡Â»â€˜ng %d. Ã„ÂÃƒÂ£ cÃƒÂ³ %d nhÃƒÂ¢n viÃƒÂªn Ã„â€˜Ã„Æ’ng kÃƒÂ½ suÃ¡ÂºÂ¥t nÃƒÂ y.",
-            newQuota, currentRegistered
-        );
+                "Không thể giảm quota xuống %d. Đã có %d nhân viên đăng ký suất này.",
+                newQuota, currentRegistered);
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, message);
         problemDetail.setTitle("Quota Violation");

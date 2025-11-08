@@ -28,15 +28,12 @@ public class TimeOffTypeController {
 
     /**
      * GET /api/v1/time-off-types
-     * LÃ¡ÂºÂ¥y danh sÃƒÂ¡ch tÃ¡ÂºÂ¥t cÃ¡ÂºÂ£ cÃƒÂ¡c loÃ¡ÂºÂ¡i hÃƒÂ¬nh nghÃ¡Â»â€°
-     * phÃƒÂ©p Ã„â€˜ang hoÃ¡ÂºÂ¡t Ã„â€˜Ã¡Â»â„¢ng
+     * Lấy danh sách tất cả các loại hình nghỉ phép đang hoạt động
      *
-     * Authorization: YÃƒÂªu cÃ¡ÂºÂ§u Ã„â€˜ÃƒÂ£ xÃƒÂ¡c thÃ¡Â»Â±c (authenticated
-     * user)
+     * Authorization: Yêu cầu đã xác thực (authenticated user)
      *
      * Response:
-     * - 200 OK: TrÃ¡ÂºÂ£ vÃ¡Â»Â danh sÃƒÂ¡ch cÃƒÂ¡c loÃ¡ÂºÂ¡i hÃƒÂ¬nh nghÃ¡Â»â€°
-     * phÃƒÂ©p vÃ¡Â»â€ºi is_active = true
+     * - 200 OK: Trả về danh sách các loại hình nghỉ phép với is_active = true
      *
      * @return List of TimeOffTypeResponse
      */

@@ -17,7 +17,7 @@ import jakarta.validation.constraints.Pattern;
  * Example (Reject):
  * {
  * "status": "REJECTED",
- * "reason": "KhÃƒÂ´ng Ã„â€˜Ã¡Â»Â§ nhÃƒÂ¢n sÃ¡Â»Â± trong thÃ¡Â»Âi gian nÃƒÂ y"
+ * "reason": "Không chấp nhận nhân sự trong thời gian này"
  * }
  */
 public class UpdateRegistrationStatusRequest {
@@ -32,7 +32,7 @@ public class UpdateRegistrationStatusRequest {
 
     /**
      * Rejection reason (REQUIRED if status = REJECTED).
-     * Example: "Ã„ÂÃƒÂ£ Ã„â€˜Ã¡Â»Â§ nhÃƒÂ¢n sÃ¡Â»Â± cho ca nÃƒÂ y"
+     * Example: "Không chấp nhận nhân sự trong thời gian này"
      */
     private String reason;
 

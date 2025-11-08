@@ -12,7 +12,7 @@ public class InvalidBalanceException extends RuntimeException {
 
     public InvalidBalanceException(Double totalAllowed, Double used, Double remaining) {
         super(String.format(
-                "SÃ¡Â»â€˜ dÃ†Â° phÃƒÂ©p khÃƒÂ´ng hÃ¡Â»Â£p lÃ¡Â»â€¡. Total allowed: %.1f, Used: %.1f, Remaining: %.1f",
+                "Số dư phép không hợp lệ. Total allowed: %.1f, Used: %.1f, Remaining: %.1f",
                 totalAllowed, used, remaining));
     }
 }

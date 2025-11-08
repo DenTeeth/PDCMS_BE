@@ -24,13 +24,13 @@ public class DuplicateOvertimeRequestException extends ErrorResponseException {
 
     private static ProblemDetail asProblemDetail(Integer employeeId, LocalDate workDate, String shiftId) {
         String message = String.format(
-            "Ã„ÂÃƒÂ£ tÃ¡Â»â€œn tÃ¡ÂºÂ¡i mÃ¡Â»â„¢t yÃƒÂªu cÃ¡ÂºÂ§u OT cho nhÃƒÂ¢n viÃƒÂªn %d vÃƒÂ o ngÃƒÂ y %s ca %s.",
-            employeeId, workDate, shiftId
-        );
+                "Đã tồn tại một yêu cầu OT cho nhân viên %d vào ngày %s ca %s.",
+                employeeId, workDate, shiftId);
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, message);
         problemDetail.setTitle("Duplicate Overtime Request");
         problemDetail.setProperty("code", "DUPLICATE_OT_REQUEST");
-        problemDetail.setProperty("message", "Ã„ÂÃƒÂ£ tÃ¡Â»â€œn tÃ¡ÂºÂ¡i mÃ¡Â»â„¢t yÃƒÂªu cÃ¡ÂºÂ§u OT cho nhÃƒÂ¢n viÃƒÂªn vÃƒÂ o ngÃƒÂ y vÃƒÂ  ca nÃƒÂ y.");
+        problemDetail.setProperty("message", String.format(
+                "Đã tồn tại một yêu cầu OT cho nhân viên %d vào ngày %s ca %s.", employeeId, workDate, shiftId));
         return problemDetail;
     }
 

@@ -15,8 +15,8 @@ import java.time.LocalDateTime;
  * registrations.
  * Applies to: FULL_TIME and PART_TIME_FIXED employees.
  *
- * When a fixed_shift_registration is about to expire (effective_to sÃ¡ÂºÂ¯p
- * Ã„â€˜Ã¡ÂºÂ¿n),
+ * When a fixed_shift_registration is about to expire (effective_to sắp
+ * hết hạn),
  * Job P8 automatically creates a renewal request inviting the employee to
  * extend.
  *

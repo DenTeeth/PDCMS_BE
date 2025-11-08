@@ -13,21 +13,22 @@ package com.dental.clinic.management.working_schedule.enums;
 public enum RegistrationStatus {
     /**
      * Registration is pending manager approval.
-     * Ã„ÂÃ„Æ’ng kÃƒÂ½ Ã„â€˜ang chÃ¡Â»Â quÃ¡ÂºÂ£n lÃƒÂ½ duyÃ¡Â»â€¡t.
+     * Đăng ký đang chờ quản lý duyệt.
      */
     PENDING,
 
     /**
      * Registration has been approved by manager.
      * Employee can work during the registered period.
-     * Ã„ÂÃ„Æ’ng kÃƒÂ½ Ã„â€˜ÃƒÂ£ Ã„â€˜Ã†Â°Ã¡Â»Â£c duyÃ¡Â»â€¡t, nhÃƒÂ¢n viÃƒÂªn cÃƒÂ³ thÃ¡Â»Æ’ lÃƒÂ m viÃ¡Â»â€¡c.
+     * Đăng ký đã được duyệt, nhân viên
+     * có thể làm việc.
      */
     APPROVED,
 
     /**
      * Registration has been rejected by manager.
      * Reason must be provided.
-     * Ã„ÂÃ„Æ’ng kÃƒÂ½ Ã„â€˜ÃƒÂ£ bÃ¡Â»â€¹ tÃ¡Â»Â« chÃ¡Â»â€˜i, phÃ¡ÂºÂ£i cÃƒÂ³ lÃƒÂ½ do.
+     * Đăng ký đã bị từ chối, phải có lý do.
      */
     REJECTED
 }

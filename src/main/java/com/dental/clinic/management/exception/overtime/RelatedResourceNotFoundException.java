@@ -5,7 +5,8 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.web.ErrorResponseException;
 
 /**
- * Exception thrown when a related resource (Employee, WorkShift, etc.) is not found.
+ * Exception thrown when a related resource (Employee, WorkShift, etc.) is not
+ * found.
  * Returns 404 NOT_FOUND status.
  */
 public class RelatedResourceNotFoundException extends ErrorResponseException {
@@ -19,11 +20,11 @@ public class RelatedResourceNotFoundException extends ErrorResponseException {
     }
 
     private static ProblemDetail asProblemDetail(String resourceType, Object resourceId) {
-        String message = String.format("%s khÃƒÂ´ng tÃ¡Â»â€œn tÃ¡ÂºÂ¡i vÃ¡Â»â€ºi ID: %s", resourceType, resourceId);
+        String message = String.format("%s không tồn tại với ID: %s", resourceType, resourceId);
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, message);
         problemDetail.setTitle("Related Resource Not Found");
         problemDetail.setProperty("code", "RELATED_RESOURCE_NOT_FOUND");
-        problemDetail.setProperty("message", "NhÃƒÂ¢n viÃƒÂªn hoÃ¡ÂºÂ·c Ca lÃƒÂ m viÃ¡Â»â€¡c khÃƒÂ´ng tÃ¡Â»â€œn tÃ¡ÂºÂ¡i.");
+        problemDetail.setProperty("message", "Nhân viên hoặc Ca làm việc không tồn tại.");
         return problemDetail;
     }
 

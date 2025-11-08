@@ -3,9 +3,9 @@ package com.dental.clinic.management.employee.enums;
 /**
  * Employment type enum (Schema V15).
  *
- * - FULL_TIME: Uses Fixed Schedule (LuÃ¡Â»â€œng 1 - fixed_shift_registrations)
- * - PART_TIME_FIXED: Uses Fixed Schedule (LuÃ¡Â»â€œng 1 - fixed_shift_registrations)
- * - PART_TIME_FLEX: Uses Flexible Schedule (LuÃ¡Â»â€œng 2 - part_time_registrations)
+ * - FULL_TIME: Uses Fixed Schedule (Lương 1 - fixed_shift_registrations)
+ * - PART_TIME_FIXED: Uses Fixed Schedule (Lương 1 - fixed_shift_registrations)
+ * - PART_TIME_FLEX: Uses Flexible Schedule (Lương 2 - part_time_registrations)
  */
 public enum EmploymentType {
     FULL_TIME,

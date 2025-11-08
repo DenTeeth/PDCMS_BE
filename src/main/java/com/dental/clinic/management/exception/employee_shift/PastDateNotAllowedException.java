@@ -9,7 +9,7 @@ public class PastDateNotAllowedException extends RuntimeException {
 
     public PastDateNotAllowedException(LocalDate workDate) {
         super(String.format(
-                "KhÃƒÂ´ng thÃ¡Â»Æ’ tÃ¡ÂºÂ¡o ca lÃƒÂ m viÃ¡Â»â€¡c cho ngÃƒÂ y %s trong quÃƒÂ¡ khÃ¡Â»Â©. Vui lÃƒÂ²ng chÃ¡Â»Ân ngÃƒÂ y tÃ¡Â»Â« hÃƒÂ´m nay trÃ¡Â»Å¸ Ã„â€˜i.",
+                "Không thể tạo ca làm việc cho ngày %s trong quá khứ. Vui lòng chọn ngày từ hôm nay trở đi.",
                 workDate));
     }
 }

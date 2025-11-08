@@ -33,18 +33,17 @@ public class AdminTimeOffTypeController {
 
     /**
      * GET /api/v1/admin/time-off-types
-     * LÃ¡ÂºÂ¥y danh sÃƒÂ¡ch LoÃ¡ÂºÂ¡i nghÃ¡Â»â€° phÃƒÂ©p (Admin View)
+     * Lấy danh sách Loại nghỉ phép (Admin View)
      *
      * Authorization: VIEW_TIMEOFF_TYPE_ALL
      *
      * Query Params:
-     * - is_active (boolean, optional): LÃ¡Â»Âc theo trÃ¡ÂºÂ¡ng thÃƒÂ¡i
-     * - is_paid (boolean, optional): LÃ¡Â»Âc theo loÃ¡ÂºÂ¡i cÃƒÂ³
-     * lÃ†Â°Ã†Â¡ng/khÃƒÂ´ng lÃ†Â°Ã†Â¡ng
+     * - is_active (boolean, optional): Lọc theo trạng thái
+     * - is_paid (boolean, optional): Lọc theo loại có
+     * lương/không lương
      *
      * Response:
-     * - 200 OK: TrÃ¡ÂºÂ£ vÃ¡Â»Â danh sÃƒÂ¡ch tÃ¡ÂºÂ¥t cÃ¡ÂºÂ£ loÃ¡ÂºÂ¡i nghÃ¡Â»â€°
-     * phÃƒÂ©p (kÃ¡Â»Æ’ cÃ¡ÂºÂ£ inactive)
+     * - 200 OK: Trả về danh sách tất cả loại nghỉ phép (kể cả inactive)
      *
      * @param isActive filter by active status (optional)
      * @param isPaid   filter by paid status (optional)
@@ -63,13 +62,13 @@ public class AdminTimeOffTypeController {
 
     /**
      * GET /api/v1/admin/time-off-types/{type_id}
-     * LÃ¡ÂºÂ¥y chi tiÃ¡ÂºÂ¿t mÃ¡Â»â„¢t loÃ¡ÂºÂ¡i nghÃ¡Â»â€° phÃƒÂ©p
+     * Lấy chi tiết một loại nghỉ phép
      *
      * Authorization: VIEW_TIMEOFF_TYPE_ALL
      *
      * Response:
-     * - 200 OK: TrÃ¡ÂºÂ£ vÃ¡Â»Â chi tiÃ¡ÂºÂ¿t loÃ¡ÂºÂ¡i nghÃ¡Â»â€° phÃƒÂ©p
-     * - 404 NOT_FOUND: KhÃƒÂ´ng tÃƒÂ¬m thÃ¡ÂºÂ¥y loÃ¡ÂºÂ¡i nghÃ¡Â»â€° phÃƒÂ©p
+     * - 200 OK: Trả về chi tiết loại nghỉ phép
+     * - 404 NOT_FOUND: Không tìm thấy loại nghỉ phép
      *
      * @param typeId the time-off type ID
      * @return TimeOffTypeResponse
@@ -85,25 +84,25 @@ public class AdminTimeOffTypeController {
 
     /**
      * POST /api/v1/admin/time-off-types
-     * TÃ¡ÂºÂ¡o LoÃ¡ÂºÂ¡i nghÃ¡Â»â€° phÃƒÂ©p mÃ¡Â»â€ºi
+     * Tạo Loại nghỉ phép mới
      *
      * Authorization: CREATE_TIMEOFF_TYPE
      *
      * Request Body:
      * {
      * "type_code": "UNPAID_LEAVE",
-     * "type_name": "NghÃ¡Â»â€° khÃƒÂ´ng lÃ†Â°Ã†Â¡ng",
+     * "type_name": "Nghỉ không lương",
      * "is_paid": false
      * }
      *
      * Business Logic:
-     * - type_code phÃ¡ÂºÂ£i unique
-     * - type_name lÃƒÂ  bÃ¡ÂºÂ¯t buÃ¡Â»â„¢c
-     * - is_paid lÃƒÂ  bÃ¡ÂºÂ¯t buÃ¡Â»â„¢c
-     * - TÃ¡Â»Â± Ã„â€˜Ã¡Â»â„¢ng gÃƒÂ¡n is_active = true
+     * - type_code phải unique
+     * - type_name là bắt buộc
+     * - is_paid là bắt buộc
+     * - Tự động gán is_active = true
      *
      * Response:
-     * - 201 CREATED: TÃ¡ÂºÂ¡o thÃƒÂ nh cÃƒÂ´ng
+     * - 201 CREATED: Tạo thành công
      * - 409 CONFLICT: DUPLICATE_TYPE_CODE
      *
      * @param request the creation request
@@ -120,21 +119,21 @@ public class AdminTimeOffTypeController {
 
     /**
      * PATCH /api/v1/admin/time-off-types/{type_id}
-     * CÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t LoÃ¡ÂºÂ¡i nghÃ¡Â»â€° phÃƒÂ©p
+     * Cập nhật Loại nghỉ phép
      *
      * Authorization: UPDATE_TIMEOFF_TYPE
      *
-     * Request Body (chÃ¡Â»â€° gÃ¡Â»Â­i cÃƒÂ¡c trÃ†Â°Ã¡Â»Âng cÃ¡ÂºÂ§n cÃ¡ÂºÂ­p
-     * nhÃ¡ÂºÂ­t):
+     * Request Body (chỉ gửi các trường cần cập
+     * nhật):
      * {
-     * "type_name": "NghÃ¡Â»â€° khÃƒÂ´ng lÃ†Â°Ã†Â¡ng (ViÃ¡Â»â€¡c riÃƒÂªng)"
+     * "type_name": "Nghỉ không lương (Việc riêng)"
      * }
      *
      * Business Logic:
-     * - NÃ¡ÂºÂ¿u type_code thay Ã„â€˜Ã¡Â»â€¢i, phÃ¡ÂºÂ£i kiÃ¡Â»Æ’m tra unique
+     * - Nếu type_code thay đổi, phải kiểm tra unique
      *
      * Response:
-     * - 200 OK: CÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t thÃƒÂ nh cÃƒÂ´ng
+     * - 200 OK: Cập nhật thành công
      * - 404 NOT_FOUND: TIMEOFF_TYPE_NOT_FOUND
      * - 409 CONFLICT: DUPLICATE_TYPE_CODE
      *
@@ -155,20 +154,19 @@ public class AdminTimeOffTypeController {
 
     /**
      * DELETE /api/v1/admin/time-off-types/{type_id}
-     * VÃƒÂ´ hiÃ¡Â»â€¡u hÃƒÂ³a / KÃƒÂ­ch hoÃ¡ÂºÂ¡t lÃ¡ÂºÂ¡i LoÃ¡ÂºÂ¡i nghÃ¡Â»â€°
-     * phÃƒÂ©p (Toggle is_active)
+     * Vô hiệu hóa / Kích hoạt lại Loại nghỉ phép (Toggle is_active)
      *
      * Authorization: DELETE_TIMEOFF_TYPE
      *
      * Business Logic:
-     * - Soft delete: Ã„ÂÃ¡ÂºÂ£o ngÃ†Â°Ã¡Â»Â£c is_active (true <-> false)
-     * - NÃ¡ÂºÂ¿u Ã„â€˜ang vÃƒÂ´ hiÃ¡Â»â€¡u hÃƒÂ³a (true -> false), kiÃ¡Â»Æ’m tra
-     * xem cÃƒÂ³ request PENDING nÃƒÂ o
-     * Ã„â€˜ang dÃƒÂ¹ng type_id nÃƒÂ y khÃƒÂ´ng
-     * - NÃ¡ÂºÂ¿u cÃƒÂ³, trÃ¡ÂºÂ£ vÃ¡Â»Â lÃ¡Â»â€”i 409 CONFLICT
+     * - Soft delete: Đảo ngược is_active (true <-> false)
+     * - Nếu đang vô hiệu hóa (true -> false), kiểm tra
+     * xem có request PENDING nào
+     * đang dùng type_id này không
+     * - Nếu có, trả về lỗi 409 CONFLICT
      *
      * Response:
-     * - 200 OK: Toggle thÃƒÂ nh cÃƒÂ´ng
+     * - 200 OK: Toggle thành công
      * - 404 NOT_FOUND: TIMEOFF_TYPE_NOT_FOUND
      * - 409 CONFLICT: TIMEOFF_TYPE_IN_USE
      *

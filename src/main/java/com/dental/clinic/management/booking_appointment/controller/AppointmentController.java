@@ -163,7 +163,7 @@ public class AppointmentController {
          * - serviceCode (string): Filter by service code
          * - searchCode (string): Combined search by code OR name
          * (patient/doctor/employee/room/service)
-         * Examples: "NguyÃ¡Â»â€¦n VÃ„Æ’n A", "Dr. An", "BN-1001", "CÃ¡ÂºÂ¡o vÃƒÂ´i"
+         * Examples: "Nguyễn Văn A", "Dr. An", "BN-1001", "Cáo vôi"
          *
          * @return Paginated list of appointments with nested
          *         patient/doctor/room/services/participants
@@ -279,10 +279,10 @@ public class AppointmentController {
          * - Comprehensive audit logging for compliance
          *
          * State Machine:
-         * - SCHEDULED Ã¢â€ â€™ CHECKED_IN, CANCELLED, NO_SHOW
-         * - CHECKED_IN Ã¢â€ â€™ IN_PROGRESS, CANCELLED
-         * - IN_PROGRESS Ã¢â€ â€™ COMPLETED, CANCELLED
-         * - COMPLETED, CANCELLED, NO_SHOW Ã¢â€ â€™ No transitions (terminal states)
+         * - SCHEDULED â€“ CHECKED_IN, CANCELLED, NO_SHOW
+         * - CHECKED_IN â€“ IN_PROGRESS, CANCELLED
+         * - IN_PROGRESS â€“ COMPLETED, CANCELLED
+         * - COMPLETED, CANCELLED, NO_SHOW â€“ No transitions (terminal states)
          *
          * Timestamp Rules:
          * - CHECKED_IN: No timestamp update (patient arrived, waiting)
@@ -291,11 +291,11 @@ public class AppointmentController {
          *
          * Request Body Examples:
          * - Check-in: {"status": "CHECKED_IN", "notes": "Ã„ÂÃ¡ÂºÂ¿n trÃ¡Â»â€¦ 10
-         * phÃƒÂºt"}
+         * phút"}
          * - Cancel: {"status": "CANCELLED", "reasonCode": "PATIENT_REQUEST", "notes":
-         * "BÃ¡ÂºÂ­n Ã„â€˜Ã¡Â»â„¢t xuÃ¡ÂºÂ¥t"}
-         * - No-show: {"status": "NO_SHOW", "notes": "GÃ¡Â»Âi 3 cuÃ¡Â»â„¢c khÃƒÂ´ng
-         * nghe mÃƒÂ¡y"}
+         * "Bệnh nhân xuất"}
+         * - No-show: {"status": "NO_SHOW", "notes": "Gọi 3 cuộc không
+         * nghe máy"}
          *
          * @param appointmentCode Unique appointment code
          * @param request         Status update request with status, reasonCode (for

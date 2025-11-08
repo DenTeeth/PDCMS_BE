@@ -12,10 +12,10 @@ import com.dental.clinic.management.working_schedule.dto.response.ShiftRegistrat
 public class ShiftRegistrationMapper {
 
     /**
-     * PhÃ†Â°Ã†Â¡ng thÃ¡Â»Â©c chuyÃ¡Â»Æ’n Ã„â€˜Ã¡Â»â€¢i Entity Ã„â€˜ÃƒÂ£ Ã„â€˜Ã†Â°Ã¡Â»Â£c tÃ¡ÂºÂ£i Ã„â€˜Ã¡ÂºÂ§y Ã„â€˜Ã¡Â»Â§ sang DTO.
+     * Phương thức chuyển đổi Entity đã được tải tại đây sang DTO.
      * 
-     * @param entity Ã„ÂÃ¡Â»â€˜i tÃ†Â°Ã¡Â»Â£ng EmployeeShiftRegistration (Ã„â€˜ÃƒÂ£ cÃƒÂ³ sÃ¡ÂºÂµn registrationDays
-     *               nhÃ¡Â»Â @EntityGraph)
+     * @param entity Đối tượng EmployeeShiftRegistration (đã có sẵn registrationDays
+     *               nhờ @EntityGraph)
      * @return ShiftRegistrationResponse DTO
      */
     public ShiftRegistrationResponse toShiftRegistrationResponse(EmployeeShiftRegistration entity) {
@@ -32,7 +32,8 @@ public class ShiftRegistrationMapper {
         response.setEffectiveTo(entity.getEffectiveTo());
         response.setActive(Boolean.TRUE.equals(entity.getIsActive()));
 
-        // V2: No longer has registrationDays, each registration is for one slot (one day)
+        // V2: No longer has registrationDays, each registration is for one slot (one
+        // day)
         // Leave daysOfWeek empty or null
         response.setDaysOfWeek(null);
 

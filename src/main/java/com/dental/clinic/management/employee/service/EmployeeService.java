@@ -203,10 +203,10 @@ public class EmployeeService {
     /**
      * Create new employee with account
      *
-     * FLOW: TÃ¡ÂºÂ¡o Employee Ã¢â€ â€™ TÃ¡Â»Â± Ã„â€˜Ã¡Â»â„¢ng tÃ¡ÂºÂ¡o Account mÃ¡Â»â€ºi
-     * - Admin tÃ¡ÂºÂ¡o employee
-     * - System tÃ¡Â»Â± Ã„â€˜Ã¡Â»â„¢ng tÃ¡ÂºÂ¡o account vÃ¡Â»â€ºi username/password
-     * - GÃ¡Â»Â­i thÃƒÂ´ng tin Ã„â€˜Ã„Æ’ng nhÃ¡ÂºÂ­p cho employee
+     * FLOW: Tạo Employee – Tạo tài khoản
+     * - Admin tạo employee
+     * - System tự động tạo account và employee
+     * - Gửi thông tin đăng nhập cho employee
      *
      * @param request employee information including username/password
      * @return EmployeeInfoResponse

@@ -34,12 +34,12 @@ public class TimeOffRequestController {
 
     /**
      * GET /api/v1/time-off-requests
-     * LÃ¡ÂºÂ¥y danh sÃƒÂ¡ch cÃƒÂ¡c yÃƒÂªu cÃ¡ÂºÂ§u nghÃ¡Â»â€° phÃƒÂ©p vÃ¡Â»â€ºi
-     * phÃƒÂ¢n trang vÃƒÂ  bÃ¡Â»â„¢ lÃ¡Â»Âc
+     * Lấy danh sách các yêu cầu nghỉ phép với
+     * phân trang và bộ lọc
      *
-     * PhÃƒÂ¢n quyÃ¡Â»Ân:
-     * - Admin hoÃ¡ÂºÂ·c VIEW_TIMEOFF_ALL: xem tÃ¡ÂºÂ¥t cÃ¡ÂºÂ£
-     * - VIEW_TIMEOFF_OWN: chÃ¡Â»â€° xem cÃ¡Â»Â§a chÃƒÂ­nh mÃƒÂ¬nh
+     * Phân quyền:
+     * - Admin hoặc VIEW_TIMEOFF_ALL: xem tất cả
+     * - VIEW_TIMEOFF_OWN: chỉ xem của chính mình
      *
      * @param employeeId Filter by employee_id (optional, ignored for
      *                   VIEW_TIMEOFF_OWN)
@@ -69,17 +69,16 @@ public class TimeOffRequestController {
 
     /**
      * GET /api/v1/time-off-requests/{request_id}
-     * Xem chi tiÃ¡ÂºÂ¿t mÃ¡Â»â„¢t yÃƒÂªu cÃ¡ÂºÂ§u nghÃ¡Â»â€° phÃƒÂ©p
+     * Xem chi tiÃ¡ÂºÂ¿t mÃ¡Â»â„¢t yÃÂªu cÃ¡ÂºÂ§u nghÃ¡Â»â€° phÃƒÂ©p
      *
-     * PhÃƒÂ¢n quyÃ¡Â»Ân:
-     * - Admin hoÃ¡ÂºÂ·c VIEW_TIMEOFF_ALL: xem bÃ¡ÂºÂ¥t kÃ¡Â»Â³ yÃƒÂªu cÃ¡ÂºÂ§u
-     * nÃƒÂ o
-     * - VIEW_TIMEOFF_OWN: chÃ¡Â»â€° xem cÃ¡Â»Â§a chÃƒÂ­nh mÃƒÂ¬nh
+     * Phân quyền:
+     * - Admin hoặc VIEW_TIMEOFF_ALL: xem tất cả
+     * - VIEW_TIMEOFF_OWN: chỉ xem của chính mình
      *
      * Response:
-     * - 200 OK: TrÃ¡ÂºÂ£ vÃ¡Â»Â chi tiÃ¡ÂºÂ¿t yÃƒÂªu cÃ¡ÂºÂ§u
-     * - 404 Not Found: YÃƒÂªu cÃ¡ÂºÂ§u khÃƒÂ´ng tÃ¡Â»â€œn tÃ¡ÂºÂ¡i hoÃ¡ÂºÂ·c
-     * khÃƒÂ´ng cÃƒÂ³ quyÃ¡Â»Ân xem
+     * - 200 OK: Trả về chi tiết yêu cầu
+     * - 404 Not Found: Yêu cầu không tồn tại hoặc
+     * không có quyền xem
      *
      * @param requestId The ID of the time-off request
      * @return TimeOffRequestResponse with request details
@@ -93,28 +92,28 @@ public class TimeOffRequestController {
 
     /**
      * POST /api/v1/time-off-requests
-     * TÃ¡ÂºÂ¡o yÃƒÂªu cÃ¡ÂºÂ§u nghÃ¡Â»â€° phÃƒÂ©p mÃ¡Â»â€ºi
+     * Tạo yêu cầu nghỉ phép mới
      *
-     * PhÃƒÂ¢n quyÃ¡Â»Ân:
-     * - CREATE_TIMEOFF: quyÃ¡Â»Ân tÃ¡ÂºÂ¡o yÃƒÂªu cÃ¡ÂºÂ§u nghÃ¡Â»â€° phÃƒÂ©p
+     * Phân quyền:
+     * - CREATE_TIMEOFF: quyền tạo yêu cầu nghỉ phép
      *
      * Validation:
-     * - employee_id vÃƒÂ  time_off_type_id phÃ¡ÂºÂ£i tÃ¡Â»â€œn tÃ¡ÂºÂ¡i
-     * - time_off_type_id phÃ¡ÂºÂ£i is_active = true
-     * - start_date khÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c lÃ¡Â»â€ºn hÃ†Â¡n end_date
-     * - NÃ¡ÂºÂ¿u slot_id cÃƒÂ³ giÃƒÂ¡ trÃ¡Â»â€¹ (nghÃ¡Â»â€° nÃ¡Â»Â­a ngÃƒÂ y),
-     * start_date phÃ¡ÂºÂ£i bÃ¡ÂºÂ±ng end_date
-     * - KhÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c trÃƒÂ¹ng lÃ¡ÂºÂ·p vÃ¡Â»â€ºi yÃƒÂªu cÃ¡ÂºÂ§u
-     * nghÃ¡Â»â€° phÃƒÂ©p khÃƒÂ¡c Ã„â€˜ang active
-     * - reason lÃƒÂ  bÃ¡ÂºÂ¯t buÃ¡Â»â„¢c
+     * - employee_id và time_off_type_id phải tồn tại
+     * - time_off_type_id phải is_active = true
+     * - start_date không được lớn hơn end_date
+     * - Nếu slot_id có giá trị (nghỉ giữa ngày),
+     * start_date phải bằng end_date
+     * - Không được trùng lặp với yêu cầu
+     * nghỉ phép khác đang active
+     * - reason là bắt buộc
      *
      * Response:
-     * - 201 Created: YÃƒÂªu cÃ¡ÂºÂ§u Ã„â€˜Ã†Â°Ã¡Â»Â£c tÃ¡ÂºÂ¡o thÃƒÂ nh cÃƒÂ´ng
-     * - 400 Bad Request: DÃ¡Â»Â¯ liÃ¡Â»â€¡u khÃƒÂ´ng hÃ¡Â»Â£p lÃ¡Â»â€¡ (ngÃƒÂ y
-     * khÃƒÂ´ng hÃ¡Â»Â£p lÃ¡Â»â€¡)
-     * - 404 Not Found: Employee hoÃ¡ÂºÂ·c TimeOffType khÃƒÂ´ng tÃ¡Â»â€œn tÃ¡ÂºÂ¡i
-     * - 409 Conflict: TrÃƒÂ¹ng lÃ¡ÂºÂ·p vÃ¡Â»â€ºi yÃƒÂªu cÃ¡ÂºÂ§u nghÃ¡Â»â€°
-     * phÃƒÂ©p khÃƒÂ¡c
+     * - 201 Created: Yêu cầu đã được tạo thành công
+     * - 400 Bad Request: Dữ liệu không hợp lệ (ngày
+     * không hợp lệ, thiếu reason, v.v.)
+     * - 404 Not Found: Employee hoặc TimeOffType không tồn tại
+     * - 409 Conflict: Trùng lặp với yêu cầu nghỉ phép khác
+     * đang active
      *
      * @param request CreateTimeOffRequest with request details
      * @return Created TimeOffRequestResponse
@@ -129,29 +128,27 @@ public class TimeOffRequestController {
 
     /**
      * PATCH /api/v1/time-off-requests/{request_id}
-     * CÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t trÃ¡ÂºÂ¡ng thÃƒÂ¡i yÃƒÂªu cÃ¡ÂºÂ§u nghÃ¡Â»â€° phÃƒÂ©p
-     * (DuyÃ¡Â»â€¡t/TÃ¡Â»Â« chÃ¡Â»â€˜i/HÃ¡Â»Â§y)
+     * Cập nhật trạng thái yêu cầu nghỉ phép
+     * (Duyệt/Từ chối/Hủy)
      *
-     * PhÃƒÂ¢n quyÃ¡Â»Ân:
+     * Phân quyền:
      * - status=APPROVED: APPROVE_TIMEOFF
-     * - status=REJECTED: REJECT_TIMEOFF (reason bÃ¡ÂºÂ¯t buÃ¡Â»â„¢c)
-     * - status=CANCELLED: CANCEL_TIMEOFF_OWN (nÃ¡ÂºÂ¿u lÃƒÂ  chÃ¡Â»Â§ sÃ¡Â»Å¸
-     * hÃ¡Â»Â¯u) hoÃ¡ÂºÂ·c
-     * CANCEL_TIMEOFF_PENDING (nÃ¡ÂºÂ¿u lÃƒÂ  quÃ¡ÂºÂ£n lÃƒÂ½)
-     * (reason bÃ¡ÂºÂ¯t buÃ¡Â»â„¢c)
+     * - status=REJECTED: REJECT_TIMEOFF (reason bắt buộc)
+     * - status=CANCELLED: CANCEL_TIMEOFF_OWN (nếu là chủ sở hữu)
+     * hoặc CANCEL_TIMEOFF_PENDING (nếu là quản lý)
+     * (reason bắt buộc)
      *
      * Business Logic:
-     * - YÃƒÂªu cÃ¡ÂºÂ§u phÃ¡ÂºÂ£i Ã„â€˜ang Ã¡Â»Å¸ trÃ¡ÂºÂ¡ng thÃƒÂ¡i PENDING
-     * - NÃ¡ÂºÂ¿u APPROVED, tÃ¡Â»Â± Ã„â€˜Ã¡Â»â„¢ng cÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t
-     * employee_shifts status thÃƒÂ nh ON_LEAVE
+     * - Yêu cầu phải đang ở trạng thái PENDING
+     * - Nếu APPROVED, tự động cập nhật
+     * employee_shifts status thành ON_LEAVE
      *
      * Response:
-     * - 200 OK: CÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t thÃƒÂ nh cÃƒÂ´ng
-     * - 400 Bad Request: ThiÃ¡ÂºÂ¿u reason (cho REJECTED/CANCELLED)
-     * - 403 Forbidden: KhÃƒÂ´ng cÃƒÂ³ quyÃ¡Â»Ân thÃ¡Â»Â±c hiÃ¡Â»â€¡n hÃƒÂ nh
-     * Ã„â€˜Ã¡Â»â„¢ng
-     * - 404 Not Found: YÃƒÂªu cÃ¡ÂºÂ§u khÃƒÂ´ng tÃ¡Â»â€œn tÃ¡ÂºÂ¡i
-     * - 409 Conflict: YÃƒÂªu cÃ¡ÂºÂ§u khÃƒÂ´ng Ã¡Â»Å¸ trÃ¡ÂºÂ¡ng thÃƒÂ¡i PENDING
+     * - 200 OK: Cập nhật thành công
+     * - 400 Bad Request: Thiếu reason (cho REJECTED/CANCELLED)
+     * - 403 Forbidden: Không có quyền thực hiện hành động
+     * - 404 Not Found: Yêu cầu không tồn tại
+     * - 409 Conflict: Yêu cầu không ở trạng thái PENDING
      *
      * @param requestId The ID of the time-off request
      * @param request   UpdateTimeOffStatusRequest with new status and optional

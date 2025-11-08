@@ -24,13 +24,13 @@ import java.util.List;
  * only).
  * <p>
  * ARCHITECTURE (Hybrid Scheduling):
- * - LuÃ¡Â»â€œng 1 (Fixed): Employees with full-time or fixed part-time
+ * - Luồng 1 (Fixed): Employees with full-time or fixed part-time
  * schedules
  * (fixed_shift_registrations)
- * - LuÃ¡Â»â€œng 2 (Flex): Employees with flexible shift selections
+ * - Luồng 2 (Flex): Employees with flexible shift selections
  * (part_time_registrations)
  * <p>
- * P7 (Shift Renewal Management) ONLY applies to LuÃ¡Â»â€œng 1 employees.
+ * P7 (Shift Renewal Management) ONLY applies to Luồng 1 employees.
  * <p>
  * Provides endpoints for:
  * - Viewing pending renewal invitations

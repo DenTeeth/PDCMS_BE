@@ -17,7 +17,7 @@ public class RegistrationInactiveException extends ErrorResponseException {
 
     private static ProblemDetail createProblemDetail(Integer registrationId) {
         String message = String.format(
-                "LÃ¡Â»â€¹ch lÃƒÂ m viÃ¡Â»â€¡c cÃ¡Â»â€˜ Ã„â€˜Ã¡Â»â€¹nh (ID: %d) Ã„â€˜ÃƒÂ£ bÃ¡Â»â€¹ hÃ¡Â»Â§y hoÃ¡ÂºÂ·c vÃƒÂ´ hiÃ¡Â»â€¡u hÃƒÂ³a. KhÃƒÂ´ng thÃ¡Â»Æ’ gia hÃ¡ÂºÂ¡n.",
+                "Lịch làm việc của yêu cầu (ID: %d) đã bị hủy hoặc vô hiệu hóa. Không thể gia hạn.",
                 registrationId);
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, message);

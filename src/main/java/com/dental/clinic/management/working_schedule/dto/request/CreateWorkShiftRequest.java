@@ -13,14 +13,14 @@ import java.time.LocalTime;
  */
 public class CreateWorkShiftRequest {
 
-    @NotBlank(message = "TÃƒÂªn ca lÃƒÂ m viÃ¡Â»â€¡c khÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c Ã„â€˜Ã¡Â»Æ’ trÃ¡Â»â€˜ng")
-    @Size(max = 100, message = "TÃƒÂªn ca lÃƒÂ m viÃ¡Â»â€¡c khÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c vÃ†Â°Ã¡Â»Â£t quÃƒÂ¡ 100 kÃƒÂ½ tÃ¡Â»Â±")
+    @NotBlank(message = "Tên ca làm việc không được để trống")
+    @Size(max = 100, message = "Tên ca làm việc không được vượt quá 100 ký tự")
     private String shiftName;
 
-    @NotNull(message = "GiÃ¡Â»Â bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u khÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c Ã„â€˜Ã¡Â»Æ’ trÃ¡Â»â€˜ng")
+    @NotNull(message = "Giờ bắt đầu không được để trống")
     private LocalTime startTime;
 
-    @NotNull(message = "GiÃ¡Â»Â kÃ¡ÂºÂ¿t thÃƒÂºc khÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c Ã„â€˜Ã¡Â»Æ' trÃ¡Â»â€˜ng")
+    @NotNull(message = "Giờ kết thúc không được để trống")
     private LocalTime endTime;
 
     public CreateWorkShiftRequest() {

@@ -267,18 +267,18 @@ public class CustomerContactService {
                     "not_interested");
         }
 
-        // Ã¢Å“â€¦ TÃ¡ÂºÂ¡o Patient thÃ¡Â»Â±c sÃ¡Â»Â±
+        // ... Tạo Patient thực sự
         CreatePatientRequest patientRequest = new CreatePatientRequest();
 
-        // Map tÃ¡Â»Â« contact sang patient
+        // Map từ contact sang patient
         String[] names = contact.getFullName().split(" ", 2);
         patientRequest.setFirstName(names.length > 0 ? names[0] : contact.getFullName());
         patientRequest.setLastName(names.length > 1 ? names[1] : "");
         patientRequest.setEmail(contact.getEmail());
         patientRequest.setPhone(contact.getPhone());
-        // Set cÃƒÂ¡c field khÃƒÂ¡c nÃ¡ÂºÂ¿u cÃ¡ÂºÂ§n...
+        // Set các field khác nếu cần...
 
-        // TÃ¡ÂºÂ¡o patient
+        // Tạo patient
         PatientInfoResponse patient = patientService.createPatient(patientRequest);
 
         // Link patient vÃ¡Â»â€ºi contact

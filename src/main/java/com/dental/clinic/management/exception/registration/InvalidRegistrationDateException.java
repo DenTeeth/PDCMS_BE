@@ -31,7 +31,7 @@ public class InvalidRegistrationDateException extends ErrorResponseException {
     private static ProblemDetail asProblemDetailWithDates(LocalDate workDate, LocalDate currentDate) {
         long daysDiff = java.time.temporal.ChronoUnit.DAYS.between(currentDate, workDate);
         String message = String.format(
-                "NgÃƒÂ y Ã„â€˜Ã„Æ’ng kÃƒÂ½ khÃƒÂ´ng hÃ¡Â»Â£p lÃ¡Â»â€¡: %s (cÃƒÂ²n %d ngÃƒÂ y).",
+                "Ngày hiệu lực không hợp lệ: %s (còn %d ngày).",
                 workDate, daysDiff);
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, message);
         problemDetail.setTitle("Invalid Registration Date");
@@ -39,4 +39,3 @@ public class InvalidRegistrationDateException extends ErrorResponseException {
         return problemDetail;
     }
 }
-

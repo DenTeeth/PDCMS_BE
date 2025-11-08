@@ -110,9 +110,9 @@ public class GlobalExceptionHandler {
         // Use Vietnamese message for consistent error responses
         String message;
         if (requiredPermission != null) {
-            message = "KhÃƒÂ´ng cÃƒÂ³ quyÃ¡Â»Ân thÃ¡Â»Â±c hiÃ¡Â»â€¡n thao tÃƒÂ¡c nÃƒÂ y. YÃƒÂªu cÃ¡ÂºÂ§u quyÃ¡Â»Ân: " + requiredPermission;
+            message = "Không có quyền thực hiện thao tác này. Yêu cầu quyền: " + requiredPermission;
         } else if (ex.getMessage() == null || ex.getMessage().equals("Access Denied")) {
-            message = "KhÃƒÂ´ng tÃƒÂ¬m thÃ¡ÂºÂ¥y tÃƒÂ i nguyÃƒÂªn hoÃ¡ÂºÂ·c bÃ¡ÂºÂ¡n khÃƒÂ´ng cÃƒÂ³ quyÃ¡Â»Ân truy cÃ¡ÂºÂ­p.";
+            message = "Không tìm thấy tài nguyên hoặc bạn không có quyền truy cập.";
         } else {
             message = ex.getMessage();
         }
@@ -144,28 +144,29 @@ public class GlobalExceptionHandler {
             ErrorResponseException ex,
             HttpServletRequest request) {
 
-    HttpStatus status = HttpStatus.valueOf(ex.getStatusCode().value());
+        HttpStatus status = HttpStatus.valueOf(ex.getStatusCode().value());
 
-    // Defensive extraction of ProblemDetail body (may be null in some cases)
-    org.springframework.http.ProblemDetail body = ex.getBody();
-    String title = body != null ? body.getTitle() : null;
-    log.warn("{} exception at {}: {}", status, request.getRequestURI(), title != null ? title : ex.getMessage());
+        // Defensive extraction of ProblemDetail body (may be null in some cases)
+        org.springframework.http.ProblemDetail body = ex.getBody();
+        String title = body != null ? body.getTitle() : null;
+        log.warn("{} exception at {}: {}", status, request.getRequestURI(), title != null ? title : ex.getMessage());
 
-    FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
-    res.setStatusCode(status.value());
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(status.value());
 
-    // Extract error code and message from ProblemDetail properties if available
-    Object errorCodeProperty = null;
-    Object messageProperty = null;
-    if (body != null && body.getProperties() != null) {
-        errorCodeProperty = body.getProperties().get("errorCode");
-        messageProperty = body.getProperties().get("message");
-    }
+        // Extract error code and message from ProblemDetail properties if available
+        Object errorCodeProperty = null;
+        Object messageProperty = null;
+        if (body != null && body.getProperties() != null) {
+            errorCodeProperty = body.getProperties().get("errorCode");
+            messageProperty = body.getProperties().get("message");
+        }
 
-    // Set error code (use errorCode property if available, otherwise fallback to generic error)
-    res.setError(errorCodeProperty != null
-        ? errorCodeProperty.toString()
-        : "error." + status.name().toLowerCase());
+        // Set error code (use errorCode property if available, otherwise fallback to
+        // generic error)
+        res.setError(errorCodeProperty != null
+                ? errorCodeProperty.toString()
+                : "error." + status.name().toLowerCase());
 
         // CRITICAL FIX: Use title (detailed message) instead of messageProperty for
         // user-facing messages
@@ -176,9 +177,9 @@ public class GlobalExceptionHandler {
                 ? ex.getBody().getTitle()
                 : (messageProperty != null ? messageProperty.toString() : ex.getBody().getDetail()));
 
-    res.setData(null);
+        res.setData(null);
 
-    return ResponseEntity.status(status).body(res);
+        return ResponseEntity.status(status).body(res);
     }
 
     /**
@@ -586,7 +587,7 @@ public class GlobalExceptionHandler {
         // For holiday endpoints, provide Vietnamese message
         if (request.getRequestURI().contains("/api/v1/holiday")) {
             String fields = String.join(", ", missingFields);
-            errorMessage = "ThiÃ¡ÂºÂ¿u thÃƒÂ´ng tin bÃ¡ÂºÂ¯t buÃ¡Â»â„¢c: " + fields;
+            errorMessage = "Thiếu thông tin bắt buộc: " + fields;
         }
 
         FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
@@ -621,7 +622,7 @@ public class GlobalExceptionHandler {
         String message;
         if (request.getRequestURI().contains("/api/v1/shifts") &&
                 (ex.getParameterName().equals("start_date") || ex.getParameterName().equals("end_date"))) {
-            message = "Vui lÃƒÂ²ng cung cÃ¡ÂºÂ¥p ngÃƒÂ y bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u vÃƒÂ  ngÃƒÂ y kÃ¡ÂºÂ¿t thÃƒÂºc hÃ¡Â»Â£p lÃ¡Â»â€¡.";
+            message = "Vui lòng cung cấp đầy đủ ngày bắt đầu và ngày kết thúc hợp lệ.";
         } else {
             message = "Missing required parameter: " + ex.getParameterName();
         }
@@ -652,8 +653,8 @@ public class GlobalExceptionHandler {
 
         if (ex.getName().equals("startDate") || ex.getName().equals("endDate") ||
                 ex.getName().equals("holidayDate") || ex.getName().equals("date")) {
-            message = "Ã„ÂÃ¡Â»â€¹nh dÃ¡ÂºÂ¡ng ngÃƒÂ y khÃƒÂ´ng hÃ¡Â»Â£p lÃ¡Â»â€¡: " + ex.getValue() +
-                    ". Ã„ÂÃ¡Â»â€¹nh dÃ¡ÂºÂ¡ng yÃƒÂªu cÃ¡ÂºÂ§u: yyyy-MM-dd";
+            message = "Định dạng ngày không hợp lệ: " + ex.getValue() +
+                    ". Định dạng yêu cầu: yyyy-MM-dd";
             errorCode = "INVALID_DATE_FORMAT";
         } else {
             message = "Invalid parameter type: " + ex.getName();
@@ -977,8 +978,10 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handle TransactionSystemException which may wrap ErrorResponseException thrown inside
-     * transactional boundaries. Unwrap and delegate to the ErrorResponseException handler
+     * Handle TransactionSystemException which may wrap ErrorResponseException
+     * thrown inside
+     * transactional boundaries. Unwrap and delegate to the ErrorResponseException
+     * handler
      * when possible so the original 4xx response is preserved.
      */
     @ExceptionHandler(org.springframework.transaction.TransactionSystemException.class)
@@ -994,7 +997,8 @@ public class GlobalExceptionHandler {
             cause = cause.getCause();
         }
 
-        // If we couldn't unwrap to a known ErrorResponseException, fall back to generic handler
+        // If we couldn't unwrap to a known ErrorResponseException, fall back to generic
+        // handler
         return handleGenericException(ex, request);
     }
 }

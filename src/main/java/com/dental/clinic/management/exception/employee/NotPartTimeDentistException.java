@@ -22,8 +22,8 @@ public class NotPartTimeDentistException extends RuntimeException {
 
     public NotPartTimeDentistException(String employeeCode, String employmentType) {
         super(String.format(
-                "NhÃƒÂ¢n viÃƒÂªn %s (loÃ¡ÂºÂ¡i: %s) khÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c Ã„â€˜Ã„Æ’ng kÃƒÂ½ lÃ¡Â»â€¹ch linh hoÃ¡ÂºÂ¡t. " +
-                        "ChÃ¡Â»â€° nhÃƒÂ¢n viÃƒÂªn PART_TIME mÃ¡Â»â€ºi cÃƒÂ³ quyÃ¡Â»Ân nÃƒÂ y.",
+                "Nhân viên %s (loại: %s) không được đăng ký lịch linh hoạt. " +
+                        "Chỉ nhân viên PART_TIME mới có quyền này.",
                 employeeCode, employmentType));
     }
 

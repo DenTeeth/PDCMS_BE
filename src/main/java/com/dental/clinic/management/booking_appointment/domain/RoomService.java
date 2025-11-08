@@ -15,10 +15,10 @@ import java.time.LocalDateTime;
  * <b>Business Rules:</b>
  * </p>
  * <ul>
- * <li>A room can support multiple services (e.g., "PhÃƒÂ²ng Implant" Ã¢â€ â€™
- * Implant + Bone Graft)</li>
- * <li>A service can be performed in multiple rooms (e.g., "CÃ¡ÂºÂ¡o vÃƒÂ´i"
- * Ã¢â€ â€™ P-01, P-02, P-03)</li>
+ * <li>A room can support multiple services (e.g., "Phòng Implant" – Implant +
+ * Bone Graft)</li>
+ * <li>A service can be performed in multiple rooms (e.g., "Cạo vôi" – P-01,
+ * P-02, P-03)</li>
  * <li>Only active services should be assigned to rooms</li>
  * <li>Receptionist uses this to validate room-service compatibility when
  * booking appointments</li>
@@ -31,10 +31,10 @@ import java.time.LocalDateTime;
  * <pre>
  * room_id | service_id | service_name       | room_name
  * --------|------------|-------------------|------------------
- * 4       | 35         | CÃ¡ÂºÂ¯m trÃ¡Â»Â¥ Implant   | PhÃƒÂ²ng Implant P-04
- * 4       | 36         | NÃƒÂ¢ng xoang        | PhÃƒÂ²ng Implant P-04
- * 1       | 1          | KhÃƒÂ¡m tÃ¡Â»â€¢ng quÃƒÂ¡t    | PhÃƒÂ²ng thÃ†Â°Ã¡Â»Âng P-01
- * 1       | 3          | CÃ¡ÂºÂ¡o vÃƒÂ´i - MÃ¡Â»Â©c 1   | PhÃƒÂ²ng thÃ†Â°Ã¡Â»Âng P-01
+ * 4       | 35         | Cạo răng Implant   | Phòng Implant P-04
+ * 4       | 36         | Nâng xoang        | Phòng Implant P-04
+ * 1       | 1          | Khám tổng quát    | Phòng thường P-01
+ * 1       | 3          | Cạo vôi - Mẻc 1   | Phòng thường P-01
  * </pre>
  *
  * @since V16

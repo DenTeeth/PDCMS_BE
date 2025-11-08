@@ -26,15 +26,15 @@ public class ScheduleConflictException extends RuntimeException {
     public ScheduleConflictException(LocalDate date, LocalTime startTime, LocalTime endTime,
             String conflictingScheduleCode) {
         super(String.format(
-                "TrÃƒÂ¹ng lÃ¡Â»â€¹ch lÃƒÂ m viÃ¡Â»â€¡c ngÃƒÂ y %s (%s - %s) vÃ¡Â»â€ºi lÃ¡Â»â€¹ch %s. " +
-                        "Vui lÃƒÂ²ng chÃ¡Â»Ân thÃ¡Â»Âi gian khÃƒÂ¡c.",
+                "Trùng lịch làm việc ngày %s (%s - %s) với lịch %s. " +
+                        "Vui lòng chọn thời gian khá    c.",
                 date, startTime, endTime, conflictingScheduleCode));
     }
 
     public ScheduleConflictException(String dayOfWeek, LocalTime startTime, LocalTime endTime) {
         super(String.format(
-                "TrÃƒÂ¹ng lÃ¡Â»â€¹ch cÃ¡Â»â€˜ Ã„â€˜Ã¡Â»â€¹nh thÃ¡Â»Â© %s (%s - %s). " +
-                        "Vui lÃƒÂ²ng kiÃ¡Â»Æ’m tra lÃ¡ÂºÂ¡i lÃ¡Â»â€¹ch tuÃ¡ÂºÂ§n.",
+                "Trùng lịch ca làm việc thứ %s (%s - %s). " +
+                        "Vui lòng kiểm tra lại lịch tuần.",
                 dayOfWeek, startTime, endTime));
     }
 

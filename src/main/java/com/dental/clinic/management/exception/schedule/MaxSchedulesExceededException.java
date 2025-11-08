@@ -27,8 +27,8 @@ public class MaxSchedulesExceededException extends RuntimeException {
 
     public MaxSchedulesExceededException(LocalDate workDate, int currentCount) {
         super(String.format(
-                "Ã„ÂÃƒÂ£ Ã„â€˜Ã¡ÂºÂ¡t giÃ¡Â»â€ºi hÃ¡ÂºÂ¡n lÃ¡Â»â€¹ch lÃƒÂ m viÃ¡Â»â€¡c cho ngÃƒÂ y %s: %d/%d ca. " +
-                        "KhÃƒÂ´ng thÃ¡Â»Æ’ Ã„â€˜Ã„Æ’ng kÃƒÂ½ thÃƒÂªm.",
+                "Đã đạt giới hạn lịch làm việc cho ngày %s: %d/%d ca. " +
+                        "Không thể đăng ký thêm.",
                 workDate, currentCount, MAX_SCHEDULES_PER_DAY));
     }
 

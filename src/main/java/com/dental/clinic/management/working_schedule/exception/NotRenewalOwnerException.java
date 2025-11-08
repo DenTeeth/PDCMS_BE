@@ -17,7 +17,7 @@ public class NotRenewalOwnerException extends ErrorResponseException {
 
     private static ProblemDetail createProblemDetail(String renewalId, Integer employeeId) {
         String message = String.format(
-                "BÃ¡ÂºÂ¡n khÃƒÂ´ng cÃƒÂ³ quyÃ¡Â»Ân phÃ¡ÂºÂ£n hÃ¡Â»â€œi yÃƒÂªu cÃ¡ÂºÂ§u gia hÃ¡ÂºÂ¡n nÃƒÂ y. YÃƒÂªu cÃ¡ÂºÂ§u %s khÃƒÂ´ng thuÃ¡Â»â„¢c vÃ¡Â»Â nhÃƒÂ¢n viÃƒÂªn %d.",
+                "Bạn không có quyền phản hồi yêu cầu gia hạn này. Yêu cầu %s không thuộc về nhân viên %d.",
                 renewalId,
                 employeeId);
 

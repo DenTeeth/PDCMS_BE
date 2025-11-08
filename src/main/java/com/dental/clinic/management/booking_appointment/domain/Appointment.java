@@ -8,13 +8,13 @@ import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
 /**
- * Appointment Entity - LÃ¡Â»â€¹ch hÃ¡ÂºÂ¹n trung tÃƒÂ¢m
- * KhÃƒÂ³a tÃƒÂ i nguyÃƒÂªn: BÃƒÂ¡c sÃ„Â© chÃƒÂ­nh + GhÃ¡ÂºÂ¿/PhÃƒÂ²ng
+ * Appointment Entity - Lịch hẹn trung tâm
+ * Khóa nguyên: Bác sĩ chính + Ghế/Phòng
  *
  * Design Notes:
- * - SÃ¡Â»Â­ dÃ¡Â»Â¥ng INTEGER foreign keys Ã„â€˜Ã¡Â»Æ’ tÃ†Â°Ã†Â¡ng thÃƒÂ­ch vÃ¡Â»â€ºi schema hiÃ¡Â»â€¡n tÃ¡ÂºÂ¡i
- * - API layer sÃ¡ÂºÂ½ nhÃ¡ÂºÂ­n/trÃ¡ÂºÂ£ codes (employeeCode, roomCode)
- * - Service layer resolve codes -> IDs trÃ†Â°Ã¡Â»â€ºc khi persist
+ * - Sử dụng INTEGER foreign keys để tương thích với schema hiện tại
+ * - API layer sẽ nhận/trả codes (employeeCode, roomCode)
+ * - Service layer resolve codes -> IDs trước khi persist
  */
 @Entity
 @Table(name = "appointments")
@@ -79,7 +79,8 @@ public class Appointment {
     private LocalDateTime actualEndTime;
 
     /**
-     * Self-referencing FK - appointment nÃƒÂ y Ã„â€˜Ã†Â°Ã¡Â»Â£c reschedule sang appointment nÃƒÂ o
+     * Self-referencing FK - appointment này được reschedule sang
+     * appointment nào
      */
     @Column(name = "rescheduled_to_appointment_id")
     private Integer rescheduledToAppointmentId;
@@ -88,7 +89,7 @@ public class Appointment {
     private String notes;
 
     /**
-     * FK to employees - LÃ¡Â»â€¦ tÃƒÂ¢n tÃ¡ÂºÂ¡o lÃ¡Â»â€¹ch hÃ¡ÂºÂ¹n nÃƒÂ y
+     * FK to employees - Lịch sử tạo lịch hẹn này
      */
     @Column(name = "created_by")
     private Integer createdBy;

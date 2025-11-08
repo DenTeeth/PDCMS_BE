@@ -16,7 +16,7 @@ public class QuotaExceededException extends ErrorResponseException {
 
     private static ProblemDetail createProblemDetail(Long slotId, LocalDate date, long registered, int quota) {
         String message = String.format(
-                "KhÃƒÂ´ng thÃ¡Â»Æ’ duyÃ¡Â»â€¡t Ã„â€˜Ã„Æ’ng kÃƒÂ½: suÃ¡ÂºÂ¥t %d vÃ†Â°Ã¡Â»Â£t quÃƒÂ¡ hÃ¡ÂºÂ¡n mÃ¡Â»Â©c vÃƒÂ o %s (%d/%d).",
+                "Không thể duyệt đăng ký: suất %d vượt quá hạn mức vào %s (%d/%d).",
                 slotId, date, registered, quota);
 
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, message);

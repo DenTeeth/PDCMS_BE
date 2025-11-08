@@ -10,7 +10,7 @@ import java.time.LocalTime;
  */
 public class UpdateWorkShiftRequest {
 
-    @Size(max = 100, message = "TÃƒÂªn ca lÃƒÂ m viÃ¡Â»â€¡c khÃƒÂ´ng Ã„â€˜Ã†Â°Ã¡Â»Â£c vÃ†Â°Ã¡Â»Â£t quÃƒÂ¡ 100 kÃƒÂ½ tÃ¡Â»Â±")
+    @Size(max = 100, message = "Tên ca làm việc không được vượt quá 100 ký tự")
     private String shiftName;
 
     private LocalTime startTime;

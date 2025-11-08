@@ -19,7 +19,7 @@ public class NotConfirmedByEmployeeException extends ErrorResponseException {
 
     private static ProblemDetail createProblemDetail(String renewalId, String currentStatus) {
         String message = String.format(
-                "KhÃƒÂ´ng thÃ¡Â»Æ’ chÃ¡Â»â€˜t gia hÃ¡ÂºÂ¡n. NhÃƒÂ¢n viÃƒÂªn chÃ†Â°a xÃƒÂ¡c nhÃ¡ÂºÂ­n Ã„â€˜Ã¡Â»â€œng ÃƒÂ½. YÃƒÂªu cÃ¡ÂºÂ§u %s Ã„â€˜ang Ã¡Â»Å¸ trÃ¡ÂºÂ¡ng thÃƒÂ¡i %s (yÃƒÂªu cÃ¡ÂºÂ§u CONFIRMED).",
+                "Không thể phản hồi yêu cầu gia hạn. Nhân viên chưa xác nhận động ý. Yêu cầu %s đang ở trạng thái %s (yêu cầu CONFIRMED).",
                 renewalId,
                 currentStatus);
 

@@ -8,7 +8,7 @@ import com.dental.clinic.management.working_schedule.enums.ShiftStatus;
  */
 public class InvalidStatusTransitionException extends RuntimeException {
 
-    private static final String DEFAULT_MESSAGE = "KhÃƒÂ´ng thÃ¡Â»Æ’ chuyÃ¡Â»Æ’n trÃ¡ÂºÂ¡ng thÃƒÂ¡i ca lÃƒÂ m viÃ¡Â»â€¡c tÃ¡Â»Â« %s sang %s";
+    private static final String DEFAULT_MESSAGE = "Không thể chuyển trạng thái ca làm việc từ %s sang %s";
 
     public InvalidStatusTransitionException(ShiftStatus currentStatus, ShiftStatus newStatus) {
         super(String.format(DEFAULT_MESSAGE, currentStatus, newStatus));

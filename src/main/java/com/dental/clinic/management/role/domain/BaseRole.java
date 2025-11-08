@@ -8,8 +8,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * BaseRole entity - 3 loÃ¡ÂºÂ¡i vai trÃƒÂ² cÃ†Â¡ bÃ¡ÂºÂ£n: admin, employee, patient.
- * XÃƒÂ¡c Ã„â€˜Ã¡Â»â€¹nh layout FE - FE tÃ¡Â»Â± xÃ¡Â»Â­ lÃƒÂ½ routing.
+ * BaseRole entity - 3 loại vai trò cơ bản: admin, employee, patient.
+ * Xác định layout FE - FE tự xử lý routing.
  */
 @Entity
 @Table(name = "base_roles")

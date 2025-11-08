@@ -23,7 +23,6 @@ import java.util.List;
 @Tag(name = "Warehouse - Transactions", description = "Quản lý xuất nhập kho (FEFO)")
 public class WarehouseController {
 
-    // TODO: Inject WarehouseService when created
     // private final WarehouseService warehouseService;
     //
     // public WarehouseController(WarehouseService warehouseService) {

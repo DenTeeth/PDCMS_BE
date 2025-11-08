@@ -10,8 +10,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * Entity representing storage transactions (sÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢
- * cÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡i kho).
+ * Entity representing storage transactions (sản phẩm trong kho).
  * Records all warehouse movements: IMPORT, EXPORT, ADJUST, DESTROY.
  * 
  * Business Rules:

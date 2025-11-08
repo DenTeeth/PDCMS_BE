@@ -15,11 +15,11 @@ public class OvertimeRequestNotFoundException extends ErrorResponseException {
     }
 
     private static ProblemDetail asProblemDetail(String requestId) {
-        String message = String.format("KhÃƒÂ´ng tÃƒÂ¬m thÃ¡ÂºÂ¥y yÃƒÂªu cÃ¡ÂºÂ§u lÃƒÂ m thÃƒÂªm giÃ¡Â»Â vÃ¡Â»â€ºi ID: %s", requestId);
+        String message = String.format("Không tìm thấy yêu cầu làm thêm giờ với ID: %s", requestId);
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, message);
         problemDetail.setTitle("Overtime Request Not Found");
         problemDetail.setProperty("code", "OT_REQUEST_NOT_FOUND");
-        problemDetail.setProperty("message", "KhÃƒÂ´ng tÃƒÂ¬m thÃ¡ÂºÂ¥y yÃƒÂªu cÃ¡ÂºÂ§u lÃƒÂ m thÃƒÂªm giÃ¡Â»Â.");
+        problemDetail.setProperty("message", "Không tìm thấy yêu cầu làm thêm giờ.");
         return problemDetail;
     }
 }

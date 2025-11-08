@@ -14,9 +14,8 @@ public class SlotNotFoundException extends ErrorResponseException {
 
     private static ProblemDetail createProblemDetail(Long slotId) {
         String message = String.format(
-            "KhÃƒÂ´ng tÃƒÂ¬m thÃ¡ÂºÂ¥y suÃ¡ÂºÂ¥t lÃƒÂ m viÃ¡Â»â€¡c vÃ¡Â»â€ºi ID: %d.",
-            slotId
-        );
+                "Không tìm thấy suất làm việc với ID: %d.",
+                slotId);
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, message);
         problemDetail.setTitle("Slot Not Found");

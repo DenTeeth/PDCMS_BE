@@ -15,7 +15,7 @@ public class DuplicateShiftNameException extends ErrorResponseException {
     }
 
     private static ProblemDetail asProblemDetail(String shiftName) {
-        String message = String.format("TÃƒÂªn ca lÃƒÂ m viÃ¡Â»â€¡c '%s' Ã„â€˜ÃƒÂ£ tÃ¡Â»â€œn tÃ¡ÂºÂ¡i. Vui lÃƒÂ²ng chÃ¡Â»Ân tÃƒÂªn khÃƒÂ¡c.", shiftName);
+        String message = String.format("Tên ca làm việc '%s' đã tồn tại. Vui lòng chọn tên khác.", shiftName);
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, message);
         problemDetail.setTitle("Duplicate Shift Name");
         problemDetail.setProperty("errorCode", "DUPLICATE_SHIFT_NAME");

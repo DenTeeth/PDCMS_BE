@@ -165,10 +165,10 @@ public class PatientService {
     /**
      * Create new patient with account
      *
-     * FLOW: TÃ¡ÂºÂ¡o Patient Ã¢â€ â€™ TÃ¡Â»Â± Ã„â€˜Ã¡Â»â„¢ng tÃ¡ÂºÂ¡o Account mÃ¡Â»â€ºi
-     * - Admin/Receptionist tÃ¡ÂºÂ¡o patient
-     * - System tÃ¡Â»Â± Ã„â€˜Ã¡Â»â„¢ng tÃ¡ÂºÂ¡o account vÃ¡Â»â€ºi username/password
-     * - Patient cÃƒÂ³ thÃ¡Â»Æ’ Ã„â€˜Ã„Æ’ng nhÃ¡ÂºÂ­p xem hÃ¡Â»â€œ sÃ†Â¡
+     * FLOW: Tạo Patient – Tự động tạo Account mới
+     * - Admin/Receptionist tạo patient
+     * - System tự động tạo account với username/password
+     * - Patient có thể đăng nhập xem hồ sơ
      *
      * @param request patient information including username/password
      * @return PatientInfoResponse

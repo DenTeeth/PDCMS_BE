@@ -8,7 +8,8 @@ import java.net.URI;
 import java.time.Instant;
 
 /**
- * Exception thrown when trying to update a shift's time range to a different time-of-day
+ * Exception thrown when trying to update a shift's time range to a different
+ * time-of-day
  * that conflicts with the shift ID prefix.
  * Example: WKS_MORNING_03 cannot be updated to afternoon hours (14:00-18:00).
  */
@@ -20,13 +21,14 @@ public class TimeOfDayMismatchException extends ErrorResponseException {
         super(HttpStatus.CONFLICT, createProblemDetail(workShiftId, expectedTimeOfDay, actualTimeOfDay), null);
     }
 
-    private static ProblemDetail createProblemDetail(String workShiftId, String expectedTimeOfDay, String actualTimeOfDay) {
+    private static ProblemDetail createProblemDetail(String workShiftId, String expectedTimeOfDay,
+            String actualTimeOfDay) {
         String message = String.format(
-            "KhÃƒÂ´ng thÃ¡Â»Æ’ cÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t ca lÃƒÂ m viÃ¡Â»â€¡c '%s' vÃƒÂ¬ thÃ¡Â»Âi gian mÃ¡Â»â€ºi (%s) khÃƒÂ´ng khÃ¡Â»â€ºp vÃ¡Â»â€ºi thÃ¡Â»Âi gian Ã„â€˜Ã†Â°Ã¡Â»Â£c Ã„â€˜Ã¡Â»â€¹nh nghÃ„Â©a trong mÃƒÂ£ ca (%s). " +
-            "VÃƒÂ­ dÃ¡Â»Â¥: ca cÃƒÂ³ mÃƒÂ£ WKS_MORNING_* chÃ¡Â»â€° Ã„â€˜Ã†Â°Ã¡Â»Â£c cÃƒÂ³ giÃ¡Â»Â bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u tÃ¡Â»Â« 08:00-11:59, " +
-            "WKS_AFTERNOON_* tÃ¡Â»Â« 12:00-17:59, WKS_EVENING_* tÃ¡Â»Â« 18:00-20:59.",
-            workShiftId, actualTimeOfDay, expectedTimeOfDay
-        );
+                "Không thể cập nhật ca làm việc '%s' vì thời gian mới (%s) không khớp với thời gian được định nghĩa trong mã ca (%s). "
+                        +
+                        "Ví dụ: ca có mã WKS_MORNING_* chỉ được có giờ bắt đầu từ 08:00-11:59, " +
+                        "WKS_AFTERNOON_* từ 12:00-17:59, WKS_EVENING_* từ 18:00-20:59.",
+                workShiftId, actualTimeOfDay, expectedTimeOfDay);
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, message);
         problemDetail.setType(URI.create("https://api.dentalclinic.com/errors/time-of-day-mismatch"));

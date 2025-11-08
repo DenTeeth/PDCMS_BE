@@ -6,13 +6,16 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.web.ErrorResponseException;
 
 /**
- * Exception thrown when attempting an invalid state transition for an overtime request.
- * For example, trying to approve/reject/cancel a request that is not in PENDING status.
+ * Exception thrown when attempting an invalid state transition for an overtime
+ * request.
+ * For example, trying to approve/reject/cancel a request that is not in PENDING
+ * status.
  * Returns 409 CONFLICT status.
  */
 public class InvalidStateTransitionException extends ErrorResponseException {
 
-    public InvalidStateTransitionException(String requestId, RequestStatus currentStatus, RequestStatus attemptedStatus) {
+    public InvalidStateTransitionException(String requestId, RequestStatus currentStatus,
+            RequestStatus attemptedStatus) {
         super(HttpStatus.CONFLICT, asProblemDetail(requestId, currentStatus, attemptedStatus), null);
     }
 
@@ -20,15 +23,15 @@ public class InvalidStateTransitionException extends ErrorResponseException {
         super(HttpStatus.CONFLICT, asProblemDetail(message), null);
     }
 
-    private static ProblemDetail asProblemDetail(String requestId, RequestStatus currentStatus, RequestStatus attemptedStatus) {
+    private static ProblemDetail asProblemDetail(String requestId, RequestStatus currentStatus,
+            RequestStatus attemptedStatus) {
         String message = String.format(
-            "KhÃƒÂ´ng thÃ¡Â»Æ’ cÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t yÃƒÂªu cÃ¡ÂºÂ§u %s tÃ¡Â»Â« trÃ¡ÂºÂ¡ng thÃƒÂ¡i %s sang %s. YÃƒÂªu cÃ¡ÂºÂ§u phÃ¡ÂºÂ£i Ã¡Â»Å¸ trÃ¡ÂºÂ¡ng thÃƒÂ¡i PENDING.",
-            requestId, currentStatus, attemptedStatus
-        );
+                "Không thể cập nhật yêu cầu %s từ trạng thái %s sang %s. Yêu cầu phải ở trạng thái PENDING.",
+                requestId, currentStatus, attemptedStatus);
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, message);
         problemDetail.setTitle("Invalid State Transition");
         problemDetail.setProperty("code", "INVALID_STATE_TRANSITION");
-        problemDetail.setProperty("message", "KhÃƒÂ´ng thÃ¡Â»Æ’ cÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t yÃƒÂªu cÃ¡ÂºÂ§u. YÃƒÂªu cÃ¡ÂºÂ§u phÃ¡ÂºÂ£i Ã¡Â»Å¸ trÃ¡ÂºÂ¡ng thÃƒÂ¡i PENDING.");
+        problemDetail.setProperty("message", "Không thể cập nhật yêu cầu. Yêu cầu phải ở trạng thái PENDING.");
         problemDetail.setProperty("currentStatus", currentStatus.name());
         problemDetail.setProperty("attemptedStatus", attemptedStatus.name());
         return problemDetail;

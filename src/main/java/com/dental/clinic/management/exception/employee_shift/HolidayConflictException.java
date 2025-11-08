@@ -8,7 +8,7 @@ import java.time.LocalDate;
  */
 public class HolidayConflictException extends RuntimeException {
 
-    private static final String DEFAULT_MESSAGE = "KhÃƒÂ´ng thÃ¡Â»Æ’ tÃ¡ÂºÂ¡o ca lÃƒÂ m viÃ¡Â»â€¡c vÃƒÂ o ngÃƒÂ y nghÃ¡Â»â€° lÃ¡Â»â€¦: %s";
+    private static final String DEFAULT_MESSAGE = "Không thể tạo ca làm việc vào ngày nghỉ lễ: %s";
 
     public HolidayConflictException(LocalDate holidayDate) {
         super(String.format(DEFAULT_MESSAGE, holidayDate));

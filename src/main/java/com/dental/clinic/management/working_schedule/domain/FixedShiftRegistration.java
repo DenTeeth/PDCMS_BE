@@ -15,7 +15,7 @@ import java.util.List;
  * This is the template that defines which shifts an employee works on which
  * days of the week.
  *
- * Schema V14 - LuÃ¡Â»â€œng 1: LÃ¡Â»â€¹ch CÃ¡Â»â€˜ Ã„â€˜Ã¡Â»â€¹nh
+ * Schema V14 - Luồng 1: Lịch Các Nhân
  */
 @Entity
 @Table(name = "fixed_shift_registrations", indexes = {
@@ -93,9 +93,9 @@ public class FixedShiftRegistration {
     }
 
     public FixedShiftRegistration(Integer registrationId, Employee employee, WorkShift workShift,
-                                  LocalDate effectiveFrom, LocalDate effectiveTo, Boolean isActive,
-                                  List<FixedRegistrationDay> registrationDays, LocalDateTime createdAt,
-                                  LocalDateTime updatedAt) {
+            LocalDate effectiveFrom, LocalDate effectiveTo, Boolean isActive,
+            List<FixedRegistrationDay> registrationDays, LocalDateTime createdAt,
+            LocalDateTime updatedAt) {
         this.registrationId = registrationId;
         this.employee = employee;
         this.workShift = workShift;

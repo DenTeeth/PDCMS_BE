@@ -26,7 +26,7 @@ public class RegistrationNotFoundException extends ErrorResponseException {
 
     private static ProblemDetail createProblemDetail(String registrationId) {
         String message = String.format(
-                "KhÃƒÂ´ng tÃƒÂ¬m thÃ¡ÂºÂ¥y Ã„â€˜Ã„Æ’ng kÃƒÂ½ vÃ¡Â»â€ºi ID: %s.",
+                "Không tìm thấy đăng ký với ID: %s.",
                 registrationId);
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, message);

@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 /**
  * Job 2: Auto-create weekly schedule for part-time employees.
  *
- * Ã¢Å¡Â Ã¯Â¸Â DEPRECATED: Replaced by UnifiedScheduleSyncJob (P8)
+ * ─ DEPRECATED: Replaced by UnifiedScheduleSyncJob (P8)
  *
  * This job has been superseded by the new unified sync job that handles
  * BOTH Fixed and Flex schedules in a single daily run.
