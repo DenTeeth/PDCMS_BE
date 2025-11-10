@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Data
 @Builder
@@ -27,4 +28,11 @@ public class AvailableSlotResponse {
     private LocalDate effectiveTo;
     private Integer quota;
     private String availabilitySummary; // e.g., "December FULL, January has space"
+    
+    /**
+     * List of months (YYYY-MM format) that have at least one working day available for this slot.
+     * Used by frontend month picker to enable/disable months.
+     * Example: ["2025-11", "2025-12", "2026-01"]
+     */
+    private List<String> availableMonths;
 }

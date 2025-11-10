@@ -26,7 +26,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -96,6 +100,9 @@ public class EmployeeShiftRegistrationService {
                     int totalDatesEmpty = 0;     // registered == 0
                     int totalDatesFull = 0;      // registered == quota
                     
+                    // Track months that have at least one available date
+                    Set<String> availableMonthsSet = new java.util.LinkedHashSet<>();
+                    
                     for (LocalDate date : workingDays) {
                         long registered = availabilityService.getRegisteredCountForDate(slot.getSlotId(), date);
                         if (registered >= slot.getQuota()) {
@@ -105,6 +112,9 @@ public class EmployeeShiftRegistrationService {
                             if (registered == 0) {
                                 totalDatesEmpty++;
                             }
+                            // Add month to available months (format: YYYY-MM)
+                            String yearMonth = date.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM"));
+                            availableMonthsSet.add(yearMonth);
                         }
                     }
 
@@ -127,6 +137,7 @@ public class EmployeeShiftRegistrationService {
                             .effectiveTo(slot.getEffectiveTo())
                             .quota(slot.getQuota())
                             .availabilitySummary(summary)
+                            .availableMonths(new java.util.ArrayList<>(availableMonthsSet))
                             .build();
                 })
                 .filter(response -> response != null)
