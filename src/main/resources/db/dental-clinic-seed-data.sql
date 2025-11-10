@@ -312,6 +312,17 @@ VALUES
 ('DELETE_SERVICE', 'DELETE_SERVICE', 'SERVICE_MANAGEMENT', 'Vô hiệu hóa dịch vụ (soft delete)', 253, NULL, TRUE, NOW())
 ON CONFLICT (permission_id) DO NOTHING;
 
+-- MODULE 13: TREATMENT_PLAN (Quản lý phác đồ điều trị bệnh nhân)
+INSERT INTO permissions (permission_id, permission_name, module, description, display_order, parent_permission_id, is_active, created_at)
+VALUES
+-- Treatment plan management (RBAC: ALL vs OWN pattern)
+('VIEW_TREATMENT_PLAN_ALL', 'VIEW_TREATMENT_PLAN_ALL', 'TREATMENT_PLAN', 'Xem TẤT CẢ phác đồ điều trị (Bác sĩ/Lễ tân)', 260, NULL, TRUE, NOW()),
+('VIEW_TREATMENT_PLAN_OWN', 'VIEW_TREATMENT_PLAN_OWN', 'TREATMENT_PLAN', 'Chỉ xem phác đồ điều trị của bản thân (Bệnh nhân)', 261, 'VIEW_TREATMENT_PLAN_ALL', TRUE, NOW()),
+('CREATE_TREATMENT_PLAN', 'CREATE_TREATMENT_PLAN', 'TREATMENT_PLAN', 'Tạo phác đồ điều trị mới', 262, NULL, TRUE, NOW()),
+('UPDATE_TREATMENT_PLAN', 'UPDATE_TREATMENT_PLAN', 'TREATMENT_PLAN', 'Cập nhật phác đồ điều trị', 263, NULL, TRUE, NOW()),
+('DELETE_TREATMENT_PLAN', 'DELETE_TREATMENT_PLAN', 'TREATMENT_PLAN', 'Vô hiệu hóa phác đồ (soft delete)', 264, NULL, TRUE, NOW())
+ON CONFLICT (permission_id) DO NOTHING;
+
 -- ============================================
 -- BƯỚC 4: PHÂN QUYỀN CHO CÁC VAI TRÒ
 -- ============================================
@@ -334,7 +345,12 @@ VALUES
 ('ROLE_DENTIST', 'CREATE_REGISTRATION'),
 ('ROLE_DENTIST', 'VIEW_LEAVE_OWN'), ('ROLE_DENTIST', 'CREATE_TIME_OFF'), ('ROLE_DENTIST', 'CREATE_OVERTIME'),
 ('ROLE_DENTIST', 'CANCEL_TIME_OFF_OWN'), ('ROLE_DENTIST', 'CANCEL_OVERTIME_OWN'),
-('ROLE_DENTIST', 'VIEW_HOLIDAY')
+('ROLE_DENTIST', 'VIEW_HOLIDAY'),
+-- ✅ NEW: Treatment Plan permissions
+('ROLE_DENTIST', 'VIEW_TREATMENT_PLAN_ALL'), -- Can view all patients' treatment plans
+('ROLE_DENTIST', 'CREATE_TREATMENT_PLAN'), -- Can create treatment plans
+('ROLE_DENTIST', 'UPDATE_TREATMENT_PLAN'), -- Can update treatment plans
+('ROLE_DENTIST', 'DELETE_TREATMENT_PLAN') -- Can delete treatment plans
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 -- Nurse
@@ -384,7 +400,9 @@ VALUES
 ('ROLE_RECEPTIONIST', 'CREATE_REGISTRATION'),
 ('ROLE_RECEPTIONIST', 'VIEW_LEAVE_OWN'), ('ROLE_RECEPTIONIST', 'CREATE_TIME_OFF'), ('ROLE_RECEPTIONIST', 'CREATE_OVERTIME'),
 ('ROLE_RECEPTIONIST', 'CANCEL_TIME_OFF_OWN'), ('ROLE_RECEPTIONIST', 'CANCEL_OVERTIME_OWN'),
-('ROLE_RECEPTIONIST', 'VIEW_HOLIDAY')
+('ROLE_RECEPTIONIST', 'VIEW_HOLIDAY'),
+-- ✅ NEW: Treatment Plan permissions
+('ROLE_RECEPTIONIST', 'VIEW_TREATMENT_PLAN_ALL') -- Can view all patients' treatment plans (read-only)
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 -- Manager (Full management permissions)
@@ -455,7 +473,9 @@ VALUES
 ('ROLE_PATIENT', 'VIEW_PATIENT'), ('ROLE_PATIENT', 'VIEW_TREATMENT'),
 ('ROLE_PATIENT', 'VIEW_APPOINTMENT'), -- Deprecated (use VIEW_APPOINTMENT_OWN)
 ('ROLE_PATIENT', 'VIEW_APPOINTMENT_OWN'), -- ✅ NEW: Patient can view their own appointments
-('ROLE_PATIENT', 'CREATE_APPOINTMENT')
+('ROLE_PATIENT', 'CREATE_APPOINTMENT'),
+-- ✅ NEW: Treatment Plan permissions
+('ROLE_PATIENT', 'VIEW_TREATMENT_PLAN_OWN') -- Can only view their own treatment plans
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 -- Grant basic Overtime permissions to all employee roles (idempotent)
@@ -2116,3 +2136,196 @@ ADD COLUMN IF NOT EXISTS old_start_time TIMESTAMP,
 ADD COLUMN IF NOT EXISTS new_start_time TIMESTAMP,
 ADD COLUMN IF NOT EXISTS old_status VARCHAR(50),
 ADD COLUMN IF NOT EXISTS new_status VARCHAR(50);
+
+-- ============================================
+-- TREATMENT PLANS SEED DATA
+-- ============================================
+
+-- Treatment Plan 1: Bệnh nhân BN-1001 (Đoàn Thanh Phong) - Niềng răng
+INSERT INTO patient_treatment_plans (
+    plan_id, plan_code, plan_name, patient_id, created_by,
+    status, start_date, expected_end_date,
+    total_price, discount_amount, final_cost, payment_type,
+    created_at
+) VALUES (
+    1, 'PLAN-20251001-001', 'Lộ trình Niềng răng Mắc cài Kim loại', 1, 1,
+    'IN_PROGRESS', '2025-10-01', '2027-10-01',
+    35000000, 0, 35000000, 'INSTALLMENT',
+    NOW()
+) ON CONFLICT (plan_id) DO NOTHING;
+
+-- Phase 1: Chuẩn bị
+INSERT INTO patient_plan_phases (
+    patient_phase_id, plan_id, phase_number, phase_name,
+    status, start_date, created_at
+) VALUES (
+    1, 1, 1, 'Giai đoạn 1: Chuẩn bị và Kiểm tra',
+    'COMPLETED', '2025-10-01', NOW()
+) ON CONFLICT (patient_phase_id) DO NOTHING;
+
+-- Items for Phase 1
+INSERT INTO patient_plan_items (
+    item_id, phase_id, service_id, sequence_number, item_name,
+    status, estimated_time_minutes, price, created_at
+) VALUES
+    (1, 1, 1, 1, 'Khám tổng quát và chụp X-quang', 'COMPLETED', 30, 500000, NOW()),
+    (2, 1, 3, 2, 'Lấy cao răng trước niềng', 'COMPLETED', 45, 800000, NOW()),
+    (3, 1, 7, 3, 'Hàn trám răng sâu (nếu có)', 'COMPLETED', 60, 1500000, NOW())
+ON CONFLICT (item_id) DO NOTHING;
+
+-- Phase 2: Lắp mắc cài
+INSERT INTO patient_plan_phases (
+    patient_phase_id, plan_id, phase_number, phase_name,
+    status, start_date, created_at
+) VALUES (
+    2, 1, 2, 'Giai đoạn 2: Lắp Mắc cài và Điều chỉnh ban đầu',
+    'IN_PROGRESS', '2025-10-15', NOW()
+) ON CONFLICT (patient_phase_id) DO NOTHING;
+
+-- Items for Phase 2
+INSERT INTO patient_plan_items (
+    item_id, phase_id, service_id, sequence_number, item_name,
+    status, estimated_time_minutes, price, created_at
+) VALUES
+    (4, 2, 38, 1, 'Lắp mắc cài kim loại hàm trên', 'COMPLETED', 90, 8000000, NOW()),
+    (5, 2, 38, 2, 'Lắp mắc cài kim loại hàm dưới', 'COMPLETED', 90, 8000000, NOW()),
+    (6, 2, 39, 3, 'Điều chỉnh lần 1 (sau 1 tháng)', 'READY_FOR_BOOKING', 45, 500000, NOW()),
+    (7, 2, 39, 4, 'Điều chỉnh lần 2 (sau 2 tháng)', 'READY_FOR_BOOKING', 45, 500000, NOW())
+ON CONFLICT (item_id) DO NOTHING;
+
+-- Phase 3: Điều chỉnh định kỳ
+INSERT INTO patient_plan_phases (
+    patient_phase_id, plan_id, phase_number, phase_name,
+    status, start_date, created_at
+) VALUES (
+    3, 1, 3, 'Giai đoạn 3: Điều chỉnh định kỳ (24 tháng)',
+    'PENDING', NULL, NOW()
+) ON CONFLICT (patient_phase_id) DO NOTHING;
+
+-- Items for Phase 3 (multiple adjustment sessions)
+INSERT INTO patient_plan_items (
+    item_id, phase_id, service_id, sequence_number, item_name,
+    status, estimated_time_minutes, price, created_at
+) VALUES
+    (8, 3, 39, 1, 'Điều chỉnh tháng 3', 'READY_FOR_BOOKING', 45, 500000, NOW()),
+    (9, 3, 39, 2, 'Điều chỉnh tháng 4', 'READY_FOR_BOOKING', 45, 500000, NOW()),
+    (10, 3, 39, 3, 'Điều chỉnh tháng 5', 'READY_FOR_BOOKING', 45, 500000, NOW()),
+    (11, 3, 39, 4, 'Điều chỉnh tháng 6', 'READY_FOR_BOOKING', 45, 500000, NOW()),
+    (12, 3, 39, 5, 'Điều chỉnh tháng 7', 'READY_FOR_BOOKING', 45, 500000, NOW())
+ON CONFLICT (item_id) DO NOTHING;
+
+-- Treatment Plan 2: Bệnh nhân BN-1002 (Phạm Văn Phong) - Implant
+INSERT INTO patient_treatment_plans (
+    plan_id, plan_code, plan_name, patient_id, created_by,
+    status, start_date, expected_end_date,
+    total_price, discount_amount, final_cost, payment_type,
+    created_at
+) VALUES (
+    2, 'PLAN-20240515-001', 'Lộ trình Implant 2 răng cửa', 2, 2,
+    'COMPLETED', '2024-05-15', '2024-08-20',
+    40000000, 5000000, 35000000, 'FULL',
+    '2024-05-15 10:00:00'
+) ON CONFLICT (plan_id) DO NOTHING;
+
+-- Phase 1: Chuẩn bị Implant
+INSERT INTO patient_plan_phases (
+    patient_phase_id, plan_id, phase_number, phase_name,
+    status, start_date, completion_date, created_at
+) VALUES (
+    4, 2, 1, 'Giai đoạn 1: Khám và Chuẩn bị',
+    'COMPLETED', '2024-05-15', '2024-05-20', '2024-05-15 10:00:00'
+) ON CONFLICT (patient_phase_id) DO NOTHING;
+
+INSERT INTO patient_plan_items (
+    item_id, phase_id, service_id, sequence_number, item_name,
+    status, estimated_time_minutes, price, completed_at, created_at
+) VALUES
+    (13, 4, 1, 1, 'Khám tổng quát và chụp CT', 'COMPLETED', 45, 1500000, '2024-05-15 11:00:00', '2024-05-15 10:00:00'),
+    (14, 4, 3, 2, 'Vệ sinh răng miệng', 'COMPLETED', 30, 800000, '2024-05-16 09:00:00', '2024-05-15 10:00:00')
+ON CONFLICT (item_id) DO NOTHING;
+
+-- Phase 2: Cấy Implant
+INSERT INTO patient_plan_phases (
+    patient_phase_id, plan_id, phase_number, phase_name,
+    status, start_date, completion_date, created_at
+) VALUES (
+    5, 2, 2, 'Giai đoạn 2: Cấy trụ Implant',
+    'COMPLETED', '2024-06-01', '2024-06-05', '2024-05-15 10:00:00'
+) ON CONFLICT (patient_phase_id) DO NOTHING;
+
+INSERT INTO patient_plan_items (
+    item_id, phase_id, service_id, sequence_number, item_name,
+    status, estimated_time_minutes, price, completed_at, created_at
+) VALUES
+    (15, 5, 29, 1, 'Cấy Implant răng cửa số 11', 'COMPLETED', 120, 18000000, '2024-06-01 14:00:00', '2024-05-15 10:00:00'),
+    (16, 5, 29, 2, 'Cấy Implant răng cửa số 21', 'COMPLETED', 120, 18000000, '2024-06-02 10:00:00', '2024-05-15 10:00:00')
+ON CONFLICT (item_id) DO NOTHING;
+
+-- Phase 3: Lắp răng sứ
+INSERT INTO patient_plan_phases (
+    patient_phase_id, plan_id, phase_number, phase_name,
+    status, start_date, completion_date, created_at
+) VALUES (
+    6, 2, 3, 'Giai đoạn 3: Lắp mão sứ (sau 3 tháng lành xương)',
+    'COMPLETED', '2024-08-15', '2024-08-20', '2024-05-15 10:00:00'
+) ON CONFLICT (patient_phase_id) DO NOTHING;
+
+INSERT INTO patient_plan_items (
+    item_id, phase_id, service_id, sequence_number, item_name,
+    status, estimated_time_minutes, price, completed_at, created_at
+) VALUES
+    (17, 6, 22, 1, 'Lắp mão sứ Titan răng 11', 'COMPLETED', 60, 6000000, '2024-08-15 10:00:00', '2024-05-15 10:00:00'),
+    (18, 6, 22, 2, 'Lắp mão sứ Titan răng 21', 'COMPLETED', 60, 6000000, '2024-08-16 10:00:00', '2024-05-15 10:00:00')
+ON CONFLICT (item_id) DO NOTHING;
+
+-- Treatment Plan 3: Bệnh nhân BN-1003 (Nguyễn Tuấn Anh) - Tẩy trắng răng
+INSERT INTO patient_treatment_plans (
+    plan_id, plan_code, plan_name, patient_id, created_by,
+    status, start_date, expected_end_date,
+    total_price, discount_amount, final_cost, payment_type,
+    created_at
+) VALUES (
+    3, 'PLAN-20251105-001', 'Lộ trình Tẩy trắng răng Laser', 3, 1,
+    'PENDING', '2025-11-15', '2025-11-30',
+    8000000, 800000, 7200000, 'FULL',
+    NOW()
+) ON CONFLICT (plan_id) DO NOTHING;
+
+-- Phase 1: Chuẩn bị tẩy trắng
+INSERT INTO patient_plan_phases (
+    patient_phase_id, plan_id, phase_number, phase_name,
+    status, start_date, created_at
+) VALUES (
+    7, 3, 1, 'Giai đoạn 1: Kiểm tra và Vệ sinh',
+    'PENDING', NULL, NOW()
+) ON CONFLICT (patient_phase_id) DO NOTHING;
+
+INSERT INTO patient_plan_items (
+    item_id, phase_id, service_id, sequence_number, item_name,
+    status, estimated_time_minutes, price, created_at
+) VALUES
+    (19, 7, 1, 1, 'Khám răng miệng tổng quát', 'READY_FOR_BOOKING', 30, 500000, NOW()),
+    (20, 7, 3, 2, 'Lấy cao răng', 'READY_FOR_BOOKING', 45, 800000, NOW())
+ON CONFLICT (item_id) DO NOTHING;
+
+-- Phase 2: Tẩy trắng
+INSERT INTO patient_plan_phases (
+    patient_phase_id, plan_id, phase_number, phase_name,
+    status, start_date, created_at
+) VALUES (
+    8, 3, 2, 'Giai đoạn 2: Tẩy trắng Laser',
+    'PENDING', NULL, NOW()
+) ON CONFLICT (patient_phase_id) DO NOTHING;
+
+INSERT INTO patient_plan_items (
+    item_id, phase_id, service_id, sequence_number, item_name,
+    status, estimated_time_minutes, price, created_at
+) VALUES
+    (21, 8, 17, 1, 'Tẩy trắng răng Laser lần 1', 'READY_FOR_BOOKING', 90, 5000000, NOW()),
+    (22, 8, 17, 2, 'Kiểm tra và tư vấn sau tẩy trắng', 'READY_FOR_BOOKING', 30, 0, NOW())
+ON CONFLICT (item_id) DO NOTHING;
+
+-- Reset sequences
+SELECT setval('patient_treatment_plans_plan_id_seq', (SELECT COALESCE(MAX(plan_id), 0) FROM patient_treatment_plans) + 1, false);
+SELECT setval('patient_plan_phases_patient_phase_id_seq', (SELECT COALESCE(MAX(patient_phase_id), 0) FROM patient_plan_phases) + 1, false);
+SELECT setval('patient_plan_items_item_id_seq', (SELECT COALESCE(MAX(item_id), 0) FROM patient_plan_items) + 1, false);

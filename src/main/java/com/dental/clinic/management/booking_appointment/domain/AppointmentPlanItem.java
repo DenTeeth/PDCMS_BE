@@ -6,52 +6,89 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * Bridge table entity for N-N relationship between appointments and patient plan items
+ * Patient Plan Item Entity (Treatment Plan Integration - Minimal Version)
  *
- * Purpose: Link appointments to treatment plan items (Luồng 2: Đặt theo lộ trình)
- * Example: Appointment APT-20251208-001 → Item 307 (Lần 3: Siết niềng)
+ * Purpose: Hạng mục công việc trong lộ trình điều trị của bệnh nhân
+ * Example: "Lần 3/24: Siết niềng"
  *
- * Business Flow:
- * 1. Receptionist creates appointment with patientPlanItemIds = [307, 308]
- * 2. System inserts 2 rows: (appointmentId, 307) and (appointmentId, 308)
- * 3. System updates items 307, 308: status READY_FOR_BOOKING → SCHEDULED
+ * NOTE: This is a minimal entity for AppointmentCreationService validation only.
+ * Full Treatment Plan module with GET APIs will be implemented separately.
+ *
+ * RENAMED to AppointmentPlanItem to avoid conflict with treatment_plans.domain.PatientPlanItem
  */
-@Entity
-@Table(name = "appointment_plan_items")
+@Entity(name = "AppointmentPlanItem")
+@Table(name = "patient_plan_items")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class AppointmentPlanItem {
 
-    @EmbeddedId
-    private AppointmentPlanItemId id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "item_id")
+    private Long itemId;
+
+    /**
+     * Reference to patient_plan_phases table
+     * Used to check ownership: item.phase.plan.patientId
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "phase_id", nullable = false)
+    private PatientPlanPhase phase;
+
+    /**
+     * Reference to services table
+     * Used to extract serviceId for appointment_services table
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "service_id", nullable = false)
+    private DentalService service;
+
+    @Column(name = "item_name", nullable = false)
+    private String itemName;
+
+    @Column(name = "sequence_number", nullable = false)
+    private Integer sequenceNumber;
+
+    /**
+     * Status flow: READY_FOR_BOOKING → SCHEDULED → IN_PROGRESS → COMPLETED
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", length = 30, nullable = false)
+    private PlanItemStatus status;
+
+    @Column(name = "price", precision = 10, scale = 2)
+    private BigDecimal price;
+
+    @Column(name = "estimated_time_minutes")
+    private Integer estimatedTimeMinutes;
+
+    @Column(name = "completed_at")
+    private LocalDateTime completedAt;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    /**
+     * Status enum for patient plan items
+     */
+    public enum PlanItemStatus {
+        READY_FOR_BOOKING, // Sẵn sàng đặt lịch
+        SCHEDULED,         // Đã đặt lịch hẹn
+        IN_PROGRESS,       // Đang thực hiện
+        COMPLETED          // Hoàn thành
+    }
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
-    }
-
-    /**
-     * Composite Primary Key for appointment_plan_items
-     */
-    @Embeddable
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class AppointmentPlanItemId implements Serializable {
-
-        @Column(name = "appointment_id")
-        private Long appointmentId;
-
-        @Column(name = "item_id")
-        private Long itemId;
+        if (status == null) {
+            status = PlanItemStatus.READY_FOR_BOOKING;
+        }
     }
 }

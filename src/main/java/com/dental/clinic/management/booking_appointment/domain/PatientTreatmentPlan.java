@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
  * NOTE: This is a minimal entity for PatientPlanItem ownership validation only.
  * Full Treatment Plan module with GET APIs will be implemented separately.
  */
-@Entity
+@Entity(name = "AppointmentTreatmentPlan")
 @Table(name = "patient_treatment_plans")
 @Data
 @Builder

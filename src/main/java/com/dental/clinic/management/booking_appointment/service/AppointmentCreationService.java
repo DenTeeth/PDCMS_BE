@@ -8,9 +8,8 @@ import com.dental.clinic.management.booking_appointment.domain.AppointmentServic
 import com.dental.clinic.management.booking_appointment.domain.AppointmentAuditLog;
 import com.dental.clinic.management.booking_appointment.domain.Room;
 import com.dental.clinic.management.booking_appointment.domain.DentalService;
-import com.dental.clinic.management.booking_appointment.domain.PatientPlanItem;
-import com.dental.clinic.management.booking_appointment.domain.AppointmentPlanItem;
-import com.dental.clinic.management.booking_appointment.domain.AppointmentPlanItem.AppointmentPlanItemId;
+import com.dental.clinic.management.treatment_plans.domain.PatientPlanItem;
+import com.dental.clinic.management.booking_appointment.domain.AppointmentPlanItemBridge;
 import com.dental.clinic.management.booking_appointment.dto.CreateAppointmentRequest;
 import com.dental.clinic.management.booking_appointment.dto.CreateAppointmentResponse;
 import com.dental.clinic.management.booking_appointment.dto.CreateAppointmentResponse.*;
@@ -103,23 +102,32 @@ public class AppointmentCreationService {
 
                 // STEP 2B: Validate services (TWO MODES: Standalone vs Treatment Plan)
                 List<DentalService> services;
-                boolean isBookingFromPlan = request.getPatientPlanItemIds() != null && !request.getPatientPlanItemIds().isEmpty();
+                boolean isBookingFromPlan = request.getPatientPlanItemIds() != null
+                                && !request.getPatientPlanItemIds().isEmpty();
 
                 if (isBookingFromPlan) {
                         // Luồng 2: Treatment Plan Booking (NEW V2)
-                        log.debug("Treatment Plan Booking mode: validating {} plan items", request.getPatientPlanItemIds().size());
-                        List<PatientPlanItem> planItems = validatePlanItems(request.getPatientPlanItemIds(), patient.getPatientId());
+                        log.debug("Treatment Plan Booking mode: validating {} plan items",
+                                        request.getPatientPlanItemIds().size());
+                        List<PatientPlanItem> planItems = validatePlanItems(request.getPatientPlanItemIds(),
+                                        patient.getPatientId());
 
                         // Extract services from plan items
                         services = planItems.stream()
-                                        .map(PatientPlanItem::getService)
+                                        .map(item -> dentalServiceRepository.findById(item.getServiceId())
+                                                        .orElseThrow(() -> new BadRequestAlertException(
+                                                                        "Service not found for plan item: "
+                                                                                        + item.getItemId(),
+                                                                        ENTITY_NAME,
+                                                                        "SERVICE_NOT_FOUND")))
                                         .distinct()
                                         .collect(Collectors.toList());
 
                         log.debug("Extracted {} unique services from plan items", services.size());
                 } else {
                         // Luồng 1: Standalone Booking (EXISTING)
-                        log.debug("Standalone Booking mode: validating {} service codes", request.getServiceCodes().size());
+                        log.debug("Standalone Booking mode: validating {} service codes",
+                                        request.getServiceCodes().size());
                         services = validateServices(request.getServiceCodes());
                 }
 
@@ -159,9 +167,11 @@ public class AppointmentCreationService {
                                         request.getPatientPlanItemIds().size(), appointment.getAppointmentCode());
 
                         insertAppointmentPlanItems(appointment, request.getPatientPlanItemIds());
-                        updatePlanItemsStatus(request.getPatientPlanItemIds(), PatientPlanItem.PlanItemStatus.SCHEDULED);
+                        updatePlanItemsStatus(request.getPatientPlanItemIds(),
+                                        com.dental.clinic.management.treatment_plans.enums.PlanItemStatus.SCHEDULED);
 
-                        log.info("Successfully linked and updated status for {} plan items", request.getPatientPlanItemIds().size());
+                        log.info("Successfully linked and updated status for {} plan items",
+                                        request.getPatientPlanItemIds().size());
                 }
 
                 insertAuditLog(appointment, createdById);
@@ -195,12 +205,19 @@ public class AppointmentCreationService {
 
                 // V2: Support both modes
                 List<DentalService> services;
-                boolean isBookingFromPlan = request.getPatientPlanItemIds() != null && !request.getPatientPlanItemIds().isEmpty();
+                boolean isBookingFromPlan = request.getPatientPlanItemIds() != null
+                                && !request.getPatientPlanItemIds().isEmpty();
 
                 if (isBookingFromPlan) {
-                        List<PatientPlanItem> planItems = validatePlanItems(request.getPatientPlanItemIds(), patient.getPatientId());
+                        List<PatientPlanItem> planItems = validatePlanItems(request.getPatientPlanItemIds(),
+                                        patient.getPatientId());
                         services = planItems.stream()
-                                        .map(PatientPlanItem::getService)
+                                        .map(item -> dentalServiceRepository.findById(item.getServiceId())
+                                                        .orElseThrow(() -> new BadRequestAlertException(
+                                                                        "Service not found for plan item: "
+                                                                                        + item.getItemId(),
+                                                                        ENTITY_NAME,
+                                                                        "SERVICE_NOT_FOUND")))
                                         .distinct()
                                         .collect(Collectors.toList());
                 } else {
@@ -232,7 +249,8 @@ public class AppointmentCreationService {
                 // V2: Treatment Plan integration
                 if (isBookingFromPlan) {
                         insertAppointmentPlanItems(appointment, request.getPatientPlanItemIds());
-                        updatePlanItemsStatus(request.getPatientPlanItemIds(), PatientPlanItem.PlanItemStatus.SCHEDULED);
+                        updatePlanItemsStatus(request.getPatientPlanItemIds(),
+                                        com.dental.clinic.management.treatment_plans.enums.PlanItemStatus.SCHEDULED);
                 }
 
                 insertAuditLog(appointment, createdById);
@@ -459,7 +477,7 @@ public class AppointmentCreationService {
          * 2. Check all items belong to this patient (via phase.plan.patientId)
          * 3. Check all items have status = READY_FOR_BOOKING
          *
-         * @param itemIds List of item IDs from request
+         * @param itemIds   List of item IDs from request
          * @param patientId Patient ID from request
          * @return List of validated PatientPlanItems
          * @throws BadRequestAlertException if any validation fails
@@ -484,20 +502,23 @@ public class AppointmentCreationService {
 
                 // Check 2: All items must belong to this patient
                 List<Long> wrongOwnershipItems = items.stream()
-                                .filter(item -> !item.getPhase().getPlan().getPatientId().equals(patientId))
+                                .filter(item -> !item.getPhase().getTreatmentPlan().getPatient().getPatientId()
+                                                .equals(patientId))
                                 .map(PatientPlanItem::getItemId)
                                 .collect(Collectors.toList());
 
                 if (!wrongOwnershipItems.isEmpty()) {
                         throw new BadRequestAlertException(
-                                        "Patient plan items do not belong to patient " + patientId + ". Item IDs: " + wrongOwnershipItems,
+                                        "Patient plan items do not belong to patient " + patientId + ". Item IDs: "
+                                                        + wrongOwnershipItems,
                                         ENTITY_NAME,
                                         "PLAN_ITEMS_WRONG_PATIENT");
                 }
 
                 // Check 3: All items must be ready for booking
                 List<String> notReadyItems = items.stream()
-                                .filter(item -> item.getStatus() != PatientPlanItem.PlanItemStatus.READY_FOR_BOOKING)
+                                .filter(item -> item
+                                                .getStatus() != com.dental.clinic.management.treatment_plans.enums.PlanItemStatus.READY_FOR_BOOKING)
                                 .map(item -> item.getItemId() + " (status: " + item.getStatus() + ")")
                                 .collect(Collectors.toList());
 
@@ -920,16 +941,16 @@ public class AppointmentCreationService {
          * Example: appointmentId=123 → items [307, 308]
          *
          * @param appointment Created appointment entity
-         * @param itemIds List of item IDs from request
+         * @param itemIds     List of item IDs from request
          */
         private void insertAppointmentPlanItems(Appointment appointment, List<Long> itemIds) {
                 for (Long itemId : itemIds) {
-                        AppointmentPlanItem api = new AppointmentPlanItem();
-                        AppointmentPlanItemId id = new AppointmentPlanItemId();
+                        AppointmentPlanItemBridge bridge = new AppointmentPlanItemBridge();
+                        AppointmentPlanItemBridge.AppointmentPlanItemBridgeId id = new AppointmentPlanItemBridge.AppointmentPlanItemBridgeId();
                         id.setAppointmentId(appointment.getAppointmentId().longValue()); // Convert Integer to Long
                         id.setItemId(itemId);
-                        api.setId(id);
-                        appointmentPlanItemRepository.save(api);
+                        bridge.setId(id);
+                        appointmentPlanItemRepository.save(bridge);
                 }
                 log.debug("Inserted {} bridge records into appointment_plan_items", itemIds.size());
         }
@@ -938,20 +959,23 @@ public class AppointmentCreationService {
          * Update plan item status: READY_FOR_BOOKING → SCHEDULED
          *
          * Purpose: Mark items as scheduled after appointment created
-         * Rollback Safety: If this fails, entire transaction rolls back (appointment not created)
+         * Rollback Safety: If this fails, entire transaction rolls back (appointment
+         * not created)
          *
-         * @param itemIds List of item IDs to update
+         * @param itemIds   List of item IDs to update
          * @param newStatus Target status (typically SCHEDULED)
          * @throws RuntimeException if update fails (triggers rollback)
          */
-        private void updatePlanItemsStatus(List<Long> itemIds, PatientPlanItem.PlanItemStatus newStatus) {
+        private void updatePlanItemsStatus(List<Long> itemIds,
+                        com.dental.clinic.management.treatment_plans.enums.PlanItemStatus newStatus) {
                 try {
                         // Fetch items again (without JOIN FETCH - simpler for update)
                         List<PatientPlanItem> items = patientPlanItemRepository.findAllById(itemIds);
 
                         if (items.size() != itemIds.size()) {
                                 throw new IllegalStateException(
-                                                "Mismatch in item count during status update. Expected: " + itemIds.size() + ", Found: " + items.size());
+                                                "Mismatch in item count during status update. Expected: "
+                                                                + itemIds.size() + ", Found: " + items.size());
                         }
 
                         // Update status

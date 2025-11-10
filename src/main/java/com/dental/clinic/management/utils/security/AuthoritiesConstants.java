@@ -115,4 +115,11 @@ public final class AuthoritiesConstants {
     public static final String CREATE_SERVICE = "CREATE_SERVICE";
     public static final String UPDATE_SERVICE = "UPDATE_SERVICE";
     public static final String DELETE_SERVICE = "DELETE_SERVICE"; // soft delete
+
+    // Treatment Plan Permissions
+    public static final String VIEW_TREATMENT_PLAN_ALL = "VIEW_TREATMENT_PLAN_ALL"; // Staff view all patients' plans
+    public static final String VIEW_TREATMENT_PLAN_OWN = "VIEW_TREATMENT_PLAN_OWN"; // Patient view own plans only
+    public static final String CREATE_TREATMENT_PLAN = "CREATE_TREATMENT_PLAN"; // Doctor creates new plan
+    public static final String UPDATE_TREATMENT_PLAN = "UPDATE_TREATMENT_PLAN"; // Doctor updates plan
+    public static final String DELETE_TREATMENT_PLAN = "DELETE_TREATMENT_PLAN"; // soft delete
 }
