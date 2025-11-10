@@ -206,4 +206,18 @@ public interface FixedShiftRegistrationRepository extends JpaRepository<FixedShi
                         @Param("startDate") java.time.LocalDate startDate,
                         @Param("endDate") java.time.LocalDate endDate,
                         @Param("isActive") Boolean isActive);
+
+        /**
+         * Deactivate all active Fixed registrations for a specific employee.
+         * Used by Job P3 (CleanupInactiveEmployeeRegistrationsJob) when employee is deactivated.
+         *
+         * @param employeeId employee ID
+         * @return number of registrations deactivated
+         */
+        @org.springframework.data.jpa.repository.Modifying
+        @Query("UPDATE FixedShiftRegistration fsr " +
+                        "SET fsr.isActive = false " +
+                        "WHERE fsr.employee.employeeId = :employeeId " +
+                        "AND fsr.isActive = true")
+        int deactivateByEmployeeId(@Param("employeeId") Integer employeeId);
 }

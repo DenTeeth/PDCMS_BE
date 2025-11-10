@@ -50,6 +50,14 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer>, Jp
     List<Employee> findByIsActiveTrue();
 
     /**
+     * Find all inactive employees.
+     * Used by Job P3 (CleanupInactiveEmployeeRegistrationsJob) to cleanup registrations.
+     *
+     * @return List of inactive employees
+     */
+    List<Employee> findByIsActiveFalse();
+
+    /**
      * Find employees by employment type and active status.
      * Used by scheduled jobs to create shifts.
      *
