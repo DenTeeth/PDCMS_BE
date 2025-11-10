@@ -8,7 +8,6 @@ import com.dental.clinic.management.booking_appointment.dto.availability.Availab
 import com.dental.clinic.management.booking_appointment.dto.availability.TimeSlotDTO;
 import com.dental.clinic.management.booking_appointment.enums.AppointmentStatus;
 import com.dental.clinic.management.booking_appointment.repository.*;
-import com.dental.clinic.management.booking_appointment.repository.BookingDentalServiceRepository;
 import com.dental.clinic.management.employee.domain.Employee;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.exception.validation.BadRequestAlertException;
@@ -37,7 +36,7 @@ import java.util.stream.Collectors;
 public class AvailabilityService {
 
     private final EmployeeRepository employeeRepository;
-    private final BookingDentalServiceRepository dentalServiceRepository;
+    private final DentalServiceRepository dentalServiceRepository;
     private final RoomRepository roomRepository;
     private final RoomServiceRepository roomServiceRepository;
     private final EmployeeShiftRepository employeeShiftRepository;

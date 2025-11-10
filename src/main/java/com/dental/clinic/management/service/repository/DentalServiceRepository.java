@@ -24,6 +24,11 @@ public interface DentalServiceRepository extends JpaRepository<DentalService, Lo
     Optional<DentalService> findByServiceCode(String serviceCode);
 
     /**
+     * Find services by list of service codes (for Availability API)
+     */
+    List<DentalService> findByServiceCodeIn(List<String> serviceCodes);
+
+    /**
      * Check if service code exists
      */
     boolean existsByServiceCode(String serviceCode);
@@ -33,7 +38,7 @@ public interface DentalServiceRepository extends JpaRepository<DentalService, Lo
      */
     @Query("SELECT CASE WHEN COUNT(s) > 0 THEN true ELSE false END FROM DentalService s " +
            "WHERE s.serviceCode = :serviceCode AND s.serviceId <> :serviceId")
-    boolean existsByServiceCodeAndIdNot(@Param("serviceCode") String serviceCode, 
+    boolean existsByServiceCodeAndIdNot(@Param("serviceCode") String serviceCode,
                                         @Param("serviceId") Long serviceId);
 
     /**

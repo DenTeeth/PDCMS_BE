@@ -28,10 +28,10 @@ Step 5: POST /api/v1/appointments → Final validation + Create appointment
 
 ### **Why This Works**
 
-✅ **Faster UX**: Receptionist never sees invalid options  
-✅ **Less Errors**: 99% of POST requests succeed (validation already done)  
-✅ **Backward Compatible**: Old `GET /available-times` API still works  
-✅ **Progressive Disclosure**: Each step narrows down choices  
+✅ **Faster UX**: Receptionist never sees invalid options
+✅ **Less Errors**: 99% of POST requests succeed (validation already done)
+✅ **Backward Compatible**: Old `GET /available-times` API still works
+✅ **Progressive Disclosure**: Each step narrows down choices
 
 ---
 
@@ -39,21 +39,21 @@ Step 5: POST /api/v1/appointments → Final validation + Create appointment
 
 ### **NEW: Availability APIs (Progressive Flow)**
 
-| Endpoint                     | Method | Permission          | Description                                    |
-| ---------------------------- | ------ | ------------------- | ---------------------------------------------- |
-| `/availability/doctors`      | GET    | CREATE_APPOINTMENT  | **Step 2**: Bác sĩ có chuyên môn + ca làm việc |
-| `/availability/slots`        | GET    | CREATE_APPOINTMENT  | **Step 3**: Khe giờ trống của bác sĩ          |
-| `/availability/resources`    | GET    | CREATE_APPOINTMENT  | **Step 4**: Phòng + Phụ tá rảnh              |
+| Endpoint                  | Method | Permission         | Description                                    |
+| ------------------------- | ------ | ------------------ | ---------------------------------------------- |
+| `/availability/doctors`   | GET    | CREATE_APPOINTMENT | **Step 2**: Bác sĩ có chuyên môn + ca làm việc |
+| `/availability/slots`     | GET    | CREATE_APPOINTMENT | **Step 3**: Khe giờ trống của bác sĩ           |
+| `/availability/resources` | GET    | CREATE_APPOINTMENT | **Step 4**: Phòng + Phụ tá rảnh                |
 
 ### **Main Appointment APIs**
 
-| Endpoint                    | Method | Permission                                     | Description                     |
-| --------------------------- | ------ | ---------------------------------------------- | ------------------------------- |
-| `/available-times`          | GET    | CREATE_APPOINTMENT                             | ⚠️ Legacy: Tìm slot (all-in-one) |
+| Endpoint                    | Method | Permission                                     | Description                                 |
+| --------------------------- | ------ | ---------------------------------------------- | ------------------------------------------- |
+| `/available-times`          | GET    | CREATE_APPOINTMENT                             | ⚠️ Legacy: Tìm slot (all-in-one)            |
 | `/`                         | POST   | CREATE_APPOINTMENT                             | **Step 5**: Tạo lịch hẹn (final validation) |
-| `/`                         | GET    | VIEW_APPOINTMENT_ALL hoặc VIEW_APPOINTMENT_OWN | Dashboard - Danh sách lịch hẹn  |
-| `/{appointmentCode}`        | GET    | VIEW_APPOINTMENT_ALL hoặc VIEW_APPOINTMENT_OWN | Chi tiết lịch hẹn               |
-| `/{appointmentCode}/status` | PATCH  | UPDATE_APPOINTMENT_STATUS                      | Cập nhật trạng thái lịch hẹn ⭐ |
+| `/`                         | GET    | VIEW_APPOINTMENT_ALL hoặc VIEW_APPOINTMENT_OWN | Dashboard - Danh sách lịch hẹn              |
+| `/{appointmentCode}`        | GET    | VIEW_APPOINTMENT_ALL hoặc VIEW_APPOINTMENT_OWN | Chi tiết lịch hẹn                           |
+| `/{appointmentCode}/status` | PATCH  | UPDATE_APPOINTMENT_STATUS                      | Cập nhật trạng thái lịch hẹn ⭐             |
 
 ---
 
@@ -68,16 +68,19 @@ Step 5: POST /api/v1/appointments → Final validation + Create appointment
 **Use Case:** After receptionist selects services + date, FE calls this to show ONLY qualified doctors with shifts.
 
 **Query Params:**
+
 - `date` (String, Required): YYYY-MM-DD
 - `serviceCodes` (Array, Required): Comma-separated service codes
 
 **Request Example:**
+
 ```bash
 GET /api/v1/availability/doctors?date=2025-11-10&serviceCodes=SCALING_L1,GEN_EXAM
 Authorization: Bearer <token>
 ```
 
 **Response 200 OK:**
+
 ```json
 [
   {
@@ -96,12 +99,14 @@ Authorization: Bearer <token>
 ```
 
 **Logic:**
+
 1. Check which specializations are required by selected services
 2. Find doctors who have ALL required specializations + STANDARD spec (ID 8)
 3. Filter doctors who have shifts on the selected date
 4. Return list with shift times
 
 **Error Responses:**
+
 - `400 Bad Request`: Services not found
 - `403 Forbidden`: No CREATE_APPOINTMENT permission
 
@@ -114,17 +119,20 @@ Authorization: Bearer <token>
 **Use Case:** After receptionist selects doctor, FE calls this to show free time slots (gaps in schedule).
 
 **Query Params:**
+
 - `date` (String, Required): YYYY-MM-DD
 - `employeeCode` (String, Required): Selected doctor code
 - `durationMinutes` (Integer, Required): Total duration needed
 
 **Request Example:**
+
 ```bash
 GET /api/v1/availability/slots?date=2025-11-10&employeeCode=DR_KHOA&durationMinutes=75
 Authorization: Bearer <token>
 ```
 
 **Response 200 OK:**
+
 ```json
 [
   {
@@ -141,16 +149,19 @@ Authorization: Bearer <token>
 ```
 
 **Logic:**
+
 1. Get doctor's shifts on the date
 2. Get doctor's existing appointments
 3. Find gaps in schedule >= durationMinutes
 4. Mark first slot as "suggested"
 
 **Notes:**
+
 - Returns empty array `[]` if doctor has no shifts
 - `suggested: true` helps UI highlight earliest slot
 
 **Error Responses:**
+
 - `404 Not Found`: Doctor not found or inactive
 - `403 Forbidden`: No CREATE_APPOINTMENT permission
 
@@ -163,17 +174,20 @@ Authorization: Bearer <token>
 **Use Case:** After receptionist selects time slot, FE calls this to show available rooms + assistants.
 
 **Query Params:**
+
 - `startTime` (String, Required): ISO 8601 format (YYYY-MM-DDTHH:mm:ss)
 - `endTime` (String, Required): ISO 8601 format
 - `serviceCodes` (Array, Required): Comma-separated service codes
 
 **Request Example:**
+
 ```bash
 GET /api/v1/availability/resources?startTime=2025-11-10T09:00:00&endTime=2025-11-10T10:15:00&serviceCodes=SCALING_L1,GEN_EXAM
 Authorization: Bearer <token>
 ```
 
 **Response 200 OK:**
+
 ```json
 {
   "availableRooms": [
@@ -196,6 +210,7 @@ Authorization: Bearer <token>
 ```
 
 **Logic:**
+
 1. Find rooms that support ALL selected services (via `room_services`)
 2. Filter rooms not booked during the time range
 3. Find assistants (medical staff with STANDARD spec) who:
@@ -203,10 +218,12 @@ Authorization: Bearer <token>
    - Are not busy (as primary doctor OR participant)
 
 **Notes:**
+
 - Returns rooms/assistants separately for flexibility
 - FE can display "No assistants needed" option if list is empty
 
 **Error Responses:**
+
 - `400 Bad Request`: Invalid time range or services not found
 - `403 Forbidden`: No CREATE_APPOINTMENT permission
 
@@ -221,7 +238,7 @@ Authorization: Bearer <token>
 const bookingData = {
   patientCode: "BN-1001",
   serviceCodes: ["SCALING_L1", "GEN_EXAM"],
-  date: "2025-11-10"
+  date: "2025-11-10",
 };
 
 // Calculate total duration from service list
@@ -229,7 +246,9 @@ const totalDuration = services.reduce((sum, s) => sum + s.duration, 0); // 75 mi
 
 // Step 2: Get Available Doctors
 const doctorsResponse = await fetch(
-  `/api/v1/availability/doctors?date=${bookingData.date}&serviceCodes=${bookingData.serviceCodes.join(',')}`
+  `/api/v1/availability/doctors?date=${
+    bookingData.date
+  }&serviceCodes=${bookingData.serviceCodes.join(",")}`
 );
 const doctors = await doctorsResponse.json();
 // Result: [{ employeeCode: "DR_KHOA", shiftTimes: ["08:00-12:00"] }, ...]
@@ -250,7 +269,11 @@ const endTime = calculateEndTime(selectedSlot, totalDuration); // 10:15:00
 
 // Step 4: Get Available Resources
 const resourcesResponse = await fetch(
-  `/api/v1/availability/resources?startTime=${bookingData.date}T${selectedSlot}&endTime=${bookingData.date}T${endTime}&serviceCodes=${bookingData.serviceCodes.join(',')}`
+  `/api/v1/availability/resources?startTime=${
+    bookingData.date
+  }T${selectedSlot}&endTime=${
+    bookingData.date
+  }T${endTime}&serviceCodes=${bookingData.serviceCodes.join(",")}`
 );
 const resources = await resourcesResponse.json();
 // Result: { availableRooms: [{ roomCode: "P-01" }], availableAssistants: [{ employeeCode: "PT_NGUYEN" }] }
@@ -260,9 +283,9 @@ const selectedRoom = "P-01";
 const selectedAssistants = ["PT_NGUYEN"]; // Optional, can be empty
 
 // Step 5: Create Appointment (Final Validation)
-const createResponse = await fetch('/api/v1/appointments', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
+const createResponse = await fetch("/api/v1/appointments", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
   body: JSON.stringify({
     patientCode: bookingData.patientCode,
     employeeCode: selectedDoctor,
@@ -270,8 +293,8 @@ const createResponse = await fetch('/api/v1/appointments', {
     appointmentStartTime: `${bookingData.date}T${selectedSlot}`,
     serviceCodes: bookingData.serviceCodes,
     participantCodes: selectedAssistants,
-    notes: "Regular checkup"
-  })
+    notes: "Regular checkup",
+  }),
 });
 
 if (createResponse.ok) {
@@ -287,23 +310,27 @@ if (createResponse.ok) {
 
 ### **Key Benefits**
 
-✅ **No More "Vỡ lẽ" Errors**: Receptionist never picks invalid doctor  
-✅ **Fast UX**: Each API call < 100ms (no heavy validation)  
-✅ **Guided Workflow**: FE UI can disable/hide invalid options  
-✅ **99% Success Rate**: Final POST rarely fails (already pre-validated)  
+✅ **No More "Vỡ lẽ" Errors**: Receptionist never picks invalid doctor
+✅ **Fast UX**: Each API call < 100ms (no heavy validation)
+✅ **Guided Workflow**: FE UI can disable/hide invalid options
+✅ **99% Success Rate**: Final POST rarely fails (already pre-validated)
 
 ### **Error Handling Strategy**
 
 ```javascript
 // If Step 2 returns empty array
 if (doctors.length === 0) {
-  showMessage("No doctors available with required specializations on this date");
+  showMessage(
+    "No doctors available with required specializations on this date"
+  );
   // Allow user to pick different date or different services
 }
 
 // If Step 3 returns empty array
 if (slots.length === 0) {
-  showMessage("Doctor has no free slots on this date. Try another doctor or date.");
+  showMessage(
+    "Doctor has no free slots on this date. Try another doctor or date."
+  );
 }
 
 // If Step 4 returns no rooms
@@ -313,7 +340,9 @@ if (resources.availableRooms.length === 0) {
 
 // If Step 5 fails (rare race condition)
 if (!createResponse.ok) {
-  showError("Slot was just booked by another user. Please select a different time.");
+  showError(
+    "Slot was just booked by another user. Please select a different time."
+  );
   // Refresh Step 3 (get new slots)
 }
 ```
@@ -591,10 +620,11 @@ Starting from V2, API 3.2 (Create Appointment) supports TWO booking modes:
 Receptionist manually selects services for walk-in patients or one-time appointments.
 
 **Request:**
+
 ```json
 {
   "patientCode": "BN-1001",
-  "serviceCodes": ["SCALING_L1", "GEN_EXAM"],  // Manually selected
+  "serviceCodes": ["SCALING_L1", "GEN_EXAM"], // Manually selected
   "employeeCode": "EMP001",
   "roomCode": "P-01",
   "appointmentStartTime": "2025-11-15T10:00:00"
@@ -610,10 +640,11 @@ Receptionist manually selects services for walk-in patients or one-time appointm
 Receptionist books appointments directly from patient's treatment plan items.
 
 **Request:**
+
 ```json
 {
   "patientCode": "BN-1001",
-  "patientPlanItemIds": [307, 308],  // Items from treatment plan (e.g., "Lần 3/24: Siết niềng", "Lần 4/24: Siết niềng")
+  "patientPlanItemIds": [307, 308], // Items from treatment plan (e.g., "Lần 3/24: Siết niềng", "Lần 4/24: Siết niềng")
   "employeeCode": "EMP001",
   "roomCode": "P-01",
   "appointmentStartTime": "2025-12-08T14:00:00"
@@ -623,6 +654,7 @@ Receptionist books appointments directly from patient's treatment plan items.
 **Use Case:** Patients with treatment plans (Niềng răng, Implant, Bọc sứ), scheduled follow-ups
 
 **Business Flow:**
+
 1. Receptionist opens patient's treatment plan (see `docs/api-guides/treatment-plan/TreatmentPlan.md`)
 2. Sees list of items with status `READY_FOR_BOOKING` (e.g., "Lần 3/24: Siết niềng")
 3. Selects items to book (can book multiple items in one appointment)
@@ -652,21 +684,25 @@ private boolean isValidBookingType() {
 **Error Examples:**
 
 ❌ **Both provided:**
+
 ```json
 {
   "serviceCodes": ["SCALING_L1"],
   "patientPlanItemIds": [307]
 }
 ```
+
 → 400 Bad Request: "Must provide either serviceCodes or patientPlanItemIds, not both and not neither"
 
 ❌ **Neither provided:**
+
 ```json
 {
   "patientCode": "BN-1001",
   "employeeCode": "EMP001"
 }
 ```
+
 → 400 Bad Request: XOR validation error
 
 ---
@@ -679,10 +715,12 @@ When using `patientPlanItemIds`, the system performs 3 strict checks:
 
 ```json
 {
-  "patientPlanItemIds": [999, 1000]  // Items don't exist in DB
+  "patientPlanItemIds": [999, 1000] // Items don't exist in DB
 }
 ```
+
 → 400 Bad Request:
+
 ```json
 {
   "message": "Patient plan items not found: [999, 1000]",
@@ -696,11 +734,13 @@ When using `patientPlanItemIds`, the system performs 3 strict checks:
 
 ```json
 {
-  "patientCode": "BN-1002",  // Patient B
-  "patientPlanItemIds": [307]  // Item belongs to Patient A
+  "patientCode": "BN-1002", // Patient B
+  "patientPlanItemIds": [307] // Item belongs to Patient A
 }
 ```
+
 → 400 Bad Request:
+
 ```json
 {
   "message": "Patient plan items do not belong to patient 2. Item IDs: [307]",
@@ -709,6 +749,7 @@ When using `patientPlanItemIds`, the system performs 3 strict checks:
 ```
 
 **Backend Logic:**
+
 ```java
 boolean allBelongToPatient = items.stream()
     .allMatch(item -> item.getPhase().getPlan().getPatientId().equals(patientId));
@@ -720,10 +761,12 @@ boolean allBelongToPatient = items.stream()
 
 ```json
 {
-  "patientPlanItemIds": [306]  // Item already SCHEDULED (appointment APT-20251208-001)
+  "patientPlanItemIds": [306] // Item already SCHEDULED (appointment APT-20251208-001)
 }
 ```
+
 → 400 Bad Request:
+
 ```json
 {
   "message": "Some patient plan items are not ready for booking: [306 (status: SCHEDULED)]",
@@ -731,7 +774,7 @@ boolean allBelongToPatient = items.stream()
 }
 ```
 
-**Valid Statuses:** Only `READY_FOR_BOOKING` items can be booked  
+**Valid Statuses:** Only `READY_FOR_BOOKING` items can be booked
 **Invalid Statuses:** `SCHEDULED`, `IN_PROGRESS`, `COMPLETED` items will be rejected
 
 ---
@@ -740,13 +783,15 @@ boolean allBelongToPatient = items.stream()
 
 ### **Example 1: Treatment Plan Booking (Happy Path)**
 
-**Precondition:** 
+**Precondition:**
+
 - Patient BN-1001 has plan `PLAN-20251107-001` (Niềng răng 2 năm)
 - Phase 3 has items:
   - Item 307: "Lần 3/24: Siết niềng" (status: READY_FOR_BOOKING)
   - Item 308: "Lần 4/24: Siết niềng" (status: READY_FOR_BOOKING)
 
 **Request:**
+
 ```json
 POST /api/v1/appointments
 {
@@ -761,6 +806,7 @@ POST /api/v1/appointments
 ```
 
 **Response 201 Created:**
+
 ```json
 {
   "appointmentCode": "APT-20251208-001",
@@ -772,15 +818,23 @@ POST /api/v1/appointments
   "doctor": { "employeeCode": "EMP001", "fullName": "Dr. Lê Anh Khoa" },
   "room": { "roomCode": "P-01", "roomName": "Phòng thường 1" },
   "services": [
-    { "serviceCode": "ORTHO_ADJUST", "serviceName": "Tái khám Chỉnh nha / Siết niềng" }
+    {
+      "serviceCode": "ORTHO_ADJUST",
+      "serviceName": "Tái khám Chỉnh nha / Siết niềng"
+    }
   ],
   "participants": [
-    { "employeeCode": "EMP007", "fullName": "Đoàn Nguyễn Khôi Nguyên", "role": "ASSISTANT" }
+    {
+      "employeeCode": "EMP007",
+      "fullName": "Đoàn Nguyễn Khôi Nguyên",
+      "role": "ASSISTANT"
+    }
   ]
 }
 ```
 
 **Backend Actions:**
+
 1. ✅ Validated items 307, 308 exist
 2. ✅ Validated items belong to patient BN-1001
 3. ✅ Validated items status = READY_FOR_BOOKING
@@ -794,6 +848,7 @@ POST /api/v1/appointments
 9. ✅ Updated items 307, 308: status READY_FOR_BOOKING → SCHEDULED
 
 **Database State After:**
+
 ```sql
 SELECT item_id, item_name, status FROM patient_plan_items WHERE item_id IN (307, 308);
 -- 307 | Lần 3/24: Siết niềng | SCHEDULED
@@ -812,6 +867,7 @@ SELECT * FROM appointment_plan_items WHERE appointment_id = 123;
 **Scenario:** Patient has plan with different services (Khám + Cạo vôi in one appointment)
 
 **Request:**
+
 ```json
 POST /api/v1/appointments
 {
@@ -823,7 +879,8 @@ POST /api/v1/appointments
 }
 ```
 
-**Response:** 
+**Response:**
+
 - System extracts 2 services: `GEN_EXAM` (from item 301) + `SCALING_L1` (from item 303)
 - Total duration: 30 + 45 = 75 minutes
 - Appointment end time: 10:15
@@ -833,6 +890,7 @@ POST /api/v1/appointments
 ### **Example 3: Error - Item Already Scheduled**
 
 **Request:**
+
 ```json
 POST /api/v1/appointments
 {
@@ -845,6 +903,7 @@ POST /api/v1/appointments
 ```
 
 **Response 400 Bad Request:**
+
 ```json
 {
   "type": "https://www.jhipster.tech/problem/problem-with-message",
@@ -862,6 +921,7 @@ POST /api/v1/appointments
 ### **Example 4: Error - Wrong Patient**
 
 **Request:**
+
 ```json
 POST /api/v1/appointments
 {
@@ -874,6 +934,7 @@ POST /api/v1/appointments
 ```
 
 **Response 400 Bad Request:**
+
 ```json
 {
   "status": 400,
@@ -891,6 +952,7 @@ POST /api/v1/appointments
 **Rollback Scenarios:**
 
 1. **Doctor Conflict Detected:**
+
    ```
    Items 307, 308 temporarily marked SCHEDULED
    → checkDoctorConflict() finds conflict
@@ -899,6 +961,7 @@ POST /api/v1/appointments
    ```
 
 2. **Room Conflict Detected:**
+
    ```
    Items marked SCHEDULED
    → checkRoomConflict() finds conflict
@@ -916,20 +979,21 @@ POST /api/v1/appointments
    ```
 
 **Implementation:**
+
 ```java
 @Transactional
 public CreateAppointmentResponse createAppointment(CreateAppointmentRequest request) {
     // All validations...
-    
+
     Appointment appointment = insertAppointment(...);
     insertAppointmentServices(...);
     insertAppointmentParticipants(...);
-    
+
     if (isBookingFromPlan) {
         insertAppointmentPlanItems(appointment, request.getPatientPlanItemIds());
         updatePlanItemsStatus(request.getPatientPlanItemIds(), SCHEDULED);  // If this fails, ALL rollback
     }
-    
+
     insertAuditLog(...);
     return buildResponse(...);
 }
@@ -940,9 +1004,12 @@ public CreateAppointmentResponse createAppointment(CreateAppointmentRequest requ
 ## Frontend Integration Example
 
 **Step 1: Fetch bookable items from patient plan**
+
 ```javascript
 // GET /api/v1/patient-treatment-plans/101/bookable-items
-const response = await fetch('/api/v1/patient-treatment-plans/101/bookable-items');
+const response = await fetch(
+  "/api/v1/patient-treatment-plans/101/bookable-items"
+);
 const data = await response.json();
 
 // Response:
@@ -955,28 +1022,31 @@ const data = await response.json();
 ```
 
 **Step 2: Display in UI with checkboxes**
+
 ```jsx
 <Checkbox label="☑️ Lần 3/24: Siết niềng (30 phút)" value={307} />
 <Checkbox label="☑️ Lần 4/24: Siết niềng (30 phút)" value={308} />
 ```
 
 **Step 3: Create appointment with selected items**
-```javascript
-const selectedItemIds = [307, 308];  // From checkbox state
 
-await fetch('/api/v1/appointments', {
-  method: 'POST',
+```javascript
+const selectedItemIds = [307, 308]; // From checkbox state
+
+await fetch("/api/v1/appointments", {
+  method: "POST",
   body: JSON.stringify({
-    patientCode: 'BN-1001',
-    patientPlanItemIds: selectedItemIds,  // Treatment Plan Booking mode
-    employeeCode: 'EMP001',
-    roomCode: 'P-01',
-    appointmentStartTime: '2025-12-08T14:00:00'
-  })
+    patientCode: "BN-1001",
+    patientPlanItemIds: selectedItemIds, // Treatment Plan Booking mode
+    employeeCode: "EMP001",
+    roomCode: "P-01",
+    appointmentStartTime: "2025-12-08T14:00:00",
+  }),
 });
 ```
 
 **Step 4: Show success + updated status**
+
 ```
 ✅ Appointment created: APT-20251208-001
 📅 Items updated:
@@ -988,12 +1058,12 @@ await fetch('/api/v1/appointments', {
 
 ## Error Handling Summary
 
-| Error Code | HTTP Status | Meaning | Solution |
-|------------|-------------|---------|----------|
-| `PLAN_ITEMS_NOT_FOUND` | 400 | Item IDs không tồn tại | Check item IDs from treatment plan API |
-| `PLAN_ITEMS_WRONG_PATIENT` | 400 | Items không thuộc về bệnh nhân | Verify patientCode matches plan owner |
-| `PLAN_ITEMS_NOT_READY` | 400 | Items không ở trạng thái READY_FOR_BOOKING | Check item status (may be SCHEDULED/IN_PROGRESS/COMPLETED) |
-| `INVALID_BOOKING_TYPE` | 400 | Vi phạm XOR rule | Provide EITHER serviceCodes OR patientPlanItemIds |
+| Error Code                 | HTTP Status | Meaning                                    | Solution                                                   |
+| -------------------------- | ----------- | ------------------------------------------ | ---------------------------------------------------------- |
+| `PLAN_ITEMS_NOT_FOUND`     | 400         | Item IDs không tồn tại                     | Check item IDs from treatment plan API                     |
+| `PLAN_ITEMS_WRONG_PATIENT` | 400         | Items không thuộc về bệnh nhân             | Verify patientCode matches plan owner                      |
+| `PLAN_ITEMS_NOT_READY`     | 400         | Items không ở trạng thái READY_FOR_BOOKING | Check item status (may be SCHEDULED/IN_PROGRESS/COMPLETED) |
+| `INVALID_BOOKING_TYPE`     | 400         | Vi phạm XOR rule                           | Provide EITHER serviceCodes OR patientPlanItemIds          |
 
 ---
 
@@ -1028,6 +1098,7 @@ Treatment Plan Item Lifecycle:
 ```
 
 **Key Points:**
+
 - Only `READY_FOR_BOOKING` items can be booked (all other states rejected)
 - Status updates are automatic when appointment status changes
 - If appointment cancelled, items revert to `READY_FOR_BOOKING`
@@ -1050,10 +1121,12 @@ Treatment Plan Item Lifecycle:
 **Backward Compatible:** Existing clients using `serviceCodes` continue to work without changes.
 
 **New Clients:** Can choose either mode based on use case:
+
 - Walk-in patients → Use `serviceCodes` (Mode 1)
 - Treatment plan patients → Use `patientPlanItemIds` (Mode 2)
 
 **Database Changes:**
+
 - No breaking changes to existing tables
 - New tables: `patient_plan_items`, `appointment_plan_items` (bridge)
 - New enum: `PlanItemStatus` (READY_FOR_BOOKING, SCHEDULED, IN_PROGRESS, COMPLETED)

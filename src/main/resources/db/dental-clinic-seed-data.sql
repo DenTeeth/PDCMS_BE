@@ -1610,7 +1610,7 @@ ON CONFLICT DO NOTHING;
 -- TEMPORARILY COMMENTED OUT - TreatmentPlanTemplate entity not yet created
 -- Uncomment when the following entities are implemented:
 -- - TreatmentPlanTemplate
--- - TemplatePhase  
+-- - TemplatePhase
 -- - TemplatePhaseService
 -- =============================================
 /*
@@ -1620,22 +1620,22 @@ ON CONFLICT DO NOTHING;
 
 -- Template 1: Niềng răng mắc cài kim loại (2 năm - 24 tái khám)
 INSERT INTO treatment_plan_templates (template_code, template_name, description, estimated_duration_days, total_price, is_active, created_at)
-VALUES ('TPL_ORTHO_METAL', 'Niềng răng mắc cài kim loại trọn gói 2 năm', 
-        'Gói điều trị chỉnh nha toàn diện với mắc cài kim loại, bao gồm 24 lần tái khám siết niềng định kỳ.', 
+VALUES ('TPL_ORTHO_METAL', 'Niềng răng mắc cài kim loại trọn gói 2 năm',
+        'Gói điều trị chỉnh nha toàn diện với mắc cài kim loại, bao gồm 24 lần tái khám siết niềng định kỳ.',
         730, 30000000, true, NOW())
 ON CONFLICT (template_code) DO NOTHING;
 
 -- Template 2: Implant Hàn Quốc (6 tháng)
 INSERT INTO treatment_plan_templates (template_code, template_name, description, estimated_duration_days, total_price, is_active, created_at)
-VALUES ('TPL_IMPLANT_OSSTEM', 'Cấy ghép Implant Hàn Quốc (Osstem) - Trọn gói', 
-        'Gói cấy ghép Implant hoàn chỉnh từ phẫu thuật đến gắn răng sứ, sử dụng trụ Osstem Hàn Quốc.', 
+VALUES ('TPL_IMPLANT_OSSTEM', 'Cấy ghép Implant Hàn Quốc (Osstem) - Trọn gói',
+        'Gói cấy ghép Implant hoàn chỉnh từ phẫu thuật đến gắn răng sứ, sử dụng trụ Osstem Hàn Quốc.',
         180, 19000000, true, NOW())
 ON CONFLICT (template_code) DO NOTHING;
 
 -- Template 3: Bọc răng sứ Cercon HT (7 ngày)
 INSERT INTO treatment_plan_templates (template_code, template_name, description, estimated_duration_days, total_price, is_active, created_at)
-VALUES ('TPL_CROWN_CERCON', 'Bọc răng sứ Cercon HT - 1 răng', 
-        'Gói bọc răng sứ toàn sứ Cercon HT cao cấp, bao gồm điều trị tủy (nếu cần) và gắn răng sứ.', 
+VALUES ('TPL_CROWN_CERCON', 'Bọc răng sứ Cercon HT - 1 răng',
+        'Gói bọc răng sứ toàn sứ Cercon HT cao cấp, bao gồm điều trị tủy (nếu cần) và gắn răng sứ.',
         7, 5000000, true, NOW())
 ON CONFLICT (template_code) DO NOTHING;
 

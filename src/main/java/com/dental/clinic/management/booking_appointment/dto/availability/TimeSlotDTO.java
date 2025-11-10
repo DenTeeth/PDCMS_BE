@@ -22,13 +22,13 @@ public class TimeSlotDTO {
      * Example: "08:30:00"
      */
     private LocalTime start;
-    
+
     /**
      * End time of available slot
      * Example: "11:00:00"
      */
     private LocalTime end;
-    
+
     /**
      * Whether this is the earliest/recommended slot
      * UI can highlight suggested slot for better UX

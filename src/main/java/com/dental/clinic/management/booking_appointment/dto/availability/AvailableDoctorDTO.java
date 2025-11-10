@@ -21,13 +21,13 @@ public class AvailableDoctorDTO {
 
     private String employeeCode;
     private String fullName;
-    
+
     /**
      * List of specialization names this doctor has
      * Example: ["General Dentistry", "Cosmetic Dentistry"]
      */
     private List<String> specializations;
-    
+
     /**
      * Working shifts on the selected date
      * Example: ["08:00-12:00", "14:00-18:00"]

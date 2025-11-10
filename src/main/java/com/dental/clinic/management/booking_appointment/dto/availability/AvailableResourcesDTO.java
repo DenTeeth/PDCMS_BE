@@ -22,7 +22,7 @@ public class AvailableResourcesDTO {
      * 2. Are not booked during the time range
      */
     private List<RoomBrief> availableRooms;
-    
+
     /**
      * Assistants (employees with STANDARD specialization) who:
      * 1. Have shifts covering the time range
