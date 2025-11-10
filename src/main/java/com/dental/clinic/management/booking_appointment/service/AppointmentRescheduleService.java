@@ -15,6 +15,7 @@ import com.dental.clinic.management.booking_appointment.repository.AppointmentAu
 import com.dental.clinic.management.booking_appointment.repository.AppointmentParticipantRepository;
 import com.dental.clinic.management.booking_appointment.repository.AppointmentRepository;
 import com.dental.clinic.management.booking_appointment.repository.AppointmentServiceRepository;
+import com.dental.clinic.management.booking_appointment.repository.BookingDentalServiceRepository;
 import com.dental.clinic.management.employee.domain.Employee;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import lombok.RequiredArgsConstructor;
@@ -49,7 +50,7 @@ public class AppointmentRescheduleService {
 
     private final AppointmentRepository appointmentRepository;
     private final AppointmentServiceRepository appointmentServiceRepository;
-    private final com.dental.clinic.management.booking_appointment.repository.BookingDentalServiceRepository dentalServiceRepository;
+    private final BookingDentalServiceRepository dentalServiceRepository;
     private final com.dental.clinic.management.patient.repository.PatientRepository patientRepository;
     private final AppointmentParticipantRepository participantRepository;
     private final AppointmentAuditLogRepository auditLogRepository;
