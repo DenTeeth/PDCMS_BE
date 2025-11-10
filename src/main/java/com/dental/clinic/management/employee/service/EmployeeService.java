@@ -10,6 +10,9 @@ import com.dental.clinic.management.employee.mapper.EmployeeMapper;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.exception.validation.BadRequestAlertException;
 import com.dental.clinic.management.exception.employee.EmployeeNotFoundException;
+import com.dental.clinic.management.working_schedule.repository.EmployeeShiftRepository;
+import com.dental.clinic.management.working_schedule.repository.FixedShiftRegistrationRepository;
+import com.dental.clinic.management.working_schedule.repository.PartTimeRegistrationRepository;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,6 +51,11 @@ public class EmployeeService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final SequentialCodeGenerator codeGenerator;
+    
+    // Job P3 related repositories for cleanup when employee deactivated
+    private final FixedShiftRegistrationRepository fixedRegistrationRepository;
+    private final PartTimeRegistrationRepository partTimeRegistrationRepository;
+    private final EmployeeShiftRepository employeeShiftRepository;
 
     public EmployeeService(
             EmployeeRepository employeeRepository,
@@ -56,7 +64,10 @@ public class EmployeeService {
             SpecializationRepository specializationRepository,
             RoleRepository roleRepository,
             PasswordEncoder passwordEncoder,
-            SequentialCodeGenerator codeGenerator) {
+            SequentialCodeGenerator codeGenerator,
+            FixedShiftRegistrationRepository fixedRegistrationRepository,
+            PartTimeRegistrationRepository partTimeRegistrationRepository,
+            EmployeeShiftRepository employeeShiftRepository) {
         this.employeeRepository = employeeRepository;
         this.employeeMapper = employeeMapper;
         this.accountRepository = accountRepository;
@@ -64,6 +75,9 @@ public class EmployeeService {
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.codeGenerator = codeGenerator;
+        this.fixedRegistrationRepository = fixedRegistrationRepository;
+        this.partTimeRegistrationRepository = partTimeRegistrationRepository;
+        this.employeeShiftRepository = employeeShiftRepository;
     }
 
     /**
@@ -384,7 +398,32 @@ public class EmployeeService {
         }
 
         if (request.getIsActive() != null) {
-            employee.setIsActive(request.getIsActive());
+            boolean wasActive = employee.getIsActive();
+            boolean newActiveStatus = request.getIsActive();
+            
+            employee.setIsActive(newActiveStatus);
+            
+            // Job P3 INLINE CLEANUP: When employee is deactivated, cleanup their registrations
+            if (wasActive && !newActiveStatus) {
+                log.info("Employee {} ({}) is being deactivated. Cleaning up registrations and future shifts...",
+                    employee.getEmployeeCode(), employee.getFullName());
+                
+                // Deactivate Fixed registrations
+                int fixedCount = fixedRegistrationRepository.deactivateByEmployeeId(employee.getEmployeeId());
+                log.info("  - Deactivated {} Fixed registration(s)", fixedCount);
+                
+                // Deactivate Flex registrations
+                int flexCount = partTimeRegistrationRepository.deactivateByEmployeeId(employee.getEmployeeId());
+                log.info("  - Deactivated {} Flex registration(s)", flexCount);
+                
+                // Delete future SCHEDULED shifts (work_date >= TODAY)
+                java.time.LocalDate today = java.time.LocalDate.now();
+                int shiftsCount = employeeShiftRepository.deleteFutureScheduledShiftsByEmployeeId(
+                    employee.getEmployeeId(), today);
+                log.info("  - Deleted {} future SCHEDULED shift(s)", shiftsCount);
+                
+                log.info("✅ Cleanup completed for deactivated employee {}", employee.getEmployeeCode());
+            }
         }
 
         // Update specializations if provided
