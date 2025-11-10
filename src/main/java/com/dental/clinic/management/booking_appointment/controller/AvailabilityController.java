@@ -112,15 +112,15 @@ public class AvailabilityController {
             @ApiResponse(responseCode = "403", description = "Access denied")
     })
     public ResponseEntity<AvailableResourcesDTO> getAvailableResources(
-            @Parameter(description = "Appointment start time (ISO 8601)", required = true, 
+            @Parameter(description = "Appointment start time (ISO 8601)", required = true,
                        example = "2025-11-10T09:00:00")
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
 
-            @Parameter(description = "Appointment end time (ISO 8601)", required = true, 
+            @Parameter(description = "Appointment end time (ISO 8601)", required = true,
                        example = "2025-11-10T10:15:00")
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime,
 
-            @Parameter(description = "Service codes (comma-separated)", required = true, 
+            @Parameter(description = "Service codes (comma-separated)", required = true,
                        example = "SCALING_L1,GEN_EXAM")
             @RequestParam List<String> serviceCodes) {
 

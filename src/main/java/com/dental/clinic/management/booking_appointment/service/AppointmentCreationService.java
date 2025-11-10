@@ -72,7 +72,7 @@ public class AppointmentCreationService {
         private final AppointmentServiceRepository appointmentServiceRepository;
         private final AppointmentParticipantRepository appointmentParticipantRepository;
         private final AppointmentAuditLogRepository appointmentAuditLogRepository;
-        
+
         // Treatment Plan Integration (V2)
         private final PatientPlanItemRepository patientPlanItemRepository;
         private final AppointmentPlanItemRepository appointmentPlanItemRepository;
@@ -100,29 +100,29 @@ public class AppointmentCreationService {
                 Patient patient = validatePatient(request.getPatientCode());
                 Employee doctor = validateDoctor(request.getEmployeeCode());
                 Room room = validateRoom(request.getRoomCode());
-                
+
                 // STEP 2B: Validate services (TWO MODES: Standalone vs Treatment Plan)
                 List<DentalService> services;
                 boolean isBookingFromPlan = request.getPatientPlanItemIds() != null && !request.getPatientPlanItemIds().isEmpty();
-                
+
                 if (isBookingFromPlan) {
                         // Luồng 2: Treatment Plan Booking (NEW V2)
                         log.debug("Treatment Plan Booking mode: validating {} plan items", request.getPatientPlanItemIds().size());
                         List<PatientPlanItem> planItems = validatePlanItems(request.getPatientPlanItemIds(), patient.getPatientId());
-                        
+
                         // Extract services from plan items
                         services = planItems.stream()
                                         .map(PatientPlanItem::getService)
                                         .distinct()
                                         .collect(Collectors.toList());
-                        
+
                         log.debug("Extracted {} unique services from plan items", services.size());
                 } else {
                         // Luồng 1: Standalone Booking (EXISTING)
                         log.debug("Standalone Booking mode: validating {} service codes", request.getServiceCodes().size());
                         services = validateServices(request.getServiceCodes());
                 }
-                
+
                 List<Employee> participants = validateParticipants(request.getParticipantCodes());
 
                 // STEP 3: Validate doctor specializations
@@ -152,18 +152,18 @@ public class AppointmentCreationService {
                                 request.getNotes(), createdById);
                 insertAppointmentServices(appointment, services);
                 insertAppointmentParticipants(appointment, participants);
-                
+
                 // STEP 8B: Treatment Plan Integration (V2) - Insert bridge + Update status
                 if (isBookingFromPlan) {
-                        log.debug("Treatment Plan Booking: linking {} items to appointment {}", 
+                        log.debug("Treatment Plan Booking: linking {} items to appointment {}",
                                         request.getPatientPlanItemIds().size(), appointment.getAppointmentCode());
-                        
+
                         insertAppointmentPlanItems(appointment, request.getPatientPlanItemIds());
                         updatePlanItemsStatus(request.getPatientPlanItemIds(), PatientPlanItem.PlanItemStatus.SCHEDULED);
-                        
+
                         log.info("Successfully linked and updated status for {} plan items", request.getPatientPlanItemIds().size());
                 }
-                
+
                 insertAuditLog(appointment, createdById);
 
                 log.info("Successfully created appointment: {}", appointment.getAppointmentCode());
@@ -192,11 +192,11 @@ public class AppointmentCreationService {
                 Patient patient = validatePatient(request.getPatientCode());
                 Employee doctor = validateDoctor(request.getEmployeeCode());
                 Room room = validateRoom(request.getRoomCode());
-                
+
                 // V2: Support both modes
                 List<DentalService> services;
                 boolean isBookingFromPlan = request.getPatientPlanItemIds() != null && !request.getPatientPlanItemIds().isEmpty();
-                
+
                 if (isBookingFromPlan) {
                         List<PatientPlanItem> planItems = validatePlanItems(request.getPatientPlanItemIds(), patient.getPatientId());
                         services = planItems.stream()
@@ -206,7 +206,7 @@ public class AppointmentCreationService {
                 } else {
                         services = validateServices(request.getServiceCodes());
                 }
-                
+
                 List<Employee> participants = validateParticipants(request.getParticipantCodes());
 
                 validateDoctorSpecializations(doctor, services);
@@ -228,13 +228,13 @@ public class AppointmentCreationService {
                                 totalDuration, request.getNotes(), createdById);
                 insertAppointmentServices(appointment, services);
                 insertAppointmentParticipants(appointment, participants);
-                
+
                 // V2: Treatment Plan integration
                 if (isBookingFromPlan) {
                         insertAppointmentPlanItems(appointment, request.getPatientPlanItemIds());
                         updatePlanItemsStatus(request.getPatientPlanItemIds(), PatientPlanItem.PlanItemStatus.SCHEDULED);
                 }
-                
+
                 insertAuditLog(appointment, createdById);
 
                 log.info("Successfully created appointment internally: {}", appointment.getAppointmentCode());
@@ -467,7 +467,7 @@ public class AppointmentCreationService {
         private List<PatientPlanItem> validatePlanItems(List<Long> itemIds, Integer patientId) {
                 // Check 1: Fetch items with phase and plan data (JOIN FETCH optimization)
                 List<PatientPlanItem> items = patientPlanItemRepository.findByIdInWithPlanAndPhase(itemIds);
-                
+
                 if (items.size() != itemIds.size()) {
                         List<Long> foundIds = items.stream()
                                         .map(PatientPlanItem::getItemId)
@@ -475,39 +475,39 @@ public class AppointmentCreationService {
                         List<Long> missingIds = itemIds.stream()
                                         .filter(id -> !foundIds.contains(id))
                                         .collect(Collectors.toList());
-                        
+
                         throw new BadRequestAlertException(
                                         "Patient plan items not found: " + missingIds,
                                         ENTITY_NAME,
                                         "PLAN_ITEMS_NOT_FOUND");
                 }
-                
+
                 // Check 2: All items must belong to this patient
                 List<Long> wrongOwnershipItems = items.stream()
                                 .filter(item -> !item.getPhase().getPlan().getPatientId().equals(patientId))
                                 .map(PatientPlanItem::getItemId)
                                 .collect(Collectors.toList());
-                
+
                 if (!wrongOwnershipItems.isEmpty()) {
                         throw new BadRequestAlertException(
                                         "Patient plan items do not belong to patient " + patientId + ". Item IDs: " + wrongOwnershipItems,
                                         ENTITY_NAME,
                                         "PLAN_ITEMS_WRONG_PATIENT");
                 }
-                
+
                 // Check 3: All items must be ready for booking
                 List<String> notReadyItems = items.stream()
                                 .filter(item -> item.getStatus() != PatientPlanItem.PlanItemStatus.READY_FOR_BOOKING)
                                 .map(item -> item.getItemId() + " (status: " + item.getStatus() + ")")
                                 .collect(Collectors.toList());
-                
+
                 if (!notReadyItems.isEmpty()) {
                         throw new BadRequestAlertException(
                                         "Some patient plan items are not ready for booking: " + notReadyItems,
                                         ENTITY_NAME,
                                         "PLAN_ITEMS_NOT_READY");
                 }
-                
+
                 log.debug("Validated {} plan items for patient {}", items.size(), patientId);
                 return items;
         }
@@ -948,19 +948,19 @@ public class AppointmentCreationService {
                 try {
                         // Fetch items again (without JOIN FETCH - simpler for update)
                         List<PatientPlanItem> items = patientPlanItemRepository.findAllById(itemIds);
-                        
+
                         if (items.size() != itemIds.size()) {
                                 throw new IllegalStateException(
                                                 "Mismatch in item count during status update. Expected: " + itemIds.size() + ", Found: " + items.size());
                         }
-                        
+
                         // Update status
                         items.forEach(item -> item.setStatus(newStatus));
                         patientPlanItemRepository.saveAll(items);
-                        
+
                         log.debug("Updated {} items to status: {}", items.size(), newStatus);
                 } catch (Exception e) {
-                        log.error("Failed to update plan items status. Transaction will rollback. ItemIds: {}, TargetStatus: {}", 
+                        log.error("Failed to update plan items status. Transaction will rollback. ItemIds: {}, TargetStatus: {}",
                                         itemIds, newStatus, e);
                         throw new RuntimeException("Failed to update plan items status", e);
                 }

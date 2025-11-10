@@ -1,9 +1,11 @@
 # Dental Service Management API (V17)
 
 ## Overview
-Service module quản lý các dịch vụ nha khoa (khám, chữa răng, tẩy trắng, niềng răng, v.v.). 
+
+Service module quản lý các dịch vụ nha khoa (khám, chữa răng, tẩy trắng, niềng răng, v.v.).
 
 **V17 Updates:**
+
 - Added `category_id` FK to group services
 - Added `display_order` for UI ordering
 - 3 API variants: Public (no auth), Internal (with auth), Admin (full CRUD)
@@ -49,16 +51,19 @@ CREATE INDEX idx_services_category ON services(category_id);
 **Description:** Hiển thị bảng giá dịch vụ cho khách (chỉ tên + giá). Services được group theo category.
 
 ### Use Cases
+
 - Trang web clinic hiển thị bảng giá công khai
 - Khách hàng xem giá trước khi đặt lịch
 - SEO-friendly price list
 
 ### Request
+
 ```http
 GET /api/v1/public/services/grouped
 ```
 
 ### Response 200 OK
+
 ```json
 [
   {
@@ -68,11 +73,11 @@ GET /api/v1/public/services/grouped
     "services": [
       {
         "serviceName": "General Checkup",
-        "price": 100000.00
+        "price": 100000.0
       },
       {
         "serviceName": "Dental Cleaning",
-        "price": 150000.00
+        "price": 150000.0
       }
     ]
   },
@@ -83,11 +88,11 @@ GET /api/v1/public/services/grouped
     "services": [
       {
         "serviceName": "Teeth Whitening",
-        "price": 2000000.00
+        "price": 2000000.0
       },
       {
         "serviceName": "Dental Veneer",
-        "price": 5000000.00
+        "price": 5000000.0
       }
     ]
   }
@@ -95,6 +100,7 @@ GET /api/v1/public/services/grouped
 ```
 
 ### Notes
+
 - **No authentication required**
 - Only active services from active categories
 - Minimal data (tên + giá) - không lộ service_id, duration
@@ -111,17 +117,20 @@ GET /api/v1/public/services/grouped
 **Description:** Hiển thị services có thêm technical fields (id, code, duration) cho staff booking
 
 ### Use Cases
+
 - Booking form: Staff chọn services cho appointment
 - Tính toán thời gian hẹn (dựa trên duration)
 - Internal operations
 
 ### Request
+
 ```http
 GET /api/v1/services/grouped
 Authorization: Bearer <token>
 ```
 
 ### Response 200 OK
+
 ```json
 [
   {
@@ -136,14 +145,14 @@ Authorization: Bearer <token>
         "serviceId": 101,
         "serviceCode": "CHK",
         "serviceName": "General Checkup",
-        "price": 100000.00,
+        "price": 100000.0,
         "durationMinutes": 30
       },
       {
         "serviceId": 102,
         "serviceCode": "CLN",
         "serviceName": "Dental Cleaning",
-        "price": 150000.00,
+        "price": 150000.0,
         "durationMinutes": 45
       }
     ]
@@ -160,7 +169,7 @@ Authorization: Bearer <token>
         "serviceId": 201,
         "serviceCode": "WHT",
         "serviceName": "Teeth Whitening",
-        "price": 2000000.00,
+        "price": 2000000.0,
         "durationMinutes": 90
       }
     ]
@@ -169,15 +178,17 @@ Authorization: Bearer <token>
 ```
 
 ### Error Responses
+
 - **403 Forbidden**: User không có quyền VIEW_SERVICE
 
 ### Booking Integration Example
+
 ```javascript
 // Frontend: Tính tổng thời gian appointment
 const selectedServices = [101, 102]; // serviceId
 const totalDuration = services
-  .flatMap(cat => cat.services)
-  .filter(s => selectedServices.includes(s.serviceId))
+  .flatMap((cat) => cat.services)
+  .filter((s) => selectedServices.includes(s.serviceId))
   .reduce((sum, s) => sum + s.durationMinutes, 0);
 // Result: 30 + 45 = 75 minutes
 ```
@@ -193,40 +204,46 @@ const totalDuration = services
 **Description:** Admin quản lý services với search, filter, pagination
 
 ### Request Parameters
-| Param | Type | Required | Description |
-|-------|------|----------|-------------|
-| `categoryId` | Long | No | Filter by category |
-| `isActive` | Boolean | No | Filter by active status |
-| `search` | String | No | Search by name or code (LIKE) |
-| `page` | int | No | Page number (default: 0) |
-| `size` | int | No | Page size (default: 20) |
-| `sortBy` | String | No | Sort field (default: displayOrder) |
-| `direction` | ASC/DESC | No | Sort direction (default: ASC) |
+
+| Param        | Type     | Required | Description                        |
+| ------------ | -------- | -------- | ---------------------------------- |
+| `categoryId` | Long     | No       | Filter by category                 |
+| `isActive`   | Boolean  | No       | Filter by active status            |
+| `search`     | String   | No       | Search by name or code (LIKE)      |
+| `page`       | int      | No       | Page number (default: 0)           |
+| `size`       | int      | No       | Page size (default: 20)            |
+| `sortBy`     | String   | No       | Sort field (default: displayOrder) |
+| `direction`  | ASC/DESC | No       | Sort direction (default: ASC)      |
 
 ### Request Examples
 
 **Example 1: Get all services (paginated)**
+
 ```http
 GET /api/v1/services?page=0&size=10
 Authorization: Bearer <token>
 ```
 
 **Example 2: Search by keyword**
+
 ```http
 GET /api/v1/services?search=whitening
 ```
 
 **Example 3: Filter by category + active status**
+
 ```http
 GET /api/v1/services?categoryId=2&isActive=true
 ```
 
 **Example 4: Sort by price descending**
+
 ```http
 GET /api/v1/services?sortBy=price&direction=DESC
 ```
 
 ### Response 200 OK
+
 ```json
 {
   "content": [
@@ -235,7 +252,7 @@ GET /api/v1/services?sortBy=price&direction=DESC
       "serviceCode": "CHK",
       "serviceName": "General Checkup",
       "description": "Basic dental examination",
-      "price": 100000.00,
+      "price": 100000.0,
       "durationMinutes": 30,
       "displayOrder": 0,
       "isActive": true,
@@ -253,7 +270,7 @@ GET /api/v1/services?sortBy=price&direction=DESC
       "serviceCode": "CLN",
       "serviceName": "Dental Cleaning",
       "description": "Professional teeth cleaning",
-      "price": 150000.00,
+      "price": 150000.0,
       "durationMinutes": 45,
       "displayOrder": 1,
       "isActive": true,
@@ -296,6 +313,7 @@ GET /api/v1/services?sortBy=price&direction=DESC
 ```
 
 ### Error Responses
+
 - **403 Forbidden**: User không có quyền VIEW_SERVICE
 
 ---
@@ -303,7 +321,9 @@ GET /api/v1/services?sortBy=price&direction=DESC
 ## Performance Optimization
 
 ### N+1 Query Problem (FIXED in V17)
+
 **Before V17:**
+
 ```sql
 -- Bad: 1 query for services + N queries for categories
 SELECT * FROM services WHERE is_active = true;  -- 1 query
@@ -312,6 +332,7 @@ SELECT * FROM service_categories WHERE category_id = ?;  -- N queries
 ```
 
 **V17 Solution:**
+
 ```java
 @Query("SELECT s FROM DentalService s " +
        "LEFT JOIN FETCH s.category c " +  // JOIN FETCH!
@@ -326,6 +347,7 @@ Result: **1 query only** (services + categories joined)
 ## Test Cases
 
 ### TC1: Public API - No Auth Required
+
 ```bash
 curl http://localhost:8080/api/v1/public/services/grouped
 
@@ -334,6 +356,7 @@ No need Authorization header
 ```
 
 ### TC2: Internal API - Requires Auth
+
 ```bash
 curl http://localhost:8080/api/v1/services/grouped
 
@@ -346,6 +369,7 @@ Expected: 200 OK with full service data (id, code, duration)
 ```
 
 ### TC3: Admin Search by Keyword
+
 ```bash
 GET /api/v1/services?search=cleaning
 
@@ -353,6 +377,7 @@ Expected: Returns all services with "cleaning" in name or code
 ```
 
 ### TC4: Admin Filter by Category
+
 ```bash
 GET /api/v1/services?categoryId=1&isActive=true
 
@@ -360,6 +385,7 @@ Expected: Only active services from category 1
 ```
 
 ### TC5: Admin Pagination
+
 ```bash
 GET /api/v1/services?page=0&size=5
 GET /api/v1/services?page=1&size=5
@@ -374,6 +400,7 @@ Expected: First 5 services, then next 5 services
 **Note:** V17 chỉ implement READ operations (3 GET endpoints). CREATE/UPDATE/DELETE services sẽ được thêm sau.
 
 **Planned APIs:**
+
 - `POST /api/v1/services` - Create service
 - `PATCH /api/v1/services/{code}` - Update service
 - `PATCH /api/v1/services/{code}/status` - Soft delete (set isActive)
@@ -384,6 +411,7 @@ Expected: First 5 services, then next 5 services
 ## Integration with Appointments
 
 ### Appointment → Service Relationship
+
 ```sql
 -- appointment_services table (many-to-many)
 CREATE TABLE appointment_services (
@@ -396,6 +424,7 @@ CREATE TABLE appointment_services (
 ```
 
 ### Why Soft Delete?
+
 ```sql
 -- Old appointment still references service
 SELECT a.appointment_id, s.service_name
@@ -413,17 +442,20 @@ WHERE a.appointment_date = '2023-01-15';
 ## Migration Guide (V16 → V17)
 
 ### Step 1: Backup Data
+
 ```sql
 -- Backup existing services
 CREATE TABLE services_backup AS SELECT * FROM services;
 ```
 
 ### Step 2: Run Schema V17
+
 ```bash
 psql -d dentalclinic -f src/main/resources/db/schema.sql
 ```
 
 ### Step 3: Link Services to Categories (Optional)
+
 ```sql
 -- Update existing services with category_id
 UPDATE services SET category_id = 1, display_order = 0 WHERE service_code = 'CHK';
@@ -433,6 +465,7 @@ UPDATE services SET category_id = 2, display_order = 0 WHERE service_code = 'WHT
 ```
 
 ### Step 4: Verify
+
 ```sql
 -- Check all services have valid category links
 SELECT s.service_id, s.service_code, c.category_name
@@ -443,7 +476,9 @@ LEFT JOIN service_categories c ON s.category_id = c.category_id;
 ---
 
 ## OpenAPI/Swagger
+
 Access Swagger UI at:
+
 ```
 http://localhost:8080/swagger-ui.html
 ```
@@ -455,6 +490,7 @@ Filter by tag: **Dental Services**
 ## Treatment Plan Integration ⭐ NEW
 
 ### Overview
+
 Starting from V2, services are integrated with **Treatment Plan Module** for long-term treatment workflows (niềng răng, cấy ghép implant, bọc răng sứ).
 
 **New Table:** `template_phase_services`
@@ -472,24 +508,28 @@ CREATE TABLE template_phase_services (
 ### Use Cases
 
 **1. Orthodontics (Niềng răng 2 năm)**
+
 - Template: `TPL_ORTHO_METAL`
 - Phase 3: "Giai đoạn điều trị"
 - Service: `ORTHO_ADJUST` (Siết niềng)
 - **Quantity: 24** (1 lần/tháng × 24 tháng)
 
 **Example Data:**
+
 ```sql
 INSERT INTO template_phase_services (template_phase_id, service_id, sequence_number, quantity) VALUES
 (3, (SELECT service_id FROM services WHERE service_code = 'ORTHO_ADJUST'), 1, 24);
 ```
 
 This generates 24 patient plan items:
+
 - Item 305: "Lần 1/24: Siết niềng"
 - Item 306: "Lần 2/24: Siết niềng"
 - ...
 - Item 328: "Lần 24/24: Siết niềng"
 
 **2. Dental Implant (Cấy ghép)**
+
 - Template: `TPL_IMPLANT_OSSTEM`
 - Phase 2: "Cấy ghép Implant"
 - Service: `IMP_SURGERY` (Phẫu thuật cấy ghép)
@@ -499,10 +539,12 @@ This generates 24 patient plan items:
 
 **1. Service Duration Affects Templates**
 If you change `services.duration_minutes`:
+
 ```sql
 UPDATE services SET duration_minutes = 45 WHERE service_code = 'ORTHO_ADJUST';  -- Changed from 30 to 45
 ```
-→ All future appointments booked from treatment plans will use NEW duration (45 minutes)  
+
+→ All future appointments booked from treatment plans will use NEW duration (45 minutes)
 → Existing appointments NOT affected (duration locked when created)
 
 **2. Service Deletion Restrictions**
@@ -520,6 +562,7 @@ GROUP BY tp.template_id;
 ```
 
 If used → Return 400 Bad Request:
+
 ```json
 {
   "errorCode": "SERVICE_IN_USE_BY_TEMPLATES",
@@ -529,11 +572,13 @@ If used → Return 400 Bad Request:
 
 **3. Price Changes**
 Changing `services.price` affects:
+
 - ✅ **New treatment plans**: Use updated price
 - ❌ **Existing patient plans**: Use price locked when plan created (stored in `patient_plan_items.price`)
 
 **4. Service Deactivation**
 Setting `is_active = FALSE`:
+
 - ❌ Cannot be added to NEW templates
 - ✅ Existing templates still valid (historical data)
 - ✅ Existing patient plans continue using service
@@ -577,8 +622,9 @@ Setting `is_active = FALSE`:
 ### Query Examples
 
 **Find all templates using a service:**
+
 ```sql
-SELECT 
+SELECT
     tp.template_code,
     tp.template_name,
     ph.phase_name,
@@ -596,8 +642,9 @@ WHERE s.service_code = 'ORTHO_ADJUST';
 ```
 
 **Find patient appointments booked from plan items:**
+
 ```sql
-SELECT 
+SELECT
     a.appointment_code,
     a.appointment_start_time,
     pi.item_name,
@@ -618,23 +665,27 @@ ORDER BY a.appointment_start_time;
 
 **1. Service Naming for Templates**
 Use clear names indicating frequency:
+
 - ✅ "Tái khám Chỉnh nha / Siết niềng" (implies monthly visits)
 - ✅ "Kiểm tra Implant sau cấy ghép" (implies follow-ups)
 - ❌ "Khám răng" (too generic)
 
 **2. Duration Accuracy**
 Set realistic `duration_minutes` for services used in templates:
+
 - `ORTHO_ADJUST`: 30 minutes (15 min treatment + 15 min consultation)
 - `IMP_CHECKUP`: 20 minutes (quick follow-up)
 - `CROWN_FIT`: 60 minutes (longer for adjustments)
 
 **3. Price Strategy**
 For long-term plans (2-year orthodontics):
+
 - Option A: Set `services.price` to per-visit price (e.g., 200,000 VND/visit)
 - Option B: Set `services.price` to 0, lock total price at plan level (e.g., 30,000,000 VND for entire plan)
 
 **4. Category Assignment**
 Assign treatment plan services to appropriate categories:
+
 - Orthodontics services → Category "C. Orthodontics"
 - Implant services → Category "D. Dental Implant & Surgery"
 - Crown services → Category "B. Cosmetic & Restoration"
@@ -644,26 +695,31 @@ This ensures proper display in public price list AND treatment plan UI.
 ### Error Handling
 
 **Error: Service not found when creating template**
+
 ```json
 {
   "errorCode": "SERVICE_NOT_FOUND",
   "message": "Service ORTHO_ADJUST not found. Cannot add to template phase."
 }
 ```
+
 → Ensure service exists and is active before linking to template
 
 **Error: Service inactive when booking appointment**
+
 ```json
 {
   "errorCode": "SERVICE_INACTIVE",
   "message": "Service ORTHO_ADJUST is inactive. Cannot book appointment from plan item 307."
 }
 ```
+
 → Reactivate service or update patient plan to use different service
 
 ### Frontend Integration
 
 **Display service info in Treatment Plan UI:**
+
 ```javascript
 // Fetch template with service details
 GET /api/v1/treatment-plan-templates/TPL_ORTHO_METAL
@@ -688,11 +744,15 @@ GET /api/v1/treatment-plan-templates/TPL_ORTHO_METAL
 ```
 
 **Calculate total treatment cost:**
+
 ```javascript
 const totalCost = template.phases.reduce((sum, phase) => {
-  return sum + phase.services.reduce((phaseSum, service) => {
-    return phaseSum + (service.price * service.quantity);
-  }, 0);
+  return (
+    sum +
+    phase.services.reduce((phaseSum, service) => {
+      return phaseSum + service.price * service.quantity;
+    }, 0)
+  );
 }, 0);
 
 // Example: TPL_ORTHO_METAL
@@ -706,6 +766,7 @@ const totalCost = template.phases.reduce((sum, phase) => {
 ---
 
 ## Related Documentation
+
 - [Service Category API](./service-category/ServiceCategory.md) - Category management
 - [Appointment API](../booking/appointment/Appointment.md) - Service usage in appointments
 - [Treatment Plan API](../treatment-plan/TreatmentPlan.md) - Template & patient plan management ⭐ NEW

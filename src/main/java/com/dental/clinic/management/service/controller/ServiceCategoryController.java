@@ -34,7 +34,7 @@ public class ServiceCategoryController {
      */
     @GetMapping
     @PreAuthorize("hasAuthority('VIEW_SERVICE')")
-    @Operation(summary = "Get all service categories", 
+    @Operation(summary = "Get all service categories",
                description = "Returns all categories including inactive ones, ordered by display order")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved categories"),
@@ -68,7 +68,7 @@ public class ServiceCategoryController {
      */
     @PostMapping
     @PreAuthorize("hasAuthority('CREATE_SERVICE')")
-    @Operation(summary = "Create new service category", 
+    @Operation(summary = "Create new service category",
                description = "Creates a new service category with unique code")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Category created successfully"),
@@ -88,7 +88,7 @@ public class ServiceCategoryController {
      */
     @PatchMapping("/{categoryId}")
     @PreAuthorize("hasAuthority('UPDATE_SERVICE')")
-    @Operation(summary = "Update service category", 
+    @Operation(summary = "Update service category",
                description = "Updates category fields (partial update supported)")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Category updated successfully"),
@@ -110,7 +110,7 @@ public class ServiceCategoryController {
      */
     @DeleteMapping("/{categoryId}")
     @PreAuthorize("hasAuthority('DELETE_SERVICE')")
-    @Operation(summary = "Delete service category", 
+    @Operation(summary = "Delete service category",
                description = "Soft deletes category by setting isActive=false. Fails if active services are linked.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Category deleted successfully"),
@@ -129,7 +129,7 @@ public class ServiceCategoryController {
      */
     @PostMapping("/reorder")
     @PreAuthorize("hasAuthority('UPDATE_SERVICE')")
-    @Operation(summary = "Reorder service categories", 
+    @Operation(summary = "Reorder service categories",
                description = "Updates display order for multiple categories at once (for drag-drop UX)")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Categories reordered successfully"),
@@ -139,7 +139,7 @@ public class ServiceCategoryController {
     })
     public ResponseEntity<Void> reorderCategories(
             @Valid @RequestBody ReorderServiceCategoriesRequest request) {
-        log.info("POST /api/v1/service-categories/reorder - Reorder {} categories", 
+        log.info("POST /api/v1/service-categories/reorder - Reorder {} categories",
                  request.getOrders().size());
         serviceCategoryService.reorderCategories(request);
         return ResponseEntity.noContent().build();
