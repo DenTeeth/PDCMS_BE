@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 public class AvailabilityService {
 
     private final EmployeeRepository employeeRepository;
-    private final DentalServiceRepository dentalServiceRepository;
+    private final BookingDentalServiceRepository dentalServiceRepository;
     private final RoomRepository roomRepository;
     private final RoomServiceRepository roomServiceRepository;
     private final EmployeeShiftRepository employeeShiftRepository;
