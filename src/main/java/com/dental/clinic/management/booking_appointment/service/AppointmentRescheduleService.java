@@ -48,227 +48,228 @@ import java.util.stream.Collectors;
 @Slf4j
 public class AppointmentRescheduleService {
 
-    private final AppointmentRepository appointmentRepository;
-    private final AppointmentServiceRepository appointmentServiceRepository;
-    private final BookingDentalServiceRepository dentalServiceRepository;
-    private final com.dental.clinic.management.patient.repository.PatientRepository patientRepository;
-    private final AppointmentParticipantRepository participantRepository;
-    private final AppointmentAuditLogRepository auditLogRepository;
-    private final EmployeeRepository employeeRepository;
-    private final AppointmentCreationService creationService;
-    private final AppointmentDetailService detailService;
+        private final AppointmentRepository appointmentRepository;
+        private final AppointmentServiceRepository appointmentServiceRepository;
+        private final BookingDentalServiceRepository dentalServiceRepository;
+        private final com.dental.clinic.management.patient.repository.PatientRepository patientRepository;
+        private final AppointmentParticipantRepository participantRepository;
+        private final AppointmentAuditLogRepository auditLogRepository;
+        private final EmployeeRepository employeeRepository;
+        private final AppointmentCreationService creationService;
+        private final AppointmentDetailService detailService;
 
-    /**
-     * Reschedule appointment: Cancel old and create new in one transaction.
-     *
-     * @param oldAppointmentCode Code of appointment to reschedule
-     * @param request            New appointment details + cancellation reason
-     * @return Both old (cancelled) and new (scheduled) appointments
-     */
-    @Transactional
-    public RescheduleAppointmentResponse rescheduleAppointment(
-            String oldAppointmentCode,
-            RescheduleAppointmentRequest request) {
+        /**
+         * Reschedule appointment: Cancel old and create new in one transaction.
+         *
+         * @param oldAppointmentCode Code of appointment to reschedule
+         * @param request            New appointment details + cancellation reason
+         * @return Both old (cancelled) and new (scheduled) appointments
+         */
+        @Transactional
+        public RescheduleAppointmentResponse rescheduleAppointment(
+                        String oldAppointmentCode,
+                        RescheduleAppointmentRequest request) {
 
-        log.info("Rescheduling appointment {} to new time {}",
-                oldAppointmentCode, request.getNewStartTime());
+                log.info("Rescheduling appointment {} to new time {}",
+                                oldAppointmentCode, request.getNewStartTime());
 
-        // STEP 1: Lock old appointment
-        Appointment oldAppointment = appointmentRepository.findByCodeForUpdate(oldAppointmentCode)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Appointment not found: " + oldAppointmentCode));
+                // STEP 1: Lock old appointment
+                Appointment oldAppointment = appointmentRepository.findByCodeForUpdate(oldAppointmentCode)
+                                .orElseThrow(() -> new IllegalArgumentException(
+                                                "Appointment not found: " + oldAppointmentCode));
 
-        // STEP 2: Validate old appointment can be rescheduled
-        validateOldAppointment(oldAppointment);
+                // STEP 2: Validate old appointment can be rescheduled
+                validateOldAppointment(oldAppointment);
 
-        // STEP 3: Get service codes from old appointment
-        List<String> serviceCodes = getServiceCodes(oldAppointment, request);
+                // STEP 3: Get service codes from old appointment
+                List<String> serviceCodes = getServiceCodes(oldAppointment, request);
 
-        // STEP 4: Get patient code from old appointment
-        String patientCode = getPatientCode(oldAppointment);
+                // STEP 4: Get patient code from old appointment
+                String patientCode = getPatientCode(oldAppointment);
 
-        // STEP 5: Create new appointment using AppointmentCreationService
-        CreateAppointmentRequest createRequest = buildCreateRequest(request, patientCode, serviceCodes);
-        Appointment newAppointment = creationService.createAppointmentInternal(createRequest);
+                // STEP 5: Create new appointment using AppointmentCreationService
+                CreateAppointmentRequest createRequest = buildCreateRequest(request, patientCode, serviceCodes);
+                Appointment newAppointment = creationService.createAppointmentInternal(createRequest);
 
-        // STEP 6: Cancel old appointment and link to new one
-        cancelOldAppointment(oldAppointment, newAppointment, request);
+                // STEP 6: Cancel old appointment and link to new one
+                cancelOldAppointment(oldAppointment, newAppointment, request);
 
-        // STEP 7: Create audit logs
-        createAuditLogs(oldAppointment, newAppointment, request);
+                // STEP 7: Create audit logs
+                createAuditLogs(oldAppointment, newAppointment, request);
 
-        log.info("Successfully rescheduled appointment {} -> {}",
-                oldAppointmentCode, newAppointment.getAppointmentCode());
+                log.info("Successfully rescheduled appointment {} -> {}",
+                                oldAppointmentCode, newAppointment.getAppointmentCode());
 
-        // STEP 8: Return both appointments
-        return RescheduleAppointmentResponse.builder()
-                .cancelledAppointment(detailService.getAppointmentDetail(oldAppointmentCode))
-                .newAppointment(detailService.getAppointmentDetail(newAppointment.getAppointmentCode()))
-                .build();
-    }
-
-    /**
-     * Validate old appointment can be rescheduled.
-     * Only SCHEDULED or CHECKED_IN can be rescheduled.
-     */
-    private void validateOldAppointment(Appointment oldAppointment) {
-        AppointmentStatus status = oldAppointment.getStatus();
-
-        // Cannot reschedule terminal states
-        if (status == AppointmentStatus.COMPLETED) {
-            throw new IllegalStateException(
-                    "Cannot reschedule completed appointment. Code: APPOINTMENT_NOT_RESCHEDULABLE");
+                // STEP 8: Return both appointments
+                return RescheduleAppointmentResponse.builder()
+                                .cancelledAppointment(detailService.getAppointmentDetail(oldAppointmentCode))
+                                .newAppointment(detailService.getAppointmentDetail(newAppointment.getAppointmentCode()))
+                                .build();
         }
 
-        if (status == AppointmentStatus.CANCELLED) {
-            throw new IllegalStateException(
-                    "Cannot reschedule cancelled appointment. Code: APPOINTMENT_NOT_RESCHEDULABLE");
+        /**
+         * Validate old appointment can be rescheduled.
+         * Only SCHEDULED or CHECKED_IN can be rescheduled.
+         */
+        private void validateOldAppointment(Appointment oldAppointment) {
+                AppointmentStatus status = oldAppointment.getStatus();
+
+                // Cannot reschedule terminal states
+                if (status == AppointmentStatus.COMPLETED) {
+                        throw new IllegalStateException(
+                                        "Cannot reschedule completed appointment. Code: APPOINTMENT_NOT_RESCHEDULABLE");
+                }
+
+                if (status == AppointmentStatus.CANCELLED) {
+                        throw new IllegalStateException(
+                                        "Cannot reschedule cancelled appointment. Code: APPOINTMENT_NOT_RESCHEDULABLE");
+                }
+
+                if (status == AppointmentStatus.NO_SHOW) {
+                        throw new IllegalStateException(
+                                        "Cannot reschedule no-show appointment. Code: APPOINTMENT_NOT_RESCHEDULABLE");
+                }
+
+                // Only allow SCHEDULED or CHECKED_IN
+                if (status != AppointmentStatus.SCHEDULED && status != AppointmentStatus.CHECKED_IN) {
+                        throw new IllegalStateException(
+                                        String.format("Cannot reschedule appointment in status %s", status));
+                }
+
+                log.debug("Old appointment {} validated for reschedule", oldAppointment.getAppointmentCode());
         }
 
-        if (status == AppointmentStatus.NO_SHOW) {
-            throw new IllegalStateException(
-                    "Cannot reschedule no-show appointment. Code: APPOINTMENT_NOT_RESCHEDULABLE");
+        /**
+         * Get patient code for new appointment from old appointment.
+         */
+        private String getPatientCode(Appointment oldAppointment) {
+                return patientRepository.findById(oldAppointment.getPatientId())
+                                .map(patient -> patient.getPatientCode())
+                                .orElseThrow(
+                                                () -> new IllegalStateException("Patient not found for ID: "
+                                                                + oldAppointment.getPatientId()));
         }
 
-        // Only allow SCHEDULED or CHECKED_IN
-        if (status != AppointmentStatus.SCHEDULED && status != AppointmentStatus.CHECKED_IN) {
-            throw new IllegalStateException(
-                    String.format("Cannot reschedule appointment in status %s", status));
+        /**
+         * Get service codes for new appointment.
+         * If request.newServiceIds is provided -> convert to codes.
+         * Otherwise -> reuse old appointment's service codes.
+         */
+        private List<String> getServiceCodes(Appointment oldAppointment, RescheduleAppointmentRequest request) {
+                if (request.getNewServiceIds() != null && !request.getNewServiceIds().isEmpty()) {
+                        log.debug("Using new service IDs from request: {}", request.getNewServiceIds());
+                        // Convert service IDs to codes
+                        return dentalServiceRepository.findAllById(request.getNewServiceIds())
+                                        .stream()
+                                        .map(service -> service.getServiceCode())
+                                        .collect(Collectors.toList());
+                }
+
+                // Reuse old services
+                log.debug("Reusing services from old appointment: {}", oldAppointment.getAppointmentCode());
+                List<com.dental.clinic.management.booking_appointment.domain.AppointmentService> oldServices = appointmentServiceRepository
+                                .findByIdAppointmentId(oldAppointment.getAppointmentId());
+
+                // Get service IDs and convert to codes
+                List<Integer> serviceIds = oldServices.stream()
+                                .map(asvc -> asvc.getId().getServiceId())
+                                .collect(Collectors.toList());
+
+                return dentalServiceRepository.findAllById(serviceIds)
+                                .stream()
+                                .map(service -> service.getServiceCode())
+                                .collect(Collectors.toList());
         }
 
-        log.debug("Old appointment {} validated for reschedule", oldAppointment.getAppointmentCode());
-    }
+        /**
+         * Build CreateAppointmentRequest from reschedule request.
+         * Reuses patient and services from old appointment.
+         */
+        private CreateAppointmentRequest buildCreateRequest(
+                        RescheduleAppointmentRequest request,
+                        String patientCode,
+                        List<String> serviceCodes) {
 
-    /**
-     * Get patient code for new appointment from old appointment.
-     */
-    private String getPatientCode(Appointment oldAppointment) {
-        return patientRepository.findById(oldAppointment.getPatientId())
-                .map(patient -> patient.getPatientCode())
-                .orElseThrow(
-                        () -> new IllegalStateException("Patient not found for ID: " + oldAppointment.getPatientId()));
-    }
-
-    /**
-     * Get service codes for new appointment.
-     * If request.newServiceIds is provided -> convert to codes.
-     * Otherwise -> reuse old appointment's service codes.
-     */
-    private List<String> getServiceCodes(Appointment oldAppointment, RescheduleAppointmentRequest request) {
-        if (request.getNewServiceIds() != null && !request.getNewServiceIds().isEmpty()) {
-            log.debug("Using new service IDs from request: {}", request.getNewServiceIds());
-            // Convert service IDs to codes
-            return dentalServiceRepository.findAllById(request.getNewServiceIds())
-                    .stream()
-                    .map(service -> service.getServiceCode())
-                    .collect(Collectors.toList());
+                return CreateAppointmentRequest.builder()
+                                .patientCode(patientCode)
+                                .employeeCode(request.getNewEmployeeCode())
+                                .roomCode(request.getNewRoomCode())
+                                .appointmentStartTime(request.getNewStartTime().toString())
+                                .serviceCodes(serviceCodes)
+                                .participantCodes(request.getNewParticipantCodes())
+                                .notes("Rescheduled from previous appointment")
+                                .build();
         }
 
-        // Reuse old services
-        log.debug("Reusing services from old appointment: {}", oldAppointment.getAppointmentCode());
-        List<com.dental.clinic.management.booking_appointment.domain.AppointmentService> oldServices = appointmentServiceRepository
-                .findByIdAppointmentId(oldAppointment.getAppointmentId());
+        /**
+         * Cancel old appointment and link to new one.
+         */
+        private void cancelOldAppointment(
+                        Appointment oldAppointment,
+                        Appointment newAppointment,
+                        RescheduleAppointmentRequest request) {
 
-        // Get service IDs and convert to codes
-        List<Integer> serviceIds = oldServices.stream()
-                .map(asvc -> asvc.getId().getServiceId())
-                .collect(Collectors.toList());
+                oldAppointment.setStatus(AppointmentStatus.CANCELLED);
+                oldAppointment.setRescheduledToAppointmentId(newAppointment.getAppointmentId());
+                appointmentRepository.save(oldAppointment);
 
-        return dentalServiceRepository.findAllById(serviceIds)
-                .stream()
-                .map(service -> service.getServiceCode())
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * Build CreateAppointmentRequest from reschedule request.
-     * Reuses patient and services from old appointment.
-     */
-    private CreateAppointmentRequest buildCreateRequest(
-            RescheduleAppointmentRequest request,
-            String patientCode,
-            List<String> serviceCodes) {
-
-        return CreateAppointmentRequest.builder()
-                .patientCode(patientCode)
-                .employeeCode(request.getNewEmployeeCode())
-                .roomCode(request.getNewRoomCode())
-                .appointmentStartTime(request.getNewStartTime().toString())
-                .serviceCodes(serviceCodes)
-                .participantCodes(request.getNewParticipantCodes())
-                .notes("Rescheduled from previous appointment")
-                .build();
-    }
-
-    /**
-     * Cancel old appointment and link to new one.
-     */
-    private void cancelOldAppointment(
-            Appointment oldAppointment,
-            Appointment newAppointment,
-            RescheduleAppointmentRequest request) {
-
-        oldAppointment.setStatus(AppointmentStatus.CANCELLED);
-        oldAppointment.setRescheduledToAppointmentId(newAppointment.getAppointmentId());
-        appointmentRepository.save(oldAppointment);
-
-        log.info("Cancelled old appointment {} and linked to new appointment {}",
-                oldAppointment.getAppointmentCode(), newAppointment.getAppointmentCode());
-    }
-
-    /**
-     * Create audit logs for both old and new appointments.
-     */
-    private void createAuditLogs(
-            Appointment oldAppointment,
-            Appointment newAppointment,
-            RescheduleAppointmentRequest request) {
-
-        Integer performedByEmployeeId = getCurrentEmployeeId();
-
-        // Audit log for OLD appointment (RESCHEDULE_SOURCE)
-        AppointmentAuditLog oldLog = AppointmentAuditLog.builder()
-                .appointmentId(oldAppointment.getAppointmentId())
-                .actionType(AppointmentActionType.RESCHEDULE_SOURCE)
-                .oldStatus(AppointmentStatus.SCHEDULED) // or CHECKED_IN
-                .newStatus(AppointmentStatus.CANCELLED)
-                .reasonCode(request.getReasonCode())
-                .notes(request.getCancelNotes())
-                .performedByEmployeeId(performedByEmployeeId)
-                .build();
-        auditLogRepository.save(oldLog);
-
-        // Audit log for NEW appointment (RESCHEDULE_TARGET)
-        AppointmentAuditLog newLog = AppointmentAuditLog.builder()
-                .appointmentId(newAppointment.getAppointmentId())
-                .actionType(AppointmentActionType.RESCHEDULE_TARGET)
-                .oldStatus(null) // New appointment has no old status
-                .newStatus(AppointmentStatus.SCHEDULED)
-                .reasonCode(request.getReasonCode())
-                .notes("Rescheduled from " + oldAppointment.getAppointmentCode())
-                .performedByEmployeeId(performedByEmployeeId)
-                .build();
-        auditLogRepository.save(newLog);
-
-        log.info("Created audit logs for reschedule operation");
-    }
-
-    /**
-     * Get current employee ID from JWT token.
-     */
-    private Integer getCurrentEmployeeId() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !(authentication.getPrincipal() instanceof Jwt)) {
-            throw new IllegalStateException("No valid JWT authentication found");
+                log.info("Cancelled old appointment {} and linked to new appointment {}",
+                                oldAppointment.getAppointmentCode(), newAppointment.getAppointmentCode());
         }
 
-        Jwt jwt = (Jwt) authentication.getPrincipal();
-        String username = jwt.getSubject();
+        /**
+         * Create audit logs for both old and new appointments.
+         */
+        private void createAuditLogs(
+                        Appointment oldAppointment,
+                        Appointment newAppointment,
+                        RescheduleAppointmentRequest request) {
 
-        Employee employee = employeeRepository.findByAccount_Username(username)
-                .orElseThrow(() -> new IllegalStateException(
-                        "Current user is not an employee: " + username));
+                Integer performedByEmployeeId = getCurrentEmployeeId();
 
-        return employee.getEmployeeId();
-    }
+                // Audit log for OLD appointment (RESCHEDULE_SOURCE)
+                AppointmentAuditLog oldLog = AppointmentAuditLog.builder()
+                                .appointmentId(oldAppointment.getAppointmentId())
+                                .actionType(AppointmentActionType.RESCHEDULE_SOURCE)
+                                .oldStatus(AppointmentStatus.SCHEDULED) // or CHECKED_IN
+                                .newStatus(AppointmentStatus.CANCELLED)
+                                .reasonCode(request.getReasonCode())
+                                .notes(request.getCancelNotes())
+                                .performedByEmployeeId(performedByEmployeeId)
+                                .build();
+                auditLogRepository.save(oldLog);
+
+                // Audit log for NEW appointment (RESCHEDULE_TARGET)
+                AppointmentAuditLog newLog = AppointmentAuditLog.builder()
+                                .appointmentId(newAppointment.getAppointmentId())
+                                .actionType(AppointmentActionType.RESCHEDULE_TARGET)
+                                .oldStatus(null) // New appointment has no old status
+                                .newStatus(AppointmentStatus.SCHEDULED)
+                                .reasonCode(request.getReasonCode())
+                                .notes("Rescheduled from " + oldAppointment.getAppointmentCode())
+                                .performedByEmployeeId(performedByEmployeeId)
+                                .build();
+                auditLogRepository.save(newLog);
+
+                log.info("Created audit logs for reschedule operation");
+        }
+
+        /**
+         * Get current employee ID from JWT token.
+         */
+        private Integer getCurrentEmployeeId() {
+                Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+                if (authentication == null || !(authentication.getPrincipal() instanceof Jwt)) {
+                        throw new IllegalStateException("No valid JWT authentication found");
+                }
+
+                Jwt jwt = (Jwt) authentication.getPrincipal();
+                String username = jwt.getSubject();
+
+                Employee employee = employeeRepository.findByAccount_Username(username)
+                                .orElseThrow(() -> new IllegalStateException(
+                                                "Current user is not an employee: " + username));
+
+                return employee.getEmployeeId();
+        }
 }
