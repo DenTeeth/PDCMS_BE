@@ -2,17 +2,13 @@ package com.dental.clinic.management.booking_appointment.service;
 
 import com.dental.clinic.management.booking_appointment.domain.Appointment;
 import com.dental.clinic.management.booking_appointment.domain.AppointmentAuditLog;
-import com.dental.clinic.management.booking_appointment.domain.AppointmentParticipant;
-import com.dental.clinic.management.booking_appointment.domain.AppointmentService;
-import com.dental.clinic.management.booking_appointment.dto.AppointmentDetailDTO;
+
 import com.dental.clinic.management.booking_appointment.dto.CreateAppointmentRequest;
 import com.dental.clinic.management.booking_appointment.dto.request.RescheduleAppointmentRequest;
 import com.dental.clinic.management.booking_appointment.dto.response.RescheduleAppointmentResponse;
 import com.dental.clinic.management.booking_appointment.enums.AppointmentActionType;
-import com.dental.clinic.management.booking_appointment.enums.AppointmentParticipantRole;
 import com.dental.clinic.management.booking_appointment.enums.AppointmentStatus;
 import com.dental.clinic.management.booking_appointment.repository.AppointmentAuditLogRepository;
-import com.dental.clinic.management.booking_appointment.repository.AppointmentParticipantRepository;
 import com.dental.clinic.management.booking_appointment.repository.AppointmentRepository;
 import com.dental.clinic.management.booking_appointment.repository.AppointmentServiceRepository;
 import com.dental.clinic.management.booking_appointment.repository.BookingDentalServiceRepository;
@@ -26,8 +22,6 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -52,7 +46,6 @@ public class AppointmentRescheduleService {
         private final AppointmentServiceRepository appointmentServiceRepository;
         private final BookingDentalServiceRepository dentalServiceRepository;
         private final com.dental.clinic.management.patient.repository.PatientRepository patientRepository;
-        private final AppointmentParticipantRepository participantRepository;
         private final AppointmentAuditLogRepository auditLogRepository;
         private final EmployeeRepository employeeRepository;
         private final AppointmentCreationService creationService;
