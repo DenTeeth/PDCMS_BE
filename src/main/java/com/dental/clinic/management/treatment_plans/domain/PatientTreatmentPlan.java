@@ -59,10 +59,13 @@ public class PatientTreatmentPlan {
     private Employee createdBy;
 
     /**
-     * Optional: Template used to create this plan
+     * Optional: Template used to create this plan (for traceability).
+     * V19: Changed from Long templateId to ManyToOne relationship for richer data
+     * access.
      */
-    @Column(name = "template_id")
-    private Long templateId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "template_id")
+    private com.dental.clinic.management.treatment_plans.domain.template.TreatmentPlanTemplate sourceTemplate;
 
     /**
      * Current status of the plan

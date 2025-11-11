@@ -5,6 +5,12 @@ package com.dental.clinic.management.treatment_plans.enums;
  */
 public enum PlanItemStatus {
     /**
+     * Item pending approval/activation (newly created from template).
+     * Waiting for doctor to activate the treatment plan.
+     */
+    PENDING,
+
+    /**
      * Item ready to be scheduled for appointment
      */
     READY_FOR_BOOKING,
@@ -22,5 +28,10 @@ public enum PlanItemStatus {
     /**
      * Item completed successfully
      */
-    COMPLETED
+    COMPLETED,
+
+    /**
+     * Item skipped (not needed or cancelled by patient)
+     */
+    SKIPPED
 }

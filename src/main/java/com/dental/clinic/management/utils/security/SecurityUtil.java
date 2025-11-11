@@ -47,7 +47,7 @@ public class SecurityUtil {
         this.jwtDecoder = jwtDecoder;
     }
 
-    public String createAccessToken(String username, List<String> roles, List<String> permissions) {
+    public String createAccessToken(String username, List<String> roles, List<String> permissions, Integer accountId) {
         Instant now = Instant.now();
         Instant validity = now.plus(jwtExpiration, ChronoUnit.SECONDS);
 
@@ -62,6 +62,7 @@ public class SecurityUtil {
                 .subject(username)
                 .claim(ROLES_CLAIM, formattedRoles)
                 .claim(PERMISSIONS_CLAIM, permissions)
+                .claim("account_id", accountId)
                 .build();
 
         JwsHeader jwsHeader = JwsHeader.with(JWT_ALGORITHM).build();

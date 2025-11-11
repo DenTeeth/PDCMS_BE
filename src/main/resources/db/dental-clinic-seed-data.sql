@@ -54,6 +54,19 @@ CREATE TYPE balance_change_reason AS ENUM ('ANNUAL_RESET', 'APPROVED_REQUEST', '
 -- ============================================
 
 -- ============================================
+-- FIX TREATMENT PLAN CONSTRAINTS
+-- ============================================
+-- Drop old constraint and recreate with correct enum values including PENDING
+-- Issue: Old schema had constraint without PENDING status
+
+ALTER TABLE IF EXISTS patient_treatment_plans
+DROP CONSTRAINT IF EXISTS patient_treatment_plans_status_check;
+
+ALTER TABLE IF EXISTS patient_treatment_plans
+ADD CONSTRAINT patient_treatment_plans_status_check
+CHECK (status IN ('PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'));
+
+-- ============================================
 
 -- ============================================
 -- BƯỚC 1: TẠO BASE ROLES (3 loại cố định)
@@ -1713,147 +1726,148 @@ ON CONFLICT (template_id, phase_number) DO NOTHING;
 
 -- =============================================
 -- BƯỚC 5: INSERT TEMPLATE PHASE SERVICES (Dịch vụ trong từng giai đoạn)
+-- V19: Added sequence_number for ordered item creation
 -- =============================================
 
--- TPL_ORTHO_METAL - Phase 1: Khám & Chuẩn bị
-INSERT INTO template_phase_services (phase_id, service_id, quantity, estimated_time_minutes, created_at)
-SELECT tp.phase_id, s.service_id, 1, 45, NOW()
+-- TPL_ORTHO_METAL - Phase 1: Khám & Chuẩn bị (3 services in order)
+INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
+SELECT tp.phase_id, s.service_id, 1, 1, 45, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'ORTHO_CONSULT'
 WHERE t.template_code = 'TPL_ORTHO_METAL' AND tp.phase_number = 1
 ON CONFLICT (phase_id, service_id) DO NOTHING;
 
-INSERT INTO template_phase_services (phase_id, service_id, quantity, estimated_time_minutes, created_at)
-SELECT tp.phase_id, s.service_id, 1, 30, NOW()
+INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
+SELECT tp.phase_id, s.service_id, 2, 1, 30, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'ORTHO_FILMS'
 WHERE t.template_code = 'TPL_ORTHO_METAL' AND tp.phase_number = 1
 ON CONFLICT (phase_id, service_id) DO NOTHING;
 
-INSERT INTO template_phase_services (phase_id, service_id, quantity, estimated_time_minutes, created_at)
-SELECT tp.phase_id, s.service_id, 1, 60, NOW()
+INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
+SELECT tp.phase_id, s.service_id, 3, 1, 60, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'SCALING_L1'
 WHERE t.template_code = 'TPL_ORTHO_METAL' AND tp.phase_number = 1
 ON CONFLICT (phase_id, service_id) DO NOTHING;
 
--- TPL_ORTHO_METAL - Phase 2: Gắn mắc cài
-INSERT INTO template_phase_services (phase_id, service_id, quantity, estimated_time_minutes, created_at)
-SELECT tp.phase_id, s.service_id, 1, 90, NOW()
+-- TPL_ORTHO_METAL - Phase 2: Gắn mắc cài (1 service)
+INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
+SELECT tp.phase_id, s.service_id, 1, 1, 90, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'ORTHO_BRACES_ON'
 WHERE t.template_code = 'TPL_ORTHO_METAL' AND tp.phase_number = 2
 ON CONFLICT (phase_id, service_id) DO NOTHING;
 
--- TPL_ORTHO_METAL - Phase 3: Tái khám 24 lần (quantity = 24)
-INSERT INTO template_phase_services (phase_id, service_id, quantity, estimated_time_minutes, created_at)
-SELECT tp.phase_id, s.service_id, 24, 30, NOW()
+-- TPL_ORTHO_METAL - Phase 3: Tái khám 8 lần (quantity = 8) - FIXED: Reduced from 24 to 8 for realistic seed data
+INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
+SELECT tp.phase_id, s.service_id, 1, 8, 30, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'ORTHO_ADJUST'
 WHERE t.template_code = 'TPL_ORTHO_METAL' AND tp.phase_number = 3
 ON CONFLICT (phase_id, service_id) DO NOTHING;
 
--- TPL_ORTHO_METAL - Phase 4: Tháo niềng & Duy trì
-INSERT INTO template_phase_services (phase_id, service_id, quantity, estimated_time_minutes, created_at)
-SELECT tp.phase_id, s.service_id, 1, 60, NOW()
+-- TPL_ORTHO_METAL - Phase 4: Tháo niềng & Duy trì (2 services in order)
+INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
+SELECT tp.phase_id, s.service_id, 1, 1, 60, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'ORTHO_BRACES_OFF'
 WHERE t.template_code = 'TPL_ORTHO_METAL' AND tp.phase_number = 4
 ON CONFLICT (phase_id, service_id) DO NOTHING;
 
-INSERT INTO template_phase_services (phase_id, service_id, quantity, estimated_time_minutes, created_at)
-SELECT tp.phase_id, s.service_id, 1, 30, NOW()
+INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
+SELECT tp.phase_id, s.service_id, 2, 1, 30, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'ORTHO_RETAINER_REMOV'
 WHERE t.template_code = 'TPL_ORTHO_METAL' AND tp.phase_number = 4
 ON CONFLICT (phase_id, service_id) DO NOTHING;
 
--- TPL_IMPLANT_OSSTEM - Phase 1: Khám & Chẩn đoán
-INSERT INTO template_phase_services (phase_id, service_id, quantity, estimated_time_minutes, created_at)
-SELECT tp.phase_id, s.service_id, 1, 45, NOW()
+-- TPL_IMPLANT_OSSTEM - Phase 1: Khám & Chẩn đoán (2 services in order)
+INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
+SELECT tp.phase_id, s.service_id, 1, 1, 45, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'IMPL_CONSULT'
 WHERE t.template_code = 'TPL_IMPLANT_OSSTEM' AND tp.phase_number = 1
 ON CONFLICT (phase_id, service_id) DO NOTHING;
 
-INSERT INTO template_phase_services (phase_id, service_id, quantity, estimated_time_minutes, created_at)
-SELECT tp.phase_id, s.service_id, 1, 30, NOW()
+INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
+SELECT tp.phase_id, s.service_id, 2, 1, 30, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'IMPL_CT_SCAN'
 WHERE t.template_code = 'TPL_IMPLANT_OSSTEM' AND tp.phase_number = 1
 ON CONFLICT (phase_id, service_id) DO NOTHING;
 
--- TPL_IMPLANT_OSSTEM - Phase 2: Phẫu thuật
-INSERT INTO template_phase_services (phase_id, service_id, quantity, estimated_time_minutes, created_at)
-SELECT tp.phase_id, s.service_id, 1, 90, NOW()
+-- TPL_IMPLANT_OSSTEM - Phase 2: Phẫu thuật (2 services in order: surgery first, then healing cap)
+INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
+SELECT tp.phase_id, s.service_id, 1, 1, 90, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'IMPL_SURGERY_KR'
 WHERE t.template_code = 'TPL_IMPLANT_OSSTEM' AND tp.phase_number = 2
 ON CONFLICT (phase_id, service_id) DO NOTHING;
 
-INSERT INTO template_phase_services (phase_id, service_id, quantity, estimated_time_minutes, created_at)
-SELECT tp.phase_id, s.service_id, 1, 20, NOW()
+INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
+SELECT tp.phase_id, s.service_id, 2, 1, 20, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'IMPL_HEALING'
 WHERE t.template_code = 'TPL_IMPLANT_OSSTEM' AND tp.phase_number = 2
 ON CONFLICT (phase_id, service_id) DO NOTHING;
 
--- TPL_IMPLANT_OSSTEM - Phase 3: Làm răng sứ
-INSERT INTO template_phase_services (phase_id, service_id, quantity, estimated_time_minutes, created_at)
-SELECT tp.phase_id, s.service_id, 1, 30, NOW()
+-- TPL_IMPLANT_OSSTEM - Phase 3: Làm răng sứ (2 services in order: impression first, then crown)
+INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
+SELECT tp.phase_id, s.service_id, 1, 1, 30, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'IMPL_IMPRESSION'
 WHERE t.template_code = 'TPL_IMPLANT_OSSTEM' AND tp.phase_number = 3
 ON CONFLICT (phase_id, service_id) DO NOTHING;
 
-INSERT INTO template_phase_services (phase_id, service_id, quantity, estimated_time_minutes, created_at)
-SELECT tp.phase_id, s.service_id, 1, 45, NOW()
+INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
+SELECT tp.phase_id, s.service_id, 2, 1, 45, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'IMPL_CROWN_ZIR'
 WHERE t.template_code = 'TPL_IMPLANT_OSSTEM' AND tp.phase_number = 3
 ON CONFLICT (phase_id, service_id) DO NOTHING;
 
--- TPL_CROWN_CERCON - Phase 1: Điều trị tủy
-INSERT INTO template_phase_services (phase_id, service_id, quantity, estimated_time_minutes, created_at)
-SELECT tp.phase_id, s.service_id, 1, 75, NOW()
+-- TPL_CROWN_CERCON - Phase 1: Điều trị tủy (2 services in order: treatment first, then post & core)
+INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
+SELECT tp.phase_id, s.service_id, 1, 1, 75, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'ENDO_TREAT_POST'
 WHERE t.template_code = 'TPL_CROWN_CERCON' AND tp.phase_number = 1
 ON CONFLICT (phase_id, service_id) DO NOTHING;
 
-INSERT INTO template_phase_services (phase_id, service_id, quantity, estimated_time_minutes, created_at)
-SELECT tp.phase_id, s.service_id, 1, 45, NOW()
+INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
+SELECT tp.phase_id, s.service_id, 2, 1, 45, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'ENDO_POST_CORE'
 WHERE t.template_code = 'TPL_CROWN_CERCON' AND tp.phase_number = 1
 ON CONFLICT (phase_id, service_id) DO NOTHING;
 
--- TPL_CROWN_CERCON - Phase 2: Lấy dấu & Gắn sứ
-INSERT INTO template_phase_services (phase_id, service_id, quantity, estimated_time_minutes, created_at)
-SELECT tp.phase_id, s.service_id, 1, 60, NOW()
+-- TPL_CROWN_CERCON - Phase 2: Lấy dấu & Gắn sứ (2 services in order: crown prep first, then cementing)
+INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
+SELECT tp.phase_id, s.service_id, 1, 1, 60, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'CROWN_ZIR_CERCON'
 WHERE t.template_code = 'TPL_CROWN_CERCON' AND tp.phase_number = 2
 ON CONFLICT (phase_id, service_id) DO NOTHING;
 
-INSERT INTO template_phase_services (phase_id, service_id, quantity, estimated_time_minutes, created_at)
-SELECT tp.phase_id, s.service_id, 1, 30, NOW()
+INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
+SELECT tp.phase_id, s.service_id, 2, 1, 30, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'PROS_CEMENT'
@@ -2157,20 +2171,20 @@ INSERT INTO patient_treatment_plans (
 -- Phase 1: Chuẩn bị
 INSERT INTO patient_plan_phases (
     patient_phase_id, plan_id, phase_number, phase_name,
-    status, start_date, created_at
+    status, start_date, completion_date, created_at
 ) VALUES (
     1, 1, 1, 'Giai đoạn 1: Chuẩn bị và Kiểm tra',
-    'COMPLETED', '2025-10-01', NOW()
+    'COMPLETED', '2025-10-01', '2025-10-06', NOW()
 ) ON CONFLICT (patient_phase_id) DO NOTHING;
 
 -- Items for Phase 1
 INSERT INTO patient_plan_items (
     item_id, phase_id, service_id, sequence_number, item_name,
-    status, estimated_time_minutes, price, created_at
+    status, estimated_time_minutes, price, completed_at, created_at
 ) VALUES
-    (1, 1, 1, 1, 'Khám tổng quát và chụp X-quang', 'COMPLETED', 30, 500000, NOW()),
-    (2, 1, 3, 2, 'Lấy cao răng trước niềng', 'COMPLETED', 45, 800000, NOW()),
-    (3, 1, 7, 3, 'Hàn trám răng sâu (nếu có)', 'COMPLETED', 60, 1500000, NOW())
+    (1, 1, 1, 1, 'Khám tổng quát và chụp X-quang', 'COMPLETED', 30, 500000, '2025-10-02 09:00:00', NOW()),
+    (2, 1, 3, 2, 'Lấy cao răng trước niềng', 'COMPLETED', 45, 800000, '2025-10-03 10:30:00', NOW()),
+    (3, 1, 7, 3, 'Hàn trám răng sâu (nếu có)', 'COMPLETED', 60, 1500000, '2025-10-05 14:00:00', NOW())
 ON CONFLICT (item_id) DO NOTHING;
 
 -- Phase 2: Lắp mắc cài
@@ -2185,33 +2199,36 @@ INSERT INTO patient_plan_phases (
 -- Items for Phase 2
 INSERT INTO patient_plan_items (
     item_id, phase_id, service_id, sequence_number, item_name,
-    status, estimated_time_minutes, price, created_at
+    status, estimated_time_minutes, price, completed_at, created_at
 ) VALUES
-    (4, 2, 38, 1, 'Lắp mắc cài kim loại hàm trên', 'COMPLETED', 90, 8000000, NOW()),
-    (5, 2, 38, 2, 'Lắp mắc cài kim loại hàm dưới', 'COMPLETED', 90, 8000000, NOW()),
-    (6, 2, 39, 3, 'Điều chỉnh lần 1 (sau 1 tháng)', 'READY_FOR_BOOKING', 45, 500000, NOW()),
-    (7, 2, 39, 4, 'Điều chỉnh lần 2 (sau 2 tháng)', 'READY_FOR_BOOKING', 45, 500000, NOW())
+    (4, 2, 38, 1, 'Lắp mắc cài kim loại hàm trên', 'COMPLETED', 90, 8000000, '2025-10-16 09:00:00', NOW()),
+    (5, 2, 38, 2, 'Lắp mắc cài kim loại hàm dưới', 'COMPLETED', 90, 8000000, '2025-10-17 10:00:00', NOW()),
+    (6, 2, 39, 3, 'Điều chỉnh lần 1 (sau 1 tháng)', 'READY_FOR_BOOKING', 45, 500000, NULL, NOW()),
+    (7, 2, 39, 4, 'Điều chỉnh lần 2 (sau 2 tháng)', 'READY_FOR_BOOKING', 45, 500000, NULL, NOW())
 ON CONFLICT (item_id) DO NOTHING;
 
--- Phase 3: Điều chỉnh định kỳ
+-- Phase 3: Điều chỉnh định kỳ (FIXED: 24→8 months for realistic seed data)
 INSERT INTO patient_plan_phases (
     patient_phase_id, plan_id, phase_number, phase_name,
     status, start_date, created_at
 ) VALUES (
-    3, 1, 3, 'Giai đoạn 3: Điều chỉnh định kỳ (24 tháng)',
+    3, 1, 3, 'Giai đoạn 3: Điều chỉnh định kỳ (8 tháng)',
     'PENDING', NULL, NOW()
 ) ON CONFLICT (patient_phase_id) DO NOTHING;
 
--- Items for Phase 3 (multiple adjustment sessions)
+-- Items for Phase 3 (8 adjustment sessions - months 3 to 10)
 INSERT INTO patient_plan_items (
     item_id, phase_id, service_id, sequence_number, item_name,
-    status, estimated_time_minutes, price, created_at
+    status, estimated_time_minutes, price, completed_at, created_at
 ) VALUES
-    (8, 3, 39, 1, 'Điều chỉnh tháng 3', 'READY_FOR_BOOKING', 45, 500000, NOW()),
-    (9, 3, 39, 2, 'Điều chỉnh tháng 4', 'READY_FOR_BOOKING', 45, 500000, NOW()),
-    (10, 3, 39, 3, 'Điều chỉnh tháng 5', 'READY_FOR_BOOKING', 45, 500000, NOW()),
-    (11, 3, 39, 4, 'Điều chỉnh tháng 6', 'READY_FOR_BOOKING', 45, 500000, NOW()),
-    (12, 3, 39, 5, 'Điều chỉnh tháng 7', 'READY_FOR_BOOKING', 45, 500000, NOW())
+    (8, 3, 39, 1, 'Điều chỉnh tháng 3', 'READY_FOR_BOOKING', 45, 500000, NULL, NOW()),
+    (9, 3, 39, 2, 'Điều chỉnh tháng 4', 'READY_FOR_BOOKING', 45, 500000, NULL, NOW()),
+    (10, 3, 39, 3, 'Điều chỉnh tháng 5', 'READY_FOR_BOOKING', 45, 500000, NULL, NOW()),
+    (11, 3, 39, 4, 'Điều chỉnh tháng 6', 'READY_FOR_BOOKING', 45, 500000, NULL, NOW()),
+    (12, 3, 39, 5, 'Điều chỉnh tháng 7', 'READY_FOR_BOOKING', 45, 500000, NULL, NOW()),
+    (13, 3, 39, 6, 'Điều chỉnh tháng 8', 'READY_FOR_BOOKING', 45, 500000, NULL, NOW()),
+    (14, 3, 39, 7, 'Điều chỉnh tháng 9', 'READY_FOR_BOOKING', 45, 500000, NULL, NOW()),
+    (15, 3, 39, 8, 'Điều chỉnh tháng 10', 'READY_FOR_BOOKING', 45, 500000, NULL, NOW())
 ON CONFLICT (item_id) DO NOTHING;
 
 -- Treatment Plan 2: Bệnh nhân BN-1002 (Phạm Văn Phong) - Implant
@@ -2302,10 +2319,10 @@ INSERT INTO patient_plan_phases (
 
 INSERT INTO patient_plan_items (
     item_id, phase_id, service_id, sequence_number, item_name,
-    status, estimated_time_minutes, price, created_at
+    status, estimated_time_minutes, price, completed_at, created_at
 ) VALUES
-    (19, 7, 1, 1, 'Khám răng miệng tổng quát', 'READY_FOR_BOOKING', 30, 500000, NOW()),
-    (20, 7, 3, 2, 'Lấy cao răng', 'READY_FOR_BOOKING', 45, 800000, NOW())
+    (19, 7, 1, 1, 'Khám răng miệng tổng quát', 'READY_FOR_BOOKING', 30, 500000, NULL, NOW()),
+    (20, 7, 3, 2, 'Lấy cao răng', 'READY_FOR_BOOKING', 45, 800000, NULL, NOW())
 ON CONFLICT (item_id) DO NOTHING;
 
 -- Phase 2: Tẩy trắng
@@ -2319,10 +2336,10 @@ INSERT INTO patient_plan_phases (
 
 INSERT INTO patient_plan_items (
     item_id, phase_id, service_id, sequence_number, item_name,
-    status, estimated_time_minutes, price, created_at
+    status, estimated_time_minutes, price, completed_at, created_at
 ) VALUES
-    (21, 8, 17, 1, 'Tẩy trắng răng Laser lần 1', 'READY_FOR_BOOKING', 90, 5000000, NOW()),
-    (22, 8, 17, 2, 'Kiểm tra và tư vấn sau tẩy trắng', 'READY_FOR_BOOKING', 30, 0, NOW())
+    (21, 8, 17, 1, 'Tẩy trắng răng Laser lần 1', 'READY_FOR_BOOKING', 90, 5000000, NULL, NOW()),
+    (22, 8, 17, 2, 'Kiểm tra và tư vấn sau tẩy trắng', 'READY_FOR_BOOKING', 30, 0, NULL, NOW())
 ON CONFLICT (item_id) DO NOTHING;
 
 -- Reset sequences

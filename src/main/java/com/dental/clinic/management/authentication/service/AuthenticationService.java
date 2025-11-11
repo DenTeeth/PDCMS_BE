@@ -127,9 +127,9 @@ public class AuthenticationService {
                                                 Permission::getModule,
                                                 Collectors.mapping(Permission::getPermissionId, Collectors.toList())));
 
-                // Tạo JWT token chứa thông tin user
+                // Tạo JWT token chứa thông tin user (including account_id for RBAC)
                 String accessToken = securityUtil.createAccessToken(account.getUsername(),
-                                List.of(roleName), permissionIds);
+                                List.of(roleName), permissionIds, account.getAccountId());
                 String refreshToken = securityUtil.createRefreshToken(account.getUsername());
 
                 long now = Instant.now().getEpochSecond();
@@ -238,8 +238,8 @@ public class AuthenticationService {
                 List<String> permissions = role.getPermissions().stream()
                                 .map(Permission::getPermissionId).distinct().collect(Collectors.toList());
 
-                // Tạo access token mới
-                String newAccess = securityUtil.createAccessToken(username, roles, permissions);
+                // Tạo access token mới (including account_id for RBAC)
+                String newAccess = securityUtil.createAccessToken(username, roles, permissions, account.getAccountId());
                 long now = Instant.now().getEpochSecond();
                 long accessExp = now + securityUtil.getAccessTokenValiditySeconds();
 
