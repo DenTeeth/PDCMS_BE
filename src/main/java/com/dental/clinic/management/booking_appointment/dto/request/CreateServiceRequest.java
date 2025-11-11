@@ -48,6 +48,10 @@ public class CreateServiceRequest {
     @Schema(description = "Specialization ID (nullable)", example = "1")
     private Integer specializationId;
 
+    @Min(value = 0, message = "Display order cannot be negative")
+    @Schema(description = "Display order for sorting services", example = "1")
+    private Integer displayOrder;
+
     @Builder.Default
     @Schema(description = "Active status", example = "true")
     private Boolean isActive = true;

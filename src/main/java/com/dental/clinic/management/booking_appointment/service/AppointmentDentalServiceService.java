@@ -191,6 +191,9 @@ public class AppointmentDentalServiceService {
         if (request.getPrice() != null) {
             service.setPrice(request.getPrice());
         }
+        if (request.getDisplayOrder() != null) {
+            service.setDisplayOrder(request.getDisplayOrder());
+        }
         if (request.getIsActive() != null) {
             service.setIsActive(request.getIsActive());
         }

@@ -60,6 +60,9 @@ public class DentalService {
     @JoinColumn(name = "specialization_id", foreignKey = @ForeignKey(name = "fk_service_specialization"))
     private Specialization specialization;
 
+    @Column(name = "display_order", nullable = false)
+    private Integer displayOrder = 0;
+
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 
@@ -77,6 +80,9 @@ public class DentalService {
         }
         if (this.defaultBufferMinutes == null) {
             this.defaultBufferMinutes = 0;
+        }
+        if (this.displayOrder == null) {
+            this.displayOrder = 0;
         }
     }
 
