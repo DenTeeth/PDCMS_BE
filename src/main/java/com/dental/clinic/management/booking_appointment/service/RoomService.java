@@ -11,6 +11,8 @@ import com.dental.clinic.management.booking_appointment.mapper.RoomMapper;
 import com.dental.clinic.management.booking_appointment.repository.BookingDentalServiceRepository;
 import com.dental.clinic.management.booking_appointment.repository.RoomRepository;
 import com.dental.clinic.management.booking_appointment.repository.RoomServiceRepository;
+import com.dental.clinic.management.exception.DuplicateResourceException;
+import com.dental.clinic.management.exception.ResourceNotFoundException;
 import com.dental.clinic.management.exception.validation.BadRequestAlertException;
 import com.dental.clinic.management.utils.IdGenerator;
 import lombok.RequiredArgsConstructor;
@@ -170,10 +172,9 @@ public class RoomService {
 
         // Check if room code already exists
         if (roomRepository.existsByRoomCode(request.getRoomCode())) {
-            throw new BadRequestAlertException(
-                    "Room code already exists: " + request.getRoomCode(),
-                    "room",
-                    "codeexists");
+            throw new DuplicateResourceException(
+                    "ROOM_CODE_EXISTS",
+                    "Room code already exists: " + request.getRoomCode());
         }
 
         Room room = roomMapper.toEntity(request);
@@ -192,19 +193,17 @@ public class RoomService {
         log.debug("Request to update room ID: {} with data: {}", roomId, request);
 
         Room room = roomRepository.findById(roomId)
-                .orElseThrow(() -> new BadRequestAlertException(
-                        "Room not found with ID: " + roomId,
-                        "room",
-                        "notfound"));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "ROOM_NOT_FOUND",
+                        "Room not found with ID: " + roomId));
 
         // Check if new room code already exists (and it's not the current room)
         if (request.getRoomCode() != null &&
                 !request.getRoomCode().equals(room.getRoomCode()) &&
                 roomRepository.existsByRoomCode(request.getRoomCode())) {
-            throw new BadRequestAlertException(
-                    "Room code already exists: " + request.getRoomCode(),
-                    "room",
-                    "codeexists");
+            throw new DuplicateResourceException(
+                    "ROOM_CODE_EXISTS",
+                    "Room code already exists: " + request.getRoomCode());
         }
 
         // Update fields if provided
@@ -236,10 +235,9 @@ public class RoomService {
         log.debug("Request to delete room ID: {}", roomId);
 
         Room room = roomRepository.findById(roomId)
-                .orElseThrow(() -> new BadRequestAlertException(
-                        "Room not found with ID: " + roomId,
-                        "room",
-                        "notfound"));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "ROOM_NOT_FOUND",
+                        "Room not found with ID: " + roomId));
 
         room.setIsActive(false);
         roomRepository.save(room);
@@ -255,10 +253,9 @@ public class RoomService {
         log.debug("Request to permanently delete room ID: {}", roomId);
 
         if (!roomRepository.existsById(roomId)) {
-            throw new BadRequestAlertException(
-                    "Room not found with ID: " + roomId,
-                    "room",
-                    "notfound");
+            throw new ResourceNotFoundException(
+                    "ROOM_NOT_FOUND",
+                    "Room not found with ID: " + roomId);
         }
 
         roomRepository.deleteById(roomId);
@@ -279,10 +276,9 @@ public class RoomService {
 
         // Find room by code
         Room room = roomRepository.findByRoomCode(roomCode)
-                .orElseThrow(() -> new BadRequestAlertException(
-                        "Room not found with code: " + roomCode,
-                        "room",
-                        "notfound"));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "ROOM_NOT_FOUND",
+                        "Room not found with code: " + roomCode));
 
         // Get all room-service mappings for this room
         List<com.dental.clinic.management.booking_appointment.domain.RoomService> roomServices = roomServiceRepository
@@ -323,10 +319,9 @@ public class RoomService {
 
         // 1. Validate room exists
         Room room = roomRepository.findByRoomCode(roomCode)
-                .orElseThrow(() -> new BadRequestAlertException(
-                        "Room not found with code: " + roomCode,
-                        "room",
-                        "notfound"));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "ROOM_NOT_FOUND",
+                        "Room not found with code: " + roomCode));
 
         // 2. Validate all serviceCodes exist
         List<com.dental.clinic.management.booking_appointment.domain.DentalService> services = dentalServiceRepository
@@ -342,10 +337,9 @@ public class RoomService {
                     .filter(code -> !foundCodes.contains(code))
                     .collect(Collectors.toList());
 
-            throw new BadRequestAlertException(
-                    "Service(s) not found with code(s): " + String.join(", ", missingCodes),
-                    "service",
-                    "notfound");
+            throw new ResourceNotFoundException(
+                    "SERVICE_NOT_FOUND",
+                    "Service(s) not found with code(s): " + String.join(", ", missingCodes));
         }
 
         // 3. Validate all services are active
