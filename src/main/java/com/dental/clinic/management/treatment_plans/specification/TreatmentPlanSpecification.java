@@ -63,8 +63,7 @@ public class TreatmentPlanSpecification {
             if (request.getPlanCode() != null && !request.getPlanCode().isBlank()) {
                 predicates.add(criteriaBuilder.like(
                         root.get("planCode"),
-                        request.getPlanCode() + "%"
-                ));
+                        request.getPlanCode() + "%"));
             }
 
             // Filter: doctorEmployeeCode (Admin only - checked in service)
@@ -72,8 +71,7 @@ public class TreatmentPlanSpecification {
                 Join<Object, Object> employeeJoin = root.join("createdBy", JoinType.INNER);
                 predicates.add(criteriaBuilder.equal(
                         employeeJoin.get("employeeCode"),
-                        request.getDoctorEmployeeCode()
-                ));
+                        request.getDoctorEmployeeCode()));
             }
 
             // Filter: patientCode (Admin only - checked in service)
@@ -81,22 +79,19 @@ public class TreatmentPlanSpecification {
                 Join<Object, Object> patientJoin = root.join("patient", JoinType.INNER);
                 predicates.add(criteriaBuilder.equal(
                         patientJoin.get("patientCode"),
-                        request.getPatientCode()
-                ));
+                        request.getPatientCode()));
             }
 
             // Filter: startDate range (P1 Enhancement)
             if (request.getStartDateFrom() != null) {
                 predicates.add(criteriaBuilder.greaterThanOrEqualTo(
                         root.get("startDate"),
-                        request.getStartDateFrom()
-                ));
+                        request.getStartDateFrom()));
             }
             if (request.getStartDateTo() != null) {
                 predicates.add(criteriaBuilder.lessThanOrEqualTo(
                         root.get("startDate"),
-                        request.getStartDateTo()
-                ));
+                        request.getStartDateTo()));
             }
 
             // Filter: createdAt range (P1 Enhancement)
@@ -104,15 +99,13 @@ public class TreatmentPlanSpecification {
                 LocalDateTime startOfDay = request.getCreatedAtFrom().atStartOfDay();
                 predicates.add(criteriaBuilder.greaterThanOrEqualTo(
                         root.get("createdAt"),
-                        startOfDay
-                ));
+                        startOfDay));
             }
             if (request.getCreatedAtTo() != null) {
                 LocalDateTime endOfDay = request.getCreatedAtTo().atTime(23, 59, 59);
                 predicates.add(criteriaBuilder.lessThanOrEqualTo(
                         root.get("createdAt"),
-                        endOfDay
-                ));
+                        endOfDay));
             }
 
             // Filter: searchTerm (P1 Enhancement)
@@ -124,12 +117,10 @@ public class TreatmentPlanSpecification {
 
                 Predicate planNameMatch = criteriaBuilder.like(
                         criteriaBuilder.lower(root.get("planName")),
-                        searchPattern
-                );
+                        searchPattern);
                 Predicate patientNameMatch = criteriaBuilder.like(
                         criteriaBuilder.lower(patientJoin.get("fullName")),
-                        searchPattern
-                );
+                        searchPattern);
 
                 predicates.add(criteriaBuilder.or(planNameMatch, patientNameMatch));
             }

@@ -18,8 +18,10 @@ import java.time.LocalDate;
  * <p>
  * RBAC Logic:
  * - Admin (VIEW_TREATMENT_PLAN_ALL): Can use doctorEmployeeCode, patientCode
- * - Doctor (VIEW_TREATMENT_PLAN_OWN): Automatically filtered by createdBy = currentEmployee
- * - Patient (VIEW_TREATMENT_PLAN_OWN): Automatically filtered by patient = currentPatient
+ * - Doctor (VIEW_TREATMENT_PLAN_OWN): Automatically filtered by createdBy =
+ * currentEmployee
+ * - Patient (VIEW_TREATMENT_PLAN_OWN): Automatically filtered by patient =
+ * currentPatient
  * <p>
  * P1 Enhancements:
  * - Date range filters (startDate, createdAt)

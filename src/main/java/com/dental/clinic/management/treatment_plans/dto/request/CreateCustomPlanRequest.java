@@ -155,7 +155,7 @@ public class CreateCustomPlanRequest {
          * Quantity (V19 - KEY FEATURE).
          * Number of times this service will be performed.
          * Example: 5 means create 5 separate patient_plan_items.
-         * 
+         *
          * Validation: 1 <= quantity <= 100 (prevent abuse)
          */
         @NotNull(message = "Quantity is required")

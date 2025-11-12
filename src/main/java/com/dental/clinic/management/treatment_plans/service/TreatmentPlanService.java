@@ -224,9 +224,12 @@ public class TreatmentPlanService {
      * API 5.5: Get ALL treatment plans with advanced filtering and RBAC.
      * <p>
      * RBAC Logic (P0 Fix - Uses BaseRoleConstants):
-     * - VIEW_TREATMENT_PLAN_ALL (Admin): Can filter by doctorCode/patientCode, see all plans
-     * - VIEW_TREATMENT_PLAN_OWN (Doctor): Auto-filtered by createdBy = currentEmployee
-     * - VIEW_TREATMENT_PLAN_OWN (Patient): Auto-filtered by patient = currentPatient
+     * - VIEW_TREATMENT_PLAN_ALL (Admin): Can filter by doctorCode/patientCode, see
+     * all plans
+     * - VIEW_TREATMENT_PLAN_OWN (Doctor): Auto-filtered by createdBy =
+     * currentEmployee
+     * - VIEW_TREATMENT_PLAN_OWN (Patient): Auto-filtered by patient =
+     * currentPatient
      * <p>
      * P1 Enhancements:
      * - Date range filters (startDate, createdAt)
@@ -271,9 +274,8 @@ public class TreatmentPlanService {
         // ============================================
         // STEP 2: Build Base Specification from Request
         // ============================================
-        org.springframework.data.jpa.domain.Specification<PatientTreatmentPlan> specification =
-                com.dental.clinic.management.treatment_plans.specification.TreatmentPlanSpecification
-                        .buildFromRequest(request);
+        org.springframework.data.jpa.domain.Specification<PatientTreatmentPlan> specification = com.dental.clinic.management.treatment_plans.specification.TreatmentPlanSpecification
+                .buildFromRequest(request);
 
         // ============================================
         // STEP 3: Apply RBAC Filters (P0 Fix - BaseRoleConstants)
@@ -314,8 +316,7 @@ public class TreatmentPlanService {
 
                 specification = specification.and(
                         com.dental.clinic.management.treatment_plans.specification.TreatmentPlanSpecification
-                                .filterByCreatedByEmployee(employee.getEmployeeId())
-                );
+                                .filterByCreatedByEmployee(employee.getEmployeeId()));
 
                 // Ignore doctorEmployeeCode/patientCode from request (security)
                 if (request.getDoctorEmployeeCode() != null || request.getPatientCode() != null) {
@@ -332,8 +333,7 @@ public class TreatmentPlanService {
 
                 specification = specification.and(
                         com.dental.clinic.management.treatment_plans.specification.TreatmentPlanSpecification
-                                .filterByPatient(patient.getPatientId())
-                );
+                                .filterByPatient(patient.getPatientId()));
 
                 // Ignore doctorEmployeeCode/patientCode from request (security)
                 if (request.getDoctorEmployeeCode() != null || request.getPatientCode() != null) {
@@ -345,7 +345,8 @@ public class TreatmentPlanService {
             }
 
         } else {
-            throw new AccessDeniedException("User does not have VIEW_TREATMENT_PLAN_ALL or VIEW_TREATMENT_PLAN_OWN permission");
+            throw new AccessDeniedException(
+                    "User does not have VIEW_TREATMENT_PLAN_ALL or VIEW_TREATMENT_PLAN_OWN permission");
         }
 
         // ============================================

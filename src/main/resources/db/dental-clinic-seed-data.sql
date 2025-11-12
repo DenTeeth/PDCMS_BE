@@ -97,16 +97,16 @@ ADD CONSTRAINT patient_treatment_plans_status_check
 CHECK (status IN ('PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'ON_HOLD'));
 
 -- Create indexes for performance
-CREATE INDEX IF NOT EXISTS idx_treatment_plans_approval_status 
+CREATE INDEX IF NOT EXISTS idx_treatment_plans_approval_status
 ON patient_treatment_plans(approval_status);
 
-CREATE INDEX IF NOT EXISTS idx_treatment_plans_approved_by 
+CREATE INDEX IF NOT EXISTS idx_treatment_plans_approved_by
 ON patient_treatment_plans(approved_by);
 
-CREATE INDEX IF NOT EXISTS idx_treatment_plans_created_by 
+CREATE INDEX IF NOT EXISTS idx_treatment_plans_created_by
 ON patient_treatment_plans(created_by);
 
-CREATE INDEX IF NOT EXISTS idx_treatment_plans_patient_id 
+CREATE INDEX IF NOT EXISTS idx_treatment_plans_patient_id
 ON patient_treatment_plans(patient_id);
 
 -- ============================================
@@ -509,7 +509,12 @@ VALUES
 ('ROLE_MANAGER', 'UPDATE_ROOM_SERVICES'),
 -- SERVICE_MANAGEMENT (V16: Full management of services)
 ('ROLE_MANAGER', 'VIEW_SERVICE'), ('ROLE_MANAGER', 'CREATE_SERVICE'),
-('ROLE_MANAGER', 'UPDATE_SERVICE'), ('ROLE_MANAGER', 'DELETE_SERVICE')
+('ROLE_MANAGER', 'UPDATE_SERVICE'), ('ROLE_MANAGER', 'DELETE_SERVICE'),
+-- ✅ TREATMENT_PLAN (V19: Full management of treatment plans)
+('ROLE_MANAGER', 'VIEW_TREATMENT_PLAN_ALL'), -- Can view all patients' treatment plans
+('ROLE_MANAGER', 'CREATE_TREATMENT_PLAN'), -- Can create treatment plans
+('ROLE_MANAGER', 'UPDATE_TREATMENT_PLAN'), -- Can update treatment plans
+('ROLE_MANAGER', 'DELETE_TREATMENT_PLAN') -- Can delete treatment plans
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 -- Accountant & Inventory Manager (LEAVE only)
@@ -764,7 +769,11 @@ VALUES
 
 -- Admin account - Super user
 (17, 'ACC017', 'admin', 'admin@dentalclinic.com',
-'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_ADMIN', 'ACTIVE', NOW())
+'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_ADMIN', 'ACTIVE', NOW()),
+
+-- Patient BN-1005 - Trần Văn Nam (for Treatment Plan testing)
+(18, 'ACC018', 'benhnhan5', 'nam.tv@email.com',
+'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_PATIENT', 'ACTIVE', NOW())
 
 ON CONFLICT (account_id) DO NOTHING;
 
@@ -836,7 +845,8 @@ VALUES
 (1, 12, 'BN-1001', 'Đoàn Thanh', 'Phong', 'phong.dt@email.com', '0971111111', '1995-03-15', '123 Lê Văn Việt, Q9, TPHCM', 'MALE', TRUE, NOW(), NOW()),
 (2, 13, 'BN-1002', 'Phạm Văn', 'Phong', 'phong.pv@email.com', '0972222222', '1990-07-20', '456 Võ Văn Ngân, Thủ Đức, TPHCM', 'MALE', TRUE, NOW(), NOW()),
 (3, 14, 'BN-1003', 'Nguyễn Tuấn', 'Anh', 'anh.nt@email.com', '0973333333', '1988-11-10', '789 Đường D2, Bình Thạnh, TPHCM', 'MALE', TRUE, NOW(), NOW()),
-(4, 15, 'BN-1004', 'Mít tơ', 'Bít', 'mit.bit@email.com', '0974444444', '2000-01-01', '321 Nguyễn Thị Minh Khai, Q1, TPHCM', 'OTHER', TRUE, NOW(), NOW())
+(4, 15, 'BN-1004', 'Mít tơ', 'Bít', 'mit.bit@email.com', '0974444444', '2000-01-01', '321 Nguyễn Thị Minh Khai, Q1, TPHCM', 'OTHER', TRUE, NOW(), NOW()),
+(5, 18, 'BN-1005', 'Trần Văn', 'Nam', 'nam.tv@email.com', '0975555555', '1992-05-25', '555 Hoàng Diệu, Q4, TPHCM', 'MALE', TRUE, NOW(), NOW())
 ON CONFLICT (patient_id) DO NOTHING;
 
 INSERT INTO work_shifts (work_shift_id, shift_name, start_time, end_time, category, is_active)

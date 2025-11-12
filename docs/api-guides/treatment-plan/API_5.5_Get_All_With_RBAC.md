@@ -1,560 +1,386 @@
-# API 5.5 Implementation Summary - Get All Treatment Plans with RBAC
+# API 5.5 - Get All Treatment Plans with RBAC
 
-**Implementation Date**: 2025-01-12  
-**Version**: V20  
-**Status**: ✅ COMPLETE - Ready for Testing  
-**Rating**: 9.5/10 (Excellent with all P0 + P1 enhancements)
+**Module**: Treatment Plan Management
+**Version**: V1.0
+**Status**: ✅ Production Ready
+**Last Updated**: 2025-11-12
+**Source**: `TreatmentPlanController.java` (lines 283-392), `TreatmentPlanService.java`
 
 ---
 
 ## 📋 Overview
 
-Implemented **API 5.5 - Get All Treatment Plans** with smart RBAC filtering, advanced query parameters, and performance optimization. This is a unified endpoint that automatically adapts to user role (Admin/Doctor/Patient).
+**Smart RBAC Endpoint** - Automatically filters data based on user role:
+
+- **Admin** (`VIEW_TREATMENT_PLAN_ALL`): Sees ALL plans, can filter by doctor/patient
+- **Doctor** (`VIEW_TREATMENT_PLAN_OWN`): Sees only plans they created
+- **Patient** (`VIEW_TREATMENT_PLAN_OWN`): Sees only their own plans
+
+**Advanced Features**:
+
+- ✅ Date range filtering (startDate, createdAt)
+- ✅ Search term (plan name, patient name)
+- ✅ Status and approval filters
+- ✅ Full pagination support
+- ✅ Performance optimized (JPA Specification + JOIN FETCH)
 
 ---
 
-## 🎯 Key Features Implemented
-
-### 1. **Smart RBAC Logic (P0 Fix - BaseRoleConstants)**
-```java
-// ✅ P0 FIX: No more magic numbers!
-if (baseRoleId.equals(BaseRoleConstants.EMPLOYEE)) {
-    // Doctor: Filter by createdBy = currentEmployee
-} else if (baseRoleId.equals(BaseRoleConstants.PATIENT)) {
-    // Patient: Filter by patient = currentPatient
-}
-```
-
-**Three User Modes**:
-- **Admin Mode** (VIEW_TREATMENT_PLAN_ALL): Can filter by `doctorEmployeeCode`/`patientCode`, sees ALL plans
-- **Doctor Mode** (VIEW_TREATMENT_PLAN_OWN): Auto-filtered by `createdBy = currentEmployee`
-- **Patient Mode** (VIEW_TREATMENT_PLAN_OWN): Auto-filtered by `patient = currentPatient`
-
-### 2. **Advanced Filtering (P1 Enhancements)**
-
-**Date Range Filters**:
-- `startDateFrom`/`startDateTo`: Filter by treatment plan start date
-- `createdAtFrom`/`createdAtTo`: Filter by plan creation date
-
-**Search Term**:
-- `searchTerm`: Case-insensitive search in plan name and patient name
-- Example: `?searchTerm=orthodontics` matches "Custom Orthodontics Plan"
-
-**Basic Filters**:
-- `status`: PENDING, IN_PROGRESS, COMPLETED, CANCELLED, ON_HOLD
-- `approvalStatus`: DRAFT, PENDING_REVIEW, APPROVED, REJECTED (V19)
-- `planCode`: Exact match or prefix search
-- `doctorEmployeeCode`: Admin only
-- `patientCode`: Admin only
-
-### 3. **Performance Optimization**
-- **JPA Specification**: Dynamic query building (no hardcoded SQL)
-- **JOIN FETCH**: Eager load patient, doctor, template (avoids N+1 problem)
-- **DISTINCT**: Prevents duplicate rows from join operations
-- **Indexed Columns**: All filters use indexed database columns
-
-### 4. **Pagination Support**
-- Standard Spring Data Page<> response
-- Query params: `page`, `size`, `sort`
-- Example: `?page=0&size=20&sort=createdAt,desc`
-
----
-
-## 📁 Files Created/Modified
-
-### ✅ New Files (5 files)
-
-1. **BaseRoleConstants.java** (P0 Fix)
-   - Path: `.../security/constants/BaseRoleConstants.java`
-   - Purpose: Replace magic numbers (2, 3) with semantic constants
-   - Constants:
-     ```java
-     public static final Integer ADMIN = 1;
-     public static final Integer EMPLOYEE = 2;
-     public static final Integer PATIENT = 3;
-     ```
-
-2. **GetAllTreatmentPlansRequest.java** (Request DTO)
-   - Path: `.../dto/request/GetAllTreatmentPlansRequest.java`
-   - Fields: status, approvalStatus, planCode, doctorCode, patientCode, date ranges, searchTerm
-   - Full Swagger annotations
-
-3. **TreatmentPlanSpecification.java** (JPA Specification)
-   - Path: `.../specification/TreatmentPlanSpecification.java`
-   - Methods:
-     - `buildFromRequest()`: Build base query from filters
-     - `filterByCreatedByEmployee()`: RBAC filter for doctors
-     - `filterByPatient()`: RBAC filter for patients
-   - Handles JOIN FETCH, date ranges, search term
-
-4. **V20__seed_treatment_plans_api_5.5.sql** (Seed Data)
-   - Path: `.../db/migration/V20__seed_treatment_plans_api_5.5.sql`
-   - Added 7 NEW treatment plans (total 10)
-   - Coverage:
-     - 5 patients (BN-1001 to BN-1005)
-     - 3 doctors (EMP-1, EMP-2, EMP-3)
-     - Mix of statuses: PENDING (2), IN_PROGRESS (4), COMPLETED (3)
-     - Mix of approvalStatus: DRAFT (2), APPROVED (7)
-     - Date range: 2024-05-15 to 2025-11-01
-
-5. **API_5.5_IMPLEMENTATION_SUMMARY.md** (This document)
-
-### ✅ Modified Files (4 files)
-
-1. **TreatmentPlanService.java**
-   - Added method: `getAllTreatmentPlans(request, pageable)`
-   - RBAC logic with BaseRoleConstants
-   - Specification building and execution
-   - Added dependencies: AccountRepository, EmployeeRepository
-
-2. **TreatmentPlanController.java**
-   - Added endpoint: `GET /api/v1/patient-treatment-plans`
-   - Comprehensive Swagger documentation
-   - 10 query parameters with descriptions
-
-3. **PatientTreatmentPlanRepository.java**
-   - Added interface: `extends JpaSpecificationExecutor<PatientTreatmentPlan>`
-   - Enables `findAll(Specification, Pageable)` method
-
-4. **PatientRepository.java**
-   - Added method: `findOneByAccountAccountId(Integer accountId)`
-   - Used for Patient RBAC check in API 5.5
-
----
-
-## 🔧 API Specification
+## API Specification
 
 ### Endpoint
+
 ```
 GET /api/v1/patient-treatment-plans
 ```
 
-### Request Headers
-```
-Authorization: Bearer {JWT_TOKEN}
+### Query Parameters
+
+| Parameter            | Type    | Required | Description                                 | Example        |
+| -------------------- | ------- | -------- | ------------------------------------------- | -------------- |
+| `page`               | Integer | No       | Page number (0-indexed)                     | 0              |
+| `size`               | Integer | No       | Page size (default 20)                      | 20             |
+| `sort`               | String  | No       | Sort field and direction                    | createdAt,desc |
+| `status`             | String  | No       | PENDING, IN_PROGRESS, COMPLETED, CANCELLED  | IN_PROGRESS    |
+| `approvalStatus`     | String  | No       | DRAFT, PENDING_APPROVAL, APPROVED, REJECTED | APPROVED       |
+| `planCode`           | String  | No       | Filter by plan code (starts with)           | PLAN-20251112  |
+| `doctorEmployeeCode` | String  | No       | **Admin only** - Filter by doctor           | EMP-001        |
+| `patientCode`        | String  | No       | **Admin only** - Filter by patient          | BN-1001        |
+| `startDateFrom`      | Date    | No       | Filter start date >= this (yyyy-MM-dd)      | 2025-01-01     |
+| `startDateTo`        | Date    | No       | Filter start date <= this (yyyy-MM-dd)      | 2025-12-31     |
+| `createdAtFrom`      | Date    | No       | Filter created date >= this (yyyy-MM-dd)    | 2025-01-01     |
+| `createdAtTo`        | Date    | No       | Filter created date <= this (yyyy-MM-dd)    | 2025-12-31     |
+| `searchTerm`         | String  | No       | Search in plan name, patient name           | orthodontics   |
+
+### Security & Permissions
+
+**@PreAuthorize Annotation**:
+
+```java
+@PreAuthorize("hasRole('ROLE_ADMIN') or " +
+              "hasAuthority('VIEW_TREATMENT_PLAN_ALL') or " +
+              "hasAuthority('VIEW_TREATMENT_PLAN_OWN')")
 ```
 
-### Query Parameters (10 total)
+**Allowed Roles**:
 
-| Parameter | Type | Required | Admin Only | Description | Example |
-|-----------|------|----------|------------|-------------|---------|
-| page | Integer | No | No | Page number (0-indexed) | 0 |
-| size | Integer | No | No | Page size | 20 |
-| sort | String | No | No | Sort field and direction | createdAt,desc |
-| status | Enum | No | No | Filter by plan status | ACTIVE |
-| approvalStatus | Enum | No | No | Filter by approval status (V19) | APPROVED |
-| planCode | String | No | No | Filter by plan code (prefix match) | PLAN-20250112 |
-| doctorEmployeeCode | String | No | **Yes** | Filter by doctor code | EMP001 |
-| patientCode | String | No | **Yes** | Filter by patient code | BN-1001 |
-| startDateFrom | Date | No | No | Filter start date >= this date | 2025-01-01 |
-| startDateTo | Date | No | No | Filter start date <= this date | 2025-12-31 |
-| createdAtFrom | Date | No | No | Filter created date >= this date | 2025-01-01 |
-| createdAtTo | Date | No | No | Filter created date <= this date | 2025-12-31 |
-| searchTerm | String | No | No | Search in plan name, patient name | orthodontics |
+- ✅ **Admin** - Full access (always allowed via `hasRole('ROLE_ADMIN')`)
+- ✅ **Manager** - Has `VIEW_TREATMENT_PLAN_ALL` permission
+- ✅ **Dentist** - Has `VIEW_TREATMENT_PLAN_ALL` permission
+- ✅ **Receptionist** - Has `VIEW_TREATMENT_PLAN_ALL` permission
+- ✅ **Patient** - Has `VIEW_TREATMENT_PLAN_OWN` permission
+
+**Permission Check Logic**:
+
+1. First checks if user has `ROLE_ADMIN` role → Full access
+2. Checks if user has `VIEW_TREATMENT_PLAN_ALL` → Can view and filter all plans
+3. Checks if user has `VIEW_TREATMENT_PLAN_OWN` → Auto-filtered by patient/doctor
+4. Returns `403 Forbidden` if no permissions match
+
+**CRITICAL**: Role `ADMIN` is checked FIRST before permissions. Admin always has full access regardless of permission assignments.
+
+### Example Requests
+
+**Admin - Get all ACTIVE plans**:
+
+```bash
+GET http://localhost:8080/api/v1/patient-treatment-plans?status=IN_PROGRESS&approvalStatus=APPROVED&page=0&size=20
+Authorization: Bearer {admin_token}
+```
+
+**Admin - Get plans for specific doctor**:
+
+```bash
+GET http://localhost:8080/api/v1/patient-treatment-plans?doctorEmployeeCode=EMP-001&status=IN_PROGRESS
+Authorization: Bearer {admin_token}
+```
+
+**Doctor - Get my patients' plans** (auto-filtered):
+
+```bash
+GET http://localhost:8080/api/v1/patient-treatment-plans?status=IN_PROGRESS
+Authorization: Bearer {doctor_token}
+# System automatically adds: createdBy = current doctor
+```
+
+**Patient - Get my plans** (auto-filtered):
+
+```bash
+GET http://localhost:8080/api/v1/patient-treatment-plans
+Authorization: Bearer {patient_token}
+# System automatically adds: patient = current patient
+```
+
+**Search plans created this month**:
+
+```bash
+GET http://localhost:8080/api/v1/patient-treatment-plans?createdAtFrom=2025-11-01&createdAtTo=2025-11-30
+Authorization: Bearer {admin_token}
+```
+
+**Search plans by name**:
+
+```bash
+GET http://localhost:8080/api/v1/patient-treatment-plans?searchTerm=orthodontics
+Authorization: Bearer {admin_token}
+```
 
 ---
 
-## 🔒 RBAC Logic (Detailed)
+## Response (200 OK)
+
+Same pagination structure as **API 5.1**:
+
+```json
+{
+  "content": [
+    {
+      "patientPlanId": 1,
+      "planCode": "PLAN-20251001-001",
+      "planName": "Lộ trình Niềng răng Mắc cài Kim loại",
+      "status": "IN_PROGRESS",
+      "doctor": {
+        "employeeCode": "EMP-001",
+        "fullName": "Bác sĩ Nguyễn Văn A"
+      },
+      "startDate": "2025-10-01",
+      "expectedEndDate": "2027-10-01",
+      "totalCost": 35000000,
+      "discountAmount": 0,
+      "finalCost": 35000000,
+      "paymentType": "INSTALLMENT"
+    }
+  ],
+  "totalElements": 1,
+  "totalPages": 1,
+  "size": 20,
+  "number": 0
+}
+```
+
+---
+
+## RBAC Logic
 
 ### Admin Mode (VIEW_TREATMENT_PLAN_ALL)
-```
-User Role: ROLE_ADMIN, ROLE_MANAGER
-Permission: VIEW_TREATMENT_PLAN_ALL
 
-Query Logic:
-- Base Query: SELECT * FROM patient_treatment_plans
-- Apply filters: status, approvalStatus, planCode, startDate, createdAt, searchTerm
-- Apply admin filters: doctorEmployeeCode, patientCode (if provided)
-- NO automatic RBAC filter
+**Behavior**:
 
-Result: Sees ALL treatment plans in system
-```
+- Sees **ALL** treatment plans in system
+- Can use `doctorEmployeeCode` and `patientCode` filters
+- No automatic filtering applied
 
-**Example Queries**:
+**Example**:
+
 ```bash
-# All ACTIVE plans
-GET /patient-treatment-plans?status=IN_PROGRESS
+# Get all plans for doctor EMP-001
+GET /api/v1/patient-treatment-plans?doctorEmployeeCode=EMP-001
 
-# All plans for doctor EMP001
-GET /patient-treatment-plans?doctorEmployeeCode=EMP001
+# Get all plans for patient BN-1001
+GET /api/v1/patient-treatment-plans?patientCode=BN-1001
 
-# All DRAFT plans created this month
-GET /patient-treatment-plans?approvalStatus=DRAFT&createdAtFrom=2025-01-01&createdAtTo=2025-01-31
-
-# Search "orthodontics" plans
-GET /patient-treatment-plans?searchTerm=orthodontics&page=0&size=20
+# Get all DRAFT plans (need approval)
+GET /api/v1/patient-treatment-plans?approvalStatus=DRAFT
 ```
 
 ### Doctor Mode (VIEW_TREATMENT_PLAN_OWN)
-```
-User Role: ROLE_DENTIST, ROLE_NURSE
-Permission: VIEW_TREATMENT_PLAN_OWN
-BaseRole: EMPLOYEE (ID = 2)
 
-RBAC Logic:
-1. Extract accountId from JWT
-2. Find Employee by accountId
-3. Add MANDATORY filter: WHERE created_by = employee.employeeId
+**Behavior**:
 
-Query Logic:
-- Base Query: SELECT * FROM patient_treatment_plans WHERE created_by = {currentEmployeeId}
-- Apply filters: status, approvalStatus, planCode, startDate, createdAt, searchTerm
-- IGNORE admin filters: doctorEmployeeCode, patientCode (security!)
-
-Result: Sees only plans they created (their patients)
-```
+- Sees **ONLY** plans created by them (`createdBy = currentEmployee`)
+- `doctorEmployeeCode` filter is **IGNORED** (security)
+- `patientCode` filter is **IGNORED** (security)
+- Can still use status, approvalStatus, date filters
 
 **Example**:
+
 ```bash
-# Doctor EMP-1 logs in
-# Automatically filtered: WHERE created_by = 1
+# Doctor EMP-001 logged in
+GET /api/v1/patient-treatment-plans?status=IN_PROGRESS
 
-GET /patient-treatment-plans
-# Returns: Plan 1, 5, 8, 9 (created by EMP-1)
-
-GET /patient-treatment-plans?status=IN_PROGRESS
-# Returns: Plan 1, 5, 8 (IN_PROGRESS + created by EMP-1)
-
-GET /patient-treatment-plans?doctorEmployeeCode=EMP002
-# IGNORED for security! Still returns plans created by EMP-1 only
+# System automatically adds: WHERE createdBy.employeeCode = 'EMP-001'
+# Returns only plans created by this doctor
 ```
 
 ### Patient Mode (VIEW_TREATMENT_PLAN_OWN)
-```
-User Role: ROLE_PATIENT
-Permission: VIEW_TREATMENT_PLAN_OWN
-BaseRole: PATIENT (ID = 3)
 
-RBAC Logic:
-1. Extract accountId from JWT
-2. Find Patient by accountId
-3. Add MANDATORY filter: WHERE patient_id = patient.patientId
+**Behavior**:
 
-Query Logic:
-- Base Query: SELECT * FROM patient_treatment_plans WHERE patient_id = {currentPatientId}
-- Apply filters: status, approvalStatus, planCode, startDate, createdAt, searchTerm
-- IGNORE admin filters: doctorEmployeeCode, patientCode (security!)
-
-Result: Sees only their own treatment plans
-```
+- Sees **ONLY** their own plans (`patient = currentPatient`)
+- `doctorEmployeeCode` filter is **IGNORED** (security)
+- `patientCode` filter is **IGNORED** (security)
+- Can still use status, approvalStatus filters
 
 **Example**:
+
 ```bash
-# Patient BN-1001 logs in
-# Automatically filtered: WHERE patient_id = 1
+# Patient BN-1001 logged in
+GET /api/v1/patient-treatment-plans
 
-GET /patient-treatment-plans
-# Returns: Plan 1, 7 (belonging to BN-1001)
-
-GET /patient-treatment-plans?status=IN_PROGRESS
-# Returns: Plan 1 (IN_PROGRESS + patient = BN-1001)
-
-GET /patient-treatment-plans?patientCode=BN-1002
-# IGNORED for security! Still returns plans for BN-1001 only
+# System automatically adds: WHERE patient.patientCode = 'BN-1001'
+# Returns only this patient's plans
 ```
 
 ---
 
-## 📊 Seed Data Summary (V20)
+## Filtering Examples
 
-### Total Treatment Plans: 10
+### Filter by Status
 
-**By Status**:
-- PENDING: 2 plans (Plan 4, 7)
-- IN_PROGRESS: 4 plans (Plan 1, 5, 8, 10)
-- COMPLETED: 3 plans (Plan 2, 6, 9)
-- ON_HOLD: 1 plan (Plan 3)
-
-**By Approval Status**:
-- DRAFT: 2 plans (Plan 4, 7)
-- APPROVED: 8 plans (Plan 1, 2, 3, 5, 6, 8, 9, 10)
-
-**By Doctor**:
-- EMP-1 (Doctor 1): 5 plans (Plan 1, 5, 8, 9, and orthodontics)
-- EMP-2 (Doctor 2): 4 plans (Plan 2, 4, 7, 10)
-- EMP-3 (Doctor 3): 1 plan (Plan 6)
-
-**By Patient**:
-- BN-1001: 3 plans (Plan 1, 7, orthodontics)
-- BN-1002: 3 plans (Plan 2, 8, implant)
-- BN-1003: 3 plans (Plan 3, 4, 9)
-- BN-1004: 2 plans (Plan 5, 10)
-- BN-1005: 1 plan (Plan 6)
-
-**Date Range Coverage**:
-- Historical: 2024-05-15 to 2024-12-20
-- Current/Future: 2025-01-05 to 2025-11-01
-
----
-
-## 🧪 Testing Scenarios
-
-### Test Case 1: Admin - Get All Plans
 ```bash
-# Login as Admin (ROLE_ADMIN)
-curl -X POST "http://localhost:8080/api/v1/auth/login" \
-  -H "Content-Type: application/json" \
-  -d '{"username": "admin", "password": "admin123"}'
+# Get all completed plans
+GET /api/v1/patient-treatment-plans?status=COMPLETED
 
-# Get all treatment plans
-curl -X GET "http://localhost:8080/api/v1/patient-treatment-plans?page=0&size=20" \
-  -H "Authorization: Bearer $ADMIN_TOKEN"
-
-# Expected: Returns all 10 plans
-# Response includes: totalElements=10, totalPages=1
+# Get all active plans
+GET /api/v1/patient-treatment-plans?status=IN_PROGRESS
 ```
 
-### Test Case 2: Admin - Filter by Doctor
-```bash
-curl -X GET "http://localhost:8080/api/v1/patient-treatment-plans?doctorEmployeeCode=EMP001&page=0&size=20" \
-  -H "Authorization: Bearer $ADMIN_TOKEN"
+### Filter by Approval Status (V19)
 
-# Expected: Returns 5 plans created by EMP-1 (Plan 1, 5, 8, 9, and 1 more)
+```bash
+# Get all DRAFT plans (need approval)
+GET /api/v1/patient-treatment-plans?approvalStatus=DRAFT
+
+# Get all APPROVED plans
+GET /api/v1/patient-treatment-plans?approvalStatus=APPROVED
 ```
 
-### Test Case 3: Admin - Filter by Status and Approval
-```bash
-curl -X GET "http://localhost:8080/api/v1/patient-treatment-plans?status=IN_PROGRESS&approvalStatus=APPROVED&page=0&size=20" \
-  -H "Authorization: Bearer $ADMIN_TOKEN"
+### Filter by Date Range
 
-# Expected: Returns 3 plans (Plan 1, 5, 8, 10 that are IN_PROGRESS + APPROVED)
+```bash
+# Plans starting in 2025
+GET /api/v1/patient-treatment-plans?startDateFrom=2025-01-01&startDateTo=2025-12-31
+
+# Plans created this month
+GET /api/v1/patient-treatment-plans?createdAtFrom=2025-11-01&createdAtTo=2025-11-30
 ```
 
-### Test Case 4: Admin - Date Range Filter
-```bash
-curl -X GET "http://localhost:8080/api/v1/patient-treatment-plans?createdAtFrom=2025-01-01&createdAtTo=2025-01-31&page=0&size=20" \
-  -H "Authorization: Bearer $ADMIN_TOKEN"
+### Search by Term
 
-# Expected: Returns plans created in January 2025 (Plan 4, 5, 7, 10)
+```bash
+# Search "orthodontics" in plan name or patient name
+GET /api/v1/patient-treatment-plans?searchTerm=orthodontics
+
+# Search patient name
+GET /api/v1/patient-treatment-plans?searchTerm=Phong
 ```
 
-### Test Case 5: Admin - Search Term
+### Combine Multiple Filters
+
 ```bash
-curl -X GET "http://localhost:8080/api/v1/patient-treatment-plans?searchTerm=implant&page=0&size=20" \
-  -H "Authorization: Bearer $ADMIN_TOKEN"
-
-# Expected: Returns plans with "implant" in plan name (Plan 2, 6)
-```
-
-### Test Case 6: Doctor - Get Own Plans
-```bash
-# Login as Doctor EMP-1
-curl -X POST "http://localhost:8080/api/v1/auth/login" \
-  -H "Content-Type: application/json" \
-  -d '{"username": "emp001", "password": "password"}'
-
-# Get treatment plans
-curl -X GET "http://localhost:8080/api/v1/patient-treatment-plans?page=0&size=20" \
-  -H "Authorization: Bearer $DOCTOR_TOKEN"
-
-# Expected: Returns only plans created by EMP-1 (5 plans)
-# Auto-filtered by: WHERE created_by = 1
-```
-
-### Test Case 7: Doctor - Filter by Status
-```bash
-curl -X GET "http://localhost:8080/api/v1/patient-treatment-plans?status=IN_PROGRESS&page=0&size=20" \
-  -H "Authorization: Bearer $DOCTOR_TOKEN"
-
-# Expected: Returns only IN_PROGRESS plans created by EMP-1 (Plan 1, 5, 8)
-```
-
-### Test Case 8: Doctor - Try Admin Filter (Should Ignore)
-```bash
-curl -X GET "http://localhost:8080/api/v1/patient-treatment-plans?patientCode=BN-1002&page=0&size=20" \
-  -H "Authorization: Bearer $DOCTOR_TOKEN"
-
-# Expected: IGNORES patientCode filter for security
-# Returns all plans created by EMP-1 (not just BN-1002's plans)
-# Log shows: "Doctor attempting to use admin-only filters. Ignoring."
-```
-
-### Test Case 9: Patient - Get Own Plans
-```bash
-# Login as Patient BN-1001
-curl -X POST "http://localhost:8080/api/v1/auth/login" \
-  -H "Content-Type: application/json" \
-  -d '{"username": "patient001", "password": "password"}'
-
-# Get treatment plans
-curl -X GET "http://localhost:8080/api/v1/patient-treatment-plans?page=0&size=20" \
-  -H "Authorization: Bearer $PATIENT_TOKEN"
-
-# Expected: Returns only plans for BN-1001 (3 plans: Plan 1, 7, and orthodontics)
-# Auto-filtered by: WHERE patient_id = 1
-```
-
-### Test Case 10: Patient - Search Term
-```bash
-curl -X GET "http://localhost:8080/api/v1/patient-treatment-plans?searchTerm=niềng&page=0&size=20" \
-  -H "Authorization: Bearer $PATIENT_TOKEN"
-
-# Expected: Returns Plan 1 "Niềng răng" (if patient has orthodontics plan)
-```
-
-### Test Case 11: Patient - Try Admin Filter (Should Ignore)
-```bash
-curl -X GET "http://localhost:8080/api/v1/patient-treatment-plans?doctorEmployeeCode=EMP001&page=0&size=20" \
-  -H "Authorization: Bearer $PATIENT_TOKEN"
-
-# Expected: IGNORES doctorEmployeeCode filter for security
-# Returns only plans for current patient (BN-1001)
-# Log shows: "Patient attempting to use admin-only filters. Ignoring."
+# Active, approved plans for doctor EMP-001, created this month
+GET /api/v1/patient-treatment-plans?doctorEmployeeCode=EMP-001&status=IN_PROGRESS&approvalStatus=APPROVED&createdAtFrom=2025-11-01&createdAtTo=2025-11-30
 ```
 
 ---
 
-## 🚀 How to Run
+## Testing Guide
 
-### 1. Apply V20 Migration (Seed Data)
+### Test 1: Admin - Get All Plans
+
+**Request**:
+
 ```bash
-# If using Flyway (automatic)
-mvn clean install
-mvn spring-boot:run
-# Flyway will auto-apply V20__seed_treatment_plans_api_5.5.sql
-
-# OR manual SQL execution
-docker exec -i postgres-dental psql -U root -d dental_clinic_db \
-  < src/main/resources/db/migration/V20__seed_treatment_plans_api_5.5.sql
+GET http://localhost:8080/api/v1/patient-treatment-plans?page=0&size=20
+Authorization: Bearer {admin_token}
 ```
 
-### 2. Verify Seed Data
-```sql
--- Check total plans
-SELECT COUNT(*) FROM patient_treatment_plans;
--- Expected: 10
+**Expected**:
 
--- Check by status
-SELECT status, COUNT(*) FROM patient_treatment_plans GROUP BY status;
--- Expected: PENDING=2, IN_PROGRESS=4, COMPLETED=3, ON_HOLD=1
+- ✅ Returns all plans in system
+- ✅ Pagination working
 
--- Check by approval
-SELECT approval_status, COUNT(*) FROM patient_treatment_plans GROUP BY approval_status;
--- Expected: DRAFT=2, APPROVED=8
+### Test 2: Doctor - Get My Plans
 
--- Check by doctor
-SELECT e.employee_code, COUNT(p.plan_id)
-FROM patient_treatment_plans p
-JOIN employees e ON p.created_by = e.employee_id
-GROUP BY e.employee_code;
--- Expected: EMP-1=5, EMP-2=4, EMP-3=1
+**Setup**: Doctor EMP-001 created plans 1, 2, 3. Doctor EMP-002 created plan 4.
+
+**Request**:
+
+```bash
+GET http://localhost:8080/api/v1/patient-treatment-plans
+Authorization: Bearer {doctor_emp001_token}
 ```
 
-### 3. Test API Endpoints
+**Expected**:
 
-**Using Swagger UI**:
-1. Open `http://localhost:8080/swagger-ui.html`
-2. Find "Treatment Plans" section
-3. Test `GET /patient-treatment-plans` with different query params
-4. Try with Admin, Doctor, and Patient JWT tokens
+- ✅ Returns only plans 1, 2, 3 (created by EMP-001)
+- ✅ Does NOT return plan 4 (created by EMP-002)
 
-**Using cURL** (see Test Cases above)
+### Test 3: Patient - Get My Plans
 
-**Using Postman**:
-1. Import collection with 11 test cases
-2. Set environment variables: ADMIN_TOKEN, DOCTOR_TOKEN, PATIENT_TOKEN
-3. Run collection and verify responses
+**Setup**: Patient BN-1001 has plans 1, 2. Patient BN-1002 has plan 3.
 
----
+**Request**:
 
-## 📈 Performance Benchmarks
-
-### Query Performance (Expected)
-
-| Scenario | Records | Query Time | Notes |
-|----------|---------|------------|-------|
-| Admin - All plans | 10 | < 50ms | With JOIN FETCH |
-| Admin - With 5 filters | 2-5 | < 30ms | Indexed columns |
-| Doctor - Own plans | 5 | < 20ms | Simple WHERE |
-| Patient - Own plans | 2-3 | < 15ms | Simple WHERE |
-
-### N+1 Problem Prevention
-```
-❌ BAD (without JOIN FETCH):
-Query 1: SELECT * FROM patient_treatment_plans (10 rows)
-Query 2-11: SELECT * FROM patients WHERE patient_id = ? (10 queries)
-Query 12-21: SELECT * FROM employees WHERE employee_id = ? (10 queries)
-Total: 21 queries
-
-✅ GOOD (with JOIN FETCH):
-Query 1: SELECT p.*, pat.*, emp.* FROM patient_treatment_plans p
-         LEFT JOIN patients pat ON ...
-         LEFT JOIN employees emp ON ...
-Total: 1 query
+```bash
+GET http://localhost:8080/api/v1/patient-treatment-plans
+Authorization: Bearer {patient_bn1001_token}
 ```
 
----
+**Expected**:
 
-## ✅ Checklist - Implementation Complete
+- ✅ Returns only plans 1, 2 (patient BN-1001)
+- ✅ Does NOT return plan 3 (patient BN-1002)
 
-- [x] Created BaseRoleConstants (P0 fix - magic numbers)
-- [x] Created GetAllTreatmentPlansRequest DTO (10 query params)
-- [x] Created TreatmentPlanSpecification (JPA Specification)
-- [x] Implemented Service Layer with RBAC (BaseRoleConstants)
-- [x] Added Controller Endpoint with Swagger docs
-- [x] Modified PatientTreatmentPlanRepository (JpaSpecificationExecutor)
-- [x] Added PatientRepository.findOneByAccountAccountId()
-- [x] Created V20 seed data (7 new plans, total 10)
-- [x] All P0 fixes implemented
-- [x] All P1 enhancements implemented
-- [x] Comprehensive testing guide created
-- [x] Documentation complete
+### Test 4: Filter by Status
 
----
+**Request**:
 
-## 🎯 Key Achievements
+```bash
+GET http://localhost:8080/api/v1/patient-treatment-plans?status=IN_PROGRESS
+Authorization: Bearer {admin_token}
+```
 
-1. **P0 Fix - BaseRoleConstants**: No more magic numbers `if (baseRoleId == 2)`
-2. **P1 Enhancement - Date Filters**: `startDateFrom/To`, `createdAtFrom/To`
-3. **P1 Enhancement - Search Term**: Full-text search in plan name, patient name
-4. **Security**: Admin-only filters are IGNORED for Doctor/Patient roles
-5. **Performance**: Single query with JOIN FETCH (no N+1)
-6. **Testing**: Comprehensive seed data with 10 plans across 3 roles
-7. **Documentation**: Complete API spec, RBAC logic, and testing guide
+**Expected**:
 
----
+- ✅ Returns only plans with status = IN_PROGRESS
 
-## 📝 Next Steps
+### Test 5: Search Term
 
-### Immediate (Testing Phase)
-1. **Run V20 Migration** - Apply seed data
-2. **Test with 3 roles** - Admin, Doctor, Patient
-3. **Verify RBAC** - Ensure filters work correctly
-4. **Performance Check** - Monitor query execution time
+**Request**:
 
-### Medium-term (Enhancements)
-1. **Add Response Statistics** (P3):
-   ```json
-   {
-     "content": [...],
-     "summary": {
-       "totalPlans": 50,
-       "draftPlans": 5,
-       "activePlans": 30,
-       "totalRevenue": 500000000
-     }
-   }
-   ```
+```bash
+GET http://localhost:8080/api/v1/patient-treatment-plans?searchTerm=niềng
+Authorization: Bearer {admin_token}
+```
 
-2. **Add Cache for Admin** (P3):
-   ```java
-   @Cacheable(value = "allTreatmentPlans", key = "#pageable + #filters")
-   ```
+**Expected**:
 
-3. **Add Export Feature**:
-   ```
-   GET /patient-treatment-plans/export?format=csv&filters=...
-   ```
+- ✅ Returns plans with "niềng" in plan name or patient name
 
-### Long-term (Future Work)
-1. Advanced analytics dashboard
-2. Plan comparison feature
-3. Bulk operations (approve/reject multiple plans)
+### Test 6: Date Range Filter
+
+**Request**:
+
+```bash
+GET http://localhost:8080/api/v1/patient-treatment-plans?createdAtFrom=2025-11-01&createdAtTo=2025-11-30
+Authorization: Bearer {admin_token}
+```
+
+**Expected**:
+
+- ✅ Returns only plans created in November 2025
 
 ---
 
-**Document Version**: 1.0  
-**Last Updated**: 2025-01-12  
-**Author**: GitHub Copilot  
-**Review Status**: Ready for QA Testing  
-**Approved By**: Senior Backend Engineer Review (9.5/10)
+## Error Handling
+
+| HTTP | Error Code    | Description                                      |
+| ---- | ------------- | ------------------------------------------------ |
+| 403  | ACCESS_DENIED | User doesn't have VIEW_TREATMENT_PLAN permission |
+| 401  | UNAUTHORIZED  | Missing or invalid JWT token                     |
+
+---
+
+## Performance Notes
+
+- **Optimized**: Uses JPA Specification with JOIN FETCH (no N+1 queries)
+- **Expected Time**: < 200ms for typical query (50 plans)
+- **Pagination**: Always use pagination for large datasets
+
+---
+
+**Document Version**: 1.0
+**Last Updated**: 2025-11-12
+**Author**: Dental Clinic Development Team
+**Verified Against**: TreatmentPlanController.java (lines 283-392), TreatmentPlanService.getAllTreatmentPlans()

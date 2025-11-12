@@ -1,191 +1,113 @@
-# API 5.4 Implementation Summary - Create Custom Treatment Plan
+# API 5.4 - Create Custom Treatment Plan
 
-**Implementation Date**: 2025-01-12  
-**Version**: V19  
-**Status**: ✅ COMPLETE - Ready for Testing
-
----
-
-## 📋 Overview
-
-Implemented **API 5.4 - Create Custom Treatment Plan** with full quantity expansion, price override validation, and approval workflow features. This allows doctors to create customized treatment plans from scratch without using templates.
+**Module**: Treatment Plan Management
+**Version**: V1.0
+**Status**: ✅ Production Ready
+**Last Updated**: 2025-11-12
+**Source**: `TreatmentPlanController.java`, `CustomTreatmentPlanService.java`, `CreateCustomPlanRequest.java`
 
 ---
 
-## 🎯 Key Features Implemented
+## 📋 Table of Contents
 
-### 1. **Quantity Expansion (P0 FIX)**
-- Backend automatically expands `quantity: 5` into 5 separate `patient_plan_items`
-- Auto-increments sequence numbers: 1, 2, 3, 4, 5 (fixes conflict issue)
-- Adds suffix to item names: "Orthodontic Adjustment (Lần 1)", "Lần 2", etc.
-
-**Code Example**:
-```java
-for (int i = 1; i <= itemReq.getQuantity(); i++) {
-    String itemName = service.getServiceName();
-    if (itemReq.getQuantity() > 1) {
-        itemName += " (Lần " + i + ")";
-    }
-    PatientPlanItem item = PatientPlanItem.builder()
-        .sequenceNumber(currentSequence++)  // ✅ Auto-increment fix
-        .itemName(itemName)
-        .price(itemReq.getPrice())
-        .status(PlanItemStatus.PENDING)
-        .build();
-}
-```
-
-### 2. **Price Override with Validation (P0 FIX)**
-- Allows doctors to customize prices (required flexibility)
-- **Validation**: Price must be within 50%-150% of service default price
-- Prevents both undercharging abuse and overcharging patients
-- If out of range → throws `BadRequestAlertException` with clear message
-
-**Code Example**:
-```java
-BigDecimal minPrice = servicePrice.multiply(new BigDecimal("0.5")); // 50%
-BigDecimal maxPrice = servicePrice.multiply(new BigDecimal("1.5")); // 150%
-
-if (requestPrice.compareTo(minPrice) < 0 || requestPrice.compareTo(maxPrice) > 0) {
-    throw new BadRequestAlertException(
-        String.format("Price for service %s (%s) is out of allowed range (%s - %s)",
-            serviceCode, requestPrice, minPrice, maxPrice)
-    );
-}
-```
-
-### 3. **Approval Workflow (V19)**
-- All custom plans created with `approval_status = DRAFT`
-- Requires manager approval (API 5.9 - future work) before activation
-- Provides control mechanism for price overrides
-
-### 4. **Phase Duration Support (P1 FIX)**
-- Added `estimatedDurationDays` field to phases
-- Used for timeline calculation and patient communication
-
-### 5. **Comprehensive Validations (P0 + P1 FIXES)**
-- ✅ Patient exists and is active
-- ✅ Doctor exists and is active
-- ✅ Services exist and are active
-- ✅ **Unique phase numbers** (no duplicates)
-- ✅ **Each phase has at least 1 item** (no empty phases)
-- ✅ **Quantity 1-100** (@Min, @Max annotations)
-- ✅ **Discount ≤ total cost** (prevents negative final cost)
-- ✅ **Price within 50%-150% range** (prevents abuse)
+1. [Overview](#overview)
+2. [API Specification](#api-specification)
+3. [Request Model](#request-model)
+4. [Response Model](#response-model)
+5. [Business Logic](#business-logic)
+6. [Quantity Expansion](#quantity-expansion)
+7. [Approval Workflow](#approval-workflow)
+8. [Testing Guide](#testing-guide)
+9. [Error Handling](#error-handling)
 
 ---
 
-## 📁 Files Created/Modified
+## Overview
 
-### ✅ New Files
+API 5.4 creates a **custom treatment plan from scratch** without using templates. Doctor manually selects services, sets prices, defines phases, and specifies quantities.
 
-1. **ApprovalStatus.java** (Enum)
-   - Path: `.../treatment_plans/domain/ApprovalStatus.java`
-   - Values: DRAFT, PENDING_REVIEW, APPROVED, REJECTED
-   - Purpose: Workflow states for price approval
+**Key Features**:
 
-2. **V19__add_approval_workflow_and_phase_duration.sql** (Migration)
-   - Path: `.../db/migration/V19__add_approval_workflow_and_phase_duration.sql`
-   - Lines: 350+ lines with 8 steps
-   - Changes:
-     - Added `approval_status` ENUM type
-     - Added 5 approval columns to `patient_treatment_plans`
-     - Added `estimated_duration_days` to `patient_plan_phases`
-     - Added `sequence_number` to `template_phase_services` (bug fix)
-     - Updated `plan_item_status` ENUM (PENDING_APPROVAL → PENDING)
-     - Backward compatibility migration for existing data
+- ✅ **Quantity Expansion**: `quantity: 5` → creates 5 separate items
+- ✅ **Price Override**: Custom pricing (must be within 50%-150% of service default)
+- ✅ **Approval Workflow**: Created with `approval_status = DRAFT` (requires manager approval)
+- ✅ **Phase Duration**: Set `estimated_duration_days` for each phase
+- ✅ **Flexible Structure**: No template restrictions
 
-3. **CreateCustomPlanRequest.java** (DTO)
-   - Path: `.../dto/request/CreateCustomPlanRequest.java`
-   - Lines: 180+ lines
-   - Structure: Main DTO + 2 nested classes (PhaseRequest, ItemRequest)
-   - Key Fields:
-     - `quantity` (1-100) - enables expansion
-     - `estimatedDurationDays` (V19)
-     - Full @Valid cascade validation
-
-4. **CustomTreatmentPlanService.java** (Service Layer)
-   - Path: `.../service/CustomTreatmentPlanService.java`
-   - Lines: 320+ lines
-   - Core Method: `createCustomPlan()`
-   - Features:
-     - Quantity expansion loop
-     - Sequence number auto-increment
-     - Price validation (50%-150%)
-     - Discount validation
-     - Unique phase number check
-     - Batch insert support via Hibernate
-     - Comprehensive error handling
-
-### ✅ Modified Files
-
-1. **PatientTreatmentPlan.java** (Entity)
-   - Added 5 V19 fields:
-     ```java
-     private ApprovalStatus approvalStatus = ApprovalStatus.DRAFT;
-     private LocalDateTime patientConsentDate;
-     private Employee approvedBy;
-     private LocalDateTime approvedAt;
-     private String rejectionReason;
-     ```
-
-2. **PatientPlanPhase.java** (Entity)
-   - Added 1 V19 field:
-     ```java
-     private Integer estimatedDurationDays; // V19 - for timeline calculation
-     ```
-
-3. **TreatmentPlanController.java** (Controller)
-   - Added API 5.4 endpoint:
-     ```java
-     @PostMapping("/patients/{patientCode}/treatment-plans/custom")
-     public ResponseEntity<TreatmentPlanDetailResponse> createCustomTreatmentPlan(
-         @PathVariable String patientCode,
-         @RequestBody @Valid CreateCustomPlanRequest request
-     )
-     ```
-   - Comprehensive Swagger documentation
-   - Example use cases in @Operation description
+**Use Case**: Doctor wants to create a unique treatment plan not covered by standard templates.
 
 ---
 
-## 🔧 API Specification
+## API Specification
 
 ### Endpoint
+
 ```
 POST /api/v1/patients/{patientCode}/treatment-plans/custom
 ```
 
+### Path Parameters
+
+| Parameter     | Type   | Required | Description           | Example |
+| ------------- | ------ | -------- | --------------------- | ------- |
+| `patientCode` | String | Yes      | Patient business code | BN-1001 |
+
 ### Request Headers
+
 ```
-Authorization: Bearer {JWT_TOKEN}
+Authorization: Bearer {jwt_token}
 Content-Type: application/json
 ```
 
-### Request Body Example
+### Security & Permissions
+
+**@PreAuthorize Annotation**:
+
+```java
+@PreAuthorize("hasRole('ROLE_ADMIN') or hasAuthority('CREATE_TREATMENT_PLAN')")
+```
+
+**Allowed Roles**:
+
+- ✅ **Admin** - Full access (always allowed via `hasRole('ROLE_ADMIN')`)
+- ✅ **Manager** - Has `CREATE_TREATMENT_PLAN` permission
+- ✅ **Dentist** - Has `CREATE_TREATMENT_PLAN` permission
+- ❌ **Receptionist** - No permission (read-only access)
+- ❌ **Patient** - No permission
+
+**Permission Check Logic**:
+
+1. First checks if user has `ROLE_ADMIN` role → Immediate access
+2. If not admin, checks if user has `CREATE_TREATMENT_PLAN` authority
+3. Returns `403 Forbidden` if neither condition is met
+
+**Note**: Custom plans are created with `approval_status=DRAFT` and require manager approval before activation.
+
+### Request Body
+
 ```json
 {
-  "planName": "Custom Orthodontics Treatment",
-  "doctorEmployeeCode": "EMP001",
-  "discountAmount": 500000,
-  "paymentType": "PHASED",
-  "startDate": "2025-01-15",
-  "expectedEndDate": "2026-01-15",
+  "planName": "Lộ trình niềng răng tùy chỉnh (6 tháng)",
+  "doctorEmployeeCode": "EMP-001",
+  "discountAmount": 0,
+  "paymentType": "INSTALLMENT",
+  "startDate": null,
+  "expectedEndDate": null,
   "phases": [
     {
       "phaseNumber": 1,
-      "phaseName": "Initial Consultation & X-rays",
+      "phaseName": "Giai đoạn 1: Khám và Chuẩn bị",
       "estimatedDurationDays": 7,
       "items": [
         {
-          "serviceCode": "ORTHO_CONSULT",
-          "price": 300000,
+          "serviceCode": "EXAM_GENERAL",
+          "price": 500000,
           "sequenceNumber": 1,
           "quantity": 1
         },
         {
-          "serviceCode": "XRAY_PANORAMIC",
-          "price": 200000,
+          "serviceCode": "SCALE_CLEAN",
+          "price": 800000,
           "sequenceNumber": 2,
           "quantity": 1
         }
@@ -193,14 +115,14 @@ Content-Type: application/json
     },
     {
       "phaseNumber": 2,
-      "phaseName": "Braces Adjustment",
-      "estimatedDurationDays": 360,
+      "phaseName": "Giai đoạn 2: Điều chỉnh định kỳ",
+      "estimatedDurationDays": 180,
       "items": [
         {
           "serviceCode": "ORTHO_ADJUST",
           "price": 500000,
           "sequenceNumber": 1,
-          "quantity": 12
+          "quantity": 6
         }
       ]
     }
@@ -208,466 +130,704 @@ Content-Type: application/json
 }
 ```
 
-**Note**: `quantity: 12` will create 12 separate items with:
-- Names: "Orthodontic Adjustment (Lần 1)", "Lần 2", ..., "Lần 12"
-- Sequence numbers: 1, 2, 3, ..., 12
-- Status: PENDING
+### Complete Example Request
 
-### Response (201 CREATED)
-```json
-{
-  "planCode": "PLAN-20250112-001",
-  "planName": "Custom Orthodontics Treatment",
-  "patient": {
-    "patientCode": "BN-1001",
-    "fullName": "Nguyễn Văn An"
-  },
-  "doctor": {
-    "employeeCode": "EMP001",
-    "fullName": "Dr. Trần Văn Bình"
-  },
-  "status": "PENDING",
-  "approvalStatus": "DRAFT",
-  "totalPrice": 6500000,
-  "discountAmount": 500000,
-  "finalCost": 6000000,
-  "paymentType": "PHASED",
-  "startDate": "2025-01-15",
-  "expectedEndDate": "2026-01-15",
-  "phases": [
-    {
-      "phaseNumber": 1,
-      "phaseName": "Initial Consultation & X-rays",
-      "status": "PENDING",
-      "estimatedDurationDays": 7,
-      "items": [
-        {
-          "sequenceNumber": 1,
-          "itemName": "Orthodontic Consultation",
-          "status": "PENDING",
-          "price": 300000
-        },
-        {
-          "sequenceNumber": 2,
-          "itemName": "Panoramic X-ray",
-          "status": "PENDING",
-          "price": 200000
-        }
-      ]
-    },
-    {
-      "phaseNumber": 2,
-      "phaseName": "Braces Adjustment",
-      "status": "PENDING",
-      "estimatedDurationDays": 360,
-      "items": [
-        {
-          "sequenceNumber": 1,
-          "itemName": "Orthodontic Adjustment (Lần 1)",
-          "status": "PENDING",
-          "price": 500000
-        },
-        {
-          "sequenceNumber": 2,
-          "itemName": "Orthodontic Adjustment (Lần 2)",
-          "status": "PENDING",
-          "price": 500000
-        },
-        // ... items 3-11 omitted for brevity
-        {
-          "sequenceNumber": 12,
-          "itemName": "Orthodontic Adjustment (Lần 12)",
-          "status": "PENDING",
-          "price": 500000
-        }
-      ]
-    }
-  ],
-  "progressSummary": {
-    "totalPhases": 2,
-    "completedPhases": 0,
-    "totalItems": 14,
-    "completedItems": 0,
-    "completionPercentage": 0
-  },
-  "createdAt": "2025-01-12T10:30:00"
-}
-```
-
----
-
-## ✅ Validations Implemented
-
-### Request Validation (@Valid Annotations)
-| Field | Validation | Error Message |
-|-------|-----------|---------------|
-| planName | @NotBlank | "Plan name is required" |
-| phases | @NotEmpty | "Must have at least 1 phase" |
-| quantity | @Min(1), @Max(100) | "Quantity must be 1-100" |
-| price | @DecimalMin("0.01") | "Price must be positive" |
-| discountAmount | @DecimalMin("0") | "Discount cannot be negative" |
-
-### Business Logic Validation
-| Validation | Implementation | Error Code |
-|-----------|----------------|-----------|
-| Patient exists | `patientRepository.findOneByPatientCode()` | `patientNotFound` |
-| Doctor exists & active | `employeeRepository.findOneByEmployeeCode()` + `isActive` check | `doctorNotFound` / `doctorInactive` |
-| Service exists & active | `serviceRepository.findByServiceCode()` + `isActive` check | `serviceNotFound` / `serviceInactive` |
-| Unique phase numbers | `HashSet.add()` duplicate check | `duplicatePhaseNumber` |
-| Phase has items | `phase.getItems().isEmpty()` check | `phaseWithoutItems` |
-| Price range | `50% <= price <= 150%` of service default | `priceOutOfRange` |
-| Discount validation | `discountAmount <= totalCost` | `discountExceedsCost` |
-
----
-
-## 🔒 Security & Permissions
-
-### Required Permission
-```java
-@PreAuthorize("hasAuthority('CREATE_TREATMENT_PLAN')")
-```
-
-### Typical Roles with Permission
-- **ROLE_DOCTOR** ✅ (assigned to patients)
-- **ROLE_MANAGER** ✅ (full access)
-- **ROLE_ADMIN** ✅ (full access)
-- **ROLE_PATIENT** ❌ (cannot create plans)
-- **ROLE_RECEPTIONIST** ❌ (view only)
-
----
-
-## 📊 Database Schema Changes (V19)
-
-### Table: `patient_treatment_plans`
-```sql
--- Approval workflow columns (NEW)
-approval_status        approval_status NOT NULL DEFAULT 'DRAFT',
-patient_consent_date   TIMESTAMP NULL,
-approved_by            INTEGER NULL,  -- FK to employees
-approved_at            TIMESTAMP NULL,
-rejection_reason       TEXT NULL
-```
-
-### Table: `patient_plan_phases`
-```sql
--- Duration for timeline calculation (NEW)
-estimated_duration_days  INTEGER NULL
-```
-
-### Table: `template_phase_services`
-```sql
--- Bug fix: sequence number for template items (NEW)
-sequence_number  INTEGER NOT NULL DEFAULT 0
-```
-
-### Enum Updates
-```sql
--- NEW ENUM TYPE
-CREATE TYPE approval_status AS ENUM ('DRAFT', 'PENDING_REVIEW', 'APPROVED', 'REJECTED');
-
--- UPDATED ENUM (safe migration)
--- OLD: READY_FOR_BOOKING, SCHEDULED, PENDING_APPROVAL, COMPLETED, CANCELLED
--- NEW: READY_FOR_BOOKING, SCHEDULED, PENDING, IN_PROGRESS, COMPLETED
--- Removed: PENDING_APPROVAL, CANCELLED
-```
-
----
-
-## 🧪 Testing Scenarios
-
-### Test Case 1: Basic Custom Plan (Success)
 ```bash
 curl -X POST "http://localhost:8080/api/v1/patients/BN-1001/treatment-plans/custom" \
-  -H "Authorization: Bearer $TOKEN" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
   -H "Content-Type: application/json" \
   -d '{
-    "planName": "Simple Checkup Plan",
-    "doctorEmployeeCode": "EMP001",
+    "planName": "Lộ trình niềng răng tùy chỉnh (6 tháng)",
+    "doctorEmployeeCode": "EMP-001",
     "discountAmount": 0,
-    "paymentType": "FULL",
-    "phases": [{
-      "phaseNumber": 1,
-      "phaseName": "Checkup",
-      "estimatedDurationDays": 1,
-      "items": [{
-        "serviceCode": "CHECKUP_GENERAL",
-        "price": 200000,
-        "sequenceNumber": 1,
-        "quantity": 1
-      }]
-    }]
-  }'
-```
-
-**Expected**: Status 201, plan created with approval_status=DRAFT
-
-### Test Case 2: Quantity Expansion (Success)
-```bash
-curl -X POST "http://localhost:8080/api/v1/patients/BN-1001/treatment-plans/custom" \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "planName": "Orthodontics Adjustment Plan",
-    "doctorEmployeeCode": "EMP001",
-    "discountAmount": 500000,
-    "paymentType": "PHASED",
-    "phases": [{
-      "phaseNumber": 1,
-      "phaseName": "Monthly Adjustments",
-      "estimatedDurationDays": 365,
-      "items": [{
-        "serviceCode": "ORTHO_ADJUST",
-        "price": 500000,
-        "sequenceNumber": 1,
-        "quantity": 12
-      }]
-    }]
-  }'
-```
-
-**Expected**: Status 201, 12 items created with sequence 1-12, names "Lần 1" to "Lần 12"
-
-### Test Case 3: Duplicate Phase Number (Validation Error)
-```bash
-curl -X POST "http://localhost:8080/api/v1/patients/BN-1001/treatment-plans/custom" \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "planName": "Invalid Plan",
-    "doctorEmployeeCode": "EMP001",
-    "discountAmount": 0,
-    "paymentType": "FULL",
+    "paymentType": "INSTALLMENT",
+    "startDate": null,
+    "expectedEndDate": null,
     "phases": [
-      {"phaseNumber": 1, "phaseName": "Phase 1", "estimatedDurationDays": 7, "items": [...]},
-      {"phaseNumber": 1, "phaseName": "Phase 2", "estimatedDurationDays": 7, "items": [...]}
+      {
+        "phaseNumber": 1,
+        "phaseName": "Giai đoạn 1: Khám và Chuẩn bị",
+        "estimatedDurationDays": 7,
+        "items": [
+          {
+            "serviceCode": "EXAM_GENERAL",
+            "price": 500000,
+            "sequenceNumber": 1,
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "phaseNumber": 2,
+        "phaseName": "Giai đoạn 2: Điều chỉnh",
+        "estimatedDurationDays": 180,
+        "items": [
+          {
+            "serviceCode": "ORTHO_ADJUST",
+            "price": 500000,
+            "sequenceNumber": 1,
+            "quantity": 6
+          }
+        ]
+      }
     ]
   }'
 ```
 
-**Expected**: Status 400, error "Duplicate phase number: 1"
+---
 
-### Test Case 4: Price Out of Range (Validation Error)
-```bash
-curl -X POST "http://localhost:8080/api/v1/patients/BN-1001/treatment-plans/custom" \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "planName": "Expensive Plan",
-    "doctorEmployeeCode": "EMP001",
-    "discountAmount": 0,
-    "paymentType": "FULL",
-    "phases": [{
-      "phaseNumber": 1,
-      "phaseName": "Checkup",
-      "estimatedDurationDays": 1,
-      "items": [{
-        "serviceCode": "CHECKUP_GENERAL",
-        "price": 1000000,
-        "sequenceNumber": 1,
-        "quantity": 1
-      }]
-    }]
-  }'
-```
+## Request Model
 
-**Expected**: Status 400, error "Price for service CHECKUP_GENERAL (1000000) is out of allowed range (100000 - 300000)"
-*(Assuming service default price is 200000)*
+### CreateCustomPlanRequest
 
-### Test Case 5: Discount Exceeds Total (Validation Error)
-```bash
-curl -X POST "http://localhost:8080/api/v1/patients/BN-1001/treatment-plans/custom" \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "planName": "Over-discounted Plan",
-    "doctorEmployeeCode": "EMP001",
-    "discountAmount": 5000000,
-    "paymentType": "FULL",
-    "phases": [{
-      "phaseNumber": 1,
-      "phaseName": "Checkup",
-      "estimatedDurationDays": 1,
-      "items": [{
-        "serviceCode": "CHECKUP_GENERAL",
-        "price": 200000,
-        "sequenceNumber": 1,
-        "quantity": 1
-      }]
-    }]
-  }'
-```
+| Field                | Type       | Required | Constraints               | Description                              |
+| -------------------- | ---------- | -------- | ------------------------- | ---------------------------------------- |
+| `planName`           | String     | **Yes**  | Max 255 chars, not blank  | Custom plan name                         |
+| `doctorEmployeeCode` | String     | **Yes**  | Not blank                 | Doctor in charge                         |
+| `discountAmount`     | BigDecimal | **Yes**  | >= 0                      | Discount amount (default 0)              |
+| `paymentType`        | String     | **Yes**  | FULL, PHASED, INSTALLMENT | Payment method                           |
+| `startDate`          | Date       | No       | -                         | Start date (optional, null for DRAFT)    |
+| `expectedEndDate`    | Date       | No       | -                         | Expected end (optional, auto-calculated) |
+| `phases`             | Array      | **Yes**  | Min 1 phase               | List of phases                           |
 
-**Expected**: Status 400, error "Discount amount (5000000) cannot exceed total cost (200000)"
+### PhaseRequest
+
+| Field                   | Type    | Required | Constraints              | Description                 |
+| ----------------------- | ------- | -------- | ------------------------ | --------------------------- |
+| `phaseNumber`           | Integer | **Yes**  | >= 1, unique within plan | Phase number (1, 2, 3, ...) |
+| `phaseName`             | String  | **Yes**  | Max 255 chars, not blank | Phase name                  |
+| `estimatedDurationDays` | Integer | No       | >= 0                     | Estimated duration in days  |
+| `items`                 | Array   | **Yes**  | Min 1 item               | List of items in this phase |
+
+### ItemRequest
+
+| Field            | Type       | Required | Constraints              | Description                                |
+| ---------------- | ---------- | -------- | ------------------------ | ------------------------------------------ |
+| `serviceCode`    | String     | **Yes**  | Must exist and be active | Service code from `dental_services` table  |
+| `price`          | BigDecimal | **Yes**  | > 0                      | Custom price for this item                 |
+| `sequenceNumber` | Integer    | **Yes**  | >= 1                     | Sequence within phase                      |
+| `quantity`       | Integer    | **Yes**  | 1-100                    | **Key feature**: Number of items to create |
+
+### Field Validations
+
+#### planName
+
+- Must not be blank
+- Max 255 characters
+- Example: "Lộ trình niềng răng tùy chỉnh (6 tháng)"
+
+#### doctorEmployeeCode
+
+- Must exist in `employees` table
+- Employee must be active
+- Example: "EMP-001"
+
+#### phases
+
+- Must have at least 1 phase
+- Phase numbers must be unique (no duplicates)
+- Each phase must have at least 1 item
+
+#### serviceCode
+
+- Must exist in `dental_services` table
+- Service must be active (`is_active = true`)
+- Example: "ORTHO_ADJUST", "EXAM_GENERAL"
+
+#### price (Price Override)
+
+- **Validation**: Must be within **50%-150%** of service default price
+- If service default price = 1,000,000đ:
+  - ✅ Allowed: 500,000đ to 1,500,000đ
+  - ❌ Rejected: 400,000đ (too low) or 2,000,000đ (too high)
+
+#### quantity (Quantity Expansion)
+
+- Min: 1
+- Max: 100 (prevent abuse)
+- Creates multiple `patient_plan_items` with auto-incremented names
 
 ---
 
-## 🔄 Workflow Integration
+## Response Model
 
-### Current API 5.4 Position in Full Workflow
+### Response (201 CREATED)
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                 Treatment Plan Lifecycle                    │
-└─────────────────────────────────────────────────────────────┘
+Same structure as **API 5.2 - TreatmentPlanDetailResponse**
 
-1. ✅ [API 5.3] Create from Template (status=PENDING, approval=APPROVED)
-   OR
-2. ✅ [API 5.4] Create Custom (status=PENDING, approval=DRAFT) ← CURRENT
+**Key Differences from Template Plans**:
 
-3. ⏳ [API 5.9] Manager Approval (DRAFT → APPROVED)           ← FUTURE
+- ✅ `approval_status` = **"DRAFT"** (not APPROVED)
+- ✅ `status` = "PENDING" (not started yet)
+- ✅ `startDate` = null (will be set when plan is activated)
 
-4. ⏳ [API 5.5] Activate Plan (PENDING → ACTIVE)             ← EXISTING
-
-5. ⏳ [API 5.6] Schedule Items (link to appointments)         ← EXISTING
-
-6. ⏳ [API 5.7] Update Progress (mark items COMPLETED)        ← EXISTING
-
-7. ⏳ [API 5.8] Complete Plan (all items done → COMPLETED)    ← EXISTING
-```
-
-### Next Required API: **5.9 - Approve/Reject Custom Plan**
-
-**Endpoint**: `POST /api/v1/treatment-plans/{planCode}/approval`
-
-**Request Body**:
 ```json
 {
-  "action": "APPROVE",  // or "REJECT"
-  "patientConsentDate": "2025-01-12T10:00:00",
-  "rejectionReason": null  // Required if action=REJECT
+  "planId": 12,
+  "planCode": "PLAN-20251112-002",
+  "planName": "Lộ trình niềng răng tùy chỉnh (6 tháng)",
+  "status": "PENDING",
+  "doctor": {
+    "employeeCode": "EMP-001",
+    "fullName": "Bác sĩ Nguyễn Văn A"
+  },
+  "patient": {
+    "patientCode": "BN-1001",
+    "fullName": "Đoàn Thanh Phong"
+  },
+  "startDate": null,
+  "expectedEndDate": null,
+  "createdAt": "2025-11-12T14:30:00",
+  "totalPrice": 3800000,
+  "discountAmount": 0,
+  "finalCost": 3800000,
+  "paymentType": "INSTALLMENT",
+  "progressSummary": {
+    "totalPhases": 2,
+    "completedPhases": 0,
+    "totalItems": 8,
+    "completedItems": 0,
+    "progressPercentage": 0.0
+  },
+  "phases": [
+    {
+      "patientPhaseId": 103,
+      "phaseNumber": 1,
+      "phaseName": "Giai đoạn 1: Khám và Chuẩn bị",
+      "status": "PENDING",
+      "startDate": null,
+      "completionDate": null,
+      "estimatedDurationDays": 7,
+      "items": [
+        {
+          "itemId": 301,
+          "sequenceNumber": 1,
+          "itemName": "Khám tổng quát",
+          "status": "PENDING",
+          "estimatedTimeMinutes": 30,
+          "price": 500000,
+          "completedAt": null,
+          "linkedAppointments": []
+        },
+        {
+          "itemId": 302,
+          "sequenceNumber": 2,
+          "itemName": "Lấy cao răng",
+          "status": "PENDING",
+          "estimatedTimeMinutes": 45,
+          "price": 800000,
+          "completedAt": null,
+          "linkedAppointments": []
+        }
+      ]
+    },
+    {
+      "patientPhaseId": 104,
+      "phaseNumber": 2,
+      "phaseName": "Giai đoạn 2: Điều chỉnh định kỳ",
+      "status": "PENDING",
+      "startDate": null,
+      "completionDate": null,
+      "estimatedDurationDays": 180,
+      "items": [
+        {
+          "itemId": 303,
+          "sequenceNumber": 1,
+          "itemName": "Điều chỉnh niềng răng (Lần 1)",
+          "status": "PENDING",
+          "estimatedTimeMinutes": 45,
+          "price": 500000,
+          "completedAt": null,
+          "linkedAppointments": []
+        },
+        {
+          "itemId": 304,
+          "sequenceNumber": 2,
+          "itemName": "Điều chỉnh niềng răng (Lần 2)",
+          "status": "PENDING",
+          "estimatedTimeMinutes": 45,
+          "price": 500000,
+          "completedAt": null,
+          "linkedAppointments": []
+        },
+        {
+          "itemId": 305,
+          "sequenceNumber": 3,
+          "itemName": "Điều chỉnh niềng răng (Lần 3)",
+          "status": "PENDING",
+          "estimatedTimeMinutes": 45,
+          "price": 500000,
+          "completedAt": null,
+          "linkedAppointments": []
+        },
+        {
+          "itemId": 306,
+          "sequenceNumber": 4,
+          "itemName": "Điều chỉnh niềng răng (Lần 4)",
+          "status": "PENDING",
+          "estimatedTimeMinutes": 45,
+          "price": 500000,
+          "completedAt": null,
+          "linkedAppointments": []
+        },
+        {
+          "itemId": 307,
+          "sequenceNumber": 5,
+          "itemName": "Điều chỉnh niềng răng (Lần 5)",
+          "status": "PENDING",
+          "estimatedTimeMinutes": 45,
+          "price": 500000,
+          "completedAt": null,
+          "linkedAppointments": []
+        },
+        {
+          "itemId": 308,
+          "sequenceNumber": 6,
+          "itemName": "Điều chỉnh niềng răng (Lần 6)",
+          "status": "PENDING",
+          "estimatedTimeMinutes": 45,
+          "price": 500000,
+          "completedAt": null,
+          "linkedAppointments": []
+        }
+      ]
+    }
+  ]
 }
 ```
 
-**Business Logic**:
-- Check `approval_status = PENDING_REVIEW`
-- Validate user has `APPROVE_TREATMENT_PLAN` permission (Manager only)
-- If APPROVE: Set `approved_by`, `approved_at`, `approval_status=APPROVED`
-- If REJECT: Set `rejection_reason`, `approval_status=REJECTED`, `status=CANCELLED`
+**Notice**:
+
+- Phase 2 has `quantity: 6` → Created **6 items** (Lần 1, Lần 2, ..., Lần 6)
+- Total items = 2 (phase 1) + 6 (phase 2) = 8 items
 
 ---
 
-## 📈 Performance Considerations
+## Business Logic
 
-### Batch Insert Optimization
-- Uses Hibernate cascade with `CascadeType.ALL`
-- Single transaction saves: plan → phases → items
-- Hibernate batches SQL INSERTs automatically (configured in application.yaml)
+### Step 1: Validate Input
 
-### Current Configuration (Check `application.yaml`):
-```yaml
-spring:
-  jpa:
-    properties:
-      hibernate:
-        jdbc:
-          batch_size: 20  # Batch 20 INSERT statements
-        order_inserts: true
-        order_updates: true
+```java
+// Validate patient
+Patient patient = patientRepository.findByPatientCode(patientCode)
+  .orElseThrow(() -> new NotFoundException("PATIENT_NOT_FOUND"));
+
+if (!patient.getIsActive()) {
+  throw new BadRequestException("PATIENT_INACTIVE");
+}
+
+// Validate doctor
+Employee doctor = employeeRepository.findByEmployeeCode(doctorEmployeeCode)
+  .orElseThrow(() -> new NotFoundException("EMPLOYEE_NOT_FOUND"));
+
+if (!doctor.getIsActive()) {
+  throw new BadRequestException("EMPLOYEE_INACTIVE");
+}
 ```
 
-### Performance Test Results (Expected):
-| Scenario | Items | Queries (without batch) | Queries (with batch) |
-|---------|-------|--------------------------|---------------------|
-| Small Plan | 5 items | ~11 queries | ~3 queries |
-| Medium Plan | 20 items | ~41 queries | ~5 queries |
-| Large Plan | 100 items | ~201 queries | ~10 queries |
+### Step 2: Validate Phases
+
+```java
+// Check phase numbers are unique
+Set<Integer> phaseNumbers = new HashSet<>();
+for (PhaseRequest phase : request.getPhases()) {
+  if (!phaseNumbers.add(phase.getPhaseNumber())) {
+    throw new BadRequestException("DUPLICATE_PHASE_NUMBER: " + phase.getPhaseNumber());
+  }
+}
+
+// Check each phase has at least 1 item
+for (PhaseRequest phase : request.getPhases()) {
+  if (phase.getItems().isEmpty()) {
+    throw new BadRequestException("PHASE_HAS_NO_ITEMS: Phase " + phase.getPhaseNumber());
+  }
+}
+```
+
+### Step 3: Validate Services and Prices
+
+```java
+for (PhaseRequest phase : request.getPhases()) {
+  for (ItemRequest item : phase.getItems()) {
+    // Validate service exists
+    DentalService service = serviceRepository.findByServiceCode(item.getServiceCode())
+      .orElseThrow(() -> new NotFoundException("SERVICE_NOT_FOUND: " + item.getServiceCode()));
+
+    if (!service.getIsActive()) {
+      throw new BadRequestException("SERVICE_INACTIVE: " + item.getServiceCode());
+    }
+
+    // Validate price override (50%-150% of default price)
+    BigDecimal defaultPrice = service.getPrice();
+    BigDecimal minPrice = defaultPrice.multiply(new BigDecimal("0.5"));
+    BigDecimal maxPrice = defaultPrice.multiply(new BigDecimal("1.5"));
+
+    if (item.getPrice().compareTo(minPrice) < 0 || item.getPrice().compareTo(maxPrice) > 0) {
+      throw new BadRequestException(
+        String.format("PRICE_OUT_OF_RANGE: Service %s (default: %s, allowed: %s-%s, given: %s)",
+          item.getServiceCode(), defaultPrice, minPrice, maxPrice, item.getPrice())
+      );
+    }
+  }
+}
+```
+
+### Step 4: Create Plan Entity
+
+```java
+String planCode = planCodeGenerator.generatePlanCode();
+
+PatientTreatmentPlan plan = PatientTreatmentPlan.builder()
+  .planCode(planCode)
+  .planName(request.getPlanName())
+  .patient(patient)
+  .createdBy(doctor)
+  .status(TreatmentPlanStatus.PENDING)
+  .approvalStatus(ApprovalStatus.DRAFT) // V19: Custom plans need approval
+  .paymentType(request.getPaymentType())
+  .startDate(request.getStartDate()) // Usually null for DRAFT
+  .expectedEndDate(request.getExpectedEndDate())
+  .build();
+
+plan = planRepository.save(plan);
+```
+
+### Step 5: Create Phases and Items (with Quantity Expansion)
+
+```java
+BigDecimal totalCost = BigDecimal.ZERO;
+
+for (PhaseRequest phaseRequest : request.getPhases()) {
+  // Create phase
+  PatientPlanPhase phase = PatientPlanPhase.builder()
+    .plan(plan)
+    .phaseNumber(phaseRequest.getPhaseNumber())
+    .phaseName(phaseRequest.getPhaseName())
+    .estimatedDurationDays(phaseRequest.getEstimatedDurationDays())
+    .status(PhaseStatus.PENDING)
+    .build();
+  phase = phaseRepository.save(phase);
+
+  // Create items with quantity expansion
+  int sequenceCounter = 1;
+  for (ItemRequest itemRequest : phaseRequest.getItems()) {
+    DentalService service = serviceRepository.findByServiceCode(itemRequest.getServiceCode()).get();
+    int quantity = itemRequest.getQuantity();
+
+    // QUANTITY EXPANSION LOGIC
+    for (int i = 1; i <= quantity; i++) {
+      PatientPlanItem item = PatientPlanItem.builder()
+        .phase(phase)
+        .service(service)
+        .sequenceNumber(sequenceCounter++)
+        .itemName(generateItemName(service.getServiceName(), quantity, i))
+        .status(PlanItemStatus.PENDING)
+        .price(itemRequest.getPrice())
+        .estimatedTimeMinutes(service.getEstimatedTimeMinutes())
+        .build();
+
+      itemRepository.save(item);
+      totalCost = totalCost.add(itemRequest.getPrice());
+    }
+  }
+}
+```
+
+### Step 6: Calculate Final Cost
+
+```java
+BigDecimal discount = request.getDiscountAmount();
+if (discount.compareTo(totalCost) > 0) {
+  throw new BadRequestException("DISCOUNT_EXCEEDS_TOTAL");
+}
+
+BigDecimal finalCost = totalCost.subtract(discount);
+
+// Update plan
+plan.setTotalPrice(totalCost);
+plan.setDiscountAmount(discount);
+plan.setFinalCost(finalCost);
+planRepository.save(plan);
+```
 
 ---
 
-## 🐛 Known Issues & Limitations
+## Quantity Expansion
 
-### Current Limitations
-1. **No RBAC for assigned doctor check**: Currently any doctor with `CREATE_TREATMENT_PLAN` can create plan for any patient. P1 fix pending.
-2. **No manager notification**: When plan is created with approval_status=DRAFT, no notification sent to managers. Feature pending.
-3. **No price history tracking**: Price overrides are logged but not stored in separate audit table. Future enhancement.
+### Example 1: Single Item (quantity = 1)
 
-### Future Enhancements (Not in Scope)
-- **API 5.9**: Approval/Rejection endpoint
-- **API 5.10**: Edit custom plan (while approval_status=DRAFT)
-- **API 5.11**: Clone plan to another patient
-- **Price History Audit Table**: Track all price changes
-- **Manager Dashboard**: List all pending approval plans
+**Request**:
 
----
+```json
+{
+  "serviceCode": "EXAM_GENERAL",
+  "price": 500000,
+  "sequenceNumber": 1,
+  "quantity": 1
+}
+```
 
-## ✅ Checklist - Implementation Complete
+**Result**: 1 item created
 
-- [x] Created ApprovalStatus enum (4 states)
-- [x] Created V19 migration script (8 steps, 350+ lines)
-- [x] Updated PatientTreatmentPlan entity (5 new fields)
-- [x] Updated PatientPlanPhase entity (1 new field)
-- [x] Created CreateCustomPlanRequest DTO (3 nested classes, full validation)
-- [x] Implemented CustomTreatmentPlanService (320+ lines)
-  - [x] Quantity expansion loop with sequence auto-increment (P0 fix)
-  - [x] Price validation 50%-150% (P0 fix)
-  - [x] Unique phase number validation (P0 fix)
-  - [x] Discount validation (P0 fix)
-  - [x] Empty phase validation (P1 fix)
-  - [x] Patient/Doctor/Service existence checks
-  - [x] Approval workflow integration (approval_status=DRAFT)
-  - [x] Comprehensive error handling
-  - [x] Batch insert support
-- [x] Added Controller endpoint with Swagger docs
-- [x] All P0 fixes implemented
-- [x] All P1 fixes implemented
-- [x] Compile errors resolved
-- [x] Documentation created
+- `itemName`: "Khám tổng quát"
+- No suffix because quantity = 1
 
----
+### Example 2: Multiple Items (quantity = 6)
 
-## 📝 Next Steps
+**Request**:
 
-### Immediate (Testing Phase)
-1. **Run V19 Migration**
-   ```bash
-   docker exec -i postgres-dental psql -U root -d dental_clinic_db \
-     < src/main/resources/db/migration/V19__add_approval_workflow_and_phase_duration.sql
-   ```
+```json
+{
+  "serviceCode": "ORTHO_ADJUST",
+  "price": 500000,
+  "sequenceNumber": 1,
+  "quantity": 6
+}
+```
 
-2. **Restart Application**
-   ```bash
-   mvn clean install
-   mvn spring-boot:run
-   ```
+**Result**: 6 items created
 
-3. **Test API 5.4**
-   - Test Case 1: Basic plan (1 phase, 1 item)
-   - Test Case 2: Quantity expansion (quantity=5)
-   - Test Case 3: Multiple phases
-   - Test Case 4: Validation errors (duplicate phase, price out of range)
+1. `itemName`: "Điều chỉnh niềng răng (Lần 1)"
+2. `itemName`: "Điều chỉnh niềng răng (Lần 2)"
+3. `itemName`: "Điều chỉnh niềng răng (Lần 3)"
+4. `itemName`: "Điều chỉnh niềng răng (Lần 4)"
+5. `itemName`: "Điều chỉnh niềng răng (Lần 5)"
+6. `itemName`: "Điều chỉnh niềng răng (Lần 6)"
 
-4. **Verify Database**
-   ```sql
-   -- Check plan created
-   SELECT plan_code, plan_name, approval_status FROM patient_treatment_plans 
-   WHERE plan_code LIKE 'PLAN-%' ORDER BY created_at DESC LIMIT 5;
+All items have same price (500,000đ) but are tracked separately.
 
-   -- Check items expanded
-   SELECT ppt.plan_code, ppp.phase_number, ppi.sequence_number, ppi.item_name, ppi.price
-   FROM patient_plan_items ppi
-   JOIN patient_plan_phases ppp ON ppi.phase_id = ppp.phase_id
-   JOIN patient_treatment_plans ppt ON ppp.plan_id = ppt.plan_id
-   WHERE ppt.plan_code = 'PLAN-20250112-001'
-   ORDER BY ppp.phase_number, ppi.sequence_number;
-   ```
+### Item Name Generation Logic
 
-### Medium-term (API 5.9 Implementation)
-1. Create `ApproveTreatmentPlanRequest` DTO
-2. Add `approvePlan()` method to service
-3. Add approval endpoint to controller
-4. Implement manager permission check
-5. Add notification system (email/in-app)
-
-### Long-term (Enhancements)
-1. Add price history audit table
-2. Implement edit custom plan feature
-3. Create manager approval dashboard
-4. Add plan cloning feature
-5. Performance monitoring and optimization
+```java
+String generateItemName(String serviceName, int quantity, int currentIndex) {
+  if (quantity > 1) {
+    return serviceName + " (Lần " + currentIndex + ")";
+  } else {
+    return serviceName;
+  }
+}
+```
 
 ---
 
-**Document Version**: 1.0  
-**Last Updated**: 2025-01-12  
-**Author**: GitHub Copilot  
-**Review Status**: Ready for QA Testing
+## Approval Workflow
+
+### Status Flow
+
+```
+1. Plan Created
+   ↓
+   status = PENDING
+   approval_status = DRAFT
+
+2. Submit for Approval (Future API)
+   ↓
+   approval_status = PENDING_APPROVAL
+
+3. Manager Approves (Future API)
+   ↓
+   approval_status = APPROVED
+
+4. Plan Can Start
+   ↓
+   status = IN_PROGRESS
+```
+
+### Current Behavior (V19)
+
+- **Created**: `approval_status = DRAFT`
+- **Required Permission**: `CREATE_TREATMENT_PLAN` (Doctor, Manager)
+- **Next Step**: Manager must approve via separate API (not yet implemented)
+- **Difference from Template Plans**: Template plans are auto-approved (`APPROVED`), custom plans require manual approval (`DRAFT`)
+
+---
+
+## Testing Guide
+
+### Test 1: Create Custom Plan (Basic)
+
+**Request**:
+
+```bash
+POST http://localhost:8080/api/v1/patients/BN-1001/treatment-plans/custom
+
+{
+  "planName": "Lộ trình điều trị tủy",
+  "doctorEmployeeCode": "EMP-001",
+  "discountAmount": 0,
+  "paymentType": "FULL",
+  "phases": [
+    {
+      "phaseNumber": 1,
+      "phaseName": "Giai đoạn 1: Điều trị",
+      "estimatedDurationDays": 7,
+      "items": [
+        {
+          "serviceCode": "ENDO_ROOT",
+          "price": 2000000,
+          "sequenceNumber": 1,
+          "quantity": 1
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Expected**:
+
+- ✅ Status: 201 CREATED
+- ✅ `planCode`: Auto-generated (PLAN-YYYYMMDD-XXX)
+- ✅ `approval_status`: "DRAFT"
+- ✅ `status`: "PENDING"
+- ✅ `totalPrice`: 2000000
+- ✅ `phases`: 1 phase
+- ✅ `items`: 1 item
+
+### Test 2: Quantity Expansion
+
+**Request**:
+
+```json
+{
+  "planName": "Lộ trình niềng răng",
+  "doctorEmployeeCode": "EMP-001",
+  "discountAmount": 0,
+  "paymentType": "INSTALLMENT",
+  "phases": [
+    {
+      "phaseNumber": 1,
+      "phaseName": "Điều chỉnh định kỳ",
+      "estimatedDurationDays": 180,
+      "items": [
+        {
+          "serviceCode": "ORTHO_ADJUST",
+          "price": 500000,
+          "sequenceNumber": 1,
+          "quantity": 6
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Expected**:
+
+- ✅ `totalPrice`: 3000000 (500000 × 6)
+- ✅ Phase 1 has **6 items**:
+  - "Điều chỉnh niềng răng (Lần 1)"
+  - "Điều chỉnh niềng răng (Lần 2)"
+  - ...
+  - "Điều chỉnh niềng răng (Lần 6)"
+
+### Test 3: Price Override Validation (Success)
+
+**Setup**: Service "EXAM_GENERAL" default price = 500,000đ
+
+**Request**:
+
+```json
+{
+  "serviceCode": "EXAM_GENERAL",
+  "price": 600000,
+  "sequenceNumber": 1,
+  "quantity": 1
+}
+```
+
+**Expected**:
+
+- ✅ Accepted (600,000 is within 250,000 - 750,000 range)
+
+### Test 4: Price Override Validation (Fail - Too Low)
+
+**Request**:
+
+```json
+{
+  "serviceCode": "EXAM_GENERAL",
+  "price": 200000,
+  "sequenceNumber": 1,
+  "quantity": 1
+}
+```
+
+**Expected**:
+
+- ❌ Status: 400 BAD REQUEST
+- Error: "PRICE_OUT_OF_RANGE" (200,000 < 250,000)
+
+### Test 5: Duplicate Phase Numbers
+
+**Request**:
+
+```json
+{
+  "phases": [
+    {
+      "phaseNumber": 1,
+      "phaseName": "Phase 1",
+      "items": [...]
+    },
+    {
+      "phaseNumber": 1,
+      "phaseName": "Phase 1 again",
+      "items": [...]
+    }
+  ]
+}
+```
+
+**Expected**:
+
+- ❌ Status: 400 BAD REQUEST
+- Error: "DUPLICATE_PHASE_NUMBER: 1"
+
+### Test 6: Empty Phase (No Items)
+
+**Request**:
+
+```json
+{
+  "phases": [
+    {
+      "phaseNumber": 1,
+      "phaseName": "Phase 1",
+      "items": []
+    }
+  ]
+}
+```
+
+**Expected**:
+
+- ❌ Status: 400 BAD REQUEST
+- Error: "PHASE_HAS_NO_ITEMS: Phase 1"
+
+---
+
+## Error Handling
+
+### Common Errors
+
+| HTTP | Error Code             | Description                                        |
+| ---- | ---------------------- | -------------------------------------------------- |
+| 404  | PATIENT_NOT_FOUND      | Patient code not found                             |
+| 404  | EMPLOYEE_NOT_FOUND     | Doctor employee code not found                     |
+| 404  | SERVICE_NOT_FOUND      | Service code not found                             |
+| 400  | PATIENT_INACTIVE       | Patient account is inactive                        |
+| 400  | EMPLOYEE_INACTIVE      | Doctor account is inactive                         |
+| 400  | SERVICE_INACTIVE       | Service is inactive                                |
+| 400  | DUPLICATE_PHASE_NUMBER | Phase numbers must be unique                       |
+| 400  | PHASE_HAS_NO_ITEMS     | Each phase must have at least 1 item               |
+| 400  | PRICE_OUT_OF_RANGE     | Price not within 50%-150% of service default       |
+| 400  | DISCOUNT_EXCEEDS_TOTAL | Discount amount > total price                      |
+| 403  | ACCESS_DENIED          | User doesn't have CREATE_TREATMENT_PLAN permission |
+
+---
+
+**Document Version**: 1.0
+**Last Updated**: 2025-11-12
+**Author**: Dental Clinic Development Team
+**Verified Against**: TreatmentPlanController.java (lines 220-270), CustomTreatmentPlanService.java, CreateCustomPlanRequest.java

@@ -1,439 +1,491 @@
-# Treatment Plan API Documentation
+# Treatment Plan Management - API Documentation
 
-**Module**: Treatment Plan Management  
-**Version**: V20  
-**Last Updated**: 2025-11-12  
+**Module**: Treatment Plan Management
+**Version**: V1.0
 **Status**: ✅ Production Ready
+**Last Updated**: 2025-11-12
+
+---
+
+## ⚠️ CRITICAL: Endpoint Path Notice
+
+**CORRECT ENDPOINT**: `/api/v1/patients/{patientCode}/treatment-plans` (**PLURAL**)
+
+**WRONG ENDPOINT**: `/api/v1/patients/{patientCode}/treatment-plan` (singular) ❌
+
+**Common Error**:
+
+```
+POST /api/v1/patients/BN-1001/treatment-plan  ❌ 404 Error
+POST /api/v1/patients/BN-1001/treatment-plans ✅ Correct
+```
+
+**Why**: RESTful convention uses plural for resource collections.
 
 ---
 
 ## 📋 Overview
 
-The Treatment Plan module manages long-term treatment contracts for patients (e.g., orthodontics, implants). It provides a complete workflow from template creation to patient plan management with booking integration.
+Treatment Plan Management system manages long-term patient care contracts. Each plan contains multiple phases, and each phase contains multiple service items.
 
-### Key Capabilities
+**Key Concepts**:
 
-✅ **Template-based Plans**: Standardize common treatments  
-✅ **Custom Plans**: Create unique treatment plans from scratch  
-✅ **Progress Tracking**: Monitor phase and item completion  
-✅ **RBAC**: Role-based access (Admin, Doctor, Patient)  
-✅ **Appointment Integration**: Direct booking from plan items  
-✅ **Approval Workflow**: Price validation and manager approval  
+- **Treatment Plan**: Long-term care contract (e.g., 2-year orthodontics package)
+- **Phase**: Logical stage in treatment (e.g., "Preparation", "Installation", "Monthly Adjustments")
+- **Item**: Individual service to be performed (can be linked to appointments)
+
+**Features**:
+
+- ✅ Template-based plans (standardized packages)
+- ✅ Custom plans (doctor-defined)
+- ✅ Quantity expansion (1 item → N trackable items)
+- ✅ Price customization
+- ✅ Approval workflow (DRAFT → APPROVED)
+- ✅ Progress tracking
+- ✅ RBAC (Role-Based Access Control)
 
 ---
 
-## 📚 API Documentation
+## 🔗 API Index
 
-### Core APIs
-
-| API | Title | File | Status |
-|-----|-------|------|--------|
-| **5.1** | Get Treatment Plans by Patient | [`API_5.1_5.2_Get_Treatment_Plans.md`](./API_5.1_5.2_Get_Treatment_Plans.md) | ✅ Production |
-| **5.2** | Get Treatment Plan Details | [`API_5.1_5.2_Get_Treatment_Plans.md`](./API_5.1_5.2_Get_Treatment_Plans.md) | ✅ Production |
-| **5.3** | Create Plan from Template | [`API_5.3_Create_From_Template.md`](./API_5.3_Create_From_Template.md) | ✅ Production |
-| **5.4** | Create Custom Plan | [`API_5.4_Create_Custom_Plan.md`](./API_5.4_Create_Custom_Plan.md) | ✅ Production |
-| **5.5** | Get All Plans with RBAC | [`API_5.5_Get_All_With_RBAC.md`](./API_5.5_Get_All_With_RBAC.md) | ✅ Production |
+| API | Method | Endpoint                                      | Description                        | Doc Link                                              |
+| --- | ------ | --------------------------------------------- | ---------------------------------- | ----------------------------------------------------- |
+| 5.1 | GET    | `/patients/{code}/treatment-plans`            | List plans for patient (paginated) | [API 5.1 & 5.2](./API_5.1_5.2_Get_Treatment_Plans.md) |
+| 5.2 | GET    | `/patients/{code}/treatment-plans/{planCode}` | Get plan detail                    | [API 5.1 & 5.2](./API_5.1_5.2_Get_Treatment_Plans.md) |
+| 5.3 | POST   | `/patients/{code}/treatment-plans`            | Create from template               | [API 5.3](./API_5.3_Create_From_Template.md)          |
+| 5.4 | POST   | `/patients/{code}/treatment-plans/custom`     | Create custom plan                 | [API 5.4](./API_5.4_Create_Custom_Plan.md)            |
+| 5.5 | GET    | `/patient-treatment-plans`                    | Get all with RBAC & filters        | [API 5.5](./API_5.5_Get_All_With_RBAC.md)             |
 
 ---
 
 ## 🚀 Quick Start
 
-### 1. View Patient's Plans
-
-Get all treatment plans for a specific patient with progress tracking:
+### 1. Get Treatment Plans for Patient
 
 ```bash
-GET /api/v1/patients/{patientCode}/treatment-plans
+GET http://localhost:8080/api/v1/patients/BN-1001/treatment-plans?page=0&size=20
+Authorization: Bearer {jwt_token}
 ```
 
-**Use Cases**:
-- Patient dashboard showing treatment progress
-- Doctor reviewing patient history
-- Receptionist checking active plans
-
-**Read more**: [API 5.1 & 5.2 Documentation](./API_5.1_5.2_Get_Treatment_Plans.md)
-
----
-
-### 2. Create Plan from Template
-
-Apply a pre-defined template to a patient (most common workflow):
+### 2. Get Treatment Plan Detail
 
 ```bash
-POST /api/v1/patient-treatment-plans/from-template
+GET http://localhost:8080/api/v1/patients/BN-1001/treatment-plans/PLAN-20251001-001
+Authorization: Bearer {jwt_token}
+```
+
+### 3. Create Plan from Template
+
+```bash
+POST http://localhost:8080/api/v1/patients/BN-1001/treatment-plans
+Content-Type: application/json
+Authorization: Bearer {jwt_token}
 
 {
-  "patientCode": "BN-1001",
-  "templateId": 1,
-  "startDate": "2025-11-01",
+  "sourceTemplateCode": "TPL_ORTHO_METAL",
+  "doctorEmployeeCode": "EMP-001",
+  "discountAmount": 0,
   "paymentType": "INSTALLMENT"
 }
 ```
 
-**Use Cases**:
-- Standard treatments (orthodontics, implants)
-- Fast plan creation with pre-configured phases
-- Consistent pricing and timelines
-
-**Features**:
-- ✅ Automatic quantity expansion (24 adjustments → 24 items)
-- ✅ Price customization with validation
-- ✅ Phase and item auto-generation
-
-**Read more**: [API 5.3 Documentation](./API_5.3_Create_From_Template.md)
-
----
-
-### 3. Create Custom Plan
-
-Create a unique treatment plan from scratch without templates:
+### 4. Create Custom Plan
 
 ```bash
-POST /api/v1/patient-treatment-plans/custom
+POST http://localhost:8080/api/v1/patients/BN-1001/treatment-plans/custom
+Content-Type: application/json
+Authorization: Bearer {jwt_token}
 
 {
-  "patientCode": "BN-1001",
-  "planName": "Custom Orthodontics + Implant Combo",
-  "startDate": "2025-11-01",
+  "planName": "Lộ trình niềng răng tùy chỉnh",
+  "doctorEmployeeCode": "EMP-001",
+  "discountAmount": 0,
+  "paymentType": "INSTALLMENT",
   "phases": [
     {
       "phaseNumber": 1,
-      "phaseName": "Phase 1: Preparation",
-      "estimatedDurationDays": 14,
+      "phaseName": "Giai đoạn 1: Khám",
+      "estimatedDurationDays": 7,
       "items": [
         {
-          "serviceCode": "EXAM-GEN",
-          "quantity": 1,
-          "price": 500000
+          "serviceCode": "EXAM_GENERAL",
+          "price": 500000,
+          "sequenceNumber": 1,
+          "quantity": 1
         }
       ]
     }
-  ],
-  "totalPrice": 45000000,
-  "discountAmount": 5000000,
-  "paymentType": "INSTALLMENT"
+  ]
 }
 ```
 
-**Use Cases**:
-- Complex multi-service treatments
-- Custom pricing negotiations
-- Treatments not covered by templates
-
-**Features**:
-- ✅ Full flexibility (any combination of services)
-- ✅ Quantity expansion (qty 5 → 5 separate items)
-- ✅ Price override with 50%-150% validation
-- ✅ Approval workflow (DRAFT status)
-
-**Read more**: [API 5.4 Documentation](./API_5.4_Create_Custom_Plan.md)
-
----
-
-### 4. Get All Plans (Admin/Doctor Dashboard)
-
-Unified endpoint with smart RBAC filtering:
+### 5. Get All Plans (Admin Dashboard)
 
 ```bash
-GET /api/v1/patient-treatment-plans
-  ?status=IN_PROGRESS
-  &approvalStatus=APPROVED
-  &startDateFrom=2024-01-01
-  &searchTerm=orthodontics
-  &page=0&size=20
-```
-
-**Use Cases**:
-- **Admin Dashboard**: View all plans, filter by doctor/patient
-- **Doctor Dashboard**: Auto-filtered to show only own plans
-- **Patient Dashboard**: Auto-filtered to show only own plans
-
-**Advanced Filters**:
-- Status: PENDING, IN_PROGRESS, COMPLETED, CANCELLED, ON_HOLD
-- Approval: DRAFT, PENDING_REVIEW, APPROVED, REJECTED
-- Date ranges: startDate, createdAt
-- Search: Plan name, patient name (case-insensitive)
-- Admin-only: doctorEmployeeCode, patientCode
-
-**Read more**: [API 5.5 Documentation](./API_5.5_Get_All_With_RBAC.md)
-
----
-
-## 🗂️ Database Schema
-
-### Core Tables
-
-```
-treatment_plan_templates          → Template definitions (reusable)
-├── template_phases               → Template phases
-    └── template_phase_services   → Services in each phase (with quantity)
-
-patient_treatment_plans           → Patient contracts (instances)
-├── patient_plan_phases           → Patient-specific phases
-    └── patient_plan_items        → Individual work items (expanded from quantity)
-        └── appointment_plan_items → Link to appointments (N-N)
-```
-
-### Key Relationships
-
-```sql
--- Template to Patient Plan (many-to-many)
-patient_treatment_plans.source_template_id → treatment_plan_templates.template_id
-
--- Plan to Patient (many-to-one)
-patient_treatment_plans.patient_id → patients.patient_id
-
--- Plan to Doctor (many-to-one)
-patient_treatment_plans.created_by → employees.employee_id
-
--- Items to Appointments (many-to-many)
-appointment_plan_items → patient_plan_items.item_id, appointments.appointment_id
+GET http://localhost:8080/api/v1/patient-treatment-plans?status=IN_PROGRESS&approvalStatus=APPROVED&page=0&size=20
+Authorization: Bearer {jwt_token}
 ```
 
 ---
 
 ## 🔐 Permissions
 
-| Permission                | Role             | Description                         |
-|---------------------------|------------------|-------------------------------------|
-| `VIEW_TREATMENT_PLAN_ALL` | Staff, Admin     | View all patient treatment plans    |
-| `VIEW_TREATMENT_PLAN_OWN` | Patient          | View only own plans                 |
-| `CREATE_TREATMENT_PLAN`   | Doctor, Admin    | Create new treatment plans          |
-| `UPDATE_TREATMENT_PLAN`   | Doctor, Admin    | Update plans (items, status)        |
-| `APPROVE_TREATMENT_PLAN`  | Manager          | Approve custom plans (future)       |
+### Permission Matrix
+
+| Permission                | Role                  | API 5.1 | API 5.2 | API 5.3 | API 5.4 | API 5.5 |
+| ------------------------- | --------------------- | ------- | ------- | ------- | ------- | ------- |
+| `VIEW_TREATMENT_PLAN_ALL` | Admin, Manager, Staff | ✅ All  | ✅ All  | -       | -       | ✅ All  |
+| `VIEW_TREATMENT_PLAN_OWN` | Patient               | ✅ Own  | ✅ Own  | -       | -       | ✅ Own  |
+| `CREATE_TREATMENT_PLAN`   | Doctor, Manager       | -       | -       | ✅      | ✅      | -       |
+
+### Role Behavior
+
+**Admin** (Always has full access via `hasRole('ROLE_ADMIN')`):
+
+- Full access to ALL APIs regardless of permissions
+- Can view, create, update, delete any treatment plan
+
+**Manager** (`VIEW_TREATMENT_PLAN_ALL` + `CREATE_TREATMENT_PLAN`):
+
+- Can view **any** patient's plans
+- Can create plans for patients
+- Can filter by doctor/patient in API 5.5
+
+**Dentist** (`VIEW_TREATMENT_PLAN_ALL` + `CREATE_TREATMENT_PLAN`):
+
+- Can view **all** patients' plans
+- Can create plans for patients
+- Can view plans they created (API 5.5 auto-filtered)
+
+**Receptionist** (`VIEW_TREATMENT_PLAN_ALL`):
+
+- Can view **any** patient's plans (read-only)
+- Cannot create or modify plans
+
+**Patient** (`VIEW_TREATMENT_PLAN_OWN`):
+
+- Can view **only** their own plans
+- System auto-filters by patient ID
 
 ---
 
-## 📊 Status Workflow
+## 📊 Data Model
 
-### Plan Item Status
+### Treatment Plan Hierarchy
+
+```
+PatientTreatmentPlan
+├── plan_code: String (e.g., PLAN-20251001-001)
+├── plan_name: String
+├── status: PENDING | IN_PROGRESS | COMPLETED | CANCELLED
+├── approval_status: DRAFT | APPROVED | REJECTED (V19)
+├── patient: Patient
+├── created_by: Employee (Doctor)
+├── total_price: BigDecimal
+├── discount_amount: BigDecimal
+├── final_cost: BigDecimal
+├── payment_type: FULL | PHASED | INSTALLMENT
+│
+└── phases: List<PatientPlanPhase>
+    ├── phase_number: Integer (1, 2, 3, ...)
+    ├── phase_name: String
+    ├── status: PENDING | IN_PROGRESS | COMPLETED
+    ├── estimated_duration_days: Integer (V19)
+    │
+    └── items: List<PatientPlanItem>
+        ├── sequence_number: Integer
+        ├── item_name: String
+        ├── status: PENDING | READY_FOR_BOOKING | SCHEDULED | IN_PROGRESS | COMPLETED
+        ├── service: DentalService
+        ├── price: BigDecimal (snapshot)
+        ├── estimated_time_minutes: Integer
+        │
+        └── linked_appointments: List<Appointment>
+```
+
+### Status Flows
+
+**Plan Status**:
+
+```
+PENDING → IN_PROGRESS → COMPLETED
+   ↓
+CANCELLED
+```
+
+**Approval Status** (V19 - Custom Plans):
+
+```
+DRAFT → APPROVED → (can start)
+   ↓
+REJECTED
+```
+
+**Item Status**:
 
 ```
 PENDING → READY_FOR_BOOKING → SCHEDULED → IN_PROGRESS → COMPLETED
-   ↓                                          ↓
-CANCELLED                                 CANCELLED
-```
-
-**Status Meanings**:
-- `PENDING`: Awaiting approval (custom plans only)
-- `READY_FOR_BOOKING`: Can schedule appointment
-- `SCHEDULED`: Appointment booked
-- `IN_PROGRESS`: Appointment started
-- `COMPLETED`: Finished
-- `CANCELLED`: Plan cancelled
-
-### Approval Status (V19)
-
-```
-DRAFT → PENDING_REVIEW → APPROVED
-   ↓                        ↓
-REJECTED                  REJECTED
-```
-
-**Approval Meanings**:
-- `DRAFT`: Just created, not submitted
-- `PENDING_REVIEW`: Waiting for manager approval
-- `APPROVED`: Can proceed with treatment
-- `REJECTED`: Needs revision (see rejection_reason)
-
----
-
-## 🧪 Testing Quick Reference
-
-### Test Scenario: End-to-End Workflow
-
-**1. Create Plan from Template**
-```bash
-POST /api/v1/patient-treatment-plans/from-template
-# Response: planId = 1, plan_code = "PLAN-20251101-001"
-```
-
-**2. View Plan Details**
-```bash
-GET /api/v1/patients/BN-1001/treatment-plans/PLAN-20251101-001
-# Verify: 31 items with status = PENDING → READY_FOR_BOOKING
-```
-
-**3. Get Bookable Items**
-```bash
-GET /api/v1/patient-treatment-plans/1/bookable-items
-# Response: Items with status = READY_FOR_BOOKING
-```
-
-**4. Book Appointment with Items**
-```bash
-POST /api/v1/appointments
-{
-  "patientCode": "BN-1001",
-  "patientPlanItemIds": [101, 102],  # Book 2 items
-  "employeeCode": "EMP-1",
-  "roomCode": "RM-01",
-  "appointmentStartTime": "2025-11-15T14:00:00"
-}
-# Items 101, 102 → status changes to SCHEDULED
-```
-
-**5. Complete Appointment**
-```bash
-PATCH /api/v1/appointments/{appointmentId}/complete
-# Items 101, 102 → status changes to COMPLETED
-```
-
-**6. Check Progress**
-```bash
-GET /api/v1/patients/BN-1001/treatment-plans
-# Response: progress.completedItems = 2, progress.percentageComplete = 6.45%
 ```
 
 ---
 
-## 🔗 Integration Points
+## 🎯 Key Features
 
-### Booking Module (BE/#4)
+### 1. Template-based Plans (API 5.3)
 
-**API 3.2 - Create Appointment** supports Treatment Plan items:
+**What**: Create plan by copying from pre-defined template package
+**Example**: "Niềng răng 2 năm - 30 triệu đồng"
+**Benefits**:
+
+- ✅ Standardized care
+- ✅ Faster creation
+- ✅ Auto-approved
+
+**Available Templates** (from seed data):
+
+- `TPL_ORTHO_METAL` - Niềng răng mắc cài kim loại (30,000,000đ, 2 years)
+- `TPL_IMPLANT_OSSTEM` - Cấy ghép Implant Osstem (19,000,000đ, 6 months)
+- `TPL_CROWN_CERCON` - Bọc răng sứ Cercon HT (5,000,000đ, 7 days)
+
+### 2. Custom Plans (API 5.4)
+
+**What**: Doctor creates unique plan from scratch
+**Example**: Custom orthodontics with specific services
+**Benefits**:
+
+- ✅ Full flexibility
+- ✅ Price customization
+- ✅ Unique patient needs
+
+**Difference**: Requires approval (`approval_status = DRAFT`)
+
+### 3. Quantity Expansion
+
+**What**: Single item with `quantity = N` creates N trackable items
+
+**Example**:
 
 ```json
 {
+  "serviceCode": "ORTHO_ADJUST",
+  "quantity": 6
+}
+```
+
+**Result**: 6 items created
+
+- Điều chỉnh niềng răng (Lần 1)
+- Điều chỉnh niềng răng (Lần 2)
+- ...
+- Điều chỉnh niềng răng (Lần 6)
+
+**Benefits**:
+
+- ✅ Track each appointment separately
+- ✅ Clear progress (3/6 completed)
+- ✅ Flexible scheduling
+
+### 4. Price Customization (Custom Plans)
+
+**Rule**: Price must be within **50%-150%** of service default
+
+**Example**:
+
+- Service default: 1,000,000đ
+- ✅ Allowed: 500,000đ - 1,500,000đ
+- ❌ Rejected: 400,000đ or 2,000,000đ
+
+### 5. Smart RBAC (API 5.5)
+
+**Admin**: Sees all plans, can filter by anyone
+**Doctor**: Sees only plans they created
+**Patient**: Sees only their own plans
+
+**No code duplication** - system auto-filters based on JWT claims
+
+---
+
+## 🧪 Testing
+
+### Test Data (Seed Data)
+
+**Patients**:
+
+- `BN-1001` - Đoàn Thanh Phong (has 2 plans)
+- `BN-1002` - Phạm Văn Phong
+- `BN-1003` - Lê Thị C (has 5 plans)
+
+**Doctors**:
+
+- `EMP-001` - Bác sĩ Nguyễn Văn A
+- `EMP-002` - Bác sĩ Trần Thị B
+- `EMP-003` - Bác sĩ Phạm Văn C
+
+**Plans**:
+
+- `PLAN-20251001-001` - Niềng răng (Patient BN-1001, Doctor EMP-001)
+- `PLAN-20240515-001` - Implant (Patient BN-1002, Doctor EMP-002)
+- ... (10 total plans in seed data)
+
+### Test Scenarios
+
+**Scenario 1**: Staff views all plans for patient BN-1001
+
+```bash
+GET /api/v1/patients/BN-1001/treatment-plans
+# Expected: 2 plans
+```
+
+**Scenario 2**: Patient BN-1001 views their plans
+
+```bash
+GET /api/v1/patients/BN-1001/treatment-plans
+# Expected: 2 plans (same as above)
+```
+
+**Scenario 3**: Patient BN-1001 tries to view BN-1002's plans
+
+```bash
+GET /api/v1/patients/BN-1002/treatment-plans
+# Expected: 403 Forbidden
+```
+
+**Scenario 4**: Doctor EMP-001 views their patients' plans
+
+```bash
+GET /api/v1/patient-treatment-plans
+# Expected: Only plans created by EMP-001
+```
+
+**Scenario 5**: Create plan from template
+
+```bash
+POST /api/v1/patients/BN-1001/treatment-plans
+Body: { "sourceTemplateCode": "TPL_ORTHO_METAL", ... }
+# Expected: 201 Created, ~31 items
+```
+
+---
+
+## 🔧 Common Issues
+
+### Issue 1: 404 - Endpoint Not Found
+
+**Wrong**:
+
+```bash
+POST /api/v1/patient-treatment-plans/from-template  # ❌
+```
+
+**Correct**:
+
+```bash
+POST /api/v1/patients/BN-1001/treatment-plans  # ✅
+```
+
+**Reason**: API 5.3 uses patient-scoped RESTful path
+
+### Issue 2: 403 - Access Denied
+
+**Problem**: Patient trying to access other patient's plan
+
+**Solution**: Use correct patient code matching JWT token
+
+### Issue 3: 400 - Discount Exceeds Total
+
+**Problem**: `discountAmount > totalPrice`
+
+**Solution**: Ensure discount <= total price
+
+### Issue 4: 400 - Price Out of Range (Custom Plans)
+
+**Problem**: Custom price not within 50%-150% of service default
+
+**Solution**: Check service default price and adjust
+
+---
+
+## 📚 Documentation Files
+
+1. **[API 5.1 & 5.2 - Get Treatment Plans](./API_5.1_5.2_Get_Treatment_Plans.md)**
+
+   - GET list (paginated)
+   - GET detail (with phases/items)
+   - RBAC permissions
+   - Response models
+
+2. **[API 5.3 - Create from Template](./API_5.3_Create_From_Template.md)**
+
+   - Template-based creation
+   - Auto-generated structure
+   - Available templates
+   - Discount validation
+
+3. **[API 5.4 - Create Custom Plan](./API_5.4_Create_Custom_Plan.md)**
+
+   - Custom plan creation
+   - Quantity expansion logic
+   - Price override validation
+   - Approval workflow (DRAFT)
+
+4. **[API 5.5 - Get All with RBAC](./API_5.5_Get_All_With_RBAC.md)**
+   - Smart RBAC filtering
+   - Advanced filters (date, search)
+   - Performance optimization
+   - Admin/Doctor/Patient modes
+
+---
+
+## 🔄 Integration Notes
+
+### With Appointment Booking
+
+After creating a treatment plan, items can be linked to appointments:
+
+```bash
+# Step 1: Get bookable items
+GET /api/v1/patient-treatment-plans/{planId}/bookable-items
+
+# Step 2: Book appointment
+POST /api/v1/appointments
+{
   "patientCode": "BN-1001",
-  "patientPlanItemIds": [101, 102],  // ✅ Luồng 2: Treatment Plan Booking
-  "employeeCode": "EMP-1",
+  "patientPlanItemIds": [101, 102],  # Link to treatment plan items
+  "employeeCode": "EMP-001",
   "roomCode": "RM-01",
   "appointmentStartTime": "2025-11-15T14:00:00"
 }
 ```
 
-**XOR Rule**: Must provide EITHER `serviceCodes` OR `patientPlanItemIds`, not both.
+### With Payment
 
-**Status Update**: When appointment created, items change from `READY_FOR_BOOKING` → `SCHEDULED`.
+Plans track payment status via `payment_type`:
 
----
-
-## 📈 Performance Optimization
-
-**Query Optimization**:
-- `JOIN FETCH` to prevent N+1 queries
-- Indexes on: plan_code, patient_id, status, created_by, approval_status
-- Lazy loading for phases/items (only load when needed)
-
-**Expected Response Times**:
-- API 5.1 (List): < 100ms (1 query)
-- API 5.2 (Details): < 200ms (3 queries with JOINs)
-- API 5.3 (Create from Template): < 500ms (batch insert)
-- API 5.4 (Create Custom): < 700ms (validation + batch insert)
-- API 5.5 (Get All): < 150ms (1 query with Specification)
+- **FULL**: Pay all upfront
+- **PHASED**: Pay when completing each phase
+- **INSTALLMENT**: Monthly payments
 
 ---
 
-## 🐛 Common Issues & Solutions
+## 📈 Version History
 
-### Issue 1: Duplicate plan_code
+**V1.0** (2025-11-12):
 
-**Error**: `409 CONFLICT - Plan code already exists`
+- ✅ API 5.1-5.5 implemented
+- ✅ V19 approval workflow
+- ✅ Quantity expansion
+- ✅ Smart RBAC
+- ✅ Price override validation
 
-**Cause**: Multiple plans created on same date
+**V19** (2025-11-10):
 
-**Solution**: Plan code uses auto-increment suffix (PLAN-20251101-001, 002, 003...)
-
----
-
-### Issue 2: Items not READY_FOR_BOOKING
-
-**Error**: `400 BAD_REQUEST - PLAN_ITEMS_NOT_READY`
-
-**Cause**: Trying to book items with status ≠ READY_FOR_BOOKING
-
-**Solution**: 
-1. Check item status: `GET .../treatment-plans/{planId}`
-2. Wait for approval (custom plans)
-3. Ensure items not already SCHEDULED
+- ✅ Added `approval_status` enum
+- ✅ Added `estimated_duration_days` to phases
+- ✅ Custom plans require approval (DRAFT)
 
 ---
 
-### Issue 3: Price Override Rejected
-
-**Error**: `400 BAD_REQUEST - PRICE_OUT_OF_RANGE`
-
-**Cause**: Custom price outside 50%-150% of service default price
-
-**Solution**:
-```java
-// If service price = 1,000,000đ
-// Allowed range: 500,000đ - 1,500,000đ
-```
-
-Use prices within validation range or request manager override.
-
----
-
-### Issue 4: Patient Permission Denied
-
-**Error**: `403 FORBIDDEN`
-
-**Cause**: Patient trying to access another patient's plans
-
-**Solution**: Ensure JWT `account_id` matches patient's `account_id`
-
----
-
-## 📝 Migration History
-
-| Version | File | Description | Date |
-|---------|------|-------------|------|
-| **V19** | `V19__add_approval_workflow_and_phase_duration.sql` | Added approval workflow (approval_status, approved_by, etc.) and estimated_duration_days | 2025-01-12 |
-| **V20** | Consolidated in `dental-clinic-seed-data.sql` | Added 7 test treatment plans with comprehensive status coverage | 2025-01-12 |
-
----
-
-## 📚 Additional Resources
-
-### Seed Data
-- **Location**: `src/main/resources/db/dental-clinic-seed-data.sql`
-- **Test Plans**: 10 plans with various statuses (PENDING, IN_PROGRESS, COMPLETED)
-- **Coverage**: 5 patients, 3 doctors, date range 2024-05 to 2025-11
-
-### SQL Consolidation
-- **Summary**: [`V19_V20_CONSOLIDATION_SUMMARY.md`](../../../V19_V20_CONSOLIDATION_SUMMARY.md) (root)
-- **Test Script**: `test-consolidation.bat` / `test-consolidation.sh`
-
-### Architecture
-- **Cron Jobs**: [`docs/architecture/CRON_JOB_P8_ARCHITECTURE.md`](../../architecture/CRON_JOB_P8_ARCHITECTURE.md)
-
----
-
-## 🎯 Future Enhancements
-
-### Planned Features (V21+)
-
-- [ ] **API 5.6**: Update Treatment Plan (add/remove items)
-- [ ] **API 5.7**: Cancel Treatment Plan (with refund logic)
-- [ ] **API 5.8**: Get Plan Progress Timeline (Gantt chart data)
-- [ ] **API 5.9**: Approve/Reject Custom Plan (Manager workflow)
-- [ ] **API 5.10**: Clone Existing Plan (reuse for repeat treatments)
-
-### Integration Enhancements
-
-- [ ] **Payment Integration**: Track payments by phase
-- [ ] **Notification System**: Alert patient when items ready for booking
-- [ ] **Recommendation Engine**: Suggest next appointment date
-- [ ] **Template Versioning**: Update templates without affecting existing plans
-
----
-
-## 📞 Support
-
-For questions or issues:
-1. Check this documentation first
-2. Review API-specific documentation (5.1-5.5)
-3. Check error codes in Error Handling sections
-4. Contact development team with:
-   - API endpoint
-   - Request payload
-   - Error response
-   - Expected behavior
-
----
-
-**Last Updated**: 2025-11-12  
-**Module Owner**: Dental Clinic Development Team  
-**Repository**: PDCMS_BE (Branch: feat/BE-501-manage-treatment-plans)
+**Document Version**: 1.0
+**Last Updated**: 2025-11-12
+**Author**: Dental Clinic Development Team
+**Source Code**: `com.dental.clinic.management.treatment_plans` package

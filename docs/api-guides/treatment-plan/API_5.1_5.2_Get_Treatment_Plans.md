@@ -1,45 +1,29 @@
 # API 5.1 & 5.2 - Get Treatment Plans
 
-**Module**: Treatment Plan Management  
-**Version**: V1.0  
-**Status**: ✅ Production Ready  
+**Module**: Treatment Plan Management
+**Version**: V1.0
+**Status**: ✅ Production Ready
 **Last Updated**: 2025-11-12
+**Source**: `TreatmentPlanController.java`, `TreatmentPlanService.java`, `TreatmentPlanDetailService.java`
 
 ---
 
 ## 📋 Table of Contents
 
-1. [Overview](#overview)
-2. [API 5.1 - Get Plans by Patient](#api-51-get-plans-by-patient)
-3. [API 5.2 - Get Plan Details](#api-52-get-plan-details)
+1. [API 5.1 - Get Treatment Plans List](#api-51---get-treatment-plans-list)
+2. [API 5.2 - Get Treatment Plan Detail](#api-52---get-treatment-plan-detail)
+3. [RBAC Permissions](#rbac-permissions)
 4. [Response Models](#response-models)
-5. [Error Handling](#error-handling)
-6. [Testing Guide](#testing-guide)
+5. [Testing Guide](#testing-guide)
+6. [Error Handling](#error-handling)
 
 ---
 
-## Overview
+## API 5.1 - Get Treatment Plans List
 
-These APIs allow viewing treatment plan summaries and details with proper RBAC controls.
+### Overview
 
-### Permissions
-
-| Permission                | Role             | Description                           |
-|---------------------------|------------------|---------------------------------------|
-| `VIEW_TREATMENT_PLAN_ALL` | Staff, Admin     | View all patient treatment plans      |
-| `VIEW_TREATMENT_PLAN_OWN` | Patient          | View only own treatment plans         |
-
-### Key Features
-
-✅ Patient-specific plan listing with progress tracking  
-✅ Detailed plan view with phase and item breakdown  
-✅ RBAC validation (staff can view all, patients view own only)  
-✅ N+1 query prevention with JOIN FETCH optimization  
-✅ Status tracking: Phase completion, item progress  
-
----
-
-## API 5.1: Get Plans by Patient
+Retrieve all treatment plans for a specific patient with pagination support.
 
 ### Endpoint
 
@@ -47,112 +31,151 @@ These APIs allow viewing treatment plan summaries and details with proper RBAC c
 GET /api/v1/patients/{patientCode}/treatment-plans
 ```
 
-### Purpose
-
-Get a summary list of all treatment plans for a specific patient. Includes progress tracking and current phase information.
-
 ### Path Parameters
 
-| Parameter     | Type   | Required | Description                    |
-|---------------|--------|----------|--------------------------------|
-| `patientCode` | String | Yes      | Patient business code (e.g., BN-1001) |
+| Parameter     | Type   | Required | Description           | Example |
+| ------------- | ------ | -------- | --------------------- | ------- |
+| `patientCode` | String | Yes      | Patient business code | BN-1001 |
 
-### RBAC Logic
+### Query Parameters (Pagination)
 
-1. **Find Patient**: Lookup patient by `patientCode`
-   - If not found → `404 NOT_FOUND`
+| Parameter | Type    | Required | Default | Description              | Example        |
+| --------- | ------- | -------- | ------- | ------------------------ | -------------- |
+| `page`    | Integer | No       | 0       | Page number (0-indexed)  | 0              |
+| `size`    | Integer | No       | 10      | Number of items per page | 20             |
+| `sort`    | String  | No       | -       | Sort field and direction | createdAt,desc |
 
-2. **Permission Check**:
-   - **Staff/Admin** with `VIEW_TREATMENT_PLAN_ALL`: ✅ Access granted
-   - **Patient** with `VIEW_TREATMENT_PLAN_OWN`:
-     - Check if `patient.account_id` matches JWT `account_id`
-     - If mismatch → `403 FORBIDDEN`
+### Security & Permissions
 
-3. **Query Plans**:
-   - JOIN FETCH employees (doctor) to avoid N+1 queries
-   - Filter by `patient_id`
-   - Order by `created_at DESC`
+**@PreAuthorize Annotation**:
+
+```java
+@PreAuthorize("hasRole('ROLE_ADMIN') or " +
+              "hasAuthority('VIEW_TREATMENT_PLAN_ALL') or " +
+              "hasAuthority('VIEW_TREATMENT_PLAN_OWN')")
+```
+
+**Allowed Roles**:
+
+- ✅ **Admin** - Full access (always allowed via `hasRole('ROLE_ADMIN')`)
+- ✅ **Manager** - Has `VIEW_TREATMENT_PLAN_ALL` permission (sees all patients' plans)
+- ✅ **Dentist** - Has `VIEW_TREATMENT_PLAN_ALL` permission (sees all patients' plans)
+- ✅ **Receptionist** - Has `VIEW_TREATMENT_PLAN_ALL` permission (sees all patients' plans)
+- ✅ **Patient** - Has `VIEW_TREATMENT_PLAN_OWN` permission (sees only their own plans)
+
+**Permission Check Logic**:
+
+1. First checks if user has `ROLE_ADMIN` role → Full access
+2. Checks if user has `VIEW_TREATMENT_PLAN_ALL` → Can view any patient's plans
+3. Checks if user has `VIEW_TREATMENT_PLAN_OWN` → RBAC filtering applied in service layer
+4. Returns `403 Forbidden` if no permissions match
+
+### Example Request
+
+```bash
+GET http://localhost:8080/api/v1/patients/BN-1001/treatment-plans?page=0&size=20&sort=createdAt,desc
+Authorization: Bearer {jwt_token}
+```
 
 ### Response (200 OK)
 
 ```json
 {
-  "plans": [
+  "content": [
     {
-      "planId": 1,
+      "patientPlanId": 1,
       "planCode": "PLAN-20251001-001",
       "planName": "Lộ trình Niềng răng Mắc cài Kim loại",
       "status": "IN_PROGRESS",
-      "approvalStatus": "APPROVED",
+      "doctor": {
+        "employeeCode": "EMP-001",
+        "fullName": "Bác sĩ Nguyễn Văn A"
+      },
       "startDate": "2025-10-01",
       "expectedEndDate": "2027-10-01",
-      "totalPrice": 35000000,
+      "totalCost": 35000000,
       "discountAmount": 0,
       "finalCost": 35000000,
-      "paymentType": "INSTALLMENT",
-      "progress": {
-        "totalPhases": 3,
-        "completedPhases": 1,
-        "totalItems": 15,
-        "completedItems": 3,
-        "percentageComplete": 20.0
+      "paymentType": "INSTALLMENT"
+    },
+    {
+      "patientPlanId": 3,
+      "planCode": "PLAN-20241115-002",
+      "planName": "Lộ trình điều trị tủy + Bọc răng sứ",
+      "status": "PENDING",
+      "doctor": {
+        "employeeCode": "EMP-001",
+        "fullName": "Bác sĩ Nguyễn Văn A"
       },
-      "currentPhase": {
-        "phaseNumber": 2,
-        "phaseName": "Giai đoạn 2: Lắp Mắc cài và Điều chỉnh ban đầu",
-        "status": "IN_PROGRESS"
-      },
-      "createdBy": {
-        "employeeId": 1,
-        "employeeName": "Bác sĩ Nguyễn Văn A",
-        "employeeCode": "EMP-1"
-      },
-      "sourceTemplate": {
-        "templateId": 1,
-        "templateName": "Niềng răng Mắc cài Kim loại"
-      },
-      "createdAt": "2025-10-01T10:00:00",
-      "updatedAt": "2025-10-15T14:30:00"
+      "startDate": null,
+      "expectedEndDate": "2025-01-15",
+      "totalCost": 7500000,
+      "discountAmount": 500000,
+      "finalCost": 7000000,
+      "paymentType": "FULL"
     }
-  ]
+  ],
+  "pageable": {
+    "pageNumber": 0,
+    "pageSize": 20,
+    "sort": {
+      "sorted": true,
+      "unsorted": false,
+      "empty": false
+    },
+    "offset": 0,
+    "paged": true,
+    "unpaged": false
+  },
+  "last": true,
+  "totalPages": 1,
+  "totalElements": 2,
+  "size": 20,
+  "number": 0,
+  "first": true,
+  "numberOfElements": 2,
+  "empty": false
 }
 ```
 
-### Response Fields Explained
+### Response Fields
 
-**Progress Calculation**:
-- `percentageComplete` = (completedItems / totalItems) × 100
-- `completedPhases` = Count of phases with status = COMPLETED
-- `completedItems` = Count of items with status = COMPLETED
+#### Page Object
 
-**Current Phase**:
-- First phase with status = IN_PROGRESS
-- If all phases COMPLETED → last phase
-- If all phases PENDING → first phase
+| Field              | Type    | Description                            |
+| ------------------ | ------- | -------------------------------------- |
+| `content`          | Array   | Array of treatment plan summaries      |
+| `totalElements`    | Long    | Total number of items across all pages |
+| `totalPages`       | Integer | Total number of pages                  |
+| `number`           | Integer | Current page number (0-indexed)        |
+| `size`             | Integer | Page size                              |
+| `first`            | Boolean | Is this the first page?                |
+| `last`             | Boolean | Is this the last page?                 |
+| `numberOfElements` | Integer | Number of items in current page        |
 
-### Example Requests
+#### TreatmentPlanSummaryDTO
 
-**Staff viewing patient plans**:
-```bash
-curl -X GET "http://localhost:8080/api/v1/patients/BN-1001/treatment-plans" \
-  -H "Authorization: Bearer <staff-token>"
-```
-
-**Patient viewing own plans**:
-```bash
-curl -X GET "http://localhost:8080/api/v1/patients/BN-1001/treatment-plans" \
-  -H "Authorization: Bearer <patient-bn1001-token>"
-```
-
-**Patient trying to view another patient's plans** (403):
-```bash
-curl -X GET "http://localhost:8080/api/v1/patients/BN-1002/treatment-plans" \
-  -H "Authorization: Bearer <patient-bn1001-token>"
-```
+| Field             | Type       | Description                                 |
+| ----------------- | ---------- | ------------------------------------------- |
+| `patientPlanId`   | Long       | Internal database ID                        |
+| `planCode`        | String     | **Business key** (e.g., PLAN-20251001-001)  |
+| `planName`        | String     | Treatment plan name                         |
+| `status`          | String     | PENDING, IN_PROGRESS, COMPLETED, CANCELLED  |
+| `doctor`          | Object     | Doctor information (employeeCode, fullName) |
+| `startDate`       | Date       | Start date (null if not started yet)        |
+| `expectedEndDate` | Date       | Expected completion date                    |
+| `totalCost`       | BigDecimal | Total price before discount                 |
+| `discountAmount`  | BigDecimal | Discount amount                             |
+| `finalCost`       | BigDecimal | Final cost after discount                   |
+| `paymentType`     | String     | FULL, PHASED, INSTALLMENT                   |
 
 ---
 
-## API 5.2: Get Plan Details
+## API 5.2 - Get Treatment Plan Detail
+
+### Overview
+
+Retrieve complete details of a specific treatment plan, including phases, items, and linked appointments.
 
 ### Endpoint
 
@@ -160,20 +183,19 @@ curl -X GET "http://localhost:8080/api/v1/patients/BN-1002/treatment-plans" \
 GET /api/v1/patients/{patientCode}/treatment-plans/{planCode}
 ```
 
-### Purpose
-
-Get complete details of a specific treatment plan including all phases, items, and appointments.
-
 ### Path Parameters
 
-| Parameter     | Type   | Required | Description                    |
-|---------------|--------|----------|--------------------------------|
-| `patientCode` | String | Yes      | Patient business code          |
-| `planCode`    | String | Yes      | Treatment plan code            |
+| Parameter     | Type   | Required | Description                  | Example           |
+| ------------- | ------ | -------- | ---------------------------- | ----------------- |
+| `patientCode` | String | Yes      | Patient business code        | BN-1001           |
+| `planCode`    | String | Yes      | Treatment plan business code | PLAN-20251001-001 |
 
-### RBAC Logic
+### Example Request
 
-Same as API 5.1 (patient ownership validation).
+```bash
+GET http://localhost:8080/api/v1/patients/BN-1001/treatment-plans/PLAN-20251001-001
+Authorization: Bearer {jwt_token}
+```
 
 ### Response (200 OK)
 
@@ -183,34 +205,27 @@ Same as API 5.1 (patient ownership validation).
   "planCode": "PLAN-20251001-001",
   "planName": "Lộ trình Niềng răng Mắc cài Kim loại",
   "status": "IN_PROGRESS",
-  "approvalStatus": "APPROVED",
-  "patientConsentDate": "2025-10-01T08:30:00",
-  "approvedBy": {
-    "employeeId": 3,
-    "employeeName": "Quản lý Nguyễn Văn C"
+  "doctor": {
+    "employeeCode": "EMP-001",
+    "fullName": "Bác sĩ Nguyễn Văn A"
   },
-  "approvedAt": "2025-10-02T09:00:00",
+  "patient": {
+    "patientCode": "BN-1001",
+    "fullName": "Đoàn Thanh Phong"
+  },
   "startDate": "2025-10-01",
   "expectedEndDate": "2027-10-01",
+  "createdAt": "2025-10-01T08:30:00",
   "totalPrice": 35000000,
   "discountAmount": 0,
   "finalCost": 35000000,
   "paymentType": "INSTALLMENT",
-  "patient": {
-    "patientId": 1,
-    "patientName": "Đoàn Thanh Phong",
-    "patientCode": "BN-1001",
-    "phoneNumber": "0901234567"
-  },
-  "createdBy": {
-    "employeeId": 1,
-    "employeeName": "Bác sĩ Nguyễn Văn A",
-    "employeeCode": "EMP-1"
-  },
-  "sourceTemplate": {
-    "templateId": 1,
-    "templateName": "Niềng răng Mắc cài Kim loại",
-    "templateCode": "TPL-ORTHO-01"
+  "progressSummary": {
+    "totalPhases": 4,
+    "completedPhases": 1,
+    "totalItems": 15,
+    "completedItems": 3,
+    "progressPercentage": 20.0
   },
   "phases": [
     {
@@ -227,48 +242,30 @@ Same as API 5.1 (patient ownership validation).
           "sequenceNumber": 1,
           "itemName": "Khám tổng quát và chụp X-quang",
           "status": "COMPLETED",
-          "price": 500000,
           "estimatedTimeMinutes": 30,
-          "service": {
-            "serviceId": 1,
-            "serviceName": "Khám tổng quát",
-            "serviceCode": "EXAM-GEN"
-          },
-          "appointments": [
-            {
-              "appointmentId": 101,
-              "appointmentCode": "APT-20251001-001",
-              "appointmentDate": "2025-10-02",
-              "startTime": "09:00:00",
-              "status": "COMPLETED"
-            }
-          ],
+          "price": 500000,
           "completedAt": "2025-10-02T09:00:00",
-          "createdAt": "2025-10-01T10:00:00"
+          "linkedAppointments": []
         },
         {
           "itemId": 2,
           "sequenceNumber": 2,
           "itemName": "Lấy cao răng trước niềng",
           "status": "COMPLETED",
-          "price": 800000,
           "estimatedTimeMinutes": 45,
-          "service": {
-            "serviceId": 3,
-            "serviceName": "Lấy cao răng",
-            "serviceCode": "SCALING-01"
-          },
-          "appointments": [
-            {
-              "appointmentId": 102,
-              "appointmentCode": "APT-20251003-001",
-              "appointmentDate": "2025-10-03",
-              "startTime": "10:30:00",
-              "status": "COMPLETED"
-            }
-          ],
+          "price": 800000,
           "completedAt": "2025-10-03T10:30:00",
-          "createdAt": "2025-10-01T10:00:00"
+          "linkedAppointments": []
+        },
+        {
+          "itemId": 3,
+          "sequenceNumber": 3,
+          "itemName": "Hàn trám răng sâu (nếu có)",
+          "status": "COMPLETED",
+          "estimatedTimeMinutes": 60,
+          "price": 1500000,
+          "completedAt": "2025-10-05T14:00:00",
+          "linkedAppointments": []
         }
       ]
     },
@@ -286,175 +283,218 @@ Same as API 5.1 (patient ownership validation).
           "sequenceNumber": 1,
           "itemName": "Lắp mắc cài kim loại hàm trên",
           "status": "COMPLETED",
-          "price": 8000000,
           "estimatedTimeMinutes": 90,
-          "service": {
-            "serviceId": 38,
-            "serviceName": "Lắp mắc cài kim loại",
-            "serviceCode": "BRACES-METAL"
-          },
-          "appointments": [
-            {
-              "appointmentId": 103,
-              "appointmentCode": "APT-20251016-001",
-              "appointmentDate": "2025-10-16",
-              "startTime": "09:00:00",
-              "status": "COMPLETED"
-            }
-          ],
+          "price": 8000000,
           "completedAt": "2025-10-16T09:00:00",
-          "createdAt": "2025-10-01T10:00:00"
+          "linkedAppointments": []
+        },
+        {
+          "itemId": 5,
+          "sequenceNumber": 2,
+          "itemName": "Lắp mắc cài kim loại hàm dưới",
+          "status": "COMPLETED",
+          "estimatedTimeMinutes": 90,
+          "price": 8000000,
+          "completedAt": "2025-10-17T10:00:00",
+          "linkedAppointments": []
         },
         {
           "itemId": 6,
           "sequenceNumber": 3,
           "itemName": "Điều chỉnh lần 1 (sau 1 tháng)",
           "status": "READY_FOR_BOOKING",
-          "price": 500000,
           "estimatedTimeMinutes": 45,
-          "service": {
-            "serviceId": 39,
-            "serviceName": "Điều chỉnh niềng răng",
-            "serviceCode": "BRACES-ADJUST"
-          },
-          "appointments": [],
+          "price": 500000,
           "completedAt": null,
-          "createdAt": "2025-10-01T10:00:00"
+          "linkedAppointments": []
+        }
+      ]
+    },
+    {
+      "patientPhaseId": 3,
+      "phaseNumber": 3,
+      "phaseName": "Giai đoạn 3: Điều chỉnh định kỳ (8 tháng)",
+      "status": "PENDING",
+      "startDate": null,
+      "completionDate": null,
+      "estimatedDurationDays": 240,
+      "items": [
+        {
+          "itemId": 8,
+          "sequenceNumber": 1,
+          "itemName": "Điều chỉnh tháng 3",
+          "status": "READY_FOR_BOOKING",
+          "estimatedTimeMinutes": 45,
+          "price": 500000,
+          "completedAt": null,
+          "linkedAppointments": []
+        },
+        {
+          "itemId": 9,
+          "sequenceNumber": 2,
+          "itemName": "Điều chỉnh tháng 4",
+          "status": "READY_FOR_BOOKING",
+          "estimatedTimeMinutes": 45,
+          "price": 500000,
+          "completedAt": null,
+          "linkedAppointments": []
         }
       ]
     }
-  ],
-  "createdAt": "2025-10-01T10:00:00",
-  "updatedAt": "2025-10-16T10:00:00"
+  ]
 }
 ```
 
-### Item Status Meanings
+### Response Fields
 
-| Status              | Description                     | Booking Allowed | Color Code |
-|---------------------|---------------------------------|-----------------|------------|
-| `PENDING`           | Awaiting approval               | No              | Gray       |
-| `READY_FOR_BOOKING` | Can schedule appointment        | Yes             | Green      |
-| `SCHEDULED`         | Appointment booked              | No              | Blue       |
-| `IN_PROGRESS`       | Currently being performed       | No              | Orange     |
-| `COMPLETED`         | Finished                        | No              | Green      |
+#### TreatmentPlanDetailResponse (Root)
 
-### Example Requests
+| Field             | Type       | Description                                |
+| ----------------- | ---------- | ------------------------------------------ |
+| `planId`          | Long       | Internal database ID                       |
+| `planCode`        | String     | Business key (e.g., PLAN-20251001-001)     |
+| `planName`        | String     | Treatment plan name                        |
+| `status`          | String     | PENDING, IN_PROGRESS, COMPLETED, CANCELLED |
+| `doctor`          | Object     | Doctor information                         |
+| `patient`         | Object     | Patient information                        |
+| `startDate`       | Date       | Treatment start date (null if not started) |
+| `expectedEndDate` | Date       | Expected completion date                   |
+| `createdAt`       | DateTime   | When this plan was created                 |
+| `totalPrice`      | BigDecimal | Total price before discount                |
+| `discountAmount`  | BigDecimal | Discount amount                            |
+| `finalCost`       | BigDecimal | Final cost after discount                  |
+| `paymentType`     | String     | FULL, PHASED, INSTALLMENT                  |
+| `progressSummary` | Object     | Progress statistics                        |
+| `phases`          | Array      | List of phases with nested items           |
 
-**Get plan details**:
+#### ProgressSummaryDTO
+
+| Field                | Type    | Description                             |
+| -------------------- | ------- | --------------------------------------- |
+| `totalPhases`        | Integer | Total number of phases                  |
+| `completedPhases`    | Integer | Number of completed phases              |
+| `totalItems`         | Integer | Total number of items across all phases |
+| `completedItems`     | Integer | Number of completed items               |
+| `progressPercentage` | Double  | Completion percentage (0-100)           |
+
+#### PhaseDetailDTO
+
+| Field                   | Type    | Description                              |
+| ----------------------- | ------- | ---------------------------------------- |
+| `patientPhaseId`        | Long    | Phase ID                                 |
+| `phaseNumber`           | Integer | Phase number (1, 2, 3, ...)              |
+| `phaseName`             | String  | Phase name                               |
+| `status`                | String  | PENDING, IN_PROGRESS, COMPLETED          |
+| `startDate`             | Date    | When phase started (null if not started) |
+| `completionDate`        | Date    | When phase completed (null if ongoing)   |
+| `estimatedDurationDays` | Integer | Estimated duration in days               |
+| `items`                 | Array   | List of items in this phase              |
+
+#### ItemDetailDTO
+
+| Field                  | Type       | Description                                                   |
+| ---------------------- | ---------- | ------------------------------------------------------------- |
+| `itemId`               | Long       | Item ID                                                       |
+| `sequenceNumber`       | Integer    | Sequence within phase                                         |
+| `itemName`             | String     | Item/service name                                             |
+| `status`               | String     | PENDING, READY_FOR_BOOKING, SCHEDULED, IN_PROGRESS, COMPLETED |
+| `estimatedTimeMinutes` | Integer    | Estimated time for this service                               |
+| `price`                | BigDecimal | Item price (snapshot from service)                            |
+| `completedAt`          | DateTime   | When completed (null if not done)                             |
+| `linkedAppointments`   | Array      | List of appointments for this item                            |
+
+---
+
+## RBAC Permissions
+
+### VIEW_TREATMENT_PLAN_ALL
+
+**Who has it**: Admin, Manager, Staff
+
+**What they can do**:
+
+- View **ANY** patient's treatment plans
+- No restrictions on `patientCode`
+
+**Example**:
+
 ```bash
-curl -X GET "http://localhost:8080/api/v1/patients/BN-1001/treatment-plans/PLAN-20251001-001" \
-  -H "Authorization: Bearer <token>"
+# Staff can view plans for any patient
+GET /api/v1/patients/BN-1001/treatment-plans  # ✅ Allowed
+GET /api/v1/patients/BN-1002/treatment-plans  # ✅ Allowed
+GET /api/v1/patients/BN-1003/treatment-plans  # ✅ Allowed
 ```
+
+### VIEW_TREATMENT_PLAN_OWN
+
+**Who has it**: Patient
+
+**What they can do**:
+
+- View **ONLY** their own treatment plans
+- System automatically validates: `{patientCode}` must match current user's patient record
+
+**Example**:
+
+```bash
+# Patient BN-1001 logged in
+GET /api/v1/patients/BN-1001/treatment-plans  # ✅ Allowed (own plan)
+GET /api/v1/patients/BN-1002/treatment-plans  # ❌ 403 Forbidden (other patient)
+```
+
+### Permission Matrix
+
+| User Role       | Permission              | Can View BN-1001? | Can View BN-1002? |
+| --------------- | ----------------------- | ----------------- | ----------------- |
+| Admin           | VIEW_TREATMENT_PLAN_ALL | ✅ Yes            | ✅ Yes            |
+| Staff           | VIEW_TREATMENT_PLAN_ALL | ✅ Yes            | ✅ Yes            |
+| Patient BN-1001 | VIEW_TREATMENT_PLAN_OWN | ✅ Yes (own)      | ❌ No             |
+| Patient BN-1002 | VIEW_TREATMENT_PLAN_OWN | ❌ No             | ✅ Yes (own)      |
 
 ---
 
 ## Response Models
 
-### TreatmentPlanSummaryDTO
+### TreatmentPlanSummaryDTO (Java)
 
 ```java
 {
-  "planId": Long,
-  "planCode": String,
-  "planName": String,
-  "status": String,
-  "approvalStatus": String,
-  "startDate": LocalDate,
-  "expectedEndDate": LocalDate,
-  "totalPrice": BigDecimal,
-  "discountAmount": BigDecimal,
-  "finalCost": BigDecimal,
-  "paymentType": String,
-  "progress": {
-    "totalPhases": Integer,
-    "completedPhases": Integer,
-    "totalItems": Integer,
-    "completedItems": Integer,
-    "percentageComplete": Double
+  patientPlanId: Long,
+  planCode: String,           // Business key - REQUIRED for navigation
+  planName: String,
+  status: TreatmentPlanStatus,
+  doctor: {
+    employeeCode: String,
+    fullName: String
   },
-  "currentPhase": {
-    "phaseNumber": Integer,
-    "phaseName": String,
-    "status": String
-  },
-  "createdBy": EmployeeSummaryDTO,
-  "sourceTemplate": TemplateSummaryDTO,
-  "createdAt": LocalDateTime,
-  "updatedAt": LocalDateTime
+  startDate: LocalDate,       // Can be null
+  expectedEndDate: LocalDate,
+  totalCost: BigDecimal,
+  discountAmount: BigDecimal,
+  finalCost: BigDecimal,
+  paymentType: PaymentType
 }
 ```
 
-### TreatmentPlanDetailDTO
-
-Extends `TreatmentPlanSummaryDTO` with:
-```java
-{
-  "patient": PatientSummaryDTO,
-  "approvedBy": EmployeeSummaryDTO,
-  "approvedAt": LocalDateTime,
-  "patientConsentDate": LocalDateTime,
-  "rejectionReason": String (nullable),
-  "phases": List<PhaseDetailDTO>
-}
-```
-
-### PhaseDetailDTO
+### TreatmentPlanDetailResponse (Java)
 
 ```java
 {
-  "patientPhaseId": Long,
-  "phaseNumber": Integer,
-  "phaseName": String,
-  "status": String,
-  "startDate": LocalDate,
-  "completionDate": LocalDate (nullable),
-  "estimatedDurationDays": Integer,
-  "items": List<PlanItemDTO>
-}
-```
-
-### PlanItemDTO
-
-```java
-{
-  "itemId": Long,
-  "sequenceNumber": Integer,
-  "itemName": String,
-  "status": String,
-  "price": BigDecimal,
-  "estimatedTimeMinutes": Integer,
-  "service": ServiceSummaryDTO,
-  "appointments": List<AppointmentSummaryDTO>,
-  "completedAt": LocalDateTime,
-  "createdAt": LocalDateTime
-}
-```
-
----
-
-## Error Handling
-
-### Common Error Codes
-
-| HTTP | Error Code             | Description                          |
-|------|------------------------|--------------------------------------|
-| 404  | PATIENT_NOT_FOUND      | Patient code not found               |
-| 404  | PLAN_NOT_FOUND         | Treatment plan code not found        |
-| 403  | FORBIDDEN              | Patient accessing another's plan     |
-| 401  | UNAUTHORIZED           | Invalid or missing JWT token         |
-
-### Error Response Format
-
-```json
-{
-  "type": "https://www.jhipster.tech/problem/problem-with-message",
-  "title": "Forbidden",
-  "status": 403,
-  "detail": "You do not have permission to access this patient's treatment plans",
-  "path": "/api/v1/patients/BN-1002/treatment-plans",
-  "message": "error.FORBIDDEN",
-  "errorCode": "FORBIDDEN"
+  planId: Long,
+  planCode: String,
+  planName: String,
+  status: String,
+  doctor: DoctorInfoDTO,
+  patient: PatientInfoDTO,
+  startDate: LocalDate,
+  expectedEndDate: LocalDate,
+  createdAt: LocalDateTime,
+  totalPrice: BigDecimal,
+  discountAmount: BigDecimal,
+  finalCost: BigDecimal,
+  paymentType: String,
+  progressSummary: ProgressSummaryDTO,
+  phases: List<PhaseDetailDTO>
 }
 ```
 
@@ -462,90 +502,163 @@ Extends `TreatmentPlanSummaryDTO` with:
 
 ## Testing Guide
 
-### Test Scenario 1: Staff Views Patient Plans
+### Test 1: List Plans with Pagination
 
-**Setup**:
-- Patient BN-1001 has 2 treatment plans
-- User is staff with VIEW_TREATMENT_PLAN_ALL
+**Seed Data**: Patient BN-1001 has 2 treatment plans
 
-**Steps**:
-1. GET `/api/v1/patients/BN-1001/treatment-plans` with staff token
-2. Verify response contains 2 plans
-3. Verify progress calculations are correct
-4. Verify currentPhase reflects actual phase status
+**Request**:
 
-**Expected**: 200 OK with full plan list
+```bash
+GET http://localhost:8080/api/v1/patients/BN-1001/treatment-plans?page=0&size=10
+Authorization: Bearer {admin_token}
+```
 
-### Test Scenario 2: Patient Views Own Plans
+**Verify**:
 
-**Setup**:
-- Patient BN-1001 is logged in
-- Patient has 2 treatment plans
+- ✅ Status: 200 OK
+- ✅ `totalElements` = 2
+- ✅ `content` array has 2 items
+- ✅ Each item has `planCode` field
+- ✅ Each item has `doctor.employeeCode` and `doctor.fullName`
 
-**Steps**:
-1. GET `/api/v1/patients/BN-1001/treatment-plans` with patient token
-2. Verify response contains own plans only
+### Test 2: Get Plan Detail
 
-**Expected**: 200 OK
+**Seed Data**: Plan PLAN-20251001-001 exists with 3 phases
 
-### Test Scenario 3: Patient Tries to View Another's Plans
+**Request**:
 
-**Setup**:
-- Patient BN-1001 is logged in
-- Trying to access BN-1002's plans
+```bash
+GET http://localhost:8080/api/v1/patients/BN-1001/treatment-plans/PLAN-20251001-001
+Authorization: Bearer {admin_token}
+```
 
-**Steps**:
-1. GET `/api/v1/patients/BN-1002/treatment-plans` with BN-1001 token
-2. Verify rejection
+**Verify**:
 
-**Expected**: 403 FORBIDDEN
+- ✅ Status: 200 OK
+- ✅ `planCode` = "PLAN-20251001-001"
+- ✅ `phases` array has items
+- ✅ Phase 1 `status` = "COMPLETED"
+- ✅ Phase 1 has 3 items, all `status` = "COMPLETED"
+- ✅ `progressSummary.completedPhases` >= 1
 
-### Test Scenario 4: Plan Details with Appointments
+### Test 3: Patient Access Control (Own Plan - Success)
 
-**Setup**:
-- Plan has items with SCHEDULED status
-- Some items linked to appointments
+**Seed Data**: Patient BN-1001 logged in
 
-**Steps**:
-1. GET `/api/v1/patients/BN-1001/treatment-plans/PLAN-20251001-001`
-2. Verify phases are ordered by phaseNumber
-3. Verify items are ordered by sequenceNumber
-4. Verify SCHEDULED items include appointment info
-5. Verify READY_FOR_BOOKING items have empty appointments array
+**Request**:
 
-**Expected**: 200 OK with full details
+```bash
+GET http://localhost:8080/api/v1/patients/BN-1001/treatment-plans
+Authorization: Bearer {patient_bn1001_token}
+```
 
-### Test Scenario 5: Progress Calculation
+**Verify**:
 
-**Setup**:
-- Plan has 10 total items
-- 3 items COMPLETED
-- 2 items SCHEDULED
-- 5 items READY_FOR_BOOKING
+- ✅ Status: 200 OK
+- ✅ Returns patient's own plans
 
-**Steps**:
-1. GET plan summary
-2. Verify progress.completedItems = 3
-3. Verify progress.percentageComplete = 30.0
+### Test 4: Patient Access Control (Other Patient - Fail)
 
-**Expected**: Accurate progress metrics
+**Seed Data**: Patient BN-1001 logged in
+
+**Request**:
+
+```bash
+GET http://localhost:8080/api/v1/patients/BN-1002/treatment-plans
+Authorization: Bearer {patient_bn1001_token}
+```
+
+**Verify**:
+
+- ❌ Status: 403 Forbidden
+- Error: "Access denied - insufficient permissions"
+
+### Test 5: Pagination
+
+**Request**:
+
+```bash
+GET http://localhost:8080/api/v1/patients/BN-1001/treatment-plans?page=0&size=2
+Authorization: Bearer {admin_token}
+```
+
+**Verify**:
+
+- ✅ `size` = 2
+- ✅ `content` array has at most 2 items
+- ✅ `first` = true
+- ✅ `totalPages` calculated correctly
+
+### Test 6: Sorting
+
+**Request**:
+
+```bash
+GET http://localhost:8080/api/v1/patients/BN-1001/treatment-plans?sort=createdAt,desc
+Authorization: Bearer {admin_token}
+```
+
+**Verify**:
+
+- ✅ Items sorted by creation date (newest first)
+
+### Test 7: Patient Not Found
+
+**Request**:
+
+```bash
+GET http://localhost:8080/api/v1/patients/INVALID-CODE/treatment-plans
+Authorization: Bearer {admin_token}
+```
+
+**Verify**:
+
+- ❌ Status: 404 Not Found
+- Error: "Patient not found"
+
+### Test 8: Plan Not Found
+
+**Request**:
+
+```bash
+GET http://localhost:8080/api/v1/patients/BN-1001/treatment-plans/INVALID-PLAN
+Authorization: Bearer {admin_token}
+```
+
+**Verify**:
+
+- ❌ Status: 404 Not Found
+- Error: "Treatment plan not found"
 
 ---
 
-## Performance Notes
+## Error Handling
 
-**Optimizations**:
-- `JOIN FETCH` for employees, patients (no N+1)
-- Lazy loading for phases/items (only load when detail requested)
-- Index on `plan_code`, `patient_id`, `status`
-- Query result caching for frequently accessed plans
+### Common Errors
 
-**Query Count**:
-- API 5.1 (Summary): 1 query (with JOIN FETCH)
-- API 5.2 (Details): 3 queries (plan + phases + items)
+| HTTP | Error Code               | Description                                |
+| ---- | ------------------------ | ------------------------------------------ |
+| 404  | PATIENT_NOT_FOUND        | Patient code not found in database         |
+| 404  | TREATMENT_PLAN_NOT_FOUND | Treatment plan code not found              |
+| 403  | ACCESS_DENIED            | User trying to access other patient's plan |
+| 401  | UNAUTHORIZED             | Missing or invalid JWT token               |
+
+### Error Response Example
+
+```json
+{
+  "type": "https://www.jhipster.tech/problem/problem-with-message",
+  "title": "Forbidden",
+  "status": 403,
+  "detail": "Access denied - insufficient permissions or accessing another patient's plan",
+  "path": "/api/v1/patients/BN-1002/treatment-plans",
+  "message": "error.ACCESS_DENIED"
+}
+```
 
 ---
 
-**Document Version**: 1.0  
-**Last Updated**: 2025-11-12  
+**Document Version**: 1.0
+**Last Updated**: 2025-11-12
 **Author**: Dental Clinic Development Team
+**Verified Against**: TreatmentPlanController.java (lines 47-134), TreatmentPlanSummaryDTO.java, TreatmentPlanDetailResponse.java, dental-clinic-seed-data.sql

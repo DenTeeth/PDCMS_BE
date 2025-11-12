@@ -1,9 +1,30 @@
 # API 5.3 - Create Treatment Plan from Template
 
-**Module**: Treatment Plan Management  
-**Version**: V1.0  
-**Status**: ✅ Production Ready  
+**Module**: Treatment Plan Management
+**Version**: V1.0
+**Status**: ✅ Production Ready
 **Last Updated**: 2025-11-12
+**Source**: `TreatmentPlanController.java`, `CreateTreatmentPlanRequest.java`, `TreatmentPlanCreationService.java`
+
+---
+
+## ⚠️ CRITICAL WARNING: Correct Endpoint Path
+
+**CORRECT**: `POST /api/v1/patients/{patientCode}/treatment-plans` (**PLURAL** `treatment-plans`)
+
+**WRONG**: `POST /api/v1/patients/{patientCode}/treatment-plan` (singular) ❌
+
+**Common Mistake**:
+
+```bash
+# ❌ WRONG - Returns 404 Error
+POST /api/v1/patients/BN-1001/treatment-plan
+
+# ✅ CORRECT
+POST /api/v1/patients/BN-1001/treatment-plans
+```
+
+**Why This Matters**: RESTful convention uses plural nouns for resource collections. Using singular will result in `404 Not Found` error.
 
 ---
 
@@ -11,32 +32,28 @@
 
 1. [Overview](#overview)
 2. [API Specification](#api-specification)
-3. [Template System](#template-system)
-4. [Business Logic](#business-logic)
-5. [Response Models](#response-models)
-6. [Error Handling](#error-handling)
-7. [Testing Guide](#testing-guide)
+3. [Request Model](#request-model)
+4. [Response Model](#response-model)
+5. [Business Logic](#business-logic)
+6. [Testing Guide](#testing-guide)
+7. [Error Handling](#error-handling)
 
 ---
 
 ## Overview
 
-API 5.3 allows creating a patient treatment plan by applying a pre-defined template. The system automatically clones the template structure (phases → services) into patient-specific plan items.
+API 5.3 creates a patient treatment plan by copying structure from a pre-defined template package.
 
-### Permissions
+**Key Features**:
 
-| Permission              | Role          | Description                             |
-|-------------------------|---------------|-----------------------------------------|
-| `CREATE_TREATMENT_PLAN` | Doctor, Staff | Create treatment plans for patients     |
+- ✅ Automatic phase & item cloning from template
+- ✅ Auto-generate unique plan code (PLAN-YYYYMMDD-XXX)
+- ✅ Calculate expected end date from template duration
+- ✅ Support custom plan name override
+- ✅ Discount validation
+- ✅ Transactional safety (rollback on error)
 
-### Key Features
-
-✅ Template-based plan creation (standardized treatments)  
-✅ Automatic phase and item generation from template  
-✅ Quantity expansion: `quantity: 24` → 24 separate items  
-✅ Price customization with validation (50%-150% range)  
-✅ Approval workflow (DRAFT status)  
-✅ Transactional safety (rollback on errors)  
+**Use Case**: Doctor selects a standardized treatment package (e.g., "Niềng răng 2 năm") and applies it to patient.
 
 ---
 
@@ -45,187 +62,267 @@ API 5.3 allows creating a patient treatment plan by applying a pre-defined templ
 ### Endpoint
 
 ```
-POST /api/v1/patient-treatment-plans/from-template
+POST /api/v1/patients/{patientCode}/treatment-plans
 ```
+
+**IMPORTANT**: Endpoint path uses `{patientCode}` as **path variable**, NOT in request body!
+
+### Path Parameters
+
+| Parameter     | Type   | Required | Description           | Example |
+| ------------- | ------ | -------- | --------------------- | ------- |
+| `patientCode` | String | Yes      | Patient business code | BN-1001 |
+
+### Request Headers
+
+```
+Authorization: Bearer {jwt_token}
+Content-Type: application/json
+```
+
+### Security & Permissions
+
+**@PreAuthorize Annotation**:
+
+```java
+@PreAuthorize("hasRole('ROLE_ADMIN') or hasAuthority('CREATE_TREATMENT_PLAN')")
+```
+
+**Allowed Roles**:
+
+- ✅ **Admin** - Full access (always allowed via `hasRole('ROLE_ADMIN')`)
+- ✅ **Manager** - Has `CREATE_TREATMENT_PLAN` permission
+- ✅ **Dentist** - Has `CREATE_TREATMENT_PLAN` permission
+- ❌ **Receptionist** - No permission (read-only access)
+- ❌ **Patient** - No permission
+
+**Permission Check Logic**:
+
+1. First checks if user has `ROLE_ADMIN` role → Immediate access
+2. If not admin, checks if user has `CREATE_TREATMENT_PLAN` authority
+3. Returns `403 Forbidden` if neither condition is met
 
 ### Request Body
 
 ```json
 {
-  "patientCode": "BN-1001",
-  "templateId": 1,
-  "startDate": "2025-11-01",
-  "totalPrice": 35000000,
-  "discountAmount": 0,
-  "paymentType": "INSTALLMENT",
-  "notes": "Patient requested metal braces, 24-month payment plan"
+  "sourceTemplateCode": "TPL_ORTHO_METAL",
+  "doctorEmployeeCode": "EMP-001",
+  "planNameOverride": "Lộ trình niềng răng tùy chỉnh cho BN Phong",
+  "discountAmount": 5000000,
+  "paymentType": "INSTALLMENT"
 }
 ```
 
-### Request Fields
+### Complete Example Request
 
-| Field            | Type       | Required | Constraints           | Description                          |
-|------------------|------------|----------|-----------------------|--------------------------------------|
-| `patientCode`    | String     | Yes      | Valid patient code    | Patient business code                |
-| `templateId`     | Long       | Yes      | Must exist, active    | Treatment plan template ID           |
-| `startDate`      | LocalDate  | Yes      | Not in past           | Treatment start date                 |
-| `totalPrice`     | BigDecimal | No       | ≥ 0                   | Override template price (optional)   |
-| `discountAmount` | BigDecimal | No       | ≥ 0, ≤ totalPrice     | Discount amount                      |
-| `paymentType`    | String     | Yes      | FULL/INSTALLMENT      | Payment method                       |
-| `notes`          | String     | No       | Max 1000 chars        | Additional notes                     |
-
-### Response (201 CREATED)
-
-```json
-{
-  "planId": 1,
-  "planCode": "PLAN-20251101-001",
-  "planName": "Lộ trình Niềng răng Mắc cài Kim loại",
-  "status": "IN_PROGRESS",
-  "approvalStatus": "APPROVED",
-  "startDate": "2025-11-01",
-  "expectedEndDate": "2027-11-01",
-  "totalPrice": 35000000,
-  "discountAmount": 0,
-  "finalCost": 35000000,
-  "paymentType": "INSTALLMENT",
-  "patient": {
-    "patientId": 1,
-    "patientName": "Đoàn Thanh Phong",
-    "patientCode": "BN-1001"
-  },
-  "sourceTemplate": {
-    "templateId": 1,
-    "templateName": "Niềng răng Mắc cài Kim loại",
-    "templateCode": "TPL-ORTHO-01"
-  },
-  "phases": [
-    {
-      "patientPhaseId": 1,
-      "phaseNumber": 1,
-      "phaseName": "Giai đoạn 1: Chuẩn bị và Kiểm tra",
-      "status": "PENDING",
-      "estimatedDurationDays": 7,
-      "itemCount": 3
-    },
-    {
-      "patientPhaseId": 2,
-      "phaseNumber": 2,
-      "phaseName": "Giai đoạn 2: Lắp Mắc cài",
-      "status": "PENDING",
-      "estimatedDurationDays": 60,
-      "itemCount": 4
-    },
-    {
-      "patientPhaseId": 3,
-      "phaseNumber": 3,
-      "phaseName": "Giai đoạn 3: Điều chỉnh định kỳ (24 tháng)",
-      "status": "PENDING",
-      "estimatedDurationDays": 720,
-      "itemCount": 24
-    }
-  ],
-  "createdBy": {
-    "employeeId": 1,
-    "employeeName": "Bác sĩ Nguyễn Văn A",
-    "employeeCode": "EMP-1"
-  },
-  "createdAt": "2025-11-01T10:00:00"
-}
+```bash
+curl -X POST "http://localhost:8080/api/v1/patients/BN-1001/treatment-plans" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sourceTemplateCode": "TPL_ORTHO_METAL",
+    "doctorEmployeeCode": "EMP-001",
+    "planNameOverride": null,
+    "discountAmount": 0,
+    "paymentType": "INSTALLMENT"
+  }'
 ```
 
 ---
 
-## Template System
+## Request Model
 
-### Template Structure
+### CreateTreatmentPlanRequest
 
+**File**: `CreateTreatmentPlanRequest.java`
+
+| Field                | Type       | Required | Constraints                      | Default | Description                                   |
+| -------------------- | ---------- | -------- | -------------------------------- | ------- | --------------------------------------------- |
+| `sourceTemplateCode` | String     | **Yes**  | Max 50 chars, not blank          | -       | Template code to copy from                    |
+| `doctorEmployeeCode` | String     | **Yes**  | Max 20 chars, not blank          | -       | Doctor in charge of this plan                 |
+| `planNameOverride`   | String     | No       | Max 255 chars                    | null    | Custom plan name. If null, uses template name |
+| `discountAmount`     | BigDecimal | No       | >= 0, max 10 digits + 2 decimals | 0       | Discount amount (validated <= totalCost)      |
+| `paymentType`        | String     | **Yes**  | FULL, PHASED, or INSTALLMENT     | -       | Payment method                                |
+
+### Field Validations
+
+#### sourceTemplateCode
+
+- ✅ Must exist in `treatment_plan_templates` table
+- ✅ Template must be active (`is_active = true`)
+- ❌ Validation fails if template not found or inactive
+
+**Valid Values** (from seed data):
+
+- `TPL_ORTHO_METAL` - Niềng răng mắc cài kim loại 2 năm (30,000,000đ)
+- `TPL_IMPLANT_OSSTEM` - Cấy ghép Implant Osstem (19,000,000đ)
+- `TPL_CROWN_CERCON` - Bọc răng sứ Cercon HT (5,000,000đ)
+
+#### doctorEmployeeCode
+
+- ✅ Must exist in `employees` table
+- ✅ Employee must be active
+- ❌ Validation fails if employee not found or inactive
+
+**Valid Values** (from seed data):
+
+- `EMP-001` - Bác sĩ Nguyễn Văn A
+- `EMP-002` - Bác sĩ Trần Thị B
+- `EMP-003` - Bác sĩ Phạm Văn C
+
+#### planNameOverride
+
+- Optional field
+- If `null` or empty → System uses template name
+- If provided → Uses this custom name
+
+**Example**:
+
+```json
+// Uses template name "Niềng răng mắc cài kim loại trọn gói 2 năm"
+"planNameOverride": null
+
+// Uses custom name
+"planNameOverride": "Lộ trình niềng răng cho BN Phong (Khuyến mãi 20%)"
 ```
-Treatment Plan Template
-├── Template Metadata (name, price, duration)
-├── Phase 1
-│   ├── Service A (quantity: 1)
-│   └── Service B (quantity: 2)
-├── Phase 2
-│   └── Service C (quantity: 24)
-└── Phase 3
-    └── Service D (quantity: 1)
+
+#### discountAmount
+
+- Must be >= 0
+- Must be <= total cost (validated in service layer)
+- Default: 0
+
+**Example**:
+
+```json
+// No discount
+"discountAmount": 0
+
+// 5 million VND discount
+"discountAmount": 5000000
 ```
 
-### Example Template: Orthodontics (Niềng răng)
+#### paymentType
 
-**Template ID**: 1  
-**Name**: Niềng răng Mắc cài Kim loại  
-**Duration**: 730 days (24 months)  
-**Price**: 35,000,000 VNĐ  
+- **FULL**: Pay all at once upfront
+- **PHASED**: Pay by phases (when completing each phase)
+- **INSTALLMENT**: Pay in monthly/custom installments
 
-**Phase 1: Chuẩn bị (7 days)**
-- Khám tổng quát × 1 (500,000đ)
-- Lấy cao răng × 1 (800,000đ)
-- Hàn trám răng sâu × 1 (1,500,000đ)
+---
 
-**Phase 2: Lắp mắc cài (1 day)**
-- Lắp mắc cài hàm trên × 1 (8,000,000đ)
-- Lắp mắc cài hàm dưới × 1 (8,000,000đ)
+## Response Model
 
-**Phase 3: Điều chỉnh định kỳ (720 days)**
-- Siết niềng × 24 (500,000đ each)
+### Response (201 CREATED)
 
-**Phase 4: Hoàn tất (1 day)**
-- Tháo niềng × 1 (1,000,000đ)
-- Làm hàm duy trì × 1 (3,000,000đ)
+Same structure as **API 5.2 - Get Treatment Plan Detail**
 
-**Total Items**: 31 items  
-**Total Cost**: 35,000,000đ
+```json
+{
+  "planId": 11,
+  "planCode": "PLAN-20251112-001",
+  "planName": "Niềng răng mắc cài kim loại trọn gói 2 năm",
+  "status": "PENDING",
+  "doctor": {
+    "employeeCode": "EMP-001",
+    "fullName": "Bác sĩ Nguyễn Văn A"
+  },
+  "patient": {
+    "patientCode": "BN-1001",
+    "fullName": "Đoàn Thanh Phong"
+  },
+  "startDate": null,
+  "expectedEndDate": null,
+  "createdAt": "2025-11-12T10:30:00",
+  "totalPrice": 30000000,
+  "discountAmount": 0,
+  "finalCost": 30000000,
+  "paymentType": "INSTALLMENT",
+  "progressSummary": {
+    "totalPhases": 4,
+    "completedPhases": 0,
+    "totalItems": 31,
+    "completedItems": 0,
+    "progressPercentage": 0.0
+  },
+  "phases": [
+    {
+      "patientPhaseId": 101,
+      "phaseNumber": 1,
+      "phaseName": "Giai đoạn 1: Khám & Chuẩn bị",
+      "status": "PENDING",
+      "startDate": null,
+      "completionDate": null,
+      "estimatedDurationDays": 14,
+      "items": [
+        {
+          "itemId": 201,
+          "sequenceNumber": 1,
+          "itemName": "Khám tổng quát và chụp X-quang",
+          "status": "PENDING",
+          "estimatedTimeMinutes": 30,
+          "price": 500000,
+          "completedAt": null,
+          "linkedAppointments": []
+        },
+        {
+          "itemId": 202,
+          "sequenceNumber": 2,
+          "itemName": "Lấy cao răng",
+          "status": "PENDING",
+          "estimatedTimeMinutes": 45,
+          "price": 800000,
+          "completedAt": null,
+          "linkedAppointments": []
+        }
+        // ... more items
+      ]
+    },
+    {
+      "patientPhaseId": 102,
+      "phaseNumber": 2,
+      "phaseName": "Giai đoạn 2: Gắn mắc cài",
+      "status": "PENDING",
+      "startDate": null,
+      "completionDate": null,
+      "estimatedDurationDays": 1,
+      "items": [
+        {
+          "itemId": 203,
+          "sequenceNumber": 1,
+          "itemName": "Lắp mắc cài kim loại hàm trên",
+          "status": "PENDING",
+          "estimatedTimeMinutes": 90,
+          "price": 8000000,
+          "completedAt": null,
+          "linkedAppointments": []
+        }
+        // ... more items
+      ]
+    }
+    // ... 2 more phases
+  ]
+}
+```
 
-### Cloning Process
+### Key Response Fields
 
-When template is applied:
-
-1. **Create Plan Record**
-   - Generate plan_code (PLAN-YYYYMMDD-XXX)
-   - Copy template name, description
-   - Set status = IN_PROGRESS
-   - Set approval_status = APPROVED (for templates)
-
-2. **Clone Phases**
-   ```sql
-   INSERT INTO patient_plan_phases (
-     plan_id, phase_number, phase_name, 
-     estimated_duration_days, status
-   )
-   SELECT 
-     {new_plan_id}, phase_number, phase_name,
-     estimated_duration_days, 'PENDING'
-   FROM template_phases
-   WHERE template_id = {template_id}
-   ```
-
-3. **Expand Services into Items**
-   ```java
-   // For each template_phase_service
-   for (int i = 1; i <= quantity; i++) {
-     PatientPlanItem item = new PatientPlanItem();
-     item.setItemName(serviceName + " (Lần " + i + ")");
-     item.setSequenceNumber(currentSequence++);
-     item.setStatus(PlanItemStatus.PENDING);
-     item.setPrice(servicePrice);
-     // ... save item
-   }
-   ```
-
-4. **Calculate End Date**
-   ```java
-   LocalDate endDate = startDate.plusDays(totalEstimatedDays);
-   ```
+| Field        | Description                                             |
+| ------------ | ------------------------------------------------------- |
+| `planCode`   | Auto-generated unique code (PLAN-YYYYMMDD-XXX)          |
+| `status`     | Always "PENDING" for newly created plans                |
+| `startDate`  | `null` (not started yet - will be set when plan starts) |
+| `totalPrice` | Copied from template's `total_price`                    |
+| `finalCost`  | `totalPrice - discountAmount`                           |
+| `phases`     | Cloned from template phases                             |
+| `items`      | All items status = "PENDING"                            |
 
 ---
 
 ## Business Logic
 
-### Validation Flow
+### Step 1: Validate Patient
 
-**STEP 1: Validate Patient**
 ```java
 Patient patient = patientRepository.findByPatientCode(patientCode)
   .orElseThrow(() -> new NotFoundException("PATIENT_NOT_FOUND"));
@@ -235,9 +332,11 @@ if (!patient.getIsActive()) {
 }
 ```
 
-**STEP 2: Validate Template**
+### Step 2: Validate Template
+
 ```java
-TreatmentPlanTemplate template = templateRepository.findById(templateId)
+TreatmentPlanTemplate template = templateRepository
+  .findByTemplateCode(sourceTemplateCode)
   .orElseThrow(() -> new NotFoundException("TEMPLATE_NOT_FOUND"));
 
 if (!template.getIsActive()) {
@@ -245,157 +344,279 @@ if (!template.getIsActive()) {
 }
 ```
 
-**STEP 3: Validate Financial Data**
+### Step 3: Validate Doctor
+
 ```java
-BigDecimal finalPrice = totalPrice != null ? totalPrice : template.getTotalPrice();
+Employee doctor = employeeRepository.findByEmployeeCode(doctorEmployeeCode)
+  .orElseThrow(() -> new NotFoundException("EMPLOYEE_NOT_FOUND"));
+
+if (!doctor.getIsActive()) {
+  throw new BadRequestException("EMPLOYEE_INACTIVE");
+}
+```
+
+### Step 4: Validate Discount
+
+```java
+BigDecimal totalPrice = template.getTotalPrice();
 BigDecimal discount = discountAmount != null ? discountAmount : BigDecimal.ZERO;
 
-if (discount.compareTo(finalPrice) > 0) {
+if (discount.compareTo(totalPrice) > 0) {
   throw new BadRequestException("DISCOUNT_EXCEEDS_TOTAL");
 }
 
-BigDecimal finalCost = finalPrice.subtract(discount);
-if (finalCost.compareTo(BigDecimal.ZERO) < 0) {
-  throw new BadRequestException("INVALID_FINAL_COST");
+BigDecimal finalCost = totalPrice.subtract(discount);
+```
+
+### Step 5: Generate Plan Code
+
+```java
+String planCode = generatePlanCode();
+// Format: PLAN-YYYYMMDD-XXX
+// Example: PLAN-20251112-001, PLAN-20251112-002, ...
+```
+
+**Logic**:
+
+1. Get current date in format YYYYMMDD (e.g., 20251112)
+2. Count existing plans created today
+3. Increment counter (001, 002, 003, ...)
+4. Combine: `PLAN-{YYYYMMDD}-{counter}`
+
+### Step 6: Create Plan Record
+
+```java
+PatientTreatmentPlan plan = new PatientTreatmentPlan();
+plan.setPlanCode(planCode);
+plan.setPlanName(planNameOverride != null ? planNameOverride : template.getTemplateName());
+plan.setPatient(patient);
+plan.setCreatedBy(doctor);
+plan.setStatus(TreatmentPlanStatus.PENDING);
+plan.setTotalPrice(template.getTotalPrice());
+plan.setDiscountAmount(discount);
+plan.setFinalCost(finalCost);
+plan.setPaymentType(paymentType);
+plan.setExpectedEndDate(null); // Will be calculated from phase durations
+plan = patientTreatmentPlanRepository.save(plan);
+```
+
+### Step 7: Clone Phases
+
+```java
+for (TemplatePhase templatePhase : template.getPhases()) {
+  PatientPlanPhase phase = new PatientPlanPhase();
+  phase.setPlan(plan);
+  phase.setPhaseNumber(templatePhase.getPhaseNumber());
+  phase.setPhaseName(templatePhase.getPhaseName());
+  phase.setStatus(PhaseStatus.PENDING);
+  phase.setEstimatedDurationDays(templatePhase.getEstimatedDurationDays());
+  phase = patientPlanPhaseRepository.save(phase);
+
+  // Clone items for this phase
+  clonePhaseItems(phase, templatePhase);
 }
 ```
 
-**STEP 4: Check for Active Plans**
-```java
-// Optional: Prevent duplicate active plans for same patient
-long activePlans = planRepository.countByPatientIdAndStatus(
-  patient.getPatientId(), 
-  TreatmentPlanStatus.IN_PROGRESS
-);
+### Step 8: Clone Items (with Quantity Expansion)
 
-if (activePlans > 0) {
-  log.warn("Patient {} already has {} active plan(s)", patientCode, activePlans);
-  // Allow or reject based on business rules
-}
-```
-
-**STEP 5: Generate Plan Code**
 ```java
-String planCode = generatePlanCode(startDate);
-// Format: PLAN-YYYYMMDD-XXX (auto-increment XXX within same day)
-```
+void clonePhaseItems(PatientPlanPhase phase, TemplatePhase templatePhase) {
+  int sequenceCounter = 1;
 
-**STEP 6: Create Plan + Clone Structure**
-```java
-@Transactional
-public TreatmentPlanDTO createFromTemplate(CreateFromTemplateRequest request) {
-  // Create plan record
-  PatientTreatmentPlan plan = new PatientTreatmentPlan();
-  plan.setPlanCode(planCode);
-  plan.setPatient(patient);
-  plan.setSourceTemplate(template);
-  plan.setStatus(TreatmentPlanStatus.IN_PROGRESS);
-  plan.setApprovalStatus(ApprovalStatus.APPROVED); // Auto-approved for templates
-  plan = planRepository.save(plan);
-  
-  // Clone phases
-  for (TemplatePhase templatePhase : template.getPhases()) {
-    PatientPlanPhase phase = clonePhase(plan, templatePhase);
-    phaseRepository.save(phase);
-    
-    // Expand services into items
-    for (TemplatePhaseService tps : templatePhase.getServices()) {
-      expandServiceIntoItems(phase, tps);
+  for (TemplatePhaseService tps : templatePhase.getServices()) {
+    int quantity = tps.getQuantity();
+
+    for (int i = 1; i <= quantity; i++) {
+      PatientPlanItem item = new PatientPlanItem();
+      item.setPhase(phase);
+      item.setService(tps.getService());
+      item.setSequenceNumber(sequenceCounter++);
+
+      // Item name logic
+      if (quantity > 1) {
+        item.setItemName(tps.getService().getServiceName() + " (Lần " + i + ")");
+      } else {
+        item.setItemName(tps.getService().getServiceName());
+      }
+
+      item.setStatus(PlanItemStatus.PENDING);
+      item.setPrice(tps.getService().getPrice());
+      item.setEstimatedTimeMinutes(tps.getService().getEstimatedTimeMinutes());
+
+      patientPlanItemRepository.save(item);
     }
   }
-  
-  return mapToDTO(plan);
 }
 ```
 
-### Quantity Expansion Logic
+**Example - Quantity Expansion**:
 
-**Example**: Service "Siết niềng" with quantity = 24
+Template has:
 
-**Template Phase Service**:
-```json
-{
-  "serviceId": 39,
-  "serviceName": "Điều chỉnh niềng răng",
-  "quantity": 24,
-  "price": 500000
-}
-```
+- Service: "Điều chỉnh niềng răng" (quantity = 24)
 
-**Expanded Patient Plan Items** (24 records):
-```json
-[
-  {
-    "itemId": 101,
-    "sequenceNumber": 1,
-    "itemName": "Điều chỉnh niềng răng (Lần 1)",
-    "status": "PENDING",
-    "price": 500000
-  },
-  {
-    "itemId": 102,
-    "sequenceNumber": 2,
-    "itemName": "Điều chỉnh niềng răng (Lần 2)",
-    "status": "PENDING",
-    "price": 500000
-  },
-  // ... 22 more items ...
-  {
-    "itemId": 124,
-    "sequenceNumber": 24,
-    "itemName": "Điều chỉnh niềng răng (Lần 24)",
-    "status": "PENDING",
-    "price": 500000
-  }
-]
-```
+System creates 24 items:
 
-**Benefits**:
-- ✅ Each appointment can be tracked individually
-- ✅ Clear progress visualization (3/24 completed)
-- ✅ Flexible scheduling (book any available session)
-- ✅ Accurate completion percentage calculation
+1. Điều chỉnh niềng răng (Lần 1)
+2. Điều chỉnh niềng răng (Lần 2)
+3. Điều chỉnh niềng răng (Lần 3)
+   ...
+4. Điều chỉnh niềng răng (Lần 24)
 
 ---
 
-## Response Models
+## Testing Guide
 
-### CreateFromTemplateRequest
+### Test 1: Create Plan from Template (Basic)
 
-```java
+**Setup**: Use seed data template `TPL_ORTHO_METAL`
+
+**Request**:
+
+```bash
+POST http://localhost:8080/api/v1/patients/BN-1001/treatment-plans
+Authorization: Bearer {doctor_token}
+Content-Type: application/json
+
 {
-  "patientCode": String,         // Required
-  "templateId": Long,             // Required
-  "startDate": LocalDate,         // Required
-  "totalPrice": BigDecimal,       // Optional (defaults to template price)
-  "discountAmount": BigDecimal,   // Optional (defaults to 0)
-  "paymentType": String,          // Required: FULL or INSTALLMENT
-  "notes": String                 // Optional
+  "sourceTemplateCode": "TPL_ORTHO_METAL",
+  "doctorEmployeeCode": "EMP-001",
+  "discountAmount": 0,
+  "paymentType": "INSTALLMENT"
 }
 ```
 
-### TreatmentPlanDTO (Response)
+**Expected Response**:
 
-```java
+- ✅ Status: 201 CREATED
+- ✅ `planCode`: PLAN-20251112-XXX (auto-generated)
+- ✅ `planName`: "Niềng răng mắc cài kim loại trọn gói 2 năm" (from template)
+- ✅ `status`: "PENDING"
+- ✅ `totalPrice`: 30000000
+- ✅ `discountAmount`: 0
+- ✅ `finalCost`: 30000000
+- ✅ `phases`: 4 phases
+- ✅ `items`: ~31 items total (depends on template structure)
+- ✅ All items `status`: "PENDING"
+
+**Database Verification**:
+
+```sql
+-- 1 plan record
+SELECT * FROM patient_treatment_plans WHERE plan_code LIKE 'PLAN-20251112-%';
+
+-- 4 phase records
+SELECT * FROM patient_plan_phases WHERE plan_id = {new_plan_id};
+
+-- 31 item records
+SELECT COUNT(*) FROM patient_plan_items
+WHERE phase_id IN (SELECT patient_phase_id FROM patient_plan_phases WHERE plan_id = {new_plan_id});
+```
+
+### Test 2: Create Plan with Discount
+
+**Request**:
+
+```json
 {
-  "planId": Long,
-  "planCode": String,
-  "planName": String,
-  "status": String,
-  "approvalStatus": String,
-  "startDate": LocalDate,
-  "expectedEndDate": LocalDate,
-  "totalPrice": BigDecimal,
-  "discountAmount": BigDecimal,
-  "finalCost": BigDecimal,
-  "paymentType": String,
-  "patient": PatientSummaryDTO,
-  "sourceTemplate": TemplateSummaryDTO,
-  "phases": List<PhaseSummaryDTO>,
-  "createdBy": EmployeeSummaryDTO,
-  "createdAt": LocalDateTime
+  "sourceTemplateCode": "TPL_ORTHO_METAL",
+  "doctorEmployeeCode": "EMP-001",
+  "discountAmount": 5000000,
+  "paymentType": "INSTALLMENT"
 }
 ```
+
+**Expected**:
+
+- ✅ `totalPrice`: 30000000
+- ✅ `discountAmount`: 5000000
+- ✅ `finalCost`: 25000000
+
+### Test 3: Create Plan with Custom Name
+
+**Request**:
+
+```json
+{
+  "sourceTemplateCode": "TPL_ORTHO_METAL",
+  "doctorEmployeeCode": "EMP-001",
+  "planNameOverride": "Lộ trình niềng răng cho BN Phong (Ưu đãi 20%)",
+  "discountAmount": 6000000,
+  "paymentType": "INSTALLMENT"
+}
+```
+
+**Expected**:
+
+- ✅ `planName`: "Lộ trình niềng răng cho BN Phong (Ưu đãi 20%)" (custom name used)
+- ✅ NOT "Niềng răng mắc cài kim loại..." (template name ignored)
+
+### Test 4: Invalid - Discount Exceeds Total
+
+**Request**:
+
+```json
+{
+  "sourceTemplateCode": "TPL_ORTHO_METAL",
+  "doctorEmployeeCode": "EMP-001",
+  "discountAmount": 35000000,
+  "paymentType": "FULL"
+}
+```
+
+**Expected**:
+
+- ❌ Status: 400 BAD REQUEST
+- Error: "DISCOUNT_EXCEEDS_TOTAL"
+
+### Test 5: Invalid - Template Not Found
+
+**Request**:
+
+```json
+{
+  "sourceTemplateCode": "INVALID_TEMPLATE",
+  "doctorEmployeeCode": "EMP-001",
+  "discountAmount": 0,
+  "paymentType": "FULL"
+}
+```
+
+**Expected**:
+
+- ❌ Status: 404 NOT FOUND
+- Error: "TEMPLATE_NOT_FOUND"
+
+### Test 6: Invalid - Patient Not Found
+
+**Request**:
+
+```bash
+POST http://localhost:8080/api/v1/patients/INVALID-CODE/treatment-plans
+```
+
+**Expected**:
+
+- ❌ Status: 404 NOT FOUND
+- Error: "PATIENT_NOT_FOUND"
+
+### Test 7: Invalid - Doctor Not Found
+
+**Request**:
+
+```json
+{
+  "sourceTemplateCode": "TPL_ORTHO_METAL",
+  "doctorEmployeeCode": "INVALID-DOCTOR",
+  "discountAmount": 0,
+  "paymentType": "FULL"
+}
+```
+
+**Expected**:
+
+- ❌ Status: 404 NOT FOUND
+- Error: "EMPLOYEE_NOT_FOUND"
 
 ---
 
@@ -403,18 +624,19 @@ public TreatmentPlanDTO createFromTemplate(CreateFromTemplateRequest request) {
 
 ### Common Errors
 
-| HTTP | Error Code              | Description                              |
-|------|-------------------------|------------------------------------------|
-| 404  | PATIENT_NOT_FOUND       | Patient code not found                   |
-| 404  | TEMPLATE_NOT_FOUND      | Template ID not found                    |
-| 400  | PATIENT_INACTIVE        | Patient account is inactive              |
-| 400  | TEMPLATE_INACTIVE       | Template is inactive/archived            |
-| 400  | DISCOUNT_EXCEEDS_TOTAL  | Discount > total price                   |
-| 400  | INVALID_START_DATE      | Start date is in the past                |
-| 400  | MISSING_TEMPLATE_PHASES | Template has no phases                   |
-| 409  | PLAN_CODE_CONFLICT      | Plan code already exists (rare)          |
+| HTTP | Error Code             | Description                             |
+| ---- | ---------------------- | --------------------------------------- |
+| 404  | PATIENT_NOT_FOUND      | Patient code not found                  |
+| 404  | TEMPLATE_NOT_FOUND     | Template code not found                 |
+| 404  | EMPLOYEE_NOT_FOUND     | Doctor employee code not found          |
+| 400  | PATIENT_INACTIVE       | Patient account is inactive             |
+| 400  | TEMPLATE_INACTIVE      | Template is inactive/archived           |
+| 400  | EMPLOYEE_INACTIVE      | Doctor account is inactive              |
+| 400  | DISCOUNT_EXCEEDS_TOTAL | Discount amount > total price           |
+| 403  | ACCESS_DENIED          | User doesn't have CREATE_TREATMENT_PLAN |
+| 401  | UNAUTHORIZED           | Missing or invalid JWT token            |
 
-### Error Response Example
+### Error Response Format
 
 ```json
 {
@@ -422,7 +644,7 @@ public TreatmentPlanDTO createFromTemplate(CreateFromTemplateRequest request) {
   "title": "Bad Request",
   "status": 400,
   "detail": "Discount amount cannot exceed total price",
-  "path": "/api/v1/patient-treatment-plans/from-template",
+  "path": "/api/v1/patients/BN-1001/treatment-plans",
   "message": "error.DISCOUNT_EXCEEDS_TOTAL",
   "errorCode": "DISCOUNT_EXCEEDS_TOTAL"
 }
@@ -430,205 +652,49 @@ public TreatmentPlanDTO createFromTemplate(CreateFromTemplateRequest request) {
 
 ---
 
-## Testing Guide
+## Available Templates (Seed Data)
 
-### Test Scenario 1: Create Plan from Template
+### TPL_ORTHO_METAL - Niềng răng mắc cài kim loại
 
-**Setup**:
-- Patient BN-1001 exists and is active
-- Template ID 1 (Niềng răng) exists with 4 phases, 31 items
+**Price**: 30,000,000đ
+**Duration**: 730 days (2 years)
+**Phases**: 4
 
-**Steps**:
-```bash
-curl -X POST "http://localhost:8080/api/v1/patient-treatment-plans/from-template" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <doctor-token>" \
-  -d '{
-    "patientCode": "BN-1001",
-    "templateId": 1,
-    "startDate": "2025-11-01",
-    "paymentType": "INSTALLMENT",
-    "notes": "Patient prefers installment payment"
-  }'
-```
+**Structure**:
 
-**Verify**:
-1. Response 201 CREATED
-2. Database checks:
-   ```sql
-   -- 1 plan record
-   SELECT * FROM patient_treatment_plans WHERE plan_code = 'PLAN-20251101-001';
-   
-   -- 4 phase records
-   SELECT * FROM patient_plan_phases WHERE plan_id = {new_plan_id};
-   
-   -- 31 item records (all status = PENDING)
-   SELECT * FROM patient_plan_items 
-   WHERE phase_id IN (SELECT patient_phase_id FROM patient_plan_phases WHERE plan_id = {new_plan_id});
-   ```
+1. Giai đoạn 1: Khám & Chuẩn bị (14 days)
 
-**Expected**:
-- ✅ Plan created with status = IN_PROGRESS
-- ✅ Approval status = APPROVED (auto-approved for templates)
-- ✅ 31 items with status = PENDING
-- ✅ Expected end date = start date + 730 days
+   - Khám tổng quát và chụp X-quang
+   - Lấy cao răng
 
-### Test Scenario 2: Price Override
+2. Giai đoạn 2: Gắn mắc cài (1 day)
 
-**Steps**:
-```bash
-curl -X POST ".../from-template" \
-  -d '{
-    "patientCode": "BN-1001",
-    "templateId": 1,
-    "startDate": "2025-11-01",
-    "totalPrice": 32000000,
-    "discountAmount": 2000000,
-    "paymentType": "INSTALLMENT"
-  }'
-```
+   - Lắp mắc cài kim loại hàm trên
+   - Lắp mắc cài kim loại hàm dưới
 
-**Expected**:
-- ✅ Plan created with totalPrice = 32,000,000đ
-- ✅ Discount = 2,000,000đ
-- ✅ Final cost = 30,000,000đ
+3. Giai đoạn 3: Điều chỉnh định kỳ (715 days)
 
-### Test Scenario 3: Invalid Discount
+   - Điều chỉnh niềng răng (quantity = 24 → 24 items)
 
-**Steps**:
-```bash
-curl -X POST ".../from-template" \
-  -d '{
-    "patientCode": "BN-1001",
-    "templateId": 1,
-    "totalPrice": 30000000,
-    "discountAmount": 35000000,
-    "paymentType": "FULL"
-  }'
-```
+4. Giai đoạn 4: Tháo niềng & Duy trì (0 days)
+   - Tháo niềng
+   - Làm hàm duy trì
 
-**Expected**:
-- ❌ 400 BAD_REQUEST
-- Error: "DISCOUNT_EXCEEDS_TOTAL"
+### TPL_IMPLANT_OSSTEM - Cấy ghép Implant
 
-### Test Scenario 4: Inactive Patient
+**Price**: 19,000,000đ
+**Duration**: 180 days (6 months)
+**Phases**: 3
 
-**Setup**:
-- Patient BN-1002 has `is_active = false`
+### TPL_CROWN_CERCON - Bọc răng sứ
 
-**Steps**:
-```bash
-curl -X POST ".../from-template" \
-  -d '{
-    "patientCode": "BN-1002",
-    "templateId": 1,
-    "startDate": "2025-11-01",
-    "paymentType": "FULL"
-  }'
-```
-
-**Expected**:
-- ❌ 400 BAD_REQUEST
-- Error: "PATIENT_INACTIVE"
-
-### Test Scenario 5: Quantity Expansion Verification
-
-**Setup**:
-- Template phase 3 has service with quantity = 24
-
-**Steps**:
-1. Create plan from template
-2. Query items:
-   ```sql
-   SELECT item_id, sequence_number, item_name, status
-   FROM patient_plan_items
-   WHERE phase_id = {phase_3_id}
-   ORDER BY sequence_number;
-   ```
-
-**Expected**:
-- ✅ 24 items returned
-- ✅ Sequence numbers: 1, 2, 3, ..., 24
-- ✅ Item names: "Service (Lần 1)", "Service (Lần 2)", ..., "Service (Lần 24)"
-- ✅ All status = PENDING
-
-### Test Scenario 6: Transactional Rollback
-
-**Setup**:
-- Template has valid phases
-- Database trigger will fail during item creation (simulate error)
-
-**Steps**:
-1. Create plan (will fail mid-transaction)
-2. Verify database state
-
-**Expected**:
-- ❌ 500 INTERNAL_SERVER_ERROR
-- ✅ No plan record created (rollback)
-- ✅ No phase records created (rollback)
-- ✅ No item records created (rollback)
-- ✅ Database remains consistent
+**Price**: 5,000,000đ
+**Duration**: 7 days
+**Phases**: 2
 
 ---
 
-## Integration Notes
-
-### Appointment Booking Integration
-
-After plan creation, items are ready for booking:
-
-```bash
-# Step 1: Get bookable items
-GET /api/v1/patient-treatment-plans/{planId}/bookable-items
-
-# Step 2: Book appointment with item IDs
-POST /api/v1/appointments
-{
-  "patientCode": "BN-1001",
-  "patientPlanItemIds": [101, 102],  // Book first 2 adjustments
-  "employeeCode": "EMP-1",
-  "roomCode": "RM-01",
-  "appointmentStartTime": "2025-11-15T14:00:00"
-}
-```
-
-### Status Transitions
-
-```
-Plan Created → All items PENDING
-                ↓ (After approval - for templates: instant)
-              Items → READY_FOR_BOOKING
-                ↓ (When appointment booked)
-              Items → SCHEDULED
-                ↓ (When appointment starts)
-              Items → IN_PROGRESS
-                ↓ (When appointment completes)
-              Items → COMPLETED
-```
-
----
-
-## Performance Considerations
-
-**Database Queries**:
-- 1 query: Validate patient
-- 1 query: Validate template
-- 1 query: Insert plan
-- N queries: Insert phases (where N = number of phases)
-- M queries: Insert items (where M = total items with quantity expansion)
-
-**Optimization**:
-- Use batch insert for items (JDBC batch size = 50)
-- Transaction boundary: Entire operation (all-or-nothing)
-- Expected execution time: < 500ms for typical plan (4 phases, 30 items)
-
-**Resource Usage**:
-- Memory: ~1MB per plan creation request
-- CPU: Minimal (mostly database I/O)
-- Database locks: Row-level locks on plan/phase/item tables
-
----
-
-**Document Version**: 1.0  
-**Last Updated**: 2025-11-12  
+**Document Version**: 1.0
+**Last Updated**: 2025-11-12
 **Author**: Dental Clinic Development Team
+**Verified Against**: TreatmentPlanController.java (line 159), CreateTreatmentPlanRequest.java, dental-clinic-seed-data.sql (lines 1703-1753)

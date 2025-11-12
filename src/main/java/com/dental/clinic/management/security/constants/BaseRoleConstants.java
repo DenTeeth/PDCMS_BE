@@ -4,7 +4,8 @@ package com.dental.clinic.management.security.constants;
  * Constants for Base Role IDs (base_roles table).
  * <p>
  * P0 Fix: Replaces magic numbers (2, 3) with semantic constants.
- * Used for RBAC logic to distinguish between Admin, Employee, and Patient roles.
+ * Used for RBAC logic to distinguish between Admin, Employee, and Patient
+ * roles.
  * <p>
  * Database Reference:
  * - base_roles table has base_role_id as PRIMARY KEY
@@ -12,7 +13,7 @@ package com.dental.clinic.management.security.constants;
  * <p>
  * Version: V19
  * Date: 2025-01-12
- * 
+ *
  * @author GitHub Copilot
  */
 public final class BaseRoleConstants {

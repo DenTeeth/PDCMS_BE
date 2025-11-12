@@ -57,7 +57,8 @@ public class CustomTreatmentPlanService {
      * 1. Validate input (patient, doctor, phases, items)
      * 2. Validate price overrides (must be within 50%-150% of service default)
      * 3. Create plan entity (status = PENDING, approval_status = DRAFT)
-     * 4. Expand items by quantity (e.g., quantity=5 → 5 items with auto-increment sequence)
+     * 4. Expand items by quantity (e.g., quantity=5 → 5 items with auto-increment
+     * sequence)
      * 5. Calculate total cost and validate discount
      * 6. Save with batch insert optimization
      * 7. Return detail DTO
@@ -177,8 +178,7 @@ public class CustomTreatmentPlanService {
                     "Discount amount (" + request.getDiscountAmount() +
                             ") cannot exceed total cost (" + totalCost + ")",
                     "TreatmentPlan",
-                    "discountExceedsCost"
-            );
+                    "discountExceedsCost");
         }
 
         BigDecimal finalCost = totalCost.subtract(request.getDiscountAmount());
@@ -192,7 +192,8 @@ public class CustomTreatmentPlanService {
                 .mapToInt(p -> p.getItems().size())
                 .sum();
 
-        log.info("Custom treatment plan created successfully. PlanCode: {}, TotalPrice: {}, FinalCost: {}, Total Items: {}",
+        log.info(
+                "Custom treatment plan created successfully. PlanCode: {}, TotalPrice: {}, FinalCost: {}, Total Items: {}",
                 planCode, totalCost, finalCost, totalItems);
 
         // ============================================
@@ -215,8 +216,7 @@ public class CustomTreatmentPlanService {
                     return new BadRequestAlertException(
                             "Patient not found with code: " + patientCode,
                             "Patient",
-                            "patientNotFound"
-                    );
+                            "patientNotFound");
                 });
     }
 
@@ -230,16 +230,14 @@ public class CustomTreatmentPlanService {
                     return new BadRequestAlertException(
                             "Doctor not found with code: " + employeeCode,
                             "Employee",
-                            "doctorNotFound"
-                    );
+                            "doctorNotFound");
                 });
 
         if (!doctor.getIsActive()) {
             throw new BadRequestAlertException(
                     "Doctor is not active: " + employeeCode,
                     "Employee",
-                    "doctorInactive"
-            );
+                    "doctorInactive");
         }
 
         return doctor;
@@ -255,16 +253,14 @@ public class CustomTreatmentPlanService {
                     return new BadRequestAlertException(
                             "Service not found with code: " + serviceCode,
                             "Service",
-                            "serviceNotFound"
-                    );
+                            "serviceNotFound");
                 });
 
         if (!service.getIsActive()) {
             throw new BadRequestAlertException(
                     "Service is not active: " + serviceCode,
                     "Service",
-                    "serviceInactive"
-            );
+                    "serviceInactive");
         }
 
         return service;
@@ -283,8 +279,7 @@ public class CustomTreatmentPlanService {
                 throw new BadRequestAlertException(
                         "Duplicate phase number: " + phase.getPhaseNumber(),
                         "TreatmentPlan",
-                        "duplicatePhaseNumber"
-                );
+                        "duplicatePhaseNumber");
             }
 
             // Check phase has items
@@ -292,8 +287,7 @@ public class CustomTreatmentPlanService {
                 throw new BadRequestAlertException(
                         "Phase " + phase.getPhaseNumber() + " has no items",
                         "TreatmentPlan",
-                        "phaseWithoutItems"
-                );
+                        "phaseWithoutItems");
             }
         }
     }
@@ -315,8 +309,7 @@ public class CustomTreatmentPlanService {
                     String.format("Price for service %s (%s) is out of allowed range (%s - %s). Default price: %s",
                             serviceCode, requestPrice, minPrice, maxPrice, servicePrice),
                     "TreatmentPlan",
-                    "priceOutOfRange"
-            );
+                    "priceOutOfRange");
         }
     }
 }
