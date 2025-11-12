@@ -10,6 +10,8 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,32 +34,43 @@ public class TreatmentPlanController {
         private final com.dental.clinic.management.treatment_plans.service.TreatmentPlanCreationService treatmentPlanCreationService;
 
         /**
-         * API 5.1: Get all treatment plans for a specific patient.
+         * API 5.1: Get all treatment plans for a specific patient (with pagination).
          * <p>
          * Required Permissions:
          * - VIEW_TREATMENT_PLAN_ALL: Staff can view all patients' plans
          * - VIEW_TREATMENT_PLAN_OWN: Patient can only view their own plans
+         * <p>
+         * Pagination: Use query params page (0-indexed) and size (default 10)
+         * Example: /patients/BN-1001/treatment-plans?page=0&size=20
          *
          * @param patientCode Unique patient code
-         * @return List of treatment plan summaries
+         * @param pageable    Pagination parameters (page, size, sort)
+         * @return Page of treatment plan summaries with pagination metadata
          */
-        @Operation(summary = "Get treatment plans for a patient", description = "Retrieve all treatment plans (contracts) for a specific patient. "
+        @Operation(summary = "Get treatment plans for a patient (paginated)", description = "Retrieve treatment plans (contracts) for a specific patient with pagination support. "
                         +
                         "Staff with VIEW_TREATMENT_PLAN_ALL can view any patient's plans. " +
-                        "Patients with VIEW_TREATMENT_PLAN_OWN can only view their own plans.")
+                        "Patients with VIEW_TREATMENT_PLAN_OWN can only view their own plans. " +
+                        "Supports pagination via page (0-indexed) and size query parameters. " +
+                        "Response includes totalElements, totalPages, and current page info.")
         @ApiResponses(value = {
                         @ApiResponse(responseCode = "200", description = "Successfully retrieved treatment plans"),
                         @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions"),
                         @ApiResponse(responseCode = "404", description = "Patient not found")
         })
         @GetMapping("/patients/{patientCode}/treatment-plans")
-        public ResponseEntity<List<TreatmentPlanSummaryDTO>> getTreatmentPlans(
-                        @Parameter(description = "Patient code (e.g., PT-2025-001)", required = true) @PathVariable String patientCode) {
-                log.info("REST request to get treatment plans for patient: {}", patientCode);
+        public ResponseEntity<org.springframework.data.domain.Page<TreatmentPlanSummaryDTO>> getTreatmentPlans(
+                        @Parameter(description = "Patient code (e.g., BN-1001)", required = true) @PathVariable String patientCode,
+                        @Parameter(description = "Pagination parameters (page=0, size=10, sort=createdAt,desc)", required = false) org.springframework.data.domain.Pageable pageable) {
+                log.info("REST request to get treatment plans for patient: {} (page: {}, size: {})",
+                                patientCode, pageable.getPageNumber(), pageable.getPageSize());
 
-                List<TreatmentPlanSummaryDTO> plans = treatmentPlanService.getTreatmentPlansByPatient(patientCode);
+                org.springframework.data.domain.Page<TreatmentPlanSummaryDTO> plans = treatmentPlanService
+                                .getTreatmentPlansByPatient(patientCode, pageable);
 
-                log.info("Returning {} treatment plans for patient {}", plans.size(), patientCode);
+                log.info("Returning {} treatment plans for patient {} (total: {}, page: {}/{})",
+                                plans.getNumberOfElements(), patientCode, plans.getTotalElements(),
+                                plans.getNumber() + 1, plans.getTotalPages());
                 return ResponseEntity.ok(plans);
         }
 

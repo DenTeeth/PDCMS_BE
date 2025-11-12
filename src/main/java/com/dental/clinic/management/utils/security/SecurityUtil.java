@@ -47,7 +47,8 @@ public class SecurityUtil {
         this.jwtDecoder = jwtDecoder;
     }
 
-    public String createAccessToken(String username, List<String> roles, List<String> permissions, Integer accountId) {
+    public String createAccessToken(String username, List<String> roles, List<String> permissions,
+            Integer accountId, String patientCode, String employeeCode) {
         Instant now = Instant.now();
         Instant validity = now.plus(jwtExpiration, ChronoUnit.SECONDS);
 
@@ -56,14 +57,25 @@ public class SecurityUtil {
                 .map(role -> role.startsWith("ROLE_") ? role : "ROLE_" + role)
                 .collect(Collectors.toList());
 
-        JwtClaimsSet claims = JwtClaimsSet.builder()
+        JwtClaimsSet.Builder claimsBuilder = JwtClaimsSet.builder()
                 .issuedAt(now)
                 .expiresAt(validity)
                 .subject(username)
                 .claim(ROLES_CLAIM, formattedRoles)
                 .claim(PERMISSIONS_CLAIM, permissions)
-                .claim("account_id", accountId)
-                .build();
+                .claim("account_id", accountId);
+
+        // Add patientCode if present (FE Issue 3.3 fix)
+        if (patientCode != null) {
+            claimsBuilder.claim("patient_code", patientCode);
+        }
+
+        // Add employeeCode if present (FE Issue 3.3 fix)
+        if (employeeCode != null) {
+            claimsBuilder.claim("employee_code", employeeCode);
+        }
+
+        JwtClaimsSet claims = claimsBuilder.build();
 
         JwsHeader jwsHeader = JwsHeader.with(JWT_ALGORITHM).build();
         return this.jwtEncoder.encode(JwtEncoderParameters.from(jwsHeader, claims)).getTokenValue();

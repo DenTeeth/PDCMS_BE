@@ -1688,7 +1688,7 @@ FROM treatment_plan_templates t WHERE t.template_code = 'TPL_ORTHO_METAL'
 ON CONFLICT (template_id, phase_number) DO NOTHING;
 
 INSERT INTO template_phases (template_id, phase_number, phase_name, estimated_duration_days, created_at)
-SELECT t.template_id, 3, 'Giai đoạn 3: Điều chỉnh định kỳ (24 tháng)', 715, NOW()
+SELECT t.template_id, 3, 'Giai đoạn 3: Điều chỉnh định kỳ (8 tháng)', 715, NOW()
 FROM treatment_plan_templates t WHERE t.template_code = 'TPL_ORTHO_METAL'
 ON CONFLICT (template_id, phase_number) DO NOTHING;
 
@@ -2346,3 +2346,11 @@ ON CONFLICT (item_id) DO NOTHING;
 SELECT setval('patient_treatment_plans_plan_id_seq', (SELECT COALESCE(MAX(plan_id), 0) FROM patient_treatment_plans) + 1, false);
 SELECT setval('patient_plan_phases_patient_phase_id_seq', (SELECT COALESCE(MAX(patient_phase_id), 0) FROM patient_plan_phases) + 1, false);
 SELECT setval('patient_plan_items_item_id_seq', (SELECT COALESCE(MAX(item_id), 0) FROM patient_plan_items) + 1, false);
+
+-- ============================================
+-- FIX: Add PENDING status to patient_plan_items constraint
+-- (Required for API 5.3 - Create Treatment Plan from Template)
+-- ============================================
+ALTER TABLE patient_plan_items DROP CONSTRAINT IF EXISTS patient_plan_items_status_check;
+ALTER TABLE patient_plan_items ADD CONSTRAINT patient_plan_items_status_check
+    CHECK (status IN ('PENDING', 'READY_FOR_BOOKING', 'SCHEDULED', 'IN_PROGRESS', 'COMPLETED'));

@@ -8,6 +8,8 @@ import com.dental.clinic.management.treatment_plans.dto.TreatmentPlanSummaryDTO;
 import com.dental.clinic.management.treatment_plans.repository.PatientTreatmentPlanRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -106,6 +108,73 @@ public class TreatmentPlanService {
     }
 
     /**
+     * Get treatment plans for a patient WITH PAGINATION (FE Issue 2.3 fix).
+     * <p>
+     * RBAC:
+     * - VIEW_TREATMENT_PLAN_ALL: Can view any patient's plans
+     * - VIEW_TREATMENT_PLAN_OWN: Can only view own plans
+     *
+     * @param patientCode Unique patient code
+     * @param pageable    Pagination parameters
+     * @return Page of treatment plan summaries
+     */
+    public Page<TreatmentPlanSummaryDTO> getTreatmentPlansByPatient(
+            String patientCode, Pageable pageable) {
+
+        log.info("Getting treatment plans for patient: {} with pagination (page: {}, size: {})",
+                patientCode, pageable.getPageNumber(), pageable.getPageSize());
+
+        // STEP 1: Verify patient exists
+        Patient patient = patientRepository.findOneByPatientCode(patientCode)
+                .orElseThrow(() -> {
+                    log.error("Patient not found with code: {}", patientCode);
+                    return new IllegalArgumentException("Patient not found with code: " + patientCode);
+                });
+
+        // STEP 2: RBAC check (same as non-paginated version)
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new AccessDeniedException("User not authenticated");
+        }
+
+        boolean hasViewAllPermission = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(auth -> auth.equals("VIEW_TREATMENT_PLAN_ALL"));
+
+        boolean hasViewOwnPermission = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(auth -> auth.equals("VIEW_TREATMENT_PLAN_OWN"));
+
+        if (hasViewAllPermission) {
+            log.info("User has VIEW_TREATMENT_PLAN_ALL permission, allowing paginated access");
+        } else if (hasViewOwnPermission) {
+            Integer currentAccountId = getCurrentAccountId(authentication);
+            Integer patientAccountId = patient.getAccount() != null ? patient.getAccount().getAccountId() : null;
+
+            if (patientAccountId == null || !patientAccountId.equals(currentAccountId)) {
+                log.warn("Access denied: User {} trying to view treatment plans of patient {} (different account)",
+                        currentAccountId, patientCode);
+                throw new AccessDeniedException("You can only view your own treatment plans");
+            }
+            log.info("User verified as owner of patient record, allowing paginated access");
+        } else {
+            log.warn("Access denied: User does not have VIEW_TREATMENT_PLAN_ALL or VIEW_TREATMENT_PLAN_OWN permission");
+            throw new AccessDeniedException("You do not have permission to view treatment plans");
+        }
+
+        // STEP 3: Query with pagination
+        Page<PatientTreatmentPlan> plansPage = treatmentPlanRepository
+                .findByPatientIdWithDoctorPageable(patient.getPatientId(), pageable);
+
+        log.info("Found {} treatment plans for patient {} (total: {}, page: {}/{})",
+                plansPage.getNumberOfElements(), patientCode, plansPage.getTotalElements(),
+                plansPage.getNumber() + 1, plansPage.getTotalPages());
+
+        // STEP 4: Convert to DTOs
+        return plansPage.map(this::convertToSummaryDTO);
+    }
+
+    /**
      * Extract account ID from JWT token.
      *
      * @param authentication Spring Security authentication object
@@ -136,6 +205,7 @@ public class TreatmentPlanService {
 
         return TreatmentPlanSummaryDTO.builder()
                 .patientPlanId(plan.getPlanId())
+                .planCode(plan.getPlanCode()) // CRITICAL FIX: Add planCode for FE navigation
                 .planName(plan.getPlanName())
                 .status(plan.getStatus())
                 .doctor(doctorInfo)

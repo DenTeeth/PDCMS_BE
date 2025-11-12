@@ -23,6 +23,12 @@ public class TreatmentPlanSummaryDTO {
 
     private Long patientPlanId;
 
+    /**
+     * Unique plan code (e.g., "PLAN-20251111-001")
+     * CRITICAL: Required by FE to navigate to detail page
+     */
+    private String planCode;
+
     private String planName;
 
     private TreatmentPlanStatus status;
