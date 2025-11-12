@@ -111,6 +111,40 @@ public class PatientTreatmentPlan {
     @Column(name = "payment_type", length = 20)
     private PaymentType paymentType;
 
+    /**
+     * Approval status (V19): DRAFT, PENDING_REVIEW, APPROVED, REJECTED.
+     * Used for price override control workflow.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "approval_status", length = 20, nullable = false)
+    @Builder.Default
+    private ApprovalStatus approvalStatus = ApprovalStatus.DRAFT;
+
+    /**
+     * Date when patient signed consent (V19).
+     */
+    @Column(name = "patient_consent_date")
+    private LocalDateTime patientConsentDate;
+
+    /**
+     * Employee who approved this plan (V19).
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "approved_by")
+    private Employee approvedBy;
+
+    /**
+     * Timestamp when plan was approved (V19).
+     */
+    @Column(name = "approved_at")
+    private LocalDateTime approvedAt;
+
+    /**
+     * Rejection reason if status = REJECTED (V19).
+     */
+    @Column(name = "rejection_reason", columnDefinition = "TEXT")
+    private String rejectionReason;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

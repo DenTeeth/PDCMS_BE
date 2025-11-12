@@ -26,6 +26,16 @@ public interface PatientRepository extends JpaRepository<Patient, Integer>, JpaS
   @Query("SELECT p FROM Patient p LEFT JOIN FETCH p.account WHERE p.patientCode = :patientCode")
   Optional<Patient> findOneByPatientCodeWithAccount(@Param("patientCode") String patientCode);
 
+  /**
+   * Find patient by account ID (for RBAC checks in API 5.5).
+   * Used when determining current patient from JWT account_id claim.
+   *
+   * @param accountId Account ID from JWT
+   * @return Optional Patient entity
+   */
+  @Query("SELECT p FROM Patient p WHERE p.account.accountId = :accountId")
+  Optional<Patient> findOneByAccountAccountId(@Param("accountId") Integer accountId);
+
   Optional<Patient> findOneByEmail(String email);
 
   Optional<Patient> findOneByPhone(String phone);

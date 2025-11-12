@@ -26,6 +26,8 @@ DROP TYPE IF EXISTS holiday_type CASCADE;
 DROP TYPE IF EXISTS renewal_status CASCADE;
 DROP TYPE IF EXISTS time_off_status CASCADE;
 DROP TYPE IF EXISTS balance_change_reason CASCADE;
+DROP TYPE IF EXISTS approval_status CASCADE;
+DROP TYPE IF EXISTS plan_item_status CASCADE;
 
 -- Create all ENUM types
 CREATE TYPE appointment_action_type AS ENUM ('CREATE', 'DELAY', 'RESCHEDULE_SOURCE', 'RESCHEDULE_TARGET', 'CANCEL', 'STATUS_CHANGE');
@@ -49,22 +51,63 @@ CREATE TYPE renewal_status AS ENUM ('PENDING_ACTION', 'CONFIRMED', 'FINALIZED', 
 CREATE TYPE time_off_status AS ENUM ('PENDING', 'APPROVED', 'REJECTED', 'CANCELLED');
 CREATE TYPE balance_change_reason AS ENUM ('ANNUAL_RESET', 'APPROVED_REQUEST', 'REJECTED_REQUEST', 'CANCELLED_REQUEST', 'MANUAL_ADJUSTMENT');
 
+-- V19: Treatment Plan Enums
+CREATE TYPE approval_status AS ENUM ('DRAFT', 'PENDING_REVIEW', 'APPROVED', 'REJECTED');
+CREATE TYPE plan_item_status AS ENUM ('READY_FOR_BOOKING', 'SCHEDULED', 'PENDING', 'IN_PROGRESS', 'COMPLETED');
+
 -- ============================================
 -- END ENUM TYPE DEFINITIONS
 -- ============================================
 
 -- ============================================
--- FIX TREATMENT PLAN CONSTRAINTS
+-- V19: TREATMENT PLAN SCHEMA UPDATES
 -- ============================================
--- Drop old constraint and recreate with correct enum values including PENDING
--- Issue: Old schema had constraint without PENDING status
+-- Add approval workflow and phase duration columns
 
+-- Add approval workflow columns to patient_treatment_plans
+ALTER TABLE IF EXISTS patient_treatment_plans
+ADD COLUMN IF NOT EXISTS approval_status approval_status NOT NULL DEFAULT 'APPROVED',
+ADD COLUMN IF NOT EXISTS patient_consent_date TIMESTAMP NULL,
+ADD COLUMN IF NOT EXISTS approved_by INTEGER NULL,
+ADD COLUMN IF NOT EXISTS approved_at TIMESTAMP NULL,
+ADD COLUMN IF NOT EXISTS rejection_reason TEXT NULL;
+
+-- Add estimated_duration_days to patient_plan_phases
+ALTER TABLE IF EXISTS patient_plan_phases
+ADD COLUMN IF NOT EXISTS estimated_duration_days INTEGER NULL;
+
+-- Add sequence_number to template_phase_services (bug fix)
+ALTER TABLE IF EXISTS template_phase_services
+ADD COLUMN IF NOT EXISTS sequence_number INTEGER NOT NULL DEFAULT 0;
+
+-- Add foreign key for approved_by
+ALTER TABLE IF EXISTS patient_treatment_plans
+DROP CONSTRAINT IF EXISTS fk_treatment_plan_approved_by;
+
+ALTER TABLE IF EXISTS patient_treatment_plans
+ADD CONSTRAINT fk_treatment_plan_approved_by
+FOREIGN KEY (approved_by) REFERENCES employees(employee_id);
+
+-- Update constraints
 ALTER TABLE IF EXISTS patient_treatment_plans
 DROP CONSTRAINT IF EXISTS patient_treatment_plans_status_check;
 
 ALTER TABLE IF EXISTS patient_treatment_plans
 ADD CONSTRAINT patient_treatment_plans_status_check
-CHECK (status IN ('PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'));
+CHECK (status IN ('PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'ON_HOLD'));
+
+-- Create indexes for performance
+CREATE INDEX IF NOT EXISTS idx_treatment_plans_approval_status 
+ON patient_treatment_plans(approval_status);
+
+CREATE INDEX IF NOT EXISTS idx_treatment_plans_approved_by 
+ON patient_treatment_plans(approved_by);
+
+CREATE INDEX IF NOT EXISTS idx_treatment_plans_created_by 
+ON patient_treatment_plans(created_by);
+
+CREATE INDEX IF NOT EXISTS idx_treatment_plans_patient_id 
+ON patient_treatment_plans(patient_id);
 
 -- ============================================
 
@@ -2158,23 +2201,23 @@ ADD COLUMN IF NOT EXISTS new_status VARCHAR(50);
 -- Treatment Plan 1: Bệnh nhân BN-1001 (Đoàn Thanh Phong) - Niềng răng
 INSERT INTO patient_treatment_plans (
     plan_id, plan_code, plan_name, patient_id, created_by,
-    status, start_date, expected_end_date,
+    status, approval_status, start_date, expected_end_date,
     total_price, discount_amount, final_cost, payment_type,
-    created_at
+    patient_consent_date, approved_by, approved_at, created_at
 ) VALUES (
     1, 'PLAN-20251001-001', 'Lộ trình Niềng răng Mắc cài Kim loại', 1, 1,
-    'IN_PROGRESS', '2025-10-01', '2027-10-01',
+    'IN_PROGRESS', 'APPROVED', '2025-10-01', '2027-10-01',
     35000000, 0, 35000000, 'INSTALLMENT',
-    NOW()
+    '2025-10-01 08:30:00', 3, '2025-10-02 09:00:00', NOW()
 ) ON CONFLICT (plan_id) DO NOTHING;
 
 -- Phase 1: Chuẩn bị
 INSERT INTO patient_plan_phases (
     patient_phase_id, plan_id, phase_number, phase_name,
-    status, start_date, completion_date, created_at
+    status, start_date, completion_date, estimated_duration_days, created_at
 ) VALUES (
     1, 1, 1, 'Giai đoạn 1: Chuẩn bị và Kiểm tra',
-    'COMPLETED', '2025-10-01', '2025-10-06', NOW()
+    'COMPLETED', '2025-10-01', '2025-10-06', 7, NOW()
 ) ON CONFLICT (patient_phase_id) DO NOTHING;
 
 -- Items for Phase 1
@@ -2190,10 +2233,10 @@ ON CONFLICT (item_id) DO NOTHING;
 -- Phase 2: Lắp mắc cài
 INSERT INTO patient_plan_phases (
     patient_phase_id, plan_id, phase_number, phase_name,
-    status, start_date, created_at
+    status, start_date, estimated_duration_days, created_at
 ) VALUES (
     2, 1, 2, 'Giai đoạn 2: Lắp Mắc cài và Điều chỉnh ban đầu',
-    'IN_PROGRESS', '2025-10-15', NOW()
+    'IN_PROGRESS', '2025-10-15', 60, NOW()
 ) ON CONFLICT (patient_phase_id) DO NOTHING;
 
 -- Items for Phase 2
@@ -2210,10 +2253,10 @@ ON CONFLICT (item_id) DO NOTHING;
 -- Phase 3: Điều chỉnh định kỳ (FIXED: 24→8 months for realistic seed data)
 INSERT INTO patient_plan_phases (
     patient_phase_id, plan_id, phase_number, phase_name,
-    status, start_date, created_at
+    status, start_date, estimated_duration_days, created_at
 ) VALUES (
     3, 1, 3, 'Giai đoạn 3: Điều chỉnh định kỳ (8 tháng)',
-    'PENDING', NULL, NOW()
+    'PENDING', NULL, 240, NOW()
 ) ON CONFLICT (patient_phase_id) DO NOTHING;
 
 -- Items for Phase 3 (8 adjustment sessions - months 3 to 10)
@@ -2234,23 +2277,23 @@ ON CONFLICT (item_id) DO NOTHING;
 -- Treatment Plan 2: Bệnh nhân BN-1002 (Phạm Văn Phong) - Implant
 INSERT INTO patient_treatment_plans (
     plan_id, plan_code, plan_name, patient_id, created_by,
-    status, start_date, expected_end_date,
+    status, approval_status, start_date, expected_end_date,
     total_price, discount_amount, final_cost, payment_type,
-    created_at
+    patient_consent_date, approved_by, approved_at, created_at
 ) VALUES (
     2, 'PLAN-20240515-001', 'Lộ trình Implant 2 răng cửa', 2, 2,
-    'COMPLETED', '2024-05-15', '2024-08-20',
+    'COMPLETED', 'APPROVED', '2024-05-15', '2024-08-20',
     40000000, 5000000, 35000000, 'FULL',
-    '2024-05-15 10:00:00'
+    '2024-05-14 15:00:00', 3, '2024-05-14 16:00:00', '2024-05-15 10:00:00'
 ) ON CONFLICT (plan_id) DO NOTHING;
 
 -- Phase 1: Chuẩn bị Implant
 INSERT INTO patient_plan_phases (
     patient_phase_id, plan_id, phase_number, phase_name,
-    status, start_date, completion_date, created_at
+    status, start_date, completion_date, estimated_duration_days, created_at
 ) VALUES (
     4, 2, 1, 'Giai đoạn 1: Khám và Chuẩn bị',
-    'COMPLETED', '2024-05-15', '2024-05-20', '2024-05-15 10:00:00'
+    'COMPLETED', '2024-05-15', '2024-05-20', 7, '2024-05-15 10:00:00'
 ) ON CONFLICT (patient_phase_id) DO NOTHING;
 
 INSERT INTO patient_plan_items (
@@ -2264,10 +2307,10 @@ ON CONFLICT (item_id) DO NOTHING;
 -- Phase 2: Cấy Implant
 INSERT INTO patient_plan_phases (
     patient_phase_id, plan_id, phase_number, phase_name,
-    status, start_date, completion_date, created_at
+    status, start_date, completion_date, estimated_duration_days, created_at
 ) VALUES (
     5, 2, 2, 'Giai đoạn 2: Cấy trụ Implant',
-    'COMPLETED', '2024-06-01', '2024-06-05', '2024-05-15 10:00:00'
+    'COMPLETED', '2024-06-01', '2024-06-05', 5, '2024-05-15 10:00:00'
 ) ON CONFLICT (patient_phase_id) DO NOTHING;
 
 INSERT INTO patient_plan_items (
@@ -2281,10 +2324,10 @@ ON CONFLICT (item_id) DO NOTHING;
 -- Phase 3: Lắp răng sứ
 INSERT INTO patient_plan_phases (
     patient_phase_id, plan_id, phase_number, phase_name,
-    status, start_date, completion_date, created_at
+    status, start_date, completion_date, estimated_duration_days, created_at
 ) VALUES (
     6, 2, 3, 'Giai đoạn 3: Lắp mão sứ (sau 3 tháng lành xương)',
-    'COMPLETED', '2024-08-15', '2024-08-20', '2024-05-15 10:00:00'
+    'COMPLETED', '2024-08-15', '2024-08-20', 90, '2024-05-15 10:00:00'
 ) ON CONFLICT (patient_phase_id) DO NOTHING;
 
 INSERT INTO patient_plan_items (
@@ -2298,23 +2341,23 @@ ON CONFLICT (item_id) DO NOTHING;
 -- Treatment Plan 3: Bệnh nhân BN-1003 (Nguyễn Tuấn Anh) - Tẩy trắng răng
 INSERT INTO patient_treatment_plans (
     plan_id, plan_code, plan_name, patient_id, created_by,
-    status, start_date, expected_end_date,
+    status, approval_status, start_date, expected_end_date,
     total_price, discount_amount, final_cost, payment_type,
-    created_at
+    approved_by, approved_at, created_at
 ) VALUES (
     3, 'PLAN-20251105-001', 'Lộ trình Tẩy trắng răng Laser', 3, 1,
-    'PENDING', '2025-11-15', '2025-11-30',
+    'PENDING', 'APPROVED', '2025-11-15', '2025-11-30',
     8000000, 800000, 7200000, 'FULL',
-    NOW()
+    3, '2025-11-05 14:00:00', NOW()
 ) ON CONFLICT (plan_id) DO NOTHING;
 
 -- Phase 1: Chuẩn bị tẩy trắng
 INSERT INTO patient_plan_phases (
     patient_phase_id, plan_id, phase_number, phase_name,
-    status, start_date, created_at
+    status, start_date, estimated_duration_days, created_at
 ) VALUES (
     7, 3, 1, 'Giai đoạn 1: Kiểm tra và Vệ sinh',
-    'PENDING', NULL, NOW()
+    'PENDING', NULL, 3, NOW()
 ) ON CONFLICT (patient_phase_id) DO NOTHING;
 
 INSERT INTO patient_plan_items (
@@ -2328,10 +2371,10 @@ ON CONFLICT (item_id) DO NOTHING;
 -- Phase 2: Tẩy trắng
 INSERT INTO patient_plan_phases (
     patient_phase_id, plan_id, phase_number, phase_name,
-    status, start_date, created_at
+    status, start_date, estimated_duration_days, created_at
 ) VALUES (
     8, 3, 2, 'Giai đoạn 2: Tẩy trắng Laser',
-    'PENDING', NULL, NOW()
+    'PENDING', NULL, 14, NOW()
 ) ON CONFLICT (patient_phase_id) DO NOTHING;
 
 INSERT INTO patient_plan_items (
@@ -2342,10 +2385,295 @@ INSERT INTO patient_plan_items (
     (22, 8, 17, 2, 'Kiểm tra và tư vấn sau tẩy trắng', 'READY_FOR_BOOKING', 30, 0, NULL, NOW())
 ON CONFLICT (item_id) DO NOTHING;
 
--- Reset sequences
-SELECT setval('patient_treatment_plans_plan_id_seq', (SELECT COALESCE(MAX(plan_id), 0) FROM patient_treatment_plans) + 1, false);
-SELECT setval('patient_plan_phases_patient_phase_id_seq', (SELECT COALESCE(MAX(patient_phase_id), 0) FROM patient_plan_phases) + 1, false);
-SELECT setval('patient_plan_items_item_id_seq', (SELECT COALESCE(MAX(item_id), 0) FROM patient_plan_items) + 1, false);
+-- ============================================
+-- V20: ADDITIONAL TREATMENT PLANS FOR API 5.5 TESTING
+-- ============================================
+-- Purpose: Add more treatment plans with various statuses and approval states
+-- Coverage: Multiple patients/doctors, date ranges, approval workflows
+
+-- Treatment Plan 4: BN-1003 - Nhổ răng khôn + Tẩy trắng (Doctor EMP-2, PENDING, DRAFT)
+INSERT INTO patient_treatment_plans (
+    plan_id, plan_code, plan_name, patient_id, created_by,
+    status, approval_status, start_date, expected_end_date,
+    total_price, discount_amount, final_cost, payment_type,
+    created_at
+) VALUES (
+    4, 'PLAN-20250110-001', 'Nhổ răng khôn và Tẩy trắng', 3, 2,
+    'PENDING', 'DRAFT', '2025-01-20', '2025-02-20',
+    8500000, 500000, 8000000, 'FULL',
+    '2025-01-10 10:00:00'
+) ON CONFLICT (plan_id) DO NOTHING;
+
+-- Phase 1: Nhổ răng khôn
+INSERT INTO patient_plan_phases (
+    patient_phase_id, plan_id, phase_number, phase_name,
+    status, start_date, estimated_duration_days, created_at
+) VALUES (
+    9, 4, 1, 'Giai đoạn 1: Nhổ răng khôn',
+    'PENDING', '2025-01-20', 7, '2025-01-10 10:00:00'
+) ON CONFLICT (patient_phase_id) DO NOTHING;
+
+INSERT INTO patient_plan_items (
+    item_id, phase_id, service_id, sequence_number, item_name,
+    status, estimated_time_minutes, price, created_at
+) VALUES
+    (23, 9, 14, 1, 'Nhổ răng khôn hàm dưới bên trái', 'PENDING', 60, 2500000, '2025-01-10 10:00:00'),
+    (24, 9, 14, 2, 'Nhổ răng khôn hàm dưới bên phải', 'PENDING', 60, 2500000, '2025-01-10 10:00:00')
+ON CONFLICT (item_id) DO NOTHING;
+
+-- Phase 2: Tẩy trắng
+INSERT INTO patient_plan_phases (
+    patient_phase_id, plan_id, phase_number, phase_name,
+    status, start_date, estimated_duration_days, created_at
+) VALUES (
+    10, 4, 2, 'Giai đoạn 2: Tẩy trắng răng',
+    'PENDING', '2025-02-05', 14, '2025-01-10 10:00:00'
+) ON CONFLICT (patient_phase_id) DO NOTHING;
+
+INSERT INTO patient_plan_items (
+    item_id, phase_id, service_id, sequence_number, item_name,
+    status, estimated_time_minutes, price, created_at
+) VALUES
+    (25, 10, 31, 1, 'Tẩy trắng răng Laser', 'PENDING', 90, 3500000, '2025-01-10 10:00:00')
+ON CONFLICT (item_id) DO NOTHING;
+
+-- Treatment Plan 5: BN-1004 - Bọc răng sứ 6 răng (Doctor EMP-1, IN_PROGRESS, APPROVED)
+INSERT INTO patient_treatment_plans (
+    plan_id, plan_code, plan_name, patient_id, created_by,
+    status, approval_status, start_date, expected_end_date,
+    total_price, discount_amount, final_cost, payment_type,
+    approved_by, approved_at, created_at
+) VALUES (
+    5, 'PLAN-20241215-001', 'Bọc răng sứ thẩm mỹ 6 răng cửa', 4, 1,
+    'IN_PROGRESS', 'APPROVED', '2024-12-15', '2025-02-15',
+    42000000, 2000000, 40000000, 'INSTALLMENT',
+    3, '2024-12-16 09:00:00', '2024-12-15 14:00:00'
+) ON CONFLICT (plan_id) DO NOTHING;
+
+-- Phase 1: Khám và chuẩn bị (COMPLETED)
+INSERT INTO patient_plan_phases (
+    patient_phase_id, plan_id, phase_number, phase_name,
+    status, start_date, completion_date, estimated_duration_days, created_at
+) VALUES (
+    11, 5, 1, 'Giai đoạn 1: Khám và chuẩn bị',
+    'COMPLETED', '2024-12-15', '2024-12-20', 5, '2024-12-15 14:00:00'
+) ON CONFLICT (patient_phase_id) DO NOTHING;
+
+INSERT INTO patient_plan_items (
+    item_id, phase_id, service_id, sequence_number, item_name,
+    status, estimated_time_minutes, price, completed_at, created_at
+) VALUES
+    (26, 11, 1, 1, 'Khám tổng quát và tư vấn', 'COMPLETED', 30, 500000, '2024-12-15 15:00:00', '2024-12-15 14:00:00'),
+    (27, 11, 3, 2, 'Vệ sinh răng miệng', 'COMPLETED', 45, 800000, '2024-12-17 10:00:00', '2024-12-15 14:00:00'),
+    (28, 11, 7, 3, 'Mài răng chuẩn bị bọc sứ', 'COMPLETED', 120, 3000000, '2024-12-19 14:00:00', '2024-12-15 14:00:00')
+ON CONFLICT (item_id) DO NOTHING;
+
+-- Phase 2: Bọc răng sứ (IN_PROGRESS)
+INSERT INTO patient_plan_phases (
+    patient_phase_id, plan_id, phase_number, phase_name,
+    status, start_date, estimated_duration_days, created_at
+) VALUES (
+    12, 5, 2, 'Giai đoạn 2: Lắp răng sứ',
+    'IN_PROGRESS', '2025-01-05', 30, '2024-12-15 14:00:00'
+) ON CONFLICT (patient_phase_id) DO NOTHING;
+
+INSERT INTO patient_plan_items (
+    item_id, phase_id, service_id, sequence_number, item_name,
+    status, estimated_time_minutes, price, completed_at, created_at
+) VALUES
+    (29, 12, 22, 1, 'Bọc răng sứ Titan răng 11', 'COMPLETED', 60, 6000000, '2025-01-05 10:00:00', '2024-12-15 14:00:00'),
+    (30, 12, 22, 2, 'Bọc răng sứ Titan răng 12', 'COMPLETED', 60, 6000000, '2025-01-05 11:00:00', '2024-12-15 14:00:00'),
+    (31, 12, 22, 3, 'Bọc răng sứ Titan răng 21', 'COMPLETED', 60, 6000000, '2025-01-06 10:00:00', '2024-12-15 14:00:00'),
+    (32, 12, 22, 4, 'Bọc răng sứ Titan răng 22', 'READY_FOR_BOOKING', 60, 6000000, NULL, '2024-12-15 14:00:00'),
+    (33, 12, 22, 5, 'Bọc răng sứ Titan răng 13', 'READY_FOR_BOOKING', 60, 6000000, NULL, '2024-12-15 14:00:00'),
+    (34, 12, 22, 6, 'Bọc răng sứ Titan răng 23', 'READY_FOR_BOOKING', 60, 6000000, NULL, '2024-12-15 14:00:00')
+ON CONFLICT (item_id) DO NOTHING;
+
+-- Treatment Plan 6: BN-1005 - Trồng răng Implant (Doctor EMP-3, COMPLETED, APPROVED)
+INSERT INTO patient_treatment_plans (
+    plan_id, plan_code, plan_name, patient_id, created_by,
+    status, approval_status, start_date, expected_end_date,
+    total_price, discount_amount, final_cost, payment_type,
+    approved_by, approved_at, created_at
+) VALUES (
+    6, 'PLAN-20240815-001', 'Trồng răng Implant răng hàm', 5, 3,
+    'COMPLETED', 'APPROVED', '2024-08-15', '2024-12-20',
+    25000000, 1000000, 24000000, 'FULL',
+    7, '2024-08-16 09:00:00', '2024-08-15 10:00:00'
+) ON CONFLICT (plan_id) DO NOTHING;
+
+-- All phases completed
+INSERT INTO patient_plan_phases (
+    patient_phase_id, plan_id, phase_number, phase_name,
+    status, start_date, completion_date, estimated_duration_days, created_at
+) VALUES (
+    13, 6, 1, 'Giai đoạn 1: Khám và Chụp CT', 'COMPLETED', '2024-08-15', '2024-08-20', 5, '2024-08-15 10:00:00'),
+    (14, 6, 2, 'Giai đoạn 2: Cấy trụ Implant', 'COMPLETED', '2024-09-01', '2024-09-10', 10, '2024-08-15 10:00:00'),
+    (15, 6, 3, 'Giai đoạn 3: Lắp mão sứ', 'COMPLETED', '2024-12-10', '2024-12-20', 10, '2024-08-15 10:00:00')
+ON CONFLICT (patient_phase_id) DO NOTHING;
+
+INSERT INTO patient_plan_items (
+    item_id, phase_id, service_id, sequence_number, item_name,
+    status, estimated_time_minutes, price, completed_at, created_at
+) VALUES
+    (35, 13, 1, 1, 'Khám và chụp CT 3D', 'COMPLETED', 45, 1500000, '2024-08-15 11:00:00', '2024-08-15 10:00:00'),
+    (36, 13, 3, 2, 'Vệ sinh răng miệng', 'COMPLETED', 30, 800000, '2024-08-17 10:00:00', '2024-08-15 10:00:00'),
+    (37, 14, 29, 1, 'Cấy trụ Implant răng 36', 'COMPLETED', 120, 18000000, '2024-09-01 14:00:00', '2024-08-15 10:00:00'),
+    (38, 15, 22, 1, 'Lắp mão sứ Titan răng 36', 'COMPLETED', 60, 6000000, '2024-12-15 10:00:00', '2024-08-15 10:00:00')
+ON CONFLICT (item_id) DO NOTHING;
+
+-- Treatment Plan 7: BN-1001 - Điều trị nướu răng (Doctor EMP-2, PENDING, DRAFT)
+INSERT INTO patient_treatment_plans (
+    plan_id, plan_code, plan_name, patient_id, created_by,
+    status, approval_status, start_date, expected_end_date,
+    total_price, discount_amount, final_cost, payment_type,
+    created_at
+) VALUES (
+    7, 'PLAN-20250108-001', 'Điều trị viêm nướu và chăm sóc nha chu', 1, 2,
+    'PENDING', 'DRAFT', '2025-01-15', '2025-03-15',
+    5500000, 0, 5500000, 'FULL',
+    '2025-01-08 11:00:00'
+) ON CONFLICT (plan_id) DO NOTHING;
+
+INSERT INTO patient_plan_phases (
+    patient_phase_id, plan_id, phase_number, phase_name,
+    status, start_date, estimated_duration_days, created_at
+) VALUES (
+    16, 7, 1, 'Giai đoạn 1: Vệ sinh và điều trị nướu',
+    'PENDING', '2025-01-15', 60, '2025-01-08 11:00:00'
+) ON CONFLICT (patient_phase_id) DO NOTHING;
+
+INSERT INTO patient_plan_items (
+    item_id, phase_id, service_id, sequence_number, item_name,
+    status, estimated_time_minutes, price, created_at
+) VALUES
+    (39, 16, 3, 1, 'Vệ sinh răng miệng sâu', 'PENDING', 60, 1200000, '2025-01-08 11:00:00'),
+    (40, 16, 4, 2, 'Điều trị viêm nướu (Lần 1)', 'PENDING', 45, 1500000, '2025-01-08 11:00:00'),
+    (41, 16, 4, 3, 'Điều trị viêm nướu (Lần 2)', 'PENDING', 45, 1500000, '2025-01-08 11:00:00'),
+    (42, 16, 4, 4, 'Kiểm tra và tái khám', 'PENDING', 30, 800000, '2025-01-08 11:00:00')
+ON CONFLICT (item_id) DO NOTHING;
+
+-- Treatment Plan 8: BN-1002 - Niềng răng Invisalign (Doctor EMP-1, IN_PROGRESS, APPROVED)
+INSERT INTO patient_treatment_plans (
+    plan_id, plan_code, plan_name, patient_id, created_by,
+    status, approval_status, start_date, expected_end_date,
+    total_price, discount_amount, final_cost, payment_type,
+    approved_by, approved_at, created_at
+) VALUES (
+    8, 'PLAN-20241101-001', 'Niềng răng trong suốt Invisalign', 2, 1,
+    'IN_PROGRESS', 'APPROVED', '2024-11-01', '2025-11-01',
+    85000000, 5000000, 80000000, 'INSTALLMENT',
+    7, '2024-11-02 09:00:00', '2024-11-01 10:00:00'
+) ON CONFLICT (plan_id) DO NOTHING;
+
+-- Phase 1: Chuẩn bị (COMPLETED)
+INSERT INTO patient_plan_phases (
+    patient_phase_id, plan_id, phase_number, phase_name,
+    status, start_date, completion_date, estimated_duration_days, created_at
+) VALUES (
+    17, 8, 1, 'Giai đoạn 1: Khám và lập kế hoạch',
+    'COMPLETED', '2024-11-01', '2024-11-10', 10, '2024-11-01 10:00:00'
+) ON CONFLICT (patient_phase_id) DO NOTHING;
+
+INSERT INTO patient_plan_items (
+    item_id, phase_id, service_id, sequence_number, item_name,
+    status, estimated_time_minutes, price, completed_at, created_at
+) VALUES
+    (43, 17, 1, 1, 'Khám tổng quát và chụp CT 3D', 'COMPLETED', 45, 2000000, '2024-11-01 11:00:00', '2024-11-01 10:00:00'),
+    (44, 17, 3, 2, 'Vệ sinh răng miệng', 'COMPLETED', 45, 800000, '2024-11-05 10:00:00', '2024-11-01 10:00:00'),
+    (45, 17, 40, 3, 'Thiết kế khay Invisalign', 'COMPLETED', 60, 10000000, '2024-11-08 14:00:00', '2024-11-01 10:00:00')
+ON CONFLICT (item_id) DO NOTHING;
+
+-- Phase 2: Điều chỉnh (IN_PROGRESS)
+INSERT INTO patient_plan_phases (
+    patient_phase_id, plan_id, phase_number, phase_name,
+    status, start_date, estimated_duration_days, created_at
+) VALUES (
+    18, 8, 2, 'Giai đoạn 2: Đeo khay và điều chỉnh (12 tháng)',
+    'IN_PROGRESS', '2024-11-15', 365, '2024-11-01 10:00:00'
+) ON CONFLICT (patient_phase_id) DO NOTHING;
+
+INSERT INTO patient_plan_items (
+    item_id, phase_id, service_id, sequence_number, item_name,
+    status, estimated_time_minutes, price, completed_at, created_at
+) VALUES
+    (46, 18, 40, 1, 'Bộ khay số 1-5', 'COMPLETED', 30, 15000000, '2024-11-15 10:00:00', '2024-11-01 10:00:00'),
+    (47, 18, 40, 2, 'Bộ khay số 6-10', 'COMPLETED', 30, 15000000, '2024-12-15 10:00:00', '2024-11-01 10:00:00'),
+    (48, 18, 40, 3, 'Bộ khay số 11-15', 'READY_FOR_BOOKING', 30, 15000000, NULL, '2024-11-01 10:00:00'),
+    (49, 18, 40, 4, 'Bộ khay số 16-20', 'READY_FOR_BOOKING', 30, 15000000, NULL, '2024-11-01 10:00:00')
+ON CONFLICT (item_id) DO NOTHING;
+
+-- Treatment Plan 9: BN-1003 - Hàn răng sâu (Doctor EMP-1, COMPLETED, APPROVED)
+INSERT INTO patient_treatment_plans (
+    plan_id, plan_code, plan_name, patient_id, created_by,
+    status, approval_status, start_date, expected_end_date,
+    total_price, discount_amount, final_cost, payment_type,
+    approved_by, approved_at, created_at
+) VALUES (
+    9, 'PLAN-20240920-001', 'Hàn răng sâu và điều trị tủy', 3, 1,
+    'COMPLETED', 'APPROVED', '2024-09-20', '2024-10-05',
+    7500000, 500000, 7000000, 'FULL',
+    3, '2024-09-21 09:00:00', '2024-09-20 14:00:00'
+) ON CONFLICT (plan_id) DO NOTHING;
+
+INSERT INTO patient_plan_phases (
+    patient_phase_id, plan_id, phase_number, phase_name,
+    status, start_date, completion_date, estimated_duration_days, created_at
+) VALUES (
+    19, 9, 1, 'Giai đoạn 1: Điều trị và hàn răng',
+    'COMPLETED', '2024-09-20', '2024-10-05', 15, '2024-09-20 14:00:00'
+) ON CONFLICT (patient_phase_id) DO NOTHING;
+
+INSERT INTO patient_plan_items (
+    item_id, phase_id, service_id, sequence_number, item_name,
+    status, estimated_time_minutes, price, completed_at, created_at
+) VALUES
+    (50, 19, 1, 1, 'Khám và chụp X-quang', 'COMPLETED', 30, 500000, '2024-09-20 15:00:00', '2024-09-20 14:00:00'),
+    (51, 19, 8, 2, 'Điều trị tủy răng 16', 'COMPLETED', 90, 3500000, '2024-09-25 10:00:00', '2024-09-20 14:00:00'),
+    (52, 19, 7, 3, 'Hàn răng composite 16', 'COMPLETED', 60, 1500000, '2024-09-30 14:00:00', '2024-09-20 14:00:00'),
+    (53, 19, 7, 4, 'Hàn răng composite 26', 'COMPLETED', 60, 1500000, '2024-10-02 10:00:00', '2024-09-20 14:00:00'),
+    (54, 19, 1, 5, 'Tái khám sau điều trị', 'COMPLETED', 30, 500000, '2024-10-05 11:00:00', '2024-09-20 14:00:00')
+ON CONFLICT (item_id) DO NOTHING;
+
+-- Treatment Plan 10: BN-1004 - Cạo vôi răng định kỳ (Doctor EMP-2, IN_PROGRESS, APPROVED)
+INSERT INTO patient_treatment_plans (
+    plan_id, plan_code, plan_name, patient_id, created_by,
+    status, approval_status, start_date, expected_end_date,
+    total_price, discount_amount, final_cost, payment_type,
+    approved_by, approved_at, created_at
+) VALUES (
+    10, 'PLAN-20250105-001', 'Vệ sinh răng miệng và chăm sóc định kỳ', 4, 2,
+    'IN_PROGRESS', 'APPROVED', '2025-01-05', '2025-07-05',
+    3600000, 0, 3600000, 'FULL',
+    7, '2025-01-06 09:00:00', '2025-01-05 10:00:00'
+) ON CONFLICT (plan_id) DO NOTHING;
+
+INSERT INTO patient_plan_phases (
+    patient_phase_id, plan_id, phase_number, phase_name,
+    status, start_date, estimated_duration_days, created_at
+) VALUES (
+    20, 10, 1, 'Giai đoạn 1: Vệ sinh 6 tháng',
+    'IN_PROGRESS', '2025-01-05', 180, '2025-01-05 10:00:00'
+) ON CONFLICT (patient_phase_id) DO NOTHING;
+
+INSERT INTO patient_plan_items (
+    item_id, phase_id, service_id, sequence_number, item_name,
+    status, estimated_time_minutes, price, completed_at, created_at
+) VALUES
+    (55, 20, 3, 1, 'Cạo vôi răng lần 1', 'COMPLETED', 45, 800000, '2025-01-05 11:00:00', '2025-01-05 10:00:00'),
+    (56, 20, 1, 2, 'Khám tổng quát lần 1', 'COMPLETED', 30, 500000, '2025-01-05 12:00:00', '2025-01-05 10:00:00'),
+    (57, 20, 3, 3, 'Cạo vôi răng lần 2 (sau 3 tháng)', 'READY_FOR_BOOKING', 45, 800000, NULL, '2025-01-05 10:00:00'),
+    (58, 20, 1, 4, 'Khám tổng quát lần 2', 'READY_FOR_BOOKING', 30, 500000, NULL, '2025-01-05 10:00:00'),
+    (59, 20, 3, 5, 'Cạo vôi răng lần 3 (sau 6 tháng)', 'READY_FOR_BOOKING', 45, 800000, NULL, '2025-01-05 10:00:00'),
+    (60, 20, 1, 6, 'Khám tổng quát lần 3', 'READY_FOR_BOOKING', 30, 500000, NULL, '2025-01-05 10:00:00')
+ON CONFLICT (item_id) DO NOTHING;
+
+-- ============================================
+-- RESET SEQUENCES
+-- ============================================
+SELECT setval('patient_treatment_plans_plan_id_seq', (SELECT MAX(plan_id) FROM patient_treatment_plans));
+SELECT setval('patient_plan_phases_patient_phase_id_seq', (SELECT MAX(patient_phase_id) FROM patient_plan_phases));
+SELECT setval('patient_plan_items_item_id_seq', (SELECT MAX(item_id) FROM patient_plan_items));
 
 -- ============================================
 -- FIX: Add PENDING status to patient_plan_items constraint

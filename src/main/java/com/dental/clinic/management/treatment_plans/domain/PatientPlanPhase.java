@@ -66,6 +66,13 @@ public class PatientPlanPhase {
     @Column(name = "completion_date")
     private LocalDate completionDate;
 
+    /**
+     * Estimated duration in days (V19).
+     * Used for timeline calculation.
+     */
+    @Column(name = "estimated_duration_days")
+    private Integer estimatedDurationDays;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

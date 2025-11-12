@@ -14,7 +14,8 @@ import java.util.Optional;
  * Handles database operations for treatment plans.
  */
 @Repository
-public interface PatientTreatmentPlanRepository extends JpaRepository<PatientTreatmentPlan, Long> {
+public interface PatientTreatmentPlanRepository extends JpaRepository<PatientTreatmentPlan, Long>,
+    org.springframework.data.jpa.repository.JpaSpecificationExecutor<PatientTreatmentPlan> {
 
   /**
    * Find all treatment plans for a specific patient.

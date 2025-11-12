@@ -32,6 +32,8 @@ public class TreatmentPlanService {
 
     private final PatientTreatmentPlanRepository treatmentPlanRepository;
     private final PatientRepository patientRepository;
+    private final com.dental.clinic.management.account.repository.AccountRepository accountRepository;
+    private final com.dental.clinic.management.employee.repository.EmployeeRepository employeeRepository;
 
     /**
      * Get all treatment plans for a specific patient.
@@ -216,5 +218,147 @@ public class TreatmentPlanService {
                 .finalCost(plan.getFinalCost())
                 .paymentType(plan.getPaymentType())
                 .build();
+    }
+
+    /**
+     * API 5.5: Get ALL treatment plans with advanced filtering and RBAC.
+     * <p>
+     * RBAC Logic (P0 Fix - Uses BaseRoleConstants):
+     * - VIEW_TREATMENT_PLAN_ALL (Admin): Can filter by doctorCode/patientCode, see all plans
+     * - VIEW_TREATMENT_PLAN_OWN (Doctor): Auto-filtered by createdBy = currentEmployee
+     * - VIEW_TREATMENT_PLAN_OWN (Patient): Auto-filtered by patient = currentPatient
+     * <p>
+     * P1 Enhancements:
+     * - Date range filters (startDate, createdAt)
+     * - Search term (plan name, patient name)
+     * <p>
+     * Performance:
+     * - Uses JPA Specification for dynamic query
+     * - JOIN FETCH patient, createdBy, sourceTemplate (avoids N+1)
+     *
+     * @param request  Filter parameters
+     * @param pageable Pagination parameters
+     * @return Page of treatment plan summaries
+     * @throws AccessDeniedException if user doesn't have permission
+     */
+    @Transactional(readOnly = true)
+    public Page<TreatmentPlanSummaryDTO> getAllTreatmentPlans(
+            com.dental.clinic.management.treatment_plans.dto.request.GetAllTreatmentPlansRequest request,
+            Pageable pageable) {
+
+        log.info("Getting all treatment plans with filters: status={}, approvalStatus={}, searchTerm={}",
+                request.getStatus(), request.getApprovalStatus(), request.getSearchTerm());
+
+        // ============================================
+        // STEP 1: Get Current User Info
+        // ============================================
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new AccessDeniedException("User not authenticated");
+        }
+
+        // Extract authorities
+        boolean hasViewAllPermission = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(auth -> auth.equals("VIEW_TREATMENT_PLAN_ALL"));
+
+        boolean hasViewOwnPermission = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(auth -> auth.equals("VIEW_TREATMENT_PLAN_OWN"));
+
+        log.debug("User has VIEW_ALL: {}, VIEW_OWN: {}", hasViewAllPermission, hasViewOwnPermission);
+
+        // ============================================
+        // STEP 2: Build Base Specification from Request
+        // ============================================
+        org.springframework.data.jpa.domain.Specification<PatientTreatmentPlan> specification =
+                com.dental.clinic.management.treatment_plans.specification.TreatmentPlanSpecification
+                        .buildFromRequest(request);
+
+        // ============================================
+        // STEP 3: Apply RBAC Filters (P0 Fix - BaseRoleConstants)
+        // ============================================
+        if (hasViewAllPermission) {
+            // Admin: Can use doctorEmployeeCode/patientCode from request
+            // No additional RBAC filter needed
+            log.info("Admin mode: Applying filters from request (doctorCode={}, patientCode={})",
+                    request.getDoctorEmployeeCode(), request.getPatientCode());
+
+        } else if (hasViewOwnPermission) {
+            // Doctor or Patient: Need to determine role and apply RBAC filter
+
+            // Get account ID from JWT
+            Jwt jwt = (Jwt) authentication.getPrincipal();
+            Integer accountId = jwt.getClaim("account_id");
+
+            if (accountId == null) {
+                throw new AccessDeniedException("Invalid JWT: account_id not found");
+            }
+
+            // Fetch account to get base role
+            com.dental.clinic.management.account.domain.Account account = accountRepository.findById(accountId)
+                    .orElseThrow(() -> new AccessDeniedException("Account not found: " + accountId));
+
+            Integer baseRoleId = account.getRole().getBaseRole().getBaseRoleId();
+
+            log.debug("User baseRoleId: {}", baseRoleId);
+
+            // P0 FIX: Use BaseRoleConstants instead of magic numbers
+            if (baseRoleId.equals(com.dental.clinic.management.security.constants.BaseRoleConstants.EMPLOYEE)) {
+                // DOCTOR: Filter by createdBy = currentEmployee
+                com.dental.clinic.management.employee.domain.Employee employee = employeeRepository
+                        .findOneByAccountAccountId(accountId)
+                        .orElseThrow(() -> new AccessDeniedException("Employee not found for account: " + accountId));
+
+                log.info("Doctor mode: Filtering by employeeId={}", employee.getEmployeeId());
+
+                specification = specification.and(
+                        com.dental.clinic.management.treatment_plans.specification.TreatmentPlanSpecification
+                                .filterByCreatedByEmployee(employee.getEmployeeId())
+                );
+
+                // Ignore doctorEmployeeCode/patientCode from request (security)
+                if (request.getDoctorEmployeeCode() != null || request.getPatientCode() != null) {
+                    log.warn("Doctor attempting to use admin-only filters. Ignoring.");
+                }
+
+            } else if (baseRoleId.equals(com.dental.clinic.management.security.constants.BaseRoleConstants.PATIENT)) {
+                // PATIENT: Filter by patient = currentPatient
+                com.dental.clinic.management.patient.domain.Patient patient = patientRepository
+                        .findOneByAccountAccountId(accountId)
+                        .orElseThrow(() -> new AccessDeniedException("Patient not found for account: " + accountId));
+
+                log.info("Patient mode: Filtering by patientId={}", patient.getPatientId());
+
+                specification = specification.and(
+                        com.dental.clinic.management.treatment_plans.specification.TreatmentPlanSpecification
+                                .filterByPatient(patient.getPatientId())
+                );
+
+                // Ignore doctorEmployeeCode/patientCode from request (security)
+                if (request.getDoctorEmployeeCode() != null || request.getPatientCode() != null) {
+                    log.warn("Patient attempting to use admin-only filters. Ignoring.");
+                }
+
+            } else {
+                throw new AccessDeniedException("User role cannot view treatment plans. BaseRoleId: " + baseRoleId);
+            }
+
+        } else {
+            throw new AccessDeniedException("User does not have VIEW_TREATMENT_PLAN_ALL or VIEW_TREATMENT_PLAN_OWN permission");
+        }
+
+        // ============================================
+        // STEP 4: Execute Query with Specification
+        // ============================================
+        Page<PatientTreatmentPlan> plans = treatmentPlanRepository.findAll(specification, pageable);
+
+        log.info("Found {} treatment plans (page {}/{})",
+                plans.getNumberOfElements(), plans.getNumber() + 1, plans.getTotalPages());
+
+        // ============================================
+        // STEP 5: Map to DTO
+        // ============================================
+        return plans.map(this::convertToSummaryDTO);
     }
 }
