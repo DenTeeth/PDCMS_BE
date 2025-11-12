@@ -7,6 +7,8 @@ import com.dental.clinic.management.booking_appointment.dto.response.ServiceResp
 import com.dental.clinic.management.booking_appointment.mapper.ServiceMapper;
 import com.dental.clinic.management.booking_appointment.repository.BookingDentalServiceRepository;
 import com.dental.clinic.management.exception.validation.BadRequestAlertException;
+import com.dental.clinic.management.exception.DuplicateResourceException;
+import com.dental.clinic.management.exception.ResourceNotFoundException;
 import com.dental.clinic.management.specialization.domain.Specialization;
 import com.dental.clinic.management.specialization.repository.SpecializationRepository;
 import lombok.RequiredArgsConstructor;
@@ -86,10 +88,9 @@ public class AppointmentDentalServiceService {
         log.debug("Request to get service by ID: {}", serviceId);
 
         DentalService service = serviceRepository.findById(serviceId)
-                .orElseThrow(() -> new BadRequestAlertException(
-                        "Service not found with ID: " + serviceId,
-                        "service",
-                        "notfound"));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "SERVICE_NOT_FOUND",
+                        "Service not found with ID: " + serviceId));
 
         return serviceMapper.toResponse(service);
     }
@@ -102,10 +103,9 @@ public class AppointmentDentalServiceService {
         log.debug("Request to get service by code: {}", serviceCode);
 
         DentalService service = serviceRepository.findByServiceCode(serviceCode)
-                .orElseThrow(() -> new BadRequestAlertException(
-                        "Service not found with code: " + serviceCode,
-                        "service",
-                        "notfound"));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "SERVICE_NOT_FOUND",
+                        "Service not found with code: " + serviceCode));
 
         return serviceMapper.toResponse(service);
     }
@@ -119,10 +119,9 @@ public class AppointmentDentalServiceService {
 
         // Validate unique service code
         if (serviceRepository.existsByServiceCode(request.getServiceCode())) {
-            throw new BadRequestAlertException(
-                    "Service code already exists: " + request.getServiceCode(),
-                    "service",
-                    "SERVICE_CODE_EXISTS");
+            throw new DuplicateResourceException(
+                    "SERVICE_CODE_EXISTS",
+                    "Service code already exists: " + request.getServiceCode());
         }
 
         // Validate specialization if provided
@@ -156,20 +155,18 @@ public class AppointmentDentalServiceService {
 
         // Find existing service by code
         DentalService service = serviceRepository.findByServiceCode(serviceCode)
-                .orElseThrow(() -> new BadRequestAlertException(
-                        "Service not found with code: " + serviceCode,
-                        "service",
-                        "notfound"));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "SERVICE_NOT_FOUND",
+                        "Service not found with code: " + serviceCode));
 
         // Validate unique service code (if changed)
         if (request.getServiceCode() != null &&
                 !request.getServiceCode().equals(service.getServiceCode()) &&
                 serviceRepository.existsByServiceCodeAndServiceIdNot(request.getServiceCode(),
                         service.getServiceId())) {
-            throw new BadRequestAlertException(
-                    "Service code already exists: " + request.getServiceCode(),
-                    "service",
-                    "SERVICE_CODE_EXISTS");
+            throw new DuplicateResourceException(
+                    "SERVICE_CODE_EXISTS",
+                    "Service code already exists: " + request.getServiceCode());
         }
 
         // Update fields
@@ -224,10 +221,9 @@ public class AppointmentDentalServiceService {
         log.debug("Request to soft delete service ID: {}", serviceId);
 
         DentalService service = serviceRepository.findById(serviceId)
-                .orElseThrow(() -> new BadRequestAlertException(
-                        "Service not found with ID: " + serviceId,
-                        "service",
-                        "notfound"));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "SERVICE_NOT_FOUND",
+                        "Service not found with ID: " + serviceId));
 
         service.setIsActive(false);
         serviceRepository.save(service);
@@ -244,10 +240,9 @@ public class AppointmentDentalServiceService {
         log.debug("Request to soft delete service code: {}", serviceCode);
 
         DentalService service = serviceRepository.findByServiceCode(serviceCode)
-                .orElseThrow(() -> new BadRequestAlertException(
-                        "Service not found with code: " + serviceCode,
-                        "service",
-                        "notfound"));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "SERVICE_NOT_FOUND",
+                        "Service not found with code: " + serviceCode));
 
         service.setIsActive(false);
         serviceRepository.save(service);
@@ -264,10 +259,9 @@ public class AppointmentDentalServiceService {
         log.debug("Request to toggle service status for ID: {}", serviceId);
 
         DentalService service = serviceRepository.findById(serviceId)
-                .orElseThrow(() -> new BadRequestAlertException(
-                        "Service not found with ID: " + serviceId,
-                        "service",
-                        "notfound"));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "SERVICE_NOT_FOUND",
+                        "Service not found with ID: " + serviceId));
 
         // Toggle: if active → inactive, if inactive → active
         boolean newStatus = !service.getIsActive();
@@ -286,10 +280,9 @@ public class AppointmentDentalServiceService {
         log.debug("Request to activate service ID: {}", serviceId);
 
         DentalService service = serviceRepository.findById(serviceId)
-                .orElseThrow(() -> new BadRequestAlertException(
-                        "Service not found with ID: " + serviceId,
-                        "service",
-                        "notfound"));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "SERVICE_NOT_FOUND",
+                        "Service not found with ID: " + serviceId));
 
         service.setIsActive(true);
         serviceRepository.save(service);
