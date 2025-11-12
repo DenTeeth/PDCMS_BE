@@ -55,6 +55,7 @@ public class ServiceMapper {
         service.setDefaultDurationMinutes(request.getDefaultDurationMinutes());
         service.setDefaultBufferMinutes(request.getDefaultBufferMinutes());
         service.setPrice(request.getPrice());
+        service.setDisplayOrder(request.getDisplayOrder() != null ? request.getDisplayOrder() : 0);
         service.setIsActive(request.getIsActive() != null ? request.getIsActive() : true);
 
         // Specialization will be set in service layer
