@@ -7,11 +7,12 @@
 4. [P1.2 - Get Room by Code](#p12---get-room-by-code)
 5. [P1.3 - Create New Room](#p13---create-new-room)
 6. [P1.4 - Update Room](#p14---update-room)
-7. [P1.5 - Get Room Services (NEW - V16)](#p15---get-room-services-new---v16)
-8. [P1.6 - Update Room Services (NEW - V16)](#p16---update-room-services-new---v16)
-9. [Data Models](#data-models)
-10. [Error Handling](#error-handling)
-11. [Postman Testing Guide](#postman-testing-guide)
+7. [P1.5 - Delete Room (Soft Delete)](#p15---delete-room-soft-delete)
+8. [P1.6 - Get Room Services (NEW - V16)](#p16---get-room-services-new---v16)
+9. [P1.7 - Update Room Services (NEW - V16)](#p17---update-room-services-new---v16)
+10. [Data Models](#data-models)
+11. [Error Handling](#error-handling)
+12. [Postman Testing Guide](#postman-testing-guide)
 
 ---
 
@@ -46,9 +47,9 @@ Rooms (phòng/ghế nha khoa) are physical resources in the dental clinic:
 | GET | `/api/v1/rooms/{roomCode}` | `VIEW_ROOM` | Get room by code | V1 |
 | POST | `/api/v1/rooms` | `CREATE_ROOM` | Create new room | V1 |
 | PUT | `/api/v1/rooms/{roomId}` | `UPDATE_ROOM` | Update room metadata | V1 |
-| DELETE | `/api/v1/rooms/{roomId}` | `DELETE_ROOM` | Soft delete room | V1 |
-| **GET** | `/api/v1/rooms/{roomCode}/services` | `VIEW_ROOM` | **Get services for a room** | **V16** |
-| **PUT** | `/api/v1/rooms/{roomCode}/services` | `UPDATE_ROOM_SERVICES` | **Update room services** | **V16** |
+| DELETE | `/api/v1/rooms/{roomId}` | `DELETE_ROOM` | Soft delete/deactivate room | V1 |
+| **GET** | `/api/v1/rooms/{roomId}/services` | `VIEW_ROOM` | **Get services for a room** | **V16** |
+| **PUT** | `/api/v1/rooms/{roomId}/services` | `UPDATE_ROOM_SERVICES` | **Update room services** | **V16** |
 
 ---
 
@@ -209,12 +210,12 @@ Content-Type: application/json
 
 ### Error Responses
 
-#### 400 Bad Request - Room code đã tồn tại
+#### 409 Conflict - Room code đã tồn tại
 ```json
 {
   "timestamp": "2024-11-03T14:30:00",
-  "status": 400,
-  "error": "Bad Request",
+  "status": 409,
+  "error": "Conflict",
   "message": "Room code already exists: P-05",
   "path": "/api/v1/rooms"
 }
@@ -301,12 +302,12 @@ Content-Type: application/json
 }
 ```
 
-#### 400 Bad Request - Room code conflict
+#### 409 Conflict - Room code đã tồn tại
 ```json
 {
   "timestamp": "2024-11-03T14:30:00",
-  "status": 400,
-  "error": "Bad Request",
+  "status": 409,
+  "error": "Conflict",
   "message": "Room code already exists: P-02",
   "path": "/api/v1/rooms/RM2024110300001"
 }
@@ -326,14 +327,12 @@ curl -X PUT "http://localhost:8080/api/v1/rooms/RM2024110300001" \
 
 ---
 
-## P1.5 - Get Room Services (NEW - V16)
-
-**Business Use Case**: Lễ tân xem danh sách dịch vụ mà phòng này hỗ trợ
+## P1.5 - Delete Room (Soft Delete)
 
 ### Request
 
 ```http
-GET /api/v1/rooms/P-04/services
+DELETE /api/v1/rooms/RM2024110300001
 Authorization: Bearer {access_token}
 ```
 
@@ -341,7 +340,82 @@ Authorization: Bearer {access_token}
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `roomCode` | String | Room code (e.g., P-01, P-04) |
+| `roomId` | String | Room ID to delete |
+
+### Business Logic
+
+1. **Soft Delete**: Sets `is_active = false` instead of physically deleting the record
+2. **Reason**: Preserves historical data for existing appointments that referenced this room
+3. **Future Appointments**: Room cannot be selected for new appointments once deactivated
+4. **Warning Logic**: System should warn if room has scheduled appointments in the future
+
+### Response (200 OK)
+
+```json
+{
+  "message": "Room deactivated successfully",
+  "roomId": "RM2024110300001",
+  "roomCode": "P-01",
+  "isActive": false
+}
+```
+
+### Error Responses
+
+#### 404 Not Found - Room không tồn tại
+```json
+{
+  "timestamp": "2024-11-03T14:30:00",
+  "status": 404,
+  "error": "Not Found",
+  "message": "Room not found with ID: RM2024110399999",
+  "path": "/api/v1/rooms/RM2024110399999"
+}
+```
+
+### Curl Example
+
+```bash
+curl -X DELETE "http://localhost:8080/api/v1/rooms/RM2024110300001" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+```
+
+### Business Considerations
+
+**⚠️ Warning for Future Appointments:**
+- If room has appointments with status `SCHEDULED` in the future, consider:
+  - Option A: Show warning to admin requiring confirmation
+  - Option B: Prevent deletion and suggest reassigning appointments first
+  - Option C: Auto-cancel or reassign future appointments
+
+**Example Warning Message:**
+```
+This room has 3 scheduled appointments in the future:
+- 2024-11-15: Patient Nguyen Van A
+- 2024-11-18: Patient Tran Thi B  
+- 2024-11-20: Patient Le Van C
+
+Are you sure you want to deactivate this room?
+```
+
+---
+
+## P1.6 - Get Room Services (NEW - V16)
+
+**Business Use Case**: Lễ tân xem danh sách dịch vụ mà phòng này hỗ trợ
+
+### Request
+
+```http
+GET /api/v1/rooms/RM2024110300002/services
+Authorization: Bearer {access_token}
+```
+
+### Path Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `roomId` | String | Room ID (e.g., RM2024110300001) |
 
 ### Response (200 OK)
 
@@ -392,15 +466,15 @@ Authorization: Bearer {access_token}
   "timestamp": "2024-11-03T14:30:00",
   "status": 404,
   "error": "Not Found",
-  "message": "Room not found with code: P-99",
-  "path": "/api/v1/rooms/P-99/services"
+  "message": "Room not found with ID: RM2024110399999",
+  "path": "/api/v1/rooms/RM2024110399999/services"
 }
 ```
 
 ### Curl Example
 
 ```bash
-curl -X GET "http://localhost:8080/api/v1/rooms/P-04/services" \
+curl -X GET "http://localhost:8080/api/v1/rooms/RM2024110300002/services" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
@@ -443,7 +517,7 @@ console.log(`Phòng ${roomServices.roomName} hỗ trợ ${roomServices.compatibl
 
 ---
 
-## P1.6 - Update Room Services (NEW - V16)
+## P1.7 - Update Room Services (NEW - V16)
 
 **Business Use Case**: Quản lý/Admin cấu hình danh sách dịch vụ mà phòng này có thể thực hiện
 
@@ -455,16 +529,12 @@ console.log(`Phòng ${roomServices.roomName} hỗ trợ ${roomServices.compatibl
 ### Request
 
 ```http
-PUT /api/v1/rooms/P-04/services
+PUT /api/v1/rooms/RM2024110300002/services
 Authorization: Bearer {access_token}
 Content-Type: application/json
 
 {
-  "serviceCodes": [
-    "IMPL-001",
-    "IMPL-002",
-    "IMPL-003"
-  ]
+  "serviceIds": [10, 11, 15]
 }
 ```
 
@@ -472,13 +542,13 @@ Content-Type: application/json
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `roomCode` | String | Room code (e.g., P-01, P-04) |
+| `roomId` | String | Room ID (e.g., RM2024110300001) |
 
 ### Request Body
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `serviceCodes` | String[] | Yes | List of service codes to assign (cannot be empty) |
+| `serviceIds` | Integer[] | Yes | List of service IDs to assign (cannot be empty) |
 
 ### Response (200 OK)
 
@@ -518,8 +588,8 @@ Content-Type: application/json
   "timestamp": "2024-11-03T14:30:00",
   "status": 404,
   "error": "Not Found",
-  "message": "Room not found with code: P-99",
-  "path": "/api/v1/rooms/P-99/services"
+  "message": "Room not found with ID: RM2024110399999",
+  "path": "/api/v1/rooms/RM2024110399999/services"
 }
 ```
 
@@ -529,8 +599,8 @@ Content-Type: application/json
   "timestamp": "2024-11-03T14:30:00",
   "status": 404,
   "error": "Not Found",
-  "message": "Service not found with codes: [INVALID-001, INVALID-002]",
-  "path": "/api/v1/rooms/P-04/services"
+  "message": "Service not found with IDs: [999, 998]",
+  "path": "/api/v1/rooms/RM2024110300002/services"
 }
 ```
 

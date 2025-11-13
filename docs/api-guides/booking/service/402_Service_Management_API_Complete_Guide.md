@@ -20,7 +20,7 @@
 
 **Module**: Service Management (BE-402)
 **Purpose**: Quản lý danh mục dịch vụ đơn lẻ (cạo vôi, nhổ răng...), bao gồm thời gian thực hiện, thời gian đệm (buffer) và giá. Đây là đầu vào cốt lõi để tính toán thời lượng của một lịch hẹn.
-**Base URL**: `/api/v1/services`
+**Base URL**: `/api/v1/booking/services`
 **Authentication**: Required (Bearer Token)
 
 ### Business Context
@@ -41,28 +41,26 @@ Services (dịch vụ nha khoa) là các dịch vụ đơn lẻ như:
 
 ## API Endpoints Summary
 
-| Method     | Endpoint                              | Permission       | Description                            | Version              |
-| ---------- | ------------------------------------- | ---------------- | -------------------------------------- | -------------------- |
-| GET        | `/api/v1/services`                    | `VIEW_SERVICE`   | Get all services (paginated + filters) | V1                   |
-| GET        | `/api/v1/services/{serviceId}`        | `VIEW_SERVICE`   | Get service by ID                      | V1                   |
-| GET        | `/api/v1/services/code/{serviceCode}` | `VIEW_SERVICE`   | Get service by code                    | V1                   |
-| POST       | `/api/v1/services`                    | `CREATE_SERVICE` | Create new service                     | V1                   |
-| PUT        | `/api/v1/services/{serviceCode}`      | `UPDATE_SERVICE` | Update service                         | V1                   |
-| **DELETE** | `/api/v1/services/{serviceId}`        | `DELETE_SERVICE` | **Soft delete by ID**                  | **V2 - Nov 3, 2024** |
-| DELETE     | `/api/v1/services/code/{serviceCode}` | `DELETE_SERVICE` | Soft delete by code (legacy)           | V1                   |
-| **PATCH**  | `/api/v1/services/{serviceId}/toggle` | `UPDATE_SERVICE` | **Toggle active status**               | **V2 - Nov 3, 2024** |
+| Method     | Endpoint                                        | Permission       | Description                            | Version              |
+| ---------- | ----------------------------------------------- | ---------------- | -------------------------------------- | -------------------- |
+| GET        | `/api/v1/booking/services`                      | `VIEW_SERVICE`   | Get all services (paginated + filters) | V1                   |
+| GET        | `/api/v1/booking/services/{serviceCode}`        | `VIEW_SERVICE`   | Get service by code                    | V1                   |
+| POST       | `/api/v1/booking/services`                      | `CREATE_SERVICE` | Create new service                     | V1                   |
+| PUT        | `/api/v1/booking/services/{serviceCode}`        | `UPDATE_SERVICE` | Update service                         | V1                   |
+| **DELETE** | `/api/v1/booking/services/{serviceCode}`        | `DELETE_SERVICE` | **Soft delete by code**                | **V1**               |
+| **PATCH**  | `/api/v1/booking/services/{serviceCode}/toggle` | `UPDATE_SERVICE` | **Toggle active status**               | **V2 - Nov 13, 2024** |
 
-### ⭐ What's New in V2 (November 3, 2024)
+### ⭐ What's New in V2 (November 13, 2024)
 
-**DELETE Endpoint Fixed**:
+**API Path Updated**:
 
-- ✅ Now accepts **Integer ID** instead of String code
-- ✅ Primary endpoint: `DELETE /api/v1/services/{serviceId}`
-- ✅ Legacy endpoint still works: `DELETE /api/v1/services/code/{serviceCode}`
+- ✅ Base URL changed to: `/api/v1/booking/services`
+- ✅ All endpoints now use `serviceCode` parameter consistently
+- ✅ DELETE endpoint uses `serviceCode` (not ID)
 
 **RESTful Toggle Added**:
 
-- ✅ New endpoint: `PATCH /api/v1/services/{serviceId}/toggle`
+- ✅ New endpoint: `PATCH /api/v1/booking/services/{serviceCode}/toggle`
 - ✅ Toggles between active/inactive in one call
 - ✅ Returns updated service immediately
 - ✅ Perfect for toggle switches in UI
@@ -70,12 +68,17 @@ Services (dịch vụ nha khoa) là các dịch vụ đơn lẻ như:
 **Example**:
 
 ```bash
-# Old way (was causing 400 error)
-DELETE /api/v1/services/CROWN_EMAX  # ❌ No longer primary
+# Get all services
+GET /api/v1/booking/services
 
-# New way (V2)
-DELETE /api/v1/services/55  # ✅ Works with ID
-PATCH /api/v1/services/55/toggle  # ✅ Toggle status
+# Get specific service
+GET /api/v1/booking/services/CROWN_EMAX
+
+# Delete service (soft delete)
+DELETE /api/v1/booking/services/CROWN_EMAX
+
+# Toggle service status
+PATCH /api/v1/booking/services/CROWN_EMAX/toggle
 ```
 
 ---
@@ -85,7 +88,7 @@ PATCH /api/v1/services/55/toggle  # ✅ Toggle status
 ### Request
 
 ```http
-GET /api/v1/services?page=0&size=10&sortBy=serviceName&sortDirection=ASC&isActive=true&specializationId=1&keyword=cạo
+GET /api/v1/booking/services?page=0&size=10&sortBy=serviceName&sortDirection=ASC&isActive=true&specializationId=1&keyword=cạo
 Authorization: Bearer {access_token}
 ```
 
@@ -158,7 +161,7 @@ Authorization: Bearer {access_token}
 ### Curl Example
 
 ```bash
-curl -X GET "http://localhost:8080/api/v1/services?page=0&size=10&isActive=true" \
+curl -X GET "http://localhost:8080/api/v1/booking/services?page=0&size=10&isActive=true" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
@@ -169,7 +172,7 @@ curl -X GET "http://localhost:8080/api/v1/services?page=0&size=10&isActive=true"
 ### Request
 
 ```http
-POST /api/v1/services
+POST /api/v1/booking/services
 Authorization: Bearer {access_token}
 Content-Type: application/json
 
@@ -228,13 +231,13 @@ Content-Type: application/json
 
 ### Error Responses
 
-#### 400 Bad Request - Service code exists
+#### 409 Conflict - Service code đã tồn tại
 
 ```json
 {
   "timestamp": "2024-11-03T14:30:00",
-  "status": 400,
-  "error": "Bad Request",
+  "status": 409,
+  "error": "Conflict",
   "message": "Service code already exists: SV-CAOVOI",
   "entityName": "service",
   "errorKey": "SERVICE_CODE_EXISTS"
@@ -274,7 +277,7 @@ Content-Type: application/json
 ### Curl Example
 
 ```bash
-curl -X POST "http://localhost:8080/api/v1/services" \
+curl -X POST "http://localhost:8080/api/v1/booking/services" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
   -H "Content-Type: application/json" \
   -d '{
@@ -294,7 +297,7 @@ curl -X POST "http://localhost:8080/api/v1/services" \
 ### Request
 
 ```http
-GET /api/v1/services/SV-CAOVOI
+GET /api/v1/booking/services/SV-CAOVOI
 Authorization: Bearer {access_token}
 ```
 
@@ -341,7 +344,7 @@ Authorization: Bearer {access_token}
 ### Curl Example
 
 ```bash
-curl -X GET "http://localhost:8080/api/v1/services/SV-CAOVOI" \
+curl -X GET "http://localhost:8080/api/v1/booking/services/SV-CAOVOI" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
@@ -352,7 +355,7 @@ curl -X GET "http://localhost:8080/api/v1/services/SV-CAOVOI" \
 ### Request
 
 ```http
-PUT /api/v1/services/SV-CAOVOI
+PUT /api/v1/booking/services/SV-CAOVOI
 Authorization: Bearer {access_token}
 Content-Type: application/json
 
@@ -427,13 +430,13 @@ Content-Type: application/json
 }
 ```
 
-#### 400 Bad Request - Code conflict
+#### 409 Conflict - Service code đã tồn tại
 
 ```json
 {
   "timestamp": "2024-11-03T14:30:00",
-  "status": 400,
-  "error": "Bad Request",
+  "status": 409,
+  "error": "Conflict",
   "message": "Service code already exists: SV-NHORANG",
   "entityName": "service",
   "errorKey": "SERVICE_CODE_EXISTS"
@@ -443,7 +446,7 @@ Content-Type: application/json
 ### Curl Example
 
 ```bash
-curl -X PUT "http://localhost:8080/api/v1/services/SV-CAOVOI" \
+curl -X PUT "http://localhost:8080/api/v1/booking/services/SV-CAOVOI" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
   -H "Content-Type: application/json" \
   -d '{
@@ -467,12 +470,12 @@ curl -X PUT "http://localhost:8080/api/v1/services/SV-CAOVOI" \
 
 ### Method 1: Delete by ID (Recommended - V2)
 
-**Endpoint**: `DELETE /api/v1/services/{serviceId}`
+**Endpoint**: `DELETE /api/v1/booking/services/{serviceId}`
 
 #### Request
 
 ```http
-DELETE /api/v1/services/55
+DELETE /api/v1/booking/services/55
 Authorization: Bearer {access_token}
 ```
 
@@ -513,7 +516,7 @@ No response body.
 #### Curl Example
 
 ```bash
-curl -X DELETE "http://localhost:8080/api/v1/services/55" \
+curl -X DELETE "http://localhost:8080/api/v1/booking/services/55" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
@@ -521,12 +524,12 @@ curl -X DELETE "http://localhost:8080/api/v1/services/55" \
 
 ### Method 2: Delete by Code (Legacy - V1)
 
-**Endpoint**: `DELETE /api/v1/services/code/{serviceCode}`
+**Endpoint**: `DELETE /api/v1/booking/services/code/{serviceCode}`
 
 #### Request
 
 ```http
-DELETE /api/v1/services/code/SV-CAOVOI
+DELETE /api/v1/booking/services/code/SV-CAOVOI
 Authorization: Bearer {access_token}
 ```
 
@@ -558,7 +561,7 @@ No response body.
 #### Curl Example
 
 ```bash
-curl -X DELETE "http://localhost:8080/api/v1/services/code/SV-CAOVOI" \
+curl -X DELETE "http://localhost:8080/api/v1/booking/services/code/SV-CAOVOI" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
@@ -602,7 +605,7 @@ DELETE / api / v1 / services / 55;
 ### Request
 
 ```http
-PATCH /api/v1/services/{serviceId}/toggle
+PATCH /api/v1/booking/services/{serviceId}/toggle
 Authorization: Bearer {access_token}
 ```
 
@@ -657,7 +660,7 @@ Authorization: Bearer {access_token}
 ### Curl Example
 
 ```bash
-curl -X PATCH "http://localhost:8080/api/v1/services/55/toggle" \
+curl -X PATCH "http://localhost:8080/api/v1/booking/services/55/toggle" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
   -H "Content-Type: application/json"
 ```
@@ -693,7 +696,7 @@ const toggledService = await toggleServiceStatus(serviceId);
 const handleToggle = async (serviceId: number) => {
   try {
     const response = await fetch(
-      `http://localhost:8080/api/v1/services/${serviceId}/toggle`,
+      `http://localhost:8080/api/v1/booking/services/${serviceId}/toggle`,
       {
         method: "PATCH",
         headers: {
@@ -813,8 +816,8 @@ interface UpdateServiceRequest {
 ```json
 {
   "timestamp": "2024-11-03T14:30:00",
-  "status": 400,
-  "error": "Bad Request",
+  "status": 409,
+  "error": "Conflict",
   "message": "Service code already exists: SV-CAOVOI",
   "entityName": "service",
   "errorKey": "SERVICE_CODE_EXISTS",
@@ -826,7 +829,7 @@ interface UpdateServiceRequest {
 
 | Error Code                 | HTTP Status | Description                             |
 | -------------------------- | ----------- | --------------------------------------- |
-| `SERVICE_CODE_EXISTS`      | 400         | Service code already exists (duplicate) |
+| `SERVICE_CODE_EXISTS`      | 409         | Service code already exists (duplicate) |
 | `SPECIALIZATION_NOT_FOUND` | 400         | Specialization ID not found             |
 | `notfound`                 | 404         | Service not found                       |
 
@@ -1038,11 +1041,11 @@ GET {{base_url}}/api/v1/services?sortBy=price&sortDirection=DESC
 
 | API Endpoint                   | Required Permission | Roles with Access                    |
 | ------------------------------ | ------------------- | ------------------------------------ |
-| GET /api/v1/services           | `VIEW_SERVICE`      | ADMIN, MANAGER, RECEPTIONIST, DOCTOR |
-| GET /api/v1/services/{code}    | `VIEW_SERVICE`      | ADMIN, MANAGER, RECEPTIONIST, DOCTOR |
-| POST /api/v1/services          | `CREATE_SERVICE`    | ADMIN, MANAGER                       |
-| PUT /api/v1/services/{code}    | `UPDATE_SERVICE`    | ADMIN, MANAGER                       |
-| DELETE /api/v1/services/{code} | `DELETE_SERVICE`    | ADMIN, MANAGER                       |
+| GET /api/v1/booking/services           | `VIEW_SERVICE`      | ADMIN, MANAGER, RECEPTIONIST, DOCTOR |
+| GET /api/v1/booking/services/{code}    | `VIEW_SERVICE`      | ADMIN, MANAGER, RECEPTIONIST, DOCTOR |
+| POST /api/v1/booking/services          | `CREATE_SERVICE`    | ADMIN, MANAGER                       |
+| PUT /api/v1/booking/services/{code}    | `UPDATE_SERVICE`    | ADMIN, MANAGER                       |
+| DELETE /api/v1/booking/services/{code} | `DELETE_SERVICE`    | ADMIN, MANAGER                       |
 
 ---
 
