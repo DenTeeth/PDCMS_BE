@@ -31,6 +31,9 @@ public class TreatmentPlanController {
         private final com.dental.clinic.management.treatment_plans.service.TreatmentPlanDetailService treatmentPlanDetailService;
         private final com.dental.clinic.management.treatment_plans.service.TreatmentPlanCreationService treatmentPlanCreationService;
         private final com.dental.clinic.management.treatment_plans.service.CustomTreatmentPlanService customTreatmentPlanService;
+        private final com.dental.clinic.management.treatment_plans.service.TreatmentPlanItemService treatmentPlanItemService;
+        private final com.dental.clinic.management.treatment_plans.service.TreatmentPlanItemAdditionService treatmentPlanItemAdditionService;
+        private final com.dental.clinic.management.treatment_plans.service.TreatmentPlanTemplateService treatmentPlanTemplateService;
 
         /**
          * API 5.1: Get all treatment plans for a specific patient (with pagination).
@@ -415,5 +418,341 @@ public class TreatmentPlanController {
                                 plans.getTotalElements());
 
                 return ResponseEntity.ok(plans);
+        }
+
+        /**
+         * API 5.6: Update treatment plan item status.
+         * <p>
+         * Allows updating the status of a treatment plan item with full business logic:
+         * - State Machine Validation (11 transition rules)
+         * - Appointment Validation (cannot skip items with active appointments)
+         * - Financial Recalculation (adjust plan costs when skipping/unskipping items)
+         * - Auto-activate next item in phase when completing an item
+         * - Auto-complete phase when all items are done/skipped
+         * - Audit logging
+         * <p>
+         * State Machine Rules:
+         * - PENDING → READY_FOR_BOOKING, SKIPPED, COMPLETED
+         * - READY_FOR_BOOKING → SCHEDULED, SKIPPED, COMPLETED
+         * - SCHEDULED → IN_PROGRESS, COMPLETED (CANNOT skip if appointment active)
+         * - IN_PROGRESS → COMPLETED (CANNOT skip if in progress)
+         * - SKIPPED → READY_FOR_BOOKING, COMPLETED (allow undo)
+         * - COMPLETED → (no further transitions)
+         * <p>
+         * Financial Impact:
+         * - Skipping item: Reduces plan.total_cost and plan.final_cost by item.price
+         * - Unskipping (SKIPPED → READY_FOR_BOOKING): Adds item.price back to plan
+         * costs
+         * <p>
+         * Required Permission: UPDATE_TREATMENT_PLAN (Admin, Manager, Dentist)
+         *
+         * @param itemId  ID of the treatment plan item to update
+         * @param request Request body with new status, notes, and optional completedAt
+         * @return Updated item details with financial impact information
+         */
+        @Operation(summary = "Update treatment plan item status (API 5.6)", description = """
+                        **Update item status with comprehensive business logic:**
+
+                        **State Machine** (11 transition rules):
+                        - PENDING → READY_FOR_BOOKING, SKIPPED, COMPLETED
+                        - READY_FOR_BOOKING → SCHEDULED, SKIPPED, COMPLETED
+                        - SCHEDULED → IN_PROGRESS, COMPLETED (⚠️ CANNOT skip if appointment active)
+                        - IN_PROGRESS → COMPLETED (⚠️ CANNOT skip)
+                        - SKIPPED → READY_FOR_BOOKING, COMPLETED (✅ allow undo)
+                        - COMPLETED → (no transitions)
+
+                        **Appointment Validation**:
+                        - Cannot skip items with SCHEDULED/IN_PROGRESS/CHECKED_IN appointments
+                        - System returns 409 CONFLICT with error message
+
+                        **Financial Impact** (CRITICAL):
+                        - SKIP: plan.total_cost -= item.price, plan.final_cost -= item.price
+                        - UNSKIP (SKIPPED → READY_FOR_BOOKING): Add item.price back
+                        - Response includes `financialImpact` flag and `financialImpactMessage`
+
+                        **Auto-Activation**:
+                        - Completing item auto-activates next PENDING item (PENDING → READY_FOR_BOOKING)
+
+                        **Auto-Complete Phase**:
+                        - When all items are COMPLETED/SKIPPED, phase status → COMPLETED
+
+                        **Example Use Cases**:
+                        1. Skip consultation: `{"status": "SKIPPED", "notes": "Patient declined"}`
+                        2. Complete item: `{"status": "COMPLETED", "completedAt": "2024-01-15T14:30:00"}`
+                        3. Undo skip: `{"status": "READY_FOR_BOOKING"}` (costs restored)
+                        """)
+        @ApiResponses(value = {
+                        @ApiResponse(responseCode = "200", description = "Item status updated successfully with financial impact information"),
+                        @ApiResponse(responseCode = "400", description = "Invalid request - missing required fields or validation errors"),
+                        @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions (requires UPDATE_TREATMENT_PLAN)"),
+                        @ApiResponse(responseCode = "404", description = "Treatment plan item not found"),
+                        @ApiResponse(responseCode = "409", description = "Conflict - invalid state transition or active appointments prevent skipping")
+        })
+        @org.springframework.security.access.prepost.PreAuthorize("hasRole('"
+                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.ADMIN + "') or " +
+                        "hasAuthority('"
+                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.UPDATE_TREATMENT_PLAN + "')")
+        @PatchMapping("/patient-plan-items/{itemId}/status")
+        public ResponseEntity<com.dental.clinic.management.treatment_plans.dto.response.PatientPlanItemResponse> updateItemStatus(
+                        @Parameter(description = "ID of the treatment plan item to update", required = true, example = "1001") @PathVariable Long itemId,
+
+                        @Parameter(description = "Request body with new status, optional notes, and completedAt timestamp", required = true) @RequestBody @jakarta.validation.Valid com.dental.clinic.management.treatment_plans.dto.request.UpdateItemStatusRequest request) {
+
+                log.info("REST request to update item {} status to {}", itemId, request.getStatus());
+
+                com.dental.clinic.management.treatment_plans.dto.response.PatientPlanItemResponse response = treatmentPlanItemService
+                                .updateItemStatus(itemId, request);
+
+                log.info("Item {} status updated successfully. FinancialImpact: {}, Message: {}",
+                                itemId, response.getFinancialImpact(), response.getFinancialImpactMessage());
+
+                return ResponseEntity.ok(response);
+        }
+
+        /**
+         * API 5.7: Add new items to an existing phase (emergent/incidental items).
+         * <p>
+         * Use Case: Doctor discovers 2 cavities during orthodontic checkup
+         * → Add FILLING_COMP service × 2 to current phase
+         * <p>
+         * Features:
+         * - Auto-sequence generation (Backend calculates max sequence + 1)
+         * - Quantity expansion (1 service × 2 quantity = 2 separate items)
+         * - Financial recalculation (adds to total_cost, recalculates final_cost with
+         * discount)
+         * - Approval workflow (Plan → PENDING_REVIEW for manager approval)
+         * - Comprehensive validation (phase/plan status checks)
+         * <p>
+         * Business Rules:
+         * 1. Cannot add to COMPLETED phase
+         * 2. Cannot add to plan with PENDING_REVIEW approval status
+         * 3. Cannot add to COMPLETED or CANCELLED plan
+         * 4. Price must be within ±50% of service default price
+         * 5. Service must exist and be active
+         * 6. All added items start with status = PENDING (waiting approval)
+         * 7. Plan changes to PENDING_REVIEW (manager must re-approve)
+         * <p>
+         * Required Permission: UPDATE_TREATMENT_PLAN (Admin, Manager, Dentist)
+         *
+         * @param phaseId  ID of the phase to add items to
+         * @param requests List of items to add (serviceCode, price, quantity, notes)
+         * @return Response with created items, financial impact, and approval status
+         */
+        @Operation(summary = "Add emergent items to a treatment plan phase (API 5.7)", description = """
+                        **Add incidental/emergent items to an existing phase:**
+
+                        **Use Case Example:**
+                        - Patient is in orthodontic treatment (Phase 1: Preparation)
+                        - During checkup, doctor discovers 2 new cavities on teeth 46, 47
+                        - Doctor adds FILLING_COMP service × 2 to current phase
+                        - System creates 2 separate items with auto-sequence numbers
+                        - Plan total cost increases, requires manager re-approval
+
+                        **Auto-Sequence Generation** (P0 Fix):
+                        - Backend calculates: `nextSequence = MAX(existing_sequences) + 1`
+                        - Example: Phase has items [1,2,3] → New items start at sequence 4
+                        - No sequence conflicts or gaps possible
+
+                        **Quantity Expansion:**
+                        - Request: `{serviceCode: "FILLING_COMP", quantity: 2, price: 400000}`
+                        - Creates 2 items:
+                          - "Trám răng Composite (Phát sinh - Lần 1)" (sequence 4)
+                          - "Trám răng Composite (Phát sinh - Lần 2)" (sequence 5)
+
+                        **Financial Impact** (P0 Fix - Correct Discount Logic):
+                        - Adds items to `plan.total_cost`
+                        - Recalculates `plan.final_cost = total_cost - discount_amount`
+                        - Response includes before/after financial summary
+                        - Example: +800,000 VND → total 15,000,000 → 15,800,000
+
+                        **Approval Workflow:**
+                        - Plan status changes to `PENDING_REVIEW`
+                        - Manager must approve before items become active
+                        - Response includes approval requirement notice
+
+                        **Validation Rules:**
+                        - ❌ Cannot add to COMPLETED phase
+                        - ❌ Cannot add if plan is PENDING_REVIEW (approve first)
+                        - ❌ Cannot add to COMPLETED/CANCELLED plan
+                        - ❌ Price must be within ±50% of service default
+                        - ❌ Service must exist and be active
+
+                        **Example Request:**
+                        ```json
+                        [
+                          {
+                            "serviceCode": "FILLING_COMP",
+                            "price": 400000,
+                            "quantity": 2,
+                            "notes": "Phát hiện 2 răng sâu mặt nhai 46, 47 tại tái khám"
+                          }
+                        ]
+                        ```
+                        """)
+        @ApiResponses(value = {
+                        @ApiResponse(responseCode = "201", description = "Items created successfully with financial impact and approval workflow information"),
+                        @ApiResponse(responseCode = "400", description = "Invalid request - service not found, price out of range, or validation errors"),
+                        @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions (requires UPDATE_TREATMENT_PLAN)"),
+                        @ApiResponse(responseCode = "404", description = "Phase not found"),
+                        @ApiResponse(responseCode = "409", description = "Conflict - cannot add to completed phase, pending approval plan, or closed plan")
+        })
+        @org.springframework.security.access.prepost.PreAuthorize("hasRole('"
+                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.ADMIN + "') or " +
+                        "hasAuthority('"
+                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.UPDATE_TREATMENT_PLAN + "')")
+        @PostMapping("/patient-plan-phases/{phaseId}/items")
+        public ResponseEntity<com.dental.clinic.management.treatment_plans.dto.response.AddItemsToPhaseResponse> addItemsToPhase(
+                        @Parameter(description = "ID of the phase to add items to", required = true, example = "201") @PathVariable Long phaseId,
+
+                        @Parameter(description = "List of items to add (serviceCode, price, quantity, notes)", required = true) @RequestBody @jakarta.validation.Valid java.util.List<com.dental.clinic.management.treatment_plans.dto.request.AddItemToPhaseRequest> requests) {
+
+                log.info("REST request to add {} item(s) to phase {}", requests.size(), phaseId);
+
+                com.dental.clinic.management.treatment_plans.dto.response.AddItemsToPhaseResponse response = treatmentPlanItemAdditionService
+                                .addItemsToPhase(phaseId, requests);
+
+                log.info("Successfully added {} items. Financial impact: total cost +{} VND. " +
+                                "Approval status → PENDING_REVIEW",
+                                response.getItems().size(),
+                                response.getFinancialImpact().getTotalCostAdded());
+
+                return ResponseEntity.status(org.springframework.http.HttpStatus.CREATED).body(response);
+        }
+
+        /**
+         * API 5.8: Get Treatment Plan Template Detail (for Hybrid Workflow).
+         * <p>
+         * **Use Case:** "Hybrid" workflow - Load template structure, customize, then
+         * create custom plan.
+         * <p>
+         * **Workflow:**
+         * 1. FE calls this API to load template structure (phases + services)
+         * 2. FE allows user to customize (add/remove services, change quantity, adjust
+         * price)
+         * 3. FE sends customized structure to API 5.4 (Create Custom Plan)
+         * <p>
+         * **Example Scenario:**
+         * - Doctor wants to create orthodontic plan based on template "TPL_ORTHO_METAL"
+         * - Load template → See 4 phases with 8 services (including 24× monthly
+         * adjustments)
+         * - Customize: Add "Tooth Extraction" service, reduce adjustments from 24 to 12
+         * - Create custom plan with modified structure
+         * <p>
+         * **Permission:** Requires CREATE_TREATMENT_PLAN (P1 Fix - removed VIEW_ALL)
+         * <p>
+         * **P1 Fixes Applied:**
+         * - Backend filters out inactive services from phases
+         * - Logs warnings if services are filtered
+         * <p>
+         * **P2 Enhancements:**
+         * - Returns 410 GONE if template is inactive (different from 404 NOT_FOUND)
+         * - Returns specialization object { id, name } (reserved for future - currently
+         * null)
+         * - Returns summary { totalPhases, totalItemsInTemplate }
+         * - Returns description field
+         *
+         * @param templateCode Template code (e.g., "TPL_ORTHO_METAL",
+         *                     "TPL_IMPLANT_OSSTEM")
+         * @return Full template structure with phases and services
+         */
+        @Operation(summary = "API 5.8 - Get Treatment Plan Template Detail", description = """
+                        **Purpose:** Load template structure for Hybrid workflow (template-based customization).
+
+                        **Use Case:**
+                        Doctor wants to create a treatment plan based on a template but needs to customize it:
+                        1. Load template detail (this API) → Get full structure
+                        2. Customize in FE → Add/remove services, change quantities, adjust prices
+                        3. Create custom plan (API 5.4) → Send modified structure
+
+                        **Example:**
+                        - Template: "Gói Niềng Răng Kim Loại 2 năm"
+                        - Default: 4 phases, 24× monthly adjustments
+                        - Customize: Add "Nhổ răng khôn", reduce adjustments to 12×
+                        - Create custom plan with new structure
+
+                        **Response Structure:**
+                        - `templateId`, `templateCode`, `templateName`, `description`
+                        - `specialization`: { id, name } (reserved - currently null)
+                        - `estimatedTotalCost`, `estimatedDurationDays`
+                        - `summary`: { totalPhases, totalItemsInTemplate }
+                        - `phases[]`: Array of phases (ordered by stepOrder)
+                          - `phaseTemplateId`, `phaseName`, `stepOrder`
+                          - `itemsInPhase[]`: Array of services (ordered by sequenceNumber)
+                            - `serviceCode`, `serviceName`, `price` (giá gốc from services table)
+                            - `quantity`, `sequenceNumber`
+
+                        **P1 Fix (Nested Validation):**
+                        Backend automatically filters out inactive services from phases. FE always receives "clean" templates.
+
+                        **P2 Enhancements:**
+                        - 410 GONE if template is inactive (vs 404 if not found)
+                        - Specialization object (not just ID)
+                        - Summary statistics for quick overview
+
+                        **Example Response:**
+                        ```json
+                        {
+                          "templateId": 1,
+                          "templateCode": "TPL_ORTHO_METAL",
+                          "templateName": "Gói Niềng Răng Mắc Cài Kim Loại (Cơ bản)",
+                          "description": "Gói điều trị chỉnh nha toàn diện...",
+                          "specialization": null,
+                          "estimatedTotalCost": 30000000,
+                          "estimatedDurationDays": 730,
+                          "summary": {
+                            "totalPhases": 4,
+                            "totalItemsInTemplate": 7
+                          },
+                          "phases": [
+                            {
+                              "phaseTemplateId": 1,
+                              "phaseName": "Giai đoạn 1: Khám & Chuẩn bị",
+                              "stepOrder": 1,
+                              "itemsInPhase": [
+                                {
+                                  "serviceCode": "ORTHO_CONSULT",
+                                  "serviceName": "Khám & Tư vấn Chỉnh nha",
+                                  "price": 0,
+                                  "quantity": 1,
+                                  "sequenceNumber": 1
+                                },
+                                {
+                                  "serviceCode": "ORTHO_FILMS",
+                                  "serviceName": "Chụp Phim Chỉnh nha (Pano, Ceph)",
+                                  "price": 500000,
+                                  "quantity": 1,
+                                  "sequenceNumber": 2
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                        ```
+                        """)
+        @ApiResponses(value = {
+                        @ApiResponse(responseCode = "200", description = "Successfully retrieved template detail"),
+                        @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions (requires CREATE_TREATMENT_PLAN)"),
+                        @ApiResponse(responseCode = "404", description = "Template not found with the given code"),
+                        @ApiResponse(responseCode = "410", description = "Template is inactive (deprecated) - P2 enhancement")
+        })
+        @org.springframework.security.access.prepost.PreAuthorize("hasRole('"
+                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.ADMIN + "') or " +
+                        "hasAuthority('"
+                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.CREATE_TREATMENT_PLAN + "')")
+        @GetMapping("/treatment-plan-templates/{templateCode}")
+        public ResponseEntity<com.dental.clinic.management.treatment_plans.dto.response.GetTemplateDetailResponse> getTemplateDetail(
+                        @Parameter(description = "Template code (e.g., TPL_ORTHO_METAL, TPL_IMPLANT_OSSTEM)", required = true, example = "TPL_ORTHO_METAL") @PathVariable String templateCode) {
+
+                log.info("REST request to get template detail for: {}", templateCode);
+
+                com.dental.clinic.management.treatment_plans.dto.response.GetTemplateDetailResponse response = treatmentPlanTemplateService
+                                .getTemplateDetail(templateCode);
+
+                log.info("Successfully retrieved template: {} ({} phases, {} items)",
+                                response.getTemplateName(),
+                                response.getSummary().getTotalPhases(),
+                                response.getSummary().getTotalItemsInTemplate());
+
+                return ResponseEntity.ok(response);
         }
 }

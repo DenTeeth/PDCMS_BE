@@ -1,5 +1,6 @@
 package com.dental.clinic.management.treatment_plans.domain.template;
 
+import com.dental.clinic.management.specialization.domain.Specialization;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -66,6 +67,20 @@ public class TreatmentPlanTemplate {
      */
     @Column(name = "total_price", precision = 12, scale = 2)
     private BigDecimal totalPrice;
+
+    /**
+     * Specialization this template belongs to (V19)
+     * Example: "Gói Niềng Răng" → specialization_id = 1 (Chỉnh nha)
+     *
+     * Why NOT inferred from services:
+     * 1. Business clarity: Template IS a specialization-level concept
+     * 2. Performance: Filtering templates by specialization (indexed)
+     * 3. Avoid logic conflict: Template may contain services from multiple
+     * specializations
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "specialization_id")
+    private Specialization specialization;
 
     /**
      * Whether this template is active/available for use

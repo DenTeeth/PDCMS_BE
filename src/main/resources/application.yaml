@@ -22,7 +22,7 @@ spring:
     show-sql: true
     defer-datasource-initialization: true
 
-  # SQL Init Configuration - Auto-run seed data
+  # SQL Init Configuration - Auto-run seed data ONLY
   sql:
     init:
       mode: always

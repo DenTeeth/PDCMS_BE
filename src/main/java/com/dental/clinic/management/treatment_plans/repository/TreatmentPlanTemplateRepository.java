@@ -38,4 +38,23 @@ public interface TreatmentPlanTemplateRepository extends JpaRepository<Treatment
      * Check if template exists and is active
      */
     boolean existsByTemplateCodeAndIsActiveTrue(String templateCode);
+
+    /**
+     * Find template by code WITH phases AND services (for API 5.8).
+     *
+     * This query loads the FULL nested structure in 2 queries:
+     * Query 1: template + phases (LEFT JOIN FETCH)
+     * Query 2: services for all phases (automatic due to @OneToMany LAZY +
+     * iteration)
+     *
+     * Use Case: API 5.8 - Get Template Detail for Hybrid workflow
+     * (FE needs to see full structure to customize before creating plan)
+     *
+     * @param templateCode The template code (e.g., "TPL_ORTHO_METAL")
+     * @return Optional with template+phases loaded, services loaded on access
+     */
+    @Query("SELECT DISTINCT t FROM TreatmentPlanTemplate t " +
+            "LEFT JOIN FETCH t.templatePhases " +
+            "WHERE t.templateCode = :templateCode")
+    Optional<TreatmentPlanTemplate> findByTemplateCodeWithFullStructure(@Param("templateCode") String templateCode);
 }
