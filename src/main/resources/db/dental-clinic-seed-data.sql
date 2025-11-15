@@ -822,7 +822,9 @@ VALUES
 -- Manager
 (11, 11, 'EMP011', 'Võ Nguyễn Minh', 'Quân', '0911111111', '1987-09-05', '777 Nguyễn Huệ, Q1, TPHCM', 'FULL_TIME', TRUE, NOW()),
 -- ✅ NEW: Thực tập sinh (OBSERVER for testing P3.3)
-(12, 16, 'EMP012', 'Nguyễn Khánh', 'Linh', '0912121212', '2003-05-15', '888 Võ Thị Sáu, Q3, TPHCM', 'PART_TIME_FLEX', TRUE, NOW()); INSERT INTO employee_specializations (employee_id, specialization_id)
+(12, 16, 'EMP012', 'Nguyễn Khánh', 'Linh', '0912121212', '2003-05-15', '888 Võ Thị Sáu, Q3, TPHCM', 'PART_TIME_FLEX', TRUE, NOW());
+
+INSERT INTO employee_specializations (employee_id, specialization_id)
 VALUES
 -- Dentist 1: Lê Anh Khoa - Chỉnh nha + Nha chu + Phục hồi + STANDARD (REQUIRED)
 (1, 1), (1, 3), (1, 4), (1, 8),
@@ -1060,29 +1062,53 @@ VALUES
 
 -- Step 1: Insert holiday definitions (one by one to avoid conflicts)
 INSERT INTO holiday_definitions (definition_id, holiday_name, holiday_type, description, created_at, updated_at)
-VALUES ('TET_2025', 'Tết Nguyên Đán 2025', 'NATIONAL', 'Lunar New Year 2025 - Vietnamese traditional holiday', NOW(), NOW()); INSERT INTO holiday_definitions (definition_id, holiday_name, holiday_type, description, created_at, updated_at)
-VALUES ('LIBERATION_DAY', 'Ngày Giải phóng miền Nam', 'NATIONAL', 'Reunification Day - April 30th', NOW(), NOW()); INSERT INTO holiday_definitions (definition_id, holiday_name, holiday_type, description, created_at, updated_at)
-VALUES ('LABOR_DAY', 'Ngày Quốc tế Lao động', 'NATIONAL', 'International Labor Day - May 1st', NOW(), NOW()); INSERT INTO holiday_definitions (definition_id, holiday_name, holiday_type, description, created_at, updated_at)
-VALUES ('NATIONAL_DAY', 'Ngày Quốc khánh', 'NATIONAL', 'Vietnam National Day - September 2nd', NOW(), NOW()); INSERT INTO holiday_definitions (definition_id, holiday_name, holiday_type, description, created_at, updated_at)
-VALUES ('NEW_YEAR', 'Tết Dương lịch', 'NATIONAL', 'Gregorian New Year', NOW(), NOW()); INSERT INTO holiday_definitions (definition_id, holiday_name, holiday_type, description, created_at, updated_at)
+VALUES ('TET_2025', 'Tết Nguyên Đán 2025', 'NATIONAL', 'Lunar New Year 2025 - Vietnamese traditional holiday', NOW(), NOW());
+
+INSERT INTO holiday_definitions (definition_id, holiday_name, holiday_type, description, created_at, updated_at)
+VALUES ('LIBERATION_DAY', 'Ngày Giải phóng miền Nam', 'NATIONAL', 'Reunification Day - April 30th', NOW(), NOW());
+
+INSERT INTO holiday_definitions (definition_id, holiday_name, holiday_type, description, created_at, updated_at)
+VALUES ('LABOR_DAY', 'Ngày Quốc tế Lao động', 'NATIONAL', 'International Labor Day - May 1st', NOW(), NOW());
+
+INSERT INTO holiday_definitions (definition_id, holiday_name, holiday_type, description, created_at, updated_at)
+VALUES ('NATIONAL_DAY', 'Ngày Quốc khánh', 'NATIONAL', 'Vietnam National Day - September 2nd', NOW(), NOW());
+
+INSERT INTO holiday_definitions (definition_id, holiday_name, holiday_type, description, created_at, updated_at)
+VALUES ('NEW_YEAR', 'Tết Dương lịch', 'NATIONAL', 'Gregorian New Year', NOW(), NOW());
+
+INSERT INTO holiday_definitions (definition_id, holiday_name, holiday_type, description, created_at, updated_at)
 VALUES ('HUNG_KINGS', 'Giỗ Tổ Hùng Vương', 'NATIONAL', 'Hung Kings Commemoration Day', NOW(), NOW());
 
 
 -- Step 2: Insert holiday dates (specific dates for each definition)
 -- Tết Nguyên Đán 2025 (Jan 29 - Feb 4, 2025)
 INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2025-01-29', 'TET_2025', 'Ngày Tết Nguyên Đán (30 Tết)', NOW(), NOW()); INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2025-01-30', 'TET_2025', 'Mùng 1 Tết', NOW(), NOW()); INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2025-01-31', 'TET_2025', 'Mùng 2 Tết', NOW(), NOW()); INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2025-02-01', 'TET_2025', 'Mùng 3 Tết', NOW(), NOW()); INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2025-02-02', 'TET_2025', 'Mùng 4 Tết', NOW(), NOW()); INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2025-02-03', 'TET_2025', 'Mùng 5 Tết', NOW(), NOW()); INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
+VALUES ('2025-01-29', 'TET_2025', 'Ngày Tết Nguyên Đán (30 Tết)', NOW(), NOW());
+
+INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
+VALUES ('2025-01-30', 'TET_2025', 'Mùng 1 Tết', NOW(), NOW());
+
+INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
+VALUES ('2025-01-31', 'TET_2025', 'Mùng 2 Tết', NOW(), NOW());
+
+INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
+VALUES ('2025-02-01', 'TET_2025', 'Mùng 3 Tết', NOW(), NOW());
+
+INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
+VALUES ('2025-02-02', 'TET_2025', 'Mùng 4 Tết', NOW(), NOW());
+
+INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
+VALUES ('2025-02-03', 'TET_2025', 'Mùng 5 Tết', NOW(), NOW());
+
+INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
 VALUES ('2025-02-04', 'TET_2025', 'Mùng 6 Tết', NOW(), NOW());
 
 
 -- Liberation Day & Labor Day (April 30 - May 1, 2025)
 INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2025-04-30', 'LIBERATION_DAY', 'Ngày Giải phóng miền Nam', NOW(), NOW()); INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
+VALUES ('2025-04-30', 'LIBERATION_DAY', 'Ngày Giải phóng miền Nam', NOW(), NOW());
+
+INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
 VALUES ('2025-05-01', 'LABOR_DAY', 'Ngày Quốc tế Lao động', NOW(), NOW());
 
 
@@ -1117,8 +1143,12 @@ VALUES ('MAINTENANCE_WEEK', 'System Maintenance Week', 'COMPANY', 'Scheduled sys
 -- Add 3 maintenance days (Monday, Wednesday, Friday of a test week)
 -- Example: November 3, 5, 7, 2025
 INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2025-11-03', 'MAINTENANCE_WEEK', 'Monday maintenance - Test holiday blocking', NOW(), NOW()); INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2025-11-05', 'MAINTENANCE_WEEK', 'Wednesday maintenance - Test holiday blocking', NOW(), NOW()); INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
+VALUES ('2025-11-03', 'MAINTENANCE_WEEK', 'Monday maintenance - Test holiday blocking', NOW(), NOW());
+
+INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
+VALUES ('2025-11-05', 'MAINTENANCE_WEEK', 'Wednesday maintenance - Test holiday blocking', NOW(), NOW());
+
+INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
 VALUES ('2025-11-07', 'MAINTENANCE_WEEK', 'Friday maintenance - Test holiday blocking', NOW(), NOW());
 
 
@@ -1147,7 +1177,9 @@ INSERT INTO fixed_shift_registrations (
     effective_from, effective_to, is_active, created_at
 )
 VALUES
-(1, 2, 'WKS_MORNING_01', '2025-01-01', '2026-12-31', TRUE, NOW()); INSERT INTO fixed_registration_days (registration_id, day_of_week)
+(1, 2, 'WKS_MORNING_01', '2025-01-01', '2026-12-31', TRUE, NOW());
+
+INSERT INTO fixed_registration_days (registration_id, day_of_week)
 VALUES
 (1, 'MONDAY'),
 (1, 'TUESDAY'),
@@ -1162,7 +1194,9 @@ INSERT INTO fixed_shift_registrations (
     effective_from, effective_to, is_active, created_at
 )
 VALUES
-(2, 3, 'WKS_AFTERNOON_01', '2025-01-01', '2026-12-31', TRUE, NOW()); INSERT INTO fixed_registration_days (registration_id, day_of_week)
+(2, 3, 'WKS_AFTERNOON_01', '2025-01-01', '2026-12-31', TRUE, NOW());
+
+INSERT INTO fixed_registration_days (registration_id, day_of_week)
 VALUES
 (2, 'MONDAY'),
 (2, 'TUESDAY'),
@@ -1177,7 +1211,9 @@ INSERT INTO fixed_shift_registrations (
     effective_from, effective_to, is_active, created_at
 )
 VALUES
-(3, 4, 'WKS_MORNING_02', '2025-11-01', '2026-10-31', TRUE, NOW()); INSERT INTO fixed_registration_days (registration_id, day_of_week)
+(3, 4, 'WKS_MORNING_02', '2025-11-01', '2026-10-31', TRUE, NOW());
+
+INSERT INTO fixed_registration_days (registration_id, day_of_week)
 VALUES
 (3, 'MONDAY'),
 (3, 'TUESDAY'),
@@ -1192,7 +1228,9 @@ INSERT INTO fixed_shift_registrations (
     effective_from, effective_to, is_active, created_at
 )
 VALUES
-(4, 5, 'WKS_MORNING_01', '2025-01-01', NULL, TRUE, NOW()); INSERT INTO fixed_registration_days (registration_id, day_of_week)
+(4, 5, 'WKS_MORNING_01', '2025-01-01', NULL, TRUE, NOW());
+
+INSERT INTO fixed_registration_days (registration_id, day_of_week)
 VALUES
 (4, 'MONDAY'),
 (4, 'TUESDAY'),
@@ -1208,7 +1246,9 @@ INSERT INTO fixed_shift_registrations (
     effective_from, effective_to, is_active, created_at
 )
 VALUES
-(5, 6, 'WKS_MORNING_02', '2025-11-01', '2026-04-30', TRUE, NOW()); INSERT INTO fixed_registration_days (registration_id, day_of_week)
+(5, 6, 'WKS_MORNING_02', '2025-11-01', '2026-04-30', TRUE, NOW());
+
+INSERT INTO fixed_registration_days (registration_id, day_of_week)
 VALUES
 (5, 'MONDAY'),
 (5, 'WEDNESDAY'),
@@ -1221,7 +1261,9 @@ INSERT INTO fixed_shift_registrations (
     effective_from, effective_to, is_active, created_at
 )
 VALUES
-(6, 7, 'WKS_MORNING_01', '2025-01-01', NULL, TRUE, NOW()); INSERT INTO fixed_registration_days (registration_id, day_of_week)
+(6, 7, 'WKS_MORNING_01', '2025-01-01', NULL, TRUE, NOW());
+
+INSERT INTO fixed_registration_days (registration_id, day_of_week)
 VALUES
 (6, 'TUESDAY'),
 (6, 'THURSDAY');
@@ -1233,7 +1275,9 @@ INSERT INTO fixed_shift_registrations (
     effective_from, effective_to, is_active, created_at
 )
 VALUES
-(7, 9, 'WKS_AFTERNOON_02', '2025-11-01', '2026-10-31', TRUE, NOW()); INSERT INTO fixed_registration_days (registration_id, day_of_week)
+(7, 9, 'WKS_AFTERNOON_02', '2025-11-01', '2026-10-31', TRUE, NOW());
+
+INSERT INTO fixed_registration_days (registration_id, day_of_week)
 VALUES
 (7, 'TUESDAY'),
 (7, 'THURSDAY'),
@@ -1345,20 +1389,24 @@ SELECT setval('part_time_slots_slot_id_seq',
 -- Additional PART_TIME_FLEX employees for testing
 -- These employees have NO pre-seeded registrations - use API to create registrations for testing
 
--- Test Employee 10: PART_TIME_FLEX (for multi-employee quota testing)
+-- Test Employee 13: PART_TIME_FLEX (for multi-employee quota testing)
 INSERT INTO accounts (account_id, username, password, email, status, role_id, created_at)
 VALUES
-(20, 'yta10', '$2a$10$RI1iV7k4XJFBWpQUCr.5L.ufNjjXlqvP0z1XrTiT8bKvYpHEtUQ8O', 'yta10@test.com', 'ACTIVE', 'ROLE_NURSE', NOW()); INSERT INTO employees (employee_id, account_id, employee_code, first_name, last_name, phone, date_of_birth, address, employment_type, is_active, created_at)
+(20, 'yta13', '$2a$10$RI1iV7k4XJFBWpQUCr.5L.ufNjjXlqvP0z1XrTiT8bKvYpHEtUQ8O', 'yta13@test.com', 'ACTIVE', 'ROLE_NURSE', NOW());
+
+INSERT INTO employees (employee_id, account_id, employee_code, first_name, last_name, phone, date_of_birth, address, employment_type, is_active, created_at)
 VALUES
-(10, 20, 'EMP010', 'Minh', 'Lê Thị', '0909999999', '2000-01-15', '789 Nguyễn Huệ, Q1, TPHCM', 'PART_TIME_FLEX', TRUE, NOW())
+(13, 20, 'EMP013', 'Minh', 'Lê Thị', '0909999999', '2000-01-15', '789 Nguyễn Huệ, Q1, TPHCM', 'PART_TIME_FLEX', TRUE, NOW());
 
 
--- Test Employee 11: PART_TIME_FLEX
+-- Test Employee 14: PART_TIME_FLEX
 INSERT INTO accounts (account_id, username, password, email, status, role_id, created_at)
 VALUES
-(21, 'yta11', '$2a$10$RI1iV7k4XJFBWpQUCr.5L.ufNjjXlqvP0z1XrTiT8bKvYpHEtUQ8O', 'yta11@test.com', 'ACTIVE', 'ROLE_NURSE', NOW()); INSERT INTO employees (employee_id, account_id, employee_code, first_name, last_name, phone, date_of_birth, address, employment_type, is_active, created_at)
+(21, 'yta14', '$2a$10$RI1iV7k4XJFBWpQUCr.5L.ufNjjXlqvP0z1XrTiT8bKvYpHEtUQ8O', 'yta14@test.com', 'ACTIVE', 'ROLE_NURSE', NOW());
+
+INSERT INTO employees (employee_id, account_id, employee_code, first_name, last_name, phone, date_of_birth, address, employment_type, is_active, created_at)
 VALUES
-(11, 21, 'EMP011', 'Hương', 'Phạm Thị', '0901111111', '1999-05-20', '321 Lê Lợi, Q1, TPHCM', 'PART_TIME_FLEX', TRUE, NOW())
+(14, 21, 'EMP014', 'Hương', 'Phạm Thị', '0901111111', '1999-05-20', '321 Lê Lợi, Q1, TPHCM', 'PART_TIME_FLEX', TRUE, NOW());
 
 
 -- ============================================
@@ -1472,7 +1520,7 @@ INSERT INTO service_categories (category_code, category_name, display_order, is_
 ('C_IMPLANT', 'C. Cắm ghép Implant', 3, true, NOW()),
 ('D_ORTHO', 'D. Chỉnh nha', 4, true, NOW()),
 ('E_PROS_DENTURE', 'E. Phục hình Tháo lắp', 5, true, NOW()),
-('F_OTHER', 'F. Dịch vụ khác', 6, true, NOW())
+('F_OTHER', 'F. Dịch vụ khác', 6, true, NOW());
 
 
 -- =============================================
@@ -1627,7 +1675,7 @@ WHERE
         'IMPL_BONE_GRAFT', 'IMPL_SINUS_LIFT', 'IMPL_HEALING',
         'IMPL_IMPRESSION', 'IMPL_CROWN_TITAN', 'IMPL_CROWN_ZIR',
         'EXTRACT_WISDOM_L1', 'EXTRACT_WISDOM_L2', 'OTHER_GINGIVECTOMY'
-    ))
+    ));
 
 
 -- =============================================
@@ -1648,21 +1696,21 @@ WHERE
 INSERT INTO treatment_plan_templates (template_code, template_name, description, estimated_duration_days, total_price, is_active, created_at)
 VALUES ('TPL_ORTHO_METAL', 'Niềng răng mắc cài kim loại trọn gói 2 năm',
         'Gói điều trị chỉnh nha toàn diện với mắc cài kim loại, bao gồm 24 lần tái khám siết niềng định kỳ.',
-        730, 30000000, true, NOW())
+        730, 30000000, true, NOW());
 
 
 -- Template 2: Implant Hàn Quốc (6 tháng)
 INSERT INTO treatment_plan_templates (template_code, template_name, description, estimated_duration_days, total_price, is_active, created_at)
 VALUES ('TPL_IMPLANT_OSSTEM', 'Cấy ghép Implant Hàn Quốc (Osstem) - Trọn gói',
         'Gói cấy ghép Implant hoàn chỉnh từ phẫu thuật đến gắn răng sứ, sử dụng trụ Osstem Hàn Quốc.',
-        180, 19000000, true, NOW())
+        180, 19000000, true, NOW());
 
 
 -- Template 3: Bọc răng sứ Cercon HT (7 ngày)
 INSERT INTO treatment_plan_templates (template_code, template_name, description, estimated_duration_days, total_price, is_active, created_at)
 VALUES ('TPL_CROWN_CERCON', 'Bọc răng sứ Cercon HT - 1 răng',
         'Gói bọc răng sứ toàn sứ Cercon HT cao cấp, bao gồm điều trị tủy (nếu cần) và gắn răng sứ.',
-        7, 5000000, true, NOW())
+        7, 5000000, true, NOW());
 
 
 -- =============================================
@@ -1672,49 +1720,49 @@ VALUES ('TPL_CROWN_CERCON', 'Bọc răng sứ Cercon HT - 1 răng',
 -- TPL_ORTHO_METAL: 4 giai đoạn
 INSERT INTO template_phases (template_id, phase_number, phase_name, estimated_duration_days, created_at)
 SELECT t.template_id, 1, 'Giai đoạn 1: Khám & Chuẩn bị', 14, NOW()
-FROM treatment_plan_templates t WHERE t.template_code = 'TPL_ORTHO_METAL'
+FROM treatment_plan_templates t WHERE t.template_code = 'TPL_ORTHO_METAL';
 
 
 INSERT INTO template_phases (template_id, phase_number, phase_name, estimated_duration_days, created_at)
 SELECT t.template_id, 2, 'Giai đoạn 2: Gắn mắc cài', 1, NOW()
-FROM treatment_plan_templates t WHERE t.template_code = 'TPL_ORTHO_METAL'
+FROM treatment_plan_templates t WHERE t.template_code = 'TPL_ORTHO_METAL';
 
 
 INSERT INTO template_phases (template_id, phase_number, phase_name, estimated_duration_days, created_at)
 SELECT t.template_id, 3, 'Giai đoạn 3: Điều chỉnh định kỳ (8 tháng)', 715, NOW()
-FROM treatment_plan_templates t WHERE t.template_code = 'TPL_ORTHO_METAL'
+FROM treatment_plan_templates t WHERE t.template_code = 'TPL_ORTHO_METAL';
 
 
 INSERT INTO template_phases (template_id, phase_number, phase_name, estimated_duration_days, created_at)
 SELECT t.template_id, 4, 'Giai đoạn 4: Tháo niềng & Duy trì', 0, NOW()
-FROM treatment_plan_templates t WHERE t.template_code = 'TPL_ORTHO_METAL'
+FROM treatment_plan_templates t WHERE t.template_code = 'TPL_ORTHO_METAL';
 
 
 -- TPL_IMPLANT_OSSTEM: 3 giai đoạn
 INSERT INTO template_phases (template_id, phase_number, phase_name, estimated_duration_days, created_at)
 SELECT t.template_id, 1, 'Giai đoạn 1: Khám & Chẩn đoán hình ảnh', 7, NOW()
-FROM treatment_plan_templates t WHERE t.template_code = 'TPL_IMPLANT_OSSTEM'
+FROM treatment_plan_templates t WHERE t.template_code = 'TPL_IMPLANT_OSSTEM';
 
 
 INSERT INTO template_phases (template_id, phase_number, phase_name, estimated_duration_days, created_at)
 SELECT t.template_id, 2, 'Giai đoạn 2: Phẫu thuật cắm Implant', 120, NOW()
-FROM treatment_plan_templates t WHERE t.template_code = 'TPL_IMPLANT_OSSTEM'
+FROM treatment_plan_templates t WHERE t.template_code = 'TPL_IMPLANT_OSSTEM';
 
 
 INSERT INTO template_phases (template_id, phase_number, phase_name, estimated_duration_days, created_at)
 SELECT t.template_id, 3, 'Giai đoạn 3: Làm & Gắn răng sứ', 14, NOW()
-FROM treatment_plan_templates t WHERE t.template_code = 'TPL_IMPLANT_OSSTEM'
+FROM treatment_plan_templates t WHERE t.template_code = 'TPL_IMPLANT_OSSTEM';
 
 
 -- TPL_CROWN_CERCON: 2 giai đoạn
 INSERT INTO template_phases (template_id, phase_number, phase_name, estimated_duration_days, created_at)
 SELECT t.template_id, 1, 'Giai đoạn 1: Điều trị tủy & Chuẩn bị', 3, NOW()
-FROM treatment_plan_templates t WHERE t.template_code = 'TPL_CROWN_CERCON'
+FROM treatment_plan_templates t WHERE t.template_code = 'TPL_CROWN_CERCON';
 
 
 INSERT INTO template_phases (template_id, phase_number, phase_name, estimated_duration_days, created_at)
 SELECT t.template_id, 2, 'Giai đoạn 2: Lấy dấu & Gắn sứ', 4, NOW()
-FROM treatment_plan_templates t WHERE t.template_code = 'TPL_CROWN_CERCON'
+FROM treatment_plan_templates t WHERE t.template_code = 'TPL_CROWN_CERCON';
 
 
 -- =============================================
@@ -1728,7 +1776,7 @@ SELECT tp.phase_id, s.service_id, 1, 1, 45, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'ORTHO_CONSULT'
-WHERE t.template_code = 'TPL_ORTHO_METAL' AND tp.phase_number = 1
+WHERE t.template_code = 'TPL_ORTHO_METAL' AND tp.phase_number = 1;
 
 
 INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
@@ -1736,7 +1784,7 @@ SELECT tp.phase_id, s.service_id, 2, 1, 30, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'ORTHO_FILMS'
-WHERE t.template_code = 'TPL_ORTHO_METAL' AND tp.phase_number = 1
+WHERE t.template_code = 'TPL_ORTHO_METAL' AND tp.phase_number = 1;
 
 
 INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
@@ -1744,7 +1792,7 @@ SELECT tp.phase_id, s.service_id, 3, 1, 60, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'SCALING_L1'
-WHERE t.template_code = 'TPL_ORTHO_METAL' AND tp.phase_number = 1
+WHERE t.template_code = 'TPL_ORTHO_METAL' AND tp.phase_number = 1;
 
 
 -- TPL_ORTHO_METAL - Phase 2: Gắn mắc cài (1 service)
@@ -1753,7 +1801,7 @@ SELECT tp.phase_id, s.service_id, 1, 1, 90, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'ORTHO_BRACES_ON'
-WHERE t.template_code = 'TPL_ORTHO_METAL' AND tp.phase_number = 2
+WHERE t.template_code = 'TPL_ORTHO_METAL' AND tp.phase_number = 2;
 
 
 -- TPL_ORTHO_METAL - Phase 3: Tái khám 8 lần (quantity = 8) - FIXED: Reduced from 24 to 8 for realistic seed data
@@ -1762,7 +1810,7 @@ SELECT tp.phase_id, s.service_id, 1, 8, 30, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'ORTHO_ADJUST'
-WHERE t.template_code = 'TPL_ORTHO_METAL' AND tp.phase_number = 3
+WHERE t.template_code = 'TPL_ORTHO_METAL' AND tp.phase_number = 3;
 
 
 -- TPL_ORTHO_METAL - Phase 4: Tháo niềng & Duy trì (2 services in order)
@@ -1771,7 +1819,7 @@ SELECT tp.phase_id, s.service_id, 1, 1, 60, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'ORTHO_BRACES_OFF'
-WHERE t.template_code = 'TPL_ORTHO_METAL' AND tp.phase_number = 4
+WHERE t.template_code = 'TPL_ORTHO_METAL' AND tp.phase_number = 4;
 
 
 INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
@@ -1779,7 +1827,7 @@ SELECT tp.phase_id, s.service_id, 2, 1, 30, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'ORTHO_RETAINER_REMOV'
-WHERE t.template_code = 'TPL_ORTHO_METAL' AND tp.phase_number = 4
+WHERE t.template_code = 'TPL_ORTHO_METAL' AND tp.phase_number = 4;
 
 
 -- TPL_IMPLANT_OSSTEM - Phase 1: Khám & Chẩn đoán (2 services in order)
@@ -1788,7 +1836,7 @@ SELECT tp.phase_id, s.service_id, 1, 1, 45, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'IMPL_CONSULT'
-WHERE t.template_code = 'TPL_IMPLANT_OSSTEM' AND tp.phase_number = 1
+WHERE t.template_code = 'TPL_IMPLANT_OSSTEM' AND tp.phase_number = 1;
 
 
 INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
@@ -1796,7 +1844,7 @@ SELECT tp.phase_id, s.service_id, 2, 1, 30, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'IMPL_CT_SCAN'
-WHERE t.template_code = 'TPL_IMPLANT_OSSTEM' AND tp.phase_number = 1
+WHERE t.template_code = 'TPL_IMPLANT_OSSTEM' AND tp.phase_number = 1;
 
 
 -- TPL_IMPLANT_OSSTEM - Phase 2: Phẫu thuật (2 services in order: surgery first, then healing cap)
@@ -1805,7 +1853,7 @@ SELECT tp.phase_id, s.service_id, 1, 1, 90, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'IMPL_SURGERY_KR'
-WHERE t.template_code = 'TPL_IMPLANT_OSSTEM' AND tp.phase_number = 2
+WHERE t.template_code = 'TPL_IMPLANT_OSSTEM' AND tp.phase_number = 2;
 
 
 INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
@@ -1813,7 +1861,7 @@ SELECT tp.phase_id, s.service_id, 2, 1, 20, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'IMPL_HEALING'
-WHERE t.template_code = 'TPL_IMPLANT_OSSTEM' AND tp.phase_number = 2
+WHERE t.template_code = 'TPL_IMPLANT_OSSTEM' AND tp.phase_number = 2;
 
 
 -- TPL_IMPLANT_OSSTEM - Phase 3: Làm răng sứ (2 services in order: impression first, then crown)
@@ -1822,7 +1870,7 @@ SELECT tp.phase_id, s.service_id, 1, 1, 30, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'IMPL_IMPRESSION'
-WHERE t.template_code = 'TPL_IMPLANT_OSSTEM' AND tp.phase_number = 3
+WHERE t.template_code = 'TPL_IMPLANT_OSSTEM' AND tp.phase_number = 3;
 
 
 INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
@@ -1830,7 +1878,7 @@ SELECT tp.phase_id, s.service_id, 2, 1, 45, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'IMPL_CROWN_ZIR'
-WHERE t.template_code = 'TPL_IMPLANT_OSSTEM' AND tp.phase_number = 3
+WHERE t.template_code = 'TPL_IMPLANT_OSSTEM' AND tp.phase_number = 3;
 
 
 -- TPL_CROWN_CERCON - Phase 1: Điều trị tủy (2 services in order: treatment first, then post & core)
@@ -1839,7 +1887,7 @@ SELECT tp.phase_id, s.service_id, 1, 1, 75, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'ENDO_TREAT_POST'
-WHERE t.template_code = 'TPL_CROWN_CERCON' AND tp.phase_number = 1
+WHERE t.template_code = 'TPL_CROWN_CERCON' AND tp.phase_number = 1;
 
 
 INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
@@ -1847,7 +1895,7 @@ SELECT tp.phase_id, s.service_id, 2, 1, 45, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'ENDO_POST_CORE'
-WHERE t.template_code = 'TPL_CROWN_CERCON' AND tp.phase_number = 1
+WHERE t.template_code = 'TPL_CROWN_CERCON' AND tp.phase_number = 1;
 
 
 -- TPL_CROWN_CERCON - Phase 2: Lấy dấu & Gắn sứ (2 services in order: crown prep first, then cementing)
@@ -1856,7 +1904,7 @@ SELECT tp.phase_id, s.service_id, 1, 1, 60, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'CROWN_ZIR_CERCON'
-WHERE t.template_code = 'TPL_CROWN_CERCON' AND tp.phase_number = 2
+WHERE t.template_code = 'TPL_CROWN_CERCON' AND tp.phase_number = 2;
 
 
 INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
@@ -1864,7 +1912,7 @@ SELECT tp.phase_id, s.service_id, 2, 1, 30, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'PROS_CEMENT'
-WHERE t.template_code = 'TPL_CROWN_CERCON' AND tp.phase_number = 2
+WHERE t.template_code = 'TPL_CROWN_CERCON' AND tp.phase_number = 2;
 
 
 
@@ -1886,7 +1934,7 @@ INSERT INTO specializations (specialization_id, specialization_code, specializat
 VALUES
     (901, 'TEST-IMPLANT', 'Test Implant Specialist', 'Chuyên khoa Cấy ghép Implant (Test)', true, CURRENT_TIMESTAMP),
     (902, 'TEST-ORTHO', 'Test Orthodontics', 'Chuyên khoa Chỉnh nha (Test)', true, CURRENT_TIMESTAMP),
-    (903, 'TEST-GENERAL', 'Test General Dentistry', 'Nha khoa tổng quát (Test)', true, CURRENT_TIMESTAMP)
+    (903, 'TEST-GENERAL', 'Test General Dentistry', 'Nha khoa tổng quát (Test)', true, CURRENT_TIMESTAMP);
 
 -- =====================================================
 -- 8. EMPLOYEE SHIFTS (Test date: 2025-11-15 - Thứ Bảy)
@@ -1994,11 +2042,11 @@ INSERT INTO appointments (
     2, 'APT-20251104-002', 2, 2, 'GHE251103002',
     '2025-11-04 14:00:00', '2025-11-04 14:30:00', 30,
     'SCHEDULED', 'Khám tổng quát - NO OBSERVER', 5, NOW(), NOW()
-)
+);
 
 -- Services cho APT-002
 INSERT INTO appointment_services (appointment_id, service_id)
-VALUES (2, 1)  -- GEN_EXAM service_id=1
+VALUES (2, 1);  -- GEN_EXAM service_id=1
 
 
 -- APT-003: Lịch hẹn LATE (quá giờ 15 phút) - Test computedStatus
@@ -2010,16 +2058,16 @@ INSERT INTO appointments (
     3, 'APT-20251104-003', 3, 1, 'GHE251103001',
     '2025-11-04 08:00:00', '2025-11-04 08:30:00', 30,
     'SCHEDULED', 'Test LATE status - Bệnh nhân chưa check-in', 5, NOW(), NOW()
-)
+);
 
 -- Services cho APT-003
 INSERT INTO appointment_services (appointment_id, service_id)
-VALUES (3, 1)  -- GEN_EXAM service_id=1
+VALUES (3, 1);  -- GEN_EXAM service_id=1
 
 
 -- Participants cho APT-003: Thực tập sinh Linh làm OBSERVER
 INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
-VALUES (3, 12, 'OBSERVER')  -- EMP012 - Thực tập sinh Linh
+VALUES (3, 12, 'OBSERVER');  -- EMP012 - Thực tập sinh Linh
 
 
 -- ============================================
@@ -2035,12 +2083,14 @@ INSERT INTO appointments (
     4, 'APT-20251106-001', 1, 1, 'GHE251103001',
     '2025-11-06 09:00:00', '2025-11-06 09:30:00', 30,
     'SCHEDULED', 'Khám tổng quát - BS Khoa ca sáng', 5, NOW(), NOW()
-); INSERT INTO appointment_services (appointment_id, service_id)
-VALUES (4, 1)  -- GEN_EXAM
+);
+
+INSERT INTO appointment_services (appointment_id, service_id)
+VALUES (4, 1);  -- GEN_EXAM
 
 
 INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
-VALUES (4, 7, 'ASSISTANT')  -- EMP007 - Y tá Nguyên
+VALUES (4, 7, 'ASSISTANT');  -- EMP007 - Y tá Nguyên
 
 
 -- APT-005: Nov 6 Afternoon - BS Lê Anh Khoa (EMP001) - ✅ FIXED: EMP001 has PERIODONTICS specialization
@@ -2052,11 +2102,15 @@ INSERT INTO appointments (
     5, 'APT-20251106-002', 2, 1, 'GHE251103002',
     '2025-11-06 14:00:00', '2025-11-06 14:45:00', 45,
     'SCHEDULED', 'Lấy cao răng + Khám - BS Khoa ca chiều', 5, NOW(), NOW()
-); INSERT INTO appointment_services (appointment_id, service_id)
+);
+
+INSERT INTO appointment_services (appointment_id, service_id)
 VALUES
     (5, 1),  -- GEN_EXAM
-    (5, 3)   -- SCALING_L1 (requires specialization_id=3 PERIODONTICS, EMP001 has it); INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
-VALUES (5, 8, 'ASSISTANT')  -- EMP008 - Y tá Khang
+    (5, 3);   -- SCALING_L1 (requires specialization_id=3 PERIODONTICS, EMP001 has it)
+
+INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
+VALUES (5, 8, 'ASSISTANT');  -- EMP008 - Y tá Khang
 
 
 -- APT-006: Nov 7 Morning - BS Jimmy (EMP003)
@@ -2068,12 +2122,14 @@ INSERT INTO appointments (
     6, 'APT-20251107-001', 3, 3, 'GHE251103003',
     '2025-11-07 10:00:00', '2025-11-07 10:30:00', 30,
     'SCHEDULED', 'Khám nha khoa trẻ em - BS Jimmy', 5, NOW(), NOW()
-); INSERT INTO appointment_services (appointment_id, service_id)
-VALUES (6, 1)  -- GEN_EXAM
+);
+
+INSERT INTO appointment_services (appointment_id, service_id)
+VALUES (6, 1);  -- GEN_EXAM
 
 
 INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
-VALUES (6, 7, 'ASSISTANT')  -- EMP007 - Y tá Nguyên
+VALUES (6, 7, 'ASSISTANT');  -- EMP007 - Y tá Nguyên
 
 
 -- APT-007: Nov 7 Afternoon - BS Thái (EMP002) - Can be used for reschedule testing
@@ -2085,12 +2141,14 @@ INSERT INTO appointments (
     7, 'APT-20251107-002', 4, 2, 'GHE251103002',
     '2025-11-07 15:00:00', '2025-11-07 15:30:00', 30,
     'SCHEDULED', 'Khám định kỳ - BN Mít tơ bít', 5, NOW(), NOW()
-); INSERT INTO appointment_services (appointment_id, service_id)
-VALUES (7, 1)  -- GEN_EXAM
+);
+
+INSERT INTO appointment_services (appointment_id, service_id)
+VALUES (7, 1);  -- GEN_EXAM
 
 
 INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
-VALUES (7, 8, 'ASSISTANT')  -- EMP008 - Y tá Khang
+VALUES (7, 8, 'ASSISTANT');  -- EMP008 - Y tá Khang
 
 
 -- APT-008: Nov 8 Morning - BS Khoa (EMP001) - Multiple services
@@ -2102,11 +2160,15 @@ INSERT INTO appointments (
     8, 'APT-20251108-001', 2, 1, 'GHE251103001',
     '2025-11-08 09:30:00', '2025-11-08 10:15:00', 45,
     'SCHEDULED', 'Lấy cao răng nâng cao - BS Khoa', 5, NOW(), NOW()
-); INSERT INTO appointment_services (appointment_id, service_id)
+);
+
+INSERT INTO appointment_services (appointment_id, service_id)
 VALUES
     (8, 1),  -- GEN_EXAM
-    (8, 4)   -- SCALING_L2 (Advanced scaling); INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
-VALUES (8, 7, 'ASSISTANT')  -- EMP007 - Y tá Nguyên
+    (8, 4);   -- SCALING_L2 (Advanced scaling)
+
+INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
+VALUES (8, 7, 'ASSISTANT');  -- EMP007 - Y tá Nguyên
 
 
 -- Reset appointments sequence after seed data
@@ -2118,15 +2180,15 @@ SELECT setval('appointments_appointment_id_seq',
 -- ============================================
 
 -- Fix appointment_audit_logs table if missing columns
-ALTER TABLE appointment_audit_logs
-ADD COLUMN IF NOT EXISTS action_type VARCHAR(50),
-ADD COLUMN IF NOT EXISTS reason_code VARCHAR(50),
-ADD COLUMN IF NOT EXISTS old_value TEXT,
-ADD COLUMN IF NOT EXISTS new_value TEXT,
-ADD COLUMN IF NOT EXISTS old_start_time TIMESTAMP,
-ADD COLUMN IF NOT EXISTS new_start_time TIMESTAMP,
-ADD COLUMN IF NOT EXISTS old_status VARCHAR(50),
-ADD COLUMN IF NOT EXISTS new_status VARCHAR(50);
+-- ALTER TABLE appointment_audit_logs
+-- ADD COLUMN IF NOT EXISTS action_type VARCHAR(50),
+-- ADD COLUMN IF NOT EXISTS reason_code VARCHAR(50),
+-- ADD COLUMN IF NOT EXISTS old_value TEXT,
+-- ADD COLUMN IF NOT EXISTS new_value TEXT,
+-- ADD COLUMN IF NOT EXISTS old_start_time TIMESTAMP,
+-- ADD COLUMN IF NOT EXISTS new_start_time TIMESTAMP,
+-- ADD COLUMN IF NOT EXISTS old_status VARCHAR(50),
+-- ADD COLUMN IF NOT EXISTS new_status VARCHAR(50);
 
 -- ============================================
 -- TREATMENT PLANS SEED DATA
@@ -2143,7 +2205,7 @@ INSERT INTO patient_treatment_plans (
     'IN_PROGRESS', 'APPROVED', '2025-10-01', '2027-10-01',
     35000000, 0, 35000000, 'INSTALLMENT',
     '2025-10-01 08:30:00', 3, '2025-10-02 09:00:00', NOW()
-)
+);
 
 -- Phase 1: Chuẩn bị
 INSERT INTO patient_plan_phases (
@@ -2152,7 +2214,7 @@ INSERT INTO patient_plan_phases (
 ) VALUES (
     1, 1, 1, 'Giai đoạn 1: Chuẩn bị và Kiểm tra',
     'COMPLETED', '2025-10-01', '2025-10-06', 7, NOW()
-)
+);
 
 -- Items for Phase 1
 INSERT INTO patient_plan_items (
@@ -2161,7 +2223,7 @@ INSERT INTO patient_plan_items (
 ) VALUES
     (1, 1, 1, 1, 'Khám tổng quát và chụp X-quang', 'COMPLETED', 30, 500000, '2025-10-02 09:00:00', NOW()),
     (2, 1, 3, 2, 'Lấy cao răng trước niềng', 'COMPLETED', 45, 800000, '2025-10-03 10:30:00', NOW()),
-    (3, 1, 7, 3, 'Hàn trám răng sâu (nếu có)', 'COMPLETED', 60, 1500000, '2025-10-05 14:00:00', NOW())
+    (3, 1, 7, 3, 'Hàn trám răng sâu (nếu có)', 'COMPLETED', 60, 1500000, '2025-10-05 14:00:00', NOW());
 
 
 -- Phase 2: Lắp mắc cài
@@ -2171,7 +2233,7 @@ INSERT INTO patient_plan_phases (
 ) VALUES (
     2, 1, 2, 'Giai đoạn 2: Lắp Mắc cài và Điều chỉnh ban đầu',
     'IN_PROGRESS', '2025-10-15', 60, NOW()
-)
+);
 
 -- Items for Phase 2
 INSERT INTO patient_plan_items (
@@ -2181,7 +2243,7 @@ INSERT INTO patient_plan_items (
     (4, 2, 38, 1, 'Lắp mắc cài kim loại hàm trên', 'COMPLETED', 90, 8000000, '2025-10-16 09:00:00', NOW()),
     (5, 2, 38, 2, 'Lắp mắc cài kim loại hàm dưới', 'COMPLETED', 90, 8000000, '2025-10-17 10:00:00', NOW()),
     (6, 2, 39, 3, 'Điều chỉnh lần 1 (sau 1 tháng)', 'READY_FOR_BOOKING', 45, 500000, NULL, NOW()),
-    (7, 2, 39, 4, 'Điều chỉnh lần 2 (sau 2 tháng)', 'READY_FOR_BOOKING', 45, 500000, NULL, NOW())
+    (7, 2, 39, 4, 'Điều chỉnh lần 2 (sau 2 tháng)', 'READY_FOR_BOOKING', 45, 500000, NULL, NOW());
 
 
 -- Phase 3: Điều chỉnh định kỳ (FIXED: 24→8 months for realistic seed data)
@@ -2191,7 +2253,7 @@ INSERT INTO patient_plan_phases (
 ) VALUES (
     3, 1, 3, 'Giai đoạn 3: Điều chỉnh định kỳ (8 tháng)',
     'PENDING', NULL, 240, NOW()
-)
+);
 
 -- Items for Phase 3 (8 adjustment sessions - months 3 to 10)
 INSERT INTO patient_plan_items (
@@ -2205,7 +2267,7 @@ INSERT INTO patient_plan_items (
     (12, 3, 39, 5, 'Điều chỉnh tháng 7', 'READY_FOR_BOOKING', 45, 500000, NULL, NOW()),
     (13, 3, 39, 6, 'Điều chỉnh tháng 8', 'READY_FOR_BOOKING', 45, 500000, NULL, NOW()),
     (14, 3, 39, 7, 'Điều chỉnh tháng 9', 'READY_FOR_BOOKING', 45, 500000, NULL, NOW()),
-    (15, 3, 39, 8, 'Điều chỉnh tháng 10', 'READY_FOR_BOOKING', 45, 500000, NULL, NOW())
+    (15, 3, 39, 8, 'Điều chỉnh tháng 10', 'READY_FOR_BOOKING', 45, 500000, NULL, NOW());
 
 
 -- Treatment Plan 2: Bệnh nhân BN-1002 (Phạm Văn Phong) - Implant
@@ -2228,12 +2290,14 @@ INSERT INTO patient_plan_phases (
 ) VALUES (
     4, 2, 1, 'Giai đoạn 1: Khám và Chuẩn bị',
     'COMPLETED', '2024-05-15', '2024-05-20', 7, '2024-05-15 10:00:00'
-); INSERT INTO patient_plan_items (
+);
+
+INSERT INTO patient_plan_items (
     item_id, phase_id, service_id, sequence_number, item_name,
     status, estimated_time_minutes, price, completed_at, created_at
 ) VALUES
-    (13, 4, 1, 1, 'Khám tổng quát và chụp CT', 'COMPLETED', 45, 1500000, '2024-05-15 11:00:00', '2024-05-15 10:00:00'),
-    (14, 4, 3, 2, 'Vệ sinh răng miệng', 'COMPLETED', 30, 800000, '2024-05-16 09:00:00', '2024-05-15 10:00:00');
+    (16, 4, 1, 1, 'Khám tổng quát và chụp CT', 'COMPLETED', 45, 1500000, '2024-05-15 11:00:00', '2024-05-15 10:00:00'),
+    (17, 4, 3, 2, 'Vệ sinh răng miệng', 'COMPLETED', 30, 800000, '2024-05-16 09:00:00', '2024-05-15 10:00:00');
 
 
 -- Phase 2: Cấy Implant
@@ -2243,12 +2307,14 @@ INSERT INTO patient_plan_phases (
 ) VALUES (
     5, 2, 2, 'Giai đoạn 2: Cấy trụ Implant',
     'COMPLETED', '2024-06-01', '2024-06-05', 5, '2024-05-15 10:00:00'
-); INSERT INTO patient_plan_items (
+);
+
+INSERT INTO patient_plan_items (
     item_id, phase_id, service_id, sequence_number, item_name,
     status, estimated_time_minutes, price, completed_at, created_at
 ) VALUES
-    (15, 5, 29, 1, 'Cấy Implant răng cửa số 11', 'COMPLETED', 120, 18000000, '2024-06-01 14:00:00', '2024-05-15 10:00:00'),
-    (16, 5, 29, 2, 'Cấy Implant răng cửa số 21', 'COMPLETED', 120, 18000000, '2024-06-02 10:00:00', '2024-05-15 10:00:00');
+    (18, 5, 29, 1, 'Cấy Implant răng cửa số 11', 'COMPLETED', 120, 18000000, '2024-06-01 14:00:00', '2024-05-15 10:00:00'),
+    (19, 5, 29, 2, 'Cấy Implant răng cửa số 21', 'COMPLETED', 120, 18000000, '2024-06-02 10:00:00', '2024-05-15 10:00:00');
 
 
 -- Phase 3: Lắp răng sứ
@@ -2258,12 +2324,14 @@ INSERT INTO patient_plan_phases (
 ) VALUES (
     6, 2, 3, 'Giai đoạn 3: Lắp mão sứ (sau 3 tháng lành xương)',
     'COMPLETED', '2024-08-15', '2024-08-20', 90, '2024-05-15 10:00:00'
-); INSERT INTO patient_plan_items (
+);
+
+INSERT INTO patient_plan_items (
     item_id, phase_id, service_id, sequence_number, item_name,
     status, estimated_time_minutes, price, completed_at, created_at
 ) VALUES
-    (17, 6, 22, 1, 'Lắp mão sứ Titan răng 11', 'COMPLETED', 60, 6000000, '2024-08-15 10:00:00', '2024-05-15 10:00:00'),
-    (18, 6, 22, 2, 'Lắp mão sứ Titan răng 21', 'COMPLETED', 60, 6000000, '2024-08-16 10:00:00', '2024-05-15 10:00:00');
+    (20, 6, 22, 1, 'Lắp mão sứ Titan răng 11', 'COMPLETED', 60, 6000000, '2024-08-15 10:00:00', '2024-05-15 10:00:00'),
+    (21, 6, 22, 2, 'Lắp mão sứ Titan răng 21', 'COMPLETED', 60, 6000000, '2024-08-16 10:00:00', '2024-05-15 10:00:00');
 
 
 -- Treatment Plan 3: Bệnh nhân BN-1003 (Nguyễn Tuấn Anh) - Tẩy trắng răng
@@ -2277,7 +2345,7 @@ INSERT INTO patient_treatment_plans (
     'PENDING', 'APPROVED', '2025-11-15', '2025-11-30',
     8000000, 800000, 7200000, 'FULL',
     3, '2025-11-05 14:00:00', NOW()
-)
+);
 
 -- Phase 1: Chuẩn bị tẩy trắng
 INSERT INTO patient_plan_phases (
@@ -2286,12 +2354,14 @@ INSERT INTO patient_plan_phases (
 ) VALUES (
     7, 3, 1, 'Giai đoạn 1: Kiểm tra và Vệ sinh',
     'PENDING', NULL, 3, NOW()
-); INSERT INTO patient_plan_items (
+);
+
+INSERT INTO patient_plan_items (
     item_id, phase_id, service_id, sequence_number, item_name,
     status, estimated_time_minutes, price, completed_at, created_at
 ) VALUES
-    (19, 7, 1, 1, 'Khám răng miệng tổng quát', 'READY_FOR_BOOKING', 30, 500000, NULL, NOW()),
-    (20, 7, 3, 2, 'Lấy cao răng', 'READY_FOR_BOOKING', 45, 800000, NULL, NOW())
+    (22, 7, 1, 1, 'Khám răng miệng tổng quát', 'READY_FOR_BOOKING', 30, 500000, NULL, NOW()),
+    (23, 7, 3, 2, 'Lấy cao răng', 'READY_FOR_BOOKING', 45, 800000, NULL, NOW());
 
 
 -- Phase 2: Tẩy trắng
@@ -2301,12 +2371,14 @@ INSERT INTO patient_plan_phases (
 ) VALUES (
     8, 3, 2, 'Giai đoạn 2: Tẩy trắng Laser',
     'PENDING', NULL, 14, NOW()
-); INSERT INTO patient_plan_items (
+);
+
+INSERT INTO patient_plan_items (
     item_id, phase_id, service_id, sequence_number, item_name,
     status, estimated_time_minutes, price, completed_at, created_at
 ) VALUES
-    (21, 8, 17, 1, 'Tẩy trắng răng Laser lần 1', 'READY_FOR_BOOKING', 90, 5000000, NULL, NOW()),
-    (22, 8, 17, 2, 'Kiểm tra và tư vấn sau tẩy trắng', 'READY_FOR_BOOKING', 30, 0, NULL, NOW())
+    (24, 8, 17, 1, 'Tẩy trắng răng Laser lần 1', 'READY_FOR_BOOKING', 90, 5000000, NULL, NOW()),
+    (25, 8, 17, 2, 'Kiểm tra và tư vấn sau tẩy trắng', 'READY_FOR_BOOKING', 30, 0, NULL, NOW());
 
 
 -- ============================================
@@ -2335,12 +2407,14 @@ INSERT INTO patient_plan_phases (
 ) VALUES (
     9, 4, 1, 'Giai đoạn 1: Nhổ răng khôn',
     'PENDING', '2025-01-20', 7, '2025-01-10 10:00:00'
-); INSERT INTO patient_plan_items (
+);
+
+INSERT INTO patient_plan_items (
     item_id, phase_id, service_id, sequence_number, item_name,
     status, estimated_time_minutes, price, created_at
 ) VALUES
-    (23, 9, 14, 1, 'Nhổ răng khôn hàm dưới bên trái', 'PENDING', 60, 2500000, '2025-01-10 10:00:00'),
-    (24, 9, 14, 2, 'Nhổ răng khôn hàm dưới bên phải', 'PENDING', 60, 2500000, '2025-01-10 10:00:00');
+    (26, 9, 14, 1, 'Nhổ răng khôn hàm dưới bên trái', 'READY_FOR_BOOKING', 60, 2500000, '2025-01-10 10:00:00'),
+    (27, 9, 14, 2, 'Nhổ răng khôn hàm dưới bên phải', 'READY_FOR_BOOKING', 60, 2500000, '2025-01-10 10:00:00');
 
 
 -- Phase 2: Tẩy trắng
@@ -2350,11 +2424,13 @@ INSERT INTO patient_plan_phases (
 ) VALUES (
     10, 4, 2, 'Giai đoạn 2: Tẩy trắng răng',
     'PENDING', '2025-02-05', 14, '2025-01-10 10:00:00'
-); INSERT INTO patient_plan_items (
+);
+
+INSERT INTO patient_plan_items (
     item_id, phase_id, service_id, sequence_number, item_name,
     status, estimated_time_minutes, price, created_at
 ) VALUES
-    (25, 10, 31, 1, 'Tẩy trắng răng Laser', 'PENDING', 90, 3500000, '2025-01-10 10:00:00');
+    (28, 10, 31, 1, 'Tẩy trắng răng Laser', 'READY_FOR_BOOKING', 90, 3500000, '2025-01-10 10:00:00');
 
 
 -- Treatment Plan 5: BN-1004 - Bọc răng sứ 6 răng (Doctor EMP-1, IN_PROGRESS, APPROVED)
@@ -2377,13 +2453,15 @@ INSERT INTO patient_plan_phases (
 ) VALUES (
     11, 5, 1, 'Giai đoạn 1: Khám và chuẩn bị',
     'COMPLETED', '2024-12-15', '2024-12-20', 5, '2024-12-15 14:00:00'
-); INSERT INTO patient_plan_items (
+);
+
+INSERT INTO patient_plan_items (
     item_id, phase_id, service_id, sequence_number, item_name,
     status, estimated_time_minutes, price, completed_at, created_at
 ) VALUES
-    (26, 11, 1, 1, 'Khám tổng quát và tư vấn', 'COMPLETED', 30, 500000, '2024-12-15 15:00:00', '2024-12-15 14:00:00'),
-    (27, 11, 3, 2, 'Vệ sinh răng miệng', 'COMPLETED', 45, 800000, '2024-12-17 10:00:00', '2024-12-15 14:00:00'),
-    (28, 11, 7, 3, 'Mài răng chuẩn bị bọc sứ', 'COMPLETED', 120, 3000000, '2024-12-19 14:00:00', '2024-12-15 14:00:00');
+    (29, 11, 1, 1, 'Khám tổng quát và tư vấn', 'COMPLETED', 30, 500000, '2024-12-15 15:00:00', '2024-12-15 14:00:00'),
+    (30, 11, 3, 2, 'Vệ sinh răng miệng', 'COMPLETED', 45, 800000, '2024-12-17 10:00:00', '2024-12-15 14:00:00'),
+    (31, 11, 7, 3, 'Mài răng chuẩn bị bọc sứ', 'COMPLETED', 120, 3000000, '2024-12-19 14:00:00', '2024-12-15 14:00:00');
 
 
 -- Phase 2: Bọc răng sứ (IN_PROGRESS)
@@ -2393,16 +2471,18 @@ INSERT INTO patient_plan_phases (
 ) VALUES (
     12, 5, 2, 'Giai đoạn 2: Lắp răng sứ',
     'IN_PROGRESS', '2025-01-05', 30, '2024-12-15 14:00:00'
-); INSERT INTO patient_plan_items (
+);
+
+INSERT INTO patient_plan_items (
     item_id, phase_id, service_id, sequence_number, item_name,
     status, estimated_time_minutes, price, completed_at, created_at
 ) VALUES
-    (29, 12, 22, 1, 'Bọc răng sứ Titan răng 11', 'COMPLETED', 60, 6000000, '2025-01-05 10:00:00', '2024-12-15 14:00:00'),
-    (30, 12, 22, 2, 'Bọc răng sứ Titan răng 12', 'COMPLETED', 60, 6000000, '2025-01-05 11:00:00', '2024-12-15 14:00:00'),
-    (31, 12, 22, 3, 'Bọc răng sứ Titan răng 21', 'COMPLETED', 60, 6000000, '2025-01-06 10:00:00', '2024-12-15 14:00:00'),
-    (32, 12, 22, 4, 'Bọc răng sứ Titan răng 22', 'READY_FOR_BOOKING', 60, 6000000, NULL, '2024-12-15 14:00:00'),
-    (33, 12, 22, 5, 'Bọc răng sứ Titan răng 13', 'READY_FOR_BOOKING', 60, 6000000, NULL, '2024-12-15 14:00:00'),
-    (34, 12, 22, 6, 'Bọc răng sứ Titan răng 23', 'READY_FOR_BOOKING', 60, 6000000, NULL, '2024-12-15 14:00:00');
+    (32, 12, 22, 1, 'Bọc răng sứ Titan răng 11', 'COMPLETED', 60, 6000000, '2025-01-05 10:00:00', '2024-12-15 14:00:00'),
+    (33, 12, 22, 2, 'Bọc răng sứ Titan răng 12', 'COMPLETED', 60, 6000000, '2025-01-05 11:00:00', '2024-12-15 14:00:00'),
+    (34, 12, 22, 3, 'Bọc răng sứ Titan răng 21', 'COMPLETED', 60, 6000000, '2025-01-06 10:00:00', '2024-12-15 14:00:00'),
+    (35, 12, 22, 4, 'Bọc răng sứ Titan răng 22', 'READY_FOR_BOOKING', 60, 6000000, NULL, '2024-12-15 14:00:00'),
+    (36, 12, 22, 5, 'Bọc răng sứ Titan răng 13', 'READY_FOR_BOOKING', 60, 6000000, NULL, '2024-12-15 14:00:00'),
+    (37, 12, 22, 6, 'Bọc răng sứ Titan răng 23', 'READY_FOR_BOOKING', 60, 6000000, NULL, '2024-12-15 14:00:00');
 
 
 -- Treatment Plan 6: BN-1005 - Trồng răng Implant (Doctor EMP-3, COMPLETED, APPROVED)
@@ -2425,14 +2505,16 @@ INSERT INTO patient_plan_phases (
 ) VALUES (
     13, 6, 1, 'Giai đoạn 1: Khám và Chụp CT', 'COMPLETED', '2024-08-15', '2024-08-20', 5, '2024-08-15 10:00:00'),
     (14, 6, 2, 'Giai đoạn 2: Cấy trụ Implant', 'COMPLETED', '2024-09-01', '2024-09-10', 10, '2024-08-15 10:00:00'),
-    (15, 6, 3, 'Giai đoạn 3: Lắp mão sứ', 'COMPLETED', '2024-12-10', '2024-12-20', 10, '2024-08-15 10:00:00'); INSERT INTO patient_plan_items (
+    (15, 6, 3, 'Giai đoạn 3: Lắp mão sứ', 'COMPLETED', '2024-12-10', '2024-12-20', 10, '2024-08-15 10:00:00');
+
+INSERT INTO patient_plan_items (
     item_id, phase_id, service_id, sequence_number, item_name,
     status, estimated_time_minutes, price, completed_at, created_at
 ) VALUES
-    (35, 13, 1, 1, 'Khám và chụp CT 3D', 'COMPLETED', 45, 1500000, '2024-08-15 11:00:00', '2024-08-15 10:00:00'),
-    (36, 13, 3, 2, 'Vệ sinh răng miệng', 'COMPLETED', 30, 800000, '2024-08-17 10:00:00', '2024-08-15 10:00:00'),
-    (37, 14, 29, 1, 'Cấy trụ Implant răng 36', 'COMPLETED', 120, 18000000, '2024-09-01 14:00:00', '2024-08-15 10:00:00'),
-    (38, 15, 22, 1, 'Lắp mão sứ Titan răng 36', 'COMPLETED', 60, 6000000, '2024-12-15 10:00:00', '2024-08-15 10:00:00');
+    (38, 13, 1, 1, 'Khám và chụp CT 3D', 'COMPLETED', 45, 1500000, '2024-08-15 11:00:00', '2024-08-15 10:00:00'),
+    (39, 13, 3, 2, 'Vệ sinh răng miệng', 'COMPLETED', 30, 800000, '2024-08-17 10:00:00', '2024-08-15 10:00:00'),
+    (40, 14, 29, 1, 'Cấy trụ Implant răng 36', 'COMPLETED', 120, 18000000, '2024-09-01 14:00:00', '2024-08-15 10:00:00'),
+    (41, 15, 22, 1, 'Lắp mão sứ Titan răng 36', 'COMPLETED', 60, 6000000, '2024-12-15 10:00:00', '2024-08-15 10:00:00');
 
 
 -- Treatment Plan 7: BN-1001 - Điều trị nướu răng (Doctor EMP-2, PENDING, DRAFT)
@@ -2446,20 +2528,24 @@ INSERT INTO patient_treatment_plans (
     'PENDING', 'DRAFT', '2025-01-15', '2025-03-15',
     5500000, 0, 5500000, 'FULL',
     '2025-01-08 11:00:00'
-); INSERT INTO patient_plan_phases (
+);
+
+INSERT INTO patient_plan_phases (
     patient_phase_id, plan_id, phase_number, phase_name,
     status, start_date, estimated_duration_days, created_at
 ) VALUES (
     16, 7, 1, 'Giai đoạn 1: Vệ sinh và điều trị nướu',
     'PENDING', '2025-01-15', 60, '2025-01-08 11:00:00'
-); INSERT INTO patient_plan_items (
+);
+
+INSERT INTO patient_plan_items (
     item_id, phase_id, service_id, sequence_number, item_name,
     status, estimated_time_minutes, price, created_at
 ) VALUES
-    (39, 16, 3, 1, 'Vệ sinh răng miệng sâu', 'PENDING', 60, 1200000, '2025-01-08 11:00:00'),
-    (40, 16, 4, 2, 'Điều trị viêm nướu (Lần 1)', 'PENDING', 45, 1500000, '2025-01-08 11:00:00'),
-    (41, 16, 4, 3, 'Điều trị viêm nướu (Lần 2)', 'PENDING', 45, 1500000, '2025-01-08 11:00:00'),
-    (42, 16, 4, 4, 'Kiểm tra và tái khám', 'PENDING', 30, 800000, '2025-01-08 11:00:00');
+    (42, 16, 3, 1, 'Vệ sinh răng miệng sâu', 'READY_FOR_BOOKING', 60, 1200000, '2025-01-08 11:00:00'),
+    (43, 16, 4, 2, 'Điều trị viêm nướu (Lần 1)', 'READY_FOR_BOOKING', 45, 1500000, '2025-01-08 11:00:00'),
+    (44, 16, 4, 3, 'Điều trị viêm nướu (Lần 2)', 'READY_FOR_BOOKING', 45, 1500000, '2025-01-08 11:00:00'),
+    (45, 16, 4, 4, 'Kiểm tra và tái khám', 'READY_FOR_BOOKING', 30, 800000, '2025-01-08 11:00:00');
 
 
 -- Treatment Plan 8: BN-1002 - Niềng răng Invisalign (Doctor EMP-1, IN_PROGRESS, APPROVED)
@@ -2482,13 +2568,15 @@ INSERT INTO patient_plan_phases (
 ) VALUES (
     17, 8, 1, 'Giai đoạn 1: Khám và lập kế hoạch',
     'COMPLETED', '2024-11-01', '2024-11-10', 10, '2024-11-01 10:00:00'
-); INSERT INTO patient_plan_items (
+);
+
+INSERT INTO patient_plan_items (
     item_id, phase_id, service_id, sequence_number, item_name,
     status, estimated_time_minutes, price, completed_at, created_at
 ) VALUES
-    (43, 17, 1, 1, 'Khám tổng quát và chụp CT 3D', 'COMPLETED', 45, 2000000, '2024-11-01 11:00:00', '2024-11-01 10:00:00'),
-    (44, 17, 3, 2, 'Vệ sinh răng miệng', 'COMPLETED', 45, 800000, '2024-11-05 10:00:00', '2024-11-01 10:00:00'),
-    (45, 17, 40, 3, 'Thiết kế khay Invisalign', 'COMPLETED', 60, 10000000, '2024-11-08 14:00:00', '2024-11-01 10:00:00');
+    (46, 17, 1, 1, 'Khám tổng quát và chụp CT 3D', 'COMPLETED', 45, 2000000, '2024-11-01 11:00:00', '2024-11-01 10:00:00'),
+    (47, 17, 3, 2, 'Vệ sinh răng miệng', 'COMPLETED', 45, 800000, '2024-11-05 10:00:00', '2024-11-01 10:00:00'),
+    (48, 17, 40, 3, 'Thiết kế khay Invisalign', 'COMPLETED', 60, 10000000, '2024-11-08 14:00:00', '2024-11-01 10:00:00');
 
 
 -- Phase 2: Điều chỉnh (IN_PROGRESS)
@@ -2498,14 +2586,16 @@ INSERT INTO patient_plan_phases (
 ) VALUES (
     18, 8, 2, 'Giai đoạn 2: Đeo khay và điều chỉnh (12 tháng)',
     'IN_PROGRESS', '2024-11-15', 365, '2024-11-01 10:00:00'
-); INSERT INTO patient_plan_items (
+);
+
+INSERT INTO patient_plan_items (
     item_id, phase_id, service_id, sequence_number, item_name,
     status, estimated_time_minutes, price, completed_at, created_at
 ) VALUES
-    (46, 18, 40, 1, 'Bộ khay số 1-5', 'COMPLETED', 30, 15000000, '2024-11-15 10:00:00', '2024-11-01 10:00:00'),
-    (47, 18, 40, 2, 'Bộ khay số 6-10', 'COMPLETED', 30, 15000000, '2024-12-15 10:00:00', '2024-11-01 10:00:00'),
-    (48, 18, 40, 3, 'Bộ khay số 11-15', 'READY_FOR_BOOKING', 30, 15000000, NULL, '2024-11-01 10:00:00'),
-    (49, 18, 40, 4, 'Bộ khay số 16-20', 'READY_FOR_BOOKING', 30, 15000000, NULL, '2024-11-01 10:00:00');
+    (49, 18, 40, 1, 'Bộ khay số 1-5', 'COMPLETED', 30, 15000000, '2024-11-15 10:00:00', '2024-11-01 10:00:00'),
+    (50, 18, 40, 2, 'Bộ khay số 6-10', 'COMPLETED', 30, 15000000, '2024-12-15 10:00:00', '2024-11-01 10:00:00'),
+    (51, 18, 40, 3, 'Bộ khay số 11-15', 'READY_FOR_BOOKING', 30, 15000000, NULL, '2024-11-01 10:00:00'),
+    (52, 18, 40, 4, 'Bộ khay số 16-20', 'READY_FOR_BOOKING', 30, 15000000, NULL, '2024-11-01 10:00:00');
 
 
 -- Treatment Plan 9: BN-1003 - Hàn răng sâu (Doctor EMP-1, COMPLETED, APPROVED)
@@ -2519,21 +2609,25 @@ INSERT INTO patient_treatment_plans (
     'COMPLETED', 'APPROVED', '2024-09-20', '2024-10-05',
     7500000, 500000, 7000000, 'FULL',
     3, '2024-09-21 09:00:00', '2024-09-20 14:00:00'
-); INSERT INTO patient_plan_phases (
+);
+
+INSERT INTO patient_plan_phases (
     patient_phase_id, plan_id, phase_number, phase_name,
     status, start_date, completion_date, estimated_duration_days, created_at
 ) VALUES (
     19, 9, 1, 'Giai đoạn 1: Điều trị và hàn răng',
     'COMPLETED', '2024-09-20', '2024-10-05', 15, '2024-09-20 14:00:00'
-); INSERT INTO patient_plan_items (
+);
+
+INSERT INTO patient_plan_items (
     item_id, phase_id, service_id, sequence_number, item_name,
     status, estimated_time_minutes, price, completed_at, created_at
 ) VALUES
-    (50, 19, 1, 1, 'Khám và chụp X-quang', 'COMPLETED', 30, 500000, '2024-09-20 15:00:00', '2024-09-20 14:00:00'),
-    (51, 19, 8, 2, 'Điều trị tủy răng 16', 'COMPLETED', 90, 3500000, '2024-09-25 10:00:00', '2024-09-20 14:00:00'),
-    (52, 19, 7, 3, 'Hàn răng composite 16', 'COMPLETED', 60, 1500000, '2024-09-30 14:00:00', '2024-09-20 14:00:00'),
-    (53, 19, 7, 4, 'Hàn răng composite 26', 'COMPLETED', 60, 1500000, '2024-10-02 10:00:00', '2024-09-20 14:00:00'),
-    (54, 19, 1, 5, 'Tái khám sau điều trị', 'COMPLETED', 30, 500000, '2024-10-05 11:00:00', '2024-09-20 14:00:00');
+    (53, 19, 1, 1, 'Khám và chụp X-quang', 'COMPLETED', 30, 500000, '2024-09-20 15:00:00', '2024-09-20 14:00:00'),
+    (54, 19, 8, 2, 'Điều trị tủy răng 16', 'COMPLETED', 90, 3500000, '2024-09-25 10:00:00', '2024-09-20 14:00:00'),
+    (55, 19, 7, 3, 'Hàn răng composite 16', 'COMPLETED', 60, 1500000, '2024-09-30 14:00:00', '2024-09-20 14:00:00'),
+    (56, 19, 7, 4, 'Hàn răng composite 26', 'COMPLETED', 60, 1500000, '2024-10-02 10:00:00', '2024-09-20 14:00:00'),
+    (57, 19, 1, 5, 'Tái khám sau điều trị', 'COMPLETED', 30, 500000, '2024-10-05 11:00:00', '2024-09-20 14:00:00');
 
 
 -- Treatment Plan 10: BN-1004 - Cạo vôi răng định kỳ (Doctor EMP-2, IN_PROGRESS, APPROVED)
@@ -2547,22 +2641,26 @@ INSERT INTO patient_treatment_plans (
     'IN_PROGRESS', 'APPROVED', '2025-01-05', '2025-07-05',
     3600000, 0, 3600000, 'FULL',
     7, '2025-01-06 09:00:00', '2025-01-05 10:00:00'
-); INSERT INTO patient_plan_phases (
+);
+
+INSERT INTO patient_plan_phases (
     patient_phase_id, plan_id, phase_number, phase_name,
     status, start_date, estimated_duration_days, created_at
 ) VALUES (
     20, 10, 1, 'Giai đoạn 1: Vệ sinh 6 tháng',
     'IN_PROGRESS', '2025-01-05', 180, '2025-01-05 10:00:00'
-); INSERT INTO patient_plan_items (
+);
+
+INSERT INTO patient_plan_items (
     item_id, phase_id, service_id, sequence_number, item_name,
     status, estimated_time_minutes, price, completed_at, created_at
 ) VALUES
-    (55, 20, 3, 1, 'Cạo vôi răng lần 1', 'COMPLETED', 45, 800000, '2025-01-05 11:00:00', '2025-01-05 10:00:00'),
-    (56, 20, 1, 2, 'Khám tổng quát lần 1', 'COMPLETED', 30, 500000, '2025-01-05 12:00:00', '2025-01-05 10:00:00'),
-    (57, 20, 3, 3, 'Cạo vôi răng lần 2 (sau 3 tháng)', 'READY_FOR_BOOKING', 45, 800000, NULL, '2025-01-05 10:00:00'),
-    (58, 20, 1, 4, 'Khám tổng quát lần 2', 'READY_FOR_BOOKING', 30, 500000, NULL, '2025-01-05 10:00:00'),
-    (59, 20, 3, 5, 'Cạo vôi răng lần 3 (sau 6 tháng)', 'READY_FOR_BOOKING', 45, 800000, NULL, '2025-01-05 10:00:00'),
-    (60, 20, 1, 6, 'Khám tổng quát lần 3', 'READY_FOR_BOOKING', 30, 500000, NULL, '2025-01-05 10:00:00');
+    (58, 20, 3, 1, 'Cạo vôi răng lần 1', 'COMPLETED', 45, 800000, '2025-01-05 11:00:00', '2025-01-05 10:00:00'),
+    (59, 20, 1, 2, 'Khám tổng quát lần 1', 'COMPLETED', 30, 500000, '2025-01-05 12:00:00', '2025-01-05 10:00:00'),
+    (60, 20, 3, 3, 'Cạo vôi răng lần 2 (sau 3 tháng)', 'READY_FOR_BOOKING', 45, 800000, NULL, '2025-01-05 10:00:00'),
+    (61, 20, 1, 4, 'Khám tổng quát lần 2', 'READY_FOR_BOOKING', 30, 500000, NULL, '2025-01-05 10:00:00'),
+    (62, 20, 3, 5, 'Cạo vôi răng lần 3 (sau 6 tháng)', 'READY_FOR_BOOKING', 45, 800000, NULL, '2025-01-05 10:00:00'),
+    (63, 20, 1, 6, 'Khám tổng quát lần 3', 'READY_FOR_BOOKING', 30, 500000, NULL, '2025-01-05 10:00:00');
 
 
 -- ============================================
