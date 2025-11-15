@@ -376,7 +376,8 @@ VALUES
 ('VIEW_TREATMENT_PLAN_OWN', 'VIEW_TREATMENT_PLAN_OWN', 'TREATMENT_PLAN', 'Chỉ xem phác đồ điều trị của bản thân (Bệnh nhân)', 261, 'VIEW_TREATMENT_PLAN_ALL', TRUE, NOW()),
 ('CREATE_TREATMENT_PLAN', 'CREATE_TREATMENT_PLAN', 'TREATMENT_PLAN', 'Tạo phác đồ điều trị mới', 262, NULL, TRUE, NOW()),
 ('UPDATE_TREATMENT_PLAN', 'UPDATE_TREATMENT_PLAN', 'TREATMENT_PLAN', 'Cập nhật phác đồ điều trị', 263, NULL, TRUE, NOW()),
-('DELETE_TREATMENT_PLAN', 'DELETE_TREATMENT_PLAN', 'TREATMENT_PLAN', 'Vô hiệu hóa phác đồ (soft delete)', 264, NULL, TRUE, NOW());
+('DELETE_TREATMENT_PLAN', 'DELETE_TREATMENT_PLAN', 'TREATMENT_PLAN', 'Vô hiệu hóa phác đồ (soft delete)', 264, NULL, TRUE, NOW()),
+('APPROVE_TREATMENT_PLAN', 'APPROVE_TREATMENT_PLAN', 'TREATMENT_PLAN', 'Duyệt/Từ chối lộ trình điều trị (Quản lý)', 265, NULL, TRUE, NOW());
 
 
 -- ============================================
@@ -510,11 +511,12 @@ VALUES
 -- SERVICE_MANAGEMENT (V16: Full management of services)
 ('ROLE_MANAGER', 'VIEW_SERVICE'), ('ROLE_MANAGER', 'CREATE_SERVICE'),
 ('ROLE_MANAGER', 'UPDATE_SERVICE'), ('ROLE_MANAGER', 'DELETE_SERVICE'),
--- ✅ TREATMENT_PLAN (V19: Full management of treatment plans)
+-- ✅ TREATMENT_PLAN (V19/V20: Full management of treatment plans)
 ('ROLE_MANAGER', 'VIEW_TREATMENT_PLAN_ALL'), -- Can view all patients' treatment plans
 ('ROLE_MANAGER', 'CREATE_TREATMENT_PLAN'), -- Can create treatment plans
 ('ROLE_MANAGER', 'UPDATE_TREATMENT_PLAN'), -- Can update treatment plans
-('ROLE_MANAGER', 'DELETE_TREATMENT_PLAN'); -- Can delete treatment plans
+('ROLE_MANAGER', 'DELETE_TREATMENT_PLAN'), -- Can delete treatment plans
+('ROLE_MANAGER', 'APPROVE_TREATMENT_PLAN'); -- ✅ V20: Can approve/reject treatment plans (API 5.9)
 
 
 -- Accountant & Inventory Manager (LEAVE only)

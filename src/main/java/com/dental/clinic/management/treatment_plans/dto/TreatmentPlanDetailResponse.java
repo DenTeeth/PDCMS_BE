@@ -53,6 +53,16 @@ public class TreatmentPlanDetailResponse {
      */
     private String status;
 
+    /**
+     * Approval status (V20): DRAFT, PENDING_REVIEW, APPROVED, REJECTED
+     */
+    private String approvalStatus;
+
+    /**
+     * Approval metadata (V20): Who approved/rejected, when, and notes
+     */
+    private com.dental.clinic.management.treatment_plans.dto.response.ApprovalMetadataDTO approvalMetadata;
+
     // ===== DOCTOR INFO =====
 
     /**

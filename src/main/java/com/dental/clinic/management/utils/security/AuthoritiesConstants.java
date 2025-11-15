@@ -122,4 +122,6 @@ public final class AuthoritiesConstants {
     public static final String CREATE_TREATMENT_PLAN = "CREATE_TREATMENT_PLAN"; // Doctor creates new plan
     public static final String UPDATE_TREATMENT_PLAN = "UPDATE_TREATMENT_PLAN"; // Doctor updates plan
     public static final String DELETE_TREATMENT_PLAN = "DELETE_TREATMENT_PLAN"; // soft delete
+    public static final String APPROVE_TREATMENT_PLAN = "APPROVE_TREATMENT_PLAN"; // V20: Manager approves/rejects plan
+                                                                                  // (API 5.9)
 }

@@ -1,10 +1,14 @@
 -- ============================================
--- DENTAL CLINIC MANAGEMENT SYSTEM - SCHEMA V17
--- Date: 2025-11-06
+-- DENTAL CLINIC MANAGEMENT SYSTEM - SCHEMA V20
+-- Date: 2025-11-15
 -- PostgreSQL Database Schema
 -- ============================================
 -- NOTE: Hibernate auto-creates tables from @Entity classes
 -- This file is for reference and manual database setup only
+-- ============================================
+-- CHANGES IN V20:
+-- - Added plan_audit_logs table for treatment plan approval audit trail
+-- - Purpose: Track all approval/rejection actions on treatment plans
 -- ============================================
 -- CHANGES IN V17:
 -- - Added service_categories table for grouping services
@@ -28,6 +32,7 @@ CREATE TYPE shift_source AS ENUM ('BATCH_JOB', 'REGISTRATION_JOB', 'OT_APPROVAL'
 CREATE TYPE day_of_week AS ENUM ('MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY');
 CREATE TYPE holiday_type AS ENUM ('NATIONAL', 'COMPANY');
 CREATE TYPE time_off_status AS ENUM ('PENDING', 'APPROVED', 'REJECTED', 'CANCELLED');
+CREATE TYPE approval_status AS ENUM ('DRAFT', 'PENDING_REVIEW', 'APPROVED', 'REJECTED');
 
 -- ============================================
 -- CORE TABLES
@@ -344,6 +349,37 @@ CREATE TABLE holiday_dates (
 );
 
 -- ============================================
+-- TREATMENT PLAN AUDIT LOG (V20)
+-- ============================================
+
+-- Plan Audit Logs (Lịch sử duyệt Lộ trình điều trị - V20)
+CREATE TABLE plan_audit_logs (
+    log_id BIGSERIAL PRIMARY KEY,
+    plan_id BIGINT NOT NULL,
+    action_type VARCHAR(50) NOT NULL,
+    performed_by BIGINT NOT NULL,
+    notes TEXT,
+    old_approval_status approval_status,
+    new_approval_status approval_status,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_plan_audit_plan FOREIGN KEY (plan_id)
+        REFERENCES patient_treatment_plans(plan_id) ON DELETE CASCADE,
+    CONSTRAINT fk_plan_audit_employee FOREIGN KEY (performed_by)
+        REFERENCES employees(employee_id) ON DELETE SET NULL
+);
+
+CREATE INDEX idx_plan_audit_plan ON plan_audit_logs(plan_id);
+CREATE INDEX idx_plan_audit_performed_by ON plan_audit_logs(performed_by);
+CREATE INDEX idx_plan_audit_action_type ON plan_audit_logs(action_type);
+CREATE INDEX idx_plan_audit_created_at ON plan_audit_logs(created_at);
+
+COMMENT ON TABLE plan_audit_logs IS 'Audit trail for treatment plan approval workflow (V20)';
+COMMENT ON COLUMN plan_audit_logs.action_type IS 'Examples: APPROVED, REJECTED, SUBMITTED_FOR_REVIEW';
+COMMENT ON COLUMN plan_audit_logs.performed_by IS 'Employee who performed the action';
+COMMENT ON COLUMN plan_audit_logs.notes IS 'Reason for rejection or approval notes';
+
+-- ============================================
 -- INDEXES FOR PERFORMANCE
 -- ============================================
 
@@ -362,5 +398,5 @@ CREATE INDEX idx_time_off_requests_employee ON time_off_requests(employee_id);
 CREATE INDEX idx_time_off_requests_status ON time_off_requests(status);
 
 -- ============================================
--- END OF SCHEMA
+-- END OF SCHEMA V20
 -- ============================================
