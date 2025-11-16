@@ -120,7 +120,8 @@ INSERT INTO base_roles (base_role_id, base_role_name, description, is_active, cr
 VALUES
 (1, 'admin', 'Admin Portal - Quản trị viên hệ thống', TRUE, NOW()),
 (2, 'employee', 'Employee Portal - Nhân viên phòng khám', TRUE, NOW()),
-(3, 'patient', 'Patient Portal - Bệnh nhân', TRUE, NOW());
+(3, 'patient', 'Patient Portal - Bệnh nhân', TRUE, NOW())
+ON CONFLICT (base_role_id) DO NOTHING;
 
 
 -- ============================================
@@ -145,7 +146,8 @@ VALUES
 ('ROLE_DENTIST_INTERN', 'ROLE_DENTIST_INTERN', 2, 'Thực tập sinh nha khoa', FALSE, TRUE, NOW()),
 
 -- Patient Portal (base_role_id = 3)
-('ROLE_PATIENT', 'ROLE_PATIENT', 3, 'Bệnh nhân - Xem hồ sơ và đặt lịch khám', FALSE, TRUE, NOW());
+('ROLE_PATIENT', 'ROLE_PATIENT', 3, 'Bệnh nhân - Xem hồ sơ và đặt lịch khám', FALSE, TRUE, NOW())
+ON CONFLICT (role_id) DO NOTHING;
 
 
 -- ============================================
@@ -171,7 +173,8 @@ VALUES
 ('VIEW_ACCOUNT', 'VIEW_ACCOUNT', 'ACCOUNT', 'Xem danh sách tài khoản', 10, NULL, TRUE, NOW()),
 ('CREATE_ACCOUNT', 'CREATE_ACCOUNT', 'ACCOUNT', 'Tạo tài khoản mới', 11, NULL, TRUE, NOW()),
 ('UPDATE_ACCOUNT', 'UPDATE_ACCOUNT', 'ACCOUNT', 'Cập nhật tài khoản', 12, NULL, TRUE, NOW()),
-('DELETE_ACCOUNT', 'DELETE_ACCOUNT', 'ACCOUNT', 'Xóa tài khoản', 13, NULL, TRUE, NOW());
+('DELETE_ACCOUNT', 'DELETE_ACCOUNT', 'ACCOUNT', 'Xóa tài khoản', 13, NULL, TRUE, NOW())
+ON CONFLICT (permission_id) DO NOTHING;
 
 
 -- MODULE 2: EMPLOYEE
@@ -182,7 +185,8 @@ VALUES
 ('READ_EMPLOYEE_BY_CODE', 'READ_EMPLOYEE_BY_CODE', 'EMPLOYEE', 'Đọc thông tin nhân viên theo mã', 22, NULL, TRUE, NOW()),
 ('CREATE_EMPLOYEE', 'CREATE_EMPLOYEE', 'EMPLOYEE', 'Tạo nhân viên mới', 23, NULL, TRUE, NOW()),
 ('UPDATE_EMPLOYEE', 'UPDATE_EMPLOYEE', 'EMPLOYEE', 'Cập nhật thông tin nhân viên', 24, NULL, TRUE, NOW()),
-('DELETE_EMPLOYEE', 'DELETE_EMPLOYEE', 'EMPLOYEE', 'Xóa nhân viên', 25, NULL, TRUE, NOW());
+('DELETE_EMPLOYEE', 'DELETE_EMPLOYEE', 'EMPLOYEE', 'Xóa nhân viên', 25, NULL, TRUE, NOW())
+ON CONFLICT (permission_id) DO NOTHING;
 
 
 -- MODULE 3: PATIENT
@@ -191,7 +195,8 @@ VALUES
 ('VIEW_PATIENT', 'VIEW_PATIENT', 'PATIENT', 'Xem danh sách bệnh nhân', 30, NULL, TRUE, NOW()),
 ('CREATE_PATIENT', 'CREATE_PATIENT', 'PATIENT', 'Tạo hồ sơ bệnh nhân mới', 31, NULL, TRUE, NOW()),
 ('UPDATE_PATIENT', 'UPDATE_PATIENT', 'PATIENT', 'Cập nhật hồ sơ bệnh nhân', 32, NULL, TRUE, NOW()),
-('DELETE_PATIENT', 'DELETE_PATIENT', 'PATIENT', 'Xóa hồ sơ bệnh nhân', 33, NULL, TRUE, NOW());
+('DELETE_PATIENT', 'DELETE_PATIENT', 'PATIENT', 'Xóa hồ sơ bệnh nhân', 33, NULL, TRUE, NOW())
+ON CONFLICT (permission_id) DO NOTHING;
 
 
 -- MODULE 4: TREATMENT
@@ -199,7 +204,8 @@ INSERT INTO permissions (permission_id, permission_name, module, description, di
 VALUES
 ('VIEW_TREATMENT', 'VIEW_TREATMENT', 'TREATMENT', 'Xem danh sách điều trị', 40, NULL, TRUE, NOW()),
 ('CREATE_TREATMENT', 'CREATE_TREATMENT', 'TREATMENT', 'Tạo phác đồ điều trị mới', 41, NULL, TRUE, NOW()),
-('UPDATE_TREATMENT', 'UPDATE_TREATMENT', 'TREATMENT', 'Cập nhật phác đồ điều trị', 42, NULL, TRUE, NOW());
+('UPDATE_TREATMENT', 'UPDATE_TREATMENT', 'TREATMENT', 'Cập nhật phác đồ điều trị', 42, NULL, TRUE, NOW())
+ON CONFLICT (permission_id) DO NOTHING;
 
 
 -- MODULE 5: APPOINTMENT
@@ -214,7 +220,8 @@ VALUES
 ('UPDATE_APPOINTMENT_STATUS', 'UPDATE_APPOINTMENT_STATUS', 'APPOINTMENT', 'Cập nhật trạng thái lịch hẹn (Check-in, In-progress, Completed, Cancelled) - API 3.5', 55, NULL, TRUE, NOW()),
 ('DELAY_APPOINTMENT', 'DELAY_APPOINTMENT', 'APPOINTMENT', 'Hoãn lịch hẹn sang thời gian khác (chỉ SCHEDULED/CHECKED_IN) - API 3.6', 56, NULL, TRUE, NOW()),
 ('CANCEL_APPOINTMENT', 'CANCEL_APPOINTMENT', 'APPOINTMENT', 'Hủy lịch hẹn', 57, NULL, TRUE, NOW()),
-('DELETE_APPOINTMENT', 'DELETE_APPOINTMENT', 'APPOINTMENT', 'Xóa lịch hẹn', 58, NULL, TRUE, NOW());
+('DELETE_APPOINTMENT', 'DELETE_APPOINTMENT', 'APPOINTMENT', 'Xóa lịch hẹn', 58, NULL, TRUE, NOW())
+ON CONFLICT (permission_id) DO NOTHING;
 
 
 -- MODULE 6: CUSTOMER_MANAGEMENT (MERGED: CONTACT + CONTACT_HISTORY)
@@ -229,7 +236,8 @@ VALUES
 ('VIEW_CONTACT_HISTORY', 'VIEW_CONTACT_HISTORY', 'CUSTOMER_MANAGEMENT', 'Xem lịch sử liên hệ', 64, NULL, TRUE, NOW()),
 ('CREATE_CONTACT_HISTORY', 'CREATE_CONTACT_HISTORY', 'CUSTOMER_MANAGEMENT', 'Tạo lịch sử liên hệ', 65, NULL, TRUE, NOW()),
 ('UPDATE_CONTACT_HISTORY', 'UPDATE_CONTACT_HISTORY', 'CUSTOMER_MANAGEMENT', 'Cập nhật lịch sử liên hệ', 66, NULL, TRUE, NOW()),
-('DELETE_CONTACT_HISTORY', 'DELETE_CONTACT_HISTORY', 'CUSTOMER_MANAGEMENT', 'Xóa lịch sử liên hệ', 67, NULL, TRUE, NOW());
+('DELETE_CONTACT_HISTORY', 'DELETE_CONTACT_HISTORY', 'CUSTOMER_MANAGEMENT', 'Xóa lịch sử liên hệ', 67, NULL, TRUE, NOW())
+ON CONFLICT (permission_id) DO NOTHING;
 
 
 -- MODULE 7: SCHEDULE_MANAGEMENT (MERGED: WORK_SHIFTS + REGISTRATION + SHIFT_RENEWAL)
@@ -269,7 +277,8 @@ VALUES
 -- Fixed shift registration management (BE-307 V2)
 ('MANAGE_FIXED_REGISTRATIONS', 'MANAGE_FIXED_REGISTRATIONS', 'SCHEDULE_MANAGEMENT', 'Quản lý đăng ký ca cố định (tạo/sửa/xóa)', 107, NULL, TRUE, NOW()),
 ('VIEW_FIXED_REGISTRATIONS_ALL', 'VIEW_FIXED_REGISTRATIONS_ALL', 'SCHEDULE_MANAGEMENT', 'Xem tất cả đăng ký ca cố định', 108, NULL, TRUE, NOW()),
-('VIEW_FIXED_REGISTRATIONS_OWN', 'VIEW_FIXED_REGISTRATIONS_OWN', 'SCHEDULE_MANAGEMENT', 'Xem đăng ký ca cố định của bản thân', 109, 'VIEW_FIXED_REGISTRATIONS_ALL', TRUE, NOW());
+('VIEW_FIXED_REGISTRATIONS_OWN', 'VIEW_FIXED_REGISTRATIONS_OWN', 'SCHEDULE_MANAGEMENT', 'Xem đăng ký ca cố định của bản thân', 109, 'VIEW_FIXED_REGISTRATIONS_ALL', TRUE, NOW())
+ON CONFLICT (permission_id) DO NOTHING;
 
 
 -- MODULE 8: LEAVE_MANAGEMENT (MERGED: TIME_OFF + OVERTIME + TIME_OFF_MANAGEMENT)
@@ -314,7 +323,8 @@ VALUES
 ('DELETE_TIMEOFF_TYPE', 'DELETE_TIMEOFF_TYPE', 'LEAVE_MANAGEMENT', 'Xóa loại nghỉ phép', 144, NULL, TRUE, NOW()),
 -- Leave balance management
 ('VIEW_LEAVE_BALANCE_ALL', 'VIEW_LEAVE_BALANCE_ALL', 'LEAVE_MANAGEMENT', 'Xem số dư nghỉ phép của nhân viên', 150, NULL, TRUE, NOW()),
-('ADJUST_LEAVE_BALANCE', 'ADJUST_LEAVE_BALANCE', 'LEAVE_MANAGEMENT', 'Điều chỉnh số dư nghỉ phép', 151, NULL, TRUE, NOW());
+('ADJUST_LEAVE_BALANCE', 'ADJUST_LEAVE_BALANCE', 'LEAVE_MANAGEMENT', 'Điều chỉnh số dư nghỉ phép', 151, NULL, TRUE, NOW())
+ON CONFLICT (permission_id) DO NOTHING;
 
 
 -- MODULE 9: SYSTEM_CONFIGURATION (MERGED: ROLE + PERMISSION + SPECIALIZATION)
@@ -334,7 +344,8 @@ VALUES
 ('VIEW_SPECIALIZATION', 'VIEW_SPECIALIZATION', 'SYSTEM_CONFIGURATION', 'Xem danh sách chuyên khoa', 220, NULL, TRUE, NOW()),
 ('CREATE_SPECIALIZATION', 'CREATE_SPECIALIZATION', 'SYSTEM_CONFIGURATION', 'Tạo chuyên khoa mới', 221, NULL, TRUE, NOW()),
 ('UPDATE_SPECIALIZATION', 'UPDATE_SPECIALIZATION', 'SYSTEM_CONFIGURATION', 'Cập nhật chuyên khoa', 222, NULL, TRUE, NOW()),
-('DELETE_SPECIALIZATION', 'DELETE_SPECIALIZATION', 'SYSTEM_CONFIGURATION', 'Xóa chuyên khoa', 223, NULL, TRUE, NOW());
+('DELETE_SPECIALIZATION', 'DELETE_SPECIALIZATION', 'SYSTEM_CONFIGURATION', 'Xóa chuyên khoa', 223, NULL, TRUE, NOW())
+ON CONFLICT (permission_id) DO NOTHING;
 
 
 -- MODULE 10: HOLIDAY (Holiday Management)
@@ -343,7 +354,8 @@ VALUES
 ('VIEW_HOLIDAY', 'VIEW_HOLIDAY', 'HOLIDAY', 'Xem danh sách ngày nghỉ lễ', 230, NULL, TRUE, NOW()),
 ('CREATE_HOLIDAY', 'CREATE_HOLIDAY', 'HOLIDAY', 'Tạo ngày nghỉ lễ mới', 231, NULL, TRUE, NOW()),
 ('UPDATE_HOLIDAY', 'UPDATE_HOLIDAY', 'HOLIDAY', 'Cập nhật ngày nghỉ lễ', 232, NULL, TRUE, NOW()),
-('DELETE_HOLIDAY', 'DELETE_HOLIDAY', 'HOLIDAY', 'Xóa ngày nghỉ lễ', 233, NULL, TRUE, NOW());
+('DELETE_HOLIDAY', 'DELETE_HOLIDAY', 'HOLIDAY', 'Xóa ngày nghỉ lễ', 233, NULL, TRUE, NOW())
+ON CONFLICT (permission_id) DO NOTHING;
 
 
 -- MODULE 11: ROOM_MANAGEMENT (Quản lý phòng khám/ghế nha khoa)
@@ -355,7 +367,8 @@ VALUES
 ('UPDATE_ROOM', 'UPDATE_ROOM', 'ROOM_MANAGEMENT', 'Cập nhật thông tin phòng', 242, NULL, TRUE, NOW()),
 ('DELETE_ROOM', 'DELETE_ROOM', 'ROOM_MANAGEMENT', 'Vô hiệu hóa phòng (soft delete)', 243, NULL, TRUE, NOW()),
 -- V16: Room-Service compatibility management
-('UPDATE_ROOM_SERVICES', 'UPDATE_ROOM_SERVICES', 'ROOM_MANAGEMENT', 'Gán/cập nhật dịch vụ cho phòng', 244, NULL, TRUE, NOW());
+('UPDATE_ROOM_SERVICES', 'UPDATE_ROOM_SERVICES', 'ROOM_MANAGEMENT', 'Gán/cập nhật dịch vụ cho phòng', 244, NULL, TRUE, NOW())
+ON CONFLICT (permission_id) DO NOTHING;
 
 
 -- MODULE 12: SERVICE_MANAGEMENT (Quản lý danh mục dịch vụ nha khoa)
@@ -365,7 +378,8 @@ VALUES
 ('VIEW_SERVICE', 'VIEW_SERVICE', 'SERVICE_MANAGEMENT', 'Xem danh sách và chi tiết dịch vụ', 250, NULL, TRUE, NOW()),
 ('CREATE_SERVICE', 'CREATE_SERVICE', 'SERVICE_MANAGEMENT', 'Tạo dịch vụ mới', 251, NULL, TRUE, NOW()),
 ('UPDATE_SERVICE', 'UPDATE_SERVICE', 'SERVICE_MANAGEMENT', 'Cập nhật thông tin dịch vụ', 252, NULL, TRUE, NOW()),
-('DELETE_SERVICE', 'DELETE_SERVICE', 'SERVICE_MANAGEMENT', 'Vô hiệu hóa dịch vụ (soft delete)', 253, NULL, TRUE, NOW());
+('DELETE_SERVICE', 'DELETE_SERVICE', 'SERVICE_MANAGEMENT', 'Vô hiệu hóa dịch vụ (soft delete)', 253, NULL, TRUE, NOW())
+ON CONFLICT (permission_id) DO NOTHING;
 
 
 -- MODULE 13: TREATMENT_PLAN (Quản lý phác đồ điều trị bệnh nhân)
@@ -377,7 +391,8 @@ VALUES
 ('CREATE_TREATMENT_PLAN', 'CREATE_TREATMENT_PLAN', 'TREATMENT_PLAN', 'Tạo phác đồ điều trị mới', 262, NULL, TRUE, NOW()),
 ('UPDATE_TREATMENT_PLAN', 'UPDATE_TREATMENT_PLAN', 'TREATMENT_PLAN', 'Cập nhật phác đồ điều trị', 263, NULL, TRUE, NOW()),
 ('DELETE_TREATMENT_PLAN', 'DELETE_TREATMENT_PLAN', 'TREATMENT_PLAN', 'Vô hiệu hóa phác đồ (soft delete)', 264, NULL, TRUE, NOW()),
-('APPROVE_TREATMENT_PLAN', 'APPROVE_TREATMENT_PLAN', 'TREATMENT_PLAN', 'Duyệt/Từ chối lộ trình điều trị (Quản lý)', 265, NULL, TRUE, NOW());
+('APPROVE_TREATMENT_PLAN', 'APPROVE_TREATMENT_PLAN', 'TREATMENT_PLAN', 'Duyệt/Từ chối lộ trình điều trị (Quản lý)', 265, NULL, TRUE, NOW())
+ON CONFLICT (permission_id) DO NOTHING;
 
 
 -- ============================================
@@ -386,7 +401,8 @@ VALUES
 
 -- Admin có TẤT CẢ quyền
 INSERT INTO role_permissions (role_id, permission_id)
-SELECT 'ROLE_ADMIN', permission_id FROM permissions WHERE is_active = TRUE;
+SELECT 'ROLE_ADMIN', permission_id FROM permissions WHERE is_active = TRUE
+ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
 -- Dentist (Fix: ROLE_DENTIST → ROLE_DENTIST)
@@ -407,7 +423,8 @@ VALUES
 ('ROLE_DENTIST', 'VIEW_TREATMENT_PLAN_ALL'), -- Can view all patients' treatment plans
 ('ROLE_DENTIST', 'CREATE_TREATMENT_PLAN'), -- Can create treatment plans
 ('ROLE_DENTIST', 'UPDATE_TREATMENT_PLAN'), -- Can update treatment plans
-('ROLE_DENTIST', 'DELETE_TREATMENT_PLAN'); -- Can delete treatment plans
+('ROLE_DENTIST', 'DELETE_TREATMENT_PLAN') -- Can delete treatment plans
+ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
 -- Nurse
@@ -421,7 +438,8 @@ VALUES
 ('ROLE_NURSE', 'CREATE_REGISTRATION'),
 ('ROLE_NURSE', 'VIEW_LEAVE_OWN'), ('ROLE_NURSE', 'CREATE_TIME_OFF'), ('ROLE_NURSE', 'CREATE_OVERTIME'),
 ('ROLE_NURSE', 'CANCEL_TIME_OFF_OWN'), ('ROLE_NURSE', 'CANCEL_OVERTIME_OWN'),
-('ROLE_NURSE', 'VIEW_HOLIDAY');
+('ROLE_NURSE', 'VIEW_HOLIDAY')
+ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
 INSERT INTO role_permissions (role_id, permission_id)
@@ -433,7 +451,8 @@ VALUES
 ('ROLE_DENTIST_INTERN', 'VIEW_LEAVE_OWN'), -- Xem nghỉ phép của mình
 ('ROLE_DENTIST_INTERN', 'CREATE_TIME_OFF'), -- Tạo đơn xin nghỉ
 ('ROLE_DENTIST_INTERN', 'CANCEL_TIME_OFF_OWN'), -- Hủy đơn nghỉ của mình
-('ROLE_DENTIST_INTERN', 'VIEW_HOLIDAY'); -- Xem lịch nghỉ lễ
+('ROLE_DENTIST_INTERN', 'VIEW_HOLIDAY') -- Xem lịch nghỉ lễ
+ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
 -- Receptionist
@@ -459,7 +478,8 @@ VALUES
 ('ROLE_RECEPTIONIST', 'CANCEL_TIME_OFF_OWN'), ('ROLE_RECEPTIONIST', 'CANCEL_OVERTIME_OWN'),
 ('ROLE_RECEPTIONIST', 'VIEW_HOLIDAY'),
 -- ✅ NEW: Treatment Plan permissions
-('ROLE_RECEPTIONIST', 'VIEW_TREATMENT_PLAN_ALL'); -- Can view all patients' treatment plans (read-only)
+('ROLE_RECEPTIONIST', 'VIEW_TREATMENT_PLAN_ALL') -- Can view all patients' treatment plans (read-only)
+ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
 -- Manager (Full management permissions)
@@ -516,7 +536,8 @@ VALUES
 ('ROLE_MANAGER', 'CREATE_TREATMENT_PLAN'), -- Can create treatment plans
 ('ROLE_MANAGER', 'UPDATE_TREATMENT_PLAN'), -- Can update treatment plans
 ('ROLE_MANAGER', 'DELETE_TREATMENT_PLAN'), -- Can delete treatment plans
-('ROLE_MANAGER', 'APPROVE_TREATMENT_PLAN'); -- ✅ V20: Can approve/reject treatment plans (API 5.9)
+('ROLE_MANAGER', 'APPROVE_TREATMENT_PLAN') -- ✅ V20: Can approve/reject treatment plans (API 5.9)
+ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
 -- Accountant & Inventory Manager (LEAVE only)
@@ -527,7 +548,8 @@ VALUES
 ('ROLE_ACCOUNTANT', 'VIEW_HOLIDAY'),
 ('ROLE_INVENTORY_MANAGER', 'VIEW_LEAVE_OWN'), ('ROLE_INVENTORY_MANAGER', 'CREATE_TIME_OFF'), ('ROLE_INVENTORY_MANAGER', 'CREATE_OVERTIME'),
 ('ROLE_INVENTORY_MANAGER', 'CANCEL_TIME_OFF_OWN'), ('ROLE_INVENTORY_MANAGER', 'CANCEL_OVERTIME_OWN'),
-('ROLE_INVENTORY_MANAGER', 'VIEW_HOLIDAY');
+('ROLE_INVENTORY_MANAGER', 'VIEW_HOLIDAY')
+ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
 -- Patient (basic view only)
@@ -538,7 +560,8 @@ VALUES
 ('ROLE_PATIENT', 'VIEW_APPOINTMENT_OWN'), -- ✅ NEW: Patient can view their own appointments
 ('ROLE_PATIENT', 'CREATE_APPOINTMENT'),
 -- ✅ NEW: Treatment Plan permissions
-('ROLE_PATIENT', 'VIEW_TREATMENT_PLAN_OWN'); -- Can only view their own treatment plans
+('ROLE_PATIENT', 'VIEW_TREATMENT_PLAN_OWN') -- Can only view their own treatment plans
+ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
 -- Grant basic Overtime permissions to all employee roles (idempotent)
@@ -549,7 +572,8 @@ VALUES
 ('ROLE_RECEPTIONIST', 'VIEW_OT_OWN'), ('ROLE_RECEPTIONIST', 'CREATE_OT'), ('ROLE_RECEPTIONIST', 'CANCEL_OT_OWN'),
 ('ROLE_ACCOUNTANT', 'VIEW_OT_OWN'), ('ROLE_ACCOUNTANT', 'CREATE_OT'), ('ROLE_ACCOUNTANT', 'CANCEL_OT_OWN'),
 ('ROLE_INVENTORY_MANAGER', 'VIEW_OT_OWN'), ('ROLE_INVENTORY_MANAGER', 'CREATE_OT'), ('ROLE_INVENTORY_MANAGER', 'CANCEL_OT_OWN'),
-('ROLE_MANAGER', 'VIEW_OT_OWN'), ('ROLE_MANAGER', 'CREATE_OT'), ('ROLE_MANAGER', 'CANCEL_OT_OWN');
+('ROLE_MANAGER', 'VIEW_OT_OWN'), ('ROLE_MANAGER', 'CREATE_OT'), ('ROLE_MANAGER', 'CANCEL_OT_OWN')
+ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
 -- Grant VIEW_WORK_SHIFTS to all employee roles (idempotent)
@@ -559,7 +583,8 @@ VALUES
 ('ROLE_NURSE', 'VIEW_WORK_SHIFTS'),
 ('ROLE_RECEPTIONIST', 'VIEW_WORK_SHIFTS'),
 ('ROLE_ACCOUNTANT', 'VIEW_WORK_SHIFTS'),
-('ROLE_INVENTORY_MANAGER', 'VIEW_WORK_SHIFTS');
+('ROLE_INVENTORY_MANAGER', 'VIEW_WORK_SHIFTS')
+ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
 -- Grant VIEW_SHIFTS_OWN to all employee roles (BE-307)
@@ -570,7 +595,8 @@ VALUES
 ('ROLE_RECEPTIONIST', 'VIEW_SHIFTS_OWN'),
 ('ROLE_ACCOUNTANT', 'VIEW_SHIFTS_OWN'),
 ('ROLE_INVENTORY_MANAGER', 'VIEW_SHIFTS_OWN'),
-('ROLE_MANAGER', 'VIEW_SHIFTS_OWN');
+('ROLE_MANAGER', 'VIEW_SHIFTS_OWN')
+ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
 -- Grant CREATE_REGISTRATION to all employee roles (idempotent) - Allow self shift registration
@@ -691,7 +717,8 @@ VALUES
 (6, 'SPEC006', 'Nha khoa trẻ em', 'Pediatric Dentistry - Chuyên khoa nhi', TRUE, NOW()),
 (7, 'SPEC007', 'Răng thẩm mỹ', 'Cosmetic Dentistry - Tẩy trắng, bọc sứ', TRUE, NOW()),
 (8, 'SPEC-STANDARD', 'STANDARD - Y tế cơ bản', 'Baseline medical qualification - Required for all doctors/nurses', TRUE, NOW()),
-(9, 'SPEC-INTERN', 'Thực tập sinh', 'Intern/Trainee - Nhân viên đang đào tạo, học việc', TRUE, NOW());
+(9, 'SPEC-INTERN', 'Thực tập sinh', 'Intern/Trainee - Nhân viên đang đào tạo, học việc', TRUE, NOW())
+ON CONFLICT (specialization_id) DO NOTHING;
 
 
 -- ============================================
@@ -779,7 +806,8 @@ VALUES
 
 -- Patient BN-1005 - Trần Văn Nam (for Treatment Plan testing)
 (18, 'ACC018', 'benhnhan5', 'nam.tv@email.com',
-'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_PATIENT', 'ACTIVE', NOW());
+'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_PATIENT', 'ACTIVE', NOW())
+ON CONFLICT (account_id) DO NOTHING;
 
 
 
@@ -796,7 +824,8 @@ VALUES
 ('GHE251103001', 'P-01', 'Phòng thường 1', 'STANDARD', TRUE, NOW()),
 ('GHE251103002', 'P-02', 'Phòng thường 2', 'STANDARD', TRUE, NOW()),
 ('GHE251103003', 'P-03', 'Phòng thường 3', 'STANDARD', TRUE, NOW()),
-('GHE251103004', 'P-04-IMPLANT', 'Phòng Implant', 'IMPLANT', TRUE, NOW());
+('GHE251103004', 'P-04-IMPLANT', 'Phòng Implant', 'IMPLANT', TRUE, NOW())
+ON CONFLICT (room_id) DO NOTHING;
 
 
 -- ============================================
@@ -824,7 +853,8 @@ VALUES
 -- Manager
 (11, 11, 'EMP011', 'Võ Nguyễn Minh', 'Quân', '0911111111', '1987-09-05', '777 Nguyễn Huệ, Q1, TPHCM', 'FULL_TIME', TRUE, NOW()),
 -- ✅ NEW: Thực tập sinh (OBSERVER for testing P3.3)
-(12, 16, 'EMP012', 'Nguyễn Khánh', 'Linh', '0912121212', '2003-05-15', '888 Võ Thị Sáu, Q3, TPHCM', 'PART_TIME_FLEX', TRUE, NOW());
+(12, 16, 'EMP012', 'Nguyễn Khánh', 'Linh', '0912121212', '2003-05-15', '888 Võ Thị Sáu, Q3, TPHCM', 'PART_TIME_FLEX', TRUE, NOW())
+ON CONFLICT (employee_id) DO NOTHING;
 
 INSERT INTO employee_specializations (employee_id, specialization_id)
 VALUES
@@ -842,7 +872,8 @@ VALUES
 (9, 8), -- Y tá Nhật (Part-time fixed)
 (10, 8), -- Y tá Chính (Part-time flex)
 -- ✅ NEW: Thực tập sinh - INTERN specialization
-(12, 9); -- Thực tập sinh Linh
+(12, 9) -- Thực tập sinh Linh
+ON CONFLICT (employee_id, specialization_id) DO NOTHING;
 
 
 INSERT INTO patients (patient_id, account_id, patient_code, first_name, last_name, email, phone, date_of_birth, address, gender, is_active, created_at, updated_at)
@@ -851,7 +882,8 @@ VALUES
 (2, 13, 'BN-1002', 'Phạm Văn', 'Phong', 'phong.pv@email.com', '0972222222', '1990-07-20', '456 Võ Văn Ngân, Thủ Đức, TPHCM', 'MALE', TRUE, NOW(), NOW()),
 (3, 14, 'BN-1003', 'Nguyễn Tuấn', 'Anh', 'anh.nt@email.com', '0973333333', '1988-11-10', '789 Đường D2, Bình Thạnh, TPHCM', 'MALE', TRUE, NOW(), NOW()),
 (4, 15, 'BN-1004', 'Mít tơ', 'Bít', 'mit.bit@email.com', '0974444444', '2000-01-01', '321 Nguyễn Thị Minh Khai, Q1, TPHCM', 'OTHER', TRUE, NOW(), NOW()),
-(5, 18, 'BN-1005', 'Trần Văn', 'Nam', 'nam.tv@email.com', '0975555555', '1992-05-25', '555 Hoàng Diệu, Q4, TPHCM', 'MALE', TRUE, NOW(), NOW());
+(5, 18, 'BN-1005', 'Trần Văn', 'Nam', 'nam.tv@email.com', '0975555555', '1992-05-25', '555 Hoàng Diệu, Q4, TPHCM', 'MALE', TRUE, NOW(), NOW())
+ON CONFLICT (patient_id) DO NOTHING;
 
 INSERT INTO work_shifts (work_shift_id, shift_name, start_time, end_time, category, is_active)
 VALUES
@@ -910,7 +942,8 @@ INSERT INTO time_off_requests (request_id, employee_id, time_off_type_id, work_s
 VALUES
 ('TOR251025001', 2, 'ANNUAL_LEAVE', 'WKS_MORNING_01', '2025-10-28', '2025-10-29', 'PENDING', NULL, NULL, NOW(), 2),
 ('TOR251025002', 3, 'SICK_LEAVE', 'WKS_AFTERNOON_01', '2025-11-02', '2025-11-02', 'APPROVED', 1, NOW() - INTERVAL '1 day', NOW() - INTERVAL '2 days', 3),
-('TOR251025003', 4, 'UNPAID_PERSONAL', 'WKS_MORNING_02', '2025-11-05', '2025-11-06', 'REJECTED', 1, NOW() - INTERVAL '1 day', NOW() - INTERVAL '2 days', 4);
+('TOR251025003', 4, 'UNPAID_PERSONAL', 'WKS_MORNING_02', '2025-11-05', '2025-11-06', 'REJECTED', 1, NOW() - INTERVAL '1 day', NOW() - INTERVAL '2 days', 4)
+ON CONFLICT (request_id) DO NOTHING;
 
 
 -- ============================================
@@ -947,7 +980,8 @@ VALUES
 
 -- CANCELLED overtime request (self-cancelled)
 ('OTR251030011', 3, 3, '2025-11-30', 'WKS_AFTERNOON_01',
- 'Yêu cầu tăng ca cuối tháng', 'CANCELLED', NULL, NULL, NULL, 'Có việc đột xuất không thể tham gia', NOW() - INTERVAL '1 day');
+ 'Yêu cầu tăng ca cuối tháng', 'CANCELLED', NULL, NULL, NULL, 'Có việc đột xuất không thể tham gia', NOW() - INTERVAL '1 day')
+ON CONFLICT (request_id) DO NOTHING;
 
 
 
@@ -968,7 +1002,8 @@ VALUES
 ('EMS251030004', NOW() - INTERVAL '1 day', 7, TRUE,
  'Tạo từ yêu cầu OT OTR251030009 - Chăm sóc bệnh nhân đặc biệt',
  'OT_APPROVAL', NULL, 'OTR251030009', 'SCHEDULED', NULL,
- '2025-11-27', 6, 'WKS_AFTERNOON_02');
+ '2025-11-27', 6, 'WKS_AFTERNOON_02')
+ON CONFLICT (employee_shift_id) DO NOTHING;
 
 
 -- ============================================
@@ -1051,7 +1086,8 @@ VALUES
 -- October 2025 shifts (Past month for historical data)
 ('EMS251001001', NOW(), NULL, FALSE, 'Ca tháng trước đã hoàn thành', 'MANUAL_ENTRY', 'COMPLETED', NOW(), '2025-10-15', 2, 'WKS_MORNING_01'),
 ('EMS251001002', NOW(), NULL, FALSE, 'Ca tháng trước đã hoàn thành', 'BATCH_JOB', 'COMPLETED', NOW(), '2025-10-16', 3, 'WKS_AFTERNOON_01'),
-('EMS251001003', NOW(), NULL, FALSE, 'Ca tháng trước bị hủy', 'MANUAL_ENTRY', 'CANCELLED', NOW(), '2025-10-17', 5, 'WKS_MORNING_01');
+('EMS251001003', NOW(), NULL, FALSE, 'Ca tháng trước bị hủy', 'MANUAL_ENTRY', 'CANCELLED', NOW(), '2025-10-17', 5, 'WKS_MORNING_01')
+ON CONFLICT (employee_shift_id) DO NOTHING;
 
 
 
@@ -1064,69 +1100,87 @@ VALUES
 
 -- Step 1: Insert holiday definitions (one by one to avoid conflicts)
 INSERT INTO holiday_definitions (definition_id, holiday_name, holiday_type, description, created_at, updated_at)
-VALUES ('TET_2025', 'Tết Nguyên Đán 2025', 'NATIONAL', 'Lunar New Year 2025 - Vietnamese traditional holiday', NOW(), NOW());
+VALUES ('TET_2025', 'Tết Nguyên Đán 2025', 'NATIONAL', 'Lunar New Year 2025 - Vietnamese traditional holiday', NOW(), NOW())
+ON CONFLICT (definition_id) DO NOTHING;
 
 INSERT INTO holiday_definitions (definition_id, holiday_name, holiday_type, description, created_at, updated_at)
-VALUES ('LIBERATION_DAY', 'Ngày Giải phóng miền Nam', 'NATIONAL', 'Reunification Day - April 30th', NOW(), NOW());
+VALUES ('LIBERATION_DAY', 'Ngày Giải phóng miền Nam', 'NATIONAL', 'Reunification Day - April 30th', NOW(), NOW())
+ON CONFLICT (definition_id) DO NOTHING;
 
 INSERT INTO holiday_definitions (definition_id, holiday_name, holiday_type, description, created_at, updated_at)
-VALUES ('LABOR_DAY', 'Ngày Quốc tế Lao động', 'NATIONAL', 'International Labor Day - May 1st', NOW(), NOW());
+VALUES ('LABOR_DAY', 'Ngày Quốc tế Lao động', 'NATIONAL', 'International Labor Day - May 1st', NOW(), NOW())
+ON CONFLICT (definition_id) DO NOTHING;
 
 INSERT INTO holiday_definitions (definition_id, holiday_name, holiday_type, description, created_at, updated_at)
-VALUES ('NATIONAL_DAY', 'Ngày Quốc khánh', 'NATIONAL', 'Vietnam National Day - September 2nd', NOW(), NOW());
+VALUES ('NATIONAL_DAY', 'Ngày Quốc khánh', 'NATIONAL', 'Vietnam National Day - September 2nd', NOW(), NOW())
+ON CONFLICT (definition_id) DO NOTHING;
 
 INSERT INTO holiday_definitions (definition_id, holiday_name, holiday_type, description, created_at, updated_at)
-VALUES ('NEW_YEAR', 'Tết Dương lịch', 'NATIONAL', 'Gregorian New Year', NOW(), NOW());
+VALUES ('NEW_YEAR', 'Tết Dương lịch', 'NATIONAL', 'Gregorian New Year', NOW(), NOW())
+ON CONFLICT (definition_id) DO NOTHING;
 
 INSERT INTO holiday_definitions (definition_id, holiday_name, holiday_type, description, created_at, updated_at)
-VALUES ('HUNG_KINGS', 'Giỗ Tổ Hùng Vương', 'NATIONAL', 'Hung Kings Commemoration Day', NOW(), NOW());
+VALUES ('HUNG_KINGS', 'Giỗ Tổ Hùng Vương', 'NATIONAL', 'Hung Kings Commemoration Day', NOW(), NOW())
+ON CONFLICT (definition_id) DO NOTHING;
 
 
 -- Step 2: Insert holiday dates (specific dates for each definition)
 -- Tết Nguyên Đán 2025 (Jan 29 - Feb 4, 2025)
 INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2025-01-29', 'TET_2025', 'Ngày Tết Nguyên Đán (30 Tết)', NOW(), NOW());
+VALUES ('2025-01-29', 'TET_2025', 'Ngày Tết Nguyên Đán (30 Tết)', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
 
 INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2025-01-30', 'TET_2025', 'Mùng 1 Tết', NOW(), NOW());
+VALUES ('2025-01-30', 'TET_2025', 'Mùng 1 Tết', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
 
 INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2025-01-31', 'TET_2025', 'Mùng 2 Tết', NOW(), NOW());
+VALUES ('2025-01-31', 'TET_2025', 'Mùng 2 Tết', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
 
 INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2025-02-01', 'TET_2025', 'Mùng 3 Tết', NOW(), NOW());
+VALUES ('2025-02-01', 'TET_2025', 'Mùng 3 Tết', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
 
 INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2025-02-02', 'TET_2025', 'Mùng 4 Tết', NOW(), NOW());
+VALUES ('2025-02-02', 'TET_2025', 'Mùng 4 Tết', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
 
 INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2025-02-03', 'TET_2025', 'Mùng 5 Tết', NOW(), NOW());
+VALUES ('2025-02-03', 'TET_2025', 'Mùng 5 Tết', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
 
 INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2025-02-04', 'TET_2025', 'Mùng 6 Tết', NOW(), NOW());
+VALUES ('2025-02-04', 'TET_2025', 'Mùng 6 Tết', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
 
 
 -- Liberation Day & Labor Day (April 30 - May 1, 2025)
 INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2025-04-30', 'LIBERATION_DAY', 'Ngày Giải phóng miền Nam', NOW(), NOW());
+VALUES ('2025-04-30', 'LIBERATION_DAY', 'Ngày Giải phóng miền Nam', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
 
 INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2025-05-01', 'LABOR_DAY', 'Ngày Quốc tế Lao động', NOW(), NOW());
+VALUES ('2025-05-01', 'LABOR_DAY', 'Ngày Quốc tế Lao động', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
 
 
 -- Hung Kings Commemoration Day 2025 (April 18, 2025 - lunar March 10th)
 INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2025-04-18', 'HUNG_KINGS', 'Giỗ Tổ Hùng Vương', NOW(), NOW());
+VALUES ('2025-04-18', 'HUNG_KINGS', 'Giỗ Tổ Hùng Vương', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
 
 
 -- National Day (September 2, 2025)
 INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2025-09-02', 'NATIONAL_DAY', 'Quốc khánh Việt Nam', NOW(), NOW());
+VALUES ('2025-09-02', 'NATIONAL_DAY', 'Quốc khánh Việt Nam', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
 
 
 -- New Year (January 1, 2025)
 INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2025-01-01', 'NEW_YEAR', 'Tết Dương lịch 2025', NOW(), NOW());
+VALUES ('2025-01-01', 'NEW_YEAR', 'Tết Dương lịch 2025', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
 
 
 -- ============================================
@@ -1139,19 +1193,23 @@ VALUES ('2025-01-01', 'NEW_YEAR', 'Tết Dương lịch 2025', NOW(), NOW());
 -- ============================================
 
 INSERT INTO holiday_definitions (definition_id, holiday_name, holiday_type, description, created_at, updated_at)
-VALUES ('MAINTENANCE_WEEK', 'System Maintenance Week', 'COMPANY', 'Scheduled system maintenance - For testing holiday blocking', NOW(), NOW());
+VALUES ('MAINTENANCE_WEEK', 'System Maintenance Week', 'COMPANY', 'Scheduled system maintenance - For testing holiday blocking', NOW(), NOW())
+ON CONFLICT (definition_id) DO NOTHING;
 
 
 -- Add 3 maintenance days (Monday, Wednesday, Friday of a test week)
 -- Example: November 3, 5, 7, 2025
 INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2025-11-03', 'MAINTENANCE_WEEK', 'Monday maintenance - Test holiday blocking', NOW(), NOW());
+VALUES ('2025-11-03', 'MAINTENANCE_WEEK', 'Monday maintenance - Test holiday blocking', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
 
 INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2025-11-05', 'MAINTENANCE_WEEK', 'Wednesday maintenance - Test holiday blocking', NOW(), NOW());
+VALUES ('2025-11-05', 'MAINTENANCE_WEEK', 'Wednesday maintenance - Test holiday blocking', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
 
 INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2025-11-07', 'MAINTENANCE_WEEK', 'Friday maintenance - Test holiday blocking', NOW(), NOW());
+VALUES ('2025-11-07', 'MAINTENANCE_WEEK', 'Friday maintenance - Test holiday blocking', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
 
 
 -- Expected Behavior:
@@ -1179,7 +1237,8 @@ INSERT INTO fixed_shift_registrations (
     effective_from, effective_to, is_active, created_at
 )
 VALUES
-(1, 2, 'WKS_MORNING_01', '2025-01-01', '2026-12-31', TRUE, NOW());
+(1, 2, 'WKS_MORNING_01', '2025-01-01', '2026-12-31', TRUE, NOW())
+ON CONFLICT (registration_id) DO NOTHING;
 
 INSERT INTO fixed_registration_days (registration_id, day_of_week)
 VALUES
@@ -1187,7 +1246,8 @@ VALUES
 (1, 'TUESDAY'),
 (1, 'WEDNESDAY'),
 (1, 'THURSDAY'),
-(1, 'FRIDAY');
+(1, 'FRIDAY')
+ON CONFLICT (registration_id, day_of_week) DO NOTHING;
 
 
 -- Fixed registration for Dr. Lan (FULL_TIME) - Weekdays Afternoon Shift
@@ -1196,7 +1256,8 @@ INSERT INTO fixed_shift_registrations (
     effective_from, effective_to, is_active, created_at
 )
 VALUES
-(2, 3, 'WKS_AFTERNOON_01', '2025-01-01', '2026-12-31', TRUE, NOW());
+(2, 3, 'WKS_AFTERNOON_01', '2025-01-01', '2026-12-31', TRUE, NOW())
+ON CONFLICT (registration_id) DO NOTHING;
 
 INSERT INTO fixed_registration_days (registration_id, day_of_week)
 VALUES
@@ -1204,7 +1265,8 @@ VALUES
 (2, 'TUESDAY'),
 (2, 'WEDNESDAY'),
 (2, 'THURSDAY'),
-(2, 'FRIDAY');
+(2, 'FRIDAY')
+ON CONFLICT (registration_id, day_of_week) DO NOTHING;
 
 
 -- Fixed registration for Receptionist Mai (FULL_TIME) - Weekdays Morning Part-time
@@ -1213,7 +1275,8 @@ INSERT INTO fixed_shift_registrations (
     effective_from, effective_to, is_active, created_at
 )
 VALUES
-(3, 4, 'WKS_MORNING_02', '2025-11-01', '2026-10-31', TRUE, NOW());
+(3, 4, 'WKS_MORNING_02', '2025-11-01', '2026-10-31', TRUE, NOW())
+ON CONFLICT (registration_id) DO NOTHING;
 
 INSERT INTO fixed_registration_days (registration_id, day_of_week)
 VALUES
@@ -1221,7 +1284,8 @@ VALUES
 (3, 'TUESDAY'),
 (3, 'WEDNESDAY'),
 (3, 'THURSDAY'),
-(3, 'FRIDAY');
+(3, 'FRIDAY')
+ON CONFLICT (registration_id, day_of_week) DO NOTHING;
 
 
 -- Fixed registration for Accountant Tuan (FULL_TIME) - Full week Morning
@@ -1230,7 +1294,8 @@ INSERT INTO fixed_shift_registrations (
     effective_from, effective_to, is_active, created_at
 )
 VALUES
-(4, 5, 'WKS_MORNING_01', '2025-01-01', NULL, TRUE, NOW());
+(4, 5, 'WKS_MORNING_01', '2025-01-01', NULL, TRUE, NOW())
+ON CONFLICT (registration_id) DO NOTHING;
 
 INSERT INTO fixed_registration_days (registration_id, day_of_week)
 VALUES
@@ -1239,7 +1304,8 @@ VALUES
 (4, 'WEDNESDAY'),
 (4, 'THURSDAY'),
 (4, 'FRIDAY'),
-(4, 'SATURDAY');
+(4, 'SATURDAY')
+ON CONFLICT (registration_id, day_of_week) DO NOTHING;
 
 
 -- Fixed registration for Nurse Hoa (PART_TIME_FIXED) - Monday, Wednesday, Friday Morning
@@ -1248,13 +1314,15 @@ INSERT INTO fixed_shift_registrations (
     effective_from, effective_to, is_active, created_at
 )
 VALUES
-(5, 6, 'WKS_MORNING_02', '2025-11-01', '2026-04-30', TRUE, NOW());
+(5, 6, 'WKS_MORNING_02', '2025-11-01', '2026-04-30', TRUE, NOW())
+ON CONFLICT (registration_id) DO NOTHING;
 
 INSERT INTO fixed_registration_days (registration_id, day_of_week)
 VALUES
 (5, 'MONDAY'),
 (5, 'WEDNESDAY'),
-(5, 'FRIDAY');
+(5, 'FRIDAY')
+ON CONFLICT (registration_id, day_of_week) DO NOTHING;
 
 
 -- Fixed registration for Manager Quan (FULL_TIME) - Flexible schedule
@@ -1263,12 +1331,14 @@ INSERT INTO fixed_shift_registrations (
     effective_from, effective_to, is_active, created_at
 )
 VALUES
-(6, 7, 'WKS_MORNING_01', '2025-01-01', NULL, TRUE, NOW());
+(6, 7, 'WKS_MORNING_01', '2025-01-01', NULL, TRUE, NOW())
+ON CONFLICT (registration_id) DO NOTHING;
 
 INSERT INTO fixed_registration_days (registration_id, day_of_week)
 VALUES
 (6, 'TUESDAY'),
-(6, 'THURSDAY');
+(6, 'THURSDAY')
+ON CONFLICT (registration_id, day_of_week) DO NOTHING;
 
 
 -- Fixed registration for Nurse Trang (PART_TIME_FIXED) - Tuesday, Thursday, Saturday Afternoon
@@ -1277,13 +1347,15 @@ INSERT INTO fixed_shift_registrations (
     effective_from, effective_to, is_active, created_at
 )
 VALUES
-(7, 9, 'WKS_AFTERNOON_02', '2025-11-01', '2026-10-31', TRUE, NOW());
+(7, 9, 'WKS_AFTERNOON_02', '2025-11-01', '2026-10-31', TRUE, NOW())
+ON CONFLICT (registration_id) DO NOTHING;
 
 INSERT INTO fixed_registration_days (registration_id, day_of_week)
 VALUES
 (7, 'TUESDAY'),
 (7, 'THURSDAY'),
-(7, 'SATURDAY');
+(7, 'SATURDAY')
+ON CONFLICT (registration_id, day_of_week) DO NOTHING;
 
 
 -- Reset sequence for fixed_shift_registrations to prevent duplicate key errors
@@ -1319,7 +1391,8 @@ INSERT INTO part_time_slots (
     slot_id, work_shift_id, day_of_week, quota, is_active, effective_from, effective_to, created_at
 )
 VALUES
-(1, 'WKS_MORNING_02', 'MONDAY', 2, TRUE, '2025-11-04', '2026-02-04', NOW());
+(1, 'WKS_MORNING_02', 'MONDAY', 2, TRUE, '2025-11-04', '2026-02-04', NOW())
+ON CONFLICT (slot_id) DO NOTHING;
 
 
 -- WEDNESDAY Slots
@@ -1327,7 +1400,8 @@ INSERT INTO part_time_slots (
     slot_id, work_shift_id, day_of_week, quota, is_active, effective_from, effective_to, created_at
 )
 VALUES
-(2, 'WKS_AFTERNOON_02', 'WEDNESDAY', 2, TRUE, '2025-11-04', '2026-02-04', NOW());
+(2, 'WKS_AFTERNOON_02', 'WEDNESDAY', 2, TRUE, '2025-11-04', '2026-02-04', NOW())
+ON CONFLICT (slot_id) DO NOTHING;
 
 
 -- FRIDAY Slots
@@ -1335,7 +1409,8 @@ INSERT INTO part_time_slots (
     slot_id, work_shift_id, day_of_week, quota, is_active, effective_from, effective_to, created_at
 )
 VALUES
-(3, 'WKS_MORNING_02', 'FRIDAY', 2, TRUE, '2025-11-04', '2026-02-04', NOW());
+(3, 'WKS_MORNING_02', 'FRIDAY', 2, TRUE, '2025-11-04', '2026-02-04', NOW())
+ON CONFLICT (slot_id) DO NOTHING;
 
 
 -- SATURDAY Slots (Higher quota for weekend)
@@ -1343,7 +1418,8 @@ INSERT INTO part_time_slots (
     slot_id, work_shift_id, day_of_week, quota, is_active, effective_from, effective_to, created_at
 )
 VALUES
-(4, 'WKS_AFTERNOON_02', 'SATURDAY', 3, TRUE, '2025-11-04', '2026-02-04', NOW());
+(4, 'WKS_AFTERNOON_02', 'SATURDAY', 3, TRUE, '2025-11-04', '2026-02-04', NOW())
+ON CONFLICT (slot_id) DO NOTHING;
 
 
 -- SUNDAY Slots (Inactive slot for testing)
@@ -1351,7 +1427,8 @@ INSERT INTO part_time_slots (
     slot_id, work_shift_id, day_of_week, quota, is_active, effective_from, effective_to, created_at
 )
 VALUES
-(5, 'WKS_MORNING_02', 'SUNDAY', 1, FALSE, '2025-11-04', '2026-02-04', NOW());
+(5, 'WKS_MORNING_02', 'SUNDAY', 1, FALSE, '2025-11-04', '2026-02-04', NOW())
+ON CONFLICT (slot_id) DO NOTHING;
 
 
 -- Reset sequence after manual inserts with explicit IDs
@@ -1394,21 +1471,25 @@ SELECT setval('part_time_slots_slot_id_seq',
 -- Test Employee 13: PART_TIME_FLEX (for multi-employee quota testing)
 INSERT INTO accounts (account_id, username, password, email, status, role_id, created_at)
 VALUES
-(20, 'yta13', '$2a$10$RI1iV7k4XJFBWpQUCr.5L.ufNjjXlqvP0z1XrTiT8bKvYpHEtUQ8O', 'yta13@test.com', 'ACTIVE', 'ROLE_NURSE', NOW());
+(20, 'yta13', '$2a$10$RI1iV7k4XJFBWpQUCr.5L.ufNjjXlqvP0z1XrTiT8bKvYpHEtUQ8O', 'yta13@test.com', 'ACTIVE', 'ROLE_NURSE', NOW())
+ON CONFLICT (account_id) DO NOTHING;
 
 INSERT INTO employees (employee_id, account_id, employee_code, first_name, last_name, phone, date_of_birth, address, employment_type, is_active, created_at)
 VALUES
-(13, 20, 'EMP013', 'Minh', 'Lê Thị', '0909999999', '2000-01-15', '789 Nguyễn Huệ, Q1, TPHCM', 'PART_TIME_FLEX', TRUE, NOW());
+(13, 20, 'EMP013', 'Minh', 'Lê Thị', '0909999999', '2000-01-15', '789 Nguyễn Huệ, Q1, TPHCM', 'PART_TIME_FLEX', TRUE, NOW())
+ON CONFLICT (employee_id) DO NOTHING;
 
 
 -- Test Employee 14: PART_TIME_FLEX
 INSERT INTO accounts (account_id, username, password, email, status, role_id, created_at)
 VALUES
-(21, 'yta14', '$2a$10$RI1iV7k4XJFBWpQUCr.5L.ufNjjXlqvP0z1XrTiT8bKvYpHEtUQ8O', 'yta14@test.com', 'ACTIVE', 'ROLE_NURSE', NOW());
+(21, 'yta14', '$2a$10$RI1iV7k4XJFBWpQUCr.5L.ufNjjXlqvP0z1XrTiT8bKvYpHEtUQ8O', 'yta14@test.com', 'ACTIVE', 'ROLE_NURSE', NOW())
+ON CONFLICT (account_id) DO NOTHING;
 
 INSERT INTO employees (employee_id, account_id, employee_code, first_name, last_name, phone, date_of_birth, address, employment_type, is_active, created_at)
 VALUES
-(14, 21, 'EMP014', 'Hương', 'Phạm Thị', '0901111111', '1999-05-20', '321 Lê Lợi, Q1, TPHCM', 'PART_TIME_FLEX', TRUE, NOW());
+(14, 21, 'EMP014', 'Hương', 'Phạm Thị', '0901111111', '1999-05-20', '321 Lê Lợi, Q1, TPHCM', 'PART_TIME_FLEX', TRUE, NOW())
+ON CONFLICT (employee_id) DO NOTHING;
 
 
 -- ============================================
@@ -1522,7 +1603,8 @@ INSERT INTO service_categories (category_code, category_name, display_order, is_
 ('C_IMPLANT', 'C. Cắm ghép Implant', 3, true, NOW()),
 ('D_ORTHO', 'D. Chỉnh nha', 4, true, NOW()),
 ('E_PROS_DENTURE', 'E. Phục hình Tháo lắp', 5, true, NOW()),
-('F_OTHER', 'F. Dịch vụ khác', 6, true, NOW());
+('F_OTHER', 'F. Dịch vụ khác', 6, true, NOW())
+ON CONFLICT (category_code) DO NOTHING;
 
 
 -- =============================================
@@ -1677,7 +1759,8 @@ WHERE
         'IMPL_BONE_GRAFT', 'IMPL_SINUS_LIFT', 'IMPL_HEALING',
         'IMPL_IMPRESSION', 'IMPL_CROWN_TITAN', 'IMPL_CROWN_ZIR',
         'EXTRACT_WISDOM_L1', 'EXTRACT_WISDOM_L2', 'OTHER_GINGIVECTOMY'
-    ));
+    ))
+ON CONFLICT (room_id, service_id) DO NOTHING;
 
 
 -- =============================================
@@ -1936,7 +2019,8 @@ INSERT INTO specializations (specialization_id, specialization_code, specializat
 VALUES
     (901, 'TEST-IMPLANT', 'Test Implant Specialist', 'Chuyên khoa Cấy ghép Implant (Test)', true, CURRENT_TIMESTAMP),
     (902, 'TEST-ORTHO', 'Test Orthodontics', 'Chuyên khoa Chỉnh nha (Test)', true, CURRENT_TIMESTAMP),
-    (903, 'TEST-GENERAL', 'Test General Dentistry', 'Nha khoa tổng quát (Test)', true, CURRENT_TIMESTAMP);
+    (903, 'TEST-GENERAL', 'Test General Dentistry', 'Nha khoa tổng quát (Test)', true, CURRENT_TIMESTAMP)
+ON CONFLICT (specialization_id) DO NOTHING;
 
 -- =====================================================
 -- 8. EMPLOYEE SHIFTS (Test date: 2025-11-15 - Thứ Bảy)
@@ -1949,61 +2033,73 @@ VALUES
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
 SELECT 'EMS251115001', 1, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
 FROM work_shifts WHERE shift_name = 'Ca Sáng (8h-12h)' LIMIT 1
+ON CONFLICT (employee_shift_id) DO NOTHING
 
 -- Dentist 1: Lê Anh Khoa (Full-time) - Ca Chiều
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
 SELECT 'EMS251115001B', 1, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
 FROM work_shifts WHERE shift_name = 'Ca Chiều (13h-17h)' LIMIT 1
+ON CONFLICT (employee_shift_id) DO NOTHING
 
 -- Dentist 2: Trịnh Công Thái (Full-time) - Ca Sáng
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
 SELECT 'EMS251115002', 2, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
 FROM work_shifts WHERE shift_name = 'Ca Sáng (8h-12h)' LIMIT 1
+ON CONFLICT (employee_shift_id) DO NOTHING
 
 -- Dentist 2: Trịnh Công Thái (Full-time) - Ca Chiều
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
 SELECT 'EMS251115002B', 2, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
 FROM work_shifts WHERE shift_name = 'Ca Chiều (13h-17h)' LIMIT 1
+ON CONFLICT (employee_shift_id) DO NOTHING
 
 -- Dentist 3: Jimmy Donaldson (Part-time flex) - Ca Part-time Sáng
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
 SELECT 'EMS251115003', 3, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
 FROM work_shifts WHERE shift_name = 'Ca Part-time Sáng (8h-12h)' LIMIT 1
+ON CONFLICT (employee_shift_id) DO NOTHING
 
 -- Dentist 4: Junya Ota (Part-time fixed) - Ca Part-time Chiều
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
 SELECT 'EMS251115004', 4, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
 FROM work_shifts WHERE shift_name = 'Ca Part-time Chiều (13h-17h)' LIMIT 1
+ON CONFLICT (employee_shift_id) DO NOTHING
 
 -- Y tá 1: Đoàn Nguyễn Khôi Nguyên (Full-time) - Ca Sáng
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
 SELECT 'EMS251115007', 7, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
 FROM work_shifts WHERE shift_name = 'Ca Sáng (8h-12h)' LIMIT 1
+ON CONFLICT (employee_shift_id) DO NOTHING
 
 -- Y tá 1: Đoàn Nguyễn Khôi Nguyên (Full-time) - Ca Chiều
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
 SELECT 'EMS251115007B', 7, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
 FROM work_shifts WHERE shift_name = 'Ca Chiều (13h-17h)' LIMIT 1
+ON CONFLICT (employee_shift_id) DO NOTHING
 
 -- Y tá 2: Nguyễn Trần Tuấn Khang (Full-time) - Ca Sáng
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
 SELECT 'EMS251115008A', 8, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
 FROM work_shifts WHERE shift_name = 'Ca Sáng (8h-12h)' LIMIT 1
+ON CONFLICT (employee_shift_id) DO NOTHING
 
 -- Y tá 2: Nguyễn Trần Tuấn Khang (Full-time) - Ca Chiều
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
 SELECT 'EMS251115008', 8, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
 FROM work_shifts WHERE shift_name = 'Ca Chiều (13h-17h)' LIMIT 1
+ON CONFLICT (employee_shift_id) DO NOTHING
 
 -- Y tá 3: Huỳnh Tấn Quang Nhật (Part-time fixed) - Ca Part-time Sáng
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
 SELECT 'EMS251115009', 9, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
 FROM work_shifts WHERE shift_name = 'Ca Part-time Sáng (8h-12h)' LIMIT 1
+ON CONFLICT (employee_shift_id) DO NOTHING
 
 -- Y tá 4: Ngô Đình Chính (Part-time flex) - Ca Part-time Chiều
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
 SELECT 'EMS251115010', 10, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
 FROM work_shifts WHERE shift_name = 'Ca Part-time Chiều (13h-17h)' LIMIT 1
+ON CONFLICT (employee_shift_id) DO NOTHING
 
 -- ============================================
 -- 9. SAMPLE APPOINTMENTS (Test date: 2025-11-04 - TODAY)
@@ -2020,12 +2116,14 @@ INSERT INTO appointments (
     '2025-11-04 09:00:00', '2025-11-04 09:45:00', 45,
     'SCHEDULED', 'Khám tổng quát + Lấy cao răng - Test OBSERVER', 5, NOW(), NOW()
 )
+ON CONFLICT (appointment_id) DO NOTHING;
 
 -- Services cho APT-001
 INSERT INTO appointment_services (appointment_id, service_id)
 VALUES
     (1, 1),  -- GEN_EXAM (service_id=1, first in services table)
     (1, 3)   -- SCALING_L1 (service_id=3, third in services table)
+ON CONFLICT (appointment_id, service_id) DO NOTHING;
 
 
 -- Participants cho APT-001: Y tá + OBSERVER
@@ -2033,6 +2131,7 @@ INSERT INTO appointment_participants (appointment_id, employee_id, participant_r
 VALUES
     (1, 7, 'ASSISTANT'),    -- EMP007 - Y tá Nguyên
     (1, 12, 'OBSERVER')     -- EMP012 - Thực tập sinh Linh (✅ TEST DATA)
+ON CONFLICT (appointment_id, employee_id, participant_role) DO NOTHING;
 
 
 -- APT-002: Lịch hẹn Ca Chiều - Bác sĩ Thái (KHÔNG có OBSERVER)
@@ -2044,11 +2143,13 @@ INSERT INTO appointments (
     2, 'APT-20251104-002', 2, 2, 'GHE251103002',
     '2025-11-04 14:00:00', '2025-11-04 14:30:00', 30,
     'SCHEDULED', 'Khám tổng quát - NO OBSERVER', 5, NOW(), NOW()
-);
+)
+ON CONFLICT (appointment_id) DO NOTHING;
 
 -- Services cho APT-002
 INSERT INTO appointment_services (appointment_id, service_id)
-VALUES (2, 1);  -- GEN_EXAM service_id=1
+VALUES (2, 1)  -- GEN_EXAM service_id=1
+ON CONFLICT (appointment_id, service_id) DO NOTHING;
 
 
 -- APT-003: Lịch hẹn LATE (quá giờ 15 phút) - Test computedStatus
@@ -2060,16 +2161,19 @@ INSERT INTO appointments (
     3, 'APT-20251104-003', 3, 1, 'GHE251103001',
     '2025-11-04 08:00:00', '2025-11-04 08:30:00', 30,
     'SCHEDULED', 'Test LATE status - Bệnh nhân chưa check-in', 5, NOW(), NOW()
-);
+)
+ON CONFLICT (appointment_id) DO NOTHING;
 
 -- Services cho APT-003
 INSERT INTO appointment_services (appointment_id, service_id)
-VALUES (3, 1);  -- GEN_EXAM service_id=1
+VALUES (3, 1)  -- GEN_EXAM service_id=1
+ON CONFLICT (appointment_id, service_id) DO NOTHING;
 
 
 -- Participants cho APT-003: Thực tập sinh Linh làm OBSERVER
 INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
-VALUES (3, 12, 'OBSERVER');  -- EMP012 - Thực tập sinh Linh
+VALUES (3, 12, 'OBSERVER')  -- EMP012 - Thực tập sinh Linh
+ON CONFLICT (appointment_id, employee_id, participant_role) DO NOTHING;
 
 
 -- ============================================
@@ -2085,14 +2189,17 @@ INSERT INTO appointments (
     4, 'APT-20251106-001', 1, 1, 'GHE251103001',
     '2025-11-06 09:00:00', '2025-11-06 09:30:00', 30,
     'SCHEDULED', 'Khám tổng quát - BS Khoa ca sáng', 5, NOW(), NOW()
-);
+)
+ON CONFLICT (appointment_id) DO NOTHING;
 
 INSERT INTO appointment_services (appointment_id, service_id)
-VALUES (4, 1);  -- GEN_EXAM
+VALUES (4, 1)  -- GEN_EXAM
+ON CONFLICT (appointment_id, service_id) DO NOTHING;
 
 
 INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
-VALUES (4, 7, 'ASSISTANT');  -- EMP007 - Y tá Nguyên
+VALUES (4, 7, 'ASSISTANT')  -- EMP007 - Y tá Nguyên
+ON CONFLICT (appointment_id, employee_id, participant_role) DO NOTHING;
 
 
 -- APT-005: Nov 6 Afternoon - BS Lê Anh Khoa (EMP001) - ✅ FIXED: EMP001 has PERIODONTICS specialization
@@ -2104,15 +2211,18 @@ INSERT INTO appointments (
     5, 'APT-20251106-002', 2, 1, 'GHE251103002',
     '2025-11-06 14:00:00', '2025-11-06 14:45:00', 45,
     'SCHEDULED', 'Lấy cao răng + Khám - BS Khoa ca chiều', 5, NOW(), NOW()
-);
+)
+ON CONFLICT (appointment_id) DO NOTHING;
 
 INSERT INTO appointment_services (appointment_id, service_id)
 VALUES
     (5, 1),  -- GEN_EXAM
-    (5, 3);   -- SCALING_L1 (requires specialization_id=3 PERIODONTICS, EMP001 has it)
+    (5, 3)   -- SCALING_L1 (requires specialization_id=3 PERIODONTICS, EMP001 has it)
+ON CONFLICT (appointment_id, service_id) DO NOTHING;
 
 INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
-VALUES (5, 8, 'ASSISTANT');  -- EMP008 - Y tá Khang
+VALUES (5, 8, 'ASSISTANT')  -- EMP008 - Y tá Khang
+ON CONFLICT (appointment_id, employee_id, participant_role) DO NOTHING;
 
 
 -- APT-006: Nov 7 Morning - BS Jimmy (EMP003)
@@ -2124,14 +2234,17 @@ INSERT INTO appointments (
     6, 'APT-20251107-001', 3, 3, 'GHE251103003',
     '2025-11-07 10:00:00', '2025-11-07 10:30:00', 30,
     'SCHEDULED', 'Khám nha khoa trẻ em - BS Jimmy', 5, NOW(), NOW()
-);
+)
+ON CONFLICT (appointment_id) DO NOTHING;
 
 INSERT INTO appointment_services (appointment_id, service_id)
-VALUES (6, 1);  -- GEN_EXAM
+VALUES (6, 1)  -- GEN_EXAM
+ON CONFLICT (appointment_id, service_id) DO NOTHING;
 
 
 INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
-VALUES (6, 7, 'ASSISTANT');  -- EMP007 - Y tá Nguyên
+VALUES (6, 7, 'ASSISTANT')  -- EMP007 - Y tá Nguyên
+ON CONFLICT (appointment_id, employee_id, participant_role) DO NOTHING;
 
 
 -- APT-007: Nov 7 Afternoon - BS Thái (EMP002) - Can be used for reschedule testing
@@ -2143,14 +2256,17 @@ INSERT INTO appointments (
     7, 'APT-20251107-002', 4, 2, 'GHE251103002',
     '2025-11-07 15:00:00', '2025-11-07 15:30:00', 30,
     'SCHEDULED', 'Khám định kỳ - BN Mít tơ bít', 5, NOW(), NOW()
-);
+)
+ON CONFLICT (appointment_id) DO NOTHING;
 
 INSERT INTO appointment_services (appointment_id, service_id)
-VALUES (7, 1);  -- GEN_EXAM
+VALUES (7, 1)  -- GEN_EXAM
+ON CONFLICT (appointment_id, service_id) DO NOTHING;
 
 
 INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
-VALUES (7, 8, 'ASSISTANT');  -- EMP008 - Y tá Khang
+VALUES (7, 8, 'ASSISTANT')  -- EMP008 - Y tá Khang
+ON CONFLICT (appointment_id, employee_id, participant_role) DO NOTHING;
 
 
 -- APT-008: Nov 8 Morning - BS Khoa (EMP001) - Multiple services
@@ -2162,15 +2278,18 @@ INSERT INTO appointments (
     8, 'APT-20251108-001', 2, 1, 'GHE251103001',
     '2025-11-08 09:30:00', '2025-11-08 10:15:00', 45,
     'SCHEDULED', 'Lấy cao răng nâng cao - BS Khoa', 5, NOW(), NOW()
-);
+)
+ON CONFLICT (appointment_id) DO NOTHING;
 
 INSERT INTO appointment_services (appointment_id, service_id)
 VALUES
     (8, 1),  -- GEN_EXAM
-    (8, 4);   -- SCALING_L2 (Advanced scaling)
+    (8, 4)   -- SCALING_L2 (Advanced scaling)
+ON CONFLICT (appointment_id, service_id) DO NOTHING;
 
 INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
-VALUES (8, 7, 'ASSISTANT');  -- EMP007 - Y tá Nguyên
+VALUES (8, 7, 'ASSISTANT')  -- EMP007 - Y tá Nguyên
+ON CONFLICT (appointment_id, employee_id, participant_role) DO NOTHING;
 
 
 -- Reset appointments sequence after seed data
@@ -2207,7 +2326,8 @@ INSERT INTO patient_treatment_plans (
     'IN_PROGRESS', 'APPROVED', '2025-10-01', '2027-10-01',
     35000000, 0, 35000000, 'INSTALLMENT',
     '2025-10-01 08:30:00', 3, '2025-10-02 09:00:00', NOW()
-);
+)
+ON CONFLICT (plan_id) DO NOTHING;
 
 -- Phase 1: Chuẩn bị
 INSERT INTO patient_plan_phases (
@@ -2216,7 +2336,8 @@ INSERT INTO patient_plan_phases (
 ) VALUES (
     1, 1, 1, 'Giai đoạn 1: Chuẩn bị và Kiểm tra',
     'COMPLETED', '2025-10-01', '2025-10-06', 7, NOW()
-);
+)
+ON CONFLICT (patient_phase_id) DO NOTHING;
 
 -- Items for Phase 1
 INSERT INTO patient_plan_items (
@@ -2225,7 +2346,8 @@ INSERT INTO patient_plan_items (
 ) VALUES
     (1, 1, 1, 1, 'Khám tổng quát và chụp X-quang', 'COMPLETED', 30, 500000, '2025-10-02 09:00:00', NOW()),
     (2, 1, 3, 2, 'Lấy cao răng trước niềng', 'COMPLETED', 45, 800000, '2025-10-03 10:30:00', NOW()),
-    (3, 1, 7, 3, 'Hàn trám răng sâu (nếu có)', 'COMPLETED', 60, 1500000, '2025-10-05 14:00:00', NOW());
+    (3, 1, 7, 3, 'Hàn trám răng sâu (nếu có)', 'COMPLETED', 60, 1500000, '2025-10-05 14:00:00', NOW())
+ON CONFLICT (item_id) DO NOTHING;
 
 
 -- Phase 2: Lắp mắc cài
@@ -2235,7 +2357,8 @@ INSERT INTO patient_plan_phases (
 ) VALUES (
     2, 1, 2, 'Giai đoạn 2: Lắp Mắc cài và Điều chỉnh ban đầu',
     'IN_PROGRESS', '2025-10-15', 60, NOW()
-);
+)
+ON CONFLICT (patient_phase_id) DO NOTHING;
 
 -- Items for Phase 2
 INSERT INTO patient_plan_items (
@@ -2245,7 +2368,8 @@ INSERT INTO patient_plan_items (
     (4, 2, 38, 1, 'Lắp mắc cài kim loại hàm trên', 'COMPLETED', 90, 8000000, '2025-10-16 09:00:00', NOW()),
     (5, 2, 38, 2, 'Lắp mắc cài kim loại hàm dưới', 'COMPLETED', 90, 8000000, '2025-10-17 10:00:00', NOW()),
     (6, 2, 39, 3, 'Điều chỉnh lần 1 (sau 1 tháng)', 'READY_FOR_BOOKING', 45, 500000, NULL, NOW()),
-    (7, 2, 39, 4, 'Điều chỉnh lần 2 (sau 2 tháng)', 'READY_FOR_BOOKING', 45, 500000, NULL, NOW());
+    (7, 2, 39, 4, 'Điều chỉnh lần 2 (sau 2 tháng)', 'READY_FOR_BOOKING', 45, 500000, NULL, NOW())
+ON CONFLICT (item_id) DO NOTHING;
 
 
 -- Phase 3: Điều chỉnh định kỳ (FIXED: 24→8 months for realistic seed data)
@@ -2255,7 +2379,8 @@ INSERT INTO patient_plan_phases (
 ) VALUES (
     3, 1, 3, 'Giai đoạn 3: Điều chỉnh định kỳ (8 tháng)',
     'PENDING', NULL, 240, NOW()
-);
+)
+ON CONFLICT (patient_phase_id) DO NOTHING;
 
 -- Items for Phase 3 (8 adjustment sessions - months 3 to 10)
 INSERT INTO patient_plan_items (
@@ -2269,7 +2394,8 @@ INSERT INTO patient_plan_items (
     (12, 3, 39, 5, 'Điều chỉnh tháng 7', 'READY_FOR_BOOKING', 45, 500000, NULL, NOW()),
     (13, 3, 39, 6, 'Điều chỉnh tháng 8', 'READY_FOR_BOOKING', 45, 500000, NULL, NOW()),
     (14, 3, 39, 7, 'Điều chỉnh tháng 9', 'READY_FOR_BOOKING', 45, 500000, NULL, NOW()),
-    (15, 3, 39, 8, 'Điều chỉnh tháng 10', 'READY_FOR_BOOKING', 45, 500000, NULL, NOW());
+    (15, 3, 39, 8, 'Điều chỉnh tháng 10', 'READY_FOR_BOOKING', 45, 500000, NULL, NOW())
+ON CONFLICT (item_id) DO NOTHING;
 
 
 -- Treatment Plan 2: Bệnh nhân BN-1002 (Phạm Văn Phong) - Implant
@@ -2283,7 +2409,8 @@ INSERT INTO patient_treatment_plans (
     'COMPLETED', 'APPROVED', '2024-05-15', '2024-08-20',
     40000000, 5000000, 35000000, 'FULL',
     '2024-05-14 15:00:00', 3, '2024-05-14 16:00:00', '2024-05-15 10:00:00'
-);
+)
+ON CONFLICT (plan_id) DO NOTHING;
 
 -- Phase 1: Chuẩn bị Implant
 INSERT INTO patient_plan_phases (
@@ -2292,14 +2419,16 @@ INSERT INTO patient_plan_phases (
 ) VALUES (
     4, 2, 1, 'Giai đoạn 1: Khám và Chuẩn bị',
     'COMPLETED', '2024-05-15', '2024-05-20', 7, '2024-05-15 10:00:00'
-);
+)
+ON CONFLICT (patient_phase_id) DO NOTHING;
 
 INSERT INTO patient_plan_items (
     item_id, phase_id, service_id, sequence_number, item_name,
     status, estimated_time_minutes, price, completed_at, created_at
 ) VALUES
     (16, 4, 1, 1, 'Khám tổng quát và chụp CT', 'COMPLETED', 45, 1500000, '2024-05-15 11:00:00', '2024-05-15 10:00:00'),
-    (17, 4, 3, 2, 'Vệ sinh răng miệng', 'COMPLETED', 30, 800000, '2024-05-16 09:00:00', '2024-05-15 10:00:00');
+    (17, 4, 3, 2, 'Vệ sinh răng miệng', 'COMPLETED', 30, 800000, '2024-05-16 09:00:00', '2024-05-15 10:00:00')
+ON CONFLICT (item_id) DO NOTHING;
 
 
 -- Phase 2: Cấy Implant
@@ -2309,14 +2438,16 @@ INSERT INTO patient_plan_phases (
 ) VALUES (
     5, 2, 2, 'Giai đoạn 2: Cấy trụ Implant',
     'COMPLETED', '2024-06-01', '2024-06-05', 5, '2024-05-15 10:00:00'
-);
+)
+ON CONFLICT (patient_phase_id) DO NOTHING;
 
 INSERT INTO patient_plan_items (
     item_id, phase_id, service_id, sequence_number, item_name,
     status, estimated_time_minutes, price, completed_at, created_at
 ) VALUES
     (18, 5, 29, 1, 'Cấy Implant răng cửa số 11', 'COMPLETED', 120, 18000000, '2024-06-01 14:00:00', '2024-05-15 10:00:00'),
-    (19, 5, 29, 2, 'Cấy Implant răng cửa số 21', 'COMPLETED', 120, 18000000, '2024-06-02 10:00:00', '2024-05-15 10:00:00');
+    (19, 5, 29, 2, 'Cấy Implant răng cửa số 21', 'COMPLETED', 120, 18000000, '2024-06-02 10:00:00', '2024-05-15 10:00:00')
+ON CONFLICT (item_id) DO NOTHING;
 
 
 -- Phase 3: Lắp răng sứ
@@ -2326,14 +2457,16 @@ INSERT INTO patient_plan_phases (
 ) VALUES (
     6, 2, 3, 'Giai đoạn 3: Lắp mão sứ (sau 3 tháng lành xương)',
     'COMPLETED', '2024-08-15', '2024-08-20', 90, '2024-05-15 10:00:00'
-);
+)
+ON CONFLICT (patient_phase_id) DO NOTHING;
 
 INSERT INTO patient_plan_items (
     item_id, phase_id, service_id, sequence_number, item_name,
     status, estimated_time_minutes, price, completed_at, created_at
 ) VALUES
     (20, 6, 22, 1, 'Lắp mão sứ Titan răng 11', 'COMPLETED', 60, 6000000, '2024-08-15 10:00:00', '2024-05-15 10:00:00'),
-    (21, 6, 22, 2, 'Lắp mão sứ Titan răng 21', 'COMPLETED', 60, 6000000, '2024-08-16 10:00:00', '2024-05-15 10:00:00');
+    (21, 6, 22, 2, 'Lắp mão sứ Titan răng 21', 'COMPLETED', 60, 6000000, '2024-08-16 10:00:00', '2024-05-15 10:00:00')
+ON CONFLICT (item_id) DO NOTHING;
 
 
 -- Treatment Plan 3: Bệnh nhân BN-1003 (Nguyễn Tuấn Anh) - Tẩy trắng răng
@@ -2347,7 +2480,8 @@ INSERT INTO patient_treatment_plans (
     'PENDING', 'APPROVED', '2025-11-15', '2025-11-30',
     8000000, 800000, 7200000, 'FULL',
     3, '2025-11-05 14:00:00', NOW()
-);
+)
+ON CONFLICT (plan_id) DO NOTHING;
 
 -- Phase 1: Chuẩn bị tẩy trắng
 INSERT INTO patient_plan_phases (
@@ -2356,14 +2490,16 @@ INSERT INTO patient_plan_phases (
 ) VALUES (
     7, 3, 1, 'Giai đoạn 1: Kiểm tra và Vệ sinh',
     'PENDING', NULL, 3, NOW()
-);
+)
+ON CONFLICT (patient_phase_id) DO NOTHING;
 
 INSERT INTO patient_plan_items (
     item_id, phase_id, service_id, sequence_number, item_name,
     status, estimated_time_minutes, price, completed_at, created_at
 ) VALUES
     (22, 7, 1, 1, 'Khám răng miệng tổng quát', 'READY_FOR_BOOKING', 30, 500000, NULL, NOW()),
-    (23, 7, 3, 2, 'Lấy cao răng', 'READY_FOR_BOOKING', 45, 800000, NULL, NOW());
+    (23, 7, 3, 2, 'Lấy cao răng', 'READY_FOR_BOOKING', 45, 800000, NULL, NOW())
+ON CONFLICT (item_id) DO NOTHING;
 
 
 -- Phase 2: Tẩy trắng
@@ -2373,14 +2509,16 @@ INSERT INTO patient_plan_phases (
 ) VALUES (
     8, 3, 2, 'Giai đoạn 2: Tẩy trắng Laser',
     'PENDING', NULL, 14, NOW()
-);
+)
+ON CONFLICT (patient_phase_id) DO NOTHING;
 
 INSERT INTO patient_plan_items (
     item_id, phase_id, service_id, sequence_number, item_name,
     status, estimated_time_minutes, price, completed_at, created_at
 ) VALUES
-    (24, 8, 17, 1, 'Tẩy trắng răng Laser lần 1', 'READY_FOR_BOOKING', 90, 5000000, NULL, NOW()),
-    (25, 8, 17, 2, 'Kiểm tra và tư vấn sau tẩy trắng', 'READY_FOR_BOOKING', 30, 0, NULL, NOW());
+    (24, 8, 17, 1, 'Tẩy trắng răng răng Laser lần 1', 'READY_FOR_BOOKING', 90, 5000000, NULL, NOW()),
+    (25, 8, 17, 2, 'Kiểm tra và tư vấn sau tẩy trắng', 'READY_FOR_BOOKING', 30, 0, NULL, NOW())
+ON CONFLICT (item_id) DO NOTHING;
 
 
 -- ============================================
@@ -2400,7 +2538,8 @@ INSERT INTO patient_treatment_plans (
     'PENDING', 'DRAFT', '2025-01-20', '2025-02-20',
     8500000, 500000, 8000000, 'FULL',
     '2025-01-10 10:00:00'
-);
+)
+ON CONFLICT (plan_id) DO NOTHING;
 
 -- Phase 1: Nhổ răng khôn
 INSERT INTO patient_plan_phases (
@@ -2409,14 +2548,16 @@ INSERT INTO patient_plan_phases (
 ) VALUES (
     9, 4, 1, 'Giai đoạn 1: Nhổ răng khôn',
     'PENDING', '2025-01-20', 7, '2025-01-10 10:00:00'
-);
+)
+ON CONFLICT (patient_phase_id) DO NOTHING;
 
 INSERT INTO patient_plan_items (
     item_id, phase_id, service_id, sequence_number, item_name,
     status, estimated_time_minutes, price, created_at
 ) VALUES
     (26, 9, 14, 1, 'Nhổ răng khôn hàm dưới bên trái', 'READY_FOR_BOOKING', 60, 2500000, '2025-01-10 10:00:00'),
-    (27, 9, 14, 2, 'Nhổ răng khôn hàm dưới bên phải', 'READY_FOR_BOOKING', 60, 2500000, '2025-01-10 10:00:00');
+    (27, 9, 14, 2, 'Nhổ răng khôn hàm dưới bên phải', 'READY_FOR_BOOKING', 60, 2500000, '2025-01-10 10:00:00')
+ON CONFLICT (item_id) DO NOTHING;
 
 
 -- Phase 2: Tẩy trắng
@@ -2426,13 +2567,15 @@ INSERT INTO patient_plan_phases (
 ) VALUES (
     10, 4, 2, 'Giai đoạn 2: Tẩy trắng răng',
     'PENDING', '2025-02-05', 14, '2025-01-10 10:00:00'
-);
+)
+ON CONFLICT (patient_phase_id) DO NOTHING;
 
 INSERT INTO patient_plan_items (
     item_id, phase_id, service_id, sequence_number, item_name,
     status, estimated_time_minutes, price, created_at
 ) VALUES
-    (28, 10, 31, 1, 'Tẩy trắng răng Laser', 'READY_FOR_BOOKING', 90, 3500000, '2025-01-10 10:00:00');
+    (28, 10, 31, 1, 'Tẩy trắng răng Laser', 'READY_FOR_BOOKING', 90, 3500000, '2025-01-10 10:00:00')
+ON CONFLICT (item_id) DO NOTHING;
 
 
 -- Treatment Plan 5: BN-1004 - Bọc răng sứ 6 răng (Doctor EMP-1, IN_PROGRESS, APPROVED)
@@ -2446,7 +2589,8 @@ INSERT INTO patient_treatment_plans (
     'IN_PROGRESS', 'APPROVED', '2024-12-15', '2025-02-15',
     42000000, 2000000, 40000000, 'INSTALLMENT',
     3, '2024-12-16 09:00:00', '2024-12-15 14:00:00'
-);
+)
+ON CONFLICT (plan_id) DO NOTHING;
 
 -- Phase 1: Khám và chuẩn bị (COMPLETED)
 INSERT INTO patient_plan_phases (
@@ -2455,7 +2599,8 @@ INSERT INTO patient_plan_phases (
 ) VALUES (
     11, 5, 1, 'Giai đoạn 1: Khám và chuẩn bị',
     'COMPLETED', '2024-12-15', '2024-12-20', 5, '2024-12-15 14:00:00'
-);
+)
+ON CONFLICT (patient_phase_id) DO NOTHING;
 
 INSERT INTO patient_plan_items (
     item_id, phase_id, service_id, sequence_number, item_name,
@@ -2463,7 +2608,8 @@ INSERT INTO patient_plan_items (
 ) VALUES
     (29, 11, 1, 1, 'Khám tổng quát và tư vấn', 'COMPLETED', 30, 500000, '2024-12-15 15:00:00', '2024-12-15 14:00:00'),
     (30, 11, 3, 2, 'Vệ sinh răng miệng', 'COMPLETED', 45, 800000, '2024-12-17 10:00:00', '2024-12-15 14:00:00'),
-    (31, 11, 7, 3, 'Mài răng chuẩn bị bọc sứ', 'COMPLETED', 120, 3000000, '2024-12-19 14:00:00', '2024-12-15 14:00:00');
+    (31, 11, 7, 3, 'Mài răng chuẩn bị bọc sứ', 'COMPLETED', 120, 3000000, '2024-12-19 14:00:00', '2024-12-15 14:00:00')
+ON CONFLICT (item_id) DO NOTHING;
 
 
 -- Phase 2: Bọc răng sứ (IN_PROGRESS)
@@ -2473,7 +2619,8 @@ INSERT INTO patient_plan_phases (
 ) VALUES (
     12, 5, 2, 'Giai đoạn 2: Lắp răng sứ',
     'IN_PROGRESS', '2025-01-05', 30, '2024-12-15 14:00:00'
-);
+)
+ON CONFLICT (patient_phase_id) DO NOTHING;
 
 INSERT INTO patient_plan_items (
     item_id, phase_id, service_id, sequence_number, item_name,
@@ -2484,7 +2631,8 @@ INSERT INTO patient_plan_items (
     (34, 12, 22, 3, 'Bọc răng sứ Titan răng 21', 'COMPLETED', 60, 6000000, '2025-01-06 10:00:00', '2024-12-15 14:00:00'),
     (35, 12, 22, 4, 'Bọc răng sứ Titan răng 22', 'READY_FOR_BOOKING', 60, 6000000, NULL, '2024-12-15 14:00:00'),
     (36, 12, 22, 5, 'Bọc răng sứ Titan răng 13', 'READY_FOR_BOOKING', 60, 6000000, NULL, '2024-12-15 14:00:00'),
-    (37, 12, 22, 6, 'Bọc răng sứ Titan răng 23', 'READY_FOR_BOOKING', 60, 6000000, NULL, '2024-12-15 14:00:00');
+    (37, 12, 22, 6, 'Bọc răng sứ Titan răng 23', 'READY_FOR_BOOKING', 60, 6000000, NULL, '2024-12-15 14:00:00')
+ON CONFLICT (item_id) DO NOTHING;
 
 
 -- Treatment Plan 6: BN-1005 - Trồng răng Implant (Doctor EMP-3, COMPLETED, APPROVED)
@@ -2498,7 +2646,8 @@ INSERT INTO patient_treatment_plans (
     'COMPLETED', 'APPROVED', '2024-08-15', '2024-12-20',
     25000000, 1000000, 24000000, 'FULL',
     7, '2024-08-16 09:00:00', '2024-08-15 10:00:00'
-);
+)
+ON CONFLICT (plan_id) DO NOTHING;
 
 -- All phases completed
 INSERT INTO patient_plan_phases (
@@ -2507,7 +2656,8 @@ INSERT INTO patient_plan_phases (
 ) VALUES (
     13, 6, 1, 'Giai đoạn 1: Khám và Chụp CT', 'COMPLETED', '2024-08-15', '2024-08-20', 5, '2024-08-15 10:00:00'),
     (14, 6, 2, 'Giai đoạn 2: Cấy trụ Implant', 'COMPLETED', '2024-09-01', '2024-09-10', 10, '2024-08-15 10:00:00'),
-    (15, 6, 3, 'Giai đoạn 3: Lắp mão sứ', 'COMPLETED', '2024-12-10', '2024-12-20', 10, '2024-08-15 10:00:00');
+    (15, 6, 3, 'Giai đoạn 3: Lắp mão sứ', 'COMPLETED', '2024-12-10', '2024-12-20', 10, '2024-08-15 10:00:00')
+ON CONFLICT (patient_phase_id) DO NOTHING;
 
 INSERT INTO patient_plan_items (
     item_id, phase_id, service_id, sequence_number, item_name,
@@ -2516,7 +2666,8 @@ INSERT INTO patient_plan_items (
     (38, 13, 1, 1, 'Khám và chụp CT 3D', 'COMPLETED', 45, 1500000, '2024-08-15 11:00:00', '2024-08-15 10:00:00'),
     (39, 13, 3, 2, 'Vệ sinh răng miệng', 'COMPLETED', 30, 800000, '2024-08-17 10:00:00', '2024-08-15 10:00:00'),
     (40, 14, 29, 1, 'Cấy trụ Implant răng 36', 'COMPLETED', 120, 18000000, '2024-09-01 14:00:00', '2024-08-15 10:00:00'),
-    (41, 15, 22, 1, 'Lắp mão sứ Titan răng 36', 'COMPLETED', 60, 6000000, '2024-12-15 10:00:00', '2024-08-15 10:00:00');
+    (41, 15, 22, 1, 'Lắp mão sứ Titan răng 36', 'COMPLETED', 60, 6000000, '2024-12-15 10:00:00', '2024-08-15 10:00:00')
+ON CONFLICT (item_id) DO NOTHING;
 
 
 -- Treatment Plan 7: BN-1001 - Điều trị nướu răng (Doctor EMP-2, PENDING, DRAFT)
@@ -2530,7 +2681,8 @@ INSERT INTO patient_treatment_plans (
     'PENDING', 'DRAFT', '2025-01-15', '2025-03-15',
     5500000, 0, 5500000, 'FULL',
     '2025-01-08 11:00:00'
-);
+)
+ON CONFLICT (plan_id) DO NOTHING;
 
 INSERT INTO patient_plan_phases (
     patient_phase_id, plan_id, phase_number, phase_name,
@@ -2538,7 +2690,8 @@ INSERT INTO patient_plan_phases (
 ) VALUES (
     16, 7, 1, 'Giai đoạn 1: Vệ sinh và điều trị nướu',
     'PENDING', '2025-01-15', 60, '2025-01-08 11:00:00'
-);
+)
+ON CONFLICT (patient_phase_id) DO NOTHING;
 
 INSERT INTO patient_plan_items (
     item_id, phase_id, service_id, sequence_number, item_name,
@@ -2547,7 +2700,8 @@ INSERT INTO patient_plan_items (
     (42, 16, 3, 1, 'Vệ sinh răng miệng sâu', 'READY_FOR_BOOKING', 60, 1200000, '2025-01-08 11:00:00'),
     (43, 16, 4, 2, 'Điều trị viêm nướu (Lần 1)', 'READY_FOR_BOOKING', 45, 1500000, '2025-01-08 11:00:00'),
     (44, 16, 4, 3, 'Điều trị viêm nướu (Lần 2)', 'READY_FOR_BOOKING', 45, 1500000, '2025-01-08 11:00:00'),
-    (45, 16, 4, 4, 'Kiểm tra và tái khám', 'READY_FOR_BOOKING', 30, 800000, '2025-01-08 11:00:00');
+    (45, 16, 4, 4, 'Kiểm tra và tái khám', 'READY_FOR_BOOKING', 30, 800000, '2025-01-08 11:00:00')
+ON CONFLICT (item_id) DO NOTHING;
 
 
 -- Treatment Plan 8: BN-1002 - Niềng răng Invisalign (Doctor EMP-1, IN_PROGRESS, APPROVED)
@@ -2561,7 +2715,8 @@ INSERT INTO patient_treatment_plans (
     'IN_PROGRESS', 'APPROVED', '2024-11-01', '2025-11-01',
     85000000, 5000000, 80000000, 'INSTALLMENT',
     7, '2024-11-02 09:00:00', '2024-11-01 10:00:00'
-);
+)
+ON CONFLICT (plan_id) DO NOTHING;
 
 -- Phase 1: Chuẩn bị (COMPLETED)
 INSERT INTO patient_plan_phases (
@@ -2570,7 +2725,8 @@ INSERT INTO patient_plan_phases (
 ) VALUES (
     17, 8, 1, 'Giai đoạn 1: Khám và lập kế hoạch',
     'COMPLETED', '2024-11-01', '2024-11-10', 10, '2024-11-01 10:00:00'
-);
+)
+ON CONFLICT (patient_phase_id) DO NOTHING;
 
 INSERT INTO patient_plan_items (
     item_id, phase_id, service_id, sequence_number, item_name,
@@ -2578,7 +2734,8 @@ INSERT INTO patient_plan_items (
 ) VALUES
     (46, 17, 1, 1, 'Khám tổng quát và chụp CT 3D', 'COMPLETED', 45, 2000000, '2024-11-01 11:00:00', '2024-11-01 10:00:00'),
     (47, 17, 3, 2, 'Vệ sinh răng miệng', 'COMPLETED', 45, 800000, '2024-11-05 10:00:00', '2024-11-01 10:00:00'),
-    (48, 17, 40, 3, 'Thiết kế khay Invisalign', 'COMPLETED', 60, 10000000, '2024-11-08 14:00:00', '2024-11-01 10:00:00');
+    (48, 17, 40, 3, 'Thiết kế khay Invisalign', 'COMPLETED', 60, 10000000, '2024-11-08 14:00:00', '2024-11-01 10:00:00')
+ON CONFLICT (item_id) DO NOTHING;
 
 
 -- Phase 2: Điều chỉnh (IN_PROGRESS)
@@ -2588,7 +2745,8 @@ INSERT INTO patient_plan_phases (
 ) VALUES (
     18, 8, 2, 'Giai đoạn 2: Đeo khay và điều chỉnh (12 tháng)',
     'IN_PROGRESS', '2024-11-15', 365, '2024-11-01 10:00:00'
-);
+)
+ON CONFLICT (patient_phase_id) DO NOTHING;
 
 INSERT INTO patient_plan_items (
     item_id, phase_id, service_id, sequence_number, item_name,
@@ -2597,7 +2755,8 @@ INSERT INTO patient_plan_items (
     (49, 18, 40, 1, 'Bộ khay số 1-5', 'COMPLETED', 30, 15000000, '2024-11-15 10:00:00', '2024-11-01 10:00:00'),
     (50, 18, 40, 2, 'Bộ khay số 6-10', 'COMPLETED', 30, 15000000, '2024-12-15 10:00:00', '2024-11-01 10:00:00'),
     (51, 18, 40, 3, 'Bộ khay số 11-15', 'READY_FOR_BOOKING', 30, 15000000, NULL, '2024-11-01 10:00:00'),
-    (52, 18, 40, 4, 'Bộ khay số 16-20', 'READY_FOR_BOOKING', 30, 15000000, NULL, '2024-11-01 10:00:00');
+    (52, 18, 40, 4, 'Bộ khay số 16-20', 'READY_FOR_BOOKING', 30, 15000000, NULL, '2024-11-01 10:00:00')
+ON CONFLICT (item_id) DO NOTHING;
 
 
 -- Treatment Plan 9: BN-1003 - Hàn răng sâu (Doctor EMP-1, COMPLETED, APPROVED)
@@ -2611,7 +2770,8 @@ INSERT INTO patient_treatment_plans (
     'COMPLETED', 'APPROVED', '2024-09-20', '2024-10-05',
     7500000, 500000, 7000000, 'FULL',
     3, '2024-09-21 09:00:00', '2024-09-20 14:00:00'
-);
+)
+ON CONFLICT (plan_id) DO NOTHING;
 
 INSERT INTO patient_plan_phases (
     patient_phase_id, plan_id, phase_number, phase_name,
@@ -2619,7 +2779,8 @@ INSERT INTO patient_plan_phases (
 ) VALUES (
     19, 9, 1, 'Giai đoạn 1: Điều trị và hàn răng',
     'COMPLETED', '2024-09-20', '2024-10-05', 15, '2024-09-20 14:00:00'
-);
+)
+ON CONFLICT (patient_phase_id) DO NOTHING;
 
 INSERT INTO patient_plan_items (
     item_id, phase_id, service_id, sequence_number, item_name,
@@ -2629,7 +2790,8 @@ INSERT INTO patient_plan_items (
     (54, 19, 8, 2, 'Điều trị tủy răng 16', 'COMPLETED', 90, 3500000, '2024-09-25 10:00:00', '2024-09-20 14:00:00'),
     (55, 19, 7, 3, 'Hàn răng composite 16', 'COMPLETED', 60, 1500000, '2024-09-30 14:00:00', '2024-09-20 14:00:00'),
     (56, 19, 7, 4, 'Hàn răng composite 26', 'COMPLETED', 60, 1500000, '2024-10-02 10:00:00', '2024-09-20 14:00:00'),
-    (57, 19, 1, 5, 'Tái khám sau điều trị', 'COMPLETED', 30, 500000, '2024-10-05 11:00:00', '2024-09-20 14:00:00');
+    (57, 19, 1, 5, 'Tái khám sau điều trị', 'COMPLETED', 30, 500000, '2024-10-05 11:00:00', '2024-09-20 14:00:00')
+ON CONFLICT (item_id) DO NOTHING;
 
 
 -- Treatment Plan 10: BN-1004 - Cạo vôi răng định kỳ (Doctor EMP-2, IN_PROGRESS, APPROVED)
@@ -2643,7 +2805,8 @@ INSERT INTO patient_treatment_plans (
     'IN_PROGRESS', 'APPROVED', '2025-01-05', '2025-07-05',
     3600000, 0, 3600000, 'FULL',
     7, '2025-01-06 09:00:00', '2025-01-05 10:00:00'
-);
+)
+ON CONFLICT (plan_id) DO NOTHING;
 
 INSERT INTO patient_plan_phases (
     patient_phase_id, plan_id, phase_number, phase_name,
@@ -2651,7 +2814,8 @@ INSERT INTO patient_plan_phases (
 ) VALUES (
     20, 10, 1, 'Giai đoạn 1: Vệ sinh 6 tháng',
     'IN_PROGRESS', '2025-01-05', 180, '2025-01-05 10:00:00'
-);
+)
+ON CONFLICT (patient_phase_id) DO NOTHING;
 
 INSERT INTO patient_plan_items (
     item_id, phase_id, service_id, sequence_number, item_name,
@@ -2662,7 +2826,8 @@ INSERT INTO patient_plan_items (
     (60, 20, 3, 3, 'Cạo vôi răng lần 2 (sau 3 tháng)', 'READY_FOR_BOOKING', 45, 800000, NULL, '2025-01-05 10:00:00'),
     (61, 20, 1, 4, 'Khám tổng quát lần 2', 'READY_FOR_BOOKING', 30, 500000, NULL, '2025-01-05 10:00:00'),
     (62, 20, 3, 5, 'Cạo vôi răng lần 3 (sau 6 tháng)', 'READY_FOR_BOOKING', 45, 800000, NULL, '2025-01-05 10:00:00'),
-    (63, 20, 1, 6, 'Khám tổng quát lần 3', 'READY_FOR_BOOKING', 30, 500000, NULL, '2025-01-05 10:00:00');
+    (63, 20, 1, 6, 'Khám tổng quát lần 3', 'READY_FOR_BOOKING', 30, 500000, NULL, '2025-01-05 10:00:00')
+ON CONFLICT (item_id) DO NOTHING;
 
 
 -- ============================================
