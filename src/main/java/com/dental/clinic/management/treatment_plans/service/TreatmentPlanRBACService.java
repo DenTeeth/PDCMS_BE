@@ -16,18 +16,18 @@ import org.springframework.stereotype.Service;
 
 /**
  * RBAC (Role-Based Access Control) Helper Service for Treatment Plans.
- * 
+ *
  * Core Responsibilities:
  * 1. Extract account_id from JWT (handle Integer/Long/String types)
  * 2. Verify EMPLOYEE can only modify plans they created (createdBy check)
  * 3. Enforce PATIENT cannot modify plans (read-only)
  * 4. Allow ADMIN/MANAGER to modify all plans
- * 
+ *
  * Pattern for UPDATE operations (APIs 5.6, 5.7, 5.10, 5.11):
  * - EMPLOYEE with UPDATE_TREATMENT_PLAN → check createdBy == current employee
  * - PATIENT with UPDATE_TREATMENT_PLAN → REJECT (patients cannot modify)
  * - ADMIN with UPDATE_TREATMENT_PLAN → ALLOW (can modify all)
- * 
+ *
  * Used by:
  * - TreatmentPlanItemService (API 5.6)
  * - TreatmentPlanItemAdditionService (API 5.7)
@@ -45,11 +45,11 @@ public class TreatmentPlanRBACService {
     /**
      * Extract account_id from JWT token with type safety.
      * Handles multiple runtime types: Integer, Long, Number, String.
-     * 
+     *
      * @param authentication Spring Security Authentication object
      * @return account_id as Integer
      * @throws ResourceNotFoundException if account_id claim is missing
-     * @throws NumberFormatException if string claim cannot be parsed
+     * @throws NumberFormatException     if string claim cannot be parsed
      */
     public Integer getCurrentAccountId(Authentication authentication) {
         if (authentication == null || !(authentication.getPrincipal() instanceof Jwt)) {
@@ -95,15 +95,15 @@ public class TreatmentPlanRBACService {
 
     /**
      * Verify EMPLOYEE can modify the treatment plan (createdBy check).
-     * 
+     *
      * RBAC Rules:
      * - EMPLOYEE: Can only modify plans where createdBy == current employee
      * - PATIENT: Cannot modify plans (throw AccessDeniedException)
      * - ADMIN: Can modify all plans (skip verification)
-     * 
-     * @param plan The treatment plan to check
+     *
+     * @param plan           The treatment plan to check
      * @param authentication Current user's authentication
-     * @throws AccessDeniedException if user lacks permission to modify the plan
+     * @throws AccessDeniedException     if user lacks permission to modify the plan
      * @throws ResourceNotFoundException if account/employee not found
      */
     public void verifyEmployeeCanModifyPlan(
@@ -145,14 +145,14 @@ public class TreatmentPlanRBACService {
                             "Employee record not found for accountId: " + accountId));
 
             String currentEmployeeCode = employee.getEmployeeCode();
-            
+
             // Get plan creator employee
             Employee planCreator = plan.getCreatedBy();
             if (planCreator == null) {
                 log.error("❌ Plan {} has no creator (createdBy is null)", plan.getPlanId());
                 throw new AccessDeniedException("Treatment plan has no creator information");
             }
-            
+
             String planCreatorEmployeeCode = planCreator.getEmployeeCode();
 
             log.info("🔍 EMPLOYEE createdBy check: current={}, planCreator={}",
@@ -178,7 +178,7 @@ public class TreatmentPlanRBACService {
     /**
      * Extract base role ID from current authentication.
      * Utility method for components that need role info without full RBAC check.
-     * 
+     *
      * @param authentication Current user's authentication
      * @return baseRoleId (1=ADMIN, 2=EMPLOYEE, 3=PATIENT)
      */

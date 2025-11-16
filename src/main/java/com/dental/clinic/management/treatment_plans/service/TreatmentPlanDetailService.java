@@ -140,24 +140,29 @@ public class TreatmentPlanDetailService {
                 // VIEW_OWN permission: Check base role to determine filtering logic
                 if (hasViewOwnPermission) {
                         Integer currentAccountId = getCurrentAccountId(authentication);
-                        
+
                         // Get account to check base role
-                        com.dental.clinic.management.account.domain.Account account = accountRepository.findById(currentAccountId)
-                                .orElseThrow(() -> new AccessDeniedException("Account not found: " + currentAccountId));
-                        
+                        com.dental.clinic.management.account.domain.Account account = accountRepository
+                                        .findById(currentAccountId)
+                                        .orElseThrow(() -> new AccessDeniedException(
+                                                        "Account not found: " + currentAccountId));
+
                         Integer baseRoleId = account.getRole().getBaseRole().getBaseRoleId();
                         log.debug("User accountId={}, baseRoleId={}", currentAccountId, baseRoleId);
-                        
+
                         // PATIENT: Can only view their own plans (account_id verification)
-                        if (baseRoleId.equals(com.dental.clinic.management.security.constants.BaseRoleConstants.PATIENT)) {
-                                Integer patientAccountId = patient.getAccount() != null ? patient.getAccount().getAccountId()
+                        if (baseRoleId.equals(
+                                        com.dental.clinic.management.security.constants.BaseRoleConstants.PATIENT)) {
+                                Integer patientAccountId = patient.getAccount() != null
+                                                ? patient.getAccount().getAccountId()
                                                 : null;
 
                                 log.info("PATIENT mode: Current accountId: {}, Patient accountId: {}, Patient code: {}",
                                                 currentAccountId, patientAccountId, patientCode);
 
                                 if (patientAccountId == null) {
-                                        log.error("Patient {} has null account! This is a data integrity issue.", patientCode);
+                                        log.error("Patient {} has null account! This is a data integrity issue.",
+                                                        patientCode);
                                         throw new AccessDeniedException("Patient account information not found");
                                 }
 
@@ -170,20 +175,25 @@ public class TreatmentPlanDetailService {
                                 log.info("Patient verified as owner of patient record, access granted");
                                 return patient;
                         }
-                        
-                        // EMPLOYEE: Can view plans they created (will verify createdBy in getTreatmentPlanDetail)
-                        else if (baseRoleId.equals(com.dental.clinic.management.security.constants.BaseRoleConstants.EMPLOYEE)) {
+
+                        // EMPLOYEE: Can view plans they created (will verify createdBy in
+                        // getTreatmentPlanDetail)
+                        else if (baseRoleId.equals(
+                                        com.dental.clinic.management.security.constants.BaseRoleConstants.EMPLOYEE)) {
                                 com.dental.clinic.management.employee.domain.Employee employee = employeeRepository
-                                        .findOneByAccountAccountId(currentAccountId)
-                                        .orElseThrow(() -> new AccessDeniedException("Employee not found for account: " + currentAccountId));
-                                
-                                log.info("EMPLOYEE mode: Will verify plan was created by employeeId={}", employee.getEmployeeId());
+                                                .findOneByAccountAccountId(currentAccountId)
+                                                .orElseThrow(() -> new AccessDeniedException(
+                                                                "Employee not found for account: " + currentAccountId));
+
+                                log.info("EMPLOYEE mode: Will verify plan was created by employeeId={}",
+                                                employee.getEmployeeId());
                                 // Return patient, but will verify createdBy after fetching plan
                                 return patient;
                         }
-                        
+
                         // ADMIN with VIEW_OWN (should not happen, but allow)
-                        else if (baseRoleId.equals(com.dental.clinic.management.security.constants.BaseRoleConstants.ADMIN)) {
+                        else if (baseRoleId.equals(
+                                        com.dental.clinic.management.security.constants.BaseRoleConstants.ADMIN)) {
                                 log.info("ADMIN with VIEW_OWN permission, access granted");
                                 return patient;
                         }
@@ -196,9 +206,10 @@ public class TreatmentPlanDetailService {
 
         /**
          * Verify that EMPLOYEE with VIEW_OWN can only view plans they created.
-         * 
+         *
          * @param firstRow First row from query (contains createdBy info)
-         * @throws AccessDeniedException if employee trying to view plan created by another employee
+         * @throws AccessDeniedException if employee trying to view plan created by
+         *                               another employee
          */
         private void verifyEmployeeCreatedByPermission(TreatmentPlanDetailDTO firstRow) {
                 Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -224,13 +235,14 @@ public class TreatmentPlanDetailService {
                 }
 
                 Integer currentAccountId = getCurrentAccountId(authentication);
-                
+
                 // Get account to check base role
-                com.dental.clinic.management.account.domain.Account account = accountRepository.findById(currentAccountId)
-                        .orElseThrow(() -> new AccessDeniedException("Account not found: " + currentAccountId));
-                
+                com.dental.clinic.management.account.domain.Account account = accountRepository
+                                .findById(currentAccountId)
+                                .orElseThrow(() -> new AccessDeniedException("Account not found: " + currentAccountId));
+
                 Integer baseRoleId = account.getRole().getBaseRole().getBaseRoleId();
-                
+
                 // Only check createdBy for EMPLOYEE
                 if (!baseRoleId.equals(com.dental.clinic.management.security.constants.BaseRoleConstants.EMPLOYEE)) {
                         return;
@@ -238,12 +250,13 @@ public class TreatmentPlanDetailService {
 
                 // Get current employee
                 com.dental.clinic.management.employee.domain.Employee employee = employeeRepository
-                        .findOneByAccountAccountId(currentAccountId)
-                        .orElseThrow(() -> new AccessDeniedException("Employee not found for account: " + currentAccountId));
+                                .findOneByAccountAccountId(currentAccountId)
+                                .orElseThrow(() -> new AccessDeniedException(
+                                                "Employee not found for account: " + currentAccountId));
 
                 // Get plan's creator from DTO
                 String planCreatorEmployeeCode = firstRow.getDoctorEmployeeCode();
-                
+
                 if (planCreatorEmployeeCode == null) {
                         log.error("Plan has no creator (createdBy is null). PlanId={}", firstRow.getPlanId());
                         throw new AccessDeniedException("Cannot verify plan creator");
@@ -252,12 +265,12 @@ public class TreatmentPlanDetailService {
                 // Compare employee codes
                 if (!employee.getEmployeeCode().equals(planCreatorEmployeeCode)) {
                         log.warn("Access denied: Employee {} (code={}) attempting to view plan created by employee {}",
-                                employee.getEmployeeId(), employee.getEmployeeCode(), planCreatorEmployeeCode);
+                                        employee.getEmployeeId(), employee.getEmployeeCode(), planCreatorEmployeeCode);
                         throw new AccessDeniedException("You can only view treatment plans that you created");
                 }
 
                 log.info("EMPLOYEE createdBy verification passed: Employee {} viewing plan created by {}",
-                        employee.getEmployeeCode(), planCreatorEmployeeCode);
+                                employee.getEmployeeCode(), planCreatorEmployeeCode);
         }
 
         /**
