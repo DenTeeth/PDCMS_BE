@@ -453,7 +453,9 @@ VALUES
 ('ROLE_DENTIST', 'VIEW_TREATMENT_PLAN_OWN'),
 ('ROLE_DENTIST', 'CREATE_TREATMENT_PLAN'),
 ('ROLE_DENTIST', 'UPDATE_TREATMENT_PLAN'),
-('ROLE_DENTIST', 'DELETE_TREATMENT_PLAN')
+('ROLE_DENTIST', 'DELETE_TREATMENT_PLAN'),
+-- ✅ Service Management permission (Required for treatment plan item management)
+('ROLE_DENTIST', 'VIEW_SERVICE')  -- Load service list when adding items to treatment plan or booking appointments
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
