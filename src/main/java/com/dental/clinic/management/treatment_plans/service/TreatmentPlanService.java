@@ -208,6 +208,8 @@ public class TreatmentPlanService {
         return TreatmentPlanSummaryDTO.builder()
                 .patientPlanId(plan.getPlanId())
                 .planCode(plan.getPlanCode()) // CRITICAL FIX: Add planCode for FE navigation
+                .patientCode(plan.getPatient().getPatientCode()) // ✅ FE FIX 2025-11-15: Add patientCode for Admin
+                                                                 // navigation
                 .planName(plan.getPlanName())
                 .status(plan.getStatus())
                 .doctor(doctorInfo)

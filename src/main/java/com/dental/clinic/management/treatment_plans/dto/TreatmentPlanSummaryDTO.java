@@ -29,6 +29,15 @@ public class TreatmentPlanSummaryDTO {
      */
     private String planCode;
 
+    /**
+     * Patient code (e.g., "BN-1001")
+     * ✅ FE FIX: Required by Admin to navigate from list (API 5.5) to detail (API
+     * 5.2)
+     * Without this, Admin cannot click on plan when viewing all plans without
+     * patientCode filter
+     */
+    private String patientCode;
+
     private String planName;
 
     private TreatmentPlanStatus status;

@@ -1,138 +1,261 @@
-# Backend Fixes for Frontend Issues - Summary
+# FE Issues Fixed: Treatment Plan Navigation & Detail Access# Backend Fixes for Frontend Issues - Summary
 
-**Date:** 2025-11-11
-**Branch:** feat/BE-501-manage-treatment-plans
-**Author:** Treatment Plan Team
+**Date:** 2025-11-15 **Date:** 2025-11-11
+
+**Module:** Treatment Plans **Branch:** feat/BE-501-manage-treatment-plans
+
+**Priority:** 🟢 **FIXED** **Author:** Treatment Plan Team
+
+**Status:** ✅ **BACKEND FIX COMPLETED**
 
 ## 🎯 Issues Fixed
 
+---
+
 ### ✅ **CRITICAL Issue 3.1: `planCode` missing in TreatmentPlanSummaryDTO**
+
+## 📋 Issue Summary
 
 **Problem:** FE had to use workaround with 50-100 API calls to find planCode
 
+Frontend reported error when Admin navigates from **list page** (API 5.5) to **detail page** (API 5.2) because `patientCode` was missing in API 5.5 response.
+
 **Solution:**
 
-- Added `planCode` field to `TreatmentPlanSummaryDTO`
-- Updated mapper in `TreatmentPlanService.convertToSummaryDTO()`
+**Root Cause:**
+
+- ❌ API 5.5 response (`TreatmentPlanSummaryDTO`) không có field `patientCode`- Added `planCode` field to `TreatmentPlanSummaryDTO`
+
+- ❌ API 5.2 requires `patientCode` in path: `/api/v1/patients/{patientCode}/treatment-plans/{planCode}`- Updated mapper in `TreatmentPlanService.convertToSummaryDTO()`
+
+- ❌ Admin không thể navigate đến detail page từ list (khi không filter by patientCode)
 
 **Files Changed:**
 
+---
+
 - `src/main/java/com/dental/clinic/management/treatment_plans/dto/TreatmentPlanSummaryDTO.java`
-- `src/main/java/com/dental/clinic/management/treatment_plans/service/TreatmentPlanService.java`
 
-**API Response Before:**
+## ✅ Backend Fix Applied- `src/main/java/com/dental/clinic/management/treatment_plans/service/TreatmentPlanService.java`
 
-```json
+### Solution: Add `patientCode` to API 5.5 Response (Recommended by FE Team ⭐)**API Response Before:**
+
+**Changed Files:**```json
+
 {
-  "patientPlanId": 5,
-  "planName": "Niềng răng...",
-  "status": "PENDING"
-}
-```
 
-**API Response After:**
+### 1. `TreatmentPlanSummaryDTO.java` ✅ "patientPlanId": 5,
 
-```json
-{
-  "patientPlanId": 5,
-  "planCode": "PLAN-20251111-001", // ✅ NEW
-  "planName": "Niềng răng...",
-  "status": "PENDING"
-}
-```
+**File:** `src/main/java/com/dental/clinic/management/treatment_plans/dto/TreatmentPlanSummaryDTO.java` "planName": "Niềng răng...",
+
+"status": "PENDING"
+
+**Change:**}
+
+`java`
+
+public class TreatmentPlanSummaryDTO {
+
+    private Long patientPlanId;**API Response After:**
+
+    private String planCode;
+
+    ```json
+
+    // ✅ ADDED: patientCode field{
+
+    private String patientCode;  // ← NEW FIELD  "patientPlanId": 5,
+
+      "planCode": "PLAN-20251111-001", // ✅ NEW
+
+    private String planName;  "planName": "Niềng răng...",
+
+    private TreatmentPlanStatus status;  "status": "PENDING"
+
+    // ... rest of fields}
+
+}```
+
+````
+
+---
 
 ---
 
 ### ✅ **Issue 3.3: `patientCode` and `employeeCode` missing in JWT**
 
-**Problem:** FE couldn't get patientCode from JWT, needed workaround
+### 2. `TreatmentPlanService.java` ✅
+
+**File:** `src/main/java/com/dental/clinic/management/treatment_plans/service/TreatmentPlanService.java`**Problem:** FE couldn't get patientCode from JWT, needed workaround
+
+
+
+**Method:** `convertToSummaryDTO()` (Line 198-221)**Solution:**
+
+
+
+**Change:**- Modified `SecurityUtil.createAccessToken()` to accept `patientCode` and `employeeCode` parameters
+
+```java- Added JWT claims: `patient_code` and `employee_code`
+
+return TreatmentPlanSummaryDTO.builder()- Updated `AuthenticationService.login()` and `refresh()` to extract and pass these values
+
+        .patientPlanId(plan.getPlanId())
+
+        .planCode(plan.getPlanCode())**Files Changed:**
+
+        .patientCode(plan.getPatient().getPatientCode())  // ← NEW LINE
+
+        .planName(plan.getPlanName())- `src/main/java/com/dental/clinic/management/utils/security/SecurityUtil.java`
+
+        // ... rest of fields- `src/main/java/com/dental/clinic/management/authentication/service/AuthenticationService.java`
+
+        .build();
+
+```**JWT Payload Before:**
+
+
+
+---```json
+
+{
+
+## 🎯 Impact & Verification  "sub": "benhnhan1",
+
+  "account_id": 123,
+
+### ✅ APIs Affected (Both Fixed)  "roles": ["ROLE_PATIENT"],
+
+  "permissions": [...]
+
+1. **API 5.1**: `GET /api/v1/patients/{patientCode}/treatment-plans` ✅}
+
+2. **API 5.5**: `GET /api/v1/patient-treatment-plans` ✅ **FIXES NAVIGATION**```
+
+
+
+### ✅ Example Response (After Fix)**JWT Payload After:**
+
+
+
+```json```json
+
+{{
+
+  "content": [  "sub": "benhnhan1",
+
+    {  "account_id": 123,
+
+      "patientPlanId": 1,  "patient_code": "BN-1001",     // ✅ NEW
+
+      "planCode": "PLAN-20251001-001",  "employee_code": null,         // ✅ NEW (null for patients)
+
+      "patientCode": "BN-1001",  // ✅ NOW AVAILABLE  "roles": ["ROLE_PATIENT"],
+
+      "planName": "Lộ trình Niềng răng",  "permissions": [...]
+
+      "status": "IN_PROGRESS",}
+
+      "doctor": { ... },```
+
+      "startDate": "2025-10-01",
+
+      "totalCost": 35000000,---
+
+      "finalCost": 35000000
+
+    }### ✅ **Issue 2.3: Pagination not supported in API 5.1**
+
+  ]
+
+}**Problem:** FE had to do client-side pagination, slow with many plans
+
+````
 
 **Solution:**
-
-- Modified `SecurityUtil.createAccessToken()` to accept `patientCode` and `employeeCode` parameters
-- Added JWT claims: `patient_code` and `employee_code`
-- Updated `AuthenticationService.login()` and `refresh()` to extract and pass these values
-
-**Files Changed:**
-
-- `src/main/java/com/dental/clinic/management/utils/security/SecurityUtil.java`
-- `src/main/java/com/dental/clinic/management/authentication/service/AuthenticationService.java`
-
-**JWT Payload Before:**
-
-```json
-{
-  "sub": "benhnhan1",
-  "account_id": 123,
-  "roles": ["ROLE_PATIENT"],
-  "permissions": [...]
-}
-```
-
-**JWT Payload After:**
-
-```json
-{
-  "sub": "benhnhan1",
-  "account_id": 123,
-  "patient_code": "BN-1001",     // ✅ NEW
-  "employee_code": null,         // ✅ NEW (null for patients)
-  "roles": ["ROLE_PATIENT"],
-  "permissions": [...]
-}
-```
 
 ---
 
-### ✅ **Issue 2.3: Pagination not supported in API 5.1**
-
-**Problem:** FE had to do client-side pagination, slow with many plans
-
-**Solution:**
-
 - Added `Pageable` parameter to `GET /api/v1/patients/{patientCode}/treatment-plans`
-- Updated service to return `Page<TreatmentPlanSummaryDTO>`
+
+## 📝 Frontend Changes Required- Updated service to return `Page<TreatmentPlanSummaryDTO>`
+
 - Added repository method `findByPatientIdWithDoctorPageable()`
 
-**Files Changed:**
+### 1. Update TypeScript Type
 
-- `src/main/java/com/dental/clinic/management/treatment_plans/controller/TreatmentPlanController.java`
-- `src/main/java/com/dental/clinic/management/treatment_plans/service/TreatmentPlanService.java`
-- `src/main/java/com/dental/clinic/management/treatment_plans/repository/PatientTreatmentPlanRepository.java`
+```````typescript**Files Changed:**
 
-**API Usage:**
+export interface TreatmentPlanSummaryDTO {
 
-```bash
+  patientPlanId: number;- `src/main/java/com/dental/clinic/management/treatment_plans/controller/TreatmentPlanController.java`
+
+  planCode: string;- `src/main/java/com/dental/clinic/management/treatment_plans/service/TreatmentPlanService.java`
+
+  patientCode: string;  // ✅ ADD THIS- `src/main/java/com/dental/clinic/management/treatment_plans/repository/PatientTreatmentPlanRepository.java`
+
+  planName: string;
+
+  // ... rest**API Usage:**
+
+}
+
+``````bash
+
 # Get first page (10 items)
-GET /api/v1/patients/BN-1001/treatment-plans?page=0&size=10
 
-# Get second page (20 items per page, sorted by createdAt desc)
-GET /api/v1/patients/BN-1001/treatment-plans?page=1&size=20&sort=createdAt,desc
-```
+### 2. Simplify NavigationGET /api/v1/patients/BN-1001/treatment-plans?page=0&size=10
 
-**API Response:**
+```typescript
 
-```json
+// ✅ AFTER (Simple):# Get second page (20 items per page, sorted by createdAt desc)
+
+const handleRowClick = (plan: TreatmentPlanSummaryDTO) => {GET /api/v1/patients/BN-1001/treatment-plans?page=1&size=20&sort=createdAt,desc
+
+  router.push(`/admin/treatment-plans/${plan.planCode}?patientCode=${plan.patientCode}`);```
+
+};
+
+```**API Response:**
+
+
+
+---```json
+
 {
-  "content": [
+
+## ✅ Acceptance Criteria (All Met)  "content": [
+
     { "patientPlanId": 5, "planCode": "PLAN-20251111-001", ... },
-    { "patientPlanId": 4, "planCode": "PLAN-20251110-002", ... }
-  ],
-  "pageable": {
-    "pageNumber": 0,
-    "pageSize": 10,
+
+- ✅ API 5.5 response includes `patientCode`    { "patientPlanId": 4, "planCode": "PLAN-20251110-002", ... }
+
+- ✅ Admin can navigate from list to detail (without filter)  ],
+
+- ✅ No error messages  "pageable": {
+
+- ✅ Backward compatible    "pageNumber": 0,
+
+- ✅ No compilation errors    "pageSize": 10,
+
     "sort": { "sorted": true, "orders": [...] }
-  },
+
+---  },
+
   "totalElements": 25,
-  "totalPages": 3,
-  "number": 0,
-  "size": 10,
+
+**Fixed By:** Backend Development Team    "totalPages": 3,
+
+**Date:** 2025-11-15    "number": 0,
+
+**Status:** ✅ COMPLETED  "size": 10,
+
   "numberOfElements": 10,
   "first": true,
   "last": false,
   "empty": false
 }
-```
+```````
 
 ---
 
