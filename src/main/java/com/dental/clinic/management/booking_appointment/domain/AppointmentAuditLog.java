@@ -53,16 +53,16 @@ public class AppointmentAuditLog {
     /**
      * Type of action performed
      */
-    @Enumerated(EnumType.STRING)
     @Column(name = "action_type", nullable = false, columnDefinition = "appointment_action_type")
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.NAMED_ENUM)
     private AppointmentActionType actionType;
 
     /**
      * Business reason for action (for DELAY, CANCEL, RESCHEDULE)
      * Optional
      */
-    @Enumerated(EnumType.STRING)
     @Column(name = "reason_code", columnDefinition = "appointment_reason_code")
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.NAMED_ENUM)
     private AppointmentReasonCode reasonCode;
 
     /**
@@ -92,15 +92,15 @@ public class AppointmentAuditLog {
     /**
      * Old status (for STATUS_CHANGE tracking)
      */
-    @Enumerated(EnumType.STRING)
     @Column(name = "old_status", columnDefinition = "appointment_status_enum")
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.NAMED_ENUM)
     private AppointmentStatus oldStatus;
 
     /**
      * New status
      */
-    @Enumerated(EnumType.STRING)
     @Column(name = "new_status", columnDefinition = "appointment_status_enum")
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.NAMED_ENUM)
     private AppointmentStatus newStatus;
 
     /**

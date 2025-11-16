@@ -60,6 +60,36 @@ CREATE TYPE plan_item_status AS ENUM ('READY_FOR_BOOKING', 'SCHEDULED', 'PENDING
 -- ============================================
 
 -- ============================================
+-- FIX: CREATE appointment_audit_logs TABLE
+-- ============================================
+-- This fixes the issue where Hibernate creates the table without ENUM columns
+-- We MUST drop and recreate the table to ensure it has correct ENUM columns
+
+DROP TABLE IF EXISTS appointment_audit_logs CASCADE;
+
+CREATE TABLE appointment_audit_logs (
+    log_id BIGSERIAL PRIMARY KEY,
+    appointment_id BIGINT NOT NULL,
+    changed_by_employee_id BIGINT,
+    action_type appointment_action_type NOT NULL,
+    reason_code appointment_reason_code,
+    old_value TEXT,
+    new_value TEXT,
+    old_start_time TIMESTAMP,
+    new_start_time TIMESTAMP,
+    old_status appointment_status_enum,
+    new_status appointment_status_enum,
+    notes TEXT,
+    action_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create indexes
+CREATE INDEX IF NOT EXISTS idx_audit_appointment ON appointment_audit_logs(appointment_id);
+CREATE INDEX IF NOT EXISTS idx_audit_action_type ON appointment_audit_logs(action_type);
+CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON appointment_audit_logs(action_timestamp);
+
+-- ============================================
 -- V19: TREATMENT PLAN SCHEMA UPDATES
 -- ============================================
 -- Add approval workflow and phase duration columns
