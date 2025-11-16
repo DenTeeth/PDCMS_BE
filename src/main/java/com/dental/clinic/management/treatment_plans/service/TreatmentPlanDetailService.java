@@ -169,17 +169,43 @@ public class TreatmentPlanDetailService {
          * @return Account ID from token
          */
         private Integer getCurrentAccountId(Authentication authentication) {
-                if (authentication.getPrincipal() instanceof Jwt jwt) {
-                        // JWT claim returns Long, need to convert to Integer
-                        Object accountIdClaim = jwt.getClaim("account_id");
-                        if (accountIdClaim instanceof Long) {
-                                return ((Long) accountIdClaim).intValue();
-                        } else if (accountIdClaim instanceof Integer) {
-                                return (Integer) accountIdClaim;
-                        }
-                        throw new IllegalStateException("account_id claim is not a number: " + accountIdClaim);
+                if (authentication == null || authentication.getPrincipal() == null) {
+                        throw new IllegalStateException(
+                                        "Unable to extract account_id from token: no authentication principal");
                 }
-                throw new IllegalStateException("Unable to extract account_id from token");
+
+                if (authentication.getPrincipal() instanceof Jwt jwt) {
+                        Object claim = jwt.getClaim("account_id");
+                        if (claim == null) {
+                                throw new IllegalStateException(
+                                                "Unable to extract account_id from token: claim is null");
+                        }
+
+                        if (claim instanceof Integer) {
+                                return (Integer) claim;
+                        }
+                        if (claim instanceof Number) {
+                                return ((Number) claim).intValue();
+                        }
+                        if (claim instanceof String) {
+                                String s = (String) claim;
+                                try {
+                                        return Integer.valueOf(s);
+                                } catch (NumberFormatException ignored) {
+                                        try {
+                                                long l = Long.parseLong(s);
+                                                return (int) l;
+                                        } catch (NumberFormatException ex) {
+                                                throw new IllegalStateException(
+                                                                "Unable to parse account_id from token string: " + s);
+                                        }
+                                }
+                        }
+
+                        throw new IllegalStateException(
+                                        "Unsupported account_id claim type: " + claim.getClass().getName());
+                }
+                throw new IllegalStateException("Unable to extract account_id from token: principal is not Jwt");
         }
 
         /**
