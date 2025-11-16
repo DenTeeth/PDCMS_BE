@@ -208,8 +208,8 @@ public class TreatmentPlanService {
         return TreatmentPlanSummaryDTO.builder()
                 .patientPlanId(plan.getPlanId())
                 .planCode(plan.getPlanCode()) // CRITICAL FIX: Add planCode for FE navigation
-                .patientCode(plan.getPatient().getPatientCode()) // ✅ FE FIX 2025-11-15: Add patientCode for Admin
-                                                                 // navigation
+                .patientCode(plan.getPatient().getPatientCode())
+                // navigation
                 .planName(plan.getPlanName())
                 .status(plan.getStatus())
                 .doctor(doctorInfo)
@@ -279,76 +279,96 @@ public class TreatmentPlanService {
         org.springframework.data.jpa.domain.Specification<PatientTreatmentPlan> specification = com.dental.clinic.management.treatment_plans.specification.TreatmentPlanSpecification
                 .buildFromRequest(request);
 
-        // ============================================
-        // STEP 3: Apply RBAC Filters (P0 Fix - BaseRoleConstants)
-        // ============================================
-        if (hasViewAllPermission) {
-            // Admin: Can use doctorEmployeeCode/patientCode from request
-            // No additional RBAC filter needed
-            log.info("Admin mode: Applying filters from request (doctorCode={}, patientCode={})",
+        // Apply RBAC filters based on role
+        // Note: VIEW_TREATMENT_PLAN_OWN has different meanings depending on role:
+        // - EMPLOYEE: filter by createdBy
+        // - PATIENT: filter by patient
+
+        // Get account ID from JWT
+        Jwt jwt = (Jwt) authentication.getPrincipal();
+        Integer accountId = jwt.getClaim("account_id");
+
+        if (accountId == null) {
+            throw new AccessDeniedException("Invalid JWT: account_id not found");
+        }
+
+        // Fetch account to get base role
+        com.dental.clinic.management.account.domain.Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new AccessDeniedException("Account not found: " + accountId));
+
+        Integer baseRoleId = account.getRole().getBaseRole().getBaseRoleId();
+        log.debug("User accountId={}, baseRoleId={}", accountId, baseRoleId);
+
+        if (baseRoleId.equals(com.dental.clinic.management.security.constants.BaseRoleConstants.EMPLOYEE)) {
+            // ============================================
+            // EMPLOYEE (Doctor): Filter by createdBy
+
+            if (!hasViewOwnPermission) {
+                throw new AccessDeniedException(
+                        "Employee must have VIEW_TREATMENT_PLAN_OWN permission");
+            }
+
+            if (hasViewAllPermission) {
+                log.warn("Employee (accountId={}) has VIEW_TREATMENT_PLAN_ALL permission. " +
+                        "This should only be assigned to ADMIN/MANAGER roles. Filtering by employeeId anyway.",
+                        accountId);
+            }
+
+            com.dental.clinic.management.employee.domain.Employee employee = employeeRepository
+                    .findOneByAccountAccountId(accountId)
+                    .orElseThrow(() -> new AccessDeniedException("Employee not found for account: " + accountId));
+
+            log.info("EMPLOYEE mode: Filtering by employeeId={}", employee.getEmployeeId());
+
+            specification = specification.and(
+                    com.dental.clinic.management.treatment_plans.specification.TreatmentPlanSpecification
+                            .filterByCreatedByEmployee(employee.getEmployeeId()));
+
+            // Ignore admin-only filters
+            if (request.getDoctorEmployeeCode() != null || request.getPatientCode() != null) {
+                log.warn("Employee (id={}) attempting to use admin-only filters. Ignoring.",
+                        employee.getEmployeeId());
+            }
+
+        } else if (baseRoleId.equals(com.dental.clinic.management.security.constants.BaseRoleConstants.PATIENT)) {
+            // PATIENT: Filter by patient
+
+            if (!hasViewOwnPermission) {
+                throw new AccessDeniedException("Patient must have VIEW_TREATMENT_PLAN_OWN permission");
+            }
+
+            com.dental.clinic.management.patient.domain.Patient patient = patientRepository
+                    .findOneByAccountAccountId(accountId)
+                    .orElseThrow(() -> new AccessDeniedException("Patient not found for account: " + accountId));
+
+            log.info("PATIENT mode: Filtering by patientId={}", patient.getPatientId());
+
+            specification = specification.and(
+                    com.dental.clinic.management.treatment_plans.specification.TreatmentPlanSpecification
+                            .filterByPatient(patient.getPatientId()));
+
+            // Ignore admin-only filters
+            if (request.getDoctorEmployeeCode() != null || request.getPatientCode() != null) {
+                log.warn("Patient (id={}) attempting to use admin-only filters. Ignoring.",
+                        patient.getPatientId());
+            }
+
+        } else if (baseRoleId.equals(com.dental.clinic.management.security.constants.BaseRoleConstants.ADMIN)) {
+            // ADMIN: Can view all plans with optional filters
+
+            if (!hasViewAllPermission) {
+                throw new AccessDeniedException("Admin must have VIEW_TREATMENT_PLAN_ALL permission");
+            }
+
+            log.info("ADMIN mode: Can view all plans. Applying optional filters (doctorCode={}, patientCode={})",
                     request.getDoctorEmployeeCode(), request.getPatientCode());
 
-        } else if (hasViewOwnPermission) {
-            // Doctor or Patient: Need to determine role and apply RBAC filter
-
-            // Get account ID from JWT
-            Jwt jwt = (Jwt) authentication.getPrincipal();
-            Integer accountId = jwt.getClaim("account_id");
-
-            if (accountId == null) {
-                throw new AccessDeniedException("Invalid JWT: account_id not found");
-            }
-
-            // Fetch account to get base role
-            com.dental.clinic.management.account.domain.Account account = accountRepository.findById(accountId)
-                    .orElseThrow(() -> new AccessDeniedException("Account not found: " + accountId));
-
-            Integer baseRoleId = account.getRole().getBaseRole().getBaseRoleId();
-
-            log.debug("User baseRoleId: {}", baseRoleId);
-
-            // P0 FIX: Use BaseRoleConstants instead of magic numbers
-            if (baseRoleId.equals(com.dental.clinic.management.security.constants.BaseRoleConstants.EMPLOYEE)) {
-                // DOCTOR: Filter by createdBy = currentEmployee
-                com.dental.clinic.management.employee.domain.Employee employee = employeeRepository
-                        .findOneByAccountAccountId(accountId)
-                        .orElseThrow(() -> new AccessDeniedException("Employee not found for account: " + accountId));
-
-                log.info("Doctor mode: Filtering by employeeId={}", employee.getEmployeeId());
-
-                specification = specification.and(
-                        com.dental.clinic.management.treatment_plans.specification.TreatmentPlanSpecification
-                                .filterByCreatedByEmployee(employee.getEmployeeId()));
-
-                // Ignore doctorEmployeeCode/patientCode from request (security)
-                if (request.getDoctorEmployeeCode() != null || request.getPatientCode() != null) {
-                    log.warn("Doctor attempting to use admin-only filters. Ignoring.");
-                }
-
-            } else if (baseRoleId.equals(com.dental.clinic.management.security.constants.BaseRoleConstants.PATIENT)) {
-                // PATIENT: Filter by patient = currentPatient
-                com.dental.clinic.management.patient.domain.Patient patient = patientRepository
-                        .findOneByAccountAccountId(accountId)
-                        .orElseThrow(() -> new AccessDeniedException("Patient not found for account: " + accountId));
-
-                log.info("Patient mode: Filtering by patientId={}", patient.getPatientId());
-
-                specification = specification.and(
-                        com.dental.clinic.management.treatment_plans.specification.TreatmentPlanSpecification
-                                .filterByPatient(patient.getPatientId()));
-
-                // Ignore doctorEmployeeCode/patientCode from request (security)
-                if (request.getDoctorEmployeeCode() != null || request.getPatientCode() != null) {
-                    log.warn("Patient attempting to use admin-only filters. Ignoring.");
-                }
-
-            } else {
-                throw new AccessDeniedException("User role cannot view treatment plans. BaseRoleId: " + baseRoleId);
-            }
+            // No additional RBAC filter needed (admin can see everything)
 
         } else {
+            // Unknown role
             throw new AccessDeniedException(
-                    "User does not have VIEW_TREATMENT_PLAN_ALL or VIEW_TREATMENT_PLAN_OWN permission");
+                    "User role cannot view treatment plans. BaseRoleId: " + baseRoleId);
         }
 
         // ============================================

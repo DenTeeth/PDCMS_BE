@@ -449,11 +449,11 @@ VALUES
 ('ROLE_DENTIST', 'VIEW_LEAVE_OWN'), ('ROLE_DENTIST', 'CREATE_TIME_OFF'), ('ROLE_DENTIST', 'CREATE_OVERTIME'),
 ('ROLE_DENTIST', 'CANCEL_TIME_OFF_OWN'), ('ROLE_DENTIST', 'CANCEL_OVERTIME_OWN'),
 ('ROLE_DENTIST', 'VIEW_HOLIDAY'),
--- ✅ NEW: Treatment Plan permissions
-('ROLE_DENTIST', 'VIEW_TREATMENT_PLAN_ALL'), -- Can view all patients' treatment plans
-('ROLE_DENTIST', 'CREATE_TREATMENT_PLAN'), -- Can create treatment plans
-('ROLE_DENTIST', 'UPDATE_TREATMENT_PLAN'), -- Can update treatment plans
-('ROLE_DENTIST', 'DELETE_TREATMENT_PLAN') -- Can delete treatment plans
+-- Treatment Plan permissions
+('ROLE_DENTIST', 'VIEW_TREATMENT_PLAN_OWN'),
+('ROLE_DENTIST', 'CREATE_TREATMENT_PLAN'),
+('ROLE_DENTIST', 'UPDATE_TREATMENT_PLAN'),
+('ROLE_DENTIST', 'DELETE_TREATMENT_PLAN')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
@@ -2334,7 +2334,7 @@ SELECT setval('appointments_appointment_id_seq',
 -- NOTE: Uncomment ONLY if you have an old database with missing/wrong columns
 -- For new databases, schema.sql creates this table correctly
 -- Better solution: Drop the table and let Hibernate recreate it correctly
--- 
+--
 -- If you must migrate existing data, run these commands separately:
 -- ALTER TABLE appointment_audit_logs ADD COLUMN IF NOT EXISTS action_type appointment_action_type;
 -- ALTER TABLE appointment_audit_logs ADD COLUMN IF NOT EXISTS reason_code appointment_reason_code;

@@ -162,12 +162,12 @@ public class TreatmentPlanItemService {
         if (request.getNotes() != null) {
             // Note: PatientPlanItem doesn't have notes field in current schema
             // If needed, add notes field to entity or log to audit table
-            log.info("📝 Notes: {}", request.getNotes());
+            log.info("Notes: {}", request.getNotes());
         }
 
         if (newStatus == PlanItemStatus.COMPLETED) {
             item.setCompletedAt(request.getCompletedAt() != null ? request.getCompletedAt() : LocalDateTime.now());
-            log.info("✅ Item marked as COMPLETED at {}", item.getCompletedAt());
+            log.info("Item marked as COMPLETED at {}", item.getCompletedAt());
         } else {
             item.setCompletedAt(null); // Clear if not completed
         }
