@@ -36,6 +36,8 @@ public class TreatmentPlanDetailService {
 
         private final PatientTreatmentPlanRepository treatmentPlanRepository;
         private final PatientRepository patientRepository;
+        private final com.dental.clinic.management.account.repository.AccountRepository accountRepository;
+        private final com.dental.clinic.management.employee.repository.EmployeeRepository employeeRepository;
 
         /**
          * Get complete treatment plan details with nested structure.
@@ -85,6 +87,9 @@ public class TreatmentPlanDetailService {
 
                 log.info("Retrieved {} flat DTO rows from database", flatDTOs.size());
 
+                // STEP 2.5: RBAC - Verify createdBy for EMPLOYEE with VIEW_OWN
+                verifyEmployeeCreatedByPermission(flatDTOs.get(0));
+
                 // STEP 3: Transform flat DTOs to nested response structure
                 TreatmentPlanDetailResponse response = buildNestedResponse(flatDTOs);
 
@@ -132,34 +137,127 @@ public class TreatmentPlanDetailService {
                         return patient;
                 }
 
-                // Patient with VIEW_OWN can only access their own plans
+                // VIEW_OWN permission: Check base role to determine filtering logic
                 if (hasViewOwnPermission) {
                         Integer currentAccountId = getCurrentAccountId(authentication);
-                        Integer patientAccountId = patient.getAccount() != null ? patient.getAccount().getAccountId()
-                                        : null;
+                        
+                        // Get account to check base role
+                        com.dental.clinic.management.account.domain.Account account = accountRepository.findById(currentAccountId)
+                                .orElseThrow(() -> new AccessDeniedException("Account not found: " + currentAccountId));
+                        
+                        Integer baseRoleId = account.getRole().getBaseRole().getBaseRoleId();
+                        log.debug("User accountId={}, baseRoleId={}", currentAccountId, baseRoleId);
+                        
+                        // PATIENT: Can only view their own plans (account_id verification)
+                        if (baseRoleId.equals(com.dental.clinic.management.security.constants.BaseRoleConstants.PATIENT)) {
+                                Integer patientAccountId = patient.getAccount() != null ? patient.getAccount().getAccountId()
+                                                : null;
 
-                        log.info("Account verification - Current accountId: {}, Patient accountId: {}, Patient code: {}",
-                                        currentAccountId, patientAccountId, patientCode);
-                        log.info("Patient account object: {}", patient.getAccount());
+                                log.info("PATIENT mode: Current accountId: {}, Patient accountId: {}, Patient code: {}",
+                                                currentAccountId, patientAccountId, patientCode);
 
-                        if (patientAccountId == null) {
-                                log.error("Patient {} has null account! This is a data integrity issue.", patientCode);
-                                throw new AccessDeniedException("Patient account information not found");
+                                if (patientAccountId == null) {
+                                        log.error("Patient {} has null account! This is a data integrity issue.", patientCode);
+                                        throw new AccessDeniedException("Patient account information not found");
+                                }
+
+                                if (!patientAccountId.equals(currentAccountId)) {
+                                        log.warn("Access denied: User accountId={} attempting to access patient {} with accountId={}",
+                                                        currentAccountId, patientCode, patientAccountId);
+                                        throw new AccessDeniedException("You can only view your own treatment plans");
+                                }
+
+                                log.info("Patient verified as owner of patient record, access granted");
+                                return patient;
                         }
-
-                        if (!patientAccountId.equals(currentAccountId)) {
-                                log.warn("Access denied: User accountId={} attempting to access patient {} with accountId={}",
-                                                currentAccountId, patientCode, patientAccountId);
-                                throw new AccessDeniedException("You can only view your own treatment plans");
+                        
+                        // EMPLOYEE: Can view plans they created (will verify createdBy in getTreatmentPlanDetail)
+                        else if (baseRoleId.equals(com.dental.clinic.management.security.constants.BaseRoleConstants.EMPLOYEE)) {
+                                com.dental.clinic.management.employee.domain.Employee employee = employeeRepository
+                                        .findOneByAccountAccountId(currentAccountId)
+                                        .orElseThrow(() -> new AccessDeniedException("Employee not found for account: " + currentAccountId));
+                                
+                                log.info("EMPLOYEE mode: Will verify plan was created by employeeId={}", employee.getEmployeeId());
+                                // Return patient, but will verify createdBy after fetching plan
+                                return patient;
                         }
-
-                        log.info("User verified as owner of patient record, access granted");
-                        return patient;
+                        
+                        // ADMIN with VIEW_OWN (should not happen, but allow)
+                        else if (baseRoleId.equals(com.dental.clinic.management.security.constants.BaseRoleConstants.ADMIN)) {
+                                log.info("ADMIN with VIEW_OWN permission, access granted");
+                                return patient;
+                        }
                 }
 
                 // No valid permission
                 log.warn("Access denied: User does not have required permissions");
                 throw new AccessDeniedException("You do not have permission to view treatment plans");
+        }
+
+        /**
+         * Verify that EMPLOYEE with VIEW_OWN can only view plans they created.
+         * 
+         * @param firstRow First row from query (contains createdBy info)
+         * @throws AccessDeniedException if employee trying to view plan created by another employee
+         */
+        private void verifyEmployeeCreatedByPermission(TreatmentPlanDetailDTO firstRow) {
+                Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+                if (authentication == null || !authentication.isAuthenticated()) {
+                        return; // Already checked in verifyPatientAccessPermission
+                }
+
+                boolean hasViewAllPermission = authentication.getAuthorities().stream()
+                                .map(GrantedAuthority::getAuthority)
+                                .anyMatch(auth -> auth.equals("VIEW_TREATMENT_PLAN_ALL"));
+
+                // If user has VIEW_ALL, skip createdBy check
+                if (hasViewAllPermission) {
+                        return;
+                }
+
+                boolean hasViewOwnPermission = authentication.getAuthorities().stream()
+                                .map(GrantedAuthority::getAuthority)
+                                .anyMatch(auth -> auth.equals("VIEW_TREATMENT_PLAN_OWN"));
+
+                if (!hasViewOwnPermission) {
+                        return; // Already checked in verifyPatientAccessPermission
+                }
+
+                Integer currentAccountId = getCurrentAccountId(authentication);
+                
+                // Get account to check base role
+                com.dental.clinic.management.account.domain.Account account = accountRepository.findById(currentAccountId)
+                        .orElseThrow(() -> new AccessDeniedException("Account not found: " + currentAccountId));
+                
+                Integer baseRoleId = account.getRole().getBaseRole().getBaseRoleId();
+                
+                // Only check createdBy for EMPLOYEE
+                if (!baseRoleId.equals(com.dental.clinic.management.security.constants.BaseRoleConstants.EMPLOYEE)) {
+                        return;
+                }
+
+                // Get current employee
+                com.dental.clinic.management.employee.domain.Employee employee = employeeRepository
+                        .findOneByAccountAccountId(currentAccountId)
+                        .orElseThrow(() -> new AccessDeniedException("Employee not found for account: " + currentAccountId));
+
+                // Get plan's creator from DTO
+                String planCreatorEmployeeCode = firstRow.getDoctorEmployeeCode();
+                
+                if (planCreatorEmployeeCode == null) {
+                        log.error("Plan has no creator (createdBy is null). PlanId={}", firstRow.getPlanId());
+                        throw new AccessDeniedException("Cannot verify plan creator");
+                }
+
+                // Compare employee codes
+                if (!employee.getEmployeeCode().equals(planCreatorEmployeeCode)) {
+                        log.warn("Access denied: Employee {} (code={}) attempting to view plan created by employee {}",
+                                employee.getEmployeeId(), employee.getEmployeeCode(), planCreatorEmployeeCode);
+                        throw new AccessDeniedException("You can only view treatment plans that you created");
+                }
+
+                log.info("EMPLOYEE createdBy verification passed: Employee {} viewing plan created by {}",
+                        employee.getEmployeeCode(), planCreatorEmployeeCode);
         }
 
         /**

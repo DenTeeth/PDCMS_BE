@@ -54,6 +54,7 @@ public class TreatmentPlanItemAdditionService {
         private final PatientTreatmentPlanRepository planRepository;
         private final PatientPlanItemRepository itemRepository;
         private final BookingDentalServiceRepository serviceRepository;
+        private final TreatmentPlanRBACService rbacService;
 
         private static final DateTimeFormatter DATETIME_FORMATTER = DateTimeFormatter
                         .ofPattern("yyyy-MM-dd'T'HH:mm:ss");
@@ -77,6 +78,10 @@ public class TreatmentPlanItemAdditionService {
                                                 "Treatment plan phase not found with ID: " + phaseId));
 
                 PatientTreatmentPlan plan = phase.getTreatmentPlan();
+
+                // RBAC verification (EMPLOYEE can only modify plans they created)
+                Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+                rbacService.verifyEmployeeCanModifyPlan(plan, authentication);
 
                 // Validate phase status
                 if (phase.getStatus() == PhaseStatus.COMPLETED) {

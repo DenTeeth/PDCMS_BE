@@ -15,6 +15,8 @@ import com.dental.clinic.management.treatment_plans.repository.PatientTreatmentP
 import com.dental.clinic.management.utils.security.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,6 +42,7 @@ public class TreatmentPlanItemDeletionService {
         private final PlanAuditLogRepository auditLogRepository;
         private final EmployeeRepository employeeRepository;
         private final AccountRepository accountRepository;
+        private final TreatmentPlanRBACService rbacService;
 
         /**
          * Xóa một hạng mục khỏi lộ trình điều trị
@@ -67,6 +70,10 @@ public class TreatmentPlanItemDeletionService {
                 PatientTreatmentPlan plan = phase.getTreatmentPlan();
                 BigDecimal deletedPrice = item.getPrice();
                 String deletedItemName = item.getItemName();
+
+                // 2.5️⃣ RBAC verification (EMPLOYEE can only modify plans they created)
+                Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+                rbacService.verifyEmployeeCanModifyPlan(plan, authentication);
 
                 log.info("📋 Item details: id={}, name='{}', price={}, status={}, plan_id={}",
                                 itemId, deletedItemName, deletedPrice, item.getStatus(), plan.getPlanId());

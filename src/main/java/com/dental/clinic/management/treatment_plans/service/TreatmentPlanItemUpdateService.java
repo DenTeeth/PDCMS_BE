@@ -19,6 +19,8 @@ import com.dental.clinic.management.treatment_plans.repository.PlanAuditLogRepos
 import com.dental.clinic.management.utils.security.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,6 +41,7 @@ public class TreatmentPlanItemUpdateService {
     private final PlanAuditLogRepository auditLogRepository;
     private final EmployeeRepository employeeRepository;
     private final AccountRepository accountRepository;
+    private final TreatmentPlanRBACService rbacService;
 
     /**
      * API 5.10: Update a treatment plan item.
@@ -72,6 +75,10 @@ public class TreatmentPlanItemUpdateService {
 
         // 2. Get treatment plan
         PatientTreatmentPlan plan = item.getPhase().getTreatmentPlan();
+
+        // 2.5. RBAC verification (EMPLOYEE can only modify plans they created)
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        rbacService.verifyEmployeeCanModifyPlan(plan, authentication);
 
         // 3. GUARD 1: Item status check
         validateItemNotScheduledOrCompleted(item);

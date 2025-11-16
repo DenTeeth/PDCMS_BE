@@ -46,6 +46,7 @@ public class TreatmentPlanItemService {
     private final PatientPlanItemRepository itemRepository;
     private final PatientTreatmentPlanRepository planRepository;
     private final EntityManager entityManager;
+    private final TreatmentPlanRBACService rbacService;
 
     /**
      * State Machine Map: current_status → allowed_next_statuses
@@ -94,6 +95,10 @@ public class TreatmentPlanItemService {
 
         PatientPlanPhase phase = item.getPhase();
         PatientTreatmentPlan plan = phase.getTreatmentPlan();
+
+        // STEP 1.5: RBAC verification (EMPLOYEE can only modify plans they created)
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        rbacService.verifyEmployeeCanModifyPlan(plan, authentication);
 
         PlanItemStatus currentStatus = item.getStatus();
         PlanItemStatus newStatus = request.getStatus();
