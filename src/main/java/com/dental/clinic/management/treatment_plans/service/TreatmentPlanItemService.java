@@ -264,7 +264,7 @@ public class TreatmentPlanItemService {
     @SuppressWarnings("unchecked")
     private List<Map<String, Object>> findAppointmentsForItem(Long itemId) {
         String sql = """
-                SELECT a.code, a.scheduled_date, a.status
+                SELECT a.appointment_code, a.scheduled_date, a.status
                 FROM appointments a
                 JOIN appointment_plan_items api ON a.appointment_id = api.appointment_id
                 WHERE api.item_id = :itemId
