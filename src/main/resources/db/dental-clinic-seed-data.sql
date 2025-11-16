@@ -2300,16 +2300,20 @@ SELECT setval('appointments_appointment_id_seq',
 -- END OF COMMENTED TEMPLATE SECTION
 -- ============================================
 
--- Fix appointment_audit_logs table if missing columns
--- ALTER TABLE appointment_audit_logs
--- ADD COLUMN IF NOT EXISTS action_type VARCHAR(50),
--- ADD COLUMN IF NOT EXISTS reason_code VARCHAR(50),
--- ADD COLUMN IF NOT EXISTS old_value TEXT,
--- ADD COLUMN IF NOT EXISTS new_value TEXT,
--- ADD COLUMN IF NOT EXISTS old_start_time TIMESTAMP,
--- ADD COLUMN IF NOT EXISTS new_start_time TIMESTAMP,
--- ADD COLUMN IF NOT EXISTS old_status VARCHAR(50),
--- ADD COLUMN IF NOT EXISTS new_status VARCHAR(50);
+-- Fix appointment_audit_logs table if missing columns (with correct ENUM types)
+-- NOTE: Uncomment ONLY if you have an old database with missing/wrong columns
+-- For new databases, schema.sql creates this table correctly
+-- Better solution: Drop the table and let Hibernate recreate it correctly
+-- 
+-- If you must migrate existing data, run these commands separately:
+-- ALTER TABLE appointment_audit_logs ADD COLUMN IF NOT EXISTS action_type appointment_action_type;
+-- ALTER TABLE appointment_audit_logs ADD COLUMN IF NOT EXISTS reason_code appointment_reason_code;
+-- ALTER TABLE appointment_audit_logs ADD COLUMN IF NOT EXISTS old_value TEXT;
+-- ALTER TABLE appointment_audit_logs ADD COLUMN IF NOT EXISTS new_value TEXT;
+-- ALTER TABLE appointment_audit_logs ADD COLUMN IF NOT EXISTS old_start_time TIMESTAMP;
+-- ALTER TABLE appointment_audit_logs ADD COLUMN IF NOT EXISTS new_start_time TIMESTAMP;
+-- ALTER TABLE appointment_audit_logs ADD COLUMN IF NOT EXISTS old_status appointment_status_enum;
+-- ALTER TABLE appointment_audit_logs ADD COLUMN IF NOT EXISTS new_status appointment_status_enum;
 
 -- ============================================
 -- TREATMENT PLANS SEED DATA

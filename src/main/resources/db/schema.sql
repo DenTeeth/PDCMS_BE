@@ -33,6 +33,8 @@ CREATE TYPE day_of_week AS ENUM ('MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', '
 CREATE TYPE holiday_type AS ENUM ('NATIONAL', 'COMPANY');
 CREATE TYPE time_off_status AS ENUM ('PENDING', 'APPROVED', 'REJECTED', 'CANCELLED');
 CREATE TYPE approval_status AS ENUM ('DRAFT', 'PENDING_REVIEW', 'APPROVED', 'REJECTED');
+CREATE TYPE appointment_action_type AS ENUM ('CREATE', 'DELAY', 'RESCHEDULE_SOURCE', 'RESCHEDULE_TARGET', 'CANCEL', 'STATUS_CHANGE');
+CREATE TYPE appointment_reason_code AS ENUM ('PREVIOUS_CASE_OVERRUN', 'DOCTOR_UNAVAILABLE', 'EQUIPMENT_FAILURE', 'PATIENT_REQUEST', 'OPERATIONAL_REDIRECT', 'OTHER');
 
 -- ============================================
 -- CORE TABLES
@@ -259,14 +261,14 @@ CREATE TABLE appointment_audit_logs (
     log_id BIGSERIAL PRIMARY KEY,
     appointment_id BIGINT NOT NULL REFERENCES appointments(appointment_id) ON DELETE CASCADE,
     changed_by_employee_id BIGINT REFERENCES employees(employee_id) ON DELETE SET NULL,
-    action_type VARCHAR(50) NOT NULL,
-    reason_code VARCHAR(50),
+    action_type appointment_action_type NOT NULL,
+    reason_code appointment_reason_code,
     old_value TEXT,
     new_value TEXT,
     old_start_time TIMESTAMP,
     new_start_time TIMESTAMP,
-    old_status VARCHAR(50),
-    new_status VARCHAR(50),
+    old_status appointment_status_enum,
+    new_status appointment_status_enum,
     notes TEXT,
     action_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
