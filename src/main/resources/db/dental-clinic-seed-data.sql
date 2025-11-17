@@ -1806,21 +1806,24 @@ ON CONFLICT (room_id, service_id) DO NOTHING;
 INSERT INTO treatment_plan_templates (template_code, template_name, description, estimated_duration_days, total_price, specialization_id, is_active, created_at)
 VALUES ('TPL_ORTHO_METAL', 'Niềng răng mắc cài kim loại trọn gói 2 năm',
         'Gói điều trị chỉnh nha toàn diện với mắc cài kim loại, bao gồm 24 lần tái khám siết niềng định kỳ.',
-        730, 30000000, 1, true, NOW());
+        730, 30000000, 1, true, NOW())
+ON CONFLICT (template_code) DO NOTHING;
 
 
 -- Template 2: Implant Hàn Quốc (6 tháng)
 INSERT INTO treatment_plan_templates (template_code, template_name, description, estimated_duration_days, total_price, specialization_id, is_active, created_at)
 VALUES ('TPL_IMPLANT_OSSTEM', 'Cấy ghép Implant Hàn Quốc (Osstem) - Trọn gói',
         'Gói cấy ghép Implant hoàn chỉnh từ phẫu thuật đến gắn răng sứ, sử dụng trụ Osstem Hàn Quốc.',
-        180, 19000000, 5, true, NOW());
+        180, 19000000, 5, true, NOW())
+ON CONFLICT (template_code) DO NOTHING;
 
 
 -- Template 3: Bọc răng sứ Cercon HT (7 ngày)
 INSERT INTO treatment_plan_templates (template_code, template_name, description, estimated_duration_days, total_price, specialization_id, is_active, created_at)
 VALUES ('TPL_CROWN_CERCON', 'Bọc răng sứ Cercon HT - 1 răng',
         'Gói bọc răng sứ toàn sứ Cercon HT cao cấp, bao gồm điều trị tủy (nếu cần) và gắn răng sứ.',
-        7, 5000000, 4, true, NOW());
+        7, 5000000, 4, true, NOW())
+ON CONFLICT (template_code) DO NOTHING;
 
 
 -- =============================================
@@ -1830,49 +1833,58 @@ VALUES ('TPL_CROWN_CERCON', 'Bọc răng sứ Cercon HT - 1 răng',
 -- TPL_ORTHO_METAL: 4 giai đoạn
 INSERT INTO template_phases (template_id, phase_number, phase_name, estimated_duration_days, created_at)
 SELECT t.template_id, 1, 'Giai đoạn 1: Khám & Chuẩn bị', 14, NOW()
-FROM treatment_plan_templates t WHERE t.template_code = 'TPL_ORTHO_METAL';
+FROM treatment_plan_templates t WHERE t.template_code = 'TPL_ORTHO_METAL'
+ON CONFLICT (template_id, phase_number) DO NOTHING;
 
 
 INSERT INTO template_phases (template_id, phase_number, phase_name, estimated_duration_days, created_at)
 SELECT t.template_id, 2, 'Giai đoạn 2: Gắn mắc cài', 1, NOW()
-FROM treatment_plan_templates t WHERE t.template_code = 'TPL_ORTHO_METAL';
+FROM treatment_plan_templates t WHERE t.template_code = 'TPL_ORTHO_METAL'
+ON CONFLICT (template_id, phase_number) DO NOTHING;
 
 
 INSERT INTO template_phases (template_id, phase_number, phase_name, estimated_duration_days, created_at)
 SELECT t.template_id, 3, 'Giai đoạn 3: Điều chỉnh định kỳ (8 tháng)', 715, NOW()
-FROM treatment_plan_templates t WHERE t.template_code = 'TPL_ORTHO_METAL';
+FROM treatment_plan_templates t WHERE t.template_code = 'TPL_ORTHO_METAL'
+ON CONFLICT (template_id, phase_number) DO NOTHING;
 
 
 INSERT INTO template_phases (template_id, phase_number, phase_name, estimated_duration_days, created_at)
 SELECT t.template_id, 4, 'Giai đoạn 4: Tháo niềng & Duy trì', 0, NOW()
-FROM treatment_plan_templates t WHERE t.template_code = 'TPL_ORTHO_METAL';
+FROM treatment_plan_templates t WHERE t.template_code = 'TPL_ORTHO_METAL'
+ON CONFLICT (template_id, phase_number) DO NOTHING;
 
 
 -- TPL_IMPLANT_OSSTEM: 3 giai đoạn
 INSERT INTO template_phases (template_id, phase_number, phase_name, estimated_duration_days, created_at)
 SELECT t.template_id, 1, 'Giai đoạn 1: Khám & Chẩn đoán hình ảnh', 7, NOW()
-FROM treatment_plan_templates t WHERE t.template_code = 'TPL_IMPLANT_OSSTEM';
+FROM treatment_plan_templates t WHERE t.template_code = 'TPL_IMPLANT_OSSTEM'
+ON CONFLICT (template_id, phase_number) DO NOTHING;
 
 
 INSERT INTO template_phases (template_id, phase_number, phase_name, estimated_duration_days, created_at)
 SELECT t.template_id, 2, 'Giai đoạn 2: Phẫu thuật cắm Implant', 120, NOW()
-FROM treatment_plan_templates t WHERE t.template_code = 'TPL_IMPLANT_OSSTEM';
+FROM treatment_plan_templates t WHERE t.template_code = 'TPL_IMPLANT_OSSTEM'
+ON CONFLICT (template_id, phase_number) DO NOTHING;
 
 
 INSERT INTO template_phases (template_id, phase_number, phase_name, estimated_duration_days, created_at)
 SELECT t.template_id, 3, 'Giai đoạn 3: Làm & Gắn răng sứ', 14, NOW()
-FROM treatment_plan_templates t WHERE t.template_code = 'TPL_IMPLANT_OSSTEM';
+FROM treatment_plan_templates t WHERE t.template_code = 'TPL_IMPLANT_OSSTEM'
+ON CONFLICT (template_id, phase_number) DO NOTHING;
 
 
 -- TPL_CROWN_CERCON: 2 giai đoạn
 INSERT INTO template_phases (template_id, phase_number, phase_name, estimated_duration_days, created_at)
 SELECT t.template_id, 1, 'Giai đoạn 1: Điều trị tủy & Chuẩn bị', 3, NOW()
-FROM treatment_plan_templates t WHERE t.template_code = 'TPL_CROWN_CERCON';
+FROM treatment_plan_templates t WHERE t.template_code = 'TPL_CROWN_CERCON'
+ON CONFLICT (template_id, phase_number) DO NOTHING;
 
 
 INSERT INTO template_phases (template_id, phase_number, phase_name, estimated_duration_days, created_at)
 SELECT t.template_id, 2, 'Giai đoạn 2: Lấy dấu & Gắn sứ', 4, NOW()
-FROM treatment_plan_templates t WHERE t.template_code = 'TPL_CROWN_CERCON';
+FROM treatment_plan_templates t WHERE t.template_code = 'TPL_CROWN_CERCON'
+ON CONFLICT (template_id, phase_number) DO NOTHING;
 
 
 -- =============================================
@@ -1886,7 +1898,8 @@ SELECT tp.phase_id, s.service_id, 1, 1, 45, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'ORTHO_CONSULT'
-WHERE t.template_code = 'TPL_ORTHO_METAL' AND tp.phase_number = 1;
+WHERE t.template_code = 'TPL_ORTHO_METAL' AND tp.phase_number = 1
+ON CONFLICT (phase_id, service_id) DO NOTHING;
 
 
 INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
@@ -1894,7 +1907,8 @@ SELECT tp.phase_id, s.service_id, 2, 1, 30, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'ORTHO_FILMS'
-WHERE t.template_code = 'TPL_ORTHO_METAL' AND tp.phase_number = 1;
+WHERE t.template_code = 'TPL_ORTHO_METAL' AND tp.phase_number = 1
+ON CONFLICT (phase_id, service_id) DO NOTHING;
 
 
 INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
@@ -1902,7 +1916,8 @@ SELECT tp.phase_id, s.service_id, 3, 1, 60, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'SCALING_L1'
-WHERE t.template_code = 'TPL_ORTHO_METAL' AND tp.phase_number = 1;
+WHERE t.template_code = 'TPL_ORTHO_METAL' AND tp.phase_number = 1
+ON CONFLICT (phase_id, service_id) DO NOTHING;
 
 
 -- TPL_ORTHO_METAL - Phase 2: Gắn mắc cài (1 service)
@@ -1911,7 +1926,8 @@ SELECT tp.phase_id, s.service_id, 1, 1, 90, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'ORTHO_BRACES_ON'
-WHERE t.template_code = 'TPL_ORTHO_METAL' AND tp.phase_number = 2;
+WHERE t.template_code = 'TPL_ORTHO_METAL' AND tp.phase_number = 2
+ON CONFLICT (phase_id, service_id) DO NOTHING;
 
 
 -- TPL_ORTHO_METAL - Phase 3: Tái khám 8 lần (quantity = 8) - FIXED: Reduced from 24 to 8 for realistic seed data
@@ -1920,7 +1936,8 @@ SELECT tp.phase_id, s.service_id, 1, 8, 30, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'ORTHO_ADJUST'
-WHERE t.template_code = 'TPL_ORTHO_METAL' AND tp.phase_number = 3;
+WHERE t.template_code = 'TPL_ORTHO_METAL' AND tp.phase_number = 3
+ON CONFLICT (phase_id, service_id) DO NOTHING;
 
 
 -- TPL_ORTHO_METAL - Phase 4: Tháo niềng & Duy trì (2 services in order)
@@ -1929,7 +1946,8 @@ SELECT tp.phase_id, s.service_id, 1, 1, 60, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'ORTHO_BRACES_OFF'
-WHERE t.template_code = 'TPL_ORTHO_METAL' AND tp.phase_number = 4;
+WHERE t.template_code = 'TPL_ORTHO_METAL' AND tp.phase_number = 4
+ON CONFLICT (phase_id, service_id) DO NOTHING;
 
 
 INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
@@ -1937,7 +1955,8 @@ SELECT tp.phase_id, s.service_id, 2, 1, 30, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'ORTHO_RETAINER_REMOV'
-WHERE t.template_code = 'TPL_ORTHO_METAL' AND tp.phase_number = 4;
+WHERE t.template_code = 'TPL_ORTHO_METAL' AND tp.phase_number = 4
+ON CONFLICT (phase_id, service_id) DO NOTHING;
 
 
 -- TPL_IMPLANT_OSSTEM - Phase 1: Khám & Chẩn đoán (2 services in order)
@@ -1946,7 +1965,8 @@ SELECT tp.phase_id, s.service_id, 1, 1, 45, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'IMPL_CONSULT'
-WHERE t.template_code = 'TPL_IMPLANT_OSSTEM' AND tp.phase_number = 1;
+WHERE t.template_code = 'TPL_IMPLANT_OSSTEM' AND tp.phase_number = 1
+ON CONFLICT (phase_id, service_id) DO NOTHING;
 
 
 INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
@@ -1954,7 +1974,8 @@ SELECT tp.phase_id, s.service_id, 2, 1, 30, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'IMPL_CT_SCAN'
-WHERE t.template_code = 'TPL_IMPLANT_OSSTEM' AND tp.phase_number = 1;
+WHERE t.template_code = 'TPL_IMPLANT_OSSTEM' AND tp.phase_number = 1
+ON CONFLICT (phase_id, service_id) DO NOTHING;
 
 
 -- TPL_IMPLANT_OSSTEM - Phase 2: Phẫu thuật (2 services in order: surgery first, then healing cap)
@@ -1963,7 +1984,8 @@ SELECT tp.phase_id, s.service_id, 1, 1, 90, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'IMPL_SURGERY_KR'
-WHERE t.template_code = 'TPL_IMPLANT_OSSTEM' AND tp.phase_number = 2;
+WHERE t.template_code = 'TPL_IMPLANT_OSSTEM' AND tp.phase_number = 2
+ON CONFLICT (phase_id, service_id) DO NOTHING;
 
 
 INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
@@ -1971,7 +1993,8 @@ SELECT tp.phase_id, s.service_id, 2, 1, 20, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'IMPL_HEALING'
-WHERE t.template_code = 'TPL_IMPLANT_OSSTEM' AND tp.phase_number = 2;
+WHERE t.template_code = 'TPL_IMPLANT_OSSTEM' AND tp.phase_number = 2
+ON CONFLICT (phase_id, service_id) DO NOTHING;
 
 
 -- TPL_IMPLANT_OSSTEM - Phase 3: Làm răng sứ (2 services in order: impression first, then crown)
@@ -1980,7 +2003,8 @@ SELECT tp.phase_id, s.service_id, 1, 1, 30, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'IMPL_IMPRESSION'
-WHERE t.template_code = 'TPL_IMPLANT_OSSTEM' AND tp.phase_number = 3;
+WHERE t.template_code = 'TPL_IMPLANT_OSSTEM' AND tp.phase_number = 3
+ON CONFLICT (phase_id, service_id) DO NOTHING;
 
 
 INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
@@ -1988,7 +2012,8 @@ SELECT tp.phase_id, s.service_id, 2, 1, 45, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'IMPL_CROWN_ZIR'
-WHERE t.template_code = 'TPL_IMPLANT_OSSTEM' AND tp.phase_number = 3;
+WHERE t.template_code = 'TPL_IMPLANT_OSSTEM' AND tp.phase_number = 3
+ON CONFLICT (phase_id, service_id) DO NOTHING;
 
 
 -- TPL_CROWN_CERCON - Phase 1: Điều trị tủy (2 services in order: treatment first, then post & core)
@@ -1997,7 +2022,8 @@ SELECT tp.phase_id, s.service_id, 1, 1, 75, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'ENDO_TREAT_POST'
-WHERE t.template_code = 'TPL_CROWN_CERCON' AND tp.phase_number = 1;
+WHERE t.template_code = 'TPL_CROWN_CERCON' AND tp.phase_number = 1
+ON CONFLICT (phase_id, service_id) DO NOTHING;
 
 
 INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
@@ -2005,7 +2031,8 @@ SELECT tp.phase_id, s.service_id, 2, 1, 45, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'ENDO_POST_CORE'
-WHERE t.template_code = 'TPL_CROWN_CERCON' AND tp.phase_number = 1;
+WHERE t.template_code = 'TPL_CROWN_CERCON' AND tp.phase_number = 1
+ON CONFLICT (phase_id, service_id) DO NOTHING;
 
 
 -- TPL_CROWN_CERCON - Phase 2: Lấy dấu & Gắn sứ (2 services in order: crown prep first, then cementing)
@@ -2014,7 +2041,8 @@ SELECT tp.phase_id, s.service_id, 1, 1, 60, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'CROWN_ZIR_CERCON'
-WHERE t.template_code = 'TPL_CROWN_CERCON' AND tp.phase_number = 2;
+WHERE t.template_code = 'TPL_CROWN_CERCON' AND tp.phase_number = 2
+ON CONFLICT (phase_id, service_id) DO NOTHING;
 
 
 INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
@@ -2022,7 +2050,8 @@ SELECT tp.phase_id, s.service_id, 2, 1, 30, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'PROS_CEMENT'
-WHERE t.template_code = 'TPL_CROWN_CERCON' AND tp.phase_number = 2;
+WHERE t.template_code = 'TPL_CROWN_CERCON' AND tp.phase_number = 2
+ON CONFLICT (phase_id, service_id) DO NOTHING;
 
 
 
@@ -2058,73 +2087,73 @@ ON CONFLICT (specialization_id) DO NOTHING;
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
 SELECT 'EMS251115001', 1, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
 FROM work_shifts WHERE shift_name = 'Ca Sáng (8h-12h)' LIMIT 1
-ON CONFLICT (employee_shift_id) DO NOTHING
+ON CONFLICT (employee_shift_id) DO NOTHING;
 
 -- Dentist 1: Lê Anh Khoa (Full-time) - Ca Chiều
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
 SELECT 'EMS251115001B', 1, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
 FROM work_shifts WHERE shift_name = 'Ca Chiều (13h-17h)' LIMIT 1
-ON CONFLICT (employee_shift_id) DO NOTHING
+ON CONFLICT (employee_shift_id) DO NOTHING;
 
 -- Dentist 2: Trịnh Công Thái (Full-time) - Ca Sáng
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
 SELECT 'EMS251115002', 2, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
 FROM work_shifts WHERE shift_name = 'Ca Sáng (8h-12h)' LIMIT 1
-ON CONFLICT (employee_shift_id) DO NOTHING
+ON CONFLICT (employee_shift_id) DO NOTHING;
 
 -- Dentist 2: Trịnh Công Thái (Full-time) - Ca Chiều
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
 SELECT 'EMS251115002B', 2, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
 FROM work_shifts WHERE shift_name = 'Ca Chiều (13h-17h)' LIMIT 1
-ON CONFLICT (employee_shift_id) DO NOTHING
+ON CONFLICT (employee_shift_id) DO NOTHING;
 
 -- Dentist 3: Jimmy Donaldson (Part-time flex) - Ca Part-time Sáng
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
 SELECT 'EMS251115003', 3, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
 FROM work_shifts WHERE shift_name = 'Ca Part-time Sáng (8h-12h)' LIMIT 1
-ON CONFLICT (employee_shift_id) DO NOTHING
+ON CONFLICT (employee_shift_id) DO NOTHING;
 
 -- Dentist 4: Junya Ota (Part-time fixed) - Ca Part-time Chiều
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
 SELECT 'EMS251115004', 4, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
 FROM work_shifts WHERE shift_name = 'Ca Part-time Chiều (13h-17h)' LIMIT 1
-ON CONFLICT (employee_shift_id) DO NOTHING
+ON CONFLICT (employee_shift_id) DO NOTHING;
 
 -- Y tá 1: Đoàn Nguyễn Khôi Nguyên (Full-time) - Ca Sáng
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
 SELECT 'EMS251115007', 7, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
 FROM work_shifts WHERE shift_name = 'Ca Sáng (8h-12h)' LIMIT 1
-ON CONFLICT (employee_shift_id) DO NOTHING
+ON CONFLICT (employee_shift_id) DO NOTHING;
 
 -- Y tá 1: Đoàn Nguyễn Khôi Nguyên (Full-time) - Ca Chiều
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
 SELECT 'EMS251115007B', 7, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
 FROM work_shifts WHERE shift_name = 'Ca Chiều (13h-17h)' LIMIT 1
-ON CONFLICT (employee_shift_id) DO NOTHING
+ON CONFLICT (employee_shift_id) DO NOTHING;
 
 -- Y tá 2: Nguyễn Trần Tuấn Khang (Full-time) - Ca Sáng
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
 SELECT 'EMS251115008A', 8, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
 FROM work_shifts WHERE shift_name = 'Ca Sáng (8h-12h)' LIMIT 1
-ON CONFLICT (employee_shift_id) DO NOTHING
+ON CONFLICT (employee_shift_id) DO NOTHING;
 
 -- Y tá 2: Nguyễn Trần Tuấn Khang (Full-time) - Ca Chiều
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
 SELECT 'EMS251115008', 8, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
 FROM work_shifts WHERE shift_name = 'Ca Chiều (13h-17h)' LIMIT 1
-ON CONFLICT (employee_shift_id) DO NOTHING
+ON CONFLICT (employee_shift_id) DO NOTHING;
 
 -- Y tá 3: Huỳnh Tấn Quang Nhật (Part-time fixed) - Ca Part-time Sáng
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
 SELECT 'EMS251115009', 9, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
 FROM work_shifts WHERE shift_name = 'Ca Part-time Sáng (8h-12h)' LIMIT 1
-ON CONFLICT (employee_shift_id) DO NOTHING
+ON CONFLICT (employee_shift_id) DO NOTHING;
 
 -- Y tá 4: Ngô Đình Chính (Part-time flex) - Ca Part-time Chiều
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
 SELECT 'EMS251115010', 10, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
 FROM work_shifts WHERE shift_name = 'Ca Part-time Chiều (13h-17h)' LIMIT 1
-ON CONFLICT (employee_shift_id) DO NOTHING
+ON CONFLICT (employee_shift_id) DO NOTHING;
 
 -- ============================================
 -- 9. SAMPLE APPOINTMENTS (Test date: 2025-11-04 - TODAY)
@@ -2155,8 +2184,8 @@ ON CONFLICT (appointment_id, service_id) DO NOTHING;
 INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
 VALUES
     (1, 7, 'ASSISTANT'),    -- EMP007 - Y tá Nguyên
-    (1, 12, 'OBSERVER')     -- EMP012 - Thực tập sinh Linh (✅ TEST DATA)
-ON CONFLICT (appointment_id, employee_id, participant_role) DO NOTHING;
+    (1, 12, 'OBSERVER')    -- EMP012 - Thực tập sinh Linh (✅ TEST DATA)
+ON CONFLICT (appointment_id, employee_id) DO NOTHING;
 
 
 -- APT-002: Lịch hẹn Ca Chiều - Bác sĩ Thái (KHÔNG có OBSERVER)
@@ -2197,8 +2226,9 @@ ON CONFLICT (appointment_id, service_id) DO NOTHING;
 
 -- Participants cho APT-003: Thực tập sinh Linh làm OBSERVER
 INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
-VALUES (3, 12, 'OBSERVER')  -- EMP012 - Thực tập sinh Linh
-ON CONFLICT (appointment_id, employee_id, participant_role) DO NOTHING;
+VALUES (3, 12, 'OBSERVER')
+ON CONFLICT (appointment_id, employee_id) DO NOTHING;  -- EMP012 - Thực tập sinh Linh
+
 
 
 -- ============================================
@@ -2223,8 +2253,9 @@ ON CONFLICT (appointment_id, service_id) DO NOTHING;
 
 
 INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
-VALUES (4, 7, 'ASSISTANT')  -- EMP007 - Y tá Nguyên
-ON CONFLICT (appointment_id, employee_id, participant_role) DO NOTHING;
+VALUES (4, 7, 'ASSISTANT')
+ON CONFLICT (appointment_id, employee_id) DO NOTHING;  -- EMP007 - Y tá Nguyên
+
 
 
 -- APT-005: Nov 6 Afternoon - BS Lê Anh Khoa (EMP001) - ✅ FIXED: EMP001 has PERIODONTICS specialization
@@ -2246,8 +2277,9 @@ VALUES
 ON CONFLICT (appointment_id, service_id) DO NOTHING;
 
 INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
-VALUES (5, 8, 'ASSISTANT')  -- EMP008 - Y tá Khang
-ON CONFLICT (appointment_id, employee_id, participant_role) DO NOTHING;
+VALUES (5, 8, 'ASSISTANT')
+ON CONFLICT (appointment_id, employee_id) DO NOTHING;  -- EMP008 - Y tá Khang
+
 
 
 -- APT-006: Nov 7 Morning - BS Jimmy (EMP003)
@@ -2268,8 +2300,9 @@ ON CONFLICT (appointment_id, service_id) DO NOTHING;
 
 
 INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
-VALUES (6, 7, 'ASSISTANT')  -- EMP007 - Y tá Nguyên
-ON CONFLICT (appointment_id, employee_id, participant_role) DO NOTHING;
+VALUES (6, 7, 'ASSISTANT')
+ON CONFLICT (appointment_id, employee_id) DO NOTHING;  -- EMP007 - Y tá Nguyên
+
 
 
 -- APT-007: Nov 7 Afternoon - BS Thái (EMP002) - Can be used for reschedule testing
@@ -2290,8 +2323,9 @@ ON CONFLICT (appointment_id, service_id) DO NOTHING;
 
 
 INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
-VALUES (7, 8, 'ASSISTANT')  -- EMP008 - Y tá Khang
-ON CONFLICT (appointment_id, employee_id, participant_role) DO NOTHING;
+VALUES (7, 8, 'ASSISTANT')
+ON CONFLICT (appointment_id, employee_id) DO NOTHING;  -- EMP008 - Y tá Khang
+
 
 
 -- APT-008: Nov 8 Morning - BS Khoa (EMP001) - Multiple services
@@ -2313,8 +2347,9 @@ VALUES
 ON CONFLICT (appointment_id, service_id) DO NOTHING;
 
 INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
-VALUES (8, 7, 'ASSISTANT')  -- EMP007 - Y tá Nguyên
-ON CONFLICT (appointment_id, employee_id, participant_role) DO NOTHING;
+VALUES (8, 7, 'ASSISTANT')
+ON CONFLICT (appointment_id, employee_id) DO NOTHING;  -- EMP007 - Y tá Nguyên
+
 
 
 -- Reset appointments sequence after seed data
