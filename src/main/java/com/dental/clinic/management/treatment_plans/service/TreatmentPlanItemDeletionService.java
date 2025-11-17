@@ -126,7 +126,9 @@ public class TreatmentPlanItemDeletionService {
                                         item.getStatus());
 
                         log.error("GUARD 1 FAILED: Item {} has status {}", item.getItemId(), item.getStatus());
-                        throw new ConflictException(errorMsg);
+
+                        // Use specific error code for better frontend handling
+                        throw new ConflictException("ITEM_SCHEDULED_CANNOT_DELETE", errorMsg);
                 }
 
                 log.debug("GUARD 1 PASSED: Item {} is in status {}", item.getItemId(), item.getStatus());
@@ -149,7 +151,9 @@ public class TreatmentPlanItemDeletionService {
 
                         log.error("GUARD 2 FAILED: Plan {} has approval status {}",
                                         plan.getPlanId(), plan.getApprovalStatus());
-                        throw new ConflictException(errorMsg);
+
+                        // Use specific error code for better frontend handling
+                        throw new ConflictException("PLAN_APPROVED_CANNOT_DELETE", errorMsg);
                 }
 
                 log.debug("GUARD 2 PASSED: Plan {} is in approval status {}",
@@ -210,7 +214,7 @@ public class TreatmentPlanItemDeletionService {
                 Optional<String> currentLogin = SecurityUtil.getCurrentUserLogin();
                 if (currentLogin.isEmpty()) {
                         log.error("No authenticated user found in security context");
-                        throw new ConflictException("Không thể xác định người thực hiện");
+                        throw new ConflictException("AUTH_USER_NOT_FOUND", "Không thể xác định người thực hiện");
                 }
 
                 Account account = accountRepository.findByUsernameWithRoleAndPermissions(currentLogin.get())
@@ -218,7 +222,7 @@ public class TreatmentPlanItemDeletionService {
 
                 if (account.getEmployee() == null || account.getEmployee().getEmployeeId() == null) {
                         log.error("Account {} has no linked employee", currentLogin.get());
-                        throw new ConflictException("Tài khoản không liên kết với nhân viên");
+                        throw new ConflictException("EMPLOYEE_NOT_LINKED", "Tài khoản không liên kết với nhân viên");
                 }
 
                 return account.getEmployee().getEmployeeId();
