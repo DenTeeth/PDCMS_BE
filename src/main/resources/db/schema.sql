@@ -1,10 +1,11 @@
 -- ============================================
 -- DENTAL CLINIC MANAGEMENT SYSTEM - SCHEMA V20
--- Date: 2025-11-15
+-- Date: 2025-11-15 (Updated: 2025-11-17)
 -- PostgreSQL Database Schema
 -- ============================================
 -- NOTE: Hibernate auto-creates tables from @Entity classes
 -- This file is for reference and manual database setup only
+-- Updated to match Java entity definitions (SERIAL/INTEGER IDs)
 -- ============================================
 -- CHANGES IN V20:
 -- - Added plan_audit_logs table for treatment plan approval audit trail
@@ -62,13 +63,15 @@ CREATE TABLE roles (
 
 -- Accounts (Tài khoản đăng nhập)
 CREATE TABLE accounts (
-    account_id BIGSERIAL PRIMARY KEY,
+    account_id SERIAL PRIMARY KEY,
     account_code VARCHAR(20) UNIQUE NOT NULL,
-    username VARCHAR(100) UNIQUE NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
     role_id VARCHAR(50) NOT NULL REFERENCES roles(role_id),
     status VARCHAR(50) DEFAULT 'ACTIVE',
+    must_change_password BOOLEAN DEFAULT FALSE,
+    password_changed_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -104,12 +107,12 @@ CREATE TABLE specializations (
 
 -- Employees (Nhân viên)
 CREATE TABLE employees (
-    employee_id BIGSERIAL PRIMARY KEY,
-    account_id BIGINT NOT NULL REFERENCES accounts(account_id) ON DELETE CASCADE,
+    employee_id SERIAL PRIMARY KEY,
+    account_id INTEGER NOT NULL REFERENCES accounts(account_id) ON DELETE CASCADE,
     employee_code VARCHAR(20) UNIQUE NOT NULL,
-    first_name VARCHAR(100) NOT NULL,
-    last_name VARCHAR(100) NOT NULL,
-    phone VARCHAR(20),
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    phone VARCHAR(15),
     date_of_birth DATE,
     address TEXT,
     employment_type VARCHAR(50) DEFAULT 'FULL_TIME',
@@ -120,23 +123,23 @@ CREATE TABLE employees (
 
 -- Employee Specializations (Chuyên môn của nhân viên)
 CREATE TABLE employee_specializations (
-    employee_id BIGINT NOT NULL REFERENCES employees(employee_id) ON DELETE CASCADE,
+    employee_id INTEGER NOT NULL REFERENCES employees(employee_id) ON DELETE CASCADE,
     specialization_id INTEGER NOT NULL REFERENCES specializations(specialization_id) ON DELETE CASCADE,
     PRIMARY KEY (employee_id, specialization_id)
 );
 
 -- Patients (Bệnh nhân)
 CREATE TABLE patients (
-    patient_id BIGSERIAL PRIMARY KEY,
-    account_id BIGINT REFERENCES accounts(account_id) ON DELETE SET NULL,
+    patient_id SERIAL PRIMARY KEY,
+    account_id INTEGER REFERENCES accounts(account_id) ON DELETE SET NULL,
     patient_code VARCHAR(20) UNIQUE NOT NULL,
-    first_name VARCHAR(100) NOT NULL,
-    last_name VARCHAR(100) NOT NULL,
-    email VARCHAR(255),
-    phone VARCHAR(20),
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    email VARCHAR(100),
+    phone VARCHAR(15),
     date_of_birth DATE,
     address TEXT,
-    gender VARCHAR(20),
+    gender VARCHAR(10),
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -149,7 +152,7 @@ CREATE TABLE patients (
 
 -- Service Categories (V17: Nhóm dịch vụ cho menu FE)
 CREATE TABLE service_categories (
-    category_id BIGSERIAL PRIMARY KEY,
+    category_id SERIAL PRIMARY KEY,
     category_code VARCHAR(50) UNIQUE NOT NULL,
     category_name VARCHAR(255) NOT NULL,
     display_order INTEGER NOT NULL DEFAULT 0,
@@ -161,14 +164,14 @@ CREATE TABLE service_categories (
 
 -- Services (Dịch vụ đơn lẻ - V17: Added category_id, display_order)
 CREATE TABLE services (
-    service_id BIGSERIAL PRIMARY KEY,
+    service_id SERIAL PRIMARY KEY,
     service_code VARCHAR(50) UNIQUE NOT NULL,
     service_name VARCHAR(255) NOT NULL,
     description TEXT,
     default_duration_minutes INTEGER NOT NULL,
     default_buffer_minutes INTEGER DEFAULT 0,
     price DECIMAL(15,2),
-    category_id BIGINT REFERENCES service_categories(category_id) ON DELETE SET NULL,
+    category_id INTEGER REFERENCES service_categories(category_id) ON DELETE SET NULL,
     display_order INTEGER NOT NULL DEFAULT 0,
     specialization_id INTEGER REFERENCES specializations(specialization_id),
     is_active BOOLEAN DEFAULT TRUE,
@@ -192,7 +195,7 @@ CREATE TABLE rooms (
 -- Room Services (Dịch vụ tương thích với phòng)
 CREATE TABLE room_services (
     room_id VARCHAR(50) NOT NULL REFERENCES rooms(room_id) ON DELETE CASCADE,
-    service_id BIGINT NOT NULL REFERENCES services(service_id) ON DELETE CASCADE,
+    service_id INTEGER NOT NULL REFERENCES services(service_id) ON DELETE CASCADE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (room_id, service_id)
 );
@@ -210,7 +213,7 @@ CREATE TABLE work_shifts (
 -- Employee Shifts (Lịch làm việc của nhân viên)
 CREATE TABLE employee_shifts (
     employee_shift_id VARCHAR(50) PRIMARY KEY,
-    employee_id BIGINT NOT NULL REFERENCES employees(employee_id) ON DELETE CASCADE,
+    employee_id INTEGER NOT NULL REFERENCES employees(employee_id) ON DELETE CASCADE,
     work_date DATE NOT NULL,
     work_shift_id VARCHAR(50) NOT NULL REFERENCES work_shifts(work_shift_id),
     source VARCHAR(50) DEFAULT 'MANUAL_ENTRY',
@@ -222,10 +225,10 @@ CREATE TABLE employee_shifts (
 
 -- Appointments (Lịch hẹn)
 CREATE TABLE appointments (
-    appointment_id BIGSERIAL PRIMARY KEY,
-    appointment_code VARCHAR(50) UNIQUE NOT NULL,
-    patient_id BIGINT NOT NULL REFERENCES patients(patient_id),
-    employee_id BIGINT NOT NULL REFERENCES employees(employee_id),
+    appointment_id SERIAL PRIMARY KEY,
+    appointment_code VARCHAR(20) UNIQUE NOT NULL,
+    patient_id INTEGER NOT NULL REFERENCES patients(patient_id),
+    employee_id INTEGER NOT NULL REFERENCES employees(employee_id),
     room_id VARCHAR(50) NOT NULL REFERENCES rooms(room_id),
     appointment_start_time TIMESTAMP NOT NULL,
     appointment_end_time TIMESTAMP NOT NULL,
@@ -238,9 +241,9 @@ CREATE TABLE appointments (
 
 -- Appointment Services (Dịch vụ trong lịch hẹn)
 CREATE TABLE appointment_services (
-    appointment_service_id BIGSERIAL PRIMARY KEY,
-    appointment_id BIGINT NOT NULL REFERENCES appointments(appointment_id) ON DELETE CASCADE,
-    service_id BIGINT NOT NULL REFERENCES services(service_id),
+    appointment_service_id SERIAL PRIMARY KEY,
+    appointment_id INTEGER NOT NULL REFERENCES appointments(appointment_id) ON DELETE CASCADE,
+    service_id INTEGER NOT NULL REFERENCES services(service_id),
     service_duration_minutes INTEGER,
     service_buffer_minutes INTEGER,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -248,9 +251,9 @@ CREATE TABLE appointment_services (
 
 -- Appointment Participants (Phụ tá/Bác sĩ phụ trong lịch hẹn)
 CREATE TABLE appointment_participants (
-    participant_id BIGSERIAL PRIMARY KEY,
-    appointment_id BIGINT NOT NULL REFERENCES appointments(appointment_id) ON DELETE CASCADE,
-    employee_id BIGINT NOT NULL REFERENCES employees(employee_id),
+    participant_id SERIAL PRIMARY KEY,
+    appointment_id INTEGER NOT NULL REFERENCES appointments(appointment_id) ON DELETE CASCADE,
+    employee_id INTEGER NOT NULL REFERENCES employees(employee_id),
     participant_role VARCHAR(50) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE (appointment_id, employee_id)
@@ -258,9 +261,9 @@ CREATE TABLE appointment_participants (
 
 -- Appointment Audit Logs (Lịch sử thay đổi lịch hẹn)
 CREATE TABLE appointment_audit_logs (
-    log_id BIGSERIAL PRIMARY KEY,
-    appointment_id BIGINT NOT NULL REFERENCES appointments(appointment_id) ON DELETE CASCADE,
-    changed_by_employee_id BIGINT REFERENCES employees(employee_id) ON DELETE SET NULL,
+    log_id SERIAL PRIMARY KEY,
+    appointment_id INTEGER NOT NULL REFERENCES appointments(appointment_id) ON DELETE CASCADE,
+    changed_by_employee_id INTEGER REFERENCES employees(employee_id) ON DELETE SET NULL,
     action_type appointment_action_type NOT NULL,
     reason_code appointment_reason_code,
     old_value TEXT,
@@ -296,8 +299,8 @@ CREATE TABLE time_off_types (
 
 -- Employee Leave Balances (Số ngày phép còn lại)
 CREATE TABLE employee_leave_balances (
-    balance_id BIGSERIAL PRIMARY KEY,
-    employee_id BIGINT NOT NULL REFERENCES employees(employee_id) ON DELETE CASCADE,
+    balance_id SERIAL PRIMARY KEY,
+    employee_id INTEGER NOT NULL REFERENCES employees(employee_id) ON DELETE CASCADE,
     time_off_type_id VARCHAR(50) NOT NULL REFERENCES time_off_types(type_id),
     year INTEGER NOT NULL,
     total_days DECIMAL(5,2) NOT NULL DEFAULT 0,
@@ -311,14 +314,14 @@ CREATE TABLE employee_leave_balances (
 -- Time Off Requests (Đơn xin nghỉ phép)
 CREATE TABLE time_off_requests (
     request_id VARCHAR(50) PRIMARY KEY,
-    employee_id BIGINT NOT NULL REFERENCES employees(employee_id),
+    employee_id INTEGER NOT NULL REFERENCES employees(employee_id),
     time_off_type_id VARCHAR(50) NOT NULL REFERENCES time_off_types(type_id),
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
     total_days DECIMAL(5,2) NOT NULL,
     reason TEXT,
     status VARCHAR(50) DEFAULT 'PENDING',
-    approved_by BIGINT REFERENCES employees(employee_id),
+    approved_by INTEGER REFERENCES employees(employee_id),
     approved_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -330,7 +333,7 @@ CREATE TABLE time_off_requests (
 
 -- Holiday Definitions (Định nghĩa ngày lễ)
 CREATE TABLE holiday_definitions (
-    holiday_id BIGSERIAL PRIMARY KEY,
+    holiday_id SERIAL PRIMARY KEY,
     holiday_code VARCHAR(50) UNIQUE NOT NULL,
     holiday_name VARCHAR(255) NOT NULL,
     holiday_type VARCHAR(50) NOT NULL,
@@ -343,8 +346,8 @@ CREATE TABLE holiday_definitions (
 
 -- Holiday Dates (Ngày lễ cụ thể theo năm)
 CREATE TABLE holiday_dates (
-    holiday_date_id BIGSERIAL PRIMARY KEY,
-    holiday_id BIGINT NOT NULL REFERENCES holiday_definitions(holiday_id) ON DELETE CASCADE,
+    holiday_date_id SERIAL PRIMARY KEY,
+    holiday_id INTEGER NOT NULL REFERENCES holiday_definitions(holiday_id) ON DELETE CASCADE,
     holiday_date DATE NOT NULL UNIQUE,
     year INTEGER NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -356,10 +359,10 @@ CREATE TABLE holiday_dates (
 
 -- Plan Audit Logs (Lịch sử duyệt Lộ trình điều trị - V20)
 CREATE TABLE plan_audit_logs (
-    log_id BIGSERIAL PRIMARY KEY,
-    plan_id BIGINT NOT NULL,
+    log_id SERIAL PRIMARY KEY,
+    plan_id INTEGER NOT NULL,
     action_type VARCHAR(50) NOT NULL,
-    performed_by BIGINT NOT NULL,
+    performed_by INTEGER NOT NULL,
     notes TEXT,
     old_approval_status approval_status,
     new_approval_status approval_status,
