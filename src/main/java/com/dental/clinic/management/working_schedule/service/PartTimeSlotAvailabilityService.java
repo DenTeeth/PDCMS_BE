@@ -9,7 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.access.prepost.PreAuthorize;
-
+import com.dental.clinic.management.exception.validation.BadRequestAlertException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -419,5 +419,112 @@ public class PartTimeSlotAvailabilityService {
             case 12: return "T12"; // Tháng 12 (December)
             default: return "T" + monthValue;
         }
+    }
+
+    /**
+     * Get daily availability breakdown for a specific slot in a given month.
+     * Shows quota, registered count, and remaining slots for each working day.
+     * 
+     * Business Logic:
+     * - Only includes days matching slot's dayOfWeek
+     * - Counts APPROVED registrations covering each date
+     * - Status: AVAILABLE (100% free), PARTIAL (some taken), FULL (no slots)
+     * 
+     * Example:
+     * - Slot: MONDAY, quota=10
+     * - Month: 2025-11 (Mondays: 3, 10, 17, 24)
+     * - Returns daily breakdown with registered count per day
+     * 
+     * @param slotId Slot ID to check
+     * @param month Month in YYYY-MM format (e.g., "2025-11")
+     * @return Daily availability response with per-day breakdown
+     */
+    @Transactional(readOnly = true)
+    @PreAuthorize("hasAuthority('VIEW_AVAILABLE_SLOTS') or hasAuthority('MANAGE_PART_TIME_REGISTRATIONS') or hasAuthority('MANAGE_WORK_SLOTS')")
+    public com.dental.clinic.management.working_schedule.dto.response.DailyAvailabilityResponse getDailyAvailability(
+            Long slotId, String month) {
+        
+        // Validate and parse month (YYYY-MM format)
+        java.time.YearMonth yearMonth;
+        try {
+            yearMonth = java.time.YearMonth.parse(month);
+        } catch (Exception e) {
+            throw new BadRequestAlertException(
+                "Invalid month format. Expected YYYY-MM",
+                "partTimeSlot",
+                "invalidmonthformat"
+            );
+        }
+        
+        // Get slot
+        PartTimeSlot slot = slotRepository.findById(slotId)
+            .orElseThrow(() -> new BadRequestAlertException(
+                "Slot not found",
+                "partTimeSlot",
+                "slotnotfound"
+            ));
+        
+        // Get month boundaries
+        LocalDate monthStart = yearMonth.atDay(1);
+        LocalDate monthEnd = yearMonth.atEndOfMonth();
+        
+        // Get all working days in the month (matching slot's dayOfWeek)
+        List<LocalDate> workingDays = getWorkingDays(slot, monthStart, monthEnd);
+        
+        // Build daily availability list
+        List<com.dental.clinic.management.working_schedule.dto.response.DailySlotAvailability> dailyList = new ArrayList<>();
+        int totalAvailable = 0;
+        int totalPartial = 0;
+        int totalFull = 0;
+        
+        for (LocalDate workingDay : workingDays) {
+            long registered = getRegisteredCountForDate(slotId, workingDay);
+            int remaining = slot.getQuota() - (int) registered;
+            
+            // Determine status
+            String status;
+            if (remaining == slot.getQuota()) {
+                status = "AVAILABLE";
+                totalAvailable++;
+            } else if (remaining > 0) {
+                status = "PARTIAL";
+                totalPartial++;
+            } else {
+                status = "FULL";
+                totalFull++;
+            }
+            
+            dailyList.add(com.dental.clinic.management.working_schedule.dto.response.DailySlotAvailability.builder()
+                .date(workingDay.toString())
+                .dayOfWeek(workingDay.getDayOfWeek().toString())
+                .quota(slot.getQuota())
+                .registered((int) registered)
+                .remaining(remaining)
+                .status(status)
+                .build());
+        }
+        
+        // Sort by date ascending
+        dailyList.sort((a, b) -> a.getDate().compareTo(b.getDate()));
+        
+        // Build month name (e.g., "November 2025")
+        String monthName = yearMonth.getMonth().toString().charAt(0) + 
+                          yearMonth.getMonth().toString().substring(1).toLowerCase() + 
+                          " " + yearMonth.getYear();
+        
+        // Build response
+        return com.dental.clinic.management.working_schedule.dto.response.DailyAvailabilityResponse.builder()
+            .slotId(slotId)
+            .shiftName(slot.getWorkShift().getShiftName())
+            .dayOfWeek(slot.getDayOfWeek())
+            .quota(slot.getQuota())
+            .month(month)
+            .monthName(monthName)
+            .totalWorkingDays(workingDays.size())
+            .totalDaysAvailable(totalAvailable)
+            .totalDaysPartial(totalPartial)
+            .totalDaysFull(totalFull)
+            .dailyAvailability(dailyList)
+            .build();
     }
 }

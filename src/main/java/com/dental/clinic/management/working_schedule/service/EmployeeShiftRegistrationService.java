@@ -657,4 +657,20 @@ public class EmployeeShiftRegistrationService {
         PartTimeSlot slot = slotRepository.findById(registration.getPartTimeSlotId()).orElse(null);
         return buildResponse(registration, slot);
     }
+
+    /**
+     * Get daily availability breakdown for a specific slot in a given month.
+     * Delegates to PartTimeSlotAvailabilityService for calculation.
+     * 
+     * @param slotId Slot ID to check
+     * @param month Month in YYYY-MM format (e.g., "2025-11")
+     * @return Daily availability response with per-day breakdown
+     */
+    @Transactional(readOnly = true)
+    @PreAuthorize("hasAuthority('VIEW_AVAILABLE_SLOTS') or hasAuthority('MANAGE_PART_TIME_REGISTRATIONS') or hasAuthority('MANAGE_WORK_SLOTS')")
+    public com.dental.clinic.management.working_schedule.dto.response.DailyAvailabilityResponse getDailyAvailability(
+            Long slotId, String month) {
+        log.info("Getting daily availability for slot {} in month {}", slotId, month);
+        return availabilityService.getDailyAvailability(slotId, month);
+    }
 }

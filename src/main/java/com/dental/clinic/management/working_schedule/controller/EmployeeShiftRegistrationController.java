@@ -72,6 +72,71 @@ public class EmployeeShiftRegistrationController {
     }
 
     /**
+     * GET /api/v1/registrations/part-time-flex/slots/{slotId}/daily-availability
+     * Get daily availability breakdown for a specific slot in a given month.
+     * Shows quota, registered count, and remaining slots for each working day.
+     *
+     * Permission: VIEW_AVAILABLE_SLOTS (employees), MANAGE_PART_TIME_REGISTRATIONS (managers), MANAGE_WORK_SLOTS (admins)
+     * 
+     * Business Logic:
+     * - Only includes days matching slot's dayOfWeek
+     * - Counts APPROVED registrations covering each date
+     * - Status: AVAILABLE (100% free), PARTIAL (some taken), FULL (no slots available)
+     * 
+     * Query Parameters:
+     * - month (required): Month in YYYY-MM format (e.g., "2025-11", "2025-12")
+     * 
+     * Example Request:
+     * GET /api/v1/registrations/part-time-flex/slots/1/daily-availability?month=2025-11
+     * 
+     * Example Response:
+     * {
+     *   "slotId": 1,
+     *   "shiftName": "Ca Part-time Sáng (8h-12h)",
+     *   "dayOfWeek": "MONDAY",
+     *   "quota": 10,
+     *   "month": "2025-11",
+     *   "monthName": "November 2025",
+     *   "totalWorkingDays": 4,
+     *   "totalDaysAvailable": 1,
+     *   "totalDaysPartial": 2,
+     *   "totalDaysFull": 1,
+     *   "dailyAvailability": [
+     *     {
+     *       "date": "2025-11-03",
+     *       "dayOfWeek": "MONDAY",
+     *       "quota": 10,
+     *       "registered": 0,
+     *       "remaining": 10,
+     *       "status": "AVAILABLE"
+     *     },
+     *     {
+     *       "date": "2025-11-10",
+     *       "dayOfWeek": "MONDAY",
+     *       "quota": 10,
+     *       "registered": 8,
+     *       "remaining": 2,
+     *       "status": "PARTIAL"
+     *     },
+     *     ...
+     *   ]
+     * }
+     * 
+     * @param slotId The slot ID to get daily availability for
+     * @param month Month in YYYY-MM format (required)
+     * @return Daily availability response with per-day breakdown
+     */
+    @GetMapping("/slots/{slotId}/daily-availability")
+    public ResponseEntity<com.dental.clinic.management.working_schedule.dto.response.DailyAvailabilityResponse> getDailyAvailability(
+            @PathVariable Long slotId,
+            @RequestParam String month) {
+        log.info("REST request to get daily availability for slot {} in month {}", slotId, month);
+        com.dental.clinic.management.working_schedule.dto.response.DailyAvailabilityResponse response = 
+            registrationService.getDailyAvailability(slotId, month);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
      * POST /api/v1/registrations/part-time
      * Submit registration request (NEW: goes to PENDING status).
      *
