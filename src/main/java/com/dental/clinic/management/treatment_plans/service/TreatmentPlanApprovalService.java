@@ -7,9 +7,11 @@ import com.dental.clinic.management.exception.BadRequestException;
 import com.dental.clinic.management.exception.ConflictException;
 import com.dental.clinic.management.exception.NotFoundException;
 import com.dental.clinic.management.treatment_plans.domain.ApprovalStatus;
+import com.dental.clinic.management.treatment_plans.domain.PatientPlanItem;
 import com.dental.clinic.management.treatment_plans.domain.PatientTreatmentPlan;
 import com.dental.clinic.management.treatment_plans.domain.PlanAuditLog;
 import com.dental.clinic.management.treatment_plans.dto.TreatmentPlanDetailResponse;
+import com.dental.clinic.management.treatment_plans.enums.PlanItemStatus;
 import com.dental.clinic.management.treatment_plans.dto.request.ApproveTreatmentPlanRequest;
 import com.dental.clinic.management.treatment_plans.dto.response.ApprovalMetadataDTO;
 import com.dental.clinic.management.treatment_plans.repository.PatientTreatmentPlanRepository;
@@ -37,6 +39,10 @@ public class TreatmentPlanApprovalService {
     private final PlanAuditLogRepository auditLogRepository;
     private final EmployeeRepository employeeRepository;
     private final AccountRepository accountRepository;
+
+    // V21: Clinical Rules Validation
+    private final com.dental.clinic.management.service.service.ClinicalRulesValidationService clinicalRulesValidationService;
+    private final com.dental.clinic.management.booking_appointment.repository.PatientPlanItemRepository itemRepository;
 
     /**
      * API 5.9: Approve or Reject a treatment plan.
@@ -103,6 +109,11 @@ public class TreatmentPlanApprovalService {
         // 8. Save plan
         plan = planRepository.save(plan);
         log.info("Updated plan {} to approval status: {}", planCode, newStatus);
+
+        // 8B. V21: If APPROVED, activate items with clinical rules check
+        if (newStatus == ApprovalStatus.APPROVED) {
+            activateItemsWithClinicalRulesCheck(plan);
+        }
 
         // 9. Create audit log (P0 requirement)
         PlanAuditLog auditLog = PlanAuditLog.createApprovalLog(
@@ -227,5 +238,67 @@ public class TreatmentPlanApprovalService {
                 .approvedAt(plan.getApprovedAt())
                 .notes(plan.getRejectionReason()) // Reusing this field for all approval notes
                 .build();
+    }
+
+    // ====================================================================
+    // V21: Clinical Rules Integration for Plan Activation
+    // ====================================================================
+
+    /**
+     * V21: Activate plan items with clinical rules awareness.
+     *
+     * When plan is APPROVED, iterate through all items in PENDING status.
+     * For each item with a service_id:
+     * - If service has prerequisites → set status to WAITING_FOR_PREREQUISITE
+     * - Else → set status to READY_FOR_BOOKING
+     *
+     * This ensures items are not bookable until prerequisites are met.
+     *
+     * @param plan The approved treatment plan
+     */
+    private void activateItemsWithClinicalRulesCheck(PatientTreatmentPlan plan) {
+        log.info("V21: Activating plan {} items with clinical rules check", plan.getPlanCode());
+
+        int itemsActivated = 0;
+        int itemsWaiting = 0;
+
+        for (var phase : plan.getPhases()) {
+            for (PatientPlanItem item : phase.getItems()) {
+                // Only process PENDING items
+                if (item.getStatus() != PlanItemStatus.PENDING) {
+                    continue;
+                }
+
+                // Skip items without service (shouldn't happen, but safety check)
+                if (item.getServiceId() == null) {
+                    log.warn("V21: Item {} has no service, skipping", item.getItemId());
+                    continue;
+                }
+
+                Long serviceId = item.getServiceId().longValue();
+
+                // Check if service has prerequisites
+                boolean hasPrereqs = clinicalRulesValidationService.hasPrerequisites(serviceId);
+
+                if (hasPrereqs) {
+                    // Service requires prerequisites → WAITING
+                    item.setStatus(PlanItemStatus.WAITING_FOR_PREREQUISITE);
+                    itemsWaiting++;
+                    log.debug("V21: Item {} (service {}) → WAITING_FOR_PREREQUISITE (has prerequisites)",
+                            item.getItemId(), serviceId);
+                } else {
+                    // No prerequisites → READY
+                    item.setStatus(PlanItemStatus.READY_FOR_BOOKING);
+                    itemsActivated++;
+                    log.debug("V21: Item {} (service {}) → READY_FOR_BOOKING (no prerequisites)",
+                            item.getItemId(), serviceId);
+                }
+
+                itemRepository.save(item);
+            }
+        }
+
+        log.info("V21: ✅ Plan {} activation complete - {} items READY, {} items WAITING for prerequisites",
+                plan.getPlanCode(), itemsActivated, itemsWaiting);
     }
 }

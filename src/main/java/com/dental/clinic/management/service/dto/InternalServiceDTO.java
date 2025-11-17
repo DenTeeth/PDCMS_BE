@@ -6,10 +6,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * DTO for Internal Service API (authentication required)
  * Includes technical fields needed for booking operations
+ * V21: Added bundlesWith field for clinical rule suggestions
  */
 @Data
 @Builder
@@ -22,6 +24,12 @@ public class InternalServiceDTO {
     private String serviceName;
     private BigDecimal price;
     private Integer durationMinutes;
+
+    /**
+     * V21: List of service codes that bundle well with this service
+     * Based on BUNDLES_WITH clinical rules (soft suggestions)
+     */
+    private List<String> bundlesWith;
 
     /**
      * Nested category info for internal API

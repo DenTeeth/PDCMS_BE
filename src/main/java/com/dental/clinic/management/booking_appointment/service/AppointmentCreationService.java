@@ -76,6 +76,9 @@ public class AppointmentCreationService {
         private final PatientPlanItemRepository patientPlanItemRepository;
         private final AppointmentPlanItemRepository appointmentPlanItemRepository;
 
+        // V21: Clinical Rules Validation
+        private final com.dental.clinic.management.service.service.ClinicalRulesValidationService clinicalRulesValidationService;
+
         private static final DateTimeFormatter ISO_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
         private static final String ENTITY_NAME = "appointment";
 
@@ -154,6 +157,17 @@ public class AppointmentCreationService {
                 checkRoomConflict(room, startTime, endTime);
                 checkPatientConflict(patient, startTime, endTime);
                 checkParticipantConflicts(participants, startTime, endTime);
+
+                // STEP 7B: V21 Clinical Rules Validation (NEW V21)
+                log.debug("V21: Validating clinical rules for {} services", services.size());
+                List<Long> serviceIds = services.stream()
+                                .map(s -> s.getServiceId().longValue())
+                                .collect(Collectors.toList());
+                clinicalRulesValidationService.validateAppointmentServices(
+                                patient.getPatientId(),
+                                serviceIds,
+                                startTime.toLocalDate());
+                log.debug("V21: ✅ All clinical rules passed");
 
                 // STEP 8: Insert data (appointment + services + participants + audit log)
                 Appointment appointment = insertAppointment(patient, doctor, room, startTime, endTime, totalDuration,
@@ -240,6 +254,17 @@ public class AppointmentCreationService {
                 checkRoomConflict(room, startTime, endTime);
                 checkPatientConflict(patient, startTime, endTime);
                 checkParticipantConflicts(participants, startTime, endTime);
+
+                // V21: Clinical Rules Validation
+                log.debug("V21: Validating clinical rules for {} services", services.size());
+                List<Long> serviceIds = services.stream()
+                                .map(s -> s.getServiceId().longValue())
+                                .collect(Collectors.toList());
+                clinicalRulesValidationService.validateAppointmentServices(
+                                patient.getPatientId(),
+                                serviceIds,
+                                startTime.toLocalDate());
+                log.debug("V21: ✅ All clinical rules passed");
 
                 Appointment appointment = insertAppointment(patient, doctor, room, startTime, endTime,
                                 totalDuration, request.getNotes(), createdById);

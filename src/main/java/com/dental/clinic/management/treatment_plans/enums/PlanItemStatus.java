@@ -16,6 +16,13 @@ public enum PlanItemStatus {
     READY_FOR_BOOKING,
 
     /**
+     * V21: Item waiting for prerequisite services to be completed.
+     * Service has REQUIRES_PREREQUISITE or REQUIRES_MIN_DAYS clinical rules.
+     * Cannot be booked until prerequisites are met.
+     */
+    WAITING_FOR_PREREQUISITE,
+
+    /**
      * Item scheduled in an appointment
      */
     SCHEDULED,

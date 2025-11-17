@@ -48,31 +48,39 @@ public class TreatmentPlanItemService {
     private final EntityManager entityManager;
     private final TreatmentPlanRBACService rbacService;
 
+    // V21: Clinical Rules Validation
+    private final com.dental.clinic.management.service.service.ClinicalRulesValidationService clinicalRulesValidationService;
+
     /**
      * State Machine Map: current_status → allowed_next_statuses
+     * V21: Added WAITING_FOR_PREREQUISITE with auto-unlock to READY_FOR_BOOKING
      */
-    private static final Map<PlanItemStatus, Set<PlanItemStatus>> STATE_TRANSITIONS = Map.of(
-            PlanItemStatus.PENDING, Set.of(
+    private static final Map<PlanItemStatus, Set<PlanItemStatus>> STATE_TRANSITIONS = Map.ofEntries(
+            Map.entry(PlanItemStatus.PENDING, Set.of(
                     PlanItemStatus.READY_FOR_BOOKING,
+                    PlanItemStatus.WAITING_FOR_PREREQUISITE, // V21: Set when plan approved with prerequisites
                     PlanItemStatus.SKIPPED,
-                    PlanItemStatus.COMPLETED),
-            PlanItemStatus.READY_FOR_BOOKING, Set.of(
+                    PlanItemStatus.COMPLETED)),
+            Map.entry(PlanItemStatus.READY_FOR_BOOKING, Set.of(
                     PlanItemStatus.SCHEDULED,
                     PlanItemStatus.SKIPPED,
-                    PlanItemStatus.COMPLETED),
-            PlanItemStatus.SCHEDULED, Set.of(
+                    PlanItemStatus.COMPLETED)),
+            Map.entry(PlanItemStatus.WAITING_FOR_PREREQUISITE, Set.of(
+                    PlanItemStatus.READY_FOR_BOOKING, // V21: Auto-unlocked when prerequisite completed
+                    PlanItemStatus.SKIPPED)),
+            Map.entry(PlanItemStatus.SCHEDULED, Set.of(
                     PlanItemStatus.IN_PROGRESS,
                     PlanItemStatus.COMPLETED
             // CANNOT skip if scheduled
-            ),
-            PlanItemStatus.IN_PROGRESS, Set.of(
+            )),
+            Map.entry(PlanItemStatus.IN_PROGRESS, Set.of(
                     PlanItemStatus.COMPLETED
             // CANNOT skip if in progress
-            ),
-            PlanItemStatus.SKIPPED, Set.of(
+            )),
+            Map.entry(PlanItemStatus.SKIPPED, Set.of(
                     PlanItemStatus.READY_FOR_BOOKING, // Allow undo
-                    PlanItemStatus.COMPLETED),
-            PlanItemStatus.COMPLETED, Set.of()
+                    PlanItemStatus.COMPLETED)),
+            Map.entry(PlanItemStatus.COMPLETED, Set.of())
     // No transitions from COMPLETED
     );
 
@@ -182,6 +190,11 @@ public class TreatmentPlanItemService {
         // STEP 6: Auto-activate next item in phase
         if (newStatus == PlanItemStatus.COMPLETED) {
             activateNextItemInPhase(phase, item.getSequenceNumber());
+        }
+
+        // STEP 6B: V21 - Auto-unlock dependent items across all phases
+        if (newStatus == PlanItemStatus.COMPLETED && savedItem.getServiceId() != null) {
+            unlockDependentItems(plan, savedItem.getServiceId().longValue());
         }
 
         // STEP 7: Check and auto-complete phase
@@ -345,6 +358,77 @@ public class TreatmentPlanItemService {
             phase.setCompletionDate(java.time.LocalDate.now());
             entityManager.merge(phase); // Update phase
             log.info("🎯 Phase {} auto-completed: all items are done", phase.getPatientPhaseId());
+        }
+    }
+
+    // ====================================================================
+    // V21: Clinical Rules Integration for Item Completion
+    // ====================================================================
+
+    /**
+     * V21: Unlock dependent items when a service is completed.
+     *
+     * When an item is marked COMPLETED, check if other items in the plan
+     * are waiting for this service as a prerequisite. If found, unlock them:
+     * WAITING_FOR_PREREQUISITE → READY_FOR_BOOKING
+     *
+     * Example:
+     * - Item A (Khám tổng quát) completed
+     * - Item B (Trám răng) has status WAITING_FOR_PREREQUISITE
+     * - If "Trám requires Khám", Item B → READY_FOR_BOOKING
+     *
+     * @param plan               The treatment plan containing the items
+     * @param completedServiceId The service ID that was just completed
+     */
+    private void unlockDependentItems(PatientTreatmentPlan plan, Long completedServiceId) {
+        log.info("V21: Checking for items to unlock after completing service {}", completedServiceId);
+
+        // Get services that depend on this completed service
+        List<Long> unlockedServiceIds = clinicalRulesValidationService
+                .getServicesUnlockedBy(completedServiceId);
+
+        if (unlockedServiceIds.isEmpty()) {
+            log.debug("V21: No services depend on service {}", completedServiceId);
+            return;
+        }
+
+        log.info("V21: Found {} services that can be unlocked: {}",
+                unlockedServiceIds.size(), unlockedServiceIds);
+
+        int unlockedCount = 0;
+
+        // Iterate through all phases and items in the plan
+        for (var phase : plan.getPhases()) {
+            for (PatientPlanItem item : phase.getItems()) {
+                // Only process items in WAITING_FOR_PREREQUISITE status
+                if (item.getStatus() != PlanItemStatus.WAITING_FOR_PREREQUISITE) {
+                    continue;
+                }
+
+                // Check if this item's service is in the unlocked list
+                if (item.getServiceId() == null) {
+                    continue;
+                }
+
+                Long itemServiceId = item.getServiceId().longValue();
+
+                if (unlockedServiceIds.contains(itemServiceId)) {
+                    // Unlock this item!
+                    item.setStatus(PlanItemStatus.READY_FOR_BOOKING);
+                    itemRepository.save(item);
+                    unlockedCount++;
+
+                    log.info("V21: ✅ Unlocked item {} (service {}, '{}') → READY_FOR_BOOKING",
+                            item.getItemId(), itemServiceId, item.getItemName());
+                }
+            }
+        }
+
+        if (unlockedCount > 0) {
+            log.info("V21: 🔓 Successfully unlocked {} item(s) after completing service {}",
+                    unlockedCount, completedServiceId);
+        } else {
+            log.debug("V21: No items were waiting for service {}", completedServiceId);
         }
     }
 

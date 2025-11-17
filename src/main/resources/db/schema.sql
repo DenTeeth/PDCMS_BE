@@ -1,11 +1,16 @@
 -- ============================================
--- DENTAL CLINIC MANAGEMENT SYSTEM - SCHEMA V20
--- Date: 2025-11-15 (Updated: 2025-11-17)
+-- DENTAL CLINIC MANAGEMENT SYSTEM - SCHEMA V21
+-- Date: 2025-11-17
 -- PostgreSQL Database Schema
 -- ============================================
 -- NOTE: Hibernate auto-creates tables from @Entity classes
 -- This file is for reference and manual database setup only
 -- Updated to match Java entity definitions (SERIAL/INTEGER IDs)
+-- ============================================
+-- CHANGES IN V21:
+-- - Added Clinical Rules Engine (service_dependencies table)
+-- - Added dependency_rule_type ENUM (REQUIRES_PREREQUISITE, REQUIRES_MIN_DAYS, EXCLUDES_SAME_DAY, BUNDLES_WITH)
+-- - Purpose: Enforce clinical workflows, prevent unsafe service combinations
 -- ============================================
 -- CHANGES IN V20:
 -- - Added plan_audit_logs table for treatment plan approval audit trail
@@ -36,6 +41,9 @@ CREATE TYPE time_off_status AS ENUM ('PENDING', 'APPROVED', 'REJECTED', 'CANCELL
 CREATE TYPE approval_status AS ENUM ('DRAFT', 'PENDING_REVIEW', 'APPROVED', 'REJECTED');
 CREATE TYPE appointment_action_type AS ENUM ('CREATE', 'DELAY', 'RESCHEDULE_SOURCE', 'RESCHEDULE_TARGET', 'CANCEL', 'STATUS_CHANGE');
 CREATE TYPE appointment_reason_code AS ENUM ('PREVIOUS_CASE_OVERRUN', 'DOCTOR_UNAVAILABLE', 'EQUIPMENT_FAILURE', 'PATIENT_REQUEST', 'OPERATIONAL_REDIRECT', 'OTHER');
+
+-- === V21: Clinical Rules Engine ===
+CREATE TYPE dependency_rule_type AS ENUM ('REQUIRES_PREREQUISITE', 'REQUIRES_MIN_DAYS', 'EXCLUDES_SAME_DAY', 'BUNDLES_WITH');
 
 -- ============================================
 -- CORE TABLES
@@ -181,6 +189,24 @@ CREATE TABLE services (
 
 CREATE INDEX idx_services_category ON services(category_id);
 CREATE INDEX idx_services_specialization ON services(specialization_id);
+
+-- === V21: Service Dependencies (Clinical Rules) ===
+CREATE TABLE service_dependencies (
+    dependency_id SERIAL PRIMARY KEY,
+    service_id INTEGER NOT NULL REFERENCES services(service_id) ON DELETE CASCADE,
+    dependent_service_id INTEGER NOT NULL REFERENCES services(service_id) ON DELETE CASCADE,
+    rule_type dependency_rule_type NOT NULL,
+    min_days_apart INTEGER,
+    receptionist_note TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT chk_min_days_for_rule CHECK (
+        (rule_type = 'REQUIRES_MIN_DAYS' AND min_days_apart IS NOT NULL AND min_days_apart > 0) OR
+        (rule_type != 'REQUIRES_MIN_DAYS')
+    )
+);
+
+CREATE INDEX idx_service_deps_service ON service_dependencies(service_id, rule_type);
+CREATE INDEX idx_service_deps_dependent ON service_dependencies(dependent_service_id);
 
 -- Rooms (Phòng khám)
 CREATE TABLE rooms (

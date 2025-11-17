@@ -414,4 +414,25 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
                         @Param("statuses") String[] statuses,
                         @Param("searchCode") String searchCode,
                         Pageable pageable);
+
+        // ==================== V21 CLINICAL RULES VALIDATION ====================
+
+        /**
+         * Find all COMPLETED appointments for a patient (for clinical rules validation)
+         * Used by ClinicalRulesValidationService to check:
+         * - REQUIRES_PREREQUISITE: Has patient completed Service A before?
+         * - REQUIRES_MIN_DAYS: Has X days passed since Service A completion?
+         *
+         * CRITICAL: We don't need appointment_services as separate list.
+         * AppointmentServiceRepository.findByIdAppointmentId() will be called
+         * separately.
+         *
+         * @param patientId Patient ID
+         * @return List of completed appointments ordered by date (most recent first)
+         */
+        @Query("SELECT a FROM Appointment a " +
+                        "WHERE a.patientId = :patientId " +
+                        "AND a.status = 'COMPLETED' " +
+                        "ORDER BY a.appointmentStartTime DESC")
+        List<Appointment> findCompletedAppointmentsByPatientId(@Param("patientId") Integer patientId);
 }
