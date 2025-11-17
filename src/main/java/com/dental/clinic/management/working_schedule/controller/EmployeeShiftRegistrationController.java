@@ -41,13 +41,16 @@ public class EmployeeShiftRegistrationController {
      * NEW SPECIFICATION:
      * - Only count APPROVED registrations
      * - Show slots with any day having availability
+     * - Optional month filter (YYYY-MM) to show only slots with availability in that month
      *
+     * @param month Optional month filter in YYYY-MM format (e.g., "2025-12")
      * @return List of available slots with quota info
      */
     @GetMapping("/available-slots")
-    public ResponseEntity<List<AvailableSlotResponse>> getAvailableSlots() {
-        log.info("REST request to get available slots");
-        List<AvailableSlotResponse> slots = registrationService.getAvailableSlots();
+    public ResponseEntity<List<AvailableSlotResponse>> getAvailableSlots(
+            @RequestParam(required = false) String month) {
+        log.info("REST request to get available slots (month filter: {})", month);
+        List<AvailableSlotResponse> slots = registrationService.getAvailableSlots(month);
         return ResponseEntity.ok(slots);
     }
 

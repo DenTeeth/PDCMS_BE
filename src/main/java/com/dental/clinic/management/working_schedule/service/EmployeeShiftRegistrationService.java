@@ -64,11 +64,25 @@ public class EmployeeShiftRegistrationService {
      */
     @Transactional(readOnly = true)
     @PreAuthorize("hasAuthority('VIEW_AVAILABLE_SLOTS')")
-    public List<AvailableSlotResponse> getAvailableSlots() {
+    public List<AvailableSlotResponse> getAvailableSlots(String monthFilter) {
         Integer employeeId = getCurrentEmployeeId();
-        log.info("Fetching available slots for employee {}", employeeId);
+        log.info("Fetching available slots for employee {} (month filter: {})", employeeId, monthFilter);
 
         LocalDate today = LocalDate.now();
+        
+        // Parse month filter if provided (format: YYYY-MM)
+        java.time.YearMonth filterMonth = null;
+        if (monthFilter != null && !monthFilter.isEmpty()) {
+            try {
+                filterMonth = java.time.YearMonth.parse(monthFilter);
+                log.debug("Filtering slots for month: {}", filterMonth);
+            } catch (Exception e) {
+                log.warn("Invalid month filter format: {}. Expected YYYY-MM", monthFilter);
+                // Continue without filter if format is invalid
+            }
+        }
+        
+        final java.time.YearMonth finalFilterMonth = filterMonth;
 
         // Get all active slots with availability
         // IMPORTANT: Show ALL slots that have space, even if employee already has registrations
@@ -76,6 +90,17 @@ public class EmployeeShiftRegistrationService {
         return slotRepository.findAll().stream()
                 .filter(slot -> slot.getIsActive())
                 .filter(slot -> slot.getEffectiveTo().isAfter(today)) // Don't show expired slots
+                // Filter by month if specified
+                .filter(slot -> {
+                    if (finalFilterMonth == null) return true;
+                    
+                    LocalDate firstDayOfMonth = finalFilterMonth.atDay(1);
+                    LocalDate lastDayOfMonth = finalFilterMonth.atEndOfMonth();
+                    
+                    // Slot must overlap with the selected month
+                    return !slot.getEffectiveFrom().isAfter(lastDayOfMonth) 
+                        && !slot.getEffectiveTo().isBefore(firstDayOfMonth);
+                })
                 .map(slot -> {
                     // Check if slot has ANY day with availability
                     boolean hasAnyAvailability = hasAnyDayWithAvailability(slot);
@@ -89,11 +114,27 @@ public class EmployeeShiftRegistrationService {
                     String shiftName = workShift != null ? workShift.getShiftName() : "Unknown";
 
                     // Calculate date counts
-                    LocalDate startDate = slot.getEffectiveFrom().isBefore(today) ? today : slot.getEffectiveFrom();
+                    // If month filter is active, only count dates in that month
+                    LocalDate startDate;
+                    LocalDate endDate;
+                    
+                    if (finalFilterMonth != null) {
+                        LocalDate firstDay = finalFilterMonth.atDay(1);
+                        LocalDate lastDay = finalFilterMonth.atEndOfMonth();
+                        startDate = slot.getEffectiveFrom().isBefore(firstDay) ? firstDay : slot.getEffectiveFrom();
+                        endDate = slot.getEffectiveTo().isAfter(lastDay) ? lastDay : slot.getEffectiveTo();
+                        
+                        // Don't show past dates even within filtered month
+                        if (startDate.isBefore(today)) startDate = today;
+                    } else {
+                        startDate = slot.getEffectiveFrom().isBefore(today) ? today : slot.getEffectiveFrom();
+                        endDate = slot.getEffectiveTo();
+                    }
+                    
                     List<LocalDate> workingDays = availabilityService.getWorkingDays(
                             slot, 
                             startDate, 
-                            slot.getEffectiveTo()
+                            endDate
                     );
                     
                     int totalDatesAvailable = 0; // registered < quota
@@ -123,8 +164,14 @@ public class EmployeeShiftRegistrationService {
                             slot.getSlotId(), 
                             slot.getQuota(),
                             startDate, 
-                            slot.getEffectiveTo()
+                            endDate
                     );
+                    
+                    // If month filter is active and no dates available in this month, skip slot
+                    if (finalFilterMonth != null && totalDatesAvailable == 0) {
+                        log.debug("Slot {} has no availability in month {} - filtering out", slot.getSlotId(), finalFilterMonth);
+                        return null;
+                    }
 
                     return AvailableSlotResponse.builder()
                             .slotId(slot.getSlotId())
