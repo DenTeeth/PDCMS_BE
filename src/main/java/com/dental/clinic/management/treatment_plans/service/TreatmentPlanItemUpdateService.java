@@ -142,9 +142,12 @@ public class TreatmentPlanItemUpdateService {
         if (approvalStatus == ApprovalStatus.APPROVED ||
                 approvalStatus == ApprovalStatus.PENDING_REVIEW) {
 
-            throw new ConflictException(
-                    String.format("Không thể sửa lộ trình đã được duyệt hoặc đang chờ duyệt (Trạng thái: %s). " +
-                            "Yêu cầu Quản lý 'Từ chối' (Reject) về DRAFT trước khi sửa.", approvalStatus));
+            String errorMsg = String
+                    .format("Không thể sửa lộ trình đã được duyệt hoặc đang chờ duyệt (Trạng thái: %s). " +
+                            "Yêu cầu Quản lý 'Từ chối' (Reject) về DRAFT trước khi sửa.", approvalStatus);
+
+            // Use specific error code for better frontend handling
+            throw new ConflictException("PLAN_APPROVED_CANNOT_UPDATE", errorMsg);
         }
     }
 

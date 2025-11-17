@@ -3,6 +3,7 @@ package com.dental.clinic.management.treatment_plans.service;
 import com.dental.clinic.management.booking_appointment.domain.DentalService;
 import com.dental.clinic.management.booking_appointment.repository.BookingDentalServiceRepository;
 import com.dental.clinic.management.booking_appointment.repository.PatientPlanItemRepository;
+import com.dental.clinic.management.exception.ConflictException;
 import com.dental.clinic.management.exception.ResourceNotFoundException;
 import com.dental.clinic.management.treatment_plans.domain.ApprovalStatus;
 import com.dental.clinic.management.treatment_plans.domain.PatientPlanItem;
@@ -90,11 +91,17 @@ public class TreatmentPlanItemAdditionService {
                                         "Cannot add items to completed phase");
                 }
 
-                // Validate plan approval status
-                if (plan.getApprovalStatus() == ApprovalStatus.PENDING_REVIEW) {
-                        throw new ResponseStatusException(
-                                        HttpStatus.CONFLICT,
-                                        "Plan is pending approval. Cannot add items until approved by manager.");
+                // Validate plan approval status (must be DRAFT)
+                if (plan.getApprovalStatus() == ApprovalStatus.APPROVED ||
+                                plan.getApprovalStatus() == ApprovalStatus.PENDING_REVIEW) {
+
+                        String errorMsg = String.format(
+                                        "Không thể thêm hạng mục vào lộ trình đã được duyệt hoặc đang chờ duyệt (Trạng thái: %s). "
+                                                        +
+                                                        "Yêu cầu Quản lý 'Từ chối' (Reject) về DRAFT trước khi thêm.",
+                                        plan.getApprovalStatus());
+
+                        throw new ConflictException("PLAN_APPROVED_CANNOT_ADD", errorMsg);
                 }
 
                 // Validate plan status

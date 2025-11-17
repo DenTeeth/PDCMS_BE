@@ -1798,36 +1798,29 @@ ON CONFLICT (room_id, service_id) DO NOTHING;
 -- =============================================
 -- BƯỚC 3: INSERT TREATMENT PLAN TEMPLATES
 -- =============================================
--- TEMPORARILY COMMENTED OUT - TreatmentPlanTemplate entity not yet created
--- Uncomment when the following entities are implemented:
--- - TreatmentPlanTemplate
--- - TemplatePhase
--- - TemplatePhaseService
--- =============================================
-/*
 -- Treatment Plan Templates for common dental procedures
 -- Used by doctors to create structured treatment plans
 -- =============================================
 
 -- Template 1: Niềng răng mắc cài kim loại (2 năm - 24 tái khám)
-INSERT INTO treatment_plan_templates (template_code, template_name, description, estimated_duration_days, total_price, is_active, created_at)
+INSERT INTO treatment_plan_templates (template_code, template_name, description, estimated_duration_days, total_price, specialization_id, is_active, created_at)
 VALUES ('TPL_ORTHO_METAL', 'Niềng răng mắc cài kim loại trọn gói 2 năm',
         'Gói điều trị chỉnh nha toàn diện với mắc cài kim loại, bao gồm 24 lần tái khám siết niềng định kỳ.',
-        730, 30000000, true, NOW());
+        730, 30000000, 1, true, NOW());
 
 
 -- Template 2: Implant Hàn Quốc (6 tháng)
-INSERT INTO treatment_plan_templates (template_code, template_name, description, estimated_duration_days, total_price, is_active, created_at)
+INSERT INTO treatment_plan_templates (template_code, template_name, description, estimated_duration_days, total_price, specialization_id, is_active, created_at)
 VALUES ('TPL_IMPLANT_OSSTEM', 'Cấy ghép Implant Hàn Quốc (Osstem) - Trọn gói',
         'Gói cấy ghép Implant hoàn chỉnh từ phẫu thuật đến gắn răng sứ, sử dụng trụ Osstem Hàn Quốc.',
-        180, 19000000, true, NOW());
+        180, 19000000, 5, true, NOW());
 
 
 -- Template 3: Bọc răng sứ Cercon HT (7 ngày)
-INSERT INTO treatment_plan_templates (template_code, template_name, description, estimated_duration_days, total_price, is_active, created_at)
+INSERT INTO treatment_plan_templates (template_code, template_name, description, estimated_duration_days, total_price, specialization_id, is_active, created_at)
 VALUES ('TPL_CROWN_CERCON', 'Bọc răng sứ Cercon HT - 1 răng',
         'Gói bọc răng sứ toàn sứ Cercon HT cao cấp, bao gồm điều trị tủy (nếu cần) và gắn răng sứ.',
-        7, 5000000, true, NOW());
+        7, 5000000, 4, true, NOW());
 
 
 -- =============================================
@@ -2328,8 +2321,7 @@ ON CONFLICT (appointment_id, employee_id, participant_role) DO NOTHING;
 SELECT setval('appointments_appointment_id_seq',
               (SELECT COALESCE(MAX(appointment_id), 0) FROM appointments) + 1,
               false);
-*/
--- END OF COMMENTED TEMPLATE SECTION
+
 -- ============================================
 
 -- Fix appointment_audit_logs table if missing columns (with correct ENUM types)
