@@ -1,6 +1,8 @@
 package com.dental.clinic.management.treatment_plans.controller;
 
+import com.dental.clinic.management.treatment_plans.domain.ApprovalStatus;
 import com.dental.clinic.management.treatment_plans.dto.TreatmentPlanSummaryDTO;
+import com.dental.clinic.management.treatment_plans.enums.TreatmentPlanStatus;
 import com.dental.clinic.management.treatment_plans.service.TreatmentPlanService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -37,6 +39,68 @@ public class TreatmentPlanController {
         private final com.dental.clinic.management.treatment_plans.service.TreatmentPlanApprovalService treatmentPlanApprovalService;
         private final com.dental.clinic.management.treatment_plans.service.TreatmentPlanItemUpdateService treatmentPlanItemUpdateService;
         private final com.dental.clinic.management.treatment_plans.service.TreatmentPlanItemDeletionService treatmentPlanItemDeletionService;
+        private final com.dental.clinic.management.treatment_plans.service.TreatmentPlanListService treatmentPlanListService;
+
+        /**
+         * NEW API: List all treatment plans across all patients (Manager view).
+         * <p>
+         * Required Permission: VIEW_ALL_TREATMENT_PLANS (typically assigned to managers)
+         * <p>
+         * This endpoint allows managers to view all treatment plans in the system,
+         * regardless of which patient they belong to. Supports filtering by:
+         * - approvalStatus: DRAFT, PENDING_REVIEW, APPROVED, REJECTED
+         * - status: PENDING, ACTIVE, COMPLETED, CANCELLED
+         * - doctorEmployeeCode: Filter by doctor who created the plan
+         * <p>
+         * Pagination: Use query params page (0-indexed) and size (default 10)
+         * Example: /treatment-plans?approvalStatus=PENDING_REVIEW&page=0&size=20
+         *
+         * @param approvalStatus Filter by approval status (optional)
+         * @param status Filter by plan status (optional)
+         * @param doctorEmployeeCode Filter by doctor employee code (optional)
+         * @param pageable Pagination parameters (page, size, sort)
+         * @return Page of treatment plan summaries with pagination metadata
+         */
+        @Operation(
+                summary = "List all treatment plans (Manager view)",
+                description = "Retrieve all treatment plans across all patients with filtering and pagination support. " +
+                        "This endpoint is designed for managers to get an overview of all plans in the system. " +
+                        "Supports filtering by approval status, plan status, and doctor. " +
+                        "Returns lightweight summaries without phase/item details for better performance. " +
+                        "Requires VIEW_ALL_TREATMENT_PLANS permission."
+        )
+        @ApiResponses(value = {
+                @ApiResponse(responseCode = "200", description = "Successfully retrieved treatment plans"),
+                @ApiResponse(responseCode = "403", description = "Access denied - requires VIEW_ALL_TREATMENT_PLANS permission"),
+                @ApiResponse(responseCode = "400", description = "Invalid filter parameters")
+        })
+        @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('" 
+                + com.dental.clinic.management.utils.security.AuthoritiesConstants.VIEW_ALL_TREATMENT_PLANS + "')")
+        @GetMapping("/treatment-plans")
+        public ResponseEntity<Page<com.dental.clinic.management.treatment_plans.dto.response.TreatmentPlanSummaryDTO>> listAllTreatmentPlans(
+                @Parameter(description = "Filter by approval status (DRAFT, PENDING_REVIEW, APPROVED, REJECTED)", required = false)
+                @RequestParam(required = false) ApprovalStatus approvalStatus,
+                
+                @Parameter(description = "Filter by plan status (PENDING, ACTIVE, COMPLETED, CANCELLED)", required = false)
+                @RequestParam(required = false) TreatmentPlanStatus status,
+                
+                @Parameter(description = "Filter by doctor employee code (e.g., NV-2001)", required = false)
+                @RequestParam(required = false) String doctorEmployeeCode,
+                
+                @Parameter(description = "Pagination parameters (page=0, size=10, sort=createdAt,desc)", required = false)
+                Pageable pageable) {
+                
+                log.info("REST request to list all treatment plans - filters: approvalStatus={}, status={}, doctor={}, page={}, size={}",
+                        approvalStatus, status, doctorEmployeeCode, pageable.getPageNumber(), pageable.getPageSize());
+
+                Page<com.dental.clinic.management.treatment_plans.dto.response.TreatmentPlanSummaryDTO> plans = 
+                        treatmentPlanListService.listAllPlans(approvalStatus, status, doctorEmployeeCode, pageable);
+
+                log.info("Found {} treatment plans (page {} of {})",
+                        plans.getNumberOfElements(), plans.getNumber() + 1, plans.getTotalPages());
+
+                return ResponseEntity.ok(plans);
+        }
 
         /**
          * API 5.1: Get all treatment plans for a specific patient (with pagination).

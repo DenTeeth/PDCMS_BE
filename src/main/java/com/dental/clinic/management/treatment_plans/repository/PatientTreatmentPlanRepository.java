@@ -133,4 +133,47 @@ public interface PatientTreatmentPlanRepository extends JpaRepository<PatientTre
     List<com.dental.clinic.management.treatment_plans.dto.TreatmentPlanDetailDTO> findDetailByPatientCodeAndPlanCode(
             @Param("patientCode") String patientCode,
             @Param("planCode") String planCode);
+
+    // ===== Manager View: List All Treatment Plans =====
+
+    /**
+     * Find all treatment plans with optional filters (Manager View).
+     * 
+     * Use Case: Manager needs to see all treatment plans across all patients
+     * for oversight, approval management, and reporting.
+     * 
+     * Supports filtering by:
+     * - approvalStatus (DRAFT, PENDING_REVIEW, APPROVED, REJECTED)
+     * - status (PENDING, ACTIVE, COMPLETED, CANCELLED)
+     * - doctorEmployeeCode (filter by doctor who created plan)
+     * 
+     * Uses LEFT JOIN FETCH to eagerly load:
+     * - patient (to get patientCode, fullName)
+     * - createdBy (doctor who created plan)
+     * - approvedBy (manager who approved, if any)
+     * 
+     * Performance: Single query with JOIN FETCH to avoid N+1 problem.
+     * 
+     * @param approvalStatus Filter by approval status (null = no filter)
+     * @param status Filter by plan status (null = no filter)
+     * @param doctorEmployeeCode Filter by doctor employee code (null = no filter)
+     * @param pageable Pagination parameters
+     * @return Page of treatment plans with patient and doctor info loaded
+     */
+    @Query(value = "SELECT DISTINCT p FROM PatientTreatmentPlan p " +
+            "LEFT JOIN FETCH p.patient " +
+            "LEFT JOIN FETCH p.createdBy " +
+            "LEFT JOIN FETCH p.approvedBy " +
+            "WHERE (:approvalStatus IS NULL OR p.approvalStatus = :approvalStatus) " +
+            "AND (:status IS NULL OR p.status = :status) " +
+            "AND (:doctorEmployeeCode IS NULL OR p.createdBy.employeeCode = :doctorEmployeeCode)",
+            countQuery = "SELECT COUNT(DISTINCT p) FROM PatientTreatmentPlan p " +
+            "WHERE (:approvalStatus IS NULL OR p.approvalStatus = :approvalStatus) " +
+            "AND (:status IS NULL OR p.status = :status) " +
+            "AND (:doctorEmployeeCode IS NULL OR p.createdBy.employeeCode = :doctorEmployeeCode)")
+    org.springframework.data.domain.Page<PatientTreatmentPlan> findAllWithFilters(
+            @Param("approvalStatus") com.dental.clinic.management.treatment_plans.domain.ApprovalStatus approvalStatus,
+            @Param("status") com.dental.clinic.management.treatment_plans.enums.TreatmentPlanStatus status,
+            @Param("doctorEmployeeCode") String doctorEmployeeCode,
+            org.springframework.data.domain.Pageable pageable);
 }
