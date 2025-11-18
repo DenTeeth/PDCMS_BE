@@ -466,6 +466,7 @@ public class TreatmentPlanDetailService {
                                 .planCode(planCode)
                                 .planName(planName)
                                 .status(planStatus != null ? planStatus.name() : null)
+                                .approvalStatus(firstRow.getApprovalStatus() != null ? firstRow.getApprovalStatus().name() : null) // ✅ V21: Added for approval workflow
                                 .doctor(doctorInfo)
                                 .patient(patientInfo)
                                 .startDate(firstRow.getStartDate())

@@ -125,5 +125,5 @@ public final class AuthoritiesConstants {
     public static final String APPROVE_TREATMENT_PLAN = "APPROVE_TREATMENT_PLAN"; // V20: Manager approves/rejects plan
                                                                                   // (API 5.9)
     public static final String VIEW_ALL_TREATMENT_PLANS = "VIEW_ALL_TREATMENT_PLANS"; // V21: Manager view all plans
-                                                                                       // across patients
+                                                                                      // across patients
 }

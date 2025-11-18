@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 /**
  * Lightweight DTO for listing treatment plans (Manager View).
  * Used by GET /api/v1/treatment-plans endpoint.
- * 
+ *
  * Purpose: Allow managers to view all treatment plans across all patients
  * with filtering and pagination support.
  */

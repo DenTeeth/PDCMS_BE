@@ -10,8 +10,8 @@
 -- Step 1: Add new permission VIEW_ALL_TREATMENT_PLANS
 INSERT INTO permissions (permission_id, permission_name, module, description, display_order, parent_permission_id, is_active, created_at)
 VALUES
-('VIEW_ALL_TREATMENT_PLANS', 'VIEW_ALL_TREATMENT_PLANS', 'TREATMENT_PLAN', 
- 'Xem TẤT CẢ phác đồ điều trị TOÀN HỆ THỐNG (Quản lý - Manager Dashboard)', 
+('VIEW_ALL_TREATMENT_PLANS', 'VIEW_ALL_TREATMENT_PLANS', 'TREATMENT_PLAN',
+ 'Xem TẤT CẢ phác đồ điều trị TOÀN HỆ THỐNG (Quản lý - Manager Dashboard)',
  266, NULL, TRUE, NOW())
 ON CONFLICT (permission_id) DO NOTHING;
 
@@ -31,7 +31,7 @@ ON CONFLICT (role_id, permission_id) DO NOTHING;
 -- ============================================
 -- 1. This permission enables the new API endpoint:
 --    GET /api/v1/treatment-plans
---    
+--
 -- 2. Differences from existing permissions:
 --    - VIEW_TREATMENT_PLAN_ALL: View all plans for a SPECIFIC patient
 --    - VIEW_ALL_TREATMENT_PLANS: View all plans across ALL patients (system-wide)

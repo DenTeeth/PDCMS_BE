@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [V21.2] - 2025-11-18
+
+### 🐛 Bug Fix - Missing approvalStatus in API 5.2 Response
+
+Fixed critical bug where API 5.2 (Get Treatment Plan Detail) was not returning `approvalStatus` field, breaking approval workflow UI.
+
+### Fixed
+
+#### API 5.2: Get Treatment Plan Detail - Missing approvalStatus
+
+**Problem**: API 5.2 (`GET /api/v1/patients/{patientCode}/treatment-plans/{planCode}`) did not return `approvalStatus` in response, causing:
+- Frontend couldn't display approval status after page refresh
+- "Approve/Reject" buttons not showing after submit for review
+- "Submit for Review" button not showing after rejection
+- Users couldn't see which approval state the plan was in
+
+**Root Cause**: 
+1. `TreatmentPlanDetailDTO` missing `approvalStatus` field
+2. Repository query didn't select `p.approvalStatus`
+3. Service `buildNestedResponse()` didn't map the field
+
+**Solution Implemented**:
+1. Added `approvalStatus: ApprovalStatus` field to `TreatmentPlanDetailDTO`
+2. Updated repository query to select `p.approvalStatus`
+3. Updated service to map `approvalStatus` in response builder
+
+**Files Modified**:
+- `TreatmentPlanDetailDTO.java` - Added approvalStatus field + import (2 lines)
+- `PatientTreatmentPlanRepository.java` - Added p.approvalStatus to SELECT query (1 line)
+- `TreatmentPlanDetailService.java` - Added approvalStatus mapping in buildNestedResponse() (1 line)
+
+**Impact**: 
+- ✅ API 5.2 now returns approvalStatus correctly
+- ✅ All treatment plan APIs now consistently return approvalStatus
+- ✅ Frontend approval workflow buttons render correctly
+- ✅ Zero compilation errors
+- ✅ Backward compatible (additive change only)
+
+**Testing**: See `FE_ISSUE_5_API_5.2_APPROVAL_STATUS_FIX.md` for test cases
+
+---
+
 ## [V21.1] - 2025-11-17
 
 ### 🚀 Manager Dashboard - System-Wide Treatment Plan View
@@ -41,21 +83,24 @@ Implemented new API to enable managers to view all treatment plans across all pa
   - Cross-patient reporting
 
 **Files Created**:
+
 - `dto/response/TreatmentPlanSummaryDTO.java` - Lightweight response DTO (123 lines)
 - `service/TreatmentPlanListService.java` - Service with permission check (136 lines)
 - `migration/V21_add_view_all_treatment_plans_permission.sql` - Database migration script
 
 **Files Modified**:
+
 - `PatientTreatmentPlanRepository.java` - Added `findAllWithFilters()` query with JOIN FETCH
 - `TreatmentPlanController.java` - Added `listAllTreatmentPlans()` endpoint with Swagger docs
 - `AuthoritiesConstants.java` - Added `VIEW_ALL_TREATMENT_PLANS` constant
 - `dental-clinic-seed-data.sql` - Added permission (display_order=266) and role assignment
 
 **Database Changes**:
+
 ```sql
 -- New permission
 INSERT INTO permissions (permission_id, permission_name, module, description, display_order)
-VALUES ('VIEW_ALL_TREATMENT_PLANS', 'VIEW_ALL_TREATMENT_PLANS', 'TREATMENT_PLAN', 
+VALUES ('VIEW_ALL_TREATMENT_PLANS', 'VIEW_ALL_TREATMENT_PLANS', 'TREATMENT_PLAN',
         'Xem TẤT CẢ phác đồ điều trị TOÀN HỆ THỐNG (Quản lý - Manager Dashboard)', 266);
 
 -- Assign to manager role

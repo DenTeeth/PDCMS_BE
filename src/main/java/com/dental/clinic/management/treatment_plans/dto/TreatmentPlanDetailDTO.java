@@ -1,6 +1,7 @@
 package com.dental.clinic.management.treatment_plans.dto;
 
 import com.dental.clinic.management.booking_appointment.enums.AppointmentStatus;
+import com.dental.clinic.management.treatment_plans.domain.ApprovalStatus;
 import com.dental.clinic.management.treatment_plans.enums.PaymentType;
 import com.dental.clinic.management.treatment_plans.enums.PhaseStatus;
 import com.dental.clinic.management.treatment_plans.enums.PlanItemStatus;
@@ -39,6 +40,7 @@ public class TreatmentPlanDetailDTO {
     private String planCode;
     private String planName;
     private TreatmentPlanStatus planStatus;
+    private ApprovalStatus approvalStatus; // ✅ V21: Added to support approval workflow
     private LocalDate startDate;
     private LocalDate expectedEndDate;
     private BigDecimal totalPrice;

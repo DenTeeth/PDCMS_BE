@@ -15,17 +15,17 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Service for listing all treatment plans (Manager View).
- * 
+ *
  * Purpose: Allow managers to view all treatment plans across all patients
  * for oversight, approval management, and reporting.
- * 
+ *
  * Features:
  * - Pagination support
  * - Filter by approval status
  * - Filter by plan status
  * - Filter by doctor
  * - Lightweight response (no phases/items detail)
- * 
+ *
  * Permission: VIEW_ALL_TREATMENT_PLANS (assigned to ROLE_MANAGER)
  */
 @Service
@@ -37,23 +37,23 @@ public class TreatmentPlanListService {
 
     /**
      * List all treatment plans with optional filters.
-     * 
+     *
      * Business Logic:
      * 1. Apply filters (approvalStatus, status, doctorCode)
      * 2. Load plans with patient and doctor info (JOIN FETCH)
      * 3. Apply pagination
      * 4. Map to lightweight DTO
-     * 
+     *
      * Use Cases:
      * - Manager dashboard: List all plans
      * - Approval queue: Filter by PENDING_REVIEW
      * - Doctor performance: Filter by doctorEmployeeCode
      * - Reporting: Filter by status and date range
-     * 
-     * @param approvalStatus Filter by approval status (null = all)
-     * @param status Filter by plan status (null = all)
+     *
+     * @param approvalStatus     Filter by approval status (null = all)
+     * @param status             Filter by plan status (null = all)
      * @param doctorEmployeeCode Filter by doctor (null = all)
-     * @param pageable Pagination parameters
+     * @param pageable           Pagination parameters
      * @return Page of TreatmentPlanSummaryDTO
      */
     @Transactional(readOnly = true)
@@ -86,7 +86,7 @@ public class TreatmentPlanListService {
 
     /**
      * Map PatientTreatmentPlan entity to TreatmentPlanSummaryDTO.
-     * 
+     *
      * Lightweight mapping (no phases/items, just plan-level info).
      */
     private TreatmentPlanSummaryDTO mapToSummaryDTO(PatientTreatmentPlan plan) {

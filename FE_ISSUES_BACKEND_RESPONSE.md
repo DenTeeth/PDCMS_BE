@@ -1,18 +1,18 @@
 # 🔍 Frontend Issues - Backend Response
 
-**Date**: November 17, 2025  
-**Branch**: `feat/BE-501-manage-treatment-plans`  
+**Date**: November 17, 2025
+**Branch**: `feat/BE-501-manage-treatment-plans`
 **Status**: 2/3 Issues Resolved, 1 Issue Needs Clarification
 
 ---
 
 ## 📋 Summary
 
-| Issue | Status | Solution |
-|-------|--------|----------|
-| **Issue 1**: Employee Code Missing in JWT | ✅ **ALREADY RESOLVED** | `employee_code` claim already exists in JWT token (implemented in v20) |
-| **Issue 2**: Zero Price Service Validation | ⏳ **NEEDS BUSINESS DECISION** | Awaiting decision: Option 1 or Option 2 |
-| **Issue 4**: Manager Permission - View All Plans | 🔴 **IN PROGRESS** | Will implement permission fix |
+| Issue                                            | Status                         | Solution                                                               |
+| ------------------------------------------------ | ------------------------------ | ---------------------------------------------------------------------- |
+| **Issue 1**: Employee Code Missing in JWT        | ✅ **ALREADY RESOLVED**        | `employee_code` claim already exists in JWT token (implemented in v20) |
+| **Issue 2**: Zero Price Service Validation       | ⏳ **NEEDS BUSINESS DECISION** | Awaiting decision: Option 1 or Option 2                                |
+| **Issue 4**: Manager Permission - View All Plans | 🔴 **IN PROGRESS**             | Will implement permission fix                                          |
 
 ---
 
@@ -29,19 +29,20 @@
 ```java
 public String createAccessToken(String username, List<String> roles, List<String> permissions,
         Integer accountId, String patientCode, String employeeCode) {
-    
+
     // ... other claims ...
-    
+
     // Add employeeCode if present (FE Issue 3.3 fix)
     if (employeeCode != null) {
         claimsBuilder.claim("employee_code", employeeCode);
     }
-    
+
     // Returns JWT with employee_code claim
 }
 ```
 
 **Token Payload Example**:
+
 ```json
 {
   "sub": "bacsi1",
@@ -51,15 +52,16 @@ public String createAccessToken(String username, List<String> roles, List<String
   "permissions": ["CREATE_TREATMENT_PLAN", "UPDATE_TREATMENT_PLAN"],
   "account_id": 456,
   "patient_code": null,
-  "employee_code": "EMP001"  // ← ĐÃ CÓ SẴN
+  "employee_code": "EMP001" // ← ĐÃ CÓ SẴN
 }
 ```
 
 ### How to Extract in Frontend
 
 **JavaScript/TypeScript**:
+
 ```typescript
-import { jwtDecode } from 'jwt-decode';
+import { jwtDecode } from "jwt-decode";
 
 interface JwtPayload {
   sub: string;
@@ -69,15 +71,16 @@ interface JwtPayload {
   permissions: string[];
 }
 
-const token = localStorage.getItem('authToken');
+const token = localStorage.getItem("authToken");
 const decoded = jwtDecode<JwtPayload>(token);
 
-console.log('Employee Code:', decoded.employee_code); // ← Extract this
+console.log("Employee Code:", decoded.employee_code); // ← Extract this
 ```
 
 ### Test Verification
 
 **Step 1**: Login as doctor
+
 ```bash
 POST /api/v1/auth/login
 {
@@ -87,6 +90,7 @@ POST /api/v1/auth/login
 ```
 
 **Step 2**: Decode the returned token
+
 - Use https://jwt.io to decode
 - Look for `employee_code` claim
 - Should see value like "EMP001"
@@ -94,15 +98,16 @@ POST /api/v1/auth/login
 ### Frontend Implementation
 
 **Auto-fill Doctor Example**:
+
 ```typescript
 // In CreateTreatmentPlanModal.tsx
 useEffect(() => {
-  const token = localStorage.getItem('authToken');
+  const token = localStorage.getItem("authToken");
   if (token) {
     const decoded = jwtDecode<JwtPayload>(token);
-    
+
     // Check if user is doctor
-    if (decoded.roles?.includes('ROLE_DENTIST')) {
+    if (decoded.roles?.includes("ROLE_DENTIST")) {
       // Auto-fill with current doctor
       setDoctorEmployeeCode(decoded.employee_code);
       setIsReadOnly(true); // Make field read-only
@@ -125,12 +130,12 @@ useEffect(() => {
 private void validatePriceOverride(BigDecimal requestPrice, BigDecimal servicePrice, String serviceCode) {
     BigDecimal minPrice = servicePrice.multiply(new BigDecimal("0.5")); // 50%
     BigDecimal maxPrice = servicePrice.multiply(new BigDecimal("1.5")); // 150%
-    
+
     // If servicePrice = 0:
     // minPrice = 0 * 0.5 = 0
     // maxPrice = 0 * 1.5 = 0
     // Range = [0, 0] ← Problem: Cannot enter any positive price!
-    
+
     if (requestPrice.compareTo(minPrice) < 0 || requestPrice.compareTo(maxPrice) > 0) {
         throw new BadRequestAlertException("Price out of range");
     }
@@ -138,6 +143,7 @@ private void validatePriceOverride(BigDecimal requestPrice, BigDecimal servicePr
 ```
 
 **Conflict Scenario**:
+
 1. Service "Lấy dấu Implant" has `price = 0` in database
 2. User tries to create plan with this service
 3. Must set price > 0 (DTO validation: `@DecimalMin("0.01")`)
@@ -147,6 +153,7 @@ private void validatePriceOverride(BigDecimal requestPrice, BigDecimal servicePr
 ### 🔍 Database Check Needed
 
 **Query to find zero-price services**:
+
 ```sql
 SELECT service_id, service_code, service_name, price, is_active
 FROM dental_services
@@ -155,6 +162,7 @@ ORDER BY service_code;
 ```
 
 **Questions for Business Team**:
+
 1. Có services nào có price = 0 không?
 2. Nếu có, có bao nhiêu services?
 3. Các services này có đang được sử dụng không?
@@ -169,14 +177,16 @@ ORDER BY service_code;
 **Implementation**:
 
 **Step 1**: Add database constraint
+
 ```sql
 -- Add CHECK constraint
 ALTER TABLE dental_services
-ADD CONSTRAINT chk_price_positive 
+ADD CONSTRAINT chk_price_positive
 CHECK (price > 0);
 ```
 
 **Step 2**: Update existing zero-price services
+
 ```sql
 -- Example: Set minimum price 1,000 VND
 UPDATE dental_services
@@ -186,11 +196,12 @@ WHERE price = 0 OR price IS NULL;
 ```
 
 **Step 3**: Add entity validation (optional backup)
+
 ```java
 @Entity
 @Table(name = "dental_services")
 public class DentalService {
-    
+
     @Column(name = "price", nullable = false)
     @Min(value = 1, message = "Service price must be at least 1 VND")
     private BigDecimal price;
@@ -198,12 +209,14 @@ public class DentalService {
 ```
 
 **Pros**:
+
 - ✅ Simple, clear business rule
 - ✅ Prevents validation conflicts
 - ✅ Ensures data consistency
 - ✅ Aligns with real-world pricing (every service has cost)
 
 **Cons**:
+
 - ❌ Need to update existing data
 - ❌ May conflict with business need for "free" services
 
@@ -214,6 +227,7 @@ public class DentalService {
 **Implementation**:
 
 **Update validation logic**:
+
 ```java
 private void validatePriceOverride(BigDecimal requestPrice, BigDecimal servicePrice, String serviceCode) {
     // Special case: If service has default price = 0
@@ -226,7 +240,7 @@ private void validatePriceOverride(BigDecimal requestPrice, BigDecimal servicePr
                 "TreatmentPlan",
                 "zeroPrice NotAllowed");
         }
-        
+
         // 2. No upper limit for zero-price services (or set reasonable max like 10M VND)
         BigDecimal maxAllowed = new BigDecimal("10000000"); // 10M VND limit
         if (requestPrice.compareTo(maxAllowed) > 0) {
@@ -235,15 +249,15 @@ private void validatePriceOverride(BigDecimal requestPrice, BigDecimal servicePr
                 "TreatmentPlan",
                 "priceExceedsMax");
         }
-        
+
         log.info("Zero-price service {} assigned value: {}", serviceCode, requestPrice);
         return; // Skip normal ±50% validation
     }
-    
+
     // Normal case: Service has price > 0, apply ±50% rule
     BigDecimal minPrice = servicePrice.multiply(new BigDecimal("0.5"));
     BigDecimal maxPrice = servicePrice.multiply(new BigDecimal("1.5"));
-    
+
     if (requestPrice.compareTo(minPrice) < 0 || requestPrice.compareTo(maxPrice) > 0) {
         throw new BadRequestAlertException(
             String.format("Price out of range [%s - %s]", minPrice, maxPrice),
@@ -254,21 +268,22 @@ private void validatePriceOverride(BigDecimal requestPrice, BigDecimal servicePr
 ```
 
 **Frontend validation update**:
+
 ```typescript
 const validatePrice = (servicePrice: number, requestPrice: number): boolean => {
   if (servicePrice === 0) {
     // Zero-price service: Must enter value > 0, max 10M
     if (requestPrice <= 0) {
-      alert('Dịch vụ này cần được định giá khi thêm vào lộ trình');
+      alert("Dịch vụ này cần được định giá khi thêm vào lộ trình");
       return false;
     }
     if (requestPrice > 10000000) {
-      alert('Giá vượt quá giới hạn cho phép (10,000,000 VND)');
+      alert("Giá vượt quá giới hạn cho phép (10,000,000 VND)");
       return false;
     }
     return true;
   }
-  
+
   // Normal service: Apply ±50% rule
   const minPrice = servicePrice * 0.5;
   const maxPrice = servicePrice * 1.5;
@@ -277,12 +292,14 @@ const validatePrice = (servicePrice: number, requestPrice: number): boolean => {
 ```
 
 **Pros**:
+
 - ✅ Flexible for business needs
 - ✅ Allows "free" services in service catalog
 - ✅ Forces value assignment when used in plans
 - ✅ No data migration needed
 
 **Cons**:
+
 - ❌ More complex logic
 - ❌ Special case handling
 - ❌ Potential confusion (why is "free" service priced in plan?)
@@ -292,6 +309,7 @@ const validatePrice = (servicePrice: number, requestPrice: number): boolean => {
 **I recommend Option 1** for these reasons:
 
 1. **Business Logic**: In a dental clinic, every service has operational cost:
+
    - Materials cost
    - Labor cost
    - Equipment depreciation
@@ -302,6 +320,7 @@ const validatePrice = (servicePrice: number, requestPrice: number): boolean => {
 3. **Data Integrity**: Prevents confusion about service pricing
 
 4. **Approval Workflow**: Current approval logic already requires price > 0:
+
    ```java
    // In TreatmentPlanApprovalService.java
    if (item.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
@@ -314,6 +333,7 @@ const validatePrice = (servicePrice: number, requestPrice: number): boolean => {
 ### 🔧 Implementation Plan (if Option 1 chosen)
 
 **Phase 1: Data Migration** (5 minutes)
+
 ```sql
 -- Backup current data
 CREATE TABLE dental_services_backup AS SELECT * FROM dental_services;
@@ -323,8 +343,8 @@ SELECT * FROM dental_services WHERE price = 0 OR price IS NULL;
 
 -- Update to minimum price (adjust based on business input)
 UPDATE dental_services
-SET price = 
-    CASE 
+SET price =
+    CASE
         WHEN service_code LIKE 'CONSULT%' THEN 50000   -- Consultation: 50k
         WHEN service_code LIKE 'FOLLOWUP%' THEN 0      -- Keep follow-up free (if needed)
         ELSE 1000                                       -- Others: 1k minimum
@@ -334,12 +354,14 @@ WHERE price = 0 OR price IS NULL;
 ```
 
 **Phase 2: Add Constraint** (1 minute)
+
 ```sql
 ALTER TABLE dental_services
 ADD CONSTRAINT chk_price_positive CHECK (price > 0);
 ```
 
 **Phase 3: Test** (10 minutes)
+
 - Try creating plan with updated services
 - Verify price validation works
 - Test frontend form
@@ -364,6 +386,7 @@ Manager không có quyền xem danh sách tất cả treatment plans.
 **Missing API**: No endpoint exists to list ALL treatment plans across all patients
 
 **Current APIs**:
+
 1. ✅ `/api/v1/patient/{patientCode}/treatment-plans` - List plans for ONE patient
 2. ✅ `/api/v1/patient/{patientCode}/treatment-plans/{planCode}` - Get ONE plan detail
 3. ❌ `/api/v1/treatment-plans` - **MISSING** - List ALL plans (needed for manager)
@@ -389,6 +412,7 @@ Manager không có quyền xem danh sách tất cả treatment plans.
 | `sort` | String | Sort criteria | `createdAt,desc` |
 
 **Response** (200 OK):
+
 ```json
 {
   "content": [
@@ -424,6 +448,7 @@ Manager không có quyền xem danh sách tất cả treatment plans.
 #### Implementation Steps
 
 **Step 1**: Create DTO
+
 ```java
 // TreatmentPlanSummaryDTO.java
 @Data
@@ -440,14 +465,14 @@ public class TreatmentPlanSummaryDTO {
     private LocalDate startDate;
     private LocalDate expectedEndDate;
     private LocalDateTime createdAt;
-    
+
     @Data
     @Builder
     public static class PatientSummary {
         private String patientCode;
         private String fullName;
     }
-    
+
     @Data
     @Builder
     public static class EmployeeSummary {
@@ -458,6 +483,7 @@ public class TreatmentPlanSummaryDTO {
 ```
 
 **Step 2**: Add Repository Query
+
 ```java
 // TreatmentPlanRepository.java
 @Query("SELECT DISTINCT p FROM PatientTreatmentPlan p " +
@@ -475,14 +501,15 @@ Page<PatientTreatmentPlan> findAllWithFilters(
 ```
 
 **Step 3**: Add Service Method
+
 ```java
 // TreatmentPlanListService.java (new file)
 @Service
 @RequiredArgsConstructor
 public class TreatmentPlanListService {
-    
+
     private final PatientTreatmentPlanRepository planRepository;
-    
+
     @Transactional(readOnly = true)
     @PreAuthorize("hasAuthority('VIEW_ALL_TREATMENT_PLANS')")
     public Page<TreatmentPlanSummaryDTO> listAllPlans(
@@ -490,14 +517,14 @@ public class TreatmentPlanListService {
             TreatmentPlanStatus status,
             String doctorCode,
             Pageable pageable) {
-        
+
         Page<PatientTreatmentPlan> plansPage = planRepository.findAllWithFilters(
             approvalStatus, status, doctorCode, pageable
         );
-        
+
         return plansPage.map(this::mapToSummary);
     }
-    
+
     private TreatmentPlanSummaryDTO mapToSummary(PatientTreatmentPlan plan) {
         // Map entity to DTO
     }
@@ -505,6 +532,7 @@ public class TreatmentPlanListService {
 ```
 
 **Step 4**: Add Controller Endpoint
+
 ```java
 // TreatmentPlanController.java
 @GetMapping("/treatment-plans")
@@ -514,20 +542,21 @@ public ResponseEntity<Page<TreatmentPlanSummaryDTO>> listAllPlans(
         @RequestParam(required = false) TreatmentPlanStatus status,
         @RequestParam(required = false) String doctorEmployeeCode,
         @ParameterObject Pageable pageable) {
-    
+
     Page<TreatmentPlanSummaryDTO> plans = listService.listAllPlans(
         approvalStatus, status, doctorEmployeeCode, pageable
     );
-    
+
     return ResponseEntity.ok(plans);
 }
 ```
 
 **Step 5**: Add Permission
+
 ```sql
 -- Add new permission
 INSERT INTO permissions (permission_id, permission_name, description)
-VALUES (nextval('permissions_seq'), 'VIEW_ALL_TREATMENT_PLANS', 
+VALUES (nextval('permissions_seq'), 'VIEW_ALL_TREATMENT_PLANS',
         'View all treatment plans across all patients');
 
 -- Assign to ROLE_MANAGER
@@ -541,22 +570,26 @@ WHERE r.role_name = 'ROLE_MANAGER'
 #### Testing Examples
 
 **Example 1**: List all plans (manager view)
+
 ```bash
 GET /api/v1/treatment-plans?page=0&size=20&sort=createdAt,desc
 Authorization: Bearer {manager_token}
 ```
 
 **Example 2**: Filter by approval status
+
 ```bash
 GET /api/v1/treatment-plans?approvalStatus=PENDING_REVIEW
 ```
 
 **Example 3**: Filter by doctor
+
 ```bash
 GET /api/v1/treatment-plans?doctorEmployeeCode=EMP001
 ```
 
 **Example 4**: Combined filters
+
 ```bash
 GET /api/v1/treatment-plans?approvalStatus=DRAFT&status=PENDING&page=0&size=10
 ```
@@ -565,13 +598,13 @@ GET /api/v1/treatment-plans?approvalStatus=DRAFT&status=PENDING&page=0&size=10
 
 ## 📊 Implementation Timeline
 
-| Issue | Estimated Time | Priority |
-|-------|---------------|----------|
-| Issue 1: Employee Code | ✅ 0 minutes (already done) | - |
-| Issue 2: Zero Price | ⏳ Awaiting decision | 🟡 MEDIUM |
-| Issue 2 - Option 1 | 20 minutes (if chosen) | - |
-| Issue 2 - Option 2 | 45 minutes (if chosen) | - |
-| Issue 4: Manager Permission | 2 hours | 🔴 HIGH |
+| Issue                       | Estimated Time              | Priority  |
+| --------------------------- | --------------------------- | --------- |
+| Issue 1: Employee Code      | ✅ 0 minutes (already done) | -         |
+| Issue 2: Zero Price         | ⏳ Awaiting decision        | 🟡 MEDIUM |
+| Issue 2 - Option 1          | 20 minutes (if chosen)      | -         |
+| Issue 2 - Option 2          | 45 minutes (if chosen)      | -         |
+| Issue 4: Manager Permission | 2 hours                     | 🔴 HIGH   |
 
 **Total**: ~2-3 hours (depending on Issue 2 decision)
 
@@ -582,7 +615,9 @@ GET /api/v1/treatment-plans?approvalStatus=DRAFT&status=PENDING&page=0&size=10
 ### For Business Team
 
 **Issue 2 Decision Needed**:
+
 1. Run this query to check zero-price services:
+
    ```sql
    SELECT service_code, service_name, price, is_active
    FROM dental_services
@@ -590,6 +625,7 @@ GET /api/v1/treatment-plans?approvalStatus=DRAFT&status=PENDING&page=0&size=10
    ```
 
 2. Answer these questions:
+
    - Do we need services with price = 0?
    - If yes, what are the use cases?
    - Should these services be priced when added to treatment plans?
@@ -601,11 +637,13 @@ GET /api/v1/treatment-plans?approvalStatus=DRAFT&status=PENDING&page=0&size=10
 ### For Backend Team
 
 **Immediate Action**:
+
 - ✅ Issue 1: No action needed (already implemented)
 - ⏳ Issue 2: Wait for business decision
 - 🔴 Issue 4: Implement LIST ALL treatment plans API
 
 **Next Steps for Issue 4**:
+
 1. Create `TreatmentPlanSummaryDTO`
 2. Add repository query with filters
 3. Create `TreatmentPlanListService`
@@ -617,15 +655,18 @@ GET /api/v1/treatment-plans?approvalStatus=DRAFT&status=PENDING&page=0&size=10
 ### For Frontend Team
 
 **Issue 1** (Employee Code):
+
 - ✅ Code already extracts `employee_code` from token
 - ✅ Auto-fill logic already implemented
 - 💡 Just need to verify JWT decoding is working
 
 **Issue 2** (Zero Price):
+
 - ⏳ Wait for backend decision
 - Update validation logic based on chosen option
 
 **Issue 4** (List All Plans):
+
 - Wait for backend API implementation
 - Create manager view for all treatment plans
 - Add filters: approval status, plan status, doctor
@@ -636,11 +677,12 @@ GET /api/v1/treatment-plans?approvalStatus=DRAFT&status=PENDING&page=0&size=10
 ## 📞 Contact
 
 **Questions or Clarifications?**
+
 - Backend Lead: [Your Name]
 - Business Team: [Business Lead]
 - Frontend Team: [Frontend Lead]
 
-**Document Version**: 1.0  
+**Document Version**: 1.0
 **Last Updated**: November 17, 2025
 
 ---
@@ -662,32 +704,35 @@ GET /api/v1/treatment-plans?approvalStatus=DRAFT&status=PENDING&page=0&size=10
   ],
   "account_id": 456,
   "patient_code": null,
-  "employee_code": "EMP001"  // ← Available since v20
+  "employee_code": "EMP001" // ← Available since v20
 }
 ```
 
 ### B. Current Treatment Plan Permissions
 
-| Permission | Description | Assigned to |
-|------------|-------------|-------------|
-| `CREATE_TREATMENT_PLAN` | Create new treatment plans | ROLE_DENTIST |
-| `UPDATE_TREATMENT_PLAN` | Update existing plans | ROLE_DENTIST |
-| `VIEW_TREATMENT_PLAN` | View plan details | ROLE_DENTIST, ROLE_MANAGER |
-| `APPROVE_TREATMENT_PLAN` | Approve/reject plans | ROLE_MANAGER |
-| `VIEW_ALL_TREATMENT_PLANS` | **NEW** - List all plans | ROLE_MANAGER |
+| Permission                 | Description                | Assigned to                |
+| -------------------------- | -------------------------- | -------------------------- |
+| `CREATE_TREATMENT_PLAN`    | Create new treatment plans | ROLE_DENTIST               |
+| `UPDATE_TREATMENT_PLAN`    | Update existing plans      | ROLE_DENTIST               |
+| `VIEW_TREATMENT_PLAN`      | View plan details          | ROLE_DENTIST, ROLE_MANAGER |
+| `APPROVE_TREATMENT_PLAN`   | Approve/reject plans       | ROLE_MANAGER               |
+| `VIEW_ALL_TREATMENT_PLANS` | **NEW** - List all plans   | ROLE_MANAGER               |
 
 ### C. Related Files
 
 **Issue 1**:
+
 - `SecurityUtil.java` - JWT token generation
 - `AuthenticationService.java` - Login logic
 
 **Issue 2**:
+
 - `CustomTreatmentPlanService.java` - Price validation
 - `TreatmentPlanItemAdditionService.java` - Price validation
 - `TreatmentPlanApprovalService.java` - Approval validation
 
 **Issue 4**:
+
 - `TreatmentPlanController.java` - Will add new endpoint
 - `PatientTreatmentPlanRepository.java` - Will add new query
 - (New) `TreatmentPlanListService.java` - New service for listing
