@@ -18,27 +18,32 @@ Fixed critical bug where API 5.2 (Get Treatment Plan Detail) was not returning `
 #### API 5.2: Get Treatment Plan Detail - Missing approvalStatus
 
 **Problem**: API 5.2 (`GET /api/v1/patients/{patientCode}/treatment-plans/{planCode}`) did not return `approvalStatus` in response, causing:
+
 - Frontend couldn't display approval status after page refresh
 - "Approve/Reject" buttons not showing after submit for review
 - "Submit for Review" button not showing after rejection
 - Users couldn't see which approval state the plan was in
 
-**Root Cause**: 
+**Root Cause**:
+
 1. `TreatmentPlanDetailDTO` missing `approvalStatus` field
 2. Repository query didn't select `p.approvalStatus`
 3. Service `buildNestedResponse()` didn't map the field
 
 **Solution Implemented**:
+
 1. Added `approvalStatus: ApprovalStatus` field to `TreatmentPlanDetailDTO`
 2. Updated repository query to select `p.approvalStatus`
 3. Updated service to map `approvalStatus` in response builder
 
 **Files Modified**:
+
 - `TreatmentPlanDetailDTO.java` - Added approvalStatus field + import (2 lines)
 - `PatientTreatmentPlanRepository.java` - Added p.approvalStatus to SELECT query (1 line)
 - `TreatmentPlanDetailService.java` - Added approvalStatus mapping in buildNestedResponse() (1 line)
 
-**Impact**: 
+**Impact**:
+
 - ✅ API 5.2 now returns approvalStatus correctly
 - ✅ All treatment plan APIs now consistently return approvalStatus
 - ✅ Frontend approval workflow buttons render correctly

@@ -1,9 +1,9 @@
 # 🔧 Fix: approvalStatus Missing in API 5.2 Response
 
-**Issue Type**: Bug Fix  
-**Priority**: 🔴 **HIGH**  
-**Module**: Treatment Plans - API 5.2  
-**Date Fixed**: November 18, 2025  
+**Issue Type**: Bug Fix
+**Priority**: 🔴 **HIGH**
+**Module**: Treatment Plans - API 5.2
+**Date Fixed**: November 18, 2025
 **Status**: ✅ **RESOLVED**
 
 ---
@@ -13,6 +13,7 @@
 API 5.2 (`GET /api/v1/patients/{patientCode}/treatment-plans/{planCode}`) was **NOT returning `approvalStatus`** in response, breaking the approval workflow UI on frontend.
 
 ### Impact
+
 - ❌ Frontend couldn't display approval status after page refresh
 - ❌ "Approve/Reject" buttons not showing after submit for review
 - ❌ "Submit for Review" button not showing after rejection
@@ -23,6 +24,7 @@ API 5.2 (`GET /api/v1/patients/{patientCode}/treatment-plans/{planCode}`) was **
 ## 🔍 Root Cause
 
 ### 1. Missing Field in DTO
+
 **File**: `TreatmentPlanDetailDTO.java`
 
 ```java
@@ -35,6 +37,7 @@ private LocalDate startDate;
 ```
 
 ### 2. Missing Field in Repository Query
+
 **File**: `PatientTreatmentPlanRepository.java`
 
 ```java
@@ -45,6 +48,7 @@ SELECT new TreatmentPlanDetailDTO(
 ```
 
 ### 3. Missing Mapping in Service
+
 **File**: `TreatmentPlanDetailService.java`
 
 ```java
@@ -61,6 +65,7 @@ return TreatmentPlanDetailResponse.builder()
 ## ✅ Solution Implemented
 
 ### Fix 1: Added Field to DTO
+
 **File**: `TreatmentPlanDetailDTO.java`
 
 ```java
@@ -79,6 +84,7 @@ public class TreatmentPlanDetailDTO {
 ```
 
 ### Fix 2: Updated Repository Query
+
 **File**: `PatientTreatmentPlanRepository.java` (line 111-113)
 
 ```java
@@ -98,6 +104,7 @@ public class TreatmentPlanDetailDTO {
 ```
 
 ### Fix 3: Updated Service Mapping
+
 **File**: `TreatmentPlanDetailService.java` (line ~465)
 
 ```java
@@ -119,61 +126,69 @@ return TreatmentPlanDetailResponse.builder()
 ## 🧪 Verification
 
 ### Test Case 1: DRAFT Plan
+
 ```bash
 GET /api/v1/patients/BN-1001/treatment-plans/PLAN-20251118-001
 ```
 
 **Expected Response**:
+
 ```json
 {
   "planCode": "PLAN-20251118-001",
   "status": "PENDING",
-  "approvalStatus": "DRAFT",  // ✅ NOW RETURNS CORRECTLY
+  "approvalStatus": "DRAFT" // ✅ NOW RETURNS CORRECTLY
   // ... other fields
 }
 ```
 
 ### Test Case 2: PENDING_REVIEW Plan
+
 ```bash
 GET /api/v1/patients/BN-1001/treatment-plans/PLAN-20251118-002
 ```
 
 **Expected Response**:
+
 ```json
 {
   "planCode": "PLAN-20251118-002",
   "status": "PENDING",
-  "approvalStatus": "PENDING_REVIEW",  // ✅ NOW RETURNS CORRECTLY
+  "approvalStatus": "PENDING_REVIEW" // ✅ NOW RETURNS CORRECTLY
   // ... other fields
 }
 ```
 
 ### Test Case 3: APPROVED Plan
+
 ```bash
 GET /api/v1/patients/BN-1001/treatment-plans/PLAN-20251118-003
 ```
 
 **Expected Response**:
+
 ```json
 {
   "planCode": "PLAN-20251118-003",
   "status": "ACTIVE",
-  "approvalStatus": "APPROVED",  // ✅ NOW RETURNS CORRECTLY
+  "approvalStatus": "APPROVED" // ✅ NOW RETURNS CORRECTLY
   // ... other fields
 }
 ```
 
 ### Test Case 4: REJECTED Plan
+
 ```bash
 GET /api/v1/patients/BN-1001/treatment-plans/PLAN-20251118-004
 ```
 
 **Expected Response**:
+
 ```json
 {
   "planCode": "PLAN-20251118-004",
   "status": "PENDING",
-  "approvalStatus": "REJECTED",  // ✅ NOW RETURNS CORRECTLY
+  "approvalStatus": "REJECTED" // ✅ NOW RETURNS CORRECTLY
   // ... other fields
 }
 ```
@@ -182,12 +197,12 @@ GET /api/v1/patients/BN-1001/treatment-plans/PLAN-20251118-004
 
 ## 📊 Files Modified
 
-| File | Lines Changed | Description |
-|------|--------------|-------------|
-| `TreatmentPlanDetailDTO.java` | +2 | Added `approvalStatus` field + import |
-| `PatientTreatmentPlanRepository.java` | +1 | Added `p.approvalStatus` to SELECT |
-| `TreatmentPlanDetailService.java` | +1 | Added `.approvalStatus()` mapping |
-| **Total** | **4 lines** | **3 files modified** |
+| File                                  | Lines Changed | Description                           |
+| ------------------------------------- | ------------- | ------------------------------------- |
+| `TreatmentPlanDetailDTO.java`         | +2            | Added `approvalStatus` field + import |
+| `PatientTreatmentPlanRepository.java` | +1            | Added `p.approvalStatus` to SELECT    |
+| `TreatmentPlanDetailService.java`     | +1            | Added `.approvalStatus()` mapping     |
+| **Total**                             | **4 lines**   | **3 files modified**                  |
 
 ---
 
@@ -208,20 +223,22 @@ Only minor warnings (unused imports) - no functional issues.
 ## 🔄 API Consistency
 
 ### Before Fix
-| API | Returns approvalStatus? |
-|-----|------------------------|
-| API 5.2 (Get Detail) | ❌ NO |
-| API 5.9 (Approve/Reject) | ✅ YES |
-| API 5.12 (Submit for Review) | ✅ YES |
-| **NEW** Manager List All | ✅ YES |
+
+| API                          | Returns approvalStatus? |
+| ---------------------------- | ----------------------- |
+| API 5.2 (Get Detail)         | ❌ NO                   |
+| API 5.9 (Approve/Reject)     | ✅ YES                  |
+| API 5.12 (Submit for Review) | ✅ YES                  |
+| **NEW** Manager List All     | ✅ YES                  |
 
 ### After Fix
-| API | Returns approvalStatus? |
-|-----|------------------------|
-| API 5.2 (Get Detail) | ✅ **YES** |
-| API 5.9 (Approve/Reject) | ✅ YES |
-| API 5.12 (Submit for Review) | ✅ YES |
-| **NEW** Manager List All | ✅ YES |
+
+| API                          | Returns approvalStatus? |
+| ---------------------------- | ----------------------- |
+| API 5.2 (Get Detail)         | ✅ **YES**              |
+| API 5.9 (Approve/Reject)     | ✅ YES                  |
+| API 5.12 (Submit for Review) | ✅ YES                  |
+| **NEW** Manager List All     | ✅ YES                  |
 
 🎉 **All APIs now consistently return `approvalStatus`!**
 
@@ -230,12 +247,14 @@ Only minor warnings (unused imports) - no functional issues.
 ## 🚀 Frontend Impact
 
 ### Before Fix
+
 ```typescript
 // Frontend had to handle missing approvalStatus
-const approvalStatus = data.approvalStatus || 'DRAFT'; // Always defaulted to DRAFT
+const approvalStatus = data.approvalStatus || "DRAFT"; // Always defaulted to DRAFT
 ```
 
 ### After Fix
+
 ```typescript
 // Frontend now gets correct approvalStatus
 const approvalStatus = data.approvalStatus; // Correct value from DB
@@ -243,6 +262,7 @@ const approvalStatus = data.approvalStatus; // Correct value from DB
 ```
 
 ### Expected Behavior
+
 - ✅ "Submit for Review" button shows when `approvalStatus === 'DRAFT'`
 - ✅ "Approve/Reject" buttons show when `approvalStatus === 'PENDING_REVIEW'`
 - ✅ "Resubmit" button shows when `approvalStatus === 'REJECTED'`
@@ -262,11 +282,13 @@ const approvalStatus = data.approvalStatus; // Correct value from DB
 ## 💡 Why This Happened
 
 1. **DTO was created before V19 approval workflow**
+
    - Original DTO created for basic plan viewing
    - Approval workflow added later in V19/V20
    - DTO never updated to include new field
 
 2. **Constructor-based JPQL query**
+
    - Must explicitly list ALL fields in SELECT
    - Easy to miss new fields when entity evolves
    - No compiler warning for missing fields
@@ -280,12 +302,15 @@ const approvalStatus = data.approvalStatus; // Correct value from DB
 ## 🎯 Lessons Learned
 
 ### Prevention
+
 1. **When adding new entity fields**, always check:
+
    - ✅ DTOs that map from entity
    - ✅ Repository queries that use constructor expression
    - ✅ Service methods that build responses
 
 2. **Add integration tests** for:
+
    - ✅ All response fields are populated
    - ✅ No null values for required enum fields
 
@@ -315,19 +340,25 @@ const approvalStatus = data.approvalStatus; // Correct value from DB
 ## 📞 Questions Answered
 
 ### Q1: Do we need to add `approvalMetadata` to API 5.2?
+
 **A**: No. API 5.2 is for viewing plan details. Approval metadata (approver name, approval time, notes) is only needed in:
+
 - API 5.9 response (after approval action)
 - API 5.12 response (after submit action)
 - Manager dashboard (already has separate DTO)
 
 ### Q2: Any backward compatibility issues?
+
 **A**: No. Adding a field to response is backward compatible:
+
 - Old clients will ignore the new field
 - New clients will use the field
 - No API version bump needed
 
 ### Q3: Performance impact?
+
 **A**: Zero. `approvalStatus` is a direct column in `patient_treatment_plans` table:
+
 - No additional JOIN needed
 - No N+1 queries
 - Same query performance as before
@@ -350,7 +381,7 @@ const approvalStatus = data.approvalStatus; // Correct value from DB
 
 ---
 
-**Fixed By**: AI Assistant  
-**Date**: November 18, 2025  
-**Commit**: Pending (to be committed with other changes)  
+**Fixed By**: AI Assistant
+**Date**: November 18, 2025
+**Commit**: Pending (to be committed with other changes)
 **Status**: ✅ **RESOLVED - READY FOR TESTING**
