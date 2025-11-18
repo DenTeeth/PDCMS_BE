@@ -4,9 +4,12 @@ import com.dental.clinic.management.treatment_plans.domain.template.TemplatePhas
 import com.dental.clinic.management.treatment_plans.domain.template.TemplatePhaseService;
 import com.dental.clinic.management.treatment_plans.domain.template.TreatmentPlanTemplate;
 import com.dental.clinic.management.treatment_plans.dto.response.GetTemplateDetailResponse;
+import com.dental.clinic.management.treatment_plans.dto.response.TemplateSummaryDTO;
 import com.dental.clinic.management.treatment_plans.repository.TreatmentPlanTemplateRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -190,5 +193,75 @@ public class TreatmentPlanTemplateService {
                 log.info("Successfully built template detail response for: {}", templateCode);
 
                 return response;
+        }
+
+        /**
+         * Get all templates with optional filters (API 6.6).
+         *
+         * Business Logic:
+         * 1. Apply filters: isActive, specializationId (both optional)
+         * 2. Load templates with specialization data (LEFT JOIN FETCH)
+         * 3. Apply pagination (page, size, sort)
+         * 4. Map to TemplateSummaryDTO (lightweight response)
+         *
+         * Use Cases:
+         * - FE dropdown: List active templates for a specialization
+         * - Admin management: List all templates (active + inactive)
+         * - Filter by specialization: Show only orthodontic templates
+         *
+         * @param isActive         Filter by active status (null = no filter)
+         * @param specializationId Filter by specialization (null = no filter)
+         * @param pageable         Pagination parameters (page, size, sort)
+         * @return Page of TemplateSummaryDTO
+         */
+        @Transactional(readOnly = true)
+        public Page<TemplateSummaryDTO> getAllTemplates(
+                        Boolean isActive,
+                        Integer specializationId,
+                        Pageable pageable) {
+
+                log.info("API 6.6: Fetching templates with filters - isActive={}, specializationId={}, page={}, size={}",
+                                isActive, specializationId, pageable.getPageNumber(), pageable.getPageSize());
+
+                // STEP 1: Query templates with filters
+                Page<TreatmentPlanTemplate> templatesPage = templateRepository.findAllWithFilters(
+                                isActive,
+                                specializationId,
+                                pageable);
+
+                log.info("Found {} templates (total={}, page={}/{})",
+                                templatesPage.getNumberOfElements(),
+                                templatesPage.getTotalElements(),
+                                templatesPage.getNumber() + 1,
+                                templatesPage.getTotalPages());
+
+                // STEP 2: Map to TemplateSummaryDTO
+                Page<TemplateSummaryDTO> response = templatesPage.map(this::mapToSummaryDTO);
+
+                return response;
+        }
+
+        /**
+         * Map TreatmentPlanTemplate entity to TemplateSummaryDTO.
+         * Lightweight mapping (no phases/services included).
+         */
+        private TemplateSummaryDTO mapToSummaryDTO(TreatmentPlanTemplate template) {
+                return TemplateSummaryDTO.builder()
+                                .templateId(template.getTemplateId())
+                                .templateCode(template.getTemplateCode())
+                                .templateName(template.getTemplateName())
+                                .description(template.getDescription())
+                                .estimatedTotalCost(template.getTotalPrice())
+                                .estimatedDurationDays(template.getEstimatedDurationDays())
+                                .isActive(template.getIsActive())
+                                .specialization(template.getSpecialization() != null
+                                                ? TemplateSummaryDTO.SpecializationDTO.builder()
+                                                                .id(template.getSpecialization().getSpecializationId())
+                                                                .name(template.getSpecialization()
+                                                                                .getSpecializationName())
+                                                                .build()
+                                                : null)
+                                .createdAt(template.getCreatedAt())
+                                .build();
         }
 }

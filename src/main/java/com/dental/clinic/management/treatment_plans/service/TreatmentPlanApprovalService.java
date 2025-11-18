@@ -301,4 +301,99 @@ public class TreatmentPlanApprovalService {
         log.info("V21: ✅ Plan {} activation complete - {} items READY, {} items WAITING for prerequisites",
                 plan.getPlanCode(), itemsActivated, itemsWaiting);
     }
+
+    /**
+     * API 5.12: Submit Treatment Plan for Review.
+     * Changes plan status from DRAFT → PENDING_REVIEW.
+     *
+     * Business Rules:
+     * 1. Plan must exist
+     * 2. Plan must be in DRAFT status
+     * 3. Plan must have at least 1 phase and 1 item
+     * 4. Log audit trail
+     *
+     * @param planCode The unique plan code
+     * @param request  The submit request with optional notes
+     * @return Updated treatment plan detail
+     */
+    @Transactional
+    public TreatmentPlanDetailResponse submitForReview(
+            String planCode,
+            com.dental.clinic.management.treatment_plans.dto.request.SubmitForReviewRequest request) {
+        log.info("API 5.12: Submitting treatment plan {} for review", planCode);
+
+        // STEP 1: Find plan
+        PatientTreatmentPlan plan = planRepository.findByPlanCode(planCode)
+                .orElseThrow(() -> new NotFoundException(
+                        "PLAN_NOT_FOUND",
+                        "Không tìm thấy lộ trình điều trị với mã: " + planCode));
+
+        log.debug("Found plan {} with current status: {}", planCode, plan.getApprovalStatus());
+
+        // STEP 2: Validate plan is in DRAFT status
+        if (plan.getApprovalStatus() != ApprovalStatus.DRAFT) {
+            throw new ConflictException(
+                    String.format("Chỉ có thể gửi duyệt lộ trình ở trạng thái 'Nháp'. Trạng thái hiện tại: %s",
+                            plan.getApprovalStatus()));
+        }
+
+        // STEP 3: Validate plan has content (at least 1 phase and 1 item)
+        if (plan.getPhases() == null || plan.getPhases().isEmpty()) {
+            throw new BadRequestException(
+                    "EMPTY_PLAN",
+                    "Không thể gửi duyệt lộ trình chưa có giai đoạn nào.");
+        }
+
+        boolean hasItems = plan.getPhases().stream()
+                .anyMatch(phase -> phase.getItems() != null && !phase.getItems().isEmpty());
+
+        if (!hasItems) {
+            throw new BadRequestException(
+                    "NO_ITEMS",
+                    "Không thể gửi duyệt lộ trình chưa có hạng mục nào.");
+        }
+
+        // STEP 4: Get current user for audit
+        Integer employeeId = getCurrentEmployeeId();
+        Employee submitter = null;
+        if (employeeId != null) {
+            submitter = employeeRepository.findById(employeeId).orElse(null);
+        }
+
+        // STEP 5: Change status to PENDING_REVIEW
+        ApprovalStatus oldStatus = plan.getApprovalStatus();
+        plan.setApprovalStatus(ApprovalStatus.PENDING_REVIEW);
+
+        PatientTreatmentPlan savedPlan = planRepository.save(plan);
+
+        log.info("Plan {} status changed: {} → PENDING_REVIEW",
+                planCode, oldStatus);
+
+        // STEP 6: Create audit log
+        String notes = (request != null && StringUtils.hasText(request.getNotes()))
+                ? request.getNotes()
+                : "Gửi duyệt lộ trình điều trị";
+
+        PlanAuditLog auditLog = PlanAuditLog.createApprovalLog(
+                savedPlan,
+                submitter,
+                oldStatus,
+                ApprovalStatus.PENDING_REVIEW,
+                notes);
+        auditLogRepository.save(auditLog);
+
+        log.info("Audit log created for plan {} submission", planCode);
+
+        // STEP 7: Build response
+        TreatmentPlanDetailResponse response = mapToDetailResponse(savedPlan);
+
+        // Add approval metadata
+        if (savedPlan.getApprovedAt() != null) {
+            response.setApprovalMetadata(buildApprovalMetadata(savedPlan));
+        }
+
+        log.info("API 5.12: Successfully submitted plan {} for review", planCode);
+
+        return response;
+    }
 }

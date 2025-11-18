@@ -1,6 +1,8 @@
 package com.dental.clinic.management.treatment_plans.repository;
 
 import com.dental.clinic.management.treatment_plans.domain.template.TreatmentPlanTemplate;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -57,4 +59,30 @@ public interface TreatmentPlanTemplateRepository extends JpaRepository<Treatment
             "LEFT JOIN FETCH t.templatePhases " +
             "WHERE t.templateCode = :templateCode")
     Optional<TreatmentPlanTemplate> findByTemplateCodeWithFullStructure(@Param("templateCode") String templateCode);
+
+    // ===== API 6.6 - List Templates with Filters =====
+
+    /**
+     * Find all templates with optional filters (API 6.6).
+     *
+     * Supports filtering by:
+     * - isActive (Boolean, optional)
+     * - specializationId (Integer, optional)
+     *
+     * If both filters are null, returns all templates.
+     * Includes specialization data via LEFT JOIN FETCH.
+     *
+     * @param isActive         Filter by active status (null = no filter)
+     * @param specializationId Filter by specialization (null = no filter)
+     * @param pageable         Pagination parameters
+     * @return Page of templates with specialization loaded
+     */
+    @Query("SELECT DISTINCT t FROM TreatmentPlanTemplate t " +
+            "LEFT JOIN FETCH t.specialization " +
+            "WHERE (:isActive IS NULL OR t.isActive = :isActive) " +
+            "AND (:specializationId IS NULL OR t.specialization.specializationId = :specializationId)")
+    Page<TreatmentPlanTemplate> findAllWithFilters(
+            @Param("isActive") Boolean isActive,
+            @Param("specializationId") Integer specializationId,
+            Pageable pageable);
 }
