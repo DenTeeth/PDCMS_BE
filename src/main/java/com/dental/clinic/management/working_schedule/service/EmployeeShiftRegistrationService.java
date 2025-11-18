@@ -137,19 +137,25 @@ public class EmployeeShiftRegistrationService {
                             endDate
                     );
                     
-                    int totalDatesAvailable = 0; // registered < quota
-                    int totalDatesEmpty = 0;     // registered == 0
-                    int totalDatesFull = 0;      // registered == quota
+                    // NEW: Calculate slots available (not just day counts)
+                    int totalSlotsCapacity = workingDays.size() * slot.getQuota();
+                    int totalSlotsRemaining = 0;
+                    int totalDatesAvailable = 0; // days with at least 1 slot available
+                    int totalDatesEmpty = 0;     // days with 0 registrations
+                    int totalDatesFull = 0;      // days completely full
                     
                     // Track months that have at least one available date
                     Set<String> availableMonthsSet = new java.util.LinkedHashSet<>();
                     
                     for (LocalDate date : workingDays) {
                         long registered = availabilityService.getRegisteredCountForDate(slot.getSlotId(), date);
+                        int remaining = Math.max(0, slot.getQuota() - (int) registered);
+                        totalSlotsRemaining += remaining;
+                        
                         if (registered >= slot.getQuota()) {
                             totalDatesFull++;
                         } else {
-                            totalDatesAvailable++; // Has space
+                            totalDatesAvailable++; // Has at least 1 slot available
                             if (registered == 0) {
                                 totalDatesEmpty++;
                             }
@@ -159,13 +165,9 @@ public class EmployeeShiftRegistrationService {
                         }
                     }
 
-                    // Generate availability summary
-                    String summary = availabilityService.generateAvailabilitySummary(
-                            slot.getSlotId(), 
-                            slot.getQuota(),
-                            startDate, 
-                            endDate
-                    );
+                    // NEW: Generate availability summary showing slots (not just days)
+                    String summary = String.format("%d/%d slots available", 
+                            totalSlotsRemaining, totalSlotsCapacity);
                     
                     // If month filter is active and no dates available in this month, skip slot
                     if (finalFilterMonth != null && totalDatesAvailable == 0) {
@@ -329,29 +331,50 @@ public class EmployeeShiftRegistrationService {
         throw new com.dental.clinic.management.working_schedule.exception.SlotInactiveException(slot.getSlotId());
     }
 
-        // Per new requirement: dayOfWeek MUST be provided by PART_TIME_FLEX employees.
-        if (request.getDayOfWeek() == null || request.getDayOfWeek().isEmpty()) {
-            throw new IllegalArgumentException("dayOfWeek is required for PART_TIME_FLEX registrations");
-        }
-
-        // Calculate all dates within the range that match the requested days of week
-        List<java.time.LocalDate> datesToCheck;
-        try {
-            datesToCheck = availabilityService.getWorkingDaysFromDayNames(
-                    request.getDayOfWeek(),
-                    request.getEffectiveFrom(),
-                    request.getEffectiveTo()
-            );
-        } catch (IllegalArgumentException e) {
-            // Extract invalid day names from the error message if possible
-            throw new InvalidDayOfWeekException(request.getDayOfWeek());
-        }
+        // NEW: Calculate all dates within the range that match the SLOT's dayOfWeek
+        // Employee can NO LONGER choose specific days - system auto-uses slot's dayOfWeek
+        List<java.time.LocalDate> datesToCheck = availabilityService.getWorkingDays(
+                slot,
+                request.getEffectiveFrom(),
+                request.getEffectiveTo()
+        );
 
         if (datesToCheck.isEmpty()) {
             throw new NoWorkingDaysFoundException(
-                    request.getDayOfWeek(),
+                    java.util.List.of(slot.getDayOfWeek()),
                     request.getEffectiveFrom(),
                     request.getEffectiveTo());
+        }
+
+        // NEW: Validate minimum 1-week requirement
+        // Must include at least ONE occurrence of EACH day defined in slot's dayOfWeek
+        // Example: If slot is MON,WED,FRI → range must contain at least 1 Monday, 1 Wednesday, 1 Friday
+        String[] slotDays = slot.getDayOfWeek().split(",");
+        java.util.Set<java.time.DayOfWeek> requiredDays = new java.util.HashSet<>();
+        java.util.Set<String> requiredDayNames = new java.util.HashSet<>();
+        for (String day : slotDays) {
+            String trimmedDay = day.trim();
+            requiredDays.add(java.time.DayOfWeek.valueOf(trimmedDay));
+            requiredDayNames.add(trimmedDay);
+        }
+        
+        java.util.Set<java.time.DayOfWeek> coveredDays = new java.util.HashSet<>();
+        for (java.time.LocalDate date : datesToCheck) {
+            coveredDays.add(date.getDayOfWeek());
+        }
+        
+        if (!coveredDays.containsAll(requiredDays)) {
+            java.util.Set<java.time.DayOfWeek> missingDayEnums = new java.util.HashSet<>(requiredDays);
+            missingDayEnums.removeAll(coveredDays);
+            java.util.Set<String> missingDayNames = missingDayEnums.stream()
+                    .map(Enum::name)
+                    .collect(java.util.stream.Collectors.toSet());
+            throw new com.dental.clinic.management.working_schedule.exception.IncompleteDayCoverageException(
+                    missingDayNames,
+                    requiredDayNames,
+                    request.getEffectiveFrom(),
+                    request.getEffectiveTo()
+            );
         }
 
         // Validate all calculated dates are within slot's effective range

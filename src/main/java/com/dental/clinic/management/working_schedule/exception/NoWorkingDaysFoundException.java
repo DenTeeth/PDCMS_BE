@@ -12,8 +12,7 @@ public class NoWorkingDaysFoundException extends RuntimeException {
     private final LocalDate effectiveTo;
 
     public NoWorkingDaysFoundException(List<String> requestedDays, LocalDate effectiveFrom, LocalDate effectiveTo) {
-        super(String.format("No working days found for %s between %s and %s. Try expanding your date range or selecting different days of the week.",
-                String.join(", ", requestedDays), effectiveFrom, effectiveTo));
+        super("Date range is insufficient. Please extend your registration period.");
         this.requestedDays = requestedDays;
         this.effectiveFrom = effectiveFrom;
         this.effectiveTo = effectiveTo;
