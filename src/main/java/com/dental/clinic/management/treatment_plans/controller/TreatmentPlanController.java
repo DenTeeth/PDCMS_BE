@@ -209,7 +209,7 @@ public class TreatmentPlanController {
          * Business Logic:
          * 1. Validates patient, doctor, and template exist
          * 2. Validates discount ≤ total cost
-         * 3. Generates unique plan code (PLAN-YYYYMMDD-XXX)
+         * 3. Generates unique plan code (PLAN-YYYYMMDD-SEQ)
          * 4. Calculates expected end date from template duration
          * 5. Snapshots all phases and items (expands by quantity, ordered by sequence)
          * 6. Calculates total cost and final cost

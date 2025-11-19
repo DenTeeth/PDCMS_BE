@@ -213,7 +213,7 @@ public class AppointmentListService {
      * - Patient CANNOT see other patients' appointments (even if they send
      * ?patientCode=BN-XXXX)
      * - Employee CANNOT see other employees' appointments (even if they send
-     * ?employeeCode=EMP-XXX)
+     * ?employeeCode=EMP-SEQ)
      */
     private void applyRBACFilters(Authentication auth, AppointmentFilterCriteria criteria) {
         String username = auth.getName();

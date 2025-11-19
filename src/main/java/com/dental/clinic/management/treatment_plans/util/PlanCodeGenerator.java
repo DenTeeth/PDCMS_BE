@@ -12,7 +12,7 @@ import java.time.format.DateTimeFormatter;
 /**
  * Utility class for generating unique treatment plan codes.
  *
- * Format: PLAN-YYYYMMDD-XXX
+ * Format: PLAN-YYYYMMDD-SEQ
  * Example: PLAN-20251111-001, PLAN-20251111-002, ...
  *
  * Thread-safe: Uses database query with COUNT to ensure atomicity
