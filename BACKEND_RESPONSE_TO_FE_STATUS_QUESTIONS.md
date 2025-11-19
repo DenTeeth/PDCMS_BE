@@ -1,6 +1,6 @@
 # ✅ BACKEND RESPONSE: Treatment Plan Status Workflow Clarification
 
-**Date**: 2025-11-18  
+**Date**: 2025-11-18
 **Purpose**: Trả lời câu hỏi của Frontend về status workflow sau khi approve/reject
 
 ---
@@ -16,6 +16,7 @@ Frontend team đã hiểu đúng hầu hết workflow. Chỉ có **MỘT điểm
 ### 1. ✅ Sau khi Approve: approvalStatus = APPROVED (mãi mãi)
 
 **ĐÚNG!** Code backend:
+
 ```java
 // TreatmentPlanApprovalService.java line 211-221
 private ApprovalStatus determineNewApprovalStatus(ApproveTreatmentPlanRequest request) {
@@ -36,6 +37,7 @@ private ApprovalStatus determineNewApprovalStatus(ApproveTreatmentPlanRequest re
 **ĐÚNG!** Backend **KHÔNG tự động chuyển** `status` khi approve.
 
 **Code backend**:
+
 ```java
 // TreatmentPlanApprovalService.java line 95-107
 ApprovalStatus newStatus = determineNewApprovalStatus(request);
@@ -48,6 +50,7 @@ plan.setApprovedAt(LocalDateTime.now());
 ```
 
 **Xác nhận**: Sau khi approve:
+
 - `approvalStatus`: `PENDING_REVIEW` → `APPROVED` ✅
 - `status`: `PENDING` → `PENDING` (không đổi) ✅
 
@@ -58,6 +61,7 @@ plan.setApprovedAt(LocalDateTime.now());
 **ĐÚNG theo thiết kế!** Nhưng **hiện tại chưa implement**.
 
 **Code comment trong ApprovalStatus.java**:
+
 ```java
 // line 42-43
 /**
@@ -69,6 +73,7 @@ APPROVED,
 ```
 
 **Hiện trạng**:
+
 - ✅ Thiết kế: Plan tự động → IN_PROGRESS khi đặt lịch đầu tiên
 - ✅ Code: **ĐÃ IMPLEMENT AUTO-ACTIVATION** (V21.3)
 - ⚠️ API 5.5 (Activate Plan): **KHÔNG CẦN** (auto-activation thay thế)
@@ -82,6 +87,7 @@ APPROVED,
 **ĐÚNG và ĐÃ IMPLEMENT!** (V21.3)
 
 **Implementation Details**:
+
 ```java
 // TreatmentPlanItemService.java (V21.3)
 // Auto-completes plan when ALL phases are done
@@ -89,10 +95,10 @@ private void checkAndCompletePlan(PatientTreatmentPlan plan) {
     if (plan.getStatus() != IN_PROGRESS) {
         return; // Only check IN_PROGRESS plans
     }
-    
+
     boolean allPhasesCompleted = plan.getPhases().stream()
         .allMatch(phase -> phase.getStatus() == PhaseStatus.COMPLETED);
-    
+
     if (allPhasesCompleted) {
         plan.setStatus(TreatmentPlanStatus.COMPLETED);
         log.info("✅ Auto-completed plan {} (IN_PROGRESS → COMPLETED)", planCode);
@@ -101,6 +107,7 @@ private void checkAndCompletePlan(PatientTreatmentPlan plan) {
 ```
 
 **Behavior**:
+
 - ✅ Triggers when doctor marks **LAST item** as COMPLETED
 - ✅ After phase auto-completion check
 - ✅ Checks if **ALL phases** are COMPLETED
@@ -115,6 +122,7 @@ private void checkAndCompletePlan(PatientTreatmentPlan plan) {
 ### ❓ FE Hỏi:
 
 > **"Khi Manager reject plan (API 5.9 with status=REJECTED):**
+>
 > - Response 5.9 trả về `approvalStatus: REJECTED` hay `DRAFT`?
 > - Response 5.2 (sau khi reject) trả về `approvalStatus: REJECTED` hay `DRAFT`?
 >
@@ -123,20 +131,22 @@ private void checkAndCompletePlan(PatientTreatmentPlan plan) {
 ### ✅ BACKEND ANSWER:
 
 **API 5.9 Response** (ngay sau khi reject):
+
 ```json
 {
   "planCode": "PLAN-001",
-  "approvalStatus": "DRAFT",  // ✅ TRẢ VỀ DRAFT NGAY
+  "approvalStatus": "DRAFT", // ✅ TRẢ VỀ DRAFT NGAY
   "status": "PENDING",
   "approvalMetadata": {
     "approvedBy": "Manager Name",
     "approvedAt": "2025-11-18T10:00:00",
-    "notes": "Lý do từ chối..."  // Rejection reason
+    "notes": "Lý do từ chối..." // Rejection reason
   }
 }
 ```
 
 **Code backend**:
+
 ```java
 // TreatmentPlanApprovalService.java line 211-221
 private ApprovalStatus determineNewApprovalStatus(ApproveTreatmentPlanRequest request) {
@@ -158,6 +168,7 @@ TreatmentPlanDetailResponse response = mapToDetailResponse(plan);
 ```
 
 **Xác nhận**:
+
 - ✅ API 5.9 response **TRẢ VỀ `DRAFT` NGAY** (không phải `REJECTED`)
 - ✅ Database lưu `approvalStatus = DRAFT` ngay lập tức
 - ✅ API 5.2 (sau khi reject) cũng trả về `approvalStatus = DRAFT`
@@ -179,6 +190,7 @@ Backend response: { approvalStatus: "DRAFT" }
 ```
 
 **ApprovalStatus enum chỉ có 4 giá trị**:
+
 ```java
 public enum ApprovalStatus {
     DRAFT,           // ✅ Có trong DB/Response
@@ -188,7 +200,8 @@ public enum ApprovalStatus {
 }
 ```
 
-**⚠️ LƯU Ý**: 
+**⚠️ LƯU Ý**:
+
 - Enum có `REJECTED` value
 - Nhưng backend **KHÔNG BAO GIỜ LƯU** `REJECTED` vào database
 - Backend **LUÔN CONVERT** `REJECTED` → `DRAFT` ngay
@@ -200,9 +213,10 @@ public enum ApprovalStatus {
 ### Vấn đề hiện tại:
 
 Frontend đang:
+
 ```typescript
 // ❌ SAI: FE hiển thị "ĐÃ TỪ CHỐI" dựa trên response
-if (response.approvalStatus === 'REJECTED') {
+if (response.approvalStatus === "REJECTED") {
   showRejectedBadge(); // ❌ Sẽ KHÔNG BAO GIỜ XẢY RA
 }
 ```
@@ -210,18 +224,20 @@ if (response.approvalStatus === 'REJECTED') {
 ### Sửa thành:
 
 **Option 1: Dựa vào approvalMetadata.notes** (Khuyến nghị)
+
 ```typescript
 // ✅ ĐÚNG: Check notes để biết có phải rejection không
-if (response.approvalStatus === 'DRAFT' && response.approvalMetadata?.notes) {
+if (response.approvalStatus === "DRAFT" && response.approvalMetadata?.notes) {
   // Có notes + DRAFT = vừa bị reject
   showRejectedMessage(response.approvalMetadata.notes);
-} else if (response.approvalStatus === 'DRAFT') {
+} else if (response.approvalStatus === "DRAFT") {
   // DRAFT thuần túy (chưa submit)
   showDraftBadge();
 }
 ```
 
 **Option 2: Backend thêm field `wasRejected`** (Nếu FE cần rõ ràng hơn)
+
 ```typescript
 // Backend có thể thêm vào response:
 {
@@ -238,6 +254,7 @@ if (response.approvalStatus === 'DRAFT' && response.approvalMetadata?.notes) {
 ### Khuyến nghị:
 
 **Dùng Option 1** (check `approvalMetadata.notes`):
+
 - ✅ Không cần thay đổi backend
 - ✅ Rejection reason luôn có trong notes
 - ✅ FE có thể hiển thị lý do reject
@@ -294,18 +311,19 @@ FE check: có approvalMetadata.notes?
 **A**: ✅ **ĐÃ IMPLEMENT** (V21.3).
 
 **Implementation Details**:
+
 ```java
 // AppointmentCreationService.java (V21.3)
 // Auto-activates plan when creating FIRST appointment
 private void activatePlanIfFirstAppointment(Appointment appointment, List<Long> itemIds) {
     // Get plan from items
     PatientTreatmentPlan plan = firstItem.getPhase().getTreatmentPlan();
-    
+
     // Check eligibility
     if (plan.getStatus() == PENDING && plan.getApprovalStatus() == APPROVED) {
         // Check if this is first appointment
         long appointmentCount = appointmentPlanItemRepository.countAppointmentsForPlan(planId);
-        
+
         if (appointmentCount == 1) {
             // AUTO-ACTIVATE
             plan.setStatus(IN_PROGRESS);
@@ -316,6 +334,7 @@ private void activatePlanIfFirstAppointment(Appointment appointment, List<Long> 
 ```
 
 **Behavior**:
+
 - ✅ Triggers when receptionist books **FIRST** appointment for plan
 - ✅ Only if `plan.status == PENDING` and `plan.approvalStatus == APPROVED`
 - ✅ Automatically sets `plan.status = IN_PROGRESS`
@@ -340,7 +359,8 @@ private void activatePlanIfFirstAppointment(Appointment appointment, List<Long> 
 
 **Use case**: Bệnh nhân không tiếp tục điều trị.
 
-**Recommendation**: 
+**Recommendation**:
+
 - Option 1: Thêm API `PATCH /patient-treatment-plans/{planCode}/cancel`
 - Option 2: Dùng status update API (nếu có) để chuyển → `CANCELLED`
 
@@ -350,7 +370,8 @@ private void activatePlanIfFirstAppointment(Appointment appointment, List<Long> 
 
 **A**: ❌ **CHƯA CÓ API 5.5**.
 
-**Recommendation**: 
+**Recommendation**:
+
 - Option 1: Implement auto-activation (khuyến nghị)
 - Option 2: Tạo API 5.5 nếu cần manual activation
 
@@ -361,18 +382,22 @@ private void activatePlanIfFirstAppointment(Appointment appointment, List<Long> 
 ### For Backend Team:
 
 - [x] **P0**: ~~Implement auto-activation logic in AppointmentService~~ ✅ **DONE (V21.3)**
+
   - ✅ When creating first appointment → set plan.status = IN_PROGRESS
   - ✅ Implemented in `AppointmentCreationService.activatePlanIfFirstAppointment()`
-  
+
 - [x] **P0**: ~~Implement auto-complete logic in TreatmentPlanItemService~~ ✅ **DONE (V21.3)**
+
   - ✅ When all phases done → set plan.status = COMPLETED
   - ✅ Implemented in `TreatmentPlanItemService.checkAndCompletePlan()`
-  
+
 - [ ] **P1**: Consider adding `wasRejected` flag to response (optional)
+
   - Giúp FE dễ phân biệt DRAFT vs DRAFT-after-rejection
   - Current workaround: FE check `approvalMetadata.notes`
 
 - [ ] **P2**: ~~Implement API 5.5 Activate Plan (if needed)~~ ❌ **NOT NEEDED**
+
   - Auto-activation implemented → manual activation not required
 
 - [ ] **P3**: Implement Plan Cancellation API
@@ -382,13 +407,16 @@ private void activatePlanIfFirstAppointment(Appointment appointment, List<Long> 
 ### For Frontend Team:
 
 - [ ] **P0**: Fix rejection display logic
+
   - Check `approvalMetadata.notes` instead of expecting `REJECTED` status
-  
+
 - [ ] **P1**: Update UI flow
+
   - DRAFT + has notes = "Đã từ chối: [reason]"
   - DRAFT + no notes = "Bản nháp"
 
 - [ ] **P2**: Handle auto-activation (✅ Backend ready V21.3)
+
   - After booking first appointment → refresh plan detail (API 5.2)
   - Expect status change: `PENDING` → `IN_PROGRESS`
   - Update badge: "Chờ thực hiện" → "Đang thực hiện"
@@ -413,9 +441,10 @@ private void activatePlanIfFirstAppointment(Appointment appointment, List<Long> 
 ### ⚠️ What FE Needs to FIX:
 
 1. ❌ **REJECTION RESPONSE**:
+
    - Backend returns `"approvalStatus": "DRAFT"` (NOT "REJECTED")
    - FE should check `approvalMetadata.notes` to detect rejection
-   
+
 2. ⏳ **AUTO-ACTIVATION**:
    - Design says: auto-activate on first appointment
    - Reality: NOT YET IMPLEMENTED in backend
@@ -428,6 +457,7 @@ private void activatePlanIfFirstAppointment(Appointment appointment, List<Long> 
 > **Rejection behavior**: Backend **KHÔNG BAO GIỜ** trả về `approvalStatus: "REJECTED"`. Khi Manager reject, backend tự động convert về `"DRAFT"` ngay.
 >
 > **Cách phân biệt**:
+>
 > - `DRAFT` + có `approvalMetadata.notes` = Vừa bị reject (hiển thị "Đã từ chối: [lý do]")
 > - `DRAFT` + không có `approvalMetadata.notes` = Bản nháp thuần túy
 >
@@ -435,6 +465,6 @@ private void activatePlanIfFirstAppointment(Appointment appointment, List<Long> 
 
 ---
 
-**Prepared By**: Backend Team  
-**Date**: 2025-11-18  
+**Prepared By**: Backend Team
+**Date**: 2025-11-18
 **Status**: ✅ Ready to Share with Frontend

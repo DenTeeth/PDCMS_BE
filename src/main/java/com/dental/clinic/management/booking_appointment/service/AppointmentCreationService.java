@@ -1023,7 +1023,8 @@ public class AppointmentCreationService {
         }
 
         /**
-         * V21: Auto-activate treatment plan (PENDING → IN_PROGRESS) when first appointment is created.
+         * V21: Auto-activate treatment plan (PENDING → IN_PROGRESS) when first
+         * appointment is created.
          *
          * Business Logic:
          * - When receptionist books the FIRST appointment for a plan
@@ -1057,8 +1058,10 @@ public class AppointmentCreationService {
                                         .getTreatmentPlan();
 
                         // Check if plan is eligible for auto-activation
-                        boolean isPending = plan.getStatus() == com.dental.clinic.management.treatment_plans.enums.TreatmentPlanStatus.PENDING;
-                        boolean isApproved = plan.getApprovalStatus() == com.dental.clinic.management.treatment_plans.domain.ApprovalStatus.APPROVED;
+                        boolean isPending = plan
+                                        .getStatus() == com.dental.clinic.management.treatment_plans.enums.TreatmentPlanStatus.PENDING;
+                        boolean isApproved = plan
+                                        .getApprovalStatus() == com.dental.clinic.management.treatment_plans.domain.ApprovalStatus.APPROVED;
 
                         if (isPending && isApproved) {
                                 // Check if this is the FIRST appointment for this plan
@@ -1082,7 +1085,8 @@ public class AppointmentCreationService {
                                                 plan.getPlanCode(), plan.getStatus(), plan.getApprovalStatus());
                         }
                 } catch (Exception e) {
-                        // Log error but don't fail transaction - auto-activation is enhancement, not critical
+                        // Log error but don't fail transaction - auto-activation is enhancement, not
+                        // critical
                         log.warn("V21: Failed to auto-activate plan for appointment {}. Plan activation can be done manually.",
                                         appointment.getAppointmentCode(), e);
                 }

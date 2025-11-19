@@ -1,7 +1,7 @@
 # 🔍 Làm Rõ: Treatment Plan Status Workflow - Sau Khi Duyệt
 
-**Date**: 2025-11-18  
-**Version**: V21  
+**Date**: 2025-11-18
+**Version**: V21
 **Purpose**: Giải thích chi tiết workflow status của Treatment Plan từ lúc tạo đến hoàn thành
 
 ---
@@ -11,6 +11,7 @@
 > **"Duyệt rồi Status nó như thế nào?"**
 
 Câu hỏi này thực ra gồm 2 phần:
+
 1. **ApprovalStatus** sau khi duyệt → Thay đổi thế nào?
 2. **TreatmentPlanStatus** (status thực thi) → Thay đổi thế nào?
 
@@ -39,7 +40,7 @@ Câu hỏi này thực ra gồm 2 phần:
    → approvalStatus: PENDING_REVIEW → APPROVED
    → status: PENDING → PENDING (không đổi tự động)
    🟡 PLAN ĐÃ ĐƯỢC DUYỆT - SẴN SÀNG ĐIỀU TRỊ
-   
+
    ⚠️ LƯU Ý: Plan vẫn ở PENDING cho đến khi:
    - Đặt lịch hẹn đầu tiên (tự động → IN_PROGRESS)
    - Hoặc gọi API 5.5 Activate Plan (nếu có)
@@ -61,13 +62,13 @@ Câu hỏi này thực ra gồm 2 phần:
 └─────────────────────────────────────────────────────────────┘
 
 4. Kích hoạt plan (Sau khi APPROVED)
-   
+
    CÁCH 1 (TỰ ĐỘNG - KHUYẾN NGHỊ):
    - Lễ tân/Bác sĩ đặt lịch hẹn đầu tiên
    - Backend tự động: status: PENDING → IN_PROGRESS
    - approvalStatus: APPROVED (không đổi)
    🟢 PLAN ĐANG THỰC HIỆN
-   
+
    CÁCH 2 (THỦ CÔNG - NẾU CÓ API 5.5):
    - Gọi API 5.5 Activate Plan
    - status: PENDING → IN_PROGRESS
@@ -102,7 +103,7 @@ TIME ─────────────────────────
 └──────────┘  └──────────┘  └──────────┘  └──────────┘  └──────────┘
 approvalStatus approvalStatus approvalStatus approvalStatus approvalStatus
     DRAFT       PENDING_REVIEW   APPROVED      APPROVED      APPROVED
-    
+
 status          status           status        status         status
    PENDING      PENDING          PENDING      IN_PROGRESS   COMPLETED
 
@@ -119,11 +120,13 @@ status          status           status        status         status
 **Ý nghĩa**: Plan đã được quản lý phê duyệt, có thể bắt đầu điều trị.
 
 **Điều KHÔNG thay đổi**:
+
 - ✅ `approvalStatus` sẽ luôn là `APPROVED` (không đổi nữa)
 - ✅ Không thể edit/delete items nữa (đã lock)
 - ✅ Không thể submit for review lại (đã approved)
 
 **Điều CÓ THỂ làm**:
+
 - ✅ Đặt lịch hẹn cho các items
 - ✅ Update item status (API 5.6) - từ PENDING → COMPLETED
 - ✅ Xem chi tiết plan (API 5.2)
@@ -135,10 +138,12 @@ status          status           status        status         status
 **Sau khi approved, plan status vẫn là `PENDING`**
 
 **Plan chuyển sang `IN_PROGRESS` khi**:
+
 - **Tự động**: Khi đặt lịch hẹn đầu tiên (khuyến nghị)
 - **Thủ công**: Gọi API 5.5 Activate Plan (nếu có)
 
 **Ví dụ timeline**:
+
 ```
 09:00 - Manager approve plan
         → approvalStatus: APPROVED
@@ -162,6 +167,7 @@ status          status           status        status         status
 ## 💡 So Sánh: APPROVED vs IN_PROGRESS
 
 ### approvalStatus: APPROVED (Approval State)
+
 - **Mục đích**: Phản ánh QUYỀN HẠN và WORKFLOW
 - **Ý nghĩa**: "Plan đã được duyệt, có thể bắt đầu"
 - **Thay đổi**: Chỉ thay đổi qua approval workflow (API 5.9, 5.12)
@@ -169,6 +175,7 @@ status          status           status        status         status
 - **Business rule**: Không thể edit plan sau khi approved
 
 ### status: IN_PROGRESS (Execution State)
+
 - **Mục đích**: Phản ánh TIẾN TRÌNH THỰC TẾ
 - **Ý nghĩa**: "Plan đang được thực hiện điều trị"
 - **Thay đổi**: Tự động khi đặt lịch/hoàn thành items
@@ -182,28 +189,30 @@ status          status           status        status         status
 ### Case 1: Plan vừa được approve
 
 **Request**:
+
 ```http
 GET /api/v1/patients/BN-1001/treatment-plans/PLAN-001
 ```
 
 **Response**:
+
 ```json
 {
   "planCode": "PLAN-001",
   "planName": "Implant + Niềng răng",
-  "approvalStatus": "APPROVED",     // ✅ Đã duyệt
-  "status": "PENDING",               // 🟡 Chưa bắt đầu điều trị
+  "approvalStatus": "APPROVED", // ✅ Đã duyệt
+  "status": "PENDING", // 🟡 Chưa bắt đầu điều trị
   "phases": [
     {
       "phaseName": "Phase 1: Implant",
       "items": [
         {
           "itemName": "Nhổ răng khôn",
-          "status": "PENDING"         // Chưa đặt lịch
+          "status": "PENDING" // Chưa đặt lịch
         },
         {
           "itemName": "Cấy implant",
-          "status": "PENDING"         // Chưa đặt lịch
+          "status": "PENDING" // Chưa đặt lịch
         }
       ]
     }
@@ -212,6 +221,7 @@ GET /api/v1/patients/BN-1001/treatment-plans/PLAN-001
 ```
 
 **Frontend hiển thị**:
+
 - ✅ Text: "Đã duyệt" (dưới mã plan)
 - 🟡 Badge: "Chờ thực hiện" (màu xám - PENDING)
 - ✅ Button: "Đặt lịch hẹn" (enabled)
@@ -222,28 +232,30 @@ GET /api/v1/patients/BN-1001/treatment-plans/PLAN-001
 ### Case 2: Plan đã bắt đầu điều trị (có lịch hẹn đầu tiên)
 
 **Request**:
+
 ```http
 GET /api/v1/patients/BN-1001/treatment-plans/PLAN-001
 ```
 
 **Response**:
+
 ```json
 {
   "planCode": "PLAN-001",
   "planName": "Implant + Niềng răng",
-  "approvalStatus": "APPROVED",     // ✅ Vẫn là APPROVED
-  "status": "IN_PROGRESS",          // 🟢 Đang điều trị
+  "approvalStatus": "APPROVED", // ✅ Vẫn là APPROVED
+  "status": "IN_PROGRESS", // 🟢 Đang điều trị
   "phases": [
     {
       "phaseName": "Phase 1: Implant",
       "items": [
         {
           "itemName": "Nhổ răng khôn",
-          "status": "SCHEDULED"       // Đã đặt lịch
+          "status": "SCHEDULED" // Đã đặt lịch
         },
         {
           "itemName": "Cấy implant",
-          "status": "PENDING"         // Chưa đặt lịch
+          "status": "PENDING" // Chưa đặt lịch
         }
       ]
     }
@@ -252,6 +264,7 @@ GET /api/v1/patients/BN-1001/treatment-plans/PLAN-001
 ```
 
 **Frontend hiển thị**:
+
 - ✅ Text: "Đã duyệt" (dưới mã plan)
 - 🟢 Badge: "Đang thực hiện" (màu xanh - IN_PROGRESS)
 - ✅ Button: "Cập nhật tiến độ" (enabled)
@@ -262,28 +275,30 @@ GET /api/v1/patients/BN-1001/treatment-plans/PLAN-001
 ### Case 3: Plan hoàn thành
 
 **Request**:
+
 ```http
 GET /api/v1/patients/BN-1001/treatment-plans/PLAN-001
 ```
 
 **Response**:
+
 ```json
 {
   "planCode": "PLAN-001",
   "planName": "Implant + Niềng răng",
-  "approvalStatus": "APPROVED",     // ✅ Vẫn là APPROVED
-  "status": "COMPLETED",            // ✅ Hoàn thành
+  "approvalStatus": "APPROVED", // ✅ Vẫn là APPROVED
+  "status": "COMPLETED", // ✅ Hoàn thành
   "phases": [
     {
       "phaseName": "Phase 1: Implant",
       "items": [
         {
           "itemName": "Nhổ răng khôn",
-          "status": "COMPLETED"       // Hoàn thành
+          "status": "COMPLETED" // Hoàn thành
         },
         {
           "itemName": "Cấy implant",
-          "status": "COMPLETED"       // Hoàn thành
+          "status": "COMPLETED" // Hoàn thành
         }
       ]
     }
@@ -292,6 +307,7 @@ GET /api/v1/patients/BN-1001/treatment-plans/PLAN-001
 ```
 
 **Frontend hiển thị**:
+
 - ✅ Text: "Đã duyệt" (dưới mã plan)
 - ✅ Badge: "Hoàn thành" (màu lục - COMPLETED)
 - ✅ Hiển thị timeline hoàn thành
@@ -333,10 +349,12 @@ chưa bắt đầu
 **A**: Có 2 cách:
 
 **Cách 1 (Tự động - Khuyến nghị)**:
+
 - Khi đặt lịch hẹn đầu tiên cho bất kỳ item nào
 - Backend tự động detect và chuyển status
 
 **Cách 2 (Thủ công - Nếu có API 5.5)**:
+
 - Gọi API 5.5 Activate Plan
 - Frontend chủ động kích hoạt plan
 
@@ -347,6 +365,7 @@ chưa bắt đầu
 ### Q4: Có thể edit plan sau khi approved không?
 
 **A**: **KHÔNG**. Sau khi approved:
+
 - ❌ Không thể thêm/xóa/sửa items
 - ❌ Không thể thay đổi giá
 - ❌ Không thể submit for review lại
@@ -360,6 +379,7 @@ chưa bắt đầu
 **A**: Có 2 options:
 
 **Option 1: Reject plan** (Khuyến nghị nếu chưa bắt đầu điều trị)
+
 ```
 1. Manager reject plan (API 5.9)
    → approvalStatus: APPROVED → REJECTED → DRAFT
@@ -373,6 +393,7 @@ chưa bắt đầu
 ```
 
 **Option 2: Tạo plan mới** (Nếu đã bắt đầu điều trị)
+
 ```
 1. Giữ nguyên plan cũ (history)
 
@@ -388,15 +409,18 @@ chưa bắt đầu
 ## 🎯 Summary: Sau Khi Duyệt
 
 ### Điều KHÔNG ĐỔI:
+
 - ✅ `approvalStatus` = `APPROVED` (mãi mãi)
 - ✅ Không thể edit plan (đã lock)
 
 ### Điều SẼ ĐỔI:
+
 - 🔄 `status`: `PENDING` → `IN_PROGRESS` → `COMPLETED`
 - 🔄 `item.status`: `PENDING` → ... → `COMPLETED`
 - 🔄 `phase.status`: Auto-update based on items
 
 ### Logic Tự Động:
+
 ```
 Khi đặt lịch đầu tiên
   → status: PENDING → IN_PROGRESS
@@ -440,14 +464,14 @@ Khi tất cả phases done
 
 ### APIs Liên Quan Đến Status Changes:
 
-| API | Endpoint | Status Changes |
-|-----|----------|----------------|
-| **API 5.2** | `GET /patients/{code}/treatment-plans/{planCode}` | Read current status |
-| **API 5.9** | `PATCH /patient-treatment-plans/{planCode}/approval` | `approvalStatus` changes |
-| **API 5.12** | `PATCH /patient-treatment-plans/{planCode}/submit-for-review` | `DRAFT → PENDING_REVIEW` |
-| **API 5.5** | `PATCH /patient-treatment-plans/{planCode}/activate` | `status: PENDING → IN_PROGRESS` (if exists) |
-| **API 5.6** | `PATCH /patient-plan-items/{itemId}/status` | `item.status` changes (triggers auto-updates) |
-| **Appointment API** | `POST /appointments` | Triggers `status: PENDING → IN_PROGRESS` (first appointment) |
+| API                 | Endpoint                                                      | Status Changes                                               |
+| ------------------- | ------------------------------------------------------------- | ------------------------------------------------------------ |
+| **API 5.2**         | `GET /patients/{code}/treatment-plans/{planCode}`             | Read current status                                          |
+| **API 5.9**         | `PATCH /patient-treatment-plans/{planCode}/approval`          | `approvalStatus` changes                                     |
+| **API 5.12**        | `PATCH /patient-treatment-plans/{planCode}/submit-for-review` | `DRAFT → PENDING_REVIEW`                                     |
+| **API 5.5**         | `PATCH /patient-treatment-plans/{planCode}/activate`          | `status: PENDING → IN_PROGRESS` (if exists)                  |
+| **API 5.6**         | `PATCH /patient-plan-items/{itemId}/status`                   | `item.status` changes (triggers auto-updates)                |
+| **Appointment API** | `POST /appointments`                                          | Triggers `status: PENDING → IN_PROGRESS` (first appointment) |
 
 ---
 
@@ -456,6 +480,7 @@ Khi tất cả phases done
 ### 1. Về API 5.5 Activate Plan
 
 ⚠️ **CẦN XÁC NHẬN VỚI BACKEND**:
+
 - Có API này không?
 - Hay plan tự động activate khi đặt lịch đầu tiên?
 
@@ -466,6 +491,7 @@ Khi tất cả phases done
 ⚠️ **CẦN XÁC NHẬN VỚI BACKEND**:
 
 Khi Manager reject plan (API 5.9 with status=REJECTED):
+
 - Response 5.9 trả về `approvalStatus: REJECTED` hay `DRAFT`?
 - Response 5.2 (sau khi reject) trả về `approvalStatus: REJECTED` hay `DRAFT`?
 
@@ -476,6 +502,7 @@ Khi Manager reject plan (API 5.9 with status=REJECTED):
 ### 3. Về Plan Cancellation
 
 ⚠️ **CẦN XÁC NHẬN VỚI BACKEND**:
+
 - Có API để cancel plan (chuyển status → CANCELLED) không?
 - Use case: Bệnh nhân không tiếp tục điều trị
 - Có thể cancel plan đang IN_PROGRESS không?
@@ -487,14 +514,17 @@ Khi Manager reject plan (API 5.9 with status=REJECTED):
 ### Critical Questions:
 
 1. **Auto-activation**:
+
    - Plan có tự động chuyển `PENDING → IN_PROGRESS` khi đặt lịch đầu tiên không?
    - Hay cần gọi API 5.5 Activate Plan riêng?
 
 2. **Rejection behavior**:
+
    - API 5.9 response với status=REJECTED trả về `approvalStatus: REJECTED` hay `DRAFT`?
    - API 5.2 (sau khi reject) trả về `approvalStatus: REJECTED` hay `DRAFT`?
 
 3. **Plan cancellation**:
+
    - Có API để cancel plan không?
    - Syntax: `PATCH /patient-treatment-plans/{planCode}/cancel`?
 
@@ -505,6 +535,6 @@ Khi Manager reject plan (API 5.9 with status=REJECTED):
 
 ---
 
-**Last Updated**: 2025-11-18  
-**Status**: ✅ Complete - Waiting for Backend Confirmation  
+**Last Updated**: 2025-11-18
+**Status**: ✅ Complete - Waiting for Backend Confirmation
 **Next Steps**: Backend team xác nhận các questions above
