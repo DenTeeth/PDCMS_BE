@@ -136,8 +136,17 @@ public class CustomTreatmentPlanService {
                 // Lookup service
                 DentalService service = validateAndGetService(itemReq.getServiceCode());
 
-                // Validate price override (P0 Fix: Issue 4)
-                validatePriceOverride(itemReq.getPrice(), service.getPrice(), service.getServiceCode());
+                // V21.4: Auto-fill price from service if not provided
+                BigDecimal itemPrice = itemReq.getPrice();
+                if (itemPrice == null) {
+                    itemPrice = service.getPrice();
+                    log.debug("V21.4: Auto-filled price for {}: {} VND (from service default)",
+                            service.getServiceCode(), itemPrice);
+                }
+
+                // V21.4: NO MORE PRICE VALIDATION
+                // Doctors use default prices, Finance adjusts later via API 5.13
+                // validatePriceOverride() method removed
 
                 // Expand by quantity (P0 Fix: Issue 1)
                 for (int i = 1; i <= itemReq.getQuantity(); i++) {
@@ -151,13 +160,13 @@ public class CustomTreatmentPlanService {
                             .serviceId(service.getServiceId().intValue())
                             .itemName(itemName)
                             .sequenceNumber(currentSequence++) // Auto-increment (P0 Fix!)
-                            .price(itemReq.getPrice()) // Snapshot price from request
+                            .price(itemPrice) // V21.4: Auto-filled or provided price
                             .estimatedTimeMinutes(service.getDurationMinutes())
                             .status(PlanItemStatus.PENDING) // V19: PENDING (not PENDING_APPROVAL)
                             .build();
 
                     phaseItems.add(item);
-                    totalCost = totalCost.add(itemReq.getPrice());
+                    totalCost = totalCost.add(itemPrice);
                 }
             }
 
@@ -293,11 +302,21 @@ public class CustomTreatmentPlanService {
     }
 
     /**
-     * Validate price override (P0 Fix: Issue 4).
-     * Price must be within 50%-150% of service default price.
-     * This prevents both undercharging and overcharging abuse.
+     * DEPRECATED in V21.4: Price validation removed.
+     * Doctors now use service default prices only.
+     * Finance team adjusts prices via API 5.13 (MANAGE_PLAN_PRICING permission).
+     *
+     * Previous logic: Validate price override within 50%-150% of service default price.
+     * Reason for removal: Separation of concerns - clinical vs financial decisions.
      */
+    @Deprecated
     private void validatePriceOverride(BigDecimal requestPrice, BigDecimal servicePrice, String serviceCode) {
+        // V21.4: METHOD DEPRECATED AND UNUSED
+        // Price validation removed to simplify doctor workflow
+        // Finance team now handles all pricing via API 5.13
+        log.debug("V21.4: validatePriceOverride() is deprecated and no longer called");
+
+        /* ORIGINAL CODE (KEPT FOR REFERENCE):
         BigDecimal minPrice = servicePrice.multiply(new BigDecimal("0.5")); // 50%
         BigDecimal maxPrice = servicePrice.multiply(new BigDecimal("1.5")); // 150%
 
@@ -311,5 +330,6 @@ public class CustomTreatmentPlanService {
                     "TreatmentPlan",
                     "priceOutOfRange");
         }
+        */
     }
 }

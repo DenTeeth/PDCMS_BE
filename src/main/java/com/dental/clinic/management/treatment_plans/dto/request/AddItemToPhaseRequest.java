@@ -39,14 +39,14 @@ public class AddItemToPhaseRequest {
     private String serviceCode;
 
     /**
-     * Snapshot price for this item (doctor can override service default price)
-     * Must be within 50%-150% of service default price (validation in service
-     * layer)
+     * Snapshot price for this item (V21.4: OPTIONAL).
+     * If not provided, will auto-fill from service default price.
+     * Doctors typically omit this field (pricing managed by Finance team).
+     * Price override validation removed in V21.4.
      */
-    @NotNull(message = "Price is required")
-    @DecimalMin(value = "0.0", inclusive = false, message = "Price must be greater than 0")
+    @DecimalMin(value = "0.0", message = "Price must be >= 0")
     @Digits(integer = 10, fraction = 2, message = "Price must have at most 10 integer digits and 2 decimal places")
-    @Schema(description = "Price for this item (can override service default price within ±50% range)", example = "400000", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(description = "Price for this item (optional, auto-fills from service default)", example = "400000", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private BigDecimal price;
 
     /**

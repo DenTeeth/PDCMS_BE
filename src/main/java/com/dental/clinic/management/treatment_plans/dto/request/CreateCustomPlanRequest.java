@@ -135,12 +135,12 @@ public class CreateCustomPlanRequest {
         private String serviceCode;
 
         /**
-         * Snapshot price for this item.
-         * Doctor can override service default price.
-         * IMPORTANT: Must be within reasonable range (validated in service layer).
+         * Snapshot price for this item (V21.4: OPTIONAL).
+         * If not provided, will auto-fill from service default price.
+         * Doctors typically omit this field (pricing managed by Finance team).
+         * IMPORTANT: Price override validation removed in V21.4.
          */
-        @NotNull(message = "Price is required")
-        @DecimalMin(value = "0.01", message = "Price must be > 0")
+        @DecimalMin(value = "0", message = "Price must be >= 0")
         private BigDecimal price;
 
         /**
