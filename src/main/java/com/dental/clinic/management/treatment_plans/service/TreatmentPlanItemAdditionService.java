@@ -68,8 +68,13 @@ public class TreatmentPlanItemAdditionService {
          * @return Response with created items, financial impact, and approval status
          */
         @Transactional
-        public AddItemsToPhaseResponse addItemsToPhase(Long phaseId, List<AddItemToPhaseRequest> requests) {
-                log.info("🔄 Adding {} item request(s) to phase {}", requests.size(), phaseId);
+        public AddItemsToPhaseResponse addItemsToPhase(Long phaseId, List<AddItemToPhaseRequest> requests, Boolean autoSubmit) {
+                // V21.4: Default autoSubmit to true for backward compatibility
+                if (autoSubmit == null) {
+                        autoSubmit = true;
+                }
+
+                log.info("🔄 Adding {} item request(s) to phase {} (autoSubmit={})", requests.size(), phaseId, autoSubmit);
 
                 // ===== STEP 1: VALIDATION =====
                 // Find phase with plan and items
@@ -91,17 +96,21 @@ public class TreatmentPlanItemAdditionService {
                                         "Cannot add items to completed phase");
                 }
 
-                // Validate plan approval status (must be DRAFT)
-                if (plan.getApprovalStatus() == ApprovalStatus.APPROVED ||
-                                plan.getApprovalStatus() == ApprovalStatus.PENDING_REVIEW) {
-
+                // V21.4: Validate plan approval status - allow DRAFT and APPROVED
+                // - DRAFT: Doctor can add items freely (with autoSubmit=false)
+                // - APPROVED: Doctor can add "phát sinh" items (with autoSubmit=true, will trigger review)
+                // - PENDING_REVIEW: Cannot add (must wait for approval/rejection)
+                if (plan.getApprovalStatus() == ApprovalStatus.PENDING_REVIEW) {
                         String errorMsg = String.format(
-                                        "Không thể thêm hạng mục vào lộ trình đã được duyệt hoặc đang chờ duyệt (Trạng thái: %s). "
-                                                        +
-                                                        "Yêu cầu Quản lý 'Từ chối' (Reject) về DRAFT trước khi thêm.",
-                                        plan.getApprovalStatus());
+                                        "Không thể thêm hạng mục vào lộ trình đang chờ duyệt. " +
+                                        "Vui lòng chờ Quản lý duyệt hoặc từ chối trước khi chỉnh sửa.");
+                        throw new ConflictException("PLAN_PENDING_REVIEW_CANNOT_ADD", errorMsg);
+                }
 
-                        throw new ConflictException("PLAN_APPROVED_CANNOT_ADD", errorMsg);
+                // V21.4: Log warning if adding to APPROVED plan
+                if (plan.getApprovalStatus() == ApprovalStatus.APPROVED) {
+                        log.warn("⚠️ Adding items to APPROVED plan {}. Will auto-submit for re-approval (autoSubmit={})",
+                                plan.getPlanCode(), autoSubmit);
                 }
 
                 // Validate plan status
@@ -131,8 +140,17 @@ public class TreatmentPlanItemAdditionService {
                         // Validate and get service
                         DentalService service = validateAndGetService(request.getServiceCode());
 
-                        // Validate price override (must be within ±50% of service price)
-                        validatePriceOverride(request.getPrice(), service.getPrice(), request.getServiceCode());
+                        // V21.4: Auto-fill price from service if not provided
+                        BigDecimal itemPrice = request.getPrice();
+                        if (itemPrice == null) {
+                                itemPrice = service.getPrice();
+                                log.debug("V21.4: Auto-filled price for {}: {} VND (from service default)",
+                                        service.getServiceCode(), itemPrice);
+                        }
+
+                        // V21.4: NO MORE PRICE VALIDATION
+                        // Doctors use default prices, Finance adjusts later via API 5.13
+                        // validatePriceOverride() method deprecated
 
                         // Expand by quantity
                         for (int i = 1; i <= request.getQuantity(); i++) {
@@ -143,16 +161,16 @@ public class TreatmentPlanItemAdditionService {
                                                 .serviceId(service.getServiceId())
                                                 .sequenceNumber(nextSequence++)
                                                 .itemName(itemName)
-                                                .price(request.getPrice())
+                                                .price(itemPrice) // V21.4: Auto-filled or provided price
                                                 .estimatedTimeMinutes(service.getDefaultDurationMinutes())
                                                 .status(PlanItemStatus.PENDING) // Waiting for manager approval
                                                 .build();
 
                                 itemsToInsert.add(item);
-                                totalCostAdded = totalCostAdded.add(request.getPrice());
+                                totalCostAdded = totalCostAdded.add(itemPrice); // V21.4: Use auto-filled price
 
                                 log.info("✨ Created item: seq={}, name={}, price={}",
-                                                item.getSequenceNumber(), itemName, request.getPrice());
+                                                item.getSequenceNumber(), itemName, itemPrice);
                         }
                 }
 
@@ -175,11 +193,18 @@ public class TreatmentPlanItemAdditionService {
                 log.info("💰 Financial update: total {} → {}, final {} → {}",
                                 oldTotalCost, newTotalCost, oldFinalCost, newFinalCost);
 
-                // ===== STEP 5: APPROVAL WORKFLOW =====
+                // ===== STEP 5: APPROVAL WORKFLOW (V21.4: Conditional auto-submit) =====
                 ApprovalStatus oldApprovalStatus = plan.getApprovalStatus();
-                plan.setApprovalStatus(ApprovalStatus.PENDING_REVIEW);
 
-                log.info("📋 Approval status: {} → PENDING_REVIEW", oldApprovalStatus);
+                // V21.4: Only auto-submit if autoSubmit=true AND plan was APPROVED
+                if (autoSubmit && oldApprovalStatus == ApprovalStatus.APPROVED) {
+                        plan.setApprovalStatus(ApprovalStatus.PENDING_REVIEW);
+                        log.info("📋 V21.4: Auto-submitted plan. Approval status: {} → PENDING_REVIEW (autoSubmit=true)",
+                                oldApprovalStatus);
+                } else {
+                        log.info("📋 V21.4: Skipped auto-submit. Plan remains in {} (autoSubmit={})",
+                                oldApprovalStatus, autoSubmit);
+                }
 
                 // ===== STEP 6: SAVE PLAN =====
                 planRepository.save(plan);
@@ -214,19 +239,18 @@ public class TreatmentPlanItemAdditionService {
         }
 
         /**
-         * Validate price override (must be within ±50% of service default price)
-         * Prevents undercharging and overcharging abuse
+         * DEPRECATED in V21.4: Price validation removed.
+         * Doctors now use service default prices only.
+         * Finance team adjusts prices via API 5.13 (MANAGE_PLAN_PRICING permission).
+         *
+         * Previous logic: Validate price override within 50%-150% of service default price.
+         * Reason for removal: Separation of concerns - clinical vs financial decisions.
          */
+        @Deprecated
         private void validatePriceOverride(BigDecimal requestPrice, BigDecimal servicePrice, String serviceCode) {
-                BigDecimal minPrice = servicePrice.multiply(new BigDecimal("0.5"));
-                BigDecimal maxPrice = servicePrice.multiply(new BigDecimal("1.5"));
-
-                if (requestPrice.compareTo(minPrice) < 0 || requestPrice.compareTo(maxPrice) > 0) {
-                        throw new ResponseStatusException(
-                                        HttpStatus.BAD_REQUEST,
-                                        String.format("Price for service %s (%s) is out of allowed range (%s - %s). Default price: %s",
-                                                        serviceCode, requestPrice, minPrice, maxPrice, servicePrice));
-                }
+                // V21.4: METHOD DEPRECATED AND UNUSED
+                // Price validation removed to simplify doctor workflow
+                log.debug("V21.4: validatePriceOverride() is deprecated and no longer called");
         }
 
         /**

@@ -71,6 +71,25 @@ public class PatientPlanItem {
     private BigDecimal price;
 
     /**
+     * V21.4: Who updated the price (Finance/Accounting)
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "price_updated_by")
+    private com.dental.clinic.management.employee.domain.Employee priceUpdatedBy;
+
+    /**
+     * V21.4: When the price was updated
+     */
+    @Column(name = "price_updated_at")
+    private LocalDateTime priceUpdatedAt;
+
+    /**
+     * V21.4: Reason for price update
+     */
+    @Column(name = "price_update_reason", length = 500)
+    private String priceUpdateReason;
+
+    /**
      * When this item was completed
      */
     @Column(name = "completed_at")
