@@ -1,6 +1,6 @@
 package com.dental.clinic.management.working_schedule.controller;
 
-import com.dental.clinic.management.account.repository.AccountRepository;
+// import com.dental.clinic.management.account.repository.AccountRepository;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.utils.security.SecurityUtil;
 import com.dental.clinic.management.working_schedule.domain.PartTimeRegistration;
@@ -36,7 +36,7 @@ public class PartTimeRegistrationAdminController {
 
     private final PartTimeRegistrationApprovalService approvalService;
     private final EmployeeShiftRegistrationService registrationService;
-    private final AccountRepository accountRepository;
+    // private final AccountRepository accountRepository;
     private final EmployeeRepository employeeRepository;
     private final com.dental.clinic.management.working_schedule.repository.PartTimeRegistrationRepository registrationRepository;
 

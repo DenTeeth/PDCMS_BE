@@ -246,6 +246,7 @@ public class AppointmentListService {
      * - datePreset=TODAY → dateFrom=2025-11-04, dateTo=2025-11-04
      * - datePreset=THIS_WEEK → dateFrom=Monday, dateTo=Sunday
      */
+    @SuppressWarnings("deprecation")
     private void applyDatePreset(AppointmentFilterCriteria criteria) {
         if (criteria.getDatePreset() != null) {
             LocalDate from = criteria.getDatePreset().getDateFrom();
@@ -263,6 +264,7 @@ public class AppointmentListService {
     /**
      * Build start date from criteria
      */
+    @SuppressWarnings("deprecation")
     private LocalDateTime buildStartDate(AppointmentFilterCriteria criteria) {
         if (Boolean.TRUE.equals(criteria.getToday())) {
             return LocalDate.now().atStartOfDay();
@@ -278,6 +280,7 @@ public class AppointmentListService {
     /**
      * Build end date from criteria
      */
+    @SuppressWarnings("deprecation")
     private LocalDateTime buildEndDate(AppointmentFilterCriteria criteria) {
         if (Boolean.TRUE.equals(criteria.getToday())) {
             return LocalDate.now().atTime(LocalTime.MAX);

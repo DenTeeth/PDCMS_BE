@@ -19,10 +19,12 @@ import java.math.BigDecimal;
 @Schema(description = "Request body for creating a new service")
 public class CreateServiceRequest {
 
+    @SuppressWarnings("deprecation")
     @NotBlank(message = "Service code is required")
     @Schema(description = "Unique service code", example = "SV-CAOVOI", required = true)
     private String serviceCode;
 
+    @SuppressWarnings("deprecation")
     @NotBlank(message = "Service name is required")
     @Schema(description = "Service name", example = "Cạo vôi răng và Đánh bóng", required = true)
     private String serviceName;
@@ -30,16 +32,19 @@ public class CreateServiceRequest {
     @Schema(description = "Service description", example = "Lấy sạch vôi răng và mảng bám")
     private String description;
 
+    @SuppressWarnings("deprecation")
     @NotNull(message = "Default duration is required")
     @Min(value = 1, message = "Duration must be at least 1 minute")
     @Schema(description = "Default duration in minutes", example = "30", required = true)
     private Integer defaultDurationMinutes;
 
+    @SuppressWarnings("deprecation")
     @NotNull(message = "Default buffer time is required")
     @Min(value = 0, message = "Buffer time cannot be negative")
     @Schema(description = "Default buffer time in minutes", example = "10", required = true)
     private Integer defaultBufferMinutes;
 
+    @SuppressWarnings("deprecation")
     @NotNull(message = "Price is required")
     @Min(value = 0, message = "Price cannot be negative")
     @Schema(description = "Service price (VND)", example = "300000", required = true)

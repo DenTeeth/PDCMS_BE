@@ -134,6 +134,7 @@ public class GlobalExceptionHandler {
      * This includes: AccountNotFoundException, EmployeeNotFoundException,
      * BadRequestAlertException, JwtValidationException, etc.
      */
+    @SuppressWarnings("null")
     @ExceptionHandler(ErrorResponseException.class)
     public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleErrorResponseException(
             ErrorResponseException ex,

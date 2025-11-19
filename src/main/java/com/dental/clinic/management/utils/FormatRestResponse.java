@@ -24,7 +24,7 @@ public class FormatRestResponse implements ResponseBodyAdvice<Object> {
 
     @Override
     public Object beforeBodyWrite(
-            Object body,
+            @SuppressWarnings("null") Object body,
             MethodParameter returnType,
             MediaType selectedContentType,
             Class<? extends HttpMessageConverter<?>> selectedConverterType,

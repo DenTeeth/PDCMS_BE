@@ -4,7 +4,6 @@ import com.dental.clinic.management.patient.domain.Patient;
 import com.dental.clinic.management.patient.repository.PatientRepository;
 import com.dental.clinic.management.treatment_plans.dto.*;
 import com.dental.clinic.management.treatment_plans.enums.PlanItemStatus;
-import com.dental.clinic.management.treatment_plans.enums.TreatmentPlanStatus;
 import com.dental.clinic.management.treatment_plans.repository.PatientTreatmentPlanRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -71,6 +70,7 @@ public class TreatmentPlanDetailService {
                 log.info("Getting treatment plan detail - Patient: {}, Plan: {}", patientCode, planCode);
 
                 // STEP 1: RBAC - Verify patient exists and check permissions
+                @SuppressWarnings("unused")
                 Patient patient = verifyPatientAccessPermission(patientCode);
 
                 // STEP 2: Execute single query to fetch all data (flat DTOs)

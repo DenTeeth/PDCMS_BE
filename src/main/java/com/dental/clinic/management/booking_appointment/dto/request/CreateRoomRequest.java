@@ -15,11 +15,13 @@ import lombok.NoArgsConstructor;
 @Schema(description = "Request to create a new room")
 public class CreateRoomRequest {
 
+    @SuppressWarnings("deprecation")
     @NotBlank(message = "Room code is required")
     @Size(max = 20, message = "Room code must not exceed 20 characters")
     @Schema(description = "Unique room code", example = "P1", required = true)
     private String roomCode;
 
+    @SuppressWarnings("deprecation")
     @NotBlank(message = "Room name is required")
     @Size(max = 100, message = "Room name must not exceed 100 characters")
     @Schema(description = "Room name", example = "Phòng 01", required = true)

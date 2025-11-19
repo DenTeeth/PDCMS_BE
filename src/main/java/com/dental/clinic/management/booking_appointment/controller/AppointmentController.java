@@ -152,6 +152,7 @@ public class AppointmentController {
          * @return Paginated list of appointments with nested
          *         patient/doctor/room/services/participants
          */
+        @SuppressWarnings("deprecation")
         @GetMapping
         @PreAuthorize("hasAnyAuthority('VIEW_APPOINTMENT_ALL', 'VIEW_APPOINTMENT_OWN')")
         public ResponseEntity<Page<AppointmentSummaryDTO>> getAppointments(

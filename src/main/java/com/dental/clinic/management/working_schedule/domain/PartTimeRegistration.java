@@ -97,6 +97,7 @@ public class PartTimeRegistration {
      */
     @Version
     @Column(name = "version", nullable = false)
+    @Builder.Default
     private Long version = 0L;
 
     /**

@@ -276,6 +276,7 @@ public class ShiftRenewalService {
      *             NOTE: This method is kept for reference but no longer used.
      *             Extension logic moved to Admin-controlled finalize API.
      */
+    @SuppressWarnings("unused")
     @Deprecated
     private void createExtendedRegistration(FixedShiftRegistration oldRegistration) {
         Integer oldRegId = oldRegistration.getRegistrationId();
