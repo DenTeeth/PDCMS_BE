@@ -36,6 +36,16 @@ public interface PartTimeRegistrationRepository extends JpaRepository<PartTimeRe
     List<PartTimeRegistration> findByEmployeeIdAndStatus(Integer employeeId, RegistrationStatus status);
     
     /**
+     * Find all registrations by employee and multiple statuses.
+     * Used for calculating weekly hours (PENDING + APPROVED).
+     * 
+     * @param employeeId Employee ID
+     * @param statuses List of statuses to filter by
+     * @return List of registrations matching any of the statuses
+     */
+    List<PartTimeRegistration> findByEmployeeIdAndStatusIn(Integer employeeId, List<RegistrationStatus> statuses);
+    
+    /**
      * NEW: Find active registrations by employee and status.
      * Used to check for overlapping approved registrations.
      */

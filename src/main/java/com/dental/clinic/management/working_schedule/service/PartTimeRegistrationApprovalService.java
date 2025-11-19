@@ -10,6 +10,7 @@ import com.dental.clinic.management.working_schedule.exception.RegistrationInval
 import com.dental.clinic.management.working_schedule.exception.RegistrationConflictException;
 import com.dental.clinic.management.working_schedule.exception.QuotaExceededException;
 import com.dental.clinic.management.working_schedule.exception.SlotNotFoundException;
+import com.dental.clinic.management.working_schedule.exception.WeeklyHoursExceededException;
 import com.dental.clinic.management.working_schedule.repository.PartTimeRegistrationRepository;
 import com.dental.clinic.management.working_schedule.repository.PartTimeSlotRepository;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +42,11 @@ public class PartTimeRegistrationApprovalService {
     private final PartTimeSlotAvailabilityService availabilityService;
     private final EmployeeRepository employeeRepository;
     private final EmployeeShiftService employeeShiftService;
+    
+    // Weekly hours limit for PART_TIME_FLEX employees
+    private static final double FULL_TIME_HOURS_PER_WEEK = 42.0; // 8h × 6 days
+    private static final double PART_TIME_FLEX_LIMIT_PERCENTAGE = 0.5; // 50%
+    private static final double WEEKLY_HOURS_LIMIT = FULL_TIME_HOURS_PER_WEEK * PART_TIME_FLEX_LIMIT_PERCENTAGE; // 21h
 
     /**
      * Approve a pending registration.
@@ -116,6 +122,9 @@ public class PartTimeRegistrationApprovalService {
 
         // FIX BUG #3: Check for existing employee shifts before approval
         validateNoExistingShifts(registration, slot);
+
+        // NEW: Validate weekly hours limit (must not exceed 21h/week)
+        validateWeeklyHoursLimit(registration, slot);
 
         // Approve
         registration.setStatus(RegistrationStatus.APPROVED);
@@ -228,6 +237,100 @@ public class PartTimeRegistrationApprovalService {
     }
 
     /**
+     * Validate that approving this registration won't exceed weekly hours limit.
+     * 
+     * Business Rule: PART_TIME_FLEX employees cannot work more than 21h/week (50% of 42h).
+     * 
+     * Logic:
+     * 1. Calculate current weekly hours from existing PENDING + APPROVED registrations
+     * 2. Calculate hours this registration would add (shift_duration × days_per_week)
+     * 3. If total > 21h, throw WeeklyHoursExceededException
+     * 
+     * Example:
+     * - Employee has: 8h (APPROVED) + 4h (PENDING) = 12h/week
+     * - New registration: 4h × 3 days = 12h/week
+     * - Total: 24h > 21h → REJECT
+     * 
+     * @param registration The registration to approve
+     * @param slot The slot being registered for
+     * @throws WeeklyHoursExceededException if limit would be exceeded
+     */
+    private void validateWeeklyHoursLimit(PartTimeRegistration registration, PartTimeSlot slot) {
+        Integer employeeId = registration.getEmployeeId();
+        
+        if (employeeId == null) {
+            log.error("Cannot validate weekly hours: employee ID is null for registration {}", 
+                     registration.getRegistrationId());
+            throw new IllegalArgumentException("Employee ID cannot be null");
+        }
+        
+        if (slot == null || slot.getWorkShift() == null) {
+            log.error("Cannot validate weekly hours: slot or work shift is null for registration {}", 
+                     registration.getRegistrationId());
+            throw new IllegalArgumentException("Slot and work shift information are required");
+        }
+        
+        // Calculate current weekly hours (PENDING + APPROVED, excluding this registration)
+        // Note: calculateWeeklyHours() already includes PENDING registrations
+        double currentWeeklyHours = calculateWeeklyHours(employeeId);
+        
+        // Subtract this registration if it's already in PENDING status
+        // (since we're checking if we can approve it)
+        if (registration.getStatus() == RegistrationStatus.PENDING) {
+            Double shiftDuration = slot.getWorkShift().getDurationHours();
+            if (shiftDuration != null && shiftDuration > 0) {
+                String dayOfWeek = slot.getDayOfWeek();
+                if (dayOfWeek != null && !dayOfWeek.trim().isEmpty()) {
+                    String[] daysArray = dayOfWeek.split(",");
+                    int daysPerWeek = daysArray.length;
+                    double thisRegistrationHours = shiftDuration * daysPerWeek;
+                    currentWeeklyHours -= thisRegistrationHours;
+                    log.debug("Adjusted current hours by removing pending registration: -{}h, new current: {}h",
+                             thisRegistrationHours, currentWeeklyHours);
+                }
+            }
+        }
+        
+        // Calculate hours for this registration
+        Double shiftDuration = slot.getWorkShift().getDurationHours();
+        if (shiftDuration == null || shiftDuration <= 0) {
+            log.warn("Invalid shift duration for slot {}: {}. Skipping weekly hours validation.", 
+                    slot.getSlotId(), shiftDuration);
+            return; // Skip validation if shift data is invalid
+        }
+        
+        String dayOfWeek = slot.getDayOfWeek();
+        if (dayOfWeek == null || dayOfWeek.trim().isEmpty()) {
+            log.warn("Invalid day of week for slot {}: '{}'. Skipping weekly hours validation.", 
+                    slot.getSlotId(), dayOfWeek);
+            return;
+        }
+        
+        String[] daysArray = dayOfWeek.split(",");
+        int daysPerWeek = daysArray.length;
+        double newHoursPerWeek = shiftDuration * daysPerWeek;
+        
+        if (newHoursPerWeek <= 0) {
+            log.warn("Calculated hours per week is zero or negative for slot {}: {}h. Skipping validation.",
+                    slot.getSlotId(), newHoursPerWeek);
+            return;
+        }
+        
+        // Check if total would exceed limit
+        double totalWeeklyHours = currentWeeklyHours + newHoursPerWeek;
+        
+        if (totalWeeklyHours > WEEKLY_HOURS_LIMIT) {
+            log.warn("Weekly hours limit exceeded for employee {}: current={}h, new={}h, total={}h, limit={}h",
+                     employeeId, currentWeeklyHours, newHoursPerWeek, totalWeeklyHours, WEEKLY_HOURS_LIMIT);
+            throw new WeeklyHoursExceededException(employeeId, totalWeeklyHours, WEEKLY_HOURS_LIMIT,
+                                                   currentWeeklyHours, newHoursPerWeek);
+        }
+        
+        log.info("Weekly hours validation passed for employee {}: total={}h/week (limit: {}h)", 
+                employeeId, totalWeeklyHours, WEEKLY_HOURS_LIMIT);
+    }
+
+    /**
      * Get all pending registrations (for manager approval list).
      * Ordered by creation date (oldest first).
      * 
@@ -247,6 +350,139 @@ public class PartTimeRegistrationApprovalService {
     @Transactional(readOnly = true)
     public List<PartTimeRegistration> getPendingRegistrationsForSlot(Long slotId) {
         return registrationRepository.findByPartTimeSlotIdAndStatus(slotId, RegistrationStatus.PENDING);
+    }
+    
+    /**
+     * Calculate total weekly hours for a PART_TIME_FLEX employee.
+     * 
+     * Business Rule: Part-time flex employees cannot work more than 50% of full-time hours.
+     * Full-time = 42h/week (8h × 6 days) → Limit = 21h/week
+     * 
+     * Logic:
+     * - Count PENDING + APPROVED registrations
+     * - For each registration, calculate hours per week:
+     *   hours_per_week = shift_duration × working_days_per_week
+     * - Example: Shift 8h-12h (4h), MONDAY+FRIDAY (2 days) = 4h × 2 = 8h/week
+     * 
+     * Note: Shift duration already excludes lunch break (calculated in WorkShift.getDurationHours())
+     * 
+     * @param employeeId Employee ID
+     * @return Total weekly hours from all active registrations
+     */
+    private double calculateWeeklyHours(Integer employeeId) {
+        if (employeeId == null) {
+            log.error("Cannot calculate weekly hours: employee ID is null");
+            throw new IllegalArgumentException("Employee ID cannot be null");
+        }
+        
+        log.debug("Calculating weekly hours for employee {}", employeeId);
+        
+        try {
+            // Get all PENDING + APPROVED registrations (both count toward weekly limit)
+            List<PartTimeRegistration> activeRegistrations = registrationRepository
+                .findByEmployeeIdAndStatusIn(employeeId, 
+                    List.of(RegistrationStatus.PENDING, RegistrationStatus.APPROVED));
+            
+            if (activeRegistrations == null || activeRegistrations.isEmpty()) {
+                log.debug("No active registrations found for employee {}", employeeId);
+                return 0.0;
+            }
+            
+            log.debug("Found {} active registrations (PENDING + APPROVED) for employee {}", 
+                     activeRegistrations.size(), employeeId);
+            
+            double totalWeeklyHours = 0.0;
+            int validRegistrations = 0;
+            int skippedRegistrations = 0;
+            
+            for (PartTimeRegistration registration : activeRegistrations) {
+                try {
+                    if (registration == null) {
+                        log.warn("Null registration found in list for employee {}", employeeId);
+                        skippedRegistrations++;
+                        continue;
+                    }
+                    
+                    // Get slot details
+                    PartTimeSlot slot = slotRepository.findById(registration.getPartTimeSlotId())
+                        .orElse(null);
+                    
+                    if (slot == null) {
+                        log.warn("Slot not found for registration {}, slotId: {}", 
+                                registration.getRegistrationId(), registration.getPartTimeSlotId());
+                        skippedRegistrations++;
+                        continue;
+                    }
+                    
+                    if (!slot.getIsActive()) {
+                        log.debug("Skipping registration {} - slot {} is inactive", 
+                                 registration.getRegistrationId(), slot.getSlotId());
+                        skippedRegistrations++;
+                        continue;
+                    }
+                    
+                    if (slot.getWorkShift() == null) {
+                        log.warn("Work shift not found for registration {}, slot {}", 
+                                registration.getRegistrationId(), slot.getSlotId());
+                        skippedRegistrations++;
+                        continue;
+                    }
+                    
+                    // Get shift duration (already excludes lunch break)
+                    Double shiftDuration = slot.getWorkShift().getDurationHours();
+                    if (shiftDuration == null || shiftDuration <= 0) {
+                        log.warn("Invalid shift duration for registration {}: {}", 
+                                registration.getRegistrationId(), shiftDuration);
+                        skippedRegistrations++;
+                        continue;
+                    }
+                    
+                    // Count working days per week for this slot
+                    String dayOfWeek = slot.getDayOfWeek();
+                    if (dayOfWeek == null || dayOfWeek.trim().isEmpty()) {
+                        log.warn("Invalid day of week for registration {}: '{}'", 
+                                registration.getRegistrationId(), dayOfWeek);
+                        skippedRegistrations++;
+                        continue;
+                    }
+                    
+                    // Example: "MONDAY,WEDNESDAY,FRIDAY" → 3 days
+                    String[] daysArray = dayOfWeek.split(",");
+                    int daysPerWeek = daysArray.length;
+                    
+                    if (daysPerWeek <= 0) {
+                        log.warn("No valid days found for registration {}", registration.getRegistrationId());
+                        skippedRegistrations++;
+                        continue;
+                    }
+                    
+                    // Calculate hours per week for this registration
+                    double hoursPerWeek = shiftDuration * daysPerWeek;
+                    totalWeeklyHours += hoursPerWeek;
+                    validRegistrations++;
+                    
+                    log.debug("Registration {}: slot={}, shift={}h, days={}, hours/week={}h (status: {})",
+                             registration.getRegistrationId(), slot.getSlotId(), 
+                             shiftDuration, daysPerWeek, hoursPerWeek, registration.getStatus());
+                             
+                } catch (Exception e) {
+                    log.error("Error calculating hours for registration {}: {}", 
+                             (registration != null ? registration.getRegistrationId() : "unknown"), 
+                             e.getMessage(), e);
+                    skippedRegistrations++;
+                    // Continue with next registration
+                }
+            }
+            
+            log.info("Employee {} total weekly hours: {}h (limit: {}h), valid: {}, skipped: {}", 
+                    employeeId, totalWeeklyHours, WEEKLY_HOURS_LIMIT, validRegistrations, skippedRegistrations);
+            
+            return totalWeeklyHours;
+            
+        } catch (Exception e) {
+            log.error("Error calculating weekly hours for employee {}: {}", employeeId, e.getMessage(), e);
+            throw new RuntimeException("Failed to calculate weekly hours for employee " + employeeId, e);
+        }
     }
 
     /**

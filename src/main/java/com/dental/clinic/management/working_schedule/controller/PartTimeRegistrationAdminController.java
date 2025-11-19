@@ -7,6 +7,7 @@ import com.dental.clinic.management.working_schedule.domain.PartTimeRegistration
 import com.dental.clinic.management.working_schedule.dto.request.UpdateRegistrationStatusRequest;
 import com.dental.clinic.management.working_schedule.dto.response.RegistrationResponse;
 import com.dental.clinic.management.working_schedule.enums.RegistrationStatus;
+import com.dental.clinic.management.working_schedule.exception.WeeklyHoursExceededException;
 import com.dental.clinic.management.working_schedule.service.PartTimeRegistrationApprovalService;
 import com.dental.clinic.management.working_schedule.service.EmployeeShiftRegistrationService;
 import jakarta.validation.Valid;
@@ -135,8 +136,24 @@ public class PartTimeRegistrationAdminController {
 
         // Validate and process
         if ("APPROVED".equalsIgnoreCase(request.getStatus())) {
-            approvalService.approveRegistration(registrationId, managerId);
-            log.info("Registration {} approved by manager {}", registrationId, managerId);
+            try {
+                approvalService.approveRegistration(registrationId, managerId);
+                log.info("Registration {} approved by manager {}", registrationId, managerId);
+            } catch (WeeklyHoursExceededException e) {
+                // Auto-reject registration when weekly hours limit exceeded
+                log.warn("Auto-rejecting registration {} due to weekly hours limit: {}", 
+                         registrationId, e.getBody().getDetail());
+                
+                // Extract error message as rejection reason
+                String rejectionReason = e.getBody().getDetail();
+                approvalService.rejectRegistration(registrationId, managerId, rejectionReason);
+                
+                log.info("Registration {} auto-rejected by manager {} due to weekly hours limit", 
+                         registrationId, managerId);
+                
+                // Re-throw to return 400 error to client with details
+                throw e;
+            }
         } else if ("REJECTED".equalsIgnoreCase(request.getStatus())) {
             if (request.getReason() == null || request.getReason().trim().isEmpty()) {
                 throw new IllegalArgumentException("Rejection reason is required");
