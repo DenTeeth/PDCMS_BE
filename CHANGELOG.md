@@ -7,6 +7,143 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [V21.3] - 2025-11-19
+
+### ✨ Treatment Plan Auto-Activation & Auto-Completion
+
+Implemented automatic status transitions for treatment plans to reduce manual operations and improve workflow.
+
+### Added
+
+#### Feature 1: Auto-Activation (PENDING → IN_PROGRESS)
+
+**Problem Solved**: After manager approves plan, it stays in PENDING status forever. Users had to manually activate plans or wait for unclear activation trigger.
+
+**Solution**: Automatically activate plan when receptionist books **first appointment**.
+
+**Implementation**:
+- **File**: `AppointmentCreationService.java`
+- **Method**: `activatePlanIfFirstAppointment()`
+- **Trigger**: When creating first appointment with `patientPlanItemIds`
+- **Conditions**:
+  - Plan status must be `PENDING`
+  - Plan approval status must be `APPROVED`
+  - This is the first appointment for this plan (count = 1)
+- **Action**: Set `plan.status = IN_PROGRESS`
+- **Logging**: `✅ V21: Auto-activated treatment plan PLAN-XXX (PENDING → IN_PROGRESS) - First appointment: APT-XXX`
+
+**Business Logic**:
+```
+Manager approves plan → approvalStatus = APPROVED, status = PENDING
+  ↓
+Receptionist books first appointment → status = PENDING → IN_PROGRESS
+  ↓
+Treatment officially begins
+```
+
+**Files Modified**:
+- `AppointmentCreationService.java` - Added activation logic (60 lines)
+- `AppointmentPlanItemRepository.java` - Added `countAppointmentsForPlan()` query
+
+**Impact**:
+- ✅ No manual activation needed
+- ✅ Clear trigger: first appointment = treatment start
+- ✅ Transactional (rolls back if fails)
+- ✅ Non-breaking (only affects PENDING+APPROVED plans)
+
+---
+
+#### Feature 2: Auto-Completion (IN_PROGRESS → COMPLETED)
+
+**Problem Solved**: Plans stay in IN_PROGRESS status even after all phases completed. Users had to manually mark plans complete.
+
+**Solution**: Automatically complete plan when **all phases are done**.
+
+**Implementation**:
+- **File**: `TreatmentPlanItemService.java`
+- **Method**: `checkAndCompletePlan()`
+- **Trigger**: After updating item status (API 5.6)
+- **Conditions**:
+  - Plan status must be `IN_PROGRESS`
+  - ALL phases must have status `COMPLETED`
+- **Action**: Set `plan.status = COMPLETED`
+- **Logging**: `✅ V21: Auto-completed treatment plan PLAN-XXX (IN_PROGRESS → COMPLETED) - All N phases done`
+
+**Business Logic**:
+```
+Doctor completes last item in last phase → item status = COMPLETED
+  ↓
+Phase auto-completes → phase.status = COMPLETED (existing logic)
+  ↓
+All phases completed → plan.status = IN_PROGRESS → COMPLETED
+  ↓
+Treatment officially finished
+```
+
+**Files Modified**:
+- `TreatmentPlanItemService.java` - Added completion logic (40 lines)
+
+**Impact**:
+- ✅ No manual completion needed
+- ✅ Clear trigger: last item done = treatment finished
+- ✅ Transactional (rolls back if fails)
+- ✅ Non-breaking (only affects IN_PROGRESS plans)
+
+---
+
+### Testing
+
+**Test Case 1: Auto-Activation**
+```bash
+# Given: Plan PLAN-001 (status=PENDING, approvalStatus=APPROVED)
+# When: Create first appointment for this plan
+POST /api/v1/appointments
+{
+  "patientCode": "BN-1001",
+  "patientPlanItemIds": [307],
+  ...
+}
+
+# Then: Plan auto-activates
+GET /api/v1/patients/BN-1001/treatment-plans/PLAN-001
+{
+  "status": "IN_PROGRESS",  # Changed from PENDING
+  "approvalStatus": "APPROVED"
+}
+```
+
+**Test Case 2: Auto-Completion**
+```bash
+# Given: Plan with 2 phases, all items completed except last one
+# When: Complete last item
+PATCH /api/v1/patient-plan-items/350/status
+{
+  "status": "COMPLETED"
+}
+
+# Then: Phase auto-completes → Plan auto-completes
+GET /api/v1/patients/BN-1001/treatment-plans/PLAN-001
+{
+  "status": "COMPLETED",  # Changed from IN_PROGRESS
+  "phases": [
+    { "phaseNumber": 1, "status": "COMPLETED" },
+    { "phaseNumber": 2, "status": "COMPLETED" }  # Just completed
+  ]
+}
+```
+
+---
+
+### Documentation
+
+- Updated `BACKEND_RESPONSE_TO_FE_STATUS_QUESTIONS.md`:
+  - Q1: Auto-activation now IMPLEMENTED ✅
+  - Q4: Auto-completion now IMPLEMENTED ✅
+  - Action items marked as DONE
+  - Frontend guidance updated with new behaviors
+
+---
+
 ## [V21.2] - 2025-11-18
 
 ### 🐛 Bug Fix - Missing approvalStatus in API 5.2 Response
