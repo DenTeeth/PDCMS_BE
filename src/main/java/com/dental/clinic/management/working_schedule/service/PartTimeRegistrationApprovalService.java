@@ -270,64 +270,65 @@ public class PartTimeRegistrationApprovalService {
             throw new IllegalArgumentException("Slot and work shift information are required");
         }
         
-        // Calculate current weekly hours (PENDING + APPROVED, excluding this registration)
-        // Note: calculateWeeklyHours() already includes PENDING registrations
-        double currentWeeklyHours = calculateWeeklyHours(employeeId);
+        // Calculate current weekly hours (PENDING + APPROVED)
+        // Note: calculateWeeklyHours() includes ALL PENDING registrations, including this one
+        double totalWeeklyHours = calculateWeeklyHours(employeeId);
         
-        // Subtract this registration if it's already in PENDING status
-        // (since we're checking if we can approve it)
+        // If this registration is already PENDING, it's included in totalWeeklyHours
+        // We need to subtract it first, then add it back to see if approval is valid
+        // This handles the case where employee has multiple PENDING registrations
+        double currentWeeklyHoursWithoutThis = totalWeeklyHours;
+        double thisRegistrationHours = 0.0;
+        
         if (registration.getStatus() == RegistrationStatus.PENDING) {
+            // Calculate hours for THIS specific registration
             Double shiftDuration = slot.getWorkShift().getDurationHours();
             if (shiftDuration != null && shiftDuration > 0) {
                 String dayOfWeek = slot.getDayOfWeek();
                 if (dayOfWeek != null && !dayOfWeek.trim().isEmpty()) {
                     String[] daysArray = dayOfWeek.split(",");
                     int daysPerWeek = daysArray.length;
-                    double thisRegistrationHours = shiftDuration * daysPerWeek;
-                    currentWeeklyHours -= thisRegistrationHours;
-                    log.debug("Adjusted current hours by removing pending registration: -{}h, new current: {}h",
-                             thisRegistrationHours, currentWeeklyHours);
+                    thisRegistrationHours = shiftDuration * daysPerWeek;
+                    currentWeeklyHoursWithoutThis = totalWeeklyHours - thisRegistrationHours;
+                    log.debug("Registration {} is PENDING with {}h/week. Total before removing: {}h, after: {}h",
+                             registration.getRegistrationId(), thisRegistrationHours, 
+                             totalWeeklyHours, currentWeeklyHoursWithoutThis);
+                }
+            }
+        } else {
+            // If not PENDING, calculate hours for this new registration
+            Double shiftDuration = slot.getWorkShift().getDurationHours();
+            if (shiftDuration != null && shiftDuration > 0) {
+                String dayOfWeek = slot.getDayOfWeek();
+                if (dayOfWeek != null && !dayOfWeek.trim().isEmpty()) {
+                    String[] daysArray = dayOfWeek.split(",");
+                    int daysPerWeek = daysArray.length;
+                    thisRegistrationHours = shiftDuration * daysPerWeek;
                 }
             }
         }
         
-        // Calculate hours for this registration
-        Double shiftDuration = slot.getWorkShift().getDurationHours();
-        if (shiftDuration == null || shiftDuration <= 0) {
-            log.warn("Invalid shift duration for slot {}: {}. Skipping weekly hours validation.", 
-                    slot.getSlotId(), shiftDuration);
-            return; // Skip validation if shift data is invalid
-        }
-        
-        String dayOfWeek = slot.getDayOfWeek();
-        if (dayOfWeek == null || dayOfWeek.trim().isEmpty()) {
-            log.warn("Invalid day of week for slot {}: '{}'. Skipping weekly hours validation.", 
-                    slot.getSlotId(), dayOfWeek);
+        // Validate hours calculation
+        if (thisRegistrationHours <= 0) {
+            log.warn("Calculated hours per week is zero or negative for registration {}: {}h. Skipping validation.",
+                    registration.getRegistrationId(), thisRegistrationHours);
             return;
         }
         
-        String[] daysArray = dayOfWeek.split(",");
-        int daysPerWeek = daysArray.length;
-        double newHoursPerWeek = shiftDuration * daysPerWeek;
-        
-        if (newHoursPerWeek <= 0) {
-            log.warn("Calculated hours per week is zero or negative for slot {}: {}h. Skipping validation.",
-                    slot.getSlotId(), newHoursPerWeek);
-            return;
-        }
+        // Calculate final total: current hours (without this registration) + this registration hours
+        double finalTotalWeeklyHours = currentWeeklyHoursWithoutThis + thisRegistrationHours;
         
         // Check if total would exceed limit
-        double totalWeeklyHours = currentWeeklyHours + newHoursPerWeek;
-        
-        if (totalWeeklyHours > WEEKLY_HOURS_LIMIT) {
-            log.warn("Weekly hours limit exceeded for employee {}: current={}h, new={}h, total={}h, limit={}h",
-                     employeeId, currentWeeklyHours, newHoursPerWeek, totalWeeklyHours, WEEKLY_HOURS_LIMIT);
-            throw new WeeklyHoursExceededException(employeeId, totalWeeklyHours, WEEKLY_HOURS_LIMIT,
-                                                   currentWeeklyHours, newHoursPerWeek);
+        if (finalTotalWeeklyHours > WEEKLY_HOURS_LIMIT) {
+            log.warn("Weekly hours limit exceeded for employee {}: currentWithoutThis={}h, thisReg={}h, total={}h, limit={}h",
+                     employeeId, currentWeeklyHoursWithoutThis, thisRegistrationHours, 
+                     finalTotalWeeklyHours, WEEKLY_HOURS_LIMIT);
+            throw new WeeklyHoursExceededException(employeeId, finalTotalWeeklyHours, WEEKLY_HOURS_LIMIT,
+                                                   currentWeeklyHoursWithoutThis, thisRegistrationHours);
         }
         
-        log.info("Weekly hours validation passed for employee {}: total={}h/week (limit: {}h)", 
-                employeeId, totalWeeklyHours, WEEKLY_HOURS_LIMIT);
+        log.info("Weekly hours validation passed for employee {}: currentWithoutThis={}h, thisReg={}h, finalTotal={}h (limit: {}h)", 
+                employeeId, currentWeeklyHoursWithoutThis, thisRegistrationHours, finalTotalWeeklyHours, WEEKLY_HOURS_LIMIT);
     }
 
     /**
