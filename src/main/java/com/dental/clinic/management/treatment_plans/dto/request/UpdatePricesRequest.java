@@ -26,6 +26,7 @@ import java.util.List;
 @Schema(description = "Request to update treatment plan prices (Finance only)")
 public class UpdatePricesRequest {
 
+    @SuppressWarnings("deprecation")
     @NotEmpty(message = "Danh sách hạng mục cần cập nhật giá không được trống")
     @Valid
     @Schema(description = "List of items to update prices", required = true)
@@ -48,10 +49,12 @@ public class UpdatePricesRequest {
     @Schema(description = "Price update for a single item")
     public static class ItemPriceUpdate {
 
+        @SuppressWarnings("deprecation")
         @NotNull(message = "Item ID không được trống")
         @Schema(description = "Patient plan item ID", required = true, example = "536")
         private Long itemId;
 
+        @SuppressWarnings("deprecation")
         @NotNull(message = "Giá mới không được trống")
         @DecimalMin(value = "0", message = "Giá mới phải >= 0")
         @Schema(description = "New price for item", required = true, example = "450000")

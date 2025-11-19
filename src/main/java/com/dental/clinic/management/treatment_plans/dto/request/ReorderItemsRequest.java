@@ -23,6 +23,7 @@ import java.util.List;
 @Schema(description = "Request to reorder items within a treatment phase")
 public class ReorderItemsRequest {
 
+    @SuppressWarnings("deprecation")
     @NotEmpty(message = "Danh sách item IDs không được trống")
     @Schema(description = "List of item IDs in new desired order. Item with ID at index 0 becomes sequence 1, index 1 becomes sequence 2, etc.",
             required = true,

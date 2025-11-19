@@ -246,6 +246,7 @@ public class TreatmentPlanItemAdditionService {
          * Previous logic: Validate price override within 50%-150% of service default price.
          * Reason for removal: Separation of concerns - clinical vs financial decisions.
          */
+        @SuppressWarnings("unused")
         @Deprecated
         private void validatePriceOverride(BigDecimal requestPrice, BigDecimal servicePrice, String serviceCode) {
                 // V21.4: METHOD DEPRECATED AND UNUSED
