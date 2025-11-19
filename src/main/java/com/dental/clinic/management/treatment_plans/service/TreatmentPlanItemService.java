@@ -10,6 +10,7 @@ import com.dental.clinic.management.treatment_plans.dto.request.UpdateItemStatus
 import com.dental.clinic.management.treatment_plans.dto.response.PatientPlanItemResponse;
 import com.dental.clinic.management.treatment_plans.enums.PhaseStatus;
 import com.dental.clinic.management.treatment_plans.enums.PlanItemStatus;
+import com.dental.clinic.management.treatment_plans.enums.TreatmentPlanStatus;
 import com.dental.clinic.management.treatment_plans.repository.PatientTreatmentPlanRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
@@ -200,6 +201,9 @@ public class TreatmentPlanItemService {
         // STEP 7: Check and auto-complete phase
         checkAndCompletePhase(phase);
 
+        // STEP 7B: V21 - Check and auto-complete plan (if all phases done)
+        checkAndCompletePlan(plan);
+
         // STEP 8: Audit log (implement if audit table exists)
         String currentUser = getCurrentUsername();
         log.info("📋 Audit: User {} changed item {} from {} to {}",
@@ -358,6 +362,51 @@ public class TreatmentPlanItemService {
             phase.setCompletionDate(java.time.LocalDate.now());
             entityManager.merge(phase); // Update phase
             log.info("🎯 Phase {} auto-completed: all items are done", phase.getPatientPhaseId());
+        }
+    }
+
+    /**
+     * V21: Check if all phases are completed, then mark plan as COMPLETED.
+     *
+     * Business Logic:
+     * - When an item is marked COMPLETED/SKIPPED
+     * - After phase auto-completion check
+     * - If ALL phases in plan are COMPLETED
+     * - Then automatically set plan.status = COMPLETED
+     *
+     * Use Case:
+     * - Plan was IN_PROGRESS (patient being treated)
+     * - Last item in last phase is marked COMPLETED
+     * - All phases → COMPLETED
+     * - Plan automatically → COMPLETED
+     *
+     * Safety:
+     * - Only completes if plan is IN_PROGRESS (no double completion)
+     * - Only completes if ALL phases are COMPLETED
+     * - Logs completion for audit trail
+     * - Transactional - rolls back if fails
+     *
+     * @param plan The treatment plan to check
+     */
+    private void checkAndCompletePlan(PatientTreatmentPlan plan) {
+        // Only check if plan is currently IN_PROGRESS
+        if (plan.getStatus() != TreatmentPlanStatus.IN_PROGRESS) {
+            return;
+        }
+
+        List<PatientPlanPhase> phases = plan.getPhases();
+
+        // Check if ALL phases are COMPLETED
+        boolean allPhasesCompleted = phases.stream()
+                .allMatch(phase -> phase.getStatus() == PhaseStatus.COMPLETED);
+
+        if (allPhasesCompleted) {
+            // AUTO-COMPLETE: IN_PROGRESS → COMPLETED
+            plan.setStatus(TreatmentPlanStatus.COMPLETED);
+            planRepository.save(plan);
+
+            log.info("✅ V21: Auto-completed treatment plan {} (IN_PROGRESS → COMPLETED) - All {} phases done",
+                    plan.getPlanCode(), phases.size());
         }
     }
 

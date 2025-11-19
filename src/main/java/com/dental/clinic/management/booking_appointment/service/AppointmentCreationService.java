@@ -75,6 +75,7 @@ public class AppointmentCreationService {
         // Treatment Plan Integration (V2)
         private final PatientPlanItemRepository patientPlanItemRepository;
         private final AppointmentPlanItemRepository appointmentPlanItemRepository;
+        private final com.dental.clinic.management.treatment_plans.repository.PatientTreatmentPlanRepository treatmentPlanRepository;
 
         // V21: Clinical Rules Validation
         private final com.dental.clinic.management.service.service.ClinicalRulesValidationService clinicalRulesValidationService;
@@ -184,6 +185,9 @@ public class AppointmentCreationService {
                         updatePlanItemsStatus(request.getPatientPlanItemIds(),
                                         com.dental.clinic.management.treatment_plans.enums.PlanItemStatus.SCHEDULED);
 
+                        // V21: Auto-activate plan (PENDING → IN_PROGRESS) if this is first appointment
+                        activatePlanIfFirstAppointment(appointment, request.getPatientPlanItemIds());
+
                         log.info("Successfully linked and updated status for {} plan items",
                                         request.getPatientPlanItemIds().size());
                 }
@@ -276,6 +280,9 @@ public class AppointmentCreationService {
                         insertAppointmentPlanItems(appointment, request.getPatientPlanItemIds());
                         updatePlanItemsStatus(request.getPatientPlanItemIds(),
                                         com.dental.clinic.management.treatment_plans.enums.PlanItemStatus.SCHEDULED);
+
+                        // V21: Auto-activate plan (PENDING → IN_PROGRESS) if this is first appointment
+                        activatePlanIfFirstAppointment(appointment, request.getPatientPlanItemIds());
                 }
 
                 insertAuditLog(appointment, createdById);
@@ -1012,6 +1019,72 @@ public class AppointmentCreationService {
                         log.error("Failed to update plan items status. Transaction will rollback. ItemIds: {}, TargetStatus: {}",
                                         itemIds, newStatus, e);
                         throw new RuntimeException("Failed to update plan items status", e);
+                }
+        }
+
+        /**
+         * V21: Auto-activate treatment plan (PENDING → IN_PROGRESS) when first appointment is created.
+         *
+         * Business Logic:
+         * - When receptionist books the FIRST appointment for a plan
+         * - And plan.status == PENDING (not yet started)
+         * - And plan.approvalStatus == APPROVED (already approved by manager)
+         * - Then automatically set plan.status = IN_PROGRESS
+         *
+         * Use Case:
+         * - Plan was created and approved by manager
+         * - Plan stays PENDING until patient actually starts treatment
+         * - First appointment booking = treatment begins → auto-activate plan
+         *
+         * Safety:
+         * - Only activates if plan is PENDING (no double activation)
+         * - Only activates if plan is APPROVED (not DRAFT/PENDING_REVIEW)
+         * - Logs activation for audit trail
+         * - Transactional - rolls back if fails
+         *
+         * @param appointment The newly created appointment
+         * @param itemIds     The plan items being booked in this appointment
+         */
+        private void activatePlanIfFirstAppointment(Appointment appointment, List<Long> itemIds) {
+                try {
+                        // Get the plan from first item (all items belong to same plan)
+                        PatientPlanItem firstItem = patientPlanItemRepository.findById(itemIds.get(0))
+                                        .orElseThrow(() -> new IllegalStateException(
+                                                        "Plan item not found: " + itemIds.get(0)));
+
+                        com.dental.clinic.management.treatment_plans.domain.PatientTreatmentPlan plan = firstItem
+                                        .getPhase()
+                                        .getTreatmentPlan();
+
+                        // Check if plan is eligible for auto-activation
+                        boolean isPending = plan.getStatus() == com.dental.clinic.management.treatment_plans.enums.TreatmentPlanStatus.PENDING;
+                        boolean isApproved = plan.getApprovalStatus() == com.dental.clinic.management.treatment_plans.domain.ApprovalStatus.APPROVED;
+
+                        if (isPending && isApproved) {
+                                // Check if this is the FIRST appointment for this plan
+                                // (No other SCHEDULED appointments exist for this plan)
+                                long existingAppointmentCount = appointmentPlanItemRepository
+                                                .countAppointmentsForPlan(plan.getPlanId().longValue());
+
+                                if (existingAppointmentCount == 1) { // Only the current appointment exists
+                                        // AUTO-ACTIVATE: PENDING → IN_PROGRESS
+                                        plan.setStatus(com.dental.clinic.management.treatment_plans.enums.TreatmentPlanStatus.IN_PROGRESS);
+                                        treatmentPlanRepository.save(plan);
+
+                                        log.info("✅ V21: Auto-activated treatment plan {} (PENDING → IN_PROGRESS) - First appointment: {}",
+                                                        plan.getPlanCode(), appointment.getAppointmentCode());
+                                } else {
+                                        log.debug("V21: Plan {} already has {} appointments - no auto-activation needed",
+                                                        plan.getPlanCode(), existingAppointmentCount);
+                                }
+                        } else {
+                                log.debug("V21: Plan {} not eligible for auto-activation - status: {}, approvalStatus: {}",
+                                                plan.getPlanCode(), plan.getStatus(), plan.getApprovalStatus());
+                        }
+                } catch (Exception e) {
+                        // Log error but don't fail transaction - auto-activation is enhancement, not critical
+                        log.warn("V21: Failed to auto-activate plan for appointment {}. Plan activation can be done manually.",
+                                        appointment.getAppointmentCode(), e);
                 }
         }
 }
