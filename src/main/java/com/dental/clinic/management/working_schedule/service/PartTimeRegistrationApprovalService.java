@@ -242,14 +242,16 @@ public class PartTimeRegistrationApprovalService {
      * Business Rule: PART_TIME_FLEX employees cannot work more than 21h/week (50% of 42h).
      * 
      * Logic:
-     * 1. Calculate current weekly hours from existing PENDING + APPROVED registrations
+     * 1. Calculate current APPROVED hours only (PENDING don't count yet)
      * 2. Calculate hours this registration would add (shift_duration × days_per_week)
-     * 3. If total > 21h, throw WeeklyHoursExceededException
+     * 3. If (approved + new) > 21h, throw WeeklyHoursExceededException
      * 
-     * Example:
-     * - Employee has: 8h (APPROVED) + 4h (PENDING) = 12h/week
-     * - New registration: 4h × 3 days = 12h/week
-     * - Total: 24h > 21h → REJECT
+     * Examples:
+     * - Employee has: 16h APPROVED, validating 4h PENDING → 16h + 4h = 20h ≤ 21h ✅ APPROVE
+     * - Employee has: 20h APPROVED, validating 4h PENDING → 20h + 4h = 24h > 21h ❌ REJECT
+     * - Employee has: 16h APPROVED + 4h PENDING A + 4h PENDING B:
+     *   * Validating A: 16h + 4h = 20h ✅ (B is still PENDING, doesn't count)
+     *   * Validating B: 16h + 4h = 20h ✅ (A is still PENDING, doesn't count)
      * 
      * @param registration The registration to approve
      * @param slot The slot being registered for
@@ -270,41 +272,21 @@ public class PartTimeRegistrationApprovalService {
             throw new IllegalArgumentException("Slot and work shift information are required");
         }
         
-        // Calculate current weekly hours (PENDING + APPROVED)
-        // Note: calculateWeeklyHours() includes ALL PENDING registrations, including this one
-        double totalWeeklyHours = calculateWeeklyHours(employeeId);
+        // Calculate current APPROVED hours only (PENDING registrations don't count yet)
+        double currentApprovedHours = calculateWeeklyHours(employeeId);
         
-        // If this registration is already PENDING, it's included in totalWeeklyHours
-        // We need to subtract it first, then add it back to see if approval is valid
-        // This handles the case where employee has multiple PENDING registrations
-        double currentWeeklyHoursWithoutThis = totalWeeklyHours;
+        // Calculate hours for THIS registration being validated
         double thisRegistrationHours = 0.0;
-        
-        if (registration.getStatus() == RegistrationStatus.PENDING) {
-            // Calculate hours for THIS specific registration
-            Double shiftDuration = slot.getWorkShift().getDurationHours();
-            if (shiftDuration != null && shiftDuration > 0) {
-                String dayOfWeek = slot.getDayOfWeek();
-                if (dayOfWeek != null && !dayOfWeek.trim().isEmpty()) {
-                    String[] daysArray = dayOfWeek.split(",");
-                    int daysPerWeek = daysArray.length;
-                    thisRegistrationHours = shiftDuration * daysPerWeek;
-                    currentWeeklyHoursWithoutThis = totalWeeklyHours - thisRegistrationHours;
-                    log.debug("Registration {} is PENDING with {}h/week. Total before removing: {}h, after: {}h",
-                             registration.getRegistrationId(), thisRegistrationHours, 
-                             totalWeeklyHours, currentWeeklyHoursWithoutThis);
-                }
-            }
-        } else {
-            // If not PENDING, calculate hours for this new registration
-            Double shiftDuration = slot.getWorkShift().getDurationHours();
-            if (shiftDuration != null && shiftDuration > 0) {
-                String dayOfWeek = slot.getDayOfWeek();
-                if (dayOfWeek != null && !dayOfWeek.trim().isEmpty()) {
-                    String[] daysArray = dayOfWeek.split(",");
-                    int daysPerWeek = daysArray.length;
-                    thisRegistrationHours = shiftDuration * daysPerWeek;
-                }
+        Double shiftDuration = slot.getWorkShift().getDurationHours();
+        if (shiftDuration != null && shiftDuration > 0) {
+            String dayOfWeek = slot.getDayOfWeek();
+            if (dayOfWeek != null && !dayOfWeek.trim().isEmpty()) {
+                String[] daysArray = dayOfWeek.split(",");
+                int daysPerWeek = daysArray.length;
+                thisRegistrationHours = shiftDuration * daysPerWeek;
+                log.debug("Registration {} hours calculated: {}h/week ({}h/day × {} days)",
+                         registration.getRegistrationId(), thisRegistrationHours, 
+                         shiftDuration, daysPerWeek);
             }
         }
         
@@ -315,20 +297,20 @@ public class PartTimeRegistrationApprovalService {
             return;
         }
         
-        // Calculate final total: current hours (without this registration) + this registration hours
-        double finalTotalWeeklyHours = currentWeeklyHoursWithoutThis + thisRegistrationHours;
+        // Calculate final total: current approved hours + this new registration
+        double finalTotalWeeklyHours = currentApprovedHours + thisRegistrationHours;
         
         // Check if total would exceed limit
         if (finalTotalWeeklyHours > WEEKLY_HOURS_LIMIT) {
-            log.warn("Weekly hours limit exceeded for employee {}: currentWithoutThis={}h, thisReg={}h, total={}h, limit={}h",
-                     employeeId, currentWeeklyHoursWithoutThis, thisRegistrationHours, 
+            log.warn("Weekly hours limit exceeded for employee {}: currentApproved={}h, newReg={}h, total={}h, limit={}h",
+                     employeeId, currentApprovedHours, thisRegistrationHours, 
                      finalTotalWeeklyHours, WEEKLY_HOURS_LIMIT);
             throw new WeeklyHoursExceededException(employeeId, finalTotalWeeklyHours, WEEKLY_HOURS_LIMIT,
-                                                   currentWeeklyHoursWithoutThis, thisRegistrationHours);
+                                                   currentApprovedHours, thisRegistrationHours);
         }
         
-        log.info("Weekly hours validation passed for employee {}: currentWithoutThis={}h, thisReg={}h, finalTotal={}h (limit: {}h)", 
-                employeeId, currentWeeklyHoursWithoutThis, thisRegistrationHours, finalTotalWeeklyHours, WEEKLY_HOURS_LIMIT);
+        log.info("Weekly hours validation passed for employee {}: currentApproved={}h, newReg={}h, finalTotal={}h (limit: {}h)", 
+                employeeId, currentApprovedHours, thisRegistrationHours, finalTotalWeeklyHours, WEEKLY_HOURS_LIMIT);
     }
 
     /**
@@ -360,7 +342,7 @@ public class PartTimeRegistrationApprovalService {
      * Full-time = 42h/week (8h × 6 days) → Limit = 21h/week
      * 
      * Logic:
-     * - Count PENDING + APPROVED registrations
+     * - Count ONLY APPROVED registrations
      * - For each registration, calculate hours per week:
      *   hours_per_week = shift_duration × working_days_per_week
      * - Example: Shift 8h-12h (4h), MONDAY+FRIDAY (2 days) = 4h × 2 = 8h/week
@@ -368,7 +350,7 @@ public class PartTimeRegistrationApprovalService {
      * Note: Shift duration already excludes lunch break (calculated in WorkShift.getDurationHours())
      * 
      * @param employeeId Employee ID
-     * @return Total weekly hours from all active registrations
+     * @return Total weekly hours from all APPROVED registrations only
      */
     private double calculateWeeklyHours(Integer employeeId) {
         if (employeeId == null) {
@@ -379,17 +361,17 @@ public class PartTimeRegistrationApprovalService {
         log.debug("Calculating weekly hours for employee {}", employeeId);
         
         try {
-            // Get all PENDING + APPROVED registrations (both count toward weekly limit)
+            // Get ONLY APPROVED registrations (PENDING should not be counted)
             List<PartTimeRegistration> activeRegistrations = registrationRepository
                 .findByEmployeeIdAndStatusIn(employeeId, 
-                    List.of(RegistrationStatus.PENDING, RegistrationStatus.APPROVED));
+                    List.of(RegistrationStatus.APPROVED));
             
             if (activeRegistrations == null || activeRegistrations.isEmpty()) {
                 log.debug("No active registrations found for employee {}", employeeId);
                 return 0.0;
             }
             
-            log.debug("Found {} active registrations (PENDING + APPROVED) for employee {}", 
+            log.debug("Found {} APPROVED registrations for employee {}", 
                      activeRegistrations.size(), employeeId);
             
             double totalWeeklyHours = 0.0;
