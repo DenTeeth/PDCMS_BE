@@ -51,7 +51,7 @@ public class TreatmentPlanApprovalService {
      * 1. Plan must exist
      * 2. Plan must be in PENDING_REVIEW status
      * 3. If REJECTED, notes are mandatory
-     * 4. If APPROVED, all items must have price > 0
+     * 4. (REMOVED) Zero-price validation - plans with free services can be approved
      * 5. Log audit trail
      *
      * @param planCode The unique plan code
@@ -88,9 +88,11 @@ public class TreatmentPlanApprovalService {
         }
 
         // 5. GUARD (P1): Check for zero-price items if APPROVED
-        if (request.isApproval()) {
-            validateNoPriceItemsForApproval(plan);
-        }
+        // FE Issue #3 Fix: Removed zero-price validation to allow approval of plans with free services
+        // Finance can adjust prices later via API 5.13 (Update Prices)
+        // if (request.isApproval()) {
+        //     validateNoPriceItemsForApproval(plan);
+        // }
 
         // 6. Store old status for audit log
         ApprovalStatus oldStatus = plan.getApprovalStatus();

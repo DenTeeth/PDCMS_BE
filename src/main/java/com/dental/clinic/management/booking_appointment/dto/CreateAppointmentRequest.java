@@ -77,7 +77,7 @@ public class CreateAppointmentRequest {
      * XOR Validation: Must provide EITHER serviceCodes OR patientPlanItemIds, not both and not neither
      * This ensures clear separation between standalone booking and treatment plan booking
      */
-    @AssertTrue(message = "Must provide either serviceCodes or patientPlanItemIds, not both and not neither")
+    @AssertTrue(message = "Please provide either serviceCodes (standalone booking) or patientPlanItemIds (treatment plan booking), but not both")
     private boolean isValidBookingType() {
         boolean hasServiceCodes = serviceCodes != null && !serviceCodes.isEmpty();
         boolean hasPlanItems = patientPlanItemIds != null && !patientPlanItemIds.isEmpty();
