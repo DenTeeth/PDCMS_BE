@@ -285,4 +285,17 @@ public interface EmployeeShiftRepository extends JpaRepository<EmployeeShift, St
         int deleteFutureScheduledShiftsByEmployeeId(
                         @Param("employeeId") Integer employeeId,
                         @Param("today") LocalDate today);
+        
+        /**
+         * Find all shifts for a specific source and source registration ID.
+         * Used for backfill operations and shift regeneration.
+         *
+         * @param sourceRegistrationId Source registration ID
+         * @return List of matching shifts
+         */
+        @Query("SELECT es FROM EmployeeShift es " +
+                        "WHERE es.sourceRegistrationId = :sourceRegistrationId " +
+                        "ORDER BY es.workDate ASC")
+        List<EmployeeShift> findBySourceRegistrationId(
+                        @Param("sourceRegistrationId") Long sourceRegistrationId);
 }

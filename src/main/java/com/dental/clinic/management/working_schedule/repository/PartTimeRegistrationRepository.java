@@ -152,6 +152,12 @@ public interface PartTimeRegistrationRepository extends JpaRepository<PartTimeRe
      * Used to show oldest requests first in approval queue.
      */
     List<PartTimeRegistration> findByStatusOrderByCreatedAtAsc(RegistrationStatus status);
+    
+    /**
+     * Find registrations by status list.
+     * Used for backfill operations to find all APPROVED registrations.
+     */
+    List<PartTimeRegistration> findByStatusIn(List<RegistrationStatus> statuses);
 
     /**
      * Find all active registrations that have expired (effective_to < today).

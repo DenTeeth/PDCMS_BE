@@ -134,27 +134,39 @@ public class PartTimeRegistrationApprovalService {
         registrationRepository.save(registration);
 
         // INTEGRATION POINT: Create employee shifts for all working days
-        List<LocalDate> workingDays;
-        if (registration.getRequestedDates() != null && !registration.getRequestedDates().isEmpty()) {
-            workingDays = java.util.List.copyOf(registration.getRequestedDates());
-        } else {
-            workingDays = availabilityService.getWorkingDays(
-                    slot,
+        // Using NEW generic shift generation method (replaces deprecated createShiftsForApprovedRegistration)
+        log.info("🔄 Starting shift generation for PART_TIME_FLEX registration {}", registrationId);
+        
+        try {
+            // Extract days of week from slot (e.g., "MONDAY,WEDNESDAY,FRIDAY" → [1,3,5])
+            List<Integer> daysOfWeek = extractDaysOfWeekFromSlot(slot);
+            
+            log.debug("Registration {} details: slot={}, shift={}, days={}, period={} to {}",
+                    registrationId, slot.getSlotId(), slot.getWorkShift().getWorkShiftId(),
+                    daysOfWeek, registration.getEffectiveFrom(), registration.getEffectiveTo());
+            
+            // Call new generic method
+            List<com.dental.clinic.management.working_schedule.domain.EmployeeShift> createdShifts = 
+                employeeShiftService.createShiftsForRegistration(
+                    registration.getEmployeeId(),
+                    slot.getWorkShift().getWorkShiftId(),
                     registration.getEffectiveFrom(),
-                    registration.getEffectiveTo()
-            );
+                    registration.getEffectiveTo(),
+                    daysOfWeek,
+                    "PART_TIME_FLEX",  // Source type for tracking
+                    registration.getRegistrationId().longValue(),  // Link to registration
+                    managerId
+                );
+            
+            log.info("✅ Registration {} approved by manager {} with {} shifts created (source: PART_TIME_FLEX, sourceId: {})", 
+                    registrationId, managerId, createdShifts.size(), registration.getRegistrationId());
+                    
+        } catch (Exception e) {
+            log.error("❌ Failed to generate shifts for registration {}: {}. Registration is APPROVED but shifts not created.",
+                    registrationId, e.getMessage(), e);
+            // Don't rollback approval - shifts can be regenerated via backfill endpoint
+            // Just log the error for admin to investigate
         }
-
-        // Create shifts automatically
-        employeeShiftService.createShiftsForApprovedRegistration(
-                registration.getEmployeeId(),
-                slot.getWorkShift().getWorkShiftId(),
-                workingDays,
-                managerId
-        );
-
-        log.info("Registration {} approved by manager {} with {} shifts created", 
-                registrationId, managerId, workingDays.size());
     }
 
     /**
@@ -765,5 +777,268 @@ public class PartTimeRegistrationApprovalService {
                     .collect(java.util.stream.Collectors.joining(", "));
             return first5 + String.format(" (và %d ngày khác)", dates.size() - 5);
         }
+    }
+    
+    /**
+     * Extract days of week from slot as List<Integer> for generic shift generation.
+     * Converts slot's dayOfWeek string (e.g., "MONDAY,WEDNESDAY,FRIDAY") to integers [1,3,5].
+     * 
+     * Mapping: MONDAY=1, TUESDAY=2, WEDNESDAY=3, THURSDAY=4, FRIDAY=5, SATURDAY=6, SUNDAY=7
+     * 
+     * @param slot The part-time slot
+     * @return List of day numbers (1-7)
+     */
+    private List<Integer> extractDaysOfWeekFromSlot(PartTimeSlot slot) {
+        if (slot == null || slot.getDayOfWeek() == null || slot.getDayOfWeek().trim().isEmpty()) {
+            log.warn("Slot has no day of week specified, returning empty list");
+            return java.util.Collections.emptyList();
+        }
+        
+        String dayOfWeek = slot.getDayOfWeek().trim();
+        log.debug("Extracting days from slot dayOfWeek: '{}'", dayOfWeek);
+        
+        List<Integer> dayNumbers = new java.util.ArrayList<>();
+        String[] days = dayOfWeek.split(",");
+        
+        for (String day : days) {
+            String trimmedDay = day.trim().toUpperCase();
+            Integer dayNumber = convertDayNameToNumber(trimmedDay);
+            if (dayNumber != null) {
+                dayNumbers.add(dayNumber);
+            } else {
+                log.warn("Unknown day name: '{}', skipping", trimmedDay);
+            }
+        }
+        
+        // Sort for consistency
+        java.util.Collections.sort(dayNumbers);
+        log.debug("Extracted day numbers: {}", dayNumbers);
+        
+        return dayNumbers;
+    }
+    
+    /**
+     * Convert day name (MONDAY, TUESDAY, etc.) to day number (1-7).
+     * 
+     * @param dayName Day name in uppercase
+     * @return Day number (1=Monday, 7=Sunday) or null if unknown
+     */
+    private Integer convertDayNameToNumber(String dayName) {
+        return switch (dayName) {
+            case "MONDAY", "MON" -> 1;
+            case "TUESDAY", "TUE" -> 2;
+            case "WEDNESDAY", "WED" -> 3;
+            case "THURSDAY", "THU" -> 4;
+            case "FRIDAY", "FRI" -> 5;
+            case "SATURDAY", "SAT" -> 6;
+            case "SUNDAY", "SUN" -> 7;
+            default -> null;
+        };
+    }
+    
+    /**
+     * Backfill shifts for all existing APPROVED PART_TIME_FLEX registrations.
+     * This is used to generate shifts for registrations created before shift auto-generation was implemented.
+     * 
+     * Admin-only operation.
+     * 
+     * Logic:
+     * 1. Find all APPROVED part_time_registrations with is_active=true
+     * 2. For each registration, regenerate shifts using generic method (in separate transaction)
+     * 3. Skip registrations that already have shifts
+     * 4. Return summary with counts
+     * 
+     * @return Summary string with success/skip/error counts
+     */
+    public String backfillShiftsForExistingRegistrations() {
+        log.info("=== Starting backfill process for PART_TIME_FLEX registrations ===");
+        
+        // Find all APPROVED and active registrations
+        List<PartTimeRegistration> approvedRegistrations = registrationRepository
+                .findByStatusIn(java.util.Arrays.asList(RegistrationStatus.APPROVED));
+        
+        log.info("Found {} APPROVED registrations to process", approvedRegistrations.size());
+        
+        int totalProcessed = 0;
+        int successCount = 0;
+        int skipCount = 0;
+        int errorCount = 0;
+        int totalShiftsCreated = 0;
+        
+        for (PartTimeRegistration registration : approvedRegistrations) {
+            totalProcessed++;
+            
+            try {
+                log.debug("Processing registration {}/{}: ID={}, employee={}, slot={}",
+                        totalProcessed, approvedRegistrations.size(),
+                        registration.getRegistrationId(),
+                        registration.getEmployeeId(),
+                        registration.getPartTimeSlotId());
+                
+                // Process in separate transaction to avoid rollback-only marking
+                int shiftsCreated = processRegistrationInTransaction(registration);
+                
+                if (shiftsCreated == -1) {
+                    skipCount++;
+                } else if (shiftsCreated >= 0) {
+                    totalShiftsCreated += shiftsCreated;
+                    successCount++;
+                    log.info("✅ Registration {}: Generated {} shifts",
+                            registration.getRegistrationId(), shiftsCreated);
+                }
+                
+            } catch (Exception e) {
+                log.error("❌ Registration {}: Failed to generate shifts: {}",
+                        registration.getRegistrationId(), e.getMessage(), e);
+                errorCount++;
+            }
+        }
+        
+        String summary = String.format(
+                "Backfill complete: %d registrations processed, %d succeeded (%d shifts created), %d skipped, %d errors",
+                totalProcessed, successCount, totalShiftsCreated, skipCount, errorCount
+        );
+        
+        log.info("=== {} ===", summary);
+        return summary;
+    }
+    
+    /**
+     * Regenerate shifts for a specific PART_TIME_FLEX registration.
+     * Deletes existing shifts and creates new ones from scratch.
+     * 
+     * Admin-only operation.
+     * 
+     * Use cases:
+     * - Fix shifts for registration with incorrect data
+     * - Recover from failed shift generation during approval
+     * - Regenerate after registration dates are modified
+     * 
+     * @param registrationId The registration ID
+     * @return Number of shifts created
+     * @throws RegistrationNotFoundException if registration not found
+     * @throws IllegalStateException if registration is not APPROVED
+     */
+    @Transactional
+    public int regenerateShiftsForRegistration(Integer registrationId) {
+        log.info("🔄 Regenerating shifts for registration {}", registrationId);
+        
+        // Find registration
+        PartTimeRegistration registration = registrationRepository.findById(registrationId)
+                .orElseThrow(() -> new RegistrationNotFoundException(registrationId));
+        
+        // Only regenerate for APPROVED registrations
+        if (registration.getStatus() != RegistrationStatus.APPROVED) {
+            log.warn("Cannot regenerate shifts for registration {} with status {}",
+                    registrationId, registration.getStatus());
+            throw new IllegalStateException(
+                    String.format("Cannot regenerate shifts for registration %d: status is %s (must be APPROVED)",
+                            registrationId, registration.getStatus())
+            );
+        }
+        
+        // Get slot details
+        PartTimeSlot slot = slotRepository.findById(registration.getPartTimeSlotId())
+                .orElseThrow(() -> new SlotNotFoundException(registration.getPartTimeSlotId()));
+        
+        if (slot.getWorkShift() == null) {
+            throw new IllegalStateException(
+                    String.format("Slot %d has no work shift assigned", slot.getSlotId())
+            );
+        }
+        
+        // Delete existing shifts for this registration
+        try {
+            int deletedCount = employeeShiftService.deleteShiftsForSource(
+                    "PART_TIME_FLEX",
+                    registration.getRegistrationId().longValue()
+            );
+            log.info("Deleted {} existing shifts for registration {}", deletedCount, registrationId);
+        } catch (Exception e) {
+            log.warn("Failed to delete existing shifts for registration {}: {}. Continuing with regeneration.",
+                    registrationId, e.getMessage());
+        }
+        
+        // Extract days of week
+        List<Integer> daysOfWeek = extractDaysOfWeekFromSlot(slot);
+        if (daysOfWeek.isEmpty()) {
+            throw new IllegalStateException(
+                    String.format("Slot %d has no valid days of week specified", slot.getSlotId())
+            );
+        }
+        
+        // Generate new shifts
+        List<com.dental.clinic.management.working_schedule.domain.EmployeeShift> createdShifts =
+            employeeShiftService.createShiftsForRegistration(
+                registration.getEmployeeId(),
+                slot.getWorkShift().getWorkShiftId(),
+                registration.getEffectiveFrom(),
+                registration.getEffectiveTo(),
+                daysOfWeek,
+                "PART_TIME_FLEX",
+                registration.getRegistrationId().longValue(),
+                null  // createdBy = null for regeneration (system generated)
+            );
+        
+        log.info("✅ Regenerated {} shifts for registration {}", createdShifts.size(), registrationId);
+        return createdShifts.size();
+    }
+    
+    /**
+     * Process a single registration in its own transaction to avoid rollback-only issues.
+     * Returns: number of shifts created, -1 if skipped, throws exception if error.
+     */
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
+    protected int processRegistrationInTransaction(PartTimeRegistration registration) {
+        // Get slot details
+        PartTimeSlot slot = slotRepository.findById(registration.getPartTimeSlotId())
+                .orElse(null);
+        
+        if (slot == null) {
+            log.warn("⚠️ Registration {}: Slot {} not found, skipping",
+                    registration.getRegistrationId(), registration.getPartTimeSlotId());
+            return -1;
+        }
+        
+        if (slot.getWorkShift() == null) {
+            log.warn("⚠️ Registration {}: Slot {} has no work shift, skipping",
+                    registration.getRegistrationId(), slot.getSlotId());
+            return -1;
+        }
+        
+        // Check if shifts already exist for this registration
+        boolean hasShifts = employeeShiftService.existsShiftsForSource(
+                "PART_TIME_FLEX",
+                registration.getRegistrationId().longValue()
+        );
+        
+        if (hasShifts) {
+            log.debug("⏭️ Registration {}: Shifts already exist, skipping",
+                    registration.getRegistrationId());
+            return -1;
+        }
+        
+        // Extract days of week
+        List<Integer> daysOfWeek = extractDaysOfWeekFromSlot(slot);
+        if (daysOfWeek.isEmpty()) {
+            log.warn("⚠️ Registration {}: No valid days of week found, skipping",
+                    registration.getRegistrationId());
+            return -1;
+        }
+        
+        // Generate shifts
+        List<com.dental.clinic.management.working_schedule.domain.EmployeeShift> createdShifts =
+            employeeShiftService.createShiftsForRegistration(
+                registration.getEmployeeId(),
+                slot.getWorkShift().getWorkShiftId(),
+                registration.getEffectiveFrom(),
+                registration.getEffectiveTo(),
+                daysOfWeek,
+                "PART_TIME_FLEX",
+                registration.getRegistrationId().longValue(),
+                null  // createdBy = null for backfill (system generated)
+            );
+        
+        return createdShifts.size();
     }
 }

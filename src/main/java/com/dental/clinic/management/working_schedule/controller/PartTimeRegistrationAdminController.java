@@ -275,6 +275,67 @@ public class PartTimeRegistrationAdminController {
     }
 
     /**
+     * POST /api/v1/admin/registrations/part-time-flex/backfill-shifts
+     * Backfill shifts for all existing APPROVED PART_TIME_FLEX registrations.
+     * 
+     * This endpoint is used to generate shifts for registrations that were created
+     * before the shift auto-generation feature was implemented.
+     * 
+     * Permission: MANAGE_PART_TIME_REGISTRATIONS (Admin only)
+     * 
+     * @return Summary string with success/skip/error counts
+     */
+    @PostMapping("/backfill-shifts")
+    @PreAuthorize("hasAuthority('MANAGE_PART_TIME_REGISTRATIONS')")
+    public ResponseEntity<String> backfillShifts() {
+        log.info("🔄 Admin triggered backfill for PART_TIME_FLEX registrations");
+        
+        try {
+            String summary = approvalService.backfillShiftsForExistingRegistrations();
+            log.info("✅ Backfill completed successfully");
+            return ResponseEntity.ok(summary);
+        } catch (Exception e) {
+            log.error("❌ Backfill failed: {}", e.getMessage(), e);
+            return ResponseEntity.status(500).body("Backfill failed: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * POST /api/v1/admin/registrations/part-time-flex/{registrationId}/regenerate-shifts
+     * Regenerate shifts for a specific PART_TIME_FLEX registration.
+     * 
+     * Deletes existing shifts and creates new ones from scratch.
+     * Used to fix shifts for registrations with incorrect data or recover from failed generation.
+     * 
+     * Permission: MANAGE_PART_TIME_REGISTRATIONS (Admin only)
+     * 
+     * @param registrationId The registration ID
+     * @return Message with number of shifts created
+     */
+    @PostMapping("/{registrationId}/regenerate-shifts")
+    @PreAuthorize("hasAuthority('MANAGE_PART_TIME_REGISTRATIONS')")
+    public ResponseEntity<String> regenerateShifts(@PathVariable Integer registrationId) {
+        log.info("🔄 Admin triggered shift regeneration for registration {}", registrationId);
+        
+        try {
+            int shiftsCreated = approvalService.regenerateShiftsForRegistration(registrationId);
+            String message = String.format("✅ Regenerated %d shifts for registration #%d", 
+                    shiftsCreated, registrationId);
+            log.info(message);
+            return ResponseEntity.ok(message);
+        } catch (com.dental.clinic.management.working_schedule.exception.RegistrationNotFoundException e) {
+            log.warn("Registration {} not found", registrationId);
+            return ResponseEntity.status(404).body("Registration not found: " + registrationId);
+        } catch (IllegalStateException e) {
+            log.warn("Cannot regenerate shifts for registration {}: {}", registrationId, e.getMessage());
+            return ResponseEntity.status(400).body(e.getMessage());
+        } catch (Exception e) {
+            log.error("❌ Failed to regenerate shifts for registration {}: {}", registrationId, e.getMessage(), e);
+            return ResponseEntity.status(500).body("Failed to regenerate shifts: " + e.getMessage());
+        }
+    }
+
+    /**
      * Response DTO for can-approve check.
      */
     public record CanApproveResponse(boolean canApprove, String reason) {}

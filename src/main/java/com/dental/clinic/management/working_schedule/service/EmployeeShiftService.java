@@ -489,6 +489,7 @@ public class EmployeeShiftService {
             newShift.setWorkDate(workDate);
             newShift.setStatus(ShiftStatus.SCHEDULED);
             newShift.setSource(ShiftSource.REGISTRATION_JOB);
+            newShift.setSourceRegistrationId(sourceRegistrationId); // Link to registration
             newShift.setIsOvertime(false);
             newShift.setCreatedBy(createdBy);
             newShift.setNotes(String.format("Tạo tự động từ %s registration #%d", source, sourceRegistrationId));
@@ -639,5 +640,44 @@ public class EmployeeShiftService {
      */
     public boolean existsByEmployeeAndDateAndShift(Integer employeeId, LocalDate workDate, String workShiftId) {
         return employeeShiftRepository.existsByEmployeeAndDateAndShift(employeeId, workDate, workShiftId);
+    }
+    
+    /**
+     * Check if any shifts exist for a specific registration.
+     * Used to skip backfill for registrations that already have shifts.
+     * 
+     * @param source Source type (e.g., "PART_TIME_FLEX", "FULL_TIME") - not used but kept for API compatibility
+     * @param sourceId Source registration ID
+     * @return true if at least one shift exists with this source registration ID
+     */
+    public boolean existsShiftsForSource(String source, Long sourceId) {
+        log.debug("Checking if shifts exist for sourceRegistrationId: {}", sourceId);
+        List<EmployeeShift> shifts = employeeShiftRepository.findBySourceRegistrationId(sourceId);
+        return shifts != null && !shifts.isEmpty();
+    }
+    
+    /**
+     * Delete all shifts for a specific registration.
+     * Used when regenerating shifts for a registration.
+     * 
+     * @param source Source type (e.g., "PART_TIME_FLEX", "FULL_TIME") - not used but kept for API compatibility
+     * @param sourceId Source registration ID
+     * @return Number of shifts deleted
+     */
+    @Transactional
+    public int deleteShiftsForSource(String source, Long sourceId) {
+        log.info("Deleting shifts for sourceRegistrationId: {}", sourceId);
+        List<EmployeeShift> shiftsToDelete = employeeShiftRepository.findBySourceRegistrationId(sourceId);
+        
+        if (shiftsToDelete == null || shiftsToDelete.isEmpty()) {
+            log.debug("No shifts found to delete for sourceRegistrationId: {}", sourceId);
+            return 0;
+        }
+        
+        int count = shiftsToDelete.size();
+        employeeShiftRepository.deleteAll(shiftsToDelete);
+        log.info("Deleted {} shifts for sourceRegistrationId: {}", count, sourceId);
+        
+        return count;
     }
 }

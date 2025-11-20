@@ -105,6 +105,14 @@ public class EmployeeShift {
      */
     @Column(name = "source_off_request_id", length = 20)
     private String sourceOffRequestId;
+    
+    /**
+     * Reference to registration ID if this shift was created from registration approval.
+     * Links to part_time_registrations.registration_id or fixed_shift_registrations.registration_id.
+     * Used for tracking and backfill operations.
+     */
+    @Column(name = "source_registration_id")
+    private Long sourceRegistrationId;
 
     /**
      * ID of the employee (admin/manager) who created this shift manually.
