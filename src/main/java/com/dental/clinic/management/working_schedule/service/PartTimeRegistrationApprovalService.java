@@ -96,6 +96,7 @@ public class PartTimeRegistrationApprovalService {
      * Keeping this method @Transactional ensures each attempt runs in its own transaction
      * so optimistic locking is effective.
      */
+    @SuppressWarnings("deprecation")
     @Transactional
     protected void attemptApproveTransactional(Integer registrationId, Integer managerId) {
         PartTimeRegistration registration = registrationRepository.findById(registrationId)
