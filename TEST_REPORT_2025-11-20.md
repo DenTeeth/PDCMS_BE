@@ -1,29 +1,29 @@
 # PDCMS - Complete Flow Test Report
 
-**Date:** 2025-11-20  
-**Tester:** Backend Development Team  
-**Environment:** Local Development (Docker + Spring Boot)  
+**Date:** 2025-11-20
+**Tester:** Backend Development Team
+**Environment:** Local Development (Docker + Spring Boot)
 
 ---
 
 ## Executive Summary
 
-✅ **Infrastructure:** Docker PostgreSQL + Spring Boot application running successfully  
-✅ **Authentication:** All 5 test users login successfully  
-✅ **API Endpoints:** Old + NEW service filtering APIs working  
-✅ **Seed Data:** 54 services, 5 patients, treatment templates loaded  
+✅ **Infrastructure:** Docker PostgreSQL + Spring Boot application running successfully
+✅ **Authentication:** All 5 test users login successfully
+✅ **API Endpoints:** Old + NEW service filtering APIs working
+✅ **Seed Data:** 54 services, 5 patients, treatment templates loaded
 
 ### Test Results Overview
 
-| Test Category | Status | Details |
-|---------------|--------|---------|
-| Docker Setup | ✅ PASSED | PostgreSQL 13.4 running on port 5432 |
-| Application Startup | ✅ PASSED | Started in 27.6 seconds |
-| User Authentication | ✅ PASSED | 5/5 users logged in |
-| Service API (Old) | ✅ PASSED | Returns 54 total services |
-| Service API (NEW) | ✅ PASSED | `/my-specializations` endpoint working |
-| Treatment Plan Templates | ✅ PASSED | Templates endpoint accessible |
-| Patients API | ✅ PASSED | Patients list endpoint working |
+| Test Category            | Status    | Details                                |
+| ------------------------ | --------- | -------------------------------------- |
+| Docker Setup             | ✅ PASSED | PostgreSQL 13.4 running on port 5432   |
+| Application Startup      | ✅ PASSED | Started in 27.6 seconds                |
+| User Authentication      | ✅ PASSED | 5/5 users logged in                    |
+| Service API (Old)        | ✅ PASSED | Returns 54 total services              |
+| Service API (NEW)        | ✅ PASSED | `/my-specializations` endpoint working |
+| Treatment Plan Templates | ✅ PASSED | Templates endpoint accessible          |
+| Patients API             | ✅ PASSED | Patients list endpoint working         |
 
 ---
 
@@ -42,6 +42,7 @@ Status: ✅ Running
 ```
 
 **Verification:**
+
 ```bash
 $ docker exec postgres-dental psql -U root -d dental_clinic_db -c "SELECT version();"
 PostgreSQL 13.4 (Debian 13.4-1.pgdg100+1)
@@ -58,8 +59,9 @@ Status: ✅ Running
 ```
 
 **Log Extract:**
+
 ```
-2025-11-20T05:00:03.116-08:00  INFO 21872 --- [Dental Clinic Management] [main] 
+2025-11-20T05:00:03.116-08:00  INFO 21872 --- [Dental Clinic Management] [main]
 .d.c.m.DentalClinicManagementApplication : Started DentalClinicManagementApplication in 27.594 seconds
 ```
 
@@ -70,6 +72,7 @@ Status: ✅ Running
 ### Test 1.1: Login bacsi1 (Dentist 1)
 
 **Request:**
+
 ```bash
 POST http://localhost:8080/api/v1/auth/login
 Content-Type: application/json
@@ -81,6 +84,7 @@ Content-Type: application/json
 ```
 
 **Response:** ✅ SUCCESS
+
 ```json
 {
   "token": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJiYWNzaTEiLCJhY2NvdW50X2lkIjox...",
@@ -89,6 +93,7 @@ Content-Type: application/json
 ```
 
 **Permissions Granted:**
+
 - CREATE_TREATMENT_PLAN
 - UPDATE_TREATMENT_PLAN
 - VIEW_TREATMENT_PLAN
@@ -99,6 +104,7 @@ Content-Type: application/json
 ### Test 1.2: Login bacsi2 (Dentist 2)
 
 **Request:**
+
 ```bash
 POST http://localhost:8080/api/v1/auth/login
 {
@@ -107,12 +113,13 @@ POST http://localhost:8080/api/v1/auth/login
 }
 ```
 
-**Response:** ✅ SUCCESS  
+**Response:** ✅ SUCCESS
 **Token:** Received (550+ characters JWT)
 
 ### Test 1.3: Login benhnhan1 (Patient 1)
 
 **Request:**
+
 ```bash
 POST http://localhost:8080/api/v1/auth/login
 {
@@ -121,21 +128,21 @@ POST http://localhost:8080/api/v1/auth/login
 }
 ```
 
-**Response:** ✅ SUCCESS  
-**Patient Code:** BN-1001  
+**Response:** ✅ SUCCESS
+**Patient Code:** BN-1001
 **Name:** Đoàn Thanh Phong
 
 ### Test 1.4: Login benhnhan2 (Patient 2)
 
-**Response:** ✅ SUCCESS  
-**Patient Code:** BN-1002  
+**Response:** ✅ SUCCESS
+**Patient Code:** BN-1002
 **Name:** Phạm Văn Phong
 
 ### Test 1.5: Login quanli1 (Manager)
 
-**Response:** ✅ SUCCESS  
-**Role:** ROLE_MANAGER  
-**Employee Code:** EMP011  
+**Response:** ✅ SUCCESS
+**Role:** ROLE_MANAGER
+**Employee Code:** EMP011
 **Name:** Võ Ngọc Minh Quân
 
 ---
@@ -147,12 +154,14 @@ POST http://localhost:8080/api/v1/auth/login
 **Endpoint:** `GET /api/v1/booking/services?page=0&size=10&isActive=true`
 
 **Request:**
+
 ```bash
 curl -X GET "http://localhost:8080/api/v1/booking/services?page=0&size=10&isActive=true" \
   -H "Authorization: Bearer $BACSI1_TOKEN"
 ```
 
 **Response:** ✅ SUCCESS
+
 ```json
 {
   "content": [
@@ -183,6 +192,7 @@ curl -X GET "http://localhost:8080/api/v1/booking/services?page=0&size=10&isActi
 ```
 
 **Key Findings:**
+
 - ✅ Total services in database: **54**
 - ✅ All services accessible (no specialization filter)
 - ✅ Pagination working correctly
@@ -193,12 +203,14 @@ curl -X GET "http://localhost:8080/api/v1/booking/services?page=0&size=10&isActi
 **Endpoint:** `GET /api/v1/booking/services/my-specializations?page=0&size=10&isActive=true`
 
 **Request:**
+
 ```bash
 curl -X GET "http://localhost:8080/api/v1/booking/services/my-specializations?page=0&size=10&isActive=true" \
   -H "Authorization: Bearer $BACSI1_TOKEN"
 ```
 
 **Response:** ✅ SUCCESS
+
 ```json
 {
   "content": [
@@ -227,12 +239,14 @@ curl -X GET "http://localhost:8080/api/v1/booking/services/my-specializations?pa
 ```
 
 **Analysis:**
+
 - ✅ NEW API endpoint working
 - ✅ Automatic doctor context detection from JWT token
 - ✅ Services filtered by bacsi1's specializations
 - ✅ Multiple specializations supported (OR logic)
 
 **bacsi1 Specializations:**
+
 - Specialization 3: Nha chu (Periodotics)
 - Specialization 4: Phục hồi răng (Restorative)
 - Specialization 8: STANDARD (General Healthcare)
@@ -242,6 +256,7 @@ curl -X GET "http://localhost:8080/api/v1/booking/services/my-specializations?pa
 ### Test 2.3: Get Services for bacsi2 (NEW API)
 
 **Request:**
+
 ```bash
 curl -X GET "http://localhost:8080/api/v1/booking/services/my-specializations?page=0&size=10&isActive=true" \
   -H "Authorization: Bearer $BACSI2_TOKEN"
@@ -250,6 +265,7 @@ curl -X GET "http://localhost:8080/api/v1/booking/services/my-specializations?pa
 **Response:** ✅ SUCCESS
 
 **bacsi2 Specializations:**
+
 - Specialization 2: Nội Nha (Endodontics)
 - Specialization 7: Nắn chỉnh răng (Orthodontics)
 - Specialization 8: STANDARD (General Healthcare)
@@ -265,12 +281,14 @@ curl -X GET "http://localhost:8080/api/v1/booking/services/my-specializations?pa
 **Endpoint:** `GET /api/v1/treatment-plans/templates?page=0&size=10`
 
 **Request:**
+
 ```bash
 curl -X GET "http://localhost:8080/api/v1/treatment-plans/templates?page=0&size=10" \
   -H "Authorization: Bearer $BACSI1_TOKEN"
 ```
 
 **Response:** ✅ SUCCESS
+
 - Templates endpoint accessible
 - Ready for template-based treatment plan creation
 
@@ -279,12 +297,14 @@ curl -X GET "http://localhost:8080/api/v1/treatment-plans/templates?page=0&size=
 **Endpoint:** `GET /api/v1/patients?page=0&size=10`
 
 **Request:**
+
 ```bash
 curl -X GET "http://localhost:8080/api/v1/patients?page=0&size=10" \
   -H "Authorization: Bearer $BACSI1_TOKEN"
 ```
 
 **Response:** ✅ SUCCESS
+
 - Patients list endpoint accessible
 - 5 patients in seed data:
   - BN-1001: Đoàn Thanh Phong
@@ -297,14 +317,14 @@ curl -X GET "http://localhost:8080/api/v1/patients?page=0&size=10" \
 
 ## API Comparison: Old vs NEW
 
-| Feature | Old API (`/services`) | NEW API (`/services/my-specializations`) |
-|---------|----------------------|------------------------------------------|
-| **URL** | `/api/v1/booking/services` | `/api/v1/booking/services/my-specializations` |
-| **Filter Method** | Manual `?specializationId=X` | Automatic from JWT token |
-| **Total Services** | 54 (all) | Filtered by doctor's specializations |
-| **Security** | ⚠️ FE must validate | ✅ BE enforces automatically |
-| **Use Case** | Admin viewing all services | Doctor selecting services for treatment |
-| **Multi-Spec Support** | ❌ Single ID only | ✅ OR logic across all doctor specs |
+| Feature                | Old API (`/services`)        | NEW API (`/services/my-specializations`)      |
+| ---------------------- | ---------------------------- | --------------------------------------------- |
+| **URL**                | `/api/v1/booking/services`   | `/api/v1/booking/services/my-specializations` |
+| **Filter Method**      | Manual `?specializationId=X` | Automatic from JWT token                      |
+| **Total Services**     | 54 (all)                     | Filtered by doctor's specializations          |
+| **Security**           | ⚠️ FE must validate          | ✅ BE enforces automatically                  |
+| **Use Case**           | Admin viewing all services   | Doctor selecting services for treatment       |
+| **Multi-Spec Support** | ❌ Single ID only            | ✅ OR logic across all doctor specs           |
 
 ---
 
@@ -329,6 +349,7 @@ curl -X GET "http://localhost:8080/api/v1/patients?page=0&size=10" \
 ### 📋 Next Steps
 
 1. **FLOW 1: Template-based Treatment Plan → Booking**
+
    - Select patient (BN-1001)
    - Get templates filtered by bacsi1's specialization
    - Create plan from template
@@ -336,6 +357,7 @@ curl -X GET "http://localhost:8080/api/v1/patients?page=0&size=10" \
    - Create booking from plan items
 
 2. **FLOW 2: Custom Treatment Plan → Booking**
+
    - Select patient (BN-1002)
    - Get services via `/my-specializations` for bacsi2
    - Create custom plan with 2-3 services
@@ -352,17 +374,20 @@ curl -X GET "http://localhost:8080/api/v1/patients?page=0&size=10" \
 ## Test Scripts Created
 
 ### 1. `test_api_simple.sh`
+
 - Tests login for all users
 - Compares old vs new service APIs
 - Validates filtering effectiveness
 - **Status:** ✅ Working (login + API calls successful)
 
 ### 2. `test_complete_flow.sh`
+
 - Full end-to-end test (template + custom flows)
 - Includes booking creation
 - **Status:** ⏳ Pending (requires jq installation or Python parsing)
 
 ### 3. `test_doctor_service_filtering.sh`
+
 - Detailed service filtering test
 - Compares results between doctors
 - **Status:** ⏳ Pending (jq dependency)
@@ -391,14 +416,14 @@ curl -X GET "http://localhost:8080/api/v1/patients?page=0&size=10" \
 
 The new `/my-specializations` API endpoint is **fully functional** and ready for production use. All basic connectivity tests passed, and the system is stable.
 
-**Test Coverage:** 70% (7/10 planned tests completed)  
-**Success Rate:** 100% (7/7 tests passed)  
-**Blocker Issues:** 0  
+**Test Coverage:** 70% (7/10 planned tests completed)
+**Success Rate:** 100% (7/7 tests passed)
+**Blocker Issues:** 0
 **Non-blocker Issues:** 0
 
 **Status:** ✅ READY FOR FLOW TESTING
 
 ---
 
-**Report Generated:** 2025-11-20 05:15:00 PST  
+**Report Generated:** 2025-11-20 05:15:00 PST
 **Next Review:** After completing FLOW 1 & FLOW 2 tests

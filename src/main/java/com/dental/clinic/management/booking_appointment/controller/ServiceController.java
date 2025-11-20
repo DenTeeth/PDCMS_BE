@@ -45,12 +45,11 @@ public class ServiceController {
 
     @GetMapping("/my-specializations")
     @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_SERVICE + "')")
-    @Operation(
-        summary = "Get services matching current doctor's specializations",
-        description = "Returns services that match ANY of the current logged-in doctor's specializations. " +
-                      "This ensures doctors can only select services they are qualified to perform when creating custom treatment plans. " +
-                      "If user is not a doctor or has no specializations, returns empty list."
-    )
+    @Operation(summary = "Get services matching current doctor's specializations", description = "Returns services that match ANY of the current logged-in doctor's specializations. "
+            +
+            "This ensures doctors can only select services they are qualified to perform when creating custom treatment plans. "
+            +
+            "If user is not a doctor or has no specializations, returns empty list.")
     @ApiMessage("Lấy danh sách dịch vụ theo chuyên môn của bác sĩ thành công")
     public ResponseEntity<Page<ServiceResponse>> getServicesForCurrentDoctor(
             @RequestParam(defaultValue = "0") int page,

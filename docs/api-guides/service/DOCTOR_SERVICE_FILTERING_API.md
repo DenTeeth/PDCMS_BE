@@ -1,9 +1,9 @@
 # API Guide: Doctor-Specific Service Filtering
 
-**Module:** Booking Appointment  
-**Version:** 1.0  
-**Date:** 2025-11-20  
-**Status:** ✅ Production Ready  
+**Module:** Booking Appointment
+**Version:** 1.0
+**Date:** 2025-11-20
+**Status:** ✅ Production Ready
 
 ---
 
@@ -29,14 +29,14 @@ This API endpoint provides automatic service filtering based on the **current lo
 
 ## Request Parameters
 
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `page` | Integer | No | `0` | Page number (zero-indexed) |
-| `size` | Integer | No | `10` | Page size (max 100) |
-| `sortBy` | String | No | `serviceId` | Sort field: `serviceId`, `serviceCode`, `serviceName`, `price` |
-| `sortDirection` | String | No | `ASC` | Sort direction: `ASC` or `DESC` |
-| `isActive` | Boolean | No | `null` | Filter by active status |
-| `keyword` | String | No | `null` | Search in service name/code |
+| Parameter       | Type    | Required | Default     | Description                                                    |
+| --------------- | ------- | -------- | ----------- | -------------------------------------------------------------- |
+| `page`          | Integer | No       | `0`         | Page number (zero-indexed)                                     |
+| `size`          | Integer | No       | `10`        | Page size (max 100)                                            |
+| `sortBy`        | String  | No       | `serviceId` | Sort field: `serviceId`, `serviceCode`, `serviceName`, `price` |
+| `sortDirection` | String  | No       | `ASC`       | Sort direction: `ASC` or `DESC`                                |
+| `isActive`      | Boolean | No       | `null`      | Filter by active status                                        |
+| `keyword`       | String  | No       | `null`      | Search in service name/code                                    |
 
 ---
 
@@ -161,6 +161,7 @@ Content-Type: application/json
 ### Example 1: Get All Services for Current Doctor
 
 **Request:**
+
 ```bash
 curl -X GET 'http://localhost:8080/api/v1/booking/services/my-specializations?page=0&size=20' \
   -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
@@ -173,6 +174,7 @@ curl -X GET 'http://localhost:8080/api/v1/booking/services/my-specializations?pa
 ### Example 2: Get Active Services Only
 
 **Request:**
+
 ```bash
 curl -X GET 'http://localhost:8080/api/v1/booking/services/my-specializations?isActive=true&size=20' \
   -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
@@ -185,6 +187,7 @@ curl -X GET 'http://localhost:8080/api/v1/booking/services/my-specializations?is
 ### Example 3: Search Services with Keyword
 
 **Request:**
+
 ```bash
 curl -X GET 'http://localhost:8080/api/v1/booking/services/my-specializations?keyword=nhổ%20răng&isActive=true' \
   -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
@@ -197,6 +200,7 @@ curl -X GET 'http://localhost:8080/api/v1/booking/services/my-specializations?ke
 ### Example 4: Sort by Price (Expensive First)
 
 **Request:**
+
 ```bash
 curl -X GET 'http://localhost:8080/api/v1/booking/services/my-specializations?sortBy=price&sortDirection=DESC&isActive=true' \
   -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
@@ -211,27 +215,33 @@ curl -X GET 'http://localhost:8080/api/v1/booking/services/my-specializations?so
 ### Step-by-Step Process
 
 1. **Extract Username from JWT Token**
+
    - Uses `SecurityUtil.getCurrentUserLogin()`
    - Throws `UNAUTHENTICATED` error if no token
 
 2. **Find Employee by Username**
+
    - Query: `employeeRepository.findByAccount_Username(username)`
    - Throws `EMPLOYEE_NOT_FOUND` if not found
 
 3. **Extract Specialization IDs**
+
    - Gets all specializations from employee entity
    - Example: Doctor has `[1, 2, 8]` (Orthodontics, Endodontics, Standard)
 
 4. **Query Services with OR Logic**
+
    - For each specialization ID: Query `serviceRepository.findWithFilters()`
    - Merge results using `flatMap()`
    - Apply `.distinct()` to remove duplicates
 
 5. **Apply Additional Filters**
+
    - Filter by `isActive` if specified
    - Filter by `keyword` (service name/code)
 
 6. **Manual Sorting**
+
    - Sort by specified field (`serviceId`, `serviceCode`, `serviceName`, `price`)
    - Apply sort direction (ASC/DESC)
 
@@ -244,14 +254,14 @@ curl -X GET 'http://localhost:8080/api/v1/booking/services/my-specializations?so
 
 ## Comparison: Old vs New API
 
-| Feature | Old API (`GET /services`) | New API (`GET /services/my-specializations`) |
-|---------|---------------------------|---------------------------------------------|
-| **Filtering** | Manual `specializationId` parameter | Automatic from JWT token |
-| **Use Case** | Admin viewing all services | Doctor selecting services for treatment |
-| **Security** | ⚠️ FE must validate doctor-service match | ✅ BE enforces automatically |
-| **Complexity** | FE must know doctor's specializations | FE just calls endpoint |
-| **Error Prevention** | ⚠️ Allows incompatible service selection | ✅ Only compatible services returned |
-| **Multi-Specialization** | ❌ Single specialization filter | ✅ OR filter across all doctor specs |
+| Feature                  | Old API (`GET /services`)                | New API (`GET /services/my-specializations`) |
+| ------------------------ | ---------------------------------------- | -------------------------------------------- |
+| **Filtering**            | Manual `specializationId` parameter      | Automatic from JWT token                     |
+| **Use Case**             | Admin viewing all services               | Doctor selecting services for treatment      |
+| **Security**             | ⚠️ FE must validate doctor-service match | ✅ BE enforces automatically                 |
+| **Complexity**           | FE must know doctor's specializations    | FE just calls endpoint                       |
+| **Error Prevention**     | ⚠️ Allows incompatible service selection | ✅ Only compatible services returned         |
+| **Multi-Specialization** | ❌ Single specialization filter          | ✅ OR filter across all doctor specs         |
 
 ---
 
@@ -260,10 +270,12 @@ curl -X GET 'http://localhost:8080/api/v1/booking/services/my-specializations?so
 ### Who Can Access This API?
 
 ✅ **Allowed:**
+
 - Doctors with `VIEW_SERVICE` permission
 - Admins with `ROLE_ADMIN`
 
 ❌ **Blocked:**
+
 - Receptionists (no specializations)
 - Unauthenticated users
 
@@ -285,56 +297,63 @@ curl -X GET 'http://localhost:8080/api/v1/booking/services/my-specializations?so
 ### 1. Custom Treatment Plan Creation (API 5.4)
 
 **Before (Error-Prone):**
+
 ```javascript
 // FE needs to know doctor's specializationId
 const doctorSpecId = getDoctorSpecializationId(); // ❌ Extra complexity
-const services = await fetch(`/api/v1/booking/services?specializationId=${doctorSpecId}`);
+const services = await fetch(
+  `/api/v1/booking/services?specializationId=${doctorSpecId}`
+);
 ```
 
 **After (Recommended):**
+
 ```javascript
 // BE handles specialization filtering automatically
-const services = await fetch('/api/v1/booking/services/my-specializations?isActive=true');
+const services = await fetch(
+  "/api/v1/booking/services/my-specializations?isActive=true"
+);
 ```
 
 ### 2. Appointment Service Selection
 
 **React Example:**
+
 ```tsx
 const ServiceSelector: React.FC = () => {
   const [services, setServices] = useState([]);
-  const [keyword, setKeyword] = useState('');
-  
+  const [keyword, setKeyword] = useState("");
+
   useEffect(() => {
     const fetchServices = async () => {
       const response = await apiClient.get(
-        '/api/v1/booking/services/my-specializations',
+        "/api/v1/booking/services/my-specializations",
         {
           params: {
             page: 0,
             size: 50,
             isActive: true,
             keyword: keyword,
-            sortBy: 'serviceName',
-            sortDirection: 'ASC'
-          }
+            sortBy: "serviceName",
+            sortDirection: "ASC",
+          },
         }
       );
       setServices(response.data.data.content);
     };
-    
+
     fetchServices();
   }, [keyword]);
-  
+
   return (
     <div>
-      <input 
-        type="text" 
-        placeholder="Tìm kiếm dịch vụ..." 
-        onChange={(e) => setKeyword(e.target.value)} 
+      <input
+        type="text"
+        placeholder="Tìm kiếm dịch vụ..."
+        onChange={(e) => setKeyword(e.target.value)}
       />
       <ul>
-        {services.map(service => (
+        {services.map((service) => (
           <li key={service.serviceId}>
             {service.serviceName} - {service.price.toLocaleString()} VND
           </li>
@@ -349,21 +368,25 @@ const ServiceSelector: React.FC = () => {
 
 ```typescript
 try {
-  const response = await apiClient.get('/api/v1/booking/services/my-specializations');
-  
+  const response = await apiClient.get(
+    "/api/v1/booking/services/my-specializations"
+  );
+
   if (response.data.data.empty) {
     // Doctor has no specializations assigned
-    toast.warning('Bạn chưa được phân công chuyên môn. Vui lòng liên hệ quản trị viên.');
+    toast.warning(
+      "Bạn chưa được phân công chuyên môn. Vui lòng liên hệ quản trị viên."
+    );
   } else {
     setServices(response.data.data.content);
   }
 } catch (error) {
   if (error.response?.status === 401) {
     // Not authenticated
-    router.push('/login');
-  } else if (error.response?.errorCode === 'EMPLOYEE_NOT_FOUND') {
+    router.push("/login");
+  } else if (error.response?.errorCode === "EMPLOYEE_NOT_FOUND") {
     // Not a doctor account
-    toast.error('Tài khoản của bạn không có quyền xem dịch vụ.');
+    toast.error("Tài khoản của bạn không có quyền xem dịch vụ.");
   }
 }
 ```
@@ -375,10 +398,12 @@ try {
 ### Optimization Strategy
 
 1. **In-Memory Deduplication:**
+
    - Uses `distinct()` to remove duplicate services
    - Memory efficient for typical result sets (<1000 services)
 
 2. **Manual Pagination:**
+
    - Loads all matching services first
    - Then applies pagination in memory
    - ⚠️ Not ideal for very large datasets (>10,000 services)
@@ -410,22 +435,22 @@ void testGetServicesForCurrentDoctor_withMultipleSpecializations() {
     Employee doctor = createDoctorWithSpecializations(1, 2, 8);
     when(employeeRepository.findByAccount_Username(username))
         .thenReturn(Optional.of(doctor));
-    
+
     DentalService service1 = createService(1, 1); // Spec 1
     DentalService service2 = createService(2, 2); // Spec 2
     DentalService service3 = createService(3, 8); // Spec 8
-    
+
     when(serviceRepository.findWithFilters(any(), eq(1), any(), any()))
         .thenReturn(new PageImpl<>(List.of(service1)));
     when(serviceRepository.findWithFilters(any(), eq(2), any(), any()))
         .thenReturn(new PageImpl<>(List.of(service2)));
     when(serviceRepository.findWithFilters(any(), eq(8), any(), any()))
         .thenReturn(new PageImpl<>(List.of(service3)));
-    
+
     // When
     Page<ServiceResponse> result = serviceService.getServicesForCurrentDoctor(
         0, 10, "serviceId", "ASC", true, null);
-    
+
     // Then
     assertEquals(3, result.getTotalElements());
     assertTrue(result.getContent().stream()
@@ -451,11 +476,13 @@ chmod +x test_doctor_service_filtering.sh
 **Symptom:** API returns `totalElements: 0`
 
 **Possible Causes:**
+
 1. Doctor has no specializations assigned
 2. All services are inactive
 3. No services match keyword filter
 
 **Solution:**
+
 ```sql
 -- Check doctor's specializations
 SELECT e.employee_code, s.specialization_name
@@ -465,9 +492,9 @@ JOIN specializations s ON es.specialization_id = s.specialization_id
 WHERE e.employee_code = 'BS001';
 
 -- Check active services count
-SELECT specialization_id, COUNT(*) 
-FROM dental_services 
-WHERE is_active = true 
+SELECT specialization_id, COUNT(*)
+FROM dental_services
+WHERE is_active = true
 GROUP BY specialization_id;
 ```
 
@@ -478,11 +505,13 @@ GROUP BY specialization_id;
 **Symptom:** `401 Unauthorized`
 
 **Possible Causes:**
+
 1. JWT token expired
 2. Missing `Authorization` header
 3. Invalid token format
 
 **Solution:**
+
 ```bash
 # Check token expiration
 jwt decode $JWT_TOKEN
@@ -498,17 +527,19 @@ curl -v ... | grep Authorization
 **Symptom:** Slow response time (>2s)
 
 **Possible Causes:**
+
 1. Too many specializations (>10)
 2. Large service catalog (>5000 services)
 3. Missing database indexes
 
 **Solution:**
+
 ```sql
 -- Add indexes
-CREATE INDEX idx_services_specialization_active 
+CREATE INDEX idx_services_specialization_active
 ON dental_services(specialization_id, is_active);
 
-CREATE INDEX idx_employee_specializations_emp 
+CREATE INDEX idx_employee_specializations_emp
 ON employee_specializations(employee_id);
 ```
 
@@ -519,11 +550,13 @@ ON employee_specializations(employee_id);
 ### Access Control
 
 ✅ **Protected:**
+
 - JWT token validation (Spring Security)
 - Role-based authorization (`@PreAuthorize`)
 - Employee-account ownership validation
 
 ❌ **Not Implemented:**
+
 - IP whitelisting
 - Rate limiting (consider adding)
 
@@ -537,17 +570,17 @@ ON employee_specializations(employee_id);
 
 ## Changelog
 
-| Version | Date | Changes |
-|---------|------|---------|
-| 1.0 | 2025-11-20 | Initial release - automatic doctor service filtering |
+| Version | Date       | Changes                                              |
+| ------- | ---------- | ---------------------------------------------------- |
+| 1.0     | 2025-11-20 | Initial release - automatic doctor service filtering |
 
 ---
 
 ## Contact & Support
 
-**Backend Team:** [Your Email]  
-**Documentation:** `SEED_DATA_OPTIMIZATION_SUMMARY.md`  
-**Related APIs:** Treatment Plan API 5.4 (Create Custom Plan)  
+**Backend Team:** [Your Email]
+**Documentation:** `SEED_DATA_OPTIMIZATION_SUMMARY.md`
+**Related APIs:** Treatment Plan API 5.4 (Create Custom Plan)
 
 ---
 

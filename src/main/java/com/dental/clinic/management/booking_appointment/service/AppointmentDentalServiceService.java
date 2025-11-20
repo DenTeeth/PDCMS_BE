@@ -31,7 +31,8 @@ import java.util.stream.Collectors;
 
 /**
  * Service layer for managing dental services (Appointment Booking Module)
- * Note: Renamed from DentalServiceService to avoid bean name conflict with Service Module
+ * Note: Renamed from DentalServiceService to avoid bean name conflict with
+ * Service Module
  */
 @Service("appointmentDentalServiceService")
 @RequiredArgsConstructor
@@ -304,7 +305,7 @@ public class AppointmentDentalServiceService {
      * Get services filtered by current logged-in doctor's specializations.
      * This ensures doctors can only select services they are qualified to perform
      * when creating custom treatment plans.
-     * 
+     *
      * Algorithm:
      * 1. Get current username from security context
      * 2. Find employee by username
@@ -313,7 +314,7 @@ public class AppointmentDentalServiceService {
      * 5. Merge and deduplicate results (using serviceId as key)
      * 6. Apply additional filters (isActive, keyword)
      * 7. Sort and paginate results
-     * 
+     *
      * @return Page of services matching ANY of doctor's specializations
      */
     @Transactional(readOnly = true)
@@ -325,7 +326,8 @@ public class AppointmentDentalServiceService {
             Boolean isActive,
             String keyword) {
 
-        log.debug("Request to get services for current doctor - page: {}, size: {}, sortBy: {}, sortDirection: {}, isActive: {}, keyword: {}",
+        log.debug(
+                "Request to get services for current doctor - page: {}, size: {}, sortBy: {}, sortDirection: {}, isActive: {}, keyword: {}",
                 page, size, sortBy, sortDirection, isActive, keyword);
 
         // 1. Get current username from security context

@@ -144,8 +144,8 @@ VALUES
 ('ROLE_PATIENT', 'ROLE_PATIENT', 3, 'Bệnh nhân', FALSE, TRUE, NOW())
 ON CONFLICT (role_id) DO NOTHING;
 
--- Permission modules: ACCOUNT, EMPLOYEE, PATIENT, TREATMENT, APPOINTMENT, 
--- CUSTOMER_MANAGEMENT, SCHEDULE_MANAGEMENT, LEAVE_MANAGEMENT, SYSTEM_CONFIGURATION, 
+-- Permission modules: ACCOUNT, EMPLOYEE, PATIENT, TREATMENT, APPOINTMENT,
+-- CUSTOMER_MANAGEMENT, SCHEDULE_MANAGEMENT, LEAVE_MANAGEMENT, SYSTEM_CONFIGURATION,
 -- HOLIDAY, ROOM_MANAGEMENT, SERVICE_MANAGEMENT, TREATMENT_PLAN
 -- (Chi tiết permissions xem file gốc - giữ nguyên cấu trúc)
 
@@ -171,7 +171,7 @@ INSERT INTO role_permissions (role_id, permission_id) VALUES
 ('ROLE_DENTIST', 'VIEW_PATIENT'), ('ROLE_DENTIST', 'UPDATE_PATIENT'),
 ('ROLE_DENTIST', 'VIEW_TREATMENT'), ('ROLE_DENTIST', 'CREATE_TREATMENT'), ('ROLE_DENTIST', 'UPDATE_TREATMENT'),
 ('ROLE_DENTIST', 'VIEW_APPOINTMENT_OWN'), ('ROLE_DENTIST', 'UPDATE_APPOINTMENT_STATUS'), ('ROLE_DENTIST', 'DELAY_APPOINTMENT'),
-('ROLE_DENTIST', 'VIEW_TREATMENT_PLAN_OWN'), ('ROLE_DENTIST', 'CREATE_TREATMENT_PLAN'), 
+('ROLE_DENTIST', 'VIEW_TREATMENT_PLAN_OWN'), ('ROLE_DENTIST', 'CREATE_TREATMENT_PLAN'),
 ('ROLE_DENTIST', 'UPDATE_TREATMENT_PLAN'), ('ROLE_DENTIST', 'DELETE_TREATMENT_PLAN'),
 ('ROLE_DENTIST', 'VIEW_SERVICE')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
@@ -372,7 +372,7 @@ ON CONFLICT (category_code) DO NOTHING;
 -- 1: Chỉnh nha, 2: Nội nha, 3: Nha chu, 4: Phục hồi, 5: Phẫu thuật, 6: Trẻ em, 7: Thẩm mỹ, 8: STANDARD
 
 INSERT INTO services (service_code, service_name, description, default_duration_minutes, default_buffer_minutes, price, specialization_id, category_id, display_order, is_active, created_at)
-SELECT vals.service_code, vals.service_name, vals.description, vals.duration, vals.buffer, vals.price, vals.spec_id, 
+SELECT vals.service_code, vals.service_name, vals.description, vals.duration, vals.buffer, vals.price, vals.spec_id,
        sc.category_id, vals.display_order, vals.is_active, vals.created_at
 FROM (VALUES
 -- Category A: General
@@ -411,9 +411,9 @@ INSERT INTO room_services (room_id, service_id, created_at)
 SELECT r.room_id, s.service_id, NOW()
 FROM rooms r
 CROSS JOIN services s
-WHERE (r.room_type = 'STANDARD' AND s.service_code IN ('GEN_EXAM', 'SCALING_L1', 'FILLING_COMP', 'EXTRACT_NORM', 
+WHERE (r.room_type = 'STANDARD' AND s.service_code IN ('GEN_EXAM', 'SCALING_L1', 'FILLING_COMP', 'EXTRACT_NORM',
        'ENDO_TREAT_POST', 'BLEACH_INOFFICE', 'CROWN_TITAN', 'VENEER_EMAX', 'ORTHO_ADJUST', 'ORTHO_BRACES_ON'))
-   OR (r.room_type = 'IMPLANT' AND s.service_code IN ('IMPL_CONSULT', 'IMPL_SURGERY_KR', 'IMPL_CROWN_ZIR', 
+   OR (r.room_type = 'IMPLANT' AND s.service_code IN ('IMPL_CONSULT', 'IMPL_SURGERY_KR', 'IMPL_CROWN_ZIR',
        'EXTRACT_WISDOM_L2', 'GEN_EXAM'))
 ON CONFLICT (room_id, service_id) DO NOTHING;
 
@@ -452,9 +452,9 @@ ON CONFLICT (template_code) DO NOTHING;
 -- ============================================
 
 -- Plan 1: Orthodontics (BN-1001, Doctor EMP001)
-INSERT INTO patient_treatment_plans (plan_id, plan_code, plan_name, patient_id, created_by, status, approval_status, 
+INSERT INTO patient_treatment_plans (plan_id, plan_code, plan_name, patient_id, created_by, status, approval_status,
     start_date, expected_end_date, total_price, discount_amount, final_cost, payment_type, approved_by, approved_at, created_at)
-VALUES (1, 'PLAN-20251001-001', 'Niềng răng Mắc cài Kim loại', 1, 1, 'IN_PROGRESS', 'APPROVED', 
+VALUES (1, 'PLAN-20251001-001', 'Niềng răng Mắc cài Kim loại', 1, 1, 'IN_PROGRESS', 'APPROVED',
     '2025-10-01', '2027-10-01', 35000000, 0, 35000000, 'INSTALLMENT', 11, '2025-10-02 09:00:00', NOW())
 ON CONFLICT (plan_id) DO NOTHING;
 
@@ -478,10 +478,10 @@ ON CONFLICT (plan_id) DO NOTHING;
 -- 20. SAMPLE APPOINTMENTS
 -- ============================================
 
-INSERT INTO appointments (appointment_id, appointment_code, patient_id, employee_id, room_id, appointment_start_time, 
+INSERT INTO appointments (appointment_id, appointment_code, patient_id, employee_id, room_id, appointment_start_time,
     appointment_end_time, expected_duration_minutes, status, notes, created_by, created_at, updated_at)
 VALUES
-(1, 'APT-20251104-001', 1, 1, 'GHE251103001', '2025-11-04 09:00:00', '2025-11-04 09:45:00', 
+(1, 'APT-20251104-001', 1, 1, 'GHE251103001', '2025-11-04 09:00:00', '2025-11-04 09:45:00',
     45, 'SCHEDULED', 'Khám tổng quát + Lấy cao răng', 5, NOW(), NOW()),
 (2, 'APT-20251106-001', 2, 1, 'GHE251103002', '2025-11-06 09:00:00', '2025-11-06 09:30:00',
     30, 'SCHEDULED', 'Khám định kỳ', 5, NOW(), NOW())

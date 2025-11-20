@@ -1,6 +1,7 @@
 # FLOW 2 Test Report: Custom Treatment Plan → Booking
-**Date**: November 20, 2025  
-**Branch**: feat/BE-501-manage-treatment-plans  
+
+**Date**: November 20, 2025
+**Branch**: feat/BE-501-manage-treatment-plans
 **Test Focus**: Custom treatment plan creation with NEW API `/my-specializations` and specialization validation
 
 ---
@@ -10,6 +11,7 @@
 ✅ **FLOW 2 COMPLETED SUCCESSFULLY** with NEW validation logic working perfectly!
 
 ### Key Achievements:
+
 1. ✅ NEW API `/my-specializations` returns correctly filtered services
 2. ✅ Custom plan creation succeeds with compatible services
 3. ✅ Specialization validation **BLOCKS** incompatible services (400 error)
@@ -17,6 +19,7 @@
 5. ✅ Plan submission for review workflow working
 
 ### Test Coverage:
+
 - **Positive Test**: Custom plan with compatible services ✅ PASSED
 - **Negative Test**: Single incompatible service ✅ PASSED (rejected)
 - **Negative Test**: Multiple incompatible services ✅ PASSED (all reported)
@@ -27,17 +30,20 @@
 ## Test Environment
 
 ### Infrastructure
+
 - **Database**: PostgreSQL 13.4 (Docker container `postgres-dental`)
 - **Application**: Spring Boot 3.2.10 (port 8080)
 - **Seed Data**: dental-clinic-seed-data-optimized.sql (500 lines)
 
 ### Test Accounts
-| Username | Password | Role | Employee Code | Specializations |
-|----------|----------|------|---------------|-----------------|
-| bacsi2 | 123456 | DENTIST | EMP002 | 2 (Nội nha), 7 (Răng thẩm mỹ), 8 (STANDARD) |
-| quanli1 | 123456 | MANAGER | EMP011 | N/A (Manager role) |
+
+| Username | Password | Role    | Employee Code | Specializations                             |
+| -------- | -------- | ------- | ------------- | ------------------------------------------- |
+| bacsi2   | 123456   | DENTIST | EMP002        | 2 (Nội nha), 7 (Răng thẩm mỹ), 8 (STANDARD) |
+| quanli1  | 123456   | MANAGER | EMP011        | N/A (Manager role)                          |
 
 ### Test Patient
+
 - **Patient Code**: BN-1001
 - **Full Name**: Đoàn Thanh Phong
 
@@ -48,6 +54,7 @@
 ### Step 1: Login bacsi2 ✅ PASSED
 
 **Request**:
+
 ```bash
 POST /api/v1/auth/login
 {
@@ -57,6 +64,7 @@ POST /api/v1/auth/login
 ```
 
 **Response**:
+
 ```json
 {
   "token": "eyJhbGci...",
@@ -69,6 +77,7 @@ POST /api/v1/auth/login
 ```
 
 **Verification**:
+
 - ✅ Token received: Valid JWT
 - ✅ Employee Code: EMP002 (Trịnh Công Thái)
 - ✅ Specializations: 2 (Nội nha), 7 (Răng thẩm mỹ), 8 (STANDARD)
@@ -78,12 +87,14 @@ POST /api/v1/auth/login
 ### Step 2: Get Compatible Services via NEW API ✅ PASSED
 
 **Request**:
+
 ```bash
 GET /api/v1/booking/services/my-specializations?page=0&size=10
 Authorization: Bearer {bacsi2_token}
 ```
 
 **Response Summary**:
+
 ```json
 {
   "content": [
@@ -93,7 +104,7 @@ Authorization: Bearer {bacsi2_token}
       "serviceName": "Điều trị tủy răng sau",
       "specializationId": 2,
       "specializationName": "Nội nha",
-      "price": 2000000.00
+      "price": 2000000.0
     },
     {
       "serviceId": 3,
@@ -101,7 +112,7 @@ Authorization: Bearer {bacsi2_token}
       "serviceName": "Điều trị tủy răng trước",
       "specializationId": 2,
       "specializationName": "Nội nha",
-      "price": 1500000.00
+      "price": 1500000.0
     },
     {
       "serviceId": 8,
@@ -109,7 +120,7 @@ Authorization: Bearer {bacsi2_token}
       "serviceName": "Đắp kẽ răng thưa Composite",
       "specializationId": 7,
       "specializationName": "Răng thẩm mỹ",
-      "price": 500000.00
+      "price": 500000.0
     },
     {
       "serviceId": 13,
@@ -117,7 +128,7 @@ Authorization: Bearer {bacsi2_token}
       "serviceName": "Chụp X-Quang quanh chóp",
       "specializationId": 8,
       "specializationName": "STANDARD - Y tế cơ bản",
-      "price": 50000.00
+      "price": 50000.0
     },
     {
       "serviceId": 14,
@@ -125,19 +136,19 @@ Authorization: Bearer {bacsi2_token}
       "serviceName": "Khám tổng quát & Tư vấn",
       "specializationId": 8,
       "specializationName": "STANDARD - Y tế cơ bản",
-      "price": 100000.00
+      "price": 100000.0
     },
     {
       "serviceCode": "VENEER_EMAX",
       "specializationId": 7,
       "specializationName": "Răng thẩm mỹ",
-      "price": 6000000.00
+      "price": 6000000.0
     },
     {
       "serviceCode": "BLEACH_INOFFICE",
       "specializationId": 7,
       "specializationName": "Răng thẩm mỹ",
-      "price": 1200000.00
+      "price": 1200000.0
     }
   ],
   "totalElements": 12,
@@ -146,6 +157,7 @@ Authorization: Bearer {bacsi2_token}
 ```
 
 **Verification**:
+
 - ✅ Total Services Returned: **12** (filtered from 54 total services)
 - ✅ All services match bacsi2's specializations: 2, 7, or 8
 - ✅ NO services with other specializations (e.g., 1-Chỉnh nha, 3-Nha chu, 4-Phục hồi răng)
@@ -158,6 +170,7 @@ Authorization: Bearer {bacsi2_token}
 ### Step 3: Create Custom Treatment Plan (POSITIVE TEST) ✅ PASSED
 
 **Request**:
+
 ```bash
 POST /api/v1/patients/BN-1001/treatment-plans/custom
 Authorization: Bearer {bacsi2_token}
@@ -196,6 +209,7 @@ Content-Type: application/json
 ```
 
 **Response**:
+
 ```json
 {
   "planId": 12,
@@ -212,9 +226,9 @@ Content-Type: application/json
     "fullName": "Đoàn Thanh Phong"
   },
   "startDate": "2025-11-25",
-  "totalPrice": 2100000.00,
-  "discountAmount": 0.00,
-  "finalCost": 2100000.00,
+  "totalPrice": 2100000.0,
+  "discountAmount": 0.0,
+  "finalCost": 2100000.0,
   "paymentType": "PHASED",
   "progressSummary": {
     "totalPhases": 1,
@@ -234,7 +248,7 @@ Content-Type: application/json
           "sequenceNumber": 1,
           "itemName": "Khám tổng quát & Tư vấn",
           "serviceCode": "GEN_EXAM",
-          "price": 100000.00,
+          "price": 100000.0,
           "status": "PENDING"
         },
         {
@@ -242,7 +256,7 @@ Content-Type: application/json
           "sequenceNumber": 2,
           "itemName": "Điều trị tủy răng sau",
           "serviceCode": "ENDO_TREAT_POST",
-          "price": 2000000.00,
+          "price": 2000000.0,
           "status": "PENDING"
         }
       ]
@@ -252,6 +266,7 @@ Content-Type: application/json
 ```
 
 **Verification**:
+
 - ✅ Plan Created: ID=12, Code=PLAN-20251120-002
 - ✅ Status: PENDING (DRAFT approval status)
 - ✅ Total Price: 2,100,000 VND (100k + 2M)
@@ -265,6 +280,7 @@ Content-Type: application/json
 ### Step 4: Test Validation - Single Incompatible Service (NEGATIVE TEST) ✅ PASSED
 
 **Request**:
+
 ```bash
 POST /api/v1/patients/BN-1001/treatment-plans/custom
 Authorization: Bearer {bacsi2_token}
@@ -294,6 +310,7 @@ Authorization: Bearer {bacsi2_token}
 ```
 
 **Response**:
+
 ```json
 {
   "statusCode": 400,
@@ -304,6 +321,7 @@ Authorization: Bearer {bacsi2_token}
 ```
 
 **Verification**:
+
 - ✅ Status Code: **400 Bad Request** (correct error type)
 - ✅ Validation Triggered: Service requires specialization 1 (Chỉnh nha)
 - ✅ Doctor Lacks: bacsi2 has [2, 7, 8] but NOT 1
@@ -318,6 +336,7 @@ Authorization: Bearer {bacsi2_token}
 ### Step 5: Test Validation - Multiple Incompatible Services ✅ PASSED
 
 **Request**:
+
 ```bash
 POST /api/v1/patients/BN-1001/treatment-plans/custom
 Authorization: Bearer {bacsi2_token}
@@ -358,6 +377,7 @@ Authorization: Bearer {bacsi2_token}
 ```
 
 **Response**:
+
 ```json
 {
   "statusCode": 400,
@@ -368,6 +388,7 @@ Authorization: Bearer {bacsi2_token}
 ```
 
 **Verification**:
+
 - ✅ Status Code: 400 Bad Request
 - ✅ **Comprehensive Validation**: Reports ALL 2 incompatible services
 - ✅ GEN_EXAM Allowed: Compatible service not blocked
@@ -379,6 +400,7 @@ Authorization: Bearer {bacsi2_token}
 ### Step 6: Submit Plan for Review ✅ PASSED
 
 **Request**:
+
 ```bash
 PATCH /api/v1/patient-treatment-plans/PLAN-20251120-002/submit-for-review
 Authorization: Bearer {bacsi2_token}
@@ -389,20 +411,22 @@ Authorization: Bearer {bacsi2_token}
 ```
 
 **Response**:
+
 ```json
 {
   "planId": 12,
   "planCode": "PLAN-20251120-002",
   "status": "PENDING",
   "approvalStatus": "PENDING_REVIEW",
-  "doctor": {"employeeCode": "EMP002", "fullName": "Trịnh Công Thái"},
-  "patient": {"patientCode": "BN-1001", "fullName": "Đoàn Thanh Phong"},
-  "totalPrice": 2100000.00,
-  "finalCost": 2100000.00
+  "doctor": { "employeeCode": "EMP002", "fullName": "Trịnh Công Thái" },
+  "patient": { "patientCode": "BN-1001", "fullName": "Đoàn Thanh Phong" },
+  "totalPrice": 2100000.0,
+  "finalCost": 2100000.0
 }
 ```
 
 **Verification**:
+
 - ✅ Approval Status Changed: DRAFT → **PENDING_REVIEW**
 - ✅ Status Remains: PENDING (awaiting manager approval)
 - ✅ Plan Details: Unchanged (price, services, patient)
@@ -416,6 +440,7 @@ Authorization: Bearer {bacsi2_token}
 **Location**: `CustomTreatmentPlanService.java` (lines 309-401)
 
 **Validation Flow**:
+
 ```
 1. Extract doctor's specialization IDs from JWT token
 2. Collect all service codes from all phases in the request
@@ -444,38 +469,41 @@ Authorization: Bearer {bacsi2_token}
 
 ## Comparison: FLOW 1 vs FLOW 2
 
-| Aspect | FLOW 1 (Template) | FLOW 2 (Custom) |
-|--------|-------------------|-----------------|
-| **Plan Type** | Template-based | Custom (manual service selection) |
-| **Service Selection** | Pre-defined in template | Doctor selects from filtered list |
-| **API Used** | `/treatment-plan-templates` | `/my-specializations` (NEW) |
-| **Validation Trigger** | Template selection | Service addition to plan |
-| **Validation Logic** | Check doctor has template's specialization | Check doctor has each service's specialization |
-| **Error Granularity** | Template-level (single check) | Service-level (per-service check) |
-| **Error Reporting** | Single template incompatibility | Lists ALL incompatible services |
-| **Frontend Support** | Filter templates by doctor specialization | Use `/my-specializations` to auto-filter services |
-| **User Experience** | Simpler (fewer choices) | More flexible (custom plans) |
-| **Validation File** | `TreatmentPlanCreationService.java` | `CustomTreatmentPlanService.java` |
+| Aspect                 | FLOW 1 (Template)                          | FLOW 2 (Custom)                                   |
+| ---------------------- | ------------------------------------------ | ------------------------------------------------- |
+| **Plan Type**          | Template-based                             | Custom (manual service selection)                 |
+| **Service Selection**  | Pre-defined in template                    | Doctor selects from filtered list                 |
+| **API Used**           | `/treatment-plan-templates`                | `/my-specializations` (NEW)                       |
+| **Validation Trigger** | Template selection                         | Service addition to plan                          |
+| **Validation Logic**   | Check doctor has template's specialization | Check doctor has each service's specialization    |
+| **Error Granularity**  | Template-level (single check)              | Service-level (per-service check)                 |
+| **Error Reporting**    | Single template incompatibility            | Lists ALL incompatible services                   |
+| **Frontend Support**   | Filter templates by doctor specialization  | Use `/my-specializations` to auto-filter services |
+| **User Experience**    | Simpler (fewer choices)                    | More flexible (custom plans)                      |
+| **Validation File**    | `TreatmentPlanCreationService.java`        | `CustomTreatmentPlanService.java`                 |
 
 ---
 
 ## NEW API `/my-specializations` Analysis
 
 ### Purpose
+
 Automatically filter services based on authenticated doctor's specializations extracted from JWT token.
 
 ### Advantages over Old API
-| Feature | Old API (`/services?specializationId={id}`) | NEW API (`/my-specializations`) |
-|---------|---------------------------------------------|----------------------------------|
-| **Authentication** | Optional | **Required** (JWT token) |
-| **Specialization Param** | Manual parameter | **Automatic** from token |
-| **Multi-Specialization** | Single ID per request | **All doctor's specializations** |
-| **Frontend Complexity** | FE must know doctor's specializations | **Zero config** needed |
-| **Security** | Can query any specialization | **Only doctor's own** specializations |
-| **Use Case** | Public service browsing | **Doctor-specific** service selection |
-| **Response Filtering** | Single specialization | **OR logic** across all doctor's specs |
+
+| Feature                  | Old API (`/services?specializationId={id}`) | NEW API (`/my-specializations`)        |
+| ------------------------ | ------------------------------------------- | -------------------------------------- |
+| **Authentication**       | Optional                                    | **Required** (JWT token)               |
+| **Specialization Param** | Manual parameter                            | **Automatic** from token               |
+| **Multi-Specialization** | Single ID per request                       | **All doctor's specializations**       |
+| **Frontend Complexity**  | FE must know doctor's specializations       | **Zero config** needed                 |
+| **Security**             | Can query any specialization                | **Only doctor's own** specializations  |
+| **Use Case**             | Public service browsing                     | **Doctor-specific** service selection  |
+| **Response Filtering**   | Single specialization                       | **OR logic** across all doctor's specs |
 
 ### Integration Recommendation
+
 ```javascript
 // OLD APPROACH (Manual)
 const doctorSpecs = await getDoctorProfile(); // [2, 7, 8]
@@ -487,8 +515,8 @@ for (const specId of doctorSpecs) {
 // Problem: Multiple API calls, duplicate handling, complexity
 
 // NEW APPROACH (Automatic)
-const services = await fetch('/my-specializations', {
-  headers: { 'Authorization': `Bearer ${token}` }
+const services = await fetch("/my-specializations", {
+  headers: { Authorization: `Bearer ${token}` },
 });
 // Benefit: Single call, automatic filtering, no duplication
 ```
@@ -498,21 +526,25 @@ const services = await fetch('/my-specializations', {
 ## Key Findings
 
 ### 1. Validation Logic is Robust ✅
+
 - **Fail-fast approach**: Errors caught at plan creation, not booking
 - **Comprehensive checking**: ALL services validated, ALL errors reported
 - **Clear error messages**: Developer-friendly with actionable details
 
 ### 2. NEW API Design is Excellent ✅
+
 - **Zero-configuration**: FE doesn't need to know doctor's specializations
 - **Performance optimized**: Single query with OR logic
 - **Security enhanced**: Doctors can only see their compatible services
 
 ### 3. Error Handling is Production-Ready ✅
+
 - **HTTP 400 Bad Request**: Correct status code for validation errors
 - **Detailed messages**: Lists doctor's specializations and missing requirements
 - **Structured response**: Consistent error format across all endpoints
 
 ### 4. User Experience Considerations 💡
+
 - **Positive**: Clear errors help developers understand restrictions
 - **Negative**: Doctors might try to create plans with incompatible services if FE doesn't use NEW API
 - **Recommendation**: FE MUST use `/my-specializations` to auto-filter dropdown/selection UI
@@ -522,51 +554,58 @@ const services = await fetch('/my-specializations', {
 ## Recommendations for Frontend Implementation
 
 ### 1. Service Selection UI (HIGH PRIORITY)
+
 ```javascript
 // When doctor creates custom treatment plan:
 // Step 1: Use NEW API to get compatible services
-const compatibleServices = await api.get('/booking/services/my-specializations');
+const compatibleServices = await api.get(
+  "/booking/services/my-specializations"
+);
 
 // Step 2: Show ONLY these services in dropdown/selection UI
-<Select 
-  options={compatibleServices} 
+<Select
+  options={compatibleServices}
   placeholder="Select compatible services only"
-/>
+/>;
 
 // Step 3: NO manual specialization filtering needed
 // Backend handles it automatically via JWT token
 ```
 
 ### 2. Error Handling
+
 ```javascript
 // Handle validation errors gracefully
 try {
-  await api.post('/treatment-plans/custom', planData);
+  await api.post("/treatment-plans/custom", planData);
 } catch (error) {
-  if (error.status === 400 && error.data.message.includes('specialization')) {
+  if (error.status === 400 && error.data.message.includes("specialization")) {
     // Show user-friendly error
     showError({
-      title: 'Incompatible Services Selected',
-      message: 'Some services require specializations you don\'t have.',
+      title: "Incompatible Services Selected",
+      message: "Some services require specializations you don't have.",
       details: error.data.message, // Show backend's detailed message
-      action: 'Please use the service filter to see only compatible services.'
+      action: "Please use the service filter to see only compatible services.",
     });
   }
 }
 ```
 
 ### 3. Pre-validation (OPTIONAL)
+
 ```javascript
 // Optional: Client-side validation before API call
 function validatePlanServices(plan, doctorSpecs) {
   const incompatible = plan.phases
-    .flatMap(p => p.items)
-    .filter(item => {
-      const service = allServices.find(s => s.code === item.serviceCode);
-      return service.specializationId && 
-             !doctorSpecs.includes(service.specializationId);
+    .flatMap((p) => p.items)
+    .filter((item) => {
+      const service = allServices.find((s) => s.code === item.serviceCode);
+      return (
+        service.specializationId &&
+        !doctorSpecs.includes(service.specializationId)
+      );
     });
-  
+
   if (incompatible.length > 0) {
     // Warn user before API call
     return { valid: false, incompatible };
@@ -580,23 +619,25 @@ function validatePlanServices(plan, doctorSpecs) {
 ## Test Data Summary
 
 ### Services by Specialization
-| Specialization ID | Name | Services Count | Example Services |
-|-------------------|------|----------------|------------------|
-| 1 | Chỉnh nha | 12 | ORTHO_RETAINER_REMOV, ORTHO_BRACES_OFF |
-| 2 | Nội nha | 8 | ENDO_TREAT_POST, ENDO_TREAT_ANT, FILLING_COMP |
-| 3 | Nha chu | 6 | SCALING_L1, SCALING_L2, PERIO_SURGERY |
-| 4 | Phục hồi răng | 10 | CROWN_CERCON, CROWN_EMAX, BRIDGE_METAL |
-| 5 | Phẫu thuật | 5 | EXT_SIMPLE, EXT_SURG, IMPLANT_PLACE |
-| 6 | Trẻ em | 4 | PEDO_EXAM, SEALANT_APP |
-| 7 | Răng thẩm mỹ | 7 | VENEER_EMAX, BLEACH_INOFFICE, FILLING_GAP |
-| 8 | STANDARD | 2 | GEN_EXAM, GEN_XRAY_PERI |
+
+| Specialization ID | Name          | Services Count | Example Services                              |
+| ----------------- | ------------- | -------------- | --------------------------------------------- |
+| 1                 | Chỉnh nha     | 12             | ORTHO_RETAINER_REMOV, ORTHO_BRACES_OFF        |
+| 2                 | Nội nha       | 8              | ENDO_TREAT_POST, ENDO_TREAT_ANT, FILLING_COMP |
+| 3                 | Nha chu       | 6              | SCALING_L1, SCALING_L2, PERIO_SURGERY         |
+| 4                 | Phục hồi răng | 10             | CROWN_CERCON, CROWN_EMAX, BRIDGE_METAL        |
+| 5                 | Phẫu thuật    | 5              | EXT_SIMPLE, EXT_SURG, IMPLANT_PLACE           |
+| 6                 | Trẻ em        | 4              | PEDO_EXAM, SEALANT_APP                        |
+| 7                 | Răng thẩm mỹ  | 7              | VENEER_EMAX, BLEACH_INOFFICE, FILLING_GAP     |
+| 8                 | STANDARD      | 2              | GEN_EXAM, GEN_XRAY_PERI                       |
 
 ### Doctor Specializations Matrix
-| Doctor | Specialization 1 | Specialization 2 | Specialization 3 | Compatible Services |
-|--------|------------------|------------------|------------------|---------------------|
-| bacsi1 (EMP001) | 3 (Nha chu) | 4 (Phục hồi răng) | 8 (STANDARD) | 18 services |
-| bacsi2 (EMP002) | 2 (Nội nha) | 7 (Răng thẩm mỹ) | 8 (STANDARD) | **12 services** (tested) |
-| bacsi3 (EMP003) | 1 (Chỉnh nha) | 8 (STANDARD) | - | 14 services |
+
+| Doctor          | Specialization 1 | Specialization 2  | Specialization 3 | Compatible Services      |
+| --------------- | ---------------- | ----------------- | ---------------- | ------------------------ |
+| bacsi1 (EMP001) | 3 (Nha chu)      | 4 (Phục hồi răng) | 8 (STANDARD)     | 18 services              |
+| bacsi2 (EMP002) | 2 (Nội nha)      | 7 (Răng thẩm mỹ)  | 8 (STANDARD)     | **12 services** (tested) |
+| bacsi3 (EMP003) | 1 (Chỉnh nha)    | 8 (STANDARD)      | -                | 14 services              |
 
 ---
 
@@ -605,6 +646,7 @@ function validatePlanServices(plan, doctorSpecs) {
 ### FLOW 2 Status: ✅ **100% SUCCESSFUL**
 
 **Test Coverage**: 5/5 steps passed
+
 1. ✅ Login bacsi2
 2. ✅ Get compatible services via NEW API
 3. ✅ Create custom plan with compatible services
@@ -612,6 +654,7 @@ function validatePlanServices(plan, doctorSpecs) {
 5. ✅ Submit plan for review
 
 ### Critical Success Factors:
+
 1. **NEW Validation Logic**: Prevents doctors from creating plans they cannot execute
 2. **NEW API Design**: Simplifies FE development with automatic filtering
 3. **Error Quality**: Detailed messages enable rapid debugging and user guidance
@@ -620,12 +663,14 @@ function validatePlanServices(plan, doctorSpecs) {
 ### Production Readiness: ✅ **READY**
 
 **Conditions**:
+
 - ✅ Backend validation: Implemented and tested
 - ✅ API endpoints: Working correctly
 - ✅ Error handling: Production-quality messages
 - ⚠️ **Frontend integration required**: Must use `/my-specializations` endpoint
 
 ### Impact Assessment:
+
 - **Positive**: Significantly improved data integrity and clinical workflow compliance
 - **Breaking Change**: Plans that previously succeeded may now fail (intended behavior)
 - **User Training**: Doctors need to understand specialization restrictions
@@ -636,6 +681,7 @@ function validatePlanServices(plan, doctorSpecs) {
 ## Next Steps
 
 ### Immediate (Before Production)
+
 1. ✅ DONE: Implement validation logic
 2. ✅ DONE: Test positive and negative cases
 3. ✅ DONE: Verify error messages
@@ -645,12 +691,14 @@ function validatePlanServices(plan, doctorSpecs) {
 7. ⏳ TODO: Create user guide for doctors
 
 ### Short-term (Post-Production)
+
 1. Monitor validation failure rates
 2. Collect user feedback on error messages
 3. Analyze most common specialization mismatches
 4. Consider UX improvements (e.g., visual indicators in UI)
 
 ### Long-term
+
 1. Add analytics dashboard for specialization coverage
 2. Implement specialization suggestions (AI-powered)
 3. Create specialization training recommendations
@@ -663,6 +711,7 @@ function validatePlanServices(plan, doctorSpecs) {
 ### A. Test Commands Reference
 
 **Login bacsi2**:
+
 ```bash
 curl -X POST "http://localhost:8080/api/v1/auth/login" \
   -H "Content-Type: application/json" \
@@ -670,12 +719,14 @@ curl -X POST "http://localhost:8080/api/v1/auth/login" \
 ```
 
 **Get Compatible Services**:
+
 ```bash
 curl -X GET "http://localhost:8080/api/v1/booking/services/my-specializations?page=0&size=10" \
   -H "Authorization: Bearer {token}"
 ```
 
 **Create Custom Plan**:
+
 ```bash
 curl -X POST "http://localhost:8080/api/v1/patients/BN-1001/treatment-plans/custom" \
   -H "Authorization: Bearer {token}" \
@@ -684,6 +735,7 @@ curl -X POST "http://localhost:8080/api/v1/patients/BN-1001/treatment-plans/cust
 ```
 
 **Submit for Review**:
+
 ```bash
 curl -X PATCH "http://localhost:8080/api/v1/patient-treatment-plans/{planCode}/submit-for-review" \
   -H "Authorization: Bearer {token}" \
@@ -694,8 +746,9 @@ curl -X PATCH "http://localhost:8080/api/v1/patient-treatment-plans/{planCode}/s
 ### B. Database Queries Reference
 
 **Check Doctor Specializations**:
+
 ```sql
-SELECT e.employee_code, e.first_name, e.last_name, 
+SELECT e.employee_code, e.first_name, e.last_name,
        s.specialization_id, s.specialization_name
 FROM employees e
 JOIN employee_specializations es ON e.employee_id = es.employee_id
@@ -704,6 +757,7 @@ WHERE e.employee_code = 'EMP002';
 ```
 
 **Check Services by Specialization**:
+
 ```sql
 SELECT service_code, service_name, specialization_id
 FROM services
@@ -711,6 +765,7 @@ WHERE specialization_id = 2;
 ```
 
 **Check Treatment Plan Details**:
+
 ```sql
 SELECT plan_code, plan_name, approval_status, total_cost
 FROM patient_treatment_plans
@@ -721,12 +776,13 @@ WHERE plan_code = 'PLAN-20251120-002';
 
 ## Document Metadata
 
-**Author**: GitHub Copilot (AI Assistant)  
-**Test Engineer**: User + AI Pair Programming  
-**Date**: November 20, 2025  
-**Version**: 1.0  
-**Status**: Final  
+**Author**: GitHub Copilot (AI Assistant)
+**Test Engineer**: User + AI Pair Programming
+**Date**: November 20, 2025
+**Version**: 1.0
+**Status**: Final
 **Related Documents**:
+
 - SPECIALIZATION_VALIDATION_FIX.md
 - DOCTOR_SERVICE_FILTERING_API.md
 - TEST_REPORT_2025-11-20.md (FLOW 1)
