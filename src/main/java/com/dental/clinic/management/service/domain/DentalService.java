@@ -1,5 +1,6 @@
 package com.dental.clinic.management.service.domain;
 
+import com.dental.clinic.management.specialization.domain.Specialization;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -9,6 +10,7 @@ import java.time.LocalDateTime;
 /**
  * Entity representing a dental service
  * V17: Added category_id FK and display_order for grouping
+ * V21.4: Added specialization FK for doctor qualification validation
  */
 @Entity
 @Table(name = "services")
@@ -45,6 +47,15 @@ public class DentalService {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     private ServiceCategory category;
+
+    /**
+     * V21.4: Link to required specialization for performing this service
+     * If NULL, service can be performed by any doctor (general service)
+     * If NOT NULL, doctor must have this specialization to perform service
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "specialization_id", foreignKey = @ForeignKey(name = "fk_service_specialization"))
+    private Specialization specialization;
 
     /**
      * V17: Display order within category (for UI ordering)

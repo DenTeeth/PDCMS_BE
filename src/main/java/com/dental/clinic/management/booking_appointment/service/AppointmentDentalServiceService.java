@@ -6,19 +6,28 @@ import com.dental.clinic.management.booking_appointment.dto.request.UpdateServic
 import com.dental.clinic.management.booking_appointment.dto.response.ServiceResponse;
 import com.dental.clinic.management.booking_appointment.mapper.ServiceMapper;
 import com.dental.clinic.management.booking_appointment.repository.BookingDentalServiceRepository;
+import com.dental.clinic.management.employee.domain.Employee;
+import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.exception.validation.BadRequestAlertException;
 import com.dental.clinic.management.exception.DuplicateResourceException;
 import com.dental.clinic.management.exception.ResourceNotFoundException;
 import com.dental.clinic.management.specialization.domain.Specialization;
 import com.dental.clinic.management.specialization.repository.SpecializationRepository;
+import com.dental.clinic.management.utils.security.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Service layer for managing dental services (Appointment Booking Module)
@@ -31,6 +40,7 @@ public class AppointmentDentalServiceService {
 
     private final BookingDentalServiceRepository serviceRepository;
     private final SpecializationRepository specializationRepository;
+    private final EmployeeRepository employeeRepository;
     private final ServiceMapper serviceMapper;
 
     private static final int MAX_PAGE_SIZE = 100;
@@ -288,5 +298,133 @@ public class AppointmentDentalServiceService {
         serviceRepository.save(service);
 
         log.info("Activated service ID: {}", serviceId);
+    }
+
+    /**
+     * Get services filtered by current logged-in doctor's specializations.
+     * This ensures doctors can only select services they are qualified to perform
+     * when creating custom treatment plans.
+     * 
+     * Algorithm:
+     * 1. Get current username from security context
+     * 2. Find employee by username
+     * 3. Extract employee's specialization IDs
+     * 4. For each specializationId, query services
+     * 5. Merge and deduplicate results (using serviceId as key)
+     * 6. Apply additional filters (isActive, keyword)
+     * 7. Sort and paginate results
+     * 
+     * @return Page of services matching ANY of doctor's specializations
+     */
+    @Transactional(readOnly = true)
+    public Page<ServiceResponse> getServicesForCurrentDoctor(
+            int page,
+            int size,
+            String sortBy,
+            String sortDirection,
+            Boolean isActive,
+            String keyword) {
+
+        log.debug("Request to get services for current doctor - page: {}, size: {}, sortBy: {}, sortDirection: {}, isActive: {}, keyword: {}",
+                page, size, sortBy, sortDirection, isActive, keyword);
+
+        // 1. Get current username from security context
+        String username = SecurityUtil.getCurrentUserLogin()
+                .orElseThrow(() -> new BadRequestAlertException(
+                        "No authenticated user found",
+                        "security",
+                        "UNAUTHENTICATED"));
+
+        // 2. Find employee by username
+        Employee employee = employeeRepository.findByAccount_Username(username)
+                .orElseThrow(() -> new BadRequestAlertException(
+                        "Employee not found for username: " + username,
+                        "employee",
+                        "EMPLOYEE_NOT_FOUND"));
+
+        // 3. Extract employee's specialization IDs
+        Set<Integer> specializationIds = employee.getSpecializations()
+                .stream()
+                .map(Specialization::getSpecializationId)
+                .collect(Collectors.toSet());
+
+        log.debug("Employee {} has {} specializations: {}",
+                employee.getEmployeeCode(),
+                specializationIds.size(),
+                specializationIds);
+
+        // If employee has no specializations, return empty page
+        if (specializationIds.isEmpty()) {
+            log.warn("Employee {} has no specializations - returning empty service list",
+                    employee.getEmployeeCode());
+            return Page.empty();
+        }
+
+        // 4-6. Query services matching ANY of the specializations
+        // Validate and adjust page size
+        if (size > MAX_PAGE_SIZE) {
+            size = MAX_PAGE_SIZE;
+        }
+        if (size <= 0) {
+            size = DEFAULT_PAGE_SIZE;
+        }
+
+        // Create sort
+        Sort sort = sortDirection.equalsIgnoreCase("DESC")
+                ? Sort.by(sortBy).descending()
+                : Sort.by(sortBy).ascending();
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        // Query all services for each specializationId and merge results
+        List<DentalService> allMatchingServices = specializationIds.stream()
+                .flatMap(specId -> {
+                    // For each specializationId, get all matching services (unpaginated)
+                    Pageable unpaginated = PageRequest.of(0, Integer.MAX_VALUE);
+                    Page<DentalService> specServices = serviceRepository.findWithFilters(
+                            isActive,
+                            specId,
+                            keyword,
+                            unpaginated);
+                    return specServices.getContent().stream();
+                })
+                .distinct() // Remove duplicates (service may match multiple specializations)
+                .sorted((s1, s2) -> {
+                    // Apply manual sorting based on sortBy and sortDirection
+                    int comparison = 0;
+                    switch (sortBy) {
+                        case "serviceId":
+                            comparison = s1.getServiceId().compareTo(s2.getServiceId());
+                            break;
+                        case "serviceCode":
+                            comparison = s1.getServiceCode().compareTo(s2.getServiceCode());
+                            break;
+                        case "serviceName":
+                            comparison = s1.getServiceName().compareTo(s2.getServiceName());
+                            break;
+                        case "price":
+                            comparison = s1.getPrice().compareTo(s2.getPrice());
+                            break;
+                        default:
+                            comparison = s1.getServiceId().compareTo(s2.getServiceId());
+                    }
+                    return sortDirection.equalsIgnoreCase("DESC") ? -comparison : comparison;
+                })
+                .collect(Collectors.toList());
+
+        // 7. Manual pagination
+        int start = Math.min((int) pageable.getOffset(), allMatchingServices.size());
+        int end = Math.min((start + pageable.getPageSize()), allMatchingServices.size());
+        List<DentalService> pageContent = allMatchingServices.subList(start, end);
+
+        log.debug("Found {} total services matching doctor's specializations, returning page {} with {} services",
+                allMatchingServices.size(), page, pageContent.size());
+
+        // Convert to response DTOs
+        List<ServiceResponse> responseContent = pageContent.stream()
+                .map(serviceMapper::toResponse)
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(responseContent, pageable, allMatchingServices.size());
     }
 }

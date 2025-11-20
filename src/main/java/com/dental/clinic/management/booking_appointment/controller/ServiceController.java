@@ -43,6 +43,28 @@ public class ServiceController {
         return ResponseEntity.ok(services);
     }
 
+    @GetMapping("/my-specializations")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_SERVICE + "')")
+    @Operation(
+        summary = "Get services matching current doctor's specializations",
+        description = "Returns services that match ANY of the current logged-in doctor's specializations. " +
+                      "This ensures doctors can only select services they are qualified to perform when creating custom treatment plans. " +
+                      "If user is not a doctor or has no specializations, returns empty list."
+    )
+    @ApiMessage("Lấy danh sách dịch vụ theo chuyên môn của bác sĩ thành công")
+    public ResponseEntity<Page<ServiceResponse>> getServicesForCurrentDoctor(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "serviceId") String sortBy,
+            @RequestParam(defaultValue = "ASC") String sortDirection,
+            @RequestParam(required = false) Boolean isActive,
+            @RequestParam(required = false) String keyword) {
+
+        Page<ServiceResponse> services = serviceService.getServicesForCurrentDoctor(
+                page, size, sortBy, sortDirection, isActive, keyword);
+        return ResponseEntity.ok(services);
+    }
+
     @GetMapping("/code/{serviceCode}")
     @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_SERVICE + "')")
     @Operation(summary = "Get service by code")

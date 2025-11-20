@@ -19,10 +19,10 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         "[format_sql]": true
-    show-sql: true
+    show-sql: false
     defer-datasource-initialization: true
 
-  # SQL Init Configuration - Auto-run seed data ONLY
+  # SQL Init Configuration - Load seed data on startup
   sql:
     init:
       mode: always

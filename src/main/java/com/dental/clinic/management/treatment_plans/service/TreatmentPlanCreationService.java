@@ -101,6 +101,39 @@ public class TreatmentPlanCreationService {
                     "TreatmentPlanTemplate", "templateInactive");
         }
 
+        // ============================================
+        // BUSINESS VALIDATION: Doctor Specialization Match
+        // ============================================
+        // Validate that doctor has the required specialization for this template
+        if (template.getSpecialization() != null) {
+            Integer requiredSpecializationId = template.getSpecialization().getSpecializationId();
+            
+            boolean doctorHasRequiredSpec = doctor.getSpecializations().stream()
+                    .anyMatch(spec -> spec.getSpecializationId().equals(requiredSpecializationId));
+            
+            if (!doctorHasRequiredSpec) {
+                throw new BadRequestAlertException(
+                        String.format("Doctor %s (%s %s) does not have required specialization '%s' (ID: %d) for template '%s'. " +
+                                "Doctor's specializations: %s",
+                                doctor.getEmployeeCode(),
+                                doctor.getFirstName(),
+                                doctor.getLastName(),
+                                template.getSpecialization().getSpecializationName(),
+                                requiredSpecializationId,
+                                template.getTemplateCode(),
+                                doctor.getSpecializations().stream()
+                                        .map(s -> s.getSpecializationName() + " (ID:" + s.getSpecializationId() + ")")
+                                        .collect(java.util.stream.Collectors.joining(", "))),
+                        "TreatmentPlanTemplate",
+                        "doctorSpecializationMismatch");
+            }
+            
+            log.info("✓ Validation passed: Doctor {} has required specialization '{}' for template '{}'",
+                    doctor.getEmployeeCode(),
+                    template.getSpecialization().getSpecializationName(),
+                    template.getTemplateCode());
+        }
+
         // Force load services within transaction (avoid lazy loading exception later)
         template.getTemplatePhases().forEach(phase -> phase.getPhaseServices().size());
 

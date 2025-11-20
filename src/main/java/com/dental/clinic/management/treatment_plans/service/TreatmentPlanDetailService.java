@@ -537,7 +537,7 @@ public class TreatmentPlanDetailService {
         /**
          * Add approval metadata to response if plan has been approved or rejected.
          * Fetches plan entity to get approvedBy, approvedAt, and rejectionReason (notes).
-         * 
+         *
          * FE Issue #2 Fix: Ensures notes are always included in approvalMetadata response.
          *
          * @param response    Response to add metadata to

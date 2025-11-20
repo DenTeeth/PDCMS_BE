@@ -81,6 +81,11 @@ public class CustomTreatmentPlanService {
         Patient patient = validateAndGetPatient(patientCode);
         Employee doctor = validateAndGetDoctor(request.getDoctorEmployeeCode());
         validatePhases(request.getPhases());
+        
+        // ============================================
+        // BUSINESS VALIDATION: Doctor Specialization for All Services
+        // ============================================
+        validateDoctorSpecializationsForServices(doctor, request.getPhases());
 
         // ============================================
         // STEP 2: Create Plan Entity (Parent)
@@ -299,6 +304,106 @@ public class CustomTreatmentPlanService {
                         "phaseWithoutItems");
             }
         }
+    }
+
+    /**
+     * CRITICAL BUSINESS VALIDATION: Validate doctor has required specializations for ALL services in plan.
+     * 
+     * This prevents doctors from creating treatment plans with services they are not qualified to perform.
+     * 
+     * Business Rules:
+     * 1. For each service in the plan, check if doctor has matching specialization
+     * 2. If service has NO specialization requirement (specializationId = null), allow it (general service)
+     * 3. If service HAS specialization requirement, doctor MUST have that specialization
+     * 4. Collect ALL mismatches and report them in one error message
+     * 
+     * Example Error Scenario:
+     * - Doctor has: [Chỉnh nha, STANDARD]
+     * - Plan includes: Service A (Nội nha), Service B (Chỉnh nha), Service C (Phẫu thuật)
+     * - Result: REJECT with error listing Service A and Service C as mismatches
+     * 
+     * @param doctor The doctor creating the treatment plan
+     * @param phases List of phases containing items with serviceCode references
+     * @throws BadRequestAlertException if doctor lacks required specializations
+     */
+    private void validateDoctorSpecializationsForServices(
+            Employee doctor, 
+            List<CreateCustomPlanRequest.PhaseRequest> phases) {
+        
+        log.debug("Validating doctor specializations. Doctor: {} {}, Specializations: {}",
+                doctor.getEmployeeCode(),
+                doctor.getFirstName() + " " + doctor.getLastName(),
+                doctor.getSpecializations().stream()
+                        .map(s -> s.getSpecializationName() + " (ID:" + s.getSpecializationId() + ")")
+                        .collect(java.util.stream.Collectors.joining(", ")));
+        
+        // Collect doctor's specialization IDs
+        Set<Integer> doctorSpecIds = doctor.getSpecializations().stream()
+                .map(com.dental.clinic.management.specialization.domain.Specialization::getSpecializationId)
+                .collect(java.util.stream.Collectors.toSet());
+        
+        // Collect all service codes from all phases
+        List<String> allServiceCodes = phases.stream()
+                .flatMap(phase -> phase.getItems().stream())
+                .map(CreateCustomPlanRequest.ItemRequest::getServiceCode)
+                .distinct()
+                .collect(java.util.stream.Collectors.toList());
+        
+        // Validate each service
+        List<String> mismatchErrors = new ArrayList<>();
+        
+        for (String serviceCode : allServiceCodes) {
+            DentalService service = validateAndGetService(serviceCode);
+            
+            // If service has NO specialization requirement, skip (general service)
+            if (service.getSpecialization() == null) {
+                log.debug("Service {} has no specialization requirement (general service) - OK", serviceCode);
+                continue;
+            }
+            
+            Integer requiredSpecId = service.getSpecialization().getSpecializationId();
+            
+            // Check if doctor has this specialization
+            if (!doctorSpecIds.contains(requiredSpecId)) {
+                String error = String.format(
+                        "Service '%s' (%s) requires specialization '%s' (ID: %d)",
+                        service.getServiceCode(),
+                        service.getServiceName(),
+                        service.getSpecialization().getSpecializationName(),
+                        requiredSpecId);
+                mismatchErrors.add(error);
+                
+                log.warn("Specialization mismatch: {}", error);
+            } else {
+                log.debug("✓ Service {} requires spec {} - doctor has it", serviceCode, requiredSpecId);
+            }
+        }
+        
+        // If any mismatches found, throw error with complete list
+        if (!mismatchErrors.isEmpty()) {
+            String doctorSpecsStr = doctor.getSpecializations().stream()
+                    .map(s -> s.getSpecializationName() + " (ID:" + s.getSpecializationId() + ")")
+                    .collect(java.util.stream.Collectors.joining(", "));
+            
+            String errorMessage = String.format(
+                    "Doctor %s (%s %s) cannot create this treatment plan. " +
+                    "Doctor's specializations: [%s]. " +
+                    "Missing required specializations for %d service(s):\n%s",
+                    doctor.getEmployeeCode(),
+                    doctor.getFirstName(),
+                    doctor.getLastName(),
+                    doctorSpecsStr,
+                    mismatchErrors.size(),
+                    String.join("\n", mismatchErrors));
+            
+            throw new BadRequestAlertException(
+                    errorMessage,
+                    "TreatmentPlan",
+                    "doctorSpecializationMismatch");
+        }
+        
+        log.info("✓ All services validated: Doctor {} has required specializations for {} service(s)",
+                doctor.getEmployeeCode(), allServiceCodes.size());
     }
 
     /**
