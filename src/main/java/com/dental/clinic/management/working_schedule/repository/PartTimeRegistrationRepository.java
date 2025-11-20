@@ -23,11 +23,26 @@ public interface PartTimeRegistrationRepository extends JpaRepository<PartTimeRe
      * Find all registrations by employee ID (both active and inactive).
      */
     List<PartTimeRegistration> findByEmployeeId(Integer employeeId);
+    
+    /**
+     * Find all registrations by employee ID with pagination.
+     */
+    org.springframework.data.domain.Page<PartTimeRegistration> findByEmployeeId(
+            Integer employeeId, 
+            org.springframework.data.domain.Pageable pageable);
 
     /**
      * Find all active/inactive registrations by employee ID.
      */
     List<PartTimeRegistration> findByEmployeeIdAndIsActive(Integer employeeId, Boolean isActive);
+    
+    /**
+     * Find all active/inactive registrations by employee ID with pagination.
+     */
+    org.springframework.data.domain.Page<PartTimeRegistration> findByEmployeeIdAndIsActive(
+            Integer employeeId, 
+            Boolean isActive, 
+            org.springframework.data.domain.Pageable pageable);
     
     /**
      * NEW: Find registrations by employee and status.

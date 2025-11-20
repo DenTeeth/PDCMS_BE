@@ -167,7 +167,7 @@ public class EmployeeShiftRegistrationController {
     }
 
     /**
-     * GET /api/v1/registrations/part-time
+     * GET /api/v1/registrations/part-time-flex
      * Get registrations (employee sees own, admin sees all or filtered).
      *
      * Permission:
@@ -175,15 +175,20 @@ public class EmployeeShiftRegistrationController {
      * - VIEW_REGISTRATIONS_OWN: View only own registrations
      * 
      * NEW: Shows status (PENDING, APPROVED, REJECTED)
+     * NEW: Supports pagination and sorting
      *
      * @param employeeId Optional filter (admin only)
-     * @return List of registrations
+     * @param pageable Pagination and sorting parameters
+     * @return Page of registrations
      */
     @GetMapping
-    public ResponseEntity<List<RegistrationResponse>> getRegistrations(
-            @RequestParam(required = false) Integer employeeId) {
-        log.info("REST request to get registrations, filter employeeId: {}", employeeId);
-        List<RegistrationResponse> registrations = registrationService.getRegistrations(employeeId);
+    public ResponseEntity<org.springframework.data.domain.Page<RegistrationResponse>> getRegistrations(
+            @RequestParam(required = false) Integer employeeId,
+            org.springframework.data.domain.Pageable pageable) {
+        log.info("REST request to get registrations, filter employeeId: {}, page: {}, size: {}, sort: {}", 
+                 employeeId, pageable.getPageNumber(), pageable.getPageSize(), pageable.getSort());
+        org.springframework.data.domain.Page<RegistrationResponse> registrations = 
+            registrationService.getRegistrations(employeeId, pageable);
         return ResponseEntity.ok(registrations);
     }
 

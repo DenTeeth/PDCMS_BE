@@ -511,6 +511,40 @@ public class EmployeeShiftRegistrationService {
 
     /**
      * Get all registrations (admin sees all, employee sees own).
+     * NEW: Supports pagination and sorting.
+     */
+    @Transactional(readOnly = true)
+    @PreAuthorize("hasAnyAuthority('UPDATE_REGISTRATIONS_ALL', 'VIEW_REGISTRATION_OWN')")
+    public org.springframework.data.domain.Page<RegistrationResponse> getRegistrations(
+            Integer filterEmployeeId, 
+            org.springframework.data.domain.Pageable pageable) {
+        boolean isAdmin = SecurityUtil.hasCurrentUserRole("ADMIN") ||
+                SecurityUtil.hasCurrentUserPermission("UPDATE_REGISTRATIONS_ALL");
+
+        log.info("Fetching registrations - admin: {}, filter: {}, page: {}, size: {}, sort: {}", 
+                 isAdmin, filterEmployeeId, pageable.getPageNumber(), pageable.getPageSize(), pageable.getSort());
+
+        org.springframework.data.domain.Page<PartTimeRegistration> registrationsPage;
+
+        if (isAdmin && filterEmployeeId != null) {
+            // Admin with filter sees ALL registrations (active + cancelled) for that employee
+            registrationsPage = registrationRepository.findByEmployeeId(filterEmployeeId, pageable);
+        } else if (isAdmin) {
+            registrationsPage = registrationRepository.findAll(pageable);
+        } else {
+            Integer currentEmployeeId = getCurrentEmployeeId();
+            registrationsPage = registrationRepository.findByEmployeeIdAndIsActive(currentEmployeeId, true, pageable);
+        }
+
+        return registrationsPage.map(reg -> {
+            PartTimeSlot slot = slotRepository.findById(reg.getPartTimeSlotId()).orElse(null);
+            return buildResponse(reg, slot);
+        });
+    }
+
+    /**
+     * Get all registrations (admin sees all, employee sees own) - Legacy method without pagination.
+     * Kept for backward compatibility.
      */
     @Transactional(readOnly = true)
     @PreAuthorize("hasAnyAuthority('UPDATE_REGISTRATIONS_ALL', 'VIEW_REGISTRATION_OWN')")
@@ -518,7 +552,7 @@ public class EmployeeShiftRegistrationService {
         boolean isAdmin = SecurityUtil.hasCurrentUserRole("ADMIN") ||
                 SecurityUtil.hasCurrentUserPermission("UPDATE_REGISTRATIONS_ALL");
 
-        log.info("Fetching registrations - admin: {}, filter: {}", isAdmin, filterEmployeeId);
+        log.info("Fetching registrations (no pagination) - admin: {}, filter: {}", isAdmin, filterEmployeeId);
 
         List<PartTimeRegistration> registrations;
 
