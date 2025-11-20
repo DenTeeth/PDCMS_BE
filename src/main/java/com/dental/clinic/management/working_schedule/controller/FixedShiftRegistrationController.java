@@ -124,4 +124,43 @@ public class FixedShiftRegistrationController {
 
         return ResponseEntity.noContent().build();
     }
+
+    /**
+     * Backfill shifts for all existing fixed registrations.
+     * This endpoint should be called once to generate shifts for registrations created before auto-generation was implemented.
+     *
+     * POST /api/v1/fixed-registrations/backfill-shifts
+     *
+     * Authorization: Requires MANAGE_FIXED_REGISTRATIONS (Admin only)
+     *
+     * @return Summary of backfill operation
+     */
+    @PostMapping("/backfill-shifts")
+    public ResponseEntity<String> backfillShifts() {
+        String summary = fixedRegistrationService.backfillShiftsForExistingRegistrations();
+        return ResponseEntity.ok(summary);
+    }
+
+    /**
+     * Regenerate shifts for a specific fixed registration.
+     * Useful for manually fixing a single registration.
+     *
+     * POST /api/v1/fixed-registrations/{registrationId}/regenerate-shifts
+     *
+     * Authorization: Requires MANAGE_FIXED_REGISTRATIONS (Admin only)
+     *
+     * @param registrationId Registration ID
+     * @return Number of shifts created
+     */
+    @PostMapping("/{registrationId}/regenerate-shifts")
+    public ResponseEntity<String> regenerateShifts(
+            @PathVariable("registrationId") Integer registrationId) {
+        
+        int shiftsCreated = fixedRegistrationService.regenerateShiftsForRegistration(registrationId);
+        
+        String message = String.format("✅ Successfully generated %d shifts for registration #%d", 
+                shiftsCreated, registrationId);
+        
+        return ResponseEntity.ok(message);
+    }
 }

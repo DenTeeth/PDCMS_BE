@@ -419,17 +419,160 @@ public class EmployeeShiftService {
     }
 
     /**
+     * Create employee shifts automatically from a registration (supports both PART_TIME and FIXED types).
+     * This is the generic method that handles shift generation for all registration types.
+     * 
+     * @param employeeId Employee ID
+     * @param workShiftId Work shift ID
+     * @param effectiveFrom Registration start date
+     * @param effectiveTo Registration end date (nullable for indefinite)
+     * @param daysOfWeek List of day numbers (1=Monday, 2=Tuesday, ..., 7=Sunday)
+     * @param source Registration source type (PART_TIME_FLEX, FULL_TIME, PART_TIME_FIXED)
+     * @param sourceRegistrationId Original registration ID for tracking
+     * @param createdBy User who created/approved the registration
+     * @return List of created shifts
+     */
+    @Transactional
+    public List<EmployeeShift> createShiftsForRegistration(
+            Integer employeeId,
+            String workShiftId,
+            LocalDate effectiveFrom,
+            LocalDate effectiveTo,
+            List<Integer> daysOfWeek,
+            String source,
+            Long sourceRegistrationId,
+            Integer createdBy) {
+        
+        log.info("🔄 Creating shifts for employee {} from {} to {} (source: {})", 
+                employeeId, effectiveFrom, effectiveTo, source);
+
+        // Validate employee exists
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new RelatedResourceNotFoundException("Nhân viên không tồn tại"));
+
+        // Validate work shift exists
+        WorkShift workShift = workShiftRepository.findById(workShiftId)
+                .orElseThrow(() -> new RelatedResourceNotFoundException("Ca làm việc không tồn tại"));
+
+        // Validate daysOfWeek
+        if (daysOfWeek == null || daysOfWeek.isEmpty()) {
+            throw new IllegalArgumentException("Danh sách ngày làm việc không được rỗng");
+        }
+
+        // Calculate working days based on effectiveFrom, effectiveTo, and daysOfWeek
+        List<LocalDate> workingDays = calculateWorkingDays(effectiveFrom, effectiveTo, daysOfWeek);
+        
+        log.info("📅 Calculated {} working days from date range", workingDays.size());
+
+        List<EmployeeShift> createdShifts = new java.util.ArrayList<>();
+        int skippedCount = 0;
+
+        for (LocalDate workDate : workingDays) {
+            // Check if shift already exists (avoid duplicates)
+            boolean exists = employeeShiftRepository.existsByEmployeeAndDateAndShift(
+                    employeeId, workDate, workShiftId);
+            
+            if (exists) {
+                log.debug("⏭️ Shift already exists for employee {} on {} - skipping", employeeId, workDate);
+                skippedCount++;
+                continue;
+            }
+
+            // Generate shift ID with format: EMS + YYMMDD + SEQ
+            String employeeShiftId = idGenerator.generateId("EMS");
+
+            // Create new shift
+            EmployeeShift newShift = new EmployeeShift();
+            newShift.setEmployeeShiftId(employeeShiftId);
+            newShift.setEmployee(employee);
+            newShift.setWorkShift(workShift);
+            newShift.setWorkDate(workDate);
+            newShift.setStatus(ShiftStatus.SCHEDULED);
+            newShift.setSource(ShiftSource.REGISTRATION_JOB);
+            newShift.setIsOvertime(false);
+            newShift.setCreatedBy(createdBy);
+            newShift.setNotes(String.format("Tạo tự động từ %s registration #%d", source, sourceRegistrationId));
+
+            EmployeeShift savedShift = employeeShiftRepository.save(newShift);
+            createdShifts.add(savedShift);
+            
+            log.debug("✅ Created shift {} for date {}", employeeShiftId, workDate);
+        }
+
+        log.info("✅ Shift generation complete: {} created, {} skipped for employee {}", 
+                createdShifts.size(), skippedCount, employeeId);
+        return createdShifts;
+    }
+
+    /**
+     * Calculate working days from date range and days of week.
+     * 
+     * @param effectiveFrom Start date
+     * @param effectiveTo End date (nullable for indefinite, will use 1 year default)
+     * @param daysOfWeek List of day numbers (1=Monday, 2=Tuesday, ..., 7=Sunday)
+     * @return List of dates matching the criteria
+     */
+    private List<LocalDate> calculateWorkingDays(LocalDate effectiveFrom, LocalDate effectiveTo, List<Integer> daysOfWeek) {
+        List<LocalDate> workingDays = new java.util.ArrayList<>();
+        
+        // If effectiveTo is null, default to 1 year from effectiveFrom (prevent infinite loop)
+        LocalDate endDate = (effectiveTo != null) ? effectiveTo : effectiveFrom.plusYears(1);
+        
+        // Validate date range
+        if (endDate.isBefore(effectiveFrom)) {
+            throw new IllegalArgumentException("Ngày kết thúc không được trước ngày bắt đầu");
+        }
+        
+        // Convert day numbers to java.time.DayOfWeek
+        List<java.time.DayOfWeek> targetDays = daysOfWeek.stream()
+                .map(this::convertDayNumberToDayOfWeek)
+                .collect(Collectors.toList());
+        
+        // Loop through date range and collect matching days
+        LocalDate currentDate = effectiveFrom;
+        while (!currentDate.isAfter(endDate)) {
+            if (targetDays.contains(currentDate.getDayOfWeek())) {
+                workingDays.add(currentDate);
+            }
+            currentDate = currentDate.plusDays(1);
+        }
+        
+        return workingDays;
+    }
+
+    /**
+     * Convert day number to java.time.DayOfWeek.
+     * 
+     * @param dayNumber 1=Monday, 2=Tuesday, ..., 7=Sunday
+     * @return DayOfWeek enum
+     */
+    private java.time.DayOfWeek convertDayNumberToDayOfWeek(Integer dayNumber) {
+        return switch (dayNumber) {
+            case 1 -> java.time.DayOfWeek.MONDAY;
+            case 2 -> java.time.DayOfWeek.TUESDAY;
+            case 3 -> java.time.DayOfWeek.WEDNESDAY;
+            case 4 -> java.time.DayOfWeek.THURSDAY;
+            case 5 -> java.time.DayOfWeek.FRIDAY;
+            case 6 -> java.time.DayOfWeek.SATURDAY;
+            case 7 -> java.time.DayOfWeek.SUNDAY;
+            default -> throw new IllegalArgumentException("Invalid day number: " + dayNumber + " (must be 1-7)");
+        };
+    }
+
+    /**
      * Create employee shifts for an approved part-time registration.
      * Generates individual shift records for each working day.
      * 
      * This is called automatically when a manager approves a part-time registration.
      * 
+     * @deprecated Use {@link #createShiftsForRegistration} instead for better flexibility
      * @param employeeId Employee ID who registered
      * @param workShiftId Work shift ID from the slot
      * @param workingDays List of dates to create shifts for
      * @param managerId Manager who approved (recorded as createdBy)
      * @return List of created shifts
      */
+    @Deprecated
     @Transactional
     public List<EmployeeShift> createShiftsForApprovedRegistration(
             Integer employeeId,

@@ -183,6 +183,7 @@ public class TreatmentPlanApprovalService {
     /**
      * Validate that all items have price > 0 before approval (P1 Guard)
      */
+    @SuppressWarnings("unused")
     private void validateNoPriceItemsForApproval(PatientTreatmentPlan plan) {
         boolean hasZeroPriceItem = plan.getPhases().stream()
                 .flatMap(phase -> phase.getItems().stream())

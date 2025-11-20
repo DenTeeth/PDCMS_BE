@@ -42,6 +42,7 @@ public class FixedShiftRegistrationService {
     private final FixedShiftRegistrationRepository registrationRepository;
     private final EmployeeRepository employeeRepository;
     private final WorkShiftRepository workShiftRepository;
+    private final EmployeeShiftService employeeShiftService;
 
     /**
      * Create a fixed shift registration for an employee.
@@ -115,6 +116,29 @@ public class FixedShiftRegistrationService {
         FixedShiftRegistration saved = registrationRepository.save(registration);
         log.info("Created fixed registration: {} for employee: {}", saved.getRegistrationId(),
                 employee.getEmployeeId());
+
+        // 10. Auto-generate shifts for fixed registration
+        try {
+            String sourceType = empType == EmploymentType.FULL_TIME ? "FULL_TIME" : "PART_TIME_FIXED";
+            
+            employeeShiftService.createShiftsForRegistration(
+                employee.getEmployeeId(),
+                workShift.getWorkShiftId(),
+                saved.getEffectiveFrom(),
+                saved.getEffectiveTo(),
+                request.getDaysOfWeek(),
+                sourceType,
+                saved.getRegistrationId().longValue(),
+                null // createdBy can be null for system-generated
+            );
+            
+            log.info("✅ Successfully auto-generated shifts for fixed registration: {}", saved.getRegistrationId());
+        } catch (Exception e) {
+            log.error("❌ Failed to generate shifts for fixed registration {}: {}", 
+                    saved.getRegistrationId(), e.getMessage(), e);
+            // Don't fail the whole transaction - registration is still valid
+            // Shifts can be regenerated later via backfill endpoint
+        }
 
         return toResponse(saved);
     }
@@ -274,6 +298,134 @@ public class FixedShiftRegistrationService {
                 .effectiveTo(registration.getEffectiveTo())
                 .isActive(registration.getIsActive())
                 .build();
+    }
+
+    /**
+     * Backfill shifts for existing fixed registrations that don't have shifts yet.
+     * This should be called once to fix existing registrations created before shift auto-generation was implemented.
+     * 
+     * @return Summary of backfill operation
+     */
+    @PreAuthorize("hasAuthority('MANAGE_FIXED_REGISTRATIONS')")
+    @Transactional
+    public String backfillShiftsForExistingRegistrations() {
+        log.info("🔄 Starting backfill process for existing fixed registrations...");
+
+        // Find all active fixed registrations
+        List<FixedShiftRegistration> activeRegistrations = registrationRepository.findAllByActiveStatus(true);
+        
+        log.info("📊 Found {} active registrations to process", activeRegistrations.size());
+
+        int successCount = 0;
+        int skipCount = 0;
+        int errorCount = 0;
+        StringBuilder errorDetails = new StringBuilder();
+
+        for (FixedShiftRegistration registration : activeRegistrations) {
+            try {
+                Employee employee = registration.getEmployee();
+                EmploymentType empType = employee.getEmploymentType();
+                
+                // Extract days of week as numbers
+                List<Integer> daysOfWeek = registration.getRegistrationDays().stream()
+                        .map(day -> convertDayStringToNumber(day.getDayOfWeek()))
+                        .collect(Collectors.toList());
+
+                if (daysOfWeek.isEmpty()) {
+                    log.warn("⚠️ Registration {} has no days configured, skipping", registration.getRegistrationId());
+                    skipCount++;
+                    continue;
+                }
+
+                String sourceType = empType == EmploymentType.FULL_TIME ? "FULL_TIME" : "PART_TIME_FIXED";
+                
+                List<com.dental.clinic.management.working_schedule.domain.EmployeeShift> createdShifts = 
+                    employeeShiftService.createShiftsForRegistration(
+                        employee.getEmployeeId(),
+                        registration.getWorkShift().getWorkShiftId(),
+                        registration.getEffectiveFrom(),
+                        registration.getEffectiveTo(),
+                        daysOfWeek,
+                        sourceType,
+                        registration.getRegistrationId().longValue(),
+                        null
+                    );
+
+                if (createdShifts.isEmpty()) {
+                    log.info("⏭️ Registration {} already has all shifts, skipping", registration.getRegistrationId());
+                    skipCount++;
+                } else {
+                    log.info("✅ Generated {} shifts for registration {}", createdShifts.size(), registration.getRegistrationId());
+                    successCount++;
+                }
+
+            } catch (Exception e) {
+                log.error("❌ Failed to generate shifts for registration {}: {}", 
+                        registration.getRegistrationId(), e.getMessage());
+                errorCount++;
+                errorDetails.append(String.format("Registration %d: %s\n", 
+                        registration.getRegistrationId(), e.getMessage()));
+            }
+        }
+
+        String summary = String.format(
+                "✅ Backfill complete: %d succeeded, %d skipped (already have shifts), %d failed out of %d total",
+                successCount, skipCount, errorCount, activeRegistrations.size()
+        );
+        
+        log.info(summary);
+        
+        if (errorCount > 0) {
+            log.error("Error details:\n{}", errorDetails);
+            return summary + "\n\nErrors:\n" + errorDetails;
+        }
+        
+        return summary;
+    }
+
+    /**
+     * Regenerate shifts for a specific fixed registration.
+     * Useful for manually fixing a single registration.
+     * 
+     * @param registrationId Registration ID
+     * @return Number of shifts created
+     */
+    @PreAuthorize("hasAuthority('MANAGE_FIXED_REGISTRATIONS')")
+    @Transactional
+    public int regenerateShiftsForRegistration(Integer registrationId) {
+        log.info("🔄 Regenerating shifts for registration {}", registrationId);
+
+        FixedShiftRegistration registration = registrationRepository.findByIdWithDetails(registrationId)
+                .orElseThrow(() -> new FixedRegistrationNotFoundException(registrationId));
+
+        if (!registration.getIsActive()) {
+            throw new IllegalStateException("Cannot regenerate shifts for inactive registration");
+        }
+
+        Employee employee = registration.getEmployee();
+        EmploymentType empType = employee.getEmploymentType();
+
+        // Extract days of week as numbers
+        List<Integer> daysOfWeek = registration.getRegistrationDays().stream()
+                .map(day -> convertDayStringToNumber(day.getDayOfWeek()))
+                .collect(Collectors.toList());
+
+        String sourceType = empType == EmploymentType.FULL_TIME ? "FULL_TIME" : "PART_TIME_FIXED";
+
+        List<com.dental.clinic.management.working_schedule.domain.EmployeeShift> createdShifts = 
+            employeeShiftService.createShiftsForRegistration(
+                employee.getEmployeeId(),
+                registration.getWorkShift().getWorkShiftId(),
+                registration.getEffectiveFrom(),
+                registration.getEffectiveTo(),
+                daysOfWeek,
+                sourceType,
+                registration.getRegistrationId().longValue(),
+                null
+            );
+
+        log.info("✅ Regenerated {} shifts for registration {}", createdShifts.size(), registrationId);
+        return createdShifts.size();
     }
 
     /**

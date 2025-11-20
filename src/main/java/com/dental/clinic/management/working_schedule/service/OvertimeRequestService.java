@@ -168,7 +168,22 @@ public class OvertimeRequestService {
         WorkShift workShift = workShiftRepository.findById(dto.getWorkShiftId())
                 .orElseThrow(() -> new RelatedResourceNotFoundException("Ca làm việc", dto.getWorkShiftId()));
 
-        // Validation 2: Check for hybrid schedule conflicts
+        // Validation 2.1: Check for duplicate overtime request (CRITICAL BUG FIX)
+        // Employee can only have ONE overtime request per (employeeId, workDate, workShiftId)
+        // Check for PENDING or APPROVED requests for the exact same shift
+        List<RequestStatus> activeStatuses = List.of(RequestStatus.PENDING, RequestStatus.APPROVED);
+        boolean duplicateExists = overtimeRequestRepository.existsConflictingRequest(
+                targetEmployeeId, dto.getWorkDate(), dto.getWorkShiftId(), activeStatuses);
+        
+        if (duplicateExists) {
+            log.warn("❌ Duplicate overtime request detected: employeeId={}, workDate={}, workShiftId={}", 
+                    targetEmployeeId, dto.getWorkDate(), dto.getWorkShiftId());
+            throw new DuplicateOvertimeRequestException(
+                    String.format("Nhân viên đã có đơn overtime cho ca này trong ngày này! (Ca: %s, Ngày: %s)", 
+                            workShift.getShiftName(), dto.getWorkDate()));
+        }
+
+        // Validation 2.2: Check for hybrid schedule conflicts
         // Employee must NOT have a regular work schedule on this date/shift
         validateNoScheduleConflict(targetEmployeeId, dto.getWorkDate(), dto.getWorkShiftId());
 
@@ -203,7 +218,6 @@ public class OvertimeRequestService {
 
         // Validation 5: Check for time-overlapping shifts on the same date (Lỗi 3)
         // A person cannot work 2 shifts that overlap in time on the same day
-        List<RequestStatus> activeStatuses = List.of(RequestStatus.PENDING, RequestStatus.APPROVED);
         List<OvertimeRequest> existingRequests = overtimeRequestRepository.findByEmployeeIdAndWorkDate(
                 targetEmployeeId, dto.getWorkDate());
         
@@ -255,16 +269,6 @@ public class OvertimeRequestService {
                         workShift.getShiftName(), workShift.getStartTime(), workShift.getEndTime())
                 );
             }
-        }
-
-        // Validation 6: Check for exact duplicate PENDING/APPROVED (same shift)
-        boolean hasExactDuplicate = overtimeRequestRepository.existsConflictingRequest(
-                targetEmployeeId, dto.getWorkDate(), dto.getWorkShiftId(), activeStatuses);
-
-        if (hasExactDuplicate) {
-            log.warn("Exact duplicate overtime request exists for employee {} on {} shift {}",
-                    targetEmployeeId, dto.getWorkDate(), dto.getWorkShiftId());
-            throw new DuplicateOvertimeRequestException(targetEmployeeId, dto.getWorkDate(), dto.getWorkShiftId());
         }
 
         // Create overtime request (ID will be auto-generated via @PrePersist)
