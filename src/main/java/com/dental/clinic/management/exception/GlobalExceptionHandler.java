@@ -338,6 +338,26 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handle registration already cancelled exception.
+     * Returns 409 Conflict.
+     */
+    @ExceptionHandler(com.dental.clinic.management.working_schedule.exception.RegistrationAlreadyCancelledException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleRegistrationAlreadyCancelled(
+            RuntimeException ex,
+            HttpServletRequest request) {
+
+        log.warn("Registration already cancelled at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.CONFLICT.value());
+        res.setError("REGISTRATION_ALREADY_CANCELLED");
+        res.setMessage(ex.getMessage());
+        res.setData(null);
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(res);
+    }
+
+    /**
      * Handle holiday conflict exception.
      * Returns 409 Conflict.
      */

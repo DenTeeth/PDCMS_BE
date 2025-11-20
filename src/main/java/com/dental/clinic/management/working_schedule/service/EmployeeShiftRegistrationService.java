@@ -17,6 +17,7 @@ import com.dental.clinic.management.working_schedule.exception.*;
 import com.dental.clinic.management.working_schedule.repository.PartTimeRegistrationRepository;
 import com.dental.clinic.management.working_schedule.repository.PartTimeSlotRepository;
 import com.dental.clinic.management.working_schedule.repository.WorkShiftRepository;
+import com.dental.clinic.management.working_schedule.exception.InvalidDateRangeException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -565,6 +566,16 @@ public class EmployeeShiftRegistrationService {
 
     /**
      * Cancel registration (soft delete).
+     * 
+     * Business Rules:
+     * - Employees can only cancel their own registrations
+     * - Admins can cancel any registration
+     * - Cannot cancel already cancelled registrations
+     * - Soft delete: Sets isActive = false
+     * 
+     * @param registrationId Registration ID to cancel
+     * @throws RegistrationNotFoundException If registration not found or user doesn't own it
+     * @throws RegistrationAlreadyCancelledException If registration is already cancelled
      */
     @Transactional
     @PreAuthorize("hasAnyAuthority('UPDATE_REGISTRATIONS_ALL', 'CANCEL_REGISTRATION_OWN')")
@@ -573,46 +584,108 @@ public class EmployeeShiftRegistrationService {
                 SecurityUtil.hasCurrentUserPermission("UPDATE_REGISTRATIONS_ALL");
         Integer currentEmployeeId = getCurrentEmployeeId();
 
-        log.info("Cancelling registration {} by employee {}", registrationId, currentEmployeeId);
+        log.info("Attempting to cancel registration {} by employee {} (isAdmin: {})", 
+                 registrationId, currentEmployeeId, isAdmin);
 
         PartTimeRegistration registration = registrationRepository.findById(registrationId)
-                .orElseThrow(() -> new RegistrationNotFoundException(registrationId.toString()));
+                .orElseThrow(() -> {
+                    log.warn("Registration {} not found", registrationId);
+                    return new RegistrationNotFoundException(registrationId.toString());
+                });
+
+        log.debug("Found registration {}: employeeId={}, status={}, isActive={}", 
+                  registrationId, registration.getEmployeeId(), 
+                  registration.getStatus(), registration.getIsActive());
 
         // Check ownership if not admin
         if (!isAdmin && !registration.getEmployeeId().equals(currentEmployeeId)) {
-            throw new RegistrationNotFoundException(registrationId.toString()); // Hide existence
+            log.warn("Employee {} attempted to cancel registration {} owned by employee {}", 
+                     currentEmployeeId, registrationId, registration.getEmployeeId());
+            throw new RegistrationNotFoundException(registrationId.toString()); // Hide existence for security
         }
 
         // Check if already cancelled
         if (!registration.getIsActive()) {
-            throw new RegistrationNotFoundException(registrationId.toString()); // Already cancelled
+            log.warn("Registration {} is already cancelled (isActive=false)", registrationId);
+            throw new com.dental.clinic.management.working_schedule.exception.RegistrationAlreadyCancelledException(registrationId);
         }
 
-        registration.setIsActive(false);
-        registration.setEffectiveTo(LocalDate.now());
-        registration.setUpdatedAt(LocalDateTime.now());
-        registrationRepository.save(registration);
-
-        log.info("Registration {} cancelled in part_time_registrations", registrationId);
+        try {
+            registration.setIsActive(false);
+            registration.setEffectiveTo(LocalDate.now());
+            registration.setUpdatedAt(LocalDateTime.now());
+            registrationRepository.save(registration);
+            
+            log.info("Successfully cancelled registration {} - set isActive=false, effectiveTo={}", 
+                     registrationId, LocalDate.now());
+        } catch (Exception e) {
+            log.error("Failed to cancel registration {}: {}", registrationId, e.getMessage(), e);
+            throw new RuntimeException("Failed to cancel registration: " + e.getMessage(), e);
+        }
     }
 
     /**
      * Update effectiveTo (admin only).
+     * 
+     * Business Rules:
+     * - Only admins/managers can update effectiveTo
+     * - Cannot update cancelled registrations
+     * - New effectiveTo must be after effectiveFrom
+     * 
+     * @param registrationId Registration ID to update
+     * @param request New effectiveTo date
+     * @return Updated registration response
+     * @throws RegistrationNotFoundException If registration not found
+     * @throws RegistrationAlreadyCancelledException If registration is cancelled
+     * @throws InvalidDateRangeException If new date is invalid
      */
     @Transactional
     @PreAuthorize("hasAuthority('UPDATE_REGISTRATIONS_ALL')")
     public RegistrationResponse updateEffectiveTo(Integer registrationId, UpdateEffectiveToRequest request) {
-        log.info("Updating effectiveTo for registration {}", registrationId);
+        log.info("Updating effectiveTo for registration {} to {}", registrationId, request.getEffectiveTo());
 
         PartTimeRegistration registration = registrationRepository.findById(registrationId)
-                .orElseThrow(() -> new RegistrationNotFoundException(registrationId.toString()));
+                .orElseThrow(() -> {
+                    log.warn("Registration {} not found for effectiveTo update", registrationId);
+                    return new RegistrationNotFoundException(registrationId.toString());
+                });
 
-        registration.setEffectiveTo(request.getEffectiveTo());
-        registration.setUpdatedAt(LocalDateTime.now());
-        PartTimeRegistration updated = registrationRepository.save(registration);
+        log.debug("Found registration {}: employeeId={}, currentEffectiveTo={}, isActive={}", 
+                  registrationId, registration.getEmployeeId(), 
+                  registration.getEffectiveTo(), registration.getIsActive());
 
-        PartTimeSlot slot = slotRepository.findById(updated.getPartTimeSlotId()).orElse(null);
-        return buildResponse(updated, slot);
+        // Cannot update cancelled registrations
+        if (!registration.getIsActive()) {
+            log.warn("Cannot update effectiveTo for cancelled registration {}", registrationId);
+            throw new com.dental.clinic.management.working_schedule.exception.RegistrationAlreadyCancelledException(registrationId);
+        }
+
+        // Validate new date is after effectiveFrom
+        if (request.getEffectiveTo().isBefore(registration.getEffectiveFrom())) {
+            log.warn("Invalid effectiveTo {} for registration {} - must be after effectiveFrom {}", 
+                     request.getEffectiveTo(), registrationId, registration.getEffectiveFrom());
+            throw new InvalidDateRangeException(
+                registration.getEffectiveFrom(), 
+                request.getEffectiveTo()
+            );
+        }
+
+        try {
+            LocalDate oldDate = registration.getEffectiveTo();
+            registration.setEffectiveTo(request.getEffectiveTo());
+            registration.setUpdatedAt(LocalDateTime.now());
+            PartTimeRegistration updated = registrationRepository.save(registration);
+
+            log.info("Successfully updated registration {} effectiveTo from {} to {}", 
+                     registrationId, oldDate, request.getEffectiveTo());
+
+            PartTimeSlot slot = slotRepository.findById(updated.getPartTimeSlotId()).orElse(null);
+            return buildResponse(updated, slot);
+        } catch (Exception e) {
+            log.error("Failed to update effectiveTo for registration {}: {}", 
+                      registrationId, e.getMessage(), e);
+            throw new RuntimeException("Failed to update registration: " + e.getMessage(), e);
+        }
     }
 
     /**
