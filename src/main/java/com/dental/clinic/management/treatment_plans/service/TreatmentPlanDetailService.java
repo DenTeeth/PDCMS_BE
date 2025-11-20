@@ -2,7 +2,9 @@ package com.dental.clinic.management.treatment_plans.service;
 
 import com.dental.clinic.management.patient.domain.Patient;
 import com.dental.clinic.management.patient.repository.PatientRepository;
+import com.dental.clinic.management.treatment_plans.domain.PatientTreatmentPlan;
 import com.dental.clinic.management.treatment_plans.dto.*;
+import com.dental.clinic.management.treatment_plans.dto.response.ApprovalMetadataDTO;
 import com.dental.clinic.management.treatment_plans.enums.PlanItemStatus;
 import com.dental.clinic.management.treatment_plans.repository.PatientTreatmentPlanRepository;
 import lombok.RequiredArgsConstructor;
@@ -92,6 +94,9 @@ public class TreatmentPlanDetailService {
 
                 // STEP 3: Transform flat DTOs to nested response structure
                 TreatmentPlanDetailResponse response = buildNestedResponse(flatDTOs);
+
+                // STEP 4: Add approval metadata if plan has been approved/rejected
+                addApprovalMetadataIfPresent(response, patientCode, planCode);
 
                 log.info("Successfully built nested response with {} phases", response.getPhases().size());
                 return response;
@@ -527,5 +532,42 @@ public class TreatmentPlanDetailService {
                                 .completedItems((int) completedItems)
                                 .readyForBookingItems((int) readyForBookingItems)
                                 .build();
+        }
+
+        /**
+         * Add approval metadata to response if plan has been approved or rejected.
+         * Fetches plan entity to get approvedBy, approvedAt, and rejectionReason (notes).
+         * 
+         * FE Issue #2 Fix: Ensures notes are always included in approvalMetadata response.
+         *
+         * @param response    Response to add metadata to
+         * @param patientCode Patient code (unused, kept for consistency)
+         * @param planCode    Plan code
+         */
+        private void addApprovalMetadataIfPresent(TreatmentPlanDetailResponse response, String patientCode,
+                        String planCode) {
+                // Fetch plan entity to get approval fields
+                PatientTreatmentPlan plan = treatmentPlanRepository.findByPlanCode(planCode)
+                                .orElse(null);
+
+                if (plan == null || plan.getApprovedBy() == null || plan.getApprovedAt() == null) {
+                        return; // No approval metadata to add
+                }
+
+                // Build approval metadata
+                ApprovalMetadataDTO metadata = ApprovalMetadataDTO.builder()
+                                .approvedBy(ApprovalMetadataDTO.EmployeeBasicDTO.builder()
+                                                .employeeCode(plan.getApprovedBy().getEmployeeCode())
+                                                .fullName(plan.getApprovedBy().getFirstName() + " "
+                                                                + plan.getApprovedBy().getLastName())
+                                                .build())
+                                .approvedAt(plan.getApprovedAt())
+                                .notes(plan.getRejectionReason()) // Always include notes (FE Issue #2 fix)
+                                .build();
+
+                response.setApprovalMetadata(metadata);
+                log.debug("Added approval metadata to response - approvedBy: {}, notes: {}",
+                                plan.getApprovedBy().getEmployeeCode(),
+                                plan.getRejectionReason() != null ? "present" : "null");
         }
 }
