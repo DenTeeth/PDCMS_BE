@@ -427,6 +427,7 @@ public class TreatmentPlanDetailService {
                                                 .sequenceNumber(sequenceNumber)
                                                 .itemName(itemName)
                                                 .serviceId(serviceId)
+                                                .serviceCode(firstItemRow.getItemServiceCode()) // Phase 5
                                                 .price(price)
                                                 .estimatedTimeMinutes(estimatedTimeMinutes)
                                                 .status(itemStatus != null ? itemStatus.name() : null)

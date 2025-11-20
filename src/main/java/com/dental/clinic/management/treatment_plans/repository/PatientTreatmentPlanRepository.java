@@ -115,7 +115,7 @@ public interface PatientTreatmentPlanRepository extends JpaRepository<PatientTre
                             pat.patientCode, CONCAT(pat.firstName, ' ', pat.lastName),
                             phase.patientPhaseId, phase.phaseNumber, phase.phaseName, phase.status,
                             phase.startDate, phase.completionDate,
-                            item.itemId, item.serviceId, item.sequenceNumber, item.itemName, item.status,
+                            item.itemId, item.serviceId, svc.serviceCode, item.sequenceNumber, item.itemName, item.status,
                             item.estimatedTimeMinutes, item.price, item.completedAt,
                             apt.appointmentCode, apt.appointmentStartTime, apt.status
                         )
@@ -124,6 +124,7 @@ public interface PatientTreatmentPlanRepository extends JpaRepository<PatientTre
                         INNER JOIN p.patient pat
                         LEFT JOIN p.phases phase
                         LEFT JOIN phase.items item
+                        LEFT JOIN com.dental.clinic.management.service.domain.DentalService svc ON svc.serviceId = item.serviceId
                         LEFT JOIN AppointmentPlanItemBridge bridge ON bridge.id.itemId = item.itemId
                         LEFT JOIN Appointment apt ON apt.appointmentId = bridge.id.appointmentId
                         WHERE pat.patientCode = :patientCode

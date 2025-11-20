@@ -41,6 +41,11 @@ public class ItemDetailDTO {
     private Integer serviceId;
 
     /**
+     * Service code (Phase 5: for FE appointment booking)
+     */
+    private String serviceCode;
+
+    /**
      * Snapshot price when plan was created
      */
     private BigDecimal price;

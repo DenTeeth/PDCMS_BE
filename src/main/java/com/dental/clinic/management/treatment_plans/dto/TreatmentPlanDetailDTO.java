@@ -68,6 +68,7 @@ public class TreatmentPlanDetailDTO {
     // ===== ITEM LEVEL (patient_plan_items) =====
     private Long itemId;
     private Integer itemServiceId;
+    private String itemServiceCode; // Phase 5: for FE appointment booking
     private Integer sequenceNumber;
     private String itemName;
     private PlanItemStatus itemStatus;
