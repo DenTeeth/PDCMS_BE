@@ -11,8 +11,10 @@ import com.dental.clinic.management.booking_appointment.repository.AppointmentAu
 import com.dental.clinic.management.booking_appointment.repository.AppointmentRepository;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.exception.ResourceNotFoundException;
+import com.dental.clinic.management.treatment_plans.enums.PlanItemStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -42,6 +44,7 @@ public class AppointmentStatusService {
     private final AppointmentAuditLogRepository auditLogRepository;
     private final EmployeeRepository employeeRepository;
     private final AppointmentDetailService detailService;
+    private final JdbcTemplate jdbcTemplate;
 
     /**
      * Valid state transitions map.
@@ -126,10 +129,13 @@ public class AppointmentStatusService {
         // Step 6: Create audit log
         createAuditLog(appointment, currentStatus, newStatus, request, now);
 
+        // Step 7: Auto-update linked plan item statuses (V21.5)
+        updateLinkedPlanItemsStatus(appointment.getAppointmentId(), newStatus, now);
+
         log.info("Successfully updated appointment status: code={}, {} -> {}",
                 appointmentCode, currentStatus, newStatus);
 
-        // Step 7: Return updated detail (same structure as API 3.4)
+        // Step 8: Return updated detail (same structure as API 3.4)
         return detailService.getAppointmentDetail(appointmentCode);
     }
 
@@ -259,6 +265,94 @@ public class AppointmentStatusService {
         } catch (Exception e) {
             log.warn("Failed to get employee ID from security context: {}", e.getMessage());
             return 0; // SYSTEM
+        }
+    }
+
+    /**
+     * V21.5: Auto-update linked treatment plan item statuses when appointment status changes.
+     * 
+     * Status Mapping:
+     * - Appointment IN_PROGRESS → Plan items IN_PROGRESS
+     * - Appointment COMPLETED → Plan items COMPLETED (with completedAt timestamp)
+     * - Appointment CANCELLED → Plan items SCHEDULED (keep as scheduled, not revert to READY_FOR_BOOKING)
+     * 
+     * This ensures treatment plan items stay synchronized with appointment progress,
+     * eliminating manual status updates and preventing data inconsistency.
+     * 
+     * @param appointmentId The appointment ID (Integer type from Appointment entity)
+     * @param appointmentStatus The new appointment status
+     * @param timestamp The timestamp to use for completedAt (when status = COMPLETED)
+     */
+    private void updateLinkedPlanItemsStatus(Integer appointmentId, AppointmentStatus appointmentStatus, LocalDateTime timestamp) {
+        // Only update plan items for specific status transitions
+        if (appointmentStatus != AppointmentStatus.IN_PROGRESS 
+                && appointmentStatus != AppointmentStatus.COMPLETED 
+                && appointmentStatus != AppointmentStatus.CANCELLED) {
+            log.debug("No plan item update needed for appointment status: {}", appointmentStatus);
+            return;
+        }
+
+        // Find all plan items linked to this appointment
+        String findItemsQuery = """
+            SELECT item_id FROM appointment_plan_items 
+            WHERE appointment_id = ?
+            """;
+        
+        List<Long> itemIds = jdbcTemplate.queryForList(findItemsQuery, Long.class, appointmentId);
+        
+        if (itemIds.isEmpty()) {
+            log.debug("No plan items linked to appointment {}", appointmentId);
+            return;
+        }
+
+        // Determine target status for plan items
+        PlanItemStatus targetStatus;
+        switch (appointmentStatus) {
+            case IN_PROGRESS:
+                targetStatus = PlanItemStatus.IN_PROGRESS;
+                break;
+            case COMPLETED:
+                targetStatus = PlanItemStatus.COMPLETED;
+                break;
+            case CANCELLED:
+                targetStatus = PlanItemStatus.SCHEDULED; // Keep as scheduled, not revert
+                break;
+            default:
+                log.warn("Unexpected appointment status for plan item update: {}", appointmentStatus);
+                return;
+        }
+
+        // Update plan items based on appointment status
+        if (appointmentStatus == AppointmentStatus.COMPLETED) {
+            // For COMPLETED: Update status AND set completedAt timestamp
+            String updateQuery = """
+                UPDATE patient_plan_items 
+                SET status = CAST(? AS plan_item_status), 
+                    completed_at = ? 
+                WHERE item_id IN (%s)
+                """;
+            String inClause = String.join(",", itemIds.stream().map(String::valueOf).toList());
+            int updatedRows = jdbcTemplate.update(
+                String.format(updateQuery, inClause),
+                targetStatus.name(),
+                timestamp
+            );
+            log.info("✅ Updated {} plan items to COMPLETED with timestamp for appointment {}", 
+                updatedRows, appointmentId);
+        } else {
+            // For IN_PROGRESS or CANCELLED: Only update status
+            String updateQuery = """
+                UPDATE patient_plan_items 
+                SET status = CAST(? AS plan_item_status) 
+                WHERE item_id IN (%s)
+                """;
+            String inClause = String.join(",", itemIds.stream().map(String::valueOf).toList());
+            int updatedRows = jdbcTemplate.update(
+                String.format(updateQuery, inClause),
+                targetStatus.name()
+            );
+            log.info("✅ Updated {} plan items to {} for appointment {}", 
+                updatedRows, targetStatus, appointmentId);
         }
     }
 }

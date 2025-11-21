@@ -6,6 +6,7 @@ import com.dental.clinic.management.treatment_plans.domain.PatientTreatmentPlan;
 import com.dental.clinic.management.treatment_plans.dto.DoctorInfoDTO;
 import com.dental.clinic.management.treatment_plans.dto.TreatmentPlanSummaryDTO;
 import com.dental.clinic.management.treatment_plans.repository.PatientTreatmentPlanRepository;
+import com.dental.clinic.management.utils.security.AuthoritiesConstants;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -104,9 +105,17 @@ public class TreatmentPlanService {
         log.info("Found {} treatment plans for patient {}", plans.size(), patientCode);
 
         // STEP 4: Convert to DTOs
-        return plans.stream()
+        List<TreatmentPlanSummaryDTO> dtos = plans.stream()
                 .map(this::convertToSummaryDTO)
                 .collect(Collectors.toList());
+
+        // STEP 5: Hide prices if user is a doctor (Task #3 - FE Issue)
+        if (isCurrentUserDoctor()) {
+                hidePricesFromSummaries(dtos);
+                log.info("Prices hidden from {} treatment plan summaries (user is doctor)", dtos.size());
+        }
+
+        return dtos;
     }
 
     /**
@@ -173,7 +182,16 @@ public class TreatmentPlanService {
                 plansPage.getNumber() + 1, plansPage.getTotalPages());
 
         // STEP 4: Convert to DTOs
-        return plansPage.map(this::convertToSummaryDTO);
+        Page<TreatmentPlanSummaryDTO> dtoPage = plansPage.map(this::convertToSummaryDTO);
+
+        // STEP 5: Hide prices if user is a doctor (Task #3 - FE Issue)
+        if (isCurrentUserDoctor()) {
+                dtoPage.getContent().forEach(this::hidePricesFromSummary);
+                log.info("Prices hidden from {} treatment plan summaries (user is doctor)",
+                                dtoPage.getNumberOfElements());
+        }
+
+        return dtoPage;
     }
 
     /**
@@ -406,6 +424,56 @@ public class TreatmentPlanService {
         // ============================================
         // STEP 5: Map to DTO
         // ============================================
-        return plans.map(this::convertToSummaryDTO);
+        Page<TreatmentPlanSummaryDTO> dtoPage = plans.map(this::convertToSummaryDTO);
+
+        // ============================================
+        // STEP 6: Hide prices if user is a doctor (Task #3 - FE Issue)
+        // ============================================
+        if (isCurrentUserDoctor()) {
+            dtoPage.getContent().forEach(this::hidePricesFromSummary);
+            log.info("Prices hidden from {} treatment plan summaries (user is doctor)",
+                    dtoPage.getNumberOfElements());
+        }
+
+        return dtoPage;
+    }
+
+    /**
+     * Check if the current authenticated user is a doctor.
+     * Task #3: Doctors should not see prices in treatment plans.
+     *
+     * @return true if user has ROLE_DOCTOR authority
+     */
+    private boolean isCurrentUserDoctor() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return false;
+        }
+
+        return authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(auth -> auth.equals("ROLE_DENTIST") || auth.equals(AuthoritiesConstants.DOCTOR));
+    }
+
+    /**
+     * Hide all price-related fields from a single treatment plan summary DTO.
+     * Task #3: Vietnamese FE feedback - "bác sĩ ko xem giá trong treatment plan"
+     *
+     * @param dto Treatment plan summary DTO to modify
+     */
+    private void hidePricesFromSummary(TreatmentPlanSummaryDTO dto) {
+        dto.setTotalCost(null);
+        dto.setDiscountAmount(null);
+        dto.setFinalCost(null);
+    }
+
+    /**
+     * Hide all price-related fields from a list of treatment plan summary DTOs.
+     * Task #3: Vietnamese FE feedback - "bác sĩ ko xem giá trong treatment plan"
+     *
+     * @param dtos List of treatment plan summary DTOs to modify
+     */
+    private void hidePricesFromSummaries(List<TreatmentPlanSummaryDTO> dtos) {
+        dtos.forEach(this::hidePricesFromSummary);
     }
 }

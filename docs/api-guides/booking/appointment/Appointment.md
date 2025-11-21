@@ -673,7 +673,7 @@ Receptionist books appointments directly from patient's treatment plan items.
 This is enforced via `@AssertTrue` validation in DTO:
 
 ```java
-@AssertTrue(message = "Must provide either serviceCodes or patientPlanItemIds, not both and not neither")
+@AssertTrue(message = "Please provide either serviceCodes (standalone booking) or patientPlanItemIds (treatment plan booking), but not both")
 private boolean isValidBookingType() {
     boolean hasServiceCodes = serviceCodes != null && !serviceCodes.isEmpty();
     boolean hasPlanItems = patientPlanItemIds != null && !patientPlanItemIds.isEmpty();
@@ -681,9 +681,14 @@ private boolean isValidBookingType() {
 }
 ```
 
+**XOR Rule Explanation:**
+- **Standalone Booking:** Provide only `serviceCodes` (e.g., walk-in patient)
+- **Treatment Plan Booking:** Provide only `patientPlanItemIds` (e.g., planned orthodontics appointment)
+- **Invalid:** Providing both, or providing neither
+
 **Error Examples:**
 
-❌ **Both provided:**
+❌ **Both provided (violates XOR):**
 
 ```json
 {
@@ -692,9 +697,35 @@ private boolean isValidBookingType() {
 }
 ```
 
-→ 400 Bad Request: "Must provide either serviceCodes or patientPlanItemIds, not both and not neither"
+→ 400 Bad Request: "Please provide either serviceCodes (standalone booking) or patientPlanItemIds (treatment plan booking), but not both"
 
-❌ **Neither provided:**
+❌ **Neither provided (violates XOR):**
+
+```json
+{
+  "patientCode": "BN-1001",
+  "employeeCode": "EMP001",
+  "roomCode": "P-01",
+  "appointmentStartTime": "2025-11-15T10:00:00"
+}
+```
+
+→ 400 Bad Request: "Please provide either serviceCodes (standalone booking) or patientPlanItemIds (treatment plan booking), but not both"
+
+✅ **Correct Example 1 - Standalone Booking:**
+
+```json
+{
+  "patientCode": "BN-1001",
+  "employeeCode": "EMP001",
+  "roomCode": "P-01",
+  "serviceCodes": ["GEN_EXAM", "SCALING_L1"],
+  "appointmentStartTime": "2025-11-15T10:00:00",
+  "notes": "Walk-in patient"
+}
+```
+
+✅ **Correct Example 2 - Treatment Plan Booking:**
 
 ```json
 {

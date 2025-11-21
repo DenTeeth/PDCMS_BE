@@ -271,7 +271,9 @@ VALUES
 ('CREATE_TREATMENT_PLAN', 'CREATE_TREATMENT_PLAN', 'TREATMENT_PLAN', 'Tạo phác đồ điều trị mới', 262, NULL, TRUE, NOW()),
 ('UPDATE_TREATMENT_PLAN', 'UPDATE_TREATMENT_PLAN', 'TREATMENT_PLAN', 'Cập nhật phác đồ điều trị', 263, NULL, TRUE, NOW()),
 ('DELETE_TREATMENT_PLAN', 'DELETE_TREATMENT_PLAN', 'TREATMENT_PLAN', 'Vô hiệu hóa phác đồ (soft delete)', 264, NULL, TRUE, NOW()),
-('APPROVE_TREATMENT_PLAN', 'APPROVE_TREATMENT_PLAN', 'TREATMENT_PLAN', 'Duyệt/Từ chối lộ trình điều trị (Quản lý)', 265, NULL, TRUE, NOW())
+('APPROVE_TREATMENT_PLAN', 'APPROVE_TREATMENT_PLAN', 'TREATMENT_PLAN', 'Duyệt/Từ chối lộ trình điều trị (Quản lý)', 265, NULL, TRUE, NOW()),
+('VIEW_ALL_TREATMENT_PLANS', 'VIEW_ALL_TREATMENT_PLANS', 'TREATMENT_PLAN', 'Xem tất cả phác đồ (Manager/Admin dashboard)', 266, NULL, TRUE, NOW()),
+('MANAGE_PLAN_PRICING', 'MANAGE_PLAN_PRICING', 'TREATMENT_PLAN', 'Điều chỉnh giá phác đồ (Kế toán/Quản lý)', 267, NULL, TRUE, NOW())
 ON CONFLICT (permission_id) DO NOTHING;
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT 'ROLE_ADMIN', permission_id FROM permissions WHERE is_active = TRUE
@@ -337,7 +339,8 @@ VALUES
 ('ROLE_RECEPTIONIST', 'VIEW_LEAVE_OWN'), ('ROLE_RECEPTIONIST', 'CREATE_TIME_OFF'), ('ROLE_RECEPTIONIST', 'CREATE_OVERTIME'),
 ('ROLE_RECEPTIONIST', 'CANCEL_TIME_OFF_OWN'), ('ROLE_RECEPTIONIST', 'CANCEL_OVERTIME_OWN'),
 ('ROLE_RECEPTIONIST', 'VIEW_HOLIDAY'),
-('ROLE_RECEPTIONIST', 'VIEW_TREATMENT_PLAN_ALL') -- Can view all patients' treatment plans (read-only)
+('ROLE_RECEPTIONIST', 'VIEW_TREATMENT_PLAN_ALL'), -- Can view all patients' treatment plans (read-only)
+('ROLE_RECEPTIONIST', 'VIEW_ALL_TREATMENT_PLANS') -- ✅ V21: Dashboard view of all plans (Vietnamese feedback #1)
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 INSERT INTO role_permissions (role_id, permission_id)
 VALUES
@@ -381,13 +384,20 @@ VALUES
 ('ROLE_MANAGER', 'CREATE_TREATMENT_PLAN'), -- Can create treatment plans
 ('ROLE_MANAGER', 'UPDATE_TREATMENT_PLAN'), -- Can update treatment plans
 ('ROLE_MANAGER', 'DELETE_TREATMENT_PLAN'), -- Can delete treatment plans
-('ROLE_MANAGER', 'APPROVE_TREATMENT_PLAN') -- ✅ V20: Can approve/reject treatment plans (API 5.9)
+('ROLE_MANAGER', 'APPROVE_TREATMENT_PLAN'), -- ✅ V20: Can approve/reject treatment plans (API 5.9)
+('ROLE_MANAGER', 'VIEW_ALL_TREATMENT_PLANS'), -- ✅ V21: Dashboard view of all plans
+('ROLE_MANAGER', 'MANAGE_PLAN_PRICING'), -- ✅ V21.4: Can adjust plan prices (API 5.13)
+('ROLE_MANAGER', 'CREATE_APPOINTMENT'), -- ✅ V21.5: Can create appointments for testing
+('ROLE_MANAGER', 'UPDATE_APPOINTMENT_STATUS') -- ✅ V21.5: Can update appointment status for testing
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 INSERT INTO role_permissions (role_id, permission_id)
 VALUES
 ('ROLE_ACCOUNTANT', 'VIEW_LEAVE_OWN'), ('ROLE_ACCOUNTANT', 'CREATE_TIME_OFF'), ('ROLE_ACCOUNTANT', 'CREATE_OVERTIME'),
 ('ROLE_ACCOUNTANT', 'CANCEL_TIME_OFF_OWN'), ('ROLE_ACCOUNTANT', 'CANCEL_OVERTIME_OWN'),
 ('ROLE_ACCOUNTANT', 'VIEW_HOLIDAY'),
+('ROLE_ACCOUNTANT', 'VIEW_TREATMENT_PLAN_ALL'), -- ✅ Can view all plans for financial review
+('ROLE_ACCOUNTANT', 'VIEW_ALL_TREATMENT_PLANS'), -- ✅ V21: Dashboard view of all plans (Vietnamese feedback #1)
+('ROLE_ACCOUNTANT', 'MANAGE_PLAN_PRICING'), -- ✅ V21.4: Can adjust plan prices (API 5.13)
 ('ROLE_INVENTORY_MANAGER', 'VIEW_LEAVE_OWN'), ('ROLE_INVENTORY_MANAGER', 'CREATE_TIME_OFF'), ('ROLE_INVENTORY_MANAGER', 'CREATE_OVERTIME'),
 ('ROLE_INVENTORY_MANAGER', 'CANCEL_TIME_OFF_OWN'), ('ROLE_INVENTORY_MANAGER', 'CANCEL_OVERTIME_OWN'),
 ('ROLE_INVENTORY_MANAGER', 'VIEW_HOLIDAY')
@@ -1107,7 +1117,7 @@ ON CONFLICT (template_code) DO NOTHING;
 INSERT INTO treatment_plan_templates (template_code, template_name, description, estimated_duration_days, total_price, specialization_id, is_active, created_at)
 VALUES ('TPL_IMPLANT_OSSTEM', 'Cấy ghép Implant Hàn Quốc (Osstem) - Trọn gói',
         'Gói cấy ghép Implant hoàn chỉnh từ phẫu thuật đến gắn răng sứ, sử dụng trụ Osstem Hàn Quốc.',
-        180, 19000000, 5, true, NOW())
+        180, 19000000, 4, true, NOW())
 ON CONFLICT (template_code) DO NOTHING;
 INSERT INTO treatment_plan_templates (template_code, template_name, description, estimated_duration_days, total_price, specialization_id, is_active, created_at)
 VALUES ('TPL_CROWN_CERCON', 'Bọc răng sứ Cercon HT - 1 răng',

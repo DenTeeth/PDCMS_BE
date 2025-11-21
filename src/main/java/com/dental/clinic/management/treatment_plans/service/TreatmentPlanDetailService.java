@@ -7,6 +7,7 @@ import com.dental.clinic.management.treatment_plans.dto.*;
 import com.dental.clinic.management.treatment_plans.dto.response.ApprovalMetadataDTO;
 import com.dental.clinic.management.treatment_plans.enums.PlanItemStatus;
 import com.dental.clinic.management.treatment_plans.repository.PatientTreatmentPlanRepository;
+import com.dental.clinic.management.utils.security.AuthoritiesConstants;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
@@ -97,6 +98,12 @@ public class TreatmentPlanDetailService {
 
                 // STEP 4: Add approval metadata if plan has been approved/rejected
                 addApprovalMetadataIfPresent(response, patientCode, planCode);
+
+                // STEP 5: Hide prices if user is a doctor (Task #3 - FE Issue)
+                if (isCurrentUserDoctor()) {
+                        hidePricesFromDetailResponse(response);
+                        log.info("Prices hidden from treatment plan detail (user is doctor)");
+                }
 
                 log.info("Successfully built nested response with {} phases", response.getPhases().size());
                 return response;
@@ -569,5 +576,51 @@ public class TreatmentPlanDetailService {
                 log.debug("Added approval metadata to response - approvedBy: {}, notes: {}",
                                 plan.getApprovedBy().getEmployeeCode(),
                                 plan.getRejectionReason() != null ? "present" : "null");
+        }
+
+        /**
+         * Check if the current authenticated user is a doctor.
+         * Task #3: Doctors should not see prices in treatment plans.
+         *
+         * @return true if user has ROLE_DOCTOR authority
+         */
+        private boolean isCurrentUserDoctor() {
+                Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+                if (authentication == null || !authentication.isAuthenticated()) {
+                        return false;
+                }
+
+                return authentication.getAuthorities().stream()
+                                .map(GrantedAuthority::getAuthority)
+                                .anyMatch(auth -> auth.equals("ROLE_DENTIST") || auth.equals(AuthoritiesConstants.DOCTOR));
+        }
+
+        /**
+         * Hide all price-related fields from treatment plan detail response for doctors.
+         * Task #3: Vietnamese FE feedback - "bác sĩ ko xem giá trong treatment plan"
+         *
+         * Hides:
+         * - Plan-level: totalPrice, discountAmount, finalCost
+         * - Item-level: price for each item in each phase
+         *
+         * @param response Treatment plan detail response to modify
+         */
+        private void hidePricesFromDetailResponse(TreatmentPlanDetailResponse response) {
+                // Hide plan-level prices
+                response.setTotalPrice(null);
+                response.setDiscountAmount(null);
+                response.setFinalCost(null);
+
+                // Hide item-level prices in all phases
+                if (response.getPhases() != null) {
+                        response.getPhases().forEach(phase -> {
+                                if (phase.getItems() != null) {
+                                        phase.getItems().forEach(item -> item.setPrice(null));
+                                }
+                        });
+                }
+
+                log.debug("Hid prices from {} phases in treatment plan detail response",
+                                response.getPhases() != null ? response.getPhases().size() : 0);
         }
 }

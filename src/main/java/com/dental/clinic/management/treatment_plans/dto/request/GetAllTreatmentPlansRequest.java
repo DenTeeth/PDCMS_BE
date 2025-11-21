@@ -86,6 +86,23 @@ public class GetAllTreatmentPlansRequest {
     @Schema(description = "Filter by patient code (Admin only)", example = "BN-1001")
     private String patientCode;
 
+    /**
+     * Filter by template ID (Admin only).
+     * Shows all treatment plans created from a specific template.
+     * Example: templateId=5 shows all plans created from template 5
+     */
+    @Schema(description = "Filter by template ID", example = "5")
+    private Long templateId;
+
+    /**
+     * Filter by specialization ID (Admin only).
+     * Shows all treatment plans whose template belongs to a specific specialization.
+     * Example: specializationId=1 shows all orthodontics plans
+     * Note: Filters via sourceTemplate.specialization relationship
+     */
+    @Schema(description = "Filter by specialization ID", example = "1")
+    private Long specializationId;
+
     // ============================================
     // DATE RANGE FILTERS (P1 Enhancement)
     // ============================================

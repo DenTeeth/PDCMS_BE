@@ -53,6 +53,8 @@ public class TreatmentPlanListService {
      * @param approvalStatus     Filter by approval status (null = all)
      * @param status             Filter by plan status (null = all)
      * @param doctorEmployeeCode Filter by doctor (null = all)
+     * @param templateId         Filter by template ID (null = all)
+     * @param specializationId   Filter by specialization ID (null = all)
      * @param pageable           Pagination parameters
      * @return Page of TreatmentPlanSummaryDTO
      */
@@ -62,16 +64,20 @@ public class TreatmentPlanListService {
             ApprovalStatus approvalStatus,
             TreatmentPlanStatus status,
             String doctorEmployeeCode,
+            Long templateId,
+            Long specializationId,
             Pageable pageable) {
 
-        log.info("🔍 Manager listing all treatment plans - approvalStatus={}, status={}, doctor={}, page={}, size={}",
-                approvalStatus, status, doctorEmployeeCode, pageable.getPageNumber(), pageable.getPageSize());
+        log.info("🔍 Manager listing all treatment plans - approvalStatus={}, status={}, doctor={}, templateId={}, specializationId={}, page={}, size={}",
+                approvalStatus, status, doctorEmployeeCode, templateId, specializationId, pageable.getPageNumber(), pageable.getPageSize());
 
         // STEP 1: Query with filters and pagination
         Page<PatientTreatmentPlan> plansPage = planRepository.findAllWithFilters(
                 approvalStatus,
                 status,
                 doctorEmployeeCode,
+                templateId,
+                specializationId,
                 pageable);
 
         log.info("Found {} treatment plans (total={}, page={}/{})",

@@ -165,16 +165,26 @@ public interface PatientTreatmentPlanRepository extends JpaRepository<PatientTre
                         "LEFT JOIN FETCH p.patient " +
                         "LEFT JOIN FETCH p.createdBy " +
                         "LEFT JOIN FETCH p.approvedBy " +
+                        "LEFT JOIN FETCH p.sourceTemplate t " +
+                        "LEFT JOIN FETCH t.specialization s " +
                         "WHERE (:approvalStatus IS NULL OR p.approvalStatus = :approvalStatus) " +
                         "AND (:status IS NULL OR p.status = :status) " +
-                        "AND (:doctorEmployeeCode IS NULL OR p.createdBy.employeeCode = :doctorEmployeeCode)", countQuery = "SELECT COUNT(DISTINCT p) FROM PatientTreatmentPlan p "
-                                        +
+                        "AND (:doctorEmployeeCode IS NULL OR p.createdBy.employeeCode = :doctorEmployeeCode) " +
+                        "AND (:templateId IS NULL OR t.templateId = :templateId) " +
+                        "AND (:specializationId IS NULL OR s.specializationId = :specializationId)", 
+                        countQuery = "SELECT COUNT(DISTINCT p) FROM PatientTreatmentPlan p " +
+                                        "LEFT JOIN p.sourceTemplate t " +
+                                        "LEFT JOIN t.specialization s " +
                                         "WHERE (:approvalStatus IS NULL OR p.approvalStatus = :approvalStatus) " +
                                         "AND (:status IS NULL OR p.status = :status) " +
-                                        "AND (:doctorEmployeeCode IS NULL OR p.createdBy.employeeCode = :doctorEmployeeCode)")
+                                        "AND (:doctorEmployeeCode IS NULL OR p.createdBy.employeeCode = :doctorEmployeeCode) " +
+                                        "AND (:templateId IS NULL OR t.templateId = :templateId) " +
+                                        "AND (:specializationId IS NULL OR s.specializationId = :specializationId)")
         org.springframework.data.domain.Page<PatientTreatmentPlan> findAllWithFilters(
                         @Param("approvalStatus") com.dental.clinic.management.treatment_plans.domain.ApprovalStatus approvalStatus,
                         @Param("status") com.dental.clinic.management.treatment_plans.enums.TreatmentPlanStatus status,
                         @Param("doctorEmployeeCode") String doctorEmployeeCode,
+                        @Param("templateId") Long templateId,
+                        @Param("specializationId") Long specializationId,
                         org.springframework.data.domain.Pageable pageable);
 }

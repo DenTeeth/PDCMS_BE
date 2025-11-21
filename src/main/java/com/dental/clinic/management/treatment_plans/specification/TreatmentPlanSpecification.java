@@ -82,6 +82,24 @@ public class TreatmentPlanSpecification {
                         request.getPatientCode()));
             }
 
+            // Filter: templateId (Task #2 - Template filtering)
+            if (request.getTemplateId() != null) {
+                Join<Object, Object> templateJoin = root.join("sourceTemplate", JoinType.INNER);
+                predicates.add(criteriaBuilder.equal(
+                        templateJoin.get("templateId"),
+                        request.getTemplateId()));
+            }
+
+            // Filter: specializationId (Task #2 - Specialization filtering)
+            // Filters treatment plans by template's specialization
+            if (request.getSpecializationId() != null) {
+                Join<Object, Object> templateJoin = root.join("sourceTemplate", JoinType.INNER);
+                Join<Object, Object> specializationJoin = templateJoin.join("specialization", JoinType.INNER);
+                predicates.add(criteriaBuilder.equal(
+                        specializationJoin.get("specializationId"),
+                        request.getSpecializationId()));
+            }
+
             // Filter: startDate range (P1 Enhancement)
             if (request.getStartDateFrom() != null) {
                 predicates.add(criteriaBuilder.greaterThanOrEqualTo(

@@ -86,14 +86,18 @@ public class TreatmentPlanController {
 
                         @Parameter(description = "Filter by doctor employee code (e.g., NV-2001)", required = false) @RequestParam(required = false) String doctorEmployeeCode,
 
+                        @Parameter(description = "Filter by template ID (e.g., 1)", required = false) @RequestParam(required = false) Long templateId,
+
+                        @Parameter(description = "Filter by specialization ID (e.g., 1 for Orthodontics)", required = false) @RequestParam(required = false) Long specializationId,
+
                         @Parameter(description = "Pagination parameters (page=0, size=10, sort=createdAt,desc)", required = false) Pageable pageable) {
 
-                log.info("REST request to list all treatment plans - filters: approvalStatus={}, status={}, doctor={}, page={}, size={}",
-                                approvalStatus, status, doctorEmployeeCode, pageable.getPageNumber(),
+                log.info("REST request to list all treatment plans - filters: approvalStatus={}, status={}, doctor={}, templateId={}, specializationId={}, page={}, size={}",
+                                approvalStatus, status, doctorEmployeeCode, templateId, specializationId, pageable.getPageNumber(),
                                 pageable.getPageSize());
 
                 Page<com.dental.clinic.management.treatment_plans.dto.response.TreatmentPlanSummaryDTO> plans = treatmentPlanListService
-                                .listAllPlans(approvalStatus, status, doctorEmployeeCode, pageable);
+                                .listAllPlans(approvalStatus, status, doctorEmployeeCode, templateId, specializationId, pageable);
 
                 log.info("Found {} treatment plans (page {} of {})",
                                 plans.getNumberOfElements(), plans.getNumber() + 1, plans.getTotalPages());
