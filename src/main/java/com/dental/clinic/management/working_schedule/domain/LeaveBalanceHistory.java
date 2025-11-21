@@ -20,11 +20,19 @@ public class LeaveBalanceHistory {
     @Column(name = "history_id")
     private Long historyId;
 
-    @Column(name = "balance_id", nullable = false)
+    @Column(name = "balance_id", nullable = false, insertable = false, updatable = false)
     private Long balanceId;
 
-    @Column(name = "changed_by", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "balance_id", nullable = false)
+    private EmployeeLeaveBalance balance;
+
+    @Column(name = "changed_by", nullable = false, insertable = false, updatable = false)
     private Integer changedBy;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "changed_by", nullable = false)
+    private com.dental.clinic.management.employee.domain.Employee changedByEmployee;
 
     @Column(name = "change_amount", nullable = false)
     private Double changeAmount;

@@ -26,6 +26,14 @@ public class AppointmentPlanItemBridge {
     /**
      * Composite Primary Key for bridge table
      */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "appointment_id", insertable = false, updatable = false)
+    private Appointment appointment;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "item_id", insertable = false, updatable = false)
+    private com.dental.clinic.management.treatment_plans.domain.PatientPlanItem item;
+
     @Embeddable
     @Data
     @NoArgsConstructor

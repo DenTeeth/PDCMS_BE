@@ -40,15 +40,23 @@ public class AppointmentAuditLog {
     /**
      * FK to appointments table
      */
-    @Column(name = "appointment_id", nullable = false)
+    @Column(name = "appointment_id", nullable = false, insertable = false, updatable = false)
     private Integer appointmentId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "appointment_id", nullable = false)
+    private Appointment appointment;
 
     /**
      * FK to employees table - who performed this action
      * NULL if system-generated
      */
-    @Column(name = "changed_by_employee_id")
+    @Column(name = "changed_by_employee_id", insertable = false, updatable = false)
     private Integer performedByEmployeeId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "changed_by_employee_id")
+    private com.dental.clinic.management.employee.domain.Employee performedByEmployee;
 
     /**
      * Type of action performed

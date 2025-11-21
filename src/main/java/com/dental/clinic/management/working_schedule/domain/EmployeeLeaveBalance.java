@@ -19,11 +19,19 @@ public class EmployeeLeaveBalance {
     @Column(name = "balance_id")
     private Long balanceId;
 
-    @Column(name = "employee_id", nullable = false)
+    @Column(name = "employee_id", nullable = false, insertable = false, updatable = false)
     private Integer employeeId;
 
-    @Column(name = "time_off_type_id", nullable = false, length = 50)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "employee_id", nullable = false)
+    private com.dental.clinic.management.employee.domain.Employee employee;
+
+    @Column(name = "time_off_type_id", nullable = false, length = 50, insertable = false, updatable = false)
     private String timeOffTypeId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "time_off_type_id", nullable = false)
+    private TimeOffType timeOffType;
 
     @Column(name = "cycle_year", nullable = false)
     private Integer year;

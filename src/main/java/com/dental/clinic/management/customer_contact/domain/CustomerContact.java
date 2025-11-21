@@ -8,7 +8,10 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
@@ -58,14 +61,16 @@ public class CustomerContact {
     @Column(name = "message", columnDefinition = "TEXT")
     private String message;
 
-    @Column(name = "assigned_to")
-    private Integer assignedTo;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assigned_to")
+    private com.dental.clinic.management.employee.domain.Employee assignedToEmployee;
 
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
 
-    @Column(name = "converted_patient_id")
-    private Integer convertedPatientId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "converted_patient_id")
+    private com.dental.clinic.management.patient.domain.Patient convertedPatient;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -161,11 +166,23 @@ public class CustomerContact {
     }
 
     public Integer getAssignedTo() {
-        return assignedTo;
+        return assignedToEmployee != null ? assignedToEmployee.getEmployeeId() : null;
     }
 
     public void setAssignedTo(Integer assignedTo) {
-        this.assignedTo = assignedTo;
+        // For backward compatibility - set the entity to null if assignedTo is null
+        if (assignedTo == null) {
+            this.assignedToEmployee = null;
+        }
+        // Entity will be loaded lazily when needed
+    }
+
+    public com.dental.clinic.management.employee.domain.Employee getAssignedToEmployee() {
+        return assignedToEmployee;
+    }
+
+    public void setAssignedToEmployee(com.dental.clinic.management.employee.domain.Employee assignedToEmployee) {
+        this.assignedToEmployee = assignedToEmployee;
     }
 
     public String getNotes() {
@@ -177,11 +194,23 @@ public class CustomerContact {
     }
 
     public Integer getConvertedPatientId() {
-        return convertedPatientId;
+        return convertedPatient != null ? convertedPatient.getPatientId() : null;
     }
 
     public void setConvertedPatientId(Integer convertedPatientId) {
-        this.convertedPatientId = convertedPatientId;
+        // For backward compatibility - set the entity to null if convertedPatientId is null
+        if (convertedPatientId == null) {
+            this.convertedPatient = null;
+        }
+        // Entity will be loaded lazily when needed
+    }
+
+    public com.dental.clinic.management.patient.domain.Patient getConvertedPatient() {
+        return convertedPatient;
+    }
+
+    public void setConvertedPatient(com.dental.clinic.management.patient.domain.Patient convertedPatient) {
+        this.convertedPatient = convertedPatient;
     }
 
     public LocalDateTime getCreatedAt() {
@@ -226,7 +255,7 @@ public class CustomerContact {
                 ", email='" + email + '\'' +
                 ", source=" + source +
                 ", status=" + status +
-                ", assignedTo='" + assignedTo + '\'' +
+                ", assignedTo='" + getAssignedTo() + '\'' +
                 ", createdAt=" + createdAt +
                 ", updatedAt=" + updatedAt +
                 '}';

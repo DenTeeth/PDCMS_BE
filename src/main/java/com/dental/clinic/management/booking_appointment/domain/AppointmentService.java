@@ -16,6 +16,14 @@ public class AppointmentService {
     @EmbeddedId
     private AppointmentServiceId id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "appointment_id", insertable = false, updatable = false)
+    private Appointment appointment;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "service_id", insertable = false, updatable = false)
+    private com.dental.clinic.management.service.domain.DentalService service;
+
     // Constructors
     public AppointmentService() {
     }

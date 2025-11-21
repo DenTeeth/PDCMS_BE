@@ -36,16 +36,24 @@ public class Appointment {
      * API nhận patientId (hoặc patientCode nếu cần)
      */
     @NotNull(message = "Patient ID is required")
-    @Column(name = "patient_id", nullable = false)
+    @Column(name = "patient_id", nullable = false, insertable = false, updatable = false)
     private Integer patientId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "patient_id", nullable = false)
+    private com.dental.clinic.management.patient.domain.Patient patient;
 
     /**
      * Foreign key to employees table - Bác sĩ CHÍNH
      * API nhận employeeCode (String), service layer resolve -> employeeId
      */
     @NotNull(message = "Employee ID is required")
-    @Column(name = "employee_id", nullable = false)
+    @Column(name = "employee_id", nullable = false, insertable = false, updatable = false)
     private Integer employeeId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "employee_id", nullable = false)
+    private com.dental.clinic.management.employee.domain.Employee employee;
 
     /**
      * Foreign key to rooms table - Ghế/Phòng CHÍNH
@@ -53,8 +61,12 @@ public class Appointment {
      * API nhận roomCode (String), service layer resolve -> roomId (String)
      */
     @NotNull(message = "Room ID is required")
-    @Column(name = "room_id", nullable = false, length = 50)
+    @Column(name = "room_id", nullable = false, length = 50, insertable = false, updatable = false)
     private String roomId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "room_id", nullable = false)
+    private Room room;
 
     @NotNull(message = "Appointment start time is required")
     @Column(name = "appointment_start_time", nullable = false)
@@ -81,8 +93,9 @@ public class Appointment {
     /**
      * Self-referencing FK - appointment này được reschedule sang appointment nào
      */
-    @Column(name = "rescheduled_to_appointment_id")
-    private Integer rescheduledToAppointmentId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "rescheduled_to_appointment_id")
+    private Appointment rescheduledToAppointment;
 
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
@@ -90,8 +103,12 @@ public class Appointment {
     /**
      * FK to employees - Lễ tân tạo lịch hẹn này
      */
-    @Column(name = "created_by")
+    @Column(name = "created_by", insertable = false, updatable = false)
     private Integer createdBy;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by")
+    private com.dental.clinic.management.employee.domain.Employee createdByEmployee;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -228,11 +245,23 @@ public class Appointment {
     }
 
     public Integer getRescheduledToAppointmentId() {
-        return rescheduledToAppointmentId;
+        return rescheduledToAppointment != null ? rescheduledToAppointment.getAppointmentId() : null;
     }
 
     public void setRescheduledToAppointmentId(Integer rescheduledToAppointmentId) {
-        this.rescheduledToAppointmentId = rescheduledToAppointmentId;
+        // For backward compatibility - set the entity to null if rescheduledToAppointmentId is null
+        if (rescheduledToAppointmentId == null) {
+            this.rescheduledToAppointment = null;
+        }
+        // Entity will be loaded lazily when needed
+    }
+
+    public Appointment getRescheduledToAppointment() {
+        return rescheduledToAppointment;
+    }
+
+    public void setRescheduledToAppointment(Appointment rescheduledToAppointment) {
+        this.rescheduledToAppointment = rescheduledToAppointment;
     }
 
     public String getNotes() {

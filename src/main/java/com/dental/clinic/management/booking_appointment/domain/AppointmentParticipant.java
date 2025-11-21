@@ -19,6 +19,14 @@ public class AppointmentParticipant {
     @EmbeddedId
     private AppointmentParticipantId id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "appointment_id", insertable = false, updatable = false)
+    private Appointment appointment;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "employee_id", insertable = false, updatable = false)
+    private com.dental.clinic.management.employee.domain.Employee employee;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "participant_role", nullable = false)
     private AppointmentParticipantRole role = AppointmentParticipantRole.ASSISTANT;

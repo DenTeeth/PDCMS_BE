@@ -6,7 +6,10 @@ import com.dental.clinic.management.utils.IdGenerator;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
@@ -24,11 +27,19 @@ public class EmployeeShiftRegistration {
     @Column(name = "registration_id", length = 20)
     private String registrationId;
 
-    @Column(name = "employee_id", nullable = false)
+    @Column(name = "employee_id", nullable = false, insertable = false, updatable = false)
     private Integer employeeId;
 
-    @Column(name = "part_time_slot_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "employee_id", nullable = false)
+    private com.dental.clinic.management.employee.domain.Employee employee;
+
+    @Column(name = "part_time_slot_id", nullable = false, insertable = false, updatable = false)
     private Long partTimeSlotId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "part_time_slot_id", nullable = false)
+    private PartTimeSlot partTimeSlot;
 
     @Column(name = "effective_from", nullable = false)
     private LocalDate effectiveFrom;
