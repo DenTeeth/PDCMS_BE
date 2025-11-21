@@ -71,8 +71,11 @@ public class CustomerContact {
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
 
+    @Column(name = "converted_patient_id")
+    private Integer convertedPatientId;
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "converted_patient_id")
+    @JoinColumn(name = "converted_patient_id", insertable = false, updatable = false)
     private com.dental.clinic.management.patient.domain.Patient convertedPatient;
 
     @Column(name = "created_at")
@@ -193,15 +196,11 @@ public class CustomerContact {
     }
 
     public Integer getConvertedPatientId() {
-        return convertedPatient != null ? convertedPatient.getPatientId() : null;
+        return convertedPatientId;
     }
 
     public void setConvertedPatientId(Integer convertedPatientId) {
-        // For backward compatibility - set the entity to null if convertedPatientId is null
-        if (convertedPatientId == null) {
-            this.convertedPatient = null;
-        }
-        // Entity will be loaded lazily when needed
+        this.convertedPatientId = convertedPatientId;
     }
 
     public com.dental.clinic.management.patient.domain.Patient getConvertedPatient() {
