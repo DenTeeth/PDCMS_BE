@@ -61,8 +61,11 @@ public class CustomerContact {
     @Column(name = "message", columnDefinition = "TEXT")
     private String message;
 
+    @Column(name = "assigned_to")
+    private Integer assignedTo;
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "assigned_to")
+    @JoinColumn(name = "assigned_to", insertable = false, updatable = false)
     private com.dental.clinic.management.employee.domain.Employee assignedToEmployee;
 
     @Column(name = "notes", columnDefinition = "TEXT")
@@ -166,15 +169,11 @@ public class CustomerContact {
     }
 
     public Integer getAssignedTo() {
-        return assignedToEmployee != null ? assignedToEmployee.getEmployeeId() : null;
+        return assignedTo;
     }
 
     public void setAssignedTo(Integer assignedTo) {
-        // For backward compatibility - set the entity to null if assignedTo is null
-        if (assignedTo == null) {
-            this.assignedToEmployee = null;
-        }
-        // Entity will be loaded lazily when needed
+        this.assignedTo = assignedTo;
     }
 
     public com.dental.clinic.management.employee.domain.Employee getAssignedToEmployee() {
