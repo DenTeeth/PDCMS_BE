@@ -619,15 +619,53 @@ Starting from V2, API 3.2 (Create Appointment) supports TWO booking modes:
 
 Receptionist manually selects services for walk-in patients or one-time appointments.
 
-**Request:**
+**Request Example:**
 
 ```json
 {
   "patientCode": "BN-1001",
-  "serviceCodes": ["SCALING_L1", "GEN_EXAM"], // Manually selected
+  "serviceCodes": ["SCALING_L1", "GEN_EXAM"],
   "employeeCode": "EMP001",
   "roomCode": "P-01",
-  "appointmentStartTime": "2025-11-15T10:00:00"
+  "appointmentStartTime": "2025-11-15T10:00:00",
+  "notes": "Walk-in patient for cleaning and checkup"
+}
+```
+
+**Response (201 Created):**
+
+```json
+{
+  "appointmentCode": "APT-20251115-012",
+  "appointmentStartTime": "2025-11-15T10:00:00",
+  "appointmentEndTime": "2025-11-15T10:45:00",
+  "patient": {
+    "patientCode": "BN-1001",
+    "fullName": "Nguyễn Văn A"
+  },
+  "doctor": {
+    "employeeCode": "EMP001",
+    "fullName": "Dr. Lê Anh Khoa"
+  },
+  "room": {
+    "roomCode": "P-01",
+    "roomName": "Phòng khám 1"
+  },
+  "services": [
+    {
+      "serviceCode": "GEN_EXAM",
+      "serviceName": "Khám tổng quát",
+      "estimatedTimeMinutes": 15
+    },
+    {
+      "serviceCode": "SCALING_L1",
+      "serviceName": "Lấy cao răng (Mức 1)",
+      "estimatedTimeMinutes": 30
+    }
+  ],
+  "linkedPlanItems": null,
+  "status": "SCHEDULED",
+  "createdAt": "2025-11-15T09:00:00"
 }
 ```
 
@@ -639,15 +677,60 @@ Receptionist manually selects services for walk-in patients or one-time appointm
 
 Receptionist books appointments directly from patient's treatment plan items.
 
-**Request:**
+**Request Example:**
 
 ```json
 {
   "patientCode": "BN-1001",
-  "patientPlanItemIds": [307, 308], // Items from treatment plan (e.g., "Lần 3/24: Siết niềng", "Lần 4/24: Siết niềng")
+  "patientPlanItemIds": [307, 308],
   "employeeCode": "EMP001",
   "roomCode": "P-01",
-  "appointmentStartTime": "2025-12-08T14:00:00"
+  "appointmentStartTime": "2025-12-08T14:00:00",
+  "notes": "Orthodontic adjustment - Sessions 3 & 4"
+}
+```
+
+**Response (201 Created):**
+
+```json
+{
+  "appointmentCode": "APT-20251208-015",
+  "appointmentStartTime": "2025-12-08T14:00:00",
+  "appointmentEndTime": "2025-12-08T14:30:00",
+  "patient": {
+    "patientCode": "BN-1001",
+    "fullName": "Nguyễn Văn A"
+  },
+  "doctor": {
+    "employeeCode": "EMP001",
+    "fullName": "Dr. Lê Anh Khoa"
+  },
+  "room": {
+    "roomCode": "P-01",
+    "roomName": "Phòng khám 1"
+  },
+  "services": [
+    {
+      "serviceCode": "ORTHO_ADJUST",
+      "serviceName": "Siết niềng định kỳ",
+      "estimatedTimeMinutes": 30
+    }
+  ],
+  "linkedPlanItems": [
+    {
+      "itemId": 307,
+      "itemName": "Lần 3/24: Siết niềng",
+      "status": "SCHEDULED"
+    },
+    {
+      "itemId": 308,
+      "itemName": "Lần 4/24: Siết niềng",
+      "status": "SCHEDULED"
+    }
+  ],
+  "status": "SCHEDULED",
+  "treatmentPlanCode": "PLAN-20251001-001",
+  "createdAt": "2025-12-08T09:00:00"
 }
 ```
 
@@ -666,7 +749,7 @@ Receptionist books appointments directly from patient's treatment plan items.
 
 ---
 
-## XOR Validation Rule
+## XOR Validation Rule (⚠️ IMPORTANT)
 
 **CRITICAL:** Request MUST provide **EITHER** `serviceCodes` **OR** `patientPlanItemIds`, **NOT BOTH** and **NOT NEITHER**.
 
@@ -682,9 +765,10 @@ private boolean isValidBookingType() {
 ```
 
 **XOR Rule Explanation:**
-- **Standalone Booking:** Provide only `serviceCodes` (e.g., walk-in patient)
-- **Treatment Plan Booking:** Provide only `patientPlanItemIds` (e.g., planned orthodontics appointment)
-- **Invalid:** Providing both, or providing neither
+- ✅ **Valid Option 1:** Provide only `serviceCodes` (standalone booking for walk-in patients)
+- ✅ **Valid Option 2:** Provide only `patientPlanItemIds` (treatment plan booking)
+- ❌ **Invalid:** Providing both `serviceCodes` AND `patientPlanItemIds`
+- ❌ **Invalid:** Providing neither (empty or null for both fields)
 
 **Error Examples:**
 
@@ -730,11 +814,56 @@ private boolean isValidBookingType() {
 ```json
 {
   "patientCode": "BN-1001",
-  "employeeCode": "EMP001"
+  "employeeCode": "EMP001",
+  "roomCode": "P-01",
+  "patientPlanItemIds": [307, 308],
+  "appointmentStartTime": "2025-12-08T14:00:00",
+  "notes": "Orthodontic adjustment session 3 & 4"
 }
 ```
 
-→ 400 Bad Request: XOR validation error
+**Response (201 Created):**
+
+```json
+{
+  "appointmentCode": "APT-20251208-015",
+  "appointmentStartTime": "2025-12-08T14:00:00",
+  "appointmentEndTime": "2025-12-08T14:30:00",
+  "patient": {
+    "patientCode": "BN-1001",
+    "fullName": "Nguyễn Văn A"
+  },
+  "doctor": {
+    "employeeCode": "EMP001",
+    "fullName": "Dr. Lê Anh Khoa"
+  },
+  "room": {
+    "roomCode": "P-01",
+    "roomName": "Phòng khám 1"
+  },
+  "services": [
+    {
+      "serviceCode": "ORTHO_ADJUST",
+      "serviceName": "Siết niềng định kỳ",
+      "estimatedTimeMinutes": 30
+    }
+  ],
+  "linkedPlanItems": [
+    {
+      "itemId": 307,
+      "itemName": "Lần 3/24: Siết niềng",
+      "status": "SCHEDULED"
+    },
+    {
+      "itemId": 308,
+      "itemName": "Lần 4/24: Siết niềng", 
+      "status": "SCHEDULED"
+    }
+  ],
+  "status": "SCHEDULED",
+  "createdAt": "2025-12-08T09:00:00"
+}
+```
 
 ---
 
