@@ -220,27 +220,33 @@ public class AppointmentRescheduleService {
 
                 Integer performedByEmployeeId = getCurrentEmployeeId();
 
+                // Fetch employee entity if ID is not 0 (SYSTEM)
+                com.dental.clinic.management.employee.domain.Employee performedByEmployee = null;
+                if (performedByEmployeeId != 0) {
+                        performedByEmployee = employeeRepository.findById(performedByEmployeeId).orElse(null);
+                }
+
                 // Audit log for OLD appointment (RESCHEDULE_SOURCE)
                 AppointmentAuditLog oldLog = AppointmentAuditLog.builder()
-                                .appointmentId(oldAppointment.getAppointmentId())
+                                .appointment(oldAppointment)
+                                .performedByEmployee(performedByEmployee)
                                 .actionType(AppointmentActionType.RESCHEDULE_SOURCE)
                                 .oldStatus(AppointmentStatus.SCHEDULED) // or CHECKED_IN
                                 .newStatus(AppointmentStatus.CANCELLED)
                                 .reasonCode(request.getReasonCode())
                                 .notes(request.getCancelNotes())
-                                .performedByEmployeeId(performedByEmployeeId)
                                 .build();
                 auditLogRepository.save(oldLog);
 
                 // Audit log for NEW appointment (RESCHEDULE_TARGET)
                 AppointmentAuditLog newLog = AppointmentAuditLog.builder()
-                                .appointmentId(newAppointment.getAppointmentId())
+                                .appointment(newAppointment)
+                                .performedByEmployee(performedByEmployee)
                                 .actionType(AppointmentActionType.RESCHEDULE_TARGET)
                                 .oldStatus(null) // New appointment has no old status
                                 .newStatus(AppointmentStatus.SCHEDULED)
                                 .reasonCode(request.getReasonCode())
                                 .notes("Rescheduled from " + oldAppointment.getAppointmentCode())
-                                .performedByEmployeeId(performedByEmployeeId)
                                 .build();
                 auditLogRepository.save(newLog);
 

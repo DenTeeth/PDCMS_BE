@@ -280,7 +280,7 @@ public class AppointmentDetailService {
         if (appointment.getStatus() == AppointmentStatus.CANCELLED) {
             try {
                 List<AppointmentAuditLog> auditLogs = appointmentAuditLogRepository
-                        .findByAppointmentIdOrderByCreatedAtDesc(appointment.getAppointmentId());
+                        .findByAppointment_AppointmentIdOrderByCreatedAtDesc(appointment.getAppointmentId());
 
                 // Find the CANCEL action log
                 AppointmentAuditLog cancelLog = auditLogs.stream()

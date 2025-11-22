@@ -212,14 +212,20 @@ public class AppointmentDelayService {
 
                 Integer performedByEmployeeId = getCurrentEmployeeId();
 
+                // Fetch employee entity if ID is not 0 (SYSTEM)
+                com.dental.clinic.management.employee.domain.Employee performedByEmployee = null;
+                if (performedByEmployeeId != 0) {
+                        performedByEmployee = employeeRepository.findById(performedByEmployeeId).orElse(null);
+                }
+
                 AppointmentAuditLog auditLog = AppointmentAuditLog.builder()
-                                .appointmentId(appointment.getAppointmentId())
+                                .appointment(appointment)
+                                .performedByEmployee(performedByEmployee)
                                 .actionType(AppointmentActionType.DELAY)
                                 .oldStatus(appointment.getStatus()) // Status unchanged (still SCHEDULED/CHECKED_IN)
                                 .newStatus(appointment.getStatus())
                                 .reasonCode(request.getReasonCode())
                                 .notes(request.getNotes())
-                                .performedByEmployeeId(performedByEmployeeId)
                                 .oldStartTime(oldStartTime)
                                 .newStartTime(newStartTime)
                                 .build();

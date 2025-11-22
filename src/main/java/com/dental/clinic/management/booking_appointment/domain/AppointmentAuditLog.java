@@ -39,23 +39,19 @@ public class AppointmentAuditLog {
 
     /**
      * FK to appointments table
+     * Mapped through JPA relationship below
      */
-    @Column(name = "appointment_id", nullable = false, insertable = false, updatable = false)
-    private Integer appointmentId;
-
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "appointment_id", nullable = false)
+    @JoinColumn(name = "appointment_id", nullable = false, foreignKey = @ForeignKey(name = "fk_audit_appointment"))
     private Appointment appointment;
 
     /**
      * FK to employees table - who performed this action
      * NULL if system-generated
+     * Mapped through JPA relationship below
      */
-    @Column(name = "changed_by_employee_id", insertable = false, updatable = false)
-    private Integer performedByEmployeeId;
-
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "changed_by_employee_id")
+    @JoinColumn(name = "changed_by_employee_id", foreignKey = @ForeignKey(name = "fk_audit_employee"))
     private com.dental.clinic.management.employee.domain.Employee performedByEmployee;
 
     /**

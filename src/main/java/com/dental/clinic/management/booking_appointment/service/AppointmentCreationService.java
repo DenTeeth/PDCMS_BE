@@ -912,11 +912,18 @@ public class AppointmentCreationService {
         }
 
         private void insertAuditLog(Appointment appointment, Integer createdById) {
-                AppointmentAuditLog log = new AppointmentAuditLog();
-                log.setAppointmentId(appointment.getAppointmentId());
-                log.setActionType(AppointmentActionType.CREATE);
-                log.setPerformedByEmployeeId(createdById);
-                log.setActionTimestamp(LocalDateTime.now());
+                // Fetch employee entity if ID is not 0 (SYSTEM)
+                Employee performedByEmployee = null;
+                if (createdById != 0) {
+                        performedByEmployee = employeeRepository.findById(createdById).orElse(null);
+                }
+
+                AppointmentAuditLog log = AppointmentAuditLog.builder()
+                                .appointment(appointment)
+                                .performedByEmployee(performedByEmployee)
+                                .actionType(AppointmentActionType.CREATE)
+                                .actionTimestamp(LocalDateTime.now())
+                                .build();
                 appointmentAuditLogRepository.save(log);
         }
 

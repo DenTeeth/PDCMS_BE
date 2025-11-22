@@ -16,6 +16,7 @@ public interface AppointmentAuditLogRepository extends JpaRepository<Appointment
     /**
      * Find all audit logs for a specific appointment
      * Ordered by creation time (newest first)
+     * Uses relationship path: appointment.appointmentId
      */
-    List<AppointmentAuditLog> findByAppointmentIdOrderByCreatedAtDesc(Integer appointmentId);
+    List<AppointmentAuditLog> findByAppointment_AppointmentIdOrderByCreatedAtDesc(Integer appointmentId);
 }

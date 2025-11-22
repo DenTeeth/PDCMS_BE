@@ -219,14 +219,20 @@ public class AppointmentStatusService {
             }
         }
 
+        // Fetch employee entity if ID is not 0 (SYSTEM)
+        com.dental.clinic.management.employee.domain.Employee performedByEmployee = null;
+        if (changedByEmployeeId != 0) {
+            performedByEmployee = employeeRepository.findById(changedByEmployeeId).orElse(null);
+        }
+
         AppointmentAuditLog auditLog = AppointmentAuditLog.builder()
                 .appointment(appointment)  // Set the relationship, not the ID
+                .performedByEmployee(performedByEmployee)  // Set the relationship
                 .actionType(AppointmentActionType.STATUS_CHANGE)
                 .oldStatus(oldStatus)
                 .newStatus(newStatus)
                 .reasonCode(reasonCodeEnum)
                 .notes(request.getNotes())
-                .performedByEmployeeId(changedByEmployeeId)
                 .createdAt(now)
                 .build();
 
