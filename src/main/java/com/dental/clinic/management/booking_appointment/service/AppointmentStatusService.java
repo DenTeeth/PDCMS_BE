@@ -9,9 +9,14 @@ import com.dental.clinic.management.booking_appointment.enums.AppointmentReasonC
 import com.dental.clinic.management.booking_appointment.enums.AppointmentStatus;
 import com.dental.clinic.management.booking_appointment.repository.AppointmentAuditLogRepository;
 import com.dental.clinic.management.booking_appointment.repository.AppointmentRepository;
+import com.dental.clinic.management.booking_appointment.repository.PatientPlanItemRepository;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.exception.ResourceNotFoundException;
+import com.dental.clinic.management.treatment_plans.domain.PatientPlanItem;
+import com.dental.clinic.management.treatment_plans.domain.PatientPlanPhase;
+import com.dental.clinic.management.treatment_plans.enums.PhaseStatus;
 import com.dental.clinic.management.treatment_plans.enums.PlanItemStatus;
+import com.dental.clinic.management.treatment_plans.repository.PatientPlanPhaseRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -45,6 +50,8 @@ public class AppointmentStatusService {
     private final EmployeeRepository employeeRepository;
     private final AppointmentDetailService detailService;
     private final JdbcTemplate jdbcTemplate;
+    private final PatientPlanPhaseRepository phaseRepository;
+    private final PatientPlanItemRepository itemRepository;
 
     /**
      * Valid state transitions map.
@@ -280,7 +287,7 @@ public class AppointmentStatusService {
      * Status Mapping:
      * - Appointment IN_PROGRESS → Plan items IN_PROGRESS
      * - Appointment COMPLETED → Plan items COMPLETED (with completedAt timestamp)
-     * - Appointment CANCELLED → Plan items SCHEDULED (keep as scheduled, not revert to READY_FOR_BOOKING)
+     * - Appointment CANCELLED → Plan items READY_FOR_BOOKING (allow re-booking)
      * 
      * This ensures treatment plan items stay synchronized with appointment progress,
      * eliminating manual status updates and preventing data inconsistency.
@@ -379,6 +386,107 @@ public class AppointmentStatusService {
         } catch (Exception e) {
             log.error("❌ Failed to update plan items for appointment {}: {}", appointmentId, e.getMessage(), e);
             throw new RuntimeException("Failed to update linked plan items", e);
+        }
+
+        // Step 8: Check and complete phases if all items in phase are done
+        checkAndCompleteAffectedPhases(itemIds, appointmentStatus);
+    }
+
+    /**
+     * Check and auto-complete phases when all items in a phase are COMPLETED or SKIPPED.
+     * 
+     * This method is called after updating plan items from appointment status changes.
+     * It ensures that when all items in a phase are completed, the phase status is
+     * automatically updated to COMPLETED.
+     * 
+     * Algorithm:
+     * 1. Get unique phase IDs from the updated items
+     * 2. For each phase, load all items
+     * 3. Check if all items are COMPLETED or SKIPPED
+     * 4. If yes, update phase status to COMPLETED with completion date
+     * 
+     * @param itemIds List of item IDs that were just updated
+     * @param appointmentStatus The appointment status (only check for COMPLETED)
+     */
+    private void checkAndCompleteAffectedPhases(List<Long> itemIds, AppointmentStatus appointmentStatus) {
+        // Only check phase completion when appointment is COMPLETED
+        // (IN_PROGRESS and CANCELLED don't trigger phase completion)
+        if (appointmentStatus != AppointmentStatus.COMPLETED) {
+            return;
+        }
+
+        try {
+            // Step 1: Get unique phase IDs from updated items
+            Set<Long> phaseIds = new HashSet<>();
+            for (Long itemId : itemIds) {
+                PatientPlanItem item = itemRepository.findById(itemId).orElse(null);
+                if (item != null && item.getPhase() != null) {
+                    phaseIds.add(item.getPhase().getPatientPhaseId());
+                }
+            }
+
+            if (phaseIds.isEmpty()) {
+                log.debug("No phases found for updated items");
+                return;
+            }
+
+            log.debug("Checking {} phases for auto-completion", phaseIds.size());
+
+            // Step 2-4: Check and complete each phase
+            for (Long phaseId : phaseIds) {
+                checkAndCompleteSinglePhase(phaseId);
+            }
+
+        } catch (Exception e) {
+            log.error("❌ Failed to check phase completion: {}", e.getMessage(), e);
+            // Don't throw - phase completion is a nice-to-have feature
+            // Main plan item update should not fail because of this
+        }
+    }
+
+    /**
+     * Check and complete a single phase if all its items are done.
+     * 
+     * @param phaseId The phase ID to check
+     */
+    private void checkAndCompleteSinglePhase(Long phaseId) {
+        // Load phase with all items
+        PatientPlanPhase phase = phaseRepository.findByIdWithPlanAndItems(phaseId).orElse(null);
+        if (phase == null) {
+            log.warn("Phase {} not found for completion check", phaseId);
+            return;
+        }
+
+        // Skip if phase is already completed
+        if (phase.getStatus() == PhaseStatus.COMPLETED) {
+            log.debug("Phase {} already completed", phaseId);
+            return;
+        }
+
+        // Check if all items are COMPLETED or SKIPPED
+        List<PatientPlanItem> items = phase.getItems();
+        if (items.isEmpty()) {
+            log.debug("Phase {} has no items", phaseId);
+            return;
+        }
+
+        boolean allDone = items.stream()
+                .allMatch(item -> item.getStatus() == PlanItemStatus.COMPLETED ||
+                        item.getStatus() == PlanItemStatus.SKIPPED);
+
+        if (allDone) {
+            // Update phase to COMPLETED
+            phase.setStatus(PhaseStatus.COMPLETED);
+            phase.setCompletionDate(java.time.LocalDate.now());
+            phaseRepository.save(phase);
+            log.info("🎯 Phase {} auto-completed: all {} items are done", phaseId, items.size());
+        } else {
+            long completedCount = items.stream()
+                    .filter(item -> item.getStatus() == PlanItemStatus.COMPLETED ||
+                            item.getStatus() == PlanItemStatus.SKIPPED)
+                    .count();
+            log.debug("Phase {} not completed yet: {}/{} items done", 
+                    phaseId, completedCount, items.size());
         }
     }
 }

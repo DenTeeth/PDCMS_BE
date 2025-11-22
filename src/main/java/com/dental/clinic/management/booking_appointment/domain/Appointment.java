@@ -36,11 +36,11 @@ public class Appointment {
      * API nhận patientId (hoặc patientCode nếu cần)
      */
     @NotNull(message = "Patient ID is required")
-    @Column(name = "patient_id", nullable = false, insertable = false, updatable = false)
+    @Column(name = "patient_id", nullable = false)
     private Integer patientId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "patient_id", nullable = false)
+    @JoinColumn(name = "patient_id", nullable = false, insertable = false, updatable = false)
     private com.dental.clinic.management.patient.domain.Patient patient;
 
     /**
@@ -48,11 +48,11 @@ public class Appointment {
      * API nhận employeeCode (String), service layer resolve -> employeeId
      */
     @NotNull(message = "Employee ID is required")
-    @Column(name = "employee_id", nullable = false, insertable = false, updatable = false)
+    @Column(name = "employee_id", nullable = false)
     private Integer employeeId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "employee_id", nullable = false)
+    @JoinColumn(name = "employee_id", nullable = false, insertable = false, updatable = false)
     private com.dental.clinic.management.employee.domain.Employee employee;
 
     /**
@@ -61,11 +61,11 @@ public class Appointment {
      * API nhận roomCode (String), service layer resolve -> roomId (String)
      */
     @NotNull(message = "Room ID is required")
-    @Column(name = "room_id", nullable = false, length = 50, insertable = false, updatable = false)
+    @Column(name = "room_id", nullable = false, length = 50)
     private String roomId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "room_id", nullable = false)
+    @JoinColumn(name = "room_id", nullable = false, insertable = false, updatable = false)
     private Room room;
 
     @NotNull(message = "Appointment start time is required")
