@@ -9,14 +9,10 @@ import com.dental.clinic.management.booking_appointment.enums.AppointmentReasonC
 import com.dental.clinic.management.booking_appointment.enums.AppointmentStatus;
 import com.dental.clinic.management.booking_appointment.repository.AppointmentAuditLogRepository;
 import com.dental.clinic.management.booking_appointment.repository.AppointmentRepository;
-import com.dental.clinic.management.booking_appointment.repository.PatientPlanItemRepository;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.exception.ResourceNotFoundException;
-import com.dental.clinic.management.treatment_plans.domain.PatientPlanItem;
-import com.dental.clinic.management.treatment_plans.domain.PatientPlanPhase;
 import com.dental.clinic.management.treatment_plans.enums.PhaseStatus;
 import com.dental.clinic.management.treatment_plans.enums.PlanItemStatus;
-import com.dental.clinic.management.treatment_plans.repository.PatientPlanPhaseRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -50,8 +46,6 @@ public class AppointmentStatusService {
     private final EmployeeRepository employeeRepository;
     private final AppointmentDetailService detailService;
     private final JdbcTemplate jdbcTemplate;
-    private final PatientPlanPhaseRepository phaseRepository;
-    private final PatientPlanItemRepository itemRepository;
 
     /**
      * Valid state transitions map.
@@ -395,15 +389,17 @@ public class AppointmentStatusService {
     /**
      * Check and auto-complete phases when all items in a phase are COMPLETED or SKIPPED.
      * 
+     * Uses direct SQL queries to avoid JPA cache issues after direct SQL updates.
+     * 
      * This method is called after updating plan items from appointment status changes.
      * It ensures that when all items in a phase are completed, the phase status is
      * automatically updated to COMPLETED.
      * 
      * Algorithm:
-     * 1. Get unique phase IDs from the updated items
-     * 2. For each phase, load all items
+     * 1. Get unique phase IDs from the updated items using direct SQL
+     * 2. For each phase, check item statuses via SQL
      * 3. Check if all items are COMPLETED or SKIPPED
-     * 4. If yes, update phase status to COMPLETED with completion date
+     * 4. If yes, update phase status to COMPLETED with completion date via SQL
      * 
      * @param itemIds List of item IDs that were just updated
      * @param appointmentStatus The appointment status (only check for COMPLETED)
@@ -416,13 +412,20 @@ public class AppointmentStatusService {
         }
 
         try {
-            // Step 1: Get unique phase IDs from updated items
+            // Step 1: Get unique phase IDs using direct SQL (avoid JPA cache)
             Set<Long> phaseIds = new HashSet<>();
-            for (Long itemId : itemIds) {
-                PatientPlanItem item = itemRepository.findById(itemId).orElse(null);
-                if (item != null && item.getPhase() != null) {
-                    phaseIds.add(item.getPhase().getPatientPhaseId());
-                }
+            if (!itemIds.isEmpty()) {
+                String phaseIdsQuery = """
+                    SELECT DISTINCT phase_id FROM patient_plan_items
+                    WHERE item_id IN (%s)
+                    """;
+                String placeholders = String.join(",", java.util.Collections.nCopies(itemIds.size(), "?"));
+                List<Long> foundPhaseIds = jdbcTemplate.queryForList(
+                    String.format(phaseIdsQuery, placeholders),
+                    Long.class,
+                    itemIds.toArray()
+                );
+                phaseIds.addAll(foundPhaseIds);
             }
 
             if (phaseIds.isEmpty()) {
@@ -432,7 +435,7 @@ public class AppointmentStatusService {
 
             log.debug("Checking {} phases for auto-completion", phaseIds.size());
 
-            // Step 2-4: Check and complete each phase
+            // Step 2-4: Check and complete each phase using direct SQL
             for (Long phaseId : phaseIds) {
                 checkAndCompleteSinglePhase(phaseId);
             }
@@ -446,47 +449,76 @@ public class AppointmentStatusService {
 
     /**
      * Check and complete a single phase if all its items are done.
-     * 
+     *
+     * IMPORTANT: Uses direct SQL query to check item statuses instead of JPA entities
+     * to avoid cache issues after direct SQL updates.
+     *
      * @param phaseId The phase ID to check
      */
     private void checkAndCompleteSinglePhase(Long phaseId) {
-        // Load phase with all items
-        PatientPlanPhase phase = phaseRepository.findByIdWithPlanAndItems(phaseId).orElse(null);
-        if (phase == null) {
+        // Check current phase status via SQL to avoid cache
+        String phaseStatusQuery = """
+            SELECT status FROM patient_plan_phases
+            WHERE patient_phase_id = ?
+            """;
+        String currentPhaseStatus;
+        try {
+            currentPhaseStatus = jdbcTemplate.queryForObject(phaseStatusQuery, String.class, phaseId);
+        } catch (Exception e) {
             log.warn("Phase {} not found for completion check", phaseId);
             return;
         }
 
         // Skip if phase is already completed
-        if (phase.getStatus() == PhaseStatus.COMPLETED) {
+        if ("COMPLETED".equals(currentPhaseStatus)) {
             log.debug("Phase {} already completed", phaseId);
             return;
         }
 
-        // Check if all items are COMPLETED or SKIPPED
-        List<PatientPlanItem> items = phase.getItems();
-        if (items.isEmpty()) {
+        // Check if all items are COMPLETED or SKIPPED using direct SQL query
+        // This ensures we get the latest status from database, not from JPA cache
+        String checkItemsQuery = """
+            SELECT
+                COUNT(*) as total_items,
+                SUM(CASE WHEN status IN ('COMPLETED', 'SKIPPED') THEN 1 ELSE 0 END) as completed_items
+            FROM patient_plan_items
+            WHERE phase_id = ?
+            """;
+        
+        java.util.Map<String, Object> result = jdbcTemplate.queryForMap(checkItemsQuery, phaseId);
+        Long totalItems = ((Number) result.get("total_items")).longValue();
+        Long completedItems = ((Number) result.get("completed_items")).longValue();
+
+        if (totalItems == 0) {
             log.debug("Phase {} has no items", phaseId);
             return;
         }
 
-        boolean allDone = items.stream()
-                .allMatch(item -> item.getStatus() == PlanItemStatus.COMPLETED ||
-                        item.getStatus() == PlanItemStatus.SKIPPED);
-
-        if (allDone) {
-            // Update phase to COMPLETED
-            phase.setStatus(PhaseStatus.COMPLETED);
-            phase.setCompletionDate(java.time.LocalDate.now());
-            phaseRepository.save(phase);
-            log.info("🎯 Phase {} auto-completed: all {} items are done", phaseId, items.size());
+        if (totalItems.equals(completedItems)) {
+            // All items are done - update phase to COMPLETED
+            // Update phase status via SQL
+            String updatePhaseQuery = """
+                UPDATE patient_plan_phases
+                SET status = CAST(? AS phase_status),
+                    completion_date = CURRENT_DATE
+                WHERE patient_phase_id = ? AND status != CAST(? AS phase_status)
+                """;
+            int updatedRows = jdbcTemplate.update(
+                updatePhaseQuery,
+                PhaseStatus.COMPLETED.name(),
+                phaseId,
+                PhaseStatus.COMPLETED.name()
+            );
+            
+            if (updatedRows > 0) {
+                log.info("🎯 Phase {} auto-completed: all {}/{} items are done",
+                    phaseId, completedItems, totalItems);
+            } else {
+                log.debug("Phase {} already completed or update failed", phaseId);
+            }
         } else {
-            long completedCount = items.stream()
-                    .filter(item -> item.getStatus() == PlanItemStatus.COMPLETED ||
-                            item.getStatus() == PlanItemStatus.SKIPPED)
-                    .count();
-            log.debug("Phase {} not completed yet: {}/{} items done", 
-                    phaseId, completedCount, items.size());
+            log.debug("Phase {} not completed yet: {}/{} items done",
+                phaseId, completedItems, totalItems);
         }
     }
 }
