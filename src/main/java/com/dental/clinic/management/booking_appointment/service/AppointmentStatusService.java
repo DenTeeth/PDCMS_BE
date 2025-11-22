@@ -220,7 +220,7 @@ public class AppointmentStatusService {
         }
 
         AppointmentAuditLog auditLog = AppointmentAuditLog.builder()
-                .appointmentId(appointment.getAppointmentId())
+                .appointment(appointment)  // Set the relationship, not the ID
                 .actionType(AppointmentActionType.STATUS_CHANGE)
                 .oldStatus(oldStatus)
                 .newStatus(newStatus)
@@ -293,12 +293,14 @@ public class AppointmentStatusService {
         }
 
         // Find all plan items linked to this appointment
+        // Convert Integer to Long explicitly (appointment_plan_items.appointment_id is bigint)
+        Long appointmentIdLong = appointmentId.longValue();
         String findItemsQuery = """
             SELECT item_id FROM appointment_plan_items 
             WHERE appointment_id = ?
             """;
         
-        List<Long> itemIds = jdbcTemplate.queryForList(findItemsQuery, Long.class, appointmentId);
+        List<Long> itemIds = jdbcTemplate.queryForList(findItemsQuery, Long.class, appointmentIdLong);
         
         if (itemIds.isEmpty()) {
             log.debug("No plan items linked to appointment {}", appointmentId);
@@ -315,7 +317,7 @@ public class AppointmentStatusService {
                 targetStatus = PlanItemStatus.COMPLETED;
                 break;
             case CANCELLED:
-                targetStatus = PlanItemStatus.SCHEDULED; // Keep as scheduled, not revert
+                targetStatus = PlanItemStatus.READY_FOR_BOOKING; // Allow re-booking
                 break;
             default:
                 log.warn("Unexpected appointment status for plan item update: {}", appointmentStatus);
@@ -323,36 +325,54 @@ public class AppointmentStatusService {
         }
 
         // Update plan items based on appointment status
-        if (appointmentStatus == AppointmentStatus.COMPLETED) {
-            // For COMPLETED: Update status AND set completedAt timestamp
-            String updateQuery = """
-                UPDATE patient_plan_items 
-                SET status = CAST(? AS plan_item_status), 
-                    completed_at = ? 
-                WHERE item_id IN (%s)
-                """;
-            String inClause = String.join(",", itemIds.stream().map(String::valueOf).toList());
-            int updatedRows = jdbcTemplate.update(
-                String.format(updateQuery, inClause),
-                targetStatus.name(),
-                timestamp
-            );
-            log.info("✅ Updated {} plan items to COMPLETED with timestamp for appointment {}", 
-                updatedRows, appointmentId);
-        } else {
-            // For IN_PROGRESS or CANCELLED: Only update status
-            String updateQuery = """
-                UPDATE patient_plan_items 
-                SET status = CAST(? AS plan_item_status) 
-                WHERE item_id IN (%s)
-                """;
-            String inClause = String.join(",", itemIds.stream().map(String::valueOf).toList());
-            int updatedRows = jdbcTemplate.update(
-                String.format(updateQuery, inClause),
-                targetStatus.name()
-            );
-            log.info("✅ Updated {} plan items to {} for appointment {}", 
-                updatedRows, targetStatus, appointmentId);
+        try {
+            if (appointmentStatus == AppointmentStatus.COMPLETED) {
+                // For COMPLETED: Update status AND set completedAt timestamp
+                // Use proper parameter binding to prevent SQL injection
+                String placeholders = String.join(",", java.util.Collections.nCopies(itemIds.size(), "?"));
+                String updateQuery = String.format(
+                    "UPDATE patient_plan_items SET status = CAST(? AS plan_item_status), completed_at = ? WHERE item_id IN (%s)",
+                    placeholders
+                );
+                
+                java.util.List<Object> params = new java.util.ArrayList<>();
+                params.add(targetStatus.name());
+                params.add(timestamp);
+                params.addAll(itemIds);
+                
+                int updatedRows = jdbcTemplate.update(updateQuery, params.toArray());
+                
+                if (updatedRows == 0) {
+                    log.warn("⚠️ No plan items updated for appointment {} - itemIds: {}", appointmentId, itemIds);
+                } else {
+                    log.info("✅ Updated {} plan items to COMPLETED with timestamp for appointment {}", 
+                        updatedRows, appointmentId);
+                }
+            } else {
+                // For IN_PROGRESS or CANCELLED: Only update status
+                // Use proper parameter binding to prevent SQL injection
+                String placeholders = String.join(",", java.util.Collections.nCopies(itemIds.size(), "?"));
+                String updateQuery = String.format(
+                    "UPDATE patient_plan_items SET status = CAST(? AS plan_item_status) WHERE item_id IN (%s)",
+                    placeholders
+                );
+                
+                java.util.List<Object> params = new java.util.ArrayList<>();
+                params.add(targetStatus.name());
+                params.addAll(itemIds);
+                
+                int updatedRows = jdbcTemplate.update(updateQuery, params.toArray());
+                
+                if (updatedRows == 0) {
+                    log.warn("⚠️ No plan items updated for appointment {} - itemIds: {}", appointmentId, itemIds);
+                } else {
+                    log.info("✅ Updated {} plan items to {} for appointment {}", 
+                        updatedRows, targetStatus, appointmentId);
+                }
+            }
+        } catch (Exception e) {
+            log.error("❌ Failed to update plan items for appointment {}: {}", appointmentId, e.getMessage(), e);
+            throw new RuntimeException("Failed to update linked plan items", e);
         }
     }
 }
