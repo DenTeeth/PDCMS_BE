@@ -98,6 +98,25 @@ public interface OvertimeRequestRepository extends JpaRepository<OvertimeRequest
     );
 
     /**
+     * Check if employee has ANY overtime request on the same date (any shift).
+     * Used to prevent spam - only 1 overtime request per employee per date.
+     * @param employeeId the employee ID
+     * @param workDate the work date
+     * @param statuses list of statuses to check (typically PENDING and APPROVED)
+     * @return true if any overtime request exists for this date
+     */
+    @Query("SELECT CASE WHEN COUNT(ot) > 0 THEN true ELSE false END " +
+           "FROM OvertimeRequest ot " +
+           "WHERE ot.employee.employeeId = :employeeId " +
+           "AND ot.workDate = :workDate " +
+           "AND ot.status IN :statuses")
+    boolean existsOvertimeRequestOnDate(
+        @Param("employeeId") Integer employeeId,
+        @Param("workDate") LocalDate workDate,
+        @Param("statuses") List<RequestStatus> statuses
+    );
+
+    /**
      * Check if a conflicting overtime request exists, excluding a specific request.
      * Used when updating an existing request.
      * @param requestId the request ID to exclude

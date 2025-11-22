@@ -168,19 +168,19 @@ public class OvertimeRequestService {
         WorkShift workShift = workShiftRepository.findById(dto.getWorkShiftId())
                 .orElseThrow(() -> new RelatedResourceNotFoundException("Ca làm việc", dto.getWorkShiftId()));
 
-        // Validation 2.1: Check for duplicate overtime request (CRITICAL BUG FIX)
-        // Employee can only have ONE overtime request per (employeeId, workDate, workShiftId)
-        // Check for PENDING or APPROVED requests for the exact same shift
+        // Validation 2.1: Anti-spam check - Only 1 overtime request per employee per date
+        // Employee can only submit ONE overtime request for each date (any shift)
+        // Check for PENDING or APPROVED requests on the same date
         List<RequestStatus> activeStatuses = List.of(RequestStatus.PENDING, RequestStatus.APPROVED);
-        boolean duplicateExists = overtimeRequestRepository.existsConflictingRequest(
-                targetEmployeeId, dto.getWorkDate(), dto.getWorkShiftId(), activeStatuses);
+        boolean alreadyHasRequestOnDate = overtimeRequestRepository.existsOvertimeRequestOnDate(
+                targetEmployeeId, dto.getWorkDate(), activeStatuses);
         
-        if (duplicateExists) {
-            log.warn("❌ Duplicate overtime request detected: employeeId={}, workDate={}, workShiftId={}", 
-                    targetEmployeeId, dto.getWorkDate(), dto.getWorkShiftId());
+        if (alreadyHasRequestOnDate) {
+            log.warn("❌ Anti-spam: Employee {} already has overtime request on date {}", 
+                    targetEmployeeId, dto.getWorkDate());
             throw new DuplicateOvertimeRequestException(
-                    String.format("Nhân viên đã có đơn overtime cho ca này trong ngày này! (Ca: %s, Ngày: %s)", 
-                            workShift.getShiftName(), dto.getWorkDate()));
+                    String.format("Bạn đã có đơn overtime cho ngày %s rồi! Chỉ được gửi 1 đơn overtime cho mỗi ngày.", 
+                            dto.getWorkDate()));
         }
 
         // Validation 2.2: Check for hybrid schedule conflicts
