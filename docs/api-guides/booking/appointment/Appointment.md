@@ -2362,6 +2362,130 @@ IMPLEMENTATION NOTES (P3.5)
     - SMS notification on status change
     - WebSocket real-time update to dashboard
 
+11. **Treatment Plan Item Auto-Update (IMPLEMENTED - V21.5)** ✅
+
+    **Feature**: When appointment status changes, linked treatment plan items automatically update to stay synchronized.
+
+    **Status Mapping**:
+    - Appointment `IN_PROGRESS` → Plan items `IN_PROGRESS`
+    - Appointment `COMPLETED` → Plan items `COMPLETED` (with `completed_at` timestamp)
+    - Appointment `CANCELLED` → Plan items `READY_FOR_BOOKING` (allow re-booking)
+
+    **Implementation** (`AppointmentStatusService.java`):
+    ```java
+    // Line 132-133: Auto-update trigger
+    updateLinkedPlanItemsStatus(appointment.getAppointmentId(), newStatus, now);
+
+    // Lines 286-357: Implementation
+    private void updateLinkedPlanItemsStatus(Integer appointmentId, AppointmentStatus appointmentStatus, LocalDateTime timestamp) {
+        // 1. Find linked items via appointment_plan_items bridge table
+        // 2. Map appointment status to plan item status
+        // 3. Update items via SQL (for performance)
+        // 4. Log changes for audit trail
+    }
+    ```
+
+    **Database Query**:
+    ```sql
+    -- Find linked plan items
+    SELECT item_id FROM appointment_plan_items WHERE appointment_id = ?
+
+    -- Update items to COMPLETED (example)
+    UPDATE patient_plan_items 
+    SET status = CAST(? AS plan_item_status), completed_at = ? 
+    WHERE item_id IN (?, ?, ...)
+    ```
+
+    **Business Value**:
+    - ✅ **Data Consistency**: Plan items always reflect actual treatment progress
+    - ✅ **No Manual Updates**: Automatic synchronization reduces errors
+    - ✅ **Accurate Tracking**: Treatment plan progress is real-time
+    - ✅ **Better UX**: Doctors see correct status without manual updates
+
+    **Testing Notes** (Verified 2025-11-22):
+    - ✅ Status transition SCHEDULED → IN_PROGRESS → COMPLETED updates items correctly
+    - ✅ CANCELLED appointments revert items to READY_FOR_BOOKING
+    - ✅ Standalone appointments (no plan items) are not affected
+    - ✅ Transactional safety: rollback if any update fails
+
+12. **Phase Auto-Completion (IMPLEMENTED - V21.5)** ✅
+
+    **Feature**: When appointment completes and ALL items in a phase are done, the phase automatically updates to COMPLETED.
+
+    **Trigger**: Only when appointment status changes to `COMPLETED`
+
+    **Logic**:
+    1. Get unique phase IDs from updated plan items
+    2. For each phase, check if ALL items are COMPLETED or SKIPPED
+    3. If yes, update phase status to COMPLETED and set completion_date
+    4. If no, phase remains in current status (IN_PROGRESS/PENDING)
+
+    **Implementation** (`AppointmentStatusService.java`):
+    ```java
+    // Line 392: Phase completion trigger
+    checkAndCompleteAffectedPhases(itemIds, appointmentStatus);
+
+    // Lines 395-443: Get phases and check each
+    private void checkAndCompleteAffectedPhases(List<Long> itemIds, AppointmentStatus appointmentStatus) {
+        if (appointmentStatus != AppointmentStatus.COMPLETED) return;
+        
+        // Get unique phase IDs
+        Set<Long> phaseIds = ...;
+        
+        // Check each phase
+        for (Long phaseId : phaseIds) {
+            checkAndCompleteSinglePhase(phaseId);
+        }
+    }
+
+    // Lines 445-491: Check and complete single phase
+    private void checkAndCompleteSinglePhase(Long phaseId) {
+        PatientPlanPhase phase = phaseRepository.findByIdWithPlanAndItems(phaseId);
+        
+        // Check if all items COMPLETED or SKIPPED
+        boolean allDone = phase.getItems().stream()
+            .allMatch(item -> item.getStatus() == COMPLETED || item.getStatus() == SKIPPED);
+        
+        if (allDone) {
+            phase.setStatus(PhaseStatus.COMPLETED);
+            phase.setCompletionDate(LocalDate.now());
+            phaseRepository.save(phase);
+        }
+    }
+    ```
+
+    **Test Results** (Verified 2025-11-22):
+    ```
+    Setup: Phase 2 with 4 items
+    - Items 4, 5: Already COMPLETED (previous appointments)
+    - Items 6, 7: Linked to appointment APT-20251201-001
+
+    Action: Update appointment to COMPLETED
+
+    Result:
+    ✅ Items 6, 7 → COMPLETED
+    ✅ Phase 2 → COMPLETED (all 4/4 items done)
+    ✅ Phase completion_date = 2025-11-22
+    ```
+
+    **Business Value**:
+    - ✅ **Automatic Progress Tracking**: Phases complete without manual updates
+    - ✅ **Accurate Treatment Plans**: Phase status reflects reality
+    - ✅ **Better Analytics**: Completion dates for reporting
+    - ✅ **Reduced Workload**: No need to manually mark phases complete
+
+    **Edge Cases**:
+    - ✅ Partial completion: Phase with 2/4 items done remains IN_PROGRESS
+    - ✅ Multiple phases: Each phase checked independently
+    - ✅ Error handling: Phase check failure doesn't break main flow
+
+    **Logging** (for debugging):
+    ```
+    DEBUG: Checking 1 phases for auto-completion
+    INFO: 🎯 Phase 2 auto-completed: all 4 items are done
+    DEBUG: Phase 3 not completed yet: 2/8 items done
+    ```
+
 ---
 
 ## PATCH DELAY APPOINTMENT (P3.6)
