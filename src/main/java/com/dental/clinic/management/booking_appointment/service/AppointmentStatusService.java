@@ -17,6 +17,7 @@ import com.dental.clinic.management.treatment_plans.domain.PatientPlanPhase;
 import com.dental.clinic.management.treatment_plans.enums.PhaseStatus;
 import com.dental.clinic.management.treatment_plans.enums.PlanItemStatus;
 import com.dental.clinic.management.treatment_plans.repository.PatientPlanPhaseRepository;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -52,6 +53,7 @@ public class AppointmentStatusService {
     private final JdbcTemplate jdbcTemplate;
     private final PatientPlanPhaseRepository phaseRepository;
     private final PatientPlanItemRepository itemRepository;
+    private final EntityManager entityManager;
 
     /**
      * Valid state transitions map.
@@ -417,8 +419,12 @@ public class AppointmentStatusService {
 
         try {
             // Step 1: Get unique phase IDs from updated items
+            // ✅ FIX: Clear entity manager cache to avoid stale data after SQL updates
+            entityManager.clear();
+            
             Set<Long> phaseIds = new HashSet<>();
             for (Long itemId : itemIds) {
+                // Load item from database (fresh data, not from cache)
                 PatientPlanItem item = itemRepository.findById(itemId).orElse(null);
                 if (item != null && item.getPhase() != null) {
                     phaseIds.add(item.getPhase().getPatientPhaseId());
@@ -447,10 +453,16 @@ public class AppointmentStatusService {
     /**
      * Check and complete a single phase if all its items are done.
      * 
+     * IMPORTANT: Clears entity manager cache before loading to avoid stale data
+     * after direct SQL updates.
+     * 
      * @param phaseId The phase ID to check
      */
     private void checkAndCompleteSinglePhase(Long phaseId) {
-        // Load phase with all items
+        // ✅ FIX: Clear entity manager cache to get fresh data from database
+        entityManager.clear();
+        
+        // Load phase with all items from database (fresh data, not from cache)
         PatientPlanPhase phase = phaseRepository.findByIdWithPlanAndItems(phaseId).orElse(null);
         if (phase == null) {
             log.warn("Phase {} not found for completion check", phaseId);
