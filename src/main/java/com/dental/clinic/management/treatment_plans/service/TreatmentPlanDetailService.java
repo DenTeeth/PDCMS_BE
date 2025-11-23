@@ -396,6 +396,7 @@ public class TreatmentPlanDetailService {
                                         .getPhaseStatus();
                         var phaseStartDate = firstPhaseRow.getPhaseStartDate();
                         var phaseCompletionDate = firstPhaseRow.getPhaseCompletionDate();
+                        Integer estimatedDurationDays = firstPhaseRow.getEstimatedDurationDays();
 
                         // Group by itemId within this phase (handle nulls)
                         Map<Long, List<TreatmentPlanDetailDTO>> rowsByItem = phaseRows.stream()
@@ -461,6 +462,7 @@ public class TreatmentPlanDetailService {
                                         .status(phaseStatus != null ? phaseStatus.name() : null)
                                         .startDate(phaseStartDate)
                                         .completionDate(phaseCompletionDate)
+                                        .estimatedDurationDays(estimatedDurationDays)
                                         .items(items)
                                         .build();
 

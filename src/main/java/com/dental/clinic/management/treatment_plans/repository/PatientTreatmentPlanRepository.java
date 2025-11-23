@@ -114,7 +114,7 @@ public interface PatientTreatmentPlanRepository extends JpaRepository<PatientTre
                             emp.employeeCode, CONCAT(emp.firstName, ' ', emp.lastName),
                             pat.patientCode, CONCAT(pat.firstName, ' ', pat.lastName),
                             phase.patientPhaseId, phase.phaseNumber, phase.phaseName, phase.status,
-                            phase.startDate, phase.completionDate,
+                            phase.startDate, phase.completionDate, phase.estimatedDurationDays,
                             item.itemId, item.serviceId, svc.serviceCode, item.sequenceNumber, item.itemName, item.status,
                             item.estimatedTimeMinutes, item.price, item.completedAt,
                             apt.appointmentCode, apt.appointmentStartTime, apt.status

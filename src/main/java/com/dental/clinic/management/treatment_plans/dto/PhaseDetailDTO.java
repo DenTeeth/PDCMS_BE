@@ -51,6 +51,12 @@ public class PhaseDetailDTO {
     private LocalDate completionDate;
 
     /**
+     * Estimated duration in days for this phase
+     * Can be null if not set
+     */
+    private Integer estimatedDurationDays;
+
+    /**
      * Items (checklist tasks) in this phase
      */
     @Builder.Default

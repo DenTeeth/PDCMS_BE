@@ -25,6 +25,7 @@ import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * Service for Treatment Plan Approval Workflow (API 5.9 - V20).
@@ -160,6 +161,9 @@ public class TreatmentPlanApprovalService {
                 .fullName(plan.getPatient().getFirstName() + " " + plan.getPatient().getLastName())
                 .build();
 
+        // Retrieve submit notes from audit log (if plan was submitted for review)
+        String submitNotes = getSubmitNotesFromAuditLog(plan.getPlanId());
+
         // Build response
         return TreatmentPlanDetailResponse.builder()
                 .planId(plan.getPlanId())
@@ -176,8 +180,26 @@ public class TreatmentPlanApprovalService {
                 .discountAmount(plan.getDiscountAmount())
                 .finalCost(plan.getFinalCost())
                 .paymentType(plan.getPaymentType() != null ? plan.getPaymentType().name() : null)
+                .submitNotes(submitNotes)
                 // Phases will be loaded separately if needed, or can be mapped here
                 .build();
+    }
+
+    /**
+     * Retrieve submit notes from audit log.
+     * Looks for the most recent SUBMITTED_FOR_REVIEW action and returns its notes.
+     *
+     * @param planId Treatment plan ID
+     * @return Submit notes, or null if not found
+     */
+    private String getSubmitNotesFromAuditLog(Long planId) {
+        List<PlanAuditLog> logs = auditLogRepository.findByPlanIdOrderByCreatedAtDesc(planId);
+        
+        return logs.stream()
+                .filter(log -> "SUBMITTED_FOR_REVIEW".equals(log.getActionType()))
+                .findFirst()
+                .map(PlanAuditLog::getNotes)
+                .orElse(null);
     }
 
     /**

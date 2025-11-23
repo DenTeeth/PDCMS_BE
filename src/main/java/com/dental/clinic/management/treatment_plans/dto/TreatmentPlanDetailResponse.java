@@ -63,6 +63,12 @@ public class TreatmentPlanDetailResponse {
      */
     private com.dental.clinic.management.treatment_plans.dto.response.ApprovalMetadataDTO approvalMetadata;
 
+    /**
+     * Submit notes: Notes provided by doctor when submitting plan for review (API 5.12)
+     * Retrieved from audit log (action_type = 'SUBMITTED_FOR_REVIEW')
+     */
+    private String submitNotes;
+
     // ===== DOCTOR INFO =====
 
     /**

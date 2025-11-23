@@ -64,6 +64,7 @@ public class TreatmentPlanDetailDTO {
     private PhaseStatus phaseStatus;
     private LocalDate phaseStartDate;
     private LocalDate phaseCompletionDate;
+    private Integer estimatedDurationDays;
 
     // ===== ITEM LEVEL (patient_plan_items) =====
     private Long itemId;

@@ -14,9 +14,12 @@ import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.exception.ResourceNotFoundException;
 import com.dental.clinic.management.treatment_plans.domain.PatientPlanItem;
 import com.dental.clinic.management.treatment_plans.domain.PatientPlanPhase;
+import com.dental.clinic.management.treatment_plans.domain.PatientTreatmentPlan;
 import com.dental.clinic.management.treatment_plans.enums.PhaseStatus;
 import com.dental.clinic.management.treatment_plans.enums.PlanItemStatus;
+import com.dental.clinic.management.treatment_plans.enums.TreatmentPlanStatus;
 import com.dental.clinic.management.treatment_plans.repository.PatientPlanPhaseRepository;
+import com.dental.clinic.management.treatment_plans.repository.PatientTreatmentPlanRepository;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -54,6 +57,7 @@ public class AppointmentStatusService {
     private final PatientPlanPhaseRepository phaseRepository;
     private final PatientPlanItemRepository itemRepository;
     private final EntityManager entityManager;
+    private final PatientTreatmentPlanRepository planRepository;
 
     /**
      * Valid state transitions map.
@@ -436,21 +440,33 @@ public class AppointmentStatusService {
                 return;
             }
 
-            log.debug("Checking {} phases for auto-completion", phaseIds.size());
+        log.debug("Checking {} phases for auto-completion", phaseIds.size());
 
-            // Step 2-4: Check and complete each phase
-            for (Long phaseId : phaseIds) {
-                checkAndCompleteSinglePhase(phaseId);
+        // Step 2-4: Check and complete each phase
+        Set<Long> planIds = new HashSet<>();
+        for (Long phaseId : phaseIds) {
+            checkAndCompleteSinglePhase(phaseId);
+            
+            // Collect plan IDs for later treatment plan completion check
+            entityManager.clear();
+            PatientPlanPhase phase = phaseRepository.findByIdWithPlanAndItems(phaseId).orElse(null);
+            if (phase != null && phase.getTreatmentPlan() != null) {
+                planIds.add(phase.getTreatmentPlan().getPlanId());
             }
-
-        } catch (Exception e) {
-            log.error("❌ Failed to check phase completion: {}", e.getMessage(), e);
-            // Don't throw - phase completion is a nice-to-have feature
-            // Main plan item update should not fail because of this
         }
-    }
 
-    /**
+        // Step 5: Check and complete treatment plans if all phases are done
+        log.debug("Checking {} treatment plans for auto-completion", planIds.size());
+        for (Long planId : planIds) {
+            checkAndCompletePlan(planId);
+        }
+
+    } catch (Exception e) {
+        log.error("❌ Failed to check phase completion: {}", e.getMessage(), e);
+        // Don't throw - phase completion is a nice-to-have feature
+        // Main plan item update should not fail because of this
+    }
+}    /**
      * Check and complete a single phase if all its items are done.
      * 
      * IMPORTANT: Clears entity manager cache before loading to avoid stale data
@@ -499,6 +515,64 @@ public class AppointmentStatusService {
                     .count();
             log.debug("Phase {} not completed yet: {}/{} items done", 
                     phaseId, completedCount, items.size());
+        }
+    }
+
+    /**
+     * Check and complete treatment plan if all phases are completed.
+     *
+     * IMPORTANT: Clears entity manager cache before loading to avoid stale data
+     * after direct SQL updates.
+     *
+     * Business Logic:
+     * - When all phases in a plan are COMPLETED
+     * - And plan status is IN_PROGRESS
+     * - Then automatically set plan.status = COMPLETED
+     *
+     * @param planId The treatment plan ID to check
+     */
+    private void checkAndCompletePlan(Long planId) {
+        // ✅ FIX: Clear entity manager cache to get fresh data from database
+        entityManager.clear();
+        
+        // Load plan from database (fresh data, not from cache)
+        PatientTreatmentPlan plan = planRepository.findById(planId).orElse(null);
+        if (plan == null) {
+            log.warn("Treatment plan {} not found for completion check", planId);
+            return;
+        }
+
+        // Only check if plan is currently IN_PROGRESS
+        if (plan.getStatus() != TreatmentPlanStatus.IN_PROGRESS) {
+            log.debug("Plan {} not in IN_PROGRESS status (current: {}), skipping completion check", 
+                    planId, plan.getStatus());
+            return;
+        }
+
+        // Load phases - need fresh data
+        List<PatientPlanPhase> phases = plan.getPhases();
+        
+        if (phases == null || phases.isEmpty()) {
+            log.debug("Plan {} has no phases", planId);
+            return;
+        }
+
+        // Check if ALL phases are COMPLETED
+        boolean allPhasesCompleted = phases.stream()
+                .allMatch(phase -> phase.getStatus() == PhaseStatus.COMPLETED);
+
+        if (allPhasesCompleted) {
+            // AUTO-COMPLETE: IN_PROGRESS → COMPLETED
+            plan.setStatus(TreatmentPlanStatus.COMPLETED);
+            planRepository.save(plan);
+            log.info("✅ Treatment plan {} (code: {}) auto-completed: all {} phases are done",
+                    planId, plan.getPlanCode(), phases.size());
+        } else {
+            long completedPhasesCount = phases.stream()
+                    .filter(phase -> phase.getStatus() == PhaseStatus.COMPLETED)
+                    .count();
+            log.debug("Plan {} not completed yet: {}/{} phases done",
+                    planId, completedPhasesCount, phases.size());
         }
     }
 }
