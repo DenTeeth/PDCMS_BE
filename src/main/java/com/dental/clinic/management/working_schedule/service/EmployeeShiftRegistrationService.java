@@ -135,40 +135,42 @@ public class EmployeeShiftRegistrationService {
                             endDate
                     );
                     
-                    // NEW: Calculate slots available (not just day counts)
+                    // FIX ISSUE #1: Calculate WEEK counts (not date counts)
+                    // Calculate total weeks in the period (including partial weeks)
+                    long daysBetween = java.time.temporal.ChronoUnit.DAYS.between(startDate, endDate);
+                    long totalWeeks = (daysBetween / 7) + (daysBetween % 7 > 0 ? 1 : 0);
+                    
+                    // Calculate total quota capacity and how much is used
                     int totalSlotsCapacity = workingDays.size() * slot.getQuota();
-                    int totalSlotsRemaining = 0;
-                    int totalDatesAvailable = 0; // days with at least 1 slot available
-                    int totalDatesEmpty = 0;     // days with 0 registrations
-                    int totalDatesFull = 0;      // days completely full
+                    int totalRegisteredSlots = 0;
+                    int datesWithAvailability = 0; // Track for month filter
                     
                     // Track months that have at least one available date
                     Set<String> availableMonthsSet = new java.util.LinkedHashSet<>();
                     
                     for (LocalDate date : workingDays) {
                         long registered = availabilityService.getRegisteredCountForDate(slot.getSlotId(), date);
-                        int remaining = Math.max(0, slot.getQuota() - (int) registered);
-                        totalSlotsRemaining += remaining;
+                        totalRegisteredSlots += (int) registered;
                         
-                        if (registered >= slot.getQuota()) {
-                            totalDatesFull++;
-                        } else {
-                            totalDatesAvailable++; // Has at least 1 slot available
-                            if (registered == 0) {
-                                totalDatesEmpty++;
-                            }
+                        if (registered < slot.getQuota()) {
+                            datesWithAvailability++;
                             // Add month to available months (format: YYYY-MM)
                             String yearMonth = date.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM"));
                             availableMonthsSet.add(yearMonth);
                         }
                     }
+                    
+                    // Calculate available slots and convert to weeks
+                    int totalSlotsRemaining = Math.max(0, totalSlotsCapacity - totalRegisteredSlots);
+                    int availableWeeks = totalSlotsRemaining / slot.getQuota(); // Integer division
+                    int fullWeeks = (int) totalWeeks - availableWeeks;
 
-                    // NEW: Generate availability summary showing slots (not just days)
-                    String summary = String.format("%d/%d slots available", 
-                            totalSlotsRemaining, totalSlotsCapacity);
+                    // Generate availability summary
+                    String summary = String.format("%d/%d weeks available", 
+                            availableWeeks, totalWeeks);
                     
                     // If month filter is active and no dates available in this month, skip slot
-                    if (finalFilterMonth != null && totalDatesAvailable == 0) {
+                    if (finalFilterMonth != null && datesWithAvailability == 0) {
                         log.debug("Slot {} has no availability in month {} - filtering out", slot.getSlotId(), finalFilterMonth);
                         return null;
                     }
@@ -177,9 +179,9 @@ public class EmployeeShiftRegistrationService {
                             .slotId(slot.getSlotId())
                             .shiftName(shiftName)
                             .dayOfWeek(slot.getDayOfWeek())
-                            .totalDatesAvailable(totalDatesAvailable)
-                            .totalDatesEmpty(totalDatesEmpty)
-                            .totalDatesFull(totalDatesFull)
+                            .totalWeeksAvailable((int) totalWeeks)
+                            .availableWeeks(availableWeeks)
+                            .fullWeeks(fullWeeks)
                             .effectiveFrom(slot.getEffectiveFrom())
                             .effectiveTo(slot.getEffectiveTo())
                             .quota(slot.getQuota())
@@ -230,10 +232,11 @@ public class EmployeeShiftRegistrationService {
      * 
      * Permission: VIEW_AVAILABLE_SLOTS
      * 
+     * FIX ISSUE #2: Removed @Transactional to ensure we always read latest committed data
+     * 
      * @param slotId The slot ID to get details for
      * @return Detailed slot information with monthly availability breakdown
      */
-    @Transactional(readOnly = true)
     @PreAuthorize("hasAuthority('VIEW_AVAILABLE_SLOTS')")
     public SlotDetailResponse getSlotDetail(Long slotId) {
         log.info("Fetching slot detail for slot {}", slotId);
@@ -500,6 +503,7 @@ public class EmployeeShiftRegistrationService {
     registration.setRequestedDates(new java.util.HashSet<>(availableDates));
 
     PartTimeRegistration saved = registrationRepository.save(registration);
+    registrationRepository.flush(); // FIX ISSUE #2: Ensure data is written to DB immediately
     log.info("Registration {} submitted by employee {} - status: PENDING (partialAccepted={})",
         saved.getRegistrationId(), employeeId, isPartial);
 

@@ -131,6 +131,7 @@ public class PartTimeRegistrationApprovalService {
         registration.setProcessedBy(managerId);
         registration.setProcessedAt(LocalDateTime.now());
         registrationRepository.save(registration);
+        registrationRepository.flush(); // FIX ISSUE #2: Ensure approval is visible immediately
 
         // INTEGRATION POINT: Create employee shifts for all working days
         // Using NEW generic shift generation method (replaces deprecated createShiftsForApprovedRegistration)
@@ -199,6 +200,7 @@ public class PartTimeRegistrationApprovalService {
         registration.setProcessedBy(managerId);
         registration.setProcessedAt(LocalDateTime.now());
         registrationRepository.save(registration);
+        registrationRepository.flush(); // FIX ISSUE #2: Ensure rejection is visible immediately
 
         log.info("Registration {} rejected by manager {}", registrationId, managerId);
     }

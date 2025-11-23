@@ -18,16 +18,16 @@ public class AvailableSlotResponse {
     private String shiftName;
     private String dayOfWeek;
     
-    // Date availability counts
-    private Integer totalDatesAvailable; // Count of dates with space (registered < quota)
-    private Integer totalDatesEmpty; // Count of dates with no registrations (registered = 0)
-    private Integer totalDatesFull; // Count of dates at quota (registered = quota)
+    // Week availability counts (FIXED: Was incorrectly showing dates)
+    private Integer totalWeeksAvailable; // Total weeks from effectiveFrom to effectiveTo
+    private Integer availableWeeks; // Weeks with at least 1 slot available
+    private Integer fullWeeks; // Weeks where all slots are full
     
     // Additional context
     private LocalDate effectiveFrom;
     private LocalDate effectiveTo;
     private Integer quota;
-    private String availabilitySummary; // e.g., "December FULL, January has space"
+    private String availabilitySummary; // e.g., "11/14 weeks available"
     
     /**
      * List of months (YYYY-MM format) that have at least one working day available for this slot.

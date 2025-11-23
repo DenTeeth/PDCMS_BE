@@ -45,16 +45,20 @@ public class PartTimeSlotAvailabilityService {
      * @param slotId The slot ID
      * @param date The specific date to check
      * @return Number of approved employees covering that date
+     * 
+     * FIX ISSUE #2: Removed @Transactional to always read latest committed data
      */
-    @Transactional(readOnly = true)
     @PreAuthorize("hasAuthority('VIEW_AVAILABLE_SLOTS') or hasAuthority('VIEW_REGISTRATION_OWN') or hasAuthority('MANAGE_PART_TIME_REGISTRATIONS') or hasAuthority('MANAGE_WORK_SLOTS')")
     public long getRegisteredCountForDate(Long slotId, LocalDate date) {
-    return registrationRepository.countBySlotAndDate(
+    long count = registrationRepository.countBySlotAndDate(
         slotId,
         date,
         RegistrationStatus.APPROVED,
         true // isActive
     );
+    // DEBUG: Log the count for troubleshooting Issue #2
+    log.info("DEBUG getRegisteredCountForDate: slotId={}, date={}, count={}", slotId, date, count);
+    return count;
     }
 
     /**
@@ -222,8 +226,9 @@ public class PartTimeSlotAvailabilityService {
      * @param startDate Start date
      * @param endDate End date
      * @return Minimum registered count (the day with fewest registrations)
+     * 
+     * FIX ISSUE #2: Removed @Transactional(readOnly = true) to prevent stale reads
      */
-    @Transactional(readOnly = true)
     public long getMinimumRegisteredCount(Long slotId, LocalDate startDate, LocalDate endDate) {
         PartTimeSlot slot = slotRepository.findById(slotId).orElse(null);
         if (slot == null) {
@@ -235,10 +240,16 @@ public class PartTimeSlotAvailabilityService {
             return 0;
         }
 
-        return workingDays.stream()
+        long minCount = workingDays.stream()
                 .mapToLong(date -> getRegisteredCountForDate(slotId, date))
                 .min()
                 .orElse(0);
+        
+        // DEBUG: Log the result for troubleshooting Issue #2
+        log.info("DEBUG getMinimumRegisteredCount: slotId={}, startDate={}, endDate={}, workingDays={}, minCount={}", 
+            slotId, startDate, endDate, workingDays.size(), minCount);
+        
+        return minCount;
     }
 
     /**
@@ -249,8 +260,9 @@ public class PartTimeSlotAvailabilityService {
      * @param startDate Start date
      * @param endDate End date
      * @return Maximum registered count (the fullest day)
+     * 
+     * FIX ISSUE #2: Removed @Transactional(readOnly = true) to prevent stale reads
      */
-    @Transactional(readOnly = true)
     public long getMaximumRegisteredCount(Long slotId, LocalDate startDate, LocalDate endDate) {
         PartTimeSlot slot = slotRepository.findById(slotId).orElse(null);
         if (slot == null) {
