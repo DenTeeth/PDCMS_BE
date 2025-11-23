@@ -59,6 +59,19 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
         Optional<Appointment> findDetailByCode(@Param("appointmentCode") String appointmentCode);
 
         /**
+         * Find all services for an appointment with a direct SQL-like join
+         * Returns: [service_code, service_name]
+         *
+         * @param appointmentId The appointment ID
+         * @return List of Object arrays containing service details
+         */
+        @Query("SELECT s.serviceCode, s.serviceName " +
+                        "FROM AppointmentService aps " +
+                        "JOIN aps.service s " +
+                        "WHERE aps.id.appointmentId = :appointmentId")
+        List<Object[]> findServicesByAppointmentId(@Param("appointmentId") Integer appointmentId);
+
+        /**
          * Find last appointment code with prefix for sequence generation
          * Example: findTopByAppointmentCodeStartingWith("APT-20251115-") ->
          * "APT-20251115-003"

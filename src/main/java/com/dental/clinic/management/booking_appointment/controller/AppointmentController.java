@@ -306,7 +306,19 @@ public class AppointmentController {
 
                 log.info("Updating appointment status: code={}, newStatus={}", appointmentCode, request.getStatus());
 
-                AppointmentDetailDTO updatedAppointment = statusService.updateStatus(appointmentCode, request);
+                // Update status (write transaction) - this commits when method returns
+                statusService.updateStatus(appointmentCode, request);
+                
+                // Small delay to ensure transaction commit is fully processed
+                // This prevents reading stale data from uncommitted transaction
+                try {
+                        Thread.sleep(50); // 50ms delay
+                } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                }
+                
+                // Fetch updated details (read transaction - must be AFTER write commits)
+                AppointmentDetailDTO updatedAppointment = detailService.getAppointmentDetail(appointmentCode);
 
                 return ResponseEntity.ok(updatedAppointment);
         }

@@ -16,11 +16,11 @@ public class AppointmentService {
     @EmbeddedId
     private AppointmentServiceId id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "appointment_id", insertable = false, updatable = false)
     private Appointment appointment;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "service_id", insertable = false, updatable = false)
     private com.dental.clinic.management.service.domain.DentalService service;
 
@@ -39,6 +39,22 @@ public class AppointmentService {
 
     public void setId(AppointmentServiceId id) {
         this.id = id;
+    }
+
+    public Appointment getAppointment() {
+        return appointment;
+    }
+
+    public void setAppointment(Appointment appointment) {
+        this.appointment = appointment;
+    }
+
+    public com.dental.clinic.management.service.domain.DentalService getService() {
+        return service;
+    }
+
+    public void setService(com.dental.clinic.management.service.domain.DentalService service) {
+        this.service = service;
     }
 
     @Override

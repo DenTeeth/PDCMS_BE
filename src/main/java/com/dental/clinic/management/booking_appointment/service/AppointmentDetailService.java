@@ -3,7 +3,6 @@ package com.dental.clinic.management.booking_appointment.service;
 import com.dental.clinic.management.booking_appointment.domain.Appointment;
 import com.dental.clinic.management.booking_appointment.domain.AppointmentAuditLog;
 import com.dental.clinic.management.booking_appointment.domain.AppointmentParticipant;
-import com.dental.clinic.management.booking_appointment.domain.AppointmentService;
 import com.dental.clinic.management.booking_appointment.dto.AppointmentDetailDTO;
 import com.dental.clinic.management.booking_appointment.dto.CreateAppointmentResponse;
 import com.dental.clinic.management.booking_appointment.enums.AppointmentActionType;
@@ -11,7 +10,6 @@ import com.dental.clinic.management.booking_appointment.enums.AppointmentStatus;
 import com.dental.clinic.management.booking_appointment.repository.AppointmentAuditLogRepository;
 import com.dental.clinic.management.booking_appointment.repository.AppointmentParticipantRepository;
 import com.dental.clinic.management.booking_appointment.repository.AppointmentRepository;
-import com.dental.clinic.management.booking_appointment.repository.AppointmentServiceRepository;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.exception.ResourceNotFoundException;
 import com.dental.clinic.management.patient.repository.PatientRepository;
@@ -48,7 +46,6 @@ public class AppointmentDetailService {
     private final AppointmentRepository appointmentRepository;
     private final PatientRepository patientRepository;
     private final EmployeeRepository employeeRepository;
-    private final AppointmentServiceRepository appointmentServiceRepository;
     private final AppointmentParticipantRepository appointmentParticipantRepository;
     private final AppointmentAuditLogRepository appointmentAuditLogRepository;
 
@@ -85,6 +82,8 @@ public class AppointmentDetailService {
         log.info("Fetching appointment detail for code: {}", appointmentCode);
 
         // Step 1: Find appointment
+        // Using repository query with @Transactional(readOnly = true) ensures fresh data from DB
+        // No need for entityManager.clear() which would detach entities and break lazy loading
         Appointment appointment = appointmentRepository.findDetailByCode(appointmentCode)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "APPOINTMENT_NOT_FOUND",
@@ -230,16 +229,21 @@ public class AppointmentDetailService {
                 .roomName("Room " + appointment.getRoomId())
                 .build();
 
-        // Load services
+        // Load services using direct JPQL query
         List<CreateAppointmentResponse.ServiceSummary> services = new ArrayList<>();
         try {
-            List<AppointmentService> appointmentServices = appointmentServiceRepository
-                    .findByIdAppointmentId(appointment.getAppointmentId());
-            // TODO: Load actual service details from ServiceRepository
-            log.debug("Found {} services for appointment {}", appointmentServices.size(),
-                    appointment.getAppointmentCode());
+            List<Object[]> serviceData = appointmentRepository.findServicesByAppointmentId(appointment.getAppointmentId());
+            
+            for (Object[] row : serviceData) {
+                String serviceCode = (String) row[0];
+                String serviceName = (String) row[1];
+                services.add(CreateAppointmentResponse.ServiceSummary.builder()
+                        .serviceCode(serviceCode)
+                        .serviceName(serviceName)
+                        .build());
+            }
         } catch (Exception e) {
-            log.warn("Failed to load services: {}", e.getMessage());
+            log.error("Failed to load services for appointment {}: {}", appointment.getAppointmentCode(), e.getMessage());
         }
 
         // Load participants

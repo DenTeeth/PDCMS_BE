@@ -2,7 +2,6 @@ package com.dental.clinic.management.booking_appointment.service;
 
 import com.dental.clinic.management.booking_appointment.domain.Appointment;
 import com.dental.clinic.management.booking_appointment.domain.AppointmentAuditLog;
-import com.dental.clinic.management.booking_appointment.dto.AppointmentDetailDTO;
 import com.dental.clinic.management.booking_appointment.dto.UpdateAppointmentStatusRequest;
 import com.dental.clinic.management.booking_appointment.enums.AppointmentActionType;
 import com.dental.clinic.management.booking_appointment.enums.AppointmentReasonCode;
@@ -52,7 +51,6 @@ public class AppointmentStatusService {
     private final AppointmentRepository appointmentRepository;
     private final AppointmentAuditLogRepository auditLogRepository;
     private final EmployeeRepository employeeRepository;
-    private final AppointmentDetailService detailService;
     private final JdbcTemplate jdbcTemplate;
     private final PatientPlanPhaseRepository phaseRepository;
     private final PatientPlanItemRepository itemRepository;
@@ -105,7 +103,7 @@ public class AppointmentStatusService {
      *                                   rule violated
      */
     @Transactional
-    public AppointmentDetailDTO updateStatus(String appointmentCode, UpdateAppointmentStatusRequest request) {
+    public void updateStatus(String appointmentCode, UpdateAppointmentStatusRequest request) {
         log.info("Updating appointment status: code={}, newStatus={}", appointmentCode, request.getStatus());
 
         // Step 1: Lock appointment (SELECT FOR UPDATE)
@@ -138,6 +136,9 @@ public class AppointmentStatusService {
             appointment.setNotes(request.getNotes());
         }
         appointmentRepository.save(appointment);
+        
+        // Force flush appointment changes before updating related entities
+        entityManager.flush();
 
         // Step 6: Create audit log
         createAuditLog(appointment, currentStatus, newStatus, request, now);
@@ -145,15 +146,8 @@ public class AppointmentStatusService {
         // Step 7: Auto-update linked plan item statuses (V21.5)
         updateLinkedPlanItemsStatus(appointment.getAppointmentId(), newStatus, now);
 
-        log.info("Successfully updated appointment status: code={}, {} -> {}",
+        log.info("✅ Successfully updated appointment status: code={}, {} -> {}",
                 appointmentCode, currentStatus, newStatus);
-
-        // Step 8: Force flush to ensure DB is updated before reading
-        // Fix: Prevents stale data when detailService queries immediately after save
-        entityManager.flush();
-
-        // Step 9: Return updated detail (same structure as API 3.4)
-        return detailService.getAppointmentDetail(appointmentCode);
     }
 
     /**
@@ -316,14 +310,10 @@ public class AppointmentStatusService {
         }
 
         // Find all plan items linked to this appointment
-        // Convert Integer to Long explicitly (appointment_plan_items.appointment_id is bigint)
-        Long appointmentIdLong = appointmentId.longValue();
-        String findItemsQuery = """
-            SELECT item_id FROM appointment_plan_items 
-            WHERE appointment_id = ?
-            """;
+        String findItemsQuery = "SELECT item_id FROM appointment_plan_items WHERE appointment_id = ?";
+        List<Long> itemIds = jdbcTemplate.queryForList(findItemsQuery, Long.class, appointmentId.longValue());
         
-        List<Long> itemIds = jdbcTemplate.queryForList(findItemsQuery, Long.class, appointmentIdLong);
+        log.info("🔍 Found {} plan items linked to appointment {} for status {}", itemIds.size(), appointmentId, appointmentStatus);
         
         if (itemIds.isEmpty()) {
             log.debug("No plan items linked to appointment {}", appointmentId);
@@ -347,52 +337,34 @@ public class AppointmentStatusService {
                 return;
         }
 
-        // Update plan items based on appointment status
+        // Update plan items based on appointment status using JPA (ensures same transaction)
         try {
-            if (appointmentStatus == AppointmentStatus.COMPLETED) {
-                // For COMPLETED: Update status AND set completedAt timestamp
-                // Use proper parameter binding to prevent SQL injection
-                String placeholders = String.join(",", java.util.Collections.nCopies(itemIds.size(), "?"));
-                String updateQuery = String.format(
-                    "UPDATE patient_plan_items SET status = CAST(? AS plan_item_status), completed_at = ? WHERE item_id IN (%s)",
-                    placeholders
-                );
-                
-                java.util.List<Object> params = new java.util.ArrayList<>();
-                params.add(targetStatus.name());
-                params.add(timestamp);
-                params.addAll(itemIds);
-                
-                int updatedRows = jdbcTemplate.update(updateQuery, params.toArray());
-                
-                if (updatedRows == 0) {
-                    log.warn("⚠️ No plan items updated for appointment {} - itemIds: {}", appointmentId, itemIds);
-                } else {
-                    log.info("✅ Updated {} plan items to COMPLETED with timestamp for appointment {}", 
-                        updatedRows, appointmentId);
-                }
-            } else {
-                // For IN_PROGRESS or CANCELLED: Only update status
-                // Use proper parameter binding to prevent SQL injection
-                String placeholders = String.join(",", java.util.Collections.nCopies(itemIds.size(), "?"));
-                String updateQuery = String.format(
-                    "UPDATE patient_plan_items SET status = CAST(? AS plan_item_status) WHERE item_id IN (%s)",
-                    placeholders
-                );
-                
-                java.util.List<Object> params = new java.util.ArrayList<>();
-                params.add(targetStatus.name());
-                params.addAll(itemIds);
-                
-                int updatedRows = jdbcTemplate.update(updateQuery, params.toArray());
-                
-                if (updatedRows == 0) {
-                    log.warn("⚠️ No plan items updated for appointment {} - itemIds: {}", appointmentId, itemIds);
-                } else {
-                    log.info("✅ Updated {} plan items to {} for appointment {}", 
-                        updatedRows, targetStatus, appointmentId);
+            int updatedCount = 0;
+            for (Long itemId : itemIds) {
+                PatientPlanItem planItem = entityManager.find(PatientPlanItem.class, itemId);
+                if (planItem != null) {
+                    planItem.setStatus(targetStatus);
+                    if (appointmentStatus == AppointmentStatus.COMPLETED) {
+                        planItem.setCompletedAt(timestamp);
+                    }
+                    updatedCount++;
                 }
             }
+            
+            if (updatedCount == 0) {
+                log.warn("⚠️ No plan items updated for appointment {} - itemIds: {}", appointmentId, itemIds);
+            } else {
+                if (appointmentStatus == AppointmentStatus.COMPLETED) {
+                    log.info("✅ Updated {} plan items to COMPLETED with timestamp for appointment {}", 
+                        updatedCount, appointmentId);
+                } else {
+                    log.info("✅ Updated {} plan items to {} for appointment {}", 
+                        updatedCount, targetStatus, appointmentId);
+                }
+            }
+            
+            // Force flush plan item updates to database before checking phases
+            entityManager.flush();
         } catch (Exception e) {
             log.error("❌ Failed to update plan items for appointment {}: {}", appointmentId, e.getMessage(), e);
             throw new RuntimeException("Failed to update linked plan items", e);
@@ -427,12 +399,9 @@ public class AppointmentStatusService {
 
         try {
             // Step 1: Get unique phase IDs from updated items
-            // ✅ FIX: Clear entity manager cache to avoid stale data after SQL updates
-            entityManager.clear();
-            
             Set<Long> phaseIds = new HashSet<>();
             for (Long itemId : itemIds) {
-                // Load item from database (fresh data, not from cache)
+                // Load item - will get updated managed entities from persistence context
                 PatientPlanItem item = itemRepository.findById(itemId).orElse(null);
                 if (item != null && item.getPhase() != null) {
                     phaseIds.add(item.getPhase().getPatientPhaseId());
@@ -452,7 +421,6 @@ public class AppointmentStatusService {
             checkAndCompleteSinglePhase(phaseId);
             
             // Collect plan IDs for later treatment plan completion check
-            entityManager.clear();
             PatientPlanPhase phase = phaseRepository.findByIdWithPlanAndItems(phaseId).orElse(null);
             if (phase != null && phase.getTreatmentPlan() != null) {
                 planIds.add(phase.getTreatmentPlan().getPlanId());
@@ -479,10 +447,7 @@ public class AppointmentStatusService {
      * @param phaseId The phase ID to check
      */
     private void checkAndCompleteSinglePhase(Long phaseId) {
-        // ✅ FIX: Clear entity manager cache to get fresh data from database
-        entityManager.clear();
-        
-        // Load phase with all items from database (fresh data, not from cache)
+        // Load phase with all items - will include recently updated managed entities
         PatientPlanPhase phase = phaseRepository.findByIdWithPlanAndItems(phaseId).orElse(null);
         if (phase == null) {
             log.warn("Phase {} not found for completion check", phaseId);
@@ -536,10 +501,7 @@ public class AppointmentStatusService {
      * @param planId The treatment plan ID to check
      */
     private void checkAndCompletePlan(Long planId) {
-        // ✅ FIX: Clear entity manager cache to get fresh data from database
-        entityManager.clear();
-        
-        // Load plan from database (fresh data, not from cache)
+        // Load plan - will reflect current state from persistence context
         PatientTreatmentPlan plan = planRepository.findById(planId).orElse(null);
         if (plan == null) {
             log.warn("Treatment plan {} not found for completion check", planId);

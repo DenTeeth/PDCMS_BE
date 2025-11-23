@@ -6,6 +6,7 @@ import com.dental.clinic.management.employee.dto.request.CreateEmployeeRequest;
 import com.dental.clinic.management.employee.dto.request.UpdateEmployeeRequest;
 import com.dental.clinic.management.employee.dto.request.ReplaceEmployeeRequest;
 import com.dental.clinic.management.employee.dto.response.EmployeeInfoResponse;
+import com.dental.clinic.management.employee.enums.EmploymentType;
 import com.dental.clinic.management.employee.mapper.EmployeeMapper;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.exception.validation.BadRequestAlertException;
@@ -81,19 +82,23 @@ public class EmployeeService {
     }
 
     /**
-     * Get all ACTIVE employees only (isActive = true) with pagination, sorting and
-     * mapping to DTO
+     * Get all ACTIVE employees only (isActive = true) with pagination, sorting,
+     * search and filters
      * This is the default method for normal operations
      *
-     * @param page          page number (zero-based)
-     * @param size          number of items per page
-     * @param sortBy        field name to sort by
-     * @param sortDirection ASC or DESC
+     * @param page           page number (zero-based)
+     * @param size           number of items per page
+     * @param sortBy         field name to sort by
+     * @param sortDirection  ASC or DESC
+     * @param search         search by employee code, first name, or last name
+     * @param roleId         filter by role ID
+     * @param employmentType filter by employment type
      * @return Page of EmployeeInfoResponse
      */
     @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('VIEW_EMPLOYEE')")
     public Page<EmployeeInfoResponse> getAllActiveEmployees(
-            int page, int size, String sortBy, String sortDirection) {
+            int page, int size, String sortBy, String sortDirection,
+            String search, String roleId, String employmentType) {
 
         // Validate and sanitize inputs
         page = Math.max(0, page); // Ensure page is not negative
@@ -111,8 +116,41 @@ public class EmployeeService {
         Pageable pageable = PageRequest.of(page, size, sort);
 
         // Create specification to filter only active employees
-        Specification<Employee> spec = (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("isActive"),
-                true);
+        Specification<Employee> spec = (root, query, criteriaBuilder) -> {
+            var predicates = new java.util.ArrayList<jakarta.persistence.criteria.Predicate>();
+            
+            // Always filter by isActive = true
+            predicates.add(criteriaBuilder.equal(root.get("isActive"), true));
+            
+            // Add search filter (employee code, first name, or last name)
+            if (search != null && !search.trim().isEmpty()) {
+                String searchPattern = "%" + search.toLowerCase() + "%";
+                predicates.add(criteriaBuilder.or(
+                    criteriaBuilder.like(criteriaBuilder.lower(root.get("employeeCode")), searchPattern),
+                    criteriaBuilder.like(criteriaBuilder.lower(root.get("firstName")), searchPattern),
+                    criteriaBuilder.like(criteriaBuilder.lower(root.get("lastName")), searchPattern)
+                ));
+            }
+            
+            // Add roleId filter (role is in Account entity, roleId is in Role entity)
+            if (roleId != null && !roleId.trim().isEmpty()) {
+                var accountJoin = root.join("account");
+                var roleJoin = accountJoin.join("role");
+                predicates.add(criteriaBuilder.equal(roleJoin.get("roleId"), roleId));
+            }
+            
+            // Add employmentType filter (EmploymentType enum)
+            if (employmentType != null && !employmentType.trim().isEmpty()) {
+                try {
+                    EmploymentType empType = EmploymentType.valueOf(employmentType);
+                    predicates.add(criteriaBuilder.equal(root.get("employmentType"), empType));
+                } catch (IllegalArgumentException e) {
+                    log.warn("Invalid employment type: {}", employmentType);
+                }
+            }
+            
+            return criteriaBuilder.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
+        };
 
         // Fetch employees and map to DTO
         Page<Employee> employeePage = employeeRepository.findAll(spec, pageable);
