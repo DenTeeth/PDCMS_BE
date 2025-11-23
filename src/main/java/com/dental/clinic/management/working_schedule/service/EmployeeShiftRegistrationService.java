@@ -140,9 +140,11 @@ public class EmployeeShiftRegistrationService {
                     long daysBetween = java.time.temporal.ChronoUnit.DAYS.between(startDate, endDate);
                     long totalWeeks = (daysBetween / 7) + (daysBetween % 7 > 0 ? 1 : 0);
                     
-                    // Calculate total quota capacity and how much is used
-                    int totalSlotsCapacity = workingDays.size() * slot.getQuota();
-                    int totalRegisteredSlots = 0;
+                    // FIX: Count weeks correctly
+                    // - availableWeeks = weeks with at least 1 slot available
+                    // - fullWeeks = weeks where ALL slots are full (registered >= quota)
+                    int weeksWithAvailability = 0;
+                    int weeksCompletelyFull = 0;
                     int datesWithAvailability = 0; // Track for month filter
                     
                     // Track months that have at least one available date
@@ -150,24 +152,22 @@ public class EmployeeShiftRegistrationService {
                     
                     for (LocalDate date : workingDays) {
                         long registered = availabilityService.getRegisteredCountForDate(slot.getSlotId(), date);
-                        totalRegisteredSlots += (int) registered;
                         
                         if (registered < slot.getQuota()) {
+                            weeksWithAvailability++;
                             datesWithAvailability++;
                             // Add month to available months (format: YYYY-MM)
                             String yearMonth = date.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM"));
                             availableMonthsSet.add(yearMonth);
+                        } else {
+                            // registered >= quota, this date is full
+                            weeksCompletelyFull++;
                         }
                     }
-                    
-                    // Calculate available slots and convert to weeks
-                    int totalSlotsRemaining = Math.max(0, totalSlotsCapacity - totalRegisteredSlots);
-                    int availableWeeks = totalSlotsRemaining / slot.getQuota(); // Integer division
-                    int fullWeeks = (int) totalWeeks - availableWeeks;
 
                     // Generate availability summary
                     String summary = String.format("%d/%d weeks available", 
-                            availableWeeks, totalWeeks);
+                            weeksWithAvailability, totalWeeks);
                     
                     // If month filter is active and no dates available in this month, skip slot
                     if (finalFilterMonth != null && datesWithAvailability == 0) {
@@ -180,8 +180,8 @@ public class EmployeeShiftRegistrationService {
                             .shiftName(shiftName)
                             .dayOfWeek(slot.getDayOfWeek())
                             .totalWeeksAvailable((int) totalWeeks)
-                            .availableWeeks(availableWeeks)
-                            .fullWeeks(fullWeeks)
+                            .availableWeeks(weeksWithAvailability)
+                            .fullWeeks(weeksCompletelyFull)
                             .effectiveFrom(slot.getEffectiveFrom())
                             .effectiveTo(slot.getEffectiveTo())
                             .quota(slot.getQuota())
