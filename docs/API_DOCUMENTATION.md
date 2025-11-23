@@ -647,24 +647,106 @@ Base path: `/api/v1/appointments`
 
 **Required Permission:** `VIEW_APPOINTMENT` or `ADMIN` role
 
-### 2. Create Appointment
+### 2. Create Appointment (API 3.2)
 
 **POST** `/appointments`
 
 **Required Permission:** `CREATE_APPOINTMENT` or `ADMIN` role
 
-**Request Body:**
+**Important:** This API supports **TWO booking modes** with **XOR validation** (must choose exactly one):
+
+1. **Mode 1: Standalone Booking** - Use `serviceCodes` for walk-in patients
+2. **Mode 2: Treatment Plan Booking** - Use `patientPlanItemIds` for patients with treatment plans
+
+#### 🚨 XOR Validation Rule (CRITICAL)
+
+You **MUST** provide **EITHER** `serviceCodes` **OR** `patientPlanItemIds`, **NOT BOTH** and **NOT NEITHER**.
+
+**Valid Options:**
+- ✅ Provide only `serviceCodes` → Standalone booking
+- ✅ Provide only `patientPlanItemIds` → Treatment plan booking
+- ❌ Provide both → 400 Bad Request
+- ❌ Provide neither → 400 Bad Request
+
+#### Request Body (Mode 1: Standalone Booking)
 
 ```json
 {
-  "patientId": 101,
-  "employeeId": 5,
-  "appointmentDate": "2025-10-25",
-  "appointmentTime": "10:00:00",
+  "patientCode": "BN-1001",
+  "serviceCodes": ["SCALING_L1", "FILLING_L2"],
+  "employeeCode": "EMP001",
+  "roomCode": "P-01",
+  "appointmentStartTime": "2025-11-15T10:00:00",
   "reason": "Khám tổng quát",
-  "notes": "Bệnh nhân có tiền sử đau răng"
+  "notes": "Bệnh nhân có tiền sử đau răng",
+  "participantCodes": ["EMP005"]
 }
 ```
+
+#### Request Body (Mode 2: Treatment Plan Booking)
+
+```json
+{
+  "patientCode": "BN-1003",
+  "patientPlanItemIds": [307, 308],
+  "employeeCode": "EMP001",
+  "roomCode": "P-01",
+  "appointmentStartTime": "2025-12-08T14:00:00",
+  "reason": "Thực hiện lộ trình điều trị",
+  "notes": "Lần 3 và 4 trong kế hoạch niềng răng",
+  "participantCodes": ["EMP006"]
+}
+```
+
+**Response:** `201 Created`
+
+```json
+{
+  "statusCode": 201,
+  "message": "Tạo lịch hẹn thành công",
+  "error": null,
+  "data": {
+    "appointmentCode": "APT-20251115-001",
+    "patientCode": "BN-1001",
+    "patientName": "Nguyễn Văn A",
+    "doctorCode": "EMP001",
+    "doctorName": "Dr. Trần Thị B",
+    "roomCode": "P-01",
+    "appointmentStartTime": "2025-11-15T10:00:00",
+    "appointmentEndTime": "2025-11-15T11:00:00",
+    "status": "SCHEDULED",
+    "services": [
+      {
+        "serviceCode": "SCALING_L1",
+        "serviceName": "Lấy cao răng Level 1",
+        "estimatedTime": 30,
+        "price": 300000
+      },
+      {
+        "serviceCode": "FILLING_L2",
+        "serviceName": "Trám răng Level 2",
+        "estimatedTime": 30,
+        "price": 500000
+      }
+    ],
+    "linkedPlanItems": null,
+    "totalEstimatedTime": 60,
+    "totalPrice": 800000
+  }
+}
+```
+
+**Common Errors:**
+
+| Error Code | HTTP Status | Description | Solution |
+|------------|-------------|-------------|----------|
+| `INVALID_BOOKING_TYPE` | 400 | Violated XOR rule (both or neither provided) | Provide **EITHER** `serviceCodes` OR `patientPlanItemIds`, not both and not neither |
+| `PLAN_ITEMS_NOT_FOUND` | 400 | Plan item IDs don't exist | Verify item IDs from treatment plan API |
+| `PLAN_ITEMS_WRONG_PATIENT` | 400 | Plan items don't belong to patient | Check patientCode matches plan owner |
+| `PLAN_ITEMS_NOT_READY` | 400 | Items not in READY_FOR_BOOKING status | Items may be SCHEDULED/IN_PROGRESS/COMPLETED |
+| `INVALID_TIME_SLOT` | 400 | Time slot unavailable | Check doctor's schedule and room availability |
+
+**For detailed documentation, see:** `docs/api-guides/booking/appointment/Appointment.md`
 
 ---
 

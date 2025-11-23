@@ -756,7 +756,7 @@ Receptionist books appointments directly from patient's treatment plan items.
 This is enforced via `@AssertTrue` validation in DTO:
 
 ```java
-@AssertTrue(message = "Please provide either serviceCodes (standalone booking) or patientPlanItemIds (treatment plan booking), but not both")
+@AssertTrue(message = "Please provide either serviceCodes for standalone booking or patientPlanItemIds for treatment plan booking, but not both and not neither")
 private boolean isValidBookingType() {
     boolean hasServiceCodes = serviceCodes != null && !serviceCodes.isEmpty();
     boolean hasPlanItems = patientPlanItemIds != null && !patientPlanItemIds.isEmpty();
@@ -781,7 +781,7 @@ private boolean isValidBookingType() {
 }
 ```
 
-→ 400 Bad Request: "Please provide either serviceCodes (standalone booking) or patientPlanItemIds (treatment plan booking), but not both"
+→ 400 Bad Request: "Please provide either serviceCodes for standalone booking or patientPlanItemIds for treatment plan booking, but not both and not neither"
 
 ❌ **Neither provided (violates XOR):**
 
@@ -794,7 +794,7 @@ private boolean isValidBookingType() {
 }
 ```
 
-→ 400 Bad Request: "Please provide either serviceCodes (standalone booking) or patientPlanItemIds (treatment plan booking), but not both"
+→ 400 Bad Request: "Please provide either serviceCodes for standalone booking or patientPlanItemIds for treatment plan booking, but not both and not neither"
 
 ✅ **Correct Example 1 - Standalone Booking:**
 
@@ -1223,7 +1223,7 @@ await fetch("/api/v1/appointments", {
 | `PLAN_ITEMS_NOT_FOUND`     | 400         | Item IDs không tồn tại                     | Check item IDs from treatment plan API                     |
 | `PLAN_ITEMS_WRONG_PATIENT` | 400         | Items không thuộc về bệnh nhân             | Verify patientCode matches plan owner                      |
 | `PLAN_ITEMS_NOT_READY`     | 400         | Items không ở trạng thái READY_FOR_BOOKING | Check item status (may be SCHEDULED/IN_PROGRESS/COMPLETED) |
-| `INVALID_BOOKING_TYPE`     | 400         | Vi phạm XOR rule                           | Provide EITHER serviceCodes OR patientPlanItemIds          |
+| `INVALID_BOOKING_TYPE`     | 400         | Vi phạm XOR rule                           | Provide EITHER serviceCodes (standalone) OR patientPlanItemIds (treatment plan), not both and not neither |
 
 ---
 
