@@ -148,7 +148,11 @@ public class AppointmentStatusService {
         log.info("Successfully updated appointment status: code={}, {} -> {}",
                 appointmentCode, currentStatus, newStatus);
 
-        // Step 8: Return updated detail (same structure as API 3.4)
+        // Step 8: Force flush to ensure DB is updated before reading
+        // Fix: Prevents stale data when detailService queries immediately after save
+        entityManager.flush();
+
+        // Step 9: Return updated detail (same structure as API 3.4)
         return detailService.getAppointmentDetail(appointmentCode);
     }
 

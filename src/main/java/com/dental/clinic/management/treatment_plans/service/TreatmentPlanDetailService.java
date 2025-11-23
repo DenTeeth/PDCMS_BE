@@ -40,6 +40,7 @@ public class TreatmentPlanDetailService {
         private final PatientRepository patientRepository;
         private final com.dental.clinic.management.account.repository.AccountRepository accountRepository;
         private final com.dental.clinic.management.employee.repository.EmployeeRepository employeeRepository;
+        private final com.dental.clinic.management.treatment_plans.repository.PlanAuditLogRepository auditLogRepository;
 
         /**
          * Get complete treatment plan details with nested structure.
@@ -475,6 +476,9 @@ public class TreatmentPlanDetailService {
                 // Calculate progress summary
                 ProgressSummaryDTO progressSummary = calculateProgressSummary(phases);
 
+                // Retrieve submit notes from audit log (if plan was submitted for review)
+                String submitNotes = getSubmitNotesFromAuditLog(planId);
+
                 // Build final response
                 return TreatmentPlanDetailResponse.builder()
                                 .planId(planId)
@@ -494,9 +498,28 @@ public class TreatmentPlanDetailService {
                                 .paymentType(firstRow.getPaymentType() != null ? firstRow.getPaymentType().name()
                                                 : null)
                                 .createdAt(firstRow.getPlanCreatedAt())
+                                .submitNotes(submitNotes)
                                 .progressSummary(progressSummary)
                                 .phases(phases)
                                 .build();
+        }
+
+        /**
+         * Retrieve submit notes from audit log.
+         * Looks for the most recent SUBMITTED_FOR_REVIEW action and returns its notes.
+         *
+         * @param planId Treatment plan ID
+         * @return Submit notes, or null if not found
+         */
+        private String getSubmitNotesFromAuditLog(Long planId) {
+                java.util.List<com.dental.clinic.management.treatment_plans.domain.PlanAuditLog> logs = auditLogRepository
+                                .findByPlanIdOrderByCreatedAtDesc(planId);
+
+                return logs.stream()
+                                .filter(log -> "SUBMITTED_FOR_REVIEW".equals(log.getActionType()))
+                                .findFirst()
+                                .map(com.dental.clinic.management.treatment_plans.domain.PlanAuditLog::getNotes)
+                                .orElse(null);
         }
 
         /**
