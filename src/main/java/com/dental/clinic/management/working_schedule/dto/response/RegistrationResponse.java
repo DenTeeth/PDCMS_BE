@@ -20,6 +20,7 @@ public class RegistrationResponse {
 
     private Integer registrationId;
     private Integer employeeId;
+    private String employeeName; // Employee full name
     private Long partTimeSlotId;
     private String workShiftId;
     private String shiftName; // More intuitive field name

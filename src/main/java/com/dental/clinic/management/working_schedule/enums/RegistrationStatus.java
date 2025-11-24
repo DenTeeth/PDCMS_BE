@@ -29,5 +29,13 @@ public enum RegistrationStatus {
      * Reason must be provided.
      * Đăng ký đã bị từ chối, phải có lý do.
      */
-    REJECTED
+    REJECTED,
+
+    /**
+     * Registration has been cancelled by employee.
+     * Employee can only cancel PENDING registrations.
+     * Admin can cancel any status.
+     * Đăng ký đã bị hủy bởi nhân viên.
+     */
+    CANCELLED
 }

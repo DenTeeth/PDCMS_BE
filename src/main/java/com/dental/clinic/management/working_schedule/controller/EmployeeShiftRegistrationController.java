@@ -193,6 +193,24 @@ public class EmployeeShiftRegistrationController {
     }
 
     /**
+     * GET /api/v1/registrations/part-time/{registrationId}
+     * Get registration details by ID.
+     * 
+     * Permissions:
+     * - Employee can only view own registrations
+     * - Admin can view any registration
+     *
+     * @param registrationId Registration ID
+     * @return Registration details
+     */
+    @GetMapping("/{registrationId}")
+    public ResponseEntity<RegistrationResponse> getRegistrationById(@PathVariable Integer registrationId) {
+        log.info("REST request to get registration details: {}", registrationId);
+        RegistrationResponse registration = registrationService.getRegistrationById(registrationId);
+        return ResponseEntity.ok(registration);
+    }
+
+    /**
      * DELETE /api/v1/registrations/part-time/{registrationId}
      * Cancel registration (soft delete - set isActive = false).
      *
@@ -200,7 +218,7 @@ public class EmployeeShiftRegistrationController {
      * - MANAGE_REGISTRATIONS_ALL: Can cancel any registration
      * - CANCEL_REGISTRATION_OWN: Can cancel only own registrations
      * 
-     * NEW: Can cancel PENDING or APPROVED registrations
+     * NEW: Employees can only cancel PENDING registrations
      *
      * @param registrationId Registration ID to cancel
      * @return 204 No Content

@@ -364,19 +364,18 @@ public class PartTimeSlotAvailabilityService {
             int totalWorkingDays = workingDays.size();
 
             // Count dates by availability status
-            int totalDatesAvailable = 0; // registered < quota
-            int totalDatesPartial = 0;   // 0 < registered < quota
-            int totalDatesFull = 0;      // registered == quota
+            int totalDatesAvailable = 0; // registered == 0 (completely empty)
+            int totalDatesPartial = 0;   // 0 < registered < quota  
+            int totalDatesFull = 0;      // registered >= quota
             
             for (LocalDate date : workingDays) {
                 long registered = getRegisteredCountForDate(slotId, date);
                 if (registered >= slot.getQuota()) {
                     totalDatesFull++;
                 } else if (registered > 0) {
-                    totalDatesPartial++;
-                    totalDatesAvailable++; // Still has space
+                    totalDatesPartial++; // Has some registrations but not full
                 } else {
-                    totalDatesAvailable++; // Completely empty
+                    totalDatesAvailable++; // Completely empty (registered == 0)
                 }
             }
 

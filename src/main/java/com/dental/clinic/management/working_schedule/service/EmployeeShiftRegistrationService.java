@@ -13,6 +13,7 @@ import com.dental.clinic.management.working_schedule.dto.request.UpdateEffective
 import com.dental.clinic.management.working_schedule.dto.response.AvailableSlotResponse;
 import com.dental.clinic.management.working_schedule.dto.response.RegistrationResponse;
 import com.dental.clinic.management.working_schedule.dto.response.SlotDetailResponse;
+import com.dental.clinic.management.working_schedule.enums.RegistrationStatus;
 import com.dental.clinic.management.working_schedule.exception.*;
 import com.dental.clinic.management.working_schedule.repository.PartTimeRegistrationRepository;
 import com.dental.clinic.management.working_schedule.repository.PartTimeSlotRepository;
@@ -648,13 +649,21 @@ public class EmployeeShiftRegistrationService {
             throw new com.dental.clinic.management.working_schedule.exception.RegistrationAlreadyCancelledException(registrationId);
         }
 
+        // Employees can only cancel PENDING registrations, admins can cancel any
+        if (!isAdmin && !RegistrationStatus.PENDING.equals(registration.getStatus())) {
+            log.warn("Employee {} attempted to cancel non-PENDING registration {} with status {}", 
+                     currentEmployeeId, registrationId, registration.getStatus());
+            throw new IllegalStateException("Can only cancel PENDING registrations. This registration is " + registration.getStatus());
+        }
+
         try {
             registration.setIsActive(false);
+            registration.setStatus(RegistrationStatus.CANCELLED);
             registration.setEffectiveTo(LocalDate.now());
             registration.setUpdatedAt(LocalDateTime.now());
             registrationRepository.save(registration);
             
-            log.info("Successfully cancelled registration {} - set isActive=false, effectiveTo={}", 
+            log.info("Successfully cancelled registration {} - set status=CANCELLED, isActive=false, effectiveTo={}", 
                      registrationId, LocalDate.now());
         } catch (Exception e) {
             log.error("Failed to cancel registration {}: {}", registrationId, e.getMessage(), e);
@@ -755,6 +764,11 @@ public class EmployeeShiftRegistrationService {
                 ? new java.util.ArrayList<>(registration.getRequestedDates())
                 : (slot != null ? availabilityService.getWorkingDays(slot, registration.getEffectiveFrom(), registration.getEffectiveTo()) : null);
 
+        // Get employee name
+        String employeeName = null;
+        Employee employee = employeeRepository.findById(registration.getEmployeeId()).orElse(null);
+        employeeName = employee != null ? employee.getFullName() : "Unknown Employee";
+
         // Get manager name if processed
         String processedByName = null;
         if (registration.getProcessedBy() != null) {
@@ -765,6 +779,7 @@ public class EmployeeShiftRegistrationService {
         return RegistrationResponse.builder()
                 .registrationId(registration.getRegistrationId())
                 .employeeId(registration.getEmployeeId())
+                .employeeName(employeeName)
                 .partTimeSlotId(registration.getPartTimeSlotId())
                 .workShiftId(workShiftId)
                 .shiftName(shiftName)
