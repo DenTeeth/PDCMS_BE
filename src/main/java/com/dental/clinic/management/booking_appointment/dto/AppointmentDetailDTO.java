@@ -128,4 +128,12 @@ public class AppointmentDetailDTO {
      * Timestamp when this appointment was created
      */
     private LocalDateTime createdAt;
+
+    /**
+     * Treatment plan code linked to this appointment (if any)
+     * Populated from appointment_plan_items bridge table
+     * Example: "PLAN-20251001-001"
+     * Null if appointment is not linked to any treatment plan
+     */
+    private String linkedTreatmentPlanCode;
 }

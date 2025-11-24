@@ -48,4 +48,13 @@ public interface AppointmentPlanItemRepository
             WHERE phase.treatmentPlan.planId = :planId
             """)
     long countAppointmentsForPlan(@Param("planId") Long planId);
+
+    /**
+     * Find all plan items linked to an appointment.
+     * Used to determine which treatment plan is linked to appointment.
+     *
+     * @param appointmentId The appointment ID
+     * @return List of bridge records for this appointment
+     */
+    java.util.List<AppointmentPlanItemBridge> findById_AppointmentId(Integer appointmentId);
 }

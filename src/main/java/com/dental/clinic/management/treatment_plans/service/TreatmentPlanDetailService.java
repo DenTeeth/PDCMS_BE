@@ -41,6 +41,7 @@ public class TreatmentPlanDetailService {
         private final com.dental.clinic.management.account.repository.AccountRepository accountRepository;
         private final com.dental.clinic.management.employee.repository.EmployeeRepository employeeRepository;
         private final com.dental.clinic.management.treatment_plans.repository.PlanAuditLogRepository auditLogRepository;
+        private final com.dental.clinic.management.booking_appointment.repository.AppointmentRepository appointmentRepository;
 
         /**
          * Get complete treatment plan details with nested structure.
@@ -277,13 +278,54 @@ public class TreatmentPlanDetailService {
 
                 // Compare employee codes
                 if (!employee.getEmployeeCode().equals(planCreatorEmployeeCode)) {
-                        log.warn("Access denied: Employee {} (code={}) attempting to view plan created by employee {}",
+                        // Check if user is primary doctor of appointment linked to this plan
+                        boolean isPrimaryDoctor = isPrimaryDoctorOfLinkedAppointment(
+                                employee.getEmployeeId(), firstRow.getPlanId());
+                        
+                        if (isPrimaryDoctor) {
+                                log.info("Access granted: Employee {} is primary doctor of appointment linked to plan {}",
+                                        employee.getEmployeeCode(), firstRow.getPlanCode());
+                                return; // Allow access
+                        }
+                        
+                        log.warn("Access denied: Employee {} (code={}) attempting to view plan created by employee {} (not primary doctor of linked appointment)",
                                         employee.getEmployeeId(), employee.getEmployeeCode(), planCreatorEmployeeCode);
-                        throw new AccessDeniedException("You can only view treatment plans that you created");
+                        throw new AccessDeniedException("You can only view treatment plans that you created or that are linked to your appointments");
                 }
 
                 log.info("EMPLOYEE createdBy verification passed: Employee {} viewing plan created by {}",
                                 employee.getEmployeeCode(), planCreatorEmployeeCode);
+        }
+
+        /**
+         * Check if employee is primary doctor of any appointment linked to treatment plan.
+         * 
+         * Query logic:
+         * 1. Find appointments where employeeId = given employeeId
+         * 2. Check if any of those appointments are linked to plan items from this treatment plan
+         * 3. Via: appointments → appointment_plan_items → patient_plan_items → phases → treatment_plan
+         * 
+         * @param employeeId Employee ID to check
+         * @param planId Treatment plan ID
+         * @return true if employee is primary doctor of at least one linked appointment
+         */
+        private boolean isPrimaryDoctorOfLinkedAppointment(Integer employeeId, Long planId) {
+                try {
+                        // Query: Find appointments by employeeId that are linked to this plan
+                        // Using repository method that checks:
+                        // 1. appointment.employeeId = employeeId (primary doctor)
+                        // 2. appointment_plan_items exists linking to items from this plan
+                        long count = appointmentRepository.countByEmployeeIdAndLinkedToPlan(employeeId, planId);
+                        
+                        log.debug("Found {} appointments where employee {} is primary doctor linked to plan {}",
+                                count, employeeId, planId);
+                        
+                        return count > 0;
+                } catch (Exception e) {
+                        log.error("Error checking if employee {} is primary doctor of appointments linked to plan {}: {}",
+                                employeeId, planId, e.getMessage());
+                        return false; // Fail-safe: deny access on error
+                }
         }
 
         /**

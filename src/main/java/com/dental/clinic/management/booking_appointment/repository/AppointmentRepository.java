@@ -448,4 +448,31 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
                         "AND a.status = 'COMPLETED' " +
                         "ORDER BY a.appointmentStartTime DESC")
         List<Appointment> findCompletedAppointmentsByPatientId(@Param("patientId") Integer patientId);
+
+        /**
+         * Count appointments where employee is primary doctor AND appointment is linked to treatment plan.
+         * Used for RBAC: Allow primary doctor to view treatment plan linked to their appointment.
+         * 
+         * Query logic:
+         * 1. Find appointments where employeeId = given employeeId (primary doctor)
+         * 2. Check if appointment has items linked to treatment plan via appointment_plan_items
+         * 3. Join: appointments → appointment_plan_items → patient_plan_items → phases → treatment_plan
+         * 4. Filter by planId
+         * 
+         * @param employeeId Employee ID (primary doctor)
+         * @param planId Treatment plan ID
+         * @return Count of appointments matching criteria
+         */
+        @Query("""
+                SELECT COUNT(DISTINCT a.appointmentId)
+                FROM Appointment a
+                JOIN AppointmentPlanItemBridge apib ON a.appointmentId = apib.id.appointmentId
+                JOIN PatientPlanItem item ON item.itemId = apib.id.itemId
+                JOIN PatientPlanPhase phase ON phase.patientPhaseId = item.phase.patientPhaseId
+                WHERE a.employeeId = :employeeId
+                AND phase.treatmentPlan.planId = :planId
+                """)
+        long countByEmployeeIdAndLinkedToPlan(
+                @Param("employeeId") Integer employeeId,
+                @Param("planId") Long planId);
 }

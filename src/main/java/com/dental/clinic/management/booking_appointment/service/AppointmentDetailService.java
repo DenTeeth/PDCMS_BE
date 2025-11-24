@@ -7,12 +7,16 @@ import com.dental.clinic.management.booking_appointment.dto.AppointmentDetailDTO
 import com.dental.clinic.management.booking_appointment.dto.CreateAppointmentResponse;
 import com.dental.clinic.management.booking_appointment.enums.AppointmentActionType;
 import com.dental.clinic.management.booking_appointment.enums.AppointmentStatus;
+import com.dental.clinic.management.booking_appointment.domain.AppointmentPlanItemBridge;
 import com.dental.clinic.management.booking_appointment.repository.AppointmentAuditLogRepository;
 import com.dental.clinic.management.booking_appointment.repository.AppointmentParticipantRepository;
+import com.dental.clinic.management.booking_appointment.repository.AppointmentPlanItemRepository;
 import com.dental.clinic.management.booking_appointment.repository.AppointmentRepository;
+import com.dental.clinic.management.booking_appointment.repository.PatientPlanItemRepository;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.exception.ResourceNotFoundException;
 import com.dental.clinic.management.patient.repository.PatientRepository;
+import com.dental.clinic.management.treatment_plans.domain.PatientPlanItem;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
@@ -48,6 +52,8 @@ public class AppointmentDetailService {
     private final EmployeeRepository employeeRepository;
     private final AppointmentParticipantRepository appointmentParticipantRepository;
     private final AppointmentAuditLogRepository appointmentAuditLogRepository;
+    private final AppointmentPlanItemRepository appointmentPlanItemRepository;
+    private final PatientPlanItemRepository patientPlanItemRepository;
 
     /**
      * Get appointment detail by code with RBAC check
@@ -311,6 +317,28 @@ public class AppointmentDetailService {
             }
         }
 
+        // Load linked treatment plan code (if appointment is linked to plan items)
+        String linkedPlanCode = null;
+        try {
+            // Query: appointment_plan_items → patient_plan_items → phases → treatment_plan
+            List<AppointmentPlanItemBridge> bridges = appointmentPlanItemRepository
+                    .findById_AppointmentId(appointment.getAppointmentId());
+            
+            if (!bridges.isEmpty()) {
+                // Get first item's plan code (all items in same appointment should be from same plan)
+                Long firstItemId = bridges.get(0).getId().getItemId();
+                PatientPlanItem item = patientPlanItemRepository.findById(firstItemId).orElse(null);
+                if (item != null && item.getPhase() != null && item.getPhase().getTreatmentPlan() != null) {
+                    linkedPlanCode = item.getPhase().getTreatmentPlan().getPlanCode();
+                    log.debug("Found linked treatment plan: {} for appointment: {}", 
+                            linkedPlanCode, appointment.getAppointmentCode());
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Failed to load linked treatment plan code for appointment {}: {}", 
+                    appointment.getAppointmentCode(), e.getMessage());
+        }
+
         // Compute dynamic fields
         LocalDateTime now = LocalDateTime.now();
         String computedStatus = calculateComputedStatus(appointment, now);
@@ -336,6 +364,7 @@ public class AppointmentDetailService {
                 .participants(participants)
                 .createdBy(createdByName)
                 .createdAt(appointment.getCreatedAt())
+                .linkedTreatmentPlanCode(linkedPlanCode)
                 .build();
     }
 
