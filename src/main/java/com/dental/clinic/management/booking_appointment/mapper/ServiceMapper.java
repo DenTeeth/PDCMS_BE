@@ -37,6 +37,13 @@ public class ServiceMapper {
             response.setSpecializationName(service.getSpecialization().getSpecializationName());
         }
 
+        // Map category if exists
+        if (service.getCategory() != null) {
+            response.setCategoryId(service.getCategory().getCategoryId());
+            response.setCategoryCode(service.getCategory().getCategoryCode());
+            response.setCategoryName(service.getCategory().getCategoryName());
+        }
+
         return response;
     }
 

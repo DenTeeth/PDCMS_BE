@@ -27,7 +27,7 @@ public class ServiceController {
 
     @GetMapping
     @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_SERVICE + "')")
-    @Operation(summary = "Get all services with filters")
+    @Operation(summary = "Get all services with filters", description = "Filter services by category, specialization, active status, and keyword search")
     @ApiMessage("Lấy danh sách dịch vụ thành công")
     public ResponseEntity<Page<ServiceResponse>> getAllServices(
             @RequestParam(defaultValue = "0") int page,
@@ -35,11 +35,12 @@ public class ServiceController {
             @RequestParam(defaultValue = "serviceId") String sortBy,
             @RequestParam(defaultValue = "ASC") String sortDirection,
             @RequestParam(required = false) Boolean isActive,
+            @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) Integer specializationId,
             @RequestParam(required = false) String keyword) {
 
         Page<ServiceResponse> services = serviceService.getAllServices(
-                page, size, sortBy, sortDirection, isActive, specializationId, keyword);
+                page, size, sortBy, sortDirection, isActive, categoryId, specializationId, keyword);
         return ResponseEntity.ok(services);
     }
 

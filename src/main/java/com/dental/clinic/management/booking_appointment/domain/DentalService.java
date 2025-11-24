@@ -60,6 +60,10 @@ public class DentalService {
     @JoinColumn(name = "specialization_id", foreignKey = @ForeignKey(name = "fk_service_specialization"))
     private Specialization specialization;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", foreignKey = @ForeignKey(name = "fk_service_category"))
+    private com.dental.clinic.management.service.domain.ServiceCategory category;
+
     @Column(name = "display_order", nullable = false)
     private Integer displayOrder = 0;
 

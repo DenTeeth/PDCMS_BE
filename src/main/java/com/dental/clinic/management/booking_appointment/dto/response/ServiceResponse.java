@@ -44,6 +44,15 @@ public class ServiceResponse {
     @Schema(description = "Specialization name", example = "Chỉnh nha")
     private String specializationName;
 
+    @Schema(description = "Service category ID", example = "5")
+    private Long categoryId;
+
+    @Schema(description = "Service category code", example = "GENERAL")
+    private String categoryCode;
+
+    @Schema(description = "Service category name", example = "Nha khoa tổng quát")
+    private String categoryName;
+
     @Schema(description = "Active status", example = "true")
     private Boolean isActive;
 

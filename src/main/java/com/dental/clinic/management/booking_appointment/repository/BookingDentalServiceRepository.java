@@ -72,11 +72,13 @@ public interface BookingDentalServiceRepository extends JpaRepository<DentalServ
         */
        @Query("SELECT s FROM BookingDentalService s WHERE " +
                      "(:isActive IS NULL OR s.isActive = :isActive) AND " +
+                     "(:categoryId IS NULL OR s.category.categoryId = :categoryId) AND " +
                      "(:specializationId IS NULL OR s.specialization.specializationId = :specializationId) AND " +
                      "(:keyword IS NULL OR :keyword = '' OR " +
                      "LOWER(s.serviceCode) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
                      "LOWER(s.serviceName) LIKE LOWER(CONCAT('%', :keyword, '%')))")
        Page<DentalService> findWithFilters(@Param("isActive") Boolean isActive,
+                     @Param("categoryId") Long categoryId,
                      @Param("specializationId") Integer specializationId,
                      @Param("keyword") String keyword,
                      Pageable pageable);

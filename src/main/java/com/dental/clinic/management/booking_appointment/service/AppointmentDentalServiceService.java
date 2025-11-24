@@ -56,12 +56,13 @@ public class AppointmentDentalServiceService {
             String sortBy,
             String sortDirection,
             Boolean isActive,
+            Long categoryId,
             Integer specializationId,
             String keyword) {
 
         log.debug(
-                "Request to get all services - page: {}, size: {}, sortBy: {}, sortDirection: {}, isActive: {}, specializationId: {}, keyword: {}",
-                page, size, sortBy, sortDirection, isActive, specializationId, keyword);
+                "Request to get all services - page: {}, size: {}, sortBy: {}, sortDirection: {}, isActive: {}, categoryId: {}, specializationId: {}, keyword: {}",
+                page, size, sortBy, sortDirection, isActive, categoryId, specializationId, keyword);
 
         // Validate and adjust page size
         if (size > MAX_PAGE_SIZE) {
@@ -81,6 +82,7 @@ public class AppointmentDentalServiceService {
         // Query with filters
         Page<DentalService> servicesPage = serviceRepository.findWithFilters(
                 isActive,
+                categoryId,
                 specializationId,
                 keyword,
                 pageable);
@@ -384,6 +386,7 @@ public class AppointmentDentalServiceService {
                     Pageable unpaginated = PageRequest.of(0, Integer.MAX_VALUE);
                     Page<DentalService> specServices = serviceRepository.findWithFilters(
                             isActive,
+                            null, // categoryId not used in doctor filter
                             specId,
                             keyword,
                             unpaginated);
