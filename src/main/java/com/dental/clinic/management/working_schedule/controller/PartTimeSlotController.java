@@ -22,6 +22,8 @@ import com.dental.clinic.management.working_schedule.domain.PartTimeSlot;
 import com.dental.clinic.management.working_schedule.repository.PartTimeSlotRepository;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 
 /**
  * REST controller for Part-time Slot Management (Admin).
@@ -30,6 +32,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 @RequestMapping("/api/v1/work-slots")
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "Part-Time Slot Management", description = "APIs for managing part-time work slots")
 public class PartTimeSlotController {
 
     private final PartTimeSlotService partTimeSlotService;
@@ -39,6 +42,10 @@ public class PartTimeSlotController {
     /**
      * Create a new part-time slot.
      */
+    @Operation(
+        summary = "Create part-time slot",
+        description = "Create a new part-time work slot with quota and schedule configuration"
+    )
     @PostMapping
     public ResponseEntity<PartTimeSlotResponse> createSlot(
             @Valid @RequestBody CreatePartTimeSlotRequest request) {
@@ -50,6 +57,10 @@ public class PartTimeSlotController {
     /**
      * Get all part-time slots with registration counts.
      */
+    @Operation(
+        summary = "Get all part-time slots",
+        description = "Retrieve all part-time work slots with their registration counts and quota status"
+    )
     @GetMapping
     public ResponseEntity<List<PartTimeSlotResponse>> getAllSlots() {
         log.info("GET /api/v1/work-slots - Fetching all slots");
@@ -60,6 +71,10 @@ public class PartTimeSlotController {
     /**
      * Get slot detail with list of registered employees.
      */
+    @Operation(
+        summary = "Get slot detail by ID",
+        description = "Retrieve detailed information about a part-time slot including list of registered employees"
+    )
     @GetMapping("/{slotId}")
     public ResponseEntity<com.dental.clinic.management.working_schedule.dto.response.PartTimeSlotDetailResponse> getSlotDetail(
             @PathVariable Long slotId) {
@@ -73,6 +88,10 @@ public class PartTimeSlotController {
      * Return the count of APPROVED registrations that cover the given date for the slot.
      * Allowed for managers who manage part-time registrations or admins managing work slots.
      */
+    @Operation(
+        summary = "Get registered count for date",
+        description = "Return the count of APPROVED registrations that cover the given date for a specific slot"
+    )
     @GetMapping("/{slotId}/registered")
     public ResponseEntity<java.util.Map<String, Object>> getRegisteredCountForDate(
             @PathVariable Long slotId,
@@ -93,6 +112,10 @@ public class PartTimeSlotController {
      * GET /api/v1/work-slots/{slotId}/availability?from=yyyy-MM-dd&to=yyyy-MM-dd
      * Returns per-day registered counts and availability flags for the slot's working days.
      */
+    @Operation(
+        summary = "Get slot availability",
+        description = "Returns per-day registered counts and availability flags for the slot's working days within date range"
+    )
     @GetMapping("/{slotId}/availability")
     @PreAuthorize("hasAnyAuthority('VIEW_AVAILABLE_SLOTS','MANAGE_PART_TIME_REGISTRATIONS','MANAGE_WORK_SLOTS')")
     public ResponseEntity<?> getAvailability(
@@ -138,6 +161,10 @@ public class PartTimeSlotController {
     /**
      * Update a part-time slot (quota and isActive).
      */
+    @Operation(
+        summary = "Update part-time slot",
+        description = "Update a part-time slot's quota and active status configuration"
+    )
     @PutMapping("/{slotId}")
     public ResponseEntity<PartTimeSlotResponse> updateSlot(
             @PathVariable Long slotId,
@@ -158,6 +185,10 @@ public class PartTimeSlotController {
      * @param slotId Slot ID to delete
      * @return 204 No Content
      */
+    @Operation(
+        summary = "Delete part-time slot",
+        description = "Soft delete a work slot by setting isActive to false. Existing registrations remain unchanged."
+    )
     @DeleteMapping("/{slotId}")
     public ResponseEntity<Void> deleteSlot(@PathVariable Long slotId) {
         log.info("DELETE /api/v1/work-slots/{} - Deactivating slot", slotId);
@@ -178,6 +209,10 @@ public class PartTimeSlotController {
      * 
      * @return Statistics response with comprehensive metrics
      */
+    @Operation(
+        summary = "Get slot statistics",
+        description = "Retrieve comprehensive statistics for all work slots including quota utilization and registration metrics"
+    )
     @GetMapping("/statistics")
     public ResponseEntity<com.dental.clinic.management.working_schedule.dto.response.SlotStatisticsResponse> getStatistics() {
         log.info("GET /api/v1/work-slots/statistics - Fetching slot statistics");

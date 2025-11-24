@@ -36,7 +36,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
-import java.math.BigDecimal;
+// import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -239,7 +239,8 @@ public class InventoryService {
     /**
      * 🧠 Map ItemMaster sang DTO với calculated fields
      */
-    private ItemMasterSummaryResponse mapToSummaryDto(ItemMaster item) {
+    @SuppressWarnings("deprecation")
+private ItemMasterSummaryResponse mapToSummaryDto(ItemMaster item) {
         List<ItemBatch> batches = itemBatchRepository.findByItemMaster_ItemMasterId(item.getItemMasterId());
 
         Integer totalQty = batches.stream()
@@ -440,6 +441,7 @@ public class InventoryService {
         log.info("Getting suppliers for item ID: {}", itemMasterId);
 
         // Validate item exists
+        @SuppressWarnings("unused")
         ItemMaster item = itemMasterRepository.findById(itemMasterId)
                 .orElseThrow(() -> new ItemMasterNotFoundException("Item not found with ID: " + itemMasterId));
 

@@ -6,8 +6,6 @@ import com.dental.clinic.management.treatment_plans.enums.TreatmentPlanStatus;
 import com.dental.clinic.management.treatment_plans.service.TreatmentPlanService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -70,11 +68,6 @@ public class TreatmentPlanController {
                         "Supports filtering by approval status, plan status, and doctor. " +
                         "Returns lightweight summaries without phase/item details for better performance. " +
                         "Requires VIEW_ALL_TREATMENT_PLANS permission.")
-        @ApiResponses(value = {
-                        @ApiResponse(responseCode = "200", description = "Successfully retrieved treatment plans"),
-                        @ApiResponse(responseCode = "403", description = "Access denied - requires VIEW_ALL_TREATMENT_PLANS permission"),
-                        @ApiResponse(responseCode = "400", description = "Invalid filter parameters")
-        })
         @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('"
                         + com.dental.clinic.management.utils.security.AuthoritiesConstants.VIEW_ALL_TREATMENT_PLANS
                         + "')")
@@ -125,11 +118,6 @@ public class TreatmentPlanController {
                         "Patients with VIEW_TREATMENT_PLAN_OWN can only view their own plans. " +
                         "Supports pagination via page (0-indexed) and size query parameters. " +
                         "Response includes totalElements, totalPages, and current page info.")
-        @ApiResponses(value = {
-                        @ApiResponse(responseCode = "200", description = "Successfully retrieved treatment plans"),
-                        @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions"),
-                        @ApiResponse(responseCode = "404", description = "Patient not found")
-        })
         @org.springframework.security.access.prepost.PreAuthorize("hasRole('"
                         + com.dental.clinic.management.utils.security.AuthoritiesConstants.ADMIN + "') or " +
                         "hasAuthority('"
@@ -178,11 +166,6 @@ public class TreatmentPlanController {
                         "Includes progress summary with counts of completed phases/items. " +
                         "Staff with VIEW_TREATMENT_PLAN_ALL can view any patient's plans. " +
                         "Patients with VIEW_TREATMENT_PLAN_OWN can only view their own plans.")
-        @ApiResponses(value = {
-                        @ApiResponse(responseCode = "200", description = "Successfully retrieved treatment plan details"),
-                        @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions or accessing another patient's plan"),
-                        @ApiResponse(responseCode = "404", description = "Patient or treatment plan not found")
-        })
         @org.springframework.security.access.prepost.PreAuthorize("hasRole('"
                         + com.dental.clinic.management.utils.security.AuthoritiesConstants.ADMIN + "') or " +
                         "hasAuthority('"
@@ -235,12 +218,6 @@ public class TreatmentPlanController {
                         "Example: Create 'Orthodontics 2-year package' for a patient from template 'TPL_ORTHO_METAL'. "
                         +
                         "Returns the complete plan structure (same as API 5.2) with status=PENDING.")
-        @ApiResponses(value = {
-                        @ApiResponse(responseCode = "201", description = "Treatment plan created successfully"),
-                        @ApiResponse(responseCode = "400", description = "Invalid request - discount exceeds total cost, or template inactive"),
-                        @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions (requires CREATE_TREATMENT_PLAN)"),
-                        @ApiResponse(responseCode = "404", description = "Patient, doctor, or template not found")
-        })
         @org.springframework.security.access.prepost.PreAuthorize("hasRole('"
                         + com.dental.clinic.management.utils.security.AuthoritiesConstants.ADMIN + "') or " +
                         "hasAuthority('"
@@ -315,12 +292,6 @@ public class TreatmentPlanController {
                         +
                         "(4) Phase Duration: Set estimated_duration_days for timeline calculation. " +
                         "Example: Create a custom orthodontics plan with 3 phases, 10 adjustment items (quantity=10), custom consultation price.")
-        @ApiResponses(value = {
-                        @ApiResponse(responseCode = "201", description = "Custom treatment plan created successfully with approval_status=DRAFT"),
-                        @ApiResponse(responseCode = "400", description = "Invalid request - duplicate phase numbers, empty phases, price out of range, or discount exceeds total cost"),
-                        @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions (requires CREATE_TREATMENT_PLAN)"),
-                        @ApiResponse(responseCode = "404", description = "Patient, doctor, or service not found or inactive")
-        })
         @org.springframework.security.access.prepost.PreAuthorize("hasRole('"
                         + com.dental.clinic.management.utils.security.AuthoritiesConstants.ADMIN + "') or " +
                         "hasAuthority('"
@@ -428,11 +399,6 @@ public class TreatmentPlanController {
                         - `?searchTerm=orthodontics` - Search "orthodontics" in plan names
                         - `?doctorEmployeeCode=EMP001&page=0&size=20` (Admin only)
                         """)
-        @ApiResponses(value = {
-                        @ApiResponse(responseCode = "200", description = "Successfully retrieved treatment plans with pagination metadata"),
-                        @ApiResponse(responseCode = "403", description = "Access denied - user does not have VIEW_TREATMENT_PLAN_ALL or VIEW_TREATMENT_PLAN_OWN permission"),
-                        @ApiResponse(responseCode = "401", description = "Unauthorized - invalid or missing JWT token")
-        })
         @org.springframework.security.access.prepost.PreAuthorize("hasRole('"
                         + com.dental.clinic.management.utils.security.AuthoritiesConstants.ADMIN + "') or " +
                         "hasAuthority('"
@@ -552,13 +518,6 @@ public class TreatmentPlanController {
                         2. Complete item: `{"status": "COMPLETED", "completedAt": "2024-01-15T14:30:00"}`
                         3. Undo skip: `{"status": "READY_FOR_BOOKING"}` (costs restored)
                         """)
-        @ApiResponses(value = {
-                        @ApiResponse(responseCode = "200", description = "Item status updated successfully with financial impact information"),
-                        @ApiResponse(responseCode = "400", description = "Invalid request - missing required fields or validation errors"),
-                        @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions (requires UPDATE_TREATMENT_PLAN)"),
-                        @ApiResponse(responseCode = "404", description = "Treatment plan item not found"),
-                        @ApiResponse(responseCode = "409", description = "Conflict - invalid state transition or active appointments prevent skipping")
-        })
         @org.springframework.security.access.prepost.PreAuthorize("hasRole('"
                         + com.dental.clinic.management.utils.security.AuthoritiesConstants.ADMIN + "') or " +
                         "hasAuthority('"
@@ -660,13 +619,6 @@ public class TreatmentPlanController {
                         ]
                         ```
                         """)
-        @ApiResponses(value = {
-                        @ApiResponse(responseCode = "201", description = "Items created successfully with financial impact and approval workflow information"),
-                        @ApiResponse(responseCode = "400", description = "Invalid request - service not found, price out of range, or validation errors"),
-                        @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions (requires UPDATE_TREATMENT_PLAN)"),
-                        @ApiResponse(responseCode = "404", description = "Phase not found"),
-                        @ApiResponse(responseCode = "409", description = "Conflict - cannot add to completed phase, pending approval plan, or closed plan")
-        })
         @org.springframework.security.access.prepost.PreAuthorize("hasRole('"
                         + com.dental.clinic.management.utils.security.AuthoritiesConstants.ADMIN + "') or " +
                         "hasAuthority('"
@@ -801,12 +753,6 @@ public class TreatmentPlanController {
                         }
                         ```
                         """)
-        @ApiResponses(value = {
-                        @ApiResponse(responseCode = "200", description = "Successfully retrieved template detail"),
-                        @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions (requires CREATE_TREATMENT_PLAN)"),
-                        @ApiResponse(responseCode = "404", description = "Template not found with the given code"),
-                        @ApiResponse(responseCode = "410", description = "Template is inactive (deprecated) - P2 enhancement")
-        })
         @org.springframework.security.access.prepost.PreAuthorize("hasRole('"
                         + com.dental.clinic.management.utils.security.AuthoritiesConstants.ADMIN + "') or " +
                         "hasAuthority('"
@@ -874,10 +820,6 @@ public class TreatmentPlanController {
 
                         **Response:** Lightweight summary (no phases/services). Use API 5.8 for full detail.
                         """)
-        @ApiResponses(value = {
-                        @ApiResponse(responseCode = "200", description = "Successfully retrieved template list"),
-                        @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions (requires CREATE_TREATMENT_PLAN)")
-        })
         @org.springframework.security.access.prepost.PreAuthorize("hasRole('"
                         + com.dental.clinic.management.utils.security.AuthoritiesConstants.ADMIN + "') or " +
                         "hasAuthority('"
@@ -930,13 +872,6 @@ public class TreatmentPlanController {
                         "APPROVED: Plan can be activated by doctor. " +
                         "REJECTED: Plan returns to DRAFT for revision. " +
                         "Audit trail is automatically logged.")
-        @ApiResponses(value = {
-                        @ApiResponse(responseCode = "200", description = "Treatment plan approval status updated successfully"),
-                        @ApiResponse(responseCode = "400", description = "Bad request - missing notes for rejection OR items with price 0đ when approving"),
-                        @ApiResponse(responseCode = "403", description = "Access denied - requires APPROVE_TREATMENT_PLAN permission"),
-                        @ApiResponse(responseCode = "404", description = "Treatment plan not found"),
-                        @ApiResponse(responseCode = "409", description = "Conflict - plan not in PENDING_REVIEW status")
-        })
         @org.springframework.security.access.prepost.PreAuthorize("hasRole('"
                         + com.dental.clinic.management.utils.security.AuthoritiesConstants.ADMIN + "') or " +
                         "hasAuthority('"
@@ -987,13 +922,6 @@ public class TreatmentPlanController {
                         "Typically used to fix incorrect prices after manager rejection. " +
                         "Financial impact is auto-calculated. " +
                         "Approval status stays DRAFT (doctor must explicitly re-submit).")
-        @ApiResponses(value = {
-                        @ApiResponse(responseCode = "200", description = "Item updated successfully with financial impact"),
-                        @ApiResponse(responseCode = "400", description = "Bad request - no fields to update OR invalid price/time"),
-                        @ApiResponse(responseCode = "403", description = "Access denied - requires UPDATE_TREATMENT_PLAN permission"),
-                        @ApiResponse(responseCode = "404", description = "Item not found"),
-                        @ApiResponse(responseCode = "409", description = "Conflict - item is scheduled/completed OR plan is approved/pending review")
-        })
         @org.springframework.security.access.prepost.PreAuthorize("hasRole('"
                         + com.dental.clinic.management.utils.security.AuthoritiesConstants.ADMIN + "') or " +
                         "hasAuthority('"
@@ -1036,12 +964,6 @@ public class TreatmentPlanController {
                         +
                         "Plan finances are automatically recalculated. Audit log created. " +
                         "Returns deleted item details and new plan totals for FE toast notification.")
-        @ApiResponses(value = {
-                        @ApiResponse(responseCode = "200", description = "Item deleted successfully - returns financial impact"),
-                        @ApiResponse(responseCode = "403", description = "Access denied - missing UPDATE_TREATMENT_PLAN permission"),
-                        @ApiResponse(responseCode = "404", description = "Item not found"),
-                        @ApiResponse(responseCode = "409", description = "Cannot delete - item already scheduled OR plan not in DRAFT status")
-        })
         @org.springframework.security.access.prepost.PreAuthorize("hasRole('"
                         + com.dental.clinic.management.utils.security.AuthoritiesConstants.ADMIN + "') or " +
                         "hasAuthority('"
@@ -1087,13 +1009,6 @@ public class TreatmentPlanController {
                         "This is the critical step that moves plan from DRAFT → PENDING_REVIEW. " +
                         "Plan must have at least 1 phase and 1 item. " +
                         "Audit trail is automatically logged.")
-        @ApiResponses(value = {
-                        @ApiResponse(responseCode = "200", description = "Treatment plan submitted for review successfully"),
-                        @ApiResponse(responseCode = "400", description = "Bad request - plan has no phases/items"),
-                        @ApiResponse(responseCode = "403", description = "Access denied - requires CREATE_TREATMENT_PLAN or UPDATE_TREATMENT_PLAN permission"),
-                        @ApiResponse(responseCode = "404", description = "Treatment plan not found"),
-                        @ApiResponse(responseCode = "409", description = "Conflict - plan not in DRAFT status")
-        })
         @org.springframework.security.access.prepost.PreAuthorize("hasRole('"
                         + com.dental.clinic.management.utils.security.AuthoritiesConstants.ADMIN + "') or " +
                         "hasAuthority('"
@@ -1146,13 +1061,6 @@ public class TreatmentPlanController {
                         "Part of new pricing model (V21.4) where doctors don't manage prices. " +
                         "Automatically recalculates costs and creates audit trail. " +
                         "Typically used between doctor submission (API 5.12) and manager approval (API 5.9).")
-        @ApiResponses(value = {
-                        @ApiResponse(responseCode = "200", description = "Prices updated successfully"),
-                        @ApiResponse(responseCode = "400", description = "Bad request - invalid item IDs or negative prices"),
-                        @ApiResponse(responseCode = "403", description = "Access denied - requires MANAGE_PLAN_PRICING permission"),
-                        @ApiResponse(responseCode = "404", description = "Treatment plan or items not found"),
-                        @ApiResponse(responseCode = "409", description = "Conflict - plan is completed or cancelled")
-        })
         @org.springframework.security.access.prepost.PreAuthorize("hasRole('"
                         + com.dental.clinic.management.utils.security.AuthoritiesConstants.ADMIN + "') or " +
                         "hasAuthority('"
@@ -1204,13 +1112,6 @@ public class TreatmentPlanController {
                         "Updates sequence numbers based on array position. " +
                         "Item at index 0 becomes sequence 1, index 1 becomes sequence 2, etc. " +
                         "Uses SERIALIZABLE isolation to prevent concurrent modification issues.")
-        @ApiResponses(value = {
-                        @ApiResponse(responseCode = "200", description = "Items reordered successfully"),
-                        @ApiResponse(responseCode = "400", description = "Bad request - item count mismatch or invalid item IDs"),
-                        @ApiResponse(responseCode = "403", description = "Access denied - requires UPDATE_TREATMENT_PLAN permission"),
-                        @ApiResponse(responseCode = "404", description = "Phase not found"),
-                        @ApiResponse(responseCode = "409", description = "Conflict - plan is completed or cancelled")
-        })
         @org.springframework.security.access.prepost.PreAuthorize("hasRole('"
                         + com.dental.clinic.management.utils.security.AuthoritiesConstants.ADMIN + "') or " +
                         "hasAuthority('"

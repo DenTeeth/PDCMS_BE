@@ -8,6 +8,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 
 import java.util.List;
 
@@ -18,6 +20,7 @@ import java.util.List;
 @RequestMapping("/api/v1/time-off-types")
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "Time-Off Type Management", description = "APIs for managing time-off types")
 public class TimeOffTypeController {
 
     private final TimeOffTypeService typeService;
@@ -34,6 +37,7 @@ public class TimeOffTypeController {
      * @return List of TimeOffTypeResponse
      */
     @GetMapping
+    @Operation(summary = "Get active time-off types", description = "Retrieve list of all active time-off types")
     public ResponseEntity<List<TimeOffTypeResponse>> getActiveTimeOffTypes() {
         log.info("REST request to get all active time-off types");
         List<TimeOffTypeResponse> types = typeService.getActiveTimeOffTypes();

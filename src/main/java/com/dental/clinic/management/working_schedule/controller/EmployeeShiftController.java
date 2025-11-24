@@ -28,6 +28,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -39,6 +41,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/shifts")
 @RequiredArgsConstructor
+@Tag(name = "Employee Shift Management", description = "APIs for viewing and managing employee shifts")
 public class EmployeeShiftController {
 
         private final EmployeeShiftService employeeShiftService;
@@ -122,6 +125,10 @@ public class EmployeeShiftController {
          * @param endDate    end date
          * @return list of daily shift summaries
          */
+        @Operation(
+            summary = "Get shift summary",
+            description = "Retrieve daily shift summaries grouped by date for a specific employee or all employees within date range"
+        )
         @GetMapping("/summary")
         public ResponseEntity<List<ShiftSummaryResponseDto>> getShiftSummary(
                         @RequestParam(name = "employee_id", required = false) Integer employeeId,
@@ -143,6 +150,10 @@ public class EmployeeShiftController {
          * @param authentication  authenticated user
          * @return shift details
          */
+        @Operation(
+            summary = "Get shift detail",
+            description = "Retrieve detailed information about a specific employee shift by ID"
+        )
         @GetMapping("/{id}")
         public ResponseEntity<EmployeeShiftResponseDto> getShiftDetail(
                         @PathVariable("id") String employeeShiftId,
@@ -173,6 +184,10 @@ public class EmployeeShiftController {
          * @param authentication authenticated user
          * @return created shift details
          */
+        @Operation(
+            summary = "Create manual shift",
+            description = "Create a manual employee shift entry with specified date, time, and work shift details"
+        )
         @PostMapping
         public ResponseEntity<EmployeeShiftResponseDto> createManualShift(
                         @Valid @RequestBody CreateShiftRequestDto request,
@@ -201,6 +216,10 @@ public class EmployeeShiftController {
          * @param request         update request
          * @return updated shift details
          */
+        @Operation(
+            summary = "Update shift",
+            description = "Update an existing employee shift's details including date, time, or work shift assignment"
+        )
         @PatchMapping("/{id}")
         public ResponseEntity<EmployeeShiftResponseDto> updateShift(
                         @PathVariable("id") String employeeShiftId,
@@ -219,6 +238,10 @@ public class EmployeeShiftController {
          * @param employeeShiftId shift ID to cancel
          * @return no content
          */
+        @Operation(
+            summary = "Cancel shift",
+            description = "Cancel an employee shift by marking it as cancelled"
+        )
         @DeleteMapping("/{id}")
         public ResponseEntity<Void> cancelShift(@PathVariable("id") String employeeShiftId) {
 

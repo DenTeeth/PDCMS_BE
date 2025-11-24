@@ -5,8 +5,6 @@ import com.dental.clinic.management.working_schedule.dto.response.ShiftRenewalRe
 import com.dental.clinic.management.working_schedule.service.ShiftRenewalService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -64,14 +62,6 @@ public class AdminRenewalController {
         @Operation(summary = "Finalize shift renewal (Admin)", description = "Admin finalizes employee's confirmed renewal with custom effective_to date. "
                         +
                         "Creates new extended registration and deactivates old one.", security = @SecurityRequirement(name = "bearerAuth"))
-        @ApiResponses(value = {
-                        @ApiResponse(responseCode = "200", description = "Successfully finalized renewal"),
-                        @ApiResponse(responseCode = "400", description = "Invalid request - newEffectiveTo must be after old effective_to"),
-                        @ApiResponse(responseCode = "401", description = "Unauthorized - Authentication required"),
-                        @ApiResponse(responseCode = "403", description = "Forbidden - Missing MANAGE_FIXED_REGISTRATIONS permission"),
-                        @ApiResponse(responseCode = "404", description = "Renewal request not found"),
-                        @ApiResponse(responseCode = "409", description = "Conflict - Renewal not CONFIRMED by employee, or registration already inactive")
-        })
         @PreAuthorize("hasAuthority('MANAGE_FIXED_REGISTRATIONS')")
         @PostMapping("/finalize")
         public ResponseEntity<ShiftRenewalResponse> finalizeRenewal(

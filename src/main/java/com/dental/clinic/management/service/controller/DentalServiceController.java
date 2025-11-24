@@ -4,8 +4,6 @@ import com.dental.clinic.management.service.dto.*;
 import com.dental.clinic.management.service.service.DentalServiceService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,9 +36,6 @@ public class DentalServiceController {
     @GetMapping("/api/v1/public/services/grouped")
     @Operation(summary = "Get public grouped services (no auth)",
                description = "Returns services grouped by category with minimal fields (name, price only)")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successfully retrieved services")
-    })
     public ResponseEntity<List<GroupedServicesResponse.Public>> getPublicGroupedServices() {
         log.info("GET /api/v1/public/services/grouped - Public grouped services");
         List<GroupedServicesResponse.Public> response = dentalServiceService.getPublicGroupedServices();
@@ -55,10 +50,6 @@ public class DentalServiceController {
     @PreAuthorize("hasAuthority('VIEW_SERVICE')")
     @Operation(summary = "Get internal grouped services (auth required)",
                description = "Returns services grouped by category with technical fields (id, code, duration)")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successfully retrieved services"),
-            @ApiResponse(responseCode = "403", description = "Access denied")
-    })
     public ResponseEntity<List<GroupedServicesResponse.Internal>> getInternalGroupedServices() {
         log.info("GET /api/v1/services/grouped - Internal grouped services");
         List<GroupedServicesResponse.Internal> response = dentalServiceService.getInternalGroupedServices();
@@ -73,10 +64,6 @@ public class DentalServiceController {
     @PreAuthorize("hasAuthority('VIEW_SERVICE')")
     @Operation(summary = "Get all services (admin with filters)",
                description = "Returns flat list with pagination, search, and filters")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successfully retrieved services"),
-            @ApiResponse(responseCode = "403", description = "Access denied")
-    })
     public ResponseEntity<Page<DentalServiceDTO>> getAllServices(
             @Parameter(description = "Filter by category ID")
             @RequestParam(required = false) Long categoryId,

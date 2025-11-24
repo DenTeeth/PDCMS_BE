@@ -12,6 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 
 import java.time.Year;
 import java.util.Map;
@@ -24,6 +26,7 @@ import java.util.Map;
 @RequestMapping("/api/v1/admin")
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "Admin - Leave Balance Management", description = "APIs for admin to manage employee leave balances")
 public class AdminLeaveBalanceController {
 
     private final AdminLeaveBalanceService balanceService;
@@ -67,6 +70,10 @@ public class AdminLeaveBalanceController {
      * @param timeOffTypeId filter by specific time-off type (optional)
      * @return AllEmployeesLeaveBalanceResponse
      */
+    @Operation(
+        summary = "Get all employees leave balances",
+        description = "Retrieve leave balance information for all employees with optional filters for year and time-off type"
+    )
     @GetMapping("/leave-balances")
     @PreAuthorize("hasRole('" + AuthoritiesConstants.ADMIN + "') or " +
             "hasAuthority('" + AuthoritiesConstants.VIEW_LEAVE_BALANCE_ALL + "')")
@@ -122,6 +129,10 @@ public class AdminLeaveBalanceController {
      * @param cycleYear the year to query (optional, defaults to current year)
      * @return EmployeeLeaveBalanceResponse
      */
+    @Operation(
+        summary = "Get employee leave balances",
+        description = "Retrieve leave balance details for a specific employee with optional year filter"
+    )
     @GetMapping("/employees/{employee_id}/leave-balances")
     @PreAuthorize("hasRole('" + AuthoritiesConstants.ADMIN + "') or " +
             "hasAuthority('" + AuthoritiesConstants.VIEW_LEAVE_BALANCE_ALL + "')")
@@ -171,6 +182,10 @@ public class AdminLeaveBalanceController {
      * @param request the adjustment request
      * @return success message
      */
+    @Operation(
+        summary = "Adjust leave balance",
+        description = "Manually adjust an employee's leave balance by adding or subtracting days with audit trail"
+    )
     @PostMapping("/leave-balances/adjust")
     @PreAuthorize("hasRole('" + AuthoritiesConstants.ADMIN + "') or " +
             "hasAuthority('" + AuthoritiesConstants.ADJUST_LEAVE_BALANCE + "')")
@@ -220,6 +235,10 @@ public class AdminLeaveBalanceController {
      * @param request the annual reset request
      * @return success message with statistics
      */
+    @Operation(
+        summary = "Annual leave balance reset",
+        description = "CRON job to automatically reset annual leave balances for all active employees at year start"
+    )
     @PostMapping("/leave-balances/annual-reset")
     @PreAuthorize("hasRole('" + AuthoritiesConstants.ADMIN + "')")
     public ResponseEntity<Map<String, Object>> annualReset(@Valid @RequestBody AnnualResetRequest request) {

@@ -6,8 +6,6 @@ import com.dental.clinic.management.booking_appointment.dto.availability.TimeSlo
 import com.dental.clinic.management.booking_appointment.service.AvailabilityService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,11 +41,6 @@ public class AvailabilityController {
             summary = "Get available doctors",
             description = "Returns doctors who have required specializations AND working shifts on the selected date"
     )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successfully retrieved available doctors"),
-            @ApiResponse(responseCode = "400", description = "Invalid request parameters"),
-            @ApiResponse(responseCode = "403", description = "Access denied")
-    })
     public ResponseEntity<List<AvailableDoctorDTO>> getAvailableDoctors(
             @Parameter(description = "Selected date (YYYY-MM-DD)", required = true, example = "2025-11-10")
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
@@ -72,12 +65,6 @@ public class AvailabilityController {
             summary = "Get available time slots",
             description = "Returns time gaps when the selected doctor is free (considering existing appointments)"
     )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successfully retrieved time slots"),
-            @ApiResponse(responseCode = "400", description = "Invalid request parameters"),
-            @ApiResponse(responseCode = "404", description = "Doctor not found"),
-            @ApiResponse(responseCode = "403", description = "Access denied")
-    })
     public ResponseEntity<List<TimeSlotDTO>> getAvailableTimeSlots(
             @Parameter(description = "Selected date (YYYY-MM-DD)", required = true, example = "2025-11-10")
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
@@ -106,11 +93,6 @@ public class AvailabilityController {
             summary = "Get available resources",
             description = "Returns rooms (compatible with services) and assistants (free) during the selected time range"
     )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successfully retrieved resources"),
-            @ApiResponse(responseCode = "400", description = "Invalid request parameters"),
-            @ApiResponse(responseCode = "403", description = "Access denied")
-    })
     public ResponseEntity<AvailableResourcesDTO> getAvailableResources(
             @Parameter(description = "Appointment start time (ISO 8601)", required = true,
                        example = "2025-11-10T09:00:00")

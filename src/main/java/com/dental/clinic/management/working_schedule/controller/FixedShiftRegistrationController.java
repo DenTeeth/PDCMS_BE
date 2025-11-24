@@ -13,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 
 import java.util.List;
 
@@ -26,13 +28,14 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/fixed-registrations")
 @RequiredArgsConstructor
+@Tag(name = "Fixed Shift Registration Management", description = "APIs for managing fixed shift registrations")
 public class FixedShiftRegistrationController {
 
     private final FixedShiftRegistrationService fixedRegistrationService;
     private final EmployeeRepository employeeRepository;
 
     /**
-     * Create a fixed shift registration.
+     * Create a new fixed shift registration.
      *
      * POST /api/v1/fixed-registrations
      *
@@ -41,6 +44,10 @@ public class FixedShiftRegistrationController {
      * @param request creation request
      * @return created registration details
      */
+    @Operation(
+        summary = "Create fixed registration",
+        description = "Create a new fixed shift registration for an employee with specified work shifts and date range"
+    )
     @PostMapping
     public ResponseEntity<FixedRegistrationResponse> createFixedRegistration(
             @Valid @RequestBody CreateFixedRegistrationRequest request) {
@@ -63,6 +70,10 @@ public class FixedShiftRegistrationController {
      * @param authentication authenticated user
      * @return list of registrations
      */
+    @Operation(
+        summary = "Get fixed registrations",
+        description = "Retrieve list of fixed shift registrations with optional filters for employee and active status"
+    )
     @GetMapping
     public ResponseEntity<List<FixedRegistrationResponse>> getFixedRegistrations(
             @RequestParam(name = "employeeId", required = false) Integer employeeId,
@@ -96,6 +107,10 @@ public class FixedShiftRegistrationController {
      * @param request        update request (all fields optional)
      * @return updated registration details
      */
+    @Operation(
+        summary = "Update fixed registration",
+        description = "Partially update a fixed shift registration's configuration (all fields optional)"
+    )
     @PatchMapping("/{registrationId}")
     public ResponseEntity<FixedRegistrationResponse> updateFixedRegistration(
             @PathVariable("registrationId") Integer registrationId,
@@ -116,6 +131,10 @@ public class FixedShiftRegistrationController {
      * @param registrationId registration ID
      * @return no content
      */
+    @Operation(
+        summary = "Delete fixed registration",
+        description = "Soft delete a fixed shift registration by setting it inactive"
+    )
     @DeleteMapping("/{registrationId}")
     public ResponseEntity<Void> deleteFixedRegistration(
             @PathVariable("registrationId") Integer registrationId) {
@@ -135,6 +154,10 @@ public class FixedShiftRegistrationController {
      *
      * @return Summary of backfill operation
      */
+    @Operation(
+        summary = "Backfill shifts",
+        description = "Generate shifts for all fixed registrations created before auto-generation was implemented"
+    )
     @PostMapping("/backfill-shifts")
     public ResponseEntity<String> backfillShifts() {
         String summary = fixedRegistrationService.backfillShiftsForExistingRegistrations();
@@ -152,6 +175,10 @@ public class FixedShiftRegistrationController {
      * @param registrationId Registration ID
      * @return Number of shifts created
      */
+    @Operation(
+        summary = "Regenerate shifts",
+        description = "Delete and regenerate all shifts for a specific fixed registration to fix incorrect data"
+    )
     @PostMapping("/{registrationId}/regenerate-shifts")
     public ResponseEntity<String> regenerateShifts(
             @PathVariable("registrationId") Integer registrationId) {

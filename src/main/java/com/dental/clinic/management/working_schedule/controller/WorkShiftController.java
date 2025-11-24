@@ -13,6 +13,9 @@ import com.dental.clinic.management.working_schedule.dto.response.WorkShiftRespo
 import com.dental.clinic.management.working_schedule.enums.WorkShiftCategory;
 import com.dental.clinic.management.working_schedule.service.WorkShiftService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import java.util.List;
 
 /**
@@ -23,6 +26,7 @@ import java.util.List;
 @RequestMapping("/api/v1/work-shifts")
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "Work Shift Management", description = "APIs for managing work shifts (CRUD, filtering, reactivation)")
 public class WorkShiftController {
 
     private final WorkShiftService workShiftService;
@@ -34,7 +38,7 @@ public class WorkShiftController {
      * @return WorkShiftResponse with created shift information including auto-generated ID
      */
     @PostMapping
-
+    @Operation(summary = "Create a new work shift", description = "Create a new work shift with the provided details.")
     public ResponseEntity<WorkShiftResponse> createWorkShift(
             @Valid @RequestBody CreateWorkShiftRequest request) {
         log.info("Creating work shift with name: {}", request.getShiftName());
@@ -47,11 +51,10 @@ public class WorkShiftController {
      * Update an existing work shift.
      * 
      * @param workShiftId The ID of the work shift to update
-     * @param request UpdateWorkShiftRequest containing fields to update
      * @return WorkShiftResponse with updated shift information
      */
     @PatchMapping("/{workShiftId}")
-
+    @Operation(summary = "Update an existing work shift", description = "Update fields of an existing work shift by ID.")
     public ResponseEntity<WorkShiftResponse> updateWorkShift(
             @PathVariable String workShiftId,
             @Valid @RequestBody UpdateWorkShiftRequest request) {
@@ -68,7 +71,7 @@ public class WorkShiftController {
      * @return ResponseEntity with no content
      */
     @DeleteMapping("/{workShiftId}")
-
+    @Operation(summary = "Delete a work shift", description = "Soft delete a work shift by ID.")
     public ResponseEntity<Void> deleteWorkShift(@PathVariable String workShiftId) {
         log.info("Deleting work shift with ID: {}", workShiftId);
         workShiftService.deleteWorkShift(workShiftId);
@@ -83,7 +86,7 @@ public class WorkShiftController {
      * @return WorkShiftResponse with reactivated shift information
      */
     @PutMapping("/{workShiftId}/reactivate")
-
+    @Operation(summary = "Reactivate a work shift", description = "Reactivate a soft-deleted work shift by ID.")
     public ResponseEntity<WorkShiftResponse> reactivateWorkShift(@PathVariable String workShiftId) {
         log.info("Reactivating work shift with ID: {}", workShiftId);
         WorkShiftResponse response = workShiftService.reactivateWorkShift(workShiftId);
@@ -102,20 +105,17 @@ public class WorkShiftController {
      * @return List of WorkShiftResponse
      */
     @GetMapping
-
+    @Operation(summary = "Get all work shifts", description = "Retrieve all work shifts with optional filtering, searching, and sorting.")
     public ResponseEntity<List<WorkShiftResponse>> getAllWorkShifts(
             @RequestParam(required = false) Boolean isActive,
             @RequestParam(required = false) WorkShiftCategory category,
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String sortBy,
             @RequestParam(required = false) String sortDirection) {
-        
         log.info("Fetching work shifts - isActive: {}, category: {}, search: '{}', sortBy: {}, sortDirection: {}", 
                  isActive, category, search, sortBy, sortDirection);
-        
         List<WorkShiftResponse> responses = workShiftService.getAllWorkShifts(
                 isActive, category, search, sortBy, sortDirection);
-        
         log.info("Retrieved {} work shifts", responses.size());
         return ResponseEntity.ok(responses);
     }
@@ -127,7 +127,7 @@ public class WorkShiftController {
      * @return WorkShiftResponse with shift details
      */
     @GetMapping("/{workShiftId}")
-
+    @Operation(summary = "Get work shift by ID", description = "Retrieve a specific work shift by its ID.")
     public ResponseEntity<WorkShiftResponse> getWorkShiftById(@PathVariable String workShiftId) {
         log.info("Fetching work shift with ID: {}", workShiftId);
         WorkShiftResponse response = workShiftService.getWorkShiftById(workShiftId);

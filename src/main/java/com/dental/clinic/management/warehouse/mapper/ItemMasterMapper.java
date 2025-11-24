@@ -22,6 +22,7 @@ public class ItemMasterMapper {
 
     private final ItemBatchRepository itemBatchRepository;
 
+    @SuppressWarnings("deprecation")
     public ItemMaster toEntity(CreateItemMasterRequest request) {
         if (request == null) {
             return null;
@@ -39,6 +40,7 @@ public class ItemMasterMapper {
                 .build();
     }
 
+    @SuppressWarnings("deprecation")
     public ItemMasterSummaryResponse toSummaryResponse(ItemMaster item) {
         if (item == null) {
             return null;
@@ -75,6 +77,7 @@ public class ItemMasterMapper {
                 .build();
     }
 
+    @SuppressWarnings("deprecation")
     public void updateEntity(ItemMaster item, UpdateItemMasterRequest request) {
         if (item == null || request == null) {
             return;

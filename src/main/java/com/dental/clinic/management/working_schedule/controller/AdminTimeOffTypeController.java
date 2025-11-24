@@ -12,6 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 
 import java.util.List;
 
@@ -23,6 +25,7 @@ import java.util.List;
 @RequestMapping("/api/v1/admin/time-off-types")
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "Admin - Time-Off Type Management", description = "APIs for admin to manage time-off types")
 public class AdminTimeOffTypeController {
 
     private final TimeOffTypeService typeService;
@@ -44,6 +47,10 @@ public class AdminTimeOffTypeController {
      * @param isPaid filter by paid status (optional)
      * @return List of TimeOffTypeResponse
      */
+    @Operation(
+        summary = "Get all time-off types",
+        description = "Retrieve all time-off types including inactive ones with optional filters for active status and paid status"
+    )
     @GetMapping
     @PreAuthorize("hasRole('" + AuthoritiesConstants.ADMIN + "') or " +
             "hasAuthority('" + AuthoritiesConstants.VIEW_TIMEOFF_TYPE_ALL + "')")
@@ -68,6 +75,10 @@ public class AdminTimeOffTypeController {
      * @param typeId the time-off type ID
      * @return TimeOffTypeResponse
      */
+    @Operation(
+        summary = "Get time-off type by ID",
+        description = "Retrieve detailed information about a specific time-off type"
+    )
     @GetMapping("/{type_id}")
     @PreAuthorize("hasRole('" + AuthoritiesConstants.ADMIN + "') or " +
             "hasAuthority('" + AuthoritiesConstants.VIEW_TIMEOFF_TYPE_ALL + "')")
@@ -103,6 +114,10 @@ public class AdminTimeOffTypeController {
      * @param request the creation request
      * @return TimeOffTypeResponse
      */
+    @Operation(
+        summary = "Create time-off type",
+        description = "Create a new time-off type with unique type code, name, and paid status"
+    )
     @PostMapping
     @PreAuthorize("hasRole('" + AuthoritiesConstants.ADMIN + "') or " +
             "hasAuthority('" + AuthoritiesConstants.CREATE_TIMEOFF_TYPE + "')")
@@ -135,6 +150,10 @@ public class AdminTimeOffTypeController {
      * @param request the update request
      * @return TimeOffTypeResponse
      */
+    @Operation(
+        summary = "Update time-off type",
+        description = "Update an existing time-off type's properties (partial update supported)"
+    )
     @PatchMapping("/{type_id}")
     @PreAuthorize("hasRole('" + AuthoritiesConstants.ADMIN + "') or " +
             "hasAuthority('" + AuthoritiesConstants.UPDATE_TIMEOFF_TYPE + "')")
@@ -166,6 +185,10 @@ public class AdminTimeOffTypeController {
      * @param typeId the time-off type ID
      * @return TimeOffTypeResponse with updated is_active status
      */
+    @Operation(
+        summary = "Toggle time-off type active status",
+        description = "Soft delete or reactivate a time-off type by toggling its is_active status. Prevents deactivation if type is in use."
+    )
     @DeleteMapping("/{type_id}")
     @PreAuthorize("hasRole('" + AuthoritiesConstants.ADMIN + "') or " +
             "hasAuthority('" + AuthoritiesConstants.DELETE_TIMEOFF_TYPE + "')")

@@ -8,7 +8,7 @@ import com.dental.clinic.management.warehouse.dto.request.ImportRequest;
 import com.dental.clinic.management.warehouse.dto.response.StorageStatsResponse;
 import com.dental.clinic.management.warehouse.dto.response.TransactionResponse;
 import com.dental.clinic.management.warehouse.enums.TransactionType;
-import com.dental.clinic.management.warehouse.enums.WarehouseType;
+// import com.dental.clinic.management.warehouse.enums.WarehouseType;
 import com.dental.clinic.management.warehouse.exception.*;
 import com.dental.clinic.management.warehouse.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -374,7 +374,7 @@ public class StorageInOutService {
     }
 
     /**
-     * Generate transaction code: PN-YYYYMMDD-XXX
+     * Generate transaction code: PN-YYYYMMDD-SEQ
      */
     private String generateTransactionCode(String prefix) {
         String dateStr = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));

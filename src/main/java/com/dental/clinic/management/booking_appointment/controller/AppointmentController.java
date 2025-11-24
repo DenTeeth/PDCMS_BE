@@ -28,6 +28,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -41,6 +43,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/appointments")
 @RequiredArgsConstructor
+@Tag(name = "Appointment Management", description = "APIs for managing dental appointments")
 public class AppointmentController {
 
         private final AppointmentAvailabilityService availabilityService;
@@ -69,6 +72,10 @@ public class AppointmentController {
          *                participantCodes
          * @return Available time slots with compatible room codes
          */
+        @Operation(
+            summary = "Find available time slots",
+            description = "Find available appointment time slots based on date, doctor, services, and assistants considering shifts and conflicts"
+        )
         @GetMapping("/available-times")
         @PreAuthorize("hasAuthority('CREATE_APPOINTMENT')")
         public ResponseEntity<AvailableTimesResponse> findAvailableTimes(
@@ -101,6 +108,10 @@ public class AppointmentController {
          * @param request Create appointment request body
          * @return 201 Created with appointment details
          */
+        @Operation(
+            summary = "Create appointment",
+            description = "Create a new dental appointment with full validation of resources, conflicts, and room compatibility"
+        )
         @PostMapping
         @PreAuthorize("hasAuthority('CREATE_APPOINTMENT')")
         public ResponseEntity<CreateAppointmentResponse> createAppointment(
@@ -152,6 +163,10 @@ public class AppointmentController {
          * @return Paginated list of appointments with nested
          *         patient/doctor/room/services/participants
          */
+        @Operation(
+            summary = "Get appointment list",
+            description = "Retrieve paginated list of appointments with comprehensive filters and RBAC-based visibility control"
+        )
         @SuppressWarnings("deprecation")
         @GetMapping
         @PreAuthorize("hasAnyAuthority('VIEW_APPOINTMENT_ALL', 'VIEW_APPOINTMENT_OWN')")
@@ -235,6 +250,10 @@ public class AppointmentController {
          *                                                                          no
          *                                                                          permission
          */
+        @Operation(
+            summary = "Get appointment detail",
+            description = "Retrieve complete details of a specific appointment including patient, doctor, services, and participants"
+        )
         @GetMapping("/{appointmentCode}")
         @PreAuthorize("hasAnyAuthority('VIEW_APPOINTMENT_ALL', 'VIEW_APPOINTMENT_OWN')")
         public ResponseEntity<AppointmentDetailDTO> getAppointmentDetail(
@@ -298,6 +317,10 @@ public class AppointmentController {
          *                                                                          for
          *                                                                          CANCELLED
          */
+        @Operation(
+            summary = "Update appointment status",
+            description = "Update appointment status with state machine validation (e.g., SCHEDULED to CHECKED_IN, COMPLETED, CANCELLED)"
+        )
         @PatchMapping("/{appointmentCode}/status")
         @PreAuthorize("hasAuthority('UPDATE_APPOINTMENT_STATUS')")
         public ResponseEntity<AppointmentDetailDTO> updateAppointmentStatus(
@@ -340,6 +363,10 @@ public class AppointmentController {
          * @param request         newStartTime, reasonCode, notes
          * @return Updated appointment detail
          */
+        @Operation(
+            summary = "Delay appointment",
+            description = "Delay appointment start time within same day with conflict validation and audit logging"
+        )
         @PatchMapping("/{appointmentCode}/delay")
         @PreAuthorize("hasAuthority('DELAY_APPOINTMENT')")
         public ResponseEntity<AppointmentDetailDTO> delayAppointment(
@@ -371,6 +398,10 @@ public class AppointmentController {
          * @param request         New appointment details + cancellation reason
          * @return Both old (cancelled) and new (scheduled) appointments
          */
+        @Operation(
+            summary = "Reschedule appointment",
+            description = "Reschedule appointment to new date/time/doctor/room by cancelling old and creating new appointment with linking"
+        )
         @PostMapping("/{appointmentCode}/reschedule")
         @PreAuthorize("hasAuthority('CREATE_APPOINTMENT')")
         public ResponseEntity<RescheduleAppointmentResponse> rescheduleAppointment(

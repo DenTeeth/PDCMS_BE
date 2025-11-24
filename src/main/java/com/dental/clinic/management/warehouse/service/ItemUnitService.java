@@ -34,6 +34,7 @@ public class ItemUnitService {
      */
     public List<ItemUnitResponse> getUnitsByItemId(Long itemMasterId) {
         // Verify item exists
+        @SuppressWarnings("unused")
         ItemMaster itemMaster = itemMasterRepository.findById(itemMasterId)
                 .orElseThrow(() -> new ItemMasterNotFoundException(itemMasterId));
 

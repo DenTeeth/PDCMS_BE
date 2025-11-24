@@ -1,7 +1,7 @@
 package com.dental.clinic.management.warehouse.repository;
 
 import com.dental.clinic.management.warehouse.domain.StorageTransaction;
-import com.dental.clinic.management.warehouse.dto.response.SuppliedItemResponse;
+// import com.dental.clinic.management.warehouse.dto.response.SuppliedItemResponse;
 import com.dental.clinic.management.warehouse.enums.TransactionType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -50,7 +50,7 @@ public interface StorageTransactionRepository extends JpaRepository<StorageTrans
             @Param("year") Integer year);
 
     /**
-     * Generate mã phiếu tự động: PN-YYYYMMDD-XXX
+     * Generate mã phiếu tự động: PN-YYYYMMDD-SEQ
      */
     @Query(value = "SELECT COALESCE(MAX(CAST(SUBSTRING(transaction_code FROM 13) AS INTEGER)), 0) + 1 " +
             "FROM storage_transactions " +

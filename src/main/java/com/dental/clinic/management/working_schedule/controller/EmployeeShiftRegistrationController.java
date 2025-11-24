@@ -12,39 +12,43 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 
 import java.util.List;
 
 /**
- * REST controller for Part-Time Registration (PART_TIME_FLEX employees).
+ * REST controller for Part-Time Flex Registration.
+ * Specifically designed for PART_TIME_FLEX employees who work on flexible schedules.
  * 
  * NEW SPECIFICATION (Approval Workflow):
- * - Employees submit registration requests with flexible dates
- * - Requests go to PENDING status
- * - Manager must approve before employee can work
- * - Only APPROVED registrations count toward quota
+ * - Part-time flex employees submit registration requests with flexible date ranges
+ * - Requests go to PENDING status awaiting manager approval
+ * - Manager must approve before part-time flex employee can work the shift
+ * - Only APPROVED registrations count toward slot quota
  */
 @RestController
 @RequestMapping("/api/v1/registrations/part-time-flex")
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "Part-Time Flex Registration", description = "APIs for part-time flex employees to register for available slots with flexible schedules")
 public class EmployeeShiftRegistrationController {
 
     private final EmployeeShiftRegistrationService registrationService;
 
     /**
      * GET /api/v1/registrations/part-time-flex/available-slots
-     * Get available slots for employee to register (NEW: dynamic quota).
+     * Get available slots for part-time flex employees to register (NEW: dynamic quota).
      *
-     * Permission: VIEW_AVAILABLE_SLOTS
+     * Permission: VIEW_AVAILABLE_SLOTS (for part-time flex employees)
      * 
      * NEW SPECIFICATION:
-     * - Only count APPROVED registrations
+     * - Only count APPROVED registrations from part-time flex employees
      * - Show slots with any day having availability
      * - Optional month filter (YYYY-MM) to show only slots with availability in that month
      *
      * @param month Optional month filter in YYYY-MM format (e.g., "2025-12")
-     * @return List of available slots with quota info
+     * @return List of available slots with quota info for part-time flex employees
      */
     @GetMapping("/available-slots")
     public ResponseEntity<List<AvailableSlotResponse>> getAvailableSlots(
@@ -64,6 +68,10 @@ public class EmployeeShiftRegistrationController {
      * @param slotId The slot ID to get details for
      * @return Detailed slot information with monthly availability breakdown
      */
+    @Operation(
+        summary = "Get slot details for part-time flex employees",
+        description = "Retrieve detailed availability information for a specific part-time flex slot with monthly breakdown to help part-time flex employees make informed registration decisions"
+    )
     @GetMapping("/slots/{slotId}/details")
     public ResponseEntity<SlotDetailResponse> getSlotDetail(@PathVariable Long slotId) {
         log.info("REST request to get slot detail for slot {}", slotId);
@@ -73,15 +81,15 @@ public class EmployeeShiftRegistrationController {
 
     /**
      * GET /api/v1/registrations/part-time-flex/slots/{slotId}/daily-availability
-     * Get daily availability breakdown for a specific slot in a given month.
-     * Shows quota, registered count, and remaining slots for each working day.
+     * Get daily availability breakdown for a specific part-time flex slot in a given month.
+     * Shows quota, registered count from part-time flex employees, and remaining slots for each working day.
      *
-     * Permission: VIEW_AVAILABLE_SLOTS (employees), MANAGE_PART_TIME_REGISTRATIONS (managers), MANAGE_WORK_SLOTS (admins)
+     * Permission: VIEW_AVAILABLE_SLOTS (part-time flex employees), MANAGE_PART_TIME_REGISTRATIONS (managers), MANAGE_WORK_SLOTS (admins)
      * 
      * Business Logic:
      * - Only includes days matching slot's dayOfWeek
-     * - Counts APPROVED registrations covering each date
-     * - Status: AVAILABLE (100% free), PARTIAL (some taken), FULL (no slots available)
+     * - Counts APPROVED registrations from part-time flex employees covering each date
+     * - Status: AVAILABLE (100% free), PARTIAL (some taken by part-time flex employees), FULL (no slots available)
      * 
      * Query Parameters:
      * - month (required): Month in YYYY-MM format (e.g., "2025-11", "2025-12")
@@ -126,6 +134,10 @@ public class EmployeeShiftRegistrationController {
      * @param month Month in YYYY-MM format (required)
      * @return Daily availability response with per-day breakdown
      */
+    @Operation(
+        summary = "Get daily availability for part-time flex slots",
+        description = "Retrieve day-by-day availability breakdown for a specific part-time flex slot in a given month showing quota and registered counts from part-time flex employees"
+    )
     @GetMapping("/slots/{slotId}/daily-availability")
     public ResponseEntity<com.dental.clinic.management.working_schedule.dto.response.DailyAvailabilityResponse> getDailyAvailability(
             @PathVariable Long slotId,
@@ -138,14 +150,14 @@ public class EmployeeShiftRegistrationController {
 
     /**
      * POST /api/v1/registrations/part-time
-     * Submit registration request (NEW: goes to PENDING status).
+     * Submit registration request for part-time flex employees (NEW: goes to PENDING status).
      *
-     * Permission: CREATE_REGISTRATION
+     * Permission: CREATE_REGISTRATION (for part-time flex employees)
      * 
      * NEW SPECIFICATION:
-     * - Employee provides flexible effectiveFrom and effectiveTo
+     * - Part-time flex employee provides flexible effectiveFrom and effectiveTo dates
      * - Request goes to PENDING status (not immediately active)
-     * - Manager must approve before employee can work
+     * - Manager must approve before part-time flex employee can work
      * - Dates must be within slot's effective range
      *
      * Request Body:
@@ -158,6 +170,10 @@ public class EmployeeShiftRegistrationController {
      * @param request Registration details with flexible dates
      * @return Created registration (status: PENDING)
      */
+    @Operation(
+        summary = "Submit registration request for part-time flex employee",
+        description = "Create a new part-time flex slot registration with flexible date range (status: PENDING awaiting manager approval). Allows part-time flex employees to request shifts."
+    )
     @PostMapping
     public ResponseEntity<RegistrationResponse> claimSlot(
             @Valid @RequestBody CreateRegistrationRequest request) {
@@ -168,19 +184,23 @@ public class EmployeeShiftRegistrationController {
 
     /**
      * GET /api/v1/registrations/part-time-flex
-     * Get registrations (employee sees own, admin sees all or filtered).
+     * Get registrations for part-time flex employees (employee sees own, admin sees all or filtered).
      *
      * Permission:
-     * - MANAGE_REGISTRATIONS_ALL: View all or filter by employeeId
-     * - VIEW_REGISTRATIONS_OWN: View only own registrations
+     * - MANAGE_REGISTRATIONS_ALL: View all part-time flex registrations or filter by employeeId
+     * - VIEW_REGISTRATIONS_OWN: Part-time flex employees view only their own registrations
      * 
      * NEW: Shows status (PENDING, APPROVED, REJECTED)
      * NEW: Supports pagination and sorting
      *
-     * @param employeeId Optional filter (admin only)
+     * @param employeeId Optional filter (admin only) to view specific part-time flex employee's registrations
      * @param pageable Pagination and sorting parameters
-     * @return Page of registrations
+     * @return Page of part-time flex registrations
      */
+    @Operation(
+        summary = "Get part-time flex registrations",
+        description = "Retrieve paginated list of part-time flex registrations. Part-time flex employees see only their own registrations, admins can view all or filter by specific part-time flex employee"
+    )
     @GetMapping
     public ResponseEntity<org.springframework.data.domain.Page<RegistrationResponse>> getRegistrations(
             @RequestParam(required = false) Integer employeeId,
@@ -194,15 +214,19 @@ public class EmployeeShiftRegistrationController {
 
     /**
      * GET /api/v1/registrations/part-time/{registrationId}
-     * Get registration details by ID.
+     * Get part-time flex registration details by ID.
      * 
      * Permissions:
-     * - Employee can only view own registrations
-     * - Admin can view any registration
+     * - Part-time flex employee can only view their own registrations
+     * - Admin can view any part-time flex registration
      *
-     * @param registrationId Registration ID
-     * @return Registration details
+     * @param registrationId Part-time flex registration ID
+     * @return Part-time flex registration details
      */
+    @Operation(
+        summary = "Get part-time flex registration by ID",
+        description = "Retrieve detailed information about a specific part-time flex registration for a part-time flex employee"
+    )
     @GetMapping("/{registrationId}")
     public ResponseEntity<RegistrationResponse> getRegistrationById(@PathVariable Integer registrationId) {
         log.info("REST request to get registration details: {}", registrationId);
@@ -212,17 +236,21 @@ public class EmployeeShiftRegistrationController {
 
     /**
      * DELETE /api/v1/registrations/part-time/{registrationId}
-     * Cancel registration (soft delete - set isActive = false).
+     * Cancel part-time flex registration (soft delete - set isActive = false).
      *
      * Permission:
-     * - MANAGE_REGISTRATIONS_ALL: Can cancel any registration
-     * - CANCEL_REGISTRATION_OWN: Can cancel only own registrations
+     * - MANAGE_REGISTRATIONS_ALL: Can cancel any part-time flex registration
+     * - CANCEL_REGISTRATION_OWN: Part-time flex employees can cancel only their own registrations
      * 
-     * NEW: Employees can only cancel PENDING registrations
+     * NEW: Part-time flex employees can only cancel PENDING registrations
      *
-     * @param registrationId Registration ID to cancel
+     * @param registrationId Part-time flex registration ID to cancel
      * @return 204 No Content
      */
+    @Operation(
+        summary = "Cancel part-time flex registration",
+        description = "Cancel a part-time flex registration by soft deletion. Part-time flex employees can only cancel their own PENDING registrations."
+    )
     @DeleteMapping("/{registrationId}")
     public ResponseEntity<Void> cancelRegistration(@PathVariable Integer registrationId) {
         log.info("REST request to cancel registration {}", registrationId);
@@ -232,14 +260,18 @@ public class EmployeeShiftRegistrationController {
 
     /**
      * PATCH /api/v1/registrations/part-time/{registrationId}/effective-to
-     * Update effectiveTo date (admin extends deadline).
+     * Update effectiveTo date for part-time flex registration (admin extends deadline).
      *
      * Permission: MANAGE_REGISTRATIONS_ALL
      *
-     * @param registrationId Registration ID
+     * @param registrationId Part-time flex registration ID
      * @param request        New effectiveTo date
-     * @return Updated registration
+     * @return Updated part-time flex registration
      */
+    @Operation(
+        summary = "Update effective-to date for part-time flex registration",
+        description = "Update the effectiveTo date of a part-time flex registration (admin function to extend deadline for part-time flex employees)"
+    )
     @PatchMapping("/{registrationId}/effective-to")
     public ResponseEntity<RegistrationResponse> updateEffectiveTo(
             @PathVariable Integer registrationId,

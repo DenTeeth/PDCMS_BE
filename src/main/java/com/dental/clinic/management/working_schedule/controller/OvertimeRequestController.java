@@ -16,6 +16,8 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 
 /**
  * REST controller for Overtime Request Management.
@@ -33,6 +35,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/overtime-requests")
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "Overtime Request Management", description = "APIs for managing employee overtime requests")
 public class OvertimeRequestController {
 
     private final OvertimeRequestService overtimeRequestService;
@@ -51,6 +54,10 @@ public class OvertimeRequestController {
      * 
      * Example: GET /api/v1/overtime-requests?status=PENDING&page=0&size=10&sort=workDate,desc
      */
+    @Operation(
+        summary = "Get all overtime requests",
+        description = "Retrieve paginated list of overtime requests with optional status filtering. Access control based on user permissions."
+    )
     @GetMapping
     public ResponseEntity<Page<OvertimeRequestListResponse>> getAllOvertimeRequests(
             @RequestParam(required = false) RequestStatus status,
@@ -81,6 +88,10 @@ public class OvertimeRequestController {
      * Error Responses:
      * - 404 NOT_FOUND: Request not found or user doesn't have permission
      */
+    @Operation(
+        summary = "Get overtime request by ID",
+        description = "Retrieve detailed information about a specific overtime request. Access control based on user permissions."
+    )
     @GetMapping("/{requestId}")
     public ResponseEntity<OvertimeRequestDetailResponse> getOvertimeRequestById(
             @PathVariable String requestId) {
@@ -131,6 +142,10 @@ public class OvertimeRequestController {
      * - 404 NOT_FOUND: Employee or WorkShift not found
      * - 409 CONFLICT: Duplicate request exists
      */
+    @Operation(
+        summary = "Create overtime request",
+        description = "Create a new overtime request with PENDING status. Employees can create for themselves or admins can create for any employee."
+    )
     @PostMapping
     public ResponseEntity<OvertimeRequestDetailResponse> createOvertimeRequest(
             @Valid @RequestBody CreateOvertimeRequestDTO dto) {
@@ -189,6 +204,10 @@ public class OvertimeRequestController {
      * - 404 NOT_FOUND: Request not found
      * - 409 CONFLICT: Request is not in PENDING status
      */
+    @Operation(
+        summary = "Update overtime request status",
+        description = "Approve, reject, or cancel an overtime request. Only PENDING requests can be updated. Requires appropriate permissions."
+    )
     @PatchMapping("/{requestId}")
     public ResponseEntity<OvertimeRequestDetailResponse> updateOvertimeStatus(
             @PathVariable String requestId,

@@ -5,8 +5,6 @@ import com.dental.clinic.management.working_schedule.dto.response.ShiftRenewalRe
 import com.dental.clinic.management.working_schedule.service.ShiftRenewalService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -52,11 +50,6 @@ public class ShiftRenewalController {
      * @return list of pending renewal requests
      */
     @Operation(summary = "Get pending renewal requests", description = "Retrieve all pending shift renewal invitations for the current employee", security = @SecurityRequirement(name = "bearerAuth"))
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successfully retrieved pending renewals"),
-            @ApiResponse(responseCode = "401", description = "Unauthorized - Authentication required"),
-            @ApiResponse(responseCode = "403", description = "Forbidden - Insufficient permissions")
-    })
     @GetMapping("/pending")
     public ResponseEntity<List<ShiftRenewalResponse>> getPendingRenewals() {
         String username = getAuthenticatedUsername();
@@ -86,14 +79,6 @@ public class ShiftRenewalController {
     @Operation(summary = "Respond to renewal request", description = "Confirm or decline a shift renewal invitation. " +
             "CONFIRMED: Update status, await Admin finalization. " +
             "DECLINED: Requires decline_reason.", security = @SecurityRequirement(name = "bearerAuth"))
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successfully responded to renewal"),
-            @ApiResponse(responseCode = "400", description = "Invalid request - Invalid action or request body"),
-            @ApiResponse(responseCode = "401", description = "Unauthorized - Authentication required"),
-            @ApiResponse(responseCode = "403", description = "Forbidden - Not the owner of this renewal"),
-            @ApiResponse(responseCode = "404", description = "Renewal request not found"),
-            @ApiResponse(responseCode = "409", description = "Conflict - Renewal already responded or expired")
-    })
     @PatchMapping("/{renewal_id}/respond")
     public ResponseEntity<ShiftRenewalResponse> respondToRenewal(
             @Parameter(description = "Renewal request ID", required = true) @PathVariable("renewal_id") String renewalId,

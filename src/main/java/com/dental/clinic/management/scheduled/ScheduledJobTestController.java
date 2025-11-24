@@ -9,6 +9,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.Map;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+
 import static com.dental.clinic.management.utils.security.AuthoritiesConstants.ADMIN;
 
 /**
@@ -30,6 +33,7 @@ import static com.dental.clinic.management.utils.security.AuthoritiesConstants.A
 @RequestMapping("/api/v1/admin/test/scheduled-jobs")
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "Admin - Scheduled Job Testing", description = "APIs for manually triggering scheduled jobs (testing only)")
 public class ScheduledJobTestController {
 
     private final UnifiedScheduleSyncJob unifiedScheduleSyncJob;
@@ -46,6 +50,10 @@ public class ScheduledJobTestController {
      * 
      * GET /api/v1/admin/test/scheduled-jobs/trigger-sync
      */
+    @Operation(
+        summary = "Trigger Job P8: Unified Schedule Sync",
+        description = "Manually execute the UnifiedScheduleSyncJob that syncs Fixed & Flex registrations to employee_shifts for the next 14 days. Normally runs daily at 00:01 AM."
+    )
     @GetMapping("/trigger-sync")
     @PreAuthorize("hasRole('" + ADMIN + "')")
     public ResponseEntity<Map<String, Object>> triggerUnifiedScheduleSync() {
@@ -89,6 +97,10 @@ public class ScheduledJobTestController {
      * 
      * GET /api/v1/admin/test/scheduled-jobs/trigger-cleanup-flex
      */
+    @Operation(
+        summary = "Trigger Job P11: Cleanup Expired Flex Registrations",
+        description = "Manually execute the CleanupExpiredFlexRegistrationsJob that deactivates expired part-time flex registrations. Normally runs daily at 00:15 AM."
+    )
     @GetMapping("/trigger-cleanup-flex")
     @PreAuthorize("hasRole('" + ADMIN + "')")
     public ResponseEntity<Map<String, Object>> triggerCleanupExpiredFlex() {
@@ -131,6 +143,10 @@ public class ScheduledJobTestController {
      * 
      * GET /api/v1/admin/test/scheduled-jobs/trigger-cleanup-inactive
      */
+    @Operation(
+        summary = "Trigger Job P3: Cleanup Inactive Employee Registrations",
+        description = "Manually execute the CleanupInactiveEmployeeRegistrationsJob that deactivates all registrations for inactive employees. Normally runs daily at 00:20 AM."
+    )
     @GetMapping("/trigger-cleanup-inactive")
     @PreAuthorize("hasRole('" + ADMIN + "')")
     public ResponseEntity<Map<String, Object>> triggerCleanupInactiveEmployees() {
@@ -171,6 +187,10 @@ public class ScheduledJobTestController {
      * 
      * GET /api/v1/admin/test/scheduled-jobs/trigger-all
      */
+    @Operation(
+        summary = "Trigger ALL Main Jobs in Sequence",
+        description = "Manually execute all main scheduled jobs in the correct order: P8 (Unified Schedule Sync) → P11 (Cleanup Expired Flex) → P3 (Cleanup Inactive Employees)."
+    )
     @GetMapping("/trigger-all")
     @PreAuthorize("hasRole('" + ADMIN + "')")
     public ResponseEntity<Map<String, Object>> triggerAllMainJobs() {
@@ -236,6 +256,10 @@ public class ScheduledJobTestController {
      * 
      * GET /api/v1/admin/test/scheduled-jobs/list
      */
+    @Operation(
+        summary = "List Available Scheduled Job Test Endpoints",
+        description = "Get information about all available test endpoints for manually triggering scheduled jobs."
+    )
     @GetMapping("/list")
     @PreAuthorize("hasRole('" + ADMIN + "')")
     public ResponseEntity<Map<String, Object>> listAvailableJobs() {

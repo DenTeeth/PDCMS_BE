@@ -16,6 +16,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -32,6 +34,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/v1/admin/registrations/part-time-flex")
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "Admin - Part-Time-Flex Registration Management", description = "APIs for admin to approve/reject part-time-flex registrations")
 public class PartTimeRegistrationAdminController {
 
     private final PartTimeRegistrationApprovalService approvalService;
@@ -56,6 +59,10 @@ public class PartTimeRegistrationAdminController {
      * @param employeeId Employee filter (optional)
      * @return List of registrations
      */
+    @Operation(
+        summary = "Get all registrations",
+        description = "Retrieve all part-time registration requests with optional status and employee filters"
+    )
     @GetMapping
     @PreAuthorize("hasAuthority('MANAGE_PART_TIME_REGISTRATIONS')")
     public ResponseEntity<List<RegistrationResponse>> getRegistrations(
@@ -109,6 +116,10 @@ public class PartTimeRegistrationAdminController {
      * @param request The approval/rejection details
      * @return Success response
      */
+    @Operation(
+        summary = "Update registration status",
+        description = "Approve or reject a pending part-time registration request. Validates quota for approvals."
+    )
     @PatchMapping("/{registrationId}/status")
     @PreAuthorize("hasAuthority('MANAGE_PART_TIME_REGISTRATIONS')")
     public ResponseEntity<RegistrationResponse> updateStatus(
@@ -174,6 +185,10 @@ public class PartTimeRegistrationAdminController {
      * GET /api/v1/admin/registrations/part-time-flex/{registrationId}
      * Return a single registration. Visible to admins or the owning employee.
      */
+    @Operation(
+        summary = "Get registration by ID",
+        description = "Retrieve details of a specific part-time registration request"
+    )
     @GetMapping("/{registrationId}")
     @PreAuthorize("hasAuthority('MANAGE_PART_TIME_REGISTRATIONS')")
     public ResponseEntity<RegistrationResponse> getRegistration(@PathVariable Integer registrationId) {
@@ -196,6 +211,10 @@ public class PartTimeRegistrationAdminController {
      * @param registrationId The registration ID to check
      * @return Approval eligibility
      */
+    @Operation(
+        summary = "Check if can approve",
+        description = "Validate if a registration can be approved without exceeding quota limits"
+    )
     @GetMapping("/{registrationId}/can-approve")
     @PreAuthorize("hasAuthority('MANAGE_PART_TIME_REGISTRATIONS')")
     public ResponseEntity<CanApproveResponse> canApprove(@PathVariable Integer registrationId) {
@@ -217,6 +236,10 @@ public class PartTimeRegistrationAdminController {
      * @param registrationId Registration ID
      * @return Registration history with timeline and processor info
      */
+    @Operation(
+        summary = "Get registration history",
+        description = "Retrieve detailed audit log showing registration lifecycle with timeline and processor information"
+    )
     @GetMapping("/{registrationId}/history")
     @PreAuthorize("hasAuthority('MANAGE_PART_TIME_REGISTRATIONS')")
     public ResponseEntity<com.dental.clinic.management.working_schedule.dto.response.RegistrationHistoryResponse> getRegistrationHistory(
@@ -255,6 +278,10 @@ public class PartTimeRegistrationAdminController {
      * @param request Bulk approve request with registration IDs
      * @return Bulk approval result with success/failure details
      */
+    @Operation(
+        summary = "Bulk approve registrations",
+        description = "Approve multiple registration requests at once with individual validation and detailed success/failure reporting"
+    )
     @PostMapping("/bulk-approve")
     @PreAuthorize("hasAuthority('MANAGE_PART_TIME_REGISTRATIONS')")
     public ResponseEntity<com.dental.clinic.management.working_schedule.dto.response.BulkApproveResponse> bulkApprove(
@@ -285,6 +312,10 @@ public class PartTimeRegistrationAdminController {
      * 
      * @return Summary string with success/skip/error counts
      */
+    @Operation(
+        summary = "Backfill shifts",
+        description = "Generate shifts for all existing approved registrations that were created before auto-generation was implemented"
+    )
     @PostMapping("/backfill-shifts")
     @PreAuthorize("hasAuthority('MANAGE_PART_TIME_REGISTRATIONS')")
     public ResponseEntity<String> backfillShifts() {
@@ -312,6 +343,10 @@ public class PartTimeRegistrationAdminController {
      * @param registrationId The registration ID
      * @return Message with number of shifts created
      */
+    @Operation(
+        summary = "Regenerate shifts",
+        description = "Delete and recreate all shifts for a specific registration to fix incorrect data or recover from failed generation"
+    )
     @PostMapping("/{registrationId}/regenerate-shifts")
     @PreAuthorize("hasAuthority('MANAGE_PART_TIME_REGISTRATIONS')")
     public ResponseEntity<String> regenerateShifts(@PathVariable Integer registrationId) {
