@@ -1,11 +1,11 @@
 # Employee Shift Management API - Test Guide (BE-307)
 
-## 📋 Overview
+##  Overview
 This guide provides comprehensive test cases for all 6 Employee Shift Management API endpoints, covering happy paths, error scenarios, and edge cases.
 
 ---
 
-## 🔑 Test Users & Permissions
+##  Test Users & Permissions
 
 ### Users (Password: `123456`)
 | Username | Role | Employee ID | Permissions |
@@ -20,16 +20,16 @@ This guide provides comprehensive test cases for all 6 Employee Shift Management
 ### Permission Matrix
 | Permission | Manager | Ketoan | Others |
 |------------|---------|--------|--------|
-| VIEW_SHIFTS_ALL | ✅ | ❌ | ❌ |
-| VIEW_SHIFTS_OWN | ✅ | ✅ | ✅ |
-| VIEW_SHIFTS_SUMMARY | ✅ | ❌ | ❌ |
-| CREATE_SHIFTS | ✅ | ❌ | ❌ |
-| UPDATE_SHIFTS | ✅ | ❌ | ❌ |
-| DELETE_SHIFTS | ✅ | ❌ | ❌ |
+| VIEW_SHIFTS_ALL |  |  |  |
+| VIEW_SHIFTS_OWN |  |  |  |
+| VIEW_SHIFTS_SUMMARY |  |  |  |
+| CREATE_SHIFTS |  |  |  |
+| UPDATE_SHIFTS |  |  |  |
+| DELETE_SHIFTS |  |  |  |
 
 ---
 
-## 📊 Sample Data Overview
+##  Sample Data Overview
 
 ### Employee Shifts in Database
 ```
@@ -60,19 +60,19 @@ October 2025 (Past Month):
 
 ---
 
-## 🧪 Test Cases
+##  Test Cases
 
 ### 1️⃣ GET /api/v1/shifts - Get Shift Calendar
 
-#### ✅ Happy Path Tests
+####  Happy Path Tests
 
 **Test 1.1: Manager views all shifts in November**
 ```bash
 GET /api/v1/shifts?start_date=2025-11-01&end_date=2025-11-30
 Authorization: Bearer {manager_token}
 ```
-✅ Expected: `200 OK` with 14 shifts (all employees)
-✅ Contains: employee_id 2,3,4,5,6,7
+ Expected: `200 OK` with 14 shifts (all employees)
+ Contains: employee_id 2,3,4,5,6,7
 
 ---
 
@@ -81,8 +81,8 @@ Authorization: Bearer {manager_token}
 GET /api/v1/shifts?start_date=2025-11-01&end_date=2025-11-30&employee_id=5
 Authorization: Bearer {manager_token}
 ```
-✅ Expected: `200 OK` with 3 shifts (ketoan only)
-✅ All shifts have employee_id=5
+ Expected: `200 OK` with 3 shifts (ketoan only)
+ All shifts have employee_id=5
 
 ---
 
@@ -91,8 +91,8 @@ Authorization: Bearer {manager_token}
 GET /api/v1/shifts?start_date=2025-11-01&end_date=2025-11-30&status=SCHEDULED
 Authorization: Bearer {manager_token}
 ```
-✅ Expected: `200 OK` with SCHEDULED shifts only
-✅ No COMPLETED/CANCELLED/ON_LEAVE shifts
+ Expected: `200 OK` with SCHEDULED shifts only
+ No COMPLETED/CANCELLED/ON_LEAVE shifts
 
 ---
 
@@ -101,19 +101,19 @@ Authorization: Bearer {manager_token}
 GET /api/v1/shifts?start_date=2025-11-01&end_date=2025-11-30
 Authorization: Bearer {ketoan_token}
 ```
-✅ Expected: `200 OK` with 3 shifts
-✅ All shifts have employee_id=5 (auto-filtered)
+ Expected: `200 OK` with 3 shifts
+ All shifts have employee_id=5 (auto-filtered)
 
 ---
 
-#### ❌ Error Cases
+####  Error Cases
 
 **Test 1.5: Missing date parameters**
 ```bash
 GET /api/v1/shifts
 Authorization: Bearer {manager_token}
 ```
-❌ Expected: `400 BAD_REQUEST`
+ Expected: `400 BAD_REQUEST`
 ```json
 {
   "statusCode": 400,
@@ -129,7 +129,7 @@ Authorization: Bearer {manager_token}
 GET /api/v1/shifts?start_date=01-11-2025&end_date=30-11-2025
 Authorization: Bearer {manager_token}
 ```
-❌ Expected: `400 BAD_REQUEST`
+ Expected: `400 BAD_REQUEST`
 ```json
 {
   "statusCode": 400,
@@ -145,7 +145,7 @@ Authorization: Bearer {manager_token}
 GET /api/v1/shifts?start_date=2025-11-01&end_date=2025-11-30&employee_id=2
 Authorization: Bearer {ketoan_token}
 ```
-❌ Expected: `403 FORBIDDEN`
+ Expected: `403 FORBIDDEN`
 ```json
 {
   "statusCode": 403,
@@ -158,14 +158,14 @@ Authorization: Bearer {ketoan_token}
 
 ### 2️⃣ GET /api/v1/shifts/{shift_id} - Get Shift Detail
 
-#### ✅ Happy Path Tests
+####  Happy Path Tests
 
 **Test 2.1: Manager views any shift detail**
 ```bash
 GET /api/v1/shifts/EMS251101001
 Authorization: Bearer {manager_token}
 ```
-✅ Expected: `200 OK` with full shift details
+ Expected: `200 OK` with full shift details
 ```json
 {
   "statusCode": 200,
@@ -188,18 +188,18 @@ Authorization: Bearer {manager_token}
 GET /api/v1/shifts/EMS251101008
 Authorization: Bearer {ketoan_token}
 ```
-✅ Expected: `200 OK` (employee_id=5 matches ketoan)
+ Expected: `200 OK` (employee_id=5 matches ketoan)
 
 ---
 
-#### ❌ Error Cases
+####  Error Cases
 
 **Test 2.3: Shift not found**
 ```bash
 GET /api/v1/shifts/EMS999999999
 Authorization: Bearer {manager_token}
 ```
-❌ Expected: `404 NOT_FOUND`
+ Expected: `404 NOT_FOUND`
 ```json
 {
   "statusCode": 404,
@@ -215,7 +215,7 @@ Authorization: Bearer {manager_token}
 GET /api/v1/shifts/EMS251101001
 Authorization: Bearer {ketoan_token}
 ```
-❌ Expected: `404 NOT_FOUND` (security: return 404 instead of 403)
+ Expected: `404 NOT_FOUND` (security: return 404 instead of 403)
 ```json
 {
   "statusCode": 404,
@@ -228,14 +228,14 @@ Authorization: Bearer {ketoan_token}
 
 ### 3️⃣ GET /api/v1/shifts/summary - Get Shift Summary
 
-#### ✅ Happy Path Tests
+####  Happy Path Tests
 
 **Test 3.1: Manager gets November summary**
 ```bash
 GET /api/v1/shifts/summary?start_date=2025-11-01&end_date=2025-11-30
 Authorization: Bearer {manager_token}
 ```
-✅ Expected: `200 OK` with statistics
+ Expected: `200 OK` with statistics
 ```json
 {
   "statusCode": 200,
@@ -263,18 +263,18 @@ Authorization: Bearer {manager_token}
 GET /api/v1/shifts/summary?start_date=2025-11-01&end_date=2025-11-30&employee_id=5
 Authorization: Bearer {manager_token}
 ```
-✅ Expected: `200 OK` with ketoan's stats only
+ Expected: `200 OK` with ketoan's stats only
 
 ---
 
-#### ❌ Error Cases
+####  Error Cases
 
 **Test 3.3: Ketoan lacks VIEW_SHIFTS_SUMMARY permission**
 ```bash
 GET /api/v1/shifts/summary?start_date=2025-11-01&end_date=2025-11-30
 Authorization: Bearer {ketoan_token}
 ```
-❌ Expected: `403 FORBIDDEN`
+ Expected: `403 FORBIDDEN`
 ```json
 {
   "statusCode": 403,
@@ -287,7 +287,7 @@ Authorization: Bearer {ketoan_token}
 
 ### 4️⃣ POST /api/v1/shifts - Create Manual Shift
 
-#### ✅ Happy Path Tests
+####  Happy Path Tests
 
 **Test 4.1: Manager creates shift for employee_id=2**
 ```bash
@@ -302,7 +302,7 @@ Content-Type: application/json
   "notes": "Ca thêm do thiếu nhân sự"
 }
 ```
-✅ Expected: `201 CREATED`
+ Expected: `201 CREATED`
 ```json
 {
   "statusCode": 201,
@@ -329,11 +329,11 @@ Content-Type: application/json
   "notes": "Ca part-time"
 }
 ```
-✅ Expected: `201 CREATED`
+ Expected: `201 CREATED`
 
 ---
 
-#### ❌ Error Cases
+####  Error Cases
 
 **Test 4.3: Ketoan lacks CREATE_SHIFTS permission**
 ```bash
@@ -347,7 +347,7 @@ Content-Type: application/json
   "work_shift_id": "WKS_MORNING_01"
 }
 ```
-❌ Expected: `403 FORBIDDEN`
+ Expected: `403 FORBIDDEN`
 
 ---
 
@@ -363,7 +363,7 @@ Content-Type: application/json
   "work_shift_id": "WKS_MORNING_01"
 }
 ```
-❌ Expected: `404 NOT_FOUND`
+ Expected: `404 NOT_FOUND`
 ```json
 {
   "statusCode": 404,
@@ -385,7 +385,7 @@ Content-Type: application/json
   "work_shift_id": "WKS_INVALID"
 }
 ```
-❌ Expected: `404 NOT_FOUND`
+ Expected: `404 NOT_FOUND`
 ```json
 {
   "statusCode": 404,
@@ -407,7 +407,7 @@ Content-Type: application/json
   "work_shift_id": "WKS_MORNING_01"
 }
 ```
-❌ Expected: `409 CONFLICT`
+ Expected: `409 CONFLICT`
 ```json
 {
   "statusCode": 409,
@@ -429,7 +429,7 @@ Content-Type: application/json
   "work_shift_id": "WKS_MORNING_01"
 }
 ```
-❌ Expected: `409 CONFLICT`
+ Expected: `409 CONFLICT`
 ```json
 {
   "statusCode": 409,
@@ -442,7 +442,7 @@ Content-Type: application/json
 
 ### 5️⃣ PATCH /api/v1/shifts/{shift_id} - Update Shift
 
-#### ✅ Happy Path Tests
+####  Happy Path Tests
 
 **Test 5.1: Manager updates shift status to COMPLETED**
 ```bash
@@ -455,7 +455,7 @@ Content-Type: application/json
   "notes": "Ca đã hoàn thành đúng giờ"
 }
 ```
-✅ Expected: `200 OK`
+ Expected: `200 OK`
 ```json
 {
   "statusCode": 200,
@@ -480,7 +480,7 @@ Content-Type: application/json
   "notes": "Đổi sang ca chiều part-time"
 }
 ```
-✅ Expected: `200 OK`
+ Expected: `200 OK`
 
 ---
 
@@ -493,11 +493,11 @@ Content-Type: application/json
   "notes": "Ghi chú cập nhật"
 }
 ```
-✅ Expected: `200 OK`
+ Expected: `200 OK`
 
 ---
 
-#### ❌ Error Cases
+####  Error Cases
 
 **Test 5.4: Ketoan lacks UPDATE_SHIFTS permission**
 ```bash
@@ -509,7 +509,7 @@ Content-Type: application/json
   "notes": "Trying to update"
 }
 ```
-❌ Expected: `403 FORBIDDEN`
+ Expected: `403 FORBIDDEN`
 
 ---
 
@@ -523,7 +523,7 @@ Content-Type: application/json
   "status": "SCHEDULED"
 }
 ```
-❌ Expected: `409 CONFLICT`
+ Expected: `409 CONFLICT`
 ```json
 {
   "statusCode": 409,
@@ -543,7 +543,7 @@ Content-Type: application/json
   "status": "SCHEDULED"
 }
 ```
-❌ Expected: `409 CONFLICT` (same as Test 5.5)
+ Expected: `409 CONFLICT` (same as Test 5.5)
 
 ---
 
@@ -557,7 +557,7 @@ Content-Type: application/json
   "notes": "Trying to set ON_LEAVE manually"
 }
 ```
-❌ Expected: `400 BAD_REQUEST`
+ Expected: `400 BAD_REQUEST`
 ```json
 {
   "statusCode": 400,
@@ -577,20 +577,20 @@ Content-Type: application/json
   "notes": "Update"
 }
 ```
-❌ Expected: `404 NOT_FOUND`
+ Expected: `404 NOT_FOUND`
 
 ---
 
 ### 6️⃣ DELETE /api/v1/shifts/{shift_id} - Cancel Shift
 
-#### ✅ Happy Path Tests
+####  Happy Path Tests
 
 **Test 6.1: Manager cancels SCHEDULED shift**
 ```bash
 DELETE /api/v1/shifts/EMS251101001
 Authorization: Bearer {manager_token}
 ```
-✅ Expected: `200 OK`
+ Expected: `200 OK`
 ```json
 {
   "statusCode": 200,
@@ -609,18 +609,18 @@ Authorization: Bearer {manager_token}
 DELETE /api/v1/shifts/EMS251101002
 Authorization: Bearer {manager_token}
 ```
-✅ Expected: `200 OK`
+ Expected: `200 OK`
 
 ---
 
-#### ❌ Error Cases
+####  Error Cases
 
 **Test 6.3: Ketoan lacks DELETE_SHIFTS permission**
 ```bash
 DELETE /api/v1/shifts/EMS251101008
 Authorization: Bearer {ketoan_token}
 ```
-❌ Expected: `403 FORBIDDEN`
+ Expected: `403 FORBIDDEN`
 
 ---
 
@@ -629,7 +629,7 @@ Authorization: Bearer {ketoan_token}
 DELETE /api/v1/shifts/EMS251101003
 Authorization: Bearer {manager_token}
 ```
-❌ Expected: `400 BAD_REQUEST`
+ Expected: `400 BAD_REQUEST`
 ```json
 {
   "statusCode": 400,
@@ -645,7 +645,7 @@ Authorization: Bearer {manager_token}
 DELETE /api/v1/shifts/EMS251101004
 Authorization: Bearer {manager_token}
 ```
-❌ Expected: `400 BAD_REQUEST`
+ Expected: `400 BAD_REQUEST`
 ```json
 {
   "statusCode": 400,
@@ -661,11 +661,11 @@ Authorization: Bearer {manager_token}
 DELETE /api/v1/shifts/EMS999999999
 Authorization: Bearer {manager_token}
 ```
-❌ Expected: `404 NOT_FOUND`
+ Expected: `404 NOT_FOUND`
 
 ---
 
-## 📝 Complete Error Code Reference
+##  Complete Error Code Reference
 
 | Error Code | HTTP Status | Scenario |
 |------------|-------------|----------|
@@ -683,7 +683,7 @@ Authorization: Bearer {manager_token}
 
 ---
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### 1. Login to get JWT token
 ```bash
@@ -703,13 +703,13 @@ Authorization: Bearer {your_access_token}
 ```
 
 ### 3. Test all 6 endpoints systematically
-- ✅ Happy paths first
-- ❌ Then error cases
-- 🔄 Verify permission enforcement
+-  Happy paths first
+-  Then error cases
+-  Verify permission enforcement
 
 ---
 
-## 📊 Testing Checklist
+##  Testing Checklist
 
 ### For FE Developers:
 - [ ] Test with `manager` user (full access)
@@ -732,7 +732,7 @@ Authorization: Bearer {your_access_token}
 
 ---
 
-## 🔗 Related Documentation
+##  Related Documentation
 - **Task**: BE-307 Employee Shift Management API
 - **Branch**: `feat/BE-307-manage-shift-registration-renewal-and-batch-job`
 - **Database Schema**: `employee_shifts` table with 9 columns
@@ -740,7 +740,7 @@ Authorization: Bearer {your_access_token}
 
 ---
 
-## 💡 Tips for Testing
+##  Tips for Testing
 
 1. **Use Postman Collections**: Import all test cases into Postman for easy execution
 2. **Environment Variables**: Set `{{base_url}}` and `{{token}}` variables

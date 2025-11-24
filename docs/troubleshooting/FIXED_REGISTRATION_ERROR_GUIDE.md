@@ -1,10 +1,10 @@
-# 🚨 Fixed Registration API - Common Errors Guide (For Frontend Team)
+#  Fixed Registration API - Common Errors Guide (For Frontend Team)
 
 **API Endpoint**: `POST /api/v1/fixed-registrations`
 
 ---
 
-## ✅ **ISSUE #1: SEQUENCE DESYNC (FIXED!)**
+##  **ISSUE #1: SEQUENCE DESYNC (FIXED!)**
 
 ### Error Message:
 
@@ -13,14 +13,14 @@ ERROR: duplicate key value violates unique constraint "fixed_shift_registrations
 Detail: Key (registration_id)=(2) already exists.
 ```
 
-### Status: **✅ FIXED AUTOMATICALLY**
+### Status: ** FIXED AUTOMATICALLY**
 
 - Sequence đã được reset về giá trị đúng (8)
 - Không còn xảy ra lỗi này nữa
 
 ---
 
-## ⚠️ **POTENTIAL ERRORS THAT MAY OCCUR**
+## ️ **POTENTIAL ERRORS THAT MAY OCCUR**
 
 ### **Error #2: Employee Not Found**
 
@@ -293,11 +293,11 @@ WHERE employee_id = 2
 
 **Fix**: Đảm bảo tất cả required fields:
 
-- ✅ `employeeId` (required)
-- ✅ `workShiftId` (required)
-- ✅ `daysOfWeek` (required, not empty)
-- ✅ `effectiveFrom` (required)
-- ⚠️ `effectiveTo` (optional - null = permanent for FULL_TIME)
+-  `employeeId` (required)
+-  `workShiftId` (required)
+-  `daysOfWeek` (required, not empty)
+-  `effectiveFrom` (required)
+- ️ `effectiveTo` (optional - null = permanent for FULL_TIME)
 
 ---
 
@@ -347,17 +347,17 @@ Authorization: Bearer <your_jwt_token>
 
 ---
 
-## 📋 **Quick Checklist Before Calling API**
+##  **Quick Checklist Before Calling API**
 
-### ✅ **Request Validation**
+###  **Request Validation**
 
 ```javascript
 // Frontend validation
 const request = {
-  employeeId: 1, // ✓ Not null
-  workShiftId: "WKS_MORNING_02", // ✓ Valid format
-  daysOfWeek: [1, 2, 3], // ✓ Not empty, values 1-7
-  effectiveFrom: "2025-11-01", // ✓ >= today
+  employeeId: 1, //  Not null
+  workShiftId: "WKS_MORNING_02", //  Valid format
+  daysOfWeek: [1, 2, 3], //  Not empty, values 1-7
+  effectiveFrom: "2025-11-01", //  >= today
 };
 
 // Validate
@@ -377,7 +377,7 @@ if (request.daysOfWeek.some((d) => d < 1 || d > 7))
   return "Invalid day of week";
 ```
 
-### ✅ **Headers Required**
+###  **Headers Required**
 
 ```http
 Content-Type: application/json
@@ -386,7 +386,7 @@ Authorization: Bearer <token>
 
 ---
 
-## 🔍 **How to Debug Errors**
+##  **How to Debug Errors**
 
 ### **Step 1: Check HTTP Status Code**
 
@@ -414,7 +414,7 @@ Authorization: Bearer <token>
 
 | Error                    | Quick Fix                          |
 | ------------------------ | ---------------------------------- |
-| `duplicate key`          | ✅ Fixed! Sequence đã được reset   |
+| `duplicate key`          |  Fixed! Sequence đã được reset   |
 | `Employee not found`     | Kiểm tra `employeeId` tồn tại      |
 | `Work shift not found`   | Kiểm tra `workShiftId` đúng format |
 | `Invalid employee type`  | Chỉ dùng FULL_TIME/PART_TIME_FIXED |
@@ -423,7 +423,7 @@ Authorization: Bearer <token>
 
 ---
 
-## 🎯 **Valid Request Example**
+##  **Valid Request Example**
 
 ```json
 {
@@ -458,7 +458,7 @@ Authorization: Bearer <token>
 
 ---
 
-## 🛠️ **Database Health Check**
+## ️ **Database Health Check**
 
 **Run this to verify everything is OK**:
 
@@ -482,4 +482,4 @@ SELECT work_shift_id, shift_name FROM work_shifts;
 
 **Document Version**: 1.0
 **Last Updated**: 2025-10-31
-**Status**: ✅ Sequence Issue Fixed - Ready for Testing
+**Status**:  Sequence Issue Fixed - Ready for Testing

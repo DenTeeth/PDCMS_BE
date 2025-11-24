@@ -6,7 +6,7 @@
 
 ---
 
-## 📋 Overview
+##  Overview
 
 API này được sử dụng bởi **Bác sĩ** để xóa vĩnh viễn một hạng mục đã thêm nhầm ra khỏi lộ trình điều trị khi lộ trình đang ở trạng thái **DRAFT** (Nháp).
 
@@ -14,7 +14,7 @@ API này được sử dụng bởi **Bác sĩ** để xóa vĩnh viễn một h
 
 ---
 
-## 🔑 API Specification
+##  API Specification
 
 | Property                | Value                                        |
 | ----------------------- | -------------------------------------------- |
@@ -28,7 +28,7 @@ API này được sử dụng bởi **Bác sĩ** để xóa vĩnh viễn một h
 
 ---
 
-## 🎯 Business Flow
+##  Business Flow
 
 ```
 Scenario: Doctor realizes an item was added by mistake
@@ -54,7 +54,7 @@ Scenario: Doctor realizes an item was added by mistake
 
 ---
 
-## 📦 Request Parameters
+##  Request Parameters
 
 ### Path Parameter
 
@@ -68,7 +68,7 @@ Scenario: Doctor realizes an item was added by mistake
 
 ---
 
-## ⚙️ Business Logic & Validation Guards
+## ️ Business Logic & Validation Guards
 
 ### 1️⃣ Find Item and Get Related Data (BEFORE Delete)
 
@@ -176,7 +176,7 @@ Plan.approvalStatus REMAINS DRAFT
 
 ---
 
-## ✅ Response Body (200 OK)
+##  Response Body (200 OK)
 
 ### JSON Structure (Option B - Full Response)
 
@@ -221,7 +221,7 @@ toast.success(
 
 ---
 
-## 🚫 Error Responses
+##  Error Responses
 
 ### 404 NOT FOUND - Item Not Found
 
@@ -273,7 +273,7 @@ toast.success(
 
 ---
 
-## 🧪 Testing Guide
+##  Testing Guide
 
 ### Prerequisites
 
@@ -282,7 +282,7 @@ toast.success(
 3. **Test Account**: Login as Doctor
 4. **Test Data**: Plan with items in DRAFT status
 
-### Test Scenario 1: Delete Item Successfully ✅
+### Test Scenario 1: Delete Item Successfully 
 
 **Setup:**
 
@@ -306,14 +306,14 @@ curl -X DELETE http://localhost:8080/api/v1/patient-plan-items/538 \
 
 **Expected Result:**
 
-- ✅ Status: 200 OK
-- ✅ `deletedItemId`: 538
-- ✅ `deletedItemName`: "Cạo vôi răng"
-- ✅ `priceReduction`: 500000
-- ✅ `financialImpact.planTotalCost`: 15500000 (16000000 - 500000)
-- ✅ `financialImpact.planFinalCost`: 13900000 (14400000 - 500000)
-- ✅ Audit log created with action_type = "ITEM_DELETED"
-- ✅ Item deleted from database
+-  Status: 200 OK
+-  `deletedItemId`: 538
+-  `deletedItemName`: "Cạo vôi răng"
+-  `priceReduction`: 500000
+-  `financialImpact.planTotalCost`: 15500000 (16000000 - 500000)
+-  `financialImpact.planFinalCost`: 13900000 (14400000 - 500000)
+-  Audit log created with action_type = "ITEM_DELETED"
+-  Item deleted from database
 
 **Verification:**
 
@@ -337,7 +337,7 @@ ORDER BY created_at DESC LIMIT 1;
 
 ---
 
-### Test Scenario 2: Delete Item Already Scheduled ❌
+### Test Scenario 2: Delete Item Already Scheduled 
 
 **Setup:**
 
@@ -357,15 +357,15 @@ curl -X DELETE http://localhost:8080/api/v1/patient-plan-items/538 \
 
 **Expected Result:**
 
-- ❌ Status: 409 CONFLICT
-- ❌ Message: "Không thể xóa hạng mục đã được đặt lịch hoặc đang thực hiện (Trạng thái: SCHEDULED)..."
-- ❌ Item NOT deleted
-- ❌ Plan finances NOT changed
-- ❌ No audit log created
+-  Status: 409 CONFLICT
+-  Message: "Không thể xóa hạng mục đã được đặt lịch hoặc đang thực hiện (Trạng thái: SCHEDULED)..."
+-  Item NOT deleted
+-  Plan finances NOT changed
+-  No audit log created
 
 ---
 
-### Test Scenario 3: Delete from Approved Plan ❌
+### Test Scenario 3: Delete from Approved Plan 
 
 **Setup:**
 
@@ -390,13 +390,13 @@ curl -X DELETE http://localhost:8080/api/v1/patient-plan-items/538 \
 
 **Expected Result:**
 
-- ❌ Status: 409 CONFLICT
-- ❌ Message: "Không thể xóa hạng mục khỏi lộ trình đã được duyệt... (Trạng thái: APPROVED)"
-- ❌ Item NOT deleted
+-  Status: 409 CONFLICT
+-  Message: "Không thể xóa hạng mục khỏi lộ trình đã được duyệt... (Trạng thái: APPROVED)"
+-  Item NOT deleted
 
 ---
 
-### Test Scenario 4: Delete Non-Existent Item ❌
+### Test Scenario 4: Delete Non-Existent Item 
 
 **Request:**
 
@@ -407,12 +407,12 @@ curl -X DELETE http://localhost:8080/api/v1/patient-plan-items/999999 \
 
 **Expected Result:**
 
-- ❌ Status: 404 NOT FOUND
-- ❌ Message: "Hạng mục không tồn tại"
+-  Status: 404 NOT FOUND
+-  Message: "Hạng mục không tồn tại"
 
 ---
 
-### Test Scenario 5: Delete Multiple Items Sequentially ✅
+### Test Scenario 5: Delete Multiple Items Sequentially 
 
 **Setup:**
 
@@ -447,14 +447,14 @@ curl -X DELETE http://localhost:8080/api/v1/patient-plan-items/540 -H "Authoriza
 
 **Expected Result:**
 
-- ✅ All 3 items deleted
-- ✅ Plan totalPrice decreased by 1000000 total (500000 + 300000 + 200000)
-- ✅ 3 separate audit log entries
-- ✅ Plan.approvalStatus still DRAFT
+-  All 3 items deleted
+-  Plan totalPrice decreased by 1000000 total (500000 + 300000 + 200000)
+-  3 separate audit log entries
+-  Plan.approvalStatus still DRAFT
 
 ---
 
-## 🔗 Related APIs
+##  Related APIs
 
 | API          | Endpoint                                                                 | Relationship                                                      |
 | ------------ | ------------------------------------------------------------------------ | ----------------------------------------------------------------- |
@@ -465,7 +465,7 @@ curl -X DELETE http://localhost:8080/api/v1/patient-plan-items/540 -H "Authoriza
 
 ---
 
-## 📊 Database Impact
+##  Database Impact
 
 ### Tables Modified
 
@@ -485,9 +485,9 @@ SELECT * FROM plan_audit_logs WHERE action_type = 'ITEM_DELETED';
 
 ---
 
-## 📝 Important Notes
+##  Important Notes
 
-### ❌ What API 5.11 Does NOT Do
+###  What API 5.11 Does NOT Do
 
 1. **Does NOT delete appointments linked to item**
 
@@ -503,19 +503,19 @@ SELECT * FROM plan_audit_logs WHERE action_type = 'ITEM_DELETED';
    - Must call API multiple times for multiple items
    - Each call creates separate audit log
 
-### ✅ What API 5.11 DOES Do
+###  What API 5.11 DOES Do
 
-1. ✅ Delete item permanently from database
-2. ✅ Recalculate plan finances automatically (decrease totalPrice and finalCost)
-3. ✅ Create audit trail with standardized format
-4. ✅ Enforce guards (status checks)
-5. ✅ Return full details (Option B) for FE toast notification
+1.  Delete item permanently from database
+2.  Recalculate plan finances automatically (decrease totalPrice and finalCost)
+3.  Create audit trail with standardized format
+4.  Enforce guards (status checks)
+5.  Return full details (Option B) for FE toast notification
 
 ---
 
-## 🎯 Key Design Decisions
+##  Key Design Decisions
 
-### Option A: 204 No Content (NOT CHOSEN ❌)
+### Option A: 204 No Content (NOT CHOSEN )
 
 ```
 DELETE returns 204 No Content (standard REST practice)
@@ -525,11 +525,11 @@ DELETE returns 204 No Content (standard REST practice)
 
 **Cons**:
 
-- ❌ FE cannot show meaningful toast: "Đã xóa 'Cạo vôi răng' (-500.000đ)"
-- ❌ FE must call GET API to refresh plan finances
-- ❌ Poor UX (no immediate feedback)
+-  FE cannot show meaningful toast: "Đã xóa 'Cạo vôi răng' (-500.000đ)"
+-  FE must call GET API to refresh plan finances
+-  Poor UX (no immediate feedback)
 
-### Option B: 200 OK with Full Response (CHOSEN ✅)
+### Option B: 200 OK with Full Response (CHOSEN )
 
 ```
 DELETE returns 200 OK with response body containing:
@@ -539,14 +539,14 @@ DELETE returns 200 OK with response body containing:
 
 **Pros**:
 
-- ✅ FE can show rich toast notification with item name and price reduction
-- ✅ FE gets updated plan totals immediately (no extra GET call)
-- ✅ Better UX with transparency
-- ✅ Aligns with healthcare domain requirement (financial transparency for doctor)
+-  FE can show rich toast notification with item name and price reduction
+-  FE gets updated plan totals immediately (no extra GET call)
+-  Better UX with transparency
+-  Aligns with healthcare domain requirement (financial transparency for doctor)
 
 ---
 
-## 🔒 Security Considerations
+##  Security Considerations
 
 ### Permission Check
 
@@ -556,15 +556,15 @@ DELETE returns 200 OK with response body containing:
 
 **Who can delete?**
 
-- ✅ ROLE_DENTIST (has UPDATE_TREATMENT_PLAN)
-- ✅ ROLE_MANAGER (has UPDATE_TREATMENT_PLAN + APPROVE_TREATMENT_PLAN)
-- ✅ ROLE_ADMIN (superuser)
+-  ROLE_DENTIST (has UPDATE_TREATMENT_PLAN)
+-  ROLE_MANAGER (has UPDATE_TREATMENT_PLAN + APPROVE_TREATMENT_PLAN)
+-  ROLE_ADMIN (superuser)
 
 **Who cannot delete?**
 
-- ❌ ROLE_NURSE
-- ❌ ROLE_RECEPTIONIST
-- ❌ ROLE_PATIENT
+-  ROLE_NURSE
+-  ROLE_RECEPTIONIST
+-  ROLE_PATIENT
 
 ### Audit Trail
 
@@ -577,7 +577,7 @@ Every deletion is logged with:
 
 ---
 
-## 🧩 Integration with Approval Workflow
+##  Integration with Approval Workflow
 
 ### Workflow Diagram
 
@@ -610,7 +610,7 @@ Every deletion is logged with:
 
 ---
 
-## 💡 Best Practices
+##  Best Practices
 
 ### For Doctors:
 
@@ -629,5 +629,5 @@ Every deletion is logged with:
 
 **Implementation Date**: 2025-11-15
 **Schema Version**: V20
-**Status**: ✅ Implemented & Documented
+**Status**:  Implemented & Documented
 **Option**: B (Full Response with deletedItemName + priceReduction)

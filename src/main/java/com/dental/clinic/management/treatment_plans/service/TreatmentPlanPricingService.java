@@ -61,7 +61,7 @@ public class TreatmentPlanPricingService {
     @Transactional
     public UpdatePricesResponse updatePlanPrices(String planCode, UpdatePricesRequest request) {
 
-        log.info("💰 Starting price update for plan: {} (Finance adjustment)", planCode);
+        log.info(" Starting price update for plan: {} (Finance adjustment)", planCode);
 
         // 1. Get current employee (Finance/Manager)
         Integer employeeId = getCurrentEmployeeId();
@@ -112,7 +112,7 @@ public class TreatmentPlanPricingService {
         createPriceAuditLog(plan, employee, totalCostBefore, totalCostAfter,
                 request.getDiscountNote(), itemsUpdated);
 
-        log.info("✅ Price update completed for plan {}. Cost: {} → {} VND (discount: {} VND)",
+        log.info(" Price update completed for plan {}. Cost: {} → {} VND (discount: {} VND)",
                 planCode, totalCostBefore, totalCostAfter, discount);
 
         // 11. Build response

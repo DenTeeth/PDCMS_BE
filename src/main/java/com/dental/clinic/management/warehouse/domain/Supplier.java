@@ -38,7 +38,7 @@ public class Supplier {
     private String address;
 
     /**
-     * 🔥 Phân loại ưu tiên nhà cung cấp (Feedback Upgrade)
+     *  Phân loại ưu tiên nhà cung cấp (Feedback Upgrade)
      * TIER_1: Ưu tiên cao nhất (chất lượng tốt, giá tốt, giao hàng nhanh)
      * TIER_2: Ổn định
      * TIER_3: Dự phòng (default cho NCC mới)

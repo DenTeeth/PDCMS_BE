@@ -1,6 +1,6 @@
 # P7: Shift Renewal Management - API Test Guide
 
-## 📋 **Overview**
+##  **Overview**
 
 **Module**: Phản hồi Gia hạn Lịch Cố định
 **Tables**: `shift_renewal_requests`, `fixed_shift_registrations`
@@ -11,22 +11,22 @@
 
 ---
 
-## 🏗️ **Architecture Context**
+## ️ **Architecture Context**
 
 ### **Two Scheduling Streams (Luồng)**
 
 | Stream              | Employee Type              | Registration Table          | Renewal Support |
 | ------------------- | -------------------------- | --------------------------- | --------------- |
-| **Luồng 1 (Fixed)** | FULL_TIME, PART_TIME_FIXED | `fixed_shift_registrations` | ✅ YES (P7)     |
-| **Luồng 2 (Flex)**  | PART_TIME_FLEX             | `part_time_registrations`   | ❌ NO           |
+| **Luồng 1 (Fixed)** | FULL_TIME, PART_TIME_FIXED | `fixed_shift_registrations` |  YES (P7)     |
+| **Luồng 2 (Flex)**  | PART_TIME_FLEX             | `part_time_registrations`   |  NO           |
 
 ### **P7 Business Logic - Two-Step Workflow**
 
 | Phase                    | Actor    | Action                                        | Status                   | Registration Changed?         |
 | ------------------------ | -------- | --------------------------------------------- | ------------------------ | ----------------------------- |
-| **1. Creation**          | Job P8   | Auto-create renewal 14 days before expiration | `PENDING_ACTION`         | ❌ No                         |
-| **2. Employee Response** | Employee | CONFIRMED or DECLINED                         | `CONFIRMED` / `DECLINED` | ❌ No (chỉ cập nhật status)   |
-| **3. Admin Finalize**    | Admin    | Specify custom effective_to date              | `FINALIZED`              | ✅ YES (tạo registration mới) |
+| **1. Creation**          | Job P8   | Auto-create renewal 14 days before expiration | `PENDING_ACTION`         |  No                         |
+| **2. Employee Response** | Employee | CONFIRMED or DECLINED                         | `CONFIRMED` / `DECLINED` |  No (chỉ cập nhật status)   |
+| **3. Admin Finalize**    | Admin    | Specify custom effective_to date              | `FINALIZED`              |  YES (tạo registration mới) |
 
 **Workflow Flow**:
 
@@ -43,7 +43,7 @@
 
 ---
 
-## 🔑 **RBAC Permissions**
+##  **RBAC Permissions**
 
 | Permission                   | Description                                              | Roles                    | Endpoint                      |
 | ---------------------------- | -------------------------------------------------------- | ------------------------ | ----------------------------- |
@@ -56,7 +56,7 @@
 
 ---
 
-## 📡 **API Endpoints**
+##  **API Endpoints**
 
 ### **1. GET /api/v1/registrations/renewals/pending**
 
@@ -159,7 +159,7 @@ Content-Type: application/json
 
 | Field           | Type   | Required    | Constraints                                                       |
 | --------------- | ------ | ----------- | ----------------------------------------------------------------- |
-| `action`        | String | ✓ YES       | Must be `CONFIRMED` or `DECLINED` (case-sensitive)                |
+| `action`        | String |  YES       | Must be `CONFIRMED` or `DECLINED` (case-sensitive)                |
 | `declineReason` | String | Conditional | **REQUIRED** if `action = DECLINED`, must not be empty/whitespace |
 
 #### **Success Response (200 OK) - CONFIRMED**
@@ -271,8 +271,8 @@ Content-Type: application/json
 
 | Field              | Type   | Required | Constraints                                                   |
 | ------------------ | ------ | -------- | ------------------------------------------------------------- |
-| `renewalRequestId` | String | ✓ YES    | Format: `SRR_YYYYMMDD_XXXXX`, must exist and status=CONFIRMED |
-| `newEffectiveTo`   | Date   | ✓ YES    | Must be **AFTER** old registration's `effective_to`           |
+| `renewalRequestId` | String |  YES    | Format: `SRR_YYYYMMDD_XXXXX`, must exist and status=CONFIRMED |
+| `newEffectiveTo`   | Date   |  YES    | Must be **AFTER** old registration's `effective_to`           |
 
 #### **Success Response (200 OK)**
 
@@ -322,7 +322,7 @@ Content-Type: application/json
 
 ---
 
-## 🧪 **Test Scenarios**
+##  **Test Scenarios**
 
 ### **Scenario 1: GET Pending Renewals - Happy Path**
 
@@ -335,12 +335,12 @@ Content-Type: application/json
 
 **Expected**:
 
-- ✅ HTTP 200 OK
-- ✅ Returns array with 2 renewal objects
-- ✅ Each has `status = "PENDING_ACTION"`
-- ✅ `expiresAt > NOW()`
-- ✅ `declineReason = null`
-- ✅ Dynamic `message` field populated
+-  HTTP 200 OK
+-  Returns array with 2 renewal objects
+-  Each has `status = "PENDING_ACTION"`
+-  `expiresAt > NOW()`
+-  `declineReason = null`
+-  Dynamic `message` field populated
 
 ---
 
@@ -350,8 +350,8 @@ Content-Type: application/json
 
 **Expected**:
 
-- ✅ HTTP 200 OK
-- ✅ Returns empty array `[]`
+-  HTTP 200 OK
+-  Returns empty array `[]`
 
 ---
 
@@ -480,10 +480,10 @@ SELECT status FROM shift_renewal_requests WHERE renewal_id = 'SRR_20251022_00001
 
 **Expected**:
 
-- ✅ HTTP 200 OK
-- ✅ `status = "DECLINED"`, `confirmedAt` populated
-- ✅ `declineReason = "Sẽ chuyển đến chi nhánh khác vào tháng 1/2026"`
-- ✅ Old registration **unchanged** (will expire at `effective_to`)
+-  HTTP 200 OK
+-  `status = "DECLINED"`, `confirmedAt` populated
+-  `declineReason = "Sẽ chuyển đến chi nhánh khác vào tháng 1/2026"`
+-  Old registration **unchanged** (will expire at `effective_to`)
 
 **Verification**:
 
@@ -504,9 +504,9 @@ SELECT status, decline_reason FROM shift_renewal_requests WHERE renewal_id = 'SR
 
 **Expected**:
 
-- ✅ HTTP 400 Bad Request
-- ✅ Error code: `REASON_REQUIRED`
-- ✅ Message: "Vui lòng cung cấp lý do từ chối gia hạn (declineReason)"
+-  HTTP 400 Bad Request
+-  Error code: `REASON_REQUIRED`
+-  Message: "Vui lòng cung cấp lý do từ chối gia hạn (declineReason)"
 
 ---
 
@@ -521,9 +521,9 @@ SELECT status, decline_reason FROM shift_renewal_requests WHERE renewal_id = 'SR
 
 **Expected**:
 
-- ✅ HTTP 403 Forbidden
-- ✅ Error code: `NOT_OWNER`
-- ✅ Message: "Bạn không phải chủ sở hữu..."
+-  HTTP 403 Forbidden
+-  Error code: `NOT_OWNER`
+-  Message: "Bạn không phải chủ sở hữu..."
 
 ---
 
@@ -537,9 +537,9 @@ SELECT status, decline_reason FROM shift_renewal_requests WHERE renewal_id = 'SR
 
 **Expected**:
 
-- ✅ HTTP 409 Conflict
-- ✅ Error code: `INVALID_STATE`
-- ✅ Message: "Yêu cầu đang ở trạng thái CONFIRMED (chỉ cho phép PENDING_ACTION)"
+-  HTTP 409 Conflict
+-  Error code: `INVALID_STATE`
+-  Message: "Yêu cầu đang ở trạng thái CONFIRMED (chỉ cho phép PENDING_ACTION)"
 
 ---
 
@@ -553,9 +553,9 @@ SELECT status, decline_reason FROM shift_renewal_requests WHERE renewal_id = 'SR
 
 **Expected**:
 
-- ✅ HTTP 409 Conflict
-- ✅ Error code: `REQUEST_EXPIRED`
-- ✅ Message: "Yêu cầu gia hạn đã hết hạn vào 2025-01-01T23:59:59"
+-  HTTP 409 Conflict
+-  Error code: `REQUEST_EXPIRED`
+-  Message: "Yêu cầu gia hạn đã hết hạn vào 2025-01-01T23:59:59"
 
 ---
 
@@ -655,7 +655,7 @@ SELECT status FROM shift_renewal_requests WHERE renewal_id = 'SRR_20251022_00001
 
 ---
 
-## 📊 **Database Schema Reference**
+##  **Database Schema Reference**
 
 ### **shift_renewal_requests**
 
@@ -701,7 +701,7 @@ CREATE TABLE fixed_registration_days (
 
 ---
 
-## 🔍 **Verification Checklist**
+##  **Verification Checklist**
 
 ### **Employee API (GET & PATCH /renewals)**
 
@@ -741,7 +741,7 @@ CREATE TABLE fixed_registration_days (
 
 ---
 
-## 📝 **Notes**
+##  **Notes**
 
 1. **Two-Step Process Logic**:
 
@@ -770,7 +770,7 @@ CREATE TABLE fixed_registration_days (
 
 ---
 
-## 🛠️ **Tools for Testing**
+## ️ **Tools for Testing**
 
 - **Postman**: Import collection with pre-configured requests
 - **cURL**: Command-line testing

@@ -573,16 +573,16 @@ If used → Return 400 Bad Request:
 **3. Price Changes**
 Changing `services.price` affects:
 
-- ✅ **New treatment plans**: Use updated price
-- ❌ **Existing patient plans**: Use price locked when plan created (stored in `patient_plan_items.price`)
+-  **New treatment plans**: Use updated price
+-  **Existing patient plans**: Use price locked when plan created (stored in `patient_plan_items.price`)
 
 **4. Service Deactivation**
 Setting `is_active = FALSE`:
 
-- ❌ Cannot be added to NEW templates
-- ✅ Existing templates still valid (historical data)
-- ✅ Existing patient plans continue using service
-- ⚠️ UI should show warning: "Service inactive but required by treatment plan"
+-  Cannot be added to NEW templates
+-  Existing templates still valid (historical data)
+-  Existing patient plans continue using service
+- ️ UI should show warning: "Service inactive but required by treatment plan"
 
 ### Integration Flow
 
@@ -666,9 +666,9 @@ ORDER BY a.appointment_start_time;
 **1. Service Naming for Templates**
 Use clear names indicating frequency:
 
-- ✅ "Tái khám Chỉnh nha / Siết niềng" (implies monthly visits)
-- ✅ "Kiểm tra Implant sau cấy ghép" (implies follow-ups)
-- ❌ "Khám răng" (too generic)
+-  "Tái khám Chỉnh nha / Siết niềng" (implies monthly visits)
+-  "Kiểm tra Implant sau cấy ghép" (implies follow-ups)
+-  "Khám răng" (too generic)
 
 **2. Duration Accuracy**
 Set realistic `duration_minutes` for services used in templates:

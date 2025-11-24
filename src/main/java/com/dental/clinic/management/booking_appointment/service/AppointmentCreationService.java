@@ -168,7 +168,7 @@ public class AppointmentCreationService {
                                 patient.getPatientId(),
                                 serviceIds,
                                 startTime.toLocalDate());
-                log.debug("V21: ✅ All clinical rules passed");
+                log.debug("V21:  All clinical rules passed");
 
                 // STEP 8: Insert data (appointment + services + participants + audit log)
                 Appointment appointment = insertAppointment(patient, doctor, room, startTime, endTime, totalDuration,
@@ -268,7 +268,7 @@ public class AppointmentCreationService {
                                 patient.getPatientId(),
                                 serviceIds,
                                 startTime.toLocalDate());
-                log.debug("V21: ✅ All clinical rules passed");
+                log.debug("V21:  All clinical rules passed");
 
                 Appointment appointment = insertAppointment(patient, doctor, room, startTime, endTime,
                                 totalDuration, request.getNotes(), createdById);
@@ -1081,7 +1081,7 @@ public class AppointmentCreationService {
                                         plan.setStatus(com.dental.clinic.management.treatment_plans.enums.TreatmentPlanStatus.IN_PROGRESS);
                                         treatmentPlanRepository.save(plan);
 
-                                        log.info("✅ V21: Auto-activated treatment plan {} (PENDING → IN_PROGRESS) - First appointment: {}",
+                                        log.info(" V21: Auto-activated treatment plan {} (PENDING → IN_PROGRESS) - First appointment: {}",
                                                         plan.getPlanCode(), appointment.getAppointmentCode());
                                 } else {
                                         log.debug("V21: Plan {} already has {} appointments - no auto-activation needed",

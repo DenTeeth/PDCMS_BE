@@ -54,7 +54,7 @@ public class ItemMaster {
     private Integer maxStockLevel = 0;
 
     /**
-     * 🔥 Giá thị trường tham chiếu (Feedback)
+     *  Giá thị trường tham chiếu (Feedback)
      * Dùng để so sánh với giá nhập thực tế
      * Giúp đánh giá NCC có báo giá hợp lý không
      */

@@ -1,4 +1,4 @@
-# 🔄 API 5.14: Reorder Treatment Plan Items
+#  API 5.14: Reorder Treatment Plan Items
 
 **Version**: V21.5
 **Release Date**: January 2025
@@ -7,7 +7,7 @@
 
 ---
 
-## 📋 Overview
+##  Overview
 
 Allows **Doctors and Managers** to reorder treatment plan items within a phase via drag-and-drop interface. This API uses **SERIALIZABLE transaction isolation** to prevent concurrent modification issues and includes **set comparison validation** to ensure data integrity.
 
@@ -27,7 +27,7 @@ Allows **Doctors and Managers** to reorder treatment plan items within a phase v
 
 ---
 
-## 🔗 Endpoint Details
+##  Endpoint Details
 
 ### HTTP Method & URL
 
@@ -39,7 +39,7 @@ PATCH /api/v1/patient-plan-phases/{phaseId}/items/reorder
 
 | Parameter | Type    | Required | Description                                 | Example |
 | --------- | ------- | -------- | ------------------------------------------- | ------- |
-| `phaseId` | Integer | ✅ Yes   | ID of the phase containing items to reorder | `50`    |
+| `phaseId` | Integer |  Yes   | ID of the phase containing items to reorder | `50`    |
 
 ### Request Headers
 
@@ -53,14 +53,14 @@ Content-Type: application/json
 - **Type**: JWT Bearer Token
 - **Required Permission**: `UPDATE_TREATMENT_PLAN`
 - **Access Control**:
-  - ✅ ROLE_DOCTOR (phase owner only)
-  - ✅ ROLE_MANAGER (all phases)
-  - ❌ ROLE_NURSE (no access)
-  - ❌ ROLE_ACCOUNTANT (no access)
+  -  ROLE_DOCTOR (phase owner only)
+  -  ROLE_MANAGER (all phases)
+  -  ROLE_NURSE (no access)
+  -  ROLE_ACCOUNTANT (no access)
 
 ---
 
-## 📥 Request Body
+##  Request Body
 
 ### Schema
 
@@ -78,7 +78,7 @@ Complete list of item IDs in desired order.
 
 | Field     | Type      | Required | Constraints               | Description                                 |
 | --------- | --------- | -------- | ------------------------- | ------------------------------------------- |
-| `itemIds` | Integer[] | ✅ Yes   | Must match existing items | Patient plan item IDs in new sequence order |
+| `itemIds` | Integer[] |  Yes   | Must match existing items | Patient plan item IDs in new sequence order |
 
 ### Validation Rules
 
@@ -118,7 +118,7 @@ Complete list of item IDs in desired order.
 
 ---
 
-## 📤 Response
+##  Response
 
 ### Success Response (200 OK)
 
@@ -161,7 +161,7 @@ Complete list of item IDs in desired order.
 
 ---
 
-## ❌ Error Responses
+##  Error Responses
 
 ### 404 Not Found - Phase Not Found
 
@@ -252,7 +252,7 @@ Complete list of item IDs in desired order.
 
 ---
 
-## 🔄 Business Rules
+##  Business Rules
 
 ### Set Comparison Validation
 
@@ -272,10 +272,10 @@ if (!expectedIds.equals(receivedIds)) {
 
 **Benefits**:
 
-- ✅ Prevents accidental data loss
-- ✅ Detects concurrent modifications
-- ✅ Validates completeness
-- ✅ User-friendly error messages
+-  Prevents accidental data loss
+-  Detects concurrent modifications
+-  Validates completeness
+-  User-friendly error messages
 
 ### Transaction Isolation
 
@@ -287,9 +287,9 @@ if (!expectedIds.equals(receivedIds)) {
 
 **Behavior**:
 
-- ✅ Only one reorder operation executes at a time
-- ✅ Second operation sees fresh data from first
-- ✅ Prevents "lost update" problem
+-  Only one reorder operation executes at a time
+-  Second operation sees fresh data from first
+-  Prevents "lost update" problem
 
 **Trade-off**:
 
@@ -309,7 +309,7 @@ Items are assigned sequence numbers based on array order:
 
 ---
 
-## 📝 Examples
+##  Examples
 
 ### Example 1: Priority Treatment First
 
@@ -319,7 +319,7 @@ Items are assigned sequence numbers based on array order:
 
 1. Khám tổng quát (ID: 101)
 2. Cạo vôi răng (ID: 102)
-3. Nhổ răng khôn (ID: 103) ⚠️ Urgent
+3. Nhổ răng khôn (ID: 103) ️ Urgent
 
 **Request:**
 
@@ -364,7 +364,7 @@ curl -X PATCH "https://api.dental.com/api/v1/patient-plan-phases/50/items/reorde
 
 **New Order:**
 
-1. Nhổ răng khôn (ID: 103) ✅ Now first
+1. Nhổ răng khôn (ID: 103)  Now first
 2. Khám tổng quát (ID: 101)
 3. Cạo vôi răng (ID: 102)
 
@@ -419,9 +419,9 @@ curl -X PATCH "https://api.dental.com/api/v1/patient-plan-phases/50/items/reorde
 { "itemIds": [103, 101, 102] }
 ```
 
-**User A Response:** ✅ Success (200 OK)
+**User A Response:**  Success (200 OK)
 
-**User B Response:** ❌ Conflict (409)
+**User B Response:**  Conflict (409)
 
 ```json
 {
@@ -438,7 +438,7 @@ curl -X PATCH "https://api.dental.com/api/v1/patient-plan-phases/50/items/reorde
 
 ---
 
-## 🧪 Testing Guide
+##  Testing Guide
 
 ### Manual Testing (Postman)
 
@@ -529,7 +529,7 @@ Content-Type: application/json
 
 ---
 
-## 🎨 Frontend Integration
+##  Frontend Integration
 
 ### React Component with react-beautiful-dnd
 
@@ -647,7 +647,7 @@ const reorderItems = async (phaseId: number, itemIds: number[]) => {
 
 ---
 
-## 🔐 Security Considerations
+##  Security Considerations
 
 ### Permission Check
 
@@ -665,14 +665,14 @@ const reorderItems = async (phaseId: number, itemIds: number[]) => {
 
 ### Data Integrity
 
-- ✅ SERIALIZABLE transaction isolation
-- ✅ Set comparison validation
-- ✅ Foreign key constraints
-- ✅ Optimistic locking on phase updates
+-  SERIALIZABLE transaction isolation
+-  Set comparison validation
+-  Foreign key constraints
+-  Optimistic locking on phase updates
 
 ---
 
-## 📊 Performance Metrics
+##  Performance Metrics
 
 ### Response Time Targets
 
@@ -704,7 +704,7 @@ Single query instead of N queries.
 
 ---
 
-## 🔗 Related APIs
+##  Related APIs
 
 - **API 5.1**: Create Custom Treatment Plan (creates initial item order)
 - **API 5.7**: Add Items to Phase (new items appended to end)
@@ -712,7 +712,7 @@ Single query instead of N queries.
 
 ---
 
-## 📞 Support
+##  Support
 
 **Technical Issues**: Contact Backend Team
 **UX Questions**: Contact Product Manager
@@ -722,4 +722,4 @@ Single query instead of N queries.
 
 **Last Updated**: January 2025
 **API Version**: V21.5
-**Status**: ✅ Production Ready
+**Status**:  Production Ready

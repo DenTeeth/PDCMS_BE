@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * 📥📤 Storage In/Out Service
+ *  Storage In/Out Service
  * Quản lý nhập/xuất kho và thống kê
  */
 @Service
@@ -40,7 +40,7 @@ public class StorageInOutService {
     private final EmployeeRepository employeeRepository;
 
     /**
-     * 🔥 API: Nhập kho (IMPORT)
+     *  API: Nhập kho (IMPORT)
      * Validation: Kho lạnh bắt buộc có HSD
      */
     @Transactional
@@ -68,7 +68,7 @@ public class StorageInOutService {
             ItemMaster itemMaster = itemMasterRepository.findById(itemDto.getItemMasterId())
                     .orElseThrow(() -> new ItemMasterNotFoundException(itemDto.getItemMasterId()));
 
-            // 🔥 Mentor feedback: Expiry date BẮT BUỘC cho TẤT CẢ vật tư
+            //  Mentor feedback: Expiry date BẮT BUỘC cho TẤT CẢ vật tư
             // Không còn exception cho is_tool
             if (itemDto.getExpiryDate() == null) {
                 throw new ExpiryDateRequiredException(itemMaster.getItemName());
@@ -94,7 +94,7 @@ public class StorageInOutService {
             StorageTransactionItem transactionItem = StorageTransactionItem.builder()
                     .transaction(transaction)
                     .batch(batch)
-                    .itemCode(itemMaster.getItemCode()) // 🔥 Warehouse staff nhận diện vật tư
+                    .itemCode(itemMaster.getItemCode()) //  Warehouse staff nhận diện vật tư
                     .quantityChange(itemDto.getQuantity()) // Dương = Nhập
                     .notes(null)
                     .build();
@@ -109,7 +109,7 @@ public class StorageInOutService {
     }
 
     /**
-     * 🔥 API: Xuất kho (EXPORT)
+     *  API: Xuất kho (EXPORT)
      */
     @Transactional
     public TransactionResponse exportItems(ExportRequest request) {
@@ -151,7 +151,7 @@ public class StorageInOutService {
                 StorageTransactionItem transactionItem = StorageTransactionItem.builder()
                         .transaction(transaction)
                         .batch(batch)
-                        .itemCode(itemMaster.getItemCode()) // 🔥 Warehouse staff nhận diện vật tư
+                        .itemCode(itemMaster.getItemCode()) //  Warehouse staff nhận diện vật tư
                         .quantityChange(-qtyToExport) // Âm = Xuất
                         .notes(null)
                         .build();
@@ -250,7 +250,7 @@ public class StorageInOutService {
     }
 
     // ===========================
-    // 🔍 GET ALL TRANSACTIONS
+    //  GET ALL TRANSACTIONS
     // ===========================
     public List<TransactionResponse> getAllTransactions(TransactionType transactionType, Integer month, Integer year) {
         log.info("Getting all transactions - type: {}, month: {}, year: {}", transactionType, month, year);
@@ -277,7 +277,7 @@ public class StorageInOutService {
     }
 
     // ===========================
-    // 🔍 GET TRANSACTION BY ID
+    //  GET TRANSACTION BY ID
     // ===========================
     public TransactionResponse getTransactionById(Long id) {
         log.info("Getting transaction by ID: {}", id);
@@ -289,7 +289,7 @@ public class StorageInOutService {
     }
 
     // ===========================
-    // ✏️ UPDATE TRANSACTION NOTES
+    // ✏ UPDATE TRANSACTION NOTES
     // ===========================
     @Transactional
     public TransactionResponse updateTransactionNotes(Long id, String notes) {
@@ -303,7 +303,7 @@ public class StorageInOutService {
         StorageTransaction saved = transactionRepository.save(transaction);
         return mapToTransactionResponse(saved);
     } // ===========================
-      // 🗑️ DELETE TRANSACTION (ROLLBACK INVENTORY)
+      //  DELETE TRANSACTION (ROLLBACK INVENTORY)
       // ===========================
 
     @Transactional

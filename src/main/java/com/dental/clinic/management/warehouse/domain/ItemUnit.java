@@ -6,7 +6,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 /**
- * 🔥 Đơn vị đo lường vật tư - Hỗ trợ hierarchy
+ *  Đơn vị đo lường vật tư - Hỗ trợ hierarchy
  * VD: 1 Hộp = 10 Vỉ, 1 Vỉ = 10 Viên
  */
 @Entity

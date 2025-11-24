@@ -68,7 +68,7 @@ public class TreatmentPlanListService {
             Long specializationId,
             Pageable pageable) {
 
-        log.info("🔍 Manager listing all treatment plans - approvalStatus={}, status={}, doctor={}, templateId={}, specializationId={}, page={}, size={}",
+        log.info(" Manager listing all treatment plans - approvalStatus={}, status={}, doctor={}, templateId={}, specializationId={}, page={}, size={}",
                 approvalStatus, status, doctorEmployeeCode, templateId, specializationId, pageable.getPageNumber(), pageable.getPageSize());
 
         // STEP 1: Query with filters and pagination

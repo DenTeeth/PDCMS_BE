@@ -460,7 +460,7 @@ public class EmployeeService {
                     employee.getEmployeeId(), today);
                 log.info("  - Deleted {} future SCHEDULED shift(s)", shiftsCount);
                 
-                log.info("✅ Cleanup completed for deactivated employee {}", employee.getEmployeeCode());
+                log.info(" Cleanup completed for deactivated employee {}", employee.getEmployeeCode());
             }
         }
 

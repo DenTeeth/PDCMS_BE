@@ -8,7 +8,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 /**
- * 🔥 WAREHOUSE AUDIT LOG - QUAN TRỌNG
+ *  WAREHOUSE AUDIT LOG - QUAN TRỌNG
  * Tracking mọi thao tác nhạy cảm trong kho để chống thất thoát
  *
  * Mục đích:

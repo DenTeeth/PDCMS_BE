@@ -74,7 +74,7 @@ public class TreatmentPlanItemAdditionService {
                         autoSubmit = true;
                 }
 
-                log.info("🔄 Adding {} item request(s) to phase {} (autoSubmit={})", requests.size(), phaseId, autoSubmit);
+                log.info(" Adding {} item request(s) to phase {} (autoSubmit={})", requests.size(), phaseId, autoSubmit);
 
                 // ===== STEP 1: VALIDATION =====
                 // Find phase with plan and items
@@ -109,7 +109,7 @@ public class TreatmentPlanItemAdditionService {
 
                 // V21.4: Log warning if adding to APPROVED plan
                 if (plan.getApprovalStatus() == ApprovalStatus.APPROVED) {
-                        log.warn("⚠️ Adding items to APPROVED plan {}. Will auto-submit for re-approval (autoSubmit={})",
+                        log.warn(" Adding items to APPROVED plan {}. Will auto-submit for re-approval (autoSubmit={})",
                                 plan.getPlanCode(), autoSubmit);
                 }
 
@@ -131,7 +131,7 @@ public class TreatmentPlanItemAdditionService {
                                 .max()
                                 .orElse(0) + 1;
 
-                log.info("📊 Starting sequence number: {}", nextSequence);
+                log.info(" Starting sequence number: {}", nextSequence);
 
                 String currentUser = getCurrentUsername();
 
@@ -169,14 +169,14 @@ public class TreatmentPlanItemAdditionService {
                                 itemsToInsert.add(item);
                                 totalCostAdded = totalCostAdded.add(itemPrice); // V21.4: Use auto-filled price
 
-                                log.info("✨ Created item: seq={}, name={}, price={}",
+                                log.info(" Created item: seq={}, name={}, price={}",
                                                 item.getSequenceNumber(), itemName, itemPrice);
                         }
                 }
 
                 // ===== STEP 3: BATCH INSERT =====
                 List<PatientPlanItem> savedItems = itemRepository.saveAll(itemsToInsert);
-                log.info("💾 Saved {} items to database", savedItems.size());
+                log.info(" Saved {} items to database", savedItems.size());
 
                 // ===== STEP 4: FINANCIAL RECALCULATION (P0 FIX) =====
                 BigDecimal oldTotalCost = plan.getTotalPrice();
@@ -190,7 +190,7 @@ public class TreatmentPlanItemAdditionService {
                 BigDecimal newFinalCost = newTotalCost.subtract(plan.getDiscountAmount());
                 plan.setFinalCost(newFinalCost);
 
-                log.info("💰 Financial update: total {} → {}, final {} → {}",
+                log.info(" Financial update: total {} → {}, final {} → {}",
                                 oldTotalCost, newTotalCost, oldFinalCost, newFinalCost);
 
                 // ===== STEP 5: APPROVAL WORKFLOW (V21.4: Conditional auto-submit) =====
@@ -199,10 +199,10 @@ public class TreatmentPlanItemAdditionService {
                 // V21.4: Only auto-submit if autoSubmit=true AND plan was APPROVED
                 if (autoSubmit && oldApprovalStatus == ApprovalStatus.APPROVED) {
                         plan.setApprovalStatus(ApprovalStatus.PENDING_REVIEW);
-                        log.info("📋 V21.4: Auto-submitted plan. Approval status: {} → PENDING_REVIEW (autoSubmit=true)",
+                        log.info(" V21.4: Auto-submitted plan. Approval status: {} → PENDING_REVIEW (autoSubmit=true)",
                                 oldApprovalStatus);
                 } else {
-                        log.info("📋 V21.4: Skipped auto-submit. Plan remains in {} (autoSubmit={})",
+                        log.info(" V21.4: Skipped auto-submit. Plan remains in {} (autoSubmit={})",
                                 oldApprovalStatus, autoSubmit);
                 }
 

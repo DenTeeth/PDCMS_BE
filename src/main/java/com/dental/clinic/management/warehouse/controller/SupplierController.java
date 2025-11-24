@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * 🏢 Supplier Management Controller
+ *  Supplier Management Controller
  * Quản lý nhà cung cấp với Pagination + Search + Sort
  */
 @RestController
@@ -38,7 +38,7 @@ public class SupplierController {
     private final SupplierService supplierService;
 
     /**
-     * 📋 GET ALL Suppliers (Pagination + Search + Sort)
+     *  GET ALL Suppliers (Pagination + Search + Sort)
      * Query Params:
      * - page: Số trang (default 0)
      * - size: Số lượng/trang (default 10)
@@ -71,7 +71,7 @@ public class SupplierController {
     }
 
     /**
-     * 📄 GET Supplier By ID (Detail + Supplied Items)
+     *  GET Supplier By ID (Detail + Supplied Items)
      */
     @Operation(summary = "Lấy chi tiết nhà cung cấp", description = "Trả về thông tin đầy đủ + danh sách vật tư cung cấp")
     @ApiMessage("Lấy chi tiết nhà cung cấp thành công")
@@ -84,7 +84,7 @@ public class SupplierController {
     }
 
     /**
-     * 📦 GET Supplied Items History
+     *  GET Supplied Items History
      * Lấy lịch sử vật tư đã cung cấp (giá nhập lần cuối + ngày nhập gần nhất)
      */
     @Operation(summary = "Lấy lịch sử vật tư cung cấp", description = "Trả về danh sách vật tư + giá nhập lần cuối + ngày nhập gần nhất")
@@ -112,7 +112,7 @@ public class SupplierController {
     }
 
     /**
-     * ✏️ API: Cập nhật Supplier
+     * ✏ API: Cập nhật Supplier
      */
     @Operation(summary = "Cập nhật nhà cung cấp", description = "Update supplier by ID")
     @ApiMessage("Cập nhật nhà cung cấp thành công")
@@ -127,7 +127,7 @@ public class SupplierController {
     }
 
     /**
-     * 🗑️ SOFT DELETE Supplier (World-class approach)
+     *  SOFT DELETE Supplier (World-class approach)
      * - Không xóa cứng, chỉ set isActive = false
      * - Validate: Không cho xóa NCC đã có giao dịch
      */

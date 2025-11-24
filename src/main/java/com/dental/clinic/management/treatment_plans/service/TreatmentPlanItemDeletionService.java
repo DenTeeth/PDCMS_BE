@@ -56,46 +56,46 @@ public class TreatmentPlanItemDeletionService {
          */
         @Transactional
         public DeletePlanItemResponse deleteItem(Long itemId) {
-                log.info("🗑️ API 5.11: Deleting plan item with id: {}", itemId);
+                log.info(" API 5.11: Deleting plan item with id: {}", itemId);
 
-                // 1️⃣ Validate: Find item
+                // 1⃣ Validate: Find item
                 PatientPlanItem item = itemRepository.findById(itemId)
                                 .orElseThrow(() -> {
                                         log.error("Item not found: {}", itemId);
                                         return new NotFoundException("Hạng mục không tồn tại");
                                 });
 
-                // 2️⃣ Get parent entities and item data (BEFORE delete)
+                // 2⃣ Get parent entities and item data (BEFORE delete)
                 PatientPlanPhase phase = item.getPhase();
                 PatientTreatmentPlan plan = phase.getTreatmentPlan();
                 BigDecimal deletedPrice = item.getPrice();
                 String deletedItemName = item.getItemName();
 
-                // 2.5️⃣ RBAC verification (EMPLOYEE can only modify plans they created)
+                // 2.5⃣ RBAC verification (EMPLOYEE can only modify plans they created)
                 Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
                 rbacService.verifyEmployeeCanModifyPlan(plan, authentication);
 
-                log.info("📋 Item details: id={}, name='{}', price={}, status={}, plan_id={}",
+                log.info(" Item details: id={}, name='{}', price={}, status={}, plan_id={}",
                                 itemId, deletedItemName, deletedPrice, item.getStatus(), plan.getPlanId());
 
-                // 3️⃣ GUARD 1: Item Status Check (CRITICAL!)
+                // 3⃣ GUARD 1: Item Status Check (CRITICAL!)
                 validateItemNotScheduledOrCompleted(item);
 
-                // 4️⃣ GUARD 2: Approval Status Check (CRITICAL!)
+                // 4⃣ GUARD 2: Approval Status Check (CRITICAL!)
                 validatePlanNotApprovedOrPendingReview(plan);
 
-                // 5️⃣ Update Finances (BEFORE delete - tránh lost reference)
+                // 5⃣ Update Finances (BEFORE delete - tránh lost reference)
                 updatePlanFinances(plan, deletedPrice);
 
-                // 6️⃣ Execute Delete
+                // 6⃣ Execute Delete
                 itemRepository.delete(item);
                 log.info("Item {} deleted from database", itemId);
 
-                // 7️⃣ Create Audit Log (AFTER delete - using saved data)
+                // 7⃣ Create Audit Log (AFTER delete - using saved data)
                 Integer performedBy = getCurrentEmployeeId();
                 createAuditLog(plan, performedBy, itemId, deletedItemName, deletedPrice);
 
-                // 8️⃣ Build Response (Option B)
+                // 8⃣ Build Response (Option B)
                 DeletePlanItemResponse response = DeletePlanItemResponse.of(
                                 itemId,
                                 deletedItemName,
@@ -175,7 +175,7 @@ public class TreatmentPlanItemDeletionService {
 
                 planRepository.save(plan);
 
-                log.info("💰 Financial update: TotalPrice {} -> {}, FinalCost {} -> {}",
+                log.info(" Financial update: TotalPrice {} -> {}, FinalCost {} -> {}",
                                 oldTotalPrice, plan.getTotalPrice(),
                                 oldFinalCost, plan.getFinalCost());
         }

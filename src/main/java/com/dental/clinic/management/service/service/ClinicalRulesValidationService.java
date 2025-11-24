@@ -78,7 +78,7 @@ public class ClinicalRulesValidationService {
             validateMinimumDays(patientId, serviceId, appointmentDate);
         }
 
-        log.info("V21: ✅ All clinical rules passed for patient {} booking {} services",
+        log.info("V21:  All clinical rules passed for patient {} booking {} services",
                 patientId, serviceIds.size());
     }
 
@@ -104,7 +104,7 @@ public class ClinicalRulesValidationService {
             String note = firstViolation.getReceptionistNote();
 
             String errorMsg = String.format(
-                    "❌ VI PHẠM QUY TẮC LÂM SÀNG: Không thể đặt '%s' và '%s' cùng ngày. %s",
+                    " VI PHẠM QUY TẮC LÂM SÀNG: Không thể đặt '%s' và '%s' cùng ngày. %s",
                     serviceName, dependentServiceName,
                     note != null ? note : "");
 
@@ -157,7 +157,7 @@ public class ClinicalRulesValidationService {
                 String note = prereq.getReceptionistNote();
 
                 String errorMsg = String.format(
-                        "❌ VI PHẠM QUY TẮC LÂM SÀNG: Bệnh nhân chưa hoàn thành '%s' (tiền đề bắt buộc cho '%s'). %s",
+                        " VI PHẠM QUY TẮC LÂM SÀNG: Bệnh nhân chưa hoàn thành '%s' (tiền đề bắt buộc cho '%s'). %s",
                         prerequisiteServiceName, serviceName,
                         note != null ? note : "");
 
@@ -167,7 +167,7 @@ public class ClinicalRulesValidationService {
             }
         }
 
-        log.debug("V21: ✅ All prerequisites met for service {}", serviceId);
+        log.debug("V21:  All prerequisites met for service {}", serviceId);
     }
 
     /**
@@ -221,7 +221,7 @@ public class ClinicalRulesValidationService {
                 String note = rule.getReceptionistNote();
 
                 String errorMsg = String.format(
-                        "❌ VI PHẠM QUY TẮC LÂM SÀNG: Bệnh nhân chưa hoàn thành '%s' (cần làm trước '%s' ít nhất %d ngày). %s",
+                        " VI PHẠM QUY TẮC LÂM SÀNG: Bệnh nhân chưa hoàn thành '%s' (cần làm trước '%s' ít nhất %d ngày). %s",
                         prerequisiteServiceName, serviceName, minDays,
                         note != null ? note : "");
 
@@ -239,7 +239,7 @@ public class ClinicalRulesValidationService {
                 String note = rule.getReceptionistNote();
 
                 String errorMsg = String.format(
-                        "❌ VI PHẠM QUY TẮC LÂM SÀNG: '%s' yêu cầu '%s' phải hoàn thành ít nhất %d ngày trước. " +
+                        " VI PHẠM QUY TẮC LÂM SÀNG: '%s' yêu cầu '%s' phải hoàn thành ít nhất %d ngày trước. " +
                                 "Hiện tại chỉ được %d ngày (ngày hoàn thành: %s, ngày đặt mới: %s). %s",
                         serviceName, prerequisiteServiceName, minDays,
                         daysBetween, prerequisiteCompletionDate, appointmentDate,
@@ -251,7 +251,7 @@ public class ClinicalRulesValidationService {
             }
         }
 
-        log.debug("V21: ✅ All minimum days rules met for service {}", serviceId);
+        log.debug("V21:  All minimum days rules met for service {}", serviceId);
     }
 
     /**

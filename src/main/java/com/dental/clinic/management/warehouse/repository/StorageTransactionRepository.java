@@ -59,7 +59,7 @@ public interface StorageTransactionRepository extends JpaRepository<StorageTrans
     Integer getNextSequenceNumber(@Param("prefix") String prefix);
 
     /**
-     * 🔥 WORLD-CLASS QUERY: Lấy lịch sử vật tư cung cấp từ NCC
+     *  WORLD-CLASS QUERY: Lấy lịch sử vật tư cung cấp từ NCC
      * - Chỉ lấy giao dịch IMPORT
      * - DISTINCT ON: Lấy 1 dòng mới nhất cho mỗi vật tư
      * - ORDER BY: Đảm bảo lấy giao dịch có ngày gần nhất

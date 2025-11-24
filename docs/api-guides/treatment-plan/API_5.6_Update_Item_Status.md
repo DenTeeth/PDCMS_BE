@@ -57,20 +57,20 @@ stateDiagram-v2
 
 | From State          | To State            | Allowed?  | Notes                                              |
 | ------------------- | ------------------- | --------- | -------------------------------------------------- |
-| `PENDING`           | `READY_FOR_BOOKING` | ✅ Yes    | Auto-activation khi item trước hoàn thành          |
-| `PENDING`           | `SKIPPED`           | ✅ Yes    | Bỏ qua item trước khi bắt đầu                      |
-| `PENDING`           | `COMPLETED`         | ✅ Yes    | Đánh dấu hoàn thành trực tiếp                      |
-| `READY_FOR_BOOKING` | `SCHEDULED`         | ✅ Yes    | Được đặt lịch hẹn (API tạo appointment)            |
-| `READY_FOR_BOOKING` | `SKIPPED`           | ✅ Yes    | Bệnh nhân từ chối dịch vụ (giảm chi phí plan)      |
-| `READY_FOR_BOOKING` | `COMPLETED`         | ✅ Yes    | Hoàn thành trực tiếp không cần hẹn                 |
-| `SCHEDULED`         | `IN_PROGRESS`       | ✅ Yes    | Bác sĩ bắt đầu điều trị                            |
-| `SCHEDULED`         | `COMPLETED`         | ✅ Yes    | Hoàn thành trong cuộc hẹn                          |
-| `SCHEDULED`         | `SKIPPED`           | ❌ **NO** | **Không được phép** - Phải hủy appointment trước   |
-| `IN_PROGRESS`       | `COMPLETED`         | ✅ Yes    | Kết thúc điều trị                                  |
-| `IN_PROGRESS`       | `SKIPPED`           | ❌ **NO** | **Không được phép** - Đang điều trị không thể skip |
-| `SKIPPED`           | `READY_FOR_BOOKING` | ✅ Yes    | **Undo skip** - Thêm lại chi phí vào plan          |
-| `SKIPPED`           | `COMPLETED`         | ✅ Yes    | Đánh dấu hoàn thành sau khi skip                   |
-| `COMPLETED`         | ANY                 | ❌ **NO** | **Không được phép** - Trạng thái cuối cùng         |
+| `PENDING`           | `READY_FOR_BOOKING` |  Yes    | Auto-activation khi item trước hoàn thành          |
+| `PENDING`           | `SKIPPED`           |  Yes    | Bỏ qua item trước khi bắt đầu                      |
+| `PENDING`           | `COMPLETED`         |  Yes    | Đánh dấu hoàn thành trực tiếp                      |
+| `READY_FOR_BOOKING` | `SCHEDULED`         |  Yes    | Được đặt lịch hẹn (API tạo appointment)            |
+| `READY_FOR_BOOKING` | `SKIPPED`           |  Yes    | Bệnh nhân từ chối dịch vụ (giảm chi phí plan)      |
+| `READY_FOR_BOOKING` | `COMPLETED`         |  Yes    | Hoàn thành trực tiếp không cần hẹn                 |
+| `SCHEDULED`         | `IN_PROGRESS`       |  Yes    | Bác sĩ bắt đầu điều trị                            |
+| `SCHEDULED`         | `COMPLETED`         |  Yes    | Hoàn thành trong cuộc hẹn                          |
+| `SCHEDULED`         | `SKIPPED`           |  **NO** | **Không được phép** - Phải hủy appointment trước   |
+| `IN_PROGRESS`       | `COMPLETED`         |  Yes    | Kết thúc điều trị                                  |
+| `IN_PROGRESS`       | `SKIPPED`           |  **NO** | **Không được phép** - Đang điều trị không thể skip |
+| `SKIPPED`           | `READY_FOR_BOOKING` |  Yes    | **Undo skip** - Thêm lại chi phí vào plan          |
+| `SKIPPED`           | `COMPLETED`         |  Yes    | Đánh dấu hoàn thành sau khi skip                   |
+| `COMPLETED`         | ANY                 |  **NO** | **Không được phép** - Trạng thái cuối cùng         |
 
 ---
 
@@ -90,9 +90,9 @@ stateDiagram-v2
 
 | Field         | Type       | Required | Validation                                                                   | Description                                                                                                   |
 | ------------- | ---------- | -------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `status`      | `string`   | ✅ Yes   | Enum: PENDING, READY_FOR_BOOKING, SCHEDULED, IN_PROGRESS, COMPLETED, SKIPPED | Trạng thái mới (phải tuân theo state machine)                                                                 |
-| `notes`       | `string`   | ⚪ No    | Max 500 chars                                                                | Ghi chú giải thích lý do thay đổi trạng thái                                                                  |
-| `completedAt` | `datetime` | ⚪ No    | ISO 8601                                                                     | Thời điểm hoàn thành (chỉ dùng khi status=COMPLETED). Nếu không cung cấp, hệ thống sẽ dùng thời gian hiện tại |
+| `status`      | `string`   |  Yes   | Enum: PENDING, READY_FOR_BOOKING, SCHEDULED, IN_PROGRESS, COMPLETED, SKIPPED | Trạng thái mới (phải tuân theo state machine)                                                                 |
+| `notes`       | `string`   |  No    | Max 500 chars                                                                | Ghi chú giải thích lý do thay đổi trạng thái                                                                  |
+| `completedAt` | `datetime` |  No    | ISO 8601                                                                     | Thời điểm hoàn thành (chỉ dùng khi status=COMPLETED). Nếu không cung cấp, hệ thống sẽ dùng thời gian hiện tại |
 
 ### Validation Rules
 
@@ -164,9 +164,9 @@ stateDiagram-v2
 
 | Transition                      | Financial Impact | Action                                          | Example                                  |
 | ------------------------------- | ---------------- | ----------------------------------------------- | ---------------------------------------- |
-| **ANY → SKIPPED**               | ✅ Yes           | **Giảm** `plan.total_cost` và `plan.final_cost` | Item 500,000 VND → Plan giảm 500,000 VND |
-| **SKIPPED → READY_FOR_BOOKING** | ✅ Yes           | **Tăng** `plan.total_cost` và `plan.final_cost` | Undo skip → Plan tăng lại 500,000 VND    |
-| Other transitions               | ❌ No            | Không thay đổi chi phí plan                     | PENDING → COMPLETED                      |
+| **ANY → SKIPPED**               |  Yes           | **Giảm** `plan.total_cost` và `plan.final_cost` | Item 500,000 VND → Plan giảm 500,000 VND |
+| **SKIPPED → READY_FOR_BOOKING** |  Yes           | **Tăng** `plan.total_cost` và `plan.final_cost` | Undo skip → Plan tăng lại 500,000 VND    |
+| Other transitions               |  No            | Không thay đổi chi phí plan                     | PENDING → COMPLETED                      |
 
 ### Example: Skip Item
 
@@ -387,7 +387,7 @@ curl -X PATCH https://api.example.com/api/v1/patient-plan-items/309/status \
 
 **Expected Result:**
 
-- ❌ **HTTP 409 Conflict**
+-  **HTTP 409 Conflict**
 - Error message: "Cannot skip item: 1 active appointment(s) found. Please cancel appointments first."
 - **Action Required**: Phải hủy appointment trước khi skip item
 
@@ -430,11 +430,11 @@ curl -X PATCH https://api.example.com/api/v1/patient-plan-items/315/status \
 
 | Role        | Permission              | Can Update Status? | Notes                                     |
 | ----------- | ----------------------- | ------------------ | ----------------------------------------- |
-| **ADMIN**   | Always has access       | ✅ Yes             | Full access to all items                  |
-| **MANAGER** | `UPDATE_TREATMENT_PLAN` | ✅ Yes             | Can manage all treatment plans            |
-| **DENTIST** | `UPDATE_TREATMENT_PLAN` | ✅ Yes             | Can update items in their treatment plans |
-| **NURSE**   | ❌ No permission        | ❌ No              | Cannot update item status                 |
-| **PATIENT** | ❌ No permission        | ❌ No              | Cannot directly update status             |
+| **ADMIN**   | Always has access       |  Yes             | Full access to all items                  |
+| **MANAGER** | `UPDATE_TREATMENT_PLAN` |  Yes             | Can manage all treatment plans            |
+| **DENTIST** | `UPDATE_TREATMENT_PLAN` |  Yes             | Can update items in their treatment plans |
+| **NURSE**   |  No permission        |  No              | Cannot update item status                 |
+| **PATIENT** |  No permission        |  No              | Cannot directly update status             |
 
 ---
 
@@ -636,7 +636,7 @@ const response = await fetch("/api/v1/patient-plan-items/308/status", {
 const data = await response.json();
 
 if (data.financialImpact) {
-  // ⚠️ CRITICAL: Notify user about cost change
+  // ️ CRITICAL: Notify user about cost change
   alert(`CHÚ Ý: ${data.financialImpactMessage}`);
 
   // Refresh plan summary to show updated costs
@@ -688,11 +688,11 @@ const nextStatuses = getAllowedTransitions(item.status);
 ```java
 // Backend automatically logs via TreatmentPlanItemService
 // Log format:
-log.info("📋 Audit: User {} changed item {} from {} to {}",
+log.info(" Audit: User {} changed item {} from {} to {}",
     currentUser, itemId, currentStatus, newStatus);
 
 // Example output:
-// 📋 Audit: User DR_AN_KHOA changed item 307 from PENDING to COMPLETED
+//  Audit: User DR_AN_KHOA changed item 307 from PENDING to COMPLETED
 ```
 
 ---
@@ -779,14 +779,14 @@ GROUP BY phase.patient_phase_id, phase.phase_name;
 
 ### Version 1.0 (2024-01-15)
 
-- ✅ Initial release
-- ✅ Implemented 11-rule state machine
-- ✅ Added financial recalculation logic (skip/unskip)
-- ✅ Added appointment validation (cannot skip if active)
-- ✅ Added auto-activate next item
-- ✅ Added auto-complete phase
-- ✅ Added audit logging
-- ✅ Permission: `UPDATE_TREATMENT_PLAN` for ADMIN, MANAGER, DENTIST
+-  Initial release
+-  Implemented 11-rule state machine
+-  Added financial recalculation logic (skip/unskip)
+-  Added appointment validation (cannot skip if active)
+-  Added auto-activate next item
+-  Added auto-complete phase
+-  Added audit logging
+-  Permission: `UPDATE_TREATMENT_PLAN` for ADMIN, MANAGER, DENTIST
 
 ---
 

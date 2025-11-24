@@ -146,7 +146,7 @@ public class AppointmentStatusService {
         // Step 7: Auto-update linked plan item statuses (V21.5)
         updateLinkedPlanItemsStatus(appointment.getAppointmentId(), newStatus, now);
 
-        log.info("✅ Successfully updated appointment status: code={}, {} -> {}",
+        log.info(" Successfully updated appointment status: code={}, {} -> {}",
                 appointmentCode, currentStatus, newStatus);
     }
 
@@ -313,7 +313,7 @@ public class AppointmentStatusService {
         String findItemsQuery = "SELECT item_id FROM appointment_plan_items WHERE appointment_id = ?";
         List<Long> itemIds = jdbcTemplate.queryForList(findItemsQuery, Long.class, appointmentId.longValue());
         
-        log.info("🔍 Found {} plan items linked to appointment {} for status {}", itemIds.size(), appointmentId, appointmentStatus);
+        log.info(" Found {} plan items linked to appointment {} for status {}", itemIds.size(), appointmentId, appointmentStatus);
         
         if (itemIds.isEmpty()) {
             log.debug("No plan items linked to appointment {}", appointmentId);
@@ -352,13 +352,13 @@ public class AppointmentStatusService {
             }
             
             if (updatedCount == 0) {
-                log.warn("⚠️ No plan items updated for appointment {} - itemIds: {}", appointmentId, itemIds);
+                log.warn(" No plan items updated for appointment {} - itemIds: {}", appointmentId, itemIds);
             } else {
                 if (appointmentStatus == AppointmentStatus.COMPLETED) {
-                    log.info("✅ Updated {} plan items to COMPLETED with timestamp for appointment {}", 
+                    log.info(" Updated {} plan items to COMPLETED with timestamp for appointment {}", 
                         updatedCount, appointmentId);
                 } else {
-                    log.info("✅ Updated {} plan items to {} for appointment {}", 
+                    log.info(" Updated {} plan items to {} for appointment {}", 
                         updatedCount, targetStatus, appointmentId);
                 }
             }
@@ -366,7 +366,7 @@ public class AppointmentStatusService {
             // Force flush plan item updates to database before checking phases
             entityManager.flush();
         } catch (Exception e) {
-            log.error("❌ Failed to update plan items for appointment {}: {}", appointmentId, e.getMessage(), e);
+            log.error(" Failed to update plan items for appointment {}: {}", appointmentId, e.getMessage(), e);
             throw new RuntimeException("Failed to update linked plan items", e);
         }
 
@@ -434,7 +434,7 @@ public class AppointmentStatusService {
         }
 
     } catch (Exception e) {
-        log.error("❌ Failed to check phase completion: {}", e.getMessage(), e);
+        log.error(" Failed to check phase completion: {}", e.getMessage(), e);
         // Don't throw - phase completion is a nice-to-have feature
         // Main plan item update should not fail because of this
     }
@@ -476,7 +476,7 @@ public class AppointmentStatusService {
             phase.setStatus(PhaseStatus.COMPLETED);
             phase.setCompletionDate(java.time.LocalDate.now());
             phaseRepository.save(phase);
-            log.info("🎯 Phase {} auto-completed: all {} items are done", phaseId, items.size());
+            log.info(" Phase {} auto-completed: all {} items are done", phaseId, items.size());
         } else {
             long completedCount = items.stream()
                     .filter(item -> item.getStatus() == PlanItemStatus.COMPLETED ||
@@ -531,7 +531,7 @@ public class AppointmentStatusService {
             // AUTO-COMPLETE: IN_PROGRESS → COMPLETED
             plan.setStatus(TreatmentPlanStatus.COMPLETED);
             planRepository.save(plan);
-            log.info("✅ Treatment plan {} (code: {}) auto-completed: all {} phases are done",
+            log.info(" Treatment plan {} (code: {}) auto-completed: all {} phases are done",
                     planId, plan.getPlanCode(), phases.size());
         } else {
             long completedPhasesCount = phases.stream()

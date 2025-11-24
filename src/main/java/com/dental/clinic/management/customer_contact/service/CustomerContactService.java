@@ -267,7 +267,7 @@ public class CustomerContactService {
                     "not_interested");
         }
 
-        // ✅ Tạo Patient thực sự
+        //  Tạo Patient thực sự
         CreatePatientRequest patientRequest = new CreatePatientRequest();
 
         // Map từ contact sang patient

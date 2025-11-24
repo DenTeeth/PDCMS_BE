@@ -319,14 +319,14 @@ public class PartTimeRegistrationAdminController {
     @PostMapping("/backfill-shifts")
     @PreAuthorize("hasAuthority('MANAGE_PART_TIME_REGISTRATIONS')")
     public ResponseEntity<String> backfillShifts() {
-        log.info("🔄 Admin triggered backfill for PART_TIME_FLEX registrations");
+        log.info(" Admin triggered backfill for PART_TIME_FLEX registrations");
         
         try {
             String summary = approvalService.backfillShiftsForExistingRegistrations();
-            log.info("✅ Backfill completed successfully");
+            log.info(" Backfill completed successfully");
             return ResponseEntity.ok(summary);
         } catch (Exception e) {
-            log.error("❌ Backfill failed: {}", e.getMessage(), e);
+            log.error(" Backfill failed: {}", e.getMessage(), e);
             return ResponseEntity.status(500).body("Backfill failed: " + e.getMessage());
         }
     }
@@ -350,11 +350,11 @@ public class PartTimeRegistrationAdminController {
     @PostMapping("/{registrationId}/regenerate-shifts")
     @PreAuthorize("hasAuthority('MANAGE_PART_TIME_REGISTRATIONS')")
     public ResponseEntity<String> regenerateShifts(@PathVariable Integer registrationId) {
-        log.info("🔄 Admin triggered shift regeneration for registration {}", registrationId);
+        log.info(" Admin triggered shift regeneration for registration {}", registrationId);
         
         try {
             int shiftsCreated = approvalService.regenerateShiftsForRegistration(registrationId);
-            String message = String.format("✅ Regenerated %d shifts for registration #%d", 
+            String message = String.format(" Regenerated %d shifts for registration #%d", 
                     shiftsCreated, registrationId);
             log.info(message);
             return ResponseEntity.ok(message);
@@ -365,7 +365,7 @@ public class PartTimeRegistrationAdminController {
             log.warn("Cannot regenerate shifts for registration {}: {}", registrationId, e.getMessage());
             return ResponseEntity.status(400).body(e.getMessage());
         } catch (Exception e) {
-            log.error("❌ Failed to regenerate shifts for registration {}: {}", registrationId, e.getMessage(), e);
+            log.error(" Failed to regenerate shifts for registration {}: {}", registrationId, e.getMessage(), e);
             return ResponseEntity.status(500).body("Failed to regenerate shifts: " + e.getMessage());
         }
     }

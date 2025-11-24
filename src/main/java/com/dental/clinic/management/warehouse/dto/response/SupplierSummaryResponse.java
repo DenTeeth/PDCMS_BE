@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * 📋 SupplierSummaryResponse - DTO nhẹ cho GET ALL (Table View)
+ *  SupplierSummaryResponse - DTO nhẹ cho GET ALL (Table View)
  * Chỉ chứa thông tin cần thiết để hiển thị trên bảng danh sách
  */
 @Data

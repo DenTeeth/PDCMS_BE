@@ -1,4 +1,4 @@
-# 📘 TIME-OFF MANAGEMENT API TEST GUIDE (P5.1, P5.2, P6.1)
+#  TIME-OFF MANAGEMENT API TEST GUIDE (P5.1, P5.2, P6.1)
 
 **Version:** V14 Hybrid
 **Date:** 2025-10-31 (Updated)
@@ -6,20 +6,20 @@
 
 ---
 
-## 🔄 CHANGELOG (2025-10-31)
+##  CHANGELOG (2025-10-31)
 
-### ✅ Đã sửa và cập nhật:
+###  Đã sửa và cập nhật:
 
 1. **Exception Message (SHIFT_NOT_FOUND_FOR_LEAVE):**
 
-   - ❌ OLD: "Không thể xin nghỉ. Nhân viên 5 không có lịch làm việc vào 2025-11-20 ca WKS_MORNING_02."
-   - ✅ NEW: "Nhân viên không có lịch làm việc vào ngày này. Vui lòng kiểm tra lịch làm việc trước khi đăng ký nghỉ phép. (Ngày: 2025-11-20, Ca: Ca sáng)"
+   -  OLD: "Không thể xin nghỉ. Nhân viên 5 không có lịch làm việc vào 2025-11-20 ca WKS_MORNING_02."
+   -  NEW: "Nhân viên không có lịch làm việc vào ngày này. Vui lòng kiểm tra lịch làm việc trước khi đăng ký nghỉ phép. (Ngày: 2025-11-20, Ca: Ca sáng)"
    - **Lý do:** Message chuyên nghiệp hơn, rõ ràng hơn cho FE, có thêm tên ca làm việc thay vì chỉ ID
 
 2. **Test Examples sử dụng đúng Seed Data:**
 
-   - ❌ OLD: Employee 5 test với `WKS_MORNING_02` (SAI - không có trong seed)
-   - ✅ NEW: Employee 5 test với `WKS_MORNING_01` (ĐÚNG - theo seed data)
+   -  OLD: Employee 5 test với `WKS_MORNING_02` (SAI - không có trong seed)
+   -  NEW: Employee 5 test với `WKS_MORNING_01` (ĐÚNG - theo seed data)
    - **Lý do:** Employee 5 (Tuấn Hoàng Văn) làm ca WKS_MORNING_01 từ Thứ 2-Thứ 7 (Mon-Sat)
 
 3. **Cập nhật Employee Information:**
@@ -32,9 +32,9 @@
    - Giữ nguyên business logic V14 Hybrid (check từ cả fixed + part-time registrations)
    - Message lỗi tiếng Việt chuyên nghiệp, dễ hiểu cho end-user
 
-5. **🐛 BUG FIX: NullPointerException khi APPROVE/REJECT/CANCEL request:**
-   - ❌ **Vấn đề:** `account.getEmployee().getEmployeeId()` gây NPE nếu Account không có Employee liên kết
-   - ✅ **Fix:** Thêm null check cho tất cả 6 vị trí trong `TimeOffRequestService`:
+5. ** BUG FIX: NullPointerException khi APPROVE/REJECT/CANCEL request:**
+   -  **Vấn đề:** `account.getEmployee().getEmployeeId()` gây NPE nếu Account không có Employee liên kết
+   -  **Fix:** Thêm null check cho tất cả 6 vị trí trong `TimeOffRequestService`:
      - `getAllRequests()` - LINE 96, 140
      - `getRequestById()` - LINE 140
      - `createRequest()` - LINE 275
@@ -44,21 +44,21 @@
    - **Error message rõ ràng:** "Account {username} không có Employee liên kết."
    - **Impact:** Fix 500 Internal Server Error → Trả về message lỗi rõ ràng
 
-### 📌 Lưu ý quan trọng cho FE Team:
+###  Lưu ý quan trọng cho FE Team:
 
-- ⚠️ **Khi test API POST /api/v1/time-off-requests:**
+- ️ **Khi test API POST /api/v1/time-off-requests:**
 
   - Employee 5 → Dùng `workShiftId: "WKS_MORNING_01"` (NOT WKS_MORNING_02)
   - Employee 6 → Dùng `workShiftId: "WKS_MORNING_02"` vào Thứ 2, 4, 6
   - Employee 8 (PART_TIME_FLEX) → Check part_time_registrations trước khi test
 
-- ✅ **Error SHIFT_NOT_FOUND_FOR_LEAVE (409):**
+-  **Error SHIFT_NOT_FOUND_FOR_LEAVE (409):**
   - Message giờ đã rõ ràng hơn với tên ca làm việc
   - FE có thể hiển thị trực tiếp cho user không cần parse
 
 ---
 
-## 🎯 OVERVIEW
+##  OVERVIEW
 
 Hệ thống quản lý nghỉ phép bao gồm 3 modules chính:
 
@@ -82,7 +82,7 @@ Hệ thống quản lý nghỉ phép bao gồm 3 modules chính:
 
 ---
 
-## 📊 SEED DATA REFERENCE
+##  SEED DATA REFERENCE
 
 ### Employees (từ seed data)
 
@@ -128,39 +128,39 @@ Hệ thống quản lý nghỉ phép bao gồm 3 modules chính:
 
 ---
 
-## 🔐 RBAC PERMISSIONS MATRIX
+##  RBAC PERMISSIONS MATRIX
 
 ### P6.1 - Time-Off Types Management
 
 | Permission            | ROLE_ADMIN | ROLE_MANAGER | ROLE_EMPLOYEE |
 | --------------------- | ---------- | ------------ | ------------- |
-| VIEW_TIMEOFF_TYPE_ALL | ✅         | ✅           | ❌            |
-| CREATE_TIMEOFF_TYPE   | ✅         | ✅           | ❌            |
-| UPDATE_TIMEOFF_TYPE   | ✅         | ✅           | ❌            |
-| DELETE_TIMEOFF_TYPE   | ✅         | ✅           | ❌            |
+| VIEW_TIMEOFF_TYPE_ALL |          |            |             |
+| CREATE_TIMEOFF_TYPE   |          |            |             |
+| UPDATE_TIMEOFF_TYPE   |          |            |             |
+| DELETE_TIMEOFF_TYPE   |          |            |             |
 
 ### P5.2 - Leave Balance Management
 
 | Permission             | ROLE_ADMIN | ROLE_MANAGER | ROLE_EMPLOYEE |
 | ---------------------- | ---------- | ------------ | ------------- |
-| VIEW_LEAVE_BALANCE_ALL | ✅         | ✅           | ❌            |
-| ADJUST_LEAVE_BALANCE   | ✅         | ✅           | ❌            |
+| VIEW_LEAVE_BALANCE_ALL |          |            |             |
+| ADJUST_LEAVE_BALANCE   |          |            |             |
 
 ### P5.1 - Time-Off Requests
 
 | Permission             | ROLE_ADMIN | ROLE_MANAGER | ROLE_EMPLOYEE |
 | ---------------------- | ---------- | ------------ | ------------- |
-| VIEW_TIMEOFF_ALL       | ✅         | ✅           | ❌            |
-| VIEW_TIMEOFF_OWN       | ✅         | ✅           | ✅            |
-| CREATE_TIMEOFF         | ✅         | ✅           | ✅            |
-| APPROVE_TIMEOFF        | ✅         | ✅           | ❌            |
-| REJECT_TIMEOFF         | ✅         | ✅           | ❌            |
-| CANCEL_TIMEOFF_OWN     | ✅         | ✅           | ✅            |
-| CANCEL_TIMEOFF_PENDING | ✅         | ✅           | ❌            |
+| VIEW_TIMEOFF_ALL       |          |            |             |
+| VIEW_TIMEOFF_OWN       |          |            |             |
+| CREATE_TIMEOFF         |          |            |             |
+| APPROVE_TIMEOFF        |          |            |             |
+| REJECT_TIMEOFF         |          |            |             |
+| CANCEL_TIMEOFF_OWN     |          |            |             |
+| CANCEL_TIMEOFF_PENDING |          |            |             |
 
 ---
 
-## 📝 MODULE P6.1: TIME-OFF TYPES MANAGEMENT
+##  MODULE P6.1: TIME-OFF TYPES MANAGEMENT
 
 Admin định nghĩa các loại nghỉ phép.
 
@@ -291,16 +291,16 @@ GET /api/v1/admin/time-off-types?is_paid=false
 **Validation Rules:**
 
 1. **requiresBalance & defaultDaysPerYear (HAI CHIỀU):**
-   - ✅ Nếu `requiresBalance = true` → `defaultDaysPerYear` **PHẢI** có giá trị (để dùng cho annual reset)
-   - ✅ Nếu `requiresBalance = false` → `defaultDaysPerYear` **PHẢI** là `null` (không cần balance tracking)
+   -  Nếu `requiresBalance = true` → `defaultDaysPerYear` **PHẢI** có giá trị (để dùng cho annual reset)
+   -  Nếu `requiresBalance = false` → `defaultDaysPerYear` **PHẢI** là `null` (không cần balance tracking)
    - **Backend sẽ reject cả hai trường hợp sai logic:**
-     - ❌ `requiresBalance = true` VÀ `defaultDaysPerYear = null` → 400 `MISSING_DEFAULT_DAYS`
-     - ❌ `requiresBalance = false` VÀ `defaultDaysPerYear != null` → 400 `INVALID_DEFAULT_DAYS`
+     -  `requiresBalance = true` VÀ `defaultDaysPerYear = null` → 400 `MISSING_DEFAULT_DAYS`
+     -  `requiresBalance = false` VÀ `defaultDaysPerYear != null` → 400 `INVALID_DEFAULT_DAYS`
    - Ví dụ:
-     - ✅ ANNUAL_LEAVE: `requiresBalance = true, defaultDaysPerYear = 12.0`
-     - ✅ SICK_LEAVE: `requiresBalance = false, defaultDaysPerYear = null`
-     - ❌ INVALID: `requiresBalance = true, defaultDaysPerYear = null` → 400 BAD_REQUEST
-     - ❌ INVALID: `requiresBalance = false, defaultDaysPerYear = 12.0` → 400 BAD_REQUEST
+     -  ANNUAL_LEAVE: `requiresBalance = true, defaultDaysPerYear = 12.0`
+     -  SICK_LEAVE: `requiresBalance = false, defaultDaysPerYear = null`
+     -  INVALID: `requiresBalance = true, defaultDaysPerYear = null` → 400 BAD_REQUEST
+     -  INVALID: `requiresBalance = false, defaultDaysPerYear = 12.0` → 400 BAD_REQUEST
 
 **Error Responses:**
 
@@ -411,7 +411,7 @@ Authorization: Bearer {manager_token}
 
 ---
 
-## 📊 MODULE P5.2: LEAVE BALANCE MANAGEMENT
+##  MODULE P5.2: LEAVE BALANCE MANAGEMENT
 
 Admin quản lý "ví phép" của nhân viên.
 
@@ -641,7 +641,7 @@ Authorization: Bearer {manager_token}
 
 ---
 
-## 🎫 MODULE P5.1: TIME-OFF REQUEST MANAGEMENT
+##  MODULE P5.1: TIME-OFF REQUEST MANAGEMENT
 
 ### API 1: GET /api/v1/time-off-requests
 
@@ -1017,7 +1017,7 @@ Lặp từng ngày từ start_date đến end_date:
 
 ---
 
-## 🧪 TESTING SCENARIOS
+##  TESTING SCENARIOS
 
 ### Scenario 1: Admin Setup Time-Off Types
 
@@ -1272,9 +1272,9 @@ Authorization: Bearer {employee_token}
 
 # Expected: 201 CREATED
 # System đã check:
-# - ✅ Employee 5 có lịch WKS_MORNING_01 vào Thứ 5 (từ fixed_shift_registration)
-# - ✅ Số dư phép đủ (14.0 >= 0.5)
-# - ✅ Không trùng request khác
+# -  Employee 5 có lịch WKS_MORNING_01 vào Thứ 5 (từ fixed_shift_registration)
+# -  Số dư phép đủ (14.0 >= 0.5)
+# -  Không trùng request khác
 # → Tạo thành công với status = PENDING
 
 # 4. Xem lại request vừa tạo
@@ -1318,10 +1318,10 @@ Authorization: Bearer {manager_token}
 
 # Expected: 200 OK
 # System tự động:
-# - ✅ UPDATE employee_shifts: Ca sáng 20/11/2025 → status = ON_LEAVE
-# - ✅ UPDATE employee_leave_balances: days_taken = 0.0 + 0.5 = 0.5
-# - ✅ INSERT leave_balance_history: change_amount = -0.5, reason = APPROVED_REQUEST
-# - ✅ Cập nhật request: status = APPROVED, approved_by = 2 (manager), approved_at = now()
+# -  UPDATE employee_shifts: Ca sáng 20/11/2025 → status = ON_LEAVE
+# -  UPDATE employee_leave_balances: days_taken = 0.0 + 0.5 = 0.5
+# -  INSERT leave_balance_history: change_amount = -0.5, reason = APPROVED_REQUEST
+# -  Cập nhật request: status = APPROVED, approved_by = 2 (manager), approved_at = now()
 
 # 4. Xem lại số dư phép của employee 5
 GET /api/v1/admin/employees/5/leave-balances?cycle_year=2025
@@ -1367,8 +1367,8 @@ Authorization: Bearer {employee_token}
 
 # Expected: 201 CREATED
 # System đã check:
-# - ✅ Employee 8 có claim slot Thứ 3 - WKS_MORNING_02 (từ part_time_registrations)
-# - ✅ SICK_LEAVE không cần check balance
+# -  Employee 8 có claim slot Thứ 3 - WKS_MORNING_02 (từ part_time_registrations)
+# -  SICK_LEAVE không cần check balance
 # → Tạo thành công
 
 # 3. Thử xin nghỉ ngày không có lịch (Thứ 5)
@@ -1438,7 +1438,7 @@ POST /api/v1/time-off-requests
 
 ---
 
-## 📋 ERROR CODE SUMMARY
+##  ERROR CODE SUMMARY
 
 | Error Code                    | HTTP Status | Module   | Description                                              |
 | ----------------------------- | ----------- | -------- | -------------------------------------------------------- |
@@ -1460,7 +1460,7 @@ POST /api/v1/time-off-requests
 
 ---
 
-## 🎯 QUICK REFERENCE
+##  QUICK REFERENCE
 
 ### Test Accounts
 
@@ -1474,7 +1474,7 @@ POST /api/v1/time-off-requests
 
 ### Key Validations (P5.1 - V14 Hybrid)
 
-✅ **Trước khi tạo request:**
+ **Trước khi tạo request:**
 
 1. Employee exists & active
 2. TimeOffType exists & is_active
@@ -1484,7 +1484,7 @@ POST /api/v1/time-off-requests
 6. **[V14 NEW]** CheckEmployeeHasShift (query từ fixed + part-time)
 7. No duplicate request
 
-✅ **Khi APPROVED:**
+ **Khi APPROVED:**
 
 1. UPDATE employee_shifts → ON_LEAVE
 2. UPDATE employee_leave_balances → days_taken + X
@@ -1492,7 +1492,7 @@ POST /api/v1/time-off-requests
 
 ---
 
-## 🔧 TROUBLESHOOTING
+##  TROUBLESHOOTING
 
 ### Issue 1: "SHIFT_NOT_FOUND_FOR_LEAVE" khi tạo request
 
@@ -1582,7 +1582,7 @@ WHERE rp.role_id = 'ROLE_DOCTOR';
 
 ---
 
-## ✅ CHECKLIST BEFORE TESTING
+##  CHECKLIST BEFORE TESTING
 
 - [ ] **Database đã restart để load seed data mới:**
   - `time_off_types`: type_id = type_code (ANNUAL_LEAVE, SICK_LEAVE, ...)

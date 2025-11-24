@@ -94,7 +94,7 @@ public class TreatmentPlanItemService {
      */
     @Transactional
     public PatientPlanItemResponse updateItemStatus(Long itemId, UpdateItemStatusRequest request) {
-        log.info("🔄 Updating item {} to status {}", itemId, request.getStatus());
+        log.info(" Updating item {} to status {}", itemId, request.getStatus());
 
         // STEP 1: Find item with phase and plan data
         PatientPlanItem item = itemRepository.findById(itemId)
@@ -112,7 +112,7 @@ public class TreatmentPlanItemService {
         PlanItemStatus currentStatus = item.getStatus();
         PlanItemStatus newStatus = request.getStatus();
 
-        log.info("📊 Item current status: {}, requested: {}", currentStatus, newStatus);
+        log.info(" Item current status: {}, requested: {}", currentStatus, newStatus);
 
         // STEP 2: Validate state transition
         if (!isValidTransition(currentStatus, newStatus)) {
@@ -160,7 +160,7 @@ public class TreatmentPlanItemService {
             recalculatePlanFinances(plan, item.getPrice(), true); // subtract
             financialMessage = String.format("Item skipped: Plan total cost reduced by %,d VND",
                     item.getPrice().longValue());
-            log.info("💰 Financial impact: SKIP - Reduced {} VND", item.getPrice());
+            log.info(" Financial impact: SKIP - Reduced {} VND", item.getPrice());
 
         } else if (currentStatus == PlanItemStatus.SKIPPED && newStatus == PlanItemStatus.READY_FOR_BOOKING) {
             // Unskipping: add costs back
@@ -168,7 +168,7 @@ public class TreatmentPlanItemService {
             recalculatePlanFinances(plan, item.getPrice(), false); // add
             financialMessage = String.format("Item re-activated: Plan total cost increased by %,d VND",
                     item.getPrice().longValue());
-            log.info("💰 Financial impact: UNSKIP - Added back {} VND", item.getPrice());
+            log.info(" Financial impact: UNSKIP - Added back {} VND", item.getPrice());
         }
 
         // STEP 5: Update item status and metadata
@@ -206,7 +206,7 @@ public class TreatmentPlanItemService {
 
         // STEP 8: Audit log (implement if audit table exists)
         String currentUser = getCurrentUsername();
-        log.info("📋 Audit: User {} changed item {} from {} to {}",
+        log.info(" Audit: User {} changed item {} from {} to {}",
                 currentUser, itemId, currentStatus, newStatus);
 
         // STEP 9: Build response
@@ -326,7 +326,7 @@ public class TreatmentPlanItemService {
         }
 
         planRepository.save(plan);
-        log.info("💸 Plan finances updated: total_cost={}, final_cost={}",
+        log.info(" Plan finances updated: total_cost={}, final_cost={}",
                 plan.getTotalPrice(), plan.getFinalCost());
     }
 
@@ -343,7 +343,7 @@ public class TreatmentPlanItemService {
                 .ifPresent(nextItem -> {
                     nextItem.setStatus(PlanItemStatus.READY_FOR_BOOKING);
                     itemRepository.save(nextItem);
-                    log.info("🚀 Auto-activated next item {} (sequence {}) → READY_FOR_BOOKING",
+                    log.info(" Auto-activated next item {} (sequence {}) → READY_FOR_BOOKING",
                             nextItem.getItemId(), nextItem.getSequenceNumber());
                 });
     }
@@ -363,7 +363,7 @@ public class TreatmentPlanItemService {
             phase.setStatus(PhaseStatus.COMPLETED);
             phase.setCompletionDate(java.time.LocalDate.now());
             entityManager.merge(phase); // Update phase
-            log.info("🎯 Phase {} auto-completed: all items are done", phase.getPatientPhaseId());
+            log.info(" Phase {} auto-completed: all items are done", phase.getPatientPhaseId());
         }
     }
 
@@ -407,7 +407,7 @@ public class TreatmentPlanItemService {
             plan.setStatus(TreatmentPlanStatus.COMPLETED);
             planRepository.save(plan);
 
-            log.info("✅ V21: Auto-completed treatment plan {} (IN_PROGRESS → COMPLETED) - All {} phases done",
+            log.info(" V21: Auto-completed treatment plan {} (IN_PROGRESS → COMPLETED) - All {} phases done",
                     plan.getPlanCode(), phases.size());
         }
     }
@@ -469,14 +469,14 @@ public class TreatmentPlanItemService {
                     itemRepository.save(item);
                     unlockedCount++;
 
-                    log.info("V21: ✅ Unlocked item {} (service {}, '{}') → READY_FOR_BOOKING",
+                    log.info("V21:  Unlocked item {} (service {}, '{}') → READY_FOR_BOOKING",
                             item.getItemId(), itemServiceId, item.getItemName());
                 }
             }
         }
 
         if (unlockedCount > 0) {
-            log.info("V21: 🔓 Successfully unlocked {} item(s) after completing service {}",
+            log.info("V21:  Successfully unlocked {} item(s) after completing service {}",
                     unlockedCount, completedServiceId);
         } else {
             log.debug("V21: No items were waiting for service {}", completedServiceId);

@@ -6,7 +6,7 @@
 
 ---
 
-## 📋 Overview
+##  Overview
 
 API này được sử dụng bởi **Bác sĩ** để cập nhật thông tin chi tiết của một hạng mục cụ thể trong lộ trình điều trị, ví dụ như sửa lại `price` (giá) hoặc `itemName` (tên) đã nhập sai.
 
@@ -14,7 +14,7 @@ API này được sử dụng bởi **Bác sĩ** để cập nhật thông tin c
 
 ---
 
-## 🔑 API Specification
+##  API Specification
 
 | Property                | Value                                        |
 | ----------------------- | -------------------------------------------- |
@@ -27,7 +27,7 @@ API này được sử dụng bởi **Bác sĩ** để cập nhật thông tin c
 
 ---
 
-## 🎯 Business Flow
+##  Business Flow
 
 ```
 Scenario: Manager rejects plan due to incorrect prices
@@ -54,7 +54,7 @@ Scenario: Manager rejects plan due to incorrect prices
 
 ---
 
-## 📦 Request Body
+##  Request Body
 
 ### JSON Structure (All Fields Optional)
 
@@ -97,7 +97,7 @@ Scenario: Manager rejects plan due to incorrect prices
 
 ---
 
-## ⚙️ Business Logic & Validation Guards
+## ️ Business Logic & Validation Guards
 
 ### 1️⃣ Find Item
 
@@ -191,7 +191,7 @@ Plan.approvalStatus REMAINS DRAFT
 
 ---
 
-## ✅ Response Body (200 OK)
+##  Response Body (200 OK)
 
 ### JSON Structure
 
@@ -228,7 +228,7 @@ Plan.approvalStatus REMAINS DRAFT
 
 ---
 
-## 🚫 Error Responses
+##  Error Responses
 
 ### 400 BAD REQUEST - No Fields Provided
 
@@ -292,7 +292,7 @@ Plan.approvalStatus REMAINS DRAFT
 
 ---
 
-## 🧪 Testing Guide
+##  Testing Guide
 
 ### Prerequisites
 
@@ -301,7 +301,7 @@ Plan.approvalStatus REMAINS DRAFT
 3. **Test Account**: Login as Doctor
 4. **Test Data**: Plan with items in DRAFT status
 
-### Test Scenario 1: Update Price Successfully ✅
+### Test Scenario 1: Update Price Successfully 
 
 **Setup:**
 
@@ -329,11 +329,11 @@ curl -X PATCH http://localhost:8080/api/v1/patient-plan-items/536 \
 
 **Expected Result:**
 
-- ✅ Status: 200 OK
-- ✅ `updatedItem.price`: 1500000
-- ✅ `financialImpact.priceChange`: 1000000 (1500000 - 500000)
-- ✅ `financialImpact.planTotalCost`: Increased by 1000000
-- ✅ Audit log created with action_type = "ITEM_UPDATED"
+-  Status: 200 OK
+-  `updatedItem.price`: 1500000
+-  `financialImpact.priceChange`: 1000000 (1500000 - 500000)
+-  `financialImpact.planTotalCost`: Increased by 1000000
+-  Audit log created with action_type = "ITEM_UPDATED"
 
 **Verification:**
 
@@ -354,7 +354,7 @@ ORDER BY created_at DESC LIMIT 1;
 
 ---
 
-### Test Scenario 2: Update Multiple Fields ✅
+### Test Scenario 2: Update Multiple Fields 
 
 **Request:**
 
@@ -371,12 +371,12 @@ curl -X PATCH http://localhost:8080/api/v1/patient-plan-items/536 \
 
 **Expected Result:**
 
-- ✅ All 3 fields updated
-- ✅ Financial impact calculated correctly
+-  All 3 fields updated
+-  Financial impact calculated correctly
 
 ---
 
-### Test Scenario 3: Update Item Already Scheduled ❌
+### Test Scenario 3: Update Item Already Scheduled 
 
 **Setup:**
 
@@ -400,12 +400,12 @@ curl -X PATCH http://localhost:8080/api/v1/patient-plan-items/536 \
 
 **Expected Result:**
 
-- ❌ Status: 409 CONFLICT
-- ❌ Message: "Không thể sửa hạng mục đã được đặt lịch..."
+-  Status: 409 CONFLICT
+-  Message: "Không thể sửa hạng mục đã được đặt lịch..."
 
 ---
 
-### Test Scenario 4: Update Plan Already Approved ❌
+### Test Scenario 4: Update Plan Already Approved 
 
 **Setup:**
 
@@ -434,12 +434,12 @@ curl -X PATCH http://localhost:8080/api/v1/patient-plan-items/536 \
 
 **Expected Result:**
 
-- ❌ Status: 409 CONFLICT
-- ❌ Message: "Không thể sửa lộ trình đã được duyệt..."
+-  Status: 409 CONFLICT
+-  Message: "Không thể sửa lộ trình đã được duyệt..."
 
 ---
 
-### Test Scenario 5: Empty Request Body ❌
+### Test Scenario 5: Empty Request Body 
 
 **Request:**
 
@@ -452,12 +452,12 @@ curl -X PATCH http://localhost:8080/api/v1/patient-plan-items/536 \
 
 **Expected Result:**
 
-- ❌ Status: 400 BAD REQUEST
-- ❌ Message: "Phải có ít nhất một trường cần cập nhật"
+-  Status: 400 BAD REQUEST
+-  Message: "Phải có ít nhất một trường cần cập nhật"
 
 ---
 
-## 🔗 Related APIs
+##  Related APIs
 
 | API          | Endpoint                                                                 | Relationship                                       |
 | ------------ | ------------------------------------------------------------------------ | -------------------------------------------------- |
@@ -468,7 +468,7 @@ curl -X PATCH http://localhost:8080/api/v1/patient-plan-items/536 \
 
 ---
 
-## 📊 Database Impact
+##  Database Impact
 
 ### Tables Modified
 
@@ -488,9 +488,9 @@ SELECT * FROM plan_audit_logs WHERE action_type = 'ITEM_UPDATED';
 
 ---
 
-## 📝 Important Notes
+##  Important Notes
 
-### ❌ What API 5.10 Does NOT Do
+###  What API 5.10 Does NOT Do
 
 1. **Does NOT change `quantity`**
 
@@ -506,19 +506,19 @@ SELECT * FROM plan_audit_logs WHERE action_type = 'ITEM_UPDATED';
    - Approval status stays DRAFT
    - Doctor must explicitly submit for review (future API)
 
-### ✅ What API 5.10 DOES Do
+###  What API 5.10 DOES Do
 
-1. ✅ Update item name, price, estimated time
-2. ✅ Recalculate plan finances automatically
-3. ✅ Create audit trail
-4. ✅ Enforce guards (status checks)
-5. ✅ Support multiple updates (call API many times for different items)
+1.  Update item name, price, estimated time
+2.  Recalculate plan finances automatically
+3.  Create audit trail
+4.  Enforce guards (status checks)
+5.  Support multiple updates (call API many times for different items)
 
 ---
 
-## 🎯 Key Design Decisions
+##  Key Design Decisions
 
-### Option A: Keep DRAFT (CHOSEN ✅)
+### Option A: Keep DRAFT (CHOSEN )
 
 ```
 When doctor updates items:
@@ -529,11 +529,11 @@ When doctor updates items:
 
 **Pros**:
 
-- ✅ Avoid spam PENDING_REVIEW
-- ✅ Doctor has full control
-- ✅ Can fix multiple errors in one session
+-  Avoid spam PENDING_REVIEW
+-  Doctor has full control
+-  Can fix multiple errors in one session
 
-### Option B: Auto PENDING_REVIEW (NOT CHOSEN ❌)
+### Option B: Auto PENDING_REVIEW (NOT CHOSEN )
 
 ```
 When doctor updates items:
@@ -543,12 +543,12 @@ When doctor updates items:
 
 **Cons**:
 
-- ❌ Spam notifications
-- ❌ Manager sees incomplete fixes
-- ❌ Poor UX for doctor
+-  Spam notifications
+-  Manager sees incomplete fixes
+-  Poor UX for doctor
 
 ---
 
 **Implementation Date**: 2025-11-15
 **Schema Version**: V20
-**Status**: ✅ Implemented & Documented
+**Status**:  Implemented & Documented

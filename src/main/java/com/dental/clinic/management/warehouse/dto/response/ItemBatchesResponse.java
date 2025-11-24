@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 
 /**
- * 📦 Item Batches Response - API 6.2
+ *  Item Batches Response - API 6.2
  * Response cho GET /api/v3/warehouse/batches/{itemMasterId}
  *
  * Contains:

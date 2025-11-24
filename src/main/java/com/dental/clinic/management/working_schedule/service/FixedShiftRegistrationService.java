@@ -132,9 +132,9 @@ public class FixedShiftRegistrationService {
                 null // createdBy can be null for system-generated
             );
             
-            log.info("✅ Successfully auto-generated shifts for fixed registration: {}", saved.getRegistrationId());
+            log.info(" Successfully auto-generated shifts for fixed registration: {}", saved.getRegistrationId());
         } catch (Exception e) {
-            log.error("❌ Failed to generate shifts for fixed registration {}: {}", 
+            log.error(" Failed to generate shifts for fixed registration {}: {}", 
                     saved.getRegistrationId(), e.getMessage(), e);
             // Don't fail the whole transaction - registration is still valid
             // Shifts can be regenerated later via backfill endpoint
@@ -309,12 +309,12 @@ public class FixedShiftRegistrationService {
     @PreAuthorize("hasAuthority('MANAGE_FIXED_REGISTRATIONS')")
     @Transactional
     public String backfillShiftsForExistingRegistrations() {
-        log.info("🔄 Starting backfill process for existing fixed registrations...");
+        log.info(" Starting backfill process for existing fixed registrations...");
 
         // Find all active fixed registrations
         List<FixedShiftRegistration> activeRegistrations = registrationRepository.findAllByActiveStatus(true);
         
-        log.info("📊 Found {} active registrations to process", activeRegistrations.size());
+        log.info(" Found {} active registrations to process", activeRegistrations.size());
 
         int successCount = 0;
         int skipCount = 0;
@@ -332,7 +332,7 @@ public class FixedShiftRegistrationService {
                         .collect(Collectors.toList());
 
                 if (daysOfWeek.isEmpty()) {
-                    log.warn("⚠️ Registration {} has no days configured, skipping", registration.getRegistrationId());
+                    log.warn(" Registration {} has no days configured, skipping", registration.getRegistrationId());
                     skipCount++;
                     continue;
                 }
@@ -352,15 +352,15 @@ public class FixedShiftRegistrationService {
                     );
 
                 if (createdShifts.isEmpty()) {
-                    log.info("⏭️ Registration {} already has all shifts, skipping", registration.getRegistrationId());
+                    log.info("⏭ Registration {} already has all shifts, skipping", registration.getRegistrationId());
                     skipCount++;
                 } else {
-                    log.info("✅ Generated {} shifts for registration {}", createdShifts.size(), registration.getRegistrationId());
+                    log.info(" Generated {} shifts for registration {}", createdShifts.size(), registration.getRegistrationId());
                     successCount++;
                 }
 
             } catch (Exception e) {
-                log.error("❌ Failed to generate shifts for registration {}: {}", 
+                log.error(" Failed to generate shifts for registration {}: {}", 
                         registration.getRegistrationId(), e.getMessage());
                 errorCount++;
                 errorDetails.append(String.format("Registration %d: %s\n", 
@@ -369,7 +369,7 @@ public class FixedShiftRegistrationService {
         }
 
         String summary = String.format(
-                "✅ Backfill complete: %d succeeded, %d skipped (already have shifts), %d failed out of %d total",
+                " Backfill complete: %d succeeded, %d skipped (already have shifts), %d failed out of %d total",
                 successCount, skipCount, errorCount, activeRegistrations.size()
         );
         
@@ -393,7 +393,7 @@ public class FixedShiftRegistrationService {
     @PreAuthorize("hasAuthority('MANAGE_FIXED_REGISTRATIONS')")
     @Transactional
     public int regenerateShiftsForRegistration(Integer registrationId) {
-        log.info("🔄 Regenerating shifts for registration {}", registrationId);
+        log.info(" Regenerating shifts for registration {}", registrationId);
 
         FixedShiftRegistration registration = registrationRepository.findByIdWithDetails(registrationId)
                 .orElseThrow(() -> new FixedRegistrationNotFoundException(registrationId));
@@ -424,7 +424,7 @@ public class FixedShiftRegistrationService {
                 null
             );
 
-        log.info("✅ Regenerated {} shifts for registration {}", createdShifts.size(), registrationId);
+        log.info(" Regenerated {} shifts for registration {}", createdShifts.size(), registrationId);
         return createdShifts.size();
     }
 

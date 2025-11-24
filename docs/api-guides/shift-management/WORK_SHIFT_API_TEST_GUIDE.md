@@ -871,7 +871,7 @@ GET /api/v1/work-shifts?category=NORMAL&search=sáng&sortBy=startTime&sortDirect
 
 ## 10. TESTING CHECKLIST
 
-### ✅ CRUD Operations
+###  CRUD Operations
 - [ ] Create morning shift (NORMAL)
 - [ ] Create night shift (NIGHT)
 - [ ] Create shift with lunch break
@@ -882,7 +882,7 @@ GET /api/v1/work-shifts?category=NORMAL&search=sáng&sortBy=startTime&sortDirect
 - [ ] Delete unused shift
 - [ ] Reactivate deleted shift
 
-### ✅ Validations
+###  Validations
 - [ ] Boundary validation (18:00 spanning)
 - [ ] Duration validation (too short)
 - [ ] Duration validation (too long)
@@ -894,7 +894,7 @@ GET /api/v1/work-shifts?category=NORMAL&search=sáng&sortBy=startTime&sortDirect
 - [ ] In-use protection (delete)
 - [ ] Work shift not found (404)
 
-### ✅ Filtering & Sorting
+###  Filtering & Sorting
 - [ ] Filter by category (NORMAL)
 - [ ] Filter by category (NIGHT)
 - [ ] Filter by isActive (true)
@@ -905,7 +905,7 @@ GET /api/v1/work-shifts?category=NORMAL&search=sáng&sortBy=startTime&sortDirect
 - [ ] Sort by category
 - [ ] Combined filters (category + search + sort)
 
-### ✅ Business Rules
+###  Business Rules
 - [ ] Lunch break deduction (12:00-13:00)
 - [ ] Shift ID auto-generation
 - [ ] Category auto-generation

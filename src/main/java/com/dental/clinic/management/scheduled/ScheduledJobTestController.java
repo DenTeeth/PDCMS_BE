@@ -17,7 +17,7 @@ import static com.dental.clinic.management.utils.security.AuthoritiesConstants.A
 /**
  * Test Controller for Manually Triggering Scheduled Jobs
  * 
- * ⚠️ WARNING: For TESTING/DEVELOPMENT ONLY
+ *  WARNING: For TESTING/DEVELOPMENT ONLY
  * These endpoints allow manual execution of cron jobs that normally run automatically.
  * 
  * Security: Only accessible by ADMIN role
@@ -57,7 +57,7 @@ public class ScheduledJobTestController {
     @GetMapping("/trigger-sync")
     @PreAuthorize("hasRole('" + ADMIN + "')")
     public ResponseEntity<Map<String, Object>> triggerUnifiedScheduleSync() {
-        log.warn("⚠️ MANUAL TRIGGER: UnifiedScheduleSyncJob triggered by admin");
+        log.warn(" MANUAL TRIGGER: UnifiedScheduleSyncJob triggered by admin");
         
         long startTime = System.currentTimeMillis();
         try {
@@ -72,11 +72,11 @@ public class ScheduledJobTestController {
             response.put("executionTimeMs", duration);
             response.put("action", "Synced schedules for next 14 days from Fixed & Flex registrations");
             
-            log.info("✅ Manual job execution completed in {}ms", duration);
+            log.info(" Manual job execution completed in {}ms", duration);
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            log.error("❌ Error executing UnifiedScheduleSyncJob manually", e);
+            log.error(" Error executing UnifiedScheduleSyncJob manually", e);
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
@@ -104,7 +104,7 @@ public class ScheduledJobTestController {
     @GetMapping("/trigger-cleanup-flex")
     @PreAuthorize("hasRole('" + ADMIN + "')")
     public ResponseEntity<Map<String, Object>> triggerCleanupExpiredFlex() {
-        log.warn("⚠️ MANUAL TRIGGER: CleanupExpiredFlexRegistrationsJob triggered by admin");
+        log.warn(" MANUAL TRIGGER: CleanupExpiredFlexRegistrationsJob triggered by admin");
         
         long startTime = System.currentTimeMillis();
         try {
@@ -122,7 +122,7 @@ public class ScheduledJobTestController {
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            log.error("❌ Error executing CleanupExpiredFlexRegistrationsJob manually", e);
+            log.error(" Error executing CleanupExpiredFlexRegistrationsJob manually", e);
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
@@ -150,7 +150,7 @@ public class ScheduledJobTestController {
     @GetMapping("/trigger-cleanup-inactive")
     @PreAuthorize("hasRole('" + ADMIN + "')")
     public ResponseEntity<Map<String, Object>> triggerCleanupInactiveEmployees() {
-        log.warn("⚠️ MANUAL TRIGGER: CleanupInactiveEmployeeRegistrationsJob triggered by admin");
+        log.warn(" MANUAL TRIGGER: CleanupInactiveEmployeeRegistrationsJob triggered by admin");
         
         long startTime = System.currentTimeMillis();
         try {
@@ -168,7 +168,7 @@ public class ScheduledJobTestController {
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            log.error("❌ Error executing CleanupInactiveEmployeeRegistrationsJob manually", e);
+            log.error(" Error executing CleanupInactiveEmployeeRegistrationsJob manually", e);
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
@@ -194,7 +194,7 @@ public class ScheduledJobTestController {
     @GetMapping("/trigger-all")
     @PreAuthorize("hasRole('" + ADMIN + "')")
     public ResponseEntity<Map<String, Object>> triggerAllMainJobs() {
-        log.warn("⚠️ MANUAL TRIGGER: Executing ALL main scheduled jobs in sequence");
+        log.warn(" MANUAL TRIGGER: Executing ALL main scheduled jobs in sequence");
         
         Map<String, Object> response = new HashMap<>();
         Map<String, Object> results = new HashMap<>();
@@ -236,11 +236,11 @@ public class ScheduledJobTestController {
             response.put("totalExecutionTimeMs", totalDuration);
             response.put("results", results);
             
-            log.info("✅ All jobs completed in {}ms", totalDuration);
+            log.info(" All jobs completed in {}ms", totalDuration);
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            log.error("❌ Error executing scheduled jobs sequence", e);
+            log.error(" Error executing scheduled jobs sequence", e);
             
             response.put("success", false);
             response.put("message", "Job sequence failed: " + e.getMessage());
@@ -266,7 +266,7 @@ public class ScheduledJobTestController {
         Map<String, Object> response = new HashMap<>();
         
         response.put("title", "Scheduled Jobs Test Endpoints");
-        response.put("warning", "⚠️ These endpoints are for TESTING/DEVELOPMENT only");
+        response.put("warning", " These endpoints are for TESTING/DEVELOPMENT only");
         response.put("security", "Only accessible by ADMIN role");
         
         Map<String, Object> endpoints = new HashMap<>();

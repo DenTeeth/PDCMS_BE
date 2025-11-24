@@ -21,7 +21,7 @@ public interface SupplierRepository extends JpaRepository<Supplier, Long> {
     @Query("SELECT MAX(s.supplierId) FROM Supplier s")
     Long findMaxSupplierId();
 
-    // 🔍 Pagination + Search Query
+    //  Pagination + Search Query
     @Query("SELECT s FROM Supplier s WHERE " +
             "(:search IS NULL OR :search = '' OR " +
             "LOWER(s.supplierName) LIKE LOWER(CONCAT('%', :search, '%')) OR " +

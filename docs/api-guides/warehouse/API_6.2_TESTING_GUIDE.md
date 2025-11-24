@@ -1,19 +1,19 @@
-# API 6.2 - Item Batches Testing Guide 🧪
+# API 6.2 - Item Batches Testing Guide 
 
-## ✅ Implementation Complete
+##  Implementation Complete
 
 API 6.2 đã được implement đầy đủ với:
 
-- ✅ BatchStatus enum (EXPIRED, CRITICAL, EXPIRING_SOON, VALID)
-- ✅ 3 DTOs (BatchDetailDTO, BatchStatsDTO, ItemBatchesResponse)
-- ✅ Repository với JOIN FETCH supplier
-- ✅ Service với business logic (stats, status calculation)
-- ✅ Controller endpoint với full Swagger docs
-- ✅ BUILD SUCCESS - 573 files compiled
+-  BatchStatus enum (EXPIRED, CRITICAL, EXPIRING_SOON, VALID)
+-  3 DTOs (BatchDetailDTO, BatchStatsDTO, ItemBatchesResponse)
+-  Repository với JOIN FETCH supplier
+-  Service với business logic (stats, status calculation)
+-  Controller endpoint với full Swagger docs
+-  BUILD SUCCESS - 573 files compiled
 
 ---
 
-## 🧪 Test Commands
+##  Test Commands
 
 ### Prerequisites
 
@@ -34,7 +34,7 @@ TOKEN="your_jwt_token_here"
 
 ---
 
-## 📋 Test Scenarios
+##  Test Scenarios
 
 ### Test 1: Get All Batches (FEFO Default)
 
@@ -91,11 +91,11 @@ curl -X GET "http://localhost:8080/api/v3/warehouse/batches/1?page=0&size=20" \
 
 **Verify:**
 
-- ✅ Batches sorted by `expiryDate ASC` (FEFO)
-- ✅ Stats shows correct counts
-- ✅ `daysRemaining` calculated correctly
-- ✅ `status` matches business rules
-- ✅ `usageRate` = (100-50)/100 \* 100 = 50%
+-  Batches sorted by `expiryDate ASC` (FEFO)
+-  Stats shows correct counts
+-  `daysRemaining` calculated correctly
+-  `status` matches business rules
+-  `usageRate` = (100-50)/100 \* 100 = 50%
 
 ---
 
@@ -109,8 +109,8 @@ curl -X GET "http://localhost:8080/api/v3/warehouse/batches/1?hideEmpty=true&pag
 
 **Expected:**
 
-- ✅ Only batches with `quantityOnHand > 0`
-- ✅ Empty batches (qty=0) not shown
+-  Only batches with `quantityOnHand > 0`
+-  Empty batches (qty=0) not shown
 
 **Alternative (show all including empty):**
 
@@ -130,8 +130,8 @@ curl -X GET "http://localhost:8080/api/v3/warehouse/batches/1?filterStatus=CRITI
 
 **Expected:**
 
-- ✅ Only batches with `daysRemaining <= 7`
-- ✅ All returned batches have `status: "CRITICAL"`
+-  Only batches with `daysRemaining <= 7`
+-  All returned batches have `status: "CRITICAL"`
 
 **Use Case:**
 
@@ -148,8 +148,8 @@ curl -X GET "http://localhost:8080/api/v3/warehouse/batches/1?filterStatus=EXPIR
 
 **Expected:**
 
-- ✅ Only batches with `daysRemaining < 0`
-- ✅ All returned batches have `status: "EXPIRED"`
+-  Only batches with `daysRemaining < 0`
+-  All returned batches have `status: "EXPIRED"`
 
 **Use Case:**
 
@@ -166,8 +166,8 @@ curl -X GET "http://localhost:8080/api/v3/warehouse/batches/1?filterStatus=EXPIR
 
 **Expected:**
 
-- ✅ Only batches with `7 < daysRemaining <= 30`
-- ✅ All returned batches have `status: "EXPIRING_SOON"`
+-  Only batches with `7 < daysRemaining <= 30`
+-  All returned batches have `status: "EXPIRING_SOON"`
 
 **Use Case:**
 
@@ -184,8 +184,8 @@ curl -X GET "http://localhost:8080/api/v3/warehouse/batches/1?filterStatus=VALID
 
 **Expected:**
 
-- ✅ Only batches with `daysRemaining > 30`
-- ✅ All returned batches have `status: "VALID"`
+-  Only batches with `daysRemaining > 30`
+-  All returned batches have `status: "VALID"`
 
 ---
 
@@ -198,8 +198,8 @@ curl -X GET "http://localhost:8080/api/v3/warehouse/batches/1?sortBy=quantityOnH
 
 **Expected:**
 
-- ✅ Batches sorted by `quantityOnHand DESC`
-- ✅ Lô có nhiều hàng nhất nằm trên cùng
+-  Batches sorted by `quantityOnHand DESC`
+-  Lô có nhiều hàng nhất nằm trên cùng
 
 **Use Case:**
 
@@ -216,8 +216,8 @@ curl -X GET "http://localhost:8080/api/v3/warehouse/batches/1?sortBy=importedAt&
 
 **Expected:**
 
-- ✅ Batches sorted by `importedAt DESC`
-- ✅ Lô nhập gần đây nhất nằm trên cùng
+-  Batches sorted by `importedAt DESC`
+-  Lô nhập gần đây nhất nằm trên cùng
 
 **Use Case:**
 
@@ -257,14 +257,14 @@ curl -X GET "http://localhost:8080/api/v3/warehouse/batches/1?hideEmpty=true&fil
 
 **Expected:**
 
-- ✅ Only batches with quantity > 0
-- ✅ Only batches with status EXPIRING_SOON
-- ✅ Sorted by expiryDate ASC
-- ✅ Page 0, size 10
+-  Only batches with quantity > 0
+-  Only batches with status EXPIRING_SOON
+-  Sorted by expiryDate ASC
+-  Page 0, size 10
 
 ---
 
-## 🔍 Verify Business Rules
+##  Verify Business Rules
 
 ### Rule 1: Status Calculation
 
@@ -307,7 +307,7 @@ Verify counts match:
 
 ---
 
-## 🐛 Common Issues & Solutions
+##  Common Issues & Solutions
 
 ### Issue 1: 404 Not Found
 
@@ -347,7 +347,7 @@ LIMIT 10;
 
 ---
 
-## 📊 Sample Test Data Setup
+##  Sample Test Data Setup
 
 If you don't have test data, create some batches:
 
@@ -388,46 +388,46 @@ VALUES (999, 'LOT-EMPTY', 0, 100, CURRENT_DATE + INTERVAL '60 days', NOW(), 'K�
 
 ---
 
-## ✅ Success Criteria
+##  Success Criteria
 
 ### API Response Should Have:
 
-- ✅ Correct item context (itemMasterId, itemCode, itemName, unitName)
-- ✅ Summary stats with correct counts
-- ✅ Pagination metadata (page, size, totalPages, totalElements)
-- ✅ Batches array with computed fields
+-  Correct item context (itemMasterId, itemCode, itemName, unitName)
+-  Summary stats with correct counts
+-  Pagination metadata (page, size, totalPages, totalElements)
+-  Batches array with computed fields
 
 ### Each Batch Should Have:
 
-- ✅ All required fields populated
-- ✅ `daysRemaining` calculated correctly (can be negative if expired)
-- ✅ `status` matches business rules
-- ✅ `usageRate` calculated correctly (0-100%)
-- ✅ `binLocation` shows physical location
-- ✅ `supplierName` from JOIN FETCH (no N+1 query)
+-  All required fields populated
+-  `daysRemaining` calculated correctly (can be negative if expired)
+-  `status` matches business rules
+-  `usageRate` calculated correctly (0-100%)
+-  `binLocation` shows physical location
+-  `supplierName` from JOIN FETCH (no N+1 query)
 
 ### Filters Should Work:
 
-- ✅ `hideEmpty`: Hides/shows empty batches
-- ✅ `filterStatus`: Filters by EXPIRED/CRITICAL/EXPIRING_SOON/VALID
-- ✅ `sortBy`: Changes sort field
-- ✅ `sortDir`: Changes sort direction
-- ✅ Pagination: page and size work correctly
+-  `hideEmpty`: Hides/shows empty batches
+-  `filterStatus`: Filters by EXPIRED/CRITICAL/EXPIRING_SOON/VALID
+-  `sortBy`: Changes sort field
+-  `sortDir`: Changes sort direction
+-  Pagination: page and size work correctly
 
 ---
 
-## 📝 Logs to Check
+##  Logs to Check
 
 Look for these log messages:
 
 ```
-🔥 API 6.2 - Getting batches for itemMasterId=1, hideEmpty=true, filterStatus=null, page=0, size=20
-✅ Returned 5 batches out of 5 total for item 'Gạc y tế vô trùng'
+ API 6.2 - Getting batches for itemMasterId=1, hideEmpty=true, filterStatus=null, page=0, size=20
+ Returned 5 batches out of 5 total for item 'Gạc y tế vô trùng'
 ```
 
 ---
 
-## 🎯 Next Steps After Testing
+##  Next Steps After Testing
 
 1. **Verify with Real Data**
 
@@ -455,7 +455,7 @@ Look for these log messages:
 
 ---
 
-**Application Status**: ✅ RUNNING on http://localhost:8080
+**Application Status**:  RUNNING on http://localhost:8080
 **API Endpoint**: GET /api/v3/warehouse/batches/{itemMasterId}
 **Swagger UI**: http://localhost:8080/swagger-ui.html
 **Implementation Date**: 2024-11-24

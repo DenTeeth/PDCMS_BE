@@ -1,7 +1,7 @@
 package com.dental.clinic.management.warehouse.enums;
 
 /**
- * 🏭 Batch Status Enum - API 6.2
+ *  Batch Status Enum - API 6.2
  * Trạng thái hạn sử dụng của lô hàng (Operational View)
  *
  * Logic:
@@ -13,28 +13,28 @@ package com.dental.clinic.management.warehouse.enums;
 public enum BatchStatus {
 
     /**
-     * 🔴 EXPIRED: Lô đã hết hạn sử dụng
+     *  EXPIRED: Lô đã hết hạn sử dụng
      * - expiryDate < currentDate
      * - Action: Tạo phiếu hủy, không được xuất kho
      */
     EXPIRED("Hết hạn"),
 
     /**
-     * 🔴 CRITICAL: Lô sắp hết hạn trong vòng 7 ngày
+     *  CRITICAL: Lô sắp hết hạn trong vòng 7 ngày
      * - 0 <= daysRemaining <= 7
      * - Action: Ưu tiên xuất kho ngay, thông báo khẩn cấp
      */
     CRITICAL("Cần dùng gấp"),
 
     /**
-     * 🟡 EXPIRING_SOON: Lô sắp hết hạn trong vòng 30 ngày
+     *  EXPIRING_SOON: Lô sắp hết hạn trong vòng 30 ngày
      * - 7 < daysRemaining <= 30
      * - Action: Ưu tiên sử dụng, chuẩn bị order thêm
      */
     EXPIRING_SOON("Sắp hết hạn"),
 
     /**
-     * 🟢 VALID: Lô còn hạn sử dụng dài
+     *  VALID: Lô còn hạn sử dụng dài
      * - daysRemaining > 30
      * - Action: An toàn, có thể dùng bình thường
      */
@@ -51,7 +51,7 @@ public enum BatchStatus {
     }
 
     /**
-     * 🧠 Calculate batch status based on days remaining
+     *  Calculate batch status based on days remaining
      *
      * @param daysRemaining Number of days until expiry (can be negative if expired)
      * @return BatchStatus enum

@@ -33,7 +33,7 @@ public interface ItemMasterRepository extends JpaRepository<ItemMaster, Long> {
         List<ItemMaster> searchItemMasters(@Param("search") String search);
 
         /**
-         * 🔥 API 6.1: Query với filters cho Inventory Summary
+         *  API 6.1: Query với filters cho Inventory Summary
          * - Search by itemName or itemCode (LIKE)
          * - Filter by warehouseType
          * - Filter by categoryId

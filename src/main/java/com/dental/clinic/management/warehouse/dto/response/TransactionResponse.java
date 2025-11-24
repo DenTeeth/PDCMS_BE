@@ -33,7 +33,7 @@ public class TransactionResponse {
     public static class TransactionItemResponse {
         private Long transactionItemId;
 
-        // 🔥 Item identification - Warehouse staff needs these
+        //  Item identification - Warehouse staff needs these
         private String itemCode; // VD: "DP002"
         private String itemName; // VD: "Amoxicillin 500mg"
         private String unitName; // VD: "Vỉ" (if unit-based transaction)

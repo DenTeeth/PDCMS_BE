@@ -40,7 +40,7 @@ public class TreatmentPlanDetailDTO {
     private String planCode;
     private String planName;
     private TreatmentPlanStatus planStatus;
-    private ApprovalStatus approvalStatus; // ✅ V21: Added to support approval workflow
+    private ApprovalStatus approvalStatus; //  V21: Added to support approval workflow
     private LocalDate startDate;
     private LocalDate expectedEndDate;
     private BigDecimal totalPrice;

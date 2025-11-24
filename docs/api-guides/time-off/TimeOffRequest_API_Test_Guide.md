@@ -54,10 +54,10 @@ Content-Type: application/json
 
 | Type ID  | Name                            | Requires Balance      |
 | -------- | ------------------------------- | --------------------- |
-| `TOT001` | Nghi phep nam (Annual Leave)    | ✅ Yes (12 days/year) |
-| `TOT002` | Nghi om (Sick Leave)            | ❌ No                 |
-| `TOT003` | Nghi hieu (Bereavement Leave)   | ❌ No                 |
-| `TOT004` | Nghi thai san (Maternity Leave) | ❌ No                 |
+| `TOT001` | Nghi phep nam (Annual Leave)    |  Yes (12 days/year) |
+| `TOT002` | Nghi om (Sick Leave)            |  No                 |
+| `TOT003` | Nghi hieu (Bereavement Leave)   |  No                 |
+| `TOT004` | Nghi thai san (Maternity Leave) |  No                 |
 
 ---
 
@@ -129,11 +129,11 @@ Content-Type: application/json
 
 **Validation:**
 
-- ✅ Returns 201 Created
-- ✅ Request ID generated correctly (TORyymmddSEQ format)
-- ✅ Status is PENDING
-- ✅ totalDays = 3.0 (full days)
-- ✅ slotId is null (full-day leave)
+-  Returns 201 Created
+-  Request ID generated correctly (TORyymmddSEQ format)
+-  Status is PENDING
+-  totalDays = 3.0 (full days)
+-  slotId is null (full-day leave)
 
 ---
 
@@ -177,8 +177,8 @@ Content-Type: application/json
 
 **Validation:**
 
-- ✅ totalDays = 0.5 (half day)
-- ✅ slotId = "SLOT_MORNING"
+-  totalDays = 0.5 (half day)
+-  slotId = "SLOT_MORNING"
 
 ---
 
@@ -216,8 +216,8 @@ Content-Type: application/json
 
 **Validation:**
 
-- ✅ No balance check for sick leave
-- ✅ Can be created for past dates (retroactive)
+-  No balance check for sick leave
+-  Can be created for past dates (retroactive)
 
 ---
 
@@ -370,9 +370,9 @@ Authorization: Bearer <manager_token>
 
 **Validation:**
 
-- ✅ Returns all requests from all employees
-- ✅ Filtered by status=PENDING
-- ✅ Sorted by requestedAt descending
+-  Returns all requests from all employees
+-  Filtered by status=PENDING
+-  Sorted by requestedAt descending
 
 ---
 
@@ -405,8 +405,8 @@ Authorization: Bearer <employee_token>
 
 **Validation:**
 
-- ✅ Returns only requests where employeeId = current user's employeeId
-- ✅ Cannot see other employees' requests
+-  Returns only requests where employeeId = current user's employeeId
+-  Cannot see other employees' requests
 
 ---
 
@@ -527,9 +527,9 @@ Content-Type: application/json
 
 **Validation:**
 
-- ✅ Status changed from PENDING to APPROVED
-- ✅ approvedBy and approvedAt are set
-- ✅ Leave balance is deducted (for annual leave)
+-  Status changed from PENDING to APPROVED
+-  approvedBy and approvedAt are set
+-  Leave balance is deducted (for annual leave)
 
 ---
 
@@ -624,9 +624,9 @@ Content-Type: application/json
 
 **Validation:**
 
-- ✅ Status changed to REJECTED
-- ✅ rejectedReason (from request.reason) is saved
-- ✅ Leave balance is NOT deducted
+-  Status changed to REJECTED
+-  rejectedReason (from request.reason) is saved
+-  Leave balance is NOT deducted
 
 ---
 
@@ -690,8 +690,8 @@ Content-Type: application/json
 
 **Validation:**
 
-- ✅ Status changed to CANCELLED
-- ✅ Employee can only cancel their own PENDING requests
+-  Status changed to CANCELLED
+-  Employee can only cancel their own PENDING requests
 
 ---
 
@@ -779,8 +779,8 @@ Authorization: Bearer <token>
 
 **Validation:**
 
-- ✅ remaining = totalAllotted - used
-- ✅ used includes all APPROVED requests
+-  remaining = totalAllotted - used
+-  used includes all APPROVED requests
 
 ---
 

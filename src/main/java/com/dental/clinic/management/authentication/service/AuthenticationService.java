@@ -603,7 +603,7 @@ public class AuthenticationService {
                 verificationToken.setVerifiedAt(LocalDateTime.now());
                 verificationTokenRepository.save(verificationToken);
 
-                log.info("✅ Email verified successfully for account: {}", account.getUsername());
+                log.info(" Email verified successfully for account: {}", account.getUsername());
         }
 
         /**
@@ -634,7 +634,7 @@ public class AuthenticationService {
                 emailService.sendVerificationEmail(account.getEmail(), account.getUsername(),
                                 verificationToken.getToken());
 
-                log.info("✅ Verification email resent to: {}", email);
+                log.info(" Verification email resent to: {}", email);
         }
 
         /**
@@ -659,7 +659,7 @@ public class AuthenticationService {
                 // Send password reset email
                 emailService.sendPasswordResetEmail(account.getEmail(), account.getUsername(), resetToken.getToken());
 
-                log.info("✅ Password reset email sent to: {}", email);
+                log.info(" Password reset email sent to: {}", email);
         }
 
         /**
@@ -703,6 +703,6 @@ public class AuthenticationService {
                 resetToken.setUsedAt(LocalDateTime.now());
                 passwordResetTokenRepository.save(resetToken);
 
-                log.info("✅ Password reset successfully for account: {}", account.getUsername());
+                log.info(" Password reset successfully for account: {}", account.getUsername());
         }
 }

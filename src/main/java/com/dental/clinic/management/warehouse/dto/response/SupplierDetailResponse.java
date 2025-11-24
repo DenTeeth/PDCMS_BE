@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * 📄 SupplierDetailResponse - DTO đầy đủ cho GET BY ID (Detail View)
+ *  SupplierDetailResponse - DTO đầy đủ cho GET BY ID (Detail View)
  * Chứa toàn bộ thông tin chi tiết + danh sách vật tư cung cấp
  */
 @Data

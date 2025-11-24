@@ -6,7 +6,7 @@
 
 ---
 
-## 📋 Overview
+##  Overview
 
 API này được sử dụng bởi **Quản lý** (Manager) để **Duyệt** (Approve) hoặc **Từ chối** (Reject) một Lộ trình điều trị đang ở trạng thái `PENDING_REVIEW`.
 
@@ -14,7 +14,7 @@ API này được sử dụng bởi **Quản lý** (Manager) để **Duyệt** (
 
 ---
 
-## 🔑 API Specification
+##  API Specification
 
 | Property                | Value                                                 |
 | ----------------------- | ----------------------------------------------------- |
@@ -27,7 +27,7 @@ API này được sử dụng bởi **Quản lý** (Manager) để **Duyệt** (
 
 ---
 
-## 🎯 Business Flow (Quy trình nghiệp vụ V19/V20)
+##  Business Flow (Quy trình nghiệp vụ V19/V20)
 
 ```
 1. Bác sĩ tạo (API 5.4) hoặc sửa (API 5.7) Lộ trình tùy chỉnh
@@ -47,7 +47,7 @@ API này được sử dụng bởi **Quản lý** (Manager) để **Duyệt** (
 
 ---
 
-## 📦 Request Body
+##  Request Body
 
 ### JSON Structure
 
@@ -73,12 +73,12 @@ API này được sử dụng bởi **Quản lý** (Manager) để **Duyệt** (
 
 | Field            | Type   | Required       | Validation                   | Description                                           |
 | ---------------- | ------ | -------------- | ---------------------------- | ----------------------------------------------------- |
-| `approvalStatus` | String | ✅ Yes         | Enum: `APPROVED`, `REJECTED` | Trạng thái duyệt mới                                  |
-| `notes`          | String | ⚠️ Conditional | Max 5000 chars               | Ghi chú của người duyệt<br/>**BẮT BUỘC nếu REJECTED** |
+| `approvalStatus` | String |  Yes         | Enum: `APPROVED`, `REJECTED` | Trạng thái duyệt mới                                  |
+| `notes`          | String | ️ Conditional | Max 5000 chars               | Ghi chú của người duyệt<br/>**BẮT BUỘC nếu REJECTED** |
 
 ---
 
-## ⚙️ Business Logic & Validation Guards
+## ️ Business Logic & Validation Guards
 
 ### 1️⃣ Authentication & Authorization
 
@@ -160,7 +160,7 @@ INSERT INTO plan_audit_logs (
 
 ---
 
-## ✅ Response Body (200 OK)
+##  Response Body (200 OK)
 
 ### JSON Structure
 
@@ -223,7 +223,7 @@ INSERT INTO plan_audit_logs (
 
 ---
 
-## 🚫 Error Responses
+##  Error Responses
 
 ### 400 BAD REQUEST - Missing Rejection Notes
 
@@ -287,7 +287,7 @@ INSERT INTO plan_audit_logs (
 
 ---
 
-## 🧪 Testing Guide
+##  Testing Guide
 
 ### Prerequisites
 
@@ -295,7 +295,7 @@ INSERT INTO plan_audit_logs (
 2. **Seed Data**: Permission `APPROVE_TREATMENT_PLAN` assigned to `ROLE_MANAGER`
 3. **Test Account**: Login as Manager with `APPROVE_TREATMENT_PLAN` permission
 
-### Test Scenario 1: Approve Treatment Plan ✅
+### Test Scenario 1: Approve Treatment Plan 
 
 **Setup:**
 
@@ -328,10 +328,10 @@ curl -X PATCH http://localhost:8080/api/v1/patient-treatment-plans/PLAN-20251111
 
 **Expected Result:**
 
-- ✅ Status: 200 OK
-- ✅ `approvalStatus`: "APPROVED"
-- ✅ `approvalMetadata` populated with manager info
-- ✅ Audit log created in `plan_audit_logs`
+-  Status: 200 OK
+-  `approvalStatus`: "APPROVED"
+-  `approvalMetadata` populated with manager info
+-  Audit log created in `plan_audit_logs`
 
 **Verification:**
 
@@ -349,7 +349,7 @@ ORDER BY created_at DESC LIMIT 1;
 
 ---
 
-### Test Scenario 2: Reject Treatment Plan (Missing Notes) ❌
+### Test Scenario 2: Reject Treatment Plan (Missing Notes) 
 
 **Request:**
 
@@ -364,12 +364,12 @@ curl -X PATCH http://localhost:8080/api/v1/patient-treatment-plans/PLAN-20251111
 
 **Expected Result:**
 
-- ❌ Status: 400 BAD REQUEST
-- ❌ Message: "Phải có lý do khi từ chối lộ trình điều trị"
+-  Status: 400 BAD REQUEST
+-  Message: "Phải có lý do khi từ chối lộ trình điều trị"
 
 ---
 
-### Test Scenario 3: Reject Treatment Plan (With Notes) ✅
+### Test Scenario 3: Reject Treatment Plan (With Notes) 
 
 **Request:**
 
@@ -385,14 +385,14 @@ curl -X PATCH http://localhost:8080/api/v1/patient-treatment-plans/PLAN-20251111
 
 **Expected Result:**
 
-- ✅ Status: 200 OK
-- ✅ `approvalStatus`: "DRAFT" (returned to draft for revision)
-- ✅ `approvalMetadata.notes`: Contains rejection reason
-- ✅ Audit log created with action_type = "REJECTED"
+-  Status: 200 OK
+-  `approvalStatus`: "DRAFT" (returned to draft for revision)
+-  `approvalMetadata.notes`: Contains rejection reason
+-  Audit log created with action_type = "REJECTED"
 
 ---
 
-### Test Scenario 4: Approve Plan with Zero-Price Items ❌
+### Test Scenario 4: Approve Plan with Zero-Price Items 
 
 **Setup:**
 
@@ -417,12 +417,12 @@ curl -X PATCH http://localhost:8080/api/v1/patient-treatment-plans/PLAN-20251111
 
 **Expected Result:**
 
-- ❌ Status: 400 BAD REQUEST
-- ❌ Message: "Không thể duyệt: Còn hạng mục có giá 0đ..."
+-  Status: 400 BAD REQUEST
+-  Message: "Không thể duyệt: Còn hạng mục có giá 0đ..."
 
 ---
 
-### Test Scenario 5: Wrong Status (Already Approved) ❌
+### Test Scenario 5: Wrong Status (Already Approved) 
 
 **Setup:**
 
@@ -446,12 +446,12 @@ curl -X PATCH http://localhost:8080/api/v1/patient-treatment-plans/PLAN-20251111
 
 **Expected Result:**
 
-- ❌ Status: 409 CONFLICT
-- ❌ Message: "Không thể duyệt lộ trình ở trạng thái 'APPROVED'..."
+-  Status: 409 CONFLICT
+-  Message: "Không thể duyệt lộ trình ở trạng thái 'APPROVED'..."
 
 ---
 
-## 📊 Database Changes (V20)
+##  Database Changes (V20)
 
 ### New Table: `plan_audit_logs`
 
@@ -490,7 +490,7 @@ VALUES ('ROLE_MANAGER', 'APPROVE_TREATMENT_PLAN');
 
 ---
 
-## 🔗 Related APIs
+##  Related APIs
 
 | API         | Endpoint                                                                 | Description                                            |
 | ----------- | ------------------------------------------------------------------------ | ------------------------------------------------------ |
@@ -501,7 +501,7 @@ VALUES ('ROLE_MANAGER', 'APPROVE_TREATMENT_PLAN');
 
 ---
 
-## 📝 Notes
+##  Notes
 
 - **Audit Trail**: Mọi hành động duyệt/từ chối đều được ghi log vào `plan_audit_logs` để đảm bảo tính minh bạch và tuân thủ (compliance).
 - **State Transition**: `REJECTED` → `DRAFT` (không phải `REJECTED` status) để Bác sĩ có thể sửa lại.
@@ -512,4 +512,4 @@ VALUES ('ROLE_MANAGER', 'APPROVE_TREATMENT_PLAN');
 
 **Implementation Date**: 2025-11-15
 **Schema Version**: V20
-**Status**: ✅ Implemented & Documented
+**Status**:  Implemented & Documented

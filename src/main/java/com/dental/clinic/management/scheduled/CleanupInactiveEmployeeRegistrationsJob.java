@@ -71,11 +71,11 @@ public class CleanupInactiveEmployeeRegistrationsJob {
             List<Employee> inactiveEmployees = employeeRepository.findByIsActiveFalse();
             
             if (inactiveEmployees.isEmpty()) {
-                log.info("✅ No inactive employees found. Nothing to cleanup.");
+                log.info(" No inactive employees found. Nothing to cleanup.");
                 return;
             }
 
-            log.info("📋 Found {} inactive employees to process", inactiveEmployees.size());
+            log.info(" Found {} inactive employees to process", inactiveEmployees.size());
 
             int totalFixedDeactivated = 0;
             int totalFlexDeactivated = 0;
@@ -94,7 +94,7 @@ public class CleanupInactiveEmployeeRegistrationsJob {
                 totalFixedDeactivated += fixedCount;
 
                 if (fixedCount > 0) {
-                    log.debug("  ✅ Deactivated {} Fixed registration(s)", fixedCount);
+                    log.debug("   Deactivated {} Fixed registration(s)", fixedCount);
                 }
 
                 // Step 2b: Deactivate Flex registrations
@@ -103,7 +103,7 @@ public class CleanupInactiveEmployeeRegistrationsJob {
                 totalFlexDeactivated += flexCount;
 
                 if (flexCount > 0) {
-                    log.debug("  ✅ Deactivated {} Flex registration(s)", flexCount);
+                    log.debug("   Deactivated {} Flex registration(s)", flexCount);
                 }
 
                 // Step 2c: Delete future SCHEDULED shifts (work_date >= TODAY)
@@ -112,14 +112,14 @@ public class CleanupInactiveEmployeeRegistrationsJob {
                 totalShiftsDeleted += shiftsCount;
 
                 if (shiftsCount > 0) {
-                    log.debug("  ✅ Deleted {} future SCHEDULED shift(s)", shiftsCount);
+                    log.debug("   Deleted {} future SCHEDULED shift(s)", shiftsCount);
                 }
             }
 
             // Step 3: Summary
             log.info("========================================");
-            log.info("✅ Job P3 Completed Successfully");
-            log.info("📊 Summary:");
+            log.info(" Job P3 Completed Successfully");
+            log.info(" Summary:");
             log.info("   - Inactive employees processed: {}", inactiveEmployees.size());
             log.info("   - Fixed registrations deactivated: {}", totalFixedDeactivated);
             log.info("   - Flex registrations deactivated: {}", totalFlexDeactivated);
@@ -127,7 +127,7 @@ public class CleanupInactiveEmployeeRegistrationsJob {
             log.info("========================================");
 
         } catch (Exception e) {
-            log.error("❌ Job P3 Failed: Error cleaning up inactive employee registrations", e);
+            log.error(" Job P3 Failed: Error cleaning up inactive employee registrations", e);
             log.error("Error details: {}", e.getMessage());
             throw e; // Re-throw to trigger rollback
         }

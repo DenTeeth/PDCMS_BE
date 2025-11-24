@@ -185,7 +185,7 @@ public class FixedShiftRegistrationController {
         
         int shiftsCreated = fixedRegistrationService.regenerateShiftsForRegistration(registrationId);
         
-        String message = String.format("✅ Successfully generated %d shifts for registration #%d", 
+        String message = String.format(" Successfully generated %d shifts for registration #%d", 
                 shiftsCreated, registrationId);
         
         return ResponseEntity.ok(message);

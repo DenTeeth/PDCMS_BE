@@ -160,10 +160,10 @@ Authorization: Bearer <employee_token>
 
 **Validation:**
 
-- ✅ Returns only PENDING_ACTION renewals for current employee
-- ✅ Includes full registration details for decision-making
-- ✅ Shows daysUntilExpiry countdown
-- ✅ Sorted by expiresAt (closest deadline first)
+-  Returns only PENDING_ACTION renewals for current employee
+-  Includes full registration details for decision-making
+-  Shows daysUntilExpiry countdown
+-  Sorted by expiresAt (closest deadline first)
 
 ---
 
@@ -257,10 +257,10 @@ Content-Type: application/json
 
 **Validation:**
 
-- ✅ Status changed from PENDING_ACTION to CONFIRMED
-- ✅ confirmedAt timestamp set
-- ✅ **Registration's effectiveTo extended by 3 months** (2025-10-30 → 2026-01-30)
-- ✅ Employee can continue working with same schedule
+-  Status changed from PENDING_ACTION to CONFIRMED
+-  confirmedAt timestamp set
+-  **Registration's effectiveTo extended by 3 months** (2025-10-30 → 2026-01-30)
+-  Employee can continue working with same schedule
 
 **Database Verification:**
 
@@ -307,9 +307,9 @@ Content-Type: application/json
 
 **Validation:**
 
-- ✅ Status changed to DECLINED
-- ✅ Registration's effectiveTo **NOT changed** (remains original date)
-- ✅ Employee will stop working after effectiveTo date
+-  Status changed to DECLINED
+-  Registration's effectiveTo **NOT changed** (remains original date)
+-  Employee will stop working after effectiveTo date
 
 ---
 
@@ -397,8 +397,8 @@ Content-Type: application/json
 
 **Validation:**
 
-- ✅ Owner validation: only the employee who owns the registration can respond
-- ✅ Prevents cross-employee manipulation
+-  Owner validation: only the employee who owns the registration can respond
+-  Prevents cross-employee manipulation
 
 ---
 
@@ -538,10 +538,10 @@ ORDER BY es.employee_id, ws.start_time;
 
 **Validation:**
 
-- ✅ Each full-time employee has 2 shifts per working day (MORNING + AFTERNOON)
-- ✅ source = 'BATCH_JOB'
-- ✅ status = 'SCHEDULED'
-- ✅ registration_id = NULL (not linked to registration)
+-  Each full-time employee has 2 shifts per working day (MORNING + AFTERNOON)
+-  source = 'BATCH_JOB'
+-  status = 'SCHEDULED'
+-  registration_id = NULL (not linked to registration)
 
 ---
 
@@ -631,10 +631,10 @@ ORDER BY es.employee_id, es.work_date;
 
 **Validation:**
 
-- ✅ Shifts created ONLY for registered days (Mon, Wed, Fri - not Tue, Thu, Sat, Sun)
-- ✅ source = 'REGISTRATION_JOB'
-- ✅ registration_id links to source registration
-- ✅ Holidays are skipped
+-  Shifts created ONLY for registered days (Mon, Wed, Fri - not Tue, Thu, Sat, Sun)
+-  source = 'REGISTRATION_JOB'
+-  registration_id links to source registration
+-  Holidays are skipped
 
 ---
 
@@ -730,10 +730,10 @@ WHERE expiring_registration_id = 'ESR251030001';
 
 **Validation:**
 
-- ✅ Renewal created exactly 7 days before expiration
-- ✅ expiresAt = registration's effective_to
-- ✅ status = PENDING_ACTION
-- ✅ Message explains deadline and extension duration
+-  Renewal created exactly 7 days before expiration
+-  expiresAt = registration's effective_to
+-  status = PENDING_ACTION
+-  Message explains deadline and extension duration
 
 ---
 

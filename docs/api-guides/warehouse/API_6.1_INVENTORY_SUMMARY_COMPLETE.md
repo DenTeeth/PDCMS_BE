@@ -1,16 +1,16 @@
-# API 6.1 - Inventory Summary Implementation Complete ✅
+# API 6.1 - Inventory Summary Implementation Complete 
 
-## 📝 Overview
+##  Overview
 
 Đã hoàn thành implementation API 6.1 - Inventory Summary với aggregation queries và computed fields theo yêu cầu V23 ERP-Compliant Architecture.
 
-## 🎯 API Endpoint
+##  API Endpoint
 
 ```
 GET /api/v3/warehouse/summary
 ```
 
-## 📊 Features Implemented
+##  Features Implemented
 
 ### 1. Request Parameters
 
@@ -91,7 +91,7 @@ WHERE item_master_id = ? AND is_base_unit = true
 - Lấy tên đơn vị cơ bản từ bảng item_units
 - Fallback về unitOfMeasure nếu chưa có unit định nghĩa
 
-## 🔐 Authorization
+##  Authorization
 
 ```java
 @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_INVENTORY_MANAGER', 'ROLE_MANAGER', 'ROLE_RECEPTIONIST', 'VIEW_WAREHOUSE')")
@@ -100,7 +100,7 @@ WHERE item_master_id = ? AND is_base_unit = true
 - Yêu cầu quyền VIEW_WAREHOUSE
 - Hoặc một trong các roles: ADMIN, INVENTORY_MANAGER, MANAGER, RECEPTIONIST
 
-## 🗂️ Files Created/Modified
+## ️ Files Created/Modified
 
 ### New Files
 
@@ -131,7 +131,7 @@ WHERE item_master_id = ? AND is_base_unit = true
    - Injected ItemUnitRepository dependency
    - Business logic: aggregation, stock status calculation, FEFO
 
-## 🧪 Test Cases
+##  Test Cases
 
 ### Test 1: Lấy tất cả items (no filters)
 
@@ -169,7 +169,7 @@ GET /api/v3/warehouse/summary?categoryId=5&page=0&size=20
 GET /api/v3/warehouse/summary?search=thuốc&stockStatus=LOW_STOCK&warehouseType=COLD&categoryId=3&page=0&size=10
 ```
 
-## 🎨 Business Use Cases
+##  Business Use Cases
 
 ### Dashboard Scenario
 
@@ -197,7 +197,7 @@ GET /api/v3/warehouse/summary?search=thuốc&stockStatus=LOW_STOCK&warehouseType
    - GET /summary?categoryId=5 → Xem vật tư tiêu hao
    - GET /summary?categoryId=8 → Xem thiết bị nha khoa
 
-## 🔥 Performance Optimization
+##  Performance Optimization
 
 ### Current Implementation
 
@@ -224,7 +224,7 @@ GET /api/v3/warehouse/summary?search=thuốc&stockStatus=LOW_STOCK&warehouseType
 CREATE VIEW v_inventory_summary AS ...
 ```
 
-## ✅ Compilation Status
+##  Compilation Status
 
 ```
 [INFO] BUILD SUCCESS
@@ -232,21 +232,21 @@ CREATE VIEW v_inventory_summary AS ...
 [INFO] Compiling 569 source files
 ```
 
-## 📚 API Documentation
+##  API Documentation
 
 - **Swagger UI**: http://localhost:8080/swagger-ui.html
 - **Tag**: Warehouse V3
 - **Operation**: API 6.1 - Inventory Summary Dashboard
 
-## 🎯 Next Steps
+##  Next Steps
 
-1. ✅ Start application: `./mvnw spring-boot:run`
-2. ✅ Test API với Postman/curl
-3. ✅ Verify computed fields accuracy
-4. ✅ Test pagination với large dataset
-5. ✅ Verify FEFO logic cho nearestExpiryDate
+1.  Start application: `./mvnw spring-boot:run`
+2.  Test API với Postman/curl
+3.  Verify computed fields accuracy
+4.  Test pagination với large dataset
+5.  Verify FEFO logic cho nearestExpiryDate
 
-## 📝 Notes
+##  Notes
 
 - Sử dụng manual pagination (in-memory) cho stockStatus filter
 - Nếu cần performance optimization cho large dataset, consider database-level aggregation

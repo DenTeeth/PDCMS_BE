@@ -323,7 +323,7 @@ public class TreatmentPlanApprovalService {
             }
         }
 
-        log.info("V21: ✅ Plan {} activation complete - {} items READY, {} items WAITING for prerequisites",
+        log.info("V21:  Plan {} activation complete - {} items READY, {} items WAITING for prerequisites",
                 plan.getPlanCode(), itemsActivated, itemsWaiting);
     }
 

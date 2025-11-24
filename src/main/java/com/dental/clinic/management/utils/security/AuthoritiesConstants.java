@@ -127,5 +127,9 @@ public final class AuthoritiesConstants {
     public static final String VIEW_ALL_TREATMENT_PLANS = "VIEW_ALL_TREATMENT_PLANS"; // V21: Manager view all plans
                                                                                       // across patients
     public static final String MANAGE_PLAN_PRICING = "MANAGE_PLAN_PRICING"; // V21.4: Finance/Accountant adjusts prices
-                                                                             // (API 5.13)
+                                                                            // (API 5.13)
+
+    // Warehouse Module Permissions (Added 2025-11-24)
+    public static final String VIEW_WAREHOUSE = "VIEW_WAREHOUSE"; // View inventory, batches, expiring alerts (API 6.1,
+                                                                  // 6.2, 6.3)
 }

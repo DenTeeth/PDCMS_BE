@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * 📥📤 Storage In/Out Controller
+ *  Storage In/Out Controller
  * Quản lý phiếu nhập/xuất kho và thống kê
  */
 @RestController
@@ -63,7 +63,7 @@ public class StorageInOutController {
     }
 
     /**
-     * 📊 API: Lấy thống kê Storage (Import/Export)
+     *  API: Lấy thống kê Storage (Import/Export)
      */
     @Operation(summary = "Lấy thống kê xuất/nhập kho", description = "Trả về: Import/Export value, growth percent")
     @ApiMessage("Lấy thống kê storage thành công")
@@ -78,7 +78,7 @@ public class StorageInOutController {
     }
 
     // ===========================
-    // 🔍 GET ALL TRANSACTIONS
+    //  GET ALL TRANSACTIONS
     // ===========================
     @Operation(summary = "Lấy danh sách phiếu nhập/xuất kho", description = "Lọc theo loại, tháng/năm")
     @ApiMessage("Lấy danh sách transactions thành công")
@@ -94,7 +94,7 @@ public class StorageInOutController {
     }
 
     // ===========================
-    // 🔍 GET TRANSACTION BY ID
+    //  GET TRANSACTION BY ID
     // ===========================
     @Operation(summary = "Lấy chi tiết phiếu nhập/xuất kho", description = "Trả về thông tin đầy đủ kèm danh sách items")
     @ApiMessage("Lấy chi tiết transaction thành công")
@@ -108,7 +108,7 @@ public class StorageInOutController {
     }
 
     // ===========================
-    // ✏️ UPDATE TRANSACTION
+    // ✏ UPDATE TRANSACTION
     // ===========================
     @Operation(summary = "Cập nhật phiếu nhập/xuất kho", description = "Chỉ cho phép cập nhật notes. Không thể sửa items sau khi đã tạo.")
     @ApiMessage("Cập nhật transaction thành công")
@@ -123,7 +123,7 @@ public class StorageInOutController {
     }
 
     // ===========================
-    // 🗑️ DELETE TRANSACTION
+    //  DELETE TRANSACTION
     // ===========================
     @Operation(summary = "Xóa phiếu nhập/xuất kho", description = "CẢNH BÁO: Xóa transaction sẽ rollback số lượng tồn kho. Chỉ admin mới được phép.")
     @ApiMessage("Xóa transaction thành công")

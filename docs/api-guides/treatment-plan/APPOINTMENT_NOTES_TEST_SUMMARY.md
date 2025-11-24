@@ -1,27 +1,27 @@
 # API Test Summary - Appointment Notes Feature
 
-## 📅 Test Date: November 24, 2025
+##  Test Date: November 24, 2025
 
-## ✅ Test Status: PASSED (Code Review & Compilation)
+##  Test Status: PASSED (Code Review & Compilation)
 
 ---
 
-## 🎯 Feature Summary
+##  Feature Summary
 
 **Feature**: Display appointment completion notes in Treatment Plan details
 
 **Implementation**:
 
-- ✅ Added `notes` field to `LinkedAppointmentDTO`
-- ✅ Added `appointmentNotes` field to `TreatmentPlanDetailDTO`
-- ✅ Updated JPQL query in `PatientTreatmentPlanRepository` to SELECT `apt.notes`
-- ✅ Updated native SQL query in `TreatmentPlanItemService` to include notes
-- ✅ Updated DTO mapping in both service classes
-- ✅ **Code compiled successfully**: BUILD SUCCESS (500 source files)
+-  Added `notes` field to `LinkedAppointmentDTO`
+-  Added `appointmentNotes` field to `TreatmentPlanDetailDTO`
+-  Updated JPQL query in `PatientTreatmentPlanRepository` to SELECT `apt.notes`
+-  Updated native SQL query in `TreatmentPlanItemService` to include notes
+-  Updated DTO mapping in both service classes
+-  **Code compiled successfully**: BUILD SUCCESS (500 source files)
 
 ---
 
-## 📋 Files Modified
+##  Files Modified
 
 ### 1. LinkedAppointmentDTO.java
 
@@ -110,7 +110,7 @@ LinkedAppointmentDTO.builder()
 
 ---
 
-## 🧪 Expected API Response
+##  Expected API Response
 
 ### Endpoint
 
@@ -174,7 +174,7 @@ curl -X GET "http://localhost:8080/api/v1/patients/BN-1001/treatment-plans/PLAN-
               "code": "APT-20251001-001",
               "scheduledDate": "2025-10-02T09:00:00",
               "status": "COMPLETED",
-              "notes": "✅ Examination completed. X-rays taken. Patient has mild tooth decay on #16 and #15. Recommended treatment plan created."
+              "notes": " Examination completed. X-rays taken. Patient has mild tooth decay on #16 and #15. Recommended treatment plan created."
             }
           ]
         },
@@ -273,7 +273,7 @@ curl -X GET "http://localhost:8080/api/v1/patients/BN-1001/treatment-plans/PLAN-
 
 ---
 
-## 🔍 Key Points for FE Team
+##  Key Points for FE Team
 
 ### 1. **Notes Field Characteristics**
 
@@ -296,7 +296,7 @@ function displayAppointmentNotes(appointment) {
     // Show notes in expanded section
     return `
       <div class="appointment-notes">
-        <strong>📝 Ghi chú từ bác sĩ:</strong>
+        <strong> Ghi chú từ bác sĩ:</strong>
         <p>${appointment.notes}</p>
       </div>
     `;
@@ -333,7 +333,7 @@ null;
 
 ---
 
-## ✅ Verification Checklist
+##  Verification Checklist
 
 ### Backend Implementation
 
@@ -357,7 +357,7 @@ null;
 
 ---
 
-## 🎨 UI/UX Recommendations
+##  UI/UX Recommendations
 
 ### 1. **Visual Hierarchy**
 
@@ -367,9 +367,9 @@ null;
 
 ### 2. **Color Coding**
 
-- ✅ **Completed with Notes**: Blue/Info border
-- ⚪ **Completed without Notes**: Gray/Muted style
-- 📆 **Scheduled**: No notes section shown
+-  **Completed with Notes**: Blue/Info border
+-  **Completed without Notes**: Gray/Muted style
+-  **Scheduled**: No notes section shown
 
 ### 3. **Responsive Design**
 
@@ -401,12 +401,12 @@ null;
 
 ---
 
-## 🚀 Next Steps
+##  Next Steps
 
 ### For Backend Team
 
-1. ✅ Feature implemented and compiled successfully
-2. ✅ Documentation created for FE team
+1.  Feature implemented and compiled successfully
+2.  Documentation created for FE team
 3. ⏳ Deploy to staging environment
 4. ⏳ Conduct integration testing with real data
 
@@ -420,7 +420,7 @@ null;
 
 ---
 
-## 📚 Related Documentation
+##  Related Documentation
 
 - **Main Guide**: `docs/api-guides/treatment-plan/APPOINTMENT_NOTES_FEATURE_GUIDE.md`
 - **API Documentation**: `docs/API_DOCUMENTATION.md`
@@ -429,7 +429,7 @@ null;
 
 ---
 
-## 📞 Contact
+##  Contact
 
 **Questions about this feature?**
 
@@ -442,4 +442,4 @@ null;
 **Test Summary Generated**: November 24, 2025
 **Backend Version**: 0.0.1-SNAPSHOT
 **Spring Boot**: 3.2.10
-**Test Status**: ✅ PASSED (Code Compilation)
+**Test Status**:  PASSED (Code Compilation)

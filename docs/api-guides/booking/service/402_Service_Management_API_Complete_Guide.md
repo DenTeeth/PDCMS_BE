@@ -1,6 +1,6 @@
 # Service Management API - Complete Guide (Module BE-402)
 
-## 📋 Table of Contents
+##  Table of Contents
 
 1. [Overview](#overview)
 2. [API Endpoints Summary](#api-endpoints-summary)
@@ -54,16 +54,16 @@ Services (dịch vụ nha khoa) là các dịch vụ đơn lẻ như:
 
 **API Path Updated**:
 
-- ✅ Base URL changed to: `/api/v1/booking/services`
-- ✅ All endpoints now use `serviceCode` parameter consistently
-- ✅ DELETE endpoint uses `serviceCode` (not ID)
+-  Base URL changed to: `/api/v1/booking/services`
+-  All endpoints now use `serviceCode` parameter consistently
+-  DELETE endpoint uses `serviceCode` (not ID)
 
 **RESTful Toggle Added**:
 
-- ✅ New endpoint: `PATCH /api/v1/booking/services/{serviceCode}/toggle`
-- ✅ Toggles between active/inactive in one call
-- ✅ Returns updated service immediately
-- ✅ Perfect for toggle switches in UI
+-  New endpoint: `PATCH /api/v1/booking/services/{serviceCode}/toggle`
+-  Toggles between active/inactive in one call
+-  Returns updated service immediately
+-  Perfect for toggle switches in UI
 
 **Example**:
 
@@ -463,8 +463,8 @@ curl -X PUT "http://localhost:8080/api/v1/booking/services/SV-CAOVOI" \
 
 **Version 2** hỗ trợ **2 cách xóa** service để tương thích với cả FE mới và cũ:
 
-1. **DELETE by ID** (Recommended - V2) ✅
-2. **DELETE by Code** (Legacy - V1) 🔄
+1. **DELETE by ID** (Recommended - V2) 
+2. **DELETE by Code** (Legacy - V1) 
 
 ---
 
@@ -567,7 +567,7 @@ curl -X DELETE "http://localhost:8080/api/v1/booking/services/code/SV-CAOVOI" \
 
 ---
 
-### 💡 Migration Guide
+###  Migration Guide
 
 **Before (V1)**:
 
@@ -636,7 +636,7 @@ Authorization: Bearer {access_token}
   "price": 200000,
   "specializationId": null,
   "specializationName": null,
-  "isActive": false, // 🔄 Toggled from true → false
+  "isActive": false, //  Toggled from true → false
   "createdAt": "2024-11-01T10:00:00",
   "updatedAt": "2024-11-03T15:30:00"
 }
@@ -682,7 +682,7 @@ await updateService(serviceId, {
 const updatedService = await getService(serviceId);
 ```
 
-**After (V2 - Only 1 API call)** ✅:
+**After (V2 - Only 1 API call)** :
 
 ```typescript
 // One call - toggle and get updated service
@@ -724,7 +724,7 @@ const handleToggle = async (serviceId: number) => {
 
 ### Idempotency
 
-- **Idempotent**: ✅ Có (same result for same initial state)
+- **Idempotent**:  Có (same result for same initial state)
 - **Multiple calls**: Mỗi lần gọi sẽ toggle trạng thái
   - Call 1: `true` → `false`
   - Call 2: `false` → `true`
@@ -736,7 +736,7 @@ const handleToggle = async (serviceId: number) => {
 | Feature          | PATCH /toggle              | PUT /update                    |
 | ---------------- | -------------------------- | ------------------------------ |
 | **Use Case**     | Quick toggle on/off        | Full update with validation    |
-| **Request Body** | No body needed ✅          | Requires UpdateServiceRequest  |
+| **Request Body** | No body needed           | Requires UpdateServiceRequest  |
 | **Response**     | Returns updated service    | Returns updated service        |
 | **Simplicity**   | Very simple (1-click)      | More complex (form validation) |
 | **Best For**     | Switch buttons, checkboxes | Edit forms, bulk updates       |
@@ -866,7 +866,7 @@ GET {{base_url}}/api/v1/services?page=0&size=10
 Authorization: Bearer {{access_token}}
 ```
 
-✅ Expected: 200 OK with service list
+ Expected: 200 OK with service list
 
 **Step 2**: Create new service
 
@@ -885,8 +885,8 @@ Body: {
 }
 ```
 
-✅ Expected: 201 Created with service details
-📝 Save `serviceId` to environment variable
+ Expected: 201 Created with service details
+ Save `serviceId` to environment variable
 
 **Step 3**: Get service by code
 
@@ -895,7 +895,7 @@ GET {{base_url}}/api/v1/services/{{test_service_code}}
 Authorization: Bearer {{access_token}}
 ```
 
-✅ Expected: 200 OK with service details
+ Expected: 200 OK with service details
 
 **Step 4**: Update service
 
@@ -908,7 +908,7 @@ Body: {
 }
 ```
 
-✅ Expected: 200 OK with updated service
+ Expected: 200 OK with updated service
 
 **Step 5**: Soft delete service
 
@@ -917,7 +917,7 @@ DELETE {{base_url}}/api/v1/services/{{test_service_code}}
 Authorization: Bearer {{access_token}}
 ```
 
-✅ Expected: 204 No Content
+ Expected: 204 No Content
 
 **Step 6**: Verify service is inactive
 
@@ -926,7 +926,7 @@ GET {{base_url}}/api/v1/services/{{test_service_code}}
 Authorization: Bearer {{access_token}}
 ```
 
-✅ Expected: 200 OK with `isActive: false`
+ Expected: 200 OK with `isActive: false`
 
 #### Scenario 2: Error Handling Tests
 
@@ -937,7 +937,7 @@ POST {{base_url}}/api/v1/services
 Body: { "serviceCode": "SV-CAOVOI", ... } (existing code)
 ```
 
-❌ Expected: 400 Bad Request (SERVICE_CODE_EXISTS)
+ Expected: 400 Bad Request (SERVICE_CODE_EXISTS)
 
 **Test 2**: Create service with invalid specialization
 
@@ -946,7 +946,7 @@ POST {{base_url}}/api/v1/services
 Body: { "specializationId": 999, ... }
 ```
 
-❌ Expected: 400 Bad Request (SPECIALIZATION_NOT_FOUND)
+ Expected: 400 Bad Request (SPECIALIZATION_NOT_FOUND)
 
 **Test 3**: Create service with invalid duration
 
@@ -955,7 +955,7 @@ POST {{base_url}}/api/v1/services
 Body: { "defaultDurationMinutes": 0, ... }
 ```
 
-❌ Expected: 400 Bad Request (validation error)
+ Expected: 400 Bad Request (validation error)
 
 **Test 4**: Get non-existent service
 
@@ -963,7 +963,7 @@ Body: { "defaultDurationMinutes": 0, ... }
 GET {{base_url}}/api/v1/services/INVALID-CODE
 ```
 
-❌ Expected: 404 Not Found
+ Expected: 404 Not Found
 
 **Test 5**: Update with duplicate code
 
@@ -972,7 +972,7 @@ PUT {{base_url}}/api/v1/services/SV-CAOVOI
 Body: { "serviceCode": "SV-NHORANG" } (existing code)
 ```
 
-❌ Expected: 400 Bad Request (SERVICE_CODE_EXISTS)
+ Expected: 400 Bad Request (SERVICE_CODE_EXISTS)
 
 **Test 6**: No authentication
 
@@ -981,7 +981,7 @@ GET {{base_url}}/api/v1/services
 (no Authorization header)
 ```
 
-❌ Expected: 401 Unauthorized
+ Expected: 401 Unauthorized
 
 **Test 7**: Wrong permission (Doctor trying to create)
 
@@ -991,7 +991,7 @@ Authorization: Bearer {{doctor_token}}
 Body: {...}
 ```
 
-❌ Expected: 403 Forbidden (Doctor không có quyền CREATE_SERVICE)
+ Expected: 403 Forbidden (Doctor không có quyền CREATE_SERVICE)
 
 #### Scenario 3: Filtering and Search
 
@@ -1001,7 +1001,7 @@ Body: {...}
 GET {{base_url}}/api/v1/services?isActive=true&page=0&size=10
 ```
 
-✅ Expected: Only active services
+ Expected: Only active services
 
 **Test 2**: Filter by specialization
 
@@ -1009,7 +1009,7 @@ GET {{base_url}}/api/v1/services?isActive=true&page=0&size=10
 GET {{base_url}}/api/v1/services?specializationId=1&page=0&size=10
 ```
 
-✅ Expected: Services belonging to specialization 1
+ Expected: Services belonging to specialization 1
 
 **Test 3**: Search by keyword
 
@@ -1017,7 +1017,7 @@ GET {{base_url}}/api/v1/services?specializationId=1&page=0&size=10
 GET {{base_url}}/api/v1/services?keyword=cạo
 ```
 
-✅ Expected: Services with "cạo" in name or code
+ Expected: Services with "cạo" in name or code
 
 **Test 4**: Combined filters
 
@@ -1025,7 +1025,7 @@ GET {{base_url}}/api/v1/services?keyword=cạo
 GET {{base_url}}/api/v1/services?isActive=true&specializationId=1&keyword=vôi
 ```
 
-✅ Expected: Active services in specialization 1 containing "vôi"
+ Expected: Active services in specialization 1 containing "vôi"
 
 **Test 5**: Sort by price descending
 
@@ -1033,7 +1033,7 @@ GET {{base_url}}/api/v1/services?isActive=true&specializationId=1&keyword=vôi
 GET {{base_url}}/api/v1/services?sortBy=price&sortDirection=DESC
 ```
 
-✅ Expected: Services sorted by price (highest first)
+ Expected: Services sorted by price (highest first)
 
 ---
 

@@ -14,10 +14,10 @@ API này cho phép lấy chi tiết cấu trúc của một "gói mẫu" (treatm
 
 **Tính Năng Chính:**
 
-- ✅ **Load full structure**: Template → Phases → Services (tối ưu 1-2 queries)
-- ✅ **Nested validation (P1 Fix)**: Tự động lọc bỏ dịch vụ inactive, log warning
-- ✅ **Enhanced error handling (P2 Fix)**: 404 (not found) vs 410 GONE (inactive)
-- ✅ **Rich metadata (P2 Enhancement)**: Summary, description, specialization (reserved)
+-  **Load full structure**: Template → Phases → Services (tối ưu 1-2 queries)
+-  **Nested validation (P1 Fix)**: Tự động lọc bỏ dịch vụ inactive, log warning
+-  **Enhanced error handling (P2 Fix)**: 404 (not found) vs 410 GONE (inactive)
+-  **Rich metadata (P2 Enhancement)**: Summary, description, specialization (reserved)
 
 ---
 
@@ -65,7 +65,7 @@ for (TemplatePhaseService tps : phaseServices) {
     if (tps.getService() != null && tps.getService().getIsActive()) {
         activeServices.add(tps);
     } else {
-        log.warn("⚠️ Filtering inactive service: {}", serviceCode);
+        log.warn("️ Filtering inactive service: {}", serviceCode);
         filteredServicesCount++;
     }
 }
@@ -102,14 +102,14 @@ throw new ResponseStatusException(HttpStatus.GONE, "Template is inactive (deprec
 
 ```json
 {
-  "description": "Gói điều trị chỉnh nha toàn diện...", // ✅ NEW
+  "description": "Gói điều trị chỉnh nha toàn diện...", //  NEW
   "specialization": {
-    // ✅ NEW - Loaded from DB (specialization_id FK)
+    //  NEW - Loaded from DB (specialization_id FK)
     "id": 1,
     "name": "Chỉnh nha"
   },
   "summary": {
-    // ✅ NEW
+    //  NEW
     "totalPhases": 4,
     "totalItemsInTemplate": 7
   }
@@ -128,7 +128,7 @@ throw new ResponseStatusException(HttpStatus.GONE, "Template is inactive (deprec
 
 | Parameter      | Type     | Required | Location | Description                                                |
 | -------------- | -------- | -------- | -------- | ---------------------------------------------------------- |
-| `templateCode` | `string` | ✅ Yes   | Path     | Mã gói mẫu (e.g., "TPL_ORTHO_METAL", "TPL_IMPLANT_OSSTEM") |
+| `templateCode` | `string` |  Yes   | Path     | Mã gói mẫu (e.g., "TPL_ORTHO_METAL", "TPL_IMPLANT_OSSTEM") |
 
 **Example:**
 
@@ -277,7 +277,7 @@ GET /api/v1/treatment-plan-templates/TPL_ORTHO_METAL
 
 ---
 
-## ⚠️ QUAN TRỌNG: Understanding Quantity Field
+## ️ QUAN TRỌNG: Understanding Quantity Field
 
 ### What FE Receives
 
@@ -286,7 +286,7 @@ GET /api/v1/treatment-plan-templates/TPL_ORTHO_METAL
   "serviceCode": "ORTHO_ADJUST",
   "serviceName": "Tái khám Chỉnh nha",
   "price": 500000,
-  "quantity": 24 // ✅ FE nhận số RAW
+  "quantity": 24 //  FE nhận số RAW
 }
 ```
 
@@ -415,7 +415,7 @@ for (TemplatePhase phase : phases) {
         if (tps.getService() != null && tps.getService().getIsActive()) {
             activeServices.add(tps);
         } else {
-            log.warn("⚠️ Filtering inactive service: {} from phase: {}",
+            log.warn("️ Filtering inactive service: {} from phase: {}",
                     serviceCode, phaseName);
             filteredServicesCount++;
         }
@@ -570,7 +570,7 @@ curl -X GET https://api.example.com/api/v1/treatment-plan-templates/TPL_ORTHO_ME
       "itemsInPhase": [
         {
           "serviceCode": "ORTHO_ADJUST",
-          "quantity": 24  // ✅ FE nhận 24
+          "quantity": 24  //  FE nhận 24
         }
       ]
     },
@@ -619,8 +619,8 @@ GET /api/v1/treatment-plan-templates/TPL_ORTHO_METAL
 **Backend Log:**
 
 ```
-⚠️ Filtering inactive service from template: Phase=Giai đoạn 1, Service=OLD_SERVICE (Dịch vụ cũ)
-⚠️ Filtered 1 inactive services from template TPL_ORTHO_METAL
+️ Filtering inactive service from template: Phase=Giai đoạn 1, Service=OLD_SERVICE (Dịch vụ cũ)
+️ Filtered 1 inactive services from template TPL_ORTHO_METAL
 ```
 
 **Response (200 OK)**:
@@ -782,11 +782,11 @@ POST /api/v1/patients/BN-1002/treatment-plans/custom
 
 | Role        | Permission              | Can Access? | Rationale                                 |
 | ----------- | ----------------------- | ----------- | ----------------------------------------- |
-| **ADMIN**   | Always has access       | ✅ Yes      | Full system access                        |
-| **MANAGER** | `CREATE_TREATMENT_PLAN` | ✅ Yes      | Can create plans → needs templates        |
-| **DENTIST** | `CREATE_TREATMENT_PLAN` | ✅ Yes      | Main user of this API                     |
-| **NURSE**   | ❌ No permission        | ❌ No       | Cannot create plans → không cần templates |
-| **PATIENT** | ❌ No permission        | ❌ No       | Cannot create plans                       |
+| **ADMIN**   | Always has access       |  Yes      | Full system access                        |
+| **MANAGER** | `CREATE_TREATMENT_PLAN` |  Yes      | Can create plans → needs templates        |
+| **DENTIST** | `CREATE_TREATMENT_PLAN` |  Yes      | Main user of this API                     |
+| **NURSE**   |  No permission        |  No       | Cannot create plans → không cần templates |
+| **PATIENT** |  No permission        |  No       | Cannot create plans                       |
 
 ---
 
@@ -889,7 +889,7 @@ curl -X GET .../treatment-plan-templates/TPL_ORTHO_METAL \
 
 - Response 200 OK
 - `totalItemsInTemplate` decreased by 1 (filtered inactive service)
-- Backend log shows: `⚠️ Filtering inactive service: OLD_SERVICE`
+- Backend log shows: `️ Filtering inactive service: OLD_SERVICE`
 
 ---
 
@@ -991,13 +991,13 @@ renderPhases(response.phases);
 ```javascript
 // IMPORTANT: Maintain stepOrder and sequenceNumber when customizing
 
-// ❌ BAD: Add service without sequenceNumber
+//  BAD: Add service without sequenceNumber
 phases[0].itemsInPhase.push({
   serviceCode: "NEW_SERVICE",
   // Missing sequenceNumber!
 });
 
-// ✅ GOOD: Calculate next sequenceNumber
+//  GOOD: Calculate next sequenceNumber
 const maxSeq = Math.max(...phases[0].itemsInPhase.map((i) => i.sequenceNumber));
 phases[0].itemsInPhase.push({
   serviceCode: "NEW_SERVICE",
@@ -1097,13 +1097,13 @@ spring.jpa.show-sql=true
 
 ### Version 1.0 (2025-01-15)
 
-- ✅ Initial release
-- ✅ P1 Fix: Permission (removed VIEW_ALL, only CREATE_TREATMENT_PLAN)
-- ✅ P1 Fix: Nested validation (filter inactive services)
-- ✅ P2 Enhancement: Error handling (404 vs 410 GONE)
-- ✅ P2 Enhancement: Response metadata (specialization, summary, description)
-- ✅ Performance optimization (JOIN FETCH for 1-2 queries)
-- ✅ Comprehensive logging (warnings for filtered services)
+-  Initial release
+-  P1 Fix: Permission (removed VIEW_ALL, only CREATE_TREATMENT_PLAN)
+-  P1 Fix: Nested validation (filter inactive services)
+-  P2 Enhancement: Error handling (404 vs 410 GONE)
+-  P2 Enhancement: Response metadata (specialization, summary, description)
+-  Performance optimization (JOIN FETCH for 1-2 queries)
+-  Comprehensive logging (warnings for filtered services)
 
 ---
 

@@ -12,7 +12,7 @@ import java.util.List;
 public interface SupplierItemRepository extends JpaRepository<SupplierItem, Long> {
 
     /**
-     * 📋 Lấy danh sách vật tư mà NCC này cung cấp (cho GET BY ID)
+     *  Lấy danh sách vật tư mà NCC này cung cấp (cho GET BY ID)
      * Kèm theo ItemMaster.ItemCategory để lấy categoryName
      */
     @Query("SELECT si FROM SupplierItem si " +

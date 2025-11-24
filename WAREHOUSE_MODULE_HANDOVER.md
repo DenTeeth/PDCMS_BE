@@ -1,4 +1,4 @@
-# 📦 WAREHOUSE MODULE - TÀI LIỆU BÀN GIAO KỸ THUẬT
+#  WAREHOUSE MODULE - TÀI LIỆU BÀN GIAO KỸ THUẬT
 
 **Ngày bàn giao:** 24/11/2025  
 **Người bàn giao:** ThanhCQ1  
@@ -8,7 +8,7 @@
 
 ---
 
-## 📑 MỤC LỤC
+##  MỤC LỤC
 
 1. [Tổng quan Module](#1-tổng-quan-module)
 2. [Kiến trúc hệ thống](#2-kiến-trúc-hệ-thống)
@@ -26,11 +26,11 @@
 
 ### 1.1. Mục đích
 Module **Warehouse Management** quản lý toàn bộ vật tư nha khoa bao gồm:
-- 📥 Nhập kho từ nhà cung cấp
-- 📤 Xuất kho cho điều trị
-- 📊 Thống kê tồn kho theo thời gian thực
-- 🔔 Cảnh báo hết hạn sử dụng (HSD)
-- 📈 Phân tích xu hướng nhập/xuất
+-  Nhập kho từ nhà cung cấp
+-  Xuất kho cho điều trị
+-  Thống kê tồn kho theo thời gian thực
+-  Cảnh báo hết hạn sử dụng (HSD)
+-  Phân tích xu hướng nhập/xuất
 
 ### 1.2. Đặc điểm riêng của Warehouse nha khoa
 
@@ -50,23 +50,23 @@ Module **Warehouse Management** quản lý toàn bộ vật tư nha khoa bao g�
 
 **4 vấn đề nghiêm trọng đã fix:**
 
-1. ❌ **Thiếu `item_code` trong transaction items**
-   - ✅ **Fixed**: Thêm `item_code` vào `storage_transaction_items`
+1.  **Thiếu `item_code` trong transaction items**
+   -  **Fixed**: Thêm `item_code` vào `storage_transaction_items`
    - Auto-populate từ `ItemMaster.itemCode` khi tạo transaction
    - Warehouse staff có thể nhận diện vật tư ngay trên phiếu nhập/xuất
 
-2. ❌ **Không hỗ trợ đơn vị đo lường hierarchy (Hộp → Vỉ → Viên)**
-   - ✅ **Fixed**: Tạo bảng `item_units` với `conversion_rate`
+2.  **Không hỗ trợ đơn vị đo lường hierarchy (Hộp → Vỉ → Viên)**
+   -  **Fixed**: Tạo bảng `item_units` với `conversion_rate`
    - Hỗ trợ giao dịch linh hoạt: "Xuất 2 vỉ từ hộp 10 vỉ"
    - VD: Amoxicillin có 3 units: Hộp (100) → Vỉ (10) → Viên (1)
 
-3. ❌ **Expiry date không bắt buộc cho tools**
-   - ✅ **Fixed**: `expiry_date NOT NULL` cho TẤT CẢ vật tư
+3.  **Expiry date không bắt buộc cho tools**
+   -  **Fixed**: `expiry_date NOT NULL` cho TẤT CẢ vật tư
    - Xóa exception cho `is_tool=TRUE`
    - Compliance với quy định quản lý thiết bị y tế
 
-4. ❌ **Không tracking parent-child batches**
-   - ✅ **Fixed**: Thêm `parent_batch_id` vào `item_batches`
+4.  **Không tracking parent-child batches**
+   -  **Fixed**: Thêm `parent_batch_id` vào `item_batches`
    - Seed data có 28 ví dụ parent-child (batches 196-223)
    - Hỗ trợ truy vết: "Vỉ #197-206 xuất từ Hộp #196"
 
@@ -100,7 +100,7 @@ com.dental.clinic.management.warehouse/
 │   │   └── CreateSupplierRequest.java
 │   ├── response/
 │   │   ├── InventorySummaryResponse.java
-│   │   ├── TransactionResponse.java     // 🔥 Có itemCode + unitName
+│   │   ├── TransactionResponse.java     //  Có itemCode + unitName
 │   │   ├── ItemUnitResponse.java        // 🆕 DTO cho unit hierarchy
 │   │   └── StorageStatsResponse.java
 ├── service/
@@ -123,7 +123,7 @@ com.dental.clinic.management.warehouse/
 └── exception/
     ├── ItemMasterNotFoundException.java
     ├── InsufficientStockException.java
-    ├── ExpiryDateRequiredException.java // 🔥 Validation HSD
+    ├── ExpiryDateRequiredException.java //  Validation HSD
     └── BatchNotFoundException.java
 ```
 
@@ -162,7 +162,7 @@ com.dental.clinic.management.warehouse/
 ```sql
 CREATE TABLE item_masters (
     item_master_id BIGSERIAL PRIMARY KEY,
-    item_code VARCHAR(50) UNIQUE NOT NULL,        -- 🔥 VD: "DP001", "VC002"
+    item_code VARCHAR(50) UNIQUE NOT NULL,        --  VD: "DP001", "VC002"
     item_name VARCHAR(255) NOT NULL,               -- "Amoxicillin 500mg"
     description TEXT,
     category_id BIGINT REFERENCES item_categories,
@@ -225,9 +225,9 @@ CREATE TABLE item_batches (
     batch_id BIGSERIAL PRIMARY KEY,
     item_master_id BIGINT NOT NULL REFERENCES item_masters,
     lot_number VARCHAR(100) NOT NULL,              -- Số lô (VD: "AMOX-2025-C")
-    quantity_on_hand INT NOT NULL DEFAULT 0,       -- 🔥 SỐ LƯỢNG TỒN KHO
+    quantity_on_hand INT NOT NULL DEFAULT 0,       --  SỐ LƯỢNG TỒN KHO
     parent_batch_id BIGINT REFERENCES item_batches, -- 🆕 Parent batch (hierarchy)
-    expiry_date DATE NOT NULL,                     -- 🔥 BẮT BUỘC (sau mentor feedback)
+    expiry_date DATE NOT NULL,                     --  BẮT BUỘC (sau mentor feedback)
     supplier_id BIGINT REFERENCES suppliers,
     imported_at TIMESTAMP NOT NULL,
     created_at TIMESTAMP NOT NULL,
@@ -354,9 +354,9 @@ CREATE INDEX idx_trans_type ON storage_transactions(transaction_type);
 2. Tạo Transaction Header (mã PN-YYYYMMDD-XXX)
 3. FOR EACH item trong request:
    a. Validate ItemMaster tồn tại
-   b. 🔥 Check expiry_date NOT NULL (bắt buộc cho ALL items)
+   b.  Check expiry_date NOT NULL (bắt buộc cho ALL items)
    c. Tìm hoặc tạo Batch mới (theo lot_number)
-   d. 🔥 Auto-populate item_code từ ItemMaster
+   d.  Auto-populate item_code từ ItemMaster
    e. quantity_on_hand += quantity (tăng tồn kho)
    f. Tạo TransactionItem (+quantity)
 4. Save Transaction
@@ -365,12 +365,12 @@ CREATE INDEX idx_trans_type ON storage_transactions(transaction_type);
 
 **Code snippet:**
 ```java
-// 🔥 Mentor feedback: Expiry date BẮT BUỘC cho ALL items
+//  Mentor feedback: Expiry date BẮT BUỘC cho ALL items
 if (itemDto.getExpiryDate() == null) {
     throw new ExpiryDateRequiredException(itemMaster.getItemName());
 }
 
-// 🔥 Auto-populate item_code
+//  Auto-populate item_code
 StorageTransactionItem transactionItem = StorageTransactionItem.builder()
     .batch(batch)
     .itemCode(itemMaster.getItemCode())  // ← Tự động lấy từ master
@@ -396,7 +396,7 @@ StorageTransactionItem transactionItem = StorageTransactionItem.builder()
       - Batch 2: Lấy tiếp → đủ rồi STOP
    d. FOR EACH batch được chọn:
       - Check quantity_on_hand >= quantityToTake
-      - 🔥 Auto-populate item_code
+      -  Auto-populate item_code
       - quantity_on_hand -= quantityToTake (giảm tồn)
       - Tạo TransactionItem (-quantity)
 3. Save Transaction
@@ -422,7 +422,7 @@ SELECT
     im.item_code,
     im.item_name,
     im.warehouse_type,
-    SUM(ib.quantity_on_hand) as total_quantity,  -- 🔥 Tổng từ TẤT CẢ batches
+    SUM(ib.quantity_on_hand) as total_quantity,  --  Tổng từ TẤT CẢ batches
     MIN(ib.expiry_date) as nearest_expiry,       -- Batch sắp hết hạn nhất
     CASE 
         WHEN SUM(ib.quantity_on_hand) = 0 THEN 'OUT_OF_STOCK'
@@ -529,7 +529,7 @@ Lấy tất cả batches của 1 item (theo FEFO)
       "quantityOnHand": 10,
       "expiryDate": "2025-09-30",
       "supplierName": "Công ty Dược ABC",
-      "parentBatchId": 196  // 🔥 Child của batch #196
+      "parentBatchId": 196  //  Child của batch #196
     }
   ]
 }
@@ -552,7 +552,7 @@ Nhập kho
       "itemMasterId": 24,
       "lotNumber": "AMOX-2025-D",
       "quantity": 500,
-      "expiryDate": "2026-11-30",  // 🔥 BẮT BUỘC
+      "expiryDate": "2026-11-30",  //  BẮT BUỘC
       "unitId": 1                   // 🆕 Optional (Hộp)
     }
   ]
@@ -571,9 +571,9 @@ Nhập kho
   "items": [
     {
       "transactionItemId": 159,
-      "itemCode": "DP001",           // 🔥 Auto-populated
+      "itemCode": "DP001",           //  Auto-populated
       "itemName": "Amoxicillin 500mg",
-      "unitName": "Hộp",             // 🔥 From ItemUnit
+      "unitName": "Hộp",             //  From ItemUnit
       "lotNumber": "AMOX-2025-D",
       "quantityChange": 500,
       "notes": null
@@ -940,7 +940,7 @@ src/main/resources/db/dental-clinic-seed-data.sql
 
 #### **UPDATE Statements (lines 4458-4502)**
 ```sql
--- 🔥 Populate item_code for all transaction_items
+--  Populate item_code for all transaction_items
 UPDATE storage_transaction_items sti
 SET item_code = (
     SELECT im.item_code
@@ -986,26 +986,26 @@ WHERE expiry_date IS NULL;
 
 ### 8.1. KHÔNG BAO GIỜ được làm
 
-❌ **Xóa validation expiry_date NOT NULL**
+ **Xóa validation expiry_date NOT NULL**
 - Mentor feedback: TẤT CẢ items phải có HSD
 - Compliance với quy định quản lý thiết bị y tế
 
-❌ **Bỏ qua FEFO trong export**
+ **Bỏ qua FEFO trong export**
 - Chuẩn ERP: Hàng sắp hết hạn phải xuất trước
 - Tránh lãng phí do quá hạn
 
-❌ **Quên auto-populate item_code**
+ **Quên auto-populate item_code**
 - Warehouse staff cần item_code trên mọi phiếu
 - Không được để NULL
 
-❌ **Hard-delete batches có quantity > 0**
+ **Hard-delete batches có quantity > 0**
 - Soft-delete hoặc validate quantity = 0 trước khi xóa
 
 ---
 
 ### 8.2. Best Practices
 
-✅ **Transaction Management:**
+ **Transaction Management:**
 ```java
 @Transactional  // Luôn dùng cho import/export
 public TransactionResponse importItems(ImportRequest request) {
@@ -1013,14 +1013,14 @@ public TransactionResponse importItems(ImportRequest request) {
 }
 ```
 
-✅ **DTO Mapping:**
+ **DTO Mapping:**
 ```java
 // Luôn populate itemCode + unitName
 .itemCode(item.getBatch().getItemMaster().getItemCode())
 .unitName(item.getUnit() != null ? item.getUnit().getUnitName() : null)
 ```
 
-✅ **Error Handling:**
+ **Error Handling:**
 ```java
 // Custom exceptions cho business logic
 if (batch.getQuantityOnHand() < quantity) {
@@ -1028,7 +1028,7 @@ if (batch.getQuantityOnHand() < quantity) {
 }
 ```
 
-✅ **Logging:**
+ **Logging:**
 ```java
 log.info("Import transaction created: {} with {} items", code, items.size());
 log.warn("Low stock detected: {} (current: {}, min: {})", itemName, current, min);
@@ -1067,7 +1067,7 @@ log.warn("Low stock detected: {} (current: {}, min: {})", itemName, current, min
 
 ## 9. ROADMAP & TODO
 
-### 9.1. Completed Features ✅
+### 9.1. Completed Features 
 
 - [x] Database schema với 8 tables
 - [x] Item units hierarchy (Hộp/Vỉ/Viên)
@@ -1162,7 +1162,7 @@ log.warn("Low stock detected: {} (current: {}, min: {})", itemName, current, min
 
 ---
 
-## 📝 APPENDIX: Quick Commands
+##  APPENDIX: Quick Commands
 
 ### Maven Build
 ```bash
@@ -1207,6 +1207,6 @@ git push origin feature/warehouse-adjustment-api
 
 ---
 
-**Chúc bạn maintain thành công! 🚀**
+**Chúc bạn maintain thành công! **
 
 Nếu có thắc mắc, cứ hỏi ThanhCQ1 hoặc tham khảo seed data để hiểu luồng nghiệp vụ.

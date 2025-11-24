@@ -1,4 +1,4 @@
-# 💰 API 5.13: Update Treatment Plan Prices (Finance)
+#  API 5.13: Update Treatment Plan Prices (Finance)
 
 **Version**: V21.4
 **Release Date**: January 2025
@@ -7,7 +7,7 @@
 
 ---
 
-## 📋 Overview
+##  Overview
 
 Allows **Finance/Accountant team** to adjust treatment plan item prices after plan creation. This API was introduced in V21.4 as part of the pricing workflow separation - doctors no longer manage prices, Finance team controls all pricing adjustments.
 
@@ -28,7 +28,7 @@ Allows **Finance/Accountant team** to adjust treatment plan item prices after pl
 
 ---
 
-## 🔗 Endpoint Details
+##  Endpoint Details
 
 ### HTTP Method & URL
 
@@ -40,7 +40,7 @@ PATCH /api/v1/patient-treatment-plans/{planCode}/prices
 
 | Parameter  | Type   | Required | Description                | Example             |
 | ---------- | ------ | -------- | -------------------------- | ------------------- |
-| `planCode` | String | ✅ Yes   | Unique treatment plan code | `PLAN-20250115-001` |
+| `planCode` | String |  Yes   | Unique treatment plan code | `PLAN-20250115-001` |
 
 ### Request Headers
 
@@ -54,14 +54,14 @@ Content-Type: application/json
 - **Type**: JWT Bearer Token
 - **Required Permission**: `MANAGE_PLAN_PRICING`
 - **Access Control**:
-  - ✅ ROLE_MANAGER (full access)
-  - ✅ ROLE_ACCOUNTANT (full access)
-  - ❌ ROLE_DOCTOR (no access)
-  - ❌ ROLE_NURSE (no access)
+  -  ROLE_MANAGER (full access)
+  -  ROLE_ACCOUNTANT (full access)
+  -  ROLE_DOCTOR (no access)
+  -  ROLE_NURSE (no access)
 
 ---
 
-## 📥 Request Body
+##  Request Body
 
 ### Schema
 
@@ -86,9 +86,9 @@ List of price adjustments to apply.
 **ItemPriceUpdate Object:**
 | Field | Type | Required | Constraints | Description |
 |-------|------|----------|-------------|-------------|
-| `itemId` | Integer | ✅ Yes | Must exist in plan | Patient plan item ID |
-| `newPrice` | Number | ✅ Yes | >= 0 | New price in VND |
-| `note` | String | ❌ No | Max 500 chars | Reason for adjustment |
+| `itemId` | Integer |  Yes | Must exist in plan | Patient plan item ID |
+| `newPrice` | Number |  Yes | >= 0 | New price in VND |
+| `note` | String |  No | Max 500 chars | Reason for adjustment |
 
 ### Validation Rules
 
@@ -104,7 +104,7 @@ List of price adjustments to apply.
 
 ---
 
-## 📤 Response
+##  Response
 
 ### Success Response (200 OK)
 
@@ -142,7 +142,7 @@ List of price adjustments to apply.
 
 ---
 
-## ❌ Error Responses
+##  Error Responses
 
 ### 400 Bad Request - Invalid Price
 
@@ -240,26 +240,26 @@ List of price adjustments to apply.
 
 ---
 
-## 🔄 Business Rules
+##  Business Rules
 
 ### Status Validation
 
 | Plan Status | Can Update Prices? | Notes                |
 | ----------- | ------------------ | -------------------- |
-| NOT_STARTED | ✅ Yes             | Plan not yet started |
-| IN_PROGRESS | ✅ Yes             | Active treatment     |
-| APPROVED    | ✅ Yes             | Approved by manager  |
-| COMPLETED   | ❌ No              | Finished treatment   |
-| CANCELLED   | ❌ No              | Cancelled plan       |
+| NOT_STARTED |  Yes             | Plan not yet started |
+| IN_PROGRESS |  Yes             | Active treatment     |
+| APPROVED    |  Yes             | Approved by manager  |
+| COMPLETED   |  No              | Finished treatment   |
+| CANCELLED   |  No              | Cancelled plan       |
 
 ### Automatic Calculations
 
 When prices are updated, the system automatically:
 
-1. ✅ Recalculates `total_price` (sum of all item prices)
-2. ✅ Recalculates `final_cost` (total - discount)
-3. ✅ Updates `updated_at` timestamp
-4. ✅ Creates audit log entry
+1.  Recalculates `total_price` (sum of all item prices)
+2.  Recalculates `final_cost` (total - discount)
+3.  Updates `updated_at` timestamp
+4.  Creates audit log entry
 
 ### Audit Trail
 
@@ -275,7 +275,7 @@ Each price change creates the following audit records:
 
 ---
 
-## 📝 Examples
+##  Examples
 
 ### Example 1: Single Price Adjustment
 
@@ -388,7 +388,7 @@ curl -X PATCH "https://api.dental.com/api/v1/patient-treatment-plans/PLAN-001/pr
 
 ---
 
-## 🧪 Testing Guide
+##  Testing Guide
 
 ### Manual Testing (Postman)
 
@@ -469,7 +469,7 @@ Authorization: Bearer <doctor-token>
 
 ---
 
-## 🔐 Security Considerations
+##  Security Considerations
 
 ### Permission Check
 
@@ -484,20 +484,20 @@ Authorization: Bearer <doctor-token>
 
 All price changes are logged with:
 
-- ✅ Who made the change (employee ID)
-- ✅ When it was made (timestamp)
-- ✅ Why it was made (note field)
-- ✅ What changed (before/after prices)
+-  Who made the change (employee ID)
+-  When it was made (timestamp)
+-  Why it was made (note field)
+-  What changed (before/after prices)
 
 ### Data Integrity
 
-- ✅ Transaction isolation: READ_COMMITTED
-- ✅ Optimistic locking on plan total calculations
-- ✅ Foreign key constraints on employee references
+-  Transaction isolation: READ_COMMITTED
+-  Optimistic locking on plan total calculations
+-  Foreign key constraints on employee references
 
 ---
 
-## 📊 Performance Metrics
+##  Performance Metrics
 
 ### Response Time Targets
 
@@ -516,7 +516,7 @@ All price changes are logged with:
 
 ---
 
-## 🔗 Related APIs
+##  Related APIs
 
 - **API 5.1**: Create Custom Treatment Plan (uses auto-filled prices)
 - **API 5.7**: Add Items to Phase (uses auto-filled prices)
@@ -525,7 +525,7 @@ All price changes are logged with:
 
 ---
 
-## 📞 Support
+##  Support
 
 **Technical Issues**: Contact Backend Team
 **Business Questions**: Contact Finance Manager
@@ -535,4 +535,4 @@ All price changes are logged with:
 
 **Last Updated**: January 2025
 **API Version**: V21.4
-**Status**: ✅ Production Ready
+**Status**:  Production Ready

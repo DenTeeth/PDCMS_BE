@@ -431,16 +431,16 @@ public class EmployeeShiftRegistrationService {
         }
 
         // Check for conflicting APPROVED registrations
-        log.info("🔍 [CONFLICT CHECK] Starting conflict validation for employeeId={}, slotId={}", 
+        log.info(" [CONFLICT CHECK] Starting conflict validation for employeeId={}, slotId={}", 
                 employeeId, slot.getSlotId());
         List<PartTimeRegistration> approvedRegistrations = registrationRepository
                 .findByEmployeeIdAndIsActiveAndStatus(employeeId, true, 
                         com.dental.clinic.management.working_schedule.enums.RegistrationStatus.APPROVED);
-        log.info("🔍 [CONFLICT CHECK] Found {} APPROVED registrations for employeeId={}", 
+        log.info(" [CONFLICT CHECK] Found {} APPROVED registrations for employeeId={}", 
                 approvedRegistrations.size(), employeeId);
 
         for (PartTimeRegistration existingReg : approvedRegistrations) {
-            log.info("🔍 [CONFLICT CHECK] Checking existing registration: id={}, slotId={}, period={} to {}", 
+            log.info(" [CONFLICT CHECK] Checking existing registration: id={}, slotId={}, period={} to {}", 
                     existingReg.getRegistrationId(), existingReg.getPartTimeSlotId(), 
                     existingReg.getEffectiveFrom(), existingReg.getEffectiveTo());
             // Build set of dates for existing registration (respecting per-day or legacy range)
@@ -462,17 +462,17 @@ public class EmployeeShiftRegistrationService {
 
             // Check 1: Can't have overlapping approved registrations for same slot
             if (existingReg.getPartTimeSlotId().equals(slot.getSlotId())) {
-                log.info("🔍 [CONFLICT CHECK] Same slot detected (slotId={}). Checking date overlap...", 
+                log.info(" [CONFLICT CHECK] Same slot detected (slotId={}). Checking date overlap...", 
                         slot.getSlotId());
-                log.info("🔍 [CONFLICT CHECK] Existing dates: {}", existingDates);
-                log.info("🔍 [CONFLICT CHECK] Requested dates: {}", requestedSet);
+                log.info(" [CONFLICT CHECK] Existing dates: {}", existingDates);
+                log.info(" [CONFLICT CHECK] Requested dates: {}", requestedSet);
                 java.util.Set<java.time.LocalDate> overlappingDates = new java.util.HashSet<>(existingDates);
                 overlappingDates.retainAll(requestedSet);
                 if (!overlappingDates.isEmpty()) {
-                    log.error("❌ [CONFLICT CHECK] Overlapping dates found: {}", overlappingDates);
+                    log.error(" [CONFLICT CHECK] Overlapping dates found: {}", overlappingDates);
                     throw new RegistrationConflictException(employeeId);
                 }
-                log.info("✅ [CONFLICT CHECK] No overlap for same slot");
+                log.info(" [CONFLICT CHECK] No overlap for same slot");
             }
 
             // Check 2: Can't have overlapping time slots (same day + same shift)

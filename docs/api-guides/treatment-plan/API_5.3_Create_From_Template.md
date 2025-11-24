@@ -2,25 +2,25 @@
 
 **Module**: Treatment Plan Management
 **Version**: V1.0
-**Status**: ✅ Production Ready
+**Status**:  Production Ready
 **Last Updated**: 2025-11-12
 **Source**: `TreatmentPlanController.java`, `CreateTreatmentPlanRequest.java`, `TreatmentPlanCreationService.java`
 
 ---
 
-## ⚠️ CRITICAL WARNING: Correct Endpoint Path
+## ️ CRITICAL WARNING: Correct Endpoint Path
 
 **CORRECT**: `POST /api/v1/patients/{patientCode}/treatment-plans` (**PLURAL** `treatment-plans`)
 
-**WRONG**: `POST /api/v1/patients/{patientCode}/treatment-plan` (singular) ❌
+**WRONG**: `POST /api/v1/patients/{patientCode}/treatment-plan` (singular) 
 
 **Common Mistake**:
 
 ```bash
-# ❌ WRONG - Returns 404 Error
+#  WRONG - Returns 404 Error
 POST /api/v1/patients/BN-1001/treatment-plan
 
-# ✅ CORRECT
+#  CORRECT
 POST /api/v1/patients/BN-1001/treatment-plans
 ```
 
@@ -28,7 +28,7 @@ POST /api/v1/patients/BN-1001/treatment-plans
 
 ---
 
-## 📋 Table of Contents
+##  Table of Contents
 
 1. [Overview](#overview)
 2. [API Specification](#api-specification)
@@ -46,12 +46,12 @@ API 5.3 creates a patient treatment plan by copying structure from a pre-defined
 
 **Key Features**:
 
-- ✅ Automatic phase & item cloning from template
-- ✅ Auto-generate unique plan code (PLAN-YYYYMMDD-XXX)
-- ✅ Calculate expected end date from template duration
-- ✅ Support custom plan name override
-- ✅ Discount validation
-- ✅ Transactional safety (rollback on error)
+-  Automatic phase & item cloning from template
+-  Auto-generate unique plan code (PLAN-YYYYMMDD-XXX)
+-  Calculate expected end date from template duration
+-  Support custom plan name override
+-  Discount validation
+-  Transactional safety (rollback on error)
 
 **Use Case**: Doctor selects a standardized treatment package (e.g., "Niềng răng 2 năm") and applies it to patient.
 
@@ -90,11 +90,11 @@ Content-Type: application/json
 
 **Allowed Roles**:
 
-- ✅ **Admin** - Full access (always allowed via `hasRole('ROLE_ADMIN')`)
-- ✅ **Manager** - Has `CREATE_TREATMENT_PLAN` permission
-- ✅ **Dentist** - Has `CREATE_TREATMENT_PLAN` permission
-- ❌ **Receptionist** - No permission (read-only access)
-- ❌ **Patient** - No permission
+-  **Admin** - Full access (always allowed via `hasRole('ROLE_ADMIN')`)
+-  **Manager** - Has `CREATE_TREATMENT_PLAN` permission
+-  **Dentist** - Has `CREATE_TREATMENT_PLAN` permission
+-  **Receptionist** - No permission (read-only access)
+-  **Patient** - No permission
 
 **Permission Check Logic**:
 
@@ -149,9 +149,9 @@ curl -X POST "http://localhost:8080/api/v1/patients/BN-1001/treatment-plans" \
 
 #### sourceTemplateCode
 
-- ✅ Must exist in `treatment_plan_templates` table
-- ✅ Template must be active (`is_active = true`)
-- ❌ Validation fails if template not found or inactive
+-  Must exist in `treatment_plan_templates` table
+-  Template must be active (`is_active = true`)
+-  Validation fails if template not found or inactive
 
 **Valid Values** (from seed data):
 
@@ -161,9 +161,9 @@ curl -X POST "http://localhost:8080/api/v1/patients/BN-1001/treatment-plans" \
 
 #### doctorEmployeeCode
 
-- ✅ Must exist in `employees` table
-- ✅ Employee must be active
-- ❌ Validation fails if employee not found or inactive
+-  Must exist in `employees` table
+-  Employee must be active
+-  Validation fails if employee not found or inactive
 
 **Valid Values** (from seed data):
 
@@ -488,16 +488,16 @@ Content-Type: application/json
 
 **Expected Response**:
 
-- ✅ Status: 201 CREATED
-- ✅ `planCode`: PLAN-20251112-XXX (auto-generated)
-- ✅ `planName`: "Niềng răng mắc cài kim loại trọn gói 2 năm" (from template)
-- ✅ `status`: "PENDING"
-- ✅ `totalPrice`: 30000000
-- ✅ `discountAmount`: 0
-- ✅ `finalCost`: 30000000
-- ✅ `phases`: 4 phases
-- ✅ `items`: ~31 items total (depends on template structure)
-- ✅ All items `status`: "PENDING"
+-  Status: 201 CREATED
+-  `planCode`: PLAN-20251112-XXX (auto-generated)
+-  `planName`: "Niềng răng mắc cài kim loại trọn gói 2 năm" (from template)
+-  `status`: "PENDING"
+-  `totalPrice`: 30000000
+-  `discountAmount`: 0
+-  `finalCost`: 30000000
+-  `phases`: 4 phases
+-  `items`: ~31 items total (depends on template structure)
+-  All items `status`: "PENDING"
 
 **Database Verification**:
 
@@ -528,9 +528,9 @@ WHERE phase_id IN (SELECT patient_phase_id FROM patient_plan_phases WHERE plan_i
 
 **Expected**:
 
-- ✅ `totalPrice`: 30000000
-- ✅ `discountAmount`: 5000000
-- ✅ `finalCost`: 25000000
+-  `totalPrice`: 30000000
+-  `discountAmount`: 5000000
+-  `finalCost`: 25000000
 
 ### Test 3: Create Plan with Custom Name
 
@@ -548,8 +548,8 @@ WHERE phase_id IN (SELECT patient_phase_id FROM patient_plan_phases WHERE plan_i
 
 **Expected**:
 
-- ✅ `planName`: "Lộ trình niềng răng cho BN Phong (Ưu đãi 20%)" (custom name used)
-- ✅ NOT "Niềng răng mắc cài kim loại..." (template name ignored)
+-  `planName`: "Lộ trình niềng răng cho BN Phong (Ưu đãi 20%)" (custom name used)
+-  NOT "Niềng răng mắc cài kim loại..." (template name ignored)
 
 ### Test 4: Invalid - Discount Exceeds Total
 
@@ -566,7 +566,7 @@ WHERE phase_id IN (SELECT patient_phase_id FROM patient_plan_phases WHERE plan_i
 
 **Expected**:
 
-- ❌ Status: 400 BAD REQUEST
+-  Status: 400 BAD REQUEST
 - Error: "DISCOUNT_EXCEEDS_TOTAL"
 
 ### Test 5: Invalid - Template Not Found
@@ -584,7 +584,7 @@ WHERE phase_id IN (SELECT patient_phase_id FROM patient_plan_phases WHERE plan_i
 
 **Expected**:
 
-- ❌ Status: 404 NOT FOUND
+-  Status: 404 NOT FOUND
 - Error: "TEMPLATE_NOT_FOUND"
 
 ### Test 6: Invalid - Patient Not Found
@@ -597,7 +597,7 @@ POST http://localhost:8080/api/v1/patients/INVALID-CODE/treatment-plans
 
 **Expected**:
 
-- ❌ Status: 404 NOT FOUND
+-  Status: 404 NOT FOUND
 - Error: "PATIENT_NOT_FOUND"
 
 ### Test 7: Invalid - Doctor Not Found
@@ -615,7 +615,7 @@ POST http://localhost:8080/api/v1/patients/INVALID-CODE/treatment-plans
 
 **Expected**:
 
-- ❌ Status: 404 NOT FOUND
+-  Status: 404 NOT FOUND
 - Error: "EMPLOYEE_NOT_FOUND"
 
 ---

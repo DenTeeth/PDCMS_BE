@@ -38,7 +38,7 @@ public class ItemBatch {
     private Integer quantityOnHand = 0;
 
     /**
-     * 🔥 Số lượng ban đầu khi nhập (Feedback: Tracking)
+     *  Số lượng ban đầu khi nhập (Feedback: Tracking)
      * Dùng để so sánh với quantity_on_hand → tính tỷ lệ xuất
      * VD: initial=100, current=30 → đã xuất 70%
      */
@@ -46,7 +46,7 @@ public class ItemBatch {
     private Integer initialQuantity;
 
     /**
-     * 🔥 Parent batch - Hỗ trợ hierarchy
+     *  Parent batch - Hỗ trợ hierarchy
      * VD: Batch "1 Hộp 100 viên" là parent của batch "10 Vỉ (mỗi vỉ 10 viên)"
      * NULL = batch gốc, không có parent
      */
@@ -55,7 +55,7 @@ public class ItemBatch {
     private ItemBatch parentBatch;
 
     /**
-     * 🔥 Vị trí kho (Feedback: Warehouse Location)
+     *  Vị trí kho (Feedback: Warehouse Location)
      * VD: "Kệ A-01", "Tủ lạnh B-03", "Kho C-Tầng 2"
      * Giúp nhân viên tìm hàng nhanh hơn
      */
@@ -63,7 +63,7 @@ public class ItemBatch {
     private String binLocation;
 
     /**
-     * 🔥 Hạn sử dụng - BẮT BUỘC cho TẤT CẢ vật tư
+     *  Hạn sử dụng - BẮT BUỘC cho TẤT CẢ vật tư
      * Mentor feedback: Không còn exception cho tools
      */
     @Column(name = "expiry_date", nullable = false)

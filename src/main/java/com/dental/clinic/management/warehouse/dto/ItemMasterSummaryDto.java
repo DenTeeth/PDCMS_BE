@@ -23,7 +23,7 @@ public class ItemMasterSummaryDto {
     private String categoryName;
     private WarehouseType warehouseType; // "COLD" | "NORMAL"
 
-    // 🔥 Calculated Fields (BE đã tính sẵn)
+    //  Calculated Fields (BE đã tính sẵn)
     private Integer totalQuantityOnHand; // Tổng từ tất cả các batch
     private StockStatus stockStatus; // "LOW_STOCK", "OUT_OF_STOCK", "NORMAL", "OVERSTOCK"
     private Boolean isExpiringSoon; // True nếu có lô sắp hết hạn (30 ngày)

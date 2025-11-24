@@ -14,8 +14,8 @@ import java.math.BigDecimal;
 public record DeletePlanItemResponse(
         String message,
         Long deletedItemId,
-        String deletedItemName, // 👈 Option B: FE có thể show tên item
-        BigDecimal priceReduction, // 👈 Option B: FE có thể show mức giảm giá
+        String deletedItemName, //  Option B: FE có thể show tên item
+        BigDecimal priceReduction, //  Option B: FE có thể show mức giảm giá
         FinancialImpactDTO financialImpact) {
     /**
      * Factory method tạo response sau khi xóa thành công

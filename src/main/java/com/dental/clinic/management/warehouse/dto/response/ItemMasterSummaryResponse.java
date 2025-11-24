@@ -28,7 +28,7 @@ public class ItemMasterSummaryResponse {
     // 🆕 Fields từ yêu cầu
     private String unitOfMeasure; // "Hộp", "Lọ", "Cái"
 
-    // 🔥 Calculated Fields (BE đã tính sẵn)
+    //  Calculated Fields (BE đã tính sẵn)
     private Integer totalQuantityOnHand;
     private StockStatus stockStatus;
     private Boolean isExpiringSoon;

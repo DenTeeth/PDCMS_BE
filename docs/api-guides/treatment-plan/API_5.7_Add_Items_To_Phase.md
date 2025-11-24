@@ -13,11 +13,11 @@ API này cho phép thêm các hạng mục phát sinh (emergent/incidental items
 
 **Tính Năng Chính:**
 
-- ✅ **Auto-sequence generation**: Backend tự động tính `max(sequence) + 1`
-- ✅ **Quantity expansion**: 1 service × 2 quantity = 2 items riêng biệt
-- ✅ **Financial recalculation**: Tính lại chi phí plan (đúng logic discount)
-- ✅ **Approval workflow**: Plan → PENDING_REVIEW (Quản lý phải duyệt lại)
-- ✅ **Comprehensive validation**: Kiểm tra phase/plan status, service active, price range
+-  **Auto-sequence generation**: Backend tự động tính `max(sequence) + 1`
+-  **Quantity expansion**: 1 service × 2 quantity = 2 items riêng biệt
+-  **Financial recalculation**: Tính lại chi phí plan (đúng logic discount)
+-  **Approval workflow**: Plan → PENDING_REVIEW (Quản lý phải duyệt lại)
+-  **Comprehensive validation**: Kiểm tra phase/plan status, service active, price range
 
 ---
 
@@ -53,17 +53,17 @@ API này cho phép thêm các hạng mục phát sinh (emergent/incidental items
 
 | Field         | Type      | Required | Validation                                                            | Description                                                     |
 | ------------- | --------- | -------- | --------------------------------------------------------------------- | --------------------------------------------------------------- |
-| `serviceCode` | `string`  | ✅ Yes   | Max 50 chars, must exist in services table                            | Mã dịch vụ cần thêm (snapshot từ services)                      |
-| `price`       | `decimal` | ✅ Yes   | > 0, max 10 integer digits + 2 decimals, within ±50% of service price | Giá snapshot (Bác sĩ có thể override giá gốc trong khoảng ±50%) |
-| `quantity`    | `integer` | ✅ Yes   | 1-10                                                                  | Số lượng (BE sẽ expand ra nhiều items)                          |
-| `notes`       | `string`  | ⚪ No    | Max 500 chars                                                         | Lý do/ghi chú (quan trọng cho việc duyệt)                       |
+| `serviceCode` | `string`  |  Yes   | Max 50 chars, must exist in services table                            | Mã dịch vụ cần thêm (snapshot từ services)                      |
+| `price`       | `decimal` |  Yes   | > 0, max 10 integer digits + 2 decimals, within ±50% of service price | Giá snapshot (Bác sĩ có thể override giá gốc trong khoảng ±50%) |
+| `quantity`    | `integer` |  Yes   | 1-10                                                                  | Số lượng (BE sẽ expand ra nhiều items)                          |
+| `notes`       | `string`  |  No    | Max 500 chars                                                         | Lý do/ghi chú (quan trọng cho việc duyệt)                       |
 
-### ⚠️ QUAN TRỌNG: Không có sequenceNumber
+### ️ QUAN TRỌNG: Không có sequenceNumber
 
 **Design Decision (P0 Fix):**
 
-- ❌ **Không cho phép** FE gửi `sequenceNumber`
-- ✅ **Backend tự động** tính: `nextSequence = MAX(existing_sequences) + 1`
+-  **Không cho phép** FE gửi `sequenceNumber`
+-  **Backend tự động** tính: `nextSequence = MAX(existing_sequences) + 1`
 
 **Lý do:**
 
@@ -74,13 +74,13 @@ API này cho phép thêm các hạng mục phát sinh (emergent/incidental items
 **Example:**
 
 ```javascript
-// ❌ BAD (Old design - would cause conflicts)
+//  BAD (Old design - would cause conflicts)
 {
   "serviceCode": "FILLING_COMP",
   "sequenceNumber": 3  // User chooses → CONFLICT if already exists!
 }
 
-// ✅ GOOD (Current design)
+//  GOOD (Current design)
 {
   "serviceCode": "FILLING_COMP",
   // Backend auto-calculates: phase has [1,2,3] → new item gets sequence 4
@@ -158,8 +158,8 @@ if (requestPrice < minPrice || requestPrice > maxPrice) {
 
 - Service price: 400,000 VND
 - Allowed range: 200,000 - 600,000 VND
-- ✅ Request price 350,000: OK
-- ❌ Request price 700,000: OUT OF RANGE
+-  Request price 350,000: OK
+-  Request price 700,000: OUT OF RANGE
 
 **Rationale**: Ngăn chặn ghi đè giá quá cao/quá thấp
 
@@ -306,7 +306,7 @@ planRepository.save(plan);
 #### **7. Audit Log**
 
 ```java
-log.info("📝 Audit: User {} added {} items to phase {} (plan {}). " +
+log.info(" Audit: User {} added {} items to phase {} (plan {}). " +
          "Total cost increased by {} VND. Plan status → PENDING_REVIEW",
          currentUser, savedItems.size(), phaseId, plan.planCode, totalCostAdded);
 ```
@@ -533,11 +533,11 @@ curl -X POST https://api.example.com/api/v1/patient-plan-phases/201/items \
 
 **Expected Result:**
 
-- ✅ Tạo 2 items mới với sequence 6, 7 (append to end)
-- ✅ Plan total_cost: 15,000,000 → 15,800,000 (+800,000)
-- ✅ Plan final_cost: 13,500,000 → 14,300,000 (discount 1,500,000 giữ nguyên)
-- ✅ Plan approval_status: APPROVED → PENDING_REVIEW
-- ✅ Manager nhận thông báo cần duyệt lại plan
+-  Tạo 2 items mới với sequence 6, 7 (append to end)
+-  Plan total_cost: 15,000,000 → 15,800,000 (+800,000)
+-  Plan final_cost: 13,500,000 → 14,300,000 (discount 1,500,000 giữ nguyên)
+-  Plan approval_status: APPROVED → PENDING_REVIEW
+-  Manager nhận thông báo cần duyệt lại plan
 
 ---
 
@@ -574,11 +574,11 @@ curl -X POST https://api.example.com/api/v1/patient-plan-phases/202/items \
 
 **Expected Result:**
 
-- ✅ Tạo 2 items:
+-  Tạo 2 items:
   - Item 1: "Trám răng Composite (Phát sinh)" - seq 10
   - Item 2: "Nhổ răng đơn giản (Phát sinh)" - seq 11
-- ✅ Total cost added: 700,000 VND
-- ✅ Plan → PENDING_REVIEW
+-  Total cost added: 700,000 VND
+-  Plan → PENDING_REVIEW
 
 ---
 
@@ -598,7 +598,7 @@ curl -X POST https://api.example.com/api/v1/patient-plan-phases/201/items \
   -d '[
     {
       "serviceCode": "FILLING_COMP",
-      "price": 700000,  // ❌ Quá cao!
+      "price": 700000,  //  Quá cao!
       "quantity": 1
     }
   ]'
@@ -606,7 +606,7 @@ curl -X POST https://api.example.com/api/v1/patient-plan-phases/201/items \
 
 **Expected Result:**
 
-- ❌ **400 Bad Request**
+-  **400 Bad Request**
 - Error: "Price for service FILLING_COMP (700000) is out of allowed range (200000 - 600000). Default price: 400000"
 - **Action Required**: Bác sĩ phải điều chỉnh giá trong khoảng cho phép
 
@@ -630,7 +630,7 @@ curl -X POST https://api.example.com/api/v1/patient-plan-phases/201/items \
 
 **Expected Result:**
 
-- ❌ **409 Conflict**
+-  **409 Conflict**
 - Error: "Cannot add items to completed phase"
 - **Action Required**: Không thể thêm vào phase đã hoàn thành
 
@@ -654,7 +654,7 @@ curl -X POST https://api.example.com/api/v1/patient-plan-phases/201/items \
 
 **Expected Result:**
 
-- ❌ **409 Conflict**
+-  **409 Conflict**
 - Error: "Plan is pending approval. Cannot add items until approved by manager."
 - **Action Required**: Đợi Manager duyệt xong, sau đó mới được thêm item
 
@@ -672,11 +672,11 @@ curl -X POST https://api.example.com/api/v1/patient-plan-phases/201/items \
 
 | Role        | Permission              | Can Add Items? | Notes                         |
 | ----------- | ----------------------- | -------------- | ----------------------------- |
-| **ADMIN**   | Always has access       | ✅ Yes         | Full access to all plans      |
-| **MANAGER** | `UPDATE_TREATMENT_PLAN` | ✅ Yes         | Can add items to any plan     |
-| **DENTIST** | `UPDATE_TREATMENT_PLAN` | ✅ Yes         | Can add items to their plans  |
-| **NURSE**   | ❌ No permission        | ❌ No          | Cannot modify treatment plans |
-| **PATIENT** | ❌ No permission        | ❌ No          | Cannot directly add items     |
+| **ADMIN**   | Always has access       |  Yes         | Full access to all plans      |
+| **MANAGER** | `UPDATE_TREATMENT_PLAN` |  Yes         | Can add items to any plan     |
+| **DENTIST** | `UPDATE_TREATMENT_PLAN` |  Yes         | Can add items to their plans  |
+| **NURSE**   |  No permission        |  No          | Cannot modify treatment plans |
+| **PATIENT** |  No permission        |  No          | Cannot directly add items     |
 
 ---
 
@@ -919,18 +919,18 @@ const response = await fetch("/api/v1/patient-plan-phases/201/items", {
 
 const data = await response.json();
 
-// ⚠️ CRITICAL: Show financial impact to user
+// ️ CRITICAL: Show financial impact to user
 if (data.financialImpact) {
   const impact = data.financialImpact;
   alert(`
-    ✅ Đã thêm ${data.items.length} hạng mục.
+     Đã thêm ${data.items.length} hạng mục.
 
-    💰 Tác động tài chính:
+     Tác động tài chính:
     - Tổng tiền cũ: ${formatVND(impact.planTotalCostBefore)}
     - Tổng tiền mới: ${formatVND(impact.planTotalCostAfter)}
     - Tăng thêm: +${formatVND(impact.totalCostAdded)}
 
-    📋 Trạng thái duyệt:
+     Trạng thái duyệt:
     - ${data.approvalWorkflow.reason}
     - Cần chờ Quản lý duyệt
   `);
@@ -968,7 +968,7 @@ const validatePriceOverride = (requestPrice, servicePrice) => {
 
   if (requestPrice < minPrice || requestPrice > maxPrice) {
     alert(`
-      ⚠️ Giá vượt quá phạm vi cho phép!
+      ️ Giá vượt quá phạm vi cho phép!
 
       Giá gốc dịch vụ: ${formatVND(servicePrice)}
       Khoảng cho phép: ${formatVND(minPrice)} - ${formatVND(maxPrice)}
@@ -1080,15 +1080,15 @@ if (response.status === 201) {
 
 ### Version 1.0 (2024-01-15)
 
-- ✅ Initial release
-- ✅ Auto-sequence generation (P0 fix)
-- ✅ Correct discount recalculation logic (P0 fix)
-- ✅ Comprehensive validation (phase/plan status)
-- ✅ Price override validation (±50%)
-- ✅ Approval workflow integration
-- ✅ Quantity expansion support
-- ✅ Audit logging
-- ✅ Permission: `UPDATE_TREATMENT_PLAN` for ADMIN, MANAGER, DENTIST
+-  Initial release
+-  Auto-sequence generation (P0 fix)
+-  Correct discount recalculation logic (P0 fix)
+-  Comprehensive validation (phase/plan status)
+-  Price override validation (±50%)
+-  Approval workflow integration
+-  Quantity expansion support
+-  Audit logging
+-  Permission: `UPDATE_TREATMENT_PLAN` for ADMIN, MANAGER, DENTIST
 
 ---
 

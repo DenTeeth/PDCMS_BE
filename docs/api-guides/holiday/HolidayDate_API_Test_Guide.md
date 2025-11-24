@@ -167,9 +167,9 @@ Authorization: Bearer <token>
 
 **Validation:**
 
-- ✅ Returns all holidays for 2025
-- ✅ Sorted by holidayDate ascending
-- ✅ Includes Vietnamese national holidays
+-  Returns all holidays for 2025
+-  Sorted by holidayDate ascending
+-  Includes Vietnamese national holidays
 
 ---
 
@@ -232,8 +232,8 @@ Authorization: Bearer <token>
 
 **Validation:**
 
-- ✅ Returns only holidays between startDate and endDate
-- ✅ Useful for batch job date range queries
+-  Returns only holidays between startDate and endDate
+-  Useful for batch job date range queries
 
 ---
 
@@ -354,9 +354,9 @@ Content-Type: application/json
 
 **Validation:**
 
-- ✅ Returns 201 Created
-- ✅ holidayId auto-generated
-- ✅ All fields saved correctly
+-  Returns 201 Created
+-  holidayId auto-generated
+-  All fields saved correctly
 
 ---
 
@@ -425,8 +425,8 @@ Content-Type: application/json
 
 **Validation:**
 
-- ✅ All holidays created in single transaction
-- ✅ Returns count and created records
+-  All holidays created in single transaction
+-  Returns count and created records
 
 ---
 
@@ -605,9 +605,9 @@ Content-Type: application/json
 
 **Validation:**
 
-- ✅ All fields updated
-- ✅ updatedAt timestamp changed
-- ✅ holidayId remains unchanged
+-  All fields updated
+-  updatedAt timestamp changed
+-  holidayId remains unchanged
 
 ---
 
@@ -634,8 +634,8 @@ Content-Type: application/json
 
 **Validation:**
 
-- ✅ holidayDate changed from 2025-04-07 to 2025-04-08
-- ✅ New date must not conflict with existing holidays
+-  holidayDate changed from 2025-04-07 to 2025-04-08
+-  New date must not conflict with existing holidays
 
 ---
 
@@ -730,8 +730,8 @@ Authorization: Bearer <admin_token>
 
 **Validation:**
 
-- ✅ Holiday permanently deleted from database
-- ✅ No longer appears in any queries
+-  Holiday permanently deleted from database
+-  No longer appears in any queries
 
 ---
 
@@ -863,8 +863,8 @@ Authorization: Bearer <token>
 
 **Validation:**
 
-- ✅ Returns holidays within next 30 days from current date
-- ✅ Includes daysUntil calculation
+-  Returns holidays within next 30 days from current date
+-  Includes daysUntil calculation
 
 ---
 

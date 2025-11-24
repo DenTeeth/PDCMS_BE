@@ -3,7 +3,7 @@
 
 ---
 
-## 📋 Table of Contents
+##  Table of Contents
 1. [Overview](#overview)
 2. [Pre-requisites](#pre-requisites)
 3. [Authentication Setup](#authentication-setup)
@@ -205,10 +205,10 @@ Authorization: Bearer {nhasi1_token}
 ```
 
 **Validation:**
-- ✅ Status code is 200
-- ✅ Only see requests where `employee.employeeId = 2` (own requests)
-- ✅ Does NOT see requests from employee 3, 4, 5, 6
-- ✅ Includes all statuses: PENDING, APPROVED, REJECTED, CANCELLED
+-  Status code is 200
+-  Only see requests where `employee.employeeId = 2` (own requests)
+-  Does NOT see requests from employee 3, 4, 5, 6
+-  Includes all statuses: PENDING, APPROVED, REJECTED, CANCELLED
 
 ---
 
@@ -253,9 +253,9 @@ Authorization: Bearer {nhasi1_token}
 ```
 
 **Validation:**
-- ✅ Status code is 200
-- ✅ Request belongs to employee 2
-- ✅ Status is PENDING (ready for approval/cancellation)
+-  Status code is 200
+-  Request belongs to employee 2
+-  Status is PENDING (ready for approval/cancellation)
 
 ---
 
@@ -283,9 +283,9 @@ Authorization: Bearer {nhasi1_token}
 ```
 
 **Validation:**
-- ✅ Status code is 404 (not 403) - hides resource existence for security
-- ✅ Message says "Không tìm thấy yêu cầu tăng ca"
-- ✅ OTR251030006 belongs to employee 3, so employee 2 cannot see it
+-  Status code is 404 (not 403) - hides resource existence for security
+-  Message says "Không tìm thấy yêu cầu tăng ca"
+-  OTR251030006 belongs to employee 3, so employee 2 cannot see it
 
 ---
 
@@ -337,11 +337,11 @@ Content-Type: application/json
 ```
 
 **Validation:**
-- ✅ Status code is 201
-- ✅ `employee.employeeId = 2` (automatically set from JWT token)
-- ✅ `requestedBy.employeeId = 2` (same as employee, self-request)
-- ✅ Status is PENDING
-- ✅ Request ID follows format OTRyymmddSSS
+-  Status code is 201
+-  `employee.employeeId = 2` (automatically set from JWT token)
+-  `requestedBy.employeeId = 2` (same as employee, self-request)
+-  Status is PENDING
+-  Request ID follows format OTRyymmddSSS
 
 ---
 
@@ -376,9 +376,9 @@ Content-Type: application/json
 ```
 
 **Validation:**
-- ✅ Status code is 400
-- ✅ Message explains date must be in future
-- ✅ Today is 2025-10-30, so 2025-10-15 is invalid
+-  Status code is 400
+-  Message explains date must be in future
+-  Today is 2025-10-30, so 2025-10-15 is invalid
 
 ---
 
@@ -413,9 +413,9 @@ Content-Type: application/json
 ```
 
 **Validation:**
-- ✅ Status code is 404
-- ✅ Clean error message (not showing full ProblemDetail structure)
-- ✅ Message identifies the invalid work shift ID
+-  Status code is 404
+-  Clean error message (not showing full ProblemDetail structure)
+-  Message identifies the invalid work shift ID
 
 ---
 
@@ -450,9 +450,9 @@ Content-Type: application/json
 ```
 
 **Validation:**
-- ✅ Status code is 400
-- ✅ Message explains duplicate constraint
-- ✅ Unique constraint: (employee_id, work_date, work_shift_id)
+-  Status code is 400
+-  Message explains duplicate constraint
+-  Unique constraint: (employee_id, work_date, work_shift_id)
 
 ---
 
@@ -487,9 +487,9 @@ Content-Type: application/json
 ```
 
 **Validation:**
-- ✅ Status code is 400
-- ✅ Shows all missing required fields
-- ✅ Required: workDate, workShiftId, reason
+-  Status code is 400
+-  Shows all missing required fields
+-  Required: workDate, workShiftId, reason
 
 ---
 
@@ -535,10 +535,10 @@ Content-Type: application/json
 ```
 
 **Validation:**
-- ✅ Status code is 200
-- ✅ Status changed from PENDING to CANCELLED
-- ✅ `cancellationReason` is set
-- ✅ Only PENDING requests can be cancelled
+-  Status code is 200
+-  Status changed from PENDING to CANCELLED
+-  `cancellationReason` is set
+-  Only PENDING requests can be cancelled
 
 ---
 
@@ -572,9 +572,9 @@ Content-Type: application/json
 ```
 
 **Validation:**
-- ✅ Status code is 400
-- ✅ Message explains only PENDING can be cancelled
-- ✅ Business rule: Approved OT cannot be cancelled by employee
+-  Status code is 400
+-  Message explains only PENDING can be cancelled
+-  Business rule: Approved OT cannot be cancelled by employee
 
 ---
 
@@ -607,9 +607,9 @@ Content-Type: application/json
 ```
 
 **Validation:**
-- ✅ Status code is 403
-- ✅ Employee doesn't have APPROVE_OT permission
-- ✅ Only managers can approve
+-  Status code is 403
+-  Employee doesn't have APPROVE_OT permission
+-  Only managers can approve
 
 ---
 
@@ -676,10 +676,10 @@ Authorization: Bearer {manager_token}
 ```
 
 **Validation:**
-- ✅ Status code is 200
-- ✅ See requests from ALL employees (2, 3, 4, 5, 6)
-- ✅ Includes all statuses
-- ✅ totalElements shows all records in database
+-  Status code is 200
+-  See requests from ALL employees (2, 3, 4, 5, 6)
+-  Includes all statuses
+-  totalElements shows all records in database
 
 ---
 
@@ -721,9 +721,9 @@ Authorization: Bearer {manager_token}
 ```
 
 **Validation:**
-- ✅ Status code is 200
-- ✅ Only shows PENDING requests (OTR251030005, OTR251030006, OTR251030007)
-- ✅ Filter works correctly
+-  Status code is 200
+-  Only shows PENDING requests (OTR251030005, OTR251030006, OTR251030007)
+-  Filter works correctly
 
 ---
 
@@ -764,9 +764,9 @@ Authorization: Bearer {manager_token}
 ```
 
 **Validation:**
-- ✅ Status code is 200
-- ✅ Only shows employee 2's requests
-- ✅ Manager can view any employee's requests
+-  Status code is 200
+-  Only shows employee 2's requests
+-  Manager can view any employee's requests
 
 ---
 
@@ -810,9 +810,9 @@ Authorization: Bearer {manager_token}
 ```
 
 **Validation:**
-- ✅ Status code is 200
-- ✅ Only shows requests with workDate between 2025-11-18 and 2025-11-25
-- ✅ Date range filter works correctly
+-  Status code is 200
+-  Only shows requests with workDate between 2025-11-18 and 2025-11-25
+-  Date range filter works correctly
 
 ---
 
@@ -866,11 +866,11 @@ Content-Type: application/json
 ```
 
 **Validation:**
-- ✅ Status code is 200
-- ✅ Status changed from PENDING to APPROVED
-- ✅ `approvedBy` shows manager's info (employee 7)
-- ✅ `approvedAt` timestamp is set
-- ✅ **AUTO-CREATE EMPLOYEE SHIFT**: System automatically creates EmployeeShift record
+-  Status code is 200
+-  Status changed from PENDING to APPROVED
+-  `approvedBy` shows manager's info (employee 7)
+-  `approvedAt` timestamp is set
+-  **AUTO-CREATE EMPLOYEE SHIFT**: System automatically creates EmployeeShift record
 
 **Check Auto-Created Employee Shift:**
 ```http
@@ -928,11 +928,11 @@ Content-Type: application/json
 ```
 
 **Validation:**
-- ✅ Status code is 200
-- ✅ Status changed from PENDING to REJECTED
-- ✅ `rejectedReason` is required and saved
-- ✅ `approvedBy` shows who rejected (employee 7)
-- ✅ No employee shift is created
+-  Status code is 200
+-  Status changed from PENDING to REJECTED
+-  `rejectedReason` is required and saved
+-  `approvedBy` shows who rejected (employee 7)
+-  No employee shift is created
 
 ---
 
@@ -965,9 +965,9 @@ Content-Type: application/json
 ```
 
 **Validation:**
-- ✅ Status code is 400
-- ✅ Reason field is mandatory for REJECT action
-- ✅ Clear error message
+-  Status code is 400
+-  Reason field is mandatory for REJECT action
+-  Clear error message
 
 ---
 
@@ -1002,9 +1002,9 @@ Content-Type: application/json
 ```
 
 **Validation:**
-- ✅ Status code is 200
-- ✅ Manager can cancel other employees' requests
-- ✅ Different from employee (CANCEL_OT_OWN) - manager has CANCEL_OT_PENDING
+-  Status code is 200
+-  Manager can cancel other employees' requests
+-  Different from employee (CANCEL_OT_OWN) - manager has CANCEL_OT_PENDING
 
 ---
 
@@ -1051,10 +1051,10 @@ Content-Type: application/json
 ```
 
 **Validation:**
-- ✅ Status code is 201
-- ✅ `employee.employeeId = 4` (specified in request)
-- ✅ `requestedBy.employeeId = 7` (manager who created it)
-- ✅ Admin creates OT for employee, not self-request
+-  Status code is 201
+-  `employee.employeeId = 4` (specified in request)
+-  `requestedBy.employeeId = 7` (manager who created it)
+-  Admin creates OT for employee, not self-request
 
 ---
 
@@ -1090,9 +1090,9 @@ Content-Type: application/json
 ```
 
 **Validation:**
-- ✅ Status code is 404
-- ✅ Message identifies invalid employee ID
-- ✅ Clean error message format
+-  Status code is 404
+-  Message identifies invalid employee ID
+-  Clean error message format
 
 ---
 
@@ -1120,39 +1120,39 @@ Content-Type: application/json
 
 | Action | Permission | nhasi1 (Dr) | letan (Recep) | manager | admin |
 |--------|------------|-------------|---------------|---------|-------|
-| View own OT | VIEW_OT_OWN | ✅ | ✅ | ✅ | ✅ |
-| View all OT | VIEW_OT_ALL | ❌ | ❌ | ✅ | ✅ |
-| Create own OT | CREATE_OT | ✅ | ✅ | ✅ | ✅ |
-| Create for others | CREATE_OT | ❌ | ❌ | ✅ | ✅ |
-| Approve OT | APPROVE_OT | ❌ | ❌ | ✅ | ✅ |
-| Reject OT | REJECT_OT | ❌ | ❌ | ✅ | ✅ |
-| Cancel own pending | CANCEL_OT_OWN | ✅ | ✅ | ✅ | ✅ |
-| Cancel any pending | CANCEL_OT_PENDING | ❌ | ❌ | ✅ | ✅ |
+| View own OT | VIEW_OT_OWN |  |  |  |  |
+| View all OT | VIEW_OT_ALL |  |  |  |  |
+| Create own OT | CREATE_OT |  |  |  |  |
+| Create for others | CREATE_OT |  |  |  |  |
+| Approve OT | APPROVE_OT |  |  |  |  |
+| Reject OT | REJECT_OT |  |  |  |  |
+| Cancel own pending | CANCEL_OT_OWN |  |  |  |  |
+| Cancel any pending | CANCEL_OT_PENDING |  |  |  |  |
 
 ---
 
 ## Business Rules Checklist
 
-### ✅ Validation Rules
+###  Validation Rules
 - [ ] Work date must be in the future (not past or today)
 - [ ] Work shift must exist in database
 - [ ] Employee must exist (when creating for others)
 - [ ] Reason field is required (max 500 characters)
 - [ ] No duplicate: same employee + date + shift
 
-### ✅ State Transitions
+###  State Transitions
 - [ ] PENDING → APPROVED (manager only)
 - [ ] PENDING → REJECTED (manager only, requires reason)
 - [ ] PENDING → CANCELLED (employee own, or manager any)
 - [ ] APPROVED/REJECTED/CANCELLED → Cannot change
 
-### ✅ Auto-Create Employee Shift
+###  Auto-Create Employee Shift
 - [ ] When OT is APPROVED, system creates EmployeeShift
 - [ ] Employee shift has: `source = OT_APPROVAL`, `isOvertime = true`
 - [ ] Employee shift references OT request ID
 - [ ] Employee shift status is SCHEDULED
 
-### ✅ Security & Access Control
+###  Security & Access Control
 - [ ] Employees see only own requests (VIEW_OT_OWN)
 - [ ] Managers see all requests (VIEW_OT_ALL)
 - [ ] Returns 404 instead of 403 to hide resource existence
@@ -1163,29 +1163,29 @@ Content-Type: application/json
 
 ## Quick Test Checklist for FE Developers
 
-### 🔹 Employee Flow (use `nhasi1`)
-1. ✅ Login and get token
-2. ✅ View own overtime requests (should see only employee 2's requests)
-3. ✅ Create new OT request for future date
-4. ✅ View detail of own request
-5. ✅ Try to view other employee's request (should get 404)
-6. ✅ Cancel own pending request
-7. ✅ Try to cancel approved request (should fail)
-8. ✅ Try to approve request (should get 403 - no permission)
-9. ✅ Test validation errors (past date, invalid shift, missing fields)
+###  Employee Flow (use `nhasi1`)
+1.  Login and get token
+2.  View own overtime requests (should see only employee 2's requests)
+3.  Create new OT request for future date
+4.  View detail of own request
+5.  Try to view other employee's request (should get 404)
+6.  Cancel own pending request
+7.  Try to cancel approved request (should fail)
+8.  Try to approve request (should get 403 - no permission)
+9.  Test validation errors (past date, invalid shift, missing fields)
 
-### 🔹 Manager Flow (use `manager`)
-10. ✅ Login and get token
-11. ✅ View all overtime requests (should see all employees)
-12. ✅ Filter by status (PENDING)
-13. ✅ Filter by employee
-14. ✅ Filter by date range
-15. ✅ Approve a pending request
-16. ✅ Verify employee shift was auto-created
-17. ✅ Reject a pending request with reason
-18. ✅ Try to reject without reason (should fail)
-19. ✅ Cancel any pending request
-20. ✅ Create OT for another employee
+###  Manager Flow (use `manager`)
+10.  Login and get token
+11.  View all overtime requests (should see all employees)
+12.  Filter by status (PENDING)
+13.  Filter by employee
+14.  Filter by date range
+15.  Approve a pending request
+16.  Verify employee shift was auto-created
+17.  Reject a pending request with reason
+18.  Try to reject without reason (should fail)
+19.  Cancel any pending request
+20.  Create OT for another employee
 
 ---
 
@@ -1246,4 +1246,4 @@ This guide covers all scenarios for Overtime Request Management API testing. Fol
 - Auto-create EmployeeShift on approval is critical functionality
 - Security uses 404 instead of 403 to hide resource existence
 
-Good luck with testing! 🚀
+Good luck with testing! 

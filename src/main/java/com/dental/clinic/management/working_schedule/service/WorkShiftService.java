@@ -428,8 +428,8 @@ public class WorkShiftService {
      * PREVENTS exact duplicates only.
      * 
      * Example:
-     * ✅ ALLOWED: Ca A (08:00-17:00) and Ca B (08:00-12:00) - overlapping is OK
-     * ❌ BLOCKED: Ca A (08:00-17:00) and Ca B (08:00-17:00) - exact match not allowed
+     *  ALLOWED: Ca A (08:00-17:00) and Ca B (08:00-12:00) - overlapping is OK
+     *  BLOCKED: Ca A (08:00-17:00) and Ca B (08:00-17:00) - exact match not allowed
      * 
      * @param startTime the start time to check
      * @param endTime the end time to check

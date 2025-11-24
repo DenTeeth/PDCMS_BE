@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * 🏢 Supplier Service
+ *  Supplier Service
  * Quản lý nhà cung cấp với Pagination + Search
  */
 @Service
@@ -41,7 +41,7 @@ public class SupplierService {
         private final SupplierMapper supplierMapper;
 
         /**
-         * 📋 GET ALL Suppliers (Pagination + Search)
+         *  GET ALL Suppliers (Pagination + Search)
          * Trả về SupplierSummaryResponse (nhẹ)
          */
         @Transactional(readOnly = true)
@@ -55,7 +55,7 @@ public class SupplierService {
         }
 
         /**
-         * 📄 GET Supplier By ID (Detail)
+         *  GET Supplier By ID (Detail)
          * Trả về SupplierDetailResponse (đầy đủ + danh sách vật tư)
          */
         @Transactional(readOnly = true)
@@ -72,7 +72,7 @@ public class SupplierService {
         }
 
         /**
-         * 🗑️ SOFT DELETE Supplier (World-class approach)
+         *  SOFT DELETE Supplier (World-class approach)
          * - Không xóa cứng (hard delete) để giữ lịch sử audit
          * - Chuyển isActive = false
          * - Kiểm tra xem có giao dịch nhập hàng không (business rule)
@@ -84,7 +84,7 @@ public class SupplierService {
                 Supplier supplier = supplierRepository.findById(id)
                                 .orElseThrow(() -> new SupplierNotFoundException(id));
 
-                // 🔒 Business Rule: Không cho xóa NCC đã có giao dịch nhập hàng
+                //  Business Rule: Không cho xóa NCC đã có giao dịch nhập hàng
                 if (storageTransactionRepository.existsBySupplier(id)) {
                         throw new IllegalStateException(
                                         "Không thể xóa nhà cung cấp '" + supplier.getSupplierName()
@@ -99,7 +99,7 @@ public class SupplierService {
         }
 
         /**
-         * 📦 GET Supplied Items History (World-class query)
+         *  GET Supplied Items History (World-class query)
          * - Lấy lịch sử vật tư mà NCC này đã cung cấp
          * - Giá nhập lần cuối + Ngày nhập gần nhất
          * - Sử dụng DISTINCT ON trong PostgreSQL (hiệu năng cao)
@@ -128,7 +128,7 @@ public class SupplierService {
         }
 
         /**
-         * 🔄 Mapper: Supplier -> SupplierSummaryResponse
+         *  Mapper: Supplier -> SupplierSummaryResponse
          */
         private SupplierSummaryResponse mapToSummaryResponse(Supplier supplier) {
                 return SupplierSummaryResponse.builder()
@@ -142,12 +142,12 @@ public class SupplierService {
         }
 
         /**
-         * 🔄 Mapper: Supplier + SupplierItems -> SupplierDetailResponse
+         *  Mapper: Supplier + SupplierItems -> SupplierDetailResponse
          */
         private SupplierDetailResponse mapToDetailResponse(Supplier supplier, List<SupplierItem> supplierItems) {
                 List<SupplierDetailResponse.SuppliedItemSummary> suppliedItemsSummary = supplierItems.stream()
                                 .map(si -> {
-                                        // 🔥 Tính tổng số lượng từ tất cả batches của supplier này cho item này
+                                        //  Tính tổng số lượng từ tất cả batches của supplier này cho item này
                                         Integer totalQuantity = itemBatchRepository.getTotalQuantityByItemAndSupplier(
                                                         si.getItemMaster().getItemMasterId(),
                                                         supplier.getSupplierId());

@@ -1,6 +1,6 @@
 # Appointment Notes in Treatment Plan - Frontend Integration Guide
 
-## 📋 Overview
+##  Overview
 
 **Feature**: Display dentist/assistant notes when viewing appointment details in Treatment Plan tab
 
@@ -12,13 +12,13 @@
 
 ---
 
-## 🎯 Business Context
+##  Business Context
 
 ### Who Can Add Notes?
 
-- ✅ **Dentists** (DENTIST role)
-- ✅ **Dental Assistants** (DENTAL_ASSISTANT role)
-- ❌ **NOT Observers** - Observers cannot add notes
+-  **Dentists** (DENTIST role)
+-  **Dental Assistants** (DENTAL_ASSISTANT role)
+-  **NOT Observers** - Observers cannot add notes
 
 ### When Are Notes Added?
 
@@ -36,7 +36,7 @@ Notes appear in:
 
 ---
 
-## 🔧 API Endpoint Details
+##  API Endpoint Details
 
 ### Get Treatment Plan Detail with Appointment Notes
 
@@ -99,7 +99,7 @@ Notes appear in:
               "code": "APT-20251120-001",
               "scheduledDate": "2025-11-20T14:00:00",
               "status": "COMPLETED",
-              "notes": "✅ First visit completed. Canal cleaned and shaped. Patient tolerated well. Slight sensitivity expected for 24-48 hours. Prescribed pain medication."
+              "notes": " First visit completed. Canal cleaned and shaped. Patient tolerated well. Slight sensitivity expected for 24-48 hours. Prescribed pain medication."
             },
             {
               "code": "APT-20251122-002",
@@ -124,7 +124,7 @@ Notes appear in:
               "code": "APT-20251121-003",
               "scheduledDate": "2025-11-21T15:00:00",
               "status": "COMPLETED",
-              "notes": "✅ Composite filling placed on occlusal surface. Patient advised to avoid hard food for 24 hours. No complications."
+              "notes": " Composite filling placed on occlusal surface. Patient advised to avoid hard food for 24 hours. No complications."
             }
           ]
         }
@@ -136,7 +136,7 @@ Notes appear in:
 
 ---
 
-## 📝 Field Specifications
+##  Field Specifications
 
 ### `linkedAppointments[].notes` Field
 
@@ -146,11 +146,11 @@ Notes appear in:
 
 **Characteristics**:
 
-- ✅ **Can be null** - If appointment not completed or no notes added
-- ✅ **Can be empty string** - If dentist submitted without notes
-- ✅ **Multi-line support** - Can contain line breaks (`\n`)
-- ✅ **Max length** - Database column type: `TEXT` (no practical limit)
-- ✅ **Rich content** - Can include observations, prescriptions, next steps
+-  **Can be null** - If appointment not completed or no notes added
+-  **Can be empty string** - If dentist submitted without notes
+-  **Multi-line support** - Can contain line breaks (`\n`)
+-  **Max length** - Database column type: `TEXT` (no practical limit)
+-  **Rich content** - Can include observations, prescriptions, next steps
 
 **Example Values**:
 
@@ -179,7 +179,7 @@ Notes appear in:
 
 ---
 
-## 🎨 Frontend Implementation Guide
+##  Frontend Implementation Guide
 
 ### 1. Display Notes in Treatment Plan View
 
@@ -190,13 +190,13 @@ Treatment Plan Tab
 └── Phase 1: Initial Treatment
     └── Item 1: Root Canal Treatment - Tooth #16
         └── Linked Appointments
-            ├── 📅 APT-20251120-001 - Nov 20, 2025 2:00 PM
-            │   ├── Status: ✅ Completed
-            │   └── 📝 Notes: "Canal cleaned and shaped. Patient tolerated well..."
+            ├──  APT-20251120-001 - Nov 20, 2025 2:00 PM
+            │   ├── Status:  Completed
+            │   └──  Notes: "Canal cleaned and shaped. Patient tolerated well..."
             │
-            └── 📅 APT-20251122-002 - Nov 22, 2025 2:00 PM
-                ├── Status: 📆 Scheduled
-                └── 📝 Notes: (Not available yet)
+            └──  APT-20251122-002 - Nov 22, 2025 2:00 PM
+                ├── Status:  Scheduled
+                └──  Notes: (Not available yet)
 ```
 
 ### 2. React/Vue Component Example
@@ -215,14 +215,14 @@ function LinkedAppointmentCard({ appointment }) {
       </div>
 
       <div className="appointment-date">
-        📅 {new Date(appointment.scheduledDate).toLocaleString("vi-VN")}
+         {new Date(appointment.scheduledDate).toLocaleString("vi-VN")}
       </div>
 
       {/* Display notes if available */}
       {appointment.notes && (
         <div className="appointment-notes">
           <div className="notes-header">
-            <span className="notes-icon">📝</span>
+            <span className="notes-icon"></span>
             <span className="notes-label">Ghi chú từ bác sĩ/phụ tá:</span>
           </div>
           <div className="notes-content">{appointment.notes}</div>
@@ -232,7 +232,7 @@ function LinkedAppointmentCard({ appointment }) {
       {/* Show placeholder for completed appointments without notes */}
       {!appointment.notes && appointment.status === "COMPLETED" && (
         <div className="appointment-notes empty">
-          <span className="notes-icon">📝</span>
+          <span className="notes-icon"></span>
           <span className="notes-label">Không có ghi chú</span>
         </div>
       )}
@@ -254,13 +254,13 @@ function LinkedAppointmentCard({ appointment }) {
     </div>
 
     <div class="appointment-date">
-      📅 {{ formatDate(appointment.scheduledDate) }}
+       {{ formatDate(appointment.scheduledDate) }}
     </div>
 
     <!-- Display notes if available -->
     <div v-if="appointment.notes" class="appointment-notes">
       <div class="notes-header">
-        <span class="notes-icon">📝</span>
+        <span class="notes-icon"></span>
         <span class="notes-label">Ghi chú từ bác sĩ/phụ tá:</span>
       </div>
       <div class="notes-content">
@@ -273,7 +273,7 @@ function LinkedAppointmentCard({ appointment }) {
       v-else-if="!appointment.notes && appointment.status === 'COMPLETED'"
       class="appointment-notes empty"
     >
-      <span class="notes-icon">📝</span>
+      <span class="notes-icon"></span>
       <span class="notes-label">Không có ghi chú</span>
     </div>
   </div>
@@ -380,7 +380,7 @@ export default {
 
 ---
 
-## 🧪 Testing Guide
+##  Testing Guide
 
 ### Test Case 1: Completed Appointment with Notes
 
@@ -456,15 +456,15 @@ export default {
 
 ---
 
-## 🔐 Security & Permissions
+##  Security & Permissions
 
 ### Who Can View Notes?
 
-- ✅ **Dentists** - Can view all notes
-- ✅ **Assistants** - Can view all notes
-- ✅ **Managers** - Can view all notes
-- ⚠️ **Observers** - Can view notes (read-only, cannot add)
-- ✅ **Patients** - Can view their own treatment plan notes
+-  **Dentists** - Can view all notes
+-  **Assistants** - Can view all notes
+-  **Managers** - Can view all notes
+- ️ **Observers** - Can view notes (read-only, cannot add)
+-  **Patients** - Can view their own treatment plan notes
 
 ### Authorization Check
 
@@ -475,7 +475,7 @@ No additional authorization needed beyond existing treatment plan access control
 
 ---
 
-## 📊 Data Flow Diagram
+##  Data Flow Diagram
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -532,7 +532,7 @@ No additional authorization needed beyond existing treatment plan access control
 
 ---
 
-## ❓ FAQ
+##  FAQ
 
 ### Q1: Can notes be edited after appointment completion?
 
@@ -556,11 +556,11 @@ No additional authorization needed beyond existing treatment plan access control
 
 ### Q6: Can observers add notes?
 
-**A**: ❌ No, observers cannot add notes. Only dentists and assistants can add notes when completing appointments.
+**A**:  No, observers cannot add notes. Only dentists and assistants can add notes when completing appointments.
 
 ---
 
-## 📞 Support
+##  Support
 
 **Backend Team Contact**: [Your Backend Team]
 **API Documentation**: `docs/API_DOCUMENTATION.md`
@@ -573,7 +573,7 @@ No additional authorization needed beyond existing treatment plan access control
 
 ---
 
-## 🔄 Changelog
+##  Changelog
 
 | Date       | Version | Changes                                                         |
 | ---------- | ------- | --------------------------------------------------------------- |

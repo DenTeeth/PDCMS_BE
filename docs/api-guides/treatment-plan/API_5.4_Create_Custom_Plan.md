@@ -2,13 +2,13 @@
 
 **Module**: Treatment Plan Management
 **Version**: V1.0
-**Status**: ✅ Production Ready
+**Status**:  Production Ready
 **Last Updated**: 2025-11-12
 **Source**: `TreatmentPlanController.java`, `CustomTreatmentPlanService.java`, `CreateCustomPlanRequest.java`
 
 ---
 
-## 📋 Table of Contents
+##  Table of Contents
 
 1. [Overview](#overview)
 2. [API Specification](#api-specification)
@@ -28,11 +28,11 @@ API 5.4 creates a **custom treatment plan from scratch** without using templates
 
 **Key Features**:
 
-- ✅ **Quantity Expansion**: `quantity: 5` → creates 5 separate items
-- ✅ **Price Override**: Custom pricing (must be within 50%-150% of service default)
-- ✅ **Approval Workflow**: Created with `approval_status = DRAFT` (requires manager approval)
-- ✅ **Phase Duration**: Set `estimated_duration_days` for each phase
-- ✅ **Flexible Structure**: No template restrictions
+-  **Quantity Expansion**: `quantity: 5` → creates 5 separate items
+-  **Price Override**: Custom pricing (must be within 50%-150% of service default)
+-  **Approval Workflow**: Created with `approval_status = DRAFT` (requires manager approval)
+-  **Phase Duration**: Set `estimated_duration_days` for each phase
+-  **Flexible Structure**: No template restrictions
 
 **Use Case**: Doctor wants to create a unique treatment plan not covered by standard templates.
 
@@ -69,11 +69,11 @@ Content-Type: application/json
 
 **Allowed Roles**:
 
-- ✅ **Admin** - Full access (always allowed via `hasRole('ROLE_ADMIN')`)
-- ✅ **Manager** - Has `CREATE_TREATMENT_PLAN` permission
-- ✅ **Dentist** - Has `CREATE_TREATMENT_PLAN` permission
-- ❌ **Receptionist** - No permission (read-only access)
-- ❌ **Patient** - No permission
+-  **Admin** - Full access (always allowed via `hasRole('ROLE_ADMIN')`)
+-  **Manager** - Has `CREATE_TREATMENT_PLAN` permission
+-  **Dentist** - Has `CREATE_TREATMENT_PLAN` permission
+-  **Receptionist** - No permission (read-only access)
+-  **Patient** - No permission
 
 **Permission Check Logic**:
 
@@ -238,8 +238,8 @@ curl -X POST "http://localhost:8080/api/v1/patients/BN-1001/treatment-plans/cust
 
 - **Validation**: Must be within **50%-150%** of service default price
 - If service default price = 1,000,000đ:
-  - ✅ Allowed: 500,000đ to 1,500,000đ
-  - ❌ Rejected: 400,000đ (too low) or 2,000,000đ (too high)
+  -  Allowed: 500,000đ to 1,500,000đ
+  -  Rejected: 400,000đ (too low) or 2,000,000đ (too high)
 
 #### quantity (Quantity Expansion)
 
@@ -257,9 +257,9 @@ Same structure as **API 5.2 - TreatmentPlanDetailResponse**
 
 **Key Differences from Template Plans**:
 
-- ✅ `approval_status` = **"DRAFT"** (not APPROVED)
-- ✅ `status` = "PENDING" (not started yet)
-- ✅ `startDate` = null (will be set when plan is activated)
+-  `approval_status` = **"DRAFT"** (not APPROVED)
+-  `status` = "PENDING" (not started yet)
+-  `startDate` = null (will be set when plan is activated)
 
 ```json
 {
@@ -676,13 +676,13 @@ POST http://localhost:8080/api/v1/patients/BN-1001/treatment-plans/custom
 
 **Expected**:
 
-- ✅ Status: 201 CREATED
-- ✅ `planCode`: Auto-generated (PLAN-YYYYMMDD-XXX)
-- ✅ `approval_status`: "DRAFT"
-- ✅ `status`: "PENDING"
-- ✅ `totalPrice`: 2000000
-- ✅ `phases`: 1 phase
-- ✅ `items`: 1 item
+-  Status: 201 CREATED
+-  `planCode`: Auto-generated (PLAN-YYYYMMDD-XXX)
+-  `approval_status`: "DRAFT"
+-  `status`: "PENDING"
+-  `totalPrice`: 2000000
+-  `phases`: 1 phase
+-  `items`: 1 item
 
 ### Test 2: Quantity Expansion
 
@@ -714,8 +714,8 @@ POST http://localhost:8080/api/v1/patients/BN-1001/treatment-plans/custom
 
 **Expected**:
 
-- ✅ `totalPrice`: 3000000 (500000 × 6)
-- ✅ Phase 1 has **6 items**:
+-  `totalPrice`: 3000000 (500000 × 6)
+-  Phase 1 has **6 items**:
   - "Điều chỉnh niềng răng (Lần 1)"
   - "Điều chỉnh niềng răng (Lần 2)"
   - ...
@@ -738,7 +738,7 @@ POST http://localhost:8080/api/v1/patients/BN-1001/treatment-plans/custom
 
 **Expected**:
 
-- ✅ Accepted (600,000 is within 250,000 - 750,000 range)
+-  Accepted (600,000 is within 250,000 - 750,000 range)
 
 ### Test 4: Price Override Validation (Fail - Too Low)
 
@@ -755,7 +755,7 @@ POST http://localhost:8080/api/v1/patients/BN-1001/treatment-plans/custom
 
 **Expected**:
 
-- ❌ Status: 400 BAD REQUEST
+-  Status: 400 BAD REQUEST
 - Error: "PRICE_OUT_OF_RANGE" (200,000 < 250,000)
 
 ### Test 5: Duplicate Phase Numbers
@@ -781,7 +781,7 @@ POST http://localhost:8080/api/v1/patients/BN-1001/treatment-plans/custom
 
 **Expected**:
 
-- ❌ Status: 400 BAD REQUEST
+-  Status: 400 BAD REQUEST
 - Error: "DUPLICATE_PHASE_NUMBER: 1"
 
 ### Test 6: Empty Phase (No Items)
@@ -802,7 +802,7 @@ POST http://localhost:8080/api/v1/patients/BN-1001/treatment-plans/custom
 
 **Expected**:
 
-- ❌ Status: 400 BAD REQUEST
+-  Status: 400 BAD REQUEST
 - Error: "PHASE_HAS_NO_ITEMS: Phase 1"
 
 ---

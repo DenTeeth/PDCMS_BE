@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * 📦 Inventory Management Controller
+ *  Inventory Management Controller
  * Quản lý vật tư, danh mục, lô hàng, thống kê kho
  */
 @RestController
@@ -36,7 +36,7 @@ public class InventoryController {
     private final InventoryService inventoryService;
 
     // ===========================
-    // 📋 GET ALL ITEM MASTERS
+    //  GET ALL ITEM MASTERS
     // ===========================
     @Operation(summary = "Lấy danh sách tất cả vật tư", description = "Lấy danh sách vật tư với tìm kiếm và lọc theo loại kho")
     @GetMapping
@@ -50,7 +50,7 @@ public class InventoryController {
     }
 
     // ===========================
-    // 🔍 GET ITEM MASTER BY ID
+    //  GET ITEM MASTER BY ID
     // ===========================
     @Operation(summary = "Lấy chi tiết 1 vật tư", description = "Lấy thông tin chi tiết của 1 vật tư theo ID")
     @GetMapping("/{id}")
@@ -63,7 +63,7 @@ public class InventoryController {
     }
 
     /**
-     * 📊 API 1: Lấy danh sách vật tư cho Dashboard (Có Pagination)
+     *  API 1: Lấy danh sách vật tư cho Dashboard (Có Pagination)
      * FE nhận được: totalQuantityOnHand, stockStatus, isExpiringSoon
      */
     @Operation(summary = "Lấy danh sách tồn kho (Inventory Dashboard)", description = "BE tự động tính toán stock_status, total_quantity, và cảnh báo hết hạn. Hỗ trợ pagination.")
@@ -108,7 +108,7 @@ public class InventoryController {
     }
 
     /**
-     * ✏️ API: Cập nhật Item Master
+     * ✏ API: Cập nhật Item Master
      */
     @Operation(summary = "Cập nhật vật tư", description = "Update item master by ID")
     @ApiMessage("Cập nhật vật tư thành công")
@@ -123,7 +123,7 @@ public class InventoryController {
     }
 
     /**
-     * 🗑️ API: Xóa Item Master
+     *  API: Xóa Item Master
      */
     @Operation(summary = "Xóa vật tư", description = "Không thể xóa nếu đã có lô hàng")
     @ApiMessage("Xóa vật tư thành công")
@@ -136,7 +136,7 @@ public class InventoryController {
     }
 
     /**
-     * 📈 API 2: Lấy thống kê cho 4 thẻ trên Dashboard
+     *  API 2: Lấy thống kê cho 4 thẻ trên Dashboard
      */
     @Operation(summary = "Lấy thống kê tổng quan kho", description = "Trả về: Tổng vật tư, Cảnh báo, Sắp hết hạn, Hết hàng")
     @ApiMessage("Lấy thống kê kho thành công")
@@ -149,7 +149,7 @@ public class InventoryController {
     }
 
     /**
-     * 📦 API 3: Lấy danh sách lô hàng (FEFO sorted)
+     *  API 3: Lấy danh sách lô hàng (FEFO sorted)
      * Dùng cho Modal Xuất Kho
      */
     @Operation(summary = "Lấy danh sách lô hàng theo FEFO", description = "BE đã sort theo expiryDate ASC")
@@ -164,7 +164,7 @@ public class InventoryController {
     }
 
     /**
-     * 📁 API: Lấy tất cả Categories
+     *  API: Lấy tất cả Categories
      */
     @Operation(summary = "Lấy danh sách danh mục", description = "Load categories for dropdown in CreateItemMasterModal")
     @ApiMessage("Lấy danh mục thành công")
@@ -193,7 +193,7 @@ public class InventoryController {
     }
 
     /**
-     * ✏️ API: Cập nhật Category
+     * ✏ API: Cập nhật Category
      */
     @Operation(summary = "Cập nhật danh mục vật tư", description = "Update category by ID")
     @ApiMessage("Cập nhật danh mục thành công")
@@ -208,7 +208,7 @@ public class InventoryController {
     }
 
     /**
-     * 🗑️ API: Xóa Category
+     *  API: Xóa Category
      */
     @Operation(summary = "Xóa danh mục vật tư", description = "Không thể xóa nếu đã có items")
     @ApiMessage("Xóa danh mục thành công")
@@ -221,11 +221,11 @@ public class InventoryController {
     }
 
     // ===========================
-    // 📦 GET SUPPLIERS OF ITEM
+    //  GET SUPPLIERS OF ITEM
     // ===========================
 
     /**
-     * 🔥 API: Lấy danh sách NCC cung cấp item này
+     *  API: Lấy danh sách NCC cung cấp item này
      * FE dùng khi: Filter item để tìm NCC, so sánh giá giữa các NCC
      */
     @Operation(summary = "Lấy danh sách NCC của item", description = "Xem item này có bao nhiêu NCC cung cấp, giá nhập lần cuối")

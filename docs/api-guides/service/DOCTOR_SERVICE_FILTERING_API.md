@@ -3,7 +3,7 @@
 **Module:** Booking Appointment
 **Version:** 1.0
 **Date:** 2025-11-20
-**Status:** ✅ Production Ready
+**Status:**  Production Ready
 
 ---
 
@@ -15,7 +15,7 @@ This API endpoint provides automatic service filtering based on the **current lo
 
 ## Endpoint Details
 
-### 🔹 Get Services for Current Doctor
+###  Get Services for Current Doctor
 
 **Endpoint:** `GET /api/v1/booking/services/my-specializations`
 
@@ -258,10 +258,10 @@ curl -X GET 'http://localhost:8080/api/v1/booking/services/my-specializations?so
 | ------------------------ | ---------------------------------------- | -------------------------------------------- |
 | **Filtering**            | Manual `specializationId` parameter      | Automatic from JWT token                     |
 | **Use Case**             | Admin viewing all services               | Doctor selecting services for treatment      |
-| **Security**             | ⚠️ FE must validate doctor-service match | ✅ BE enforces automatically                 |
+| **Security**             | ️ FE must validate doctor-service match |  BE enforces automatically                 |
 | **Complexity**           | FE must know doctor's specializations    | FE just calls endpoint                       |
-| **Error Prevention**     | ⚠️ Allows incompatible service selection | ✅ Only compatible services returned         |
-| **Multi-Specialization** | ❌ Single specialization filter          | ✅ OR filter across all doctor specs         |
+| **Error Prevention**     | ️ Allows incompatible service selection |  Only compatible services returned         |
+| **Multi-Specialization** |  Single specialization filter          |  OR filter across all doctor specs         |
 
 ---
 
@@ -269,12 +269,12 @@ curl -X GET 'http://localhost:8080/api/v1/booking/services/my-specializations?so
 
 ### Who Can Access This API?
 
-✅ **Allowed:**
+ **Allowed:**
 
 - Doctors with `VIEW_SERVICE` permission
 - Admins with `ROLE_ADMIN`
 
-❌ **Blocked:**
+ **Blocked:**
 
 - Receptionists (no specializations)
 - Unauthenticated users
@@ -300,7 +300,7 @@ curl -X GET 'http://localhost:8080/api/v1/booking/services/my-specializations?so
 
 ```javascript
 // FE needs to know doctor's specializationId
-const doctorSpecId = getDoctorSpecializationId(); // ❌ Extra complexity
+const doctorSpecId = getDoctorSpecializationId(); //  Extra complexity
 const services = await fetch(
   `/api/v1/booking/services?specializationId=${doctorSpecId}`
 );
@@ -406,7 +406,7 @@ try {
 
    - Loads all matching services first
    - Then applies pagination in memory
-   - ⚠️ Not ideal for very large datasets (>10,000 services)
+   - ️ Not ideal for very large datasets (>10,000 services)
 
 3. **Query Optimization:**
    - Uses existing `findWithFilters()` repository method
@@ -549,22 +549,22 @@ ON employee_specializations(employee_id);
 
 ### Access Control
 
-✅ **Protected:**
+ **Protected:**
 
 - JWT token validation (Spring Security)
 - Role-based authorization (`@PreAuthorize`)
 - Employee-account ownership validation
 
-❌ **Not Implemented:**
+ **Not Implemented:**
 
 - IP whitelisting
 - Rate limiting (consider adding)
 
 ### Data Exposure
 
-- ✅ Only returns services matching doctor's specializations
-- ✅ Prevents unauthorized service visibility
-- ✅ No sensitive data in response (prices are public)
+-  Only returns services matching doctor's specializations
+-  Prevents unauthorized service visibility
+-  No sensitive data in response (prices are public)
 
 ---
 

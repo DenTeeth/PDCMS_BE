@@ -636,7 +636,7 @@ public class TreatmentPlanController {
                 com.dental.clinic.management.treatment_plans.dto.response.AddItemsToPhaseResponse response = treatmentPlanItemAdditionService
                                 .addItemsToPhase(phaseId, requests, autoSubmit);
 
-                log.info("✅ Successfully added {} items. Financial impact: total cost +{} VND.",
+                log.info(" Successfully added {} items. Financial impact: total cost +{} VND.",
                                 response.getItems().size(),
                                 response.getFinancialImpact().getTotalCostAdded());
 
@@ -836,7 +836,7 @@ public class TreatmentPlanController {
                 org.springframework.data.domain.Page<com.dental.clinic.management.treatment_plans.dto.response.TemplateSummaryDTO> response = treatmentPlanTemplateService
                                 .getAllTemplates(isActive, specializationId, pageable);
 
-                log.info("✅ Retrieved {} templates (total={}, page={}/{})",
+                log.info(" Retrieved {} templates (total={}, page={}/{})",
                                 response.getNumberOfElements(),
                                 response.getTotalElements(),
                                 response.getNumber() + 1,
@@ -973,7 +973,7 @@ public class TreatmentPlanController {
         public ResponseEntity<com.dental.clinic.management.treatment_plans.dto.response.DeletePlanItemResponse> deleteItem(
                         @Parameter(description = "ID of the plan item to delete", required = true, example = "538") @PathVariable Long itemId) {
 
-                log.info("🗑️ REST request to delete plan item: {}", itemId);
+                log.info(" REST request to delete plan item: {}", itemId);
 
                 com.dental.clinic.management.treatment_plans.dto.response.DeletePlanItemResponse response = treatmentPlanItemDeletionService
                                 .deleteItem(itemId);
@@ -1021,12 +1021,12 @@ public class TreatmentPlanController {
                         @Parameter(description = "Treatment plan code (e.g., PLAN-20251111-002)", required = true, example = "PLAN-20251111-002") @PathVariable String planCode,
                         @Parameter(description = "Submit request with optional notes", required = false) @org.springframework.web.bind.annotation.RequestBody(required = false) @jakarta.validation.Valid com.dental.clinic.management.treatment_plans.dto.request.SubmitForReviewRequest request) {
 
-                log.info("🔴 REST request to submit treatment plan for review: {}", planCode);
+                log.info(" REST request to submit treatment plan for review: {}", planCode);
 
                 com.dental.clinic.management.treatment_plans.dto.TreatmentPlanDetailResponse response = treatmentPlanApprovalService
                                 .submitForReview(planCode, request);
 
-                log.info("✅ Treatment plan {} submitted for review. Status: DRAFT → PENDING_REVIEW", planCode);
+                log.info(" Treatment plan {} submitted for review. Status: DRAFT → PENDING_REVIEW", planCode);
 
                 return ResponseEntity.ok(response);
         }
@@ -1070,13 +1070,13 @@ public class TreatmentPlanController {
                         @Parameter(description = "Treatment plan code (e.g., PLAN-20251119-001)", required = true, example = "PLAN-20251119-001") @PathVariable String planCode,
                         @Parameter(description = "Price update request with item prices and discount", required = true) @org.springframework.web.bind.annotation.RequestBody @jakarta.validation.Valid com.dental.clinic.management.treatment_plans.dto.request.UpdatePricesRequest request) {
 
-                log.info("💰 REST request to update prices for plan: {} ({} items)",
+                log.info(" REST request to update prices for plan: {} ({} items)",
                         planCode, request.getItems().size());
 
                 com.dental.clinic.management.treatment_plans.dto.response.UpdatePricesResponse response = treatmentPlanPricingService
                                 .updatePlanPrices(planCode, request);
 
-                log.info("✅ Prices updated for plan {}. Cost: {} → {} VND",
+                log.info(" Prices updated for plan {}. Cost: {} → {} VND",
                         planCode, response.getTotalCostBefore(), response.getTotalCostAfter());
 
                 return ResponseEntity.ok(response);
@@ -1121,13 +1121,13 @@ public class TreatmentPlanController {
                         @Parameter(description = "Phase ID", required = true, example = "123") @PathVariable Long phaseId,
                         @Parameter(description = "Reorder request with item IDs in new order", required = true) @org.springframework.web.bind.annotation.RequestBody @jakarta.validation.Valid com.dental.clinic.management.treatment_plans.dto.request.ReorderItemsRequest request) {
 
-                log.info("🔄 REST request to reorder {} items in phase: {}",
+                log.info(" REST request to reorder {} items in phase: {}",
                         request.getItemIds().size(), phaseId);
 
                 com.dental.clinic.management.treatment_plans.dto.response.ReorderItemsResponse response = treatmentPlanReorderService
                                 .reorderPhaseItems(phaseId, request);
 
-                log.info("✅ Reordered {} items in phase {}",
+                log.info(" Reordered {} items in phase {}",
                         response.getItemsReordered(), phaseId);
 
                 return ResponseEntity.ok(response);

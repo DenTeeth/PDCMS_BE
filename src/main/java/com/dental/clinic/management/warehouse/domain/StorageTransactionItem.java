@@ -29,14 +29,14 @@ public class StorageTransactionItem {
     private ItemBatch batch;
 
     /**
-     * 🔥 Mã vật tư - Warehouse staff nhận diện vật tư
+     *  Mã vật tư - Warehouse staff nhận diện vật tư
      * Copy từ ItemMaster.itemCode khi tạo transaction
      */
     @Column(name = "item_code", length = 50)
     private String itemCode;
 
     /**
-     * 🔥 Đơn vị đo - Hỗ trợ giao dịch theo unit (Hộp/Vỉ/Viên)
+     *  Đơn vị đo - Hỗ trợ giao dịch theo unit (Hộp/Vỉ/Viên)
      * NULL = sử dụng đơn vị mặc định của item
      */
     @ManyToOne(fetch = FetchType.LAZY)
@@ -51,7 +51,7 @@ public class StorageTransactionItem {
     private Integer quantityChange;
 
     /**
-     * 🔥 Giá tại thời điểm giao dịch (Feedback: Price History)
+     *  Giá tại thời điểm giao dịch (Feedback: Price History)
      * - Import: Giá nhập từ NCC
      * - Export: Giá xuất (có thể khác giá nhập do tính toán lại)
      * NULL = không tracking giá (VD: điều chỉnh kho)

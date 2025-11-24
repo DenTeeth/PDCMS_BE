@@ -135,7 +135,7 @@ public class PartTimeRegistrationApprovalService {
 
         // INTEGRATION POINT: Create employee shifts for all working days
         // Using NEW generic shift generation method (replaces deprecated createShiftsForApprovedRegistration)
-        log.info("🔄 Starting shift generation for PART_TIME_FLEX registration {}", registrationId);
+        log.info(" Starting shift generation for PART_TIME_FLEX registration {}", registrationId);
         
         try {
             // Extract days of week from slot (e.g., "MONDAY,WEDNESDAY,FRIDAY" → [1,3,5])
@@ -158,11 +158,11 @@ public class PartTimeRegistrationApprovalService {
                     managerId
                 );
             
-            log.info("✅ Registration {} approved by manager {} with {} shifts created (source: PART_TIME_FLEX, sourceId: {})", 
+            log.info(" Registration {} approved by manager {} with {} shifts created (source: PART_TIME_FLEX, sourceId: {})", 
                     registrationId, managerId, createdShifts.size(), registration.getRegistrationId());
                     
         } catch (Exception e) {
-            log.error("❌ Failed to generate shifts for registration {}: {}. Registration is APPROVED but shifts not created.",
+            log.error(" Failed to generate shifts for registration {}: {}. Registration is APPROVED but shifts not created.",
                     registrationId, e.getMessage(), e);
             // Don't rollback approval - shifts can be regenerated via backfill endpoint
             // Just log the error for admin to investigate
@@ -261,11 +261,11 @@ public class PartTimeRegistrationApprovalService {
      * 3. If (approved + new) > 21h, throw WeeklyHoursExceededException
      * 
      * Examples:
-     * - Employee has: 16h APPROVED, validating 4h PENDING → 16h + 4h = 20h ≤ 21h ✅ APPROVE
-     * - Employee has: 20h APPROVED, validating 4h PENDING → 20h + 4h = 24h > 21h ❌ REJECT
+     * - Employee has: 16h APPROVED, validating 4h PENDING → 16h + 4h = 20h ≤ 21h  APPROVE
+     * - Employee has: 20h APPROVED, validating 4h PENDING → 20h + 4h = 24h > 21h  REJECT
      * - Employee has: 16h APPROVED + 4h PENDING A + 4h PENDING B:
-     *   * Validating A: 16h + 4h = 20h ✅ (B is still PENDING, doesn't count)
-     *   * Validating B: 16h + 4h = 20h ✅ (A is still PENDING, doesn't count)
+     *   * Validating A: 16h + 4h = 20h  (B is still PENDING, doesn't count)
+     *   * Validating B: 16h + 4h = 20h  (A is still PENDING, doesn't count)
      * 
      * @param registration The registration to approve
      * @param slot The slot being registered for
@@ -884,12 +884,12 @@ public class PartTimeRegistrationApprovalService {
                 } else if (shiftsCreated >= 0) {
                     totalShiftsCreated += shiftsCreated;
                     successCount++;
-                    log.info("✅ Registration {}: Generated {} shifts",
+                    log.info(" Registration {}: Generated {} shifts",
                             registration.getRegistrationId(), shiftsCreated);
                 }
                 
             } catch (Exception e) {
-                log.error("❌ Registration {}: Failed to generate shifts: {}",
+                log.error(" Registration {}: Failed to generate shifts: {}",
                         registration.getRegistrationId(), e.getMessage(), e);
                 errorCount++;
             }
@@ -922,7 +922,7 @@ public class PartTimeRegistrationApprovalService {
      */
     @Transactional
     public int regenerateShiftsForRegistration(Integer registrationId) {
-        log.info("🔄 Regenerating shifts for registration {}", registrationId);
+        log.info(" Regenerating shifts for registration {}", registrationId);
         
         // Find registration
         PartTimeRegistration registration = registrationRepository.findById(registrationId)
@@ -981,7 +981,7 @@ public class PartTimeRegistrationApprovalService {
                 null  // createdBy = null for regeneration (system generated)
             );
         
-        log.info("✅ Regenerated {} shifts for registration {}", createdShifts.size(), registrationId);
+        log.info(" Regenerated {} shifts for registration {}", createdShifts.size(), registrationId);
         return createdShifts.size();
     }
     
@@ -996,13 +996,13 @@ public class PartTimeRegistrationApprovalService {
                 .orElse(null);
         
         if (slot == null) {
-            log.warn("⚠️ Registration {}: Slot {} not found, skipping",
+            log.warn(" Registration {}: Slot {} not found, skipping",
                     registration.getRegistrationId(), registration.getPartTimeSlotId());
             return -1;
         }
         
         if (slot.getWorkShift() == null) {
-            log.warn("⚠️ Registration {}: Slot {} has no work shift, skipping",
+            log.warn(" Registration {}: Slot {} has no work shift, skipping",
                     registration.getRegistrationId(), slot.getSlotId());
             return -1;
         }
@@ -1014,7 +1014,7 @@ public class PartTimeRegistrationApprovalService {
         );
         
         if (hasShifts) {
-            log.debug("⏭️ Registration {}: Shifts already exist, skipping",
+            log.debug("⏭ Registration {}: Shifts already exist, skipping",
                     registration.getRegistrationId());
             return -1;
         }
@@ -1022,7 +1022,7 @@ public class PartTimeRegistrationApprovalService {
         // Extract days of week
         List<Integer> daysOfWeek = extractDaysOfWeekFromSlot(slot);
         if (daysOfWeek.isEmpty()) {
-            log.warn("⚠️ Registration {}: No valid days of week found, skipping",
+            log.warn(" Registration {}: No valid days of week found, skipping",
                     registration.getRegistrationId());
             return -1;
         }

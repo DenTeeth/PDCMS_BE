@@ -2,13 +2,13 @@
 
 **Module**: Treatment Plan Management
 **Version**: V1.0
-**Status**: ✅ Production Ready
+**Status**:  Production Ready
 **Last Updated**: 2025-11-12
 **Source**: `TreatmentPlanController.java`, `TreatmentPlanService.java`, `TreatmentPlanDetailService.java`
 
 ---
 
-## 📋 Table of Contents
+##  Table of Contents
 
 1. [API 5.1 - Get Treatment Plans List](#api-51---get-treatment-plans-list)
 2. [API 5.2 - Get Treatment Plan Detail](#api-52---get-treatment-plan-detail)
@@ -57,11 +57,11 @@ GET /api/v1/patients/{patientCode}/treatment-plans
 
 **Allowed Roles**:
 
-- ✅ **Admin** - Full access (always allowed via `hasRole('ROLE_ADMIN')`)
-- ✅ **Manager** - Has `VIEW_TREATMENT_PLAN_ALL` permission (sees all patients' plans)
-- ✅ **Dentist** - Has `VIEW_TREATMENT_PLAN_ALL` permission (sees all patients' plans)
-- ✅ **Receptionist** - Has `VIEW_TREATMENT_PLAN_ALL` permission (sees all patients' plans)
-- ✅ **Patient** - Has `VIEW_TREATMENT_PLAN_OWN` permission (sees only their own plans)
+-  **Admin** - Full access (always allowed via `hasRole('ROLE_ADMIN')`)
+-  **Manager** - Has `VIEW_TREATMENT_PLAN_ALL` permission (sees all patients' plans)
+-  **Dentist** - Has `VIEW_TREATMENT_PLAN_ALL` permission (sees all patients' plans)
+-  **Receptionist** - Has `VIEW_TREATMENT_PLAN_ALL` permission (sees all patients' plans)
+-  **Patient** - Has `VIEW_TREATMENT_PLAN_OWN` permission (sees only their own plans)
 
 **Permission Check Logic**:
 
@@ -420,9 +420,9 @@ Authorization: Bearer {jwt_token}
 
 ```bash
 # Staff can view plans for any patient
-GET /api/v1/patients/BN-1001/treatment-plans  # ✅ Allowed
-GET /api/v1/patients/BN-1002/treatment-plans  # ✅ Allowed
-GET /api/v1/patients/BN-1003/treatment-plans  # ✅ Allowed
+GET /api/v1/patients/BN-1001/treatment-plans  #  Allowed
+GET /api/v1/patients/BN-1002/treatment-plans  #  Allowed
+GET /api/v1/patients/BN-1003/treatment-plans  #  Allowed
 ```
 
 ### VIEW_TREATMENT_PLAN_OWN
@@ -438,18 +438,18 @@ GET /api/v1/patients/BN-1003/treatment-plans  # ✅ Allowed
 
 ```bash
 # Patient BN-1001 logged in
-GET /api/v1/patients/BN-1001/treatment-plans  # ✅ Allowed (own plan)
-GET /api/v1/patients/BN-1002/treatment-plans  # ❌ 403 Forbidden (other patient)
+GET /api/v1/patients/BN-1001/treatment-plans  #  Allowed (own plan)
+GET /api/v1/patients/BN-1002/treatment-plans  #  403 Forbidden (other patient)
 ```
 
 ### Permission Matrix
 
 | User Role       | Permission              | Can View BN-1001? | Can View BN-1002? |
 | --------------- | ----------------------- | ----------------- | ----------------- |
-| Admin           | VIEW_TREATMENT_PLAN_ALL | ✅ Yes            | ✅ Yes            |
-| Staff           | VIEW_TREATMENT_PLAN_ALL | ✅ Yes            | ✅ Yes            |
-| Patient BN-1001 | VIEW_TREATMENT_PLAN_OWN | ✅ Yes (own)      | ❌ No             |
-| Patient BN-1002 | VIEW_TREATMENT_PLAN_OWN | ❌ No             | ✅ Yes (own)      |
+| Admin           | VIEW_TREATMENT_PLAN_ALL |  Yes            |  Yes            |
+| Staff           | VIEW_TREATMENT_PLAN_ALL |  Yes            |  Yes            |
+| Patient BN-1001 | VIEW_TREATMENT_PLAN_OWN |  Yes (own)      |  No             |
+| Patient BN-1002 | VIEW_TREATMENT_PLAN_OWN |  No             |  Yes (own)      |
 
 ---
 
@@ -515,11 +515,11 @@ Authorization: Bearer {admin_token}
 
 **Verify**:
 
-- ✅ Status: 200 OK
-- ✅ `totalElements` = 2
-- ✅ `content` array has 2 items
-- ✅ Each item has `planCode` field
-- ✅ Each item has `doctor.employeeCode` and `doctor.fullName`
+-  Status: 200 OK
+-  `totalElements` = 2
+-  `content` array has 2 items
+-  Each item has `planCode` field
+-  Each item has `doctor.employeeCode` and `doctor.fullName`
 
 ### Test 2: Get Plan Detail
 
@@ -534,12 +534,12 @@ Authorization: Bearer {admin_token}
 
 **Verify**:
 
-- ✅ Status: 200 OK
-- ✅ `planCode` = "PLAN-20251001-001"
-- ✅ `phases` array has items
-- ✅ Phase 1 `status` = "COMPLETED"
-- ✅ Phase 1 has 3 items, all `status` = "COMPLETED"
-- ✅ `progressSummary.completedPhases` >= 1
+-  Status: 200 OK
+-  `planCode` = "PLAN-20251001-001"
+-  `phases` array has items
+-  Phase 1 `status` = "COMPLETED"
+-  Phase 1 has 3 items, all `status` = "COMPLETED"
+-  `progressSummary.completedPhases` >= 1
 
 ### Test 3: Patient Access Control (Own Plan - Success)
 
@@ -554,8 +554,8 @@ Authorization: Bearer {patient_bn1001_token}
 
 **Verify**:
 
-- ✅ Status: 200 OK
-- ✅ Returns patient's own plans
+-  Status: 200 OK
+-  Returns patient's own plans
 
 ### Test 4: Patient Access Control (Other Patient - Fail)
 
@@ -570,7 +570,7 @@ Authorization: Bearer {patient_bn1001_token}
 
 **Verify**:
 
-- ❌ Status: 403 Forbidden
+-  Status: 403 Forbidden
 - Error: "Access denied - insufficient permissions"
 
 ### Test 5: Pagination
@@ -584,10 +584,10 @@ Authorization: Bearer {admin_token}
 
 **Verify**:
 
-- ✅ `size` = 2
-- ✅ `content` array has at most 2 items
-- ✅ `first` = true
-- ✅ `totalPages` calculated correctly
+-  `size` = 2
+-  `content` array has at most 2 items
+-  `first` = true
+-  `totalPages` calculated correctly
 
 ### Test 6: Sorting
 
@@ -600,7 +600,7 @@ Authorization: Bearer {admin_token}
 
 **Verify**:
 
-- ✅ Items sorted by creation date (newest first)
+-  Items sorted by creation date (newest first)
 
 ### Test 7: Patient Not Found
 
@@ -613,7 +613,7 @@ Authorization: Bearer {admin_token}
 
 **Verify**:
 
-- ❌ Status: 404 Not Found
+-  Status: 404 Not Found
 - Error: "Patient not found"
 
 ### Test 8: Plan Not Found
@@ -627,7 +627,7 @@ Authorization: Bearer {admin_token}
 
 **Verify**:
 
-- ❌ Status: 404 Not Found
+-  Status: 404 Not Found
 - Error: "Treatment plan not found"
 
 ---

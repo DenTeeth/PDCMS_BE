@@ -10,7 +10,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
- * 📦 Batch Detail DTO - API 6.2
+ *  Batch Detail DTO - API 6.2
  * Chi tiết của một lô hàng (Operational View - No Financial Data)
  */
 @Data

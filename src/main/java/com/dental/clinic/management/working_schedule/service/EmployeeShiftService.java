@@ -443,7 +443,7 @@ public class EmployeeShiftService {
             Long sourceRegistrationId,
             Integer createdBy) {
         
-        log.info("🔄 Creating shifts for employee {} from {} to {} (source: {})", 
+        log.info(" Creating shifts for employee {} from {} to {} (source: {})", 
                 employeeId, effectiveFrom, effectiveTo, source);
 
         // Validate employee exists
@@ -462,7 +462,7 @@ public class EmployeeShiftService {
         // Calculate working days based on effectiveFrom, effectiveTo, and daysOfWeek
         List<LocalDate> workingDays = calculateWorkingDays(effectiveFrom, effectiveTo, daysOfWeek);
         
-        log.info("📅 Calculated {} working days from date range", workingDays.size());
+        log.info(" Calculated {} working days from date range", workingDays.size());
 
         List<EmployeeShift> createdShifts = new java.util.ArrayList<>();
         int skippedCount = 0;
@@ -473,7 +473,7 @@ public class EmployeeShiftService {
                     employeeId, workDate, workShiftId);
             
             if (exists) {
-                log.debug("⏭️ Shift already exists for employee {} on {} - skipping", employeeId, workDate);
+                log.debug("⏭ Shift already exists for employee {} on {} - skipping", employeeId, workDate);
                 skippedCount++;
                 continue;
             }
@@ -497,10 +497,10 @@ public class EmployeeShiftService {
             EmployeeShift savedShift = employeeShiftRepository.save(newShift);
             createdShifts.add(savedShift);
             
-            log.debug("✅ Created shift {} for date {}", employeeShiftId, workDate);
+            log.debug(" Created shift {} for date {}", employeeShiftId, workDate);
         }
 
-        log.info("✅ Shift generation complete: {} created, {} skipped for employee {}", 
+        log.info(" Shift generation complete: {} created, {} skipped for employee {}", 
                 createdShifts.size(), skippedCount, employeeId);
         return createdShifts;
     }

@@ -1,15 +1,15 @@
 # Part-Time Registration API Test Guide (BE-307 V2)
 
-## 📋 Overview
+##  Overview
 This guide provides step-by-step instructions for testing the Part-Time Slot Registration System with **real data** from the database.
 
 **Version:** V2 (Quota-based system)  
 **Date:** October 29, 2025  
-**Status:** ✅ Production Ready - All tests passed
+**Status:**  Production Ready - All tests passed
 
 ---
 
-## 🔑 Test Accounts
+##  Test Accounts
 
 | Username | Password | Role | Employee ID | Employment Type | Purpose |
 |----------|----------|------|-------------|-----------------|---------|
@@ -21,7 +21,7 @@ This guide provides step-by-step instructions for testing the Part-Time Slot Reg
 
 ---
 
-## 🏗️ Pre-requisites
+## ️ Pre-requisites
 
 ### Work Shifts (Already in Database)
 ```sql
@@ -40,7 +40,7 @@ employee_id = 9  -> yta3 (Trang Võ Thị)
 
 ---
 
-## 📚 API Endpoints Summary
+##  API Endpoints Summary
 
 ### **Admin/Manager Endpoints**
 1. **POST** `/api/v1/work-slots` - Create slot
@@ -56,7 +56,7 @@ employee_id = 9  -> yta3 (Trang Võ Thị)
 
 ---
 
-## 🧪 Test Scenarios
+##  Test Scenarios
 
 ## **SECTION A: Admin Slot Management**
 
@@ -81,7 +81,7 @@ Content-Type: application/json
 }
 ```
 
-**📝 Action:** Copy the `token` value for subsequent requests.
+** Action:** Copy the `token` value for subsequent requests.
 
 ---
 
@@ -112,7 +112,7 @@ Content-Type: application/json
 }
 ```
 
-**✅ Verify:** Status code `201 CREATED`, `slotId` is returned
+** Verify:** Status code `201 CREATED`, `slotId` is returned
 
 ---
 
@@ -142,7 +142,7 @@ Content-Type: application/json
 }
 ```
 
-**✅ Verify:** Status code `201 CREATED`
+** Verify:** Status code `201 CREATED`
 
 ---
 
@@ -169,7 +169,7 @@ Content-Type: application/json
 }
 ```
 
-**✅ Verify:** Status code `409 CONFLICT`, error code `SLOT_ALREADY_EXISTS`
+** Verify:** Status code `409 CONFLICT`, error code `SLOT_ALREADY_EXISTS`
 
 ---
 
@@ -205,7 +205,7 @@ Authorization: Bearer <ADMIN_TOKEN>
 ]
 ```
 
-**✅ Verify:** Status code `200 OK`, shows all created slots with registration counts
+** Verify:** Status code `200 OK`, shows all created slots with registration counts
 
 ---
 
@@ -232,7 +232,7 @@ Content-Type: application/json
 }
 ```
 
-**📝 Action:** Copy the `token` value (YTA_TOKEN)
+** Action:** Copy the `token` value (YTA_TOKEN)
 
 ---
 
@@ -260,7 +260,7 @@ Authorization: Bearer <YTA_TOKEN>
 ]
 ```
 
-**✅ Verify:** Status code `200 OK`, shows only active slots with available quota
+** Verify:** Status code `200 OK`, shows only active slots with available quota
 
 ---
 
@@ -291,7 +291,7 @@ Content-Type: application/json
 }
 ```
 
-**✅ Verify:** 
+** Verify:** 
 - Status code `201 CREATED`
 - `effectiveTo` = `effectiveFrom` + 3 months
 - Registration ID follows pattern
@@ -320,7 +320,7 @@ Content-Type: application/json
 }
 ```
 
-**✅ Verify:** Status code `409 CONFLICT`, error code `REGISTRATION_CONFLICT`
+** Verify:** Status code `409 CONFLICT`, error code `REGISTRATION_CONFLICT`
 
 ---
 
@@ -347,7 +347,7 @@ Authorization: Bearer <YTA_TOKEN>
 ]
 ```
 
-**✅ Verify:** Status code `200 OK`, shows only own active registrations
+** Verify:** Status code `200 OK`, shows only own active registrations
 
 ---
 
@@ -362,7 +362,7 @@ Content-Type: application/json
 }
 ```
 
-**📝 Action:** Copy the token (YTA2_TOKEN)
+** Action:** Copy the token (YTA2_TOKEN)
 
 ---
 
@@ -393,7 +393,7 @@ Content-Type: application/json
 }
 ```
 
-**✅ Verify:** Status code `201 CREATED`, slot now full (1/1 registered)
+** Verify:** Status code `201 CREATED`, slot now full (1/1 registered)
 
 ---
 
@@ -419,7 +419,7 @@ Content-Type: application/json
 }
 ```
 
-**✅ Verify:** Status code `409 CONFLICT`, error code `SLOT_IS_FULL`
+** Verify:** Status code `409 CONFLICT`, error code `SLOT_IS_FULL`
 
 ---
 
@@ -441,7 +441,7 @@ Authorization: Bearer <YTA_TOKEN>
 ]
 ```
 
-**✅ Verify:** 
+** Verify:** 
 - Tuesday slot (slotId=2) no longer appears (full)
 - Monday slot shows `remaining: 9` (was 10, now 9)
 
@@ -460,7 +460,7 @@ Authorization: Bearer <YTA_TOKEN>
 Status: 204 No Content
 ```
 
-**✅ Verify:** Status code `204 NO CONTENT`, no response body
+** Verify:** Status code `204 NO CONTENT`, no response body
 
 ---
 
@@ -480,7 +480,7 @@ Authorization: Bearer <YTA_TOKEN>
 }
 ```
 
-**✅ Verify:** Status code `404 NOT FOUND` (registration is cancelled, appears as not found)
+** Verify:** Status code `404 NOT FOUND` (registration is cancelled, appears as not found)
 
 ---
 
@@ -500,7 +500,7 @@ Authorization: Bearer <YTA_TOKEN>
 }
 ```
 
-**✅ Verify:** Status code `404 NOT FOUND` (ownership check hides existence)
+** Verify:** Status code `404 NOT FOUND` (ownership check hides existence)
 
 ---
 
@@ -529,7 +529,7 @@ Authorization: Bearer <ADMIN_TOKEN>
 ]
 ```
 
-**✅ Verify:** 
+** Verify:** 
 - Status code `200 OK`
 - Shows **ALL** registrations (active + cancelled)
 - Cancelled registration has `isActive: false` and `effectiveTo` updated
@@ -562,7 +562,7 @@ Content-Type: application/json
 }
 ```
 
-**✅ Verify:** Status code `200 OK`, quota updated to 15
+** Verify:** Status code `200 OK`, quota updated to 15
 
 ---
 
@@ -593,7 +593,7 @@ Content-Type: application/json
 }
 ```
 
-**✅ Verify:** Status code `409 CONFLICT`, error code `QUOTA_VIOLATION`
+** Verify:** Status code `409 CONFLICT`, error code `QUOTA_VIOLATION`
 
 ---
 
@@ -623,7 +623,7 @@ Content-Type: application/json
 }
 ```
 
-**✅ Verify:** Status code `200 OK`, `effectiveTo` updated to new date
+** Verify:** Status code `200 OK`, `effectiveTo` updated to new date
 
 ---
 
@@ -642,7 +642,7 @@ Content-Type: application/json
 }
 ```
 
-**📝 Action:** Note the returned `slotId` (should be 3)
+** Action:** Note the returned `slotId` (should be 3)
 
 ---
 
@@ -672,7 +672,7 @@ Content-Type: application/json
 }
 ```
 
-**✅ Verify:** Both succeed with `201 CREATED`
+** Verify:** Both succeed with `201 CREATED`
 
 ---
 
@@ -711,7 +711,7 @@ Content-Type: application/json
 }
 ```
 
-**✅ Verify:** Status code `409 CONFLICT`, quota enforcement working
+** Verify:** Status code `409 CONFLICT`, quota enforcement working
 
 ---
 
@@ -741,11 +741,11 @@ Content-Type: application/json
 }
 ```
 
-**✅ Verify:** Now succeeds with `201 CREATED`
+** Verify:** Now succeeds with `201 CREATED`
 
 ---
 
-## 🎯 Permission Testing
+##  Permission Testing
 
 ### **Test 26: Employee Cannot Manage Slots (403 Forbidden)**
 ```http
@@ -770,7 +770,7 @@ Content-Type: application/json
 }
 ```
 
-**✅ Verify:** Status code `403 FORBIDDEN`
+** Verify:** Status code `403 FORBIDDEN`
 
 ---
 
@@ -795,20 +795,20 @@ Content-Type: application/json
 }
 ```
 
-**✅ Verify:** Status code `403 FORBIDDEN`
+** Verify:** Status code `403 FORBIDDEN`
 
 ---
 
-## 📊 Test Summary Checklist
+##  Test Summary Checklist
 
-### ✅ Admin Slot Management (Tests 1-5)
+###  Admin Slot Management (Tests 1-5)
 - [x] Create slot
 - [x] Create slot with small quota
 - [x] Duplicate slot prevention
 - [x] View all slots
 - [x] Registration count tracking
 
-### ✅ Employee Registration (Tests 6-14)
+###  Employee Registration (Tests 6-14)
 - [x] View available slots
 - [x] Claim slot
 - [x] Duplicate registration prevention
@@ -816,54 +816,54 @@ Content-Type: application/json
 - [x] Full slot prevention
 - [x] Available slots filter
 
-### ✅ Cancellation (Tests 15-17)
+###  Cancellation (Tests 15-17)
 - [x] Cancel own registration
 - [x] Re-cancel prevention
 - [x] Ownership check
 
-### ✅ Admin Management (Tests 18-21)
+###  Admin Management (Tests 18-21)
 - [x] View all employee registrations
 - [x] Filter by employee
 - [x] Update slot quota
 - [x] Quota violation prevention
 - [x] Update registration deadline
 
-### ✅ Concurrent Access (Tests 22-25)
+###  Concurrent Access (Tests 22-25)
 - [x] Multiple employees claim same slot
 - [x] Quota enforcement
 - [x] Dynamic quota adjustment
 
-### ✅ Permission Checks (Tests 26-27)
+###  Permission Checks (Tests 26-27)
 - [x] Employee cannot manage slots
 - [x] Employee cannot update deadlines
 
 ---
 
-## 🔍 Validation Points
+##  Validation Points
 
 ### Business Logic Validation
-- ✅ Pessimistic locking prevents race conditions
-- ✅ Quota strictly enforced (cannot over-book)
-- ✅ Employees can register multiple different slots
-- ✅ Employees cannot register same slot twice
-- ✅ Soft delete preserves history
-- ✅ Admin cannot reduce quota below registrations
+-  Pessimistic locking prevents race conditions
+-  Quota strictly enforced (cannot over-book)
+-  Employees can register multiple different slots
+-  Employees cannot register same slot twice
+-  Soft delete preserves history
+-  Admin cannot reduce quota below registrations
 
 ### Security Validation
-- ✅ Permission checks on all endpoints
-- ✅ Ownership checks prevent unauthorized cancellation
-- ✅ Admin/Manager have elevated permissions
-- ✅ Employees auto-filtered to own data
+-  Permission checks on all endpoints
+-  Ownership checks prevent unauthorized cancellation
+-  Admin/Manager have elevated permissions
+-  Employees auto-filtered to own data
 
 ### Data Integrity Validation
-- ✅ effectiveTo calculated correctly (+3 months)
-- ✅ Registration IDs follow pattern
-- ✅ Timestamps captured accurately
-- ✅ Status transitions correct (active → cancelled)
+-  effectiveTo calculated correctly (+3 months)
+-  Registration IDs follow pattern
+-  Timestamps captured accurately
+-  Status transitions correct (active → cancelled)
 
 ---
 
-## 🐛 Known Behaviors (Not Bugs)
+##  Known Behaviors (Not Bugs)
 
 1. **@Min(1) on quota**: Cannot create/update slot with quota=0
    - **Reason:** Business rule - use `isActive=false` to disable slots
@@ -876,7 +876,7 @@ Content-Type: application/json
 
 ---
 
-## 📈 Performance Considerations
+##  Performance Considerations
 
 - **Pessimistic Lock:** `FOR UPDATE` on slot during claim (prevents race conditions)
 - **Index Recommendation:** `part_time_slot_id` in `employee_shift_registrations`
@@ -884,7 +884,7 @@ Content-Type: application/json
 
 ---
 
-## 🎓 Notes for Developers
+##  Notes for Developers
 
 1. **Registration ID Format:** `REG{YYYYMMDD}_{employeeId}_{slotId}`
 2. **Effective Period:** Default +3 months from effectiveFrom
@@ -893,7 +893,7 @@ Content-Type: application/json
 
 ---
 
-## ✅ Test Completion Checklist
+##  Test Completion Checklist
 
 ```
 □ All 27 tests executed
@@ -909,4 +909,4 @@ Content-Type: application/json
 
 **Guide Version:** 1.0  
 **Last Updated:** October 29, 2025  
-**Test Status:** ✅ All tests passed in production environment
+**Test Status:**  All tests passed in production environment

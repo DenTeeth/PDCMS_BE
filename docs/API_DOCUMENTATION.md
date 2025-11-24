@@ -1,4 +1,4 @@
-# 🏥 DENTAL CLINIC MANAGEMENT SYSTEM - API DOCUMENTATION
+#  DENTAL CLINIC MANAGEMENT SYSTEM - API DOCUMENTATION
 
 **Version:** 1.0.0
 **Base URL:** `http://localhost:8080/api/v1`
@@ -6,7 +6,7 @@
 
 ---
 
-## 📚 Table of Contents
+##  Table of Contents
 
 1. [Authentication APIs](#authentication-apis)
 2. [Account Management APIs](#account-management-apis)
@@ -23,7 +23,7 @@
 
 ---
 
-## 🔐 Authentication APIs
+##  Authentication APIs
 
 Base path: `/api/v1/auth`
 
@@ -130,7 +130,7 @@ Invalidate access and refresh tokens, clear refresh token cookie.
 
 ---
 
-### 4. Verify Email ✨ NEW
+### 4. Verify Email  NEW
 
 **GET** `/auth/verify-email?token={token}`
 
@@ -158,7 +158,7 @@ Verify email address using token from email link. This changes account status fr
 
 ---
 
-### 5. Resend Verification Email ✨ NEW
+### 5. Resend Verification Email  NEW
 
 **POST** `/auth/resend-verification`
 
@@ -190,7 +190,7 @@ Resend verification email to user if they didn't receive it or token expired.
 
 ---
 
-### 6. Forgot Password ✨ NEW
+### 6. Forgot Password  NEW
 
 **POST** `/auth/forgot-password`
 
@@ -221,7 +221,7 @@ Initiate password reset process. Sends password reset email to user.
 
 ---
 
-### 7. Reset Password ✨ NEW
+### 7. Reset Password  NEW
 
 **POST** `/auth/reset-password`
 
@@ -289,7 +289,7 @@ Get all permissions of the currently authenticated user, grouped by module.
 
 ---
 
-## 👤 Account Management APIs
+##  Account Management APIs
 
 Base path: `/api/v1/accounts`
 
@@ -405,7 +405,7 @@ Change password for currently authenticated user.
 
 ---
 
-## 👥 Employee Management APIs
+##  Employee Management APIs
 
 Base path: `/api/v1/employees`
 
@@ -551,7 +551,7 @@ Base path: `/api/v1/employees`
 
 ---
 
-## 🏥 Patient Management APIs
+##  Patient Management APIs
 
 Base path: `/api/v1/patients`
 
@@ -565,7 +565,7 @@ Base path: `/api/v1/patients`
 
 ---
 
-### 2. Create Patient ✨ UPDATED
+### 2. Create Patient  UPDATED
 
 **POST** `/patients`
 
@@ -637,7 +637,7 @@ Base path: `/api/v1/patients`
 
 ---
 
-## 📅 Appointment Management APIs
+##  Appointment Management APIs
 
 Base path: `/api/v1/appointments`
 
@@ -658,15 +658,15 @@ Base path: `/api/v1/appointments`
 1. **Mode 1: Standalone Booking** - Use `serviceCodes` for walk-in patients
 2. **Mode 2: Treatment Plan Booking** - Use `patientPlanItemIds` for patients with treatment plans
 
-#### 🚨 XOR Validation Rule (CRITICAL)
+####  XOR Validation Rule (CRITICAL)
 
 You **MUST** provide **EITHER** `serviceCodes` **OR** `patientPlanItemIds`, **NOT BOTH** and **NOT NEITHER**.
 
 **Valid Options:**
-- ✅ Provide only `serviceCodes` → Standalone booking
-- ✅ Provide only `patientPlanItemIds` → Treatment plan booking
-- ❌ Provide both → 400 Bad Request
-- ❌ Provide neither → 400 Bad Request
+-  Provide only `serviceCodes` → Standalone booking
+-  Provide only `patientPlanItemIds` → Treatment plan booking
+-  Provide both → 400 Bad Request
+-  Provide neither → 400 Bad Request
 
 #### Request Body (Mode 1: Standalone Booking)
 
@@ -750,7 +750,7 @@ You **MUST** provide **EITHER** `serviceCodes` **OR** `patientPlanItemIds`, **NO
 
 ---
 
-## 🦷 Treatment Management APIs
+##  Treatment Management APIs
 
 Base path: `/api/v1/treatments`
 
@@ -808,7 +808,7 @@ Base path: `/api/v1/work-shifts`
 
 ---
 
-## 📝 Shift Registration & Renewal APIs
+##  Shift Registration & Renewal APIs
 
 Base path: `/api/v1/shift-registrations`
 
@@ -826,7 +826,7 @@ Base path: `/api/v1/shift-registrations`
 
 ---
 
-## 🌴 Time Off & Overtime APIs
+##  Time Off & Overtime APIs
 
 Base path: `/api/v1/time-off` and `/api/v1/overtime`
 
@@ -850,7 +850,7 @@ Base path: `/api/v1/time-off` and `/api/v1/overtime`
 
 ---
 
-## 🔐 Role & Permission Management APIs
+##  Role & Permission Management APIs
 
 Base path: `/api/v1/roles` and `/api/v1/permissions`
 
@@ -892,7 +892,7 @@ Base path: `/api/v1/roles` and `/api/v1/permissions`
 
 ---
 
-## ⚠️ Error Handling
+## ️ Error Handling
 
 All error responses follow this format:
 
@@ -921,7 +921,7 @@ All error responses follow this format:
 
 ---
 
-## 📊 Status Codes
+##  Status Codes
 
 | Status Code                 | Description                           |
 | --------------------------- | ------------------------------------- |
@@ -936,7 +936,7 @@ All error responses follow this format:
 
 ---
 
-## 📧 Email Verification Flow
+##  Email Verification Flow
 
 ### For NEW Accounts (Created via API):
 
@@ -969,7 +969,7 @@ All error responses follow this format:
 
 ---
 
-## 🔄 Password Reset Flow
+##  Password Reset Flow
 
 1. **Forgot Password:**
 
@@ -987,7 +987,7 @@ All error responses follow this format:
 
 ---
 
-## 📝 Notes
+##  Notes
 
 1. **Authentication:** Most endpoints require `Authorization: Bearer <token>` header
 2. **Refresh Token:** Automatically stored in HTTP-only cookie
@@ -998,7 +998,7 @@ All error responses follow this format:
 
 ---
 
-## 🚀 Getting Started
+##  Getting Started
 
 ### 1. Environment Variables:
 

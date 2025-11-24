@@ -55,7 +55,7 @@ public class TreatmentPlanReorderService {
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public ReorderItemsResponse reorderPhaseItems(Long phaseId, ReorderItemsRequest request) {
 
-        log.info("🔄 Starting reorder for phase: {} with {} items", phaseId, request.getItemIds().size());
+        log.info(" Starting reorder for phase: {} with {} items", phaseId, request.getItemIds().size());
 
         // 1. Find phase with plan relationship
         PatientPlanPhase phase = phaseRepository.findById(phaseId)
@@ -75,7 +75,7 @@ public class TreatmentPlanReorderService {
         // 4. GUARD: Should not reorder in APPROVED plans (recommendation)
         // Allow with warning log, but strict mode would block here
         if (plan.getApprovalStatus() == ApprovalStatus.APPROVED) {
-            log.warn("⚠️ Reordering items in APPROVED plan {}. Consider reverting to DRAFT first.",
+            log.warn(" Reordering items in APPROVED plan {}. Consider reverting to DRAFT first.",
                     plan.getPlanCode());
             // Optionally throw exception for strict mode:
             // throw new ConflictException("Lộ trình đã duyệt. Vui lòng chuyển về DRAFT để chỉnh sửa.");
@@ -129,7 +129,7 @@ public class TreatmentPlanReorderService {
         // 10. Batch save all items (even if some unchanged, for consistency)
         itemRepository.saveAll(reorderedItems);
 
-        log.info("✅ Reordered {} items in phase {}", reorderedItems.size(), phaseId);
+        log.info(" Reordered {} items in phase {}", reorderedItems.size(), phaseId);
 
         // 11. Build response
         List<ReorderItemsResponse.ReorderedItem> responseItems = reorderedItems.stream()

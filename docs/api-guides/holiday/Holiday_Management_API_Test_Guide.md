@@ -1,19 +1,19 @@
 # Holiday Management API Test Guide
 
-## ⚡ Latest Updates (November 2, 2025)
+##  Latest Updates (November 2, 2025)
 
 ### **Custom Exception Classes Implemented**
 This guide now includes testing for **3 new custom exception classes** that provide specific error codes and helpful debugging information:
-- ✅ `DuplicateHolidayDefinitionException` → `DUPLICATE_HOLIDAY_DEFINITION` (409)
-- ✅ `DuplicateHolidayDateException` → `DUPLICATE_HOLIDAY_DATE` (409)
-- ✅ `InvalidDateRangeException` → `INVALID_DATE_RANGE` (400)
+-  `DuplicateHolidayDefinitionException` → `DUPLICATE_HOLIDAY_DEFINITION` (409)
+-  `DuplicateHolidayDateException` → `DUPLICATE_HOLIDAY_DATE` (409)
+-  `InvalidDateRangeException` → `INVALID_DATE_RANGE` (400)
 
 ### **Enhanced Global Exception Handlers**
 6 exception handlers were enhanced with:
-- ✅ **Specific error codes** (not generic `error.bad.request`)
-- ✅ **Vietnamese error messages** for user-facing errors
-- ✅ **Helpful data fields** (missingFields, expectedFormat, requiredPermission)
-- ✅ **Consistent JSON structure** across all error responses
+-  **Specific error codes** (not generic `error.bad.request`)
+-  **Vietnamese error messages** for user-facing errors
+-  **Helpful data fields** (missingFields, expectedFormat, requiredPermission)
+-  **Consistent JSON structure** across all error responses
 
 ### **What Changed**
 - Error Code: `error.bad.request` → `DUPLICATE_HOLIDAY_DEFINITION`, `VALIDATION_ERROR`, etc.
@@ -24,7 +24,7 @@ This guide now includes testing for **3 new custom exception classes** that prov
 - Permission errors show required permission
 
 ### **Frontend Action Required**
-⚠️ Update error handling code to recognize new error codes and parse the `data` object for helpful fields.
+️ Update error handling code to recognize new error codes and parse the `data` object for helpful fields.
 
 ---
 
@@ -60,7 +60,7 @@ $response = Invoke-RestMethod -Uri "http://localhost:8080/api/v1/auth/login" `
     -Body $loginBody
 
 $token = $response.token
-Write-Host "✅ Authenticated successfully"
+Write-Host " Authenticated successfully"
 ```
 
 **Expected Response:**
@@ -95,10 +95,10 @@ The Holiday Management API uses **custom exception classes** with specific error
 ### **Enhanced Error Response Format**
 
 All error responses now include:
-- ✅ **Specific error codes** (not generic `error.bad.request`)
-- ✅ **Vietnamese error messages** for user-facing errors
-- ✅ **Helpful data fields** for debugging (missing fields, expected formats, required permissions)
-- ✅ **Consistent JSON structure**
+-  **Specific error codes** (not generic `error.bad.request`)
+-  **Vietnamese error messages** for user-facing errors
+-  **Helpful data fields** for debugging (missing fields, expected formats, required permissions)
+-  **Consistent JSON structure**
 
 **Example Enhanced Error Response:**
 ```json
@@ -114,27 +114,27 @@ All error responses now include:
 
 ### **Things to Look Out For When Testing**
 
-⚠️ **Error Code Changes:**
+️ **Error Code Changes:**
 - Old: Generic `error.bad.request`, `error.validation`
 - New: Specific codes like `DUPLICATE_HOLIDAY_DEFINITION`, `VALIDATION_ERROR`
 - **Action:** Update frontend error handling to match new error codes
 
-⚠️ **Response Data Structure:**
+️ **Response Data Structure:**
 - Error responses now include `data` object with helpful debugging info
 - Example: `missingFields` array shows exactly which fields are missing
 - **Action:** Parse `data` object for detailed error information
 
-⚠️ **Date Format Validation:**
+️ **Date Format Validation:**
 - Invalid dates now return `INVALID_DATE_FORMAT` with `expectedFormat` and `example`
 - Example: `{"parameter": "holidayDate", "expectedFormat": "yyyy-MM-dd", "example": "2025-01-28"}`
 - **Action:** Show format hints to users
 
-⚠️ **Permission Errors:**
+️ **Permission Errors:**
 - Now includes `requiredPermission` in response data
 - Example: `{"requiredPermission": "CREATE_HOLIDAY"}`
 - **Action:** Display which permission is needed
 
-⚠️ **Date Range Validation:**
+️ **Date Range Validation:**
 - `startDate > endDate` now throws `INVALID_DATE_RANGE` with both dates in response
 - **Action:** Validate date ranges on frontend before submission
 
@@ -281,7 +281,7 @@ Invoke-RestMethod -Uri "http://localhost:8080/api/v1/holiday-definitions/COMPANY
     -Method DELETE `
     -Headers @{"Authorization"="Bearer $token"}
 
-Write-Host "✅ Holiday definition and all dates deleted"
+Write-Host " Holiday definition and all dates deleted"
 ```
 
 **Expected Response:** `204 No Content`
@@ -337,7 +337,7 @@ foreach ($date in $dates) {
         -Method POST `
         -Headers @{"Authorization"="Bearer $token"; "Content-Type"="application/json"} `
         -Body $body
-    Write-Host "✅ Added $($date.holidayDate)"
+    Write-Host " Added $($date.holidayDate)"
 }
 ```
 
@@ -441,7 +441,7 @@ Invoke-RestMethod -Uri "http://localhost:8080/api/v1/holiday-dates/2026-01-29/de
     -Method DELETE `
     -Headers @{"Authorization"="Bearer $token"}
 
-Write-Host "✅ Holiday date deleted"
+Write-Host " Holiday date deleted"
 ```
 
 **Expected Response:** `204 No Content`
@@ -512,14 +512,14 @@ try {
         -Headers @{"Authorization"="Bearer $token"; "Content-Type"="application/json"} `
         -Body $body
     
-    Write-Host "✅ Shift created successfully: $($response.employee_shift_id)"
+    Write-Host " Shift created successfully: $($response.employee_shift_id)"
     $response | ConvertTo-Json -Depth 3
 } catch {
-    Write-Host "❌ Failed: $($_.Exception.Message)"
+    Write-Host " Failed: $($_.Exception.Message)"
 }
 ```
 
-**Expected Result:** ✅ Shift created with ID (e.g., `EMS251102001`)
+**Expected Result:**  Shift created with ID (e.g., `EMS251102001`)
 
 #### Test 2: Create Shift on Holiday (Should Fail with 409)
 
@@ -535,13 +535,13 @@ try {
         -Headers @{"Authorization"="Bearer $token"; "Content-Type"="application/json"} `
         -Body $body
     
-    Write-Host "❌ ERROR: Shift should have been blocked!" -ForegroundColor Red
+    Write-Host " ERROR: Shift should have been blocked!" -ForegroundColor Red
 } catch {
     $streamReader = [System.IO.StreamReader]::new($_.Exception.Response.GetResponseStream())
     $errorBody = $streamReader.ReadToEnd()
     $error = $errorBody | ConvertFrom-Json
     
-    Write-Host "✅ Shift blocked as expected:" -ForegroundColor Green
+    Write-Host " Shift blocked as expected:" -ForegroundColor Green
     Write-Host "   Status Code: $($error.statusCode)"
     Write-Host "   Error Code: $($error.error)"
     Write-Host "   Message: $($error.message)"
@@ -550,7 +550,7 @@ try {
 }
 ```
 
-**Expected Result:** ❌ `409 HOLIDAY_CONFLICT`
+**Expected Result:**  `409 HOLIDAY_CONFLICT`
 ```json
 {
     "statusCode": 409,
@@ -560,7 +560,7 @@ try {
 }
 ```
 
-**Test Verification:** ✅ **Tested successfully on November 2, 2025**
+**Test Verification:**  **Tested successfully on November 2, 2025**
 - Dates tested: 2025-11-03, 2025-11-05, 2025-11-07
 - All returned `409 HOLIDAY_CONFLICT`
 - Error message format verified
@@ -580,7 +580,7 @@ try {
         -Headers @{"Authorization"="Bearer $token"; "Content-Type"="application/json"} `
         -Body $body
     
-    Write-Host "✅ Shift created successfully on non-holiday:" -ForegroundColor Green
+    Write-Host " Shift created successfully on non-holiday:" -ForegroundColor Green
     Write-Host "   Shift ID: $($response.employee_shift_id)"
     Write-Host "   Employee: $($response.employee.full_name)"
     Write-Host "   Date: $($response.work_date)"
@@ -588,11 +588,11 @@ try {
     
     $response | ConvertTo-Json -Depth 3
 } catch {
-    Write-Host "❌ Unexpected failure - date should NOT be blocked!" -ForegroundColor Red
+    Write-Host " Unexpected failure - date should NOT be blocked!" -ForegroundColor Red
 }
 ```
 
-**Expected Result:** ✅ `201 Created`
+**Expected Result:**  `201 Created`
 ```json
 {
     "employee_shift_id": "EMS251102061",
@@ -615,7 +615,7 @@ try {
 }
 ```
 
-**Test Verification:** ✅ **Tested successfully on November 2, 2025**
+**Test Verification:**  **Tested successfully on November 2, 2025**
 - Date tested: 2025-11-04 (Tuesday - not a holiday)
 - Shift ID created: `EMS251102061`
 - Employee ID 3 (Lan Trần Thị)
@@ -643,19 +643,19 @@ try {
         -Headers @{"Authorization"="Bearer $token"; "Content-Type"="application/json"} `
         -Body $body
     
-    Write-Host "✅ Time-off request created: $($response.requestId)" -ForegroundColor Green
+    Write-Host " Time-off request created: $($response.requestId)" -ForegroundColor Green
     Write-Host "   Employee ID: $($response.employeeId)"
     Write-Host "   Period: $($response.startDate) to $($response.endDate)"
-    Write-Host "   Duration includes Tết holidays (Jan 29-31) ✓"
+    Write-Host "   Duration includes Tết holidays (Jan 29-31) "
     Write-Host "   Status: $($response.status)"
     
     $response | ConvertTo-Json -Depth 3
 } catch {
-    Write-Host "❌ Failed: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host " Failed: $($_.Exception.Message)" -ForegroundColor Red
 }
 ```
 
-**Expected Result:** ✅ `201 Created`
+**Expected Result:**  `201 Created`
 ```json
 {
     "requestId": "TOR251101001",
@@ -678,7 +678,7 @@ try {
 }
 ```
 
-**Test Verification:** ✅ **Tested successfully on November 1, 2025**
+**Test Verification:**  **Tested successfully on November 1, 2025**
 - Request ID: `TOR251101001`
 - Employee: Minh Nguyễn Văn (ID: 2)
 - Period: Jan 28-31, 2025 (includes 3 Tết holidays)
@@ -702,7 +702,7 @@ $response = Invoke-RestMethod -Uri "http://localhost:8080/api/v1/time-off-reques
     -Headers @{"Authorization"="Bearer $token"; "Content-Type"="application/json"} `
     -Body $body
 
-Write-Host "✅ Time-off request created: $($response.requestId)"
+Write-Host " Time-off request created: $($response.requestId)"
 $response | ConvertTo-Json -Depth 3
 ```
 
@@ -732,15 +732,15 @@ if ($shifts.content.Count -gt 0) {
             -Headers @{"Authorization"="Bearer $token"; "Content-Type"="application/json"} `
             -Body $body
         
-        Write-Host "✅ Overtime request created: $($response.overtimeRequestId)"
+        Write-Host " Overtime request created: $($response.overtimeRequestId)"
         $response | ConvertTo-Json -Depth 3
     } catch {
         $streamReader = [System.IO.StreamReader]::new($_.Exception.Response.GetResponseStream())
         $errorBody = $streamReader.ReadToEnd()
-        Write-Host "❌ Failed: $errorBody"
+        Write-Host " Failed: $errorBody"
     }
 } else {
-    Write-Host "⚠️  No completed shifts found for testing"
+    Write-Host "️  No completed shifts found for testing"
 }
 ```
 
@@ -781,7 +781,7 @@ try {
         -Headers @{"Authorization"="Bearer $token"; "Content-Type"="application/json"} `
         -Body $shiftBody
     
-    Write-Host "✅ Shift created for Dec 24: $($shift.employee_shift_id)"
+    Write-Host " Shift created for Dec 24: $($shift.employee_shift_id)"
     
     # Step 2: Mark shift as completed (requires admin permission)
     # Note: In real scenario, this would be done through shift completion workflow
@@ -790,7 +790,7 @@ try {
     Write-Host "   In production, use shift completion API to mark as completed first"
     
 } catch {
-    Write-Host "❌ Failed to create shift: $($_.Exception.Message)"
+    Write-Host " Failed to create shift: $($_.Exception.Message)"
 }
 ```
 
@@ -810,7 +810,7 @@ $definition = Invoke-RestMethod -Uri "http://localhost:8080/api/v1/holiday-defin
     -Headers @{"Authorization"="Bearer $token"; "Content-Type"="application/json"} `
     -Body $defBody
 
-Write-Host "✅ Created holiday definition: MAINTENANCE_WEEK"
+Write-Host " Created holiday definition: MAINTENANCE_WEEK"
 ```
 
 **Expected Response:**
@@ -848,15 +848,15 @@ for($i=0; $i -lt $dates.Length; $i++) {
         -Method POST `
         -Headers @{"Authorization"="Bearer $token"; "Content-Type"="application/json"} `
         -Body $body | Out-Null
-    Write-Host "✅ Added holiday: $($dates[$i]) - $($descriptions[$i])"
+    Write-Host " Added holiday: $($dates[$i]) - $($descriptions[$i])"
 }
 ```
 
 **Output:**
 ```
-✅ Added holiday: 2025-11-03 - Monday maintenance
-✅ Added holiday: 2025-11-05 - Wednesday maintenance
-✅ Added holiday: 2025-11-07 - Friday maintenance
+ Added holiday: 2025-11-03 - Monday maintenance
+ Added holiday: 2025-11-05 - Wednesday maintenance
+ Added holiday: 2025-11-07 - Friday maintenance
 ```
 
 #### Step 3: Verify Holiday Dates Created
@@ -889,11 +889,11 @@ try {
         -Method POST `
         -Headers @{"Authorization"="Bearer $token"; "Content-Type"="application/json"} `
         -Body $body
-    Write-Host "❌ ERROR: Shift should have been blocked!"
+    Write-Host " ERROR: Shift should have been blocked!"
 } catch {
     $streamReader = [System.IO.StreamReader]::new($_.Exception.Response.GetResponseStream())
     $errBody = $streamReader.ReadToEnd()
-    Write-Host "✅ BLOCKED on Monday (2025-11-03):"
+    Write-Host " BLOCKED on Monday (2025-11-03):"
     $errBody | ConvertFrom-Json | ConvertTo-Json
 }
 ```
@@ -916,15 +916,15 @@ try {
         -Method POST `
         -Headers @{"Authorization"="Bearer $token"; "Content-Type"="application/json"} `
         -Body $body
-    Write-Host "✅ SUCCESS on Tuesday (2025-11-04): Shift $($response.employee_shift_id) created"
+    Write-Host " SUCCESS on Tuesday (2025-11-04): Shift $($response.employee_shift_id) created"
 } catch {
-    Write-Host "❌ Tuesday should NOT be blocked!"
+    Write-Host " Tuesday should NOT be blocked!"
 }
 ```
 
 **Expected Result (201 Created):**
 ```
-✅ SUCCESS on Tuesday (2025-11-04): Shift EMS251102061 created
+ SUCCESS on Tuesday (2025-11-04): Shift EMS251102061 created
 ```
 
 ```powershell
@@ -937,7 +937,7 @@ try {
         -Body $body
 } catch {
     $streamReader = [System.IO.StreamReader]::new($_.Exception.Response.GetResponseStream())
-    Write-Host "✅ BLOCKED on Wednesday (2025-11-05):"
+    Write-Host " BLOCKED on Wednesday (2025-11-05):"
     $streamReader.ReadToEnd() | ConvertFrom-Json | ConvertTo-Json
 }
 ```
@@ -1032,26 +1032,26 @@ Write-Host "`n=== CLEANUP ===" -ForegroundColor Cyan
 Invoke-RestMethod -Uri "http://localhost:8080/api/v1/holiday-definitions/MAINTENANCE_WEEK" `
     -Method DELETE `
     -Headers @{"Authorization"="Bearer $token"}
-Write-Host "✅ Deleted MAINTENANCE_WEEK definition and all 3 holiday dates"
+Write-Host " Deleted MAINTENANCE_WEEK definition and all 3 holiday dates"
 
 # Summary
 Write-Host "`n=== TEST SUMMARY ===" -ForegroundColor Cyan
 Write-Host "Holiday Blocking:" -ForegroundColor Yellow
-Write-Host "  ✅ Monday (2025-11-03): BLOCKED (409 HOLIDAY_CONFLICT)"
-Write-Host "  ✅ Tuesday (2025-11-04): ALLOWED (Shift created)"
-Write-Host "  ✅ Wednesday (2025-11-05): BLOCKED (409 HOLIDAY_CONFLICT)"
-Write-Host "  ✅ Friday (2025-11-07): BLOCKED (409 HOLIDAY_CONFLICT)"
+Write-Host "   Monday (2025-11-03): BLOCKED (409 HOLIDAY_CONFLICT)"
+Write-Host "   Tuesday (2025-11-04): ALLOWED (Shift created)"
+Write-Host "   Wednesday (2025-11-05): BLOCKED (409 HOLIDAY_CONFLICT)"
+Write-Host "   Friday (2025-11-07): BLOCKED (409 HOLIDAY_CONFLICT)"
 
 Write-Host "`nBatch Job Simulation:" -ForegroundColor Yellow
-Write-Host "  ✅ Found 3 holidays via date range query"
-Write-Host "  ✅ Batch jobs would skip: Mon, Wed, Fri, Sat, Sun"
-Write-Host "  ✅ Batch jobs would create shifts: Tue, Thu only"
+Write-Host "   Found 3 holidays via date range query"
+Write-Host "   Batch jobs would skip: Mon, Wed, Fri, Sat, Sun"
+Write-Host "   Batch jobs would create shifts: Tue, Thu only"
 
-Write-Host "`n✅ CONCLUSION: Holiday blocking works correctly for both manual and batch operations!"
+Write-Host "`n CONCLUSION: Holiday blocking works correctly for both manual and batch operations!"
 ```
 
 **Test Results Verified on:** November 2, 2025  
-**Status:** ✅ All tests passed successfully
+**Status:**  All tests passed successfully
 
 ---
 
@@ -1075,20 +1075,20 @@ try {
         -Method POST `
         -Headers @{"Authorization"="Bearer $token"; "Content-Type"="application/json"} `
         -Body $body
-    Write-Host "✅ First creation succeeded"
+    Write-Host " First creation succeeded"
     
     # Second creation - should fail
     Invoke-RestMethod -Uri "http://localhost:8080/api/v1/holiday-dates" `
         -Method POST `
         -Headers @{"Authorization"="Bearer $token"; "Content-Type"="application/json"} `
         -Body $body
-    Write-Host "❌ ERROR: Duplicate should have been blocked!"
+    Write-Host " ERROR: Duplicate should have been blocked!"
 } catch {
     $streamReader = [System.IO.StreamReader]::new($_.Exception.Response.GetResponseStream())
     $errorBody = $streamReader.ReadToEnd()
     $error = $errorBody | ConvertFrom-Json
     
-    Write-Host "✅ Duplicate correctly rejected:" -ForegroundColor Green
+    Write-Host " Duplicate correctly rejected:" -ForegroundColor Green
     Write-Host "   Error Code: $($error.errorCode)"
     Write-Host "   Message: $($error.message)"
     Write-Host "   Holiday Date: $($error.data.holidayDate)"
@@ -1127,13 +1127,13 @@ try {
         -Method POST `
         -Headers @{"Authorization"="Bearer $token"; "Content-Type"="application/json"} `
         -Body $body
-    Write-Host "❌ ERROR: Invalid definition should be rejected!"
+    Write-Host " ERROR: Invalid definition should be rejected!"
 } catch {
     $streamReader = [System.IO.StreamReader]::new($_.Exception.Response.GetResponseStream())
     $errorBody = $streamReader.ReadToEnd()
     $error = $errorBody | ConvertFrom-Json
     
-    Write-Host "✅ Invalid definition correctly rejected:" -ForegroundColor Green
+    Write-Host " Invalid definition correctly rejected:" -ForegroundColor Green
     Write-Host "   Error Code: $($error.errorCode)"
     Write-Host "   Message: $($error.message)"
     
@@ -1169,13 +1169,13 @@ try {
         -Method POST `
         -Headers @{"Authorization"="Bearer $token"; "Content-Type"="application/json"} `
         -Body $body
-    Write-Host "❌ ERROR: Invalid date should be rejected!"
+    Write-Host " ERROR: Invalid date should be rejected!"
 } catch {
     $streamReader = [System.IO.StreamReader]::new($_.Exception.Response.GetResponseStream())
     $errorBody = $streamReader.ReadToEnd()
     $error = $errorBody | ConvertFrom-Json
     
-    Write-Host "✅ Invalid date correctly rejected:" -ForegroundColor Green
+    Write-Host " Invalid date correctly rejected:" -ForegroundColor Green
     Write-Host "   Error Code: $($error.errorCode)"
     Write-Host "   Message: $($error.message)"
     Write-Host "   Parameter: $($error.data.parameter)"
@@ -1215,13 +1215,13 @@ try {
         -Method POST `
         -Headers @{"Authorization"="Bearer $token"; "Content-Type"="application/json"} `
         -Body $body
-    Write-Host "❌ ERROR: Missing fields should be rejected!"
+    Write-Host " ERROR: Missing fields should be rejected!"
 } catch {
     $streamReader = [System.IO.StreamReader]::new($_.Exception.Response.GetResponseStream())
     $errorBody = $streamReader.ReadToEnd()
     $error = $errorBody | ConvertFrom-Json
     
-    Write-Host "✅ Validation correctly rejected missing fields:" -ForegroundColor Green
+    Write-Host " Validation correctly rejected missing fields:" -ForegroundColor Green
     Write-Host "   Error Code: $($error.errorCode)"
     Write-Host "   Message: $($error.message)"
     Write-Host "   Missing Fields: $($error.data.missingFields -join ', ')"
@@ -1258,13 +1258,13 @@ try {
         -Method POST `
         -Headers @{"Authorization"="Bearer $token"; "Content-Type"="application/json"} `
         -Body $body
-    Write-Host "❌ ERROR: Duplicate definition should be blocked!"
+    Write-Host " ERROR: Duplicate definition should be blocked!"
 } catch {
     $streamReader = [System.IO.StreamReader]::new($_.Exception.Response.GetResponseStream())
     $errorBody = $streamReader.ReadToEnd()
     $error = $errorBody | ConvertFrom-Json
     
-    Write-Host "✅ Duplicate definition correctly rejected:" -ForegroundColor Green
+    Write-Host " Duplicate definition correctly rejected:" -ForegroundColor Green
     Write-Host "   Error Code: $($error.errorCode)"
     Write-Host "   Message: $($error.message)"
     Write-Host "   Definition ID: $($error.data.definitionId)"
@@ -1297,13 +1297,13 @@ try {
     Invoke-RestMethod -Uri "http://localhost:8080/api/v1/holiday-dates/by-range?startDate=$startDate&endDate=$endDate" `
         -Method GET `
         -Headers @{"Authorization"="Bearer $token"}
-    Write-Host "❌ ERROR: Invalid date range should be rejected!"
+    Write-Host " ERROR: Invalid date range should be rejected!"
 } catch {
     $streamReader = [System.IO.StreamReader]::new($_.Exception.Response.GetResponseStream())
     $errorBody = $streamReader.ReadToEnd()
     $error = $errorBody | ConvertFrom-Json
     
-    Write-Host "✅ Invalid date range correctly rejected:" -ForegroundColor Green
+    Write-Host " Invalid date range correctly rejected:" -ForegroundColor Green
     Write-Host "   Error Code: $($error.errorCode)"
     Write-Host "   Message: $($error.message)"
     Write-Host "   Start Date: $($error.data.startDate)"
@@ -1349,9 +1349,9 @@ try {
         Invoke-RestMethod -Uri "http://localhost:8080/api/v1/holiday-definitions" `
             -Method GET `
             -Headers @{"Authorization"="Bearer $empToken"}
-        Write-Host "✅ Employee can VIEW holidays"
+        Write-Host " Employee can VIEW holidays"
     } catch {
-        Write-Host "❌ Employee should be able to VIEW holidays"
+        Write-Host " Employee should be able to VIEW holidays"
     }
     
     # Test 2: CREATE should fail with detailed permission info
@@ -1366,13 +1366,13 @@ try {
             -Method POST `
             -Headers @{"Authorization"="Bearer $empToken"; "Content-Type"="application/json"} `
             -Body $body
-        Write-Host "❌ Employee should NOT be able to CREATE holidays"
+        Write-Host " Employee should NOT be able to CREATE holidays"
     } catch {
         $streamReader = [System.IO.StreamReader]::new($_.Exception.Response.GetResponseStream())
         $errorBody = $streamReader.ReadToEnd()
         $error = $errorBody | ConvertFrom-Json
         
-        Write-Host "✅ Employee correctly denied CREATE permission:" -ForegroundColor Green
+        Write-Host " Employee correctly denied CREATE permission:" -ForegroundColor Green
         Write-Host "   Error Code: $($error.errorCode)"
         Write-Host "   Message: $($error.message)"
         Write-Host "   Required Permission: $($error.data.requiredPermission)"
@@ -1381,7 +1381,7 @@ try {
     }
     
 } catch {
-    Write-Host "⚠️  Could not test employee permissions - adjust credentials"
+    Write-Host "️  Could not test employee permissions - adjust credentials"
 }
 ```
 
@@ -1418,29 +1418,29 @@ $loginBody = '{"username":"admin","password":"123456"}'
 $response = Invoke-RestMethod -Uri "http://localhost:8080/api/v1/auth/login" `
     -Method POST -ContentType "application/json" -Body $loginBody
 $token = $response.token
-Write-Host "   ✅ Authenticated as $($response.username)" -ForegroundColor Green
+Write-Host "    Authenticated as $($response.username)" -ForegroundColor Green
 Write-Host ""
 
 # 2. View existing holidays
 Write-Host "2. Viewing existing holidays..."
 $definitions = Invoke-RestMethod -Uri "http://localhost:8080/api/v1/holiday-definitions" `
     -Method GET -Headers @{"Authorization"="Bearer $token"}
-Write-Host "   ✅ Found $($definitions.Count) holiday definitions" -ForegroundColor Green
+Write-Host "    Found $($definitions.Count) holiday definitions" -ForegroundColor Green
 
 $dates = Invoke-RestMethod -Uri "http://localhost:8080/api/v1/holiday-dates" `
     -Method GET -Headers @{"Authorization"="Bearer $token"}
-Write-Host "   ✅ Found $($dates.Count) holiday dates" -ForegroundColor Green
+Write-Host "    Found $($dates.Count) holiday dates" -ForegroundColor Green
 Write-Host ""
 
 # 3. Check specific holidays
 Write-Host "3. Testing holiday checks..."
 $tetCheck = Invoke-RestMethod -Uri "http://localhost:8080/api/v1/holiday-dates/check/2025-01-30" `
     -Method GET -Headers @{"Authorization"="Bearer $token"}
-Write-Host "   ✅ Jan 30, 2025 (Tết): $($tetCheck.isHoliday)" -ForegroundColor Green
+Write-Host "    Jan 30, 2025 (Tết): $($tetCheck.isHoliday)" -ForegroundColor Green
 
 $regularCheck = Invoke-RestMethod -Uri "http://localhost:8080/api/v1/holiday-dates/check/2025-11-05" `
     -Method GET -Headers @{"Authorization"="Bearer $token"}
-Write-Host "   ✅ Nov 05, 2025 (Regular): $($regularCheck.isHoliday)" -ForegroundColor Green
+Write-Host "    Nov 05, 2025 (Regular): $($regularCheck.isHoliday)" -ForegroundColor Green
 Write-Host ""
 
 # 4. Test shift blocking
@@ -1460,9 +1460,9 @@ try {
     Invoke-RestMethod -Uri "http://localhost:8080/api/v1/shifts" `
         -Method POST -Headers @{"Authorization"="Bearer $token";"Content-Type"="application/json"} `
         -Body $shiftBody
-    Write-Host "   ❌ ERROR: Shift should have been blocked!" -ForegroundColor Red
+    Write-Host "    ERROR: Shift should have been blocked!" -ForegroundColor Red
 } catch {
-    Write-Host "   ✅ Shift correctly blocked on holiday (409 HOLIDAY_CONFLICT)" -ForegroundColor Green
+    Write-Host "    Shift correctly blocked on holiday (409 HOLIDAY_CONFLICT)" -ForegroundColor Green
 }
 
 Invoke-RestMethod -Uri "http://localhost:8080/api/v1/holiday-definitions/TEST_BLOCK" `
@@ -1473,11 +1473,11 @@ Write-Host ""
 Write-Host "5. Testing date range query..."
 $januaryHolidays = Invoke-RestMethod -Uri "http://localhost:8080/api/v1/holiday-dates/by-range?startDate=2025-01-01&endDate=2025-01-31" `
     -Method GET -Headers @{"Authorization"="Bearer $token"}
-Write-Host "   ✅ Found $($januaryHolidays.Count) holidays in January 2025" -ForegroundColor Green
+Write-Host "    Found $($januaryHolidays.Count) holidays in January 2025" -ForegroundColor Green
 Write-Host ""
 
 Write-Host "======================================"
-Write-Host "ALL TESTS COMPLETED SUCCESSFULLY! ✅"
+Write-Host "ALL TESTS COMPLETED SUCCESSFULLY! "
 Write-Host "======================================"
 ```
 
@@ -1488,33 +1488,33 @@ Write-Host "======================================"
 **Last Updated:** November 2, 2025  
 **Testing Environment:** Windows PowerShell v5.1  
 **Application Version:** v1.0 (Spring Boot)  
-**Test Status:** ✅ **ALL TESTS PASSED**
+**Test Status:**  **ALL TESTS PASSED**
 
-### CRUD Operations - Verified ✅
+### CRUD Operations - Verified 
 
 #### Holiday Definitions
-- ✅ **Create**: Working with all fields
-- ✅ **Read All/One**: Returns correct data with totalDates count
-- ✅ **Update**: `PATCH` method working (changed from PUT on Nov 1, 2025)
-- ✅ **Delete**: Cascade deletes all associated holiday dates
-- ✅ **Composite Keys**: Verified with multiple definitions
+-  **Create**: Working with all fields
+-  **Read All/One**: Returns correct data with totalDates count
+-  **Update**: `PATCH` method working (changed from PUT on Nov 1, 2025)
+-  **Delete**: Cascade deletes all associated holiday dates
+-  **Composite Keys**: Verified with multiple definitions
 
 #### Holiday Dates  
-- ✅ **Create**: Working with composite key (holidayDate + definitionId)
-- ✅ **Read by Definition**: Returns all dates for a definition
-- ✅ **Read by Range**: `?startDate=X&endDate=Y` - **Critical for batch jobs** ✅
-- ✅ **Update**: `PATCH` method working (changed from PUT on Nov 1, 2025)
-- ✅ **Delete**: Removes specific date from definition
-- ✅ **Check Holiday**: `/check/{date}` returns `{"isHoliday": true/false}`
+-  **Create**: Working with composite key (holidayDate + definitionId)
+-  **Read by Definition**: Returns all dates for a definition
+-  **Read by Range**: `?startDate=X&endDate=Y` - **Critical for batch jobs** 
+-  **Update**: `PATCH` method working (changed from PUT on Nov 1, 2025)
+-  **Delete**: Removes specific date from definition
+-  **Check Holiday**: `/check/{date}` returns `{"isHoliday": true/false}`
 
 **Date Range Query Verification:**
 ```
 GET /api/v1/holiday-dates/by-range?startDate=2025-11-03&endDate=2025-11-09
-✅ Found 3 holidays: 2025-11-03, 2025-11-05, 2025-11-07
-✅ This is the EXACT query used by batch jobs in production
+ Found 3 holidays: 2025-11-03, 2025-11-05, 2025-11-07
+ This is the EXACT query used by batch jobs in production
 ```
 
-### Integration Tests - Real Data Verified ✅
+### Integration Tests - Real Data Verified 
 
 #### Time-Off Request Integration
 **Test Result (Nov 1, 2025):**
@@ -1529,19 +1529,19 @@ GET /api/v1/holiday-dates/by-range?startDate=2025-11-03&endDate=2025-11-09
     "status": "PENDING"
 }
 ```
-- ✅ Request spans 3 Tết holidays (Jan 29-31)
-- ✅ System allows time-off on holidays (expected behavior)
-- ✅ Total days correctly calculated
+-  Request spans 3 Tết holidays (Jan 29-31)
+-  System allows time-off on holidays (expected behavior)
+-  Total days correctly calculated
 
 #### Shift Creation - Holiday Blocking
 **Test Results (Nov 2, 2025):**
 
 | Date | Day | Holiday? | Employee | Result | Shift ID |
 |------|-----|----------|----------|--------|----------|
-| 2025-11-03 | Mon | ✅ Yes | 2 | ❌ **409 HOLIDAY_CONFLICT** | - |
-| 2025-11-04 | Tue | ❌ No | 3 | ✅ **Created** | EMS251102061 |
-| 2025-11-05 | Wed | ✅ Yes | 3 | ❌ **409 HOLIDAY_CONFLICT** | - |
-| 2025-11-07 | Fri | ✅ Yes | 3 | ❌ **409 HOLIDAY_CONFLICT** | - |
+| 2025-11-03 | Mon |  Yes | 2 |  **409 HOLIDAY_CONFLICT** | - |
+| 2025-11-04 | Tue |  No | 3 |  **Created** | EMS251102061 |
+| 2025-11-05 | Wed |  Yes | 3 |  **409 HOLIDAY_CONFLICT** | - |
+| 2025-11-07 | Fri |  Yes | 3 |  **409 HOLIDAY_CONFLICT** | - |
 
 **Error Response Verified:**
 ```json
@@ -1551,9 +1551,9 @@ GET /api/v1/holiday-dates/by-range?startDate=2025-11-03&endDate=2025-11-09
     "message": "Không thể tạo ca làm việc vào ngày nghỉ lễ: 2025-11-03"
 }
 ```
-- ✅ Vietnamese error message displays correctly
-- ✅ Consistent error format across all blocked dates
-- ✅ HTTP 409 status code appropriate for conflict
+-  Vietnamese error message displays correctly
+-  Consistent error format across all blocked dates
+-  HTTP 409 status code appropriate for conflict
 
 **Success Response Verified:**
 ```json
@@ -1581,82 +1581,82 @@ GET /api/v1/holiday-dates/by-range?startDate=2025-11-03&endDate=2025-11-09
 ```
 Week: November 3-9, 2025
 
-2025-11-03 (Monday)    - SKIP (Holiday) ❌
-2025-11-04 (Tuesday)   - CREATE SHIFTS ✅
-2025-11-05 (Wednesday) - SKIP (Holiday) ❌
-2025-11-06 (Thursday)  - CREATE SHIFTS ✅
-2025-11-07 (Friday)    - SKIP (Holiday) ❌
+2025-11-03 (Monday)    - SKIP (Holiday) 
+2025-11-04 (Tuesday)   - CREATE SHIFTS 
+2025-11-05 (Wednesday) - SKIP (Holiday) 
+2025-11-06 (Thursday)  - CREATE SHIFTS 
+2025-11-07 (Friday)    - SKIP (Holiday) 
 2025-11-08 (Saturday)  - SKIP (Weekend) ⏭️
 2025-11-09 (Sunday)    - SKIP (Weekend) ⏭️
 ```
 
 **Batch Jobs Validated:**
-- ✅ `MonthlyFullTimeScheduleJob`: Uses `findHolidayDatesByRange()` correctly
-- ✅ `WeeklyPartTimeScheduleJob`: Uses `findHolidayDatesByRange()` correctly
-- ✅ **Conclusion**: Batch jobs create shifts ONLY on working days (Tue, Thu)
-- ✅ All holidays (Mon, Wed, Fri) correctly skipped
-- ✅ Weekends (Sat, Sun) correctly skipped
+-  `MonthlyFullTimeScheduleJob`: Uses `findHolidayDatesByRange()` correctly
+-  `WeeklyPartTimeScheduleJob`: Uses `findHolidayDatesByRange()` correctly
+-  **Conclusion**: Batch jobs create shifts ONLY on working days (Tue, Thu)
+-  All holidays (Mon, Wed, Fri) correctly skipped
+-  Weekends (Sat, Sun) correctly skipped
 
 **Test Data Cleanup:**
 ```powershell
 DELETE /api/v1/holiday-definitions/MAINTENANCE_WEEK
-✅ 204 No Content
-✅ Definition and all 3 holiday dates cascade deleted
+ 204 No Content
+ Definition and all 3 holiday dates cascade deleted
 ```
 
-### Seeded Vietnamese Holidays 2025 ✅
+### Seeded Vietnamese Holidays 2025 
 
 **Production Data Verified:**
-- ✅ `TET_2025`: Tết Nguyên Đán (5 dates: Jan 28 - Feb 2)
-- ✅ `HUNG_KING_2025`: Giỗ Tổ Hùng Vương (1 date: Apr 10)
-- ✅ `LIBERATION_DAY_2025`: Ngày Giải Phóng (1 date: Apr 30)
-- ✅ `LABOR_DAY_2025`: Ngày Quốc Tế Lao Động (1 date: May 1)
-- ✅ `NATIONAL_DAY_2025`: Quốc Khánh (2 dates: Sep 1-2)
-- ✅ **Total**: 5 definitions, 10 holiday dates
+-  `TET_2025`: Tết Nguyên Đán (5 dates: Jan 28 - Feb 2)
+-  `HUNG_KING_2025`: Giỗ Tổ Hùng Vương (1 date: Apr 10)
+-  `LIBERATION_DAY_2025`: Ngày Giải Phóng (1 date: Apr 30)
+-  `LABOR_DAY_2025`: Ngày Quốc Tế Lao Động (1 date: May 1)
+-  `NATIONAL_DAY_2025`: Quốc Khánh (2 dates: Sep 1-2)
+-  **Total**: 5 definitions, 10 holiday dates
 
-### Error Handling - Verified ✅
+### Error Handling - Verified 
 
 **HTTP Status Codes:**
-- ✅ `201 Created`: Resource creation
-- ✅ `200 OK`: Successful read/update
-- ✅ `204 No Content`: Successful deletion
-- ✅ `404 Not Found`: Resource not found
-- ✅ `409 Conflict`: Duplicates or holiday conflicts
+-  `201 Created`: Resource creation
+-  `200 OK`: Successful read/update
+-  `204 No Content`: Successful deletion
+-  `404 Not Found`: Resource not found
+-  `409 Conflict`: Duplicates or holiday conflicts
 
 **Error Types Tested:**
-- ✅ **DUPLICATE_HOLIDAY_DEFINITION**: Custom exception (409)
-- ✅ **DUPLICATE_HOLIDAY_DATE**: Custom exception (409)
-- ✅ **INVALID_DATE_RANGE**: Custom exception (400)
-- ✅ **VALIDATION_ERROR**: Enhanced with missingFields array (400)
-- ✅ **INVALID_DATE_FORMAT**: Enhanced with format hints (400)
-- ✅ **FORBIDDEN**: Enhanced with requiredPermission (403)
-- ✅ **HOLIDAY_CONFLICT**: Shift on holiday (verified 3 times) (409)
-- ✅ **HOLIDAY_DEFINITION_NOT_FOUND**: Resource not found (404)
-- ✅ **HOLIDAY_DATE_NOT_FOUND**: Resource not found (404)
-- ✅ **Cascade Delete**: Definition removal deletes all dates
-- ✅ **Unicode Handling**: Vietnamese characters display correctly
+-  **DUPLICATE_HOLIDAY_DEFINITION**: Custom exception (409)
+-  **DUPLICATE_HOLIDAY_DATE**: Custom exception (409)
+-  **INVALID_DATE_RANGE**: Custom exception (400)
+-  **VALIDATION_ERROR**: Enhanced with missingFields array (400)
+-  **INVALID_DATE_FORMAT**: Enhanced with format hints (400)
+-  **FORBIDDEN**: Enhanced with requiredPermission (403)
+-  **HOLIDAY_CONFLICT**: Shift on holiday (verified 3 times) (409)
+-  **HOLIDAY_DEFINITION_NOT_FOUND**: Resource not found (404)
+-  **HOLIDAY_DATE_NOT_FOUND**: Resource not found (404)
+-  **Cascade Delete**: Definition removal deletes all dates
+-  **Unicode Handling**: Vietnamese characters display correctly
 
-### Performance & Stability ✅
+### Performance & Stability 
 
-- ✅ All API endpoints respond within acceptable time
-- ✅ Date range queries efficient (1-week range tested)
-- ✅ Cascade deletes work correctly without orphans
-- ✅ No database constraint violations
-- ✅ Memory stable during repeated operations
-- ✅ Concurrent requests handled properly
+-  All API endpoints respond within acceptable time
+-  Date range queries efficient (1-week range tested)
+-  Cascade deletes work correctly without orphans
+-  No database constraint violations
+-  Memory stable during repeated operations
+-  Concurrent requests handled properly
 
 ### Known Limitations
 
-⚠️ **PowerShell Unicode**: Use English descriptions for test data to avoid encoding issues in request bodies  
-⚠️ **Terminal Rendering**: PSReadLine may show buffer errors with very long outputs (cosmetic only)
+️ **PowerShell Unicode**: Use English descriptions for test data to avoid encoding issues in request bodies  
+️ **Terminal Rendering**: PSReadLine may show buffer errors with very long outputs (cosmetic only)
 
 ---
 
 ## Production Readiness Status
 
-### ✅ **FEATURE READY FOR PRODUCTION**
+###  **FEATURE READY FOR PRODUCTION**
 
-**Implementation:** ✅ Complete
+**Implementation:**  Complete
 - 2-table design with composite keys
 - Full CRUD APIs with correct HTTP semantics (PATCH for updates)
 - Security permissions (VIEW_HOLIDAY for all, CREATE/UPDATE/DELETE for admin)
@@ -1666,20 +1666,20 @@ DELETE /api/v1/holiday-definitions/MAINTENANCE_WEEK
 - **Specific Error Codes:** Replaced generic codes with descriptive ones
 - **Helpful Error Data:** Includes missingFields, expectedFormat, requiredPermission
 
-**Testing:** ✅ Complete
+**Testing:**  Complete
 - All CRUD operations validated with real data
 - Integration tests with shifts and time-off requests executed
 - Batch job simulation completed successfully
 - Error handling verified across all scenarios
 - Data validation confirmed
 
-**Documentation:** ✅ Complete
+**Documentation:**  Complete
 - API test guide with real examples and expected responses
 - Error scenarios documented
 - PowerShell test scripts provided
 - Integration testing procedures included
 
-**Backward Compatibility:** ✅ Confirmed
+**Backward Compatibility:**  Confirmed
 - Existing features unaffected
 - Time-off requests work with holidays
 - Batch jobs skip holidays correctly
@@ -1697,28 +1697,28 @@ DELETE /api/v1/holiday-definitions/MAINTENANCE_WEEK
 
 This test guide covers:
 
-✅ **Basic CRUD Operations**
+ **Basic CRUD Operations**
 - Holiday Definitions (Create, Read, Update with PATCH, Delete)
 - Holiday Dates (Create, Read by various filters, Update with PATCH, Delete)
 - Holiday checking and validation
 
-✅ **Integration Tests**
+ **Integration Tests**
 - Shift creation blocked on holidays (409 HOLIDAY_CONFLICT)
 - Time-off requests spanning holidays (allowed)
 - Batch job date range queries (critical path)
 - Weekend and holiday filtering
 
-✅ **Real Test Data**
+ **Real Test Data**
 - Test holidays created: MAINTENANCE_WEEK (3 dates)
 - Time-off request: TOR251101001 (4 days spanning Tết)
 - Shift created: EMS251102061 (non-holiday)
 - Shifts blocked: 3 holidays tested (Mon, Wed, Fri)
 
-✅ **Permission Tests**
+ **Permission Tests**
 - VIEW_HOLIDAY: All employees
 - CREATE/UPDATE/DELETE_HOLIDAY: Admin only
 
-✅ **Edge Cases**
+ **Edge Cases**
 - Duplicate prevention
 - Invalid data handling
 - Missing required fields
@@ -1741,7 +1741,7 @@ The following custom exceptions were implemented to provide **specific error cod
 - **HTTP Status:** 409 Conflict
 - **Data Fields:** `definitionId`
 - **Usage:** Thrown when attempting to create a holiday definition with an ID that already exists
-- **Test Coverage:** ✅ Tested in Edge Cases section
+- **Test Coverage:**  Tested in Edge Cases section
 
 #### 2. **DuplicateHolidayDateException**
 - **Package:** `com.dental.clinic.management.exception.holiday`
@@ -1749,7 +1749,7 @@ The following custom exceptions were implemented to provide **specific error cod
 - **HTTP Status:** 409 Conflict
 - **Data Fields:** `holidayDate`, `definitionId`
 - **Usage:** Thrown when attempting to create a duplicate holiday date for the same definition (composite key violation)
-- **Test Coverage:** ✅ Tested in Edge Cases section
+- **Test Coverage:**  Tested in Edge Cases section
 
 #### 3. **InvalidDateRangeException**
 - **Package:** `com.dental.clinic.management.exception.holiday`
@@ -1757,7 +1757,7 @@ The following custom exceptions were implemented to provide **specific error cod
 - **HTTP Status:** 400 Bad Request
 - **Data Fields:** `startDate`, `endDate`
 - **Usage:** Thrown when startDate > endDate in date range queries
-- **Test Coverage:** ✅ Tested in Edge Cases section
+- **Test Coverage:**  Tested in Edge Cases section
 
 ### **Enhanced Global Exception Handlers**
 
@@ -1815,8 +1815,8 @@ Use this checklist when testing the holiday management API:
 ### **Frontend Integration Notes**
 
 **Breaking Changes:**
-- ⚠️ Error codes changed from generic (`error.bad.request`) to specific (`DUPLICATE_HOLIDAY_DEFINITION`, `VALIDATION_ERROR`)
-- ⚠️ Error response structure now includes `data` object with helpful fields
+- ️ Error codes changed from generic (`error.bad.request`) to specific (`DUPLICATE_HOLIDAY_DEFINITION`, `VALIDATION_ERROR`)
+- ️ Error response structure now includes `data` object with helpful fields
 
 **What Frontend Needs to Update:**
 1. **Error Code Mapping:** Update error handling to recognize new error codes
@@ -1850,7 +1850,7 @@ try {
 
 ---
 
-**Feature Status:** ✅ Production Ready  
-**Custom Exceptions:** ✅ Fully Implemented & Tested  
+**Feature Status:**  Production Ready  
+**Custom Exceptions:**  Fully Implemented & Tested  
 **Test Date:** November 2, 2025  
 **Tested By:** Automated PowerShell Test Suite

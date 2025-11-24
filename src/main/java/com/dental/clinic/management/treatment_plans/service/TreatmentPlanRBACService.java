@@ -61,7 +61,7 @@ public class TreatmentPlanRBACService {
         Jwt jwt = (Jwt) authentication.getPrincipal();
         Object claim = jwt.getClaim("account_id");
 
-        log.debug("🔐 JWT account_id claim type: {}", claim != null ? claim.getClass().getName() : "null");
+        log.debug(" JWT account_id claim type: {}", claim != null ? claim.getClass().getName() : "null");
 
         if (claim == null) {
             throw new ResourceNotFoundException(
@@ -111,7 +111,7 @@ public class TreatmentPlanRBACService {
             Authentication authentication) {
 
         Integer accountId = getCurrentAccountId(authentication);
-        log.info("🔒 RBAC Check: accountId={} trying to modify planId={}", accountId, plan.getPlanId());
+        log.info(" RBAC Check: accountId={} trying to modify planId={}", accountId, plan.getPlanId());
 
         // Fetch account and baseRole
         Account account = accountRepository.findById(accountId)
@@ -122,17 +122,17 @@ public class TreatmentPlanRBACService {
         Integer baseRoleId = account.getRole().getBaseRole().getBaseRoleId();
         String baseRoleName = account.getRole().getBaseRole().getBaseRoleName();
 
-        log.info("👤 User baseRole: {} (id={})", baseRoleName, baseRoleId);
+        log.info(" User baseRole: {} (id={})", baseRoleName, baseRoleId);
 
         // ADMIN: Allow access to all plans
         if (baseRoleId.equals(BaseRoleConstants.ADMIN)) {
-            log.info("✅ ADMIN user - Access granted to modify any plan");
+            log.info(" ADMIN user - Access granted to modify any plan");
             return;
         }
 
         // PATIENT: Reject modification attempts
         if (baseRoleId.equals(BaseRoleConstants.PATIENT)) {
-            log.warn("❌ PATIENT user attempted to modify plan - REJECTED");
+            log.warn(" PATIENT user attempted to modify plan - REJECTED");
             throw new AccessDeniedException(
                     "Patients cannot modify treatment plans. Please contact your dentist.");
         }
@@ -149,29 +149,29 @@ public class TreatmentPlanRBACService {
             // Get plan creator employee
             Employee planCreator = plan.getCreatedBy();
             if (planCreator == null) {
-                log.error("❌ Plan {} has no creator (createdBy is null)", plan.getPlanId());
+                log.error(" Plan {} has no creator (createdBy is null)", plan.getPlanId());
                 throw new AccessDeniedException("Treatment plan has no creator information");
             }
 
             String planCreatorEmployeeCode = planCreator.getEmployeeCode();
 
-            log.info("🔍 EMPLOYEE createdBy check: current={}, planCreator={}",
+            log.info(" EMPLOYEE createdBy check: current={}, planCreator={}",
                     currentEmployeeCode, planCreatorEmployeeCode);
 
             if (!currentEmployeeCode.equals(planCreatorEmployeeCode)) {
-                log.warn("❌ Access DENIED: Employee {} tried to modify plan created by {}",
+                log.warn(" Access DENIED: Employee {} tried to modify plan created by {}",
                         currentEmployeeCode, planCreatorEmployeeCode);
                 throw new AccessDeniedException(
                         String.format("You can only modify treatment plans that you created. " +
                                 "This plan was created by %s", planCreatorEmployeeCode));
             }
 
-            log.info("✅ EMPLOYEE createdBy verification passed");
+            log.info(" EMPLOYEE createdBy verification passed");
             return;
         }
 
         // Unknown role
-        log.error("❌ Unknown baseRoleId: {}", baseRoleId);
+        log.error(" Unknown baseRoleId: {}", baseRoleId);
         throw new AccessDeniedException("Unknown user role: " + baseRoleId);
     }
 

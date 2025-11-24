@@ -2,13 +2,13 @@
 
 **Module**: Treatment Plan Management
 **Version**: V1.0
-**Status**: ✅ Production Ready
+**Status**:  Production Ready
 **Last Updated**: 2025-11-12
 **Source**: `TreatmentPlanController.java` (lines 283-392), `TreatmentPlanService.java`
 
 ---
 
-## 📋 Overview
+##  Overview
 
 **Smart RBAC Endpoint** - Automatically filters data based on user role:
 
@@ -18,11 +18,11 @@
 
 **Advanced Features**:
 
-- ✅ Date range filtering (startDate, createdAt)
-- ✅ Search term (plan name, patient name)
-- ✅ Status and approval filters
-- ✅ Full pagination support
-- ✅ Performance optimized (JPA Specification + JOIN FETCH)
+-  Date range filtering (startDate, createdAt)
+-  Search term (plan name, patient name)
+-  Status and approval filters
+-  Full pagination support
+-  Performance optimized (JPA Specification + JOIN FETCH)
 
 ---
 
@@ -64,11 +64,11 @@ GET /api/v1/patient-treatment-plans
 
 **Allowed Roles**:
 
-- ✅ **Admin** - Full access (always allowed via `hasRole('ROLE_ADMIN')`)
-- ✅ **Manager** - Has `VIEW_TREATMENT_PLAN_ALL` permission
-- ✅ **Dentist** - Has `VIEW_TREATMENT_PLAN_ALL` permission
-- ✅ **Receptionist** - Has `VIEW_TREATMENT_PLAN_ALL` permission
-- ✅ **Patient** - Has `VIEW_TREATMENT_PLAN_OWN` permission
+-  **Admin** - Full access (always allowed via `hasRole('ROLE_ADMIN')`)
+-  **Manager** - Has `VIEW_TREATMENT_PLAN_ALL` permission
+-  **Dentist** - Has `VIEW_TREATMENT_PLAN_ALL` permission
+-  **Receptionist** - Has `VIEW_TREATMENT_PLAN_ALL` permission
+-  **Patient** - Has `VIEW_TREATMENT_PLAN_OWN` permission
 
 **Permission Check Logic**:
 
@@ -287,8 +287,8 @@ Authorization: Bearer {admin_token}
 
 **Expected**:
 
-- ✅ Returns all plans in system
-- ✅ Pagination working
+-  Returns all plans in system
+-  Pagination working
 
 ### Test 2: Doctor - Get My Plans
 
@@ -303,8 +303,8 @@ Authorization: Bearer {doctor_emp001_token}
 
 **Expected**:
 
-- ✅ Returns only plans 1, 2, 3 (created by EMP-001)
-- ✅ Does NOT return plan 4 (created by EMP-002)
+-  Returns only plans 1, 2, 3 (created by EMP-001)
+-  Does NOT return plan 4 (created by EMP-002)
 
 ### Test 3: Patient - Get My Plans
 
@@ -319,8 +319,8 @@ Authorization: Bearer {patient_bn1001_token}
 
 **Expected**:
 
-- ✅ Returns only plans 1, 2 (patient BN-1001)
-- ✅ Does NOT return plan 3 (patient BN-1002)
+-  Returns only plans 1, 2 (patient BN-1001)
+-  Does NOT return plan 3 (patient BN-1002)
 
 ### Test 4: Filter by Status
 
@@ -333,7 +333,7 @@ Authorization: Bearer {admin_token}
 
 **Expected**:
 
-- ✅ Returns only plans with status = IN_PROGRESS
+-  Returns only plans with status = IN_PROGRESS
 
 ### Test 5: Search Term
 
@@ -346,7 +346,7 @@ Authorization: Bearer {admin_token}
 
 **Expected**:
 
-- ✅ Returns plans with "niềng" in plan name or patient name
+-  Returns plans with "niềng" in plan name or patient name
 
 ### Test 6: Date Range Filter
 
@@ -359,7 +359,7 @@ Authorization: Bearer {admin_token}
 
 **Expected**:
 
-- ✅ Returns only plans created in November 2025
+-  Returns only plans created in November 2025
 
 ---
 

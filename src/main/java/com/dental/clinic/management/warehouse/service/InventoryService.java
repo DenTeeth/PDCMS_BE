@@ -43,7 +43,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * 📦 Inventory Service
+ * Inventory Service
  * Quản lý tồn kho, vật tư, danh mục, lô hàng
  */
 @Service
@@ -59,7 +59,7 @@ public class InventoryService {
     private final ItemUnitRepository itemUnitRepository;
 
     /**
-     * 🔥 API 1: Lấy danh sách vật tư cho Dashboard
+     * API 1: Lấy danh sách vật tư cho Dashboard
      * BE tự động tính toán stock_status, total_quantity, isExpiringSoon
      */
     @Transactional(readOnly = true)
@@ -86,7 +86,7 @@ public class InventoryService {
     }
 
     /**
-     * 🔥 API 1.5: Lấy danh sách vật tư với Pagination
+     * API 1.5: Lấy danh sách vật tư với Pagination
      */
     @Transactional(readOnly = true)
     public Page<ItemMasterSummaryResponse> getInventorySummaryPaginated(WarehouseType warehouseType,
@@ -106,7 +106,7 @@ public class InventoryService {
     }
 
     /**
-     * 🔥 API 2: Lấy thống kê cho 4 thẻ trên Dashboard
+     * API 2: Lấy thống kê cho 4 thẻ trên Dashboard
      */
     @Transactional(readOnly = true)
     public WarehouseStatsResponse getWarehouseStats() {
@@ -124,7 +124,7 @@ public class InventoryService {
     }
 
     /**
-     * 🔥 API 3: Lấy danh sách lô hàng (FEFO sorted)
+     * API 3: Lấy danh sách lô hàng (FEFO sorted)
      */
     @Transactional(readOnly = true)
     public List<BatchResponse> getBatchesByItemMaster(Long itemMasterId) {
@@ -237,7 +237,7 @@ public class InventoryService {
     // ==================== HELPER METHODS ====================
 
     /**
-     * 🧠 Map ItemMaster sang DTO với calculated fields
+     * Map ItemMaster sang DTO với calculated fields
      */
     @SuppressWarnings("deprecation")
 private ItemMasterSummaryResponse mapToSummaryDto(ItemMaster item) {
@@ -273,7 +273,7 @@ private ItemMasterSummaryResponse mapToSummaryDto(ItemMaster item) {
     }
 
     /**
-     * 🧠 Logic: Tính stock status
+     * Logic: Tính stock status
      */
     private StockStatus calculateStockStatus(Integer totalQty, Integer minLevel, Integer maxLevel) {
         if (totalQty == 0)
@@ -303,7 +303,7 @@ private ItemMasterSummaryResponse mapToSummaryDto(ItemMaster item) {
     }
 
     /**
-     * 📋 API: Lấy tất cả Item Masters với phân trang
+     * API: Lấy tất cả Item Masters với phân trang
      */
     @Transactional(readOnly = true)
     public List<ItemMasterSummaryResponse> getAllItemMasters(WarehouseType warehouseType, String search) {
@@ -324,7 +324,7 @@ private ItemMasterSummaryResponse mapToSummaryDto(ItemMaster item) {
     }
 
     /**
-     * 🔍 API: Lấy chi tiết 1 Item Master
+     * API: Lấy chi tiết 1 Item Master
      */
     @Transactional(readOnly = true)
     public ItemMasterSummaryResponse getItemMasterById(Long id) {
@@ -341,7 +341,7 @@ private ItemMasterSummaryResponse mapToSummaryDto(ItemMaster item) {
     }
 
     // ========================================
-    // 📁 CATEGORY CRUD OPERATIONS
+    // CATEGORY CRUD OPERATIONS
     // ========================================
 
     /**
@@ -371,7 +371,7 @@ private ItemMasterSummaryResponse mapToSummaryDto(ItemMaster item) {
     }
 
     /**
-     * ✏️ API: Cập nhật Category
+     * ✏ API: Cập nhật Category
      */
     @Transactional
     public ItemCategoryResponse updateCategory(Long id, UpdateCategoryRequest request) {
@@ -394,7 +394,7 @@ private ItemMasterSummaryResponse mapToSummaryDto(ItemMaster item) {
     }
 
     /**
-     * 🗑️ API: Xóa Category
+     * API: Xóa Category
      */
     @Transactional
     public void deleteCategory(Long id) {
@@ -416,7 +416,7 @@ private ItemMasterSummaryResponse mapToSummaryDto(ItemMaster item) {
     }
 
     /**
-     * 🧠 Mapper: Category entity sang DTO
+     * Mapper: Category entity sang DTO
      */
     private ItemCategoryResponse mapToCategoryResponse(ItemCategory category) {
         return ItemCategoryResponse.builder()
@@ -429,11 +429,11 @@ private ItemMasterSummaryResponse mapToSummaryDto(ItemMaster item) {
     }
 
     // ===========================
-    // 📦 API: LẤY DANH SÁCH NCC CỦA 1 ITEM
+    // API: LẤY DANH SÁCH NCC CỦA 1 ITEM
     // ===========================
 
     /**
-     * 🔥 API: Lấy danh sách nhà cung cấp của 1 item
+     * API: Lấy danh sách nhà cung cấp của 1 item
      * FE dùng để: Xem item này có bao nhiêu NCC, tìm NCC mới
      */
     @Transactional(readOnly = true)
@@ -458,11 +458,11 @@ private ItemMasterSummaryResponse mapToSummaryDto(ItemMaster item) {
     }
 
     // ===========================
-    // 🔥 API 6.1: INVENTORY SUMMARY WITH AGGREGATION
+    // API 6.1: INVENTORY SUMMARY WITH AGGREGATION
     // ===========================
 
     /**
-     * 🔥 API 6.1: Lấy Inventory Summary với computed fields
+     * API 6.1: Lấy Inventory Summary với computed fields
      * - Tổng số lượng (aggregation từ batches)
      * - Stock status (calculated)
      * - Nearest expiry date (FEFO)
@@ -513,7 +513,7 @@ private ItemMasterSummaryResponse mapToSummaryDto(ItemMaster item) {
     }
 
     /**
-     * 🧠 Map ItemMaster sang InventoryItemDTO với computed fields
+     * Map ItemMaster sang InventoryItemDTO với computed fields
      * - totalQuantity: SUM(quantity_on_hand) từ batches
      * - stockStatus: calculated từ totalQuantity vs min/max levels
      * - nearestExpiryDate: MIN(expiry_date) WHERE quantity > 0 (FEFO)
@@ -559,11 +559,11 @@ private ItemMasterSummaryResponse mapToSummaryDto(ItemMaster item) {
     }
 
     // ===========================
-    // 🔥 API 6.2: GET ITEM BATCHES WITH DETAILS
+    // API 6.2: GET ITEM BATCHES WITH DETAILS
     // ===========================
 
     /**
-     * 🔥 API 6.2: Lấy chi tiết các lô hàng của một item
+     * API 6.2: Lấy chi tiết các lô hàng của một item
      *
      * Features:
      * - Pagination, sorting, filtering
@@ -587,7 +587,7 @@ private ItemMasterSummaryResponse mapToSummaryDto(ItemMaster item) {
             BatchStatus filterStatus,
             Pageable pageable) {
 
-        log.info("🔥 API 6.2 - Getting batches for itemMasterId={}, hideEmpty={}, filterStatus={}, page={}, size={}",
+        log.info(" API 6.2 - Getting batches for itemMasterId={}, hideEmpty={}, filterStatus={}, page={}, size={}",
                 itemMasterId, hideEmpty, filterStatus, pageable.getPageNumber(), pageable.getPageSize());
 
         // Step 1: Validate item exists
@@ -634,7 +634,7 @@ private ItemMasterSummaryResponse mapToSummaryDto(ItemMaster item) {
     }
 
     /**
-     * 🧠 Calculate batch statistics
+     * Calculate batch statistics
      * Count batches by status categories
      */
     private BatchStatsDTO calculateBatchStats(List<ItemBatch> batches) {
@@ -681,7 +681,7 @@ private ItemMasterSummaryResponse mapToSummaryDto(ItemMaster item) {
     }
 
     /**
-     * 🧠 Map ItemBatch entity to BatchDetailDTO
+     * Map ItemBatch entity to BatchDetailDTO
      * Calculate computed fields: daysRemaining, status, usageRate
      */
     private BatchDetailDTO mapToBatchDetailDTO(ItemBatch batch) {
@@ -715,6 +715,146 @@ private ItemMasterSummaryResponse mapToSummaryDto(ItemMaster item) {
                 .importedAt(batch.getImportedAt())
                 .daysRemaining(daysRemaining)
                 .status(status)
+                .build();
+    }
+
+    /**
+     * API 6.3: Get Expiring Alerts
+     *
+     * Business Logic:
+     * 1. Validate days parameter (1-1095)
+     * 2. Calculate targetDate = currentDate + days
+     * 3. Query batches with filters (category, warehouseType)
+     * 4. Calculate daysRemaining & status for each batch
+     * 5. Apply statusFilter if provided (EXPIRED/CRITICAL/EXPIRING_SOON)
+     * 6. Aggregate stats (count by status, sum quantity)
+     * 7. Map to DTOs
+     *
+     * @param days          Threshold days (1-1095, default: 30)
+     * @param categoryId    Optional category filter
+     * @param warehouseType Optional warehouse type filter
+     * @param statusFilter  Optional status filter (EXPIRED/CRITICAL/EXPIRING_SOON)
+     * @param pageable      Pagination config
+     * @return ExpiringAlertsResponse with stats, meta, alerts list
+     */
+    @Transactional(readOnly = true)
+    public com.dental.clinic.management.warehouse.dto.response.ExpiringAlertsResponse getExpiringAlerts(
+            Integer days,
+            Long categoryId,
+            WarehouseType warehouseType,
+            BatchStatus statusFilter,
+            Pageable pageable) {
+
+        log.info(" API 6.3 - Getting expiring alerts: days={}, categoryId={}, warehouseType={}, statusFilter={}",
+                days, categoryId, warehouseType, statusFilter);
+
+        // 1. Validate days parameter
+        if (days == null) {
+            days = 30; // Default
+        }
+        if (days < 1 || days > 1095) {
+            throw new IllegalArgumentException("Parameter 'days' must be between 1 and 1095 (3 years)");
+        }
+
+        // 2. Calculate target date
+        LocalDate today = LocalDate.now();
+        LocalDate targetDate = today.plusDays(days);
+
+        log.info("Scanning batches expiring from {} to {}", today, targetDate);
+
+        // 3. Query batches with JOIN FETCH (avoid N+1)
+        Page<ItemBatch> batchPage = itemBatchRepository.findExpiringBatches(
+                targetDate, categoryId, warehouseType, pageable);
+
+        List<ItemBatch> batches = batchPage.getContent();
+
+        // 4. Map to DTOs & calculate status (before filtering)
+        List<com.dental.clinic.management.warehouse.dto.response.ExpiringAlertDTO> alerts = batches.stream()
+                .map(batch -> {
+                    long daysRemaining = java.time.temporal.ChronoUnit.DAYS.between(today, batch.getExpiryDate());
+                    BatchStatus status = BatchStatus.fromDaysRemaining(daysRemaining);
+
+                    return com.dental.clinic.management.warehouse.dto.response.ExpiringAlertDTO.builder()
+                            .batchId(batch.getBatchId())
+                            .itemCode(batch.getItemMaster().getItemCode())
+                            .itemName(batch.getItemMaster().getItemName())
+                            .categoryName(batch.getItemMaster().getCategory() != null
+                                    ? batch.getItemMaster().getCategory().getCategoryName()
+                                    : null)
+                            .warehouseType(batch.getItemMaster().getWarehouseType())
+                            .lotNumber(batch.getLotNumber())
+                            .binLocation(batch.getBinLocation())
+                            .quantityOnHand(batch.getQuantityOnHand())
+                            .unitName(batch.getItemMaster().getUnitOfMeasure())
+                            .expiryDate(batch.getExpiryDate())
+                            .daysRemaining(daysRemaining)
+                            .status(status)
+                            .supplierName(batch.getSupplier() != null ? batch.getSupplier().getSupplierName() : null)
+                            .build();
+                })
+                .collect(Collectors.toList());
+
+        // 5. Apply statusFilter if provided (post-query filter)
+        if (statusFilter != null) {
+            alerts = alerts.stream()
+                    .filter(alert -> alert.getStatus() == statusFilter)
+                    .collect(Collectors.toList());
+            log.info("Filtered by status {}: {} alerts remaining", statusFilter, alerts.size());
+        }
+
+        // 6. Aggregate stats
+        com.dental.clinic.management.warehouse.dto.response.AlertStatsDTO stats = calculateAlertStats(alerts);
+
+        // 7. Build response
+        return com.dental.clinic.management.warehouse.dto.response.ExpiringAlertsResponse.builder()
+                .reportDate(LocalDateTime.now())
+                .thresholdDays(days)
+                .stats(stats)
+                .meta(com.dental.clinic.management.warehouse.dto.response.ExpiringAlertsResponse.PaginationMeta
+                        .builder()
+                        .page(batchPage.getNumber())
+                        .size(batchPage.getSize())
+                        .totalPages(batchPage.getTotalPages())
+                        .totalElements(batchPage.getTotalElements())
+                        .build())
+                .alerts(alerts)
+                .build();
+    }
+
+    /**
+     * Calculate Alert Statistics
+     * Count batches by status categories & sum total quantity
+     */
+    private com.dental.clinic.management.warehouse.dto.response.AlertStatsDTO calculateAlertStats(
+            List<com.dental.clinic.management.warehouse.dto.response.ExpiringAlertDTO> alerts) {
+
+        int expired = 0, critical = 0, expiringSoon = 0;
+        int totalQty = 0;
+
+        for (com.dental.clinic.management.warehouse.dto.response.ExpiringAlertDTO alert : alerts) {
+            totalQty += alert.getQuantityOnHand();
+
+            switch (alert.getStatus()) {
+                case EXPIRED:
+                    expired++;
+                    break;
+                case CRITICAL:
+                    critical++;
+                    break;
+                case EXPIRING_SOON:
+                    expiringSoon++;
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        return com.dental.clinic.management.warehouse.dto.response.AlertStatsDTO.builder()
+                .totalAlerts(alerts.size())
+                .expiredCount(expired)
+                .criticalCount(critical)
+                .expiringSoonCount(expiringSoon)
+                .totalQuantity(totalQty)
                 .build();
     }
 }

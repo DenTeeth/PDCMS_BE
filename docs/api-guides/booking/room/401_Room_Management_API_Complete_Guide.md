@@ -1,6 +1,6 @@
 # Room Management API - Complete Guide (Module BE-401)
 
-## 📋 Table of Contents
+##  Table of Contents
 1. [Overview](#overview)
 2. [API Endpoints Summary](#api-endpoints-summary)
 3. [P1.1 - Get All Rooms (Paginated)](#p11---get-all-rooms-paginated)
@@ -382,7 +382,7 @@ curl -X DELETE "http://localhost:8080/api/v1/rooms/RM2024110300001" \
 
 ### Business Considerations
 
-**⚠️ Warning for Future Appointments:**
+**️ Warning for Future Appointments:**
 - If room has appointments with status `SCHEDULED` in the future, consider:
   - Option A: Show warning to admin requiring confirmation
   - Option B: Prevent deletion and suggest reassigning appointments first
@@ -791,14 +791,14 @@ Body: {
   "roomType": "STANDARD"
 }
 ```
-✅ Expected: 201 Created
+ Expected: 201 Created
 
 **Step 2**: Get room services (should be empty)
 ```
 GET {{base_url}}/api/v1/rooms/P-TEST/services
 Authorization: Bearer {{access_token}}
 ```
-✅ Expected: 200 OK with `compatibleServices: []`
+ Expected: 200 OK with `compatibleServices: []`
 
 **Step 3**: Assign services to room
 ```
@@ -808,14 +808,14 @@ Body: {
   "serviceCodes": ["SV-001", "SV-002", "SV-003"]
 }
 ```
-✅ Expected: 200 OK with 3 services
+ Expected: 200 OK with 3 services
 
 **Step 4**: Get room services again (should show 3 services)
 ```
 GET {{base_url}}/api/v1/rooms/P-TEST/services
 Authorization: Bearer {{access_token}}
 ```
-✅ Expected: 200 OK with 3 services
+ Expected: 200 OK with 3 services
 
 **Step 5**: Update services (replace with new list)
 ```
@@ -825,7 +825,7 @@ Body: {
   "serviceCodes": ["SV-004", "SV-005"]
 }
 ```
-✅ Expected: 200 OK with 2 NEW services (old ones deleted)
+ Expected: 200 OK with 2 NEW services (old ones deleted)
 
 #### Scenario 2: Error Handling Tests
 
@@ -834,35 +834,35 @@ Body: {
 PUT {{base_url}}/api/v1/rooms/INVALID-ROOM/services
 Body: { "serviceCodes": ["SV-001"] }
 ```
-❌ Expected: 404 Not Found
+ Expected: 404 Not Found
 
 **Test 2**: Assign non-existent service
 ```
 PUT {{base_url}}/api/v1/rooms/P-TEST/services
 Body: { "serviceCodes": ["INVALID-SERVICE"] }
 ```
-❌ Expected: 404 Not Found (service not found)
+ Expected: 404 Not Found (service not found)
 
 **Test 3**: Assign inactive service
 ```
 PUT {{base_url}}/api/v1/rooms/P-TEST/services
 Body: { "serviceCodes": ["INACTIVE-SV-001"] }
 ```
-❌ Expected: 400 Bad Request (service not active)
+ Expected: 400 Bad Request (service not active)
 
 **Test 4**: Empty service list
 ```
 PUT {{base_url}}/api/v1/rooms/P-TEST/services
 Body: { "serviceCodes": [] }
 ```
-❌ Expected: 400 Bad Request (validation error)
+ Expected: 400 Bad Request (validation error)
 
 **Test 5**: No authentication
 ```
 GET {{base_url}}/api/v1/rooms/P-01/services
 (no Authorization header)
 ```
-❌ Expected: 401 Unauthorized
+ Expected: 401 Unauthorized
 
 **Test 6**: Wrong permission
 ```
@@ -870,7 +870,7 @@ PUT {{base_url}}/api/v1/rooms/P-01/services
 Authorization: Bearer {{doctor_token}}
 Body: { "serviceCodes": ["SV-001"] }
 ```
-❌ Expected: 403 Forbidden (doctor không có quyền UPDATE_ROOM_SERVICES)
+ Expected: 403 Forbidden (doctor không có quyền UPDATE_ROOM_SERVICES)
 
 #### Scenario 3: Pagination and Filtering
 

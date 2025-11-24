@@ -1,6 +1,6 @@
-# API 6.1 - Inventory Summary Testing Guide 🧪
+# API 6.1 - Inventory Summary Testing Guide 
 
-## ✅ Implementation Complete
+##  Implementation Complete
 
 ### What Was Implemented
 
@@ -25,7 +25,7 @@
 
 ---
 
-## 🧪 Test Commands
+##  Test Commands
 
 ### Prerequisites
 
@@ -126,7 +126,7 @@ curl -X GET "http://localhost:8080/api/v3/warehouse/summary?page=1&size=5" \
 
 ---
 
-## 🔍 Verify Computed Fields
+##  Verify Computed Fields
 
 ### totalQuantity (Aggregation)
 
@@ -153,7 +153,7 @@ curl -X GET "http://localhost:8080/api/v3/warehouse/summary?page=1&size=5" \
 
 ---
 
-## 🐛 Common Issues & Solutions
+##  Common Issues & Solutions
 
 ### Issue 1: 401 Unauthorized
 
@@ -177,7 +177,7 @@ curl -X GET "http://localhost:8080/api/v3/warehouse/summary?page=1&size=5" \
 
 ---
 
-## 📊 Sample Test Data Setup
+##  Sample Test Data Setup
 
 If you don't have seed data yet, you can create test items:
 
@@ -204,40 +204,40 @@ VALUES (1, 'Gói', 1.0, true, 1, NOW());
 
 ---
 
-## ✅ Success Criteria
+##  Success Criteria
 
 ### API Response Should Have:
 
-- ✅ Correct pagination (page, size, totalPages, totalItems)
-- ✅ Content array with items
-- ✅ Each item has all required fields
-- ✅ totalQuantity matches SUM from batches
-- ✅ stockStatus calculated correctly
-- ✅ nearestExpiryDate shows earliest expiry (FEFO)
-- ✅ unitName comes from base unit
+-  Correct pagination (page, size, totalPages, totalItems)
+-  Content array with items
+-  Each item has all required fields
+-  totalQuantity matches SUM from batches
+-  stockStatus calculated correctly
+-  nearestExpiryDate shows earliest expiry (FEFO)
+-  unitName comes from base unit
 
 ### Filters Should Work:
 
-- ✅ search: filters by itemName or itemCode (LIKE)
-- ✅ stockStatus: filters by calculated status
-- ✅ warehouseType: filters COLD/NORMAL
-- ✅ categoryId: filters by category
-- ✅ pagination: page and size work correctly
+-  search: filters by itemName or itemCode (LIKE)
+-  stockStatus: filters by calculated status
+-  warehouseType: filters COLD/NORMAL
+-  categoryId: filters by category
+-  pagination: page and size work correctly
 
 ---
 
-## 📝 Logs to Check
+##  Logs to Check
 
 Look for these log messages in terminal:
 
 ```
-🔥 API 6.1 - GET /api/v3/warehouse/summary - search='...', stockStatus=..., warehouseType=..., categoryId=..., page=..., size=...
-✅ Returned X items out of Y total
+ API 6.1 - GET /api/v3/warehouse/summary - search='...', stockStatus=..., warehouseType=..., categoryId=..., page=..., size=...
+ Returned X items out of Y total
 ```
 
 ---
 
-## 🎯 Next Steps After Testing
+##  Next Steps After Testing
 
 1. **Frontend Integration**
 
@@ -258,7 +258,7 @@ Look for these log messages in terminal:
 
 ---
 
-**Application Status**: ✅ RUNNING on http://localhost:8080
+**Application Status**:  RUNNING on http://localhost:8080
 **API Endpoint**: GET /api/v3/warehouse/summary
 **Swagger UI**: http://localhost:8080/swagger-ui.html
 **Implementation Date**: 2024-11-24

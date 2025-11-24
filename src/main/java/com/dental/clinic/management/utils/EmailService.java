@@ -65,10 +65,10 @@ public class EmailService {
             helper.setText(htmlContent, true);
 
             mailSender.send(message);
-            logger.info("✅ Verification email sent to: {}", toEmail);
+            logger.info(" Verification email sent to: {}", toEmail);
 
         } catch (MessagingException e) {
-            logger.error("❌ Failed to send verification email to {}: {}", toEmail, e.getMessage());
+            logger.error(" Failed to send verification email to {}: {}", toEmail, e.getMessage());
         }
     }
 
@@ -110,10 +110,10 @@ public class EmailService {
             helper.setText(htmlContent, true);
 
             mailSender.send(message);
-            logger.info("✅ Password reset email sent to: {}", toEmail);
+            logger.info(" Password reset email sent to: {}", toEmail);
 
         } catch (MessagingException e) {
-            logger.error("❌ Failed to send password reset email to {}: {}", toEmail, e.getMessage());
+            logger.error(" Failed to send password reset email to {}: {}", toEmail, e.getMessage());
         }
     }
 
@@ -130,10 +130,10 @@ public class EmailService {
             message.setText(text);
 
             mailSender.send(message);
-            logger.info("✅ Simple email sent to: {}", toEmail);
+            logger.info(" Simple email sent to: {}", toEmail);
 
         } catch (Exception e) {
-            logger.error("❌ Failed to send simple email to {}: {}", toEmail, e.getMessage());
+            logger.error(" Failed to send simple email to {}: {}", toEmail, e.getMessage());
         }
     }
 }

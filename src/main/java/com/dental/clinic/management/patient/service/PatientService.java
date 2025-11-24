@@ -230,7 +230,7 @@ public class PatientService {
 
             // Send verification email asynchronously
             emailService.sendVerificationEmail(account.getEmail(), account.getUsername(), verificationToken.getToken());
-            log.info("✅ Verification email sent to: {}", account.getEmail());
+            log.info(" Verification email sent to: {}", account.getEmail());
         } else {
             log.debug("Creating patient without account (no username/password provided)");
         }

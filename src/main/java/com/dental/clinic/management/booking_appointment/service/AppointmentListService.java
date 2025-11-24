@@ -147,7 +147,7 @@ public class AppointmentListService {
                     startDate,
                     endDate,
                     statuses,
-                    pageableJpql); // ✅ Use JPQL pageable (camelCase)
+                    pageableJpql); //  Use JPQL pageable (camelCase)
         } else if (criteria.getCurrentUserEmployeeId() != null) {
             // Employee view: Where they are primary doctor OR participant (JPQL query)
             // This includes: Doctor, Nurse/Assistant, OBSERVER (thực tập sinh)
@@ -158,7 +158,7 @@ public class AppointmentListService {
                     startDate,
                     endDate,
                     statuses,
-                    pageableJpql); // ✅ Use JPQL pageable (camelCase)
+                    pageableJpql); //  Use JPQL pageable (camelCase)
         } else {
             // Admin/Receptionist view: All appointments with optional filters (NATIVE
             // queries)
@@ -180,19 +180,19 @@ public class AppointmentListService {
                         endDate,
                         statusArray,
                         criteria.getSearchCode(),
-                        pageableNative); // ✅ Use NATIVE pageable (snake_case)
+                        pageableNative); //  Use NATIVE pageable (snake_case)
             } else {
                 log.info("Executing search with individual filters");
                 appointments = appointmentRepository.findByFilters(
                         startDate,
                         endDate,
-                        statusArray, // ✅ Pass String[] instead of List
+                        statusArray, //  Pass String[] instead of List
                         null, // patientId - TODO: resolve from patientCode if needed
                         null, // employeeId - TODO: resolve from employeeCode if needed
                         criteria.getRoomCode(),
-                        criteria.getPatientName(), // ✅ NEW: Search by name
-                        criteria.getPatientPhone(), // ✅ NEW: Search by phone
-                        pageableNative); // ✅ Use NATIVE pageable (snake_case)
+                        criteria.getPatientName(), //  NEW: Search by name
+                        criteria.getPatientPhone(), //  NEW: Search by phone
+                        pageableNative); //  Use NATIVE pageable (snake_case)
             }
         }
 

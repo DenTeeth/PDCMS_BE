@@ -6,7 +6,7 @@ Permissions: CREATE_APPOINTMENT, VIEW_APPOINTMENT_ALL, VIEW_APPOINTMENT_OWN
 
 ---
 
-## 🎯 **PROGRESSIVE BOOKING FLOW** (Recommended for FE)
+##  **PROGRESSIVE BOOKING FLOW** (Recommended for FE)
 
 **Problem:** Old flow forced receptionist to "guess" all 5 parameters (Doctor, Room, Time, Assistants, Services) upfront, leading to validation errors at the final step (e.g., "Doctor not qualified", "Patient has conflict").
 
@@ -28,14 +28,14 @@ Step 5: POST /api/v1/appointments → Final validation + Create appointment
 
 ### **Why This Works**
 
-✅ **Faster UX**: Receptionist never sees invalid options
-✅ **Less Errors**: 99% of POST requests succeed (validation already done)
-✅ **Backward Compatible**: Old `GET /available-times` API still works
-✅ **Progressive Disclosure**: Each step narrows down choices
+ **Faster UX**: Receptionist never sees invalid options
+ **Less Errors**: 99% of POST requests succeed (validation already done)
+ **Backward Compatible**: Old `GET /available-times` API still works
+ **Progressive Disclosure**: Each step narrows down choices
 
 ---
 
-## 📋 API SUMMARY
+##  API SUMMARY
 
 ### **NEW: Availability APIs (Progressive Flow)**
 
@@ -49,7 +49,7 @@ Step 5: POST /api/v1/appointments → Final validation + Create appointment
 
 | Endpoint                    | Method | Permission                                     | Description                                 |
 | --------------------------- | ------ | ---------------------------------------------- | ------------------------------------------- |
-| `/available-times`          | GET    | CREATE_APPOINTMENT                             | ⚠️ Legacy: Tìm slot (all-in-one)            |
+| `/available-times`          | GET    | CREATE_APPOINTMENT                             | ️ Legacy: Tìm slot (all-in-one)            |
 | `/`                         | POST   | CREATE_APPOINTMENT                             | **Step 5**: Tạo lịch hẹn (final validation) |
 | `/`                         | GET    | VIEW_APPOINTMENT_ALL hoặc VIEW_APPOINTMENT_OWN | Dashboard - Danh sách lịch hẹn              |
 | `/{appointmentCode}`        | GET    | VIEW_APPOINTMENT_ALL hoặc VIEW_APPOINTMENT_OWN | Chi tiết lịch hẹn                           |
@@ -229,7 +229,7 @@ Authorization: Bearer <token>
 
 ---
 
-## 🔗 **Frontend Integration Example**
+##  **Frontend Integration Example**
 
 ### **Complete Booking Flow (5 Steps)**
 
@@ -310,10 +310,10 @@ if (createResponse.ok) {
 
 ### **Key Benefits**
 
-✅ **No More "Vỡ lẽ" Errors**: Receptionist never picks invalid doctor
-✅ **Fast UX**: Each API call < 100ms (no heavy validation)
-✅ **Guided Workflow**: FE UI can disable/hide invalid options
-✅ **99% Success Rate**: Final POST rarely fails (already pre-validated)
+ **No More "Vỡ lẽ" Errors**: Receptionist never picks invalid doctor
+ **Fast UX**: Each API call < 100ms (no heavy validation)
+ **Guided Workflow**: FE UI can disable/hide invalid options
+ **99% Success Rate**: Final POST rarely fails (already pre-validated)
 
 ### **Error Handling Strategy**
 
@@ -355,7 +355,7 @@ if (!createResponse.ok) {
 
 ## GET AVAILABLE TIMES
 
-⚠️ **Note:** This is the old all-in-one API. For better UX, use the **Progressive Flow APIs** (4.1 → 4.2 → 4.3) instead.
+️ **Note:** This is the old all-in-one API. For better UX, use the **Progressive Flow APIs** (4.1 → 4.2 → 4.3) instead.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 GET AVAILABLE TIMES
@@ -430,9 +430,9 @@ GET /api/v1/appointments/available-times?date=2025-11-16&employeeCode=EMP001&ser
 POST CREATE APPOINTMENT
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-⚠️ IMPORTANT: URL must NOT have trailing slash!
-✅ Correct: POST http://localhost:8080/api/v1/appointments
-❌ Wrong: POST http://localhost:8080/api/v1/appointments/
+️ IMPORTANT: URL must NOT have trailing slash!
+ Correct: POST http://localhost:8080/api/v1/appointments
+ Wrong: POST http://localhost:8080/api/v1/appointments/
 
 Endpoint:
 POST /api/v1/appointments
@@ -579,7 +579,7 @@ Critical - Afternoon Appointment with Participant (Test full-time schedule)
 }
 ```
 
-⚠️ CONFLICT WARNING: This test case may fail with ROOM_SLOT_TAKEN if room P-01 is already booked during 14:30-15:15.
+️ CONFLICT WARNING: This test case may fail with ROOM_SLOT_TAKEN if room P-01 is already booked during 14:30-15:15.
 The error will now include conflicting appointment details: "Conflicting appointment: APT-XXXXXXXX-XXX (2025-11-15T14:00:00 to 2025-11-15T14:45:00)"
 Expected on success: 201 Created with created_by = 0 (SYSTEM for admin)
 
@@ -608,14 +608,14 @@ Ca Sáng (8-12h) but book at 14:00
 Expected: 400 DOCTOR_NOT_AVAILABLE
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📦 **TREATMENT PLAN BOOKING INTEGRATION** (V2 - NEW)
+ **TREATMENT PLAN BOOKING INTEGRATION** (V2 - NEW)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ## Two Booking Modes
 
 Starting from V2, API 3.2 (Create Appointment) supports TWO booking modes:
 
-### **Mode 1: Standalone Booking** (Luồng 1 - Đặt lẻ) ✅ EXISTING
+### **Mode 1: Standalone Booking** (Luồng 1 - Đặt lẻ)  EXISTING
 
 Receptionist manually selects services for walk-in patients or one-time appointments.
 
@@ -749,7 +749,7 @@ Receptionist books appointments directly from patient's treatment plan items.
 
 ---
 
-## XOR Validation Rule (⚠️ IMPORTANT)
+## XOR Validation Rule (️ IMPORTANT)
 
 **CRITICAL:** Request MUST provide **EITHER** `serviceCodes` **OR** `patientPlanItemIds`, **NOT BOTH** and **NOT NEITHER**.
 
@@ -765,14 +765,14 @@ private boolean isValidBookingType() {
 ```
 
 **XOR Rule Explanation:**
-- ✅ **Valid Option 1:** Provide only `serviceCodes` (standalone booking for walk-in patients)
-- ✅ **Valid Option 2:** Provide only `patientPlanItemIds` (treatment plan booking)
-- ❌ **Invalid:** Providing both `serviceCodes` AND `patientPlanItemIds`
-- ❌ **Invalid:** Providing neither (empty or null for both fields)
+-  **Valid Option 1:** Provide only `serviceCodes` (standalone booking for walk-in patients)
+-  **Valid Option 2:** Provide only `patientPlanItemIds` (treatment plan booking)
+-  **Invalid:** Providing both `serviceCodes` AND `patientPlanItemIds`
+-  **Invalid:** Providing neither (empty or null for both fields)
 
 **Error Examples:**
 
-❌ **Both provided (violates XOR):**
+ **Both provided (violates XOR):**
 
 ```json
 {
@@ -783,7 +783,7 @@ private boolean isValidBookingType() {
 
 → 400 Bad Request: "Please provide either serviceCodes for standalone booking or patientPlanItemIds for treatment plan booking, but not both and not neither"
 
-❌ **Neither provided (violates XOR):**
+ **Neither provided (violates XOR):**
 
 ```json
 {
@@ -796,7 +796,7 @@ private boolean isValidBookingType() {
 
 → 400 Bad Request: "Please provide either serviceCodes for standalone booking or patientPlanItemIds for treatment plan booking, but not both and not neither"
 
-✅ **Correct Example 1 - Standalone Booking:**
+ **Correct Example 1 - Standalone Booking:**
 
 ```json
 {
@@ -809,7 +809,7 @@ private boolean isValidBookingType() {
 }
 ```
 
-✅ **Correct Example 2 - Treatment Plan Booking:**
+ **Correct Example 2 - Treatment Plan Booking:**
 
 ```json
 {
@@ -995,17 +995,17 @@ POST /api/v1/appointments
 
 **Backend Actions:**
 
-1. ✅ Validated items 307, 308 exist
-2. ✅ Validated items belong to patient BN-1001
-3. ✅ Validated items status = READY_FOR_BOOKING
-4. ✅ Extracted service `ORTHO_ADJUST` from items
-5. ✅ Validated doctor has Orthodontics specialization
-6. ✅ Validated room P-01 supports ORTHO_ADJUST service
-7. ✅ Created appointment APT-20251208-001
-8. ✅ Inserted 2 bridge records: `appointment_plan_items`
+1.  Validated items 307, 308 exist
+2.  Validated items belong to patient BN-1001
+3.  Validated items status = READY_FOR_BOOKING
+4.  Extracted service `ORTHO_ADJUST` from items
+5.  Validated doctor has Orthodontics specialization
+6.  Validated room P-01 supports ORTHO_ADJUST service
+7.  Created appointment APT-20251208-001
+8.  Inserted 2 bridge records: `appointment_plan_items`
    - (appointment_id: 123, item_id: 307)
    - (appointment_id: 123, item_id: 308)
-9. ✅ Updated items 307, 308: status READY_FOR_BOOKING → SCHEDULED
+9.  Updated items 307, 308: status READY_FOR_BOOKING → SCHEDULED
 
 **Database State After:**
 
@@ -1117,7 +1117,7 @@ POST /api/v1/appointments
    Items 307, 308 temporarily marked SCHEDULED
    → checkDoctorConflict() finds conflict
    → Transaction rollback
-   → Items revert to READY_FOR_BOOKING ✅
+   → Items revert to READY_FOR_BOOKING 
    ```
 
 2. **Room Conflict Detected:**
@@ -1126,7 +1126,7 @@ POST /api/v1/appointments
    Items marked SCHEDULED
    → checkRoomConflict() finds conflict
    → Transaction rollback
-   → Items remain READY_FOR_BOOKING ✅
+   → Items remain READY_FOR_BOOKING 
    ```
 
 3. **Status Update Fails:**
@@ -1135,7 +1135,7 @@ POST /api/v1/appointments
    → updatePlanItemsStatus() throws exception
    → Entire transaction rollback
    → Appointment NOT created
-   → Items remain READY_FOR_BOOKING ✅
+   → Items remain READY_FOR_BOOKING 
    ```
 
 **Implementation:**
@@ -1184,8 +1184,8 @@ const data = await response.json();
 **Step 2: Display in UI with checkboxes**
 
 ```jsx
-<Checkbox label="☑️ Lần 3/24: Siết niềng (30 phút)" value={307} />
-<Checkbox label="☑️ Lần 4/24: Siết niềng (30 phút)" value={308} />
+<Checkbox label="️ Lần 3/24: Siết niềng (30 phút)" value={307} />
+<Checkbox label="️ Lần 4/24: Siết niềng (30 phút)" value={308} />
 ```
 
 **Step 3: Create appointment with selected items**
@@ -1208,8 +1208,8 @@ await fetch("/api/v1/appointments", {
 **Step 4: Show success + updated status**
 
 ```
-✅ Appointment created: APT-20251208-001
-📅 Items updated:
+ Appointment created: APT-20251208-001
+ Items updated:
    - Lần 3/24: Siết niềng → SCHEDULED
    - Lần 4/24: Siết niềng → SCHEDULED
 ```
@@ -1303,7 +1303,7 @@ Authorization (PERMISSION-BASED, NOT ROLE-BASED):
 - VIEW_APPOINTMENT_ALL: Lễ tân/Quản lý - Xem tất cả, dùng filters tự do
 - VIEW_APPOINTMENT_OWN: Bác sĩ/Y tá/OBSERVER/Bệnh nhân - Filters bị GHI ĐÈ
 
-⚠️ CRITICAL: Logic kiểm tra PERMISSION_ID, KHÔNG kiểm tra role_id
+️ CRITICAL: Logic kiểm tra PERMISSION_ID, KHÔNG kiểm tra role_id
 
 Query Params (All Optional):
 
@@ -1311,17 +1311,17 @@ Query Params (All Optional):
 - size (Number) Default: 10
 - sortBy (String) Default: "appointmentStartTime"
 - sortDirection (String) Default: "ASC" (ASC|DESC)
-- datePreset (String) ✅ NEW - Quick date filter: TODAY | THIS_WEEK | NEXT_7_DAYS | THIS_MONTH
+- datePreset (String)  NEW - Quick date filter: TODAY | THIS_WEEK | NEXT_7_DAYS | THIS_MONTH
 - dateFrom (String) YYYY-MM-DD - Từ ngày (inclusive)
 - dateTo (String) YYYY-MM-DD - Đến ngày (inclusive)
 - today (Boolean) DEPRECATED - Dùng datePreset=TODAY thay thế
 - status (Array) Repeat: status=SCHEDULED&status=CHECKED_IN
 - patientCode (String) Mã bệnh nhân (VIEW_ALL only)
-- patientName (String) ✅ NEW - Search tên bệnh nhân LIKE (VIEW_ALL only)
-- patientPhone (String) ✅ NEW - Search SĐT bệnh nhân LIKE (VIEW_ALL only)
+- patientName (String)  NEW - Search tên bệnh nhân LIKE (VIEW_ALL only)
+- patientPhone (String)  NEW - Search SĐT bệnh nhân LIKE (VIEW_ALL only)
 - employeeCode (String) Mã bác sĩ chính (VIEW_ALL only)
 - roomCode (String) Mã phòng
-- serviceCode (String) ✅ NEW - Mã dịch vụ (JOIN appointment_services)
+- serviceCode (String)  NEW - Mã dịch vụ (JOIN appointment_services)
 
 RBAC Logic (Permission-based):
 
@@ -1329,14 +1329,14 @@ RBAC Logic (Permission-based):
    → Kiểm tra: auth.authorities contains "VIEW_APPOINTMENT_ALL"
    → Xem TẤT CẢ appointments
    → Filters hoạt động bình thường
-   → ✅ Có thể search by patient name/phone
+   →  Có thể search by patient name/phone
 
 2. VIEW_APPOINTMENT_OWN + Employee (Bác sĩ/Y tá/OBSERVER):
    → Kiểm tra: auth.authorities contains "VIEW_APPOINTMENT_OWN"
    → OVERRIDE: WHERE (appointments.employee_id = [my_employee_id]
    OR EXISTS (participant where employee_id = [my_employee_id]))
    → PHỚT LỜI employeeCode từ client
-   → ⚠️ OBSERVER (Thực tập sinh):
+   → ️ OBSERVER (Thực tập sinh):
    • Có quyền VIEW_APPOINTMENT_OWN
    • Thấy appointments MÀ HỌ THAM GIA (role = OBSERVER trong participants)
    • KHÔNG thấy toàn bộ appointments (security)
@@ -1635,28 +1635,28 @@ Test Accounts:
 - thuan.dk (Lễ tân) - ROLE_RECEPTIONIST - Permission: VIEW_APPOINTMENT_ALL
 - khoa.la (Bác sĩ) - ROLE_DENTIST - Permission: VIEW_APPOINTMENT_OWN
 - nguyen.dnk (Y tá) - ROLE_NURSE - Permission: VIEW_APPOINTMENT_OWN
-- linh.nk (Thực tập sinh) ✅ NEW - ROLE_DENTIST_INTERN - Permission: VIEW_APPOINTMENT_OWN
+- linh.nk (Thực tập sinh)  NEW - ROLE_DENTIST_INTERN - Permission: VIEW_APPOINTMENT_OWN
 - phong.dt (Bệnh nhân) - ROLE_PATIENT - Permission: VIEW_APPOINTMENT_OWN (TODO: mapping)
 
 Employees (Ca Sáng 8-12h on 2025-11-15):
 
-- EMP001 - Lê Anh Khoa - Nha sĩ (Full-time) - Chỉnh nha (ID 1), Phục hồi (ID 4), STANDARD (ID 8) - ✅ BOTH SHIFTS
-- EMP002 - Trịnh Công Thái - Nha sĩ (Full-time) - Nội nha (ID 2), Răng thẩm mỹ (ID 7), STANDARD (ID 8) - ✅ BOTH SHIFTS
+- EMP001 - Lê Anh Khoa - Nha sĩ (Full-time) - Chỉnh nha (ID 1), Phục hồi (ID 4), STANDARD (ID 8) -  BOTH SHIFTS
+- EMP002 - Trịnh Công Thái - Nha sĩ (Full-time) - Nội nha (ID 2), Răng thẩm mỹ (ID 7), STANDARD (ID 8) -  BOTH SHIFTS
 - EMP003 - Jimmy Donaldson - Nha sĩ (Part-time flex) - Nha khoa trẻ em (ID 6), STANDARD (ID 8) - Morning only
-- EMP007 - Đoàn Nguyễn Khôi Nguyên - Y tá (Full-time) - STANDARD (ID 8) - ✅ BOTH SHIFTS
-- EMP008 - Nguyễn Trần Tuấn Khang - Y tá (Full-time) - STANDARD (ID 8) - ✅ BOTH SHIFTS
+- EMP007 - Đoàn Nguyễn Khôi Nguyên - Y tá (Full-time) - STANDARD (ID 8) -  BOTH SHIFTS
+- EMP008 - Nguyễn Trần Tuấn Khang - Y tá (Full-time) - STANDARD (ID 8) -  BOTH SHIFTS
 - EMP009 - Huỳnh Tấn Quang Nhật - Y tá (Part-time fixed) - STANDARD (ID 8) - Morning only
 
 Employees (Ca Chiều 13-17h on 2025-11-15):
 
-- EMP001 - Lê Anh Khoa - Nha sĩ (Full-time) - ✅ BOTH SHIFTS
-- EMP002 - Trịnh Công Thái - Nha sĩ (Full-time) - ✅ BOTH SHIFTS
+- EMP001 - Lê Anh Khoa - Nha sĩ (Full-time) -  BOTH SHIFTS
+- EMP002 - Trịnh Công Thái - Nha sĩ (Full-time) -  BOTH SHIFTS
 - EMP004 - Junya Ota - Nha sĩ (Part-time fixed) - Phẫu thuật (ID 5), STANDARD (ID 8) - Afternoon only
-- EMP007 - Đoàn Nguyễn Khôi Nguyên - Y tá (Full-time) - ✅ BOTH SHIFTS
-- EMP008 - Nguyễn Trần Tuấn Khang - Y tá (Full-time) - ✅ BOTH SHIFTS
+- EMP007 - Đoàn Nguyễn Khôi Nguyên - Y tá (Full-time) -  BOTH SHIFTS
+- EMP008 - Nguyễn Trần Tuấn Khang - Y tá (Full-time) -  BOTH SHIFTS
 - EMP010 - Ngô Đình Chính - Y tá (Part-time flex) - STANDARD (ID 8) - Afternoon only
 
-⚠️ IMPORTANT: When selecting participants for test cases:
+️ IMPORTANT: When selecting participants for test cases:
 
 - Morning appointments (08:00-12:00): Can use EMP007, EMP008, EMP009
 - Afternoon appointments (13:00-17:00): Can use EMP007, EMP008, EMP010
@@ -1990,7 +1990,7 @@ Description:
 Cập nhật trạng thái vận hành của lịch hẹn (Check-in, Bắt đầu khám, Hoàn thành, Hủy, Vắng mặt).
 API này sử dụng SELECT FOR UPDATE để tránh race condition khi nhiều lễ tân/bác sĩ cập nhật cùng lúc.
 
-⚙️ State Machine (CRITICAL - Must Follow):
+️ State Machine (CRITICAL - Must Follow):
 
 ```
 SCHEDULED (Đã đặt lịch)
@@ -2015,16 +2015,16 @@ NO_SHOW (Terminal state - không chuyển được)
 
 ```
 SCHEDULED -> CHECKED_IN:
-   ❌ KHÔNG cập nhật actualStartTime
-   ✅ Bệnh nhân chỉ mới đến, chưa vào ghế
+    KHÔNG cập nhật actualStartTime
+    Bệnh nhân chỉ mới đến, chưa vào ghế
 
 CHECKED_IN -> IN_PROGRESS:
-   ✅ CẬP NHẬT actualStartTime = NOW()
-   ✅ Bác sĩ bắt đầu khám thực sự
+    CẬP NHẬT actualStartTime = NOW()
+    Bác sĩ bắt đầu khám thực sự
 
 IN_PROGRESS -> COMPLETED:
-   ✅ CẬP NHẬT actualEndTime = NOW()
-   ✅ Kết thúc điều trị
+    CẬP NHẬT actualEndTime = NOW()
+    Kết thúc điều trị
 ```
 
 Request Body (Case 1: Check-in):
@@ -2428,18 +2428,18 @@ IMPLEMENTATION NOTES (P3.5)
 
    CHECKED_IN (Lễ tân):
 
-   - ❌ KHÔNG cập nhật actual_start_time
-   - ✅ Bệnh nhân chỉ đến phòng chờ, chưa vào ghế
+   -  KHÔNG cập nhật actual_start_time
+   -  Bệnh nhân chỉ đến phòng chờ, chưa vào ghế
 
    IN_PROGRESS (Bác sĩ):
 
-   - ✅ CẬP NHẬT actual_start_time = NOW()
-   - ✅ Bắt đầu điều trị thực sự
+   -  CẬP NHẬT actual_start_time = NOW()
+   -  Bắt đầu điều trị thực sự
 
    COMPLETED:
 
-   - ✅ CẬP NHẬT actual_end_time = NOW()
-   - ✅ Kết thúc điều trị
+   -  CẬP NHẬT actual_end_time = NOW()
+   -  Kết thúc điều trị
 
    Business Value:
 
@@ -2491,7 +2491,7 @@ IMPLEMENTATION NOTES (P3.5)
     - SMS notification on status change
     - WebSocket real-time update to dashboard
 
-11. **Treatment Plan Item Auto-Update (IMPLEMENTED - V21.5)** ✅
+11. **Treatment Plan Item Auto-Update (IMPLEMENTED - V21.5)** 
 
     **Feature**: When appointment status changes, linked treatment plan items automatically update to stay synchronized.
 
@@ -2526,18 +2526,18 @@ IMPLEMENTATION NOTES (P3.5)
     ```
 
     **Business Value**:
-    - ✅ **Data Consistency**: Plan items always reflect actual treatment progress
-    - ✅ **No Manual Updates**: Automatic synchronization reduces errors
-    - ✅ **Accurate Tracking**: Treatment plan progress is real-time
-    - ✅ **Better UX**: Doctors see correct status without manual updates
+    -  **Data Consistency**: Plan items always reflect actual treatment progress
+    -  **No Manual Updates**: Automatic synchronization reduces errors
+    -  **Accurate Tracking**: Treatment plan progress is real-time
+    -  **Better UX**: Doctors see correct status without manual updates
 
     **Testing Notes** (Verified 2025-11-22):
-    - ✅ Status transition SCHEDULED → IN_PROGRESS → COMPLETED updates items correctly
-    - ✅ CANCELLED appointments revert items to READY_FOR_BOOKING
-    - ✅ Standalone appointments (no plan items) are not affected
-    - ✅ Transactional safety: rollback if any update fails
+    -  Status transition SCHEDULED → IN_PROGRESS → COMPLETED updates items correctly
+    -  CANCELLED appointments revert items to READY_FOR_BOOKING
+    -  Standalone appointments (no plan items) are not affected
+    -  Transactional safety: rollback if any update fails
 
-12. **Phase Auto-Completion (IMPLEMENTED - V21.5)** ✅
+12. **Phase Auto-Completion (IMPLEMENTED - V21.5)** 
 
     **Feature**: When appointment completes and ALL items in a phase are done, the phase automatically updates to COMPLETED.
 
@@ -2592,26 +2592,26 @@ IMPLEMENTATION NOTES (P3.5)
     Action: Update appointment to COMPLETED
 
     Result:
-    ✅ Items 6, 7 → COMPLETED
-    ✅ Phase 2 → COMPLETED (all 4/4 items done)
-    ✅ Phase completion_date = 2025-11-22
+     Items 6, 7 → COMPLETED
+     Phase 2 → COMPLETED (all 4/4 items done)
+     Phase completion_date = 2025-11-22
     ```
 
     **Business Value**:
-    - ✅ **Automatic Progress Tracking**: Phases complete without manual updates
-    - ✅ **Accurate Treatment Plans**: Phase status reflects reality
-    - ✅ **Better Analytics**: Completion dates for reporting
-    - ✅ **Reduced Workload**: No need to manually mark phases complete
+    -  **Automatic Progress Tracking**: Phases complete without manual updates
+    -  **Accurate Treatment Plans**: Phase status reflects reality
+    -  **Better Analytics**: Completion dates for reporting
+    -  **Reduced Workload**: No need to manually mark phases complete
 
     **Edge Cases**:
-    - ✅ Partial completion: Phase with 2/4 items done remains IN_PROGRESS
-    - ✅ Multiple phases: Each phase checked independently
-    - ✅ Error handling: Phase check failure doesn't break main flow
+    -  Partial completion: Phase with 2/4 items done remains IN_PROGRESS
+    -  Multiple phases: Each phase checked independently
+    -  Error handling: Phase check failure doesn't break main flow
 
     **Logging** (for debugging):
     ```
     DEBUG: Checking 1 phases for auto-completion
-    INFO: 🎯 Phase 2 auto-completed: all 4 items are done
+    INFO:  Phase 2 auto-completed: all 4 items are done
     DEBUG: Phase 3 not completed yet: 2/8 items done
     ```
 
@@ -3261,35 +3261,35 @@ INSERT INTO appointment_audit_logs (
 
 ## API 3.7: Reschedule Appointment (Cancel Old + Create New)
 
-### ⚠️ SEED DATA & CONSTRAINTS (Current: Nov 6, 2025)
+### ️ SEED DATA & CONSTRAINTS (Current: Nov 6, 2025)
 
-#### 🔴 Critical Fixes Applied
+####  Critical Fixes Applied
 
 1. **Fixed JPA Query Error**: `appointment_start_time` → `appointmentStartTime` (camelCase for JPQL)
 2. **Added Future Shifts**: 25+ employee shifts for Nov 6-8 (EMP001-EMP004, nurses)
 3. **Added Future Appointments**: 5 appointments for Nov 6-8 for realistic testing
 4. **Fixed EMP001**: Now HAS shifts (was empty before)
 
-#### 📅 Holiday Constraints
+####  Holiday Constraints
 
-- ❌ **Nov 5, 2025 is MAINTENANCE_WEEK holiday** - NO appointments/shifts allowed
-- ✅ **Nov 6-8, 2025** are valid working days with full shift coverage
+-  **Nov 5, 2025 is MAINTENANCE_WEEK holiday** - NO appointments/shifts allowed
+-  **Nov 6-8, 2025** are valid working days with full shift coverage
 
-#### 👨‍⚕️ Employee Shift Coverage (Nov 6-8, 2025)
+#### ‍️ Employee Shift Coverage (Nov 6-8, 2025)
 
 **Dentists:**
 
-- **EMP001 (Lê Anh Khoa)**: ✅ Nov 6 (morning+afternoon), Nov 7-8 (morning)
-- **EMP002 (Trịnh Công Thái)**: ✅ Nov 6 (morning), Nov 7-8 (morning/afternoon)
-- **EMP003 (Jimmy Donaldson)**: ✅ Nov 6 (afternoon), Nov 7 (morning)
-- **EMP004 (Junya Ota)**: ✅ Nov 6-7 (morning)
+- **EMP001 (Lê Anh Khoa)**:  Nov 6 (morning+afternoon), Nov 7-8 (morning)
+- **EMP002 (Trịnh Công Thái)**:  Nov 6 (morning), Nov 7-8 (morning/afternoon)
+- **EMP003 (Jimmy Donaldson)**:  Nov 6 (afternoon), Nov 7 (morning)
+- **EMP004 (Junya Ota)**:  Nov 6-7 (morning)
 
 **Nurses:**
 
-- **EMP007 (Y tá Nguyên)**: ✅ Full coverage Nov 6-8 (morning+afternoon)
-- **EMP008 (Y tá Khang)**: ✅ Full coverage Nov 6-8 (morning+afternoon)
+- **EMP007 (Y tá Nguyên)**:  Full coverage Nov 6-8 (morning+afternoon)
+- **EMP008 (Y tá Khang)**:  Full coverage Nov 6-8 (morning+afternoon)
 
-#### 📋 Available Test Appointments
+####  Available Test Appointments
 
 | Code                 | Date           | Time      | Patient     | Doctor     | Room     | Services              | Status        |
 | -------------------- | -------------- | --------- | ----------- | ---------- | -------- | --------------------- | ------------- |
@@ -3302,19 +3302,19 @@ INSERT INTO appointment_audit_logs (
 | **APT-20251107-002** | **2025-11-07** | **15:00** | **BN-1004** | **EMP002** | **P-02** | **GEN_EXAM**          | **SCHEDULED** |
 | **APT-20251108-001** | **2025-11-08** | **09:30** | **BN-1002** | **EMP001** | **P-01** | **GEN_EXAM+SCALING2** | **SCHEDULED** |
 
-#### 📦 Seed Data Resources
+####  Seed Data Resources
 
 **Employees**: EMP001-EMP012 (all have codes, only EMP001-EMP004 are doctors)
 **Rooms**: P-01, P-02, P-03, P-04-IMPLANT (use `roomCode`, NOT `room_id`)
 **Patients**: BN-1001, BN-1002, BN-1003, BN-1004
 **Services**: GEN_EXAM (id=1), SCALING_L1 (id=3), SCALING_L2 (id=4)
 
-#### ✅ Recommended Test Cases
+####  Recommended Test Cases
 
-- ✅ Reschedule **APT-20251106-001** to Nov 7 (tomorrow)
-  -- ✅ Reschedule **APT-20251106-002** to Nov 7 with different doctor (example: from EMP001 → EMP002)
-- ❌ Do NOT reschedule to Nov 5 (holiday - will fail)
-- ❌ Do NOT use Nov 9+ (no shifts defined - will fail)
+-  Reschedule **APT-20251106-001** to Nov 7 (tomorrow)
+  --  Reschedule **APT-20251106-002** to Nov 7 with different doctor (example: from EMP001 → EMP002)
+-  Do NOT reschedule to Nov 5 (holiday - will fail)
+-  Do NOT use Nov 9+ (no shifts defined - will fail)
 
 ---
 
@@ -3360,7 +3360,7 @@ Authorization: Bearer {jwt_token}
 
 | Parameter         | Type   | Required | Description                                                |
 | ----------------- | ------ | -------- | ---------------------------------------------------------- |
-| `appointmentCode` | string | ✅       | Code of appointment to reschedule (e.g., APT-20251105-001) |
+| `appointmentCode` | string |        | Code of appointment to reschedule (e.g., APT-20251105-001) |
 
 #### Request Body (JSON)
 
@@ -3377,12 +3377,12 @@ Authorization: Bearer {jwt_token}
 
 | Field                 | Type     | Required | Description                                       |
 | --------------------- | -------- | -------- | ------------------------------------------------- |
-| `newEmployeeCode`     | string   | ✅       | New primary doctor code (e.g., EMP001, EMP002)    |
-| `newRoomCode`         | string   | ✅       | New treatment room code (e.g., P-01, P-02)        |
-| `newStartTime`        | datetime | ✅       | New start time (ISO 8601: YYYY-MM-DDTHH:MM:SS)    |
-| `newParticipantCodes` | string[] | ❌       | Optional: New participants (e.g., EMP007, EMP008) |
-| `reasonCode`          | string   | ✅       | Reason for cancellation (old appointment)         |
-| `cancelNotes`         | string   | ❌       | Additional cancellation notes                     |
+| `newEmployeeCode`     | string   |        | New primary doctor code (e.g., EMP001, EMP002)    |
+| `newRoomCode`         | string   |        | New treatment room code (e.g., P-01, P-02)        |
+| `newStartTime`        | datetime |        | New start time (ISO 8601: YYYY-MM-DDTHH:MM:SS)    |
+| `newParticipantCodes` | string[] |        | Optional: New participants (e.g., EMP007, EMP008) |
+| `reasonCode`          | string   |        | Reason for cancellation (old appointment)         |
+| `cancelNotes`         | string   |        | Additional cancellation notes                     |
 
 **Business Rules:**
 
@@ -3540,11 +3540,11 @@ Authorization: Bearer {jwt_token}
 
 **Who Can Reschedule:**
 
-- ✅ **RECEPTIONIST** (has CREATE_APPOINTMENT)
-- ✅ **DENTIST** (has CREATE_APPOINTMENT)
-- ✅ **MANAGER** (has CREATE_APPOINTMENT)
-- ❌ **PATIENT** (typically does not have this permission - must request via staff)
-- ❌ **OBSERVER** (does not have this permission)
+-  **RECEPTIONIST** (has CREATE_APPOINTMENT)
+-  **DENTIST** (has CREATE_APPOINTMENT)
+-  **MANAGER** (has CREATE_APPOINTMENT)
+-  **PATIENT** (typically does not have this permission - must request via staff)
+-  **OBSERVER** (does not have this permission)
 
 **Security Check:**
 
@@ -3698,7 +3698,7 @@ Authorization: Bearer {jwt_token}
 
 #### Test 1: Success - Reschedule SCHEDULED appointment
 
-**✅ UPDATED: Using current date Nov 6, 2025 with NEW seed data**
+** UPDATED: Using current date Nov 6, 2025 with NEW seed data**
 
 **Prerequisites:**
 
@@ -3778,7 +3778,7 @@ ORDER BY created_at DESC;
 
 #### Test 2: Success - Reschedule with multiple services
 
-**✅ UPDATED: Using APT-20251106-002 (current date Nov 6)**
+** UPDATED: Using APT-20251106-002 (current date Nov 6)**
 
 **Prerequisites:**
 
@@ -4084,7 +4084,7 @@ Content-Type: application/json
 
 ### 9. Seed Data Validation & Testing Guide
 
-#### 📝 Pre-Restart Checklist
+####  Pre-Restart Checklist
 
 Before restarting application, verify seed data was updated correctly:
 
@@ -4097,7 +4097,7 @@ grep -c "APT-20251106" src/main/resources/db/dental-clinic-seed-data.sql
 # Expected: 2 (new appointments for Nov 6)
 ```
 
-#### ✅ Post-Restart Validation
+####  Post-Restart Validation
 
 After application starts successfully, run these SQL queries:
 
@@ -4173,8 +4173,8 @@ SELECT
     e.first_name || ' ' || e.last_name as name,
     array_agg(es.specialization_id ORDER BY es.specialization_id) as specializations,
     CASE WHEN 8 = ANY(array_agg(es.specialization_id))
-         THEN '✅ HAS STANDARD'
-         ELSE '❌ MISSING STANDARD'
+         THEN ' HAS STANDARD'
+         ELSE ' MISSING STANDARD'
     END as has_required_standard
 FROM employees e
 JOIN employee_specializations es ON e.employee_id = es.employee_id
@@ -4182,14 +4182,14 @@ WHERE e.employee_id IN (1,2,3,4)
 GROUP BY e.employee_code, e.first_name, e.last_name
 ORDER BY e.employee_id;
 
--- Expected: ALL doctors should show "✅ HAS STANDARD"
+-- Expected: ALL doctors should show " HAS STANDARD"
 -- EMP001: [1,3,4,8] - Chỉnh nha + Nha chu + Phục hồi + STANDARD
 -- EMP002: [2,7,8] - Nội nha + Thẩm mỹ + STANDARD
 -- EMP003: [6,8] - Trẻ em + STANDARD
 -- EMP004: [4,5,8] - Phục hồi + Phẫu thuật + STANDARD
 ```
 
-#### 🧪 API Testing Workflow
+####  API Testing Workflow
 
 **Step 1: Test GET appointments (verify JPA fix)**
 
@@ -4259,7 +4259,7 @@ ORDER BY created_at DESC;
 -- Expected: 2 rows (RESCHEDULE_SOURCE, RESCHEDULE_TARGET)
 ```
 
-#### ⚠️ Common Errors & Solutions
+#### ️ Common Errors & Solutions
 
 **Error 1: "Doctor EMP001 has no shift on 2025-11-09"**
 
@@ -4307,12 +4307,12 @@ ORDER BY created_at DESC;
 | ----------------------- | ------------------------ | ------------------- | ---------------------------- |
 | HTTP Method             | PATCH                    | PATCH               | POST                         |
 | Operation               | Update status            | Update times        | Cancel + Create              |
-| Changes doctor          | ❌ No                    | ❌ No               | ✅ Yes                       |
-| Changes room            | ❌ No                    | ❌ No (typically)   | ✅ Yes                       |
-| Changes patient         | ❌ No                    | ❌ No               | ❌ No                        |
-| Changes services        | ❌ No                    | ❌ No               | ❌ No (V1)                   |
-| Requires reasonCode     | ✅ Yes                   | ✅ Yes              | ✅ Yes                       |
-| Creates new appointment | ❌ No                    | ❌ No               | ✅ Yes                       |
+| Changes doctor          |  No                    |  No               |  Yes                       |
+| Changes room            |  No                    |  No (typically)   |  Yes                       |
+| Changes patient         |  No                    |  No               |  No                        |
+| Changes services        |  No                    |  No               |  No (V1)                   |
+| Requires reasonCode     |  Yes                   |  Yes              |  Yes                       |
+| Creates new appointment |  No                    |  No               |  Yes                       |
 | Database transactions   | 1 (UPDATE)               | 1 (UPDATE)          | 2 (UPDATE + INSERT)          |
 | Audit log count         | 1                        | 1                   | 2 (source + target)          |
 | Permission required     | CANCEL_APPOINTMENT       | DELAY_APPOINTMENT   | CREATE_APPOINTMENT           |
@@ -4395,7 +4395,7 @@ canReschedule(appointment: Appointment): boolean {
 
 ### 13. FINAL SUMMARY - API 3.7 Implementation
 
-#### ✅ Code Changes Completed
+####  Code Changes Completed
 
 **1. Backend Files Modified (5 files):**
 
@@ -4420,16 +4420,16 @@ canReschedule(appointment: Appointment): boolean {
 - Testing workflow with curl examples
 - Error troubleshooting guide
 
-#### 🎯 Key Features Implemented
+####  Key Features Implemented
 
-✅ **Atomic Transaction**: Cancel old + Create new in ONE database transaction
-✅ **Audit Trail**: 2 audit logs (RESCHEDULE_SOURCE + RESCHEDULE_TARGET) with link
-✅ **Service Preservation**: All services from old appointment transferred to new
-✅ **Validation**: Same as create appointment (shift, conflict, specialization checks)
-✅ **Permission**: CREATE_APPOINTMENT required (same as creating new appointment)
-✅ **Flexible Changes**: Can change doctor, room, time, participants in one operation
+ **Atomic Transaction**: Cancel old + Create new in ONE database transaction
+ **Audit Trail**: 2 audit logs (RESCHEDULE_SOURCE + RESCHEDULE_TARGET) with link
+ **Service Preservation**: All services from old appointment transferred to new
+ **Validation**: Same as create appointment (shift, conflict, specialization checks)
+ **Permission**: CREATE_APPOINTMENT required (same as creating new appointment)
+ **Flexible Changes**: Can change doctor, room, time, participants in one operation
 
-#### 📊 Seed Data Summary (Current: Nov 6, 2025)
+####  Seed Data Summary (Current: Nov 6, 2025)
 
 **Available Appointments for Testing:**
 
@@ -4446,11 +4446,11 @@ canReschedule(appointment: Appointment): boolean {
 
 **Constraints:**
 
-- ❌ Nov 5 is holiday - CANNOT create appointments
-- ❌ Nov 9+ no shifts - CANNOT reschedule beyond Nov 8
-- ✅ Nov 6-8 full coverage - CAN reschedule freely
+-  Nov 5 is holiday - CANNOT create appointments
+-  Nov 9+ no shifts - CANNOT reschedule beyond Nov 8
+-  Nov 6-8 full coverage - CAN reschedule freely
 
-#### 🚀 Quick Start Test
+####  Quick Start Test
 
 ```bash
 # 1. Start application (auto-loads seed data)
@@ -4478,7 +4478,7 @@ curl -X POST http://localhost:8080/api/v1/appointments/APT-20251106-001/reschedu
 # 4. Verify result (should return 200 OK with both appointments)
 ```
 
-#### 📋 Validation Checklist
+####  Validation Checklist
 
 Before deployment, verify:
 
@@ -4493,7 +4493,7 @@ Before deployment, verify:
 - [ ] Services transferred correctly to new appointment
 - [ ] Transaction rollback works (test with invalid data)
 
-#### 🎓 Lessons Learned
+####  Lessons Learned
 
 1. **Seed Data Matters**: Wrong test data wastes hours - always verify against real database
 2. **JPA vs SQL**: JPQL uses camelCase (appointmentStartTime), SQL uses snake_case (appointment_start_time)

@@ -1,20 +1,20 @@
-# 📅 Hướng Dẫn: Hệ Thống Cron Jobs Mới (P8 Architecture)
+#  Hướng Dẫn: Hệ Thống Cron Jobs Mới (P8 Architecture)
 
-## 🎯 Tổng Quan
+##  Tổng Quan
 
 Dự án đã được **CẢI TIẾN HOÀN TOÀN** hệ thống cron jobs:
 
-- ❌ **CŨ**: 2 jobs riêng biệt cho Fixed (Job 1) và Flex (Job 2)
-- ✅ **MỚI**: 1 job duy nhất đồng bộ cả 2 luồng (Job P8)
+-  **CŨ**: 2 jobs riêng biệt cho Fixed (Job 1) và Flex (Job 2)
+-  **MỚI**: 1 job duy nhất đồng bộ cả 2 luồng (Job P8)
 
 ---
 
-## 📊 Kiến Trúc Mới
+##  Kiến Trúc Mới
 
 ### **Job P8: UnifiedScheduleSyncJob** ⭐ (QUAN TRỌNG NHẤT)
 
 **File**: `UnifiedScheduleSyncJob.java`
-**Status**: ✅ **ENABLED** (đang chạy)
+**Status**:  **ENABLED** (đang chạy)
 **Cron**: `0 1 0 * * ?` (00:01 AM hàng ngày)
 
 #### Mục Đích:
@@ -96,12 +96,12 @@ Dự án đã được **CẢI TIẾN HOÀN TOÀN** hệ thống cron jobs:
 
 ---
 
-## 🚫 Jobs Đã DEPRECATED
+##  Jobs Đã DEPRECATED
 
-### **Job 1: MonthlyFullTimeScheduleJob** ❌
+### **Job 1: MonthlyFullTimeScheduleJob** 
 
 **File**: `MonthlyFullTimeScheduleJob.java`
-**Status**: ⛔ **DISABLED** (`// @Component`)
+**Status**:  **DISABLED** (`// @Component`)
 **Lý do**: Thay thế bởi `UnifiedScheduleSyncJob`
 
 **Cũ**:
@@ -118,10 +118,10 @@ Dự án đã được **CẢI TIẾN HOÀN TOÀN** hệ thống cron jobs:
 
 ---
 
-### **Job 2: WeeklyPartTimeScheduleJob** ❌
+### **Job 2: WeeklyPartTimeScheduleJob** 
 
 **File**: `WeeklyPartTimeScheduleJob.java`
-**Status**: ⛔ **DISABLED** (`// @Component`)
+**Status**:  **DISABLED** (`// @Component`)
 **Lý do**: Thay thế bởi `UnifiedScheduleSyncJob`
 
 **Cũ**:
@@ -138,12 +138,12 @@ Dự án đã được **CẢI TIẾN HOÀN TOÀN** hệ thống cron jobs:
 
 ---
 
-## ✅ Jobs VẪN HOẠT ĐỘNG
+##  Jobs VẪN HOẠT ĐỘNG
 
-### **Job 3: DailyRenewalDetectionJob** ✅
+### **Job 3: DailyRenewalDetectionJob** 
 
 **File**: `DailyRenewalDetectionJob.java`
-**Status**: ✅ **ENABLED**
+**Status**:  **ENABLED**
 **Cron**: `0 0 1 * * ?` (01:00 AM hàng ngày)
 
 **Mục đích**:
@@ -174,10 +174,10 @@ WHERE effective_to = (CURRENT_DATE + INTERVAL '7 days')
 
 ---
 
-### **Job 4: ExpirePendingRenewalsJob** ✅
+### **Job 4: ExpirePendingRenewalsJob** 
 
 **File**: `ExpirePendingRenewalsJob.java`
-**Status**: ✅ **ENABLED**
+**Status**:  **ENABLED**
 **Cron**: `0 30 1 * * ?` (01:30 AM hàng ngày)
 
 **Mục đích**:
@@ -204,10 +204,10 @@ WHERE status = 'PENDING_ACTION'
 
 ---
 
-### **Job 5: AnnualLeaveBalanceResetJob** ✅
+### **Job 5: AnnualLeaveBalanceResetJob** 
 
 **File**: `AnnualLeaveBalanceResetJob.java`
-**Status**: ✅ **ENABLED**
+**Status**:  **ENABLED**
 **Cron**: `0 0 0 1 1 ?` (00:00 AM, ngày 1/1 hàng năm)
 
 **Mục đích**:
@@ -217,13 +217,13 @@ WHERE status = 'PENDING_ACTION'
 
 ---
 
-## 📈 So Sánh Kiến Trúc
+##  So Sánh Kiến Trúc
 
 | Tiêu Chí           | Cũ (Job 1 & 2)                                    | Mới (Job P8)                  |
 | ------------------ | ------------------------------------------------- | ----------------------------- |
 | **Tần suất**       | Tháng 1 lần (Full-Time)<br>Tuần 1 lần (Part-Time) | **Hàng ngày**                 |
 | **Sync window**    | 30 ngày (Full-Time)<br>7 ngày (Part-Time)         | **14 ngày** (cả 2 loại)       |
-| **Self-healing**   | ❌ Không                                          | ✅ **Có** (24h auto-correct)  |
+| **Self-healing**   |  Không                                          |  **Có** (24h auto-correct)  |
 | **Admin đổi lịch** | Phải đợi job tiếp theo                            | **Tự động sync trong 1 ngày** |
 | **Độ phức tạp**    | 2 jobs riêng biệt                                 | **1 job duy nhất**            |
 | **Trùng lặp code** | Cao (copy logic)                                  | Thấp (reuse logic)            |
@@ -231,7 +231,7 @@ WHERE status = 'PENDING_ACTION'
 
 ---
 
-## 🔧 Cấu Hình Cron Timing
+##  Cấu Hình Cron Timing
 
 ### Thứ Tự Chạy Hàng Ngày:
 
@@ -250,7 +250,7 @@ WHERE status = 'PENDING_ACTION'
 
 ---
 
-## 🧪 Testing & Validation
+##  Testing & Validation
 
 ### Test Case 1: Self-Healing After Admin Change
 
@@ -274,7 +274,7 @@ WHERE employee_id = 5 AND work_date = '2025-11-10'
 -- Day 1 (00:05): New shifts created
 SELECT * FROM employee_shifts
 WHERE employee_id = 5 AND work_date = '2025-11-10'
--- Result: WKS_AFTERNOON_01 (NEW) ✅
+-- Result: WKS_AFTERNOON_01 (NEW) 
 ```
 
 ---
@@ -319,12 +319,12 @@ VALUES ('2025-12-25', 'Christmas', 2025);
 SELECT * FROM employee_shifts
 WHERE work_date = '2025-12-25'
   AND source IN ('BATCH_JOB', 'REGISTRATION_JOB')
--- Expected: 0 shifts (holiday skipped) ✅
+-- Expected: 0 shifts (holiday skipped) 
 ```
 
 ---
 
-## 🛠️ Troubleshooting
+## ️ Troubleshooting
 
 ### Vấn Đề 1: Job Không Chạy
 
@@ -413,7 +413,7 @@ UNIQUE (employee_id, work_date, work_shift_id);
 
 ---
 
-## 📝 Migration Guide (Nếu Bạn Có Data Cũ)
+##  Migration Guide (Nếu Bạn Có Data Cũ)
 
 ### Bước 1: Backup
 
@@ -462,7 +462,7 @@ docker exec -i postgres-dental psql -U root -d dental_clinic_db \
 
 ---
 
-## 🎯 Best Practices
+##  Best Practices
 
 ### 1. Monitor Job Execution
 
@@ -541,20 +541,20 @@ WHERE source IN ('BATCH_JOB', 'REGISTRATION_JOB')
 
 ---
 
-## 🚀 Kết Luận
+##  Kết Luận
 
 ### Những Gì Đã Thay Đổi:
 
-✅ **1 Job thay vì 2**: Giảm complexity
-✅ **Daily sync**: Self-healing trong 24h
-✅ **14-day window**: Balance giữa performance và coverage
-✅ **Clean architecture**: Dễ maintain, dễ extend
+ **1 Job thay vì 2**: Giảm complexity
+ **Daily sync**: Self-healing trong 24h
+ **14-day window**: Balance giữa performance và coverage
+ **Clean architecture**: Dễ maintain, dễ extend
 
 ### Lợi Ích Cho Team:
 
-👨‍💼 **Admin**: Đổi lịch nhân viên → Tự động sync ngày hôm sau
-👨‍⚕️ **Nhân viên**: Đăng ký ca part-time → Thấy lịch ngày hôm sau
-👨‍💻 **Developer**: Chỉ cần maintain 1 file duy nhất
-📊 **Business**: Dữ liệu luôn chính xác trong vòng 24h
+‍ **Admin**: Đổi lịch nhân viên → Tự động sync ngày hôm sau
+‍️ **Nhân viên**: Đăng ký ca part-time → Thấy lịch ngày hôm sau
+‍ **Developer**: Chỉ cần maintain 1 file duy nhất
+ **Business**: Dữ liệu luôn chính xác trong vòng 24h
 
-**No more manual fixes!** 🎉
+**No more manual fixes!** 

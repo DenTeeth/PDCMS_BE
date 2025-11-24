@@ -49,7 +49,7 @@ public class TreatmentPlanTemplateService {
          */
         @Transactional(readOnly = true)
         public GetTemplateDetailResponse getTemplateDetail(String templateCode) {
-                log.info("🔍 API 5.8: Fetching template detail for templateCode={}", templateCode);
+                log.info(" API 5.8: Fetching template detail for templateCode={}", templateCode);
 
                 // ============================================
                 // STEP 1: Validate Template Exists (P2 Fix)
@@ -82,7 +82,7 @@ public class TreatmentPlanTemplateService {
                 // ============================================
 
                 List<TemplatePhase> phases = template.getTemplatePhases();
-                log.info("📦 Template has {} phases", phases.size());
+                log.info(" Template has {} phases", phases.size());
 
                 // Track statistics for summary
                 int totalItemsInTemplate = 0;
@@ -163,7 +163,7 @@ public class TreatmentPlanTemplateService {
                                 .totalItemsInTemplate(totalItemsInTemplate)
                                 .build();
 
-                log.info("📊 Summary: {} phases, {} items (after filtering)",
+                log.info(" Summary: {} phases, {} items (after filtering)",
                                 summary.getTotalPhases(), summary.getTotalItemsInTemplate());
 
                 // ============================================

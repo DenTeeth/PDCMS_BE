@@ -1,6 +1,6 @@
-# 🔧 Hướng Dẫn Fix Lỗi Sequence Desync (PERMANENT SOLUTION)
+#  Hướng Dẫn Fix Lỗi Sequence Desync (PERMANENT SOLUTION)
 
-## 📋 Tổng Quan
+##  Tổng Quan
 
 **Vấn đề**: API POST `/api/v1/fixed-registrations` (và các API khác) bị lỗi:
 
@@ -17,13 +17,13 @@ Detail: Key (registration_id)=(2) already exists.
 
 **Ảnh hưởng**:
 
-- ❌ Bất kỳ developer/teammate nào chạy seed data đều gặp lỗi này
-- ❌ Ảnh hưởng đến nhiều tables: `fixed_shift_registrations`, `holiday_dates`, và các tables khác
-- ❌ Lỗi chỉ xuất hiện khi INSERT record MỚI (không phải khi test với data có sẵn)
+-  Bất kỳ developer/teammate nào chạy seed data đều gặp lỗi này
+-  Ảnh hưởng đến nhiều tables: `fixed_shift_registrations`, `holiday_dates`, và các tables khác
+-  Lỗi chỉ xuất hiện khi INSERT record MỚI (không phải khi test với data có sẵn)
 
 ---
 
-## ✅ Giải Pháp Đã Thực Hiện
+##  Giải Pháp Đã Thực Hiện
 
 ### 1️⃣ **Fixed Tables Thiếu Sequence Reset**
 
@@ -47,7 +47,7 @@ SELECT setval('holiday_dates_holiday_id_seq',
     false);
 ```
 
-### 2️⃣ **Tables Đã Có Sequence Reset** ✅
+### 2️⃣ **Tables Đã Có Sequence Reset** 
 
 Các tables sau **ĐÃ ĐÚNG** trong seed data:
 
@@ -69,7 +69,7 @@ Các tables sau dùng **VARCHAR primary key** (không dùng SERIAL/IDENTITY):
 
 ---
 
-## 🧪 Validation & Testing
+##  Validation & Testing
 
 ### **Script 1: Validate All Sequences**
 
@@ -84,13 +84,13 @@ docker exec -i postgres-dental psql -U root -d dental_clinic_db < validate_all_s
 **Output mong đợi**:
 
 ```
-1. base_roles:                     ✓ OK
-2. accounts:                       ✓ OK
-3. employees:                      ✓ OK
-4. patients:                       ✓ OK
-5. fixed_shift_registrations:      ✓ OK
-6. part_time_slots:                ✓ OK
-7. holiday_dates:                  ✓ OK
+1. base_roles:                      OK
+2. accounts:                        OK
+3. employees:                       OK
+4. patients:                        OK
+5. fixed_shift_registrations:       OK
+6. part_time_slots:                 OK
+7. holiday_dates:                   OK
 ```
 
 ### **Script 2: Fix Sequence Desync (Nếu Cần)**
@@ -105,16 +105,16 @@ docker exec -i postgres-dental psql -U root -d dental_clinic_db < fix_sequence_i
 
 ---
 
-## 📦 Áp Dụng Fix Cho Team
+##  Áp Dụng Fix Cho Team
 
 ### **Option 1: Fresh Database Setup** (RECOMMENDED)
 
 Nếu teammate setup database mới:
 
-1. ✅ Pull code mới nhất (đã có seed data được fix)
-2. ✅ Run Docker Compose: `docker-compose up -d`
-3. ✅ Seed data sẽ tự động chạy với sequence resets
-4. ✅ KHÔNG GẶP LỖI
+1.  Pull code mới nhất (đã có seed data được fix)
+2.  Run Docker Compose: `docker-compose up -d`
+3.  Seed data sẽ tự động chạy với sequence resets
+4.  KHÔNG GẶP LỖI
 
 ### **Option 2: Existing Database**
 
@@ -144,7 +144,7 @@ docker exec -i postgres-dental psql -U root -d dental_clinic_db < validate_all_s
 
 ---
 
-## 🚨 Khi Nào Gặp Lỗi Này?
+##  Khi Nào Gặp Lỗi Này?
 
 ### Triệu chứng:
 
@@ -173,26 +173,26 @@ org.springframework.dao.DataIntegrityViolationException:
 
 ---
 
-## 📊 Table Summary
+##  Table Summary
 
 | Table                          | Primary Key Type | Seed Data IDs | Sequence Reset | Status       |
 | ------------------------------ | ---------------- | ------------- | -------------- | ------------ |
-| `base_roles`                   | SERIAL           | 1-3           | ✅ Line 599    | ✅ OK        |
-| `accounts`                     | SERIAL           | 1-21          | ✅ Line 600    | ✅ OK        |
-| `employees`                    | SERIAL           | 1-11          | ✅ Line 601    | ✅ OK        |
-| `patients`                     | SERIAL           | 1-3           | ✅ Line 602    | ✅ OK        |
-| `specializations`              | INTEGER (manual) | 1-7           | ❌ N/A         | ✅ OK        |
-| `fixed_shift_registrations`    | BIGSERIAL        | 1-7           | ✅ **ADDED**   | ✅ **FIXED** |
-| `part_time_slots`              | BIGSERIAL        | 1-14          | ✅ Line 940+   | ✅ OK        |
-| `holiday_dates`                | BIGSERIAL        | 1-3           | ✅ **ADDED**   | ✅ **FIXED** |
-| `employee_shift_registrations` | VARCHAR          | ESR...        | ❌ N/A         | ✅ OK        |
-| `time_off_requests`            | VARCHAR          | TOR...        | ❌ N/A         | ✅ OK        |
-| `work_shifts`                  | VARCHAR          | WKS\_...      | ❌ N/A         | ✅ OK        |
-| `time_off_types`               | VARCHAR          | TTF\_...      | ❌ N/A         | ✅ OK        |
+| `base_roles`                   | SERIAL           | 1-3           |  Line 599    |  OK        |
+| `accounts`                     | SERIAL           | 1-21          |  Line 600    |  OK        |
+| `employees`                    | SERIAL           | 1-11          |  Line 601    |  OK        |
+| `patients`                     | SERIAL           | 1-3           |  Line 602    |  OK        |
+| `specializations`              | INTEGER (manual) | 1-7           |  N/A         |  OK        |
+| `fixed_shift_registrations`    | BIGSERIAL        | 1-7           |  **ADDED**   |  **FIXED** |
+| `part_time_slots`              | BIGSERIAL        | 1-14          |  Line 940+   |  OK        |
+| `holiday_dates`                | BIGSERIAL        | 1-3           |  **ADDED**   |  **FIXED** |
+| `employee_shift_registrations` | VARCHAR          | ESR...        |  N/A         |  OK        |
+| `time_off_requests`            | VARCHAR          | TOR...        |  N/A         |  OK        |
+| `work_shifts`                  | VARCHAR          | WKS\_...      |  N/A         |  OK        |
+| `time_off_types`               | VARCHAR          | TTF\_...      |  N/A         |  OK        |
 
 ---
 
-## 🔍 Root Cause Analysis
+##  Root Cause Analysis
 
 ### Before Fix:
 
@@ -202,7 +202,7 @@ INSERT INTO fixed_shift_registrations (registration_id, ...)
 VALUES
 (1, ...), (2, ...), (3, ...), ..., (7, ...);
 
--- ❌ THIẾU: Sequence reset
+--  THIẾU: Sequence reset
 -- → Sequence vẫn ở giá trị mặc định = 1
 -- → Lần INSERT tiếp theo: Hibernate lấy nextval() = 1 → CONFLICT với ID=1 đã tồn tại
 ```
@@ -215,53 +215,53 @@ INSERT INTO fixed_shift_registrations (registration_id, ...)
 VALUES
 (1, ...), (2, ...), (3, ...), ..., (7, ...);
 
--- ✅ ADDED: Reset sequence về max_id + 1
+--  ADDED: Reset sequence về max_id + 1
 SELECT setval('fixed_shift_registrations_registration_id_seq',
     COALESCE((SELECT MAX(registration_id) FROM fixed_shift_registrations), 0) + 1,
     false);
 -- → Sequence = 8
--- → Lần INSERT tiếp theo: Hibernate lấy nextval() = 8 → NO CONFLICT ✅
+-- → Lần INSERT tiếp theo: Hibernate lấy nextval() = 8 → NO CONFLICT 
 ```
 
 ---
 
-## 📞 Contact & Support
+##  Contact & Support
 
 **Nếu bạn vẫn gặp lỗi sau khi áp dụng fix:**
 
-1. ✅ Verify bạn đã pull code mới nhất
-2. ✅ Run validation script: `validate_all_sequences.sql`
-3. ✅ Check sequence values:
+1.  Verify bạn đã pull code mới nhất
+2.  Run validation script: `validate_all_sequences.sql`
+3.  Check sequence values:
    ```sql
    SELECT
      MAX(registration_id) as max_id,
      nextval('fixed_shift_registrations_registration_id_seq') as next_seq
    FROM fixed_shift_registrations;
    ```
-4. ✅ Nếu `next_seq <= max_id` → Run `fix_sequence_issue.sql`
+4.  Nếu `next_seq <= max_id` → Run `fix_sequence_issue.sql`
 
 **Error Documentation**: Xem file `FIXED_REGISTRATION_ERROR_GUIDE.md` để biết tất cả error codes có thể gặp.
 
 ---
 
-## 📅 Change Log
+##  Change Log
 
 | Date       | Author       | Change                                                    |
 | ---------- | ------------ | --------------------------------------------------------- |
-| 2025-01-31 | Backend Team | ✅ Added sequence reset for `fixed_shift_registrations`   |
-| 2025-01-31 | Backend Team | ✅ Added sequence reset for `holiday_dates`               |
-| 2025-01-31 | Backend Team | ✅ Created validation script `validate_all_sequences.sql` |
-| 2025-01-31 | Backend Team | ✅ Updated `FIXED_REGISTRATION_ERROR_GUIDE.md`            |
+| 2025-01-31 | Backend Team |  Added sequence reset for `fixed_shift_registrations`   |
+| 2025-01-31 | Backend Team |  Added sequence reset for `holiday_dates`               |
+| 2025-01-31 | Backend Team |  Created validation script `validate_all_sequences.sql` |
+| 2025-01-31 | Backend Team |  Updated `FIXED_REGISTRATION_ERROR_GUIDE.md`            |
 
 ---
 
-## ✨ Kết Luận
+##  Kết Luận
 
 **Fix này là PERMANENT SOLUTION** - chỉ cần pull code và seed data mới là OK!
 
-✅ **Teammates không cần làm gì thêm** nếu setup database mới
-✅ **Seed data đã được fix tận gốc** - không còn sequence desync
-✅ **Validation script** có sẵn để check nếu nghi ngờ có vấn đề
-✅ **Documentation đầy đủ** cho Frontend team
+ **Teammates không cần làm gì thêm** nếu setup database mới
+ **Seed data đã được fix tận gốc** - không còn sequence desync
+ **Validation script** có sẵn để check nếu nghi ngờ có vấn đề
+ **Documentation đầy đủ** cho Frontend team
 
-**No more "duplicate key value" errors!** 🎉
+**No more "duplicate key value" errors!** 

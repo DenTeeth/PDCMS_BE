@@ -124,9 +124,9 @@ Authorization: Bearer <token>
 
 **Validation:**
 
-- ✅ Returns only active types (isActive=true)
-- ✅ Sorted by typeName by default
-- ✅ All required fields are present
+-  Returns only active types (isActive=true)
+-  Sorted by typeName by default
+-  All required fields are present
 
 ---
 
@@ -247,10 +247,10 @@ Content-Type: application/json
 
 **Validation:**
 
-- ✅ Returns 201 Created
-- ✅ typeId auto-generated (TOT + sequence)
-- ✅ createdAt and updatedAt automatically set
-- ✅ All fields saved correctly
+-  Returns 201 Created
+-  typeId auto-generated (TOT + sequence)
+-  createdAt and updatedAt automatically set
+-  All fields saved correctly
 
 ---
 
@@ -290,8 +290,8 @@ Content-Type: application/json
 
 **Validation:**
 
-- ✅ requiresBalance = true
-- ✅ defaultDaysPerYear can be 0 (accumulated through overtime)
+-  requiresBalance = true
+-  defaultDaysPerYear can be 0 (accumulated through overtime)
 
 ---
 
@@ -441,9 +441,9 @@ Content-Type: application/json
 
 **Validation:**
 
-- ✅ All fields updated
-- ✅ updatedAt timestamp changed
-- ✅ typeId remains unchanged
+-  All fields updated
+-  updatedAt timestamp changed
+-  typeId remains unchanged
 
 ---
 
@@ -473,9 +473,9 @@ Content-Type: application/json
 
 **Validation:**
 
-- ✅ requiresBalance changed to true
-- ✅ defaultDaysPerYear set to 10.0
-- ⚠️ Warning: This may affect existing requests
+-  requiresBalance changed to true
+-  defaultDaysPerYear set to 10.0
+- ️ Warning: This may affect existing requests
 
 ---
 
@@ -572,9 +572,9 @@ Authorization: Bearer <admin_token>
 
 **Validation:**
 
-- ✅ isActive set to false (soft delete)
-- ✅ Type still exists in database
-- ✅ Will not appear in active type listings
+-  isActive set to false (soft delete)
+-  Type still exists in database
+-  Will not appear in active type listings
 
 ---
 
@@ -601,8 +601,8 @@ Authorization: Bearer <admin_token>
 
 **Validation:**
 
-- ✅ Type with active PENDING requests cannot be deleted
-- ✅ Protects data integrity
+-  Type with active PENDING requests cannot be deleted
+-  Protects data integrity
 
 ---
 
@@ -655,8 +655,8 @@ Authorization: Bearer <admin_token>
 
 **Validation:**
 
-- ✅ isActive changed from false to true
-- ✅ Type appears in active listings again
+-  isActive changed from false to true
+-  Type appears in active listings again
 
 ---
 
@@ -688,8 +688,8 @@ Authorization: Bearer <token>
 
 **Validation:**
 
-- ✅ Returns only types with requiresBalance=true
-- ✅ Useful for balance initialization
+-  Returns only types with requiresBalance=true
+-  Useful for balance initialization
 
 ---
 

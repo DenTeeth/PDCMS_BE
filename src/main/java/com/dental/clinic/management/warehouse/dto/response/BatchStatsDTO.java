@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * 📊 Batch Stats DTO - API 6.2
+ *  Batch Stats DTO - API 6.2
  * Thống kê tổng quan về các lô hàng của một item
  * (Operational Metrics - No Financial Data)
  */
