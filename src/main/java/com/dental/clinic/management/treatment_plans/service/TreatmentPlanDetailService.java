@@ -280,17 +280,18 @@ public class TreatmentPlanDetailService {
                 if (!employee.getEmployeeCode().equals(planCreatorEmployeeCode)) {
                         // Check if user is primary doctor of appointment linked to this plan
                         boolean isPrimaryDoctor = isPrimaryDoctorOfLinkedAppointment(
-                                employee.getEmployeeId(), firstRow.getPlanId());
-                        
+                                        employee.getEmployeeId(), firstRow.getPlanId());
+
                         if (isPrimaryDoctor) {
                                 log.info("Access granted: Employee {} is primary doctor of appointment linked to plan {}",
-                                        employee.getEmployeeCode(), firstRow.getPlanCode());
+                                                employee.getEmployeeCode(), firstRow.getPlanCode());
                                 return; // Allow access
                         }
-                        
+
                         log.warn("Access denied: Employee {} (code={}) attempting to view plan created by employee {} (not primary doctor of linked appointment)",
                                         employee.getEmployeeId(), employee.getEmployeeCode(), planCreatorEmployeeCode);
-                        throw new AccessDeniedException("You can only view treatment plans that you created or that are linked to your appointments");
+                        throw new AccessDeniedException(
+                                        "You can only view treatment plans that you created or that are linked to your appointments");
                 }
 
                 log.info("EMPLOYEE createdBy verification passed: Employee {} viewing plan created by {}",
@@ -298,15 +299,18 @@ public class TreatmentPlanDetailService {
         }
 
         /**
-         * Check if employee is primary doctor of any appointment linked to treatment plan.
-         * 
+         * Check if employee is primary doctor of any appointment linked to treatment
+         * plan.
+         *
          * Query logic:
          * 1. Find appointments where employeeId = given employeeId
-         * 2. Check if any of those appointments are linked to plan items from this treatment plan
-         * 3. Via: appointments → appointment_plan_items → patient_plan_items → phases → treatment_plan
-         * 
+         * 2. Check if any of those appointments are linked to plan items from this
+         * treatment plan
+         * 3. Via: appointments → appointment_plan_items → patient_plan_items → phases →
+         * treatment_plan
+         *
          * @param employeeId Employee ID to check
-         * @param planId Treatment plan ID
+         * @param planId     Treatment plan ID
          * @return true if employee is primary doctor of at least one linked appointment
          */
         private boolean isPrimaryDoctorOfLinkedAppointment(Integer employeeId, Long planId) {
@@ -316,14 +320,14 @@ public class TreatmentPlanDetailService {
                         // 1. appointment.employeeId = employeeId (primary doctor)
                         // 2. appointment_plan_items exists linking to items from this plan
                         long count = appointmentRepository.countByEmployeeIdAndLinkedToPlan(employeeId, planId);
-                        
+
                         log.debug("Found {} appointments where employee {} is primary doctor linked to plan {}",
-                                count, employeeId, planId);
-                        
+                                        count, employeeId, planId);
+
                         return count > 0;
                 } catch (Exception e) {
                         log.error("Error checking if employee {} is primary doctor of appointments linked to plan {}: {}",
-                                employeeId, planId, e.getMessage());
+                                        employeeId, planId, e.getMessage());
                         return false; // Fail-safe: deny access on error
                 }
         }
@@ -473,6 +477,8 @@ public class TreatmentPlanDetailService {
                                                                 .status(dto.getAppointmentStatus() != null
                                                                                 ? dto.getAppointmentStatus().name()
                                                                                 : null)
+                                                                .notes(dto.getAppointmentNotes()) // Include notes from
+                                                                                                  // dentist/assistant
                                                                 .build())
                                                 .distinct() // In case of duplicate appointments
                                                 .collect(Collectors.toList());
@@ -610,9 +616,11 @@ public class TreatmentPlanDetailService {
 
         /**
          * Add approval metadata to response if plan has been approved or rejected.
-         * Fetches plan entity to get approvedBy, approvedAt, and rejectionReason (notes).
+         * Fetches plan entity to get approvedBy, approvedAt, and rejectionReason
+         * (notes).
          *
-         * FE Issue #2 Fix: Ensures notes are always included in approvalMetadata response.
+         * FE Issue #2 Fix: Ensures notes are always included in approvalMetadata
+         * response.
          *
          * @param response    Response to add metadata to
          * @param patientCode Patient code (unused, kept for consistency)
@@ -659,11 +667,13 @@ public class TreatmentPlanDetailService {
 
                 return authentication.getAuthorities().stream()
                                 .map(GrantedAuthority::getAuthority)
-                                .anyMatch(auth -> auth.equals("ROLE_DENTIST") || auth.equals(AuthoritiesConstants.DOCTOR));
+                                .anyMatch(auth -> auth.equals("ROLE_DENTIST")
+                                                || auth.equals(AuthoritiesConstants.DOCTOR));
         }
 
         /**
-         * Hide all price-related fields from treatment plan detail response for doctors.
+         * Hide all price-related fields from treatment plan detail response for
+         * doctors.
          * Task #3: Vietnamese FE feedback - "bác sĩ ko xem giá trong treatment plan"
          *
          * Hides:

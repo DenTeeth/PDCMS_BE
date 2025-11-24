@@ -81,4 +81,5 @@ public class TreatmentPlanDetailDTO {
     private String appointmentCode; // NULL if not linked yet
     private LocalDateTime appointmentScheduledDate;
     private AppointmentStatus appointmentStatus; // NULL if not linked (ENUM)
+    private String appointmentNotes; // Notes from dentist/assistant when completing appointment
 }

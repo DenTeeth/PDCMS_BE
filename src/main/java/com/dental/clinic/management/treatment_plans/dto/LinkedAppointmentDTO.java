@@ -32,4 +32,10 @@ public class LinkedAppointmentDTO {
      * Appointment status (SCHEDULED, COMPLETED, etc.)
      */
     private String status;
+
+    /**
+     * Notes from dentist/assistant when completing appointment.
+     * Used to record treatment observations, patient conditions, etc.
+     */
+    private String notes;
 }

@@ -215,6 +215,7 @@ public class TreatmentPlanItemService {
                         .code((String) apt.get("code"))
                         .scheduledDate((LocalDateTime) apt.get("scheduled_date"))
                         .status((String) apt.get("status"))
+                        .notes((String) apt.get("notes")) // Include notes from dentist/assistant
                         .build())
                 .toList();
 
@@ -281,7 +282,7 @@ public class TreatmentPlanItemService {
     @SuppressWarnings("unchecked")
     private List<Map<String, Object>> findAppointmentsForItem(Long itemId) {
         String sql = """
-                SELECT a.appointment_code, a.scheduled_date, a.status
+                SELECT a.appointment_code, a.scheduled_date, a.status, a.notes
                 FROM appointments a
                 JOIN appointment_plan_items api ON a.appointment_id = api.appointment_id
                 WHERE api.item_id = :itemId
@@ -299,6 +300,7 @@ public class TreatmentPlanItemService {
                     map.put("code", row[0]);
                     map.put("scheduled_date", row[1]);
                     map.put("status", row[2]);
+                    map.put("notes", row[3]); // Include notes from appointment
                     return map;
                 })
                 .toList();
