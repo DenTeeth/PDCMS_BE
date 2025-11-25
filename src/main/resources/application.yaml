@@ -25,8 +25,8 @@ spring:
   # SQL Init Configuration - Load seed data on startup
   sql:
     init:
-      mode: always
-      data-locations: classpath:db/dental-clinic-seed-data.sql
+      mode: never
+      # data-locations: classpath:db/dental-clinic-seed-data.sql
       encoding: UTF-8
       continue-on-error: false
 

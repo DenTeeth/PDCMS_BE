@@ -114,7 +114,7 @@ class ServiceControllerTest {
                 // Given
                 Page<ServiceResponse> page = new PageImpl<>(Arrays.asList(serviceResponse1, serviceResponse2));
                 when(serviceService.getAllServices(anyInt(), anyInt(), anyString(), anyString(),
-                                isNull(), isNull(), isNull())).thenReturn(page);
+                                isNull(), isNull(), isNull(), isNull())).thenReturn(page);
 
                 // When & Then
                 mockMvc.perform(get("/api/v1/services")
@@ -130,7 +130,7 @@ class ServiceControllerTest {
                                 .andExpect(jsonPath("$.content[0].serviceName", containsString("Cạo vôi")))
                                 .andExpect(jsonPath("$.content[1].serviceCode", is("CROWN_TITAN")));
 
-                verify(serviceService, times(1)).getAllServices(0, 10, "serviceName", "ASC", null, null, null);
+                verify(serviceService, times(1)).getAllServices(0, 10, "serviceName", "ASC", null, null, null, null);
         }
 
         @Test
@@ -140,7 +140,7 @@ class ServiceControllerTest {
                 // Given
                 Page<ServiceResponse> page = new PageImpl<>(List.of(serviceResponse2));
                 when(serviceService.getAllServices(anyInt(), anyInt(), anyString(), anyString(),
-                                eq(true), eq(3), eq("titan"))).thenReturn(page);
+                                eq(true), isNull(), eq(3), eq("titan"))).thenReturn(page);
 
                 // When & Then
                 mockMvc.perform(get("/api/v1/services")
@@ -156,7 +156,7 @@ class ServiceControllerTest {
                                 .andExpect(jsonPath("$.content[0].specializationId", is(3)))
                                 .andExpect(jsonPath("$.content[0].serviceName", containsString("Titan")));
 
-                verify(serviceService, times(1)).getAllServices(0, 10, "serviceName", "ASC", true, 3, "titan");
+                verify(serviceService, times(1)).getAllServices(0, 10, "serviceName", "ASC", true, null, 3, "titan");
         }
 
         @Test
