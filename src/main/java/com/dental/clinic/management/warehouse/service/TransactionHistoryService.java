@@ -31,9 +31,10 @@ import java.util.stream.Collectors;
 
 /**
  * API 6.6: Transaction History Service
- * 
+ *
  * Features:
- * - Comprehensive filtering (type, status, payment, date range, supplier, appointment)
+ * - Comprehensive filtering (type, status, payment, date range, supplier,
+ * appointment)
  * - RBAC-aware data masking (VIEW_COST permission)
  * - Aggregated statistics
  * - Pagination & sorting
@@ -48,7 +49,7 @@ public class TransactionHistoryService {
 
     /**
      * Get transaction history with advanced filtering
-     * 
+     *
      * @param request Filter criteria
      * @return Paginated transaction history with stats
      */
@@ -103,8 +104,7 @@ public class TransactionHistoryService {
             if (request.getFromDate().isAfter(request.getToDate())) {
                 throw new BadRequestException(
                         "INVALID_DATE_RANGE",
-                        "fromDate cannot be after toDate"
-                );
+                        "fromDate cannot be after toDate");
             }
         }
 
@@ -168,7 +168,7 @@ public class TransactionHistoryService {
         if (tx.getTransactionType() == TransactionType.EXPORT && tx.getRelatedAppointment() != null) {
             dto.setRelatedAppointmentId(tx.getRelatedAppointment().getAppointmentId().longValue());
             dto.setRelatedAppointmentCode(tx.getRelatedAppointment().getAppointmentCode());
-            
+
             // Get patient name via patientId
             Integer patientId = tx.getRelatedAppointment().getPatientId();
             if (patientId != null) {
@@ -208,8 +208,7 @@ public class TransactionHistoryService {
 
         // Count pending approval
         Specification<StorageTransaction> pendingSpec = spec.and(
-                (root, query, cb) -> cb.equal(root.get("approvalStatus"), TransactionStatus.PENDING_APPROVAL)
-        );
+                (root, query, cb) -> cb.equal(root.get("approvalStatus"), TransactionStatus.PENDING_APPROVAL));
         long pendingCount = transactionRepository.count(pendingSpec);
         stats.setPendingApprovalCount((int) pendingCount);
 

@@ -25,12 +25,10 @@ public class TransactionHistorySpecification {
                 String searchPattern = "%" + request.getSearch().toLowerCase() + "%";
                 Predicate codePredicate = criteriaBuilder.like(
                         criteriaBuilder.lower(root.get("transactionCode")),
-                        searchPattern
-                );
+                        searchPattern);
                 Predicate invoicePredicate = criteriaBuilder.like(
                         criteriaBuilder.lower(root.get("invoiceNumber")),
-                        searchPattern
-                );
+                        searchPattern);
                 predicates.add(criteriaBuilder.or(codePredicate, invoicePredicate));
             }
 
@@ -68,16 +66,14 @@ public class TransactionHistorySpecification {
             if (request.getAppointmentId() != null) {
                 predicates.add(criteriaBuilder.equal(
                         root.get("relatedAppointment").get("appointmentId"),
-                        request.getAppointmentId()
-                ));
+                        request.getAppointmentId()));
             }
 
             // 8. Filter by creator (created_by employee_id)
             if (request.getCreatedBy() != null) {
                 predicates.add(criteriaBuilder.equal(
                         root.get("createdBy").get("employeeId"),
-                        request.getCreatedBy()
-                ));
+                        request.getCreatedBy()));
             }
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));

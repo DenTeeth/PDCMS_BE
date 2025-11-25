@@ -3281,9 +3281,9 @@ SELECT setval('suppliers_supplier_id_seq', (SELECT COALESCE(MAX(supplier_id), 0)
 -- This section only contains INSERT statements for test data
 -- =============================================
 -- Transaction 1: IMPORT - APPROVED, PAID (Da thanh toan day du)
-INSERT INTO storage_transactions (transaction_code, transaction_type, transaction_date, invoice_number, total_value, created_by, supplier_id, 
+INSERT INTO storage_transactions (transaction_code, transaction_type, transaction_date, invoice_number, total_value, created_by, supplier_id,
     payment_status, paid_amount, remaining_debt, due_date, approval_status, approved_by, approved_at, notes, created_at)
-VALUES ('IMP-2024-001', 'IMPORT', NOW() - INTERVAL '15 days', 'INV-20240101-001', 15000000.00, 6, 1, 
+VALUES ('IMP-2024-001', 'IMPORT', NOW() - INTERVAL '15 days', 'INV-20240101-001', 15000000.00, 6, 1,
     'PAID', 15000000.00, 0.00, NULL, 'APPROVED', 3, NOW() - INTERVAL '10 days', 'Nhap vat tu nha khoa thang 1', NOW() - INTERVAL '15 days');
 
 -- Transaction 2: IMPORT - APPROVED, PARTIAL payment (Chua thanh toan het)

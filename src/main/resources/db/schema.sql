@@ -435,18 +435,18 @@ CREATE TABLE storage_transactions (
     description TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP,
-    
+
     -- V22: Payment tracking fields (for Accountants)
     payment_status payment_status,
     paid_amount DECIMAL(15,2),
     remaining_debt DECIMAL(15,2),
     due_date DATE,
-    
+
     -- V22: Approval workflow fields (for Managers)
     approval_status transaction_status,
     approved_by_id INTEGER,
     approved_at TIMESTAMP,
-    
+
     -- V22: Appointment linking field (for Doctors)
     related_appointment_id INTEGER,
 
