@@ -4,6 +4,7 @@ import com.dental.clinic.management.warehouse.domain.StorageTransaction;
 // import com.dental.clinic.management.warehouse.dto.response.SuppliedItemResponse;
 import com.dental.clinic.management.warehouse.enums.TransactionType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -13,7 +14,8 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface StorageTransactionRepository extends JpaRepository<StorageTransaction, Long> {
+public interface StorageTransactionRepository extends JpaRepository<StorageTransaction, Long>,
+        JpaSpecificationExecutor<StorageTransaction> {
 
         Optional<StorageTransaction> findByTransactionCode(String transactionCode);
 

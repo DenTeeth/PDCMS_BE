@@ -425,6 +425,17 @@ VALUES
 ON CONFLICT (permission_id) DO NOTHING;
 
 
+-- MODULE 14: WAREHOUSE (Quản lý kho vật tư API 6.6)
+INSERT INTO permissions (permission_id, permission_name, module, description, display_order, parent_permission_id, is_active, created_at)
+VALUES
+('VIEW_WAREHOUSE', 'VIEW_WAREHOUSE', 'WAREHOUSE', 'Xem danh sách giao dịch kho', 270, NULL, TRUE, NOW()),
+('VIEW_COST', 'VIEW_COST', 'WAREHOUSE', 'Xem thông tin tài chính (giá trị, công nợ, thanh toán)', 271, NULL, TRUE, NOW()),
+('IMPORT_ITEMS', 'IMPORT_ITEMS', 'WAREHOUSE', 'Tạo phiếu nhập kho', 272, NULL, TRUE, NOW()),
+('EXPORT_ITEMS', 'EXPORT_ITEMS', 'WAREHOUSE', 'Tạo phiếu xuất kho', 273, NULL, TRUE, NOW()),
+('APPROVE_TRANSACTION', 'APPROVE_TRANSACTION', 'WAREHOUSE', 'Duyệt/Từ chối phiếu nhập xuất kho', 274, NULL, TRUE, NOW())
+ON CONFLICT (permission_id) DO NOTHING;
+
+
 -- ============================================
 -- BƯỚC 4: PHÂN QUYỀN CHO CÁC VAI TRÒ
 -- ============================================
@@ -510,7 +521,9 @@ VALUES
 ('ROLE_RECEPTIONIST', 'CANCEL_TIME_OFF_OWN'), ('ROLE_RECEPTIONIST', 'CANCEL_OVERTIME_OWN'),
 ('ROLE_RECEPTIONIST', 'VIEW_HOLIDAY'),
 -- ✅ NEW: Treatment Plan permissions
-('ROLE_RECEPTIONIST', 'VIEW_TREATMENT_PLAN_ALL') -- Can view all patients' treatment plans (read-only)
+('ROLE_RECEPTIONIST', 'VIEW_TREATMENT_PLAN_ALL'), -- Can view all patients' treatment plans (read-only)
+-- WAREHOUSE (V22: Receptionist can view transaction history - API 6.6)
+('ROLE_RECEPTIONIST', 'VIEW_WAREHOUSE') -- Can view basic transaction history (no cost data)
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
@@ -568,7 +581,11 @@ VALUES
 ('ROLE_MANAGER', 'CREATE_TREATMENT_PLAN'), -- Can create treatment plans
 ('ROLE_MANAGER', 'UPDATE_TREATMENT_PLAN'), -- Can update treatment plans
 ('ROLE_MANAGER', 'DELETE_TREATMENT_PLAN'), -- Can delete treatment plans
-('ROLE_MANAGER', 'APPROVE_TREATMENT_PLAN') -- ✅ V20: Can approve/reject treatment plans (API 5.9)
+('ROLE_MANAGER', 'APPROVE_TREATMENT_PLAN'), -- ✅ V20: Can approve/reject treatment plans (API 5.9)
+-- WAREHOUSE (V22: Transaction history management - API 6.6)
+('ROLE_MANAGER', 'VIEW_WAREHOUSE'), -- Can view transaction history
+('ROLE_MANAGER', 'VIEW_COST'), -- Can view financial data (cost, payment info)
+('ROLE_MANAGER', 'APPROVE_TRANSACTION') -- Can approve/reject transactions
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
@@ -578,9 +595,18 @@ VALUES
 ('ROLE_ACCOUNTANT', 'VIEW_LEAVE_OWN'), ('ROLE_ACCOUNTANT', 'CREATE_TIME_OFF'), ('ROLE_ACCOUNTANT', 'CREATE_OVERTIME'),
 ('ROLE_ACCOUNTANT', 'CANCEL_TIME_OFF_OWN'), ('ROLE_ACCOUNTANT', 'CANCEL_OVERTIME_OWN'),
 ('ROLE_ACCOUNTANT', 'VIEW_HOLIDAY'),
+-- WAREHOUSE (V22: Accountant can view transactions and financial data - API 6.6)
+('ROLE_ACCOUNTANT', 'VIEW_WAREHOUSE'), -- Can view transaction history
+('ROLE_ACCOUNTANT', 'VIEW_COST'), -- Can view financial data (cost, payment info)
 ('ROLE_INVENTORY_MANAGER', 'VIEW_LEAVE_OWN'), ('ROLE_INVENTORY_MANAGER', 'CREATE_TIME_OFF'), ('ROLE_INVENTORY_MANAGER', 'CREATE_OVERTIME'),
 ('ROLE_INVENTORY_MANAGER', 'CANCEL_TIME_OFF_OWN'), ('ROLE_INVENTORY_MANAGER', 'CANCEL_OVERTIME_OWN'),
-('ROLE_INVENTORY_MANAGER', 'VIEW_HOLIDAY')
+('ROLE_INVENTORY_MANAGER', 'VIEW_HOLIDAY'),
+-- WAREHOUSE (V22: Full warehouse management - API 6.6)
+('ROLE_INVENTORY_MANAGER', 'VIEW_WAREHOUSE'), -- Can view transaction history
+('ROLE_INVENTORY_MANAGER', 'VIEW_COST'), -- Can view financial data
+('ROLE_INVENTORY_MANAGER', 'IMPORT_ITEMS'), -- Can create import transactions
+('ROLE_INVENTORY_MANAGER', 'EXPORT_ITEMS'), -- Can create export transactions
+('ROLE_INVENTORY_MANAGER', 'APPROVE_TRANSACTION') -- Can approve transactions
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
@@ -3232,3 +3258,64 @@ SELECT setval('item_masters_item_master_id_seq', (SELECT COALESCE(MAX(item_maste
 -- LEFT JOIN item_masters im ON ic.category_id = im.category_id
 -- GROUP BY ic.category_name
 -- ORDER BY ic.display_order;
+
+-- =============================================
+-- BUOC 8: WAREHOUSE SAMPLE DATA (API 6.6)
+-- =============================================
+
+-- 1. SUPPLIERS (Nha cung cap)
+INSERT INTO suppliers (supplier_code, supplier_name, phone_number, email, address, tier_level, rating_score, total_orders, last_order_date, notes, is_active, created_at)
+VALUES
+('SUP-001', 'Cong ty Vat tu Nha khoa A', '0901234567', 'info@vatlieunk.vn', '123 Nguyen Van Linh, Q.7, TP.HCM', 'TIER_1', 4.8, 25, '2024-01-15', 'Nha cung cap chinh, chat luong tot', TRUE, NOW() - INTERVAL '6 months'),
+('SUP-002', 'Cong ty Duoc pham B', '0912345678', 'contact@duocphamb.com', '456 Le Van Viet, Q.9, TP.HCM', 'TIER_2', 4.2, 18, '2024-01-10', 'Cung cap thuoc va hoa chat', TRUE, NOW() - INTERVAL '5 months'),
+('SUP-003', 'Cong ty Thiet bi Y te C', '0923456789', 'sales@thietbiyc.vn', '789 Pham Van Dong, Thu Duc, TP.HCM', 'TIER_1', 4.7, 15, '2024-01-12', 'Thiet bi cao cap, gia hop ly', TRUE, NOW() - INTERVAL '4 months'),
+('SUP-004', 'Cong ty Vat tu Nha khoa D', '0934567890', 'support@vatlieud.com', '321 Tran Hung Dao, Q.1, TP.HCM', 'TIER_3', 3.9, 8, '2023-12-20', 'Nha cung cap du phong', TRUE, NOW() - INTERVAL '7 months')
+ON CONFLICT (supplier_code) DO NOTHING;
+
+-- Reset supplier sequence
+SELECT setval('suppliers_supplier_id_seq', (SELECT COALESCE(MAX(supplier_id), 0) FROM suppliers));
+
+-- =============================================
+-- BUOC 9: STORAGE TRANSACTIONS TEST DATA (API 6.6)
+-- Note: Hibernate auto-creates storage_transactions table from @Entity
+-- This section only contains INSERT statements for test data
+-- =============================================
+-- Transaction 1: IMPORT - APPROVED, PAID (Da thanh toan day du)
+INSERT INTO storage_transactions (transaction_code, transaction_type, transaction_date, invoice_number, total_value, created_by, supplier_id, 
+    payment_status, paid_amount, remaining_debt, due_date, approval_status, approved_by, approved_at, notes, created_at)
+VALUES ('IMP-2024-001', 'IMPORT', NOW() - INTERVAL '15 days', 'INV-20240101-001', 15000000.00, 6, 1, 
+    'PAID', 15000000.00, 0.00, NULL, 'APPROVED', 3, NOW() - INTERVAL '10 days', 'Nhap vat tu nha khoa thang 1', NOW() - INTERVAL '15 days');
+
+-- Transaction 2: IMPORT - APPROVED, PARTIAL payment (Chua thanh toan het)
+INSERT INTO storage_transactions (transaction_code, transaction_type, transaction_date, invoice_number, total_value, created_by, supplier_id,
+    payment_status, paid_amount, remaining_debt, due_date, approval_status, approved_by, approved_at, notes, created_at)
+VALUES ('IMP-2024-002', 'IMPORT', NOW() - INTERVAL '12 days', 'INV-20240105-002', 25000000.00, 6, 2,
+    'PARTIAL', 15000000.00, 10000000.00, CURRENT_DATE + INTERVAL '15 days', 'APPROVED', 3, NOW() - INTERVAL '8 days', 'Nhap thuoc va hoa chat', NOW() - INTERVAL '12 days');
+
+-- Transaction 3: IMPORT - PENDING_APPROVAL, UNPAID (Cho duyet)
+INSERT INTO storage_transactions (transaction_code, transaction_type, transaction_date, invoice_number, total_value, created_by, supplier_id,
+    payment_status, paid_amount, remaining_debt, due_date, approval_status, approved_by, approved_at, notes, created_at)
+VALUES ('IMP-2024-003', 'IMPORT', NOW() - INTERVAL '2 days', 'INV-20240110-003', 18000000.00, 6, 3,
+    'UNPAID', 0.00, 18000000.00, CURRENT_DATE + INTERVAL '30 days', 'PENDING_APPROVAL', NULL, NULL, 'Nhap thiet bi cao cap', NOW() - INTERVAL '2 days');
+
+-- Transaction 4: EXPORT - APPROVED (Xuat kho lien ket voi lich hen 1)
+INSERT INTO storage_transactions (transaction_code, transaction_type, transaction_date, invoice_number, total_value, created_by, supplier_id,
+    payment_status, paid_amount, remaining_debt, due_date, approval_status, approved_by, approved_at, related_appointment_id, notes, created_at)
+VALUES ('EXP-2024-001', 'EXPORT', NOW() - INTERVAL '7 days', NULL, NULL, 2, NULL,
+    NULL, NULL, NULL, NULL, 'APPROVED', 3, NOW() - INTERVAL '5 days', 1, 'Xuat vat tu cho dieu tri benh nhan Nguyen Van A', NOW() - INTERVAL '7 days');
+
+-- Transaction 5: EXPORT - APPROVED (Xuat kho lien ket voi lich hen 2)
+INSERT INTO storage_transactions (transaction_code, transaction_type, transaction_date, invoice_number, total_value, created_by, supplier_id,
+    payment_status, paid_amount, remaining_debt, due_date, approval_status, approved_by, approved_at, related_appointment_id, notes, created_at)
+VALUES ('EXP-2024-002', 'EXPORT', NOW() - INTERVAL '4 days', NULL, NULL, 2, NULL,
+    NULL, NULL, NULL, NULL, 'APPROVED', 3, NOW() - INTERVAL '3 days', 2, 'Xuat vat tu cho dieu tri benh nhan Tran Thi B', NOW() - INTERVAL '4 days');
+
+-- Transaction 6: IMPORT - REJECTED (Bi tu choi)
+INSERT INTO storage_transactions (transaction_code, transaction_type, transaction_date, invoice_number, total_value, created_by, supplier_id,
+    payment_status, paid_amount, remaining_debt, due_date, approval_status, approved_by, approved_at, notes, created_at)
+VALUES ('IMP-2024-004', 'IMPORT', NOW() - INTERVAL '3 days', 'INV-20240115-004', 12000000.00, 6, 4,
+    'UNPAID', 0.00, 12000000.00, CURRENT_DATE + INTERVAL '20 days', 'REJECTED', 3, NOW() - INTERVAL '1 day', 'Nhap vat tu khong dat chuan - tu choi', NOW() - INTERVAL '3 days');
+
+-- Reset storage_transactions sequence
+SELECT setval('storage_transactions_transaction_id_seq', (SELECT COALESCE(MAX(transaction_id), 0) FROM storage_transactions));
+

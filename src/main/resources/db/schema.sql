@@ -1,11 +1,17 @@
 -- ============================================
--- DENTAL CLINIC MANAGEMENT SYSTEM - SCHEMA V21
--- Date: 2025-11-17
+-- DENTAL CLINIC MANAGEMENT SYSTEM - SCHEMA V22
+-- Date: 2025-11-25
 -- PostgreSQL Database Schema
 -- ============================================
 -- NOTE: Hibernate auto-creates tables from @Entity classes
 -- This file is for reference and manual database setup only
 -- Updated to match Java entity definitions (SERIAL/INTEGER IDs)
+-- ============================================
+-- CHANGES IN V22 (API 6.6 - Transaction History):
+-- - Added payment_status ENUM (UNPAID, PARTIAL, PAID)
+-- - Added transaction_status ENUM (DRAFT, PENDING_APPROVAL, APPROVED, REJECTED, COMPLETED, CANCELLED)
+-- - Enhanced storage_transactions table with 8 new fields for payment tracking, approval workflow, appointment linking
+-- - Purpose: Track payment status, approval workflow, link export transactions to appointments
 -- ============================================
 -- CHANGES IN V21:
 -- - Added Clinical Rules Engine (service_dependencies table)
@@ -44,6 +50,10 @@ CREATE TYPE appointment_reason_code AS ENUM ('PREVIOUS_CASE_OVERRUN', 'DOCTOR_UN
 
 -- === V21: Clinical Rules Engine ===
 CREATE TYPE dependency_rule_type AS ENUM ('REQUIRES_PREREQUISITE', 'REQUIRES_MIN_DAYS', 'EXCLUDES_SAME_DAY', 'BUNDLES_WITH');
+
+-- === V22: Warehouse Transaction History (API 6.6) ===
+CREATE TYPE payment_status AS ENUM ('UNPAID', 'PARTIAL', 'PAID');
+CREATE TYPE transaction_status AS ENUM ('DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'REJECTED', 'COMPLETED', 'CANCELLED');
 
 -- ============================================
 -- CORE TABLES
@@ -411,6 +421,60 @@ COMMENT ON COLUMN plan_audit_logs.performed_by IS 'Employee who performed the ac
 COMMENT ON COLUMN plan_audit_logs.notes IS 'Reason for rejection or approval notes';
 
 -- ============================================
+-- V22: WAREHOUSE TABLES (API 6.6)
+-- ============================================
+
+CREATE TABLE storage_transactions (
+    storage_transaction_id SERIAL PRIMARY KEY,
+    transaction_code VARCHAR(50) UNIQUE NOT NULL,
+    type VARCHAR(20) NOT NULL,
+    invoice_number VARCHAR(100),
+    total_value DECIMAL(15,2),
+    created_by_id INTEGER NOT NULL,
+    supplier_id INTEGER,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP,
+    
+    -- V22: Payment tracking fields (for Accountants)
+    payment_status payment_status,
+    paid_amount DECIMAL(15,2),
+    remaining_debt DECIMAL(15,2),
+    due_date DATE,
+    
+    -- V22: Approval workflow fields (for Managers)
+    approval_status transaction_status,
+    approved_by_id INTEGER,
+    approved_at TIMESTAMP,
+    
+    -- V22: Appointment linking field (for Doctors)
+    related_appointment_id INTEGER,
+
+    CONSTRAINT fk_transaction_created_by FOREIGN KEY (created_by_id)
+        REFERENCES employees(employee_id) ON DELETE RESTRICT,
+    CONSTRAINT fk_transaction_supplier FOREIGN KEY (supplier_id)
+        REFERENCES suppliers(supplier_id) ON DELETE SET NULL,
+    CONSTRAINT fk_transaction_approved_by FOREIGN KEY (approved_by_id)
+        REFERENCES employees(employee_id) ON DELETE SET NULL,
+    CONSTRAINT fk_transaction_appointment FOREIGN KEY (related_appointment_id)
+        REFERENCES appointments(appointment_id) ON DELETE SET NULL
+);
+
+CREATE INDEX idx_storage_transactions_code ON storage_transactions(transaction_code);
+CREATE INDEX idx_storage_transactions_type ON storage_transactions(type);
+CREATE INDEX idx_storage_transactions_created_by ON storage_transactions(created_by_id);
+CREATE INDEX idx_storage_transactions_supplier ON storage_transactions(supplier_id);
+CREATE INDEX idx_storage_transactions_payment_status ON storage_transactions(payment_status);
+CREATE INDEX idx_storage_transactions_approval_status ON storage_transactions(approval_status);
+CREATE INDEX idx_storage_transactions_appointment ON storage_transactions(related_appointment_id);
+CREATE INDEX idx_storage_transactions_created_at ON storage_transactions(created_at);
+
+COMMENT ON TABLE storage_transactions IS 'Warehouse transactions with payment tracking, approval workflow, and appointment linking (V22/API 6.6)';
+COMMENT ON COLUMN storage_transactions.payment_status IS 'Payment status for IMPORT transactions: UNPAID, PARTIAL, PAID';
+COMMENT ON COLUMN storage_transactions.approval_status IS 'Approval workflow status: DRAFT, PENDING_APPROVAL, APPROVED, REJECTED, COMPLETED, CANCELLED';
+COMMENT ON COLUMN storage_transactions.related_appointment_id IS 'Links EXPORT transactions to patient appointments for clinical context';
+
+-- ============================================
 -- INDEXES FOR PERFORMANCE
 -- ============================================
 
@@ -429,5 +493,5 @@ CREATE INDEX idx_time_off_requests_employee ON time_off_requests(employee_id);
 CREATE INDEX idx_time_off_requests_status ON time_off_requests(status);
 
 -- ============================================
--- END OF SCHEMA V20
+-- END OF SCHEMA V22
 -- ============================================

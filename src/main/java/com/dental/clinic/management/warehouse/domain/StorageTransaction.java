@@ -1,10 +1,15 @@
 package com.dental.clinic.management.warehouse.domain;
 
+import com.dental.clinic.management.booking_appointment.domain.Appointment;
 import com.dental.clinic.management.employee.domain.Employee;
+import com.dental.clinic.management.warehouse.enums.PaymentStatus;
+import com.dental.clinic.management.warehouse.enums.TransactionStatus;
 import com.dental.clinic.management.warehouse.enums.TransactionType;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -59,7 +64,7 @@ public class StorageTransaction {
     private java.math.BigDecimal totalValue; // Tổng giá trị phiếu nhập
 
     @Column(name = "status", length = 20)
-    private String status; // COMPLETED, DRAFT, CANCELLED
+    private String status; // COMPLETED, DRAFT, CANCELLED (legacy - kept for backward compatibility)
 
     /**
      * API 6.5: Export-specific fields
@@ -76,6 +81,41 @@ public class StorageTransaction {
     @Column(name = "requested_by", length = 200)
     private String requestedBy; // Người yêu cầu xuất
 
+    /**
+     * API 6.6: Enhanced Transaction History Features
+     */
+    // Payment tracking (for IMPORT transactions)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_status", length = 20)
+    private PaymentStatus paymentStatus; // UNPAID, PARTIAL, PAID
+
+    @Column(name = "paid_amount", precision = 15, scale = 2)
+    private BigDecimal paidAmount; // Số tiền đã thanh toán
+
+    @Column(name = "remaining_debt", precision = 15, scale = 2)
+    private BigDecimal remainingDebt; // Số tiền còn nợ
+
+    @Column(name = "due_date")
+    private LocalDate dueDate; // Hạn thanh toán
+
+    // Approval workflow
+    @Enumerated(EnumType.STRING)
+    @Column(name = "approval_status", length = 20)
+    private TransactionStatus approvalStatus; // DRAFT, PENDING_APPROVAL, APPROVED, REJECTED, CANCELLED
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "approved_by")
+    private Employee approvedBy; // Người duyệt phiếu
+
+    @Column(name = "approved_at")
+    private LocalDateTime approvedAt; // Thời gian duyệt
+
+    // Appointment linking (for EXPORT transactions)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "related_appointment_id")
+    private Appointment relatedAppointment; // Liên kết với ca điều trị
+
+    // Creator tracking
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by")
     private Employee createdBy;
