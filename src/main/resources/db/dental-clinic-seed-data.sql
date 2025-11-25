@@ -3120,6 +3120,29 @@ ALTER TABLE patient_plan_items ADD CONSTRAINT patient_plan_items_status_check
 -- FE Endpoint: GET /api/v1/inventory/categories
 -- =============================================
 
+INSERT INTO item_categories (category_code, category_name, description, warehouse_type, display_order, is_active, created_at, updated_at)
+VALUES
+    -- COLD STORAGE Categories
+    ('CAT_MEDICINE', 'Thuốc men', 'Thuốc và dược phẩm cần bảo quản lạnh (kháng sinh, vaccine, insulin)', 'COLD', 1, true, NOW(), NOW()),
+    ('CAT_BIOPRODUCT', 'Sinh phẩm y tế', 'Các sản phẩm sinh học (máu, huyết tương, mẫu xét nghiệm)', 'COLD', 2, true, NOW(), NOW()),
+    ('CAT_VACCINE', 'Vắc-xin', 'Vaccine phòng bệnh cần bảo quản 2-8°C', 'COLD', 3, true, NOW(), NOW()),
+    
+    -- NORMAL STORAGE Categories
+    ('CAT_DENTAL_MATERIAL', 'Vật liệu nha khoa', 'Vật liệu trám răng, composite, xi măng, keo dán', 'NORMAL', 4, true, NOW(), NOW()),
+    ('CAT_INSTRUMENT', 'Dụng cụ y tế', 'Dụng cụ khám và điều trị tái sử dụng (kìm, kéo, gương, đục)', 'NORMAL', 5, true, NOW(), NOW()),
+    ('CAT_CONSUMABLE', 'Vật tư tiêu hao', 'Vật tư sử dụng một lần (găng tay, khẩu trang, bông, gạc, kim tiêm)', 'NORMAL', 6, true, NOW(), NOW()),
+    ('CAT_DISINFECTANT', 'Dung dịch sát khuẩn', 'Cồn, betadine, dung dịch khử trùng, nước rửa tay', 'NORMAL', 7, true, NOW(), NOW()),
+    ('CAT_PROTECTIVE', 'Đồ bảo hộ', 'Quần áo, mũ, kính bảo hộ, tạp dề phòng mổ', 'NORMAL', 8, true, NOW(), NOW()),
+    ('CAT_XRAY_SUPPLY', 'Vật tư X-quang', 'Phim X-quang, sensor kỹ thuật số, túi bảo vệ', 'NORMAL', 9, true, NOW(), NOW()),
+    ('CAT_LAB_SUPPLY', 'Vật tư phòng LAB', 'Ống nghiệm, que test, mẫu thử, khay đúc', 'NORMAL', 10, true, NOW(), NOW())
+ON CONFLICT (category_code) DO NOTHING;
+
+-- Log seed data
+INSERT INTO audit_logs (entity_type, entity_id, action, performed_by, performed_at, description)
+VALUES ('ITEM_CATEGORY', 0, 'SEED_DATA', 'SYSTEM', NOW(), 'Initialized 10 default item categories for warehouse module')
+ON CONFLICT DO NOTHING;
+-- =============================================
+
 INSERT INTO item_categories (category_code, category_name, description, is_active, display_order, created_at)
 VALUES
   ('CONSUMABLE', 'Vật tư tiêu hao', 'Vật tư sử dụng một lần (gạc, băng, kim tiêm, bông, khẩu trang, găng tay, ống hút)', true, 1, NOW()),
