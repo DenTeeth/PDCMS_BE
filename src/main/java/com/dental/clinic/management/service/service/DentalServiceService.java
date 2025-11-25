@@ -114,7 +114,7 @@ public class DentalServiceService {
                                                         .serviceCode(service.getServiceCode())
                                                         .serviceName(service.getServiceName())
                                                         .price(service.getPrice())
-                                                        .durationMinutes(service.getDurationMinutes())
+                                                        .durationMinutes(service.getDefaultDurationMinutes())
                                                         .bundlesWith(bundlesWith) // V21: Add bundle suggestions as
                                                                                   // service codes
                                                         .build());
@@ -172,7 +172,7 @@ public class DentalServiceService {
                                 .serviceName(service.getServiceName())
                                 .description(service.getDescription())
                                 .price(service.getPrice())
-                                .durationMinutes(service.getDurationMinutes())
+                                .durationMinutes(service.getDefaultDurationMinutes())
                                 .displayOrder(service.getDisplayOrder())
                                 .isActive(service.getIsActive())
                                 .createdAt(service.getCreatedAt())

@@ -1806,7 +1806,7 @@ INSERT INTO service_dependencies (service_id, dependent_service_id, rule_type, r
 SELECT
     s1.service_id,
     s2.service_id,
-    'REQUIRES_PREREQUISITE'::dependency_rule_type,
+    'REQUIRES_PREREQUISITE',
     'Bệnh nhân phải KHÁM tổng quát trước khi được trám răng.',
     NOW()
 FROM services s1, services s2
@@ -1819,7 +1819,7 @@ INSERT INTO service_dependencies (service_id, dependent_service_id, rule_type, m
 SELECT
     s1.service_id,
     s2.service_id,
-    'REQUIRES_MIN_DAYS'::dependency_rule_type,
+    'REQUIRES_MIN_DAYS',
     7,
     'Cắt chỉ SAU nhổ răng khôn ít nhất 7 ngày (lý tưởng 7-10 ngày).',
     NOW()
@@ -1833,7 +1833,7 @@ INSERT INTO service_dependencies (service_id, dependent_service_id, rule_type, r
 SELECT
     s1.service_id,
     s2.service_id,
-    'EXCLUDES_SAME_DAY'::dependency_rule_type,
+    'EXCLUDES_SAME_DAY',
     'KHÔNG được đặt Nhổ răng khôn và Tẩy trắng cùng ngày (nguy hiểm).',
     NOW()
 FROM services s1, services s2
@@ -1846,7 +1846,7 @@ INSERT INTO service_dependencies (service_id, dependent_service_id, rule_type, r
 SELECT
     s1.service_id,
     s2.service_id,
-    'EXCLUDES_SAME_DAY'::dependency_rule_type,
+    'EXCLUDES_SAME_DAY',
     'KHÔNG được đặt Tẩy trắng và Nhổ răng khôn cùng ngày (nguy hiểm).',
     NOW()
 FROM services s1, services s2
@@ -1859,7 +1859,7 @@ INSERT INTO service_dependencies (service_id, dependent_service_id, rule_type, r
 SELECT
     s1.service_id,
     s2.service_id,
-    'BUNDLES_WITH'::dependency_rule_type,
+    'BUNDLES_WITH',
     'Gợi ý: Nên đặt Khám + Cạo vôi cùng lúc để tiết kiệm thời gian.',
     NOW()
 FROM services s1, services s2
@@ -1872,14 +1872,13 @@ INSERT INTO service_dependencies (service_id, dependent_service_id, rule_type, r
 SELECT
     s1.service_id,
     s2.service_id,
-    'BUNDLES_WITH'::dependency_rule_type,
+    'BUNDLES_WITH',
     'Gợi ý: Nên đặt Cạo vôi + Khám cùng lúc để tiết kiệm thời gian.',
     NOW()
 FROM services s1, services s2
 WHERE s1.service_code = 'SCALING_L1'
   AND s2.service_code = 'GEN_EXAM'
 ON CONFLICT DO NOTHING;
-
 
 -- =============================================
 -- BƯỚC 3: INSERT TREATMENT PLAN TEMPLATES
@@ -2428,7 +2427,8 @@ ON CONFLICT (appointment_id, service_id) DO NOTHING;
 
 -- Participants cho APT-003: Thực tập sinh Linh làm OBSERVER
 INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
-VALUES (3, 12, 'OBSERVER');  -- EMP012 - Thực tập sinh Linh
+VALUES (3, 12, 'OBSERVER')  -- EMP012 - Thực tập sinh Linh
+ON CONFLICT (appointment_id, employee_id) DO NOTHING;
 
 
 
@@ -2454,8 +2454,8 @@ ON CONFLICT (appointment_id, service_id) DO NOTHING;
 
 
 INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
-VALUES (4, 7, 'ASSISTANT');  -- EMP007 - Y tá Nguyên
-
+VALUES (4, 7, 'ASSISTANT')  -- EMP007 - Y tá Nguyên
+ON CONFLICT (appointment_id, employee_id) DO NOTHING;
 
 
 -- APT-005: Nov 6 Afternoon - BS Lê Anh Khoa (EMP001) - ✅ FIXED: EMP001 has PERIODONTICS specialization
@@ -2477,8 +2477,8 @@ VALUES
 ON CONFLICT (appointment_id, service_id) DO NOTHING;
 
 INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
-VALUES (5, 8, 'ASSISTANT');  -- EMP008 - Y tá Khang
-
+VALUES (5, 8, 'ASSISTANT')  -- EMP008 - Y tá Khang
+ON CONFLICT (appointment_id, employee_id) DO NOTHING;
 
 
 -- APT-006: Nov 7 Morning - BS Jimmy (EMP003)
@@ -2499,8 +2499,8 @@ ON CONFLICT (appointment_id, service_id) DO NOTHING;
 
 
 INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
-VALUES (6, 7, 'ASSISTANT');  -- EMP007 - Y tá Nguyên
-
+VALUES (6, 7, 'ASSISTANT')  -- EMP007 - Y tá Nguyên
+ON CONFLICT (appointment_id, employee_id) DO NOTHING;
 
 
 -- APT-007: Nov 7 Afternoon - BS Thái (EMP002) - Can be used for reschedule testing
@@ -2521,8 +2521,8 @@ ON CONFLICT (appointment_id, service_id) DO NOTHING;
 
 
 INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
-VALUES (7, 8, 'ASSISTANT');  -- EMP008 - Y tá Khang
-
+VALUES (7, 8, 'ASSISTANT')  -- EMP008 - Y tá Khang
+ON CONFLICT (appointment_id, employee_id) DO NOTHING;
 
 
 -- APT-008: Nov 8 Morning - BS Khoa (EMP001) - Multiple services
@@ -2544,8 +2544,8 @@ VALUES
 ON CONFLICT (appointment_id, service_id) DO NOTHING;
 
 INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
-VALUES (8, 7, 'ASSISTANT');  -- EMP007 - Y tá Nguyên
-
+VALUES (8, 7, 'ASSISTANT')  -- EMP007 - Y tá Nguyên
+ON CONFLICT (appointment_id, employee_id) DO NOTHING;
 
 
 -- Reset appointments sequence after seed data
@@ -3119,42 +3119,18 @@ ALTER TABLE patient_plan_items ADD CONSTRAINT patient_plan_items_status_check
 -- Used in CreateItemMasterModal dropdown: "Nhóm Vật Tư"
 -- FE Endpoint: GET /api/v1/inventory/categories
 -- =============================================
-
-INSERT INTO item_categories (category_code, category_name, description, warehouse_type, display_order, is_active, created_at, updated_at)
+INSERT INTO item_categories (category_code, category_name, description, is_active, created_at)
 VALUES
-    -- COLD STORAGE Categories
-    ('CAT_MEDICINE', 'Thuốc men', 'Thuốc và dược phẩm cần bảo quản lạnh (kháng sinh, vaccine, insulin)', 'COLD', 1, true, NOW(), NOW()),
-    ('CAT_BIOPRODUCT', 'Sinh phẩm y tế', 'Các sản phẩm sinh học (máu, huyết tương, mẫu xét nghiệm)', 'COLD', 2, true, NOW(), NOW()),
-    ('CAT_VACCINE', 'Vắc-xin', 'Vaccine phòng bệnh cần bảo quản 2-8°C', 'COLD', 3, true, NOW(), NOW()),
-    
-    -- NORMAL STORAGE Categories
-    ('CAT_DENTAL_MATERIAL', 'Vật liệu nha khoa', 'Vật liệu trám răng, composite, xi măng, keo dán', 'NORMAL', 4, true, NOW(), NOW()),
-    ('CAT_INSTRUMENT', 'Dụng cụ y tế', 'Dụng cụ khám và điều trị tái sử dụng (kìm, kéo, gương, đục)', 'NORMAL', 5, true, NOW(), NOW()),
-    ('CAT_CONSUMABLE', 'Vật tư tiêu hao', 'Vật tư sử dụng một lần (găng tay, khẩu trang, bông, gạc, kim tiêm)', 'NORMAL', 6, true, NOW(), NOW()),
-    ('CAT_DISINFECTANT', 'Dung dịch sát khuẩn', 'Cồn, betadine, dung dịch khử trùng, nước rửa tay', 'NORMAL', 7, true, NOW(), NOW()),
-    ('CAT_PROTECTIVE', 'Đồ bảo hộ', 'Quần áo, mũ, kính bảo hộ, tạp dề phòng mổ', 'NORMAL', 8, true, NOW(), NOW()),
-    ('CAT_XRAY_SUPPLY', 'Vật tư X-quang', 'Phim X-quang, sensor kỹ thuật số, túi bảo vệ', 'NORMAL', 9, true, NOW(), NOW()),
-    ('CAT_LAB_SUPPLY', 'Vật tư phòng LAB', 'Ống nghiệm, que test, mẫu thử, khay đúc', 'NORMAL', 10, true, NOW(), NOW())
-ON CONFLICT (category_code) DO NOTHING;
-
--- Log seed data
-INSERT INTO audit_logs (entity_type, entity_id, action, performed_by, performed_at, description)
-VALUES ('ITEM_CATEGORY', 0, 'SEED_DATA', 'SYSTEM', NOW(), 'Initialized 10 default item categories for warehouse module')
-ON CONFLICT DO NOTHING;
--- =============================================
-
-INSERT INTO item_categories (category_code, category_name, description, is_active, display_order, created_at)
-VALUES
-  ('CONSUMABLE', 'Vật tư tiêu hao', 'Vật tư sử dụng một lần (gạc, băng, kim tiêm, bông, khẩu trang, găng tay, ống hút)', true, 1, NOW()),
-  ('EQUIPMENT', 'Dụng cụ y tế', 'Thiết bị và dụng cụ tái sử dụng (khay, kìm, kéo, gương nha khoa, đục, dũa, máy siêu âm)', true, 2, NOW()),
-  ('MEDICINE', 'Thuốc men', 'Thuốc và dược phẩm (kháng sinh, giảm đau, sát trùng, thuốc gây tê, thuốc kháng viêm)', true, 3, NOW()),
-  ('CHEMICAL', 'Hóa chất nha khoa', 'Hóa chất y tế (dung dịch tẩy trắng, chất trám, composite, xi măng, keo dán, acid)', true, 4, NOW()),
-  ('MATERIAL', 'Vật liệu nha khoa', 'Vật liệu chuyên dụng (dây chỉnh nha, bracket, implant, crown, veneer, răng giả)', true, 5, NOW()),
-  ('LAB_SUPPLY', 'Vật tư phòng LAB', 'Vật tư phòng thí nghiệm (mẫu thử, ống nghiệm, que test, khay đúc, thạch cao)', true, 6, NOW()),
-  ('STERILIZE', 'Vật tư khử khuẩn', 'Vật tư cho quy trình khử khuẩn (túi hấp, chỉ thị sinh học, dung dịch khử trùng, băng keo)', true, 7, NOW()),
-  ('XRAY', 'Vật tư X-quang', 'Phim X-quang, sensor kỹ thuật số, chất hiện hình, túi bảo vệ, máy chụp', true, 8, NOW()),
-  ('OFFICE', 'Văn phòng phẩm', 'Giấy tờ, hồ sơ bệnh án, bút, tem nhãn, hộp lưu trữ, kệ tài liệu', true, 9, NOW()),
-  ('PROTECTIVE', 'Đồ bảo hộ', 'Trang phục bảo hộ cho nhân viên (áo blouse, mũ, kính, tạp dề, giày, khẩu trang N95)', true, 10, NOW())
+  ('CONSUMABLE', 'Vật tư tiêu hao', 'Vật tư sử dụng một lần (gạc, băng, kim tiêm, bông, khẩu trang, găng tay, ống hút)', true, NOW()),
+  ('EQUIPMENT', 'Dụng cụ y tế', 'Thiết bị và dụng cụ tái sử dụng (khay, kìm, kéo, gương nha khoa, đục, dũa, máy siêu âm)', true, NOW()),
+  ('MEDICINE', 'Thuốc men', 'Thuốc và dược phẩm (kháng sinh, giảm đau, sát trùng, thuốc gây tê, thuốc kháng viêm)', true, NOW()),
+  ('CHEMICAL', 'Hóa chất nha khoa', 'Hóa chất y tế (dung dịch tẩy trắng, chất trám, composite, xi măng, keo dán, acid)', true, NOW()),
+  ('MATERIAL', 'Vật liệu nha khoa', 'Vật liệu chuyên dụng (dây chỉnh nha, bracket, implant, crown, veneer, răng giả)', true, NOW()),
+  ('LAB_SUPPLY', 'Vật tư phòng LAB', 'Vật tư phòng thí nghiệm (mẫu thử, ống nghiệm, que test, khay đúc, thạch cao)', true, NOW()),
+  ('STERILIZE', 'Vật tư khử khuẩn', 'Vật tư cho quy trình khử khuẩn (túi hấp, chỉ thị sinh học, dung dịch khử trùng, băng keo)', true, NOW()),
+  ('XRAY', 'Vật tư X-quang', 'Phim X-quang, sensor kỹ thuật số, chất hiện hình, túi bảo vệ, máy chụp', true, NOW()),
+  ('OFFICE', 'Văn phòng phẩm', 'Giấy tờ, hồ sơ bệnh án, bút, tem nhãn, hộp lưu trữ, kệ tài liệu', true, NOW()),
+  ('PROTECTIVE', 'Đồ bảo hộ', 'Trang phục bảo hộ cho nhân viên (áo blouse, mũ, kính, tạp dề, giày, khẩu trang N95)', true, NOW())
 ON CONFLICT (category_code) DO NOTHING;
 
 -- =============================================
@@ -3168,3 +3144,91 @@ SELECT setval('item_categories_category_id_seq', (SELECT MAX(category_id) FROM i
 -- SELECT category_id, category_code, category_name, is_active, display_order
 -- FROM item_categories
 -- ORDER BY display_order;
+
+-- ============================================
+-- WAREHOUSE DATA SEEDING - ITEM MASTERS
+-- Thêm dữ liệu vật tư, thuốc, hóa chất thực tế
+-- Note: purchase_price & total_value = NULL (Phase 2 update)
+-- ============================================
+
+-- 1. NHÓM VẬT TƯ TIÊU HAO (CONSUMABLE)
+INSERT INTO item_masters (item_code, item_name, category_id, unit_of_measure, warehouse_type, description, min_stock_level, max_stock_level, is_tool, is_active, created_at)
+SELECT t.code, t.name, cat.category_id, t.unit, 'NORMAL', t.descr, 10, 1000, FALSE, TRUE, NOW()
+FROM item_categories cat
+CROSS JOIN (VALUES
+    ('CON-GLOVE-01', 'Găng tay y tế', 'Đôi', 'Găng tay cao su khám bệnh dùng một lần'),
+    ('CON-MASK-01', 'Khẩu trang y tế', 'Cái', 'Khẩu trang y tế 3-4 lớp'),
+    ('CON-CUP-01', 'Ly súc miệng', 'Cái', 'Ly nhựa/giấy dùng một lần'),
+    ('CON-EJECT-01', 'Ống hút nước bọt', 'Cái', 'Ống hút nha khoa dẻo'),
+    ('CON-BIB-01', 'Khăn trải ngực (Bib)', 'Cái', 'Khăn giấy chống thấm cho bệnh nhân'),
+    ('CON-NEEDLE-01', 'Kim tiêm nha khoa', 'Cái', 'Kim tiêm gây tê chuyên dụng'),
+    ('CON-GAUZE-01', 'Bông gạc phẫu thuật', 'Gói', 'Gạc vô trùng thấm hút tốt'),
+    ('CON-SPON-01', 'Spongel (Cầm máu)', 'Viên', 'Xốp gelatin cầm máu tại chỗ'),
+    ('CON-SUT-01', 'Chỉ khâu phẫu thuật', 'Tép', 'Chỉ khâu y tế tự tiêu/không tiêu'),
+    ('CON-BLADE-01', 'Lưỡi dao mổ', 'Cái', 'Lưỡi dao phẫu thuật thép không gỉ'),
+    ('CON-TIP-01', 'Đầu bơm keo', 'Cái', 'Đầu bơm composite/keo dùng 1 lần'),
+    ('CON-PAPER-01', 'Giấy cắn', 'Tờ', 'Giấy kiểm tra khớp cắn'),
+    ('CON-MATRX-01', 'Đai trám (Matrix)', 'Cái', 'Khuôn trám răng'),
+    ('CON-DAM-01', 'Đê cao su', 'Miếng', 'Màng cao su cô lập răng'),
+    ('CON-PPOINT-01', 'Côn giấy', 'Cây', 'Côn giấy thấm hút ống tủy'),
+    ('CON-GUTTA-01', 'Côn Gutta Percha', 'Cây', 'Côn cao su trám bít ống tủy'),
+    ('CON-BRUSH-01', 'Chổi đánh bóng', 'Cái', 'Chổi cước đánh bóng bề mặt răng'),
+    ('CON-RETR-01', 'Banh miệng', 'Cái', 'Dụng cụ banh miệng nhựa dẻo')
+) AS t(code, name, unit, descr)
+WHERE cat.category_code = 'CONSUMABLE'
+ON CONFLICT (item_code) DO NOTHING;
+
+-- 2. NHÓM THUỐC (MEDICINE)
+INSERT INTO item_masters (item_code, item_name, category_id, unit_of_measure, warehouse_type, description, min_stock_level, max_stock_level, is_tool, is_active, created_at)
+SELECT t.code, t.name, cat.category_id, t.unit, 'COLD', t.descr, 5, 500, FALSE, TRUE, NOW()
+FROM item_categories cat
+CROSS JOIN (VALUES
+    ('MED-SEPT-01', 'Thuốc tê (Septodont)', 'Ống', 'Thuốc tê tiêm nha khoa (Pháp)'),
+    ('MED-GEL-01', 'Thuốc tê bôi (Gel)', 'g', 'Gel gây tê bề mặt niêm mạc'),
+    ('MED-BETA-01', 'Dung dịch Betadine', 'ml', 'Dung dịch sát khuẩn Povidone-Iodine'),
+    ('MED-CAOH-01', 'Ca(OH)2 (Đặt tủy)', 'g', 'Canxi Hydroxide đặt ống tủy'),
+    ('MED-WASH-01', 'Nước súc miệng', 'ml', 'Nước súc miệng sát khuẩn chuyên dụng'),
+    ('MED-SENS-01', 'Gel chống ê buốt', 'g', 'Gel bôi giảm ê buốt ngà răng')
+) AS t(code, name, unit, descr)
+WHERE cat.category_code = 'MEDICINE'
+ON CONFLICT (item_code) DO NOTHING;
+
+-- 3. NHÓM VẬT LIỆU NHA KHOA & HÓA CHẤT (MATERIAL / CHEMICAL)
+INSERT INTO item_masters (item_code, item_name, category_id, unit_of_measure, warehouse_type, description, min_stock_level, max_stock_level, is_tool, is_active, created_at)
+SELECT t.code, t.name, cat.category_id, t.unit, 'NORMAL', t.descr, 2, 200, FALSE, TRUE, NOW()
+FROM item_categories cat
+CROSS JOIN (VALUES
+    ('MAT-COMP-01', 'Trám Composite', 'g', 'Vật liệu trám thẩm mỹ (Quy cách đóng gói: Tuýp)'),
+    ('MAT-ETCH-01', 'Etching Gel (Axit)', 'ml', 'Gel axit xói mòn men răng 37%'),
+    ('MAT-BOND-01', 'Bonding Agent (Keo)', 'Giọt', 'Keo dán nha khoa (Quy cách: Lọ/ml)'),
+    ('MAT-RESIN-01', 'Composite Resin 3M', 'g', 'Composite đặc 3M cao cấp'),
+    ('MAT-NAOCL-01', 'NaOCl (Bơm rửa)', 'ml', 'Dung dịch bơm rửa ống tủy Sodium Hypochlorite'),
+    ('MAT-EDTA-01', 'Dung dịch EDTA', 'g', 'Gel bôi trơn và làm sạch ống tủy'),
+    ('MAT-SEAL-01', 'Xi măng Sealer', 'g', 'Vật liệu trám bít ống tủy'),
+    ('MAT-POL-01', 'Sò đánh bóng', 'g', 'Bột/Sáp đánh bóng (Tính theo g)'),
+    ('MAT-GUM-01', 'Gel che nướu', 'ml', 'Gel bảo vệ nướu khi tẩy trắng'),
+    ('MAT-WHIT-01', 'Thuốc tẩy trắng', 'Set', 'Bộ kít thuốc tẩy trắng răng')
+) AS t(code, name, unit, descr)
+WHERE cat.category_code IN ('MATERIAL', 'CHEMICAL')
+ON CONFLICT (item_code) DO NOTHING;
+
+-- =============================================
+-- RESET SEQUENCES for item_masters
+-- =============================================
+SELECT setval('item_masters_item_master_id_seq', (SELECT COALESCE(MAX(item_master_id), 0) FROM item_masters));
+
+-- =============================================
+-- VERIFICATION QUERIES (Optional - for testing)
+-- =============================================
+-- Check item masters by category
+-- SELECT im.item_code, im.item_name, ic.category_name, im.unit_name, im.min_stock_level, im.max_stock_level
+-- FROM item_masters im
+-- JOIN item_categories ic ON im.category_id = ic.category_id
+-- ORDER BY ic.display_order, im.item_code;
+
+-- Count by category
+-- SELECT ic.category_name, COUNT(im.item_id) as item_count
+-- FROM item_categories ic
+-- LEFT JOIN item_masters im ON ic.category_id = im.category_id
+-- GROUP BY ic.category_name
+-- ORDER BY ic.display_order;

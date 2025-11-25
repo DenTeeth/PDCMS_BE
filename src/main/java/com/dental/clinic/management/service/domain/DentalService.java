@@ -38,8 +38,8 @@ public class DentalService {
     @Column(name = "price", nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
 
-    @Column(name = "duration_minutes")
-    private Integer durationMinutes;
+    @Column(name = "default_duration_minutes", nullable = false)
+    private Integer defaultDurationMinutes;
 
     /**
      * V17: Link to service category (e.g., "A. General Dentistry")

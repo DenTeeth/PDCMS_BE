@@ -167,7 +167,7 @@ public class CustomTreatmentPlanService {
                                                         .itemName(itemName)
                                                         .sequenceNumber(currentSequence++) // Auto-increment (P0 Fix!)
                                                         .price(itemPrice) // V21.4: Auto-filled or provided price
-                                                        .estimatedTimeMinutes(service.getDurationMinutes())
+                                                        .estimatedTimeMinutes(service.getDefaultDurationMinutes())
                                                         .status(PlanItemStatus.PENDING) // V19: PENDING (not
                                                                                         // PENDING_APPROVAL)
                                                         .build();
@@ -436,14 +436,14 @@ public class CustomTreatmentPlanService {
                  * ORIGINAL CODE (KEPT FOR REFERENCE):
                  * BigDecimal minPrice = servicePrice.multiply(new BigDecimal("0.5")); // 50%
                  * BigDecimal maxPrice = servicePrice.multiply(new BigDecimal("1.5")); // 150%
-                 * 
+                 *
                  * if (requestPrice.compareTo(minPrice) < 0 || requestPrice.compareTo(maxPrice)
                  * > 0) {
                  * log.
                  * warn("Price override out of range. Service: {}, Default: {}, Request: {}, Range: {}-{}"
                  * ,
                  * serviceCode, servicePrice, requestPrice, minPrice, maxPrice);
-                 * 
+                 *
                  * throw new BadRequestAlertException(
                  * String.
                  * format("Price for service %s (%s) is out of allowed range (%s - %s). Default price: %s"

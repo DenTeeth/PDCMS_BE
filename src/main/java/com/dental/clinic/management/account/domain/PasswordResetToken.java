@@ -6,7 +6,7 @@ import java.util.UUID;
 
 /**
  * Password reset token for forgot password flow.
- * Token expires after 1 hour.
+ * Token expires after 24 hours.
  */
 @Entity
 @Table(name = "password_reset_tokens")
@@ -41,7 +41,7 @@ public class PasswordResetToken {
         this.token = UUID.randomUUID().toString();
         this.account = account;
         this.createdAt = LocalDateTime.now();
-        this.expiresAt = this.createdAt.plusHours(1); // 1 hour validity
+        this.expiresAt = this.createdAt.plusHours(24); // 24 hours validity
     }
 
     // Getters and Setters
