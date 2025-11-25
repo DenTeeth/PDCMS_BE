@@ -224,13 +224,23 @@ public class PatientService {
             log.info("Created account with ID: {} and code: {} for patient (PENDING_VERIFICATION)",
                     account.getAccountId(), account.getAccountCode());
 
-            // Create and send verification token
-            AccountVerificationToken verificationToken = new AccountVerificationToken(account);
-            verificationTokenRepository.save(verificationToken);
+            // Create and send verification token (with graceful error handling)
+            try {
+                AccountVerificationToken verificationToken = new AccountVerificationToken(account);
+                verificationTokenRepository.save(verificationToken);
 
-            // Send verification email asynchronously
-            emailService.sendVerificationEmail(account.getEmail(), account.getUsername(), verificationToken.getToken());
-            log.info(" Verification email sent to: {}", account.getEmail());
+                // Send verification email asynchronously
+                emailService.sendVerificationEmail(account.getEmail(), account.getUsername(),
+                        verificationToken.getToken());
+                log.info("✅ Verification email sent successfully to: {}", account.getEmail());
+
+            } catch (Exception e) {
+                // Log error but don't fail the entire patient creation
+                log.error("⚠️ Failed to send verification email to {}: {}", account.getEmail(), e.getMessage(), e);
+                log.warn("⚠️ Patient account created successfully, but email not sent. Manual verification may be required.");
+                log.warn("⚠️ Possible causes: SMTP server not configured, network error, invalid email address");
+                // Don't throw exception - allow patient creation to succeed
+            }
         } else {
             log.debug("Creating patient without account (no username/password provided)");
         }
