@@ -15,7 +15,7 @@
 | #3 Permission Constants | 🟡 Medium | ✅ **FIXED** | None - FE already fixed |
 | #4 Warehouse V3 API | 🟡 Medium | ✅ **WORKING** | None - API works correctly |
 | #5 Item Category Empty | 🟡 Medium | ✅ **FIXED** | Deploy & run migration |
-| #6 Patient Creation 500 | 🔴 Critical | 🔴 **TODO** | Apply fix NOW (5 min) |
+| #6 Patient Creation 500 | 🔴 Critical | ✅ **FIXED** | Deployed - commit 5155553 |
 
 ---
 
