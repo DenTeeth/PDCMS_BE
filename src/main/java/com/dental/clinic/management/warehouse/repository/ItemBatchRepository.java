@@ -123,4 +123,27 @@ public interface ItemBatchRepository extends JpaRepository<ItemBatch, Long> {
                         @Param("targetDate") LocalDate targetDate,
                         @Param("categoryId") Long categoryId,
                         @Param("warehouseType") WarehouseType warehouseType);
+
+        /**
+         * API 6.5: Find batches by ItemMaster (for FEFO allocation)
+         */
+        @Query("SELECT ib FROM ItemBatch ib WHERE ib.itemMaster = :itemMaster")
+        List<ItemBatch> findByItemMaster(
+                        @Param("itemMaster") com.dental.clinic.management.warehouse.domain.ItemMaster itemMaster);
+
+        /**
+         * API 6.5: Find batches by ItemMaster ordered by expiry date (FEFO)
+         */
+        @Query("SELECT ib FROM ItemBatch ib " +
+                        "WHERE ib.itemMaster = :itemMaster " +
+                        "ORDER BY ib.expiryDate ASC")
+        List<ItemBatch> findByItemMasterOrderByExpiryDateAsc(
+                        @Param("itemMaster") com.dental.clinic.management.warehouse.domain.ItemMaster itemMaster);
+
+        /**
+         * API 6.5: Find batch by ItemMaster and LotNumber (for unpacking)
+         */
+        Optional<ItemBatch> findByItemMasterAndLotNumber(
+                        @Param("itemMaster") com.dental.clinic.management.warehouse.domain.ItemMaster itemMaster,
+                        @Param("lotNumber") String lotNumber);
 }

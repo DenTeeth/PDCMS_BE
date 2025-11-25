@@ -1,13 +1,18 @@
 package com.dental.clinic.management.warehouse.controller;
 
+import com.dental.clinic.management.utils.security.SecurityUtil;
 import com.dental.clinic.management.utils.annotation.ApiMessage;
 import com.dental.clinic.management.warehouse.dto.request.CreateCategoryRequest;
 import com.dental.clinic.management.warehouse.dto.request.CreateItemMasterRequest;
+import com.dental.clinic.management.warehouse.dto.request.ExportTransactionRequest;
+import com.dental.clinic.management.warehouse.dto.request.ImportTransactionRequest;
 import com.dental.clinic.management.warehouse.dto.request.UpdateCategoryRequest;
 import com.dental.clinic.management.warehouse.dto.request.UpdateItemMasterRequest;
 import com.dental.clinic.management.warehouse.dto.response.*;
 import com.dental.clinic.management.warehouse.enums.StockStatus;
 import com.dental.clinic.management.warehouse.enums.WarehouseType;
+import com.dental.clinic.management.warehouse.service.ExportTransactionService;
+import com.dental.clinic.management.warehouse.service.ImportTransactionService;
 import com.dental.clinic.management.warehouse.service.InventoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -23,7 +28,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- *  Inventory Management Controller
+ * Inventory Management Controller
  * Quản lý vật tư, danh mục, lô hàng, thống kê kho
  */
 @RestController
@@ -34,9 +39,11 @@ import java.util.List;
 public class InventoryController {
 
     private final InventoryService inventoryService;
+    private final ImportTransactionService importTransactionService;
+    private final ExportTransactionService exportTransactionService;
 
     // ===========================
-    //  GET ALL ITEM MASTERS
+    // GET ALL ITEM MASTERS
     // ===========================
     @Operation(summary = "Lấy danh sách tất cả vật tư", description = "Lấy danh sách vật tư với tìm kiếm và lọc theo loại kho")
     @GetMapping
@@ -50,7 +57,7 @@ public class InventoryController {
     }
 
     // ===========================
-    //  GET ITEM MASTER BY ID
+    // GET ITEM MASTER BY ID
     // ===========================
     @Operation(summary = "Lấy chi tiết 1 vật tư", description = "Lấy thông tin chi tiết của 1 vật tư theo ID")
     @GetMapping("/{id}")
@@ -63,7 +70,7 @@ public class InventoryController {
     }
 
     /**
-     *  API 1: Lấy danh sách vật tư cho Dashboard (Có Pagination)
+     * API 1: Lấy danh sách vật tư cho Dashboard (Có Pagination)
      * FE nhận được: totalQuantityOnHand, stockStatus, isExpiringSoon
      */
     @Operation(summary = "Lấy danh sách tồn kho (Inventory Dashboard)", description = "BE tự động tính toán stock_status, total_quantity, và cảnh báo hết hạn. Hỗ trợ pagination.")
@@ -123,7 +130,7 @@ public class InventoryController {
     }
 
     /**
-     *  API: Xóa Item Master
+     * API: Xóa Item Master
      */
     @Operation(summary = "Xóa vật tư", description = "Không thể xóa nếu đã có lô hàng")
     @ApiMessage("Xóa vật tư thành công")
@@ -136,7 +143,7 @@ public class InventoryController {
     }
 
     /**
-     *  API 2: Lấy thống kê cho 4 thẻ trên Dashboard
+     * API 2: Lấy thống kê cho 4 thẻ trên Dashboard
      */
     @Operation(summary = "Lấy thống kê tổng quan kho", description = "Trả về: Tổng vật tư, Cảnh báo, Sắp hết hạn, Hết hàng")
     @ApiMessage("Lấy thống kê kho thành công")
@@ -149,7 +156,7 @@ public class InventoryController {
     }
 
     /**
-     *  API 3: Lấy danh sách lô hàng (FEFO sorted)
+     * API 3: Lấy danh sách lô hàng (FEFO sorted)
      * Dùng cho Modal Xuất Kho
      */
     @Operation(summary = "Lấy danh sách lô hàng theo FEFO", description = "BE đã sort theo expiryDate ASC")
@@ -164,7 +171,7 @@ public class InventoryController {
     }
 
     /**
-     *  API: Lấy tất cả Categories
+     * API: Lấy tất cả Categories
      */
     @Operation(summary = "Lấy danh sách danh mục", description = "Load categories for dropdown in CreateItemMasterModal")
     @ApiMessage("Lấy danh mục thành công")
@@ -208,7 +215,7 @@ public class InventoryController {
     }
 
     /**
-     *  API: Xóa Category
+     * API: Xóa Category
      */
     @Operation(summary = "Xóa danh mục vật tư", description = "Không thể xóa nếu đã có items")
     @ApiMessage("Xóa danh mục thành công")
@@ -221,11 +228,11 @@ public class InventoryController {
     }
 
     // ===========================
-    //  GET SUPPLIERS OF ITEM
+    // GET SUPPLIERS OF ITEM
     // ===========================
 
     /**
-     *  API: Lấy danh sách NCC cung cấp item này
+     * API: Lấy danh sách NCC cung cấp item này
      * FE dùng khi: Filter item để tìm NCC, so sánh giá giữa các NCC
      */
     @Operation(summary = "Lấy danh sách NCC của item", description = "Xem item này có bao nhiêu NCC cung cấp, giá nhập lần cuối")
@@ -235,5 +242,91 @@ public class InventoryController {
         log.info("GET /api/v1/inventory/{}/suppliers", id);
         List<ItemSupplierResponse> suppliers = inventoryService.getItemSuppliers(id);
         return ResponseEntity.ok(suppliers);
+    }
+
+    // ===========================
+    // API 6.4: CREATE IMPORT TRANSACTION
+    // ===========================
+
+    /**
+     * API 6.4: Create Import Transaction
+     *
+     * Business Features:
+     * - Invoice number tracking (unique constraint)
+     * - Batch creation/update with expiry date validation
+     * - Unit conversion (input unit to base unit)
+     * - Purchase price tracking for COGS
+     * - Financial summary (totalValue)
+     * - Warning generation (near expiry, price variance)
+     * - Batch status tracking (CREATED/UPDATED)
+     * - Current stock after import
+     */
+    @Operation(summary = "Tạo phiếu nhập kho", description = "Tạo phiếu nhập kho với tracking hóa đơn, giá nhập, chuyển đổi đơn vị, xử lý lô hàng")
+    @ApiMessage("Tạo phiếu nhập kho thành công")
+    @PostMapping("/import")
+    @PreAuthorize("hasAuthority('IMPORT_ITEMS')")
+    public ResponseEntity<ImportTransactionResponse> createImportTransaction(
+            @Valid @RequestBody ImportTransactionRequest request) {
+
+        String employeeCode = SecurityUtil.getCurrentUserLogin()
+                .orElseThrow(() -> new RuntimeException("Cannot determine current user"));
+
+        log.info("POST /api/v1/inventory/import - Invoice: {}, Supplier: {}, Items: {}",
+                request.getInvoiceNumber(), request.getSupplierId(), request.getItems().size());
+
+        ImportTransactionResponse response = importTransactionService.createImportTransaction(
+                request, employeeCode);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    // ===========================
+    // API 6.5: CREATE EXPORT TRANSACTION
+    // ===========================
+
+    /**
+     * API 6.5: Create Export Transaction
+     *
+     * Business Features:
+     * - FEFO Algorithm (First Expired, First Out)
+     * - Auto-Unpacking (xé lẻ tự động từ đơn vị lớn)
+     * - Multi-Batch Allocation (phân bổ từ nhiều lô)
+     * - Financial Tracking (COGS calculation)
+     * - Warning System (near expiry, expired stock)
+     * - Unpacking Traceability (parentBatchId tracking)
+     *
+     * Export Types:
+     * - USAGE: Xuất dùng (không cho phép hàng hết hạn)
+     * - DISPOSAL: Xuất hủy (cho phép hàng hết hạn)
+     * - RETURN: Trả NCC
+     */
+    @Operation(summary = "Tạo phiếu xuất kho", description = """
+            Tạo phiếu xuất kho với các tính năng:
+            - FEFO Algorithm: Tự động chọn lô hết hạn trước
+            - Auto-Unpacking: Xé lẻ tự động nếu không đủ hàng lẻ
+            - Multi-Batch: Phân bổ từ nhiều lô để đủ số lượng
+            - Financial Tracking: Tính COGS cho báo cáo
+            - Warnings: Cảnh báo hàng sắp hết hạn/đã hết hạn
+
+            Permissions:
+            - EXPORT_ITEMS: Xuất dùng (USAGE)
+            - DISPOSE_ITEMS: Xuất hủy (DISPOSAL)
+            """)
+    @ApiMessage("Tạo phiếu xuất kho thành công")
+    @PostMapping("/export")
+    @PreAuthorize("hasAnyAuthority('EXPORT_ITEMS', 'DISPOSE_ITEMS')")
+    public ResponseEntity<ExportTransactionResponse> createExportTransaction(
+            @Valid @RequestBody ExportTransactionRequest request) {
+
+        String employeeCode = SecurityUtil.getCurrentUserLogin()
+                .orElseThrow(() -> new RuntimeException("Cannot determine current user"));
+
+        log.info("POST /api/v1/inventory/export - Type: {}, Items: {}",
+                request.getExportType(), request.getItems().size());
+
+        ExportTransactionResponse response = exportTransactionService.createExportTransaction(
+                request, employeeCode);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }
