@@ -1,7 +1,7 @@
 # Service API Architecture Clarification
 
-**Date:** 2025-11-24  
-**Status:** 🟢 **OFFICIAL BACKEND CLARIFICATION**  
+**Date:** 2025-11-24
+**Status:** 🟢 **OFFICIAL BACKEND CLARIFICATION**
 **For:** Frontend Team
 
 ---
@@ -12,12 +12,12 @@
 
 ### Quick Answer for Frontend:
 
-| Use Case | API to Use | Endpoint |
-|----------|-----------|----------|
-| **Admin CRUD** (Create/Edit/Delete services) | **Booking API** | `/api/v1/booking/services` |
-| **Public Price List** (No auth) | **V17 API** | `/api/v1/public/services/grouped` |
-| **Service Selection** (Treatment Plans, Appointments) | **V17 API** | `/api/v1/services/grouped` |
-| **Admin Dashboard** (List with category filter) | **V17 API** | `/api/v1/services?categoryId=X` |
+| Use Case                                              | API to Use      | Endpoint                          |
+| ----------------------------------------------------- | --------------- | --------------------------------- |
+| **Admin CRUD** (Create/Edit/Delete services)          | **Booking API** | `/api/v1/booking/services`        |
+| **Public Price List** (No auth)                       | **V17 API**     | `/api/v1/public/services/grouped` |
+| **Service Selection** (Treatment Plans, Appointments) | **V17 API**     | `/api/v1/services/grouped`        |
+| **Admin Dashboard** (List with category filter)       | **V17 API**     | `/api/v1/services?categoryId=X`   |
 
 ---
 
@@ -28,17 +28,20 @@
 These are **NOT duplicate APIs** - they serve different domains:
 
 #### 1️⃣ **V17 Service API** (`/api/v1/services`)
-**Domain:** Service Catalog & Configuration  
-**Purpose:** Read-only service browsing for operational use  
+
+**Domain:** Service Catalog & Configuration
+**Purpose:** Read-only service browsing for operational use
 **Controller:** `service/controller/DentalServiceController.java`
 
 **Use Cases:**
+
 - ✅ Public website price list display
 - ✅ Treatment plan service selection
 - ✅ Appointment booking service dropdown
 - ✅ Admin dashboard service overview with category grouping
 
 **Key Features:**
+
 - ✅ Category-based grouping (`GroupedServicesResponse`)
 - ✅ Public endpoint (no auth) for price lists
 - ✅ `categoryId` filter support
@@ -48,17 +51,20 @@ These are **NOT duplicate APIs** - they serve different domains:
 ---
 
 #### 2️⃣ **Booking Service API** (`/api/v1/booking/services`)
-**Domain:** Service Configuration & Management  
-**Purpose:** Admin CRUD operations for service setup  
+
+**Domain:** Service Configuration & Management
+**Purpose:** Admin CRUD operations for service setup
 **Controller:** `booking_appointment/controller/ServiceController.java`
 
 **Use Cases:**
+
 - ✅ Admin create/update/delete services
 - ✅ Service-Specialization mapping management
 - ✅ Service status toggling (activate/deactivate)
 - ✅ Doctor specialization-based filtering
 
 **Key Features:**
+
 - ✅ Full CRUD operations (POST/PUT/DELETE/PATCH)
 - ✅ `specializationId` filter (for doctor-specific services)
 - ✅ `/my-specializations` endpoint for doctors
@@ -70,6 +76,7 @@ These are **NOT duplicate APIs** - they serve different domains:
 ## DTO Comparison
 
 ### V17 API - `DentalServiceDTO`
+
 ```java
 DentalServiceDTO {
   Long serviceId;
@@ -87,6 +94,7 @@ DentalServiceDTO {
 ```
 
 **Strengths:**
+
 - ✅ Has `categoryId` via `category.categoryId`
 - ✅ Has `displayOrder` for consistent UI ordering
 - ✅ Simpler duration model (single field)
@@ -94,6 +102,7 @@ DentalServiceDTO {
 ---
 
 ### Booking API - `ServiceResponse`
+
 ```java
 ServiceResponse {
   Integer serviceId;
@@ -112,11 +121,13 @@ ServiceResponse {
 ```
 
 **Strengths:**
+
 - ✅ Has `specializationId` for doctor filtering
 - ✅ Separate `buffer` time for appointment scheduling
 - ✅ Full CRUD support via separate endpoints
 
 **Weakness:**
+
 - ❌ Missing `categoryId` (cannot group by category)
 
 ---
@@ -135,24 +146,24 @@ class ServiceService {
     isActive?: boolean;
     search?: string;
   }): Promise<DentalServiceDTO[]> {
-    return axios.get('/api/v1/services', { params: filters });
+    return axios.get("/api/v1/services", { params: filters });
   }
 
   async getPublicPriceList(): Promise<GroupedServicesResponse> {
-    return axios.get('/api/v1/public/services/grouped');
+    return axios.get("/api/v1/public/services/grouped");
   }
 
   async getGroupedServicesForBooking(): Promise<GroupedServicesResponse> {
-    return axios.get('/api/v1/services/grouped');
+    return axios.get("/api/v1/services/grouped");
   }
 
   // 2️⃣ Use Booking API for WRITE operations (has CRUD)
   async createService(data: CreateServiceRequest): Promise<ServiceResponse> {
-    return axios.post('/api/v1/booking/services', data);
+    return axios.post("/api/v1/booking/services", data);
   }
 
   async updateService(
-    serviceCode: string, 
+    serviceCode: string,
     data: UpdateServiceRequest
   ): Promise<ServiceResponse> {
     return axios.put(`/api/v1/booking/services/${serviceCode}`, data);
@@ -173,6 +184,7 @@ class ServiceService {
 ### Page-by-Page Usage
 
 #### 1. **Public Price List Page** (`/pricing`)
+
 ```typescript
 // Use V17 public API (no auth required)
 const services = await serviceService.getPublicPriceList();
@@ -185,17 +197,19 @@ const services = await serviceService.getPublicPriceList();
 #### 2. **Admin Service Management Page** (`/admin/services`)
 
 **LIST/READ:**
+
 ```typescript
 // Use V17 API for better filtering
 const services = await serviceService.getServicesForDisplay({
   categoryId: selectedCategoryId,
   isActive: true,
-  search: searchQuery
+  search: searchQuery,
 });
 // Returns: Page<DentalServiceDTO> with category info
 ```
 
 **CREATE/UPDATE/DELETE:**
+
 ```typescript
 // Use Booking API for CRUD operations
 await serviceService.createService({
@@ -214,6 +228,7 @@ await serviceService.deleteService(123);
 ---
 
 #### 3. **Treatment Plan Service Selection** (`/treatment-plans/create`)
+
 ```typescript
 // Use V17 grouped API (easier to render by category)
 const groupedServices = await serviceService.getGroupedServicesForBooking();
@@ -224,13 +239,14 @@ const groupedServices = await serviceService.getGroupedServicesForBooking();
 ---
 
 #### 4. **Appointment Booking Service Dropdown** (`/appointments/create`)
+
 ```typescript
 // Option A: Use V17 grouped API
 const groupedServices = await serviceService.getGroupedServicesForBooking();
 
 // Option B: Use Booking API filtered by doctor's specialization
 const doctorServices = await axios.get(
-  '/api/v1/booking/services/my-specializations'
+  "/api/v1/booking/services/my-specializations"
 );
 ```
 
@@ -240,12 +256,13 @@ const doctorServices = await axios.get(
 
 ### Priority 1: Add `categoryId` to Booking API DTO ⭐
 
-**Impact:** Frontend can use single API for admin CRUD  
+**Impact:** Frontend can use single API for admin CRUD
 **Effort:** Low (15 minutes)
 
 **Changes Required:**
 
 #### 1. Update `ServiceResponse.java`:
+
 ```java
 @Schema(description = "Service category ID", example = "5")
 private Long categoryId;
@@ -258,6 +275,7 @@ private String categoryName;
 ```
 
 #### 2. Update `AppointmentDentalServiceService.java`:
+
 ```java
 // In toServiceResponse() mapping method
 .categoryId(service.getCategory() != null ? service.getCategory().getCategoryId() : null)
@@ -266,6 +284,7 @@ private String categoryName;
 ```
 
 #### 3. Add `categoryId` filter to endpoint:
+
 ```java
 @GetMapping
 public ResponseEntity<Page<ServiceResponse>> getAllServices(
@@ -288,6 +307,7 @@ This document serves as official backend clarification.
 ### Priority 3: Consider Future Consolidation (Low Priority)
 
 **Long-term (v2.0):** Merge both APIs into single `/api/v2/services` with:
+
 - ✅ Full CRUD operations
 - ✅ Both `categoryId` and `specializationId` filters
 - ✅ Public/Internal/Admin endpoints under one controller
@@ -303,6 +323,7 @@ This document serves as official backend clarification.
 **Answer:** ✅ **Use BOTH - they serve different purposes**
 
 - **Read operations** (List/Filter/Display): V17 API (`/api/v1/services`)
+
   - Has `categoryId` filter
   - Has grouped endpoints
   - Optimized for browsing
@@ -352,18 +373,20 @@ POST   /api/v1/service-categories/reorder      # Reorder
 
 ### Frontend Requirements
 
-✅ Service: `ServiceCategoryService` (already implemented)  
-✅ Types: `ServiceCategory` interface (already defined)  
+✅ Service: `ServiceCategoryService` (already implemented)
+✅ Types: `ServiceCategory` interface (already defined)
 ❌ **Missing:** Admin page `/admin/service-categories`
 
 **Page Features Needed:**
 
 1. **List View:**
+
    - Table: Category Name, Code, Service Count, Display Order, Status
    - Actions: Edit, Delete, Toggle Status
    - Drag-drop reordering
 
 2. **Create/Edit Modal:**
+
    - Fields: Category Name, Code, Description, Display Order
    - Validation: Required fields, unique code
 
@@ -403,13 +426,13 @@ const [services, setServices] = useState<DentalServiceDTO[]>([]);
 // Use V17 API for listing (has categoryId)
 useEffect(() => {
   const fetchServices = async () => {
-    const response = await axios.get('/api/v1/services', {
+    const response = await axios.get("/api/v1/services", {
       params: {
         categoryId: categoryId,
         isActive: true,
         page: 0,
-        size: 20
-      }
+        size: 20,
+      },
     });
     setServices(response.data.content);
   };
@@ -418,12 +441,12 @@ useEffect(() => {
 
 // Render category filter dropdown
 <Select value={categoryId} onChange={setCategoryId}>
-  {categories.map(cat => (
+  {categories.map((cat) => (
     <Option key={cat.categoryId} value={cat.categoryId}>
       {cat.categoryName}
     </Option>
   ))}
-</Select>
+</Select>;
 ```
 
 ### Example 2: Admin Create Service Form
@@ -433,20 +456,20 @@ useEffect(() => {
 const handleCreateService = async (values: CreateServiceRequest) => {
   try {
     // Use Booking API for create operation
-    const response = await axios.post('/api/v1/booking/services', {
+    const response = await axios.post("/api/v1/booking/services", {
       serviceCode: values.serviceCode,
       serviceName: values.serviceName,
       specializationId: values.specializationId,
       defaultDurationMinutes: values.duration,
       defaultBufferMinutes: values.buffer,
       price: values.price,
-      description: values.description
+      description: values.description,
     });
-    
-    message.success('Service created successfully');
+
+    message.success("Service created successfully");
     onSuccess(response.data);
   } catch (error) {
-    message.error('Failed to create service');
+    message.error("Failed to create service");
   }
 };
 ```
@@ -455,32 +478,36 @@ const handleCreateService = async (values: CreateServiceRequest) => {
 
 ```typescript
 // /treatment-plans/components/ServiceSelector.tsx
-const [groupedServices, setGroupedServices] = useState<GroupedServicesResponse[]>([]);
+const [groupedServices, setGroupedServices] = useState<
+  GroupedServicesResponse[]
+>([]);
 
 useEffect(() => {
   const fetchServices = async () => {
     // Use V17 grouped API (easier to render by category)
-    const response = await axios.get('/api/v1/services/grouped');
+    const response = await axios.get("/api/v1/services/grouped");
     setGroupedServices(response.data);
   };
   fetchServices();
 }, []);
 
 // Render grouped by category
-{groupedServices.map(group => (
-  <div key={group.categoryId}>
-    <h3>{group.categoryName}</h3>
-    {group.services.map(service => (
-      <ServiceCard 
-        key={service.serviceId}
-        code={service.serviceCode}
-        name={service.serviceName}
-        duration={service.durationMinutes}
-        price={service.price}
-      />
-    ))}
-  </div>
-))}
+{
+  groupedServices.map((group) => (
+    <div key={group.categoryId}>
+      <h3>{group.categoryName}</h3>
+      {group.services.map((service) => (
+        <ServiceCard
+          key={service.serviceId}
+          code={service.serviceCode}
+          name={service.serviceName}
+          duration={service.durationMinutes}
+          price={service.price}
+        />
+      ))}
+    </div>
+  ));
+}
 ```
 
 ---
@@ -495,12 +522,13 @@ useEffect(() => {
 - ✅ Service Category admin UI is FE task (medium priority)
 
 **Next Steps:**
+
 1. Backend: Implement Priority 1 enhancement
 2. Frontend: Use dual-API approach immediately
 3. Frontend: Create Service Category admin page
 
 ---
 
-**Document Owner:** Backend Team  
-**Last Updated:** 2025-11-24  
+**Document Owner:** Backend Team
+**Last Updated:** 2025-11-24
 **Questions?** Contact Backend Team via Slack

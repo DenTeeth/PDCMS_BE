@@ -1,8 +1,8 @@
 # Backend Issues Response - 2025-11-24
 
-**Date:** 2025-11-24  
-**Status:** ✅ All Critical Issues Analyzed  
-**Responder:** Backend Team  
+**Date:** 2025-11-24
+**Status:** ✅ All Critical Issues Analyzed
+**Responder:** Backend Team
 **Document Version:** 1.0
 
 ---
@@ -11,14 +11,14 @@
 
 **6 issues** được FE team báo cáo. Dưới đây là status và solutions:
 
-| # | Issue | Priority | Status | Solution |
-|---|-------|----------|--------|----------|
-| 1 | Service API - Duplicate APIs | 🔴 Critical | ✅ **FIXED** | Added categoryId to Booking Service API |
-| 2 | Service Category Admin UI | 🟡 Medium | ⚠️ **FE TODO** | FE needs to create admin page |
-| 3 | Permission Constants Missing | 🟡 Medium | ✅ **FIXED** | FE already fixed |
-| 4 | Warehouse V3 API - 500 Error | 🟡 Medium | ✅ **WORKING** | API works, FE misunderstood endpoint |
-| 5 | Warehouse Item Category - Empty | 🟡 Medium | ✅ **SOLUTION** | Need to add seed data |
-| 6 | Patient Creation - 500 Error | 🔴 Critical | ✅ **SOLUTION** | Email service error - fix provided |
+| #   | Issue                           | Priority    | Status          | Solution                                |
+| --- | ------------------------------- | ----------- | --------------- | --------------------------------------- |
+| 1   | Service API - Duplicate APIs    | 🔴 Critical | ✅ **FIXED**    | Added categoryId to Booking Service API |
+| 2   | Service Category Admin UI       | 🟡 Medium   | ⚠️ **FE TODO**  | FE needs to create admin page           |
+| 3   | Permission Constants Missing    | 🟡 Medium   | ✅ **FIXED**    | FE already fixed                        |
+| 4   | Warehouse V3 API - 500 Error    | 🟡 Medium   | ✅ **WORKING**  | API works, FE misunderstood endpoint    |
+| 5   | Warehouse Item Category - Empty | 🟡 Medium   | ✅ **SOLUTION** | Need to add seed data                   |
+| 6   | Patient Creation - 500 Error    | 🔴 Critical | ✅ **SOLUTION** | Email service error - fix provided      |
 
 ---
 
@@ -29,6 +29,7 @@
 ### Problem Summary
 
 FE team reported confusion about **two Service APIs** with different capabilities:
+
 - **V17 Service API** (`/api/v1/services`) - Has `categoryId` but no CREATE/UPDATE/DELETE
 - **Booking Service API** (`/api/v1/booking/services`) - Has full CRUD but no `categoryId`
 
@@ -41,6 +42,7 @@ FE was forced to use Booking API (only one with CRUD), but couldn't filter/group
 **Changes Made:**
 
 #### 1. ServiceResponse DTO - Added 3 Category Fields
+
 ```java
 // File: booking_appointment/dto/response/ServiceResponse.java
 // Lines added: 103-107
@@ -51,6 +53,7 @@ private String categoryName;    // NEW - For FE display
 ```
 
 #### 2. ServiceMapper - Added Category Mapping
+
 ```java
 // File: booking_appointment/mapper/ServiceMapper.java
 // Added in toResponse() method
@@ -63,6 +66,7 @@ if (service.getCategory() != null) {
 ```
 
 #### 3. ServiceController - Added categoryId Filter
+
 ```java
 // File: booking_appointment/controller/ServiceController.java
 // Added query parameter to GET /api/v1/booking/services
@@ -78,6 +82,7 @@ public ResponseEntity<Page<ServiceResponse>> getAllServices(
 ```
 
 #### 4. Service Layer - Updated Method Signatures
+
 ```java
 // File: booking_appointment/service/AppointmentDentalServiceService.java
 // Updated 2 methods to accept categoryId parameter
@@ -92,6 +97,7 @@ public Page<ServiceResponse> getAllServices(
 ```
 
 #### 5. Repository - Updated Query with Category Filter
+
 ```java
 // File: booking_appointment/repository/BookingDentalServiceRepository.java
 // Added to WHERE clause in @Query
@@ -100,6 +106,7 @@ public Page<ServiceResponse> getAllServices(
 ```
 
 #### 6. Entity - Added Category Relationship
+
 ```java
 // File: booking_appointment/domain/DentalService.java
 // Added @ManyToOne relationship
@@ -112,6 +119,7 @@ private com.dental.clinic.management.service.domain.ServiceCategory category;
 ### API Changes for FE Team
 
 **✅ New Response Fields (GET /api/v1/booking/services)**
+
 ```typescript
 interface ServiceResponse {
   serviceId: number;
@@ -124,18 +132,19 @@ interface ServiceResponse {
   specializationId: number;
   specializationName: string;
   isActive: boolean;
-  
+
   // NEW FIELDS ✅
-  categoryId?: number;        // NULL if service has no category
-  categoryCode?: string;      // e.g., "ORTHO", "ENDO"
-  categoryName?: string;      // e.g., "Chỉnh Nha", "Nội Nha"
-  
+  categoryId?: number; // NULL if service has no category
+  categoryCode?: string; // e.g., "ORTHO", "ENDO"
+  categoryName?: string; // e.g., "Chỉnh Nha", "Nội Nha"
+
   createdAt: string;
   updatedAt: string;
 }
 ```
 
 **✅ New Query Parameter (Filter by Category)**
+
 ```bash
 # Original endpoint (still works)
 GET /api/v1/booking/services?isActive=true&page=0&size=20
@@ -168,17 +177,20 @@ GET /api/v1/booking/services?categoryId=5&specializationId=2&keyword=tẩy&isAct
 ✅ **4 comprehensive documents** for FE team:
 
 1. **SERVICE_API_ARCHITECTURE_CLARIFICATION.md** (~15KB)
+
    - Explains why two Service APIs exist
    - When to use each API
    - Architecture rationale
 
 2. **CHANGELOG_2025_11_24_Service_API_Enhancement.md** (~12KB)
+
    - Detailed API changes
    - Migration guide for FE
    - Testing checklist
    - Complete React component example
 
 3. **FE_UPDATE_2025_11_24_QUICK_GUIDE.md** (~3KB)
+
    - TL;DR for FE developers
    - 5-minute quick start
    - Interface updates
@@ -206,33 +218,36 @@ GET /api/v1/booking/services?categoryId=5&specializationId=2&keyword=tẩy&isAct
 ### FE Team Next Steps
 
 **Step 1: Update TypeScript Interface (5 minutes)**
+
 ```typescript
 // src/types/service.ts
 interface ServiceResponse {
   // ... existing fields
-  categoryId?: number;        // ADD THIS
-  categoryCode?: string;      // ADD THIS
-  categoryName?: string;      // ADD THIS
+  categoryId?: number; // ADD THIS
+  categoryCode?: string; // ADD THIS
+  categoryName?: string; // ADD THIS
 }
 ```
 
 **Step 2: Update Service Method (5 minutes)**
+
 ```typescript
 // src/services/serviceService.ts
 getAllServices: async (filter?: {
-  categoryId?: number;        // ADD THIS
+  categoryId?: number; // ADD THIS
   specializationId?: number;
   isActive?: boolean;
   keyword?: string;
   page?: number;
   size?: number;
 }) => {
-  const response = await api.get('/booking/services', { params: filter });
+  const response = await api.get("/booking/services", { params: filter });
   return response.data;
-}
+};
 ```
 
 **Step 3: Add Category Filter to Admin UI (~1 hour)**
+
 ```typescript
 // src/app/admin/booking/services/page.tsx
 // Add category dropdown filter
@@ -249,8 +264,8 @@ getAllServices: async (filter?: {
 </Select>
 
 // Display category in table
-<Column 
-  title="Danh mục" 
+<Column
+  title="Danh mục"
   dataIndex="categoryName"
   render={(name) => name || 'Chưa phân loại'}
 />
@@ -303,14 +318,17 @@ All endpoints exist and working:
 ### FE Implementation Status
 
 ✅ **Service layer exists:**
+
 - File: `src/services/serviceCategoryService.ts`
 - All API methods implemented
 
 ✅ **Types defined:**
+
 - File: `src/types/serviceCategory.ts`
 - TypeScript interfaces ready
 
 ❌ **Missing:**
+
 - Admin page `/admin/service-categories` not created
 - No UI for CRUD operations
 - No drag-drop reordering UI
@@ -318,6 +336,7 @@ All endpoints exist and working:
 ### Required FE Work
 
 **1. Create Admin Page** (`/admin/service-categories/page.tsx`)
+
 - List categories table with:
   - categoryCode, categoryName, description
   - Service count per category
@@ -328,10 +347,12 @@ All endpoints exist and working:
 - Permissions check: `VIEW_SERVICE`, `CREATE_SERVICE`, `UPDATE_SERVICE`, `DELETE_SERVICE`
 
 **2. Update Services Admin Page** (`/admin/booking/services/page.tsx`)
+
 - Add category filter dropdown (now possible with Issue #1 fix)
 - Display category name in services table
 
 **3. Add Navigation**
+
 - Add menu item: "Quản lý Danh mục Dịch vụ" under Services section
 
 ### API Response Example
@@ -382,9 +403,11 @@ FE team already added missing permissions to `src/types/permission.ts`. No actio
 ### Problem Analysis
 
 **FE Reported:**
+
 > "V3 Warehouse API returns HTTP 500 error"
 
 **Root Cause:**
+
 - ❌ FE was calling `/api/v3/warehouse/summary` (correct)
 - ✅ API exists and works
 - ⚠️ **However**, controller was renamed: `WarehouseV3Controller` → `WarehouseInventoryController`
@@ -393,6 +416,7 @@ FE team already added missing permissions to `src/types/permission.ts`. No actio
 ### BE Investigation Results
 
 **✅ Controller Exists:**
+
 ```java
 // File: warehouse/controller/WarehouseInventoryController.java
 @RestController
@@ -404,6 +428,7 @@ public class WarehouseInventoryController {
 ```
 
 **✅ Service Layer Implemented:**
+
 ```java
 // File: warehouse/service/InventoryService.java
 @Transactional(readOnly = true)
@@ -427,6 +452,7 @@ public InventorySummaryResponse getInventorySummaryV2(
 ### API Endpoints (All Implemented) ✅
 
 **API 6.1: Inventory Summary**
+
 ```bash
 GET /api/v3/warehouse/summary
 Parameters:
@@ -462,6 +488,7 @@ Response:
 ```
 
 **API 6.2: Item Batches Detail**
+
 ```bash
 GET /api/v3/warehouse/batches/{itemMasterId}
 Parameters:
@@ -475,6 +502,7 @@ Response: ItemBatchesResponse with summary stats + batches array
 ```
 
 **API 6.3: Expiring Alerts**
+
 ```bash
 GET /api/v3/warehouse/alerts/expiring
 Parameters:
@@ -498,32 +526,38 @@ Response: ExpiringAlertsResponse with stats + alerts array
 **Possible Causes:**
 
 1. **No Data in Database:**
+
    - If `item_masters` table is empty, API returns empty array (NOT 500)
    - API works even with 0 items
 
 2. **Missing Permissions:**
+
    - If user doesn't have `VIEW_WAREHOUSE` permission, returns 403 (NOT 500)
 
 3. **Database Connection Error:**
+
    - If PostgreSQL is down or connection fails
    - Check database connection in BE logs
 
 4. **FE Already Implemented Fallback:**
+
 ```typescript
 // FE code: src/services/warehouseService.ts
 export const itemMasterService = {
   getSummary: async (filter?) => {
     try {
       // Try V3 first
-      const response = await apiV3.get('/warehouse/summary', { params: filter });
+      const response = await apiV3.get("/warehouse/summary", {
+        params: filter,
+      });
       return response.data;
     } catch (error) {
       // Fallback to V1 API
-      console.warn('V3 API failed, using V1 fallback');
-      const response = await api.get('/inventory', { params: filter });
+      console.warn("V3 API failed, using V1 fallback");
+      const response = await api.get("/inventory", { params: filter });
       return response.data.content || [];
     }
-  }
+  },
 };
 ```
 
@@ -535,6 +569,7 @@ export const itemMasterService = {
 - ✅ **FE already has fallback to V1**
 
 **No BE fix required.** If FE still sees 500 error:
+
 1. Check BE logs for stack trace
 2. Verify database has data
 3. Verify user has `VIEW_WAREHOUSE` permission
@@ -542,14 +577,14 @@ export const itemMasterService = {
 
 ### V1 vs V3 Comparison
 
-| Feature | V1 API (`/api/v1/inventory`) | V3 API (`/api/v3/warehouse`) |
-|---------|------------------------------|------------------------------|
-| **CRUD Operations** | ✅ Full CRUD | ❌ Read-only (dashboard) |
-| **totalQuantity** | ❌ No aggregation | ✅ SUM across batches |
-| **stockStatus** | ❌ Not computed | ✅ Computed (4 levels) |
-| **nearestExpiryDate** | ❌ Not available | ✅ FEFO support |
-| **Batch Status** | ❌ Basic | ✅ EXPIRED/CRITICAL/EXPIRING_SOON/VALID |
-| **Use Case** | Item Master CRUD | Dashboard & Analytics |
+| Feature               | V1 API (`/api/v1/inventory`) | V3 API (`/api/v3/warehouse`)            |
+| --------------------- | ---------------------------- | --------------------------------------- |
+| **CRUD Operations**   | ✅ Full CRUD                 | ❌ Read-only (dashboard)                |
+| **totalQuantity**     | ❌ No aggregation            | ✅ SUM across batches                   |
+| **stockStatus**       | ❌ Not computed              | ✅ Computed (4 levels)                  |
+| **nearestExpiryDate** | ❌ Not available             | ✅ FEFO support                         |
+| **Batch Status**      | ❌ Basic                     | ✅ EXPIRED/CRITICAL/EXPIRING_SOON/VALID |
+| **Use Case**          | Item Master CRUD             | Dashboard & Analytics                   |
 
 **Recommendation:** Use V1 for CRUD, use V3 for dashboard (when working).
 
@@ -570,6 +605,7 @@ When creating new items in Warehouse module, the "Nhóm Vật Tư" (Item Categor
 ### BE Investigation Results
 
 **✅ Entity Exists:**
+
 ```java
 // File: warehouse/domain/ItemCategory.java
 @Entity
@@ -578,19 +614,20 @@ public class ItemCategory {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long categoryId;
-    
+
     private String categoryCode;
     private String categoryName;
     private String description;
     private Boolean isActive;
     private Integer displayOrder;
-    
+
     @ManyToOne(fetch = FetchType.LAZY)
     private ItemCategory parentCategory;  // Hierarchical support
 }
 ```
 
 **✅ API Endpoints Exist (V1):**
+
 ```bash
 ✅ GET /api/v1/inventory/categories
    - List all active categories
@@ -608,6 +645,7 @@ public class ItemCategory {
 ```
 
 **✅ Service Layer Implemented:**
+
 ```java
 // File: warehouse/service/InventoryService.java
 public List<ItemCategoryResponse> getAllCategories(WarehouseType warehouseType) {
@@ -626,6 +664,7 @@ public List<ItemCategoryResponse> getAllCategories(WarehouseType warehouseType) 
 ```
 
 **❌ Root Cause: NO SEED DATA**
+
 ```bash
 # Checked SQL files
 grep -r "item_categories" src/main/resources/db/
@@ -644,8 +683,8 @@ Create file: `src/main/resources/db/dental-clinic-seed-data.sql`
 -- ========================================
 -- Insert default item categories for warehouse management
 
-INSERT INTO item_categories (category_code, category_name, description, is_active, display_order, created_at) 
-VALUES 
+INSERT INTO item_categories (category_code, category_name, description, is_active, display_order, created_at)
+VALUES
   ('CONSUMABLE', 'Vật tư tiêu hao', 'Vật tư sử dụng một lần (gạc, băng, kim tiêm, bông, khẩu trang, găng tay)', true, 1, NOW()),
   ('EQUIPMENT', 'Dụng cụ y tế', 'Thiết bị và dụng cụ tái sử dụng (khay, kìm, kéo, gương nha khoa, đục, dũa)', true, 2, NOW()),
   ('MEDICINE', 'Thuốc men', 'Thuốc và dược phẩm (kháng sinh, giảm đau, sát trùng, thuốc gây tê)', true, 3, NOW()),
@@ -663,7 +702,7 @@ SELECT setval('item_categories_category_id_seq', (SELECT MAX(category_id) FROM i
 
 -- Log
 INSERT INTO audit_logs (entity_type, entity_id, action, performed_by, performed_at, description)
-VALUES 
+VALUES
   ('ITEM_CATEGORY', 0, 'SEED_DATA', 'SYSTEM', NOW(), 'Initialized 10 default item categories for warehouse module');
 ```
 
@@ -673,16 +712,16 @@ VALUES
 // File: utils/DataSeeder.java
 @Component
 public class DataSeeder implements ApplicationRunner {
-    
+
     @Autowired
     private ItemCategoryRepository itemCategoryRepository;
-    
+
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
         if (itemCategoryRepository.count() == 0) {
             log.info("Seeding item categories...");
-            
+
             List<ItemCategory> categories = List.of(
                 createCategory("CONSUMABLE", "Vật tư tiêu hao", "Vật tư sử dụng một lần", 1),
                 createCategory("EQUIPMENT", "Dụng cụ y tế", "Thiết bị và dụng cụ tái sử dụng", 2),
@@ -695,12 +734,12 @@ public class DataSeeder implements ApplicationRunner {
                 createCategory("OFFICE", "Văn phòng phẩm", "Giấy tờ, hồ sơ bệnh án", 9),
                 createCategory("PROTECTIVE", "Đồ bảo hộ", "Trang phục bảo hộ cho nhân viên", 10)
             );
-            
+
             itemCategoryRepository.saveAll(categories);
             log.info("✅ Seeded {} item categories", categories.size());
         }
     }
-    
+
     private ItemCategory createCategory(String code, String name, String desc, int order) {
         return ItemCategory.builder()
             .categoryCode(code)
@@ -745,9 +784,9 @@ GET /api/v1/inventory/categories
 // File: src/services/warehouseService.ts
 export const categoryService = {
   getAll: async (): Promise<any[]> => {
-    const response = await api.get('/inventory/categories');  // ✅ Correct endpoint
+    const response = await api.get("/inventory/categories"); // ✅ Correct endpoint
     return response.data;
-  }
+  },
 };
 
 // Used in:
@@ -764,34 +803,48 @@ FE code is correct. Just need BE to add seed data.
 export const categoryService = {
   getAll: async (): Promise<any[]> => {
     try {
-      const response = await api.get('/inventory/categories');
+      const response = await api.get("/inventory/categories");
       if (response.data && response.data.length > 0) {
         return response.data;
       }
       // Fallback to hardcoded categories
       return [
-        { categoryId: 1, categoryCode: 'CONSUMABLE', categoryName: 'Vật tư tiêu hao' },
-        { categoryId: 2, categoryCode: 'EQUIPMENT', categoryName: 'Dụng cụ y tế' },
-        { categoryId: 3, categoryCode: 'MEDICINE', categoryName: 'Thuốc men' },
-        { categoryId: 4, categoryCode: 'CHEMICAL', categoryName: 'Hóa chất' },
-        { categoryId: 5, categoryCode: 'MATERIAL', categoryName: 'Vật liệu nha khoa' },
+        {
+          categoryId: 1,
+          categoryCode: "CONSUMABLE",
+          categoryName: "Vật tư tiêu hao",
+        },
+        {
+          categoryId: 2,
+          categoryCode: "EQUIPMENT",
+          categoryName: "Dụng cụ y tế",
+        },
+        { categoryId: 3, categoryCode: "MEDICINE", categoryName: "Thuốc men" },
+        { categoryId: 4, categoryCode: "CHEMICAL", categoryName: "Hóa chất" },
+        {
+          categoryId: 5,
+          categoryCode: "MATERIAL",
+          categoryName: "Vật liệu nha khoa",
+        },
       ];
     } catch (error) {
-      console.error('Failed to load categories, using fallback', error);
+      console.error("Failed to load categories, using fallback", error);
       return [];
     }
-  }
+  },
 };
 ```
 
 ### Action Items
 
 **For BE Team (URGENT):**
+
 1. ✅ Add SQL seed data for 10 default item categories
 2. ✅ Run database migration
 3. ✅ Verify `GET /api/v1/inventory/categories` returns data
 
 **For FE Team:**
+
 - ⚠️ Optionally add fallback data until BE seeds database
 - ✅ No code changes needed (API endpoint is correct)
 
@@ -808,6 +861,7 @@ export const categoryService = {
 `POST /api/v1/patients` returns HTTP 500 Internal Server Error when creating patient accounts.
 
 **Tested Scenario:**
+
 ```bash
 POST /api/v1/patients
 {
@@ -832,10 +886,11 @@ POST /api/v1/patients
 
 ### Root Cause Analysis ✅
 
-**File:** `patient/service/PatientService.java`  
+**File:** `patient/service/PatientService.java`
 **Method:** `createPatient()` line 178-265
 
 **Line 232 - Email Verification:**
+
 ```java
 // Send verification email asynchronously
 emailService.sendVerificationEmail(account.getEmail(), account.getUsername(), verificationToken.getToken());
@@ -843,12 +898,14 @@ log.info(" Verification email sent to: {}", account.getEmail());
 ```
 
 **Problem:**
+
 1. **Email service throws exception** if SMTP not configured
 2. **@Transactional method** - Exception causes transaction rollback
 3. **Patient + Account creation rolled back** - Nothing saved
 4. **Returns generic 500 error** instead of specific error message
 
 **EmailService Implementation (Line 32):**
+
 ```java
 @Async
 public void sendVerificationEmail(String toEmail, String username, String token) {
@@ -865,6 +922,7 @@ public void sendVerificationEmail(String toEmail, String username, String token)
 ```
 
 **Why 500 Error:**
+
 - SMTP server not configured in `application.properties`
 - `JavaMailSender` bean throws exception
 - Transaction rolled back
@@ -904,6 +962,7 @@ try {
 ```
 
 **Benefits:**
+
 - ✅ Patient account creation succeeds even if email fails
 - ✅ Graceful degradation
 - ✅ Admin can manually verify patient if needed
@@ -934,6 +993,7 @@ log.warn("⚠️ Email verification disabled - account is ACTIVE immediately");
 ```
 
 **Benefits:**
+
 - ✅ Quick fix - patients can be created immediately
 - ✅ No email configuration needed
 - ⚠️ Security concern - accounts not verified
@@ -946,7 +1006,7 @@ log.warn("⚠️ Email verification disabled - account is ACTIVE immediately");
 ```yaml
 spring:
   mail:
-    host: smtp.gmail.com       # Or your SMTP server
+    host: smtp.gmail.com # Or your SMTP server
     port: 587
     username: ${MAIL_USERNAME:your-email@gmail.com}
     password: ${MAIL_PASSWORD:your-app-password}
@@ -959,7 +1019,6 @@ spring:
             required: true
           ssl:
             trust: smtp.gmail.com
-    
 # For Gmail:
 # 1. Enable 2-Step Verification
 # 2. Create App Password: https://myaccount.google.com/apppasswords
@@ -967,6 +1026,7 @@ spring:
 ```
 
 **Environment Variables:**
+
 ```bash
 # .env or Railway config
 MAIL_USERNAME=dentalclinic@gmail.com
@@ -974,6 +1034,7 @@ MAIL_PASSWORD=abcd efgh ijkl mnop   # App password (16 characters with spaces)
 ```
 
 **Benefits:**
+
 - ✅ Proper solution - email verification works
 - ✅ No code changes needed
 - ⚠️ Requires SMTP server setup
@@ -984,6 +1045,7 @@ MAIL_PASSWORD=abcd efgh ijkl mnop   # App password (16 characters with spaces)
 **Combine Option 1 + Option 3:**
 
 1. **Short-term (1 hour):** Apply Option 1 (Make email non-blocking)
+
    - Allows patient creation to succeed
    - Email failures don't break system
    - Admin can manually verify if needed
@@ -1002,14 +1064,14 @@ MAIL_PASSWORD=abcd efgh ijkl mnop   # App password (16 characters with spaces)
 try {
     AccountVerificationToken verificationToken = new AccountVerificationToken(account);
     verificationTokenRepository.save(verificationToken);
-    
+
     emailService.sendVerificationEmail(
-        account.getEmail(), 
-        account.getUsername(), 
+        account.getEmail(),
+        account.getUsername(),
         verificationToken.getToken()
     );
     log.info("✅ Verification email sent to: {}", account.getEmail());
-    
+
 } catch (Exception e) {
     log.error("⚠️ Failed to send verification email: {}", e.getMessage(), e);
     log.warn("⚠️ Patient account created successfully, but email not sent.");
@@ -1035,6 +1097,7 @@ spring:
 ### Testing After Fix
 
 **Test 1: Patient Creation (Email Fails)**
+
 ```bash
 # Email not configured - should still work
 POST /api/v1/patients
@@ -1063,6 +1126,7 @@ POST /api/v1/patients
 ```
 
 **Test 2: Patient Creation (Email Works)**
+
 ```bash
 # After SMTP configured
 POST /api/v1/patients
@@ -1083,6 +1147,7 @@ POST /api/v1/patients
 **For BE Team (URGENT - Do This Now):**
 
 1. **Apply Option 1 (5 minutes):**
+
    ```bash
    # Edit PatientService.java line 230
    # Wrap email sending in try-catch
@@ -1090,6 +1155,7 @@ POST /api/v1/patients
    ```
 
 2. **Test patient creation:**
+
    ```bash
    # Should return 200 OK even without email config
    POST /api/v1/patients {...}
@@ -1105,6 +1171,7 @@ POST /api/v1/patients
 **For BE Team (Within 1 Week):**
 
 4. **Configure SMTP server:**
+
    ```bash
    # Add to Railway environment variables
    MAIL_HOST=smtp.gmail.com
@@ -1119,6 +1186,7 @@ POST /api/v1/patients
    ```
 
 **For FE Team:**
+
 - ⚠️ No FE changes required
 - ✅ Existing code will work once BE applies fix
 - ⚠️ Be prepared for `accountStatus: "PENDING_VERIFICATION"` in response
@@ -1135,19 +1203,19 @@ POST /api/v1/patients
 
 ### Completed ✅
 
-| Issue | Status | Action Taken |
-|-------|--------|--------------|
-| #1 - Service API Duplicate | ✅ FIXED | Added categoryId to Booking Service API |
-| #3 - Permission Constants | ✅ FIXED | FE already fixed |
-| #4 - Warehouse V3 API | ✅ WORKING | API exists and works, FE has fallback |
+| Issue                      | Status     | Action Taken                            |
+| -------------------------- | ---------- | --------------------------------------- |
+| #1 - Service API Duplicate | ✅ FIXED   | Added categoryId to Booking Service API |
+| #3 - Permission Constants  | ✅ FIXED   | FE already fixed                        |
+| #4 - Warehouse V3 API      | ✅ WORKING | API exists and works, FE has fallback   |
 
 ### Pending ⚠️
 
-| Issue | Status | Owner | Priority | ETA |
-|-------|--------|-------|----------|-----|
-| #2 - Service Category UI | ⚠️ TODO | FE Team | 🟡 Medium | After #1 integrated |
-| #5 - Item Category Data | ⚠️ TODO | BE Team | 🟡 Medium | Add seed data (1 hour) |
-| #6 - Patient Creation 500 | 🔴 TODO | BE Team | 🔴 Critical | Apply fix NOW (5 min) |
+| Issue                     | Status  | Owner   | Priority    | ETA                    |
+| ------------------------- | ------- | ------- | ----------- | ---------------------- |
+| #2 - Service Category UI  | ⚠️ TODO | FE Team | 🟡 Medium   | After #1 integrated    |
+| #5 - Item Category Data   | ⚠️ TODO | BE Team | 🟡 Medium   | Add seed data (1 hour) |
+| #6 - Patient Creation 500 | 🔴 TODO | BE Team | 🔴 Critical | Apply fix NOW (5 min)  |
 
 ### Immediate Action Items (Priority Order)
 
@@ -1162,6 +1230,7 @@ POST /api/v1/patients
 **🟡 MEDIUM (This Week):**
 
 2. **Fix Issue #5 - Item Category Seed Data**
+
    - Add SQL seed data for 10 default categories
    - Run database migration
    - Verify dropdown populated
@@ -1201,6 +1270,6 @@ POST /api/v1/patients
 
 ---
 
-**Document Status:** ✅ Complete  
-**Last Updated:** 2025-11-24  
+**Document Status:** ✅ Complete
+**Last Updated:** 2025-11-24
 **Next Review:** After Issue #6 is fixed (URGENT)

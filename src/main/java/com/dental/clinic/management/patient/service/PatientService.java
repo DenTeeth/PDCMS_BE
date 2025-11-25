@@ -237,7 +237,8 @@ public class PatientService {
             } catch (Exception e) {
                 // Log error but don't fail the entire patient creation
                 log.error("⚠️ Failed to send verification email to {}: {}", account.getEmail(), e.getMessage(), e);
-                log.warn("⚠️ Patient account created successfully, but email not sent. Manual verification may be required.");
+                log.warn(
+                        "⚠️ Patient account created successfully, but email not sent. Manual verification may be required.");
                 log.warn("⚠️ Possible causes: SMTP server not configured, network error, invalid email address");
                 // Don't throw exception - allow patient creation to succeed
             }

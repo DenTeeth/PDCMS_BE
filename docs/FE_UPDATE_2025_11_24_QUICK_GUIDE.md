@@ -13,11 +13,11 @@
 ```typescript
 interface ServiceResponse {
   // ... existing fields ...
-  
+
   // ⭐ NEW
-  categoryId: number;          // ID của category (VD: 5)
-  categoryCode: string;         // Code của category (VD: "GENERAL")
-  categoryName: string;         // Tên category (VD: "Nha khoa tổng quát")
+  categoryId: number; // ID của category (VD: 5)
+  categoryCode: string; // Code của category (VD: "GENERAL")
+  categoryName: string; // Tên category (VD: "Nha khoa tổng quát")
 }
 ```
 
@@ -49,12 +49,12 @@ interface ServiceResponse {
   price: number;
   specializationId?: number;
   specializationName?: string;
-  
+
   // ⭐ ADD THESE 3 LINES
   categoryId?: number;
   categoryCode?: string;
   categoryName?: string;
-  
+
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -84,21 +84,22 @@ async getAllServices(params: {
 const [categoryId, setCategoryId] = useState<number>();
 
 const { data: services } = useQuery({
-  queryKey: ['services', categoryId],
-  queryFn: () => serviceService.getAllServices({ 
-    categoryId,  // ⭐ USE NEW FILTER
-    isActive: true 
-  })
+  queryKey: ["services", categoryId],
+  queryFn: () =>
+    serviceService.getAllServices({
+      categoryId, // ⭐ USE NEW FILTER
+      isActive: true,
+    }),
 });
 
 // Display category in table
 <Table
   columns={[
-    { title: 'Service', dataIndex: 'serviceName' },
-    { title: 'Category', dataIndex: 'categoryName' },  // ⭐ NEW COLUMN
-    { title: 'Price', dataIndex: 'price' }
+    { title: "Service", dataIndex: "serviceName" },
+    { title: "Category", dataIndex: "categoryName" }, // ⭐ NEW COLUMN
+    { title: "Price", dataIndex: "price" },
   ]}
-/>
+/>;
 ```
 
 ---
@@ -117,19 +118,21 @@ const { data: services } = useQuery({
 ## 🎯 Benefits
 
 **Before:** Phải dùng 2 APIs khác nhau
+
 ```typescript
 // READ: Dùng V17 API (có categoryId)
-axios.get('/api/v1/services?categoryId=5');
+axios.get("/api/v1/services?categoryId=5");
 
 // WRITE: Dùng Booking API (không có categoryId)
-axios.post('/api/v1/booking/services', data);
+axios.post("/api/v1/booking/services", data);
 ```
 
 **After:** Dùng 1 API cho tất cả ✨
+
 ```typescript
 // READ + WRITE: Chỉ cần Booking API
-axios.get('/api/v1/booking/services?categoryId=5');
-axios.post('/api/v1/booking/services', data);
+axios.get("/api/v1/booking/services?categoryId=5");
+axios.post("/api/v1/booking/services", data);
 ```
 
 ---
@@ -137,6 +140,7 @@ axios.post('/api/v1/booking/services', data);
 ## 📖 Full Documentation
 
 Xem chi tiết tại:
+
 - **Changelog:** [CHANGELOG_2025_11_24_Service_API_Enhancement.md](./CHANGELOG_2025_11_24_Service_API_Enhancement.md)
 - **Architecture:** [SERVICE_API_ARCHITECTURE_CLARIFICATION.md](./SERVICE_API_ARCHITECTURE_CLARIFICATION.md)
 
@@ -144,11 +148,11 @@ Xem chi tiết tại:
 
 ## ❓ Questions?
 
-**Slack:** `#backend-support`  
+**Slack:** `#backend-support`
 **Issues:** Create ticket với label `service-api`
 
 ---
 
-**Status:** ✅ READY - Đã test và commit  
-**Breaking Changes:** ❌ None - Fully backward compatible  
+**Status:** ✅ READY - Đã test và commit
+**Breaking Changes:** ❌ None - Fully backward compatible
 **Action Required:** Update TypeScript interfaces và thêm category filter vào UI
