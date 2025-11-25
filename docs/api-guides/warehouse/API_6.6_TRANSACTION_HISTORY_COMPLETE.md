@@ -1,4 +1,4 @@
-# API 6.6 - Transaction History Implementation Complete 
+# API 6.6 - Transaction History Implementation Complete
 
 ## 📋 Overview
 
@@ -10,7 +10,7 @@
 GET /api/warehouse/transactions
 ```
 
-##  Features Implemented
+## Features Implemented
 
 ### 1. Request Parameters
 
@@ -61,7 +61,7 @@ GET /api/warehouse/transactions
       "periodStart": "2025-11-01",
       "periodEnd": "2025-11-24",
       "totalImportValue": 500000000, // Requires VIEW_COST permission
-      "totalExportValue": 250000000,  // Requires VIEW_COST permission
+      "totalExportValue": 250000000, // Requires VIEW_COST permission
       "pendingApprovalCount": 3
     },
 
@@ -93,7 +93,7 @@ GET /api/warehouse/transactions
 
         // Financial (RBAC: requires VIEW_COST)
         "totalItems": 3,
-        "totalValue": 150000.00, // null if no VIEW_COST
+        "totalValue": 150000.0, // null if no VIEW_COST
 
         // Payment Tracking (Import only)
         "paymentStatus": null,
@@ -115,9 +115,9 @@ GET /api/warehouse/transactions
 
         // Payment Tracking
         "paymentStatus": "PARTIAL",
-        "totalValue": 122500000.00,
-        "paidAmount": 61250000.00,    // Requires VIEW_COST
-        "remainingDebt": 61250000.00, // Requires VIEW_COST
+        "totalValue": 122500000.0,
+        "paidAmount": 61250000.0, // Requires VIEW_COST
+        "remainingDebt": 61250000.0, // Requires VIEW_COST
         "dueDate": "2025-12-24",
 
         // Workflow
@@ -188,14 +188,14 @@ GET /transactions?appointmentId=1523
 
 ### Permission Matrix
 
-| Role                 | VIEW_WAREHOUSE | VIEW_COST | Use Case                               |
-| -------------------- | -------------- | --------- | -------------------------------------- |
-| ROLE_ADMIN           | [YES]             | ✅        | Full access                            |
-| ROLE_INVENTORY_MANAGER | [YES]             | ✅        | Quản lý kho - full financial data      |
-| ROLE_MANAGER         | [YES]             | ✅        | Quản lý - duyệt phiếu + xem tài chính |
-| ROLE_ACCOUNTANT      | [YES]             | ✅        | Kế toán - đối soát công nợ            |
-| ROLE_RECEPTIONIST    | [YES]             | [NO]        | Lễ tân - chỉ xem metadata             |
-| ROLE_DOCTOR          | [NO]             | ❌        | Không truy cập warehouse               |
+| Role                   | VIEW_WAREHOUSE | VIEW_COST | Use Case                              |
+| ---------------------- | -------------- | --------- | ------------------------------------- |
+| ROLE_ADMIN             | [YES]          | ✅        | Full access                           |
+| ROLE_INVENTORY_MANAGER | [YES]          | ✅        | Quản lý kho - full financial data     |
+| ROLE_MANAGER           | [YES]          | ✅        | Quản lý - duyệt phiếu + xem tài chính |
+| ROLE_ACCOUNTANT        | [YES]          | ✅        | Kế toán - đối soát công nợ            |
+| ROLE_RECEPTIONIST      | [YES]          | [NO]      | Lễ tân - chỉ xem metadata             |
+| ROLE_DOCTOR            | [NO]           | ❌        | Không truy cập warehouse              |
 
 **RBAC Logic**:
 
@@ -234,20 +234,20 @@ ALTER TABLE storage_transactions
 
 ```sql
 -- Composite index for search (transaction_code, invoice_number)
-CREATE INDEX idx_storage_transactions_search 
+CREATE INDEX idx_storage_transactions_search
     ON storage_transactions(transaction_code, invoice_number, transaction_date DESC);
 
 -- Index for date range queries
-CREATE INDEX idx_storage_transactions_date 
+CREATE INDEX idx_storage_transactions_date
     ON storage_transactions(transaction_date DESC);
 
 -- Index for approval workflow
-CREATE INDEX idx_storage_transactions_approval_status 
+CREATE INDEX idx_storage_transactions_approval_status
     ON storage_transactions(approval_status);
 
 -- Index for payment status
-CREATE INDEX idx_storage_transactions_payment_status 
-    ON storage_transactions(payment_status) 
+CREATE INDEX idx_storage_transactions_payment_status
+    ON storage_transactions(payment_status)
     WHERE payment_status IS NOT NULL;
 ```
 
@@ -442,8 +442,8 @@ LEFT JOIN FETCH st.supplier
 LEFT JOIN FETCH st.relatedAppointment
 LEFT JOIN FETCH st.createdBy
 LEFT JOIN FETCH st.approvedBy
-WHERE 
-    LOWER(st.transactionCode) LIKE LOWER(:search) 
+WHERE
+    LOWER(st.transactionCode) LIKE LOWER(:search)
     OR LOWER(st.invoiceNumber) LIKE LOWER(:search)
 AND st.transactionType = :type
 AND st.approvalStatus = :status
@@ -457,7 +457,7 @@ ORDER BY st.transactionDate DESC
 ```sql
 -- Option 1: Materialized View cho Stats
 CREATE MATERIALIZED VIEW mv_transaction_summary AS
-SELECT 
+SELECT
     DATE(transaction_date) as tx_date,
     transaction_type,
     SUM(total_value) as daily_total,
@@ -515,6 +515,6 @@ FOR VALUES FROM ('2025-11-01') TO ('2025-12-01');
 
 ---
 
-**Implementation Date**: 2025-11-25  
-**API Version**: v1 (không dùng /v3)  
+**Implementation Date**: 2025-11-25
+**API Version**: v1 (không dùng /v3)
 **Module**: Warehouse ERP V3

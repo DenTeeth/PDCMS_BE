@@ -42,6 +42,7 @@ curl -X GET "http://localhost:8080/api/warehouse/transactions?page=0&size=20" \
 ```
 
 **Expected Response**:
+
 ```json
 {
   "statusCode": 200,
@@ -204,6 +205,7 @@ curl -X GET "http://localhost:8080/api/warehouse/transactions?type=IMPORT&page=0
 ```
 
 **Expected**: Response includes:
+
 - `totalValue`: 122500000.00
 - `paidAmount`: 61250000.00
 - `remainingDebt`: 61250000.00
@@ -226,6 +228,7 @@ curl -X GET "http://localhost:8080/api/warehouse/transactions?type=IMPORT&page=0
 ```
 
 **Expected**: Response shows:
+
 - `totalValue`: **null** (masked)
 - `paidAmount`: **null** (masked)
 - `remainingDebt`: **null** (masked)
@@ -259,6 +262,7 @@ curl -X GET "http://localhost:8080/api/warehouse/transactions?fromDate=2025-12-0
 ```
 
 **Expected**:
+
 ```json
 {
   "statusCode": 400,
@@ -275,6 +279,7 @@ curl -X GET "http://localhost:8080/api/warehouse/transactions?page=0&size=101" \
 ```
 
 **Expected**:
+
 ```json
 {
   "statusCode": 400,
@@ -291,6 +296,7 @@ curl -X GET "http://localhost:8080/api/warehouse/transactions?sortDir=invalid" \
 ```
 
 **Expected**:
+
 ```json
 {
   "statusCode": 400,
@@ -307,6 +313,7 @@ curl -X GET "http://localhost:8080/api/warehouse/transactions?page=-1" \
 ```
 
 **Expected**:
+
 ```json
 {
   "statusCode": 400,
@@ -324,8 +331,8 @@ curl -X GET "http://localhost:8080/api/warehouse/transactions?page=-1" \
 SELECT * FROM permissions WHERE permission_id = 'VIEW_COST';
 
 -- Check role assignments
-SELECT r.role_id, p.permission_id 
-FROM role_permissions r 
+SELECT r.role_id, p.permission_id
+FROM role_permissions r
 JOIN permissions p ON r.permission_id = p.permission_id
 WHERE p.permission_id IN ('VIEW_COST', 'VIEW_WAREHOUSE', 'APPROVE_TRANSACTION');
 
@@ -474,6 +481,6 @@ Environment: Development
 
 ---
 
-**Testing Completed**: [YES] / ❌  
-**Date**: 2025-11-25  
+**Testing Completed**: [YES] / ❌
+**Date**: 2025-11-25
 **Version**: API 6.6 v1
