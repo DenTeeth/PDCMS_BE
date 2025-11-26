@@ -31,6 +31,7 @@ public class PatientInfoResponse {
     private LocalDateTime updatedAt;
 
     // Account-related fields
+    private Boolean hasAccount;
     private Integer accountId;
     private AccountStatus accountStatus;
     private Boolean isEmailVerified;
@@ -174,6 +175,14 @@ public class PatientInfoResponse {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Boolean getHasAccount() {
+        return hasAccount;
+    }
+
+    public void setHasAccount(Boolean hasAccount) {
+        this.hasAccount = hasAccount;
     }
 
     public Integer getAccountId() {

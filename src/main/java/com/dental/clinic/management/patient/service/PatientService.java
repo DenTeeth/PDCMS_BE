@@ -210,28 +210,29 @@ public class PatientService {
                         "emailexists");
             }
 
-            // Generate username from email if not provided
+            // V23/V24: Get username from request or auto-generate from email
             String username = request.getUsername();
             if (username == null || username.trim().isEmpty()) {
-                // Extract username from email (before @)
+                // Fallback: Extract username from email (before @)
                 username = request.getEmail().split("@")[0];
 
-                // Make sure username is unique
+                // Make sure username is unique by adding counter if needed
                 String baseUsername = username;
                 int counter = 1;
                 while (accountRepository.existsByUsername(username)) {
                     username = baseUsername + counter;
                     counter++;
                 }
-                log.debug("Generated username from email: {}", username);
+                log.debug("Auto-generated username from email: {}", username);
             } else {
-                // Check username uniqueness if provided
+                // Check username uniqueness if provided by staff
                 if (accountRepository.existsByUsername(username)) {
                     throw new BadRequestAlertException(
                             "Username already exists",
                             "account",
                             "usernameexists");
                 }
+                log.debug("Using staff-provided username: {}", username);
             }
 
             // Create account for patient with TEMPORARY PASSWORD (patient will set real
