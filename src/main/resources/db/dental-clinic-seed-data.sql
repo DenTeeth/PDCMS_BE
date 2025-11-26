@@ -3336,3 +3336,526 @@ VALUES ('IMP-2024-004', 'IMPORT', NOW() - INTERVAL '3 days', 'INV-20240115-004',
 -- Reset storage_transactions sequence
 SELECT setval('storage_transactions_transaction_id_seq', (SELECT COALESCE(MAX(transaction_id), 0) FROM storage_transactions));
 
+
+-- =============================================
+-- ISSUE #7: COMPLETE WAREHOUSE SEED DATA
+-- Missing tables: item_units, item_batches, storage_transaction_items, warehouse_audit_logs, supplier_items
+-- Date: 2025-11-26
+-- Purpose: Enable FE warehouse module with realistic test data
+-- =============================================
+
+-- =============================================
+-- STEP 1: ITEM_UNITS (Don vi do luong - Unit hierarchy)
+-- =============================================
+-- Consumables: Găng tay y tế
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, display_order, created_at)
+SELECT im.item_master_id, 'Chiếc', 1, TRUE, 3, NOW()
+FROM item_masters im WHERE im.item_code = 'CON-GLOVE-01'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, display_order, created_at)
+SELECT im.item_master_id, 'Cặp', 2, FALSE, 2, NOW()
+FROM item_masters im WHERE im.item_code = 'CON-GLOVE-01'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, display_order, created_at)
+SELECT im.item_master_id, 'Hộp', 200, FALSE, 1, NOW()
+FROM item_masters im WHERE im.item_code = 'CON-GLOVE-01'
+ON CONFLICT DO NOTHING;
+
+-- Khẩu trang y tế
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, display_order, created_at)
+SELECT im.item_master_id, 'Cái', 1, TRUE, 3, NOW()
+FROM item_masters im WHERE im.item_code = 'CON-MASK-01'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, display_order, created_at)
+SELECT im.item_master_id, 'Hộp', 50, FALSE, 1, NOW()
+FROM item_masters im WHERE im.item_code = 'CON-MASK-01'
+ON CONFLICT DO NOTHING;
+
+-- Kim tiêm nha khoa
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, display_order, created_at)
+SELECT im.item_master_id, 'Cái', 1, TRUE, 2, NOW()
+FROM item_masters im WHERE im.item_code = 'CON-NEEDLE-01'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, display_order, created_at)
+SELECT im.item_master_id, 'Hộp', 100, FALSE, 1, NOW()
+FROM item_masters im WHERE im.item_code = 'CON-NEEDLE-01'
+ON CONFLICT DO NOTHING;
+
+-- Medicine: Thuốc tê Septodont
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, display_order, created_at)
+SELECT im.item_master_id, 'Ống', 1, TRUE, 2, NOW()
+FROM item_masters im WHERE im.item_code = 'MED-SEPT-01'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, display_order, created_at)
+SELECT im.item_master_id, 'Hộp', 50, FALSE, 1, NOW()
+FROM item_masters im WHERE im.item_code = 'MED-SEPT-01'
+ON CONFLICT DO NOTHING;
+
+-- Material: Composite
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, display_order, created_at)
+SELECT im.item_master_id, 'g', 1, TRUE, 2, NOW()
+FROM item_masters im WHERE im.item_code = 'MAT-COMP-01'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, display_order, created_at)
+SELECT im.item_master_id, 'Tuýp', 4, FALSE, 1, NOW()
+FROM item_masters im WHERE im.item_code = 'MAT-COMP-01'
+ON CONFLICT DO NOTHING;
+
+-- Reset sequence
+SELECT setval('item_units_unit_id_seq', (SELECT COALESCE(MAX(unit_id), 0) FROM item_units));
+
+
+-- =============================================
+-- STEP 2: ITEM_BATCHES (Lo hang thuc te)
+-- =============================================
+-- Batch 1: Găng tay (NORMAL storage, good stock, expiring in 90 days)
+INSERT INTO item_batches (item_master_id, lot_number, quantity_on_hand, initial_quantity, expiry_date, supplier_id, imported_at, bin_location, created_at)
+SELECT im.item_master_id, 'BATCH-GLOVE-2024-001', 150, 200, CURRENT_DATE + INTERVAL '90 days', 1, NOW() - INTERVAL '30 days', 'Kệ A-01', NOW()
+FROM item_masters im WHERE im.item_code = 'CON-GLOVE-01'
+ON CONFLICT DO NOTHING;
+
+-- Batch 2: Găng tay (Low stock, expiring soon - 20 days)
+INSERT INTO item_batches (item_master_id, lot_number, quantity_on_hand, initial_quantity, expiry_date, supplier_id, imported_at, bin_location, created_at)
+SELECT im.item_master_id, 'BATCH-GLOVE-2023-012', 30, 200, CURRENT_DATE + INTERVAL '20 days', 1, NOW() - INTERVAL '350 days', 'Kệ A-02', NOW()
+FROM item_masters im WHERE im.item_code = 'CON-GLOVE-01'
+ON CONFLICT DO NOTHING;
+
+-- Batch 3: Khẩu trang (Good stock)
+INSERT INTO item_batches (item_master_id, lot_number, quantity_on_hand, initial_quantity, expiry_date, supplier_id, imported_at, bin_location, created_at)
+SELECT im.item_master_id, 'BATCH-MASK-2024-001', 800, 1000, CURRENT_DATE + INTERVAL '120 days', 2, NOW() - INTERVAL '25 days', 'Kệ A-03', NOW()
+FROM item_masters im WHERE im.item_code = 'CON-MASK-01'
+ON CONFLICT DO NOTHING;
+
+-- Batch 4: Kim tiêm (Good stock)
+INSERT INTO item_batches (item_master_id, lot_number, quantity_on_hand, initial_quantity, expiry_date, supplier_id, imported_at, bin_location, created_at)
+SELECT im.item_master_id, 'BATCH-NEEDLE-2024-001', 450, 500, CURRENT_DATE + INTERVAL '180 days', 1, NOW() - INTERVAL '20 days', 'Kệ B-01', NOW()
+FROM item_masters im WHERE im.item_code = 'CON-NEEDLE-01'
+ON CONFLICT DO NOTHING;
+
+-- Batch 5: Thuốc tê (COLD storage, good stock)
+INSERT INTO item_batches (item_master_id, lot_number, quantity_on_hand, initial_quantity, expiry_date, supplier_id, imported_at, bin_location, created_at)
+SELECT im.item_master_id, 'BATCH-SEPT-2024-001', 180, 200, CURRENT_DATE + INTERVAL '150 days', 2, NOW() - INTERVAL '15 days', 'Tủ lạnh A-01', NOW()
+FROM item_masters im WHERE im.item_code = 'MED-SEPT-01'
+ON CONFLICT DO NOTHING;
+
+-- Batch 6: Thuốc tê (COLD storage, expiring soon - 15 days)
+INSERT INTO item_batches (item_master_id, lot_number, quantity_on_hand, initial_quantity, expiry_date, supplier_id, imported_at, bin_location, created_at)
+SELECT im.item_master_id, 'BATCH-SEPT-2023-010', 25, 200, CURRENT_DATE + INTERVAL '15 days', 2, NOW() - INTERVAL '335 days', 'Tủ lạnh A-02', NOW()
+FROM item_masters im WHERE im.item_code = 'MED-SEPT-01'
+ON CONFLICT DO NOTHING;
+
+-- Batch 7: Composite (NORMAL, good stock)
+INSERT INTO item_batches (item_master_id, lot_number, quantity_on_hand, initial_quantity, expiry_date, supplier_id, imported_at, bin_location, created_at)
+SELECT im.item_master_id, 'BATCH-COMP-2024-001', 35, 40, CURRENT_DATE + INTERVAL '200 days', 3, NOW() - INTERVAL '10 days', 'Kệ C-01', NOW()
+FROM item_masters im WHERE im.item_code = 'MAT-COMP-01'
+ON CONFLICT DO NOTHING;
+
+-- Batch 8: Composite (EXPIRED - for testing)
+INSERT INTO item_batches (item_master_id, lot_number, quantity_on_hand, initial_quantity, expiry_date, supplier_id, imported_at, bin_location, created_at)
+SELECT im.item_master_id, 'BATCH-COMP-2022-005', 0, 40, CURRENT_DATE - INTERVAL '10 days', 3, NOW() - INTERVAL '400 days', 'Kệ C-05 (HẾT HẠN)', NOW()
+FROM item_masters im WHERE im.item_code = 'MAT-COMP-01'
+ON CONFLICT DO NOTHING;
+
+-- Batch 9: Ly súc miệng
+INSERT INTO item_batches (item_master_id, lot_number, quantity_on_hand, initial_quantity, expiry_date, supplier_id, imported_at, bin_location, created_at)
+SELECT im.item_master_id, 'BATCH-CUP-2024-001', 950, 1000, CURRENT_DATE + INTERVAL '100 days', 1, NOW() - INTERVAL '5 days', 'Kệ A-04', NOW()
+FROM item_masters im WHERE im.item_code = 'CON-CUP-01'
+ON CONFLICT DO NOTHING;
+
+-- Batch 10: Bông gạc
+INSERT INTO item_batches (item_master_id, lot_number, quantity_on_hand, initial_quantity, expiry_date, supplier_id, imported_at, bin_location, created_at)
+SELECT im.item_master_id, 'BATCH-GAUZE-2024-001', 280, 300, CURRENT_DATE + INTERVAL '180 days', 2, NOW() - INTERVAL '18 days', 'Kệ B-02', NOW()
+FROM item_masters im WHERE im.item_code = 'CON-GAUZE-01'
+ON CONFLICT DO NOTHING;
+
+-- Batch 11: Bonding Agent (Keo dán)
+INSERT INTO item_batches (item_master_id, lot_number, quantity_on_hand, initial_quantity, expiry_date, supplier_id, imported_at, bin_location, created_at)
+SELECT im.item_master_id, 'BATCH-BOND-2024-001', 45, 50, CURRENT_DATE + INTERVAL '220 days', 3, NOW() - INTERVAL '8 days', 'Kệ C-02', NOW()
+FROM item_masters im WHERE im.item_code = 'MAT-BOND-01'
+ON CONFLICT DO NOTHING;
+
+-- Batch 12: NaOCl (Bơm rửa ống tủy)
+INSERT INTO item_batches (item_master_id, lot_number, quantity_on_hand, initial_quantity, expiry_date, supplier_id, imported_at, bin_location, created_at)
+SELECT im.item_master_id, 'BATCH-NAOCL-2024-001', 190, 200, CURRENT_DATE + INTERVAL '140 days', 2, NOW() - INTERVAL '12 days', 'Tủ lạnh B-01', NOW()
+FROM item_masters im WHERE im.item_code = 'MAT-NAOCL-01'
+ON CONFLICT DO NOTHING;
+
+-- Reset sequence
+SELECT setval('item_batches_batch_id_seq', (SELECT COALESCE(MAX(batch_id), 0) FROM item_batches));
+
+
+-- =============================================
+-- STEP 3: STORAGE_TRANSACTION_ITEMS (Chi tiet phieu nhap/xuat)
+-- =============================================
+-- Transaction IMP-2024-001 items (3 items)
+INSERT INTO storage_transaction_items (transaction_id, batch_id, item_code, quantity_change, price, total_line_value)
+SELECT st.transaction_id, b.batch_id, 'CON-GLOVE-01', 200, 150000, 30000000
+FROM storage_transactions st
+CROSS JOIN item_batches b
+WHERE st.transaction_code = 'IMP-2024-001' 
+AND b.lot_number = 'BATCH-GLOVE-2024-001'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO storage_transaction_items (transaction_id, batch_id, item_code, quantity_change, price, total_line_value)
+SELECT st.transaction_id, b.batch_id, 'CON-MASK-01', 1000, 50000, 50000000
+FROM storage_transactions st
+CROSS JOIN item_batches b
+WHERE st.transaction_code = 'IMP-2024-001'
+AND b.lot_number = 'BATCH-MASK-2024-001'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO storage_transaction_items (transaction_id, batch_id, item_code, quantity_change, price, total_line_value)
+SELECT st.transaction_id, b.batch_id, 'CON-NEEDLE-01', 500, 80000, 40000000
+FROM storage_transactions st
+CROSS JOIN item_batches b
+WHERE st.transaction_code = 'IMP-2024-001'
+AND b.lot_number = 'BATCH-NEEDLE-2024-001'
+ON CONFLICT DO NOTHING;
+
+-- Transaction IMP-2024-002 items (4 items - medicines and materials)
+INSERT INTO storage_transaction_items (transaction_id, batch_id, item_code, quantity_change, price, total_line_value)
+SELECT st.transaction_id, b.batch_id, 'MED-SEPT-01', 200, 120000, 24000000
+FROM storage_transactions st
+CROSS JOIN item_batches b
+WHERE st.transaction_code = 'IMP-2024-002'
+AND b.lot_number = 'BATCH-SEPT-2024-001'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO storage_transaction_items (transaction_id, batch_id, item_code, quantity_change, price, total_line_value)
+SELECT st.transaction_id, b.batch_id, 'MAT-COMP-01', 40, 500000, 20000000
+FROM storage_transactions st
+CROSS JOIN item_batches b
+WHERE st.transaction_code = 'IMP-2024-002'
+AND b.lot_number = 'BATCH-COMP-2024-001'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO storage_transaction_items (transaction_id, batch_id, item_code, quantity_change, price, total_line_value)
+SELECT st.transaction_id, b.batch_id, 'CON-GAUZE-01', 300, 30000, 9000000
+FROM storage_transactions st
+CROSS JOIN item_batches b
+WHERE st.transaction_code = 'IMP-2024-002'
+AND b.lot_number = 'BATCH-GAUZE-2024-001'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO storage_transaction_items (transaction_id, batch_id, item_code, quantity_change, price, total_line_value)
+SELECT st.transaction_id, b.batch_id, 'MAT-BOND-01', 50, 400000, 20000000
+FROM storage_transactions st
+CROSS JOIN item_batches b
+WHERE st.transaction_code = 'IMP-2024-002'
+AND b.lot_number = 'BATCH-BOND-2024-001'
+ON CONFLICT DO NOTHING;
+
+-- Transaction IMP-2024-003 items (PENDING approval)
+INSERT INTO storage_transaction_items (transaction_id, batch_id, item_code, quantity_change, price, total_line_value)
+SELECT st.transaction_id, b.batch_id, 'CON-CUP-01', 1000, 10000, 10000000
+FROM storage_transactions st
+CROSS JOIN item_batches b
+WHERE st.transaction_code = 'IMP-2024-003'
+AND b.lot_number = 'BATCH-CUP-2024-001'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO storage_transaction_items (transaction_id, batch_id, item_code, quantity_change, price, total_line_value)
+SELECT st.transaction_id, b.batch_id, 'MAT-NAOCL-01', 200, 40000, 8000000
+FROM storage_transactions st
+CROSS JOIN item_batches b
+WHERE st.transaction_code = 'IMP-2024-003'
+AND b.lot_number = 'BATCH-NAOCL-2024-001'
+ON CONFLICT DO NOTHING;
+
+-- Transaction EXP-2024-001 items (EXPORT for appointment - negative quantities)
+INSERT INTO storage_transaction_items (transaction_id, batch_id, item_code, quantity_change, notes)
+SELECT st.transaction_id, b.batch_id, 'CON-GLOVE-01', -10, 'Xuất cho lịch hẹn APT-20251106-001'
+FROM storage_transactions st
+CROSS JOIN item_batches b
+WHERE st.transaction_code = 'EXP-2024-001'
+AND b.lot_number = 'BATCH-GLOVE-2024-001'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO storage_transaction_items (transaction_id, batch_id, item_code, quantity_change, notes)
+SELECT st.transaction_id, b.batch_id, 'CON-MASK-01', -5, 'Xuất cho lịch hẹn APT-20251106-001'
+FROM storage_transactions st
+CROSS JOIN item_batches b
+WHERE st.transaction_code = 'EXP-2024-001'
+AND b.lot_number = 'BATCH-MASK-2024-001'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO storage_transaction_items (transaction_id, batch_id, item_code, quantity_change, notes)
+SELECT st.transaction_id, b.batch_id, 'MED-SEPT-01', -2, 'Xuất cho lịch hẹn APT-20251106-001'
+FROM storage_transactions st
+CROSS JOIN item_batches b
+WHERE st.transaction_code = 'EXP-2024-001'
+AND b.lot_number = 'BATCH-SEPT-2024-001'
+ON CONFLICT DO NOTHING;
+
+-- Transaction EXP-2024-002 items (EXPORT for appointment)
+INSERT INTO storage_transaction_items (transaction_id, batch_id, item_code, quantity_change, notes)
+SELECT st.transaction_id, b.batch_id, 'CON-GLOVE-01', -8, 'Xuất cho lịch hẹn APT-20251106-002'
+FROM storage_transactions st
+CROSS JOIN item_batches b
+WHERE st.transaction_code = 'EXP-2024-002'
+AND b.lot_number = 'BATCH-GLOVE-2024-001'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO storage_transaction_items (transaction_id, batch_id, item_code, quantity_change, notes)
+SELECT st.transaction_id, b.batch_id, 'MAT-COMP-01', -5, 'Xuất composite cho lịch hẹn APT-20251106-002'
+FROM storage_transactions st
+CROSS JOIN item_batches b
+WHERE st.transaction_code = 'EXP-2024-002'
+AND b.lot_number = 'BATCH-COMP-2024-001'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO storage_transaction_items (transaction_id, batch_id, item_code, quantity_change, notes)
+SELECT st.transaction_id, b.batch_id, 'CON-GAUZE-01', -20, 'Xuất bông gạc cho lịch hẹn APT-20251106-002'
+FROM storage_transactions st
+CROSS JOIN item_batches b
+WHERE st.transaction_code = 'EXP-2024-002'
+AND b.lot_number = 'BATCH-GAUZE-2024-001'
+ON CONFLICT DO NOTHING;
+
+-- Reset sequence
+SELECT setval('storage_transaction_items_transaction_item_id_seq', (SELECT COALESCE(MAX(transaction_item_id), 0) FROM storage_transaction_items));
+
+
+-- =============================================
+-- STEP 4: WAREHOUSE_AUDIT_LOGS (Tracking approval/rejection/adjustments)
+-- =============================================
+-- Log 1: Approval of IMP-2024-001
+INSERT INTO warehouse_audit_logs (transaction_id, action_type, performed_by, old_value, new_value, reason, created_at)
+SELECT st.transaction_id, 'UPDATE', 3, 
+    'approval_status: PENDING_APPROVAL', 
+    'approval_status: APPROVED', 
+    'Da kiem tra hoa don INV-20240101-001, vat tu day du va chat luong tot', NOW() - INTERVAL '10 days'
+FROM storage_transactions st WHERE st.transaction_code = 'IMP-2024-001'
+ON CONFLICT DO NOTHING;
+
+-- Log 2: Approval of IMP-2024-002
+INSERT INTO warehouse_audit_logs (transaction_id, action_type, performed_by, old_value, new_value, reason, created_at)
+SELECT st.transaction_id, 'UPDATE', 3,
+    'approval_status: PENDING_APPROVAL',
+    'approval_status: APPROVED',
+    'Da xac nhan nhan hang tu NCC Duoc pham B, thanh toan 15M/25M', NOW() - INTERVAL '8 days'
+FROM storage_transactions st WHERE st.transaction_code = 'IMP-2024-002'
+ON CONFLICT DO NOTHING;
+
+-- Log 3: Rejection of IMP-2024-004
+INSERT INTO warehouse_audit_logs (transaction_id, action_type, performed_by, old_value, new_value, reason, created_at)
+SELECT st.transaction_id, 'UPDATE', 3,
+    'approval_status: PENDING_APPROVAL',
+    'approval_status: REJECTED',
+    'Vat tu khong dat tieu chuan chat luong - Gang tay bi rach, khau trang mong. Yeu cau NCC doi hang', NOW() - INTERVAL '1 day'
+FROM storage_transactions st WHERE st.transaction_code = 'IMP-2024-004'
+ON CONFLICT DO NOTHING;
+
+-- Log 4: Export approval for EXP-2024-001
+INSERT INTO warehouse_audit_logs (transaction_id, action_type, performed_by, old_value, new_value, reason, created_at)
+SELECT st.transaction_id, 'UPDATE', 3,
+    'approval_status: PENDING_APPROVAL',
+    'approval_status: APPROVED',
+    'Xuat vat tu cho dieu tri benh nhan Nguyen Van A - APT-20251106-001', NOW() - INTERVAL '5 days'
+FROM storage_transactions st WHERE st.transaction_code = 'EXP-2024-001'
+ON CONFLICT DO NOTHING;
+
+-- Log 5: Export approval for EXP-2024-002
+INSERT INTO warehouse_audit_logs (transaction_id, action_type, performed_by, old_value, new_value, reason, created_at)
+SELECT st.transaction_id, 'UPDATE', 3,
+    'approval_status: PENDING_APPROVAL',
+    'approval_status: APPROVED',
+    'Xuat vat tu cho dieu tri benh nhan Tran Thi B - APT-20251106-002', NOW() - INTERVAL '3 days'
+FROM storage_transactions st WHERE st.transaction_code = 'EXP-2024-002'
+ON CONFLICT DO NOTHING;
+
+-- Log 6: Stock adjustment (inventory check found damage)
+INSERT INTO warehouse_audit_logs (batch_id, action_type, performed_by, old_value, new_value, reason, created_at)
+SELECT b.batch_id, 'ADJUST', 6,
+    'quantity_on_hand: 1000',
+    'quantity_on_hand: 800',
+    'Kiem ke dinh ky - Phat hien 200 chiec khau trang bi am moc do luu tru khong dung cach', NOW() - INTERVAL '5 days'
+FROM item_batches b WHERE b.lot_number = 'BATCH-MASK-2024-001'
+ON CONFLICT DO NOTHING;
+
+-- Log 7: Expiry alert for MED-SEPT-01
+INSERT INTO warehouse_audit_logs (batch_id, action_type, performed_by, old_value, new_value, reason, created_at)
+SELECT b.batch_id, 'EXPIRE_ALERT', NULL,
+    NULL,
+    'status: EXPIRING_SOON (15 days left)',
+    'CANH BAO: Lo thuoc te BATCH-SEPT-2023-010 sap het han sau 15 ngay. Can uu tien su dung (FEFO)', NOW() - INTERVAL '2 days'
+FROM item_batches b WHERE b.lot_number = 'BATCH-SEPT-2023-010'
+ON CONFLICT DO NOTHING;
+
+-- Log 8: Expiry alert for CON-GLOVE-01
+INSERT INTO warehouse_audit_logs (batch_id, action_type, performed_by, old_value, new_value, reason, created_at)
+SELECT b.batch_id, 'EXPIRE_ALERT', NULL,
+    NULL,
+    'status: EXPIRING_SOON (20 days left)',
+    'CANH BAO: Lo gang tay BATCH-GLOVE-2023-012 sap het han sau 20 ngay. Con 30 cap can xuat', NOW() - INTERVAL '1 day'
+FROM item_batches b WHERE b.lot_number = 'BATCH-GLOVE-2023-012'
+ON CONFLICT DO NOTHING;
+
+-- Log 9: Discard expired batch
+INSERT INTO warehouse_audit_logs (batch_id, action_type, performed_by, old_value, new_value, reason, created_at)
+SELECT b.batch_id, 'DISCARD', 6,
+    'quantity_on_hand: 40, status: ACTIVE',
+    'quantity_on_hand: 0, status: EXPIRED',
+    'Huy lo composite BATCH-COMP-2022-005 da het han 10 ngay. Da lap bien ban huy theo quy dinh', NOW() - INTERVAL '3 days'
+FROM item_batches b WHERE b.lot_number = 'BATCH-COMP-2022-005'
+ON CONFLICT DO NOTHING;
+
+-- Log 10: Payment status update for IMP-2024-002
+INSERT INTO warehouse_audit_logs (transaction_id, action_type, performed_by, old_value, new_value, reason, created_at)
+SELECT st.transaction_id, 'UPDATE', 6,
+    'payment_status: UNPAID, paid_amount: 0',
+    'payment_status: PARTIAL, paid_amount: 15000000',
+    'Da thanh toan 15M/25M cho NCC Duoc pham B. Con no 10M, han thanh toan 15 ngay nua', NOW() - INTERVAL '6 days'
+FROM storage_transactions st WHERE st.transaction_code = 'IMP-2024-002'
+ON CONFLICT DO NOTHING;
+
+-- Reset sequence
+SELECT setval('warehouse_audit_logs_log_id_seq', (SELECT COALESCE(MAX(log_id), 0) FROM warehouse_audit_logs));
+
+
+-- =============================================
+-- STEP 5: SUPPLIER_ITEMS (Mapping NCC - Vật tư)
+-- =============================================
+-- Supplier 1 (Vat tu Nha khoa A) supplies consumables
+INSERT INTO supplier_items (supplier_id, item_master_id, supplier_item_code, last_purchase_date, is_preferred)
+SELECT s.supplier_id, im.item_master_id, 'SUP1-GLOVE-100', NOW() - INTERVAL '30 days', TRUE
+FROM suppliers s
+CROSS JOIN item_masters im
+WHERE s.supplier_code = 'SUP-001' AND im.item_code = 'CON-GLOVE-01'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO supplier_items (supplier_id, item_master_id, supplier_item_code, last_purchase_date, is_preferred)
+SELECT s.supplier_id, im.item_master_id, 'SUP1-MASK-50', NOW() - INTERVAL '30 days', TRUE
+FROM suppliers s
+CROSS JOIN item_masters im
+WHERE s.supplier_code = 'SUP-001' AND im.item_code = 'CON-MASK-01'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO supplier_items (supplier_id, item_master_id, supplier_item_code, last_purchase_date, is_preferred)
+SELECT s.supplier_id, im.item_master_id, 'SUP1-NEEDLE-27G', NOW() - INTERVAL '30 days', TRUE
+FROM suppliers s
+CROSS JOIN item_masters im
+WHERE s.supplier_code = 'SUP-001' AND im.item_code = 'CON-NEEDLE-01'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO supplier_items (supplier_id, item_master_id, supplier_item_code, last_purchase_date, is_preferred)
+SELECT s.supplier_id, im.item_master_id, 'SUP1-CUP-PLT', NULL, FALSE
+FROM suppliers s
+CROSS JOIN item_masters im
+WHERE s.supplier_code = 'SUP-001' AND im.item_code = 'CON-CUP-01'
+ON CONFLICT DO NOTHING;
+
+-- Supplier 2 (Duoc pham B) supplies medicines and chemicals
+INSERT INTO supplier_items (supplier_id, item_master_id, supplier_item_code, last_purchase_date, is_preferred)
+SELECT s.supplier_id, im.item_master_id, 'SUP2-SEPT-500ML', NOW() - INTERVAL '15 days', TRUE
+FROM suppliers s
+CROSS JOIN item_masters im
+WHERE s.supplier_code = 'SUP-002' AND im.item_code = 'MED-SEPT-01'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO supplier_items (supplier_id, item_master_id, supplier_item_code, last_purchase_date, is_preferred)
+SELECT s.supplier_id, im.item_master_id, 'SUP2-NAOCL-525', NOW() - INTERVAL '12 days', TRUE
+FROM suppliers s
+CROSS JOIN item_masters im
+WHERE s.supplier_code = 'SUP-002' AND im.item_code = 'MAT-NAOCL-01'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO supplier_items (supplier_id, item_master_id, supplier_item_code, last_purchase_date, is_preferred)
+SELECT s.supplier_id, im.item_master_id, 'SUP2-GAUZE-STR', NOW() - INTERVAL '18 days', TRUE
+FROM suppliers s
+CROSS JOIN item_masters im
+WHERE s.supplier_code = 'SUP-002' AND im.item_code = 'CON-GAUZE-01'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO supplier_items (supplier_id, item_master_id, supplier_item_code, last_purchase_date, is_preferred)
+SELECT s.supplier_id, im.item_master_id, 'SUP2-BETA-100ML', NULL, FALSE
+FROM suppliers s
+CROSS JOIN item_masters im
+WHERE s.supplier_code = 'SUP-002' AND im.item_code = 'MED-BETA-01'
+ON CONFLICT DO NOTHING;
+
+-- Supplier 3 (Thiet bi Y te C) supplies materials
+INSERT INTO supplier_items (supplier_id, item_master_id, supplier_item_code, last_purchase_date, is_preferred)
+SELECT s.supplier_id, im.item_master_id, 'SUP3-COMP-3M-A2', NOW() - INTERVAL '10 days', TRUE
+FROM suppliers s
+CROSS JOIN item_masters im
+WHERE s.supplier_code = 'SUP-003' AND im.item_code = 'MAT-COMP-01'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO supplier_items (supplier_id, item_master_id, supplier_item_code, last_purchase_date, is_preferred)
+SELECT s.supplier_id, im.item_master_id, 'SUP3-BOND-3M', NOW() - INTERVAL '8 days', TRUE
+FROM suppliers s
+CROSS JOIN item_masters im
+WHERE s.supplier_code = 'SUP-003' AND im.item_code = 'MAT-BOND-01'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO supplier_items (supplier_id, item_master_id, supplier_item_code, last_purchase_date, is_preferred)
+SELECT s.supplier_id, im.item_master_id, 'SUP3-ETCH-37', NULL, FALSE
+FROM suppliers s
+CROSS JOIN item_masters im
+WHERE s.supplier_code = 'SUP-003' AND im.item_code = 'MAT-ETCH-01'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO supplier_items (supplier_id, item_master_id, supplier_item_code, last_purchase_date, is_preferred)
+SELECT s.supplier_id, im.item_master_id, 'SUP3-RESIN-3M', NULL, FALSE
+FROM suppliers s
+CROSS JOIN item_masters im
+WHERE s.supplier_code = 'SUP-003' AND im.item_code = 'MAT-RESIN-01'
+ON CONFLICT DO NOTHING;
+
+-- Supplier 4 (Vat tu D - backup supplier) supplies basic consumables
+INSERT INTO supplier_items (supplier_id, item_master_id, supplier_item_code, last_purchase_date, is_preferred)
+SELECT s.supplier_id, im.item_master_id, 'SUP4-GLOVE-MED', NULL, FALSE
+FROM suppliers s
+CROSS JOIN item_masters im
+WHERE s.supplier_code = 'SUP-004' AND im.item_code = 'CON-GLOVE-01'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO supplier_items (supplier_id, item_master_id, supplier_item_code, last_purchase_date, is_preferred)
+SELECT s.supplier_id, im.item_master_id, 'SUP4-MASK-3L', NULL, FALSE
+FROM suppliers s
+CROSS JOIN item_masters im
+WHERE s.supplier_code = 'SUP-004' AND im.item_code = 'CON-MASK-01'
+ON CONFLICT DO NOTHING;
+
+-- Reset sequence
+SELECT setval('supplier_items_supplier_item_id_seq', (SELECT COALESCE(MAX(supplier_item_id), 0) FROM supplier_items));
+
+
+-- =============================================
+-- VERIFICATION QUERIES (Optional - for testing)
+-- =============================================
+-- Check warehouse data coverage
+-- SELECT 'item_units' as table_name, COUNT(*) as row_count FROM item_units
+-- UNION ALL
+-- SELECT 'item_batches', COUNT(*) FROM item_batches
+-- UNION ALL
+-- SELECT 'storage_transaction_items', COUNT(*) FROM storage_transaction_items
+-- UNION ALL
+-- SELECT 'warehouse_audit_logs', COUNT(*) FROM warehouse_audit_logs
+-- UNION ALL
+-- SELECT 'supplier_items', COUNT(*) FROM supplier_items;
+
+-- Check expiring batches (FEFO alerts)
+-- SELECT im.item_name, b.lot_number, b.quantity_on_hand, b.expiry_date,
+--        (b.expiry_date - CURRENT_DATE) as days_until_expiry
+-- FROM item_batches b
+-- JOIN item_masters im ON b.item_master_id = im.item_master_id
+-- WHERE b.expiry_date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '30 days'
+-- AND b.quantity_on_hand > 0
+-- ORDER BY b.expiry_date;
+
+-- Check supplier-item coverage
+-- SELECT s.supplier_name, COUNT(si.supplier_item_id) as items_supplied,
+--        SUM(CASE WHEN si.is_preferred THEN 1 ELSE 0 END) as preferred_items
+-- FROM suppliers s
+-- LEFT JOIN supplier_items si ON s.supplier_id = si.supplier_id
+-- GROUP BY s.supplier_id, s.supplier_name
+-- ORDER BY items_supplied DESC;
+
