@@ -381,7 +381,7 @@ public class ImportTransactionService {
     }
 
     /**
-     * Generate transaction code (PN-YYYYMMDD-XXX)
+     * Generate transaction code (PN-YYYYMMDD-SEQ)
      */
     private String generateTransactionCode() {
         String dateStr = LocalDateTime.now().format(

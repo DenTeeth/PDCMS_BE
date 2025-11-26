@@ -422,7 +422,8 @@ VALUES
 ('CREATE_TREATMENT_PLAN', 'CREATE_TREATMENT_PLAN', 'TREATMENT_PLAN', 'Tạo phác đồ điều trị mới', 263, NULL, TRUE, NOW()),
 ('UPDATE_TREATMENT_PLAN', 'UPDATE_TREATMENT_PLAN', 'TREATMENT_PLAN', 'Cập nhật phác đồ điều trị', 264, NULL, TRUE, NOW()),
 ('DELETE_TREATMENT_PLAN', 'DELETE_TREATMENT_PLAN', 'TREATMENT_PLAN', 'Vô hiệu hóa phác đồ (soft delete)', 265, NULL, TRUE, NOW()),
-('APPROVE_TREATMENT_PLAN', 'APPROVE_TREATMENT_PLAN', 'TREATMENT_PLAN', 'Duyệt/Từ chối lộ trình điều trị (Quản lý)', 266, NULL, TRUE, NOW())
+('APPROVE_TREATMENT_PLAN', 'APPROVE_TREATMENT_PLAN', 'TREATMENT_PLAN', 'Duyệt/Từ chối lộ trình điều trị', 266, NULL, TRUE, NOW()),
+('MANAGE_PLAN_PRICING', 'MANAGE_PLAN_PRICING', 'TREATMENT_PLAN', 'Điều chỉnh giá/chiết khấu phác đồ điều trị', 267, NULL, TRUE, NOW())
 ON CONFLICT (permission_id) DO NOTHING;
 
 
@@ -588,6 +589,7 @@ VALUES
 ('ROLE_MANAGER', 'UPDATE_TREATMENT_PLAN'), -- Can update treatment plans
 ('ROLE_MANAGER', 'DELETE_TREATMENT_PLAN'), -- Can delete treatment plans
 ('ROLE_MANAGER', 'APPROVE_TREATMENT_PLAN'), -- ✅ V20: Can approve/reject treatment plans (API 5.9)
+('ROLE_MANAGER', 'MANAGE_PLAN_PRICING'), -- ✅ V21: Can adjust pricing/discounts on treatment plans
 -- WAREHOUSE (V22: Transaction history management - API 6.6)
 ('ROLE_MANAGER', 'VIEW_WAREHOUSE'), -- Can view transaction history
 ('ROLE_MANAGER', 'VIEW_COST'), -- Can view financial data (cost, payment info)
@@ -603,6 +605,9 @@ VALUES
 ('ROLE_ACCOUNTANT', 'VIEW_LEAVE_OWN'), ('ROLE_ACCOUNTANT', 'CREATE_TIME_OFF'), ('ROLE_ACCOUNTANT', 'CREATE_OVERTIME'),
 ('ROLE_ACCOUNTANT', 'CANCEL_TIME_OFF_OWN'), ('ROLE_ACCOUNTANT', 'CANCEL_OVERTIME_OWN'),
 ('ROLE_ACCOUNTANT', 'VIEW_HOLIDAY'),
+-- TREATMENT_PLAN (V21: Accountant can adjust pricing - API 5.x)
+('ROLE_ACCOUNTANT', 'VIEW_TREATMENT_PLAN_ALL'), -- Can view all treatment plans
+('ROLE_ACCOUNTANT', 'MANAGE_PLAN_PRICING'), -- Can adjust pricing/discounts
 -- WAREHOUSE (V22: Accountant can view transactions and financial data - API 6.6)
 ('ROLE_ACCOUNTANT', 'VIEW_WAREHOUSE'), -- Can view transaction history
 ('ROLE_ACCOUNTANT', 'VIEW_COST'), -- Can view financial data (cost, payment info)

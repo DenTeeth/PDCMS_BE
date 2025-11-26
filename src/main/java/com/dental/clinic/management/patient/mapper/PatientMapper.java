@@ -45,10 +45,13 @@ public class PatientMapper {
 
         // Map account-related fields
         if (patient.getAccount() != null) {
+            response.setHasAccount(true);
             response.setAccountId(patient.getAccount().getAccountId());
             response.setAccountStatus(patient.getAccount().getStatus()); // Fixed: use getStatus() not
                                                                          // getAccountStatus()
             response.setIsEmailVerified(patient.getAccount().getIsEmailVerified());
+        } else {
+            response.setHasAccount(false);
         }
 
         return response;
