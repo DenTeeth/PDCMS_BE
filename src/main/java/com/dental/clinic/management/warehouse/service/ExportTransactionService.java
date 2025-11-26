@@ -351,6 +351,9 @@ public class ExportTransactionService {
                 batch.setQuantityOnHand(batch.getQuantityOnHand() - quantityToTake);
                 batchRepository.save(batch);
 
+                itemMaster.updateCachedQuantity(-quantityToTake);
+                itemMasterRepository.save(itemMaster);
+
                 // Calculate financial value
                 BigDecimal unitPrice = getUnitPrice(batch);
                 BigDecimal lineValue = unitPrice.multiply(BigDecimal.valueOf(quantityToTake));

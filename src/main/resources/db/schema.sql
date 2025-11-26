@@ -1,11 +1,15 @@
 -- ============================================
--- DENTAL CLINIC MANAGEMENT SYSTEM - SCHEMA V22
+-- DENTAL CLINIC MANAGEMENT SYSTEM - SCHEMA V23
 -- Date: 2025-11-25
 -- PostgreSQL Database Schema
 -- ============================================
 -- NOTE: Hibernate auto-creates tables from @Entity classes
 -- This file is for reference and manual database setup only
 -- Updated to match Java entity definitions (SERIAL/INTEGER IDs)
+-- ============================================
+-- CHANGES IN V23 (API 6.7 - Item Masters List):
+-- - Added cached_total_quantity, cached_last_import_date, cached_last_updated to item_masters
+-- - Purpose: Performance optimization - avoid JOIN/SUM on item_batches for every query
 -- ============================================
 -- CHANGES IN V22 (API 6.6 - Transaction History):
 -- - Added payment_status ENUM (UNPAID, PARTIAL, PAID)

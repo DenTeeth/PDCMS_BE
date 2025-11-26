@@ -427,9 +427,10 @@ VALUES
 ON CONFLICT (permission_id) DO NOTHING;
 
 
--- MODULE 14: WAREHOUSE (Quản lý kho vật tư API 6.6)
+-- MODULE 14: WAREHOUSE (Quản lý kho vật tư API 6.6, 6.7)
 INSERT INTO permissions (permission_id, permission_name, module, description, display_order, parent_permission_id, is_active, created_at)
 VALUES
+('VIEW_ITEMS', 'VIEW_ITEMS', 'WAREHOUSE', 'Xem danh sách vật tư (cho Bác sĩ/Lễ tân)', 269, NULL, TRUE, NOW()),
 ('VIEW_WAREHOUSE', 'VIEW_WAREHOUSE', 'WAREHOUSE', 'Xem danh sách giao dịch kho', 270, NULL, TRUE, NOW()),
 ('CREATE_WAREHOUSE', 'CREATE_WAREHOUSE', 'WAREHOUSE', 'Tạo vật tư, danh mục, nhà cung cấp', 271, NULL, TRUE, NOW()),
 ('UPDATE_WAREHOUSE', 'UPDATE_WAREHOUSE', 'WAREHOUSE', 'Cập nhật vật tư, danh mục, nhà cung cấp', 272, NULL, TRUE, NOW()),
@@ -471,8 +472,8 @@ VALUES
 ('ROLE_DENTIST', 'CREATE_TREATMENT_PLAN'),
 ('ROLE_DENTIST', 'UPDATE_TREATMENT_PLAN'),
 ('ROLE_DENTIST', 'DELETE_TREATMENT_PLAN'),
--- ✅ Service Management permission (Required for treatment plan item management)
-('ROLE_DENTIST', 'VIEW_SERVICE')  -- Load service list when adding items to treatment plan or booking appointments
+('ROLE_DENTIST', 'VIEW_SERVICE'),
+('ROLE_DENTIST', 'VIEW_ITEMS')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
@@ -526,10 +527,9 @@ VALUES
 ('ROLE_RECEPTIONIST', 'VIEW_LEAVE_OWN'), ('ROLE_RECEPTIONIST', 'CREATE_TIME_OFF'), ('ROLE_RECEPTIONIST', 'CREATE_OVERTIME'),
 ('ROLE_RECEPTIONIST', 'CANCEL_TIME_OFF_OWN'), ('ROLE_RECEPTIONIST', 'CANCEL_OVERTIME_OWN'),
 ('ROLE_RECEPTIONIST', 'VIEW_HOLIDAY'),
--- ✅ NEW: Treatment Plan permissions
-('ROLE_RECEPTIONIST', 'VIEW_TREATMENT_PLAN_ALL'), -- Can view all patients' treatment plans (read-only)
--- WAREHOUSE (V22: Receptionist can view transaction history - API 6.6)
-('ROLE_RECEPTIONIST', 'VIEW_WAREHOUSE') -- Can view basic transaction history (no cost data)
+('ROLE_RECEPTIONIST', 'VIEW_TREATMENT_PLAN_ALL'),
+('ROLE_RECEPTIONIST', 'VIEW_WAREHOUSE'),
+('ROLE_RECEPTIONIST', 'VIEW_ITEMS')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
@@ -590,12 +590,12 @@ VALUES
 ('ROLE_MANAGER', 'DELETE_TREATMENT_PLAN'), -- Can delete treatment plans
 ('ROLE_MANAGER', 'APPROVE_TREATMENT_PLAN'), -- ✅ V20: Can approve/reject treatment plans (API 5.9)
 ('ROLE_MANAGER', 'MANAGE_PLAN_PRICING'), -- ✅ V21: Can adjust pricing/discounts on treatment plans
--- WAREHOUSE (V22: Transaction history management - API 6.6)
-('ROLE_MANAGER', 'VIEW_WAREHOUSE'), -- Can view transaction history
-('ROLE_MANAGER', 'VIEW_COST'), -- Can view financial data (cost, payment info)
-('ROLE_MANAGER', 'IMPORT_ITEMS'), -- Can create import transactions
-('ROLE_MANAGER', 'EXPORT_ITEMS'), -- Can create export transactions
-('ROLE_MANAGER', 'APPROVE_TRANSACTION') -- Can approve/reject transactions
+('ROLE_MANAGER', 'VIEW_WAREHOUSE'),
+('ROLE_MANAGER', 'VIEW_COST'),
+('ROLE_MANAGER', 'VIEW_ITEMS'),
+('ROLE_MANAGER', 'IMPORT_ITEMS'),
+('ROLE_MANAGER', 'EXPORT_ITEMS'),
+('ROLE_MANAGER', 'APPROVE_TRANSACTION')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
@@ -3284,6 +3284,15 @@ ON CONFLICT (item_code) DO NOTHING;
 -- RESET SEQUENCES for item_masters
 -- =============================================
 SELECT setval('item_masters_item_master_id_seq', (SELECT COALESCE(MAX(item_master_id), 0) FROM item_masters));
+
+-- =============================================
+-- INITIALIZE CACHE COLUMNS (V23 - API 6.7)
+-- =============================================
+UPDATE item_masters SET
+    cached_total_quantity = 0,
+    cached_last_import_date = NULL,
+    cached_last_updated = NOW()
+WHERE cached_total_quantity IS NULL;
 
 -- =============================================
 -- VERIFICATION QUERIES (Optional - for testing)
