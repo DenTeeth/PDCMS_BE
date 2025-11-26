@@ -302,6 +302,10 @@ public class ImportTransactionService {
             }
             batchRepository.save(batch);
 
+            itemMaster.updateCachedQuantity(quantityToAdd);
+            itemMaster.setCachedLastImportDate(LocalDateTime.now());
+            itemMasterRepository.save(itemMaster);
+
             log.debug("✅ Updated existing batch ID {} - Added {} units, New total: {}",
                     batch.getBatchId(), quantityToAdd, batch.getQuantityOnHand());
 
@@ -318,6 +322,10 @@ public class ImportTransactionService {
                     .build();
 
             newBatch = batchRepository.save(newBatch);
+
+            itemMaster.updateCachedQuantity(quantityToAdd);
+            itemMaster.setCachedLastImportDate(LocalDateTime.now());
+            itemMasterRepository.save(itemMaster);
 
             log.debug("✅ Created new batch ID {} - Lot: {}, Quantity: {}",
                     newBatch.getBatchId(), lotNumber, quantityToAdd);

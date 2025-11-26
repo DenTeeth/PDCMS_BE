@@ -3,6 +3,7 @@ package com.dental.clinic.management.warehouse.repository;
 import com.dental.clinic.management.warehouse.domain.ItemMaster;
 import com.dental.clinic.management.warehouse.enums.WarehouseType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -11,7 +12,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface ItemMasterRepository extends JpaRepository<ItemMaster, Long> {
+public interface ItemMasterRepository extends JpaRepository<ItemMaster, Long>, JpaSpecificationExecutor<ItemMaster> {
 
         Optional<ItemMaster> findByItemCode(String itemCode);
 

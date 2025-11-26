@@ -61,6 +61,16 @@ public class ItemMaster {
     @Column(name = "current_market_price", precision = 15, scale = 2)
     private java.math.BigDecimal currentMarketPrice;
 
+    @Column(name = "cached_total_quantity")
+    @Builder.Default
+    private Integer cachedTotalQuantity = 0;
+
+    @Column(name = "cached_last_import_date")
+    private LocalDateTime cachedLastImportDate;
+
+    @Column(name = "cached_last_updated")
+    private LocalDateTime cachedLastUpdated;
+
     /**
      * @deprecated Không còn sử dụng sau mentor feedback
      *             Tất cả items đều phải có expiry_date (kể cả tools)
@@ -93,10 +103,32 @@ public class ItemMaster {
         if (this.warehouseType == null) {
             this.warehouseType = WarehouseType.NORMAL;
         }
+        if (this.cachedTotalQuantity == null) {
+            this.cachedTotalQuantity = 0;
+        }
     }
 
     @PreUpdate
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public void updateCachedQuantity(int delta) {
+        this.cachedTotalQuantity = (this.cachedTotalQuantity == null ? 0 : this.cachedTotalQuantity) + delta;
+        this.cachedLastUpdated = LocalDateTime.now();
+    }
+
+    @Transient
+    public com.dental.clinic.management.warehouse.enums.StockStatus getStockStatus() {
+        if (cachedTotalQuantity == null || cachedTotalQuantity == 0) {
+            return com.dental.clinic.management.warehouse.enums.StockStatus.OUT_OF_STOCK;
+        }
+        if (minStockLevel != null && cachedTotalQuantity < minStockLevel) {
+            return com.dental.clinic.management.warehouse.enums.StockStatus.LOW_STOCK;
+        }
+        if (maxStockLevel != null && cachedTotalQuantity > maxStockLevel) {
+            return com.dental.clinic.management.warehouse.enums.StockStatus.OVERSTOCK;
+        }
+        return com.dental.clinic.management.warehouse.enums.StockStatus.NORMAL;
     }
 }
