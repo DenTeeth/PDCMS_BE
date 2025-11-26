@@ -55,14 +55,11 @@ public class PartTimeRegistrationAdminController {
      * 
      * Response: List of registrations with employee info, slot info, dates
      * 
-     * @param status Status filter (default: PENDING)
+     * @param status     Status filter (default: PENDING)
      * @param employeeId Employee filter (optional)
      * @return List of registrations
      */
-    @Operation(
-        summary = "Get all registrations",
-        description = "Retrieve all part-time registration requests with optional status and employee filters"
-    )
+    @Operation(summary = "Get all registrations", description = "Retrieve all part-time registration requests with optional status and employee filters")
     @GetMapping
     @PreAuthorize("hasAuthority('MANAGE_PART_TIME_REGISTRATIONS')")
     public ResponseEntity<List<RegistrationResponse>> getRegistrations(
@@ -81,7 +78,7 @@ public class PartTimeRegistrationAdminController {
         } else {
             // Get all registrations (filtered by employeeId if provided)
             registrations = registrationService.getRegistrations(employeeId);
-            
+
             // Apply status filter if not ALL
             if (!"ALL".equalsIgnoreCase(status)) {
                 RegistrationStatus filterStatus = RegistrationStatus.valueOf(status.toUpperCase());
@@ -103,8 +100,8 @@ public class PartTimeRegistrationAdminController {
      * 
      * Request Body:
      * {
-     *   "status": "APPROVED",  // or "REJECTED"
-     *   "reason": "Lý do từ chối"  // Required only if REJECTED
+     * "status": "APPROVED", // or "REJECTED"
+     * "reason": "Lý do từ chối" // Required only if REJECTED
      * }
      * 
      * Validations:
@@ -113,35 +110,34 @@ public class PartTimeRegistrationAdminController {
      * - If REJECTED: Reason is required
      * 
      * @param registrationId The registration ID to process
-     * @param request The approval/rejection details
+     * @param request        The approval/rejection details
      * @return Success response
      */
-    @Operation(
-        summary = "Update registration status",
-        description = "Approve or reject a pending part-time registration request. Validates quota for approvals."
-    )
+    @Operation(summary = "Update registration status", description = "Approve or reject a pending part-time registration request. Validates quota for approvals.")
     @PatchMapping("/{registrationId}/status")
     @PreAuthorize("hasAuthority('MANAGE_PART_TIME_REGISTRATIONS')")
     public ResponseEntity<RegistrationResponse> updateStatus(
             @PathVariable Integer registrationId,
             @Valid @RequestBody UpdateRegistrationStatusRequest request) {
-        
+
         // Get current manager ID from employee table
         String username = SecurityUtil.getCurrentUserLogin()
                 .orElseThrow(() -> new RuntimeException("User not authenticated"));
         Integer managerId = employeeRepository.findByAccount_Username(username)
                 .map(employee -> employee.getEmployeeId())
                 .orElseThrow(() -> new RuntimeException("Employee not found for user: " + username));
-        
-        log.info("Manager {} updating registration {} to status: {}", 
-                 managerId, registrationId, request.getStatus());
 
-        // Pre-check registration status to avoid transactional wrapping of custom exceptions
+        log.info("Manager {} updating registration {} to status: {}",
+                managerId, registrationId, request.getStatus());
+
+        // Pre-check registration status to avoid transactional wrapping of custom
+        // exceptions
         var regOpt = registrationRepository.findById(registrationId);
         if (regOpt.isPresent()) {
             var reg = regOpt.get();
             if (reg.getStatus() != null && !"PENDING".equalsIgnoreCase(reg.getStatus().name())) {
-                throw new com.dental.clinic.management.working_schedule.exception.RegistrationInvalidStateException(registrationId, reg.getStatus().name());
+                throw new com.dental.clinic.management.working_schedule.exception.RegistrationInvalidStateException(
+                        registrationId, reg.getStatus().name());
             }
         }
 
@@ -152,16 +148,16 @@ public class PartTimeRegistrationAdminController {
                 log.info("Registration {} approved by manager {}", registrationId, managerId);
             } catch (WeeklyHoursExceededException e) {
                 // Auto-reject registration when weekly hours limit exceeded
-                log.warn("Auto-rejecting registration {} due to weekly hours limit: {}", 
-                         registrationId, e.getBody().getDetail());
-                
+                log.warn("Auto-rejecting registration {} due to weekly hours limit: {}",
+                        registrationId, e.getBody().getDetail());
+
                 // Extract error message as rejection reason
                 String rejectionReason = e.getBody().getDetail();
                 approvalService.rejectRegistration(registrationId, managerId, rejectionReason);
-                
-                log.info("Registration {} auto-rejected by manager {} due to weekly hours limit", 
-                         registrationId, managerId);
-                
+
+                log.info("Registration {} auto-rejected by manager {} due to weekly hours limit",
+                        registrationId, managerId);
+
                 // Re-throw to return 400 error to client with details
                 throw e;
             }
@@ -170,8 +166,8 @@ public class PartTimeRegistrationAdminController {
                 throw new IllegalArgumentException("Rejection reason is required");
             }
             approvalService.rejectRegistration(registrationId, managerId, request.getReason());
-            log.info("Registration {} rejected by manager {}: {}", 
-                     registrationId, managerId, request.getReason());
+            log.info("Registration {} rejected by manager {}: {}",
+                    registrationId, managerId, request.getReason());
         } else {
             throw new IllegalArgumentException("Invalid status: " + request.getStatus());
         }
@@ -185,10 +181,7 @@ public class PartTimeRegistrationAdminController {
      * GET /api/v1/admin/registrations/part-time-flex/{registrationId}
      * Return a single registration. Visible to admins or the owning employee.
      */
-    @Operation(
-        summary = "Get registration by ID",
-        description = "Retrieve details of a specific part-time registration request"
-    )
+    @Operation(summary = "Get registration by ID", description = "Retrieve details of a specific part-time registration request")
     @GetMapping("/{registrationId}")
     @PreAuthorize("hasAuthority('MANAGE_PART_TIME_REGISTRATIONS')")
     public ResponseEntity<RegistrationResponse> getRegistration(@PathVariable Integer registrationId) {
@@ -204,25 +197,22 @@ public class PartTimeRegistrationAdminController {
      * 
      * Returns:
      * {
-     *   "canApprove": true,
-     *   "reason": "Approval would not exceed quota"
+     * "canApprove": true,
+     * "reason": "Approval would not exceed quota"
      * }
      * 
      * @param registrationId The registration ID to check
      * @return Approval eligibility
      */
-    @Operation(
-        summary = "Check if can approve",
-        description = "Validate if a registration can be approved without exceeding quota limits"
-    )
+    @Operation(summary = "Check if can approve", description = "Validate if a registration can be approved without exceeding quota limits")
     @GetMapping("/{registrationId}/can-approve")
     @PreAuthorize("hasAuthority('MANAGE_PART_TIME_REGISTRATIONS')")
     public ResponseEntity<CanApproveResponse> canApprove(@PathVariable Integer registrationId) {
         boolean canApprove = approvalService.canApprove(registrationId);
-        String reason = canApprove 
-                ? "Approval would not exceed quota" 
+        String reason = canApprove
+                ? "Approval would not exceed quota"
                 : "Cannot approve: quota would be exceeded or registration is not pending";
-        
+
         return ResponseEntity.ok(new CanApproveResponse(canApprove, reason));
     }
 
@@ -236,10 +226,7 @@ public class PartTimeRegistrationAdminController {
      * @param registrationId Registration ID
      * @return Registration history with timeline and processor info
      */
-    @Operation(
-        summary = "Get registration history",
-        description = "Retrieve detailed audit log showing registration lifecycle with timeline and processor information"
-    )
+    @Operation(summary = "Get registration history", description = "Retrieve detailed audit log showing registration lifecycle with timeline and processor information")
     @GetMapping("/{registrationId}/history")
     @PreAuthorize("hasAuthority('MANAGE_PART_TIME_REGISTRATIONS')")
     public ResponseEntity<com.dental.clinic.management.working_schedule.dto.response.RegistrationHistoryResponse> getRegistrationHistory(
@@ -258,45 +245,42 @@ public class PartTimeRegistrationAdminController {
      * 
      * Request Body:
      * {
-     *   "registrationIds": [1, 2, 3, 4]
+     * "registrationIds": [1, 2, 3, 4]
      * }
      * 
      * Response:
      * {
-     *   "totalRequested": 4,
-     *   "successCount": 3,
-     *   "failureCount": 1,
-     *   "successfulIds": [1, 2, 3],
-     *   "failures": [
-     *     {
-     *       "registrationId": 4,
-     *       "reason": "Quota would be exceeded"
-     *     }
-     *   ]
+     * "totalRequested": 4,
+     * "successCount": 3,
+     * "failureCount": 1,
+     * "successfulIds": [1, 2, 3],
+     * "failures": [
+     * {
+     * "registrationId": 4,
+     * "reason": "Quota would be exceeded"
+     * }
+     * ]
      * }
      * 
      * @param request Bulk approve request with registration IDs
      * @return Bulk approval result with success/failure details
      */
-    @Operation(
-        summary = "Bulk approve registrations",
-        description = "Approve multiple registration requests at once with individual validation and detailed success/failure reporting"
-    )
+    @Operation(summary = "Bulk approve registrations", description = "Approve multiple registration requests at once with individual validation and detailed success/failure reporting")
     @PostMapping("/bulk-approve")
     @PreAuthorize("hasAuthority('MANAGE_PART_TIME_REGISTRATIONS')")
     public ResponseEntity<com.dental.clinic.management.working_schedule.dto.response.BulkApproveResponse> bulkApprove(
             @Valid @RequestBody com.dental.clinic.management.working_schedule.dto.request.BulkApproveRequest request) {
         log.info("Admin bulk approving {} registrations", request.getRegistrationIds().size());
-        
+
         // Get current manager ID from employee table
         String username = SecurityUtil.getCurrentUserLogin()
                 .orElseThrow(() -> new RuntimeException("User not authenticated"));
         Integer managerId = employeeRepository.findByAccount_Username(username)
                 .map(employee -> employee.getEmployeeId())
                 .orElseThrow(() -> new RuntimeException("Employee not found for user: " + username));
-        
+
         var result = approvalService.bulkApprove(request.getRegistrationIds(), managerId);
-        
+
         log.info("Bulk approve completed: {} succeeded, {} failed", result.getSuccessCount(), result.getFailureCount());
         return ResponseEntity.ok(result);
     }
@@ -312,15 +296,12 @@ public class PartTimeRegistrationAdminController {
      * 
      * @return Summary string with success/skip/error counts
      */
-    @Operation(
-        summary = "Backfill shifts",
-        description = "Generate shifts for all existing approved registrations that were created before auto-generation was implemented"
-    )
+    @Operation(summary = "Backfill shifts", description = "Generate shifts for all existing approved registrations that were created before auto-generation was implemented")
     @PostMapping("/backfill-shifts")
     @PreAuthorize("hasAuthority('MANAGE_PART_TIME_REGISTRATIONS')")
     public ResponseEntity<String> backfillShifts() {
         log.info(" Admin triggered backfill for PART_TIME_FLEX registrations");
-        
+
         try {
             String summary = approvalService.backfillShiftsForExistingRegistrations();
             log.info(" Backfill completed successfully");
@@ -330,31 +311,30 @@ public class PartTimeRegistrationAdminController {
             return ResponseEntity.status(500).body("Backfill failed: " + e.getMessage());
         }
     }
-    
+
     /**
-     * POST /api/v1/admin/registrations/part-time-flex/{registrationId}/regenerate-shifts
+     * POST
+     * /api/v1/admin/registrations/part-time-flex/{registrationId}/regenerate-shifts
      * Regenerate shifts for a specific PART_TIME_FLEX registration.
      * 
      * Deletes existing shifts and creates new ones from scratch.
-     * Used to fix shifts for registrations with incorrect data or recover from failed generation.
+     * Used to fix shifts for registrations with incorrect data or recover from
+     * failed generation.
      * 
      * Permission: MANAGE_PART_TIME_REGISTRATIONS (Admin only)
      * 
      * @param registrationId The registration ID
      * @return Message with number of shifts created
      */
-    @Operation(
-        summary = "Regenerate shifts",
-        description = "Delete and recreate all shifts for a specific registration to fix incorrect data or recover from failed generation"
-    )
+    @Operation(summary = "Regenerate shifts", description = "Delete and recreate all shifts for a specific registration to fix incorrect data or recover from failed generation")
     @PostMapping("/{registrationId}/regenerate-shifts")
     @PreAuthorize("hasAuthority('MANAGE_PART_TIME_REGISTRATIONS')")
     public ResponseEntity<String> regenerateShifts(@PathVariable Integer registrationId) {
         log.info(" Admin triggered shift regeneration for registration {}", registrationId);
-        
+
         try {
             int shiftsCreated = approvalService.regenerateShiftsForRegistration(registrationId);
-            String message = String.format(" Regenerated %d shifts for registration #%d", 
+            String message = String.format(" Regenerated %d shifts for registration #%d",
                     shiftsCreated, registrationId);
             log.info(message);
             return ResponseEntity.ok(message);
@@ -373,5 +353,6 @@ public class PartTimeRegistrationAdminController {
     /**
      * Response DTO for can-approve check.
      */
-    public record CanApproveResponse(boolean canApprove, String reason) {}
+    public record CanApproveResponse(boolean canApprove, String reason) {
+    }
 }

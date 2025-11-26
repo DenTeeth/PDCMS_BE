@@ -35,7 +35,8 @@ public class WorkShiftController {
      * Create a new work shift.
      * 
      * @param request CreateWorkShiftRequest containing shift details
-     * @return WorkShiftResponse with created shift information including auto-generated ID
+     * @return WorkShiftResponse with created shift information including
+     *         auto-generated ID
      */
     @PostMapping
     @Operation(summary = "Create a new work shift", description = "Create a new work shift with the provided details.")
@@ -95,12 +96,16 @@ public class WorkShiftController {
     }
 
     /**
-     * Get all work shifts with advanced filtering, searching, and sorting (Issues 10, 11, 12).
+     * Get all work shifts with advanced filtering, searching, and sorting (Issues
+     * 10, 11, 12).
      * 
-     * @param isActive Optional filter for active/inactive shifts (null = all shifts)
-     * @param category Optional filter by category (NORMAL/NIGHT)
-     * @param search Optional search keyword for shift name (case-insensitive)
-     * @param sortBy Optional sort field (startTime, category, shiftName). Default: startTime
+     * @param isActive      Optional filter for active/inactive shifts (null = all
+     *                      shifts)
+     * @param category      Optional filter by category (NORMAL/NIGHT)
+     * @param search        Optional search keyword for shift name
+     *                      (case-insensitive)
+     * @param sortBy        Optional sort field (startTime, category, shiftName).
+     *                      Default: startTime
      * @param sortDirection Optional sort direction (ASC/DESC). Default: ASC
      * @return List of WorkShiftResponse
      */
@@ -112,8 +117,8 @@ public class WorkShiftController {
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String sortBy,
             @RequestParam(required = false) String sortDirection) {
-        log.info("Fetching work shifts - isActive: {}, category: {}, search: '{}', sortBy: {}, sortDirection: {}", 
-                 isActive, category, search, sortBy, sortDirection);
+        log.info("Fetching work shifts - isActive: {}, category: {}, search: '{}', sortBy: {}, sortDirection: {}",
+                isActive, category, search, sortBy, sortDirection);
         List<WorkShiftResponse> responses = workShiftService.getAllWorkShifts(
                 isActive, category, search, sortBy, sortDirection);
         log.info("Retrieved {} work shifts", responses.size());
