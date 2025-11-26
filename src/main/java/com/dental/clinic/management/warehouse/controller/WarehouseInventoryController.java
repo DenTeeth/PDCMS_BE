@@ -2,6 +2,7 @@ package com.dental.clinic.management.warehouse.controller;
 
 import com.dental.clinic.management.utils.annotation.ApiMessage;
 import com.dental.clinic.management.warehouse.dto.response.InventorySummaryResponse;
+import static com.dental.clinic.management.utils.security.AuthoritiesConstants.*;
 import com.dental.clinic.management.warehouse.dto.response.ItemBatchesResponse;
 import com.dental.clinic.management.warehouse.enums.BatchStatus;
 import com.dental.clinic.management.warehouse.enums.StockStatus;
@@ -73,7 +74,7 @@ public class WarehouseInventoryController {
                         "Hỗ trợ filters: search, stockStatus, warehouseType, categoryId. Pagination enabled.")
         @ApiMessage("Lấy inventory summary thành công")
         @GetMapping("/summary")
-        @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_INVENTORY_MANAGER', 'ROLE_MANAGER', 'ROLE_RECEPTIONIST', 'VIEW_WAREHOUSE')")
+        @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('VIEW_WAREHOUSE')")
         public ResponseEntity<InventorySummaryResponse> getInventorySummary(
                         @Parameter(description = "Tìm kiếm theo itemName hoặc itemCode (LIKE)") @RequestParam(required = false) String search,
 
@@ -156,7 +157,7 @@ public class WarehouseInventoryController {
                         "Operational view: số lượng, vị trí, HSD (không có giá vốn).")
         @ApiMessage("Lấy chi tiết lô hàng thành công")
         @GetMapping("/batches/{itemMasterId}")
-        @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_INVENTORY_MANAGER', 'ROLE_MANAGER', 'ROLE_RECEPTIONIST', 'VIEW_WAREHOUSE')")
+        @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('VIEW_WAREHOUSE')")
         public ResponseEntity<ItemBatchesResponse> getItemBatches(
                         @Parameter(description = "ID của Item Master cần xem lô hàng") @PathVariable Long itemMasterId,
 
@@ -247,7 +248,7 @@ public class WarehouseInventoryController {
                         "Use cases: Morning routine check, Supplier return planning, Disposal management.")
         @ApiMessage("Lấy cảnh báo hàng sắp hết hạn thành công")
         @GetMapping("/alerts/expiring")
-        @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_INVENTORY_MANAGER', 'ROLE_MANAGER', 'ROLE_RECEPTIONIST', 'VIEW_WAREHOUSE')")
+        @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('VIEW_WAREHOUSE')")
         public ResponseEntity<com.dental.clinic.management.warehouse.dto.response.ExpiringAlertsResponse> getExpiringAlerts(
                         @Parameter(description = "Số ngày quét tới (1-1095). VD: 30 = quét hàng hết hạn trong 30 ngày tới") @RequestParam(defaultValue = "30") Integer days,
 

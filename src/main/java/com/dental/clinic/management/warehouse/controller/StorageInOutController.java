@@ -3,6 +3,7 @@ package com.dental.clinic.management.warehouse.controller;
 import com.dental.clinic.management.utils.annotation.ApiMessage;
 import com.dental.clinic.management.warehouse.dto.request.ExportRequest;
 import com.dental.clinic.management.warehouse.dto.request.ImportRequest;
+import static com.dental.clinic.management.utils.security.AuthoritiesConstants.*;
 import com.dental.clinic.management.warehouse.dto.response.StorageStatsResponse;
 import com.dental.clinic.management.warehouse.dto.response.TransactionResponse;
 import com.dental.clinic.management.warehouse.enums.TransactionType;
@@ -21,7 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- *  Storage In/Out Controller
+ * Storage In/Out Controller
  * Quản lý phiếu nhập/xuất kho và thống kê
  */
 @RestController
@@ -39,7 +40,7 @@ public class StorageInOutController {
     @Operation(summary = "Tạo phiếu nhập kho", description = "Validate: Kho lạnh bắt buộc có HSD. Tự động tạo/cập nhật batch.")
     @ApiMessage("Nhập kho thành công")
     @PostMapping("/import")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_INVENTORY_MANAGER')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('IMPORT_ITEMS')")
     public ResponseEntity<TransactionResponse> importItems(
             @Valid @RequestBody ImportRequest request) {
         log.info("POST /api/v1/storage/import - supplier: {}, items: {}",
@@ -54,7 +55,7 @@ public class StorageInOutController {
     @Operation(summary = "Tạo phiếu xuất kho", description = "Validate: Kiểm tra số lượng tồn kho. Tự động trừ quantity_on_hand.")
     @ApiMessage("Xuất kho thành công")
     @PostMapping("/export")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_INVENTORY_MANAGER', 'ROLE_DENTIST', 'ROLE_NURSE')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('EXPORT_ITEMS')")
     public ResponseEntity<TransactionResponse> exportItems(
             @Valid @RequestBody ExportRequest request) {
         log.info("POST /api/v1/storage/export - items: {}", request.getItems().size());
@@ -63,12 +64,12 @@ public class StorageInOutController {
     }
 
     /**
-     *  API: Lấy thống kê Storage (Import/Export)
+     * API: Lấy thống kê Storage (Import/Export)
      */
     @Operation(summary = "Lấy thống kê xuất/nhập kho", description = "Trả về: Import/Export value, growth percent")
     @ApiMessage("Lấy thống kê storage thành công")
     @GetMapping("/stats")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_INVENTORY_MANAGER', 'ROLE_MANAGER')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('VIEW_WAREHOUSE')")
     public ResponseEntity<StorageStatsResponse> getStorageStats(
             @Parameter(description = "Tháng (1-12)") @RequestParam(required = false) Integer month,
             @Parameter(description = "Năm") @RequestParam(required = false) Integer year) {
@@ -78,12 +79,12 @@ public class StorageInOutController {
     }
 
     // ===========================
-    //  GET ALL TRANSACTIONS
+    // GET ALL TRANSACTIONS
     // ===========================
     @Operation(summary = "Lấy danh sách phiếu nhập/xuất kho", description = "Lọc theo loại, tháng/năm")
     @ApiMessage("Lấy danh sách transactions thành công")
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_INVENTORY_MANAGER', 'ROLE_MANAGER')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('VIEW_WAREHOUSE')")
     public ResponseEntity<List<TransactionResponse>> getAllTransactions(
             @Parameter(description = "Loại giao dịch: IMPORT, EXPORT, ADJUSTMENT, LOSS") @RequestParam(required = false) TransactionType transactionType,
             @Parameter(description = "Tháng (1-12)") @RequestParam(required = false) Integer month,
@@ -94,12 +95,12 @@ public class StorageInOutController {
     }
 
     // ===========================
-    //  GET TRANSACTION BY ID
+    // GET TRANSACTION BY ID
     // ===========================
     @Operation(summary = "Lấy chi tiết phiếu nhập/xuất kho", description = "Trả về thông tin đầy đủ kèm danh sách items")
     @ApiMessage("Lấy chi tiết transaction thành công")
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_INVENTORY_MANAGER', 'ROLE_MANAGER', 'ROLE_DENTIST', 'ROLE_NURSE')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('VIEW_WAREHOUSE')")
     public ResponseEntity<TransactionResponse> getTransactionById(
             @Parameter(description = "ID của phiếu nhập/xuất kho") @PathVariable Long id) {
         log.info("GET /api/v1/storage/{}", id);
@@ -113,7 +114,7 @@ public class StorageInOutController {
     @Operation(summary = "Cập nhật phiếu nhập/xuất kho", description = "Chỉ cho phép cập nhật notes. Không thể sửa items sau khi đã tạo.")
     @ApiMessage("Cập nhật transaction thành công")
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_INVENTORY_MANAGER')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('APPROVE_TRANSACTION')")
     public ResponseEntity<TransactionResponse> updateTransaction(
             @Parameter(description = "ID của phiếu nhập/xuất kho") @PathVariable Long id,
             @Parameter(description = "Ghi chú mới") @RequestParam String notes) {
@@ -123,12 +124,12 @@ public class StorageInOutController {
     }
 
     // ===========================
-    //  DELETE TRANSACTION
+    // DELETE TRANSACTION
     // ===========================
     @Operation(summary = "Xóa phiếu nhập/xuất kho", description = "CẢNH BÁO: Xóa transaction sẽ rollback số lượng tồn kho. Chỉ admin mới được phép.")
     @ApiMessage("Xóa transaction thành công")
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('" + ADMIN + "')")
     public ResponseEntity<Void> deleteTransaction(
             @Parameter(description = "ID của phiếu nhập/xuất kho") @PathVariable Long id) {
         log.info("DELETE /api/v1/storage/{}", id);

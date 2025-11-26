@@ -1,5 +1,7 @@
 package com.dental.clinic.management.warehouse.controller;
 
+import static com.dental.clinic.management.utils.security.AuthoritiesConstants.*;
+
 import com.dental.clinic.management.utils.annotation.ApiMessage;
 import com.dental.clinic.management.warehouse.dto.request.CreateSupplierRequest;
 import com.dental.clinic.management.warehouse.dto.request.UpdateSupplierRequest;
@@ -25,7 +27,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- *  Supplier Management Controller
+ * Supplier Management Controller
  * Quản lý nhà cung cấp với Pagination + Search + Sort
  */
 @RestController
@@ -38,7 +40,7 @@ public class SupplierController {
     private final SupplierService supplierService;
 
     /**
-     *  GET ALL Suppliers (Pagination + Search + Sort)
+     * GET ALL Suppliers (Pagination + Search + Sort)
      * Query Params:
      * - page: Số trang (default 0)
      * - size: Số lượng/trang (default 10)
@@ -48,7 +50,7 @@ public class SupplierController {
     @Operation(summary = "Lấy danh sách nhà cung cấp (Paginated)", description = "Hỗ trợ phân trang, tìm kiếm và sắp xếp")
     @ApiMessage("Lấy danh sách nhà cung cấp thành công")
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_INVENTORY_MANAGER', 'ROLE_RECEPTIONIST')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('VIEW_WAREHOUSE')")
     public ResponseEntity<Page<SupplierSummaryResponse>> getAllSuppliers(
             @Parameter(description = "Số trang (0-based)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Số lượng/trang") @RequestParam(defaultValue = "10") int size,
@@ -71,12 +73,12 @@ public class SupplierController {
     }
 
     /**
-     *  GET Supplier By ID (Detail + Supplied Items)
+     * GET Supplier By ID (Detail + Supplied Items)
      */
     @Operation(summary = "Lấy chi tiết nhà cung cấp", description = "Trả về thông tin đầy đủ + danh sách vật tư cung cấp")
     @ApiMessage("Lấy chi tiết nhà cung cấp thành công")
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_INVENTORY_MANAGER', 'ROLE_RECEPTIONIST')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('VIEW_WAREHOUSE')")
     public ResponseEntity<SupplierDetailResponse> getSupplierById(@PathVariable Long id) {
         log.info("GET /api/v1/suppliers/{}", id);
         SupplierDetailResponse supplier = supplierService.getSupplierById(id);
@@ -84,13 +86,13 @@ public class SupplierController {
     }
 
     /**
-     *  GET Supplied Items History
+     * GET Supplied Items History
      * Lấy lịch sử vật tư đã cung cấp (giá nhập lần cuối + ngày nhập gần nhất)
      */
     @Operation(summary = "Lấy lịch sử vật tư cung cấp", description = "Trả về danh sách vật tư + giá nhập lần cuối + ngày nhập gần nhất")
     @ApiMessage("Lấy lịch sử vật tư thành công")
     @GetMapping("/{id}/supplied-items")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_INVENTORY_MANAGER', 'ROLE_RECEPTIONIST')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('VIEW_WAREHOUSE')")
     public ResponseEntity<List<SuppliedItemResponse>> getSuppliedItems(@PathVariable Long id) {
         log.info("GET /api/v1/suppliers/{}/supplied-items", id);
         List<SuppliedItemResponse> items = supplierService.getSuppliedItems(id);
@@ -103,7 +105,7 @@ public class SupplierController {
     @Operation(summary = "Tạo nhà cung cấp mới", description = "Create new supplier")
     @ApiMessage("Tạo nhà cung cấp thành công")
     @PostMapping
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_INVENTORY_MANAGER')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('CREATE_WAREHOUSE')")
     public ResponseEntity<SupplierSummaryResponse> createSupplier(
             @Valid @RequestBody CreateSupplierRequest request) {
         log.info("POST /api/v1/suppliers - name: {}", request.getSupplierName());
@@ -117,7 +119,7 @@ public class SupplierController {
     @Operation(summary = "Cập nhật nhà cung cấp", description = "Update supplier by ID")
     @ApiMessage("Cập nhật nhà cung cấp thành công")
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_INVENTORY_MANAGER')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('UPDATE_WAREHOUSE')")
     public ResponseEntity<SupplierSummaryResponse> updateSupplier(
             @PathVariable Long id,
             @Valid @RequestBody UpdateSupplierRequest request) {
@@ -127,14 +129,14 @@ public class SupplierController {
     }
 
     /**
-     *  SOFT DELETE Supplier (World-class approach)
+     * SOFT DELETE Supplier (World-class approach)
      * - Không xóa cứng, chỉ set isActive = false
      * - Validate: Không cho xóa NCC đã có giao dịch
      */
     @Operation(summary = "Xóa mềm nhà cung cấp", description = "Set isActive = false. Không xóa nếu đã có giao dịch nhập hàng.")
     @ApiMessage("Xóa nhà cung cấp thành công")
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_INVENTORY_MANAGER')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('DELETE_WAREHOUSE')")
     public ResponseEntity<Void> deleteSupplier(@PathVariable Long id) {
         log.info("DELETE /api/v1/suppliers/{}", id);
         supplierService.deleteSupplier(id);

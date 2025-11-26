@@ -43,3 +43,9 @@ out/
 .env.local
 application-local.yaml
 application-local.yml
+
+### Log Files ###
+*.log
+logs/
+app-startup.log
+app.log

@@ -86,11 +86,13 @@ public class TreatmentPlanController {
                         @Parameter(description = "Pagination parameters (page=0, size=10, sort=createdAt,desc)", required = false) Pageable pageable) {
 
                 log.info("REST request to list all treatment plans - filters: approvalStatus={}, status={}, doctor={}, templateId={}, specializationId={}, page={}, size={}",
-                                approvalStatus, status, doctorEmployeeCode, templateId, specializationId, pageable.getPageNumber(),
+                                approvalStatus, status, doctorEmployeeCode, templateId, specializationId,
+                                pageable.getPageNumber(),
                                 pageable.getPageSize());
 
                 Page<com.dental.clinic.management.treatment_plans.dto.response.TreatmentPlanSummaryDTO> plans = treatmentPlanListService
-                                .listAllPlans(approvalStatus, status, doctorEmployeeCode, templateId, specializationId, pageable);
+                                .listAllPlans(approvalStatus, status, doctorEmployeeCode, templateId, specializationId,
+                                                pageable);
 
                 log.info("Found {} treatment plans (page {} of {})",
                                 plans.getNumberOfElements(), plans.getNumber() + 1, plans.getTotalPages());
@@ -631,7 +633,8 @@ public class TreatmentPlanController {
 
                         @Parameter(description = "V21.4: Auto-submit plan to PENDING_REVIEW after adding items (default: true for backward compatibility). Use false for DRAFT plans to keep editing.", example = "true") @RequestParam(required = false, defaultValue = "true") Boolean autoSubmit) {
 
-                log.info("REST request to add {} item(s) to phase {} (autoSubmit={})", requests.size(), phaseId, autoSubmit);
+                log.info("REST request to add {} item(s) to phase {} (autoSubmit={})", requests.size(), phaseId,
+                                autoSubmit);
 
                 com.dental.clinic.management.treatment_plans.dto.response.AddItemsToPhaseResponse response = treatmentPlanItemAdditionService
                                 .addItemsToPhase(phaseId, requests, autoSubmit);
@@ -895,6 +898,31 @@ public class TreatmentPlanController {
         }
 
         /**
+         * FE Compatibility Endpoint: POST /treatment-plans/{planCode}/approve
+         * Alias for PATCH /patient-treatment-plans/{planCode}/approval
+         * Added to support FE's current implementation
+         */
+        @Operation(summary = "Approve/Reject Treatment Plan (FE Alias)", description = "Alias endpoint for FE compatibility. Use PATCH /patient-treatment-plans/{planCode}/approval instead.")
+        @org.springframework.security.access.prepost.PreAuthorize("hasRole('"
+                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.ADMIN + "') or " +
+                        "hasAuthority('"
+                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.APPROVE_TREATMENT_PLAN
+                        + "')")
+        @PostMapping("/treatment-plans/{planCode}/approve")
+        public ResponseEntity<com.dental.clinic.management.treatment_plans.dto.TreatmentPlanDetailResponse> approveTreatmentPlanAlias(
+                        @Parameter(description = "Treatment plan code", required = true) @PathVariable String planCode,
+                        @Parameter(description = "Approval request", required = true) @org.springframework.web.bind.annotation.RequestBody @jakarta.validation.Valid com.dental.clinic.management.treatment_plans.dto.request.ApproveTreatmentPlanRequest request) {
+
+                log.info("REST request (FE alias) to approve/reject treatment plan: {} with status: {}",
+                                planCode, request.getApprovalStatus());
+
+                com.dental.clinic.management.treatment_plans.dto.TreatmentPlanDetailResponse response = treatmentPlanApprovalService
+                                .approveTreatmentPlan(planCode, request);
+
+                return ResponseEntity.ok(response);
+        }
+
+        /**
          * API 5.10: Update Treatment Plan Item (V20).
          * <p>
          * Used by doctors to update item details (name, price, estimated time) after
@@ -1034,7 +1062,8 @@ public class TreatmentPlanController {
         /**
          * API 5.13: Update Treatment Plan Prices (Finance/Accounting - V21.4).
          * <p>
-         * Allows Finance/Accounting team to adjust item prices and discounts before approval.
+         * Allows Finance/Accounting team to adjust item prices and discounts before
+         * approval.
          * This is part of the new pricing model where doctors don't manage prices.
          * <p>
          * Business Rules:
@@ -1050,7 +1079,8 @@ public class TreatmentPlanController {
          * 3. Finance adjusts prices if needed (THIS API)
          * 4. Manager approves final plan (API 5.9)
          * <p>
-         * Required Permission: MANAGE_PLAN_PRICING (assigned to ROLE_MANAGER, ROLE_ACCOUNTANT)
+         * Required Permission: MANAGE_PLAN_PRICING (assigned to ROLE_MANAGER,
+         * ROLE_ACCOUNTANT)
          *
          * @param planCode Treatment plan code (e.g., "PLAN-20251119-001")
          * @param request  Price update request with item prices and discount
@@ -1071,13 +1101,13 @@ public class TreatmentPlanController {
                         @Parameter(description = "Price update request with item prices and discount", required = true) @org.springframework.web.bind.annotation.RequestBody @jakarta.validation.Valid com.dental.clinic.management.treatment_plans.dto.request.UpdatePricesRequest request) {
 
                 log.info(" REST request to update prices for plan: {} ({} items)",
-                        planCode, request.getItems().size());
+                                planCode, request.getItems().size());
 
                 com.dental.clinic.management.treatment_plans.dto.response.UpdatePricesResponse response = treatmentPlanPricingService
                                 .updatePlanPrices(planCode, request);
 
                 log.info(" Prices updated for plan {}. Cost: {} → {} VND",
-                        planCode, response.getTotalCostBefore(), response.getTotalCostAfter());
+                                planCode, response.getTotalCostBefore(), response.getTotalCostAfter());
 
                 return ResponseEntity.ok(response);
         }
@@ -1101,7 +1131,8 @@ public class TreatmentPlanController {
          * - Adjust sequence based on clinical findings
          * - Optimize treatment flow for efficiency
          * <p>
-         * Required Permission: UPDATE_TREATMENT_PLAN (assigned to ROLE_DENTIST, ROLE_MANAGER)
+         * Required Permission: UPDATE_TREATMENT_PLAN (assigned to ROLE_DENTIST,
+         * ROLE_MANAGER)
          *
          * @param phaseId Phase ID
          * @param request Reorder request with item IDs in new desired order
@@ -1122,13 +1153,13 @@ public class TreatmentPlanController {
                         @Parameter(description = "Reorder request with item IDs in new order", required = true) @org.springframework.web.bind.annotation.RequestBody @jakarta.validation.Valid com.dental.clinic.management.treatment_plans.dto.request.ReorderItemsRequest request) {
 
                 log.info(" REST request to reorder {} items in phase: {}",
-                        request.getItemIds().size(), phaseId);
+                                request.getItemIds().size(), phaseId);
 
                 com.dental.clinic.management.treatment_plans.dto.response.ReorderItemsResponse response = treatmentPlanReorderService
                                 .reorderPhaseItems(phaseId, request);
 
                 log.info(" Reordered {} items in phase {}",
-                        response.getItemsReordered(), phaseId);
+                                response.getItemsReordered(), phaseId);
 
                 return ResponseEntity.ok(response);
         }

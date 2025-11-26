@@ -176,6 +176,8 @@ public class TreatmentPlanCreationService {
                                 .patient(patient)
                                 .createdBy(doctor)
                                 .sourceTemplate(template) // Trace back to template
+                                .specialization(template.getSpecialization()) // FE Issue #1 Fix: Snapshot
+                                                                              // specialization from template
                                 .status(TreatmentPlanStatus.PENDING) // Initial status
                                 .startDate(null) // Will be set when first phase starts
                                 .expectedEndDate(expectedEndDate) // V19: From template duration

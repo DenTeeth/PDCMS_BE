@@ -68,6 +68,14 @@ public class PatientTreatmentPlan {
     private com.dental.clinic.management.treatment_plans.domain.template.TreatmentPlanTemplate sourceTemplate;
 
     /**
+     * Specialization this plan belongs to (snapshotted from template at creation).
+     * Allows direct access to specialization without loading template.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "specialization_id")
+    private com.dental.clinic.management.specialization.domain.Specialization specialization;
+
+    /**
      * Current status of the plan
      */
     @Enumerated(EnumType.STRING)

@@ -62,6 +62,9 @@ public class Account {
     @Column(name = "status")
     private AccountStatus status = AccountStatus.ACTIVE;
 
+    @Column(name = "is_email_verified")
+    private Boolean isEmailVerified = false;
+
     @Column(name = "must_change_password")
     private Boolean mustChangePassword = false;
 
@@ -144,6 +147,14 @@ public class Account {
 
     public void setStatus(AccountStatus status) {
         this.status = status;
+    }
+
+    public Boolean getIsEmailVerified() {
+        return isEmailVerified;
+    }
+
+    public void setIsEmailVerified(Boolean isEmailVerified) {
+        this.isEmailVerified = isEmailVerified;
     }
 
     public Boolean getMustChangePassword() {
