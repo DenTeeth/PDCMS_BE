@@ -1946,10 +1946,17 @@ VALUES ('TPL_IMPLANT_OSSTEM', 'Cấy ghép Implant Hàn Quốc (Osstem) - Trọn
 ON CONFLICT (template_code) DO NOTHING;
 
 
--- Template 3: Bọc răng sứ Cercon HT (7 ngày)
+-- Template 3A: Bọc răng sứ Cercon HT đơn giản (4 ngày)
 INSERT INTO treatment_plan_templates (template_code, template_name, description, estimated_duration_days, total_price, specialization_id, is_active, created_at)
-VALUES ('TPL_CROWN_CERCON', 'Bọc răng sứ Cercon HT - 1 răng',
-        'Gói bọc răng sứ toàn sứ Cercon HT cao cấp, bao gồm điều trị tủy (nếu cần) và gắn răng sứ.',
+VALUES ('TPL_CROWN_CERCON_SIMPLE', 'Bọc răng sứ Cercon HT - 1 răng (đơn giản)',
+        'Gói bọc răng sứ toàn sứ Cercon HT cho răng đã điều trị tủy hoặc răng còn tủy sống không cần điều trị.',
+        4, 3500000, 4, true, NOW())
+ON CONFLICT (template_code) DO NOTHING;
+
+-- Template 3B: Bọc răng sứ Cercon HT + Điều trị tủy (7 ngày)
+INSERT INTO treatment_plan_templates (template_code, template_name, description, estimated_duration_days, total_price, specialization_id, is_active, created_at)
+VALUES ('TPL_CROWN_CERCON_ENDO', 'Bọc răng sứ Cercon HT - 1 răng (kèm điều trị tủy)',
+        'Gói bọc răng sứ toàn sứ Cercon HT cho răng cần điều trị tủy, bao gồm điều trị tủy + trụ sợi + bọc sứ.',
         7, 5000000, 4, true, NOW())
 ON CONFLICT (template_code) DO NOTHING;
 
@@ -2002,16 +2009,22 @@ FROM treatment_plan_templates t WHERE t.template_code = 'TPL_IMPLANT_OSSTEM'
 ON CONFLICT (template_id, phase_number) DO NOTHING;
 
 
--- TPL_CROWN_CERCON: 2 giai đoạn
+-- TPL_CROWN_CERCON_SIMPLE: 1 giai đoạn (chỉ bọc sứ)
 INSERT INTO template_phases (template_id, phase_number, phase_name, estimated_duration_days, created_at)
-SELECT t.template_id, 1, 'Giai đoạn 1: Điều trị tủy & Chuẩn bị', 3, NOW()
-FROM treatment_plan_templates t WHERE t.template_code = 'TPL_CROWN_CERCON'
+SELECT t.template_id, 1, 'Giai đoạn 1: Mài răng, Lấy dấu & Gắn sứ', 4, NOW()
+FROM treatment_plan_templates t WHERE t.template_code = 'TPL_CROWN_CERCON_SIMPLE'
+ON CONFLICT (template_id, phase_number) DO NOTHING;
+
+-- TPL_CROWN_CERCON_ENDO: 2 giai đoạn (điều trị tủy + bọc sứ)
+INSERT INTO template_phases (template_id, phase_number, phase_name, estimated_duration_days, created_at)
+SELECT t.template_id, 1, 'Giai đoạn 1: Điều trị tủy & Trụ sợi', 3, NOW()
+FROM treatment_plan_templates t WHERE t.template_code = 'TPL_CROWN_CERCON_ENDO'
 ON CONFLICT (template_id, phase_number) DO NOTHING;
 
 
 INSERT INTO template_phases (template_id, phase_number, phase_name, estimated_duration_days, created_at)
-SELECT t.template_id, 2, 'Giai đoạn 2: Lấy dấu & Gắn sứ', 4, NOW()
-FROM treatment_plan_templates t WHERE t.template_code = 'TPL_CROWN_CERCON'
+SELECT t.template_id, 2, 'Giai đoạn 2: Mài răng, Lấy dấu & Gắn sứ', 4, NOW()
+FROM treatment_plan_templates t WHERE t.template_code = 'TPL_CROWN_CERCON_ENDO'
 ON CONFLICT (template_id, phase_number) DO NOTHING;
 
 
@@ -2038,14 +2051,7 @@ JOIN services s ON s.service_code = 'ORTHO_FILMS'
 WHERE t.template_code = 'TPL_ORTHO_METAL' AND tp.phase_number = 1
 ON CONFLICT (phase_id, service_id) DO NOTHING;
 
-
-INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
-SELECT tp.phase_id, s.service_id, 3, 1, 60, NOW()
-FROM template_phases tp
-JOIN treatment_plan_templates t ON tp.template_id = t.template_id
-JOIN services s ON s.service_code = 'SCALING_L1'
-WHERE t.template_code = 'TPL_ORTHO_METAL' AND tp.phase_number = 1
-ON CONFLICT (phase_id, service_id) DO NOTHING;
+-- REMOVED SCALING_L1 - periodontics service doesn't belong in orthodontics template
 
 
 -- TPL_ORTHO_METAL - Phase 2: Gắn mắc cài (1 service)
@@ -2144,32 +2150,13 @@ WHERE t.template_code = 'TPL_IMPLANT_OSSTEM' AND tp.phase_number = 3
 ON CONFLICT (phase_id, service_id) DO NOTHING;
 
 
--- TPL_CROWN_CERCON - Phase 1: Điều trị tủy (2 services in order: treatment first, then post & core)
-INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
-SELECT tp.phase_id, s.service_id, 1, 1, 75, NOW()
-FROM template_phases tp
-JOIN treatment_plan_templates t ON tp.template_id = t.template_id
-JOIN services s ON s.service_code = 'ENDO_TREAT_POST'
-WHERE t.template_code = 'TPL_CROWN_CERCON' AND tp.phase_number = 1
-ON CONFLICT (phase_id, service_id) DO NOTHING;
-
-
-INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
-SELECT tp.phase_id, s.service_id, 2, 1, 45, NOW()
-FROM template_phases tp
-JOIN treatment_plan_templates t ON tp.template_id = t.template_id
-JOIN services s ON s.service_code = 'ENDO_POST_CORE'
-WHERE t.template_code = 'TPL_CROWN_CERCON' AND tp.phase_number = 1
-ON CONFLICT (phase_id, service_id) DO NOTHING;
-
-
--- TPL_CROWN_CERCON - Phase 2: Lấy dấu & Gắn sứ (2 services in order: crown prep first, then cementing)
+-- TPL_CROWN_CERCON_SIMPLE - Phase 1: Bọc sứ đơn giản (2 services: crown prep + cementing)
 INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
 SELECT tp.phase_id, s.service_id, 1, 1, 60, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'CROWN_ZIR_CERCON'
-WHERE t.template_code = 'TPL_CROWN_CERCON' AND tp.phase_number = 2
+WHERE t.template_code = 'TPL_CROWN_CERCON_SIMPLE' AND tp.phase_number = 1
 ON CONFLICT (phase_id, service_id) DO NOTHING;
 
 
@@ -2178,7 +2165,45 @@ SELECT tp.phase_id, s.service_id, 2, 1, 30, NOW()
 FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'PROS_CEMENT'
-WHERE t.template_code = 'TPL_CROWN_CERCON' AND tp.phase_number = 2
+WHERE t.template_code = 'TPL_CROWN_CERCON_SIMPLE' AND tp.phase_number = 1
+ON CONFLICT (phase_id, service_id) DO NOTHING;
+
+
+-- TPL_CROWN_CERCON_ENDO - Phase 1: Điều trị tủy (2 services: endo treatment + post & core)
+INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
+SELECT tp.phase_id, s.service_id, 1, 1, 75, NOW()
+FROM template_phases tp
+JOIN treatment_plan_templates t ON tp.template_id = t.template_id
+JOIN services s ON s.service_code = 'ENDO_TREAT_POST'
+WHERE t.template_code = 'TPL_CROWN_CERCON_ENDO' AND tp.phase_number = 1
+ON CONFLICT (phase_id, service_id) DO NOTHING;
+
+
+INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
+SELECT tp.phase_id, s.service_id, 2, 1, 45, NOW()
+FROM template_phases tp
+JOIN treatment_plan_templates t ON tp.template_id = t.template_id
+JOIN services s ON s.service_code = 'ENDO_POST_CORE'
+WHERE t.template_code = 'TPL_CROWN_CERCON_ENDO' AND tp.phase_number = 1
+ON CONFLICT (phase_id, service_id) DO NOTHING;
+
+
+-- TPL_CROWN_CERCON_ENDO - Phase 2: Bọc sứ (2 services: crown prep + cementing)
+INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
+SELECT tp.phase_id, s.service_id, 1, 1, 60, NOW()
+FROM template_phases tp
+JOIN treatment_plan_templates t ON tp.template_id = t.template_id
+JOIN services s ON s.service_code = 'CROWN_ZIR_CERCON'
+WHERE t.template_code = 'TPL_CROWN_CERCON_ENDO' AND tp.phase_number = 2
+ON CONFLICT (phase_id, service_id) DO NOTHING;
+
+
+INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
+SELECT tp.phase_id, s.service_id, 2, 1, 30, NOW()
+FROM template_phases tp
+JOIN treatment_plan_templates t ON tp.template_id = t.template_id
+JOIN services s ON s.service_code = 'PROS_CEMENT'
+WHERE t.template_code = 'TPL_CROWN_CERCON_ENDO' AND tp.phase_number = 2
 ON CONFLICT (phase_id, service_id) DO NOTHING;
 
 
