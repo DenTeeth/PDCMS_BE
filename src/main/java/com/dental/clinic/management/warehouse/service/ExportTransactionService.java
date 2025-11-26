@@ -725,7 +725,7 @@ public class ExportTransactionService {
     }
 
     /**
-     * Generate transaction code (PX-YYYYMMDD-XXX)
+     * Generate transaction code (PX-YYYYMMDD-SEQ)
      */
     private String generateTransactionCode() {
         String dateStr = LocalDateTime.now().format(
@@ -771,10 +771,12 @@ public class ExportTransactionService {
             return availableExpired;
         }
 
+        @SuppressWarnings("unused")
         public int getLoose() {
             return loose;
         }
 
+        @SuppressWarnings("unused")
         public int getPacked() {
             return packed;
         }
@@ -798,10 +800,12 @@ public class ExportTransactionService {
             return batch;
         }
 
+        @SuppressWarnings("unused")
         public Integer getQuantity() {
             return quantity;
         }
 
+        @SuppressWarnings("unused")
         public BigDecimal getUnitPrice() {
             return unitPrice;
         }

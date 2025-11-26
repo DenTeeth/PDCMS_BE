@@ -1,6 +1,6 @@
 package com.dental.clinic.management.warehouse.service;
 
-import com.dental.clinic.management.booking_appointment.repository.AppointmentRepository;
+// import com.dental.clinic.management.booking_appointment.repository.AppointmentRepository;
 import com.dental.clinic.management.exception.BadRequestException;
 import com.dental.clinic.management.patient.domain.Patient;
 import com.dental.clinic.management.patient.repository.PatientRepository;

@@ -3,7 +3,7 @@ package com.dental.clinic.management.patient.service;
 import com.dental.clinic.management.exception.validation.BadRequestAlertException;
 import com.dental.clinic.management.account.enums.AccountStatus;
 import com.dental.clinic.management.account.domain.Account;
-import com.dental.clinic.management.account.domain.AccountVerificationToken;
+// import com.dental.clinic.management.account.domain.AccountVerificationToken;
 import com.dental.clinic.management.account.domain.PasswordResetToken;
 import com.dental.clinic.management.account.repository.AccountRepository;
 import com.dental.clinic.management.account.repository.AccountVerificationTokenRepository;
@@ -48,6 +48,7 @@ public class PatientService {
     private final AccountRepository accountRepository;
     private final PasswordEncoder passwordEncoder;
     private final SequentialCodeGenerator codeGenerator;
+    @SuppressWarnings("unused")
     private final AccountVerificationTokenRepository verificationTokenRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final EmailService emailService;
