@@ -696,23 +696,24 @@ public class AuthenticationService {
 
                 Account account = resetToken.getAccount();
                 String encodedPassword = passwordEncoder.encode(newPassword);
-                log.debug("Encoding new password for account: {} - Encoded length: {}", 
-                        account.getUsername(), encodedPassword.length());
-                
+                log.debug("Encoding new password for account: {} - Encoded length: {}",
+                                account.getUsername(), encodedPassword.length());
+
                 account.setPassword(encodedPassword);
                 account.setPasswordChangedAt(LocalDateTime.now());
                 account.setMustChangePassword(false);
-                
+
                 if (account.getStatus() == AccountStatus.PENDING_VERIFICATION) {
                         log.info("Auto-activating account {} after password reset", account.getUsername());
                         account.setStatus(AccountStatus.ACTIVE);
                 }
-                
+
                 Account savedAccount = accountRepository.save(account);
-                log.info("Password updated in database for account: {} - Password hash starts with: {}, Status: {}", 
-                        savedAccount.getUsername(), 
-                        savedAccount.getPassword().substring(0, Math.min(10, savedAccount.getPassword().length())),
-                        savedAccount.getStatus());
+                log.info("Password updated in database for account: {} - Password hash starts with: {}, Status: {}",
+                                savedAccount.getUsername(),
+                                savedAccount.getPassword().substring(0,
+                                                Math.min(10, savedAccount.getPassword().length())),
+                                savedAccount.getStatus());
 
                 resetToken.setUsedAt(LocalDateTime.now());
                 passwordResetTokenRepository.save(resetToken);
