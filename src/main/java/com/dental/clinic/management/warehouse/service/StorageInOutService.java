@@ -38,6 +38,7 @@ public class StorageInOutService {
     private final StorageTransactionRepository transactionRepository;
     private final SupplierRepository supplierRepository;
     private final EmployeeRepository employeeRepository;
+    private final com.dental.clinic.management.warehouse.mapper.StorageTransactionMapper storageTransactionMapper;
 
     /**
      *  API: Nhập kho (IMPORT)
@@ -350,27 +351,9 @@ public class StorageInOutService {
     // ==================== HELPER METHODS ====================
 
     private TransactionResponse mapToTransactionResponse(StorageTransaction transaction) {
-        List<TransactionResponse.TransactionItemResponse> itemDtos = transaction.getItems().stream()
-                .map(item -> TransactionResponse.TransactionItemResponse.builder()
-                        .transactionItemId(item.getTransactionItemId())
-                        .itemName(item.getBatch().getItemMaster().getItemName())
-                        .lotNumber(item.getBatch().getLotNumber())
-                        .quantityChange(item.getQuantityChange())
-                        .notes(item.getNotes())
-                        .build())
-                .collect(Collectors.toList());
-
-        return TransactionResponse.builder()
-                .transactionId(transaction.getTransactionId())
-                .transactionCode(transaction.getTransactionCode())
-                .transactionType(transaction.getTransactionType())
-                .transactionDate(transaction.getTransactionDate())
-                .supplierName(transaction.getSupplier() != null ? transaction.getSupplier().getSupplierName() : null)
-                .notes(transaction.getNotes())
-                .createdByName(transaction.getCreatedBy() != null ? transaction.getCreatedBy().getFullName() : null)
-                .createdAt(transaction.getCreatedAt())
-                .items(itemDtos)
-                .build();
+        // Use StorageTransactionMapper which includes all fields:
+        // itemMasterId, itemCode (with fallback), expiryDate, unitName, etc.
+        return storageTransactionMapper.toResponse(transaction);
     }
 
     /**
