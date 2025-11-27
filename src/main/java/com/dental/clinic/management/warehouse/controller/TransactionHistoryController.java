@@ -31,7 +31,7 @@ import java.time.LocalDate;
  * - Aggregated statistics
  */
 @RestController
-@RequestMapping("/api/warehouse")
+@RequestMapping("/api/v1/warehouse")
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Warehouse Transaction History", description = "API 6.6 - Transaction History Management")
@@ -109,7 +109,7 @@ public class TransactionHistoryController {
 
                         @Parameter(description = "Hướng sắp xếp: asc, desc") @RequestParam(defaultValue = "desc") String sortDir) {
 
-                log.info("📋 GET /api/warehouse/transactions - Page: {}, Size: {}, Type: {}, Status: {}",
+                log.info("📋 GET /api/v1/warehouse/transactions - Page: {}, Size: {}, Type: {}, Status: {}",
                                 page, size, type, status);
 
                 TransactionHistoryRequest request = TransactionHistoryRequest.builder()
