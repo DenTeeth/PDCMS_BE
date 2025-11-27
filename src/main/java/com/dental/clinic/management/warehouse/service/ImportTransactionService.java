@@ -215,11 +215,47 @@ public class ImportTransactionService {
                             " (Expiry: " + itemRequest.getExpiryDate() + ")");
         }
 
-        // 3. Load unit
-        ItemUnit unit = unitRepository.findById(itemRequest.getUnitId())
-                .orElseThrow(() -> new NotFoundException(
-                        "UNIT_NOT_FOUND",
-                        "Unit with ID " + itemRequest.getUnitId() + " not found"));
+        // 3. Load or auto-create unit
+        ItemUnit unit;
+        Optional<ItemUnit> unitOpt = unitRepository.findById(itemRequest.getUnitId());
+
+        if (unitOpt.isPresent()) {
+            unit = unitOpt.get();
+        } else {
+            // Auto-create base unit from itemMaster.unitOfMeasure if unit not found
+            log.warn("⚠️ Unit ID {} not found for item {}. Attempting to auto-create base unit from unitOfMeasure: {}",
+                    itemRequest.getUnitId(), itemMaster.getItemCode(), itemMaster.getUnitOfMeasure());
+
+            if (itemMaster.getUnitOfMeasure() == null || itemMaster.getUnitOfMeasure().trim().isEmpty()) {
+                throw new BadRequestException(
+                        "UNIT_REQUIRED",
+                        "Item master '" + itemMaster.getItemCode() + "' does not have unitOfMeasure. Cannot create base unit.");
+            }
+
+            // Check if base unit already exists (maybe unitId was wrong, but base unit exists)
+            Optional<ItemUnit> existingBaseUnit = unitRepository
+                    .findBaseUnitByItemMasterId(itemMaster.getItemMasterId());
+
+            if (existingBaseUnit.isPresent()) {
+                // Use existing base unit
+                unit = existingBaseUnit.get();
+                log.info("✅ Using existing base unit '{}' (ID: {}) for item: {}",
+                        unit.getUnitName(), unit.getUnitId(), itemMaster.getItemCode());
+            } else {
+                // Create new base unit from unitOfMeasure
+                unit = ItemUnit.builder()
+                        .itemMaster(itemMaster)
+                        .unitName(itemMaster.getUnitOfMeasure())
+                        .conversionRate(1)
+                        .isBaseUnit(true)
+                        .displayOrder(1)
+                        .build();
+
+                unit = unitRepository.save(unit);
+                log.info("✅ Auto-created base unit '{}' (ID: {}) for item master: {}",
+                        itemMaster.getUnitOfMeasure(), unit.getUnitId(), itemMaster.getItemCode());
+            }
+        }
 
         // 4. Unit conversion
         Integer baseQuantity = itemRequest.getQuantity() * unit.getConversionRate();
