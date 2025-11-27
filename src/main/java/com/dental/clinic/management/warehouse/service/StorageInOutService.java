@@ -282,7 +282,7 @@ public class StorageInOutService {
     public TransactionResponse getTransactionById(Long id) {
         log.info("Getting transaction by ID: {}", id);
 
-        StorageTransaction transaction = transactionRepository.findById(id)
+        StorageTransaction transaction = transactionRepository.findByIdWithDetails(id)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy phiếu nhập/xuất kho với ID: " + id));
 
         return mapToTransactionResponse(transaction);

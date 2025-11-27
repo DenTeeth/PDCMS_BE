@@ -97,4 +97,18 @@ public interface StorageTransactionRepository extends JpaRepository<StorageTrans
    * API 6.4: Count transactions by code prefix for sequence generation
    */
   Long countByTransactionCodeStartingWith(String prefix);
+
+  /**
+   * Get transaction by ID with all details eagerly loaded
+   * Prevents lazy loading issues when accessing batch, itemMaster, and unit
+   */
+  @Query("SELECT DISTINCT st FROM StorageTransaction st " +
+         "LEFT JOIN FETCH st.items i " +
+         "LEFT JOIN FETCH i.batch b " +
+         "LEFT JOIN FETCH b.itemMaster im " +
+         "LEFT JOIN FETCH i.unit u " +
+         "LEFT JOIN FETCH st.supplier s " +
+         "LEFT JOIN FETCH st.createdBy e " +
+         "WHERE st.transactionId = :id")
+  Optional<StorageTransaction> findByIdWithDetails(@Param("id") Long id);
 }

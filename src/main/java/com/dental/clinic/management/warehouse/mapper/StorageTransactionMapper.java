@@ -31,7 +31,7 @@ public class StorageTransactionMapper {
                                 .transactionItemId(item.getTransactionItemId())
                                 .itemCode(item.getBatch() != null && item.getBatch().getItemMaster() != null
                                         ? item.getBatch().getItemMaster().getItemCode()
-                                        : null)
+                                        : item.getItemCode()) // Fallback to stored itemCode
                                 .itemName(item.getBatch() != null && item.getBatch().getItemMaster() != null
                                         ? item.getBatch().getItemMaster().getItemName()
                                         : null)
