@@ -1,8 +1,10 @@
-# API 6.7: Get Item Masters
+# API 6.8: Get Item Masters
 
 ## Overview
 
 API trả về danh sách vật tư (Item Masters) trong hệ thống với hỗ trợ tìm kiếm, lọc theo nhóm, loại kho và trạng thái tồn kho.
+
+> **Note:** API này đã được đổi tên từ API 6.7 → API 6.8 (November 27, 2025) để nhường chỗ cho API 6.7 - Transaction Detail.
 
 ## Endpoint
 

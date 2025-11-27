@@ -57,6 +57,14 @@ public class ItemUnit {
     @Column(name = "display_order")
     private Integer displayOrder;
 
+    @Column(name = "is_default_import_unit", nullable = false)
+    @Builder.Default
+    private Boolean isDefaultImportUnit = false;
+
+    @Column(name = "is_default_export_unit", nullable = false)
+    @Builder.Default
+    private Boolean isDefaultExportUnit = false;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

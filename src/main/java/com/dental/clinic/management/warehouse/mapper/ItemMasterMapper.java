@@ -22,20 +22,35 @@ public class ItemMasterMapper {
 
     private final ItemBatchRepository itemBatchRepository;
 
+    /**
+     * DEPRECATED: This method is for old CreateItemMaster API (InventoryService).
+     * API 6.9 uses ItemMasterService.createItemMaster() directly.
+     * 
+     * Note: CreateItemMasterRequest was rewritten for API 6.9 with unit hierarchy.
+     * This old mapper is incompatible with the new DTO structure.
+     * Keeping this commented until InventoryService is refactored.
+     */
+    @Deprecated
     @SuppressWarnings("deprecation")
     public ItemMaster toEntity(CreateItemMasterRequest request) {
         if (request == null) {
             return null;
         }
 
+        // Extract base unit name from units array
+        String baseUnitName = request.getUnits().stream()
+                .filter(u -> u.getIsBaseUnit())
+                .findFirst()
+                .map(CreateItemMasterRequest.UnitRequest::getUnitName)
+                .orElse("Unit");
+
         return ItemMaster.builder()
                 .itemCode(request.getItemCode())
                 .itemName(request.getItemName())
                 .warehouseType(request.getWarehouseType())
-                .unitOfMeasure(request.getUnitOfMeasure())
+                .unitOfMeasure(baseUnitName)  // Use base unit name from units array
                 .minStockLevel(request.getMinStockLevel())
                 .maxStockLevel(request.getMaxStockLevel())
-                .isTool(request.getIsTool() != null ? request.getIsTool() : false)
                 .description(request.getDescription())
                 .build();
     }

@@ -21,11 +21,11 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 
 /**
- * ✨ API 6.6: Transaction History Controller
+ * ✨ API 6.6 & 6.7: Transaction History Controller
  *
  * Features:
- * - Comprehensive filtering (type, status, payment, date, supplier,
- * appointment)
+ * - API 6.6: List with comprehensive filtering (type, status, payment, date, supplier, appointment)
+ * - API 6.7: Detail view with full item breakdown and batch information
  * - RBAC-aware data masking (VIEW_COST permission)
  * - Pagination & sorting
  * - Aggregated statistics
@@ -34,7 +34,7 @@ import java.time.LocalDate;
 @RequestMapping("/api/v1/warehouse")
 @RequiredArgsConstructor
 @Slf4j
-@Tag(name = "Warehouse Transaction History", description = "API 6.6 - Transaction History Management")
+@Tag(name = "Warehouse Transaction History", description = "API 6.6 & 6.7 - Transaction History Management")
 public class TransactionHistoryController {
 
         private final TransactionHistoryService transactionHistoryService;
@@ -134,6 +134,53 @@ public class TransactionHistoryController {
                                 response.getMeta().getTotalElements(),
                                 response.getMeta().getPage() + 1,
                                 response.getMeta().getTotalPages());
+
+                return ResponseEntity.ok(response);
+        }
+
+        /**
+         * API 6.7: Get Transaction Detail by ID
+         *
+         * @param id Transaction ID
+         * @return Full transaction details with item breakdown and batch information
+         */
+        @GetMapping("/transactions/{id}")
+        @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('VIEW_WAREHOUSE')")
+        @Operation(summary = "Xem Chi tiết Giao dịch Kho", description = """
+                        ✨ API 6.7 - Xem chi tiết đầy đủ của một phiếu Nhập/Xuất/Điều chỉnh kho
+
+                        **Tính năng chính:**
+                        - Hiển thị đầy đủ thông tin phiếu (header, supplier/appointment, payment)
+                        - Danh sách chi tiết tất cả items với batch và số lượng
+                        - Thông tin tự động unpacking (nếu có)
+                        - Cảnh báo hết hạn và tồn kho âm
+                        - Lịch sử duyệt phiếu
+                        - Phân quyền VIEW_COST để ẩn/hiện giá trị tài chính
+
+                        **Use Cases:**
+                        1. Click vào phiếu từ danh sách → Xem chi tiết đầy đủ
+                        2. Kiểm tra items và batch đã xuất trong một ca điều trị
+                        3. Đối soát hóa đơn nhà cung cấp với phiếu nhập
+                        4. Xem lý do từ chối phiếu
+
+                        **Response Structure:**
+                        - IMPORT: Trả về ImportTransactionResponse (supplier, invoice, payment info, items với batch và giá)
+                        - EXPORT: Trả về ExportTransactionResponse (appointment, patient, items với FEFO batch, unpacking details)
+                        - ADJUSTMENT: Trả về chi tiết điều chỉnh kho
+
+                        **Permissions:**
+                        - VIEW_WAREHOUSE: Xem thông tin phiếu và items (bắt buộc)
+                        - VIEW_COST: Xem giá trị tài chính (unitPrice, totalPrice, paidAmount, debt)
+                        """)
+        @ApiMessage("Lấy chi tiết giao dịch thành công")
+        public ResponseEntity<?> getTransactionDetail(
+                        @Parameter(description = "ID của phiếu giao dịch") @PathVariable Long id) {
+
+                log.info("📋 GET /api/v1/warehouse/transactions/{} - Get transaction detail", id);
+
+                Object response = transactionHistoryService.getTransactionDetail(id);
+
+                log.info("✅ Transaction detail retrieved - ID: {}", id);
 
                 return ResponseEntity.ok(response);
         }
