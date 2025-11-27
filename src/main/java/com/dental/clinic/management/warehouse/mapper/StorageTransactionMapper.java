@@ -29,6 +29,9 @@ public class StorageTransactionMapper {
                 .items(transaction.getItems() != null ? transaction.getItems().stream()
                         .map(item -> TransactionResponse.TransactionItemResponse.builder()
                                 .transactionItemId(item.getTransactionItemId())
+                                .itemMasterId(item.getBatch() != null && item.getBatch().getItemMaster() != null
+                                        ? item.getBatch().getItemMaster().getItemMasterId()
+                                        : null)
                                 .itemCode(item.getBatch() != null && item.getBatch().getItemMaster() != null
                                         ? item.getBatch().getItemMaster().getItemCode()
                                         : item.getItemCode()) // Fallback to stored itemCode
