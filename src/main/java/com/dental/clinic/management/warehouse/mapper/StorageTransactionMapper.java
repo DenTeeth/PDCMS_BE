@@ -29,12 +29,16 @@ public class StorageTransactionMapper {
                 .items(transaction.getItems() != null ? transaction.getItems().stream()
                         .map(item -> TransactionResponse.TransactionItemResponse.builder()
                                 .transactionItemId(item.getTransactionItemId())
-                                .itemCode(item.getBatch().getItemMaster().getItemCode()) //  From ItemMaster
-                                .itemName(item.getBatch().getItemMaster().getItemName())
-                                .unitName(item.getUnit() != null ? item.getUnit().getUnitName() : null) //  From
-                                                                                                        // ItemUnit
-                                .lotNumber(item.getBatch().getLotNumber())
+                                .itemCode(item.getBatch() != null && item.getBatch().getItemMaster() != null
+                                        ? item.getBatch().getItemMaster().getItemCode()
+                                        : null)
+                                .itemName(item.getBatch() != null && item.getBatch().getItemMaster() != null
+                                        ? item.getBatch().getItemMaster().getItemName()
+                                        : null)
+                                .unitName(item.getUnit() != null ? item.getUnit().getUnitName() : null)
+                                .lotNumber(item.getBatch() != null ? item.getBatch().getLotNumber() : null)
                                 .quantityChange(item.getQuantityChange())
+                                .expiryDate(item.getBatch() != null ? item.getBatch().getExpiryDate() : null)
                                 .notes(item.getNotes())
                                 .build())
                         .collect(Collectors.toList())

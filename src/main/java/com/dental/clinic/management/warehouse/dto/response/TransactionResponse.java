@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -40,6 +41,7 @@ public class TransactionResponse {
 
         private String lotNumber;
         private Integer quantityChange;
+        private LocalDate expiryDate; // Expiry date from batch - critical for FEFO and cold storage
         private String notes;
     }
 }
