@@ -15,7 +15,7 @@ import java.util.List;
  * Enables frontend to get unit hierarchies for items
  */
 @RestController
-@RequestMapping("/api/v3/warehouse/items")
+@RequestMapping("/api/v1/warehouse/items")
 @RequiredArgsConstructor
 @Tag(name = "Warehouse - Item Units", description = "API for managing item unit hierarchies (Hộp/Vỉ/Viên)")
 public class ItemUnitController {

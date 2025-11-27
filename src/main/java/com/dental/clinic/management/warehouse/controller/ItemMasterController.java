@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v3/warehouse/items")
+@RequestMapping("/api/v1/warehouse/items")
 @RequiredArgsConstructor
 @Slf4j
 public class ItemMasterController {
@@ -29,7 +29,7 @@ public class ItemMasterController {
     @PreAuthorize("hasRole('" + ADMIN + "') or hasAnyAuthority('VIEW_ITEMS', 'VIEW_WAREHOUSE', 'MANAGE_WAREHOUSE')")
     public ResponseEntity<ItemMasterPageResponse> getItems(@ModelAttribute ItemFilterRequest filter) {
 
-        log.info("GET /api/v3/warehouse/items - Filter: {}", filter);
+        log.info("GET /api/v1/warehouse/items - Filter: {}", filter);
 
         ItemMasterPageResponse response = itemMasterService.getItems(filter);
 
