@@ -35,6 +35,7 @@ public class TransactionResponse {
         private Long transactionItemId;
 
         //  Item identification - Warehouse staff needs these
+        private Long itemMasterId; // Item master ID for cross-linking to inventory
         private String itemCode; // VD: "DP002"
         private String itemName; // VD: "Amoxicillin 500mg"
         private String unitName; // VD: "Vỉ" (if unit-based transaction)
