@@ -68,10 +68,16 @@ public class ExportTransactionService {
             validateExportRequest(request);
 
             // 2. Load employee
-            Employee employee = employeeRepository.findOneByEmployeeCode(employeeCode)
+            Employee employee = employeeRepository.findByAccount_Username(employeeCode)
                     .orElseThrow(() -> new NotFoundException(
                             "EMPLOYEE_NOT_FOUND",
-                            "Employee with code " + employeeCode + " not found"));
+                            "Employee not found for account: " + employeeCode));
+
+            if (!employee.getIsActive()) {
+                throw new BadRequestException(
+                        "EMPLOYEE_INACTIVE",
+                        "Cannot create export transaction with inactive employee: " + employeeCode);
+            }
 
             // 3. Create transaction header
             StorageTransaction transaction = createTransactionHeader(request, employee);

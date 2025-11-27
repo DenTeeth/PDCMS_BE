@@ -86,10 +86,16 @@ public class ImportTransactionService {
                         "Cannot import from inactive supplier: " + supplier.getSupplierName());
             }
 
-            Employee employee = employeeRepository.findByEmployeeCodeAndIsActiveTrue(employeeCode)
+            Employee employee = employeeRepository.findByAccount_Username(employeeCode)
                     .orElseThrow(() -> new NotFoundException(
                             "EMPLOYEE_NOT_FOUND",
-                            "Employee with code " + employeeCode + " not found or inactive"));
+                            "Employee not found for account: " + employeeCode));
+
+            if (!employee.getIsActive()) {
+                throw new BadRequestException(
+                        "EMPLOYEE_INACTIVE",
+                        "Cannot create import transaction with inactive employee: " + employeeCode);
+            }
 
             // 4. Create transaction header
             StorageTransaction transaction = createTransactionHeader(request, supplier, employee);
