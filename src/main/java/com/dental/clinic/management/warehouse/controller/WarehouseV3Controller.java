@@ -17,7 +17,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * ✨ API 6.4: Warehouse Import Transaction Controller (V3)
+ * ✨ API 6.4: Warehouse Import Transaction Controller
  *
  * Enhanced features:
  * - Invoice number tracking
@@ -28,10 +28,10 @@ import org.springframework.web.bind.annotation.*;
  * - Batch status tracking
  */
 @RestController
-@RequestMapping("/api/v3/warehouse")
+@RequestMapping("/api/v1/warehouse")
 @RequiredArgsConstructor
 @Slf4j
-@Tag(name = "Warehouse V3", description = "API 6.4 - Import Transaction Management")
+@Tag(name = "Warehouse Import", description = "API 6.4 - Import Transaction Management")
 public class WarehouseV3Controller {
 
         private final ImportTransactionService importTransactionService;
@@ -72,7 +72,7 @@ public class WarehouseV3Controller {
                         @Valid @RequestBody ImportTransactionRequest request,
                         Authentication authentication) {
 
-                log.info("📦 POST /api/v3/warehouse/import - Invoice: {}, Items: {}",
+                log.info("📦 POST /api/v1/warehouse/import - Invoice: {}, Items: {}",
                                 request.getInvoiceNumber(), request.getItems().size());
 
                 String employeeCode = authentication.getName();

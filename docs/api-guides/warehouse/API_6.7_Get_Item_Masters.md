@@ -7,7 +7,7 @@ API trả về danh sách vật tư (Item Masters) trong hệ thống với hỗ
 ## Endpoint
 
 ```
-GET /api/v3/warehouse/items
+GET /api/v1/warehouse/items
 ```
 
 ## Authorization
@@ -124,7 +124,7 @@ Required permissions:
 Lễ tân cần tra cứu thuốc giảm đau:
 
 ```
-GET /api/v3/warehouse/items?search=Panadol
+GET /api/v1/warehouse/items?search=Panadol
 ```
 
 ### 2. Lọc hàng sắp hết (Re-order Report)
@@ -132,7 +132,7 @@ GET /api/v3/warehouse/items?search=Panadol
 Thủ kho lên danh sách nhập hàng:
 
 ```
-GET /api/v3/warehouse/items?stockStatus=LOW_STOCK
+GET /api/v1/warehouse/items?stockStatus=LOW_STOCK
 ```
 
 ### 3. Quản lý danh mục
@@ -140,7 +140,7 @@ GET /api/v3/warehouse/items?stockStatus=LOW_STOCK
 Admin xem các mặt hàng ngừng kinh doanh:
 
 ```
-GET /api/v3/warehouse/items?isActive=false
+GET /api/v1/warehouse/items?isActive=false
 ```
 
 ### 4. Lọc theo loại kho
@@ -148,7 +148,7 @@ GET /api/v3/warehouse/items?isActive=false
 Xem tất cả vật tư cần bảo quản lạnh:
 
 ```
-GET /api/v3/warehouse/items?warehouseType=COLD
+GET /api/v1/warehouse/items?warehouseType=COLD
 ```
 
 ### 5. Lọc theo nhóm vật tư
@@ -156,7 +156,7 @@ GET /api/v3/warehouse/items?warehouseType=COLD
 Xem tất cả thuốc:
 
 ```
-GET /api/v3/warehouse/items?categoryId=2
+GET /api/v1/warehouse/items?categoryId=2
 ```
 
 ## Test Cases
@@ -166,7 +166,7 @@ GET /api/v3/warehouse/items?categoryId=2
 **Request:**
 
 ```bash
-curl -X GET "http://localhost:8080/api/v3/warehouse/items" \
+curl -X GET "http://localhost:8080/api/v1/warehouse/items" \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -181,7 +181,7 @@ curl -X GET "http://localhost:8080/api/v3/warehouse/items" \
 **Request:**
 
 ```bash
-curl -X GET "http://localhost:8080/api/v3/warehouse/items?search=gang%20tay" \
+curl -X GET "http://localhost:8080/api/v1/warehouse/items?search=gang%20tay" \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -195,7 +195,7 @@ curl -X GET "http://localhost:8080/api/v3/warehouse/items?search=gang%20tay" \
 **Request:**
 
 ```bash
-curl -X GET "http://localhost:8080/api/v3/warehouse/items?stockStatus=LOW_STOCK" \
+curl -X GET "http://localhost:8080/api/v1/warehouse/items?stockStatus=LOW_STOCK" \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -209,7 +209,7 @@ curl -X GET "http://localhost:8080/api/v3/warehouse/items?stockStatus=LOW_STOCK"
 **Request:**
 
 ```bash
-curl -X GET "http://localhost:8080/api/v3/warehouse/items?categoryId=1" \
+curl -X GET "http://localhost:8080/api/v1/warehouse/items?categoryId=1" \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -223,7 +223,7 @@ curl -X GET "http://localhost:8080/api/v3/warehouse/items?categoryId=1" \
 **Request:**
 
 ```bash
-curl -X GET "http://localhost:8080/api/v3/warehouse/items?page=1&size=10" \
+curl -X GET "http://localhost:8080/api/v1/warehouse/items?page=1&size=10" \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -237,7 +237,7 @@ curl -X GET "http://localhost:8080/api/v3/warehouse/items?page=1&size=10" \
 **Request:**
 
 ```bash
-curl -X GET "http://localhost:8080/api/v3/warehouse/items?sortBy=cachedTotalQuantity&sortDir=desc" \
+curl -X GET "http://localhost:8080/api/v1/warehouse/items?sortBy=cachedTotalQuantity&sortDir=desc" \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -251,7 +251,7 @@ curl -X GET "http://localhost:8080/api/v3/warehouse/items?sortBy=cachedTotalQuan
 **Request:**
 
 ```bash
-curl -X GET "http://localhost:8080/api/v3/warehouse/items?warehouseType=COLD&stockStatus=NORMAL&isActive=true" \
+curl -X GET "http://localhost:8080/api/v1/warehouse/items?warehouseType=COLD&stockStatus=NORMAL&isActive=true" \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -265,7 +265,7 @@ curl -X GET "http://localhost:8080/api/v3/warehouse/items?warehouseType=COLD&sto
 **Request:**
 
 ```bash
-curl -X GET "http://localhost:8080/api/v3/warehouse/items"
+curl -X GET "http://localhost:8080/api/v1/warehouse/items"
 ```
 
 **Expected:**
@@ -277,7 +277,7 @@ curl -X GET "http://localhost:8080/api/v3/warehouse/items"
 **Request:**
 
 ```bash
-curl -X GET "http://localhost:8080/api/v3/warehouse/items" \
+curl -X GET "http://localhost:8080/api/v1/warehouse/items" \
   -H "Authorization: Bearer {patient_token}"
 ```
 
@@ -290,7 +290,7 @@ curl -X GET "http://localhost:8080/api/v3/warehouse/items" \
 **Request:**
 
 ```bash
-curl -X GET "http://localhost:8080/api/v3/warehouse/items?search=nonexistent123" \
+curl -X GET "http://localhost:8080/api/v1/warehouse/items?search=nonexistent123" \
   -H "Authorization: Bearer {token}"
 ```
 

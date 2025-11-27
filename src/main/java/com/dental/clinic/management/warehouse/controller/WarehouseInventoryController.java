@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.*;
  * APIs for inventory summary, batch tracking, and expiring alerts
  */
 @RestController
-@RequestMapping("/api/v3/warehouse")
+@RequestMapping("/api/v1/warehouse")
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Warehouse Inventory", description = "Inventory summary, batch tracking, and expiring alerts APIs")
@@ -89,7 +89,7 @@ public class WarehouseInventoryController {
                         @Parameter(description = "Số lượng items mỗi trang") @RequestParam(defaultValue = "20") int size) {
 
                 log.info(
-                                " API 6.1 - GET /api/v3/warehouse/summary - search='{}', stockStatus={}, warehouseType={}, categoryId={}, page={}, size={}",
+                                " API 6.1 - GET /api/v1/warehouse/summary - search='{}', stockStatus={}, warehouseType={}, categoryId={}, page={}, size={}",
                                 search, stockStatus, warehouseType, categoryId, page, size);
 
                 Pageable pageable = PageRequest.of(page, size);
@@ -174,7 +174,7 @@ public class WarehouseInventoryController {
                         @Parameter(description = "Số lượng items mỗi trang") @RequestParam(defaultValue = "20") int size) {
 
                 log.info(
-                                " API 6.2 - GET /api/v3/warehouse/batches/{} - hideEmpty={}, filterStatus={}, sortBy={}, sortDir={}, page={}, size={}",
+                                " API 6.2 - GET /api/v1/warehouse/batches/{} - hideEmpty={}, filterStatus={}, sortBy={}, sortDir={}, page={}, size={}",
                                 itemMasterId, hideEmpty, filterStatus, sortBy, sortDir, page, size);
 
                 // Build pageable với sorting
@@ -262,7 +262,7 @@ public class WarehouseInventoryController {
 
                         @Parameter(description = "Số lượng items mỗi trang") @RequestParam(defaultValue = "20") int size) {
 
-                log.info(" API 6.3 - GET /api/v3/warehouse/alerts/expiring - days={}, categoryId={}, warehouseType={}, statusFilter={}, page={}, size={}",
+                log.info(" API 6.3 - GET /api/v1/warehouse/alerts/expiring - days={}, categoryId={}, warehouseType={}, statusFilter={}, page={}, size={}",
                                 days, categoryId, warehouseType, statusFilter, page, size);
 
                 // Build pageable với FEFO sorting (expiryDate ASC)
