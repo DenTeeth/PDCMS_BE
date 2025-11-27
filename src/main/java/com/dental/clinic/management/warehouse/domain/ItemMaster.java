@@ -61,6 +61,13 @@ public class ItemMaster {
     @Column(name = "current_market_price", precision = 15, scale = 2)
     private java.math.BigDecimal currentMarketPrice;
 
+    @Column(name = "is_prescription_required", nullable = false)
+    @Builder.Default
+    private Boolean isPrescriptionRequired = false;
+
+    @Column(name = "default_shelf_life_days")
+    private Integer defaultShelfLifeDays;
+
     @Column(name = "cached_total_quantity")
     @Builder.Default
     private Integer cachedTotalQuantity = 0;

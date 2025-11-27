@@ -427,19 +427,20 @@ VALUES
 ON CONFLICT (permission_id) DO NOTHING;
 
 
--- MODULE 14: WAREHOUSE (Quản lý kho vật tư API 6.6, 6.7)
+-- MODULE 14: WAREHOUSE (Quản lý kho vật tư API 6.6, 6.7, 6.9)
 INSERT INTO permissions (permission_id, permission_name, module, description, display_order, parent_permission_id, is_active, created_at)
 VALUES
 ('VIEW_ITEMS', 'VIEW_ITEMS', 'WAREHOUSE', 'Xem danh sách vật tư (cho Bác sĩ/Lễ tân)', 269, NULL, TRUE, NOW()),
 ('VIEW_WAREHOUSE', 'VIEW_WAREHOUSE', 'WAREHOUSE', 'Xem danh sách giao dịch kho', 270, NULL, TRUE, NOW()),
-('CREATE_WAREHOUSE', 'CREATE_WAREHOUSE', 'WAREHOUSE', 'Tạo vật tư, danh mục, nhà cung cấp', 271, NULL, TRUE, NOW()),
-('UPDATE_WAREHOUSE', 'UPDATE_WAREHOUSE', 'WAREHOUSE', 'Cập nhật vật tư, danh mục, nhà cung cấp', 272, NULL, TRUE, NOW()),
-('DELETE_WAREHOUSE', 'DELETE_WAREHOUSE', 'WAREHOUSE', 'Xóa vật tư, danh mục, nhà cung cấp', 273, NULL, TRUE, NOW()),
-('VIEW_COST', 'VIEW_COST', 'WAREHOUSE', 'Xem thông tin tài chính (giá trị, công nợ, thanh toán)', 274, NULL, TRUE, NOW()),
-('IMPORT_ITEMS', 'IMPORT_ITEMS', 'WAREHOUSE', 'Tạo phiếu nhập kho', 275, NULL, TRUE, NOW()),
-('EXPORT_ITEMS', 'EXPORT_ITEMS', 'WAREHOUSE', 'Tạo phiếu xuất kho', 276, NULL, TRUE, NOW()),
-('DISPOSE_ITEMS', 'DISPOSE_ITEMS', 'WAREHOUSE', 'Tạo phiếu thanh lý', 277, NULL, TRUE, NOW()),
-('APPROVE_TRANSACTION', 'APPROVE_TRANSACTION', 'WAREHOUSE', 'Duyệt/Từ chối phiếu nhập xuất kho', 278, NULL, TRUE, NOW())
+('CREATE_ITEMS', 'CREATE_ITEMS', 'WAREHOUSE', 'Tạo vật tư mới với hệ thống đơn vị', 271, NULL, TRUE, NOW()),
+('CREATE_WAREHOUSE', 'CREATE_WAREHOUSE', 'WAREHOUSE', 'Tạo danh mục, nhà cung cấp', 272, NULL, TRUE, NOW()),
+('UPDATE_WAREHOUSE', 'UPDATE_WAREHOUSE', 'WAREHOUSE', 'Cập nhật vật tư, danh mục, nhà cung cấp', 273, NULL, TRUE, NOW()),
+('DELETE_WAREHOUSE', 'DELETE_WAREHOUSE', 'WAREHOUSE', 'Xóa vật tư, danh mục, nhà cung cấp', 274, NULL, TRUE, NOW()),
+('VIEW_COST', 'VIEW_COST', 'WAREHOUSE', 'Xem thông tin tài chính (giá trị, công nợ, thanh toán)', 275, NULL, TRUE, NOW()),
+('IMPORT_ITEMS', 'IMPORT_ITEMS', 'WAREHOUSE', 'Tạo phiếu nhập kho', 276, NULL, TRUE, NOW()),
+('EXPORT_ITEMS', 'EXPORT_ITEMS', 'WAREHOUSE', 'Tạo phiếu xuất kho', 277, NULL, TRUE, NOW()),
+('DISPOSE_ITEMS', 'DISPOSE_ITEMS', 'WAREHOUSE', 'Tạo phiếu thanh lý', 278, NULL, TRUE, NOW()),
+('APPROVE_TRANSACTION', 'APPROVE_TRANSACTION', 'WAREHOUSE', 'Duyệt/Từ chối phiếu nhập xuất kho', 279, NULL, TRUE, NOW())
 ON CONFLICT (permission_id) DO NOTHING;
 
 
@@ -614,9 +615,10 @@ VALUES
 ('ROLE_INVENTORY_MANAGER', 'VIEW_LEAVE_OWN'), ('ROLE_INVENTORY_MANAGER', 'CREATE_TIME_OFF'), ('ROLE_INVENTORY_MANAGER', 'CREATE_OVERTIME'),
 ('ROLE_INVENTORY_MANAGER', 'CANCEL_TIME_OFF_OWN'), ('ROLE_INVENTORY_MANAGER', 'CANCEL_OVERTIME_OWN'),
 ('ROLE_INVENTORY_MANAGER', 'VIEW_HOLIDAY'),
--- WAREHOUSE (V22: Full warehouse management - API 6.6)
+-- WAREHOUSE (V22: Full warehouse management - API 6.6, 6.9)
 ('ROLE_INVENTORY_MANAGER', 'VIEW_WAREHOUSE'), -- Can view transaction history
-('ROLE_INVENTORY_MANAGER', 'CREATE_WAREHOUSE'), -- Can create items/categories/suppliers
+('ROLE_INVENTORY_MANAGER', 'CREATE_ITEMS'), -- Can create item masters (API 6.9)
+('ROLE_INVENTORY_MANAGER', 'CREATE_WAREHOUSE'), -- Can create categories/suppliers
 ('ROLE_INVENTORY_MANAGER', 'UPDATE_WAREHOUSE'), -- Can update items/categories/suppliers
 ('ROLE_INVENTORY_MANAGER', 'DELETE_WAREHOUSE'), -- Can delete items/categories/suppliers
 ('ROLE_INVENTORY_MANAGER', 'VIEW_COST'), -- Can view financial data
@@ -3220,8 +3222,8 @@ SELECT setval('item_categories_category_id_seq', (SELECT MAX(category_id) FROM i
 -- ============================================
 
 -- 1. NHÓM VẬT TƯ TIÊU HAO (CONSUMABLE)
-INSERT INTO item_masters (item_code, item_name, category_id, unit_of_measure, warehouse_type, description, min_stock_level, max_stock_level, is_tool, is_active, created_at)
-SELECT t.code, t.name, cat.category_id, t.unit, 'NORMAL', t.descr, 10, 1000, FALSE, TRUE, NOW()
+INSERT INTO item_masters (item_code, item_name, category_id, unit_of_measure, warehouse_type, description, min_stock_level, max_stock_level, is_tool, is_prescription_required, is_active, created_at)
+SELECT t.code, t.name, cat.category_id, t.unit, 'NORMAL', t.descr, 10, 1000, FALSE, FALSE, TRUE, NOW()
 FROM item_categories cat
 CROSS JOIN (VALUES
     ('CON-GLOVE-01', 'Găng tay y tế', 'Đôi', 'Găng tay cao su khám bệnh dùng một lần'),
@@ -3247,8 +3249,8 @@ WHERE cat.category_code = 'CONSUMABLE'
 ON CONFLICT (item_code) DO NOTHING;
 
 -- 2. NHÓM THUỐC (MEDICINE)
-INSERT INTO item_masters (item_code, item_name, category_id, unit_of_measure, warehouse_type, description, min_stock_level, max_stock_level, is_tool, is_active, created_at)
-SELECT t.code, t.name, cat.category_id, t.unit, 'COLD', t.descr, 5, 500, FALSE, TRUE, NOW()
+INSERT INTO item_masters (item_code, item_name, category_id, unit_of_measure, warehouse_type, description, min_stock_level, max_stock_level, is_tool, is_prescription_required, is_active, created_at)
+SELECT t.code, t.name, cat.category_id, t.unit, 'COLD', t.descr, 5, 500, FALSE, TRUE, TRUE, NOW()
 FROM item_categories cat
 CROSS JOIN (VALUES
     ('MED-SEPT-01', 'Thuốc tê (Septodont)', 'Ống', 'Thuốc tê tiêm nha khoa (Pháp)'),
@@ -3262,8 +3264,8 @@ WHERE cat.category_code = 'MEDICINE'
 ON CONFLICT (item_code) DO NOTHING;
 
 -- 3. NHÓM VẬT LIỆU NHA KHOA & HÓA CHẤT (MATERIAL / CHEMICAL)
-INSERT INTO item_masters (item_code, item_name, category_id, unit_of_measure, warehouse_type, description, min_stock_level, max_stock_level, is_tool, is_active, created_at)
-SELECT t.code, t.name, cat.category_id, t.unit, 'NORMAL', t.descr, 2, 200, FALSE, TRUE, NOW()
+INSERT INTO item_masters (item_code, item_name, category_id, unit_of_measure, warehouse_type, description, min_stock_level, max_stock_level, is_tool, is_prescription_required, is_active, created_at)
+SELECT t.code, t.name, cat.category_id, t.unit, 'NORMAL', t.descr, 2, 200, FALSE, FALSE, TRUE, NOW()
 FROM item_categories cat
 CROSS JOIN (VALUES
     ('MAT-COMP-01', 'Trám Composite', 'g', 'Vật liệu trám thẩm mỹ (Quy cách đóng gói: Tuýp)'),
@@ -3382,62 +3384,62 @@ SELECT setval('storage_transactions_transaction_id_seq', (SELECT COALESCE(MAX(tr
 -- STEP 1: ITEM_UNITS (Don vi do luong - Unit hierarchy)
 -- =============================================
 -- Consumables: Găng tay y tế
-INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, display_order, created_at)
-SELECT im.item_master_id, 'Chiếc', 1, TRUE, 3, NOW()
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_default_import_unit, is_default_export_unit, display_order, created_at)
+SELECT im.item_master_id, 'Chiếc', 1, TRUE, FALSE, TRUE, 3, NOW()
 FROM item_masters im WHERE im.item_code = 'CON-GLOVE-01'
 ON CONFLICT DO NOTHING;
 
-INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, display_order, created_at)
-SELECT im.item_master_id, 'Cặp', 2, FALSE, 2, NOW()
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_default_import_unit, is_default_export_unit, display_order, created_at)
+SELECT im.item_master_id, 'Cặp', 2, FALSE, FALSE, FALSE, 2, NOW()
 FROM item_masters im WHERE im.item_code = 'CON-GLOVE-01'
 ON CONFLICT DO NOTHING;
 
-INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, display_order, created_at)
-SELECT im.item_master_id, 'Hộp', 200, FALSE, 1, NOW()
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_default_import_unit, is_default_export_unit, display_order, created_at)
+SELECT im.item_master_id, 'Hộp', 200, FALSE, TRUE, FALSE, 1, NOW()
 FROM item_masters im WHERE im.item_code = 'CON-GLOVE-01'
 ON CONFLICT DO NOTHING;
 
 -- Khẩu trang y tế
-INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, display_order, created_at)
-SELECT im.item_master_id, 'Cái', 1, TRUE, 3, NOW()
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_default_import_unit, is_default_export_unit, display_order, created_at)
+SELECT im.item_master_id, 'Cái', 1, TRUE, FALSE, TRUE, 3, NOW()
 FROM item_masters im WHERE im.item_code = 'CON-MASK-01'
 ON CONFLICT DO NOTHING;
 
-INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, display_order, created_at)
-SELECT im.item_master_id, 'Hộp', 50, FALSE, 1, NOW()
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_default_import_unit, is_default_export_unit, display_order, created_at)
+SELECT im.item_master_id, 'Hộp', 50, FALSE, TRUE, FALSE, 1, NOW()
 FROM item_masters im WHERE im.item_code = 'CON-MASK-01'
 ON CONFLICT DO NOTHING;
 
 -- Kim tiêm nha khoa
-INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, display_order, created_at)
-SELECT im.item_master_id, 'Cái', 1, TRUE, 2, NOW()
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_default_import_unit, is_default_export_unit, display_order, created_at)
+SELECT im.item_master_id, 'Cái', 1, TRUE, FALSE, TRUE, 2, NOW()
 FROM item_masters im WHERE im.item_code = 'CON-NEEDLE-01'
 ON CONFLICT DO NOTHING;
 
-INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, display_order, created_at)
-SELECT im.item_master_id, 'Hộp', 100, FALSE, 1, NOW()
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_default_import_unit, is_default_export_unit, display_order, created_at)
+SELECT im.item_master_id, 'Hộp', 100, FALSE, TRUE, FALSE, 1, NOW()
 FROM item_masters im WHERE im.item_code = 'CON-NEEDLE-01'
 ON CONFLICT DO NOTHING;
 
 -- Medicine: Thuốc tê Septodont
-INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, display_order, created_at)
-SELECT im.item_master_id, 'Ống', 1, TRUE, 2, NOW()
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_default_import_unit, is_default_export_unit, display_order, created_at)
+SELECT im.item_master_id, 'Ống', 1, TRUE, FALSE, TRUE, 2, NOW()
 FROM item_masters im WHERE im.item_code = 'MED-SEPT-01'
 ON CONFLICT DO NOTHING;
 
-INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, display_order, created_at)
-SELECT im.item_master_id, 'Hộp', 50, FALSE, 1, NOW()
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_default_import_unit, is_default_export_unit, display_order, created_at)
+SELECT im.item_master_id, 'Hộp', 50, FALSE, TRUE, FALSE, 1, NOW()
 FROM item_masters im WHERE im.item_code = 'MED-SEPT-01'
 ON CONFLICT DO NOTHING;
 
 -- Material: Composite
-INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, display_order, created_at)
-SELECT im.item_master_id, 'g', 1, TRUE, 2, NOW()
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_default_import_unit, is_default_export_unit, display_order, created_at)
+SELECT im.item_master_id, 'g', 1, TRUE, FALSE, TRUE, 2, NOW()
 FROM item_masters im WHERE im.item_code = 'MAT-COMP-01'
 ON CONFLICT DO NOTHING;
 
-INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, display_order, created_at)
-SELECT im.item_master_id, 'Tuýp', 4, FALSE, 1, NOW()
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_default_import_unit, is_default_export_unit, display_order, created_at)
+SELECT im.item_master_id, 'Tuýp', 4, FALSE, TRUE, FALSE, 1, NOW()
 FROM item_masters im WHERE im.item_code = 'MAT-COMP-01'
 ON CONFLICT DO NOTHING;
 

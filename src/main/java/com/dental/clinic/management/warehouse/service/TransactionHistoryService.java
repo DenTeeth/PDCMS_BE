@@ -237,6 +237,194 @@ public class TransactionHistoryService {
     }
 
     /**
+     * Get transaction detail by ID (API 6.7)
+     * 
+     * @param id Transaction ID
+     * @return ImportTransactionResponse or ExportTransactionResponse based on type
+     */
+    @Transactional(readOnly = true)
+    public Object getTransactionDetail(Long id) {
+        log.info("📋 Fetching transaction detail - ID: {}", id);
+
+        // 1. Find transaction
+        StorageTransaction transaction = transactionRepository.findById(id)
+                .orElseThrow(() -> new BadRequestException(
+                        "TRANSACTION_NOT_FOUND",
+                        "Transaction with ID " + id + " not found"));
+
+        // 2. Check permissions
+        boolean hasViewCostPermission = hasPermission("VIEW_COST");
+        log.debug("🔐 Permission check - VIEW_COST: {}", hasViewCostPermission);
+
+        // 3. Map to appropriate response based on transaction type
+        Object response = mapToDetailResponse(transaction, hasViewCostPermission);
+
+        log.info("✅ Transaction detail fetched - Type: {}, Code: {}", 
+                transaction.getTransactionType(), transaction.getTransactionCode());
+
+        return response;
+    }
+
+    /**
+     * Map transaction entity to detail response DTO with RBAC
+     */
+    private Object mapToDetailResponse(StorageTransaction tx, boolean hasViewCostPermission) {
+        // Import transaction
+        if (tx.getTransactionType() == TransactionType.IMPORT) {
+            return mapToImportResponse(tx, hasViewCostPermission);
+        }
+        
+        // Export transaction
+        if (tx.getTransactionType() == TransactionType.EXPORT) {
+            return mapToExportResponse(tx, hasViewCostPermission);
+        }
+
+        // Adjustment or other types - return basic transaction info
+        return TransactionHistoryItemDto.builder()
+                .transactionId(tx.getTransactionId())
+                .transactionCode(tx.getTransactionCode())
+                .type(tx.getTransactionType())
+                .transactionDate(tx.getTransactionDate())
+                .status(tx.getApprovalStatus())
+                .notes(tx.getNotes())
+                .createdByName(tx.getCreatedBy() != null ? tx.getCreatedBy().getFullName() : null)
+                .createdAt(tx.getCreatedAt())
+                .approvedByName(tx.getApprovedBy() != null ? tx.getApprovedBy().getFullName() : null)
+                .approvedAt(tx.getApprovedAt())
+                .totalItems(tx.getItems() != null ? tx.getItems().size() : 0)
+                .totalValue(hasViewCostPermission ? tx.getTotalValue() : null)
+                .build();
+    }
+
+    /**
+     * Map to ImportTransactionResponse
+     */
+    private com.dental.clinic.management.warehouse.dto.response.ImportTransactionResponse mapToImportResponse(
+            StorageTransaction tx, boolean hasViewCostPermission) {
+        
+        // Map items
+        List<com.dental.clinic.management.warehouse.dto.response.ImportTransactionResponse.ImportItemResponse> items = 
+                tx.getItems().stream()
+                        .map(item -> {
+                            com.dental.clinic.management.warehouse.dto.response.ImportTransactionResponse.ImportItemResponse.ImportItemResponseBuilder builder =
+                                    com.dental.clinic.management.warehouse.dto.response.ImportTransactionResponse.ImportItemResponse.builder()
+                                            .itemCode(item.getItemCode())
+                                            .itemName(item.getBatch() != null && item.getBatch().getItemMaster() != null ? 
+                                                    item.getBatch().getItemMaster().getItemName() : "N/A")
+                                            .batchId(item.getBatch() != null ? item.getBatch().getBatchId() : null)
+                                            .batchStatus("EXISTING")
+                                            .lotNumber(item.getBatch() != null ? item.getBatch().getLotNumber() : null)
+                                            .expiryDate(item.getBatch() != null ? item.getBatch().getExpiryDate() : null)
+                                            .quantityChange(item.getQuantityChange())
+                                            .unitName(item.getUnit() != null ? item.getUnit().getUnitName() : "N/A")
+                                            .binLocation(item.getBatch() != null ? item.getBatch().getBinLocation() : null)
+                                            .currentStock(item.getBatch() != null ? item.getBatch().getQuantityOnHand() : 0);
+
+                            // Add cost info if user has permission
+                            if (hasViewCostPermission) {
+                                builder.purchasePrice(item.getPrice())
+                                        .totalLineValue(item.getTotalLineValue());
+                            }
+
+                            return builder.build();
+                        })
+                        .collect(Collectors.toList());
+
+        // Build response
+        com.dental.clinic.management.warehouse.dto.response.ImportTransactionResponse.ImportTransactionResponseBuilder builder =
+                com.dental.clinic.management.warehouse.dto.response.ImportTransactionResponse.builder()
+                        .transactionId(tx.getTransactionId())
+                        .transactionCode(tx.getTransactionCode())
+                        .transactionDate(tx.getTransactionDate())
+                        .supplierName(tx.getSupplier() != null ? tx.getSupplier().getSupplierName() : null)
+                        .invoiceNumber(tx.getInvoiceNumber())
+                        .status(tx.getApprovalStatus() != null ? tx.getApprovalStatus().toString() : "UNKNOWN")
+                        .createdBy(tx.getCreatedBy() != null ? tx.getCreatedBy().getFullName() : null)
+                        .createdAt(tx.getCreatedAt())
+                        .totalItems(items.size())
+                        .items(items)
+                        .warnings(List.of()); // No warnings for view operation
+
+        // Add financial info if user has permission
+        if (hasViewCostPermission) {
+            builder.totalValue(tx.getTotalValue());
+        }
+
+        return builder.build();
+    }
+
+    /**
+     * Map to ExportTransactionResponse
+     */
+    private com.dental.clinic.management.warehouse.dto.response.ExportTransactionResponse mapToExportResponse(
+            StorageTransaction tx, boolean hasViewCostPermission) {
+        
+        // Map items
+        List<com.dental.clinic.management.warehouse.dto.response.ExportTransactionResponse.ExportItemResponse> items = 
+                tx.getItems().stream()
+                        .map(item -> {
+                            com.dental.clinic.management.warehouse.dto.response.ExportTransactionResponse.ExportItemResponse.ExportItemResponseBuilder builder =
+                                    com.dental.clinic.management.warehouse.dto.response.ExportTransactionResponse.ExportItemResponse.builder()
+                                            .itemCode(item.getItemCode())
+                                            .itemName(item.getBatch() != null && item.getBatch().getItemMaster() != null ? 
+                                                    item.getBatch().getItemMaster().getItemName() : "N/A")
+                                            .batchId(item.getBatch() != null ? item.getBatch().getBatchId() : null)
+                                            .lotNumber(item.getBatch() != null ? item.getBatch().getLotNumber() : null)
+                                            .expiryDate(item.getBatch() != null ? item.getBatch().getExpiryDate() : null)
+                                            .binLocation(item.getBatch() != null ? item.getBatch().getBinLocation() : null)
+                                            .quantityChange(item.getQuantityChange())
+                                            .unitName(item.getUnit() != null ? item.getUnit().getUnitName() : "N/A")
+                                            .notes(item.getNotes());
+
+                            // Add unpacking info if batch was unpacked
+                            if (item.getBatch() != null && Boolean.TRUE.equals(item.getBatch().getIsUnpacked())) {
+                                builder.unpackingInfo(
+                                        com.dental.clinic.management.warehouse.dto.response.ExportTransactionResponse.UnpackingInfo.builder()
+                                                .wasUnpacked(true)
+                                                .parentBatchId(item.getBatch().getParentBatch() != null ? 
+                                                        item.getBatch().getParentBatch().getBatchId() : null)
+                                                .parentUnitName("Parent Unit")
+                                                .remainingInBatch(item.getBatch().getQuantityOnHand())
+                                                .build()
+                                );
+                            }
+
+                            // Add cost info if user has permission
+                            if (hasViewCostPermission) {
+                                builder.unitPrice(item.getPrice())
+                                        .totalLineValue(item.getTotalLineValue());
+                            }
+
+                            return builder.build();
+                        })
+                        .collect(Collectors.toList());
+
+        // Build response
+        com.dental.clinic.management.warehouse.dto.response.ExportTransactionResponse.ExportTransactionResponseBuilder builder =
+                com.dental.clinic.management.warehouse.dto.response.ExportTransactionResponse.builder()
+                        .transactionId(tx.getTransactionId())
+                        .transactionCode(tx.getTransactionCode())
+                        .transactionDate(tx.getTransactionDate())
+                        .exportType(tx.getExportType() != null ? 
+                                com.dental.clinic.management.warehouse.enums.ExportType.valueOf(tx.getExportType()) : null)
+                        .referenceCode(tx.getRelatedAppointment() != null ? 
+                                tx.getRelatedAppointment().getAppointmentCode() : null)
+                        .notes(tx.getNotes())
+                        .createdBy(tx.getCreatedBy() != null ? tx.getCreatedBy().getFullName() : null)
+                        .createdAt(tx.getCreatedAt())
+                        .totalItems(items.size())
+                        .items(items)
+                        .warnings(List.of()); // No warnings for view operation
+
+        // Add financial info if user has permission
+        if (hasViewCostPermission) {
+            builder.totalValue(tx.getTotalValue());
+        }
+
+        return builder.build();
+    }
+
+    /**
      * Check if current user has specific permission
      */
     private boolean hasPermission(String permission) {

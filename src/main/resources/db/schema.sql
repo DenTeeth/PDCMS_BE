@@ -478,6 +478,90 @@ COMMENT ON COLUMN storage_transactions.payment_status IS 'Payment status for IMP
 COMMENT ON COLUMN storage_transactions.approval_status IS 'Approval workflow status: DRAFT, PENDING_APPROVAL, APPROVED, REJECTED, COMPLETED, CANCELLED';
 COMMENT ON COLUMN storage_transactions.related_appointment_id IS 'Links EXPORT transactions to patient appointments for clinical context';
 
+-- Item Categories (Danh mục vật tư)
+CREATE TABLE item_categories (
+    category_id SERIAL PRIMARY KEY,
+    category_code VARCHAR(50) UNIQUE NOT NULL,
+    category_name VARCHAR(255) NOT NULL,
+    description TEXT,
+    parent_category_id INTEGER,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP,
+    
+    CONSTRAINT fk_item_category_parent FOREIGN KEY (parent_category_id)
+        REFERENCES item_categories(category_id) ON DELETE SET NULL
+);
+
+CREATE INDEX idx_item_categories_code ON item_categories(category_code);
+CREATE INDEX idx_item_categories_parent ON item_categories(parent_category_id);
+
+COMMENT ON TABLE item_categories IS 'Item categories for warehouse management';
+
+-- Item Masters (Định nghĩa vật tư - API 6.9)
+CREATE TABLE item_masters (
+    item_master_id SERIAL PRIMARY KEY,
+    item_code VARCHAR(50) UNIQUE NOT NULL,
+    item_name VARCHAR(255) NOT NULL,
+    description TEXT,
+    category_id INTEGER,
+    warehouse_type VARCHAR(20) NOT NULL DEFAULT 'NORMAL',
+    unit_of_measure VARCHAR(50),
+    min_stock_level INTEGER NOT NULL DEFAULT 0,
+    max_stock_level INTEGER NOT NULL DEFAULT 0,
+    current_market_price DECIMAL(15,2) DEFAULT 0,
+    is_prescription_required BOOLEAN NOT NULL DEFAULT FALSE,
+    default_shelf_life_days INTEGER,
+    is_active BOOLEAN DEFAULT TRUE,
+    cached_total_quantity INTEGER DEFAULT 0,
+    cached_last_import_date DATE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP,
+    
+    CONSTRAINT fk_item_master_category FOREIGN KEY (category_id)
+        REFERENCES item_categories(category_id) ON DELETE SET NULL,
+    CONSTRAINT chk_stock_levels CHECK (min_stock_level < max_stock_level),
+    CONSTRAINT chk_shelf_life CHECK (default_shelf_life_days IS NULL OR default_shelf_life_days BETWEEN 1 AND 3650)
+);
+
+CREATE INDEX idx_item_masters_code ON item_masters(item_code);
+CREATE INDEX idx_item_masters_name ON item_masters(item_name);
+CREATE INDEX idx_item_masters_category ON item_masters(category_id);
+CREATE INDEX idx_item_masters_warehouse_type ON item_masters(warehouse_type);
+CREATE INDEX idx_item_masters_cached_quantity ON item_masters(cached_total_quantity);
+
+COMMENT ON TABLE item_masters IS 'Item master data with unit hierarchy support (API 6.9)';
+COMMENT ON COLUMN item_masters.is_prescription_required IS 'Healthcare compliance: TRUE for prescription-required medications';
+COMMENT ON COLUMN item_masters.default_shelf_life_days IS 'Default shelf life in days (1-3650), NULL for non-perishable items';
+COMMENT ON COLUMN item_masters.cached_total_quantity IS 'Denormalized total stock quantity for performance';
+
+-- Item Units (Đơn vị đo lường vật tư - API 6.9)
+CREATE TABLE item_units (
+    unit_id SERIAL PRIMARY KEY,
+    item_master_id INTEGER NOT NULL,
+    unit_name VARCHAR(50) NOT NULL,
+    conversion_rate INTEGER NOT NULL,
+    is_base_unit BOOLEAN NOT NULL DEFAULT FALSE,
+    display_order INTEGER,
+    is_default_import_unit BOOLEAN NOT NULL DEFAULT FALSE,
+    is_default_export_unit BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP,
+    
+    CONSTRAINT fk_item_unit_master FOREIGN KEY (item_master_id)
+        REFERENCES item_masters(item_master_id) ON DELETE CASCADE,
+    CONSTRAINT chk_conversion_rate CHECK (conversion_rate >= 1),
+    CONSTRAINT uq_item_unit_name UNIQUE (item_master_id, unit_name)
+);
+
+CREATE INDEX idx_item_units_item_master ON item_units(item_master_id);
+CREATE INDEX idx_item_units_base_unit ON item_units(is_base_unit);
+
+COMMENT ON TABLE item_units IS 'Unit hierarchy for items (e.g., Box -> Strip -> Pill) - API 6.9';
+COMMENT ON COLUMN item_units.conversion_rate IS 'Conversion rate to base unit (base unit = 1)';
+COMMENT ON COLUMN item_units.is_default_import_unit IS 'UX optimization: default unit for import transactions';
+COMMENT ON COLUMN item_units.is_default_export_unit IS 'UX optimization: default unit for export transactions';
+
 -- ============================================
 -- INDEXES FOR PERFORMANCE
 -- ============================================
