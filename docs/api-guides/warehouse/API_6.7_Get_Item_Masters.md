@@ -13,6 +13,7 @@ GET /api/v3/warehouse/items
 ## Authorization
 
 Required permissions:
+
 - `VIEW_ITEMS` (Bác sĩ, Lễ tân)
 - `VIEW_WAREHOUSE` (Thủ kho)
 - `MANAGE_WAREHOUSE` (Quản lý kho)
@@ -20,17 +21,17 @@ Required permissions:
 
 ## Query Parameters
 
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| page | Integer | No | 0 | Số trang |
-| size | Integer | No | 20 | Số bản ghi mỗi trang |
-| search | String | No | - | Tìm kiếm theo tên hoặc mã vật tư |
-| categoryId | Long | No | - | Lọc theo nhóm vật tư |
-| warehouseType | Enum | No | - | COLD hoặc NORMAL |
-| stockStatus | Enum | No | - | OUT_OF_STOCK, LOW_STOCK, NORMAL, OVERSTOCK |
-| isActive | Boolean | No | - | true (đang kinh doanh), false (ngừng kinh doanh) |
-| sortBy | String | No | itemName | Trường sắp xếp |
-| sortDir | String | No | asc | asc hoặc desc |
+| Parameter     | Type    | Required | Default  | Description                                      |
+| ------------- | ------- | -------- | -------- | ------------------------------------------------ |
+| page          | Integer | No       | 0        | Số trang                                         |
+| size          | Integer | No       | 20       | Số bản ghi mỗi trang                             |
+| search        | String  | No       | -        | Tìm kiếm theo tên hoặc mã vật tư                 |
+| categoryId    | Long    | No       | -        | Lọc theo nhóm vật tư                             |
+| warehouseType | Enum    | No       | -        | COLD hoặc NORMAL                                 |
+| stockStatus   | Enum    | No       | -        | OUT_OF_STOCK, LOW_STOCK, NORMAL, OVERSTOCK       |
+| isActive      | Boolean | No       | -        | true (đang kinh doanh), false (ngừng kinh doanh) |
+| sortBy        | String  | No       | itemName | Trường sắp xếp                                   |
+| sortDir       | String  | No       | asc      | asc hoặc desc                                    |
 
 ### Stock Status Values
 
@@ -163,12 +164,14 @@ GET /api/v3/warehouse/items?categoryId=2
 ### Test Case 1: Get All Items (Default)
 
 **Request:**
+
 ```bash
 curl -X GET "http://localhost:8080/api/v3/warehouse/items" \
   -H "Authorization: Bearer {token}"
 ```
 
 **Expected:**
+
 - Status: 200 OK
 - Returns first 20 items
 - Default sort by itemName asc
@@ -176,105 +179,123 @@ curl -X GET "http://localhost:8080/api/v3/warehouse/items" \
 ### Test Case 2: Search by Name
 
 **Request:**
+
 ```bash
 curl -X GET "http://localhost:8080/api/v3/warehouse/items?search=gang%20tay" \
   -H "Authorization: Bearer {token}"
 ```
 
 **Expected:**
+
 - Status: 200 OK
 - Returns items with "gang tay" in name or code
 
 ### Test Case 3: Filter by Stock Status
 
 **Request:**
+
 ```bash
 curl -X GET "http://localhost:8080/api/v3/warehouse/items?stockStatus=LOW_STOCK" \
   -H "Authorization: Bearer {token}"
 ```
 
 **Expected:**
+
 - Status: 200 OK
 - Returns only items where totalQuantity < minStockLevel
 
 ### Test Case 4: Filter by Category
 
 **Request:**
+
 ```bash
 curl -X GET "http://localhost:8080/api/v3/warehouse/items?categoryId=1" \
   -H "Authorization: Bearer {token}"
 ```
 
 **Expected:**
+
 - Status: 200 OK
 - Returns items from category ID 1
 
 ### Test Case 5: Pagination
 
 **Request:**
+
 ```bash
 curl -X GET "http://localhost:8080/api/v3/warehouse/items?page=1&size=10" \
   -H "Authorization: Bearer {token}"
 ```
 
 **Expected:**
+
 - Status: 200 OK
 - Returns page 1 (second page) with 10 items
 
 ### Test Case 6: Sort by Quantity Desc
 
 **Request:**
+
 ```bash
 curl -X GET "http://localhost:8080/api/v3/warehouse/items?sortBy=cachedTotalQuantity&sortDir=desc" \
   -H "Authorization: Bearer {token}"
 ```
 
 **Expected:**
+
 - Status: 200 OK
 - Items sorted by quantity descending
 
 ### Test Case 7: Multiple Filters
 
 **Request:**
+
 ```bash
 curl -X GET "http://localhost:8080/api/v3/warehouse/items?warehouseType=COLD&stockStatus=NORMAL&isActive=true" \
   -H "Authorization: Bearer {token}"
 ```
 
 **Expected:**
+
 - Status: 200 OK
 - Returns active cold storage items with normal stock levels
 
 ### Test Case 8: Unauthorized Access (No Token)
 
 **Request:**
+
 ```bash
 curl -X GET "http://localhost:8080/api/v3/warehouse/items"
 ```
 
 **Expected:**
+
 - Status: 401 Unauthorized
 
 ### Test Case 9: Forbidden Access (Patient Role)
 
 **Request:**
+
 ```bash
 curl -X GET "http://localhost:8080/api/v3/warehouse/items" \
   -H "Authorization: Bearer {patient_token}"
 ```
 
 **Expected:**
+
 - Status: 403 Forbidden
 
 ### Test Case 10: Empty Results
 
 **Request:**
+
 ```bash
 curl -X GET "http://localhost:8080/api/v3/warehouse/items?search=nonexistent123" \
   -H "Authorization: Bearer {token}"
 ```
 
 **Expected:**
+
 - Status: 200 OK
 - Empty content array
 - totalElements: 0
@@ -286,11 +307,13 @@ curl -X GET "http://localhost:8080/api/v3/warehouse/items?search=nonexistent123"
 API này sử dụng cột cache (`cached_total_quantity`) để tránh JOIN/SUM trên bảng `item_batches` mỗi lần query.
 
 **Cache columns:**
+
 - `cached_total_quantity`: Tổng số lượng tồn kho
 - `cached_last_import_date`: Ngày nhập cuối cùng
 - `cached_last_updated`: Timestamp cập nhật cache
 
 **Cache update:**
+
 - Cache được cập nhật tự động khi có giao dịch nhập/xuất kho
 - Method: `ItemMaster.updateCachedQuantity(int delta)`
 

@@ -16,24 +16,21 @@ public class ItemMasterSpecification {
             String pattern = "%" + search.toLowerCase() + "%";
             return cb.or(
                     cb.like(cb.lower(root.get("itemName")), pattern),
-                    cb.like(cb.lower(root.get("itemCode")), pattern)
-            );
+                    cb.like(cb.lower(root.get("itemCode")), pattern));
         };
     }
 
     public static Specification<ItemMaster> hasCategoryId(Long categoryId) {
-        return (root, query, cb) ->
-                categoryId == null ? null : cb.equal(root.get("category").get("categoryId"), categoryId);
+        return (root, query, cb) -> categoryId == null ? null
+                : cb.equal(root.get("category").get("categoryId"), categoryId);
     }
 
     public static Specification<ItemMaster> hasWarehouseType(WarehouseType warehouseType) {
-        return (root, query, cb) ->
-                warehouseType == null ? null : cb.equal(root.get("warehouseType"), warehouseType);
+        return (root, query, cb) -> warehouseType == null ? null : cb.equal(root.get("warehouseType"), warehouseType);
     }
 
     public static Specification<ItemMaster> isActive(Boolean isActive) {
-        return (root, query, cb) ->
-                isActive == null ? null : cb.equal(root.get("isActive"), isActive);
+        return (root, query, cb) -> isActive == null ? null : cb.equal(root.get("isActive"), isActive);
     }
 
     public static Specification<ItemMaster> hasStockStatus(StockStatus stockStatus) {
@@ -50,23 +47,20 @@ public class ItemMasterSpecification {
                 case OUT_OF_STOCK:
                     return cb.or(
                             cb.isNull(cachedQty),
-                            cb.equal(cachedQty, 0)
-                    );
+                            cb.equal(cachedQty, 0));
 
                 case LOW_STOCK:
                     return cb.and(
                             cb.isNotNull(cachedQty),
                             cb.gt(cachedQty, 0),
                             cb.isNotNull(minLevel),
-                            cb.lt(cachedQty, minLevel)
-                    );
+                            cb.lt(cachedQty, minLevel));
 
                 case OVERSTOCK:
                     return cb.and(
                             cb.isNotNull(cachedQty),
                             cb.isNotNull(maxLevel),
-                            cb.gt(cachedQty, maxLevel)
-                    );
+                            cb.gt(cachedQty, maxLevel));
 
                 case NORMAL:
                     return cb.and(
@@ -74,8 +68,7 @@ public class ItemMasterSpecification {
                             cb.isNotNull(minLevel),
                             cb.isNotNull(maxLevel),
                             cb.ge(cachedQty, minLevel),
-                            cb.le(cachedQty, maxLevel)
-                    );
+                            cb.le(cachedQty, maxLevel));
 
                 default:
                     return null;

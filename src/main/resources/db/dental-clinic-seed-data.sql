@@ -3532,7 +3532,7 @@ INSERT INTO storage_transaction_items (transaction_id, batch_id, item_code, quan
 SELECT st.transaction_id, b.batch_id, 'CON-GLOVE-01', 200, 150000, 30000000
 FROM storage_transactions st
 CROSS JOIN item_batches b
-WHERE st.transaction_code = 'IMP-2024-001' 
+WHERE st.transaction_code = 'IMP-2024-001'
 AND b.lot_number = 'BATCH-GLOVE-2024-001'
 ON CONFLICT DO NOTHING;
 
@@ -3661,9 +3661,9 @@ SELECT setval('storage_transaction_items_transaction_item_id_seq', (SELECT COALE
 -- =============================================
 -- Log 1: Approval of IMP-2024-001
 INSERT INTO warehouse_audit_logs (transaction_id, action_type, performed_by, old_value, new_value, reason, created_at)
-SELECT st.transaction_id, 'UPDATE', 3, 
-    'approval_status: PENDING_APPROVAL', 
-    'approval_status: APPROVED', 
+SELECT st.transaction_id, 'UPDATE', 3,
+    'approval_status: PENDING_APPROVAL',
+    'approval_status: APPROVED',
     'Da kiem tra hoa don INV-20240101-001, vat tu day du va chat luong tot', NOW() - INTERVAL '10 days'
 FROM storage_transactions st WHERE st.transaction_code = 'IMP-2024-001'
 ON CONFLICT DO NOTHING;
