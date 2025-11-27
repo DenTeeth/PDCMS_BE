@@ -7,10 +7,12 @@ import com.dental.clinic.management.warehouse.exception.ItemMasterNotFoundExcept
 import com.dental.clinic.management.warehouse.repository.ItemMasterRepository;
 import com.dental.clinic.management.warehouse.repository.ItemUnitRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -20,6 +22,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j
 public class ItemUnitService {
 
     private final ItemUnitRepository itemUnitRepository;
@@ -50,19 +53,45 @@ public class ItemUnitService {
      * Get the base (smallest) unit for an item
      * Example: Amoxicillin → "Viên"
      *
+     * Auto-creates base unit from unitOfMeasure if not found (fallback)
+     *
      * @param itemMasterId The item master ID
      * @return Base unit response
      */
+    @Transactional
     public ItemUnitResponse getBaseUnit(Long itemMasterId) {
         // Verify item exists
         ItemMaster itemMaster = itemMasterRepository.findById(itemMasterId)
                 .orElseThrow(() -> new ItemMasterNotFoundException(itemMasterId));
 
-        // Get base unit
-        ItemUnit baseUnit = itemUnitRepository.findBaseUnitByItemMasterId(itemMasterId)
-                .orElseThrow(() -> new RuntimeException("Base unit not found for item: " + itemMaster.getItemName()));
+        // Try to get base unit
+        Optional<ItemUnit> baseUnitOpt = itemUnitRepository.findBaseUnitByItemMasterId(itemMasterId);
 
-        return mapToResponse(baseUnit);
+        if (baseUnitOpt.isPresent()) {
+            return mapToResponse(baseUnitOpt.get());
+        }
+
+        // Fallback: Auto-create base unit from unitOfMeasure
+        if (itemMaster.getUnitOfMeasure() != null && !itemMaster.getUnitOfMeasure().trim().isEmpty()) {
+            log.warn("⚠️ Base unit not found for item {}, auto-creating from unitOfMeasure: {}",
+                    itemMaster.getItemCode(), itemMaster.getUnitOfMeasure());
+
+            ItemUnit fallbackUnit = ItemUnit.builder()
+                    .itemMaster(itemMaster)
+                    .unitName(itemMaster.getUnitOfMeasure())
+                    .conversionRate(1)
+                    .isBaseUnit(true)
+                    .displayOrder(1)
+                    .build();
+
+            ItemUnit saved = itemUnitRepository.save(fallbackUnit);
+            log.info("✅ Auto-created base unit '{}' (ID: {}) for item master: {}",
+                    itemMaster.getUnitOfMeasure(), saved.getUnitId(), itemMaster.getItemCode());
+
+            return mapToResponse(saved);
+        }
+
+        throw new RuntimeException("Base unit not found and unitOfMeasure is empty for item: " + itemMaster.getItemName());
     }
 
     /**
