@@ -29,7 +29,8 @@ import org.springframework.web.bind.annotation.*;
  * - API 6.10: Update item master with Safety Lock mechanism
  * - Denormalized cache for performance (cached_total_quantity,
  * cached_last_import_date)
- * - RBAC with VIEW_ITEMS, CREATE_ITEMS, UPDATE_ITEMS, MANAGE_WAREHOUSE permissions
+ * - RBAC with VIEW_ITEMS, CREATE_ITEMS, UPDATE_ITEMS, MANAGE_WAREHOUSE
+ * permissions
  * - Pagination & sorting
  */
 @RestController

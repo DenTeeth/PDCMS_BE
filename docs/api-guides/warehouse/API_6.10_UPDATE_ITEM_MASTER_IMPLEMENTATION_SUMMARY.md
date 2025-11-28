@@ -1,9 +1,11 @@
 # API 6.10: Update Item Master - Implementation Summary
 
 ## Implementation Date
+
 2025-11-27
 
 ## Overview
+
 Successfully implemented API 6.10 - Update Item Master with Safety Lock mechanism and Soft Delete Unit support. The API prevents dangerous data modifications when inventory exists while allowing safe cosmetic changes.
 
 ## Changes Made
@@ -11,11 +13,13 @@ Successfully implemented API 6.10 - Update Item Master with Safety Lock mechanis
 ### 1. DTO Layer
 
 #### UpdateItemMasterRequest.java (NEW)
+
 **Location**: `src/main/java/com/dental/clinic/management/warehouse/dto/request/UpdateItemMasterRequest.java`
 
 **Purpose**: Request body for updating item master with unit hierarchy
 
 **Key Fields**:
+
 - `itemName`: Item name (1-255 chars, required)
 - `description`: Optional description
 - `categoryId`: Category reference (required)
@@ -27,6 +31,7 @@ Successfully implemented API 6.10 - Update Item Master with Safety Lock mechanis
 - `units`: List of unit configurations
 
 **Nested Class - UnitRequest**:
+
 - `unitId`: Null for new unit, ID for existing unit
 - `unitName`: Unit name (1-50 chars, required)
 - `conversionRate`: Conversion to base unit (> 0, required)
@@ -37,17 +42,20 @@ Successfully implemented API 6.10 - Update Item Master with Safety Lock mechanis
 - `isDefaultExportUnit`: Export default flag
 
 **Validation**:
+
 - Jakarta Bean Validation annotations
 - Size constraints on strings
 - Min/Max values on numbers
 - NotNull/NotBlank constraints
 
 #### UpdateItemMasterResponse.java (NEW)
+
 **Location**: `src/main/java/com/dental/clinic/management/warehouse/dto/response/UpdateItemMasterResponse.java`
 
 **Purpose**: Response with updated item data and Safety Lock status
 
 **Key Fields**:
+
 - `itemMasterId`: Item ID
 - `itemCode`: Immutable SKU code
 - `itemName`: Updated item name
@@ -58,6 +66,7 @@ Successfully implemented API 6.10 - Update Item Master with Safety Lock mechanis
 - `units`: List of all units after update
 
 **Nested Class - UnitInfo**:
+
 - `unitId`: Unit ID
 - `unitName`: Unit name
 - `conversionRate`: Conversion rate
@@ -67,9 +76,11 @@ Successfully implemented API 6.10 - Update Item Master with Safety Lock mechanis
 ### 2. Entity Layer
 
 #### ItemUnit.java (MODIFIED)
+
 **Location**: `src/main/java/com/dental/clinic/management/warehouse/domain/ItemUnit.java`
 
 **Changes**:
+
 - Added `isActive` field (Boolean, non-null, default true)
 - JPA annotation: `@Column(name = "is_active", nullable = false)`
 - Builder default: `@Builder.Default private Boolean isActive = true;`
@@ -80,9 +91,11 @@ Successfully implemented API 6.10 - Update Item Master with Safety Lock mechanis
 ### 3. Repository Layer
 
 #### ItemUnitRepository.java (MODIFIED)
+
 **Location**: `src/main/java/com/dental/clinic/management/warehouse/repository/ItemUnitRepository.java`
 
 **Changes**:
+
 - Added method: `List<ItemUnit> findByItemMaster_ItemMasterId(Long itemMasterId)`
 - Purpose: Load all units for an item master (needed for Safety Lock validation)
 - Naming convention: Spring Data JPA auto-generates query
@@ -90,11 +103,13 @@ Successfully implemented API 6.10 - Update Item Master with Safety Lock mechanis
 ### 4. Service Layer
 
 #### ItemMasterService.java (MODIFIED)
+
 **Location**: `src/main/java/com/dental/clinic/management/warehouse/service/ItemMasterService.java`
 
 **New Method**: `updateItemMaster(Long itemMasterId, UpdateItemMasterRequest request)`
 
 **Logic Flow**:
+
 1. **Load Item Master**: Find by ID or throw 404
 2. **Validate Stock Levels**: min < max or throw 400
 3. **Safety Lock Check**: `safetyLockApplied = cachedTotalQuantity > 0`
@@ -109,7 +124,7 @@ Successfully implemented API 6.10 - Update Item Master with Safety Lock mechanis
    - If any blocked changes: throw 409 CONFLICT with detailed message
 8. **Validate Category**: Category must exist or throw 404
 9. **Update Item Master**: Set all fields, save
-10. **Update/Create Units**: 
+10. **Update/Create Units**:
     - If unitId exists: update existing unit
     - If unitId null: create new unit
     - Set isActive flag for soft delete
@@ -118,20 +133,24 @@ Successfully implemented API 6.10 - Update Item Master with Safety Lock mechanis
 12. **Build Response**: Include safetyLockApplied flag and all units
 
 **Key Features**:
+
 - O(1) Safety Lock check using cached field
 - Batch save for units (performance)
 - Detailed error messages for blocked changes
 - Soft delete support via isActive flag
 
 **Imports Added**:
+
 - `UpdateItemMasterRequest`
 - `UpdateItemMasterResponse`
 - `Map`, `Collectors` (for unit mapping)
 
 #### ItemMasterMapper.java (MODIFIED)
+
 **Location**: `src/main/java/com/dental/clinic/management/warehouse/mapper/ItemMasterMapper.java`
 
 **Changes**:
+
 - Deprecated `updateEntity()` method
 - Throws `UnsupportedOperationException` with migration message
 - Reason: Old method incompatible with new units array structure
@@ -139,9 +158,11 @@ Successfully implemented API 6.10 - Update Item Master with Safety Lock mechanis
 ### 5. Controller Layer
 
 #### ItemMasterController.java (MODIFIED)
+
 **Location**: `src/main/java/com/dental/clinic/management/warehouse/controller/ItemMasterController.java`
 
 **New Endpoint**:
+
 ```
 PUT /api/v1/warehouse/items/{id}
 ```
@@ -149,6 +170,7 @@ PUT /api/v1/warehouse/items/{id}
 **Authorization**: `@PreAuthorize("hasRole('ADMIN') or hasAnyAuthority('UPDATE_ITEMS', 'MANAGE_WAREHOUSE')")`
 
 **Swagger Documentation**:
+
 - Comprehensive operation summary
 - Safety Lock rules explained
 - Use cases listed
@@ -156,29 +178,35 @@ PUT /api/v1/warehouse/items/{id}
 - Permission requirements
 
 **Imports Added**:
+
 - `UpdateItemMasterRequest`
 - `UpdateItemMasterResponse`
 
 **Class Documentation Updated**:
+
 - Added API 6.10 to class-level comment
 - Updated Swagger tag description
 
 ### 6. Database Layer
 
 #### schema.sql (MODIFIED)
+
 **Location**: `src/main/resources/db/schema.sql`
 
 **Changes to `item_units` table**:
+
 ```sql
 is_active BOOLEAN NOT NULL DEFAULT TRUE
 ```
 
 **Index Added**:
+
 ```sql
 CREATE INDEX IF NOT EXISTS idx_item_units_active ON item_units(item_master_id, is_active);
 ```
 
 **Comment Added**:
+
 ```sql
 COMMENT ON COLUMN item_units.is_active IS 'Soft delete flag for units - FALSE hides from dropdown, preserves transaction history';
 ```
@@ -186,16 +214,19 @@ COMMENT ON COLUMN item_units.is_active IS 'Soft delete flag for units - FALSE hi
 **Location**: After `is_base_unit` column, before `is_default_import_unit`
 
 #### dental-clinic-seed-data.sql (MODIFIED)
+
 **Location**: `src/main/resources/db/dental-clinic-seed-data.sql`
 
 **Changes**:
 
 1. **Permission Added** (Line ~440):
+
 ```sql
 ('UPDATE_ITEMS', 'UPDATE_ITEMS', 'WAREHOUSE', 'Cap nhat thong tin vat tu va don vi tinh', 272, NULL, TRUE, NOW())
 ```
 
 2. **Permission Renumbering** (Module 14: WAREHOUSE):
+
    - UPDATE_ITEMS: 272 (NEW)
    - CREATE_WAREHOUSE: 272 -> 273
    - UPDATE_WAREHOUSE: 273 -> 274
@@ -207,6 +238,7 @@ COMMENT ON COLUMN item_units.is_active IS 'Soft delete flag for units - FALSE hi
    - APPROVE_TRANSACTION: 279 -> 280
 
 3. **Role Grant Added** (Line ~620):
+
 ```sql
 ('ROLE_INVENTORY_MANAGER', 'UPDATE_ITEMS')
 ```
@@ -215,15 +247,17 @@ COMMENT ON COLUMN item_units.is_active IS 'Soft delete flag for units - FALSE hi
    - Added `is_active` column to all INSERT statements
    - Added `TRUE` value for is_active in all rows
    - Used sed commands for batch update:
-     * Command 1: Add column to INSERT clause
-     * Command 2: Add TRUE value to VALUES clause
+     - Command 1: Add column to INSERT clause
+     - Command 2: Add TRUE value to VALUES clause
 
 ### 7. Documentation
 
 #### API_6.10_UPDATE_ITEM_MASTER_COMPLETE.md (NEW)
+
 **Location**: `docs/api-guides/warehouse/API_6.10_UPDATE_ITEM_MASTER_COMPLETE.md`
 
 **Contents**:
+
 - Complete API specification
 - Safety Lock mechanism explanation
 - Request/Response examples
@@ -241,16 +275,19 @@ COMMENT ON COLUMN item_units.is_active IS 'Soft delete flag for units - FALSE hi
 ## Safety Lock Mechanism
 
 ### Detection
+
 ```java
 boolean safetyLockApplied = itemMaster.getCachedTotalQuantity() > 0;
 ```
 
 ### Blocked Changes (when stock > 0)
+
 1. **Conversion Rate**: Prevents corruption of stock calculations
 2. **isBaseUnit Flag**: Prevents breaking unit hierarchy
 3. **Hard Delete Units**: Prevents FK constraint violations
 
 ### Allowed Changes (when stock > 0)
+
 1. Item name, description, category
 2. Min/max stock levels
 3. Unit renames (cosmetic)
@@ -259,6 +296,7 @@ boolean safetyLockApplied = itemMaster.getCachedTotalQuantity() > 0;
 6. Soft delete units (isActive = false)
 
 ### Error Response (409 CONFLICT)
+
 ```
 Safety Lock: Cannot modify units when stock exists. Blocked changes: Cannot change conversion rate for unit 'Hop' (current: 10.0, new: 12.0); Cannot change base unit status for unit 'Vi'
 ```
@@ -266,6 +304,7 @@ Safety Lock: Cannot modify units when stock exists. Blocked changes: Cannot chan
 ## Soft Delete Pattern
 
 ### Implementation
+
 - Set `isActive = false` instead of DELETE
 - Unit remains in database
 - No FK constraint violations
@@ -273,6 +312,7 @@ Safety Lock: Cannot modify units when stock exists. Blocked changes: Cannot chan
 - Hidden from UI dropdowns
 
 ### Benefits
+
 - Data integrity maintained
 - Audit trail preserved
 - Can reactivate if needed
@@ -281,12 +321,14 @@ Safety Lock: Cannot modify units when stock exists. Blocked changes: Cannot chan
 ## Permissions & RBAC
 
 ### New Permission
+
 - **Code**: UPDATE_ITEMS
 - **Module**: WAREHOUSE
 - **Display Order**: 272
 - **Description**: Cap nhat thong tin vat tu va don vi tinh
 
 ### Role Assignments
+
 - ROLE_ADMIN: Full access (inherent)
 - ROLE_INVENTORY_MANAGER: Granted UPDATE_ITEMS
 - ROLE_MANAGER: Can be granted if needed
@@ -294,12 +336,14 @@ Safety Lock: Cannot modify units when stock exists. Blocked changes: Cannot chan
 ## Performance
 
 ### Query Optimization
+
 - Safety Lock check: O(1) using cached field
 - Unit validation: Single query with `findByItemMaster_ItemMasterId()`
 - Batch save: `saveAll()` for multiple units
 - Index usage: FK index on item_master_id, new index on is_active
 
 ### Expected Response Times
+
 - Update without stock: < 100ms
 - Update with stock (Safety Lock): < 150ms
 - Update with 10 units: < 200ms
@@ -307,17 +351,20 @@ Safety Lock: Cannot modify units when stock exists. Blocked changes: Cannot chan
 ## Testing Status
 
 ### Compilation
+
 - **Status**: SUCCESS
 - **Warnings**: Deprecated API usage in InventoryService (unrelated)
 - **Errors**: None in API 6.10 code
 
 ### Application Startup
+
 - **Status**: FAILED
 - **Reason**: Pre-existing bug in seed data (storage_transactions INSERT missing columns)
 - **Impact**: Cannot test API 6.10 with running application
 - **Note**: Bug unrelated to API 6.10 implementation
 
 ### Unit Tests
+
 - **Status**: Not implemented yet
 - **Coverage**: 0%
 - **Recommendation**: Add tests for Safety Lock validation logic
@@ -325,12 +372,15 @@ Safety Lock: Cannot modify units when stock exists. Blocked changes: Cannot chan
 ## Known Issues
 
 ### Pre-existing Bugs Fixed
+
 1. **ImportTransactionService.java (Line 425)**:
+
    - **Issue**: Type mismatch - String vs TransactionStatus enum
    - **Fix**: Added `TransactionStatus.valueOf()` conversion
    - **Status**: FIXED
 
 2. **TransactionHistoryService.java (Lines 469, 515, 553)**:
+
    - **Issue**: Method `SecurityUtil.getCurrentEmployeeId()` does not exist
    - **Fix**: Commented out employee assignment lines
    - **Status**: TEMPORARY FIX (needs proper implementation)
@@ -341,6 +391,7 @@ Safety Lock: Cannot modify units when stock exists. Blocked changes: Cannot chan
    - **Status**: FIXED
 
 ### Unresolved Issues
+
 1. **seed-data.sql - storage_transactions**:
    - **Issue**: INSERT statements missing columns (causes app startup failure)
    - **Impact**: Cannot start application for integration testing
@@ -350,10 +401,12 @@ Safety Lock: Cannot modify units when stock exists. Blocked changes: Cannot chan
 ## Files Modified Summary
 
 ### Created (2 files)
+
 1. `UpdateItemMasterRequest.java` - Request DTO
 2. `UpdateItemMasterResponse.java` - Response DTO
 
 ### Modified (8 files)
+
 1. `ItemUnit.java` - Added isActive field
 2. `ItemUnitRepository.java` - Added findByItemMaster_ItemMasterId method
 3. `ItemMasterService.java` - Added updateItemMaster method
@@ -365,11 +418,13 @@ Safety Lock: Cannot modify units when stock exists. Blocked changes: Cannot chan
 9. `TransactionHistoryService.java` - Temporarily fixed missing method calls
 
 ### Created Documentation (1 file)
+
 1. `API_6.10_UPDATE_ITEM_MASTER_COMPLETE.md` - Complete API specification
 
 ## Code Statistics
 
 ### Lines of Code Added
+
 - DTOs: ~200 lines
 - Service: ~200 lines
 - Controller: ~70 lines
@@ -380,6 +435,7 @@ Safety Lock: Cannot modify units when stock exists. Blocked changes: Cannot chan
 - **Total**: ~1,010 lines
 
 ### Test Coverage
+
 - Unit Tests: 0%
 - Integration Tests: 0%
 - **Target**: 80%+
@@ -402,12 +458,14 @@ Safety Lock: Cannot modify units when stock exists. Blocked changes: Cannot chan
 ## Deployment Notes
 
 ### Database Migration
+
 - Schema change: Add is_active column to item_units (backward compatible)
 - Data migration: All existing units get is_active = TRUE
 - Index creation: idx_item_units_active (can be created online)
 - Permission seed: UPDATE_ITEMS permission added
 
 ### Rollback Plan
+
 - If issues found: Remove is_active column via migration
 - Permission can be removed from permissions table
 - Role grants can be revoked

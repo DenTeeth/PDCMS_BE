@@ -4,31 +4,36 @@
 
 **Current Status**: BLOCKED - Application startup fails due to pre-existing seed data bug
 
-**Issue**: `storage_transactions` INSERT statements in seed data missing required columns  
-**Line**: #328 in dental-clinic-seed-data.sql  
-**Error**: SQL script execution failure during app initialization  
-**Impact**: Cannot start application for integration testing  
+**Issue**: `storage_transactions` INSERT statements in seed data missing required columns
+**Line**: #328 in dental-clinic-seed-data.sql
+**Error**: SQL script execution failure during app initialization
+**Impact**: Cannot start application for integration testing
 **Related to API 6.10**: NO - Pre-existing bug in unrelated code
 
 ## Prerequisites
 
 ### Fix Required Before Testing
+
 The seed data bug must be fixed before API 6.10 can be tested with a running application. The error occurs in storage_transactions INSERT statements which are missing columns that the table schema requires.
 
 ### Alternative Testing Approaches
+
 1. **Option A**: Fix seed data and restart application
 2. **Option B**: Skip seed data loading (set `spring.sql.init.mode=never`)
 3. **Option C**: Create minimal test data programmatically
 4. **Option D**: Use unit tests with mocked data
 
 ### Environment Setup
+
 - Java 17
 - PostgreSQL database
 - Spring Boot 3.2.10
 - Maven
 
 ### Required Test Data
+
 For comprehensive testing, you need:
+
 1. **Item with stock > 0**: To test Safety Lock mechanism
 2. **Item with stock = 0**: To test free mode (all changes allowed)
 3. **User with UPDATE_ITEMS permission**: ROLE_INVENTORY_MANAGER
@@ -41,10 +46,12 @@ For comprehensive testing, you need:
 **Objective**: Verify basic item details can be updated regardless of stock
 
 **Prerequisites**:
+
 - Item exists with ID = 1
 - Any stock level
 
 **Request**:
+
 ```bash
 curl -X PUT http://localhost:8080/api/v1/warehouse/items/1 \
   -H "Content-Type: application/json" \
@@ -84,6 +91,7 @@ curl -X PUT http://localhost:8080/api/v1/warehouse/items/1 \
 ```
 
 **Expected Response**: 200 OK
+
 ```json
 {
   "itemMasterId": 1,
@@ -98,6 +106,7 @@ curl -X PUT http://localhost:8080/api/v1/warehouse/items/1 \
 ```
 
 **Verification**:
+
 - Response status is 200
 - itemName updated in response
 - safetyLockApplied is true (if stock > 0) or false (if stock = 0)
@@ -108,6 +117,7 @@ curl -X PUT http://localhost:8080/api/v1/warehouse/items/1 \
 **Objective**: Verify stock alert levels can be adjusted
 
 **Request**:
+
 ```bash
 curl -X PUT http://localhost:8080/api/v1/warehouse/items/1 \
   -H "Content-Type: application/json" \
@@ -123,11 +133,12 @@ curl -X PUT http://localhost:8080/api/v1/warehouse/items/1 \
   }'
 ```
 
-**Expected Response**: 200 OK  
-**Min stock**: 150  
+**Expected Response**: 200 OK
+**Min stock**: 150
 **Max stock**: 1500
 
 **Verification**:
+
 - Response status is 200
 - minStockLevel = 150
 - maxStockLevel = 1500
@@ -137,10 +148,12 @@ curl -X PUT http://localhost:8080/api/v1/warehouse/items/1 \
 **Objective**: Verify unit names can be changed when stock exists
 
 **Prerequisites**:
+
 - Item has stock > 0
 - Unit with unitId = 1 exists with name "Hop"
 
 **Request**:
+
 ```bash
 curl -X PUT http://localhost:8080/api/v1/warehouse/items/1 \
   -H "Content-Type: application/json" \
@@ -173,10 +186,11 @@ curl -X PUT http://localhost:8080/api/v1/warehouse/items/1 \
   }'
 ```
 
-**Expected Response**: 200 OK  
+**Expected Response**: 200 OK
 **Unit name**: "Carton" (changed from "Hop")
 
 **Verification**:
+
 - Response status is 200
 - Unit with unitId=1 has name "Carton"
 - safetyLockApplied is true
@@ -187,9 +201,11 @@ curl -X PUT http://localhost:8080/api/v1/warehouse/items/1 \
 **Objective**: Verify new units can be added when stock exists
 
 **Prerequisites**:
+
 - Item has stock > 0
 
 **Request**:
+
 ```bash
 curl -X PUT http://localhost:8080/api/v1/warehouse/items/1 \
   -H "Content-Type: application/json" \
@@ -230,10 +246,11 @@ curl -X PUT http://localhost:8080/api/v1/warehouse/items/1 \
   }'
 ```
 
-**Expected Response**: 200 OK  
+**Expected Response**: 200 OK
 **New unit**: "Pallet" with conversion rate 100.0
 
 **Verification**:
+
 - Response status is 200
 - units array contains 3 units
 - New unit "Pallet" has valid unitId (auto-generated)
@@ -244,10 +261,12 @@ curl -X PUT http://localhost:8080/api/v1/warehouse/items/1 \
 **Objective**: Verify units can be soft deleted (isActive = false) when stock exists
 
 **Prerequisites**:
+
 - Item has stock > 0
 - Unit with unitId = 1 exists
 
 **Request**:
+
 ```bash
 curl -X PUT http://localhost:8080/api/v1/warehouse/items/1 \
   -H "Content-Type: application/json" \
@@ -280,10 +299,11 @@ curl -X PUT http://localhost:8080/api/v1/warehouse/items/1 \
   }'
 ```
 
-**Expected Response**: 200 OK  
+**Expected Response**: 200 OK
 **Unit isActive**: false for unitId=1
 
 **Verification**:
+
 - Response status is 200
 - Unit with unitId=1 has isActive = false
 - Unit still exists in database
@@ -294,10 +314,12 @@ curl -X PUT http://localhost:8080/api/v1/warehouse/items/1 \
 **Objective**: Verify Safety Lock blocks conversion rate changes when stock exists
 
 **Prerequisites**:
+
 - Item has stock > 0
 - Unit with unitId = 1 has conversionRate = 10.0
 
 **Request**:
+
 ```bash
 curl -X PUT http://localhost:8080/api/v1/warehouse/items/1 \
   -H "Content-Type: application/json" \
@@ -331,6 +353,7 @@ curl -X PUT http://localhost:8080/api/v1/warehouse/items/1 \
 ```
 
 **Expected Response**: 409 CONFLICT
+
 ```json
 {
   "timestamp": "2025-11-27T20:30:00",
@@ -342,6 +365,7 @@ curl -X PUT http://localhost:8080/api/v1/warehouse/items/1 \
 ```
 
 **Verification**:
+
 - Response status is 409
 - Error message mentions "Safety Lock"
 - Error message lists specific blocked change
@@ -352,10 +376,12 @@ curl -X PUT http://localhost:8080/api/v1/warehouse/items/1 \
 **Objective**: Verify Safety Lock blocks base unit flag changes when stock exists
 
 **Prerequisites**:
+
 - Item has stock > 0
 - Unit with unitId = 1 has isBaseUnit = false
 
 **Request**:
+
 ```bash
 curl -X PUT http://localhost:8080/api/v1/warehouse/items/1 \
   -H "Content-Type: application/json" \
@@ -388,10 +414,11 @@ curl -X PUT http://localhost:8080/api/v1/warehouse/items/1 \
   }'
 ```
 
-**Expected Response**: 409 CONFLICT  
+**Expected Response**: 409 CONFLICT
 **Error message**: Contains "Cannot change base unit status"
 
 **Verification**:
+
 - Response status is 409
 - Error message mentions base unit change
 - Database unchanged
@@ -401,10 +428,12 @@ curl -X PUT http://localhost:8080/api/v1/warehouse/items/1 \
 **Objective**: Verify Safety Lock blocks unit deletion when stock exists
 
 **Prerequisites**:
+
 - Item has stock > 0
 - Item has 2 units: unitId=1 and unitId=2
 
 **Request**:
+
 ```bash
 curl -X PUT http://localhost:8080/api/v1/warehouse/items/1 \
   -H "Content-Type: application/json" \
@@ -429,10 +458,11 @@ curl -X PUT http://localhost:8080/api/v1/warehouse/items/1 \
   }'
 ```
 
-**Expected Response**: 409 CONFLICT  
+**Expected Response**: 409 CONFLICT
 **Error message**: Contains "Cannot delete unit" and suggests soft delete
 
 **Verification**:
+
 - Response status is 409
 - Error message mentions unit deletion blocked
 - Database unchanged (both units still exist)
@@ -442,9 +472,11 @@ curl -X PUT http://localhost:8080/api/v1/warehouse/items/1 \
 **Objective**: Verify all changes are allowed when no stock exists
 
 **Prerequisites**:
+
 - Item has stock = 0 (cached_total_quantity = 0)
 
 **Request**:
+
 ```bash
 curl -X PUT http://localhost:8080/api/v1/warehouse/items/2 \
   -H "Content-Type: application/json" \
@@ -477,11 +509,12 @@ curl -X PUT http://localhost:8080/api/v1/warehouse/items/2 \
   }'
 ```
 
-**Expected Response**: 200 OK  
-**safetyLockApplied**: false  
+**Expected Response**: 200 OK
+**safetyLockApplied**: false
 **Changes**: All changes applied successfully
 
 **Verification**:
+
 - Response status is 200
 - safetyLockApplied is false
 - All fields updated
@@ -492,6 +525,7 @@ curl -X PUT http://localhost:8080/api/v1/warehouse/items/2 \
 **Objective**: Verify validation rejects invalid stock levels
 
 **Request**:
+
 ```bash
 curl -X PUT http://localhost:8080/api/v1/warehouse/items/1 \
   -H "Content-Type: application/json" \
@@ -507,10 +541,11 @@ curl -X PUT http://localhost:8080/api/v1/warehouse/items/1 \
   }'
 ```
 
-**Expected Response**: 400 BAD REQUEST  
+**Expected Response**: 400 BAD REQUEST
 **Error message**: "Min stock level must be less than max stock level"
 
 **Verification**:
+
 - Response status is 400
 - Error message clear and helpful
 - Database unchanged
@@ -520,6 +555,7 @@ curl -X PUT http://localhost:8080/api/v1/warehouse/items/1 \
 **Objective**: Verify validation requires exactly one base unit
 
 **Request**:
+
 ```bash
 curl -X PUT http://localhost:8080/api/v1/warehouse/items/1 \
   -H "Content-Type: application/json" \
@@ -552,10 +588,11 @@ curl -X PUT http://localhost:8080/api/v1/warehouse/items/1 \
   }'
 ```
 
-**Expected Response**: 400 BAD REQUEST  
+**Expected Response**: 400 BAD REQUEST
 **Error message**: "Exactly one base unit is required"
 
 **Verification**:
+
 - Response status is 400
 - Database unchanged
 
@@ -564,6 +601,7 @@ curl -X PUT http://localhost:8080/api/v1/warehouse/items/1 \
 **Objective**: Verify validation prevents duplicate unit names
 
 **Request**:
+
 ```bash
 curl -X PUT http://localhost:8080/api/v1/warehouse/items/1 \
   -H "Content-Type: application/json" \
@@ -596,10 +634,11 @@ curl -X PUT http://localhost:8080/api/v1/warehouse/items/1 \
   }'
 ```
 
-**Expected Response**: 400 BAD REQUEST  
+**Expected Response**: 400 BAD REQUEST
 **Error message**: Contains "duplicated"
 
 **Verification**:
+
 - Response status is 400
 - Database unchanged
 
@@ -608,6 +647,7 @@ curl -X PUT http://localhost:8080/api/v1/warehouse/items/1 \
 **Objective**: Verify 404 error for non-existent item
 
 **Request**:
+
 ```bash
 curl -X PUT http://localhost:8080/api/v1/warehouse/items/999999 \
   -H "Content-Type: application/json" \
@@ -622,10 +662,11 @@ curl -X PUT http://localhost:8080/api/v1/warehouse/items/999999 \
   }'
 ```
 
-**Expected Response**: 404 NOT FOUND  
+**Expected Response**: 404 NOT FOUND
 **Error message**: "Item master with ID 999999 not found"
 
 **Verification**:
+
 - Response status is 404
 - Error message clear
 
@@ -634,9 +675,11 @@ curl -X PUT http://localhost:8080/api/v1/warehouse/items/999999 \
 **Objective**: Verify authorization check
 
 **Prerequisites**:
+
 - User token without UPDATE_ITEMS permission (e.g., ROLE_DOCTOR)
 
 **Request**:
+
 ```bash
 curl -X PUT http://localhost:8080/api/v1/warehouse/items/1 \
   -H "Content-Type: application/json" \
@@ -651,10 +694,11 @@ curl -X PUT http://localhost:8080/api/v1/warehouse/items/1 \
   }'
 ```
 
-**Expected Response**: 403 FORBIDDEN  
+**Expected Response**: 403 FORBIDDEN
 **Error message**: "Access denied"
 
 **Verification**:
+
 - Response status is 403
 - Database unchanged
 
@@ -663,6 +707,7 @@ curl -X PUT http://localhost:8080/api/v1/warehouse/items/1 \
 **Objective**: Verify authorized user can update
 
 **Prerequisites**:
+
 - User token with UPDATE_ITEMS permission (ROLE_INVENTORY_MANAGER)
 
 **Request**: Same as Scenario 1
@@ -670,18 +715,22 @@ curl -X PUT http://localhost:8080/api/v1/warehouse/items/1 \
 **Expected Response**: 200 OK
 
 **Verification**:
+
 - Response status is 200
 - Update successful
 
 ## Performance Testing
 
 ### Response Time Benchmarks
+
 - Update without stock: < 100ms (target)
 - Update with stock (Safety Lock): < 150ms (target)
 - Update with 10 units: < 200ms (target)
 
 ### Test Method
+
 Use Apache Bench or JMeter:
+
 ```bash
 ab -n 100 -c 10 -T 'application/json' -H 'Authorization: Bearer TOKEN' \
    -p update_request.json \
@@ -689,6 +738,7 @@ ab -n 100 -c 10 -T 'application/json' -H 'Authorization: Bearer TOKEN' \
 ```
 
 ### Metrics to Collect
+
 - Average response time
 - 95th percentile
 - 99th percentile
@@ -698,6 +748,7 @@ ab -n 100 -c 10 -T 'application/json' -H 'Authorization: Bearer TOKEN' \
 ## Database Verification
 
 ### After Successful Update
+
 ```sql
 -- Verify item master updated
 SELECT * FROM item_masters WHERE item_master_id = 1;
@@ -713,6 +764,7 @@ SELECT * FROM item_units WHERE item_master_id NOT IN (SELECT item_master_id FROM
 ```
 
 ### After Soft Delete
+
 ```sql
 -- Verify unit still exists but inactive
 SELECT * FROM item_units WHERE unit_id = 1;
@@ -726,6 +778,7 @@ SELECT * FROM import_item_batches WHERE unit_id = 1;
 ## Test Data Setup
 
 ### Create Test Items (SQL)
+
 ```sql
 -- Item with stock (for Safety Lock testing)
 INSERT INTO item_masters (item_code, item_name, category_id, warehouse_type, min_stock_level, max_stock_level, cached_total_quantity, unit_of_measure, is_active, created_at, updated_at)
@@ -737,13 +790,13 @@ VALUES ('TEST-002', 'Test Item No Stock', 1, 'NORMAL', 10, 100, 0, 'Piece', TRUE
 
 -- Units for TEST-001
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, display_order, created_at, updated_at)
-VALUES 
+VALUES
   ((SELECT item_master_id FROM item_masters WHERE item_code = 'TEST-001'), 'Box', 10.0, FALSE, TRUE, 1, NOW(), NOW()),
   ((SELECT item_master_id FROM item_masters WHERE item_code = 'TEST-001'), 'Piece', 1.0, TRUE, TRUE, 2, NOW(), NOW());
 
 -- Units for TEST-002
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, display_order, created_at, updated_at)
-VALUES 
+VALUES
   ((SELECT item_master_id FROM item_masters WHERE item_code = 'TEST-002'), 'Box', 10.0, FALSE, TRUE, 1, NOW(), NOW()),
   ((SELECT item_master_id FROM item_masters WHERE item_code = 'TEST-002'), 'Piece', 1.0, TRUE, TRUE, 2, NOW(), NOW());
 ```
@@ -763,38 +816,44 @@ DELETE FROM item_masters WHERE item_code LIKE 'TEST-%';
 ```markdown
 # API 6.10 Test Report
 
-**Date**: YYYY-MM-DD  
-**Tester**: Name  
+**Date**: YYYY-MM-DD
+**Tester**: Name
 **Environment**: Dev/Staging/Prod
 
 ## Test Results Summary
+
 - Total Scenarios: 15
 - Passed: X
 - Failed: Y
 - Blocked: Z
 
 ## Detailed Results
-| Scenario | Status | Notes |
-|----------|--------|-------|
-| 1. Update Item Name | PASS | Response time: 85ms |
-| 2. Adjust Stock Levels | PASS | |
-| ... | ... | ... |
+
+| Scenario               | Status | Notes               |
+| ---------------------- | ------ | ------------------- |
+| 1. Update Item Name    | PASS   | Response time: 85ms |
+| 2. Adjust Stock Levels | PASS   |                     |
+| ...                    | ...    | ...                 |
 
 ## Issues Found
+
 1. **Issue #1**: Description
    - Severity: High/Medium/Low
    - Steps to reproduce
    - Expected vs Actual
 
 ## Performance Metrics
+
 - Average response time: Xms
 - 95th percentile: Xms
 - Throughput: X req/s
 
 ## Recommendations
+
 - List any recommendations
 
 ## Sign-off
+
 - [ ] All critical scenarios passed
 - [ ] Performance meets targets
 - [ ] Ready for production
@@ -803,16 +862,19 @@ DELETE FROM item_masters WHERE item_code LIKE 'TEST-%';
 ## Known Limitations
 
 ### Blocked Testing
+
 - **Application Startup**: Fails due to seed data bug (unrelated to API 6.10)
 - **Workaround**: Fix seed data or skip seed data loading
 - **Priority**: HIGH - Must fix before testing
 
 ### Missing Test Coverage
+
 - Unit tests: 0%
 - Integration tests: 0%
 - Need to add automated tests
 
 ### Manual Testing Required
+
 - All scenarios must be tested manually due to blocked app startup
 - Recommend creating Postman collection for repeatable testing
 - Consider adding to CI/CD pipeline once automated tests added
@@ -821,6 +883,6 @@ DELETE FROM item_masters WHERE item_code LIKE 'TEST-%';
 
 API 6.10 implementation is code-complete and compiles successfully. Comprehensive testing blocked by unrelated seed data issue. Once resolved, follow this guide to thoroughly test all scenarios including Success cases, Safety Lock enforcement, Validation errors, and RBAC permissions.
 
-**Testing Priority**: HIGH  
-**Estimated Testing Time**: 2-3 hours  
+**Testing Priority**: HIGH
+**Estimated Testing Time**: 2-3 hours
 **Prerequisite**: Fix seed data bug first

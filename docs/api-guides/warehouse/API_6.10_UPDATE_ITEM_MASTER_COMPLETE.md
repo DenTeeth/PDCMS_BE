@@ -1,16 +1,19 @@
 # API 6.10: Update Item Master - Complete Specification
 
 ## Overview
+
 This API allows updating an existing item master with a Safety Lock mechanism that prevents dangerous changes when inventory exists in the system.
 
 ## API Endpoint
+
 ```
 PUT /api/v1/warehouse/items/{id}
 ```
 
 ## Authentication & Authorization
+
 - **Required Permission**: `UPDATE_ITEMS`
-- **Roles with Access**: 
+- **Roles with Access**:
   - ROLE_ADMIN
   - ROLE_INVENTORY_MANAGER (default)
   - ROLE_MANAGER (if granted)
@@ -18,16 +21,19 @@ PUT /api/v1/warehouse/items/{id}
 ## Safety Lock Mechanism
 
 ### Purpose
+
 The Safety Lock protects data integrity by preventing modifications that would corrupt stock calculations or break transaction history when the item has existing inventory (cached_total_quantity > 0).
 
 ### Rules
 
 #### BLOCKED Changes (when stock exists):
+
 1. **Conversion Rate Changes**: Would corrupt all existing stock calculations
 2. **Base Unit Flag Changes**: Would break unit hierarchy integrity
 3. **Hard Delete Units**: Would cause FK constraint violations in transaction history
 
 #### ALLOWED Changes (when stock exists):
+
 1. **Item Details**: name, description, category, warehouse type
 2. **Stock Levels**: min/max stock level adjustments
 3. **Unit Rename**: Cosmetic change, no impact on calculations
@@ -36,14 +42,17 @@ The Safety Lock protects data integrity by preventing modifications that would c
 6. **Soft Delete Units**: Set isActive=false, preserves history
 
 #### FREE Mode (when stock = 0):
+
 All changes are allowed when no inventory exists.
 
 ## Request
 
 ### Path Parameters
+
 - `id` (Long, required): Item Master ID
 
 ### Request Body
+
 ```json
 {
   "itemName": "Paracetamol 500mg",
@@ -92,6 +101,7 @@ All changes are allowed when no inventory exists.
 ### Field Descriptions
 
 #### Item Fields
+
 - `itemName` (String, required): Item name (1-255 chars)
 - `description` (String, optional): Detailed description
 - `categoryId` (Long, required): Category ID (must exist)
@@ -102,7 +112,8 @@ All changes are allowed when no inventory exists.
 - `defaultShelfLifeDays` (Integer, optional): Shelf life in days
 
 #### Unit Fields
-- `unitId` (Long, nullable): 
+
+- `unitId` (Long, nullable):
   - If provided: Update existing unit
   - If null: Create new unit
 - `unitName` (String, required): Unit name (1-50 chars)
@@ -116,6 +127,7 @@ All changes are allowed when no inventory exists.
 ## Response
 
 ### Success Response (200 OK)
+
 ```json
 {
   "itemMasterId": 1,
@@ -154,6 +166,7 @@ All changes are allowed when no inventory exists.
 ### Error Responses
 
 #### 400 BAD REQUEST - Validation Errors
+
 ```json
 {
   "timestamp": "2025-11-27T19:30:00",
@@ -165,6 +178,7 @@ All changes are allowed when no inventory exists.
 ```
 
 Common validation errors:
+
 - Min stock level >= Max stock level
 - No base unit or multiple base units
 - Base unit conversion rate != 1.0
@@ -172,6 +186,7 @@ Common validation errors:
 - Unit name too long (> 50 chars)
 
 #### 404 NOT FOUND - Item Not Found
+
 ```json
 {
   "timestamp": "2025-11-27T19:30:00",
@@ -183,6 +198,7 @@ Common validation errors:
 ```
 
 #### 409 CONFLICT - Safety Lock Violation
+
 ```json
 {
   "timestamp": "2025-11-27T19:30:00",
@@ -194,6 +210,7 @@ Common validation errors:
 ```
 
 #### 403 FORBIDDEN - Missing Permission
+
 ```json
 {
   "timestamp": "2025-11-27T19:30:00",
@@ -207,61 +224,75 @@ Common validation errors:
 ## Use Cases
 
 ### 1. Update Item Details (Safe)
+
 **Scenario**: Change item name and category
 **Stock Status**: Any
 **Expected Result**: SUCCESS
 **Changes**:
+
 - itemName: "Paracetamol 500mg" -> "Paracetamol Tablets 500mg"
 - categoryId: 1 -> 2
 
 ### 2. Adjust Stock Alerts (Safe)
+
 **Scenario**: Update min/max levels based on demand
 **Stock Status**: Any
 **Expected Result**: SUCCESS
 **Changes**:
+
 - minStockLevel: 100 -> 150
 - maxStockLevel: 1000 -> 1500
 
 ### 3. Rename Unit (Safe, even with stock)
+
 **Scenario**: Change "Box" to "Carton" for clarity
 **Stock Status**: 500 units in stock
 **Expected Result**: SUCCESS (cosmetic change only)
 **Changes**:
+
 - unitName: "Box" -> "Carton"
 
 ### 4. Add New Unit (Safe, even with stock)
+
 **Scenario**: Add "Pallet" for bulk orders
 **Stock Status**: 500 units in stock
 **Expected Result**: SUCCESS (expands options)
 **Changes**:
+
 - Add new unit with unitId=null, conversionRate=100.0
 
 ### 5. Soft Delete Unit (Safe, even with stock)
+
 **Scenario**: Hide "Sample Pack" from dropdowns
 **Stock Status**: 500 units in stock
 **Expected Result**: SUCCESS (preserves history)
 **Changes**:
+
 - isActive: true -> false
 
 ### 6. Change Conversion Rate (BLOCKED with stock)
+
 **Scenario**: Change Box conversion from 10 to 12
 **Stock Status**: 500 units in stock
 **Expected Result**: 409 CONFLICT
 **Reason**: Would corrupt stock calculations
 
 ### 7. Change Base Unit (BLOCKED with stock)
+
 **Scenario**: Change base unit from "Pill" to "Strip"
 **Stock Status**: 500 units in stock
 **Expected Result**: 409 CONFLICT
 **Reason**: Would break unit hierarchy
 
 ### 8. Delete Unit (BLOCKED with stock)
+
 **Scenario**: Remove "Box" unit completely
 **Stock Status**: 500 units in stock
 **Expected Result**: 409 CONFLICT
 **Reason**: Would break transaction history
 
 ### 9. Free Mode - All Changes Allowed
+
 **Scenario**: Restructure entire unit hierarchy
 **Stock Status**: 0 units (no inventory)
 **Expected Result**: SUCCESS
@@ -270,31 +301,37 @@ Common validation errors:
 ## Implementation Notes
 
 ### Immutable Fields
+
 - `itemCode`: SKU code cannot be changed after creation
 - `itemMasterId`: Primary key, system-generated
 
 ### Base Unit Requirements
+
 - Exactly ONE unit must have `isBaseUnit = true`
 - Base unit must have `conversionRate = 1.0`
 - All other units convert to base unit
 
 ### Soft Delete Pattern
+
 - Setting `isActive = false` hides unit from dropdowns
 - Unit remains in database for transaction history integrity
 - No FK constraint violations
 
 ### Safety Lock Detection
+
 ```java
 boolean safetyLockApplied = itemMaster.getCachedTotalQuantity() > 0;
 ```
 
 ### Cache Invalidation
+
 - `cached_total_quantity` remains unchanged (updated by batch triggers)
 - Base unit name updated in `unit_of_measure` field
 
 ## Testing Scenarios
 
 ### Success Cases
+
 1. Update item name, description, category (any stock level)
 2. Update min/max stock levels (any stock level)
 3. Rename unit with stock = 500
@@ -305,6 +342,7 @@ boolean safetyLockApplied = itemMaster.getCachedTotalQuantity() > 0;
 8. Add + rename + soft delete units simultaneously
 
 ### Error Cases
+
 1. Min stock >= Max stock (400 BAD REQUEST)
 2. Zero base units (400 BAD REQUEST)
 3. Multiple base units (400 BAD REQUEST)
@@ -316,6 +354,7 @@ boolean safetyLockApplied = itemMaster.getCachedTotalQuantity() > 0;
 9. Missing UPDATE_ITEMS permission (403 FORBIDDEN)
 
 ### RBAC Test
+
 1. ROLE_ADMIN: Full access
 2. ROLE_INVENTORY_MANAGER: Full access
 3. ROLE_DOCTOR without UPDATE_ITEMS: 403 FORBIDDEN
@@ -323,15 +362,18 @@ boolean safetyLockApplied = itemMaster.getCachedTotalQuantity() > 0;
 ## Performance Considerations
 
 ### Query Optimization
+
 - Uses `cached_total_quantity` for Safety Lock check (O(1))
 - Batch save for units with `saveAll()`
 - Single transaction for consistency
 
 ### Index Usage
+
 - `item_units.item_master_id` (foreign key index)
 - `item_units.is_active` (for active unit queries)
 
 ### Expected Response Times
+
 - Update without stock: < 100ms
 - Update with stock (Safety Lock check): < 150ms
 - Update with 10 units: < 200ms
@@ -339,24 +381,29 @@ boolean safetyLockApplied = itemMaster.getCachedTotalQuantity() > 0;
 ## Database Impact
 
 ### Tables Modified
+
 1. `item_masters`: itemName, description, categoryId, warehouseType, minStockLevel, maxStockLevel, isPrescriptionRequired, defaultShelfLifeDays, unitOfMeasure, updatedAt
 2. `item_units`: unitName, conversionRate, isBaseUnit, isActive, displayOrder, isDefaultImportUnit, isDefaultExportUnit, updatedAt
 
 ### Tables Read
+
 1. `item_masters`: Load existing item
 2. `item_units`: Load existing units for comparison
 3. `item_categories`: Validate categoryId
 
 ### Constraints
+
 - FK: `item_units.item_master_id` references `item_masters.item_master_id`
 - FK: `item_masters.category_id` references `item_categories.category_id`
 - Unique: `item_masters.item_code`
 
 ## Related APIs
+
 - API 6.8: List Item Masters (GET /api/v1/warehouse/items)
 - API 6.9: Create Item Master (POST /api/v1/warehouse/items)
 - API 6.4: Import Transaction (references item_units.unit_id)
 - API 6.5: Export Transaction (references item_units.unit_id)
 
 ## Version History
+
 - **v1.0** (2025-11-27): Initial release with Safety Lock mechanism and Soft Delete support

@@ -466,7 +466,8 @@ public class TransactionHistoryService {
                             + transaction.getApprovalStatus());
         }
 
-        // NOTE: approvedBy field left NULL - requires employee_id in JWT claims for proper implementation
+        // NOTE: approvedBy field left NULL - requires employee_id in JWT claims for
+        // proper implementation
         log.warn("Approving transaction {} without approvedBy - employee tracking not implemented", id);
 
         transaction.setApprovalStatus(TransactionStatus.APPROVED);
@@ -510,7 +511,8 @@ public class TransactionHistoryService {
                             + transaction.getApprovalStatus());
         }
 
-        // NOTE: rejectedBy field left NULL - requires employee_id in JWT claims for proper implementation
+        // NOTE: rejectedBy field left NULL - requires employee_id in JWT claims for
+        // proper implementation
         log.warn("Rejecting transaction {} without rejectedBy - employee tracking not implemented", id);
 
         transaction.setApprovalStatus(TransactionStatus.REJECTED);
@@ -546,7 +548,8 @@ public class TransactionHistoryService {
                             + transaction.getApprovalStatus());
         }
 
-        // NOTE: cancelledBy field left NULL - requires employee_id in JWT claims for proper implementation
+        // NOTE: cancelledBy field left NULL - requires employee_id in JWT claims for
+        // proper implementation
         log.warn("Cancelling transaction {} without cancelledBy - employee tracking not implemented", id);
 
         transaction.setApprovalStatus(TransactionStatus.CANCELLED);
