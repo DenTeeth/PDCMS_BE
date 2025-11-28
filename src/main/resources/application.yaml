@@ -11,24 +11,27 @@ spring:
     password: 123456
     driver-class-name: org.postgresql.Driver
 
-  # JPA Configuration
+  # JPA Configuration  
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update  # Hibernate creates tables (ENUMs created by seed data SQL)
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         "[format_sql]": true
     show-sql: false
-    defer-datasource-initialization: true
+    defer-datasource-initialization: false  # Run SQL BEFORE Hibernate to create ENUMs first
 
-  # SQL Init Configuration - Load seed data on startup
+  # SQL Init Configuration - The ONLY SQL file in the project
+  # Contains: ENUM types + Initial seed data (INSERT statements)
+  # ENUMs are created by this file, then Hibernate creates tables using those ENUMs
+  # Tables are created by Hibernate (ddl-auto: update)
   sql:
     init:
       mode: always
       data-locations: classpath:db/dental-clinic-seed-data.sql
       encoding: UTF-8
-      continue-on-error: false
+      continue-on-error: true  # Ignore "already exists" errors for ENUMs
 
   # ==============================
   # Mail Configuration (Email Verification & Password Reset)

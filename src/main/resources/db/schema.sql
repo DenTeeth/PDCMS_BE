@@ -1,12 +1,16 @@
 -- ============================================
--- DENTAL CLINIC MANAGEMENT SYSTEM - SCHEMA V23
--- Date: 2025-11-25
+-- DENTAL CLINIC MANAGEMENT SYSTEM - SCHEMA V24
+-- Date: 2025-11-28
 -- PostgreSQL Database Schema
 -- ============================================
--- NOTE: Hibernate auto-creates tables from @Entity classes
--- This file is for reference and manual database setup only
--- Updated to match Java entity definitions (SERIAL/INTEGER IDs)
+-- This is the single source of truth for database schema
+-- Hibernate DDL is disabled (ddl-auto: none)
+-- Schema recreated on every application start
 -- ============================================
+-- CHANGES IN V24 (API 6.11 - Get Item Units):
+--   - Added transaction_date column to storage_transactions
+--   - Added status column to storage_transactions
+--   - VIEW_ITEMS permission granted to INVENTORY_MANAGER
 -- CHANGES IN V23 (API 6.7 - Item Masters List):
 -- - Added cached_total_quantity, cached_last_import_date, cached_last_updated to item_masters
 -- - Purpose: Performance optimization - avoid JOIN/SUM on item_batches for every query
@@ -35,6 +39,26 @@
 -- ============================================
 -- ENUM TYPES (Must be created before tables)
 -- ============================================
+
+-- Drop all existing types to ensure clean recreation
+DROP TYPE IF EXISTS gender CASCADE;
+DROP TYPE IF EXISTS employment_type CASCADE;
+DROP TYPE IF EXISTS account_status CASCADE;
+DROP TYPE IF EXISTS appointment_status_enum CASCADE;
+DROP TYPE IF EXISTS appointment_participant_role_enum CASCADE;
+DROP TYPE IF EXISTS shift_status CASCADE;
+DROP TYPE IF EXISTS request_status CASCADE;
+DROP TYPE IF EXISTS work_shift_category CASCADE;
+DROP TYPE IF EXISTS shift_source CASCADE;
+DROP TYPE IF EXISTS day_of_week CASCADE;
+DROP TYPE IF EXISTS holiday_type CASCADE;
+DROP TYPE IF EXISTS time_off_status CASCADE;
+DROP TYPE IF EXISTS approval_status CASCADE;
+DROP TYPE IF EXISTS appointment_action_type CASCADE;
+DROP TYPE IF EXISTS appointment_reason_code CASCADE;
+DROP TYPE IF EXISTS dependency_rule_type CASCADE;
+DROP TYPE IF EXISTS payment_status CASCADE;
+DROP TYPE IF EXISTS transaction_status CASCADE;
 
 CREATE TYPE gender AS ENUM ('MALE', 'FEMALE', 'OTHER');
 CREATE TYPE employment_type AS ENUM ('FULL_TIME', 'PART_TIME_FIXED', 'PART_TIME_FLEX');
@@ -432,11 +456,13 @@ CREATE TABLE storage_transactions (
     storage_transaction_id SERIAL PRIMARY KEY,
     transaction_code VARCHAR(50) UNIQUE NOT NULL,
     type VARCHAR(20) NOT NULL,
+    transaction_date TIMESTAMP NOT NULL,
     invoice_number VARCHAR(100),
     total_value DECIMAL(15,2),
     created_by_id INTEGER NOT NULL,
     supplier_id INTEGER,
     description TEXT,
+    status VARCHAR(20) DEFAULT 'DRAFT',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP,
 

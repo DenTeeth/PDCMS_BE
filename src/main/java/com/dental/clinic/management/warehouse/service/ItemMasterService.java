@@ -6,6 +6,7 @@ import com.dental.clinic.management.warehouse.dto.request.CreateItemMasterReques
 import com.dental.clinic.management.warehouse.dto.request.ItemFilterRequest;
 import com.dental.clinic.management.warehouse.dto.request.UpdateItemMasterRequest;
 import com.dental.clinic.management.warehouse.dto.response.CreateItemMasterResponse;
+import com.dental.clinic.management.warehouse.dto.response.GetItemUnitsResponse;
 import com.dental.clinic.management.warehouse.dto.response.ItemMasterListDto;
 import com.dental.clinic.management.warehouse.dto.response.ItemMasterPageResponse;
 import com.dental.clinic.management.warehouse.dto.response.UpdateItemMasterResponse;
@@ -445,5 +446,106 @@ public class ItemMasterService {
                                 response.getItemMasterId(), response.getItemCode(), safetyLockApplied);
 
                 return response;
+        }
+
+        @Transactional(readOnly = true)
+        public GetItemUnitsResponse getItemUnits(Long itemMasterId, String status) {
+                log.info("Getting units for item master ID: {} with status: {}", itemMasterId, status);
+
+                // 1. Validate and load item master
+                ItemMaster itemMaster = itemMasterRepository.findById(itemMasterId)
+                                .orElseThrow(() -> {
+                                        log.error("Item master not found with ID: {}", itemMasterId);
+                                        return new ResourceNotFoundException("ITEM_NOT_FOUND", 
+                                                "Item master not found with ID: " + itemMasterId);
+                                });
+
+                // 2. Check if item is inactive (return 410 GONE)
+                if (!itemMaster.getIsActive()) {
+                        log.warn("Attempted to get units for inactive item: {}", itemMaster.getItemCode());
+                        throw new ResponseStatusException(
+                                        HttpStatus.GONE,
+                                        "Item '" + itemMaster.getItemCode() + "' is no longer active");
+                }
+
+                // 3. Get units based on status filter
+                List<ItemUnit> units;
+                if ("inactive".equalsIgnoreCase(status)) {
+                        units = itemUnitRepository.findByItemMaster_ItemMasterIdAndIsActiveFalseOrderByDisplayOrderAsc(
+                                        itemMasterId);
+                        log.debug("Found {} inactive units", units.size());
+                } else if ("all".equalsIgnoreCase(status)) {
+                        units = itemUnitRepository.findByItemMaster_ItemMasterIdOrderByDisplayOrderAsc(itemMasterId);
+                        log.debug("Found {} total units (active + inactive)", units.size());
+                } else {
+                        // Default: active only
+                        units = itemUnitRepository.findByItemMaster_ItemMasterIdAndIsActiveTrueOrderByDisplayOrderAsc(
+                                        itemMasterId);
+                        log.debug("Found {} active units", units.size());
+                }
+
+                if (units.isEmpty()) {
+                        log.warn("No units configured for item master ID: {}", itemMasterId);
+                        throw new ResponseStatusException(
+                                        HttpStatus.NOT_FOUND,
+                                        "No units configured for this item");
+                }
+
+                // 4. Find base unit
+                ItemUnit baseUnit = units.stream()
+                                .filter(ItemUnit::getIsBaseUnit)
+                                .findFirst()
+                                .orElseThrow(() -> {
+                                        log.error("Base unit not found for item master ID: {}", itemMasterId);
+                                        return new ResponseStatusException(
+                                                        HttpStatus.INTERNAL_SERVER_ERROR,
+                                                        "Base unit not configured properly");
+                                });
+
+                // 5. Build response
+                GetItemUnitsResponse.ItemMasterInfo itemMasterInfo = GetItemUnitsResponse.ItemMasterInfo.builder()
+                                .itemMasterId(itemMaster.getItemMasterId())
+                                .itemCode(itemMaster.getItemCode())
+                                .itemName(itemMaster.getItemName())
+                                .isActive(itemMaster.getIsActive())
+                                .build();
+
+                GetItemUnitsResponse.BaseUnitInfo baseUnitInfo = GetItemUnitsResponse.BaseUnitInfo.builder()
+                                .unitId(baseUnit.getUnitId())
+                                .unitName(baseUnit.getUnitName())
+                                .build();
+
+                List<GetItemUnitsResponse.UnitInfo> unitInfos = units.stream()
+                                .map(unit -> {
+                                        String description = generateUnitDescription(unit, baseUnit.getUnitName());
+                                        return GetItemUnitsResponse.UnitInfo.builder()
+                                                        .unitId(unit.getUnitId())
+                                                        .unitName(unit.getUnitName())
+                                                        .conversionRate(unit.getConversionRate())
+                                                        .isBaseUnit(unit.getIsBaseUnit())
+                                                        .displayOrder(unit.getDisplayOrder())
+                                                        .isActive(unit.getIsActive())
+                                                        .description(description)
+                                                        .build();
+                                })
+                                .collect(Collectors.toList());
+
+                log.info("Successfully retrieved {} units for item: {}", unitInfos.size(), itemMaster.getItemCode());
+
+                return GetItemUnitsResponse.builder()
+                                .itemMaster(itemMasterInfo)
+                                .baseUnit(baseUnitInfo)
+                                .units(unitInfos)
+                                .build();
+        }
+
+        private String generateUnitDescription(ItemUnit unit, String baseUnitName) {
+                if (unit.getIsBaseUnit()) {
+                        return "Don vi co so";
+                }
+                return String.format("1 %s = %d %s",
+                                unit.getUnitName(),
+                                unit.getConversionRate(),
+                                baseUnitName);
         }
 }

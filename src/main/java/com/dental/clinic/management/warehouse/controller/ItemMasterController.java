@@ -7,12 +7,15 @@ import com.dental.clinic.management.warehouse.dto.request.CreateItemMasterReques
 import com.dental.clinic.management.warehouse.dto.request.ItemFilterRequest;
 import com.dental.clinic.management.warehouse.dto.request.UpdateItemMasterRequest;
 import com.dental.clinic.management.warehouse.dto.response.CreateItemMasterResponse;
+import com.dental.clinic.management.warehouse.dto.response.GetItemUnitsResponse;
 import com.dental.clinic.management.warehouse.dto.response.ItemMasterPageResponse;
 import com.dental.clinic.management.warehouse.dto.response.UpdateItemMasterResponse;
 import com.dental.clinic.management.warehouse.service.ItemMasterService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -37,7 +40,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/warehouse/items")
 @RequiredArgsConstructor
 @Slf4j
-@Tag(name = "Item Master Management", description = "API 6.8, 6.9 & 6.10 - Item Master List, Create & Update")
+@Tag(name = "Item Master Management", description = "API 6.8, 6.9, 6.10 & 6.11 - Item Master List, Create, Update & Get Units")
 public class ItemMasterController {
 
         private final ItemMasterService itemMasterService;
@@ -195,5 +198,56 @@ public class ItemMasterController {
                                 response.getItemMasterId(), response.getItemCode(), response.getSafetyLockApplied());
 
                 return new ResponseEntity<>(response, HttpStatus.OK);
+        }
+
+        @GetMapping("/{itemMasterId}/units")
+        @ApiMessage("Item units retrieved successfully")
+        @PreAuthorize("hasRole('" + ADMIN + "') or hasAnyAuthority('VIEW_ITEMS', 'VIEW_WAREHOUSE', 'MANAGE_WAREHOUSE')")
+        @Operation(summary = "Get Item Units", description = """
+                        API 6.11 - Get list of units for an item master (for dropdown selection)
+
+                        This API provides unit hierarchy for:
+                        - Import/Export transaction forms (unit selection dropdown)
+                        - Prescription forms (dosage unit selection)
+                        - Transaction history display (show historical units including inactive ones)
+
+                        **Query Parameters:**
+                        - status: Filter units by status
+                          - active (default): Only active units
+                          - inactive: Only inactive (soft-deleted) units
+                          - all: All units (for transaction history)
+
+                        **Business Logic:**
+                        - Returns item master metadata for context
+                        - Returns base unit for calculation reference
+                        - Auto-generates description (e.g., "1 Hop = 100 Vien")
+                        - Sorted by displayOrder (large units first for import, small units visible for usage)
+                        - Returns 410 GONE if item master is inactive
+                        - Returns 404 NOT FOUND if item master does not exist
+
+                        **Authorization:**
+                        - Requires one of: ADMIN, VIEW_ITEMS, VIEW_WAREHOUSE, MANAGE_WAREHOUSE
+                        - Doctor, Nurse, Warehouse staff all need this for their respective workflows
+
+                        **Response:**
+                        - itemMaster: Basic item information
+                        - baseUnit: Base unit for conversion reference
+                        - units: List of units with auto-generated descriptions
+                        """)
+        public ResponseEntity<GetItemUnitsResponse> getItemUnits(
+                        @Parameter(description = "Item Master ID", required = true, example = "24")
+                        @PathVariable @Min(1) Long itemMasterId,
+                        
+                        @Parameter(description = "Unit status filter: active (default), inactive, or all", example = "active")
+                        @RequestParam(defaultValue = "active") String status) {
+
+                log.info("GET /api/v1/warehouse/items/{}/units?status={}", itemMasterId, status);
+
+                GetItemUnitsResponse response = itemMasterService.getItemUnits(itemMasterId, status);
+
+                log.info("Retrieved {} units for item master ID: {}", 
+                                response.getUnits().size(), itemMasterId);
+
+                return ResponseEntity.ok(response);
         }
 }

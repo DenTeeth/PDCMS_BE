@@ -22,12 +22,8 @@ public class ItemUnitController {
 
     private final ItemUnitService itemUnitService;
 
-    @GetMapping("/{itemMasterId}/units")
-    @Operation(summary = "Get all units for an item", description = "Returns unit hierarchy ordered by display order (Hộp → Vỉ → Viên)")
-    public ResponseEntity<List<ItemUnitResponse>> getItemUnits(@PathVariable Long itemMasterId) {
-        List<ItemUnitResponse> units = itemUnitService.getUnitsByItemId(itemMasterId);
-        return ResponseEntity.ok(units);
-    }
+    // API 6.11 (GET /items/{id}/units) has been moved to ItemMasterController
+    // to comply with the specification and avoid duplicate mappings
 
     @GetMapping("/{itemMasterId}/units/base")
     @Operation(summary = "Get base unit for an item", description = "Returns the smallest unit (e.g., 'Viên' for Amoxicillin)")
