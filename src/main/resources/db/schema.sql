@@ -450,6 +450,12 @@ CREATE TABLE storage_transactions (
     approval_status transaction_status,
     approved_by_id INTEGER,
     approved_at TIMESTAMP,
+    rejected_by_id INTEGER,
+    rejected_at TIMESTAMP,
+    rejection_reason TEXT,
+    cancelled_by_id INTEGER,
+    cancelled_at TIMESTAMP,
+    cancellation_reason TEXT,
 
     -- V22: Appointment linking field (for Doctors)
     related_appointment_id INTEGER,
@@ -459,6 +465,10 @@ CREATE TABLE storage_transactions (
     CONSTRAINT fk_transaction_supplier FOREIGN KEY (supplier_id)
         REFERENCES suppliers(supplier_id) ON DELETE SET NULL,
     CONSTRAINT fk_transaction_approved_by FOREIGN KEY (approved_by_id)
+        REFERENCES employees(employee_id) ON DELETE SET NULL,
+    CONSTRAINT fk_transaction_rejected_by FOREIGN KEY (rejected_by_id)
+        REFERENCES employees(employee_id) ON DELETE SET NULL,
+    CONSTRAINT fk_transaction_cancelled_by FOREIGN KEY (cancelled_by_id)
         REFERENCES employees(employee_id) ON DELETE SET NULL,
     CONSTRAINT fk_transaction_appointment FOREIGN KEY (related_appointment_id)
         REFERENCES appointments(appointment_id) ON DELETE SET NULL
@@ -488,7 +498,7 @@ CREATE TABLE item_categories (
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP,
-    
+
     CONSTRAINT fk_item_category_parent FOREIGN KEY (parent_category_id)
         REFERENCES item_categories(category_id) ON DELETE SET NULL
 );
@@ -517,7 +527,7 @@ CREATE TABLE item_masters (
     cached_last_import_date DATE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP,
-    
+
     CONSTRAINT fk_item_master_category FOREIGN KEY (category_id)
         REFERENCES item_categories(category_id) ON DELETE SET NULL,
     CONSTRAINT chk_stock_levels CHECK (min_stock_level < max_stock_level),
@@ -547,7 +557,7 @@ CREATE TABLE item_units (
     is_default_export_unit BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP,
-    
+
     CONSTRAINT fk_item_unit_master FOREIGN KEY (item_master_id)
         REFERENCES item_masters(item_master_id) ON DELETE CASCADE,
     CONSTRAINT chk_conversion_rate CHECK (conversion_rate >= 1),

@@ -24,7 +24,8 @@ import java.time.LocalDate;
  * ✨ API 6.6 & 6.7: Transaction History Controller
  *
  * Features:
- * - API 6.6: List with comprehensive filtering (type, status, payment, date, supplier, appointment)
+ * - API 6.6: List with comprehensive filtering (type, status, payment, date,
+ * supplier, appointment)
  * - API 6.7: Detail view with full item breakdown and batch information
  * - RBAC-aware data masking (VIEW_COST permission)
  * - Pagination & sorting
@@ -109,7 +110,7 @@ public class TransactionHistoryController {
 
                         @Parameter(description = "Hướng sắp xếp: asc, desc") @RequestParam(defaultValue = "desc") String sortDir) {
 
-                log.info("📋 GET /api/v1/warehouse/transactions - Page: {}, Size: {}, Type: {}, Status: {}",
+                log.info("GET /api/v1/warehouse/transactions - Page: {}, Size: {}, Type: {}, Status: {}",
                                 page, size, type, status);
 
                 TransactionHistoryRequest request = TransactionHistoryRequest.builder()
@@ -130,7 +131,7 @@ public class TransactionHistoryController {
 
                 TransactionHistoryResponse response = transactionHistoryService.getTransactionHistory(request);
 
-                log.info("✅ Transaction history retrieved - Total: {}, Page: {}/{}",
+                log.info("Transaction history retrieved - Total: {}, Page: {}/{}",
                                 response.getMeta().getTotalElements(),
                                 response.getMeta().getPage() + 1,
                                 response.getMeta().getTotalPages());
@@ -176,11 +177,108 @@ public class TransactionHistoryController {
         public ResponseEntity<?> getTransactionDetail(
                         @Parameter(description = "ID của phiếu giao dịch") @PathVariable Long id) {
 
-                log.info("📋 GET /api/v1/warehouse/transactions/{} - Get transaction detail", id);
+                log.info("GET /api/v1/warehouse/transactions/{} - Get transaction detail", id);
 
                 Object response = transactionHistoryService.getTransactionDetail(id);
 
-                log.info("✅ Transaction detail retrieved - ID: {}", id);
+                log.info("Transaction detail retrieved - ID: {}", id);
+
+                return ResponseEntity.ok(response);
+        }
+
+        /**
+         * API 6.6.1: Approve Transaction
+         */
+        @PostMapping("/transactions/{id}/approve")
+        @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('APPROVE_TRANSACTION')")
+        @Operation(summary = "Duyệt phiếu nhập/xuất kho", description = """
+                        Duyệt phiếu giao dịch kho. Chỉ có thể duyệt khi status = PENDING_APPROVAL.
+
+                        **Business Logic:**
+                        - Chỉ duyệt được khi approval_status = PENDING_APPROVAL
+                        - Cập nhật approved_by, approved_at
+                        - Thay đổi status thành APPROVED
+                        - Ghi lại notes nếu có
+
+                        **Permissions:**
+                        - APPROVE_WAREHOUSE: Quyền duyệt phiếu kho
+                        """)
+        @ApiMessage("Duyệt phiếu thành công")
+        public ResponseEntity<?> approveTransaction(
+                        @Parameter(description = "ID của phiếu giao dịch") @PathVariable Long id,
+                        @RequestBody(required = false) com.dental.clinic.management.warehouse.dto.request.ApproveTransactionRequest request) {
+
+                log.info("POST /api/v1/warehouse/transactions/{}/approve - Approve transaction", id);
+
+                String notes = request != null ? request.getNotes() : null;
+                Object response = transactionHistoryService.approveTransaction(id, notes);
+
+                log.info("Transaction approved - ID: {}", id);
+
+                return ResponseEntity.ok(response);
+        }
+
+        /**
+         * API 6.6.2: Reject Transaction
+         */
+        @PostMapping("/transactions/{id}/reject")
+        @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('APPROVE_TRANSACTION')")
+        @Operation(summary = "Từ chối phiếu nhập/xuất kho", description = """
+                        Từ chối phiếu giao dịch kho. Chỉ có thể từ chối khi status = PENDING_APPROVAL.
+
+                        **Business Logic:**
+                        - Chỉ từ chối được khi approval_status = PENDING_APPROVAL
+                        - Bắt buộc phải có rejection_reason
+                        - Cập nhật rejected_by, rejected_at, rejection_reason
+                        - Thay đổi status thành REJECTED
+                        - Không cập nhật tồn kho
+
+                        **Permissions:**
+                        - APPROVE_WAREHOUSE: Quyền duyệt/từ chối phiếu kho
+                        """)
+        @ApiMessage("Từ chối phiếu thành công")
+        public ResponseEntity<?> rejectTransaction(
+                        @Parameter(description = "ID của phiếu giao dịch") @PathVariable Long id,
+                        @RequestBody @jakarta.validation.Valid com.dental.clinic.management.warehouse.dto.request.RejectTransactionRequest request) {
+
+                log.info("POST /api/v1/warehouse/transactions/{}/reject - Reject transaction", id);
+
+                Object response = transactionHistoryService.rejectTransaction(id, request.getRejectionReason());
+
+                log.info("Transaction rejected - ID: {}", id);
+
+                return ResponseEntity.ok(response);
+        }
+
+        /**
+         * API 6.6.3: Cancel Transaction
+         */
+        @PostMapping("/transactions/{id}/cancel")
+        @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('UPDATE_WAREHOUSE') or hasAuthority('CANCEL_WAREHOUSE')")
+        @Operation(summary = "Hủy phiếu nhập/xuất kho", description = """
+                        Hủy phiếu giao dịch kho. Chỉ có thể hủy khi status = DRAFT hoặc PENDING_APPROVAL.
+
+                        **Business Logic:**
+                        - Chỉ hủy được khi approval_status = DRAFT hoặc PENDING_APPROVAL
+                        - Không thể hủy phiếu đã APPROVED
+                        - Cập nhật cancelled_by, cancelled_at, cancellation_reason (optional)
+                        - Thay đổi status thành CANCELLED
+                        - Không cập nhật tồn kho
+
+                        **Permissions:**
+                        - UPDATE_WAREHOUSE hoặc CANCEL_WAREHOUSE: Quyền hủy phiếu kho
+                        """)
+        @ApiMessage("Hủy phiếu thành công")
+        public ResponseEntity<?> cancelTransaction(
+                        @Parameter(description = "ID của phiếu giao dịch") @PathVariable Long id,
+                        @RequestBody(required = false) com.dental.clinic.management.warehouse.dto.request.CancelTransactionRequest request) {
+
+                log.info("POST /api/v1/warehouse/transactions/{}/cancel - Cancel transaction", id);
+
+                String reason = request != null ? request.getCancellationReason() : null;
+                Object response = transactionHistoryService.cancelTransaction(id, reason);
+
+                log.info("Transaction cancelled - ID: {}", id);
 
                 return ResponseEntity.ok(response);
         }

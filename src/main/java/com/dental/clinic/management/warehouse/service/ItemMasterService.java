@@ -46,46 +46,42 @@ public class ItemMasterService {
         if (itemMasterRepository.findByItemCode(request.getItemCode()).isPresent()) {
             log.warn("Item code already exists: {}", request.getItemCode());
             throw new ResponseStatusException(
-                HttpStatus.CONFLICT,
-                "Item code '" + request.getItemCode() + "' already exists"
-            );
+                    HttpStatus.CONFLICT,
+                    "Item code '" + request.getItemCode() + "' already exists");
         }
 
         // 2. Validate min < max stock level
         if (request.getMinStockLevel() >= request.getMaxStockLevel()) {
-            log.warn("Invalid stock levels - min: {}, max: {}", 
-                request.getMinStockLevel(), request.getMaxStockLevel());
+            log.warn("Invalid stock levels - min: {}, max: {}",
+                    request.getMinStockLevel(), request.getMaxStockLevel());
             throw new ResponseStatusException(
-                HttpStatus.BAD_REQUEST,
-                "Min stock level must be less than max stock level"
-            );
+                    HttpStatus.BAD_REQUEST,
+                    "Min stock level must be less than max stock level");
         }
 
         // 3. Validate exactly one base unit
         long baseUnitCount = request.getUnits().stream()
-            .filter(CreateItemMasterRequest.UnitRequest::getIsBaseUnit)
-            .count();
-        
+                .filter(CreateItemMasterRequest.UnitRequest::getIsBaseUnit)
+                .count();
+
         if (baseUnitCount != 1) {
             log.warn("Invalid base unit count: {}", baseUnitCount);
             throw new ResponseStatusException(
-                HttpStatus.BAD_REQUEST,
-                "Exactly one base unit is required"
-            );
+                    HttpStatus.BAD_REQUEST,
+                    "Exactly one base unit is required");
         }
 
         // 4. Validate base unit has conversion rate = 1
         CreateItemMasterRequest.UnitRequest baseUnitRequest = request.getUnits().stream()
-            .filter(CreateItemMasterRequest.UnitRequest::getIsBaseUnit)
-            .findFirst()
-            .orElseThrow();
+                .filter(CreateItemMasterRequest.UnitRequest::getIsBaseUnit)
+                .findFirst()
+                .orElseThrow();
 
         if (baseUnitRequest.getConversionRate() != 1) {
             log.warn("Base unit must have conversion rate = 1");
             throw new ResponseStatusException(
-                HttpStatus.BAD_REQUEST,
-                "Base unit must have conversion rate = 1"
-            );
+                    HttpStatus.BAD_REQUEST,
+                    "Base unit must have conversion rate = 1");
         }
 
         // 5. Validate unit name uniqueness
@@ -94,41 +90,39 @@ public class ItemMasterService {
             if (!unitNames.add(unit.getUnitName().toLowerCase())) {
                 log.warn("Duplicate unit name: {}", unit.getUnitName());
                 throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Unit name '" + unit.getUnitName() + "' is duplicated"
-                );
+                        HttpStatus.BAD_REQUEST,
+                        "Unit name '" + unit.getUnitName() + "' is duplicated");
             }
         }
 
         // 6. Validate category exists
         ItemCategory category = itemCategoryRepository.findById(request.getCategoryId())
-            .orElseThrow(() -> {
-                log.warn("Category not found: {}", request.getCategoryId());
-                return new ResourceNotFoundException(
-                    "ITEM_CATEGORY_NOT_FOUND", 
-                    "Item category with ID " + request.getCategoryId() + " not found"
-                );
-            });
+                .orElseThrow(() -> {
+                    log.warn("Category not found: {}", request.getCategoryId());
+                    return new ResourceNotFoundException(
+                            "ITEM_CATEGORY_NOT_FOUND",
+                            "Item category with ID " + request.getCategoryId() + " not found");
+                });
 
         // 7. Create ItemMaster entity
         ItemMaster itemMaster = ItemMaster.builder()
-            .itemCode(request.getItemCode())
-            .itemName(request.getItemName())
-            .description(request.getDescription())
-            .category(category)
-            .unitOfMeasure(baseUnitRequest.getUnitName())
-            .warehouseType(request.getWarehouseType())
-            .minStockLevel(request.getMinStockLevel())
-            .maxStockLevel(request.getMaxStockLevel())
-            .currentMarketPrice(java.math.BigDecimal.ZERO)
-            .isPrescriptionRequired(request.getIsPrescriptionRequired() != null ? 
-                request.getIsPrescriptionRequired() : false)
-            .defaultShelfLifeDays(request.getDefaultShelfLifeDays())
-            .isActive(true)
-            .cachedTotalQuantity(0)
-            .createdAt(LocalDateTime.now())
-            .updatedAt(LocalDateTime.now())
-            .build();
+                .itemCode(request.getItemCode())
+                .itemName(request.getItemName())
+                .description(request.getDescription())
+                .category(category)
+                .unitOfMeasure(baseUnitRequest.getUnitName())
+                .warehouseType(request.getWarehouseType())
+                .minStockLevel(request.getMinStockLevel())
+                .maxStockLevel(request.getMaxStockLevel())
+                .currentMarketPrice(java.math.BigDecimal.ZERO)
+                .isPrescriptionRequired(
+                        request.getIsPrescriptionRequired() != null ? request.getIsPrescriptionRequired() : false)
+                .defaultShelfLifeDays(request.getDefaultShelfLifeDays())
+                .isActive(true)
+                .cachedTotalQuantity(0)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
 
         ItemMaster savedItemMaster = itemMasterRepository.save(itemMaster);
         log.info("Item master saved with ID: {}", savedItemMaster.getItemMasterId());
@@ -137,18 +131,18 @@ public class ItemMasterService {
         List<ItemUnit> units = new ArrayList<>();
         for (CreateItemMasterRequest.UnitRequest unitRequest : request.getUnits()) {
             ItemUnit unit = ItemUnit.builder()
-                .itemMaster(savedItemMaster)
-                .unitName(unitRequest.getUnitName())
-                .conversionRate(unitRequest.getConversionRate())
-                .isBaseUnit(unitRequest.getIsBaseUnit())
-                .displayOrder(unitRequest.getDisplayOrder())
-                .isDefaultImportUnit(unitRequest.getIsDefaultImportUnit() != null ? 
-                    unitRequest.getIsDefaultImportUnit() : false)
-                .isDefaultExportUnit(unitRequest.getIsDefaultExportUnit() != null ? 
-                    unitRequest.getIsDefaultExportUnit() : false)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
+                    .itemMaster(savedItemMaster)
+                    .unitName(unitRequest.getUnitName())
+                    .conversionRate(unitRequest.getConversionRate())
+                    .isBaseUnit(unitRequest.getIsBaseUnit())
+                    .displayOrder(unitRequest.getDisplayOrder())
+                    .isDefaultImportUnit(
+                            unitRequest.getIsDefaultImportUnit() != null ? unitRequest.getIsDefaultImportUnit() : false)
+                    .isDefaultExportUnit(
+                            unitRequest.getIsDefaultExportUnit() != null ? unitRequest.getIsDefaultExportUnit() : false)
+                    .createdAt(LocalDateTime.now())
+                    .updatedAt(LocalDateTime.now())
+                    .build();
             units.add(unit);
         }
 
@@ -157,18 +151,18 @@ public class ItemMasterService {
 
         // 9. Build response
         CreateItemMasterResponse response = CreateItemMasterResponse.builder()
-            .itemMasterId(savedItemMaster.getItemMasterId())
-            .itemCode(savedItemMaster.getItemCode())
-            .itemName(savedItemMaster.getItemName())
-            .baseUnitName(baseUnitRequest.getUnitName())
-            .totalQuantity(0)
-            .isActive(true)
-            .createdAt(savedItemMaster.getCreatedAt())
-            .createdBy("SYSTEM")
-            .build();
+                .itemMasterId(savedItemMaster.getItemMasterId())
+                .itemCode(savedItemMaster.getItemCode())
+                .itemName(savedItemMaster.getItemName())
+                .baseUnitName(baseUnitRequest.getUnitName())
+                .totalQuantity(0)
+                .isActive(true)
+                .createdAt(savedItemMaster.getCreatedAt())
+                .createdBy("SYSTEM")
+                .build();
 
-        log.info("Item master created successfully - ID: {}, Code: {}", 
-            response.getItemMasterId(), response.getItemCode());
+        log.info("Item master created successfully - ID: {}, Code: {}",
+                response.getItemMasterId(), response.getItemCode());
 
         return response;
     }

@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -55,7 +56,7 @@ public class TransactionHistoryService {
      */
     @Transactional(readOnly = true)
     public TransactionHistoryResponse getTransactionHistory(TransactionHistoryRequest request) {
-        log.info("📋 Fetching transaction history - Type: {}, Status: {}, Page: {}/{}",
+        log.info("Fetching transaction history - Type: {}, Status: {}, Page: {}/{}",
                 request.getType(), request.getStatus(), request.getPage(), request.getSize());
 
         // 1. Validate request
@@ -63,7 +64,7 @@ public class TransactionHistoryService {
 
         // 2. Check permissions
         boolean hasViewCostPermission = hasPermission("VIEW_COST");
-        log.debug("🔐 Permission check - VIEW_COST: {}", hasViewCostPermission);
+        log.debug("Permission check - VIEW_COST: {}", hasViewCostPermission);
 
         // 3. Build dynamic query specification
         Specification<StorageTransaction> spec = TransactionHistorySpecification.buildSpecification(request);
@@ -238,13 +239,13 @@ public class TransactionHistoryService {
 
     /**
      * Get transaction detail by ID (API 6.7)
-     * 
+     *
      * @param id Transaction ID
      * @return ImportTransactionResponse or ExportTransactionResponse based on type
      */
     @Transactional(readOnly = true)
     public Object getTransactionDetail(Long id) {
-        log.info("📋 Fetching transaction detail - ID: {}", id);
+        log.info("Fetching transaction detail - ID: {}", id);
 
         // 1. Find transaction
         StorageTransaction transaction = transactionRepository.findById(id)
@@ -254,12 +255,12 @@ public class TransactionHistoryService {
 
         // 2. Check permissions
         boolean hasViewCostPermission = hasPermission("VIEW_COST");
-        log.debug("🔐 Permission check - VIEW_COST: {}", hasViewCostPermission);
+        log.debug("Permission check - VIEW_COST: {}", hasViewCostPermission);
 
         // 3. Map to appropriate response based on transaction type
         Object response = mapToDetailResponse(transaction, hasViewCostPermission);
 
-        log.info("✅ Transaction detail fetched - Type: {}, Code: {}", 
+        log.info("Transaction detail fetched - Type: {}, Code: {}",
                 transaction.getTransactionType(), transaction.getTransactionCode());
 
         return response;
@@ -273,7 +274,7 @@ public class TransactionHistoryService {
         if (tx.getTransactionType() == TransactionType.IMPORT) {
             return mapToImportResponse(tx, hasViewCostPermission);
         }
-        
+
         // Export transaction
         if (tx.getTransactionType() == TransactionType.EXPORT) {
             return mapToExportResponse(tx, hasViewCostPermission);
@@ -301,53 +302,60 @@ public class TransactionHistoryService {
      */
     private com.dental.clinic.management.warehouse.dto.response.ImportTransactionResponse mapToImportResponse(
             StorageTransaction tx, boolean hasViewCostPermission) {
-        
+
         // Map items
-        List<com.dental.clinic.management.warehouse.dto.response.ImportTransactionResponse.ImportItemResponse> items = 
-                tx.getItems().stream()
-                        .map(item -> {
-                            com.dental.clinic.management.warehouse.dto.response.ImportTransactionResponse.ImportItemResponse.ImportItemResponseBuilder builder =
-                                    com.dental.clinic.management.warehouse.dto.response.ImportTransactionResponse.ImportItemResponse.builder()
-                                            .itemCode(item.getItemCode())
-                                            .itemName(item.getBatch() != null && item.getBatch().getItemMaster() != null ? 
-                                                    item.getBatch().getItemMaster().getItemName() : "N/A")
-                                            .batchId(item.getBatch() != null ? item.getBatch().getBatchId() : null)
-                                            .batchStatus("EXISTING")
-                                            .lotNumber(item.getBatch() != null ? item.getBatch().getLotNumber() : null)
-                                            .expiryDate(item.getBatch() != null ? item.getBatch().getExpiryDate() : null)
-                                            .quantityChange(item.getQuantityChange())
-                                            .unitName(item.getUnit() != null ? item.getUnit().getUnitName() : "N/A")
-                                            .binLocation(item.getBatch() != null ? item.getBatch().getBinLocation() : null)
-                                            .currentStock(item.getBatch() != null ? item.getBatch().getQuantityOnHand() : 0);
+        List<com.dental.clinic.management.warehouse.dto.response.ImportTransactionResponse.ImportItemResponse> items = tx
+                .getItems().stream()
+                .map(item -> {
+                    com.dental.clinic.management.warehouse.dto.response.ImportTransactionResponse.ImportItemResponse.ImportItemResponseBuilder builder = com.dental.clinic.management.warehouse.dto.response.ImportTransactionResponse.ImportItemResponse
+                            .builder()
+                            .itemCode(item.getItemCode())
+                            .itemName(item.getBatch() != null && item.getBatch().getItemMaster() != null
+                                    ? item.getBatch().getItemMaster().getItemName()
+                                    : "N/A")
+                            .batchId(item.getBatch() != null ? item.getBatch().getBatchId() : null)
+                            .batchStatus("EXISTING")
+                            .lotNumber(item.getBatch() != null ? item.getBatch().getLotNumber() : null)
+                            .expiryDate(item.getBatch() != null ? item.getBatch().getExpiryDate() : null)
+                            .quantityChange(item.getQuantityChange())
+                            .unitName(item.getUnit() != null ? item.getUnit().getUnitName() : "N/A")
+                            .binLocation(item.getBatch() != null ? item.getBatch().getBinLocation() : null)
+                            .currentStock(item.getBatch() != null ? item.getBatch().getQuantityOnHand() : 0);
 
-                            // Add cost info if user has permission
-                            if (hasViewCostPermission) {
-                                builder.purchasePrice(item.getPrice())
-                                        .totalLineValue(item.getTotalLineValue());
-                            }
+                    // Add cost info if user has permission
+                    if (hasViewCostPermission) {
+                        builder.purchasePrice(item.getPrice())
+                                .totalLineValue(item.getTotalLineValue());
+                    }
 
-                            return builder.build();
-                        })
-                        .collect(Collectors.toList());
+                    return builder.build();
+                })
+                .collect(Collectors.toList());
 
         // Build response
-        com.dental.clinic.management.warehouse.dto.response.ImportTransactionResponse.ImportTransactionResponseBuilder builder =
-                com.dental.clinic.management.warehouse.dto.response.ImportTransactionResponse.builder()
-                        .transactionId(tx.getTransactionId())
-                        .transactionCode(tx.getTransactionCode())
-                        .transactionDate(tx.getTransactionDate())
-                        .supplierName(tx.getSupplier() != null ? tx.getSupplier().getSupplierName() : null)
-                        .invoiceNumber(tx.getInvoiceNumber())
-                        .status(tx.getApprovalStatus() != null ? tx.getApprovalStatus().toString() : "UNKNOWN")
-                        .createdBy(tx.getCreatedBy() != null ? tx.getCreatedBy().getFullName() : null)
-                        .createdAt(tx.getCreatedAt())
-                        .totalItems(items.size())
-                        .items(items)
-                        .warnings(List.of()); // No warnings for view operation
+        com.dental.clinic.management.warehouse.dto.response.ImportTransactionResponse.ImportTransactionResponseBuilder builder = com.dental.clinic.management.warehouse.dto.response.ImportTransactionResponse
+                .builder()
+                .transactionId(tx.getTransactionId())
+                .transactionCode(tx.getTransactionCode())
+                .transactionDate(tx.getTransactionDate())
+                .supplierName(tx.getSupplier() != null ? tx.getSupplier().getSupplierName() : null)
+                .invoiceNumber(tx.getInvoiceNumber())
+                .status(tx.getApprovalStatus())
+                .createdBy(tx.getCreatedBy() != null ? tx.getCreatedBy().getFullName() : null)
+                .createdAt(tx.getCreatedAt())
+                .approvedByName(tx.getApprovedBy() != null ? tx.getApprovedBy().getFullName() : null)
+                .approvedAt(tx.getApprovedAt())
+                .paymentStatus(tx.getPaymentStatus())
+                .dueDate(tx.getDueDate())
+                .totalItems(items.size())
+                .items(items)
+                .warnings(List.of());
 
         // Add financial info if user has permission
         if (hasViewCostPermission) {
-            builder.totalValue(tx.getTotalValue());
+            builder.totalValue(tx.getTotalValue())
+                    .paidAmount(tx.getPaidAmount())
+                    .remainingDebt(tx.getRemainingDebt());
         }
 
         return builder.build();
@@ -358,63 +366,78 @@ public class TransactionHistoryService {
      */
     private com.dental.clinic.management.warehouse.dto.response.ExportTransactionResponse mapToExportResponse(
             StorageTransaction tx, boolean hasViewCostPermission) {
-        
+
         // Map items
-        List<com.dental.clinic.management.warehouse.dto.response.ExportTransactionResponse.ExportItemResponse> items = 
-                tx.getItems().stream()
-                        .map(item -> {
-                            com.dental.clinic.management.warehouse.dto.response.ExportTransactionResponse.ExportItemResponse.ExportItemResponseBuilder builder =
-                                    com.dental.clinic.management.warehouse.dto.response.ExportTransactionResponse.ExportItemResponse.builder()
-                                            .itemCode(item.getItemCode())
-                                            .itemName(item.getBatch() != null && item.getBatch().getItemMaster() != null ? 
-                                                    item.getBatch().getItemMaster().getItemName() : "N/A")
-                                            .batchId(item.getBatch() != null ? item.getBatch().getBatchId() : null)
-                                            .lotNumber(item.getBatch() != null ? item.getBatch().getLotNumber() : null)
-                                            .expiryDate(item.getBatch() != null ? item.getBatch().getExpiryDate() : null)
-                                            .binLocation(item.getBatch() != null ? item.getBatch().getBinLocation() : null)
-                                            .quantityChange(item.getQuantityChange())
-                                            .unitName(item.getUnit() != null ? item.getUnit().getUnitName() : "N/A")
-                                            .notes(item.getNotes());
+        List<com.dental.clinic.management.warehouse.dto.response.ExportTransactionResponse.ExportItemResponse> items = tx
+                .getItems().stream()
+                .map(item -> {
+                    com.dental.clinic.management.warehouse.dto.response.ExportTransactionResponse.ExportItemResponse.ExportItemResponseBuilder builder = com.dental.clinic.management.warehouse.dto.response.ExportTransactionResponse.ExportItemResponse
+                            .builder()
+                            .itemCode(item.getItemCode())
+                            .itemName(item.getBatch() != null && item.getBatch().getItemMaster() != null
+                                    ? item.getBatch().getItemMaster().getItemName()
+                                    : "N/A")
+                            .batchId(item.getBatch() != null ? item.getBatch().getBatchId() : null)
+                            .lotNumber(item.getBatch() != null ? item.getBatch().getLotNumber() : null)
+                            .expiryDate(item.getBatch() != null ? item.getBatch().getExpiryDate() : null)
+                            .binLocation(item.getBatch() != null ? item.getBatch().getBinLocation() : null)
+                            .quantityChange(item.getQuantityChange())
+                            .unitName(item.getUnit() != null ? item.getUnit().getUnitName() : "N/A")
+                            .notes(item.getNotes());
 
-                            // Add unpacking info if batch was unpacked
-                            if (item.getBatch() != null && Boolean.TRUE.equals(item.getBatch().getIsUnpacked())) {
-                                builder.unpackingInfo(
-                                        com.dental.clinic.management.warehouse.dto.response.ExportTransactionResponse.UnpackingInfo.builder()
-                                                .wasUnpacked(true)
-                                                .parentBatchId(item.getBatch().getParentBatch() != null ? 
-                                                        item.getBatch().getParentBatch().getBatchId() : null)
-                                                .parentUnitName("Parent Unit")
-                                                .remainingInBatch(item.getBatch().getQuantityOnHand())
-                                                .build()
-                                );
-                            }
+                    // Add unpacking info if batch was unpacked
+                    if (item.getBatch() != null && Boolean.TRUE.equals(item.getBatch().getIsUnpacked())) {
+                        builder.unpackingInfo(
+                                com.dental.clinic.management.warehouse.dto.response.ExportTransactionResponse.UnpackingInfo
+                                        .builder()
+                                        .wasUnpacked(true)
+                                        .parentBatchId(item.getBatch().getParentBatch() != null
+                                                ? item.getBatch().getParentBatch().getBatchId()
+                                                : null)
+                                        .parentUnitName("Parent Unit")
+                                        .remainingInBatch(item.getBatch().getQuantityOnHand())
+                                        .build());
+                    }
 
-                            // Add cost info if user has permission
-                            if (hasViewCostPermission) {
-                                builder.unitPrice(item.getPrice())
-                                        .totalLineValue(item.getTotalLineValue());
-                            }
+                    // Add cost info if user has permission
+                    if (hasViewCostPermission) {
+                        builder.unitPrice(item.getPrice())
+                                .totalLineValue(item.getTotalLineValue());
+                    }
 
-                            return builder.build();
-                        })
-                        .collect(Collectors.toList());
+                    return builder.build();
+                })
+                .collect(Collectors.toList());
 
         // Build response
-        com.dental.clinic.management.warehouse.dto.response.ExportTransactionResponse.ExportTransactionResponseBuilder builder =
-                com.dental.clinic.management.warehouse.dto.response.ExportTransactionResponse.builder()
-                        .transactionId(tx.getTransactionId())
-                        .transactionCode(tx.getTransactionCode())
-                        .transactionDate(tx.getTransactionDate())
-                        .exportType(tx.getExportType() != null ? 
-                                com.dental.clinic.management.warehouse.enums.ExportType.valueOf(tx.getExportType()) : null)
-                        .referenceCode(tx.getRelatedAppointment() != null ? 
-                                tx.getRelatedAppointment().getAppointmentCode() : null)
-                        .notes(tx.getNotes())
-                        .createdBy(tx.getCreatedBy() != null ? tx.getCreatedBy().getFullName() : null)
-                        .createdAt(tx.getCreatedAt())
-                        .totalItems(items.size())
-                        .items(items)
-                        .warnings(List.of()); // No warnings for view operation
+        com.dental.clinic.management.warehouse.dto.response.ExportTransactionResponse.ExportTransactionResponseBuilder builder = com.dental.clinic.management.warehouse.dto.response.ExportTransactionResponse
+                .builder()
+                .transactionId(tx.getTransactionId())
+                .transactionCode(tx.getTransactionCode())
+                .transactionDate(tx.getTransactionDate())
+                .exportType(tx.getExportType() != null
+                        ? com.dental.clinic.management.warehouse.enums.ExportType.valueOf(tx.getExportType())
+                        : null)
+                .referenceCode(
+                        tx.getRelatedAppointment() != null ? tx.getRelatedAppointment().getAppointmentCode() : null)
+                .notes(tx.getNotes())
+                .createdBy(tx.getCreatedBy() != null ? tx.getCreatedBy().getFullName() : null)
+                .createdAt(tx.getCreatedAt())
+                .status(tx.getApprovalStatus())
+                .approvedByName(tx.getApprovedBy() != null ? tx.getApprovedBy().getFullName() : null)
+                .approvedAt(tx.getApprovedAt())
+                .relatedAppointmentId(tx.getRelatedAppointment() != null
+                        ? tx.getRelatedAppointment().getAppointmentId().longValue()
+                        : null)
+                .totalItems(items.size())
+                .items(items)
+                .warnings(List.of());
+
+        // Get patient name if export is linked to appointment
+        if (tx.getRelatedAppointment() != null && tx.getRelatedAppointment().getPatientId() != null) {
+            Optional<Patient> patient = patientRepository.findById(tx.getRelatedAppointment().getPatientId());
+            patient.ifPresent(p -> builder.patientName(p.getFullName()));
+        }
 
         // Add financial info if user has permission
         if (hasViewCostPermission) {
@@ -422,6 +445,129 @@ public class TransactionHistoryService {
         }
 
         return builder.build();
+    }
+
+    /**
+     * Approve transaction (API 6.6.1)
+     */
+    @Transactional
+    public Object approveTransaction(Long id, String notes) {
+        log.info("Approving transaction - ID: {}", id);
+
+        StorageTransaction transaction = transactionRepository.findById(id)
+                .orElseThrow(() -> new BadRequestException(
+                        "TRANSACTION_NOT_FOUND",
+                        "Transaction with ID " + id + " not found"));
+
+        if (transaction.getApprovalStatus() != TransactionStatus.PENDING_APPROVAL) {
+            throw new BadRequestException(
+                    "INVALID_STATUS",
+                    "Can only approve transactions with status PENDING_APPROVAL. Current status: "
+                            + transaction.getApprovalStatus());
+        }
+
+        Integer currentUserId = SecurityUtil.getCurrentEmployeeId();
+        com.dental.clinic.management.employees.domain.Employee currentUser = new com.dental.clinic.management.employees.domain.Employee();
+        currentUser.setEmployeeId(currentUserId);
+
+        transaction.setApprovalStatus(TransactionStatus.APPROVED);
+        transaction.setApprovedBy(currentUser);
+        transaction.setApprovedAt(LocalDateTime.now());
+
+        if (notes != null && !notes.trim().isEmpty()) {
+            String existingNotes = transaction.getNotes() != null ? transaction.getNotes() : "";
+            transaction.setNotes(existingNotes + "\nApproval notes: " + notes);
+        }
+
+        transactionRepository.save(transaction);
+
+        log.info("Transaction approved - ID: {}, Code: {}", id, transaction.getTransactionCode());
+
+        boolean hasViewCostPermission = hasPermission("VIEW_COST");
+        return mapToDetailResponse(transaction, hasViewCostPermission);
+    }
+
+    /**
+     * Reject transaction (API 6.6.2)
+     */
+    @Transactional
+    public Object rejectTransaction(Long id, String rejectionReason) {
+        log.info("Rejecting transaction - ID: {}", id);
+
+        if (rejectionReason == null || rejectionReason.trim().isEmpty()) {
+            throw new BadRequestException(
+                    "REJECTION_REASON_REQUIRED",
+                    "Rejection reason is required");
+        }
+
+        StorageTransaction transaction = transactionRepository.findById(id)
+                .orElseThrow(() -> new BadRequestException(
+                        "TRANSACTION_NOT_FOUND",
+                        "Transaction with ID " + id + " not found"));
+
+        if (transaction.getApprovalStatus() != TransactionStatus.PENDING_APPROVAL) {
+            throw new BadRequestException(
+                    "INVALID_STATUS",
+                    "Can only reject transactions with status PENDING_APPROVAL. Current status: "
+                            + transaction.getApprovalStatus());
+        }
+
+        Integer currentUserId = SecurityUtil.getCurrentEmployeeId();
+        com.dental.clinic.management.employees.domain.Employee currentUser = new com.dental.clinic.management.employees.domain.Employee();
+        currentUser.setEmployeeId(currentUserId);
+
+        transaction.setApprovalStatus(TransactionStatus.REJECTED);
+        transaction.setRejectedBy(currentUser);
+        transaction.setRejectedAt(LocalDateTime.now());
+        transaction.setRejectionReason(rejectionReason);
+
+        transactionRepository.save(transaction);
+
+        log.info("Transaction rejected - ID: {}, Code: {}, Reason: {}",
+                id, transaction.getTransactionCode(), rejectionReason);
+
+        boolean hasViewCostPermission = hasPermission("VIEW_COST");
+        return mapToDetailResponse(transaction, hasViewCostPermission);
+    }
+
+    /**
+     * Cancel transaction (API 6.6.3)
+     */
+    @Transactional
+    public Object cancelTransaction(Long id, String cancellationReason) {
+        log.info("Cancelling transaction - ID: {}", id);
+
+        StorageTransaction transaction = transactionRepository.findById(id)
+                .orElseThrow(() -> new BadRequestException(
+                        "TRANSACTION_NOT_FOUND",
+                        "Transaction with ID " + id + " not found"));
+
+        if (transaction.getApprovalStatus() != TransactionStatus.DRAFT
+                && transaction.getApprovalStatus() != TransactionStatus.PENDING_APPROVAL) {
+            throw new BadRequestException(
+                    "INVALID_STATUS",
+                    "Can only cancel transactions with status DRAFT or PENDING_APPROVAL. Current status: "
+                            + transaction.getApprovalStatus());
+        }
+
+        Integer currentUserId = SecurityUtil.getCurrentEmployeeId();
+        com.dental.clinic.management.employees.domain.Employee currentUser = new com.dental.clinic.management.employees.domain.Employee();
+        currentUser.setEmployeeId(currentUserId);
+
+        transaction.setApprovalStatus(TransactionStatus.CANCELLED);
+        transaction.setCancelledBy(currentUser);
+        transaction.setCancelledAt(LocalDateTime.now());
+        if (cancellationReason != null && !cancellationReason.trim().isEmpty()) {
+            transaction.setCancellationReason(cancellationReason);
+        }
+
+        transactionRepository.save(transaction);
+
+        log.info("Transaction cancelled - ID: {}, Code: {}",
+                id, transaction.getTransactionCode());
+
+        boolean hasViewCostPermission = hasPermission("VIEW_COST");
+        return mapToDetailResponse(transaction, hasViewCostPermission);
     }
 
     /**
