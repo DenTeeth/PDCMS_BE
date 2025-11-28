@@ -1,12 +1,16 @@
 -- ============================================
--- DENTAL CLINIC MANAGEMENT SYSTEM - SCHEMA V23
--- Date: 2025-11-25
+-- DENTAL CLINIC MANAGEMENT SYSTEM - SCHEMA V24
+-- Date: 2025-11-28
 -- PostgreSQL Database Schema
 -- ============================================
--- NOTE: Hibernate auto-creates tables from @Entity classes
--- This file is for reference and manual database setup only
--- Updated to match Java entity definitions (SERIAL/INTEGER IDs)
+-- This is the single source of truth for database schema
+-- Hibernate DDL is disabled (ddl-auto: none)
+-- Schema recreated on every application start
 -- ============================================
+-- CHANGES IN V24 (API 6.11 - Get Item Units):
+--   - Added transaction_date column to storage_transactions
+--   - Added status column to storage_transactions
+--   - VIEW_ITEMS permission granted to INVENTORY_MANAGER
 -- CHANGES IN V23 (API 6.7 - Item Masters List):
 -- - Added cached_total_quantity, cached_last_import_date, cached_last_updated to item_masters
 -- - Purpose: Performance optimization - avoid JOIN/SUM on item_batches for every query
@@ -35,6 +39,26 @@
 -- ============================================
 -- ENUM TYPES (Must be created before tables)
 -- ============================================
+
+-- Drop all existing types to ensure clean recreation
+DROP TYPE IF EXISTS gender CASCADE;
+DROP TYPE IF EXISTS employment_type CASCADE;
+DROP TYPE IF EXISTS account_status CASCADE;
+DROP TYPE IF EXISTS appointment_status_enum CASCADE;
+DROP TYPE IF EXISTS appointment_participant_role_enum CASCADE;
+DROP TYPE IF EXISTS shift_status CASCADE;
+DROP TYPE IF EXISTS request_status CASCADE;
+DROP TYPE IF EXISTS work_shift_category CASCADE;
+DROP TYPE IF EXISTS shift_source CASCADE;
+DROP TYPE IF EXISTS day_of_week CASCADE;
+DROP TYPE IF EXISTS holiday_type CASCADE;
+DROP TYPE IF EXISTS time_off_status CASCADE;
+DROP TYPE IF EXISTS approval_status CASCADE;
+DROP TYPE IF EXISTS appointment_action_type CASCADE;
+DROP TYPE IF EXISTS appointment_reason_code CASCADE;
+DROP TYPE IF EXISTS dependency_rule_type CASCADE;
+DROP TYPE IF EXISTS payment_status CASCADE;
+DROP TYPE IF EXISTS transaction_status CASCADE;
 
 CREATE TYPE gender AS ENUM ('MALE', 'FEMALE', 'OTHER');
 CREATE TYPE employment_type AS ENUM ('FULL_TIME', 'PART_TIME_FIXED', 'PART_TIME_FLEX');
@@ -432,11 +456,13 @@ CREATE TABLE storage_transactions (
     storage_transaction_id SERIAL PRIMARY KEY,
     transaction_code VARCHAR(50) UNIQUE NOT NULL,
     type VARCHAR(20) NOT NULL,
+    transaction_date TIMESTAMP NOT NULL,
     invoice_number VARCHAR(100),
     total_value DECIMAL(15,2),
     created_by_id INTEGER NOT NULL,
     supplier_id INTEGER,
     description TEXT,
+    status VARCHAR(20) DEFAULT 'DRAFT',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP,
 
@@ -450,6 +476,12 @@ CREATE TABLE storage_transactions (
     approval_status transaction_status,
     approved_by_id INTEGER,
     approved_at TIMESTAMP,
+    rejected_by_id INTEGER,
+    rejected_at TIMESTAMP,
+    rejection_reason TEXT,
+    cancelled_by_id INTEGER,
+    cancelled_at TIMESTAMP,
+    cancellation_reason TEXT,
 
     -- V22: Appointment linking field (for Doctors)
     related_appointment_id INTEGER,
@@ -459,6 +491,10 @@ CREATE TABLE storage_transactions (
     CONSTRAINT fk_transaction_supplier FOREIGN KEY (supplier_id)
         REFERENCES suppliers(supplier_id) ON DELETE SET NULL,
     CONSTRAINT fk_transaction_approved_by FOREIGN KEY (approved_by_id)
+        REFERENCES employees(employee_id) ON DELETE SET NULL,
+    CONSTRAINT fk_transaction_rejected_by FOREIGN KEY (rejected_by_id)
+        REFERENCES employees(employee_id) ON DELETE SET NULL,
+    CONSTRAINT fk_transaction_cancelled_by FOREIGN KEY (cancelled_by_id)
         REFERENCES employees(employee_id) ON DELETE SET NULL,
     CONSTRAINT fk_transaction_appointment FOREIGN KEY (related_appointment_id)
         REFERENCES appointments(appointment_id) ON DELETE SET NULL
@@ -488,7 +524,7 @@ CREATE TABLE item_categories (
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP,
-    
+
     CONSTRAINT fk_item_category_parent FOREIGN KEY (parent_category_id)
         REFERENCES item_categories(category_id) ON DELETE SET NULL
 );
@@ -517,7 +553,7 @@ CREATE TABLE item_masters (
     cached_last_import_date DATE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP,
-    
+
     CONSTRAINT fk_item_master_category FOREIGN KEY (category_id)
         REFERENCES item_categories(category_id) ON DELETE SET NULL,
     CONSTRAINT chk_stock_levels CHECK (min_stock_level < max_stock_level),
@@ -542,12 +578,13 @@ CREATE TABLE item_units (
     unit_name VARCHAR(50) NOT NULL,
     conversion_rate INTEGER NOT NULL,
     is_base_unit BOOLEAN NOT NULL DEFAULT FALSE,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
     display_order INTEGER,
     is_default_import_unit BOOLEAN NOT NULL DEFAULT FALSE,
     is_default_export_unit BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP,
-    
+
     CONSTRAINT fk_item_unit_master FOREIGN KEY (item_master_id)
         REFERENCES item_masters(item_master_id) ON DELETE CASCADE,
     CONSTRAINT chk_conversion_rate CHECK (conversion_rate >= 1),
@@ -556,9 +593,11 @@ CREATE TABLE item_units (
 
 CREATE INDEX idx_item_units_item_master ON item_units(item_master_id);
 CREATE INDEX idx_item_units_base_unit ON item_units(is_base_unit);
+CREATE INDEX idx_item_units_active ON item_units(is_active);
 
-COMMENT ON TABLE item_units IS 'Unit hierarchy for items (e.g., Box -> Strip -> Pill) - API 6.9';
+COMMENT ON TABLE item_units IS 'Unit hierarchy for items (e.g., Box -> Strip -> Pill) - API 6.9, 6.10';
 COMMENT ON COLUMN item_units.conversion_rate IS 'Conversion rate to base unit (base unit = 1)';
+COMMENT ON COLUMN item_units.is_active IS 'Soft delete flag: false = deprecated unit, hide from dropdown but keep in history';
 COMMENT ON COLUMN item_units.is_default_import_unit IS 'UX optimization: default unit for import transactions';
 COMMENT ON COLUMN item_units.is_default_export_unit IS 'UX optimization: default unit for export transactions';
 

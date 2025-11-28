@@ -1,7 +1,7 @@
 # API 6.9: Create Item Master - Testing Guide
 
-**Version:** 1.0  
-**Date:** November 27, 2025  
+**Version:** 1.0
+**Date:** November 27, 2025
 **Purpose:** Comprehensive test cases for API 6.9
 
 ---
@@ -46,13 +46,13 @@ Authorization: Bearer <JWT_TOKEN>
 
 Generate tokens for the following users:
 
-| Role | Username | Purpose |
-|------|----------|---------|
-| Admin | admin@clinic.com | Full access testing |
-| Inventory Manager | inventory@clinic.com | Primary user testing |
-| Warehouse Manager | warehouse@clinic.com | Alternative authorized user |
-| Doctor | doctor@clinic.com | Unauthorized user testing |
-| Receptionist | receptionist@clinic.com | Unauthorized user testing |
+| Role              | Username                | Purpose                     |
+| ----------------- | ----------------------- | --------------------------- |
+| Admin             | admin@clinic.com        | Full access testing         |
+| Inventory Manager | inventory@clinic.com    | Primary user testing        |
+| Warehouse Manager | warehouse@clinic.com    | Alternative authorized user |
+| Doctor            | doctor@clinic.com       | Unauthorized user testing   |
+| Receptionist      | receptionist@clinic.com | Unauthorized user testing   |
 
 ---
 
@@ -69,6 +69,7 @@ SELECT category_id, category_code, category_name FROM item_categories LIMIT 5;
 ```
 
 Expected categories:
+
 - ID 1: Medications
 - ID 2: Consumables
 - ID 3: Equipment
@@ -86,11 +87,12 @@ Expected result: 1 row with CREATE_ITEMS permission
 #### Role Permissions Check
 
 ```sql
-SELECT role_id, permission_id FROM role_permissions 
+SELECT role_id, permission_id FROM role_permissions
 WHERE permission_id = 'CREATE_ITEMS';
 ```
 
 Expected results:
+
 - ROLE_ADMIN, CREATE_ITEMS
 - ROLE_INVENTORY_MANAGER, CREATE_ITEMS
 
@@ -100,11 +102,12 @@ Expected results:
 
 ### Test Case 1: Create Medication with Unit Hierarchy
 
-**Test ID:** SUCCESS-001  
-**Priority:** High  
+**Test ID:** SUCCESS-001
+**Priority:** High
 **Description:** Create a prescription medication with 3-level unit hierarchy
 
 **Request:**
+
 ```json
 POST /api/v1/warehouse/items
 Content-Type: application/json
@@ -150,6 +153,7 @@ Authorization: Bearer <INVENTORY_MANAGER_TOKEN>
 ```
 
 **Expected Response:**
+
 ```json
 HTTP/1.1 201 Created
 Content-Type: application/json
@@ -167,6 +171,7 @@ Content-Type: application/json
 ```
 
 **Verification Steps:**
+
 1. Check HTTP status code is 201
 2. Verify itemMasterId is a positive integer
 3. Verify baseUnitName is "Capsule"
@@ -174,18 +179,20 @@ Content-Type: application/json
 5. Verify isActive is true
 
 **Database Verification:**
+
 ```sql
 -- Check item master created
 SELECT * FROM item_masters WHERE item_code = 'AMOX-500MG';
 
 -- Check units created
-SELECT unit_name, conversion_rate, is_base_unit, display_order 
-FROM item_units 
+SELECT unit_name, conversion_rate, is_base_unit, display_order
+FROM item_units
 WHERE item_master_id = <GENERATED_ID>
 ORDER BY display_order;
 ```
 
 Expected units:
+
 ```
 Box    | 100 | false | 1
 Strip  | 10  | false | 2
@@ -196,11 +203,12 @@ Capsule| 1   | true  | 3
 
 ### Test Case 2: Create Consumable with 2-Level Units
 
-**Test ID:** SUCCESS-002  
-**Priority:** High  
+**Test ID:** SUCCESS-002
+**Priority:** High
 **Description:** Create non-prescription consumable with simple unit hierarchy
 
 **Request:**
+
 ```json
 POST /api/v1/warehouse/items
 Content-Type: application/json
@@ -238,6 +246,7 @@ Authorization: Bearer <ADMIN_TOKEN>
 ```
 
 **Expected Response:**
+
 ```json
 HTTP/1.1 201 Created
 
@@ -254,6 +263,7 @@ HTTP/1.1 201 Created
 ```
 
 **Key Points:**
+
 - No prescription required
 - No shelf life (null)
 - 2-level unit hierarchy
@@ -263,11 +273,12 @@ HTTP/1.1 201 Created
 
 ### Test Case 3: Create Equipment with Single Unit
 
-**Test ID:** SUCCESS-003  
-**Priority:** Medium  
+**Test ID:** SUCCESS-003
+**Priority:** Medium
 **Description:** Create equipment item with only one unit (no conversion)
 
 **Request:**
+
 ```json
 POST /api/v1/warehouse/items
 Content-Type: application/json
@@ -296,6 +307,7 @@ Authorization: Bearer <WAREHOUSE_MANAGER_TOKEN>
 ```
 
 **Expected Response:**
+
 ```json
 HTTP/1.1 201 Created
 
@@ -312,6 +324,7 @@ HTTP/1.1 201 Created
 ```
 
 **Key Points:**
+
 - Single unit only
 - No shelf life (omitted, not null)
 - Simple equipment tracking
@@ -320,11 +333,12 @@ HTTP/1.1 201 Created
 
 ### Test Case 4: Create with Minimum Valid Data
 
-**Test ID:** SUCCESS-004  
-**Priority:** Medium  
+**Test ID:** SUCCESS-004
+**Priority:** Medium
 **Description:** Create item with only required fields
 
 **Request:**
+
 ```json
 POST /api/v1/warehouse/items
 
@@ -347,6 +361,7 @@ POST /api/v1/warehouse/items
 ```
 
 **Expected Response:**
+
 ```json
 HTTP/1.1 201 Created
 
@@ -368,13 +383,14 @@ HTTP/1.1 201 Created
 
 ### Test Case 5: Duplicate Item Code
 
-**Test ID:** ERROR-001  
-**Priority:** High  
+**Test ID:** ERROR-001
+**Priority:** High
 **Description:** Attempt to create item with existing item code
 
 **Pre-condition:** Run SUCCESS-001 first to create AMOX-500MG
 
 **Request:**
+
 ```json
 POST /api/v1/warehouse/items
 
@@ -397,6 +413,7 @@ POST /api/v1/warehouse/items
 ```
 
 **Expected Response:**
+
 ```json
 HTTP/1.1 409 Conflict
 
@@ -411,11 +428,12 @@ HTTP/1.1 409 Conflict
 
 ### Test Case 6: Invalid Item Code Format
 
-**Test ID:** ERROR-002  
-**Priority:** High  
+**Test ID:** ERROR-002
+**Priority:** High
 **Description:** Item code violates pattern validation
 
 **Sub-Test 6.1: Lowercase Characters**
+
 ```json
 {
   "itemCode": "amox-500mg",
@@ -431,6 +449,7 @@ HTTP/1.1 409 Conflict
 **Expected:** 400 Bad Request - Pattern violation
 
 **Sub-Test 6.2: Too Short**
+
 ```json
 {
   "itemCode": "AB",
@@ -442,6 +461,7 @@ HTTP/1.1 409 Conflict
 **Expected:** 400 Bad Request - Size violation
 
 **Sub-Test 6.3: Contains Underscore**
+
 ```json
 {
   "itemCode": "ITEM_CODE_123",
@@ -453,6 +473,7 @@ HTTP/1.1 409 Conflict
 **Expected:** 400 Bad Request - Pattern violation
 
 **Sub-Test 6.4: Too Long**
+
 ```json
 {
   "itemCode": "VERYLONGITEMCODENAME12345",
@@ -467,11 +488,12 @@ HTTP/1.1 409 Conflict
 
 ### Test Case 7: Invalid Stock Levels
 
-**Test ID:** ERROR-003  
-**Priority:** High  
+**Test ID:** ERROR-003
+**Priority:** High
 **Description:** Min stock level >= Max stock level
 
 **Sub-Test 7.1: Equal Values**
+
 ```json
 {
   "itemCode": "TEST-STOCK-001",
@@ -485,6 +507,7 @@ HTTP/1.1 409 Conflict
 ```
 
 **Expected Response:**
+
 ```json
 HTTP/1.1 400 Bad Request
 
@@ -496,6 +519,7 @@ HTTP/1.1 400 Bad Request
 ```
 
 **Sub-Test 7.2: Min Greater Than Max**
+
 ```json
 {
   "minStockLevel": 500,
@@ -510,11 +534,12 @@ HTTP/1.1 400 Bad Request
 
 ### Test Case 8: Missing Base Unit
 
-**Test ID:** ERROR-004  
-**Priority:** High  
+**Test ID:** ERROR-004
+**Priority:** High
 **Description:** No unit has isBaseUnit = true
 
 **Request:**
+
 ```json
 {
   "itemCode": "TEST-NOBASE-001",
@@ -541,6 +566,7 @@ HTTP/1.1 400 Bad Request
 ```
 
 **Expected Response:**
+
 ```json
 HTTP/1.1 400 Bad Request
 
@@ -555,11 +581,12 @@ HTTP/1.1 400 Bad Request
 
 ### Test Case 9: Multiple Base Units
 
-**Test ID:** ERROR-005  
-**Priority:** High  
+**Test ID:** ERROR-005
+**Priority:** High
 **Description:** More than one unit has isBaseUnit = true
 
 **Request:**
+
 ```json
 {
   "itemCode": "TEST-MULTIBASE-001",
@@ -586,6 +613,7 @@ HTTP/1.1 400 Bad Request
 ```
 
 **Expected Response:**
+
 ```json
 HTTP/1.1 400 Bad Request
 
@@ -600,11 +628,12 @@ HTTP/1.1 400 Bad Request
 
 ### Test Case 10: Base Unit Wrong Conversion Rate
 
-**Test ID:** ERROR-006  
-**Priority:** High  
+**Test ID:** ERROR-006
+**Priority:** High
 **Description:** Base unit has conversionRate != 1
 
 **Request:**
+
 ```json
 {
   "itemCode": "TEST-WRONGRATE-001",
@@ -625,6 +654,7 @@ HTTP/1.1 400 Bad Request
 ```
 
 **Expected Response:**
+
 ```json
 HTTP/1.1 400 Bad Request
 
@@ -639,11 +669,12 @@ HTTP/1.1 400 Bad Request
 
 ### Test Case 11: Duplicate Unit Names
 
-**Test ID:** ERROR-007  
-**Priority:** High  
+**Test ID:** ERROR-007
+**Priority:** High
 **Description:** Unit names are not unique (case-insensitive)
 
 **Sub-Test 11.1: Exact Duplicates**
+
 ```json
 {
   "itemCode": "TEST-DUPUNIT-001",
@@ -670,6 +701,7 @@ HTTP/1.1 400 Bad Request
 ```
 
 **Expected Response:**
+
 ```json
 HTTP/1.1 400 Bad Request
 
@@ -681,6 +713,7 @@ HTTP/1.1 400 Bad Request
 ```
 
 **Sub-Test 11.2: Case-Insensitive Duplicates**
+
 ```json
 {
   "units": [
@@ -697,11 +730,12 @@ HTTP/1.1 400 Bad Request
 
 ### Test Case 12: Invalid Category ID
 
-**Test ID:** ERROR-008  
-**Priority:** High  
+**Test ID:** ERROR-008
+**Priority:** High
 **Description:** Category does not exist
 
 **Request:**
+
 ```json
 {
   "itemCode": "TEST-BADCAT-001",
@@ -715,6 +749,7 @@ HTTP/1.1 400 Bad Request
 ```
 
 **Expected Response:**
+
 ```json
 HTTP/1.1 404 Not Found
 
@@ -731,11 +766,12 @@ HTTP/1.1 404 Not Found
 
 ### Test Case 13: Invalid Shelf Life
 
-**Test ID:** ERROR-009  
-**Priority:** Medium  
+**Test ID:** ERROR-009
+**Priority:** Medium
 **Description:** Shelf life outside valid range
 
 **Sub-Test 13.1: Zero Days**
+
 ```json
 {
   "itemCode": "TEST-SHELF-001",
@@ -752,6 +788,7 @@ HTTP/1.1 404 Not Found
 **Expected:** 400 Bad Request - Must be between 1 and 3650
 
 **Sub-Test 13.2: Negative Days**
+
 ```json
 {
   "defaultShelfLifeDays": -30,
@@ -762,6 +799,7 @@ HTTP/1.1 404 Not Found
 **Expected:** 400 Bad Request - Must be between 1 and 3650
 
 **Sub-Test 13.3: Exceeds Maximum**
+
 ```json
 {
   "defaultShelfLifeDays": 5000,
@@ -775,11 +813,12 @@ HTTP/1.1 404 Not Found
 
 ### Test Case 14: Empty Units Array
 
-**Test ID:** ERROR-010  
-**Priority:** High  
+**Test ID:** ERROR-010
+**Priority:** High
 **Description:** Units array is empty
 
 **Request:**
+
 ```json
 {
   "itemCode": "TEST-NOUNIT-001",
@@ -793,6 +832,7 @@ HTTP/1.1 404 Not Found
 ```
 
 **Expected Response:**
+
 ```json
 HTTP/1.1 400 Bad Request
 
@@ -816,11 +856,12 @@ HTTP/1.1 400 Bad Request
 
 ### Test Case 15: Healthcare Compliance Validation
 
-**Test ID:** BUSINESS-001  
-**Priority:** Medium  
+**Test ID:** BUSINESS-001
+**Priority:** Medium
 **Description:** Verify prescription and shelf life combinations
 
 **Sub-Test 15.1: Prescription Drug with Shelf Life**
+
 ```json
 {
   "itemCode": "RX-VALID-001",
@@ -836,6 +877,7 @@ HTTP/1.1 400 Bad Request
 **Expected:** 201 Created - Valid combination
 
 **Sub-Test 15.2: OTC Item No Shelf Life**
+
 ```json
 {
   "itemCode": "OTC-VALID-001",
@@ -852,27 +894,29 @@ HTTP/1.1 400 Bad Request
 
 ### Test Case 16: Unit Hierarchy Verification
 
-**Test ID:** BUSINESS-002  
-**Priority:** High  
+**Test ID:** BUSINESS-002
+**Priority:** High
 **Description:** Verify unit hierarchy is correctly stored and ordered
 
 **Request:** Create item with 3 units (Box=100, Strip=10, Pill=1)
 
 **Database Verification:**
+
 ```sql
-SELECT 
-  unit_name, 
-  conversion_rate, 
-  is_base_unit, 
+SELECT
+  unit_name,
+  conversion_rate,
+  is_base_unit,
   display_order,
   is_default_import_unit,
   is_default_export_unit
-FROM item_units 
+FROM item_units
 WHERE item_master_id = <GENERATED_ID>
 ORDER BY display_order;
 ```
 
 **Expected Results:**
+
 ```
 Box   | 100 | false | 1 | true  | false
 Strip | 10  | false | 2 | false | true
@@ -880,6 +924,7 @@ Pill  | 1   | true  | 3 | false | false
 ```
 
 **Verification Points:**
+
 1. Exactly 3 records
 2. conversion_rate decreases: 100 -> 10 -> 1
 3. Only one is_base_unit = true (Pill)
@@ -892,42 +937,50 @@ Pill  | 1   | true  | 3 | false | false
 
 ### Test Case 17: Authorized Users
 
-**Test ID:** RBAC-001  
-**Priority:** High  
+**Test ID:** RBAC-001
+**Priority:** High
 **Description:** Verify authorized users can create items
 
 **Sub-Test 17.1: Admin Role**
+
 ```bash
 Authorization: Bearer <ADMIN_TOKEN>
 ```
+
 **Expected:** 201 Created
 
 **Sub-Test 17.2: Inventory Manager**
+
 ```bash
 Authorization: Bearer <INVENTORY_MANAGER_TOKEN>
 ```
+
 **Expected:** 201 Created
 
 **Sub-Test 17.3: Warehouse Manager**
+
 ```bash
 Authorization: Bearer <WAREHOUSE_MANAGER_TOKEN>
 ```
+
 **Expected:** 201 Created (through MANAGE_WAREHOUSE authority)
 
 ---
 
 ### Test Case 18: Unauthorized Users
 
-**Test ID:** RBAC-002  
-**Priority:** High  
+**Test ID:** RBAC-002
+**Priority:** High
 **Description:** Verify unauthorized users cannot create items
 
 **Sub-Test 18.1: Doctor Role**
+
 ```bash
 Authorization: Bearer <DOCTOR_TOKEN>
 ```
 
 **Expected Response:**
+
 ```json
 HTTP/1.1 403 Forbidden
 
@@ -939,26 +992,31 @@ HTTP/1.1 403 Forbidden
 ```
 
 **Sub-Test 18.2: Receptionist Role**
+
 ```bash
 Authorization: Bearer <RECEPTIONIST_TOKEN>
 ```
+
 **Expected:** 403 Forbidden
 
 **Sub-Test 18.3: Accountant Role**
+
 ```bash
 Authorization: Bearer <ACCOUNTANT_TOKEN>
 ```
+
 **Expected:** 403 Forbidden
 
 ---
 
 ### Test Case 19: Missing Authentication
 
-**Test ID:** RBAC-003  
-**Priority:** High  
+**Test ID:** RBAC-003
+**Priority:** High
 **Description:** Request without authentication token
 
 **Request:**
+
 ```bash
 POST /api/v1/warehouse/items
 Content-Type: application/json
@@ -968,6 +1026,7 @@ Content-Type: application/json
 ```
 
 **Expected Response:**
+
 ```json
 HTTP/1.1 401 Unauthorized
 
@@ -984,11 +1043,12 @@ HTTP/1.1 401 Unauthorized
 
 ### Test Case 20: End-to-End Item Lifecycle
 
-**Test ID:** INTEGRATION-001  
-**Priority:** High  
+**Test ID:** INTEGRATION-001
+**Priority:** High
 **Description:** Create item and verify it appears in GET list
 
 **Step 1:** Create item via POST
+
 ```json
 POST /api/v1/warehouse/items
 {
@@ -999,6 +1059,7 @@ POST /api/v1/warehouse/items
 ```
 
 **Step 2:** List items via GET
+
 ```bash
 GET /api/v1/warehouse/items?search=E2E-TEST-001
 ```
@@ -1006,6 +1067,7 @@ GET /api/v1/warehouse/items?search=E2E-TEST-001
 **Expected:** Item appears in search results with correct data
 
 **Step 3:** Verify in database
+
 ```sql
 SELECT * FROM item_masters WHERE item_code = 'E2E-TEST-001';
 SELECT * FROM item_units WHERE item_master_id = <ID>;
@@ -1017,8 +1079,8 @@ SELECT * FROM item_units WHERE item_master_id = <ID>;
 
 ### Test Case 21: Category Relationship
 
-**Test ID:** INTEGRATION-002  
-**Priority:** Medium  
+**Test ID:** INTEGRATION-002
+**Priority:** Medium
 **Description:** Verify category relationship is maintained
 
 **Pre-condition:** Note existing category name
@@ -1026,8 +1088,9 @@ SELECT * FROM item_units WHERE item_master_id = <ID>;
 **Request:** Create item with known category ID
 
 **Verification:**
+
 ```sql
-SELECT 
+SELECT
   im.item_code,
   im.item_name,
   ic.category_name
@@ -1044,13 +1107,14 @@ WHERE im.item_code = '<TEST_CODE>';
 
 ### Test Case 22: Batch Insert Performance
 
-**Test ID:** PERFORMANCE-001  
-**Priority:** Low  
+**Test ID:** PERFORMANCE-001
+**Priority:** Low
 **Description:** Measure unit insertion time
 
 **Test Scenario:** Create item with 10 units
 
 **Metrics to Capture:**
+
 - Total response time
 - Database insert time
 - Transaction commit time
@@ -1061,13 +1125,14 @@ WHERE im.item_code = '<TEST_CODE>';
 
 ### Test Case 23: Concurrent Creation
 
-**Test ID:** PERFORMANCE-002  
-**Priority:** Medium  
+**Test ID:** PERFORMANCE-002
+**Priority:** Medium
 **Description:** Multiple users creating items simultaneously
 
 **Test Scenario:** 5 concurrent requests with different item codes
 
 **Expected:**
+
 - All requests succeed (201 Created)
 - No deadlocks
 - No duplicate IDs
@@ -1236,21 +1301,21 @@ echo "Test suite completed!"
 
 ## Quick Reference: Expected HTTP Status Codes
 
-| Scenario | Expected Status | Error Detail |
-|----------|----------------|--------------|
-| Valid request | 201 Created | N/A |
-| Duplicate item code | 409 Conflict | "Item code 'XXX' already exists" |
-| Invalid format | 400 Bad Request | Pattern/Size violation |
-| Min >= Max | 400 Bad Request | "Min stock level must be less than max stock level" |
-| No base unit | 400 Bad Request | "Exactly one base unit is required" |
-| Multiple base units | 400 Bad Request | "Exactly one base unit is required" |
-| Wrong conversion rate | 400 Bad Request | "Base unit must have conversion rate = 1" |
-| Duplicate unit names | 400 Bad Request | "Unit name 'XXX' is duplicated" |
-| Invalid category | 404 Not Found | "Item category with ID XXX not found" |
-| Invalid shelf life | 400 Bad Request | "must be between 1 and 3650" |
-| Empty units | 400 Bad Request | "must not be empty" |
-| No auth token | 401 Unauthorized | "Full authentication is required" |
-| Insufficient permission | 403 Forbidden | "Access Denied" |
+| Scenario                | Expected Status  | Error Detail                                        |
+| ----------------------- | ---------------- | --------------------------------------------------- |
+| Valid request           | 201 Created      | N/A                                                 |
+| Duplicate item code     | 409 Conflict     | "Item code 'XXX' already exists"                    |
+| Invalid format          | 400 Bad Request  | Pattern/Size violation                              |
+| Min >= Max              | 400 Bad Request  | "Min stock level must be less than max stock level" |
+| No base unit            | 400 Bad Request  | "Exactly one base unit is required"                 |
+| Multiple base units     | 400 Bad Request  | "Exactly one base unit is required"                 |
+| Wrong conversion rate   | 400 Bad Request  | "Base unit must have conversion rate = 1"           |
+| Duplicate unit names    | 400 Bad Request  | "Unit name 'XXX' is duplicated"                     |
+| Invalid category        | 404 Not Found    | "Item category with ID XXX not found"               |
+| Invalid shelf life      | 400 Bad Request  | "must be between 1 and 3650"                        |
+| Empty units             | 400 Bad Request  | "must not be empty"                                 |
+| No auth token           | 401 Unauthorized | "Full authentication is required"                   |
+| Insufficient permission | 403 Forbidden    | "Access Denied"                                     |
 
 ---
 

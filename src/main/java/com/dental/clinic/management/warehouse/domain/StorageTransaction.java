@@ -104,16 +104,36 @@ public class StorageTransaction {
     private TransactionStatus approvalStatus; // DRAFT, PENDING_APPROVAL, APPROVED, REJECTED, CANCELLED
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "approved_by")
-    private Employee approvedBy; // Người duyệt phiếu
+    @JoinColumn(name = "approved_by_id")
+    private Employee approvedBy;
 
     @Column(name = "approved_at")
-    private LocalDateTime approvedAt; // Thời gian duyệt
+    private LocalDateTime approvedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "rejected_by_id")
+    private Employee rejectedBy;
+
+    @Column(name = "rejected_at")
+    private LocalDateTime rejectedAt;
+
+    @Column(name = "rejection_reason", columnDefinition = "TEXT")
+    private String rejectionReason;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cancelled_by_id")
+    private Employee cancelledBy;
+
+    @Column(name = "cancelled_at")
+    private LocalDateTime cancelledAt;
+
+    @Column(name = "cancellation_reason", columnDefinition = "TEXT")
+    private String cancellationReason;
 
     // Appointment linking (for EXPORT transactions)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "related_appointment_id")
-    private Appointment relatedAppointment; // Liên kết với ca điều trị
+    private Appointment relatedAppointment;
 
     // Creator tracking
     @ManyToOne(fetch = FetchType.LAZY)

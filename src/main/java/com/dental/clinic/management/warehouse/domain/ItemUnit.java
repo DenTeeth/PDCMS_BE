@@ -6,7 +6,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 /**
- *  Đơn vị đo lường vật tư - Hỗ trợ hierarchy
+ * Đơn vị đo lường vật tư - Hỗ trợ hierarchy
  * VD: 1 Hộp = 10 Vỉ, 1 Vỉ = 10 Viên
  */
 @Entity
@@ -49,6 +49,14 @@ public class ItemUnit {
     @Column(name = "is_base_unit", nullable = false)
     @Builder.Default
     private Boolean isBaseUnit = false;
+
+    /**
+     * Soft delete flag: false = deprecated unit
+     * Ẩn khỏi dropdown nhưng vẫn giữ lịch sử giao dịch
+     */
+    @Column(name = "is_active", nullable = false)
+    @Builder.Default
+    private Boolean isActive = true;
 
     /**
      * Thứ tự hiển thị (từ lớn đến nhỏ)

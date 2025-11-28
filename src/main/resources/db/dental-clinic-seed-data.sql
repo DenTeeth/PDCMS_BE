@@ -1,45 +1,40 @@
 -- ============================================
 -- HỆ THỐNG QUẢN LÝ PHÒNG KHÁM NHA KHOA
--- Dental Clinic Management System - Seed Data V2
+-- Dental Clinic Management System - Seed Data V6
 -- ============================================
--- POSTGRESQL ENUM TYPE DEFINITIONS
+-- NOTE:
+-- - This is the ONLY SQL file used in the project
+-- - Contains: ENUM types + Initial seed data (INSERT statements)
+-- - Tables are automatically created by Hibernate (ddl-auto: update)
+-- - This file runs AFTER Hibernate creates schema (defer-datasource-initialization: true)
+-- - ENUMs MUST be created in this file to survive database drops
 -- ============================================
 
--- Drop existing types if they exist (for clean re-initialization)
-DROP TYPE IF EXISTS appointment_action_type CASCADE;
-DROP TYPE IF EXISTS appointment_status_enum CASCADE;
-DROP TYPE IF EXISTS appointment_participant_role_enum CASCADE;
-DROP TYPE IF EXISTS appointment_reason_code CASCADE;
-DROP TYPE IF EXISTS gender CASCADE;
-DROP TYPE IF EXISTS employment_type CASCADE;
-DROP TYPE IF EXISTS account_status CASCADE;
-DROP TYPE IF EXISTS contact_history_action CASCADE;
-DROP TYPE IF EXISTS customer_contact_status CASCADE;
-DROP TYPE IF EXISTS customer_contact_source CASCADE;
-DROP TYPE IF EXISTS shift_status CASCADE;
-DROP TYPE IF EXISTS request_status CASCADE;
-DROP TYPE IF EXISTS work_shift_category CASCADE;
-DROP TYPE IF EXISTS shift_source CASCADE;
-DROP TYPE IF EXISTS employee_shifts_source CASCADE;
-DROP TYPE IF EXISTS day_of_week CASCADE;
-DROP TYPE IF EXISTS holiday_type CASCADE;
-DROP TYPE IF EXISTS renewal_status CASCADE;
-DROP TYPE IF EXISTS time_off_status CASCADE;
-DROP TYPE IF EXISTS balance_change_reason CASCADE;
-DROP TYPE IF EXISTS approval_status CASCADE;
-DROP TYPE IF EXISTS plan_item_status CASCADE;
+-- ============================================
+-- STEP 0: CREATE ALL POSTGRESQL ENUM TYPES
+-- ============================================
+-- These ENUMs MUST exist before Hibernate creates tables
+-- Spring Boot SQL parser cannot handle DO blocks, so using simple CREATE TYPE
+-- continue-on-error=true will ignore "already exists" errors
+-- ============================================
 
--- Create all ENUM types
+-- Appointment ENUMs
 CREATE TYPE appointment_action_type AS ENUM ('CREATE', 'DELAY', 'RESCHEDULE_SOURCE', 'RESCHEDULE_TARGET', 'CANCEL', 'STATUS_CHANGE');
 CREATE TYPE appointment_status_enum AS ENUM ('SCHEDULED', 'CHECKED_IN', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'NO_SHOW');
 CREATE TYPE appointment_participant_role_enum AS ENUM ('ASSISTANT', 'SECONDARY_DOCTOR', 'OBSERVER');
 CREATE TYPE appointment_reason_code AS ENUM ('PREVIOUS_CASE_OVERRUN', 'DOCTOR_UNAVAILABLE', 'EQUIPMENT_FAILURE', 'PATIENT_REQUEST', 'OPERATIONAL_REDIRECT', 'OTHER');
+
+-- Account & Employee ENUMs
 CREATE TYPE gender AS ENUM ('MALE', 'FEMALE', 'OTHER');
 CREATE TYPE employment_type AS ENUM ('FULL_TIME', 'PART_TIME_FIXED', 'PART_TIME_FLEX');
 CREATE TYPE account_status AS ENUM ('ACTIVE', 'INACTIVE', 'SUSPENDED', 'LOCKED', 'PENDING_VERIFICATION');
+
+-- Customer Contact ENUMs
 CREATE TYPE contact_history_action AS ENUM ('CALL', 'MESSAGE', 'NOTE');
 CREATE TYPE customer_contact_status AS ENUM ('NEW', 'CONTACTED', 'APPOINTMENT_SET', 'NOT_INTERESTED', 'CONVERTED');
 CREATE TYPE customer_contact_source AS ENUM ('WEBSITE', 'FACEBOOK', 'ZALO', 'WALK_IN', 'REFERRAL');
+
+-- Working Schedule ENUMs
 CREATE TYPE shift_status AS ENUM ('SCHEDULED', 'ON_LEAVE', 'COMPLETED', 'ABSENT', 'CANCELLED');
 CREATE TYPE request_status AS ENUM ('PENDING', 'APPROVED', 'REJECTED', 'CANCELLED');
 CREATE TYPE work_shift_category AS ENUM ('NORMAL', 'NIGHT');
@@ -50,95 +45,29 @@ CREATE TYPE holiday_type AS ENUM ('NATIONAL', 'COMPANY');
 CREATE TYPE renewal_status AS ENUM ('PENDING_ACTION', 'CONFIRMED', 'FINALIZED', 'DECLINED', 'EXPIRED');
 CREATE TYPE time_off_status AS ENUM ('PENDING', 'APPROVED', 'REJECTED', 'CANCELLED');
 CREATE TYPE balance_change_reason AS ENUM ('ANNUAL_RESET', 'APPROVED_REQUEST', 'REJECTED_REQUEST', 'CANCELLED_REQUEST', 'MANUAL_ADJUSTMENT');
+CREATE TYPE registrationstatus AS ENUM ('PENDING', 'APPROVED', 'REJECTED');
 
--- V19: Treatment Plan Enums
+-- Treatment Plan ENUMs
 CREATE TYPE approval_status AS ENUM ('DRAFT', 'PENDING_REVIEW', 'APPROVED', 'REJECTED');
 CREATE TYPE plan_item_status AS ENUM ('READY_FOR_BOOKING', 'SCHEDULED', 'PENDING', 'IN_PROGRESS', 'COMPLETED');
+CREATE TYPE treatmentplanstatus AS ENUM ('PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED');
+CREATE TYPE paymenttype AS ENUM ('FULL', 'PHASED', 'INSTALLMENT');
+CREATE TYPE phasestatus AS ENUM ('PENDING', 'IN_PROGRESS', 'COMPLETED');
+CREATE TYPE planactiontype AS ENUM ('STATUS_CHANGE', 'PRICE_UPDATE', 'PHASE_UPDATE', 'APPROVAL');
+
+-- Warehouse ENUMs
+CREATE TYPE batchstatus AS ENUM ('ACTIVE', 'EXPIRED', 'DEPLETED');
+CREATE TYPE exporttype AS ENUM ('SERVICE', 'SALE', 'WASTAGE', 'TRANSFER');
+CREATE TYPE suppliertier AS ENUM ('PLATINUM', 'GOLD', 'SILVER', 'BRONZE');
+CREATE TYPE stockstatus AS ENUM ('IN_STOCK', 'LOW_STOCK', 'OUT_OF_STOCK');
+CREATE TYPE transactionstatus AS ENUM ('PENDING', 'COMPLETED', 'CANCELLED');
+CREATE TYPE paymentstatus AS ENUM ('UNPAID', 'PARTIAL', 'PAID');
+CREATE TYPE warehousetype AS ENUM ('MAIN', 'BRANCH');
+CREATE TYPE warehouseactiontype AS ENUM ('IMPORT', 'EXPORT', 'TRANSFER', 'ADJUSTMENT');
+CREATE TYPE transactiontype AS ENUM ('PURCHASE', 'SALE', 'SERVICE', 'TRANSFER_IN', 'TRANSFER_OUT', 'ADJUSTMENT');
 
 -- ============================================
--- END ENUM TYPE DEFINITIONS
--- ============================================
-
--- ============================================
--- FIX: CREATE appointment_audit_logs TABLE
--- ============================================
--- This fixes the issue where Hibernate creates the table without ENUM columns
--- We MUST drop and recreate the table to ensure it has correct ENUM columns
-
-DROP TABLE IF EXISTS appointment_audit_logs CASCADE;
-
-CREATE TABLE appointment_audit_logs (
-    log_id BIGSERIAL PRIMARY KEY,
-    appointment_id BIGINT NOT NULL,
-    changed_by_employee_id BIGINT,
-    action_type appointment_action_type NOT NULL,
-    reason_code appointment_reason_code,
-    old_value TEXT,
-    new_value TEXT,
-    old_start_time TIMESTAMP,
-    new_start_time TIMESTAMP,
-    old_status appointment_status_enum,
-    new_status appointment_status_enum,
-    notes TEXT,
-    action_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Create indexes
-CREATE INDEX IF NOT EXISTS idx_audit_appointment ON appointment_audit_logs(appointment_id);
-CREATE INDEX IF NOT EXISTS idx_audit_action_type ON appointment_audit_logs(action_type);
-CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON appointment_audit_logs(action_timestamp);
-
--- ============================================
--- V19: TREATMENT PLAN SCHEMA UPDATES
--- ============================================
--- Add approval workflow and phase duration columns
-
--- Add approval workflow columns to patient_treatment_plans
-ALTER TABLE IF EXISTS patient_treatment_plans
-ADD COLUMN IF NOT EXISTS approval_status approval_status NOT NULL DEFAULT 'APPROVED',
-ADD COLUMN IF NOT EXISTS patient_consent_date TIMESTAMP NULL,
-ADD COLUMN IF NOT EXISTS approved_by INTEGER NULL,
-ADD COLUMN IF NOT EXISTS approved_at TIMESTAMP NULL,
-ADD COLUMN IF NOT EXISTS rejection_reason TEXT NULL;
-
--- Add estimated_duration_days to patient_plan_phases
-ALTER TABLE IF EXISTS patient_plan_phases
-ADD COLUMN IF NOT EXISTS estimated_duration_days INTEGER NULL;
-
--- Add sequence_number to template_phase_services (bug fix)
-ALTER TABLE IF EXISTS template_phase_services
-ADD COLUMN IF NOT EXISTS sequence_number INTEGER NOT NULL DEFAULT 0;
-
--- Add foreign key for approved_by
-ALTER TABLE IF EXISTS patient_treatment_plans
-DROP CONSTRAINT IF EXISTS fk_treatment_plan_approved_by;
-
-ALTER TABLE IF EXISTS patient_treatment_plans
-ADD CONSTRAINT fk_treatment_plan_approved_by
-FOREIGN KEY (approved_by) REFERENCES employees(employee_id);
-
--- Update constraints
-ALTER TABLE IF EXISTS patient_treatment_plans
-DROP CONSTRAINT IF EXISTS patient_treatment_plans_status_check;
-
-ALTER TABLE IF EXISTS patient_treatment_plans
-ADD CONSTRAINT patient_treatment_plans_status_check
-CHECK (status IN ('PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'ON_HOLD'));
-
--- Create indexes for performance
-CREATE INDEX IF NOT EXISTS idx_treatment_plans_approval_status
-ON patient_treatment_plans(approval_status);
-
-CREATE INDEX IF NOT EXISTS idx_treatment_plans_approved_by
-ON patient_treatment_plans(approved_by);
-
-CREATE INDEX IF NOT EXISTS idx_treatment_plans_created_by
-ON patient_treatment_plans(created_by);
-
-CREATE INDEX IF NOT EXISTS idx_treatment_plans_patient_id
-ON patient_treatment_plans(patient_id);
-
+-- END ENUM TYPE DEFINITIONS (36 types total)
 -- ============================================
 
 -- ============================================
@@ -433,14 +362,15 @@ VALUES
 ('VIEW_ITEMS', 'VIEW_ITEMS', 'WAREHOUSE', 'Xem danh sách vật tư (cho Bác sĩ/Lễ tân)', 269, NULL, TRUE, NOW()),
 ('VIEW_WAREHOUSE', 'VIEW_WAREHOUSE', 'WAREHOUSE', 'Xem danh sách giao dịch kho', 270, NULL, TRUE, NOW()),
 ('CREATE_ITEMS', 'CREATE_ITEMS', 'WAREHOUSE', 'Tạo vật tư mới với hệ thống đơn vị', 271, NULL, TRUE, NOW()),
-('CREATE_WAREHOUSE', 'CREATE_WAREHOUSE', 'WAREHOUSE', 'Tạo danh mục, nhà cung cấp', 272, NULL, TRUE, NOW()),
-('UPDATE_WAREHOUSE', 'UPDATE_WAREHOUSE', 'WAREHOUSE', 'Cập nhật vật tư, danh mục, nhà cung cấp', 273, NULL, TRUE, NOW()),
-('DELETE_WAREHOUSE', 'DELETE_WAREHOUSE', 'WAREHOUSE', 'Xóa vật tư, danh mục, nhà cung cấp', 274, NULL, TRUE, NOW()),
-('VIEW_COST', 'VIEW_COST', 'WAREHOUSE', 'Xem thông tin tài chính (giá trị, công nợ, thanh toán)', 275, NULL, TRUE, NOW()),
-('IMPORT_ITEMS', 'IMPORT_ITEMS', 'WAREHOUSE', 'Tạo phiếu nhập kho', 276, NULL, TRUE, NOW()),
-('EXPORT_ITEMS', 'EXPORT_ITEMS', 'WAREHOUSE', 'Tạo phiếu xuất kho', 277, NULL, TRUE, NOW()),
-('DISPOSE_ITEMS', 'DISPOSE_ITEMS', 'WAREHOUSE', 'Tạo phiếu thanh lý', 278, NULL, TRUE, NOW()),
-('APPROVE_TRANSACTION', 'APPROVE_TRANSACTION', 'WAREHOUSE', 'Duyệt/Từ chối phiếu nhập xuất kho', 279, NULL, TRUE, NOW())
+('UPDATE_ITEMS', 'UPDATE_ITEMS', 'WAREHOUSE', 'Cập nhật thông tin vật tư và đơn vị tính', 272, NULL, TRUE, NOW()),
+('CREATE_WAREHOUSE', 'CREATE_WAREHOUSE', 'WAREHOUSE', 'Tạo danh mục, nhà cung cấp', 273, NULL, TRUE, NOW()),
+('UPDATE_WAREHOUSE', 'UPDATE_WAREHOUSE', 'WAREHOUSE', 'Cập nhật danh mục, nhà cung cấp', 274, NULL, TRUE, NOW()),
+('DELETE_WAREHOUSE', 'DELETE_WAREHOUSE', 'WAREHOUSE', 'Xóa vật tư, danh mục, nhà cung cấp', 275, NULL, TRUE, NOW()),
+('VIEW_COST', 'VIEW_COST', 'WAREHOUSE', 'Xem thông tin tài chính (giá trị, công nợ, thanh toán)', 276, NULL, TRUE, NOW()),
+('IMPORT_ITEMS', 'IMPORT_ITEMS', 'WAREHOUSE', 'Tạo phiếu nhập kho', 277, NULL, TRUE, NOW()),
+('EXPORT_ITEMS', 'EXPORT_ITEMS', 'WAREHOUSE', 'Tạo phiếu xuất kho', 278, NULL, TRUE, NOW()),
+('DISPOSE_ITEMS', 'DISPOSE_ITEMS', 'WAREHOUSE', 'Tạo phiếu thanh lý', 279, NULL, TRUE, NOW()),
+('APPROVE_TRANSACTION', 'APPROVE_TRANSACTION', 'WAREHOUSE', 'Duyệt/Từ chối phiếu nhập xuất kho', 280, NULL, TRUE, NOW())
 ON CONFLICT (permission_id) DO NOTHING;
 
 
@@ -615,9 +545,11 @@ VALUES
 ('ROLE_INVENTORY_MANAGER', 'VIEW_LEAVE_OWN'), ('ROLE_INVENTORY_MANAGER', 'CREATE_TIME_OFF'), ('ROLE_INVENTORY_MANAGER', 'CREATE_OVERTIME'),
 ('ROLE_INVENTORY_MANAGER', 'CANCEL_TIME_OFF_OWN'), ('ROLE_INVENTORY_MANAGER', 'CANCEL_OVERTIME_OWN'),
 ('ROLE_INVENTORY_MANAGER', 'VIEW_HOLIDAY'),
--- WAREHOUSE (V22: Full warehouse management - API 6.6, 6.9)
+-- WAREHOUSE (V22: Full warehouse management - API 6.6, 6.9, 6.10, 6.11)
+('ROLE_INVENTORY_MANAGER', 'VIEW_ITEMS'), -- Can view item list and units (API 6.8, 6.11)
 ('ROLE_INVENTORY_MANAGER', 'VIEW_WAREHOUSE'), -- Can view transaction history
 ('ROLE_INVENTORY_MANAGER', 'CREATE_ITEMS'), -- Can create item masters (API 6.9)
+('ROLE_INVENTORY_MANAGER', 'UPDATE_ITEMS'), -- Can update item masters (API 6.10)
 ('ROLE_INVENTORY_MANAGER', 'CREATE_WAREHOUSE'), -- Can create categories/suppliers
 ('ROLE_INVENTORY_MANAGER', 'UPDATE_WAREHOUSE'), -- Can update items/categories/suppliers
 ('ROLE_INVENTORY_MANAGER', 'DELETE_WAREHOUSE'), -- Can delete items/categories/suppliers
@@ -3334,43 +3266,43 @@ SELECT setval('suppliers_supplier_id_seq', (SELECT COALESCE(MAX(supplier_id), 0)
 -- This section only contains INSERT statements for test data
 -- =============================================
 -- Transaction 1: IMPORT - APPROVED, PAID (Da thanh toan day du)
-INSERT INTO storage_transactions (transaction_code, transaction_type, transaction_date, invoice_number, total_value, created_by, supplier_id,
-    payment_status, paid_amount, remaining_debt, due_date, approval_status, approved_by, approved_at, notes, created_at)
+INSERT INTO storage_transactions (transaction_code, type, transaction_date, invoice_number, total_value, created_by_id, supplier_id,
+    payment_status, paid_amount, remaining_debt, due_date, approval_status, approved_by_id, approved_at, status, description, created_at)
 VALUES ('IMP-2024-001', 'IMPORT', NOW() - INTERVAL '15 days', 'INV-20240101-001', 15000000.00, 6, 1,
-    'PAID', 15000000.00, 0.00, NULL, 'APPROVED', 3, NOW() - INTERVAL '10 days', 'Nhap vat tu nha khoa thang 1', NOW() - INTERVAL '15 days');
+    'PAID', 15000000.00, 0.00, NULL, 'APPROVED', 3, NOW() - INTERVAL '10 days', 'COMPLETED', 'Nhap vat tu nha khoa thang 1', NOW() - INTERVAL '15 days');
 
 -- Transaction 2: IMPORT - APPROVED, PARTIAL payment (Chua thanh toan het)
-INSERT INTO storage_transactions (transaction_code, transaction_type, transaction_date, invoice_number, total_value, created_by, supplier_id,
-    payment_status, paid_amount, remaining_debt, due_date, approval_status, approved_by, approved_at, notes, created_at)
+INSERT INTO storage_transactions (transaction_code, type, transaction_date, invoice_number, total_value, created_by_id, supplier_id,
+    payment_status, paid_amount, remaining_debt, due_date, approval_status, approved_by_id, approved_at, status, description, created_at)
 VALUES ('IMP-2024-002', 'IMPORT', NOW() - INTERVAL '12 days', 'INV-20240105-002', 25000000.00, 6, 2,
-    'PARTIAL', 15000000.00, 10000000.00, CURRENT_DATE + INTERVAL '15 days', 'APPROVED', 3, NOW() - INTERVAL '8 days', 'Nhap thuoc va hoa chat', NOW() - INTERVAL '12 days');
+    'PARTIAL', 15000000.00, 10000000.00, CURRENT_DATE + INTERVAL '15 days', 'APPROVED', 3, NOW() - INTERVAL '8 days', 'COMPLETED', 'Nhap thuoc va hoa chat', NOW() - INTERVAL '12 days');
 
 -- Transaction 3: IMPORT - PENDING_APPROVAL, UNPAID (Cho duyet)
-INSERT INTO storage_transactions (transaction_code, transaction_type, transaction_date, invoice_number, total_value, created_by, supplier_id,
-    payment_status, paid_amount, remaining_debt, due_date, approval_status, approved_by, approved_at, notes, created_at)
+INSERT INTO storage_transactions (transaction_code, type, transaction_date, invoice_number, total_value, created_by_id, supplier_id,
+    payment_status, paid_amount, remaining_debt, due_date, approval_status, approved_by_id, approved_at, status, description, created_at)
 VALUES ('IMP-2024-003', 'IMPORT', NOW() - INTERVAL '2 days', 'INV-20240110-003', 18000000.00, 6, 3,
-    'UNPAID', 0.00, 18000000.00, CURRENT_DATE + INTERVAL '30 days', 'PENDING_APPROVAL', NULL, NULL, 'Nhap thiet bi cao cap', NOW() - INTERVAL '2 days');
+    'UNPAID', 0.00, 18000000.00, CURRENT_DATE + INTERVAL '30 days', 'PENDING_APPROVAL', NULL, NULL, 'DRAFT', 'Nhap thiet bi cao cap', NOW() - INTERVAL '2 days');
 
 -- Transaction 4: EXPORT - APPROVED (Xuat kho lien ket voi lich hen 1)
-INSERT INTO storage_transactions (transaction_code, transaction_type, transaction_date, invoice_number, total_value, created_by, supplier_id,
-    payment_status, paid_amount, remaining_debt, due_date, approval_status, approved_by, approved_at, related_appointment_id, notes, created_at)
+INSERT INTO storage_transactions (transaction_code, type, transaction_date, invoice_number, total_value, created_by_id, supplier_id,
+    payment_status, paid_amount, remaining_debt, due_date, approval_status, approved_by_id, approved_at, status, related_appointment_id, description, created_at)
 VALUES ('EXP-2024-001', 'EXPORT', NOW() - INTERVAL '7 days', NULL, NULL, 2, NULL,
-    NULL, NULL, NULL, NULL, 'APPROVED', 3, NOW() - INTERVAL '5 days', 1, 'Xuat vat tu cho dieu tri benh nhan Nguyen Van A', NOW() - INTERVAL '7 days');
+    NULL, NULL, NULL, NULL, 'APPROVED', 3, NOW() - INTERVAL '5 days', 'COMPLETED', 1, 'Xuat vat tu cho dieu tri benh nhan Nguyen Van A', NOW() - INTERVAL '7 days');
 
 -- Transaction 5: EXPORT - APPROVED (Xuat kho lien ket voi lich hen 2)
-INSERT INTO storage_transactions (transaction_code, transaction_type, transaction_date, invoice_number, total_value, created_by, supplier_id,
-    payment_status, paid_amount, remaining_debt, due_date, approval_status, approved_by, approved_at, related_appointment_id, notes, created_at)
+INSERT INTO storage_transactions (transaction_code, type, transaction_date, invoice_number, total_value, created_by_id, supplier_id,
+    payment_status, paid_amount, remaining_debt, due_date, approval_status, approved_by_id, approved_at, status, related_appointment_id, description, created_at)
 VALUES ('EXP-2024-002', 'EXPORT', NOW() - INTERVAL '4 days', NULL, NULL, 2, NULL,
-    NULL, NULL, NULL, NULL, 'APPROVED', 3, NOW() - INTERVAL '3 days', 2, 'Xuat vat tu cho dieu tri benh nhan Tran Thi B', NOW() - INTERVAL '4 days');
+    NULL, NULL, NULL, NULL, 'APPROVED', 3, NOW() - INTERVAL '3 days', 'COMPLETED', 2, 'Xuat vat tu cho dieu tri benh nhan Tran Thi B', NOW() - INTERVAL '4 days');
 
 -- Transaction 6: IMPORT - REJECTED (Bi tu choi)
-INSERT INTO storage_transactions (transaction_code, transaction_type, transaction_date, invoice_number, total_value, created_by, supplier_id,
-    payment_status, paid_amount, remaining_debt, due_date, approval_status, approved_by, approved_at, notes, created_at)
+INSERT INTO storage_transactions (transaction_code, type, transaction_date, invoice_number, total_value, created_by_id, supplier_id,
+    payment_status, paid_amount, remaining_debt, due_date, approval_status, rejected_by_id, rejected_at, status, rejection_reason, created_at)
 VALUES ('IMP-2024-004', 'IMPORT', NOW() - INTERVAL '3 days', 'INV-20240115-004', 12000000.00, 6, 4,
-    'UNPAID', 0.00, 12000000.00, CURRENT_DATE + INTERVAL '20 days', 'REJECTED', 3, NOW() - INTERVAL '1 day', 'Nhap vat tu khong dat chuan - tu choi', NOW() - INTERVAL '3 days');
+    'UNPAID', 0.00, 12000000.00, CURRENT_DATE + INTERVAL '20 days', 'REJECTED', 3, NOW() - INTERVAL '1 day', 'CANCELLED', 'Nhap vat tu khong dat chuan - tu choi', NOW() - INTERVAL '3 days');
 
 -- Reset storage_transactions sequence
-SELECT setval('storage_transactions_transaction_id_seq', (SELECT COALESCE(MAX(transaction_id), 0) FROM storage_transactions));
+SELECT setval('storage_transactions_storage_transaction_id_seq', (SELECT COALESCE(MAX(storage_transaction_id), 0) FROM storage_transactions));
 
 
 -- =============================================
@@ -3384,62 +3316,62 @@ SELECT setval('storage_transactions_transaction_id_seq', (SELECT COALESCE(MAX(tr
 -- STEP 1: ITEM_UNITS (Don vi do luong - Unit hierarchy)
 -- =============================================
 -- Consumables: Găng tay y tế
-INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'Chiếc', 1, TRUE, FALSE, TRUE, 3, NOW()
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
+SELECT im.item_master_id, 'Chiếc', 1, TRUE, TRUE, TRUE, TRUE, FALSE, TRUE, 3, NOW()
 FROM item_masters im WHERE im.item_code = 'CON-GLOVE-01'
 ON CONFLICT DO NOTHING;
 
-INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'Cặp', 2, FALSE, FALSE, FALSE, 2, NOW()
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
+SELECT im.item_master_id, 'Cặp', 2, FALSE, TRUE, FALSE, FALSE, 2, NOW()
 FROM item_masters im WHERE im.item_code = 'CON-GLOVE-01'
 ON CONFLICT DO NOTHING;
 
-INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'Hộp', 200, FALSE, TRUE, FALSE, 1, NOW()
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
+SELECT im.item_master_id, 'Hộp', 200, FALSE, TRUE, TRUE, FALSE, 1, NOW()
 FROM item_masters im WHERE im.item_code = 'CON-GLOVE-01'
 ON CONFLICT DO NOTHING;
 
 -- Khẩu trang y tế
-INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'Cái', 1, TRUE, FALSE, TRUE, 3, NOW()
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
+SELECT im.item_master_id, 'Cái', 1, TRUE, TRUE, TRUE, FALSE, TRUE, 3, NOW()
 FROM item_masters im WHERE im.item_code = 'CON-MASK-01'
 ON CONFLICT DO NOTHING;
 
-INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'Hộp', 50, FALSE, TRUE, FALSE, 1, NOW()
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
+SELECT im.item_master_id, 'Hộp', 50, FALSE, TRUE, TRUE, FALSE, 1, NOW()
 FROM item_masters im WHERE im.item_code = 'CON-MASK-01'
 ON CONFLICT DO NOTHING;
 
 -- Kim tiêm nha khoa
-INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'Cái', 1, TRUE, FALSE, TRUE, 2, NOW()
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
+SELECT im.item_master_id, 'Cái', 1, TRUE, TRUE, TRUE, FALSE, TRUE, 2, NOW()
 FROM item_masters im WHERE im.item_code = 'CON-NEEDLE-01'
 ON CONFLICT DO NOTHING;
 
-INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'Hộp', 100, FALSE, TRUE, FALSE, 1, NOW()
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
+SELECT im.item_master_id, 'Hộp', 100, FALSE, TRUE, TRUE, FALSE, 1, NOW()
 FROM item_masters im WHERE im.item_code = 'CON-NEEDLE-01'
 ON CONFLICT DO NOTHING;
 
 -- Medicine: Thuốc tê Septodont
-INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'Ống', 1, TRUE, FALSE, TRUE, 2, NOW()
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
+SELECT im.item_master_id, 'Ống', 1, TRUE, TRUE, TRUE, FALSE, TRUE, 2, NOW()
 FROM item_masters im WHERE im.item_code = 'MED-SEPT-01'
 ON CONFLICT DO NOTHING;
 
-INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'Hộp', 50, FALSE, TRUE, FALSE, 1, NOW()
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
+SELECT im.item_master_id, 'Hộp', 50, FALSE, TRUE, TRUE, FALSE, 1, NOW()
 FROM item_masters im WHERE im.item_code = 'MED-SEPT-01'
 ON CONFLICT DO NOTHING;
 
 -- Material: Composite
-INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'g', 1, TRUE, FALSE, TRUE, 2, NOW()
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
+SELECT im.item_master_id, 'g', 1, TRUE, TRUE, TRUE, FALSE, TRUE, 2, NOW()
 FROM item_masters im WHERE im.item_code = 'MAT-COMP-01'
 ON CONFLICT DO NOTHING;
 
-INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'Tuýp', 4, FALSE, TRUE, FALSE, 1, NOW()
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
+SELECT im.item_master_id, 'Tuýp', 4, FALSE, TRUE, TRUE, FALSE, 1, NOW()
 FROM item_masters im WHERE im.item_code = 'MAT-COMP-01'
 ON CONFLICT DO NOTHING;
 

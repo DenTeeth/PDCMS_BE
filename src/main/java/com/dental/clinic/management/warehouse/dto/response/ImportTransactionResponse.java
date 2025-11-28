@@ -32,7 +32,17 @@ public class ImportTransactionResponse {
     private String invoiceNumber;
     private String createdBy;
     private LocalDateTime createdAt;
-    private String status; // COMPLETED, DRAFT, CANCELLED
+    private com.dental.clinic.management.warehouse.enums.TransactionStatus status;
+
+    // Approval Info
+    private String approvedByName;
+    private LocalDateTime approvedAt;
+
+    // Payment Info (RBAC: requires VIEW_COST)
+    private com.dental.clinic.management.warehouse.enums.PaymentStatus paymentStatus;
+    private BigDecimal paidAmount;
+    private BigDecimal remainingDebt;
+    private LocalDate dueDate;
 
     // Financial Summary
     private Integer totalItems;

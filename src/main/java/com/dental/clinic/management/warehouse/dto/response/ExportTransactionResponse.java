@@ -37,9 +37,18 @@ public class ExportTransactionResponse {
     private String createdBy;
     private LocalDateTime createdAt;
 
+    // Approval Info
+    private com.dental.clinic.management.warehouse.enums.TransactionStatus status;
+    private String approvedByName;
+    private LocalDateTime approvedAt;
+
+    // Appointment Info (for CLINICAL exports)
+    private Long relatedAppointmentId;
+    private String patientName;
+
     // Summary
-    private Integer totalItems; // Số dòng thực tế (có thể > số dòng yêu cầu do multi-batch)
-    private BigDecimal totalValue; // Tổng giá vốn (COGS)
+    private Integer totalItems;
+    private BigDecimal totalValue;
 
     // Items Detail
     private List<ExportItemResponse> items;

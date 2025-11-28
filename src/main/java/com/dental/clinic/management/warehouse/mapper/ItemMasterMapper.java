@@ -25,7 +25,7 @@ public class ItemMasterMapper {
     /**
      * DEPRECATED: This method is for old CreateItemMaster API (InventoryService).
      * API 6.9 uses ItemMasterService.createItemMaster() directly.
-     * 
+     *
      * Note: CreateItemMasterRequest was rewritten for API 6.9 with unit hierarchy.
      * This old mapper is incompatible with the new DTO structure.
      * Keeping this commented until InventoryService is refactored.
@@ -48,7 +48,7 @@ public class ItemMasterMapper {
                 .itemCode(request.getItemCode())
                 .itemName(request.getItemName())
                 .warehouseType(request.getWarehouseType())
-                .unitOfMeasure(baseUnitName)  // Use base unit name from units array
+                .unitOfMeasure(baseUnitName) // Use base unit name from units array
                 .minStockLevel(request.getMinStockLevel())
                 .maxStockLevel(request.getMaxStockLevel())
                 .description(request.getDescription())
@@ -92,19 +92,14 @@ public class ItemMasterMapper {
                 .build();
     }
 
-    @SuppressWarnings("deprecation")
+    // DEPRECATED: This method is no longer used. Update logic is now handled in
+    // ItemMasterService.updateItemMaster()
+    // with Safety Lock mechanism and unit hierarchy management.
+    // Keeping this method for backward compatibility with legacy code.
+    @Deprecated
     public void updateEntity(ItemMaster item, UpdateItemMasterRequest request) {
-        if (item == null || request == null) {
-            return;
-        }
-
-        item.setItemName(request.getItemName());
-        item.setWarehouseType(request.getWarehouseType());
-        item.setUnitOfMeasure(request.getUnitOfMeasure());
-        item.setMinStockLevel(request.getMinStockLevel());
-        item.setMaxStockLevel(request.getMaxStockLevel());
-        item.setIsTool(request.getIsTool());
-        item.setDescription(request.getDescription());
+        throw new UnsupportedOperationException(
+                "This method is deprecated. Use ItemMasterService.updateItemMaster() instead for API 6.10 with Safety Lock support.");
     }
 
     private StockStatus calculateStockStatus(Integer totalQty, Integer minLevel, Integer maxLevel) {
