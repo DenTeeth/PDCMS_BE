@@ -7,6 +7,7 @@ This guide provides comprehensive test scenarios for API 6.11 (Get Item Units). 
 ## Prerequisites
 
 ### 1. Start the Application
+
 ```bash
 cd D:/Code/PDCMS_BE
 ./mvnw spring-boot:run
@@ -15,6 +16,7 @@ cd D:/Code/PDCMS_BE
 Wait for: "Started DentalClinicManagementApplication"
 
 ### 2. Verify Application Health
+
 ```bash
 curl http://localhost:8080/actuator/health
 ```
@@ -24,6 +26,7 @@ Expected: `{"status":"UP"}`
 ### 3. Get Authentication Token
 
 Login as Inventory Manager:
+
 ```bash
 curl -X POST http://localhost:8080/api/v1/auth/login \
   -H "Content-Type: application/json" \
@@ -40,22 +43,25 @@ Save the JWT token from response for subsequent requests.
 ### Available Test Items (from seed data)
 
 **Item 1: Thuoc giam dau Paracetamol 500mg**
+
 - itemMasterId: Check DB after seed
 - itemCode: DP-PARA-500
 - Units: 3 (Hop, Vi, Vien)
 - Status: Active
 
 **Item 2: Thuoc khang sinh Amoxicillin 500mg**
+
 - itemMasterId: Check DB after seed
 - itemCode: DP-AMOX-500
 - Units: 3 (Hop, Vi, Vien)
 - Status: Active
 
 Query to find item IDs:
+
 ```sql
-SELECT item_master_id, item_code, item_name 
-FROM item_masters 
-WHERE is_active = true 
+SELECT item_master_id, item_code, item_name
+FROM item_masters
+WHERE is_active = true
 LIMIT 5;
 ```
 
@@ -66,12 +72,14 @@ LIMIT 5;
 **Purpose:** Verify default status filter returns only active units
 
 **Request:**
+
 ```bash
 curl -X GET "http://localhost:8080/api/v1/warehouse/items/{itemMasterId}/units" \
   -H "Authorization: Bearer {token}"
 ```
 
 **Expected Response:**
+
 ```json
 {
   "statusCode": 200,
@@ -121,6 +129,7 @@ curl -X GET "http://localhost:8080/api/v1/warehouse/items/{itemMasterId}/units" 
 ```
 
 **Validation:**
+
 - [ ] Status code is 200
 - [ ] Message is correct
 - [ ] itemMaster contains all fields
@@ -137,6 +146,7 @@ curl -X GET "http://localhost:8080/api/v1/warehouse/items/{itemMasterId}/units" 
 **Purpose:** Verify explicit status=active parameter works
 
 **Request:**
+
 ```bash
 curl -X GET "http://localhost:8080/api/v1/warehouse/items/{itemMasterId}/units?status=active" \
   -H "Authorization: Bearer {token}"
@@ -145,6 +155,7 @@ curl -X GET "http://localhost:8080/api/v1/warehouse/items/{itemMasterId}/units?s
 **Expected Result:** Same as Scenario 1
 
 **Validation:**
+
 - [ ] Response identical to default (status=active)
 - [ ] Only active units returned
 
@@ -156,6 +167,7 @@ curl -X GET "http://localhost:8080/api/v1/warehouse/items/{itemMasterId}/units?s
 
 **Setup:**
 First, soft-delete a unit using API 6.10:
+
 ```bash
 curl -X PUT "http://localhost:8080/api/v1/warehouse/items/{itemMasterId}" \
   -H "Authorization: Bearer {token}" \
@@ -196,12 +208,14 @@ curl -X PUT "http://localhost:8080/api/v1/warehouse/items/{itemMasterId}" \
 ```
 
 **Request:**
+
 ```bash
 curl -X GET "http://localhost:8080/api/v1/warehouse/items/{itemMasterId}/units?status=inactive" \
   -H "Authorization: Bearer {token}"
 ```
 
 **Expected Response:**
+
 ```json
 {
   "statusCode": 200,
@@ -228,6 +242,7 @@ curl -X GET "http://localhost:8080/api/v1/warehouse/items/{itemMasterId}/units?s
 ```
 
 **Validation:**
+
 - [ ] Only 1 unit returned
 - [ ] Unit has isActive=false
 - [ ] Description still correctly generated
@@ -239,12 +254,14 @@ curl -X GET "http://localhost:8080/api/v1/warehouse/items/{itemMasterId}/units?s
 **Purpose:** Verify status=all returns all units regardless of status
 
 **Request:**
+
 ```bash
 curl -X GET "http://localhost:8080/api/v1/warehouse/items/{itemMasterId}/units?status=all" \
   -H "Authorization: Bearer {token}"
 ```
 
 **Expected Response:**
+
 ```json
 {
   "statusCode": 200,
@@ -274,6 +291,7 @@ curl -X GET "http://localhost:8080/api/v1/warehouse/items/{itemMasterId}/units?s
 ```
 
 **Validation:**
+
 - [ ] 3 units returned
 - [ ] Mix of isActive=true and isActive=false
 - [ ] Still sorted by displayOrder
@@ -285,12 +303,14 @@ curl -X GET "http://localhost:8080/api/v1/warehouse/items/{itemMasterId}/units?s
 **Purpose:** Verify proper error for non-existent item
 
 **Request:**
+
 ```bash
 curl -X GET "http://localhost:8080/api/v1/warehouse/items/999999/units" \
   -H "Authorization: Bearer {token}"
 ```
 
 **Expected Response:**
+
 ```json
 {
   "statusCode": 404,
@@ -300,6 +320,7 @@ curl -X GET "http://localhost:8080/api/v1/warehouse/items/999999/units" \
 ```
 
 **Validation:**
+
 - [ ] Status code is 404
 - [ ] Error message mentions the ID
 - [ ] Response format matches error structure
@@ -314,12 +335,14 @@ curl -X GET "http://localhost:8080/api/v1/warehouse/items/999999/units" \
 First, soft-delete an item using API 6.10 (set all units to isActive=false, or use direct DB update).
 
 **Request:**
+
 ```bash
 curl -X GET "http://localhost:8080/api/v1/warehouse/items/{inactiveItemId}/units" \
   -H "Authorization: Bearer {token}"
 ```
 
 **Expected Response:**
+
 ```json
 {
   "statusCode": 410,
@@ -329,6 +352,7 @@ curl -X GET "http://localhost:8080/api/v1/warehouse/items/{inactiveItemId}/units
 ```
 
 **Validation:**
+
 - [ ] Status code is 410 (not 404)
 - [ ] Error message mentions item code
 - [ ] Distinguishes from non-existent item
@@ -340,12 +364,14 @@ curl -X GET "http://localhost:8080/api/v1/warehouse/items/{inactiveItemId}/units
 **Purpose:** Verify input validation rejects negative IDs
 
 **Request:**
+
 ```bash
 curl -X GET "http://localhost:8080/api/v1/warehouse/items/-1/units" \
   -H "Authorization: Bearer {token}"
 ```
 
 **Expected Response:**
+
 ```json
 {
   "statusCode": 400,
@@ -355,6 +381,7 @@ curl -X GET "http://localhost:8080/api/v1/warehouse/items/-1/units" \
 ```
 
 **Validation:**
+
 - [ ] Status code is 400
 - [ ] Validation error message clear
 - [ ] Request rejected before hitting service layer
@@ -366,6 +393,7 @@ curl -X GET "http://localhost:8080/api/v1/warehouse/items/-1/units" \
 **Purpose:** Verify validation rejects zero
 
 **Request:**
+
 ```bash
 curl -X GET "http://localhost:8080/api/v1/warehouse/items/0/units" \
   -H "Authorization: Bearer {token}"
@@ -374,6 +402,7 @@ curl -X GET "http://localhost:8080/api/v1/warehouse/items/0/units" \
 **Expected Response:** Same as Scenario 7
 
 **Validation:**
+
 - [ ] Status code is 400
 - [ ] Validation error for minimum value
 
@@ -384,6 +413,7 @@ curl -X GET "http://localhost:8080/api/v1/warehouse/items/0/units" \
 **Purpose:** Verify status parameter is case-insensitive
 
 **Request:**
+
 ```bash
 curl -X GET "http://localhost:8080/api/v1/warehouse/items/{itemMasterId}/units?status=ACTIVE" \
   -H "Authorization: Bearer {token}"
@@ -392,6 +422,7 @@ curl -X GET "http://localhost:8080/api/v1/warehouse/items/{itemMasterId}/units?s
 **Expected Result:** Same as Scenario 1 (active units)
 
 **Validation:**
+
 - [ ] ACTIVE (uppercase) treated as "active"
 - [ ] Returns only active units
 
@@ -402,6 +433,7 @@ curl -X GET "http://localhost:8080/api/v1/warehouse/items/{itemMasterId}/units?s
 **Purpose:** Verify unknown status values default to active
 
 **Request:**
+
 ```bash
 curl -X GET "http://localhost:8080/api/v1/warehouse/items/{itemMasterId}/units?status=invalid" \
   -H "Authorization: Bearer {token}"
@@ -410,6 +442,7 @@ curl -X GET "http://localhost:8080/api/v1/warehouse/items/{itemMasterId}/units?s
 **Expected Result:** Same as Scenario 1 (active units)
 
 **Validation:**
+
 - [ ] Invalid status treated as default (active)
 - [ ] No error thrown
 
@@ -420,11 +453,13 @@ curl -X GET "http://localhost:8080/api/v1/warehouse/items/{itemMasterId}/units?s
 **Purpose:** Verify authentication required
 
 **Request:**
+
 ```bash
 curl -X GET "http://localhost:8080/api/v1/warehouse/items/{itemMasterId}/units"
 ```
 
 **Expected Response:**
+
 ```json
 {
   "statusCode": 401,
@@ -434,6 +469,7 @@ curl -X GET "http://localhost:8080/api/v1/warehouse/items/{itemMasterId}/units"
 ```
 
 **Validation:**
+
 - [ ] Status code is 401
 - [ ] Clear authentication error message
 
@@ -445,6 +481,7 @@ curl -X GET "http://localhost:8080/api/v1/warehouse/items/{itemMasterId}/units"
 
 **Setup:**
 Login as doctor:
+
 ```bash
 curl -X POST http://localhost:8080/api/v1/auth/login \
   -H "Content-Type: application/json" \
@@ -455,6 +492,7 @@ curl -X POST http://localhost:8080/api/v1/auth/login \
 ```
 
 **Request:**
+
 ```bash
 curl -X GET "http://localhost:8080/api/v1/warehouse/items/{itemMasterId}/units" \
   -H "Authorization: Bearer {doctorToken}"
@@ -463,6 +501,7 @@ curl -X GET "http://localhost:8080/api/v1/warehouse/items/{itemMasterId}/units" 
 **Expected Result:** Success (200) with full data
 
 **Validation:**
+
 - [ ] Doctor has VIEW_ITEMS permission
 - [ ] Can access units for prescription
 
@@ -474,6 +513,7 @@ curl -X GET "http://localhost:8080/api/v1/warehouse/items/{itemMasterId}/units" 
 
 **Setup:**
 Login as receptionist:
+
 ```bash
 curl -X POST http://localhost:8080/api/v1/auth/login \
   -H "Content-Type: application/json" \
@@ -484,6 +524,7 @@ curl -X POST http://localhost:8080/api/v1/auth/login \
 ```
 
 **Request:**
+
 ```bash
 curl -X GET "http://localhost:8080/api/v1/warehouse/items/{itemMasterId}/units" \
   -H "Authorization: Bearer {receptionistToken}"
@@ -492,6 +533,7 @@ curl -X GET "http://localhost:8080/api/v1/warehouse/items/{itemMasterId}/units" 
 **Expected Result:** Success (200)
 
 **Validation:**
+
 - [ ] Receptionist has VIEW_ITEMS permission
 - [ ] Can access units
 
@@ -502,6 +544,7 @@ curl -X GET "http://localhost:8080/api/v1/warehouse/items/{itemMasterId}/units" 
 **Purpose:** Verify base unit has special description
 
 **Request:**
+
 ```bash
 curl -X GET "http://localhost:8080/api/v1/warehouse/items/{itemMasterId}/units" \
   -H "Authorization: Bearer {token}"
@@ -510,6 +553,7 @@ curl -X GET "http://localhost:8080/api/v1/warehouse/items/{itemMasterId}/units" 
 **Focus:** Find unit where isBaseUnit=true
 
 **Validation:**
+
 - [ ] Base unit description is "Don vi co so"
 - [ ] Not formatted as "1 Vien = 1 Vien"
 
@@ -520,12 +564,14 @@ curl -X GET "http://localhost:8080/api/v1/warehouse/items/{itemMasterId}/units" 
 **Purpose:** Verify units always sorted by displayOrder ASC
 
 **Request:**
+
 ```bash
 curl -X GET "http://localhost:8080/api/v1/warehouse/items/{itemMasterId}/units?status=all" \
   -H "Authorization: Bearer {token}"
 ```
 
 **Validation:**
+
 - [ ] First unit has displayOrder=1 (Hop - Box)
 - [ ] Second unit has displayOrder=2 (Vi - Blister)
 - [ ] Third unit has displayOrder=3 (Vien - Tablet/base)
@@ -536,8 +582,9 @@ curl -X GET "http://localhost:8080/api/v1/warehouse/items/{itemMasterId}/units?s
 ## SQL Queries for Test Verification
 
 ### Check Item Units Configuration
+
 ```sql
-SELECT 
+SELECT
     iu.unit_id,
     iu.unit_name,
     iu.conversion_rate,
@@ -553,8 +600,9 @@ ORDER BY iu.display_order ASC;
 ```
 
 ### Find Active Items with Units
+
 ```sql
-SELECT 
+SELECT
     im.item_master_id,
     im.item_code,
     im.item_name,
@@ -567,6 +615,7 @@ HAVING COUNT(iu.unit_id) > 0;
 ```
 
 ### Verify Permissions
+
 ```sql
 SELECT r.role_id, p.permission_id
 FROM role_permissions rp
@@ -579,14 +628,17 @@ WHERE p.permission_id = 'VIEW_ITEMS'
 ## Swagger UI Testing
 
 ### Access Swagger
+
 Open browser: `http://localhost:8080/swagger-ui.html`
 
 ### Navigate to API 6.11
+
 1. Find "Item Master Management" section
 2. Expand "GET /api/v1/warehouse/items/{itemMasterId}/units"
 3. Click "Try it out"
 
 ### Execute Tests
+
 1. Enter itemMasterId (e.g., 1)
 2. Select status (active/inactive/all)
 3. Click "Execute"
@@ -595,6 +647,7 @@ Open browser: `http://localhost:8080/swagger-ui.html`
 ## Test Summary Checklist
 
 ### Functional Tests
+
 - [ ] Scenario 1: Default status (active)
 - [ ] Scenario 2: Explicit active status
 - [ ] Scenario 3: Inactive units only
@@ -607,17 +660,20 @@ Open browser: `http://localhost:8080/swagger-ui.html`
 - [ ] Scenario 10: Unknown status defaults
 
 ### Security Tests
+
 - [ ] Scenario 11: No auth (401)
 - [ ] Scenario 12: Doctor role (200)
 - [ ] Scenario 13: Receptionist role (200)
 
 ### Data Integrity Tests
+
 - [ ] Scenario 14: Base unit description
 - [ ] Scenario 15: Sorting by displayOrder
 
 ## Performance Testing
 
 ### Load Test
+
 ```bash
 # Using Apache Bench
 ab -n 1000 -c 10 \
@@ -626,11 +682,13 @@ ab -n 1000 -c 10 \
 ```
 
 **Expected:**
+
 - Average response time: < 100ms
 - No errors
 - Consistent performance
 
 ### Stress Test
+
 ```bash
 # 100 concurrent requests
 ab -n 5000 -c 100 \
@@ -639,6 +697,7 @@ ab -n 5000 -c 100 \
 ```
 
 **Expected:**
+
 - No connection errors
 - P95 latency < 500ms
 - All responses valid
@@ -647,7 +706,7 @@ ab -n 5000 -c 100 \
 
 If any test fails, report using this template:
 
-```markdown
+````markdown
 **Test Scenario:** Scenario X - [Name]
 
 **Expected Behavior:**
@@ -657,28 +716,34 @@ If any test fails, report using this template:
 [What actually happened]
 
 **Request:**
+
 ```bash
 [Exact curl command]
 ```
+````
 
 **Response:**
+
 ```json
 [Actual response]
 ```
 
 **Environment:**
+
 - Java Version: 17
 - Spring Boot Version: 3.2.10
 - Database: PostgreSQL
 - Branch: feat/BE-501-manage-treatment-plans
 
 **Steps to Reproduce:**
+
 1. [Step 1]
 2. [Step 2]
-...
+   ...
 
 **Additional Context:**
 [Any relevant logs, screenshots, or SQL queries]
+
 ```
 
 ## Test Completion Sign-off
@@ -693,8 +758,8 @@ After completing all tests:
 - [ ] Performance acceptable
 - [ ] Documentation accurate
 
-**Tester Name:** _________________  
-**Date:** _________________  
+**Tester Name:** _________________
+**Date:** _________________
 **Signature:** _________________
 
 ## Troubleshooting
@@ -734,3 +799,4 @@ After all tests pass:
 - All tests assume seed data is loaded
 - Tests are non-destructive except Scenario 3 (soft delete)
 - For Scenario 3, restore data after testing or use dedicated test item
+```
