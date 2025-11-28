@@ -34,6 +34,11 @@ public interface ItemUnitRepository extends JpaRepository<ItemUnit, Long> {
         Optional<ItemUnit> findByItemMaster_ItemMasterIdAndUnitName(Long itemMasterId, String unitName);
 
         /**
+         * Lấy tất cả đơn vị của 1 item master (for update logic)
+         */
+        List<ItemUnit> findByItemMaster_ItemMasterId(Long itemMasterId);
+
+        /**
          * Lấy tất cả đơn vị của 1 item master (for unpacking logic)
          */
         @Query("SELECT iu FROM ItemUnit iu " +

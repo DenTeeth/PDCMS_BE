@@ -422,7 +422,7 @@ public class ImportTransactionService {
                 .invoiceNumber(transaction.getInvoiceNumber())
                 .createdBy(employee.getFullName())
                 .createdAt(transaction.getCreatedAt())
-                .status(transaction.getStatus())
+                .status(com.dental.clinic.management.warehouse.enums.TransactionStatus.valueOf(transaction.getStatus()))
                 .totalItems(items.size())
                 .totalValue(transaction.getTotalValue())
                 .items(items)

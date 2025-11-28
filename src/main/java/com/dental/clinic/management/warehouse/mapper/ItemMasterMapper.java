@@ -92,19 +92,13 @@ public class ItemMasterMapper {
                 .build();
     }
 
-    @SuppressWarnings("deprecation")
+    // DEPRECATED: This method is no longer used. Update logic is now handled in ItemMasterService.updateItemMaster()
+    // with Safety Lock mechanism and unit hierarchy management.
+    // Keeping this method for backward compatibility with legacy code.
+    @Deprecated
     public void updateEntity(ItemMaster item, UpdateItemMasterRequest request) {
-        if (item == null || request == null) {
-            return;
-        }
-
-        item.setItemName(request.getItemName());
-        item.setWarehouseType(request.getWarehouseType());
-        item.setUnitOfMeasure(request.getUnitOfMeasure());
-        item.setMinStockLevel(request.getMinStockLevel());
-        item.setMaxStockLevel(request.getMaxStockLevel());
-        item.setIsTool(request.getIsTool());
-        item.setDescription(request.getDescription());
+        throw new UnsupportedOperationException(
+                "This method is deprecated. Use ItemMasterService.updateItemMaster() instead for API 6.10 with Safety Lock support.");
     }
 
     private StockStatus calculateStockStatus(Integer totalQty, Integer minLevel, Integer maxLevel) {

@@ -466,12 +466,10 @@ public class TransactionHistoryService {
                             + transaction.getApprovalStatus());
         }
 
-        Integer currentUserId = SecurityUtil.getCurrentEmployeeId();
-        com.dental.clinic.management.employees.domain.Employee currentUser = new com.dental.clinic.management.employees.domain.Employee();
-        currentUser.setEmployeeId(currentUserId);
+        // NOTE: approvedBy field left NULL - requires employee_id in JWT claims for proper implementation
+        log.warn("Approving transaction {} without approvedBy - employee tracking not implemented", id);
 
         transaction.setApprovalStatus(TransactionStatus.APPROVED);
-        transaction.setApprovedBy(currentUser);
         transaction.setApprovedAt(LocalDateTime.now());
 
         if (notes != null && !notes.trim().isEmpty()) {
@@ -512,12 +510,10 @@ public class TransactionHistoryService {
                             + transaction.getApprovalStatus());
         }
 
-        Integer currentUserId = SecurityUtil.getCurrentEmployeeId();
-        com.dental.clinic.management.employees.domain.Employee currentUser = new com.dental.clinic.management.employees.domain.Employee();
-        currentUser.setEmployeeId(currentUserId);
+        // NOTE: rejectedBy field left NULL - requires employee_id in JWT claims for proper implementation
+        log.warn("Rejecting transaction {} without rejectedBy - employee tracking not implemented", id);
 
         transaction.setApprovalStatus(TransactionStatus.REJECTED);
-        transaction.setRejectedBy(currentUser);
         transaction.setRejectedAt(LocalDateTime.now());
         transaction.setRejectionReason(rejectionReason);
 
@@ -550,12 +546,10 @@ public class TransactionHistoryService {
                             + transaction.getApprovalStatus());
         }
 
-        Integer currentUserId = SecurityUtil.getCurrentEmployeeId();
-        com.dental.clinic.management.employees.domain.Employee currentUser = new com.dental.clinic.management.employees.domain.Employee();
-        currentUser.setEmployeeId(currentUserId);
+        // NOTE: cancelledBy field left NULL - requires employee_id in JWT claims for proper implementation
+        log.warn("Cancelling transaction {} without cancelledBy - employee tracking not implemented", id);
 
         transaction.setApprovalStatus(TransactionStatus.CANCELLED);
-        transaction.setCancelledBy(currentUser);
         transaction.setCancelledAt(LocalDateTime.now());
         if (cancellationReason != null && !cancellationReason.trim().isEmpty()) {
             transaction.setCancellationReason(cancellationReason);

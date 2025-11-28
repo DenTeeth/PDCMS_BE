@@ -51,6 +51,14 @@ public class ItemUnit {
     private Boolean isBaseUnit = false;
 
     /**
+     * Soft delete flag: false = deprecated unit
+     * Ẩn khỏi dropdown nhưng vẫn giữ lịch sử giao dịch
+     */
+    @Column(name = "is_active", nullable = false)
+    @Builder.Default
+    private Boolean isActive = true;
+
+    /**
      * Thứ tự hiển thị (từ lớn đến nhỏ)
      * Hộp (1) → Vỉ (2) → Viên (3)
      */

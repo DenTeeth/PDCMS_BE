@@ -552,6 +552,7 @@ CREATE TABLE item_units (
     unit_name VARCHAR(50) NOT NULL,
     conversion_rate INTEGER NOT NULL,
     is_base_unit BOOLEAN NOT NULL DEFAULT FALSE,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
     display_order INTEGER,
     is_default_import_unit BOOLEAN NOT NULL DEFAULT FALSE,
     is_default_export_unit BOOLEAN NOT NULL DEFAULT FALSE,
@@ -566,9 +567,11 @@ CREATE TABLE item_units (
 
 CREATE INDEX idx_item_units_item_master ON item_units(item_master_id);
 CREATE INDEX idx_item_units_base_unit ON item_units(is_base_unit);
+CREATE INDEX idx_item_units_active ON item_units(is_active);
 
-COMMENT ON TABLE item_units IS 'Unit hierarchy for items (e.g., Box -> Strip -> Pill) - API 6.9';
+COMMENT ON TABLE item_units IS 'Unit hierarchy for items (e.g., Box -> Strip -> Pill) - API 6.9, 6.10';
 COMMENT ON COLUMN item_units.conversion_rate IS 'Conversion rate to base unit (base unit = 1)';
+COMMENT ON COLUMN item_units.is_active IS 'Soft delete flag: false = deprecated unit, hide from dropdown but keep in history';
 COMMENT ON COLUMN item_units.is_default_import_unit IS 'UX optimization: default unit for import transactions';
 COMMENT ON COLUMN item_units.is_default_export_unit IS 'UX optimization: default unit for export transactions';
 

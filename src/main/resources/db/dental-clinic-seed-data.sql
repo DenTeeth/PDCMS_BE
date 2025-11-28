@@ -433,14 +433,15 @@ VALUES
 ('VIEW_ITEMS', 'VIEW_ITEMS', 'WAREHOUSE', 'Xem danh sách vật tư (cho Bác sĩ/Lễ tân)', 269, NULL, TRUE, NOW()),
 ('VIEW_WAREHOUSE', 'VIEW_WAREHOUSE', 'WAREHOUSE', 'Xem danh sách giao dịch kho', 270, NULL, TRUE, NOW()),
 ('CREATE_ITEMS', 'CREATE_ITEMS', 'WAREHOUSE', 'Tạo vật tư mới với hệ thống đơn vị', 271, NULL, TRUE, NOW()),
-('CREATE_WAREHOUSE', 'CREATE_WAREHOUSE', 'WAREHOUSE', 'Tạo danh mục, nhà cung cấp', 272, NULL, TRUE, NOW()),
-('UPDATE_WAREHOUSE', 'UPDATE_WAREHOUSE', 'WAREHOUSE', 'Cập nhật vật tư, danh mục, nhà cung cấp', 273, NULL, TRUE, NOW()),
-('DELETE_WAREHOUSE', 'DELETE_WAREHOUSE', 'WAREHOUSE', 'Xóa vật tư, danh mục, nhà cung cấp', 274, NULL, TRUE, NOW()),
-('VIEW_COST', 'VIEW_COST', 'WAREHOUSE', 'Xem thông tin tài chính (giá trị, công nợ, thanh toán)', 275, NULL, TRUE, NOW()),
-('IMPORT_ITEMS', 'IMPORT_ITEMS', 'WAREHOUSE', 'Tạo phiếu nhập kho', 276, NULL, TRUE, NOW()),
-('EXPORT_ITEMS', 'EXPORT_ITEMS', 'WAREHOUSE', 'Tạo phiếu xuất kho', 277, NULL, TRUE, NOW()),
-('DISPOSE_ITEMS', 'DISPOSE_ITEMS', 'WAREHOUSE', 'Tạo phiếu thanh lý', 278, NULL, TRUE, NOW()),
-('APPROVE_TRANSACTION', 'APPROVE_TRANSACTION', 'WAREHOUSE', 'Duyệt/Từ chối phiếu nhập xuất kho', 279, NULL, TRUE, NOW())
+('UPDATE_ITEMS', 'UPDATE_ITEMS', 'WAREHOUSE', 'Cập nhật thông tin vật tư và đơn vị tính', 272, NULL, TRUE, NOW()),
+('CREATE_WAREHOUSE', 'CREATE_WAREHOUSE', 'WAREHOUSE', 'Tạo danh mục, nhà cung cấp', 273, NULL, TRUE, NOW()),
+('UPDATE_WAREHOUSE', 'UPDATE_WAREHOUSE', 'WAREHOUSE', 'Cập nhật danh mục, nhà cung cấp', 274, NULL, TRUE, NOW()),
+('DELETE_WAREHOUSE', 'DELETE_WAREHOUSE', 'WAREHOUSE', 'Xóa vật tư, danh mục, nhà cung cấp', 275, NULL, TRUE, NOW()),
+('VIEW_COST', 'VIEW_COST', 'WAREHOUSE', 'Xem thông tin tài chính (giá trị, công nợ, thanh toán)', 276, NULL, TRUE, NOW()),
+('IMPORT_ITEMS', 'IMPORT_ITEMS', 'WAREHOUSE', 'Tạo phiếu nhập kho', 277, NULL, TRUE, NOW()),
+('EXPORT_ITEMS', 'EXPORT_ITEMS', 'WAREHOUSE', 'Tạo phiếu xuất kho', 278, NULL, TRUE, NOW()),
+('DISPOSE_ITEMS', 'DISPOSE_ITEMS', 'WAREHOUSE', 'Tạo phiếu thanh lý', 279, NULL, TRUE, NOW()),
+('APPROVE_TRANSACTION', 'APPROVE_TRANSACTION', 'WAREHOUSE', 'Duyệt/Từ chối phiếu nhập xuất kho', 280, NULL, TRUE, NOW())
 ON CONFLICT (permission_id) DO NOTHING;
 
 
@@ -618,6 +619,7 @@ VALUES
 -- WAREHOUSE (V22: Full warehouse management - API 6.6, 6.9)
 ('ROLE_INVENTORY_MANAGER', 'VIEW_WAREHOUSE'), -- Can view transaction history
 ('ROLE_INVENTORY_MANAGER', 'CREATE_ITEMS'), -- Can create item masters (API 6.9)
+('ROLE_INVENTORY_MANAGER', 'UPDATE_ITEMS'), -- Can update item masters (API 6.10)
 ('ROLE_INVENTORY_MANAGER', 'CREATE_WAREHOUSE'), -- Can create categories/suppliers
 ('ROLE_INVENTORY_MANAGER', 'UPDATE_WAREHOUSE'), -- Can update items/categories/suppliers
 ('ROLE_INVENTORY_MANAGER', 'DELETE_WAREHOUSE'), -- Can delete items/categories/suppliers
@@ -3334,43 +3336,43 @@ SELECT setval('suppliers_supplier_id_seq', (SELECT COALESCE(MAX(supplier_id), 0)
 -- This section only contains INSERT statements for test data
 -- =============================================
 -- Transaction 1: IMPORT - APPROVED, PAID (Da thanh toan day du)
-INSERT INTO storage_transactions (transaction_code, transaction_type, transaction_date, invoice_number, total_value, created_by, supplier_id,
-    payment_status, paid_amount, remaining_debt, due_date, approval_status, approved_by, approved_at, notes, created_at)
+INSERT INTO storage_transactions (transaction_code, type, transaction_date, invoice_number, total_value, created_by_id, supplier_id,
+    payment_status, paid_amount, remaining_debt, due_date, approval_status, approved_by_id, approved_at, status, description, created_at)
 VALUES ('IMP-2024-001', 'IMPORT', NOW() - INTERVAL '15 days', 'INV-20240101-001', 15000000.00, 6, 1,
-    'PAID', 15000000.00, 0.00, NULL, 'APPROVED', 3, NOW() - INTERVAL '10 days', 'Nhap vat tu nha khoa thang 1', NOW() - INTERVAL '15 days');
+    'PAID', 15000000.00, 0.00, NULL, 'APPROVED', 3, NOW() - INTERVAL '10 days', 'COMPLETED', 'Nhap vat tu nha khoa thang 1', NOW() - INTERVAL '15 days');
 
 -- Transaction 2: IMPORT - APPROVED, PARTIAL payment (Chua thanh toan het)
-INSERT INTO storage_transactions (transaction_code, transaction_type, transaction_date, invoice_number, total_value, created_by, supplier_id,
-    payment_status, paid_amount, remaining_debt, due_date, approval_status, approved_by, approved_at, notes, created_at)
+INSERT INTO storage_transactions (transaction_code, type, transaction_date, invoice_number, total_value, created_by_id, supplier_id,
+    payment_status, paid_amount, remaining_debt, due_date, approval_status, approved_by_id, approved_at, status, description, created_at)
 VALUES ('IMP-2024-002', 'IMPORT', NOW() - INTERVAL '12 days', 'INV-20240105-002', 25000000.00, 6, 2,
-    'PARTIAL', 15000000.00, 10000000.00, CURRENT_DATE + INTERVAL '15 days', 'APPROVED', 3, NOW() - INTERVAL '8 days', 'Nhap thuoc va hoa chat', NOW() - INTERVAL '12 days');
+    'PARTIAL', 15000000.00, 10000000.00, CURRENT_DATE + INTERVAL '15 days', 'APPROVED', 3, NOW() - INTERVAL '8 days', 'COMPLETED', 'Nhap thuoc va hoa chat', NOW() - INTERVAL '12 days');
 
 -- Transaction 3: IMPORT - PENDING_APPROVAL, UNPAID (Cho duyet)
-INSERT INTO storage_transactions (transaction_code, transaction_type, transaction_date, invoice_number, total_value, created_by, supplier_id,
-    payment_status, paid_amount, remaining_debt, due_date, approval_status, approved_by, approved_at, notes, created_at)
+INSERT INTO storage_transactions (transaction_code, type, transaction_date, invoice_number, total_value, created_by_id, supplier_id,
+    payment_status, paid_amount, remaining_debt, due_date, approval_status, approved_by_id, approved_at, status, description, created_at)
 VALUES ('IMP-2024-003', 'IMPORT', NOW() - INTERVAL '2 days', 'INV-20240110-003', 18000000.00, 6, 3,
-    'UNPAID', 0.00, 18000000.00, CURRENT_DATE + INTERVAL '30 days', 'PENDING_APPROVAL', NULL, NULL, 'Nhap thiet bi cao cap', NOW() - INTERVAL '2 days');
+    'UNPAID', 0.00, 18000000.00, CURRENT_DATE + INTERVAL '30 days', 'PENDING_APPROVAL', NULL, NULL, 'DRAFT', 'Nhap thiet bi cao cap', NOW() - INTERVAL '2 days');
 
 -- Transaction 4: EXPORT - APPROVED (Xuat kho lien ket voi lich hen 1)
-INSERT INTO storage_transactions (transaction_code, transaction_type, transaction_date, invoice_number, total_value, created_by, supplier_id,
-    payment_status, paid_amount, remaining_debt, due_date, approval_status, approved_by, approved_at, related_appointment_id, notes, created_at)
+INSERT INTO storage_transactions (transaction_code, type, transaction_date, invoice_number, total_value, created_by_id, supplier_id,
+    payment_status, paid_amount, remaining_debt, due_date, approval_status, approved_by_id, approved_at, status, related_appointment_id, description, created_at)
 VALUES ('EXP-2024-001', 'EXPORT', NOW() - INTERVAL '7 days', NULL, NULL, 2, NULL,
-    NULL, NULL, NULL, NULL, 'APPROVED', 3, NOW() - INTERVAL '5 days', 1, 'Xuat vat tu cho dieu tri benh nhan Nguyen Van A', NOW() - INTERVAL '7 days');
+    NULL, NULL, NULL, NULL, 'APPROVED', 3, NOW() - INTERVAL '5 days', 'COMPLETED', 1, 'Xuat vat tu cho dieu tri benh nhan Nguyen Van A', NOW() - INTERVAL '7 days');
 
 -- Transaction 5: EXPORT - APPROVED (Xuat kho lien ket voi lich hen 2)
-INSERT INTO storage_transactions (transaction_code, transaction_type, transaction_date, invoice_number, total_value, created_by, supplier_id,
-    payment_status, paid_amount, remaining_debt, due_date, approval_status, approved_by, approved_at, related_appointment_id, notes, created_at)
+INSERT INTO storage_transactions (transaction_code, type, transaction_date, invoice_number, total_value, created_by_id, supplier_id,
+    payment_status, paid_amount, remaining_debt, due_date, approval_status, approved_by_id, approved_at, status, related_appointment_id, description, created_at)
 VALUES ('EXP-2024-002', 'EXPORT', NOW() - INTERVAL '4 days', NULL, NULL, 2, NULL,
-    NULL, NULL, NULL, NULL, 'APPROVED', 3, NOW() - INTERVAL '3 days', 2, 'Xuat vat tu cho dieu tri benh nhan Tran Thi B', NOW() - INTERVAL '4 days');
+    NULL, NULL, NULL, NULL, 'APPROVED', 3, NOW() - INTERVAL '3 days', 'COMPLETED', 2, 'Xuat vat tu cho dieu tri benh nhan Tran Thi B', NOW() - INTERVAL '4 days');
 
 -- Transaction 6: IMPORT - REJECTED (Bi tu choi)
-INSERT INTO storage_transactions (transaction_code, transaction_type, transaction_date, invoice_number, total_value, created_by, supplier_id,
-    payment_status, paid_amount, remaining_debt, due_date, approval_status, approved_by, approved_at, notes, created_at)
+INSERT INTO storage_transactions (transaction_code, type, transaction_date, invoice_number, total_value, created_by_id, supplier_id,
+    payment_status, paid_amount, remaining_debt, due_date, approval_status, rejected_by_id, rejected_at, status, rejection_reason, created_at)
 VALUES ('IMP-2024-004', 'IMPORT', NOW() - INTERVAL '3 days', 'INV-20240115-004', 12000000.00, 6, 4,
-    'UNPAID', 0.00, 12000000.00, CURRENT_DATE + INTERVAL '20 days', 'REJECTED', 3, NOW() - INTERVAL '1 day', 'Nhap vat tu khong dat chuan - tu choi', NOW() - INTERVAL '3 days');
+    'UNPAID', 0.00, 12000000.00, CURRENT_DATE + INTERVAL '20 days', 'REJECTED', 3, NOW() - INTERVAL '1 day', 'CANCELLED', 'Nhap vat tu khong dat chuan - tu choi', NOW() - INTERVAL '3 days');
 
 -- Reset storage_transactions sequence
-SELECT setval('storage_transactions_transaction_id_seq', (SELECT COALESCE(MAX(transaction_id), 0) FROM storage_transactions));
+SELECT setval('storage_transactions_storage_transaction_id_seq', (SELECT COALESCE(MAX(storage_transaction_id), 0) FROM storage_transactions));
 
 
 -- =============================================
@@ -3384,62 +3386,62 @@ SELECT setval('storage_transactions_transaction_id_seq', (SELECT COALESCE(MAX(tr
 -- STEP 1: ITEM_UNITS (Don vi do luong - Unit hierarchy)
 -- =============================================
 -- Consumables: Găng tay y tế
-INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'Chiếc', 1, TRUE, FALSE, TRUE, 3, NOW()
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
+SELECT im.item_master_id, 'Chiếc', 1, TRUE, TRUE, TRUE, TRUE, FALSE, TRUE, 3, NOW()
 FROM item_masters im WHERE im.item_code = 'CON-GLOVE-01'
 ON CONFLICT DO NOTHING;
 
-INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'Cặp', 2, FALSE, FALSE, FALSE, 2, NOW()
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
+SELECT im.item_master_id, 'Cặp', 2, FALSE, TRUE, FALSE, FALSE, 2, NOW()
 FROM item_masters im WHERE im.item_code = 'CON-GLOVE-01'
 ON CONFLICT DO NOTHING;
 
-INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'Hộp', 200, FALSE, TRUE, FALSE, 1, NOW()
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
+SELECT im.item_master_id, 'Hộp', 200, FALSE, TRUE, TRUE, FALSE, 1, NOW()
 FROM item_masters im WHERE im.item_code = 'CON-GLOVE-01'
 ON CONFLICT DO NOTHING;
 
 -- Khẩu trang y tế
-INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'Cái', 1, TRUE, FALSE, TRUE, 3, NOW()
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
+SELECT im.item_master_id, 'Cái', 1, TRUE, TRUE, TRUE, FALSE, TRUE, 3, NOW()
 FROM item_masters im WHERE im.item_code = 'CON-MASK-01'
 ON CONFLICT DO NOTHING;
 
-INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'Hộp', 50, FALSE, TRUE, FALSE, 1, NOW()
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
+SELECT im.item_master_id, 'Hộp', 50, FALSE, TRUE, TRUE, FALSE, 1, NOW()
 FROM item_masters im WHERE im.item_code = 'CON-MASK-01'
 ON CONFLICT DO NOTHING;
 
 -- Kim tiêm nha khoa
-INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'Cái', 1, TRUE, FALSE, TRUE, 2, NOW()
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
+SELECT im.item_master_id, 'Cái', 1, TRUE, TRUE, TRUE, FALSE, TRUE, 2, NOW()
 FROM item_masters im WHERE im.item_code = 'CON-NEEDLE-01'
 ON CONFLICT DO NOTHING;
 
-INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'Hộp', 100, FALSE, TRUE, FALSE, 1, NOW()
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
+SELECT im.item_master_id, 'Hộp', 100, FALSE, TRUE, TRUE, FALSE, 1, NOW()
 FROM item_masters im WHERE im.item_code = 'CON-NEEDLE-01'
 ON CONFLICT DO NOTHING;
 
 -- Medicine: Thuốc tê Septodont
-INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'Ống', 1, TRUE, FALSE, TRUE, 2, NOW()
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
+SELECT im.item_master_id, 'Ống', 1, TRUE, TRUE, TRUE, FALSE, TRUE, 2, NOW()
 FROM item_masters im WHERE im.item_code = 'MED-SEPT-01'
 ON CONFLICT DO NOTHING;
 
-INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'Hộp', 50, FALSE, TRUE, FALSE, 1, NOW()
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
+SELECT im.item_master_id, 'Hộp', 50, FALSE, TRUE, TRUE, FALSE, 1, NOW()
 FROM item_masters im WHERE im.item_code = 'MED-SEPT-01'
 ON CONFLICT DO NOTHING;
 
 -- Material: Composite
-INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'g', 1, TRUE, FALSE, TRUE, 2, NOW()
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
+SELECT im.item_master_id, 'g', 1, TRUE, TRUE, TRUE, FALSE, TRUE, 2, NOW()
 FROM item_masters im WHERE im.item_code = 'MAT-COMP-01'
 ON CONFLICT DO NOTHING;
 
-INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'Tuýp', 4, FALSE, TRUE, FALSE, 1, NOW()
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
+SELECT im.item_master_id, 'Tuýp', 4, FALSE, TRUE, TRUE, FALSE, 1, NOW()
 FROM item_masters im WHERE im.item_code = 'MAT-COMP-01'
 ON CONFLICT DO NOTHING;
 
