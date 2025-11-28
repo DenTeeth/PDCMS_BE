@@ -456,8 +456,8 @@ public class ItemMasterService {
                 ItemMaster itemMaster = itemMasterRepository.findById(itemMasterId)
                                 .orElseThrow(() -> {
                                         log.error("Item master not found with ID: {}", itemMasterId);
-                                        return new ResourceNotFoundException("ITEM_NOT_FOUND", 
-                                                "Item master not found with ID: " + itemMasterId);
+                                        return new ResourceNotFoundException("ITEM_NOT_FOUND",
+                                                        "Item master not found with ID: " + itemMasterId);
                                 });
 
                 // 2. Check if item is inactive (return 410 GONE)

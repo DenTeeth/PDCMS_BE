@@ -2,7 +2,7 @@
 -- HỆ THỐNG QUẢN LÝ PHÒNG KHÁM NHA KHOA
 -- Dental Clinic Management System - Seed Data V6
 -- ============================================
--- NOTE: 
+-- NOTE:
 -- - This is the ONLY SQL file used in the project
 -- - Contains: ENUM types + Initial seed data (INSERT statements)
 -- - Tables are automatically created by Hibernate (ddl-auto: update)

@@ -235,17 +235,15 @@ public class ItemMasterController {
                         - units: List of units with auto-generated descriptions
                         """)
         public ResponseEntity<GetItemUnitsResponse> getItemUnits(
-                        @Parameter(description = "Item Master ID", required = true, example = "24")
-                        @PathVariable @Min(1) Long itemMasterId,
-                        
-                        @Parameter(description = "Unit status filter: active (default), inactive, or all", example = "active")
-                        @RequestParam(defaultValue = "active") String status) {
+                        @Parameter(description = "Item Master ID", required = true, example = "24") @PathVariable @Min(1) Long itemMasterId,
+
+                        @Parameter(description = "Unit status filter: active (default), inactive, or all", example = "active") @RequestParam(defaultValue = "active") String status) {
 
                 log.info("GET /api/v1/warehouse/items/{}/units?status={}", itemMasterId, status);
 
                 GetItemUnitsResponse response = itemMasterService.getItemUnits(itemMasterId, status);
 
-                log.info("Retrieved {} units for item master ID: {}", 
+                log.info("Retrieved {} units for item master ID: {}",
                                 response.getUnits().size(), itemMasterId);
 
                 return ResponseEntity.ok(response);
