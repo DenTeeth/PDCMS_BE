@@ -254,7 +254,8 @@ public class TransactionHistoryController {
          * API 6.6.3: Cancel Transaction
          */
         @PostMapping("/transactions/{id}/cancel")
-        @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('UPDATE_WAREHOUSE') or hasAuthority('CANCEL_WAREHOUSE')")
+        @PreAuthorize("hasRole('" + ADMIN
+                        + "') or hasAuthority('UPDATE_WAREHOUSE') or hasAuthority('CANCEL_WAREHOUSE')")
         @Operation(summary = "Hủy phiếu nhập/xuất kho", description = """
                         Hủy phiếu giao dịch kho. Chỉ có thể hủy khi status = DRAFT hoặc PENDING_APPROVAL.
 

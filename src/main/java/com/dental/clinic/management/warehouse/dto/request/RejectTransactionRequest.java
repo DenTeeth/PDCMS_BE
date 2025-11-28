@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RejectTransactionRequest {
-    
+
     @NotBlank(message = "Rejection reason is required")
     private String rejectionReason;
 }
