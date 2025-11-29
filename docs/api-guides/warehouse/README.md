@@ -9,6 +9,7 @@
 ## 🚀 Quick Start
 
 **📖 Main Reference**: [`WAREHOUSE_MODULE_API_REFERENCE.md`](../../WAREHOUSE_MODULE_API_REFERENCE.md)
+
 - Complete API documentation for all 11 endpoints
 - Request/response examples
 - Recent fixes and improvements
@@ -21,11 +22,13 @@
 ## 📚 Documentation Structure
 
 ### Current Files (Kept):
+
 - **`API_X.Y_FEATURE_NAME_COMPLETE.md`** - Complete API specification
 
 ### Removed (28/11/2025):
+
 - [NO] `*_TESTING_GUIDE.md` - Replaced by automated tests
-- [NO] `*_IMPLEMENTATION_SUMMARY.md` - Merged into _COMPLETE docs
+- [NO] `*_IMPLEMENTATION_SUMMARY.md` - Merged into \_COMPLETE docs
 
 ---
 
@@ -103,7 +106,7 @@
 
 ---
 
-### API 6.7 - Transaction Detail (View)  NEW
+### API 6.7 - Transaction Detail (View) NEW
 
 📄 **Specification:**
 
@@ -147,13 +150,13 @@
 
 ## 📋 Quick Reference Table
 
-| API | Endpoint                       | Method | Purpose            | Docs        |
-| --- | ------------------------------ | ------ | ------------------ | ----------- |
+| API | Endpoint                       | Method | Purpose            | Docs           |
+| --- | ------------------------------ | ------ | ------------------ | -------------- |
 | 6.1 | `/warehouse/summary`           | GET    | Inventory summary  | [YES] Complete |
 | 6.2 | `/warehouse/batches/{id}`      | GET    | Batch details      | [YES] Complete |
 | 6.3 | `/warehouse/alerts/expiring`   | GET    | Expiring alerts    | [YES] Complete |
 | 6.4 | `/warehouse/import`            | POST   | Create import      | [YES] Complete |
-| 6.5 | `/inventory/export`            | POST   | Create export      | [WARN] Pending  |
+| 6.5 | `/inventory/export`            | POST   | Create export      | [WARN] Pending |
 | 6.6 | `/warehouse/transactions`      | GET    | Transaction list   | [YES] Complete |
 | 6.7 | `/warehouse/transactions/{id}` | GET    | Transaction detail | [YES] Complete |
 | 6.8 | `/warehouse/items`             | GET    | Item masters list  | [YES] Complete |

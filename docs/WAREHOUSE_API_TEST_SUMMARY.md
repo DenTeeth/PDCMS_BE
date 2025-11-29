@@ -1,33 +1,33 @@
 # 📊 Báo Cáo Test Warehouse APIs 6.1 - 6.11
 
-**Ngày**: 28/11/2025  
+**Ngày**: 28/11/2025
 **Tester**: Automated Test Script
 
 ---
 
 ## [YES] Kết Quả Tổng Quan
 
-| Trạng Thái | Số Lượng | Tỷ Lệ |
-|:----------:|:--------:|:-----:|
-| **[YES] PASS** | **10** | **67%** |
-| **[NO] FAIL** | **5** | **33%** |
+|   Trạng Thái   | Số Lượng |  Tỷ Lệ  |
+| :------------: | :------: | :-----: |
+| **[YES] PASS** |  **10**  | **67%** |
+| **[NO] FAIL**  |  **5**   | **33%** |
 
 ---
 
 ## [YES] 10 APIs Hoạt Động Tốt
 
-| API | Endpoint | Method | Status | Ghi Chú |
-|-----|----------|--------|--------|---------|
-| **6.1** | `/api/v1/warehouse/summary` | GET | [YES] 200 | 34 items, pagination OK |
-| **6.2** | `/api/v1/warehouse/batches/1` | GET | [YES] 200 | 3 batches, FEFO sorting |
-| **6.3** | `/api/v1/warehouse/alerts/expiring` | GET | [YES] 200 | 3 alerts, threshold 90 days |
-| **6.4** | `/api/v1/warehouse/import` | POST | [YES] 201 | Created PN-20251128-002 |
-| **6.5** | `/api/v1/inventory/export` | POST | [YES] 201 | Created PX-20251128-002, FEFO OK |
-| **6.6** | `/api/v1/warehouse/transactions` | GET | [YES] 200 | 4 transactions |
-| **6.6b** | `/api/v1/warehouse/transactions?type=IMPORT` | GET | [YES] 200 | Filter by type OK |
-| **6.7** | `/api/v1/warehouse/transactions/1` | GET | [YES] 200 | Transaction detail OK |
-| **6.8** | `/api/v1/warehouse/items` | GET | [YES] 200 | 34 items, pagination OK |
-| **6.8b** | `/api/v1/warehouse/items?search=syringe` | GET | [YES] 200 | Search OK (0 results) |
+| API      | Endpoint                                     | Method | Status    | Ghi Chú                          |
+| -------- | -------------------------------------------- | ------ | --------- | -------------------------------- |
+| **6.1**  | `/api/v1/warehouse/summary`                  | GET    | [YES] 200 | 34 items, pagination OK          |
+| **6.2**  | `/api/v1/warehouse/batches/1`                | GET    | [YES] 200 | 3 batches, FEFO sorting          |
+| **6.3**  | `/api/v1/warehouse/alerts/expiring`          | GET    | [YES] 200 | 3 alerts, threshold 90 days      |
+| **6.4**  | `/api/v1/warehouse/import`                   | POST   | [YES] 201 | Created PN-20251128-002          |
+| **6.5**  | `/api/v1/inventory/export`                   | POST   | [YES] 201 | Created PX-20251128-002, FEFO OK |
+| **6.6**  | `/api/v1/warehouse/transactions`             | GET    | [YES] 200 | 4 transactions                   |
+| **6.6b** | `/api/v1/warehouse/transactions?type=IMPORT` | GET    | [YES] 200 | Filter by type OK                |
+| **6.7**  | `/api/v1/warehouse/transactions/1`           | GET    | [YES] 200 | Transaction detail OK            |
+| **6.8**  | `/api/v1/warehouse/items`                    | GET    | [YES] 200 | 34 items, pagination OK          |
+| **6.8b** | `/api/v1/warehouse/items?search=syringe`     | GET    | [YES] 200 | Search OK (0 results)            |
 
 ---
 
@@ -36,6 +36,7 @@
 ### 🔴 CRITICAL - Block FE Development
 
 #### 1. API 6.11 - Get Item Units [NO]
+
 ```
 Endpoint: GET /api/v1/warehouse/items/1/units
 Status:   500 Internal Server Error
@@ -44,12 +45,14 @@ Impact:   FE không thể hiển thị dropdown units → BLOCK form import/expo
 ```
 
 **Cần làm ngay**:
+
 - [ ] Check server logs để xem stacktrace
 - [ ] Debug `ItemMasterService.getItemUnits(itemMasterId=1)`
 - [ ] Verify Item ID 1 có units trong DB không
 - [ ] Test với item khác (ID 2, 3...)
 
 #### 2. API 6.11b - Get Item Units (All Status) [NO]
+
 ```
 Endpoint: GET /api/v1/warehouse/items/1/units?status=all
 Status:   500 Internal Server Error
@@ -57,6 +60,7 @@ Lỗi:      Giống API 6.11
 ```
 
 #### 3. API 6.9 - Create Item Master [NO]
+
 ```
 Endpoint: POST /api/v1/warehouse/items
 Status:   500 Internal Server Error
@@ -65,6 +69,7 @@ Impact:   FE không thể tạo item mới → BLOCK inventory management
 ```
 
 **Cần làm**:
+
 - [ ] Check server logs để xem exception
 - [ ] Debug `ItemMasterService.createItemMaster(request)`
 - [ ] Kiểm tra:
@@ -75,6 +80,7 @@ Impact:   FE không thể tạo item mới → BLOCK inventory management
 ### 🟡 MEDIUM - Có Workaround
 
 #### 4. API 6.10 - Update Item Master [NO]
+
 ```
 Endpoint: PUT /api/v1/warehouse/items/18
 Status:   400 Bad Request
@@ -83,6 +89,7 @@ Impact:   FE cần gửi thêm 2 fields
 ```
 
 **Fix đơn giản** - Thêm vào request body:
+
 ```json
 {
   "isActive": true,
@@ -94,6 +101,7 @@ Impact:   FE cần gửi thêm 2 fields
 ### 🟢 LOW - Minor Issue
 
 #### 5. API 6.1b - Inventory Summary Filter [NO]
+
 ```
 Endpoint: GET /api/v1/warehouse/summary?stockStatus=IN_STOCK
 Status:   400 Bad Request
@@ -108,10 +116,12 @@ Impact:   Filter không hoạt động, nhưng API chính OK
 ## 🎯 Ưu Tiên Fix
 
 ### Tuần Này (Critical)
+
 1. [WARN] **API 6.11** - Get Item Units (500) - **BLOCKING FE**
 2. [WARN] **API 6.9** - Create Item (500) - **HIGH PRIORITY**
 
 ### Tuần Sau (Medium)
+
 3. ⚡ **API 6.10** - Update Item (400) - Easy fix
 4. ⚡ **API 6.1b** - Filter (400) - Minor issue
 
@@ -120,6 +130,7 @@ Impact:   Filter không hoạt động, nhưng API chính OK
 ## 💪 Điểm Mạnh
 
 [YES] **Core warehouse operations hoạt động tốt**:
+
 - Import/Export transactions: 100% OK
 - FEFO allocation: Hoạt động chính xác
 - Transaction history: Đầy đủ filters
@@ -127,6 +138,7 @@ Impact:   Filter không hoạt động, nhưng API chính OK
 - Pagination: Hoạt động tốt
 
 [YES] **Test cases thành công**:
+
 - [YES] Import 50 units → Tạo batch mới (batch ID 14)
 - [YES] Export 10 units → FEFO chọn đúng batch sắp hết hạn
 - [YES] Warning system → Hiển thị cảnh báo 20 days expiry
