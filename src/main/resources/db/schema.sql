@@ -1,5 +1,5 @@
 -- ============================================
--- DENTAL CLINIC MANAGEMENT SYSTEM - SCHEMA V26
+-- DENTAL CLINIC MANAGEMENT SYSTEM - SCHEMA V27
 -- Date: 2025-11-29
 -- PostgreSQL Database Schema - REFERENCE ONLY
 -- ============================================
@@ -14,6 +14,12 @@
 --
 -- This file documents the expected schema structure for reference
 -- ============================================
+-- CHANGES IN V27 (API 6.13 - Get Suppliers with Metrics):
+--   - Added is_blacklisted column to suppliers table (via Entity update)
+--   - Hibernate automatically executes: ALTER TABLE suppliers ADD COLUMN is_blacklisted BOOLEAN
+--   - Added business metrics: totalOrders, lastOrderDate (already existed)
+--   - GET /api/v1/warehouse/suppliers endpoint with filters
+--   - Auto-update supplier metrics on import transaction
 -- CHANGES IN V26 (API 6.12 - Convert Item Quantity):
 --   - No schema changes (utility API only)
 --   - Added batch conversion endpoint POST /items/units/convert

@@ -75,8 +75,9 @@ public class Supplier {
      * Cờ đánh dấu nhà cung cấp bị đưa vào danh sách đen
      * TRUE = Không nên đặt hàng từ NCC này (quality/fraud issues)
      * FALSE = NCC đáng tin cậy (default)
+     * Note: nullable=true for Hibernate ALTER TABLE compatibility (existing rows may be NULL)
      */
-    @Column(name = "is_blacklisted", nullable = false)
+    @Column(name = "is_blacklisted")
     @Builder.Default
     private Boolean isBlacklisted = false;
 

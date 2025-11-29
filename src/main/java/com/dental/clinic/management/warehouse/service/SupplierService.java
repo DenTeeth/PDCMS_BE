@@ -81,11 +81,12 @@ public class SupplierService {
                 );
 
                 // Create Pageable with dynamic sorting
+                // IMPORTANT: Use Java property name (supplierName) NOT database column name (supplier_name)
                 org.springframework.data.domain.Sort sort = org.springframework.data.domain.Sort.by(
                         filterRequest.getSortDir().equalsIgnoreCase("DESC")
                                 ? org.springframework.data.domain.Sort.Direction.DESC
                                 : org.springframework.data.domain.Sort.Direction.ASC,
-                        filterRequest.getSortColumn()
+                        filterRequest.getSortBy() // Java property name for JPA query
                 );
                 
                 Pageable pageable = org.springframework.data.domain.PageRequest.of(
