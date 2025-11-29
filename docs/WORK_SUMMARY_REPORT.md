@@ -69,14 +69,14 @@ CREATE TYPE request_status AS ENUM ('PENDING', 'APPROVED', 'REJECTED', 'CANCELLE
 
 ### 2.1. Tính năng chính
 
-- ✅ Đặt lịch hẹn cho bệnh nhân
-- ✅ Kiểm tra xung đột lịch (bác sĩ, phòng khám, dịch vụ)
-- ✅ Delay appointment (Trễ trong cùng ngày)
-- ✅ Reschedule appointment (Hủy và đặt lại ngày khác)
-- ✅ Cancel appointment với lý do
-- ✅ Update appointment status (SCHEDULED → CHECKED_IN → IN_PROGRESS → COMPLETED)
-- ✅ Audit logging (Ghi lại tất cả thao tác)
-- ✅ Participant management (Hỗ trợ nhiều bác sĩ/y tá cho 1 cuộc hẹn)
+- [YES] Đặt lịch hẹn cho bệnh nhân
+- [YES] Kiểm tra xung đột lịch (bác sĩ, phòng khám, dịch vụ)
+- [YES] Delay appointment (Trễ trong cùng ngày)
+- [YES] Reschedule appointment (Hủy và đặt lại ngày khác)
+- [YES] Cancel appointment với lý do
+- [YES] Update appointment status (SCHEDULED → CHECKED_IN → IN_PROGRESS → COMPLETED)
+- [YES] Audit logging (Ghi lại tất cả thao tác)
+- [YES] Participant management (Hỗ trợ nhiều bác sĩ/y tá cho 1 cuộc hẹn)
 
 ### 2.2. APIs Implemented (12 endpoints)
 
@@ -125,16 +125,16 @@ CREATE TYPE request_status AS ENUM ('PENDING', 'APPROVED', 'REJECTED', 'CANCELLE
 
 ### 3.1. Tính năng chính
 
-- ✅ Tạo phác đồ điều trị từ templates hoặc custom
-- ✅ Phase-based treatment (Điều trị theo giai đoạn)
-- ✅ Service selection per phase với sequence
-- ✅ Auto pricing calculation (Tính tổng chi phí tự động)
-- ✅ Approval workflow (DRAFT → PENDING_REVIEW → APPROVED/REJECTED)
-- ✅ Patient consent tracking (Ghi nhận sự đồng ý của bệnh nhân)
-- ✅ Phase duration estimation (Ước tính thời gian hoàn thành)
-- ✅ Treatment status tracking (READY_FOR_BOOKING, IN_PROGRESS, COMPLETED)
-- ✅ Template management (Quản lý mẫu phác đồ chuẩn)
-- ✅ Finance adjustments (Kế toán điều chỉnh giá)
+- [YES] Tạo phác đồ điều trị từ templates hoặc custom
+- [YES] Phase-based treatment (Điều trị theo giai đoạn)
+- [YES] Service selection per phase với sequence
+- [YES] Auto pricing calculation (Tính tổng chi phí tự động)
+- [YES] Approval workflow (DRAFT → PENDING_REVIEW → APPROVED/REJECTED)
+- [YES] Patient consent tracking (Ghi nhận sự đồng ý của bệnh nhân)
+- [YES] Phase duration estimation (Ước tính thời gian hoàn thành)
+- [YES] Treatment status tracking (READY_FOR_BOOKING, IN_PROGRESS, COMPLETED)
+- [YES] Template management (Quản lý mẫu phác đồ chuẩn)
+- [YES] Finance adjustments (Kế toán điều chỉnh giá)
 
 ### 3.2. APIs Implemented (13 endpoints)
 
@@ -212,7 +212,7 @@ PENDING_REVIEW → reject() → REJECTED (Manager + rejection_reason)
 
 ### 4.1. Tính năng chính
 
-- ✅ **Inventory Management** (Quản lý tồn kho)
+- [YES] **Inventory Management** (Quản lý tồn kho)
 
   - Item Masters (Danh mục vật tư)
   - Categories (Phân loại: Thuốc, Vật tư tiêu hao, Dụng cụ)
@@ -220,13 +220,13 @@ PENDING_REVIEW → reject() → REJECTED (Manager + rejection_reason)
   - Stock levels (min/max thresholds)
   - Warehouse types (COLD storage cho thuốc, NORMAL cho vật tư)
 
-- ✅ **Supplier Management** (Quản lý nhà cung cấp)
+- [YES] **Supplier Management** (Quản lý nhà cung cấp)
 
   - Supplier CRUD với tier levels (GOLD, SILVER, BRONZE, STANDARD)
   - Supplied items history (Lịch sử cung cấp + giá nhập lần cuối)
   - Pagination + Search + Sort
 
-- ✅ **Transaction Management** (Quản lý giao dịch)
+- [YES] **Transaction Management** (Quản lý giao dịch)
 
   - Import transactions (Phiếu nhập kho)
   - Export transactions (Phiếu xuất kho)
@@ -235,14 +235,14 @@ PENDING_REVIEW → reject() → REJECTED (Manager + rejection_reason)
   - Payment status tracking (UNPAID, PARTIAL, PAID)
   - Approval workflow (DRAFT → PENDING_APPROVAL → APPROVED/REJECTED)
 
-- ✅ **Alerts & Reports** (Cảnh báo & Báo cáo)
+- [YES] **Alerts & Reports** (Cảnh báo & Báo cáo)
 
   - Expiring alerts (Hàng sắp hết hạn)
   - Low stock alerts (Hàng dưới mức tối thiểu)
   - Batch status (EXPIRED, CRITICAL <7 days, EXPIRING_SOON <30 days, VALID)
   - Transaction history với filters mạnh mẽ
 
-- ✅ **RBAC Security** (Phân quyền chi tiết)
+- [YES] **RBAC Security** (Phân quyền chi tiết)
   - VIEW_WAREHOUSE: Xem danh sách
   - CREATE_WAREHOUSE: Tạo items/categories/suppliers
   - UPDATE_WAREHOUSE: Cập nhật
@@ -325,10 +325,10 @@ PENDING_REVIEW → reject() → REJECTED (Manager + rejection_reason)
 **Solution**: Cập nhật tất cả 33 endpoints với pattern chuẩn:
 
 ```java
-// ❌ WRONG (Old pattern)
+// [NO] WRONG (Old pattern)
 @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_INVENTORY_MANAGER')")
 
-// ✅ CORRECT (New pattern)
+// [YES] CORRECT (New pattern)
 @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('VIEW_WAREHOUSE')")
 ```
 
@@ -428,9 +428,9 @@ INSERT INTO role_permissions (role_id, permission_id) VALUES
 
 ### 5.1. Tính năng chính
 
-- ✅ **SMTP Configuration** (Gmail/Custom SMTP server)
-- ✅ **HTML Email Templates** với Thymeleaf
-- ✅ **Email Types**:
+- [YES] **SMTP Configuration** (Gmail/Custom SMTP server)
+- [YES] **HTML Email Templates** với Thymeleaf
+- [YES] **Email Types**:
   - Appointment confirmation
   - Appointment reminders (1 day before)
   - Appointment cancellation
@@ -573,28 +573,28 @@ docs/
 
 ### 8.2. Features Completed
 
-✅ Complete RBAC system (150+ permissions across 12 modules)
-✅ 4 major modules (Appointment, Treatment Plan, Warehouse, Email)
-✅ Multi-level approval workflows
-✅ Comprehensive audit logging
-✅ Email notification system
-✅ Batch tracking với FEFO logic
-✅ Complex business rules implementation
-✅ Extensive API documentation
+[YES] Complete RBAC system (150+ permissions across 12 modules)
+[YES] 4 major modules (Appointment, Treatment Plan, Warehouse, Email)
+[YES] Multi-level approval workflows
+[YES] Comprehensive audit logging
+[YES] Email notification system
+[YES] Batch tracking với FEFO logic
+[YES] Complex business rules implementation
+[YES] Extensive API documentation
 
 ### 8.3. Testing Results
 
-✅ Application starts successfully (23 seconds startup time)
-✅ Database seeding works correctly
-✅ JWT authentication functional
-✅ RBAC permissions working
-✅ Manager role có thể access warehouse APIs sau khi fix RBAC
+[YES] Application starts successfully (23 seconds startup time)
+[YES] Database seeding works correctly
+[YES] JWT authentication functional
+[YES] RBAC permissions working
+[YES] Manager role có thể access warehouse APIs sau khi fix RBAC
 
 ---
 
 ## 🐛 9. RECENT BUG FIXES (November 25, 2025)
 
-### Issue #2: Warehouse RBAC Missing (CRITICAL - FIXED ✅)
+### Issue #2: Warehouse RBAC Missing (CRITICAL - FIXED [YES])
 
 **Problem**:
 
@@ -613,11 +613,11 @@ docs/
 
 **Solution Applied**:
 
-1. ✅ Added 4 missing permissions: CREATE_WAREHOUSE, UPDATE_WAREHOUSE, DELETE_WAREHOUSE, DISPOSE_ITEMS
-2. ✅ Updated 33 warehouse endpoints với pattern đúng: `hasRole(ADMIN) or hasAuthority(PERMISSION)`
-3. ✅ Added 4 suppliers to seed data
-4. ✅ Added 9 warehouse permissions to seed data
-5. ✅ Mapped permissions to roles (Manager: 5/9, Inventory Manager: 9/9, Receptionist: 1/9)
+1. [YES] Added 4 missing permissions: CREATE_WAREHOUSE, UPDATE_WAREHOUSE, DELETE_WAREHOUSE, DISPOSE_ITEMS
+2. [YES] Updated 33 warehouse endpoints với pattern đúng: `hasRole(ADMIN) or hasAuthority(PERMISSION)`
+3. [YES] Added 4 suppliers to seed data
+4. [YES] Added 9 warehouse permissions to seed data
+5. [YES] Mapped permissions to roles (Manager: 5/9, Inventory Manager: 9/9, Receptionist: 1/9)
 
 **Files Modified**:
 
@@ -646,14 +646,14 @@ curl -H "Authorization: Bearer ${MANAGER_TOKEN}" \
 
 ### 10.1. High Priority
 
-1. ⚠️ Fix remaining issues from "BE Open Issues" document:
+1. [WARN] Fix remaining issues from "BE Open Issues" document:
 
    - Issue #1: Review treatment plan templates specialization
    - Issue #4: Debug treatment plan approval 500 error
    - Issue #5: Implement resend password setup email endpoint
    - Issue #6: Add account status fields to PatientInfoResponse
 
-2. ⚠️ Add `.gitignore` entry for `app-startup.log` (đừng commit log files)
+2. [WARN] Add `.gitignore` entry for `app-startup.log` (đừng commit log files)
 
 ### 10.2. Medium Priority
 
@@ -698,7 +698,7 @@ Inventory Manager: khoquanli1 / 123456
 
 ---
 
-## ✅ CONCLUSION
+## [YES] CONCLUSION
 
 Đã hoàn thành phát triển 4 module chính của hệ thống PDCMS_BE với:
 
@@ -714,4 +714,4 @@ Hệ thống đã sẵn sàng cho testing và deployment phase tiếp theo.
 
 **Generated**: November 25, 2025
 **Version**: 1.0
-**Status**: Complete ✅
+**Status**: Complete [YES]

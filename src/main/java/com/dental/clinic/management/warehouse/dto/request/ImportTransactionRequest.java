@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -33,7 +32,7 @@ public class ImportTransactionRequest {
     private Long supplierId;
 
     @NotNull(message = "Transaction date is required")
-    private LocalDateTime transactionDate;
+    private LocalDate transactionDate;
 
     @NotBlank(message = "Invoice number is required")
     @Size(max = 100, message = "Invoice number must not exceed 100 characters")

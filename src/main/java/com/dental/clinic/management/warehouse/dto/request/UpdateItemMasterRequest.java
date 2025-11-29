@@ -47,11 +47,11 @@ public class UpdateItemMasterRequest {
     @DecimalMin(value = "0.0", inclusive = false, message = "Current market price must be > 0")
     private BigDecimal currentMarketPrice;
 
-    @NotNull(message = "isActive flag is required")
+    // Optional: If not provided, existing value will be retained
     private Boolean isActive;
 
-    @NotNull(message = "Units list is required")
-    @Size(min = 1, message = "At least one unit must be defined")
+    // Optional: If not provided or empty, existing units will be retained
+    // If provided, will perform Safety Lock validation
     @Valid
     private List<UnitRequest> units;
 

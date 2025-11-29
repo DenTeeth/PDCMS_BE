@@ -171,7 +171,7 @@ ON CONFLICT (permission_id) DO NOTHING;
 INSERT INTO permissions (permission_id, permission_name, module, description, display_order, parent_permission_id, is_active, created_at)
 VALUES
 ('VIEW_APPOINTMENT', 'VIEW_APPOINTMENT', 'APPOINTMENT', 'Xem danh sách lịch hẹn (deprecated - use VIEW_APPOINTMENT_ALL or VIEW_APPOINTMENT_OWN)', 50, NULL, TRUE, NOW()),
--- ✅ NEW: RBAC-compliant permissions (P3.3)
+-- NEW: RBAC-compliant permissions (P3.3)
 ('VIEW_APPOINTMENT_ALL', 'VIEW_APPOINTMENT_ALL', 'APPOINTMENT', 'Xem TẤT CẢ lịch hẹn (Lễ tân/Quản lý)', 51, NULL, TRUE, NOW()),
 ('VIEW_APPOINTMENT_OWN', 'VIEW_APPOINTMENT_OWN', 'APPOINTMENT', 'Chỉ xem lịch hẹn LIÊN QUAN (Bác sĩ/Y tá/Observer/Bệnh nhân)', 52, 'VIEW_APPOINTMENT_ALL', TRUE, NOW()),
 ('CREATE_APPOINTMENT', 'CREATE_APPOINTMENT', 'APPOINTMENT', 'Đặt lịch hẹn mới', 53, NULL, TRUE, NOW()),
@@ -390,9 +390,9 @@ VALUES
 ('ROLE_DENTIST', 'VIEW_PATIENT'), ('ROLE_DENTIST', 'UPDATE_PATIENT'),
 ('ROLE_DENTIST', 'VIEW_TREATMENT'), ('ROLE_DENTIST', 'CREATE_TREATMENT'), ('ROLE_DENTIST', 'UPDATE_TREATMENT'),
 ('ROLE_DENTIST', 'VIEW_APPOINTMENT'), -- Deprecated
-('ROLE_DENTIST', 'VIEW_APPOINTMENT_OWN'), -- ✅ NEW: Only see own appointments
-('ROLE_DENTIST', 'UPDATE_APPOINTMENT_STATUS'), -- ✅ NEW API 3.5: Start, Complete treatment
-('ROLE_DENTIST', 'DELAY_APPOINTMENT'), -- ✅ NEW API 3.6: Delay appointment when needed
+('ROLE_DENTIST', 'VIEW_APPOINTMENT_OWN'), -- NEW: Only see own appointments
+('ROLE_DENTIST', 'UPDATE_APPOINTMENT_STATUS'), -- NEW API 3.5: Start, Complete treatment
+('ROLE_DENTIST', 'DELAY_APPOINTMENT'), -- NEW API 3.6: Delay appointment when needed
 ('ROLE_DENTIST', 'VIEW_REGISTRATION_OWN'), ('ROLE_DENTIST', 'VIEW_RENEWAL_OWN'), ('ROLE_DENTIST', 'RESPOND_RENEWAL_OWN'),
 ('ROLE_DENTIST', 'CREATE_REGISTRATION'),
 ('ROLE_DENTIST', 'VIEW_LEAVE_OWN'), ('ROLE_DENTIST', 'CREATE_TIME_OFF'), ('ROLE_DENTIST', 'CREATE_OVERTIME'),
@@ -413,8 +413,8 @@ INSERT INTO role_permissions (role_id, permission_id)
 VALUES
 ('ROLE_NURSE', 'VIEW_PATIENT'), ('ROLE_NURSE', 'VIEW_TREATMENT'),
 ('ROLE_NURSE', 'VIEW_APPOINTMENT'), -- Deprecated
-('ROLE_NURSE', 'VIEW_APPOINTMENT_OWN'), -- ✅ NEW: Only see participating appointments
-('ROLE_NURSE', 'UPDATE_APPOINTMENT_STATUS'), -- ✅ NEW API 3.5: Help check-in patients
+('ROLE_NURSE', 'VIEW_APPOINTMENT_OWN'), -- NEW: Only see participating appointments
+('ROLE_NURSE', 'UPDATE_APPOINTMENT_STATUS'), -- NEW API 3.5: Help check-in patients
 ('ROLE_NURSE', 'VIEW_REGISTRATION_OWN'), ('ROLE_NURSE', 'VIEW_RENEWAL_OWN'), ('ROLE_NURSE', 'RESPOND_RENEWAL_OWN'),
 ('ROLE_NURSE', 'CREATE_REGISTRATION'),
 ('ROLE_NURSE', 'VIEW_LEAVE_OWN'), ('ROLE_NURSE', 'CREATE_TIME_OFF'), ('ROLE_NURSE', 'CREATE_OVERTIME'),
@@ -441,11 +441,11 @@ INSERT INTO role_permissions (role_id, permission_id)
 VALUES
 ('ROLE_RECEPTIONIST', 'VIEW_PATIENT'), ('ROLE_RECEPTIONIST', 'CREATE_PATIENT'), ('ROLE_RECEPTIONIST', 'UPDATE_PATIENT'),
 ('ROLE_RECEPTIONIST', 'VIEW_APPOINTMENT'), -- Deprecated
-('ROLE_RECEPTIONIST', 'VIEW_APPOINTMENT_ALL'), -- ✅ NEW: Xem TẤT CẢ lịch hẹn
+('ROLE_RECEPTIONIST', 'VIEW_APPOINTMENT_ALL'), -- NEW: Xem TẤT CẢ lịch hẹn
 ('ROLE_RECEPTIONIST', 'CREATE_APPOINTMENT'),
 ('ROLE_RECEPTIONIST', 'UPDATE_APPOINTMENT'),
-('ROLE_RECEPTIONIST', 'UPDATE_APPOINTMENT_STATUS'), -- ✅ NEW API 3.5: Check-in, In-progress, Complete
-('ROLE_RECEPTIONIST', 'DELAY_APPOINTMENT'), -- ✅ NEW API 3.6: Delay appointment for patients
+('ROLE_RECEPTIONIST', 'UPDATE_APPOINTMENT_STATUS'), -- NEW API 3.5: Check-in, In-progress, Complete
+('ROLE_RECEPTIONIST', 'DELAY_APPOINTMENT'), -- NEW API 3.6: Delay appointment for patients
 ('ROLE_RECEPTIONIST', 'DELETE_APPOINTMENT'),
 -- CUSTOMER_MANAGEMENT
 ('ROLE_RECEPTIONIST', 'VIEW_CONTACT'), ('ROLE_RECEPTIONIST', 'CREATE_CONTACT'),
@@ -470,9 +470,9 @@ VALUES
 ('ROLE_MANAGER', 'VIEW_EMPLOYEE'), ('ROLE_MANAGER', 'CREATE_EMPLOYEE'),
 ('ROLE_MANAGER', 'UPDATE_EMPLOYEE'), ('ROLE_MANAGER', 'DELETE_EMPLOYEE'),
 ('ROLE_MANAGER', 'VIEW_PATIENT'), ('ROLE_MANAGER', 'VIEW_APPOINTMENT'),
-('ROLE_MANAGER', 'VIEW_APPOINTMENT_ALL'), -- ✅ See all appointments
-('ROLE_MANAGER', 'UPDATE_APPOINTMENT_STATUS'), -- ✅ NEW API 3.5: Full appointment status control
-('ROLE_MANAGER', 'DELAY_APPOINTMENT'), -- ✅ NEW API 3.6: Reschedule appointments
+('ROLE_MANAGER', 'VIEW_APPOINTMENT_ALL'), -- See all appointments
+('ROLE_MANAGER', 'UPDATE_APPOINTMENT_STATUS'), -- NEW API 3.5: Full appointment status control
+('ROLE_MANAGER', 'DELAY_APPOINTMENT'), -- NEW API 3.6: Reschedule appointments
 -- CUSTOMER_MANAGEMENT
 ('ROLE_MANAGER', 'VIEW_CONTACT'), ('ROLE_MANAGER', 'CREATE_CONTACT'),
 ('ROLE_MANAGER', 'UPDATE_CONTACT'), ('ROLE_MANAGER', 'DELETE_CONTACT'),
@@ -513,14 +513,14 @@ VALUES
 -- SERVICE_MANAGEMENT (V16: Full management of services)
 ('ROLE_MANAGER', 'VIEW_SERVICE'), ('ROLE_MANAGER', 'CREATE_SERVICE'),
 ('ROLE_MANAGER', 'UPDATE_SERVICE'), ('ROLE_MANAGER', 'DELETE_SERVICE'),
--- ✅ TREATMENT_PLAN (V19/V20/V21: Full management of treatment plans)
+-- TREATMENT_PLAN (V19/V20/V21: Full management of treatment plans)
 ('ROLE_MANAGER', 'VIEW_TREATMENT_PLAN_ALL'), -- Can view all patients' treatment plans
-('ROLE_MANAGER', 'VIEW_ALL_TREATMENT_PLANS'), -- ✅ V21: Can view system-wide treatment plan list
+('ROLE_MANAGER', 'VIEW_ALL_TREATMENT_PLANS'), -- V21: Can view system-wide treatment plan list
 ('ROLE_MANAGER', 'CREATE_TREATMENT_PLAN'), -- Can create treatment plans
 ('ROLE_MANAGER', 'UPDATE_TREATMENT_PLAN'), -- Can update treatment plans
 ('ROLE_MANAGER', 'DELETE_TREATMENT_PLAN'), -- Can delete treatment plans
-('ROLE_MANAGER', 'APPROVE_TREATMENT_PLAN'), -- ✅ V20: Can approve/reject treatment plans (API 5.9)
-('ROLE_MANAGER', 'MANAGE_PLAN_PRICING'), -- ✅ V21: Can adjust pricing/discounts on treatment plans
+('ROLE_MANAGER', 'APPROVE_TREATMENT_PLAN'), -- V20: Can approve/reject treatment plans (API 5.9)
+('ROLE_MANAGER', 'MANAGE_PLAN_PRICING'), -- V21: Can adjust pricing/discounts on treatment plans
 ('ROLE_MANAGER', 'VIEW_WAREHOUSE'),
 ('ROLE_MANAGER', 'VIEW_COST'),
 ('ROLE_MANAGER', 'VIEW_ITEMS'),
@@ -566,9 +566,9 @@ INSERT INTO role_permissions (role_id, permission_id)
 VALUES
 ('ROLE_PATIENT', 'VIEW_PATIENT'), ('ROLE_PATIENT', 'VIEW_TREATMENT'),
 ('ROLE_PATIENT', 'VIEW_APPOINTMENT'), -- Deprecated (use VIEW_APPOINTMENT_OWN)
-('ROLE_PATIENT', 'VIEW_APPOINTMENT_OWN'), -- ✅ NEW: Patient can view their own appointments
+('ROLE_PATIENT', 'VIEW_APPOINTMENT_OWN'), -- NEW: Patient can view their own appointments
 ('ROLE_PATIENT', 'CREATE_APPOINTMENT'),
--- ✅ NEW: Treatment Plan permissions
+-- NEW: Treatment Plan permissions
 ('ROLE_PATIENT', 'VIEW_TREATMENT_PLAN_OWN') -- Can only view their own treatment plans
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
@@ -861,7 +861,7 @@ VALUES
 (10, 10, 'EMP010', 'Ngô Đình', 'Chính', '0910101010', '2000-02-28', '666 Nguyễn Thị Minh Khai, Q3, TPHCM', 'PART_TIME_FLEX', TRUE, NOW()),
 -- Manager
 (11, 11, 'EMP011', 'Võ Nguyễn Minh', 'Quân', '0911111111', '1987-09-05', '777 Nguyễn Huệ, Q1, TPHCM', 'FULL_TIME', TRUE, NOW()),
--- ✅ NEW: Thực tập sinh (OBSERVER for testing P3.3)
+-- NEW: Thực tập sinh (OBSERVER for testing P3.3)
 (12, 16, 'EMP012', 'Nguyễn Khánh', 'Linh', '0912121212', '2003-05-15', '888 Võ Thị Sáu, Q3, TPHCM', 'PART_TIME_FLEX', TRUE, NOW())
 ON CONFLICT (employee_id) DO NOTHING;
 
@@ -880,7 +880,7 @@ VALUES
 (8, 8), -- Y tá Khang
 (9, 8), -- Y tá Nhật (Part-time fixed)
 (10, 8), -- Y tá Chính (Part-time flex)
--- ✅ NEW: Thực tập sinh - INTERN specialization
+-- NEW: Thực tập sinh - INTERN specialization
 (12, 9) -- Thực tập sinh Linh
 ON CONFLICT (employee_id, specialization_id) DO NOTHING;
 
@@ -1222,10 +1222,10 @@ ON CONFLICT (holiday_date, definition_id) DO NOTHING;
 
 
 -- Expected Behavior:
--- ✅ Creating shifts on 2025-11-04 (Tuesday) or 2025-11-06 (Thursday) should SUCCEED
--- ❌ Creating shifts on 2025-11-03 (Monday), 2025-11-05 (Wednesday), or 2025-11-07 (Friday) should return 409 HOLIDAY_CONFLICT
--- ✅ Time-off requests spanning these dates should SUCCEED (expected behavior)
--- ✅ Batch jobs should SKIP these dates when auto-creating shifts
+-- Creating shifts on 2025-11-04 (Tuesday) or 2025-11-06 (Thursday) should SUCCEED
+-- Creating shifts on 2025-11-03 (Monday), 2025-11-05 (Wednesday), or 2025-11-07 (Friday) should return 409 HOLIDAY_CONFLICT
+-- Time-off requests spanning these dates should SUCCEED (expected behavior)
+-- Batch jobs should SKIP these dates when auto-creating shifts
 
 -- ============================================
 -- WORKING SCHEDULE SAMPLE DATA (Schema V14 Hybrid)
@@ -2435,7 +2435,7 @@ ON CONFLICT (appointment_id, employee_id) DO NOTHING;
 
 
 -- ============================================
--- ✅ NEW: FUTURE APPOINTMENTS (Nov 6-8, 2025) for current date testing
+-- NEW: FUTURE APPOINTMENTS (Nov 6-8, 2025) for current date testing
 -- ============================================
 
 -- APT-004: Nov 6 Morning - BS Khoa (EMP001) - NOW HAS SHIFT!
@@ -2460,7 +2460,7 @@ VALUES (4, 7, 'ASSISTANT')  -- EMP007 - Y tá Nguyên
 ON CONFLICT (appointment_id, employee_id) DO NOTHING;
 
 
--- APT-005: Nov 6 Afternoon - BS Lê Anh Khoa (EMP001) - ✅ FIXED: EMP001 has PERIODONTICS specialization
+-- APT-005: Nov 6 Afternoon - BS Lê Anh Khoa (EMP001) - FIXED: EMP001 has PERIODONTICS specialization
 INSERT INTO appointments (
     appointment_id, appointment_code, patient_id, employee_id, room_id,
     appointment_start_time, appointment_end_time, expected_duration_minutes,
@@ -3315,63 +3315,63 @@ SELECT setval('storage_transactions_storage_transaction_id_seq', (SELECT COALESC
 -- =============================================
 -- STEP 1: ITEM_UNITS (Don vi do luong - Unit hierarchy)
 -- =============================================
--- Consumables: Găng tay y tế
+-- Consumables: Gang tay y te
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'Chiếc', 1, TRUE, TRUE, TRUE, TRUE, FALSE, TRUE, 3, NOW()
+SELECT im.item_master_id, 'Chiec', 1, TRUE, TRUE, FALSE, TRUE, 3, NOW()
 FROM item_masters im WHERE im.item_code = 'CON-GLOVE-01'
 ON CONFLICT DO NOTHING;
 
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'Cặp', 2, FALSE, TRUE, FALSE, FALSE, 2, NOW()
+SELECT im.item_master_id, 'Cap', 2, FALSE, TRUE, FALSE, FALSE, 2, NOW()
 FROM item_masters im WHERE im.item_code = 'CON-GLOVE-01'
 ON CONFLICT DO NOTHING;
 
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'Hộp', 200, FALSE, TRUE, TRUE, FALSE, 1, NOW()
+SELECT im.item_master_id, 'Hop', 200, FALSE, TRUE, TRUE, FALSE, 1, NOW()
 FROM item_masters im WHERE im.item_code = 'CON-GLOVE-01'
 ON CONFLICT DO NOTHING;
 
--- Khẩu trang y tế
+-- Khau trang y te
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'Cái', 1, TRUE, TRUE, TRUE, FALSE, TRUE, 3, NOW()
+SELECT im.item_master_id, 'Cai', 1, TRUE, TRUE, FALSE, TRUE, 3, NOW()
 FROM item_masters im WHERE im.item_code = 'CON-MASK-01'
 ON CONFLICT DO NOTHING;
 
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'Hộp', 50, FALSE, TRUE, TRUE, FALSE, 1, NOW()
+SELECT im.item_master_id, 'Hop', 50, FALSE, TRUE, TRUE, FALSE, 1, NOW()
 FROM item_masters im WHERE im.item_code = 'CON-MASK-01'
 ON CONFLICT DO NOTHING;
 
--- Kim tiêm nha khoa
+-- Kim tiem nha khoa
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'Cái', 1, TRUE, TRUE, TRUE, FALSE, TRUE, 2, NOW()
+SELECT im.item_master_id, 'Cai', 1, TRUE, TRUE, FALSE, TRUE, 2, NOW()
 FROM item_masters im WHERE im.item_code = 'CON-NEEDLE-01'
 ON CONFLICT DO NOTHING;
 
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'Hộp', 100, FALSE, TRUE, TRUE, FALSE, 1, NOW()
+SELECT im.item_master_id, 'Hop', 100, FALSE, TRUE, TRUE, FALSE, 1, NOW()
 FROM item_masters im WHERE im.item_code = 'CON-NEEDLE-01'
 ON CONFLICT DO NOTHING;
 
--- Medicine: Thuốc tê Septodont
+-- Medicine: Thuoc te Septodont
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'Ống', 1, TRUE, TRUE, TRUE, FALSE, TRUE, 2, NOW()
+SELECT im.item_master_id, 'Ong', 1, TRUE, TRUE, FALSE, TRUE, 2, NOW()
 FROM item_masters im WHERE im.item_code = 'MED-SEPT-01'
 ON CONFLICT DO NOTHING;
 
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'Hộp', 50, FALSE, TRUE, TRUE, FALSE, 1, NOW()
+SELECT im.item_master_id, 'Hop', 50, FALSE, TRUE, TRUE, FALSE, 1, NOW()
 FROM item_masters im WHERE im.item_code = 'MED-SEPT-01'
 ON CONFLICT DO NOTHING;
 
 -- Material: Composite
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'g', 1, TRUE, TRUE, TRUE, FALSE, TRUE, 2, NOW()
+SELECT im.item_master_id, 'g', 1, TRUE, TRUE, FALSE, TRUE, 2, NOW()
 FROM item_masters im WHERE im.item_code = 'MAT-COMP-01'
 ON CONFLICT DO NOTHING;
 
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'Tuýp', 4, FALSE, TRUE, TRUE, FALSE, 1, NOW()
+SELECT im.item_master_id, 'Tuyp', 4, FALSE, TRUE, TRUE, FALSE, 1, NOW()
 FROM item_masters im WHERE im.item_code = 'MAT-COMP-01'
 ON CONFLICT DO NOTHING;
 
@@ -3589,241 +3589,10 @@ ON CONFLICT DO NOTHING;
 -- Reset sequence
 SELECT setval('storage_transaction_items_transaction_item_id_seq', (SELECT COALESCE(MAX(transaction_item_id), 0) FROM storage_transaction_items));
 
-
 -- =============================================
--- STEP 4: WAREHOUSE_AUDIT_LOGS (Tracking approval/rejection/adjustments)
+-- WAREHOUSE SEED DATA COMPLETE
 -- =============================================
--- Log 1: Approval of IMP-2024-001
-INSERT INTO warehouse_audit_logs (transaction_id, action_type, performed_by, old_value, new_value, reason, created_at)
-SELECT st.transaction_id, 'UPDATE', 3,
-    'approval_status: PENDING_APPROVAL',
-    'approval_status: APPROVED',
-    'Da kiem tra hoa don INV-20240101-001, vat tu day du va chat luong tot', NOW() - INTERVAL '10 days'
-FROM storage_transactions st WHERE st.transaction_code = 'IMP-2024-001'
-ON CONFLICT DO NOTHING;
-
--- Log 2: Approval of IMP-2024-002
-INSERT INTO warehouse_audit_logs (transaction_id, action_type, performed_by, old_value, new_value, reason, created_at)
-SELECT st.transaction_id, 'UPDATE', 3,
-    'approval_status: PENDING_APPROVAL',
-    'approval_status: APPROVED',
-    'Da xac nhan nhan hang tu NCC Duoc pham B, thanh toan 15M/25M', NOW() - INTERVAL '8 days'
-FROM storage_transactions st WHERE st.transaction_code = 'IMP-2024-002'
-ON CONFLICT DO NOTHING;
-
--- Log 3: Rejection of IMP-2024-004
-INSERT INTO warehouse_audit_logs (transaction_id, action_type, performed_by, old_value, new_value, reason, created_at)
-SELECT st.transaction_id, 'UPDATE', 3,
-    'approval_status: PENDING_APPROVAL',
-    'approval_status: REJECTED',
-    'Vat tu khong dat tieu chuan chat luong - Gang tay bi rach, khau trang mong. Yeu cau NCC doi hang', NOW() - INTERVAL '1 day'
-FROM storage_transactions st WHERE st.transaction_code = 'IMP-2024-004'
-ON CONFLICT DO NOTHING;
-
--- Log 4: Export approval for EXP-2024-001
-INSERT INTO warehouse_audit_logs (transaction_id, action_type, performed_by, old_value, new_value, reason, created_at)
-SELECT st.transaction_id, 'UPDATE', 3,
-    'approval_status: PENDING_APPROVAL',
-    'approval_status: APPROVED',
-    'Xuat vat tu cho dieu tri benh nhan Nguyen Van A - APT-20251106-001', NOW() - INTERVAL '5 days'
-FROM storage_transactions st WHERE st.transaction_code = 'EXP-2024-001'
-ON CONFLICT DO NOTHING;
-
--- Log 5: Export approval for EXP-2024-002
-INSERT INTO warehouse_audit_logs (transaction_id, action_type, performed_by, old_value, new_value, reason, created_at)
-SELECT st.transaction_id, 'UPDATE', 3,
-    'approval_status: PENDING_APPROVAL',
-    'approval_status: APPROVED',
-    'Xuat vat tu cho dieu tri benh nhan Tran Thi B - APT-20251106-002', NOW() - INTERVAL '3 days'
-FROM storage_transactions st WHERE st.transaction_code = 'EXP-2024-002'
-ON CONFLICT DO NOTHING;
-
--- Log 6: Stock adjustment (inventory check found damage)
-INSERT INTO warehouse_audit_logs (batch_id, action_type, performed_by, old_value, new_value, reason, created_at)
-SELECT b.batch_id, 'ADJUST', 6,
-    'quantity_on_hand: 1000',
-    'quantity_on_hand: 800',
-    'Kiem ke dinh ky - Phat hien 200 chiec khau trang bi am moc do luu tru khong dung cach', NOW() - INTERVAL '5 days'
-FROM item_batches b WHERE b.lot_number = 'BATCH-MASK-2024-001'
-ON CONFLICT DO NOTHING;
-
--- Log 7: Expiry alert for MED-SEPT-01
-INSERT INTO warehouse_audit_logs (batch_id, action_type, performed_by, old_value, new_value, reason, created_at)
-SELECT b.batch_id, 'EXPIRE_ALERT', NULL,
-    NULL,
-    'status: EXPIRING_SOON (15 days left)',
-    'CANH BAO: Lo thuoc te BATCH-SEPT-2023-010 sap het han sau 15 ngay. Can uu tien su dung (FEFO)', NOW() - INTERVAL '2 days'
-FROM item_batches b WHERE b.lot_number = 'BATCH-SEPT-2023-010'
-ON CONFLICT DO NOTHING;
-
--- Log 8: Expiry alert for CON-GLOVE-01
-INSERT INTO warehouse_audit_logs (batch_id, action_type, performed_by, old_value, new_value, reason, created_at)
-SELECT b.batch_id, 'EXPIRE_ALERT', NULL,
-    NULL,
-    'status: EXPIRING_SOON (20 days left)',
-    'CANH BAO: Lo gang tay BATCH-GLOVE-2023-012 sap het han sau 20 ngay. Con 30 cap can xuat', NOW() - INTERVAL '1 day'
-FROM item_batches b WHERE b.lot_number = 'BATCH-GLOVE-2023-012'
-ON CONFLICT DO NOTHING;
-
--- Log 9: Discard expired batch
-INSERT INTO warehouse_audit_logs (batch_id, action_type, performed_by, old_value, new_value, reason, created_at)
-SELECT b.batch_id, 'DISCARD', 6,
-    'quantity_on_hand: 40, status: ACTIVE',
-    'quantity_on_hand: 0, status: EXPIRED',
-    'Huy lo composite BATCH-COMP-2022-005 da het han 10 ngay. Da lap bien ban huy theo quy dinh', NOW() - INTERVAL '3 days'
-FROM item_batches b WHERE b.lot_number = 'BATCH-COMP-2022-005'
-ON CONFLICT DO NOTHING;
-
--- Log 10: Payment status update for IMP-2024-002
-INSERT INTO warehouse_audit_logs (transaction_id, action_type, performed_by, old_value, new_value, reason, created_at)
-SELECT st.transaction_id, 'UPDATE', 6,
-    'payment_status: UNPAID, paid_amount: 0',
-    'payment_status: PARTIAL, paid_amount: 15000000',
-    'Da thanh toan 15M/25M cho NCC Duoc pham B. Con no 10M, han thanh toan 15 ngay nua', NOW() - INTERVAL '6 days'
-FROM storage_transactions st WHERE st.transaction_code = 'IMP-2024-002'
-ON CONFLICT DO NOTHING;
-
--- Reset sequence
-SELECT setval('warehouse_audit_logs_log_id_seq', (SELECT COALESCE(MAX(log_id), 0) FROM warehouse_audit_logs));
-
-
--- =============================================
--- STEP 5: SUPPLIER_ITEMS (Mapping NCC - Vật tư)
--- =============================================
--- Supplier 1 (Vat tu Nha khoa A) supplies consumables
-INSERT INTO supplier_items (supplier_id, item_master_id, supplier_item_code, last_purchase_date, is_preferred)
-SELECT s.supplier_id, im.item_master_id, 'SUP1-GLOVE-100', NOW() - INTERVAL '30 days', TRUE
-FROM suppliers s
-CROSS JOIN item_masters im
-WHERE s.supplier_code = 'SUP-001' AND im.item_code = 'CON-GLOVE-01'
-ON CONFLICT DO NOTHING;
-
-INSERT INTO supplier_items (supplier_id, item_master_id, supplier_item_code, last_purchase_date, is_preferred)
-SELECT s.supplier_id, im.item_master_id, 'SUP1-MASK-50', NOW() - INTERVAL '30 days', TRUE
-FROM suppliers s
-CROSS JOIN item_masters im
-WHERE s.supplier_code = 'SUP-001' AND im.item_code = 'CON-MASK-01'
-ON CONFLICT DO NOTHING;
-
-INSERT INTO supplier_items (supplier_id, item_master_id, supplier_item_code, last_purchase_date, is_preferred)
-SELECT s.supplier_id, im.item_master_id, 'SUP1-NEEDLE-27G', NOW() - INTERVAL '30 days', TRUE
-FROM suppliers s
-CROSS JOIN item_masters im
-WHERE s.supplier_code = 'SUP-001' AND im.item_code = 'CON-NEEDLE-01'
-ON CONFLICT DO NOTHING;
-
-INSERT INTO supplier_items (supplier_id, item_master_id, supplier_item_code, last_purchase_date, is_preferred)
-SELECT s.supplier_id, im.item_master_id, 'SUP1-CUP-PLT', NULL, FALSE
-FROM suppliers s
-CROSS JOIN item_masters im
-WHERE s.supplier_code = 'SUP-001' AND im.item_code = 'CON-CUP-01'
-ON CONFLICT DO NOTHING;
-
--- Supplier 2 (Duoc pham B) supplies medicines and chemicals
-INSERT INTO supplier_items (supplier_id, item_master_id, supplier_item_code, last_purchase_date, is_preferred)
-SELECT s.supplier_id, im.item_master_id, 'SUP2-SEPT-500ML', NOW() - INTERVAL '15 days', TRUE
-FROM suppliers s
-CROSS JOIN item_masters im
-WHERE s.supplier_code = 'SUP-002' AND im.item_code = 'MED-SEPT-01'
-ON CONFLICT DO NOTHING;
-
-INSERT INTO supplier_items (supplier_id, item_master_id, supplier_item_code, last_purchase_date, is_preferred)
-SELECT s.supplier_id, im.item_master_id, 'SUP2-NAOCL-525', NOW() - INTERVAL '12 days', TRUE
-FROM suppliers s
-CROSS JOIN item_masters im
-WHERE s.supplier_code = 'SUP-002' AND im.item_code = 'MAT-NAOCL-01'
-ON CONFLICT DO NOTHING;
-
-INSERT INTO supplier_items (supplier_id, item_master_id, supplier_item_code, last_purchase_date, is_preferred)
-SELECT s.supplier_id, im.item_master_id, 'SUP2-GAUZE-STR', NOW() - INTERVAL '18 days', TRUE
-FROM suppliers s
-CROSS JOIN item_masters im
-WHERE s.supplier_code = 'SUP-002' AND im.item_code = 'CON-GAUZE-01'
-ON CONFLICT DO NOTHING;
-
-INSERT INTO supplier_items (supplier_id, item_master_id, supplier_item_code, last_purchase_date, is_preferred)
-SELECT s.supplier_id, im.item_master_id, 'SUP2-BETA-100ML', NULL, FALSE
-FROM suppliers s
-CROSS JOIN item_masters im
-WHERE s.supplier_code = 'SUP-002' AND im.item_code = 'MED-BETA-01'
-ON CONFLICT DO NOTHING;
-
--- Supplier 3 (Thiet bi Y te C) supplies materials
-INSERT INTO supplier_items (supplier_id, item_master_id, supplier_item_code, last_purchase_date, is_preferred)
-SELECT s.supplier_id, im.item_master_id, 'SUP3-COMP-3M-A2', NOW() - INTERVAL '10 days', TRUE
-FROM suppliers s
-CROSS JOIN item_masters im
-WHERE s.supplier_code = 'SUP-003' AND im.item_code = 'MAT-COMP-01'
-ON CONFLICT DO NOTHING;
-
-INSERT INTO supplier_items (supplier_id, item_master_id, supplier_item_code, last_purchase_date, is_preferred)
-SELECT s.supplier_id, im.item_master_id, 'SUP3-BOND-3M', NOW() - INTERVAL '8 days', TRUE
-FROM suppliers s
-CROSS JOIN item_masters im
-WHERE s.supplier_code = 'SUP-003' AND im.item_code = 'MAT-BOND-01'
-ON CONFLICT DO NOTHING;
-
-INSERT INTO supplier_items (supplier_id, item_master_id, supplier_item_code, last_purchase_date, is_preferred)
-SELECT s.supplier_id, im.item_master_id, 'SUP3-ETCH-37', NULL, FALSE
-FROM suppliers s
-CROSS JOIN item_masters im
-WHERE s.supplier_code = 'SUP-003' AND im.item_code = 'MAT-ETCH-01'
-ON CONFLICT DO NOTHING;
-
-INSERT INTO supplier_items (supplier_id, item_master_id, supplier_item_code, last_purchase_date, is_preferred)
-SELECT s.supplier_id, im.item_master_id, 'SUP3-RESIN-3M', NULL, FALSE
-FROM suppliers s
-CROSS JOIN item_masters im
-WHERE s.supplier_code = 'SUP-003' AND im.item_code = 'MAT-RESIN-01'
-ON CONFLICT DO NOTHING;
-
--- Supplier 4 (Vat tu D - backup supplier) supplies basic consumables
-INSERT INTO supplier_items (supplier_id, item_master_id, supplier_item_code, last_purchase_date, is_preferred)
-SELECT s.supplier_id, im.item_master_id, 'SUP4-GLOVE-MED', NULL, FALSE
-FROM suppliers s
-CROSS JOIN item_masters im
-WHERE s.supplier_code = 'SUP-004' AND im.item_code = 'CON-GLOVE-01'
-ON CONFLICT DO NOTHING;
-
-INSERT INTO supplier_items (supplier_id, item_master_id, supplier_item_code, last_purchase_date, is_preferred)
-SELECT s.supplier_id, im.item_master_id, 'SUP4-MASK-3L', NULL, FALSE
-FROM suppliers s
-CROSS JOIN item_masters im
-WHERE s.supplier_code = 'SUP-004' AND im.item_code = 'CON-MASK-01'
-ON CONFLICT DO NOTHING;
-
--- Reset sequence
-SELECT setval('supplier_items_supplier_item_id_seq', (SELECT COALESCE(MAX(supplier_item_id), 0) FROM supplier_items));
-
-
--- =============================================
--- VERIFICATION QUERIES (Optional - for testing)
--- =============================================
--- Check warehouse data coverage
--- SELECT 'item_units' as table_name, COUNT(*) as row_count FROM item_units
--- UNION ALL
--- SELECT 'item_batches', COUNT(*) FROM item_batches
--- UNION ALL
--- SELECT 'storage_transaction_items', COUNT(*) FROM storage_transaction_items
--- UNION ALL
--- SELECT 'warehouse_audit_logs', COUNT(*) FROM warehouse_audit_logs
--- UNION ALL
--- SELECT 'supplier_items', COUNT(*) FROM supplier_items;
-
--- Check expiring batches (FEFO alerts)
--- SELECT im.item_name, b.lot_number, b.quantity_on_hand, b.expiry_date,
---        (b.expiry_date - CURRENT_DATE) as days_until_expiry
--- FROM item_batches b
--- JOIN item_masters im ON b.item_master_id = im.item_master_id
--- WHERE b.expiry_date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '30 days'
--- AND b.quantity_on_hand > 0
--- ORDER BY b.expiry_date;
-
--- Check supplier-item coverage
--- SELECT s.supplier_name, COUNT(si.supplier_item_id) as items_supplied,
---        SUM(CASE WHEN si.is_preferred THEN 1 ELSE 0 END) as preferred_items
--- FROM suppliers s
--- LEFT JOIN supplier_items si ON s.supplier_id = si.supplier_id
--- GROUP BY s.supplier_id, s.supplier_name
--- ORDER BY items_supplied DESC;
-
+-- Note: warehouse_audit_logs and supplier_items are NOT seeded
+-- These tables will be populated through normal application usage
+-- Audit logs: Created automatically when transactions are approved/rejected
+-- Supplier items: Managed through supplier management UI

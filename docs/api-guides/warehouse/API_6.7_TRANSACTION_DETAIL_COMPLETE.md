@@ -1,7 +1,7 @@
 # API 6.7 - Transaction Detail (Xem Chi tiết Giao dịch Kho)
 
 **Date:** November 27, 2025
-**Status:** ✅ Production Ready
+**Status:** [YES] Production Ready
 **Version:** v1
 **Endpoint:** `GET /api/v1/warehouse/transactions/{id}`
 
@@ -48,13 +48,13 @@ Khi có sự cố (vật tư lỗi, hết hạn), truy vết batch nào đã đ�
 
 ### Roles:
 
-- ✅ **Admin** - Full access (bao gồm financial data)
-- ✅ **Warehouse Manager** - Full access với VIEW_COST
-- ✅ **Warehouse Staff** - View-only, không có financial data
-- ✅ **Accountant** - Full access với VIEW_COST
-- ✅ **Receptionist** - View-only cho export transactions
-- ✅ **Doctor** - View-only cho export transactions liên quan đến ca bệnh của mình
-- ❌ **Patient** - Không có quyền truy cập
+- [YES] **Admin** - Full access (bao gồm financial data)
+- [YES] **Warehouse Manager** - Full access với VIEW_COST
+- [YES] **Warehouse Staff** - View-only, không có financial data
+- [YES] **Accountant** - Full access với VIEW_COST
+- [YES] **Receptionist** - View-only cho export transactions
+- [YES] **Doctor** - View-only cho export transactions liên quan đến ca bệnh của mình
+- [NO] **Patient** - Không có quyền truy cập
 
 ---
 
@@ -70,7 +70,7 @@ GET /api/v1/warehouse/transactions/{id}
 
 | Parameter | Type | Required | Description                             |
 | --------- | ---- | -------- | --------------------------------------- |
-| `id`      | Long | ✅ Yes   | ID của phiếu giao dịch (transaction_id) |
+| `id`      | Long | [YES] Yes   | ID của phiếu giao dịch (transaction_id) |
 
 ### Headers
 
@@ -409,11 +409,11 @@ Authorization: Bearer {WAREHOUSE_MANAGER_TOKEN}
 
 **Expected Response:**
 
-- ✅ Status: 200 OK
-- ✅ Transaction type: IMPORT
-- ✅ Contains: supplierName, invoiceNumber
-- ✅ Items array with batch info, purchasePrice, currentStock
-- ✅ totalValue hiển thị (có VIEW_COST)
+- [YES] Status: 200 OK
+- [YES] Transaction type: IMPORT
+- [YES] Contains: supplierName, invoiceNumber
+- [YES] Items array with batch info, purchasePrice, currentStock
+- [YES] totalValue hiển thị (có VIEW_COST)
 
 ---
 
@@ -428,12 +428,12 @@ Authorization: Bearer {WAREHOUSE_STAFF_TOKEN}
 
 **Expected Response:**
 
-- ✅ Status: 200 OK
-- ✅ Transaction type: EXPORT
-- ✅ Contains: exportType, referenceCode
-- ✅ Items array with quantityChange (âm)
-- ✅ unpackingInfo hiển thị nếu có unpacking
-- ✅ totalValue = null (không có VIEW_COST)
+- [YES] Status: 200 OK
+- [YES] Transaction type: EXPORT
+- [YES] Contains: exportType, referenceCode
+- [YES] Items array with quantityChange (âm)
+- [YES] unpackingInfo hiển thị nếu có unpacking
+- [YES] totalValue = null (không có VIEW_COST)
 
 ---
 
@@ -448,8 +448,8 @@ Authorization: Bearer {ADMIN_TOKEN}
 
 **Expected Response:**
 
-- ✅ Status: 404 Not Found
-- ✅ Message: "Transaction with ID 99999 not found"
+- [YES] Status: 404 Not Found
+- [YES] Message: "Transaction with ID 99999 not found"
 
 ---
 
@@ -464,8 +464,8 @@ Authorization: Bearer {PATIENT_TOKEN}
 
 **Expected Response:**
 
-- ✅ Status: 403 Forbidden
-- ✅ Message: "Access Denied"
+- [YES] Status: 403 Forbidden
+- [YES] Message: "Access Denied"
 
 ---
 
@@ -507,8 +507,8 @@ sequenceDiagram
 
 ### Caching:
 
-- ❌ Không cache (data thay đổi thường xuyên)
-- ✅ Sử dụng database index để tăng tốc query
+- [NO] Không cache (data thay đổi thường xuyên)
+- [YES] Sử dụng database index để tăng tốc query
 
 ### Expected Response Time:
 
@@ -643,7 +643,7 @@ const TransactionDetailPage = () => {
 
 ---
 
-## ✅ Implementation Checklist
+## [YES] Implementation Checklist
 
 - [x] Controller endpoint created
 - [x] Service method implemented

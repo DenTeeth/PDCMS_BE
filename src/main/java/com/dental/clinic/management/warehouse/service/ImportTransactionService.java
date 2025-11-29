@@ -122,13 +122,13 @@ public class ImportTransactionService {
                         ImportTransactionResponse response = buildResponse(
                                         transaction, supplier, employee, itemResponses, warnings);
 
-                        log.info("✅ Import transaction created successfully - Code: {}, Total: {} VNĐ",
+                        log.info(" Import transaction created successfully - Code: {}, Total: {} VNĐ",
                                         transaction.getTransactionCode(), totalValue);
 
                         return response;
 
                 } catch (Exception e) {
-                        log.error("❌ Failed to create import transaction: {}", e.getMessage(), e);
+                        log.error(" Failed to create import transaction: {}", e.getMessage(), e);
                         throw e;
                 }
         }
@@ -138,7 +138,7 @@ public class ImportTransactionService {
          */
         private void validateImportRequest(ImportTransactionRequest request) {
                 // Transaction date must not be in future
-                if (request.getTransactionDate().isAfter(LocalDateTime.now())) {
+                if (request.getTransactionDate().isAfter(LocalDate.now())) {
                         throw new BadRequestException(
                                         "INVALID_DATE",
                                         "Transaction date cannot be in the future");
@@ -147,10 +147,10 @@ public class ImportTransactionService {
                 // Expected delivery date validation
                 if (request.getExpectedDeliveryDate() != null) {
                         if (request.getExpectedDeliveryDate().isAfter(
-                                        request.getTransactionDate().toLocalDate())) {
-                                log.warn("⚠️ Delivery was late - Expected: {}, Actual: {}",
+                                        request.getTransactionDate())) {
+                                log.warn(" Delivery was late - Expected: {}, Actual: {}",
                                                 request.getExpectedDeliveryDate(),
-                                                request.getTransactionDate().toLocalDate());
+                                                request.getTransactionDate());
                         }
                 }
 
@@ -175,7 +175,7 @@ public class ImportTransactionService {
                 return StorageTransaction.builder()
                                 .transactionCode(transactionCode)
                                 .transactionType(TransactionType.IMPORT)
-                                .transactionDate(request.getTransactionDate())
+                                .transactionDate(request.getTransactionDate().atStartOfDay())
                                 .supplier(supplier)
                                 .invoiceNumber(request.getInvoiceNumber())
                                 .expectedDeliveryDate(request.getExpectedDeliveryDate())
@@ -224,7 +224,7 @@ public class ImportTransactionService {
                         unit = unitOpt.get();
                 } else {
                         // Auto-create base unit from itemMaster.unitOfMeasure if unit not found
-                        log.warn("⚠️ Unit ID {} not found for item {}. Attempting to auto-create base unit from unitOfMeasure: {}",
+                        log.warn(" Unit ID {} not found for item {}. Attempting to auto-create base unit from unitOfMeasure: {}",
                                         itemRequest.getUnitId(), itemMaster.getItemCode(),
                                         itemMaster.getUnitOfMeasure());
 
@@ -243,7 +243,7 @@ public class ImportTransactionService {
                         if (existingBaseUnit.isPresent()) {
                                 // Use existing base unit
                                 unit = existingBaseUnit.get();
-                                log.info("✅ Using existing base unit '{}' (ID: {}) for item: {}",
+                                log.info(" Using existing base unit '{}' (ID: {}) for item: {}",
                                                 unit.getUnitName(), unit.getUnitId(), itemMaster.getItemCode());
                         } else {
                                 // Create new base unit from unitOfMeasure
@@ -256,7 +256,7 @@ public class ImportTransactionService {
                                                 .build();
 
                                 unit = unitRepository.save(unit);
-                                log.info("✅ Auto-created base unit '{}' (ID: {}) for item master: {}",
+                                log.info(" Auto-created base unit '{}' (ID: {}) for item master: {}",
                                                 itemMaster.getUnitOfMeasure(), unit.getUnitId(),
                                                 itemMaster.getItemCode());
                         }
@@ -354,7 +354,7 @@ public class ImportTransactionService {
                         itemMaster.setCachedLastImportDate(LocalDateTime.now());
                         itemMasterRepository.save(itemMaster);
 
-                        log.debug("✅ Updated existing batch ID {} - Added {} units, New total: {}",
+                        log.debug(" Updated existing batch ID {} - Added {} units, New total: {}",
                                         batch.getBatchId(), quantityToAdd, batch.getQuantityOnHand());
 
                         return new BatchResult(batch, false);
@@ -375,7 +375,7 @@ public class ImportTransactionService {
                         itemMaster.setCachedLastImportDate(LocalDateTime.now());
                         itemMasterRepository.save(itemMaster);
 
-                        log.debug("✅ Created new batch ID {} - Lot: {}, Quantity: {}",
+                        log.debug(" Created new batch ID {} - Lot: {}, Quantity: {}",
                                         newBatch.getBatchId(), lotNumber, quantityToAdd);
 
                         return new BatchResult(newBatch, true);

@@ -261,31 +261,38 @@ public class ItemMasterService {
                 Map<Long, ItemUnit> existingUnitMap = existingUnits.stream()
                                 .collect(Collectors.toMap(ItemUnit::getUnitId, unit -> unit));
 
-                // 5. Validate exactly one base unit in request
-                long baseUnitCount = request.getUnits().stream()
-                                .filter(UpdateItemMasterRequest.UnitRequest::getIsBaseUnit)
-                                .count();
+                // 5. Validate units if provided
+                boolean updateUnits = request.getUnits() != null && !request.getUnits().isEmpty();
 
-                if (baseUnitCount != 1) {
-                        log.warn("Invalid base unit count: {}", baseUnitCount);
-                        throw new ResponseStatusException(
-                                        HttpStatus.BAD_REQUEST,
-                                        "Exactly one base unit is required");
-                }
+                if (updateUnits) {
+                        // Validate exactly one base unit in request
+                        long baseUnitCount = request.getUnits().stream()
+                                        .filter(UpdateItemMasterRequest.UnitRequest::getIsBaseUnit)
+                                        .count();
 
-                // 6. Validate unit name uniqueness in request
-                Set<String> unitNames = new HashSet<>();
-                for (UpdateItemMasterRequest.UnitRequest unit : request.getUnits()) {
-                        if (!unitNames.add(unit.getUnitName().toLowerCase())) {
-                                log.warn("Duplicate unit name: {}", unit.getUnitName());
+                        if (baseUnitCount != 1) {
+                                log.warn("Invalid base unit count: {}", baseUnitCount);
                                 throw new ResponseStatusException(
                                                 HttpStatus.BAD_REQUEST,
-                                                "Unit name '" + unit.getUnitName() + "' is duplicated");
+                                                "Exactly one base unit is required");
                         }
                 }
 
-                // 7. Safety Lock validation (if stock exists)
-                if (safetyLockApplied) {
+                // 6. Validate unit name uniqueness in request (only if updating units)
+                if (updateUnits) {
+                        Set<String> unitNames = new HashSet<>();
+                        for (UpdateItemMasterRequest.UnitRequest unit : request.getUnits()) {
+                                if (!unitNames.add(unit.getUnitName().toLowerCase())) {
+                                        log.warn("Duplicate unit name: {}", unit.getUnitName());
+                                        throw new ResponseStatusException(
+                                                        HttpStatus.BAD_REQUEST,
+                                                        "Unit name '" + unit.getUnitName() + "' is duplicated");
+                                }
+                        }
+                }
+
+                // 7. Safety Lock validation (if stock exists and updating units)
+                if (safetyLockApplied && updateUnits) {
                         List<String> blockedChanges = new ArrayList<>();
 
                         for (UpdateItemMasterRequest.UnitRequest unitRequest : request.getUnits()) {
@@ -351,74 +358,92 @@ public class ItemMasterService {
                                 request.getIsPrescriptionRequired() != null ? request.getIsPrescriptionRequired()
                                                 : false);
                 itemMaster.setDefaultShelfLifeDays(request.getDefaultShelfLifeDays());
+
+                // Update isActive if provided
+                if (request.getIsActive() != null) {
+                        itemMaster.setIsActive(request.getIsActive());
+                }
+
                 itemMaster.setUpdatedAt(LocalDateTime.now());
 
                 ItemMaster updatedItemMaster = itemMasterRepository.save(itemMaster);
                 log.info("Item master updated: {}", updatedItemMaster.getItemCode());
 
-                // 10. Update or create units
+                // 10. Update or create units (only if provided)
                 List<ItemUnit> unitsToSave = new ArrayList<>();
-                UpdateItemMasterRequest.UnitRequest baseUnitRequest = request.getUnits().stream()
-                                .filter(UpdateItemMasterRequest.UnitRequest::getIsBaseUnit)
-                                .findFirst()
-                                .orElseThrow();
+                UpdateItemMasterRequest.UnitRequest baseUnitRequest = null;
 
-                for (UpdateItemMasterRequest.UnitRequest unitRequest : request.getUnits()) {
-                        ItemUnit unit;
-                        if (unitRequest.getUnitId() != null) {
-                                // Update existing unit
-                                unit = existingUnitMap.get(unitRequest.getUnitId());
-                                if (unit == null) {
-                                        log.warn("Unit not found: {}", unitRequest.getUnitId());
-                                        throw new ResourceNotFoundException(
-                                                        "ITEM_UNIT_NOT_FOUND",
-                                                        "Unit with ID " + unitRequest.getUnitId() + " not found");
+                if (updateUnits) {
+                        baseUnitRequest = request.getUnits().stream()
+                                        .filter(UpdateItemMasterRequest.UnitRequest::getIsBaseUnit)
+                                        .findFirst()
+                                        .orElseThrow();
+
+                        for (UpdateItemMasterRequest.UnitRequest unitRequest : request.getUnits()) {
+                                ItemUnit unit;
+                                if (unitRequest.getUnitId() != null) {
+                                        // Update existing unit
+                                        unit = existingUnitMap.get(unitRequest.getUnitId());
+                                        if (unit == null) {
+                                                log.warn("Unit not found: {}", unitRequest.getUnitId());
+                                                throw new ResourceNotFoundException(
+                                                                "ITEM_UNIT_NOT_FOUND",
+                                                                "Unit with ID " + unitRequest.getUnitId()
+                                                                                + " not found");
+                                        }
+                                        unit.setUnitName(unitRequest.getUnitName());
+                                        unit.setConversionRate(unitRequest.getConversionRate());
+                                        unit.setIsBaseUnit(unitRequest.getIsBaseUnit());
+                                        unit.setIsActive(unitRequest.getIsActive() != null ? unitRequest.getIsActive()
+                                                        : true);
+                                        unit.setDisplayOrder(unitRequest.getDisplayOrder());
+                                        unit.setIsDefaultImportUnit(
+                                                        unitRequest.getIsDefaultImportUnit() != null
+                                                                        ? unitRequest.getIsDefaultImportUnit()
+                                                                        : false);
+                                        unit.setIsDefaultExportUnit(
+                                                        unitRequest.getIsDefaultExportUnit() != null
+                                                                        ? unitRequest.getIsDefaultExportUnit()
+                                                                        : false);
+                                        unit.setUpdatedAt(LocalDateTime.now());
+                                } else {
+                                        // Create new unit
+                                        unit = ItemUnit.builder()
+                                                        .itemMaster(updatedItemMaster)
+                                                        .unitName(unitRequest.getUnitName())
+                                                        .conversionRate(unitRequest.getConversionRate())
+                                                        .isBaseUnit(unitRequest.getIsBaseUnit())
+                                                        .isActive(unitRequest.getIsActive() != null
+                                                                        ? unitRequest.getIsActive()
+                                                                        : true)
+                                                        .displayOrder(unitRequest.getDisplayOrder())
+                                                        .isDefaultImportUnit(
+                                                                        unitRequest.getIsDefaultImportUnit() != null
+                                                                                        ? unitRequest.getIsDefaultImportUnit()
+                                                                                        : false)
+                                                        .isDefaultExportUnit(
+                                                                        unitRequest.getIsDefaultExportUnit() != null
+                                                                                        ? unitRequest.getIsDefaultExportUnit()
+                                                                                        : false)
+                                                        .createdAt(LocalDateTime.now())
+                                                        .updatedAt(LocalDateTime.now())
+                                                        .build();
                                 }
-                                unit.setUnitName(unitRequest.getUnitName());
-                                unit.setConversionRate(unitRequest.getConversionRate());
-                                unit.setIsBaseUnit(unitRequest.getIsBaseUnit());
-                                unit.setIsActive(unitRequest.getIsActive() != null ? unitRequest.getIsActive() : true);
-                                unit.setDisplayOrder(unitRequest.getDisplayOrder());
-                                unit.setIsDefaultImportUnit(
-                                                unitRequest.getIsDefaultImportUnit() != null
-                                                                ? unitRequest.getIsDefaultImportUnit()
-                                                                : false);
-                                unit.setIsDefaultExportUnit(
-                                                unitRequest.getIsDefaultExportUnit() != null
-                                                                ? unitRequest.getIsDefaultExportUnit()
-                                                                : false);
-                                unit.setUpdatedAt(LocalDateTime.now());
-                        } else {
-                                // Create new unit
-                                unit = ItemUnit.builder()
-                                                .itemMaster(updatedItemMaster)
-                                                .unitName(unitRequest.getUnitName())
-                                                .conversionRate(unitRequest.getConversionRate())
-                                                .isBaseUnit(unitRequest.getIsBaseUnit())
-                                                .isActive(unitRequest.getIsActive() != null ? unitRequest.getIsActive()
-                                                                : true)
-                                                .displayOrder(unitRequest.getDisplayOrder())
-                                                .isDefaultImportUnit(
-                                                                unitRequest.getIsDefaultImportUnit() != null
-                                                                                ? unitRequest.getIsDefaultImportUnit()
-                                                                                : false)
-                                                .isDefaultExportUnit(
-                                                                unitRequest.getIsDefaultExportUnit() != null
-                                                                                ? unitRequest.getIsDefaultExportUnit()
-                                                                                : false)
-                                                .createdAt(LocalDateTime.now())
-                                                .updatedAt(LocalDateTime.now())
-                                                .build();
+                                unitsToSave.add(unit);
                         }
-                        unitsToSave.add(unit);
+
+                        itemUnitRepository.saveAll(unitsToSave);
+                        log.info("Updated/created {} units for item: {}", unitsToSave.size(),
+                                        updatedItemMaster.getItemCode());
+
+                        // 11. Update base unit name in item master
+                        updatedItemMaster.setUnitOfMeasure(baseUnitRequest.getUnitName());
+                        itemMasterRepository.save(updatedItemMaster);
+                } else {
+                        // If not updating units, load existing units for response
+                        unitsToSave = existingUnits;
+                        log.info("Skipping unit updates - using existing {} units", unitsToSave.size());
                 }
-
-                itemUnitRepository.saveAll(unitsToSave);
-                log.info("Updated/created {} units for item: {}", unitsToSave.size(), updatedItemMaster.getItemCode());
-
-                // 11. Update base unit name in item master
-                updatedItemMaster.setUnitOfMeasure(baseUnitRequest.getUnitName());
-                itemMasterRepository.save(updatedItemMaster);
 
                 // 12. Build response
                 List<UpdateItemMasterResponse.UnitInfo> unitInfos = unitsToSave.stream()
@@ -468,41 +493,61 @@ public class ItemMasterService {
                                         "Item '" + itemMaster.getItemCode() + "' is no longer active");
                 }
 
-                // 3. Get units based on status filter
-                List<ItemUnit> units;
-                if ("inactive".equalsIgnoreCase(status)) {
-                        units = itemUnitRepository.findByItemMaster_ItemMasterIdAndIsActiveFalseOrderByDisplayOrderAsc(
-                                        itemMasterId);
-                        log.debug("Found {} inactive units", units.size());
-                } else if ("all".equalsIgnoreCase(status)) {
-                        units = itemUnitRepository.findByItemMaster_ItemMasterIdOrderByDisplayOrderAsc(itemMasterId);
-                        log.debug("Found {} total units (active + inactive)", units.size());
-                } else {
-                        // Default: active only
-                        units = itemUnitRepository.findByItemMaster_ItemMasterIdAndIsActiveTrueOrderByDisplayOrderAsc(
-                                        itemMasterId);
-                        log.debug("Found {} active units", units.size());
-                }
+                // 3. Get ALL units first (for finding base unit)
+                List<ItemUnit> allUnits = itemUnitRepository
+                                .findByItemMaster_ItemMasterIdOrderByDisplayOrderAsc(itemMasterId);
 
-                if (units.isEmpty()) {
+                if (allUnits.isEmpty()) {
                         log.warn("No units configured for item master ID: {}", itemMasterId);
                         throw new ResponseStatusException(
                                         HttpStatus.NOT_FOUND,
                                         "No units configured for this item");
                 }
 
-                // 4. Find base unit
-                ItemUnit baseUnit = units.stream()
+                // 4. Find base unit from ALL units (base unit might be inactive)
+                // Fallback: If no unit marked as base, use unit with conversion_rate=1
+                ItemUnit baseUnit = allUnits.stream()
                                 .filter(ItemUnit::getIsBaseUnit)
                                 .findFirst()
-                                .orElseThrow(() -> {
-                                        log.error("Base unit not found for item master ID: {}", itemMasterId);
-                                        return new ResponseStatusException(
-                                                        HttpStatus.INTERNAL_SERVER_ERROR,
-                                                        "Base unit not configured properly");
+                                .orElseGet(() -> {
+                                        log.warn("No unit marked as base for item master ID: {}. Using unit with conversion_rate=1 as fallback",
+                                                        itemMasterId);
+                                        return allUnits.stream()
+                                                        .filter(u -> u.getConversionRate() == 1)
+                                                        .findFirst()
+                                                        .orElseThrow(() -> {
+                                                                log.error("Neither base unit nor unit with conversion_rate=1 found for item master ID: {}",
+                                                                                itemMasterId);
+                                                                return new ResponseStatusException(
+                                                                                HttpStatus.INTERNAL_SERVER_ERROR,
+                                                                                "Base unit not configured properly. Please ensure at least one unit has conversion_rate=1");
+                                                        });
                                 });
 
-                // 5. Build response
+                // 5. Filter units based on status parameter (for response)
+                List<ItemUnit> units;
+                if ("inactive".equalsIgnoreCase(status)) {
+                        units = allUnits.stream()
+                                        .filter(u -> !u.getIsActive())
+                                        .collect(Collectors.toList());
+                        log.debug("Found {} inactive units", units.size());
+                } else if ("all".equalsIgnoreCase(status)) {
+                        units = allUnits;
+                        log.debug("Found {} total units (active + inactive)", units.size());
+                } else {
+                        // Default: active only
+                        units = allUnits.stream()
+                                        .filter(ItemUnit::getIsActive)
+                                        .collect(Collectors.toList());
+                        log.debug("Found {} active units", units.size());
+                }
+
+                if (units.isEmpty()) {
+                        log.warn("No {} units found for item master ID: {}", status, itemMasterId);
+                        throw new ResponseStatusException(
+                                        HttpStatus.NOT_FOUND,
+                                        "No " + status + " units found for this item");
+                } // 5. Build response
                 GetItemUnitsResponse.ItemMasterInfo itemMasterInfo = GetItemUnitsResponse.ItemMasterInfo.builder()
                                 .itemMasterId(itemMaster.getItemMasterId())
                                 .itemCode(itemMaster.getItemCode())

@@ -33,7 +33,7 @@ import java.time.LocalDate;
  *
  * Security: Staff NEVER sees or knows patient's password
  *
- * ⚠️ BREAKING CHANGE (V23/V24):
+ *  BREAKING CHANGE (V23/V24):
  * - Removed `password` field from request (patient sets via email)
  * - Kept `username` field (staff must provide username)
  * - Username is REQUIRED if creating account
