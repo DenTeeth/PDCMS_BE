@@ -46,15 +46,29 @@ public class SupplierMapper {
                 .build();
     }
 
+    /**
+     * API 6.15: Update entity from request
+     * Updates only profile fields, NOT metrics (totalOrders, lastOrderDate)
+     */
     public void updateEntity(Supplier supplier, UpdateSupplierRequest request) {
         if (supplier == null || request == null) {
             return;
         }
 
         supplier.setSupplierName(request.getSupplierName());
+        supplier.setContactPerson(request.getContactPerson());
         supplier.setPhoneNumber(request.getPhoneNumber());
         supplier.setEmail(request.getEmail());
         supplier.setAddress(request.getAddress());
+        
+        // Risk management flags
+        if (request.getIsActive() != null) {
+            supplier.setIsActive(request.getIsActive());
+        }
+        if (request.getIsBlacklisted() != null) {
+            supplier.setIsBlacklisted(request.getIsBlacklisted());
+        }
+        
         supplier.setNotes(request.getNotes());
     }
 }

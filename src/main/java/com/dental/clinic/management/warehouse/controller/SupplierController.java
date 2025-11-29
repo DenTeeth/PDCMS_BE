@@ -202,16 +202,18 @@ public class SupplierController {
     }
 
     /**
-     * ✏ API: Cập nhật Supplier
+     * API 6.15: Update Supplier
+     * Updates supplier profile and risk management flags (isActive, isBlacklisted)
+     * Authorization: MANAGE_SUPPLIERS or MANAGE_WAREHOUSE
      */
-    @Operation(summary = "Cập nhật nhà cung cấp", description = "Update supplier by ID")
-    @ApiMessage("Cập nhật nhà cung cấp thành công")
+    @Operation(summary = "Update supplier", description = "Update supplier profile including risk management flags")
+    @ApiMessage("Supplier updated successfully")
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('UPDATE_WAREHOUSE')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAnyAuthority('MANAGE_SUPPLIERS', 'MANAGE_WAREHOUSE')")
     public ResponseEntity<SupplierSummaryResponse> updateSupplier(
             @PathVariable Long id,
             @Valid @RequestBody UpdateSupplierRequest request) {
-        log.info("PUT /api/v1/suppliers/{}", id);
+        log.info("PUT /api/v1/warehouse/suppliers/{}", id);
         SupplierSummaryResponse response = supplierService.updateSupplier(id, request);
         return ResponseEntity.ok(response);
     }

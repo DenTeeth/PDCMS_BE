@@ -28,6 +28,9 @@ public class Supplier {
     @Column(name = "supplier_name", nullable = false)
     private String supplierName;
 
+    @Column(name = "contact_person", length = 255)
+    private String contactPerson;
+
     @Column(name = "phone_number", length = 20)
     private String phoneNumber;
 

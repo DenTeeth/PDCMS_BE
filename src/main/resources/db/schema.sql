@@ -1,5 +1,5 @@
 -- ============================================
--- DENTAL CLINIC MANAGEMENT SYSTEM - SCHEMA V29
+-- DENTAL CLINIC MANAGEMENT SYSTEM - SCHEMA V30
 -- Date: 2025-11-29
 -- PostgreSQL Database Schema - REFERENCE ONLY
 -- ============================================
@@ -14,6 +14,15 @@
 --
 -- This file documents the expected schema structure for reference
 -- ============================================
+-- CHANGES IN V30 (API 6.15 - Update Supplier):
+--   - PUT /api/v1/warehouse/suppliers/{id} endpoint
+--   - Added contact_person column to suppliers table (VARCHAR 255)
+--   - Hibernate executes: ALTER TABLE suppliers ADD COLUMN contact_person VARCHAR(255)
+--   - Update supplier profile: name, contactPerson, phone, email, address, notes
+--   - Risk Management: Update isActive (pause orders), isBlacklisted (fraud warning)
+--   - Validation: Duplicate name with OTHER suppliers (409), supplier exists (404)
+--   - Metrics (totalOrders, lastOrderDate) NOT updated via this API
+--   - Log warning when supplier marked as BLACKLISTED
 -- CHANGES IN V29 (Architecture Fix - Supplier-Item Auto-Linking):
 --   - FIXED: supplier_items table now auto-populated on import
 --   - Logic: When import transaction created, auto-create/update SupplierItem record

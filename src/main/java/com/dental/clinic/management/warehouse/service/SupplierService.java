@@ -319,20 +319,60 @@ public class SupplierService {
         }
 
         /**
-         * Update Supplier
+         * API 6.15: Update Supplier
+         * Updates supplier profile and risk management flags
+         * Validates: (1) Supplier exists (404), (2) Duplicate name with other suppliers (409)
+         * Note: Metrics (totalOrders, lastOrderDate) are NOT updated via this API
          */
         @Transactional
         public SupplierSummaryResponse updateSupplier(Long id, UpdateSupplierRequest request) {
-                log.info("Updating supplier: {}", id);
+                log.info("API 6.15 - Updating supplier ID: {}", id);
 
+                // 1. Validate supplier exists
                 Supplier supplier = supplierRepository.findById(id)
-                                .orElseThrow(() -> new SupplierNotFoundException(id));
+                                .orElseThrow(() -> {
+                                        log.warn("Supplier not found: ID {}", id);
+                                        return new SupplierNotFoundException(id);
+                                });
 
-                // Update using mapper
+                // 2. Validate duplicate name with OTHER suppliers (case-insensitive)
+                if (!supplier.getSupplierName().equalsIgnoreCase(request.getSupplierName())) {
+                        if (supplierRepository.existsBySupplierNameIgnoreCase(request.getSupplierName())) {
+                                log.warn("Supplier name already exists: {}", request.getSupplierName());
+                                throw new com.dental.clinic.management.exception.DuplicateResourceException(
+                                                "DUPLICATE_SUPPLIER_NAME",
+                                                "Supplier name '" + request.getSupplierName()
+                                                                + "' is already used by another supplier");
+                        }
+                }
+
+                // 3. Validate duplicate email with OTHER suppliers if email changed
+                if (request.getEmail() != null && !request.getEmail().isEmpty()) {
+                        if (supplier.getEmail() == null || !supplier.getEmail().equalsIgnoreCase(request.getEmail())) {
+                                if (supplierRepository.existsByEmailIgnoreCase(request.getEmail())) {
+                                        log.warn("Email already exists: {}", request.getEmail());
+                                        throw new com.dental.clinic.management.exception.DuplicateResourceException(
+                                                        "DUPLICATE_EMAIL",
+                                                        "Email '" + request.getEmail()
+                                                                        + "' is already in use by another supplier");
+                                }
+                        }
+                }
+
+                // 4. Log blacklist flag change for risk management
+                if (request.getIsBlacklisted() != null && request.getIsBlacklisted()
+                                && !Boolean.TRUE.equals(supplier.getIsBlacklisted())) {
+                        log.warn("RISK MANAGEMENT: Supplier '{}' ({}) marked as BLACKLISTED. Reason: {}",
+                                        supplier.getSupplierCode(), supplier.getSupplierName(),
+                                        request.getNotes() != null ? request.getNotes() : "Not specified");
+                }
+
+                // 5. Update using mapper (only profile fields, NOT metrics)
                 supplierMapper.updateEntity(supplier, request);
 
                 supplier = supplierRepository.save(supplier);
-                log.info("Updated supplier: {}", supplier.getSupplierCode());
+                log.info("API 6.15 - Updated supplier successfully: {} ({})",
+                                supplier.getSupplierCode(), supplier.getSupplierName());
 
                 return mapToSummaryResponse(supplier);
         }
