@@ -1,5 +1,5 @@
 -- ============================================
--- DENTAL CLINIC MANAGEMENT SYSTEM - SCHEMA V28
+-- DENTAL CLINIC MANAGEMENT SYSTEM - SCHEMA V29
 -- Date: 2025-11-29
 -- PostgreSQL Database Schema - REFERENCE ONLY
 -- ============================================
@@ -14,6 +14,15 @@
 --
 -- This file documents the expected schema structure for reference
 -- ============================================
+-- CHANGES IN V29 (Architecture Fix - Supplier-Item Auto-Linking):
+--   - FIXED: supplier_items table now auto-populated on import
+--   - Logic: When import transaction created, auto-create/update SupplierItem record
+--   - First import from supplier -> Create new SupplierItem (isPreferred=false, lastPurchaseDate=transactionDate)
+--   - Subsequent imports -> Update lastPurchaseDate to latest transactionDate
+--   - Impact: GET /inventory/{id}/suppliers now returns actual supplier data
+--   - No manual API needed - supplier-item links created organically through import workflow
+--   - Repository: Added findBySupplierAndItemMaster() method to SupplierItemRepository
+--   - Service: Modified ImportTransactionService.processImportItem() with auto-linking logic
 -- CHANGES IN V28 (API 6.14 - Create Supplier):
 --   - POST /api/v1/warehouse/suppliers endpoint
 --   - Auto-generate supplier_code (SUP-001, SUP-002, ...)

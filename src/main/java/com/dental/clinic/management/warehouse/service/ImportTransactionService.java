@@ -46,6 +46,7 @@ public class ImportTransactionService {
         private final ItemUnitRepository unitRepository;
         private final SupplierRepository supplierRepository;
         private final EmployeeRepository employeeRepository;
+        private final SupplierItemRepository supplierItemRepository;
 
         /**
          * Create Import Transaction
@@ -208,6 +209,34 @@ public class ImportTransactionService {
                                         "ITEM_INACTIVE",
                                         "Cannot import inactive item: " + itemMaster.getItemCode() +
                                                         " - " + itemMaster.getItemName());
+                }
+
+                // 1.1. Auto-create supplier-item link if not exists
+                // This populates supplier_items table for GET /inventory/{id}/suppliers API
+                Supplier supplier = transaction.getSupplier();
+                Optional<SupplierItem> existingLink = supplierItemRepository
+                                .findBySupplierAndItemMaster(supplier, itemMaster);
+
+                SupplierItem supplierItem;
+                if (existingLink.isEmpty()) {
+                        // First time this supplier provides this item - create link
+                        supplierItem = SupplierItem.builder()
+                                        .supplier(supplier)
+                                        .itemMaster(itemMaster)
+                                        .isPreferred(false) // Default: not preferred
+                                        .lastPurchaseDate(transaction.getTransactionDate())
+                                        .build();
+                        supplierItem = supplierItemRepository.save(supplierItem);
+                        log.info("Auto-created supplier-item link: Supplier '{}' -> Item '{}'",
+                                        supplier.getSupplierCode(), itemMaster.getItemCode());
+                } else {
+                        // Update last purchase date for existing link
+                        supplierItem = existingLink.get();
+                        supplierItem.setLastPurchaseDate(transaction.getTransactionDate());
+                        supplierItemRepository.save(supplierItem);
+                        log.info("Updated supplier-item link: Supplier '{}' -> Item '{}' (lastPurchaseDate: {})",
+                                        supplier.getSupplierCode(), itemMaster.getItemCode(),
+                                        transaction.getTransactionDate());
                 }
 
                 // 2. Validate expiry date
