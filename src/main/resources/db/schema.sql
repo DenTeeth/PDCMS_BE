@@ -1,6 +1,6 @@
 -- ============================================
--- DENTAL CLINIC MANAGEMENT SYSTEM - SCHEMA V25
--- Date: 2025-11-28
+-- DENTAL CLINIC MANAGEMENT SYSTEM - SCHEMA V26
+-- Date: 2025-11-29
 -- PostgreSQL Database Schema - REFERENCE ONLY
 -- ============================================
 -- IMPORTANT: This file is for REFERENCE/DOCUMENTATION purposes only
@@ -14,6 +14,14 @@
 --
 -- This file documents the expected schema structure for reference
 -- ============================================
+-- CHANGES IN V26 (API 6.12 - Convert Item Quantity):
+--   - No schema changes (utility API only)
+--   - Added batch conversion endpoint POST /items/units/convert
+--   - Supports FLOOR/CEILING/HALF_UP rounding modes
+--   - Returns formula for transparency
+-- CHANGES IN V25 (Seed Data Initialization Fix):
+--   - Added DataInitializer bean for proper seed data loading
+--   - Fixed three-phase initialization (ENUMs -> Tables -> Data)
 -- CHANGES IN V24 (API 6.11 - Get Item Units):
 --   - Added transaction_date column to storage_transactions
 --   - Added status column to storage_transactions
