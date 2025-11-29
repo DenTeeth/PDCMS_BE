@@ -229,6 +229,13 @@ public class SupplierService {
                                 .supplierName(supplier.getSupplierName())
                                 .phoneNumber(supplier.getPhoneNumber())
                                 .email(supplier.getEmail())
+                                .address(supplier.getAddress())
+                                .isActive(supplier.getIsActive())
+                                .isBlacklisted(supplier.getIsBlacklisted())
+                                .totalOrders(supplier.getTotalOrders())
+                                .lastOrderDate(supplier.getLastOrderDate())
+                                .notes(supplier.getNotes())
+                                .createdAt(supplier.getCreatedAt())
                                 .status(supplier.getIsActive() ? "ACTIVE" : "INACTIVE")
                                 .build();
         }
@@ -278,18 +285,40 @@ public class SupplierService {
          */
         @Transactional
         public SupplierSummaryResponse createSupplier(CreateSupplierRequest request) {
-                log.info("Creating supplier: {}", request.getSupplierName());
+                log.info("API 6.14 - Creating supplier: {}", request.getSupplierName());
 
-                // Auto-generate supplier code
+                // Validate supplier name uniqueness (case-insensitive)
+                if (supplierRepository.existsBySupplierNameIgnoreCase(request.getSupplierName())) {
+                        log.warn("Supplier name already exists: {}", request.getSupplierName());
+                        throw new com.dental.clinic.management.exception.DuplicateResourceException(
+                                "DUPLICATE_SUPPLIER_NAME",
+                                "Supplier '" + request.getSupplierName() + "' already exists"
+                        );
+                }
+
+                // Validate email uniqueness if provided (case-insensitive)
+                if (request.getEmail() != null && !request.getEmail().isEmpty()) {
+                        if (supplierRepository.existsByEmailIgnoreCase(request.getEmail())) {
+                                log.warn("Email already exists: {}", request.getEmail());
+                                throw new com.dental.clinic.management.exception.DuplicateResourceException(
+                                        "DUPLICATE_EMAIL",
+                                        "Email '" + request.getEmail() + "' is already in use by another supplier"
+                                );
+                        }
+                }
+
+                // Auto-generate supplier code (SUP-001, SUP-002, ...)
                 String supplierCode = generateSupplierCode();
 
                 // Map to entity using mapper
                 Supplier supplier = supplierMapper.toEntity(request);
                 supplier.setSupplierCode(supplierCode);
                 supplier.setIsActive(true);
+                supplier.setTotalOrders(0);
+                supplier.setLastOrderDate(null);
 
                 supplier = supplierRepository.save(supplier);
-                log.info("Created supplier with code: {}", supplierCode);
+                log.info("API 6.14 - Created supplier successfully: {} ({})", supplierCode, request.getSupplierName());
 
                 return mapToSummaryResponse(supplier);
         }

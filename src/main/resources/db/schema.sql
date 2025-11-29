@@ -1,5 +1,5 @@
 -- ============================================
--- DENTAL CLINIC MANAGEMENT SYSTEM - SCHEMA V27
+-- DENTAL CLINIC MANAGEMENT SYSTEM - SCHEMA V28
 -- Date: 2025-11-29
 -- PostgreSQL Database Schema - REFERENCE ONLY
 -- ============================================
@@ -14,11 +14,18 @@
 --
 -- This file documents the expected schema structure for reference
 -- ============================================
+-- CHANGES IN V28 (API 6.14 - Create Supplier):
+--   - POST /api/v1/warehouse/suppliers endpoint
+--   - Auto-generate supplier_code (SUP-001, SUP-002, ...)
+--   - Validate supplier name uniqueness (case-insensitive)
+--   - Validate email uniqueness (case-insensitive)
+--   - Set defaults: is_active=true, total_orders=0, last_order_date=null
+--   - No new columns needed (all fields already exist in suppliers table)
 -- CHANGES IN V27 (API 6.13 - Get Suppliers with Metrics):
 --   - Added is_blacklisted column to suppliers table (via Entity update)
 --   - Hibernate automatically executes: ALTER TABLE suppliers ADD COLUMN is_blacklisted BOOLEAN
 --   - Added business metrics: totalOrders, lastOrderDate (already existed)
---   - GET /api/v1/warehouse/suppliers endpoint with filters
+--   - GET /api/v1/warehouse/suppliers/list endpoint with filters
 --   - Auto-update supplier metrics on import transaction
 -- CHANGES IN V26 (API 6.12 - Convert Item Quantity):
 --   - No schema changes (utility API only)

@@ -370,7 +370,9 @@ VALUES
 ('IMPORT_ITEMS', 'IMPORT_ITEMS', 'WAREHOUSE', 'Tạo phiếu nhập kho', 277, NULL, TRUE, NOW()),
 ('EXPORT_ITEMS', 'EXPORT_ITEMS', 'WAREHOUSE', 'Tạo phiếu xuất kho', 278, NULL, TRUE, NOW()),
 ('DISPOSE_ITEMS', 'DISPOSE_ITEMS', 'WAREHOUSE', 'Tạo phiếu thanh lý', 279, NULL, TRUE, NOW()),
-('APPROVE_TRANSACTION', 'APPROVE_TRANSACTION', 'WAREHOUSE', 'Duyệt/Từ chối phiếu nhập xuất kho', 280, NULL, TRUE, NOW())
+('APPROVE_TRANSACTION', 'APPROVE_TRANSACTION', 'WAREHOUSE', 'Duyệt/Từ chối phiếu nhập xuất kho', 280, NULL, TRUE, NOW()),
+('MANAGE_SUPPLIERS', 'MANAGE_SUPPLIERS', 'WAREHOUSE', 'Quản lý nhà cung cấp (API 6.13, 6.14)', 281, NULL, TRUE, NOW()),
+('MANAGE_WAREHOUSE', 'MANAGE_WAREHOUSE', 'WAREHOUSE', 'Toàn quyền quản lý kho', 282, NULL, TRUE, NOW())
 ON CONFLICT (permission_id) DO NOTHING;
 
 
@@ -526,7 +528,9 @@ VALUES
 ('ROLE_MANAGER', 'VIEW_ITEMS'),
 ('ROLE_MANAGER', 'IMPORT_ITEMS'),
 ('ROLE_MANAGER', 'EXPORT_ITEMS'),
-('ROLE_MANAGER', 'APPROVE_TRANSACTION')
+('ROLE_MANAGER', 'APPROVE_TRANSACTION'),
+('ROLE_MANAGER', 'MANAGE_SUPPLIERS'), -- V28: Can manage suppliers (API 6.13, 6.14)
+('ROLE_MANAGER', 'MANAGE_WAREHOUSE') -- V28: Full warehouse management authority
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
@@ -545,7 +549,7 @@ VALUES
 ('ROLE_INVENTORY_MANAGER', 'VIEW_LEAVE_OWN'), ('ROLE_INVENTORY_MANAGER', 'CREATE_TIME_OFF'), ('ROLE_INVENTORY_MANAGER', 'CREATE_OVERTIME'),
 ('ROLE_INVENTORY_MANAGER', 'CANCEL_TIME_OFF_OWN'), ('ROLE_INVENTORY_MANAGER', 'CANCEL_OVERTIME_OWN'),
 ('ROLE_INVENTORY_MANAGER', 'VIEW_HOLIDAY'),
--- WAREHOUSE (V22: Full warehouse management - API 6.6, 6.9, 6.10, 6.11)
+-- WAREHOUSE (V28: Full warehouse management - API 6.6, 6.9, 6.10, 6.11, 6.13, 6.14)
 ('ROLE_INVENTORY_MANAGER', 'VIEW_ITEMS'), -- Can view item list and units (API 6.8, 6.11)
 ('ROLE_INVENTORY_MANAGER', 'VIEW_WAREHOUSE'), -- Can view transaction history
 ('ROLE_INVENTORY_MANAGER', 'CREATE_ITEMS'), -- Can create item masters (API 6.9)
@@ -557,7 +561,9 @@ VALUES
 ('ROLE_INVENTORY_MANAGER', 'IMPORT_ITEMS'), -- Can create import transactions
 ('ROLE_INVENTORY_MANAGER', 'EXPORT_ITEMS'), -- Can create export transactions
 ('ROLE_INVENTORY_MANAGER', 'DISPOSE_ITEMS'), -- Can create disposal transactions
-('ROLE_INVENTORY_MANAGER', 'APPROVE_TRANSACTION') -- Can approve transactions
+('ROLE_INVENTORY_MANAGER', 'APPROVE_TRANSACTION'), -- Can approve transactions
+('ROLE_INVENTORY_MANAGER', 'MANAGE_SUPPLIERS'), -- Can manage suppliers (API 6.13, 6.14)
+('ROLE_INVENTORY_MANAGER', 'MANAGE_WAREHOUSE') -- Full warehouse management authority
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 

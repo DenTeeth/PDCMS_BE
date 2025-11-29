@@ -22,6 +22,7 @@ public class SupplierMapper {
                 .phoneNumber(request.getPhoneNumber())
                 .email(request.getEmail())
                 .address(request.getAddress())
+                .isBlacklisted(request.getIsBlacklisted() != null ? request.getIsBlacklisted() : false)
                 .notes(request.getNotes())
                 .build();
     }

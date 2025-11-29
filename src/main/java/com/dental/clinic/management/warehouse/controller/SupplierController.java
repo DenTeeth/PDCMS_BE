@@ -180,15 +180,37 @@ public class SupplierController {
     }
 
     /**
-     * ➕ API: Tạo Supplier mới
+     * API 6.14: Create New Supplier
+     * 
+     * Features:
+     * - Auto-generate supplier code (SUP-001, SUP-002, ...)
+     * - Validate name uniqueness (case-insensitive)
+     * - Validate email uniqueness (case-insensitive)
+     * - Set default values: isActive=true, totalOrders=0
+     * 
+     * Validation Rules:
+     * - supplierName: Required, 2-255 characters, must be unique
+     * - phone: Required, 10-11 digits
+     * - email: Optional, valid email format, must be unique if provided
+     * - address: Optional, max 500 characters
+     * - isBlacklisted: Optional, default false
+     * - notes: Optional, max 1000 characters
      */
-    @Operation(summary = "Tạo nhà cung cấp mới", description = "Create new supplier")
-    @ApiMessage("Tạo nhà cung cấp thành công")
+    @Operation(
+        summary = "API 6.14 - Create new supplier",
+        description = """
+            Create a new supplier record for procurement management.
+            
+            Auto-generates supplier code (SUP-XXX format).
+            Validates name and email uniqueness.
+            """
+    )
+    @ApiMessage("Supplier created successfully")
     @PostMapping
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('CREATE_WAREHOUSE')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAnyAuthority('MANAGE_SUPPLIERS', 'MANAGE_WAREHOUSE')")
     public ResponseEntity<SupplierSummaryResponse> createSupplier(
             @Valid @RequestBody CreateSupplierRequest request) {
-        log.info("POST /api/v1/suppliers - name: {}", request.getSupplierName());
+        log.info("API 6.14 - POST /api/v1/warehouse/suppliers - name: {}", request.getSupplierName());
         SupplierSummaryResponse response = supplierService.createSupplier(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
