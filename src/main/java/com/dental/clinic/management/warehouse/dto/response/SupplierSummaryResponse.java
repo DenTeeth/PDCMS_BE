@@ -5,9 +5,12 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 /**
- *  SupplierSummaryResponse - DTO nhẹ cho GET ALL (Table View)
- * Chỉ chứa thông tin cần thiết để hiển thị trên bảng danh sách
+ * SupplierSummaryResponse - DTO for supplier operations
+ * Used for GET ALL (Table View) and CREATE/UPDATE responses
  */
 @Data
 @Builder
@@ -16,9 +19,16 @@ import lombok.NoArgsConstructor;
 public class SupplierSummaryResponse {
 
     private Long supplierId;
-    private String supplierCode; // SUP001
-    private String supplierName; // Công ty Dược A
-    private String phoneNumber; // 0901234567
-    private String email; // contact@a.com
-    private String status; // ACTIVE | INACTIVE
+    private String supplierCode;
+    private String supplierName;
+    private String phoneNumber;
+    private String email;
+    private String address;
+    private Boolean isActive;
+    private Boolean isBlacklisted;
+    private Integer totalOrders;
+    private LocalDate lastOrderDate;
+    private String notes;
+    private LocalDateTime createdAt;
+    private String status; // Computed: ACTIVE | INACTIVE
 }

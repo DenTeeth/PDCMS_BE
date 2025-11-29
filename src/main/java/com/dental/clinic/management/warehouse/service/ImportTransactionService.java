@@ -46,6 +46,7 @@ public class ImportTransactionService {
         private final ItemUnitRepository unitRepository;
         private final SupplierRepository supplierRepository;
         private final EmployeeRepository employeeRepository;
+        private final SupplierItemRepository supplierItemRepository;
 
         /**
          * Create Import Transaction
@@ -117,6 +118,9 @@ public class ImportTransactionService {
                         // 6. Update transaction totals
                         transaction.setTotalValue(totalValue);
                         transactionRepository.save(transaction);
+
+                        // 6.1 Update supplier business metrics (API 6.13)
+                        updateSupplierMetrics(supplier, transaction.getTransactionDate().toLocalDate());
 
                         // 7. Build response
                         ImportTransactionResponse response = buildResponse(
@@ -205,6 +209,34 @@ public class ImportTransactionService {
                                         "ITEM_INACTIVE",
                                         "Cannot import inactive item: " + itemMaster.getItemCode() +
                                                         " - " + itemMaster.getItemName());
+                }
+
+                // 1.1. Auto-create supplier-item link if not exists
+                // This populates supplier_items table for GET /inventory/{id}/suppliers API
+                Supplier supplier = transaction.getSupplier();
+                Optional<SupplierItem> existingLink = supplierItemRepository
+                                .findBySupplierAndItemMaster(supplier, itemMaster);
+
+                SupplierItem supplierItem;
+                if (existingLink.isEmpty()) {
+                        // First time this supplier provides this item - create link
+                        supplierItem = SupplierItem.builder()
+                                        .supplier(supplier)
+                                        .itemMaster(itemMaster)
+                                        .isPreferred(false) // Default: not preferred
+                                        .lastPurchaseDate(transaction.getTransactionDate())
+                                        .build();
+                        supplierItem = supplierItemRepository.save(supplierItem);
+                        log.info("Auto-created supplier-item link: Supplier '{}' -> Item '{}'",
+                                        supplier.getSupplierCode(), itemMaster.getItemCode());
+                } else {
+                        // Update last purchase date for existing link
+                        supplierItem = existingLink.get();
+                        supplierItem.setLastPurchaseDate(transaction.getTransactionDate());
+                        supplierItemRepository.save(supplierItem);
+                        log.info("Updated supplier-item link: Supplier '{}' -> Item '{}' (lastPurchaseDate: {})",
+                                        supplier.getSupplierCode(), itemMaster.getItemCode(),
+                                        transaction.getTransactionDate());
                 }
 
                 // 2. Validate expiry date
@@ -408,6 +440,38 @@ public class ImportTransactionService {
                 // Commented out for now, can be implemented later
 
                 return warnings;
+        }
+
+        /**
+         * API 6.13: Update supplier business metrics after successful import
+         * Updates totalOrders (increment) and lastOrderDate (set to transaction date)
+         *
+         * @param supplier        The supplier who provided the items
+         * @param transactionDate Date of the import transaction
+         */
+        private void updateSupplierMetrics(Supplier supplier, java.time.LocalDate transactionDate) {
+                try {
+                        // Increment total orders
+                        Integer currentOrders = supplier.getTotalOrders();
+                        supplier.setTotalOrders(currentOrders != null ? currentOrders + 1 : 1);
+
+                        // Update last order date
+                        supplier.setLastOrderDate(transactionDate);
+
+                        // Save supplier
+                        supplierRepository.save(supplier);
+
+                        log.info("✓ Updated supplier metrics - ID: {}, Total Orders: {}, Last Order: {}",
+                                        supplier.getSupplierId(),
+                                        supplier.getTotalOrders(),
+                                        transactionDate);
+
+                } catch (Exception e) {
+                        // Log error but don't fail the transaction
+                        log.error("✗ Failed to update supplier metrics for supplier ID {}: {}",
+                                        supplier.getSupplierId(), e.getMessage());
+                        // Continue - metrics update failure should not block import transaction
+                }
         }
 
         /**

@@ -61,4 +61,11 @@ public interface ItemUnitRepository extends JpaRepository<ItemUnit, Long> {
          * API 6.11: Lấy tất cả đơn vị (active + inactive), sắp xếp theo displayOrder
          */
         List<ItemUnit> findByItemMaster_ItemMasterIdOrderByDisplayOrderAsc(Long itemMasterId);
+
+        /**
+         * API 6.12: Tìm base unit theo ItemMaster object và isBaseUnit flag
+         */
+        Optional<ItemUnit> findByItemMasterAndIsBaseUnit(
+                        com.dental.clinic.management.warehouse.domain.ItemMaster itemMaster,
+                        boolean isBaseUnit);
 }

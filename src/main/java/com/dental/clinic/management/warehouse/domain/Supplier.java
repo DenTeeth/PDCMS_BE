@@ -28,6 +28,9 @@ public class Supplier {
     @Column(name = "supplier_name", nullable = false)
     private String supplierName;
 
+    @Column(name = "contact_person", length = 255)
+    private String contactPerson;
+
     @Column(name = "phone_number", length = 20)
     private String phoneNumber;
 
@@ -38,7 +41,7 @@ public class Supplier {
     private String address;
 
     /**
-     *  Phân loại ưu tiên nhà cung cấp (Feedback Upgrade)
+     * Phân loại ưu tiên nhà cung cấp (Feedback Upgrade)
      * TIER_1: Ưu tiên cao nhất (chất lượng tốt, giá tốt, giao hàng nhanh)
      * TIER_2: Ổn định
      * TIER_3: Dự phòng (default cho NCC mới)
@@ -70,6 +73,17 @@ public class Supplier {
      */
     @Column(name = "last_order_date")
     private java.time.LocalDate lastOrderDate;
+
+    /**
+     * Cờ đánh dấu nhà cung cấp bị đưa vào danh sách đen
+     * TRUE = Không nên đặt hàng từ NCC này (quality/fraud issues)
+     * FALSE = NCC đáng tin cậy (default)
+     * Note: nullable=true for Hibernate ALTER TABLE compatibility (existing rows
+     * may be NULL)
+     */
+    @Column(name = "is_blacklisted")
+    @Builder.Default
+    private Boolean isBlacklisted = false;
 
     @Column(columnDefinition = "TEXT")
     private String notes;

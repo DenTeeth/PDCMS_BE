@@ -1,6 +1,6 @@
 -- ============================================
--- DENTAL CLINIC MANAGEMENT SYSTEM - SCHEMA V25
--- Date: 2025-11-28
+-- DENTAL CLINIC MANAGEMENT SYSTEM - SCHEMA V30
+-- Date: 2025-11-29
 -- PostgreSQL Database Schema - REFERENCE ONLY
 -- ============================================
 -- IMPORTANT: This file is for REFERENCE/DOCUMENTATION purposes only
@@ -14,6 +14,45 @@
 --
 -- This file documents the expected schema structure for reference
 -- ============================================
+-- CHANGES IN V30 (API 6.15 - Update Supplier):
+--   - PUT /api/v1/warehouse/suppliers/{id} endpoint
+--   - Added contact_person column to suppliers table (VARCHAR 255)
+--   - Hibernate executes: ALTER TABLE suppliers ADD COLUMN contact_person VARCHAR(255)
+--   - Update supplier profile: name, contactPerson, phone, email, address, notes
+--   - Risk Management: Update isActive (pause orders), isBlacklisted (fraud warning)
+--   - Validation: Duplicate name with OTHER suppliers (409), supplier exists (404)
+--   - Metrics (totalOrders, lastOrderDate) NOT updated via this API
+--   - Log warning when supplier marked as BLACKLISTED
+-- CHANGES IN V29 (Architecture Fix - Supplier-Item Auto-Linking):
+--   - FIXED: supplier_items table now auto-populated on import
+--   - Logic: When import transaction created, auto-create/update SupplierItem record
+--   - First import from supplier -> Create new SupplierItem (isPreferred=false, lastPurchaseDate=transactionDate)
+--   - Subsequent imports -> Update lastPurchaseDate to latest transactionDate
+--   - Impact: GET /inventory/{id}/suppliers now returns actual supplier data
+--   - No manual API needed - supplier-item links created organically through import workflow
+--   - Repository: Added findBySupplierAndItemMaster() method to SupplierItemRepository
+--   - Service: Modified ImportTransactionService.processImportItem() with auto-linking logic
+-- CHANGES IN V28 (API 6.14 - Create Supplier):
+--   - POST /api/v1/warehouse/suppliers endpoint
+--   - Auto-generate supplier_code (SUP-001, SUP-002, ...)
+--   - Validate supplier name uniqueness (case-insensitive)
+--   - Validate email uniqueness (case-insensitive)
+--   - Set defaults: is_active=true, total_orders=0, last_order_date=null
+--   - No new columns needed (all fields already exist in suppliers table)
+-- CHANGES IN V27 (API 6.13 - Get Suppliers with Metrics):
+--   - Added is_blacklisted column to suppliers table (via Entity update)
+--   - Hibernate automatically executes: ALTER TABLE suppliers ADD COLUMN is_blacklisted BOOLEAN
+--   - Added business metrics: totalOrders, lastOrderDate (already existed)
+--   - GET /api/v1/warehouse/suppliers/list endpoint with filters
+--   - Auto-update supplier metrics on import transaction
+-- CHANGES IN V26 (API 6.12 - Convert Item Quantity):
+--   - No schema changes (utility API only)
+--   - Added batch conversion endpoint POST /items/units/convert
+--   - Supports FLOOR/CEILING/HALF_UP rounding modes
+--   - Returns formula for transparency
+-- CHANGES IN V25 (Seed Data Initialization Fix):
+--   - Added DataInitializer bean for proper seed data loading
+--   - Fixed three-phase initialization (ENUMs -> Tables -> Data)
 -- CHANGES IN V24 (API 6.11 - Get Item Units):
 --   - Added transaction_date column to storage_transactions
 --   - Added status column to storage_transactions
@@ -629,6 +668,42 @@ CREATE TABLE warehouse_audit_logs (
 
 CREATE INDEX idx_audit_logs_transaction ON warehouse_audit_logs(transaction_id);
 CREATE INDEX idx_audit_logs_timestamp ON warehouse_audit_logs(action_timestamp);
+
+-- ============================================
+-- SUPPLIERS (Nhà cung cấp)
+-- ============================================
+CREATE TABLE suppliers (
+    supplier_id SERIAL PRIMARY KEY,
+    supplier_code VARCHAR(50) NOT NULL UNIQUE,
+    supplier_name VARCHAR(255) NOT NULL,
+    phone_number VARCHAR(20),
+    email VARCHAR(100),
+    address TEXT,
+
+    -- Business Metrics (API 6.13)
+    tier_level VARCHAR(20) NOT NULL DEFAULT 'TIER_3',
+    rating_score DECIMAL(3,1) DEFAULT 0.0,
+    total_orders INTEGER DEFAULT 0,
+    last_order_date DATE,
+    is_blacklisted BOOLEAN NOT NULL DEFAULT FALSE,
+
+    notes TEXT,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP
+);
+
+CREATE INDEX idx_suppliers_code ON suppliers(supplier_code);
+CREATE INDEX idx_suppliers_name ON suppliers(supplier_name);
+CREATE INDEX idx_suppliers_active ON suppliers(is_active);
+CREATE INDEX idx_suppliers_blacklisted ON suppliers(is_blacklisted);
+
+COMMENT ON TABLE suppliers IS 'Nhà cung cấp vật tư nha khoa';
+COMMENT ON COLUMN suppliers.tier_level IS 'Phân loại ưu tiên: TIER_1 (cao nhất), TIER_2 (ổn định), TIER_3 (dự phòng)';
+COMMENT ON COLUMN suppliers.rating_score IS 'Điểm đánh giá chất lượng (0.0 - 5.0)';
+COMMENT ON COLUMN suppliers.total_orders IS 'Tổng số đơn hàng đã nhập từ NCC này - dùng để đánh giá độ tin cậy';
+COMMENT ON COLUMN suppliers.last_order_date IS 'Ngày nhập hàng gần nhất - tracking hoạt động của NCC';
+COMMENT ON COLUMN suppliers.is_blacklisted IS 'Cờ đánh dấu NCC bị đưa vào danh sách đen (quality/fraud issues)';
 
 -- ============================================
 -- SUPPLIER ITEMS (Many-to-Many)

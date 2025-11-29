@@ -12,23 +12,24 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CreateSupplierRequest {
 
-    @NotBlank(message = "Tên nhà cung cấp không được để trống")
-    @Size(min = 2, max = 255, message = "Tên nhà cung cấp từ 2-255 ký tự")
+    @NotBlank(message = "Supplier name is required")
+    @Size(min = 2, max = 255, message = "Supplier name must be between 2-255 characters")
     private String supplierName;
 
-    @NotBlank(message = "Số điện thoại không được để trống")
-    @Pattern(regexp = "^(0|\\+84)(\\s|\\.)?((3[2-9])|(5[689])|(7[06-9])|(8[1-689])|(9[0-46-9]))(\\d)(\\s|\\.)?(\\d{3})(\\s|\\.)?(\\d{3})$|^02[0-9]{9}$", message = "Số điện thoại không đúng định dạng Việt Nam")
+    @NotBlank(message = "Phone number is required")
+    @Size(min = 10, max = 11, message = "Phone number must be 10-11 digits")
+    @Pattern(regexp = "^[0-9]{10,11}$", message = "Phone number must contain only digits (10-11 characters)")
     private String phoneNumber;
 
-    @NotBlank(message = "Email không được để trống")
-    @Email(message = "Email không hợp lệ")
-    @Size(max = 100, message = "Email tối đa 100 ký tự")
+    @Email(message = "Email format is invalid")
+    @Size(max = 100, message = "Email must not exceed 100 characters")
     private String email;
 
-    @NotBlank(message = "Địa chỉ không được để trống")
-    @Size(min = 10, max = 500, message = "Địa chỉ phải chi tiết (10-500 ký tự)")
+    @Size(max = 500, message = "Address must not exceed 500 characters")
     private String address;
 
-    @Size(max = 1000, message = "Ghi chú tối đa 1000 ký tự")
+    private Boolean isBlacklisted;
+
+    @Size(max = 1000, message = "Notes must not exceed 1000 characters")
     private String notes;
 }

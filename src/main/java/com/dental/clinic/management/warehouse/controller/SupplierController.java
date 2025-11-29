@@ -31,7 +31,7 @@ import java.util.List;
  * Quản lý nhà cung cấp với Pagination + Search + Sort
  */
 @RestController
-@RequestMapping("/api/v1/suppliers")
+@RequestMapping("/api/v1/warehouse/suppliers")
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Supplier Management", description = "APIs quản lý nhà cung cấp")
@@ -73,6 +73,75 @@ public class SupplierController {
     }
 
     /**
+     * API 6.13: GET Suppliers with Business Metrics (Advanced)
+     * Features:
+     * - Multi-field search (name, phone, email, code)
+     * - Filter by blacklist status
+     * - Filter by active status
+     * - Sort by: supplierName, totalOrders, lastOrderDate, etc.
+     * - Returns full supplier info + business metrics
+     */
+    @Operation(summary = "API 6.13 - Lấy danh sách nhà cung cấp với metrics", description = """
+            Advanced supplier list với business metrics cho procurement decisions.
+
+            **Search**: Tìm kiếm đa trường (name, phone, email, code)
+
+            **Filters**:
+            - isBlacklisted: Lọc NCC đen (fraud/quality issues)
+            - isActive: Lọc NCC hoạt động
+
+            **Sort Fields**: supplierName, totalOrders, lastOrderDate, createdAt, tierLevel, ratingScore
+
+            **Business Metrics**:
+            - totalOrders: Số lần đã nhập hàng từ NCC này (reliability indicator)
+            - lastOrderDate: Ngày nhập gần nhất (detect inactive suppliers > 6 months)
+            - isBlacklisted: Cảnh báo NCC có vấn đề chất lượng/fraud
+
+            **Use Cases**:
+            - Smart procurement: Chọn NCC đáng tin cậy (high totalOrders)
+            - Risk management: Tránh NCC blacklisted
+            - Supplier relationship: Detect inactive suppliers cần follow-up
+            """)
+    @ApiMessage("Lấy danh sách nhà cung cấp với metrics thành công")
+    @GetMapping("/list")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAnyAuthority('VIEW_WAREHOUSE', 'MANAGE_SUPPLIERS')")
+    public ResponseEntity<com.dental.clinic.management.warehouse.dto.SupplierPageResponse> getSuppliersWithMetrics(
+            @Parameter(description = "Page number (0-indexed)", example = "0") @RequestParam(required = false) Integer page,
+
+            @Parameter(description = "Page size (max 100)", example = "20") @RequestParam(required = false) Integer size,
+
+            @Parameter(description = "Search keyword (searches in name, phone, email, code)", example = "ABC") @RequestParam(required = false) String search,
+
+            @Parameter(description = "Filter by blacklist status (true = only blacklisted, false = only non-blacklisted, null = all)", example = "false") @RequestParam(required = false) Boolean isBlacklisted,
+
+            @Parameter(description = "Filter by active status (true = only active, false = only inactive, null = all)", example = "true") @RequestParam(required = false) Boolean isActive,
+
+            @Parameter(description = "Sort field: supplierName, totalOrders, lastOrderDate, createdAt, tierLevel, ratingScore", example = "totalOrders") @RequestParam(required = false) String sortBy,
+
+            @Parameter(description = "Sort direction: ASC or DESC", example = "DESC") @RequestParam(required = false) String sortDir) {
+        log.info("API 6.13 - GET /api/v1/suppliers/list - search='{}', isBlacklisted={}, isActive={}",
+                search, isBlacklisted, isActive);
+
+        // Build filter request
+        com.dental.clinic.management.warehouse.dto.SupplierFilterRequest filterRequest = com.dental.clinic.management.warehouse.dto.SupplierFilterRequest
+                .builder()
+                .page(page)
+                .size(size)
+                .search(search)
+                .isBlacklisted(isBlacklisted)
+                .isActive(isActive)
+                .sortBy(sortBy)
+                .sortDir(sortDir)
+                .build();
+
+        // Get suppliers with metrics
+        com.dental.clinic.management.warehouse.dto.SupplierPageResponse response = supplierService
+                .getSuppliers(filterRequest);
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
      * GET Supplier By ID (Detail + Supplied Items)
      */
     @Operation(summary = "Lấy chi tiết nhà cung cấp", description = "Trả về thông tin đầy đủ + danh sách vật tư cung cấp")
@@ -100,30 +169,51 @@ public class SupplierController {
     }
 
     /**
-     * ➕ API: Tạo Supplier mới
+     * API 6.14: Create New Supplier
+     *
+     * Features:
+     * - Auto-generate supplier code (SUP-001, SUP-002, ...)
+     * - Validate name uniqueness (case-insensitive)
+     * - Validate email uniqueness (case-insensitive)
+     * - Set default values: isActive=true, totalOrders=0
+     *
+     * Validation Rules:
+     * - supplierName: Required, 2-255 characters, must be unique
+     * - phone: Required, 10-11 digits
+     * - email: Optional, valid email format, must be unique if provided
+     * - address: Optional, max 500 characters
+     * - isBlacklisted: Optional, default false
+     * - notes: Optional, max 1000 characters
      */
-    @Operation(summary = "Tạo nhà cung cấp mới", description = "Create new supplier")
-    @ApiMessage("Tạo nhà cung cấp thành công")
+    @Operation(summary = "API 6.14 - Create new supplier", description = """
+            Create a new supplier record for procurement management.
+
+            Auto-generates supplier code (SUP-XXX format).
+            Validates name and email uniqueness.
+            """)
+    @ApiMessage("Supplier created successfully")
     @PostMapping
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('CREATE_WAREHOUSE')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAnyAuthority('MANAGE_SUPPLIERS', 'MANAGE_WAREHOUSE')")
     public ResponseEntity<SupplierSummaryResponse> createSupplier(
             @Valid @RequestBody CreateSupplierRequest request) {
-        log.info("POST /api/v1/suppliers - name: {}", request.getSupplierName());
+        log.info("API 6.14 - POST /api/v1/warehouse/suppliers - name: {}", request.getSupplierName());
         SupplierSummaryResponse response = supplierService.createSupplier(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     /**
-     * ✏ API: Cập nhật Supplier
+     * API 6.15: Update Supplier
+     * Updates supplier profile and risk management flags (isActive, isBlacklisted)
+     * Authorization: MANAGE_SUPPLIERS or MANAGE_WAREHOUSE
      */
-    @Operation(summary = "Cập nhật nhà cung cấp", description = "Update supplier by ID")
-    @ApiMessage("Cập nhật nhà cung cấp thành công")
+    @Operation(summary = "Update supplier", description = "Update supplier profile including risk management flags")
+    @ApiMessage("Supplier updated successfully")
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('UPDATE_WAREHOUSE')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAnyAuthority('MANAGE_SUPPLIERS', 'MANAGE_WAREHOUSE')")
     public ResponseEntity<SupplierSummaryResponse> updateSupplier(
             @PathVariable Long id,
             @Valid @RequestBody UpdateSupplierRequest request) {
-        log.info("PUT /api/v1/suppliers/{}", id);
+        log.info("PUT /api/v1/warehouse/suppliers/{}", id);
         SupplierSummaryResponse response = supplierService.updateSupplier(id, request);
         return ResponseEntity.ok(response);
     }

@@ -248,4 +248,73 @@ public class ItemMasterController {
 
                 return ResponseEntity.ok(response);
         }
+
+        @PostMapping("/units/convert")
+        @ApiMessage("Conversion processed successfully")
+        @PreAuthorize("hasRole('" + ADMIN + "') or hasAnyAuthority('VIEW_ITEMS', 'VIEW_WAREHOUSE', 'MANAGE_WAREHOUSE')")
+        @Operation(summary = "Convert Item Quantity Between Units (Batch)", description = """
+                        API 6.12 - Convert item quantities between units with batch support
+
+                        This utility API helps calculate unit conversions for:
+                        - Prescription forms: Show "0.5 Hop (= 50 Vien)" for doctor verification
+                        - Import forms: Convert "10 Thung" to "10,000 Vien" for inventory calculation
+                        - Stock reports: Display quantities in user-preferred units
+
+                        **Business Logic:**
+                        1. Validates all units belong to their respective items (security)
+                        2. Validates base units exist and conversion rates > 0
+                        3. Converts using intermediate base unit pattern:
+                           baseQty = quantity * fromUnit.conversionRate
+                           result = baseQty / toUnit.conversionRate
+                        4. Applies rounding strategy (FLOOR/CEILING/HALF_UP)
+                        5. Returns formula for transparency and debugging
+
+                        **Request Body:**
+                        - conversions: Array of conversion requests
+                          - itemMasterId: Item to convert
+                          - fromUnitId: Source unit ID
+                          - toUnitId: Target unit ID
+                          - quantity: Amount to convert (supports decimals)
+                        - roundingMode: FLOOR | CEILING | HALF_UP (default)
+                          - FLOOR: Round down (medications - cannot split pills)
+                          - CEILING: Round up (materials - buy extra instead of shortage)
+                          - HALF_UP: Standard rounding (default)
+
+                        **Response:**
+                        - totalProcessed: Number of successful conversions
+                        - results: Array of conversion results
+                          - inputQuantity: Original amount
+                          - resultQuantity: Converted amount (exact)
+                          - resultQuantityDisplay: Formatted string for UI (e.g., "1,000")
+                          - formula: Calculation formula (e.g., "(2.5 * 100) / 1")
+                          - conversionFactor: Multiplier for frontend calculations
+
+                        **Error Cases:**
+                        - 400 BAD_REQUEST: Unit does not belong to item (security)
+                        - 400 BAD_REQUEST: Conversion rate <= 0 (data integrity)
+                        - 404 NOT_FOUND: Item or unit does not exist
+                        - 500 INTERNAL_ERROR: Base unit missing (data integrity issue)
+
+                        **Authorization:**
+                        - Requires one of: ADMIN, VIEW_ITEMS, VIEW_WAREHOUSE, MANAGE_WAREHOUSE
+                        - Public for internal staff (doctors, nurses, warehouse staff)
+
+                        **Performance:**
+                        - Supports batch processing (multiple conversions in one request)
+                        - Reduces HTTP overhead (1 request instead of N)
+                        - Faster UX for prescription forms with multiple items
+                        """)
+        public ResponseEntity<com.dental.clinic.management.warehouse.dto.response.ConversionResponse> convertUnits(
+                        @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Batch conversion request with rounding mode", required = true) @Valid @org.springframework.web.bind.annotation.RequestBody com.dental.clinic.management.warehouse.dto.request.ConversionRequest request) {
+
+                log.info("POST /api/v1/warehouse/items/units/convert - Processing {} conversions",
+                                request.getConversions().size());
+
+                com.dental.clinic.management.warehouse.dto.response.ConversionResponse response = itemMasterService
+                                .convertUnits(request);
+
+                log.info("Conversion completed - Processed: {}", response.getTotalProcessed());
+
+                return ResponseEntity.ok(response);
+        }
 }

@@ -370,7 +370,9 @@ VALUES
 ('IMPORT_ITEMS', 'IMPORT_ITEMS', 'WAREHOUSE', 'Tạo phiếu nhập kho', 277, NULL, TRUE, NOW()),
 ('EXPORT_ITEMS', 'EXPORT_ITEMS', 'WAREHOUSE', 'Tạo phiếu xuất kho', 278, NULL, TRUE, NOW()),
 ('DISPOSE_ITEMS', 'DISPOSE_ITEMS', 'WAREHOUSE', 'Tạo phiếu thanh lý', 279, NULL, TRUE, NOW()),
-('APPROVE_TRANSACTION', 'APPROVE_TRANSACTION', 'WAREHOUSE', 'Duyệt/Từ chối phiếu nhập xuất kho', 280, NULL, TRUE, NOW())
+('APPROVE_TRANSACTION', 'APPROVE_TRANSACTION', 'WAREHOUSE', 'Duyệt/Từ chối phiếu nhập xuất kho', 280, NULL, TRUE, NOW()),
+('MANAGE_SUPPLIERS', 'MANAGE_SUPPLIERS', 'WAREHOUSE', 'Quản lý nhà cung cấp (API 6.13, 6.14)', 281, NULL, TRUE, NOW()),
+('MANAGE_WAREHOUSE', 'MANAGE_WAREHOUSE', 'WAREHOUSE', 'Toàn quyền quản lý kho', 282, NULL, TRUE, NOW())
 ON CONFLICT (permission_id) DO NOTHING;
 
 
@@ -526,7 +528,9 @@ VALUES
 ('ROLE_MANAGER', 'VIEW_ITEMS'),
 ('ROLE_MANAGER', 'IMPORT_ITEMS'),
 ('ROLE_MANAGER', 'EXPORT_ITEMS'),
-('ROLE_MANAGER', 'APPROVE_TRANSACTION')
+('ROLE_MANAGER', 'APPROVE_TRANSACTION'),
+('ROLE_MANAGER', 'MANAGE_SUPPLIERS'), -- V28: Can manage suppliers (API 6.13, 6.14)
+('ROLE_MANAGER', 'MANAGE_WAREHOUSE') -- V28: Full warehouse management authority
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
@@ -545,7 +549,7 @@ VALUES
 ('ROLE_INVENTORY_MANAGER', 'VIEW_LEAVE_OWN'), ('ROLE_INVENTORY_MANAGER', 'CREATE_TIME_OFF'), ('ROLE_INVENTORY_MANAGER', 'CREATE_OVERTIME'),
 ('ROLE_INVENTORY_MANAGER', 'CANCEL_TIME_OFF_OWN'), ('ROLE_INVENTORY_MANAGER', 'CANCEL_OVERTIME_OWN'),
 ('ROLE_INVENTORY_MANAGER', 'VIEW_HOLIDAY'),
--- WAREHOUSE (V22: Full warehouse management - API 6.6, 6.9, 6.10, 6.11)
+-- WAREHOUSE (V28: Full warehouse management - API 6.6, 6.9, 6.10, 6.11, 6.13, 6.14)
 ('ROLE_INVENTORY_MANAGER', 'VIEW_ITEMS'), -- Can view item list and units (API 6.8, 6.11)
 ('ROLE_INVENTORY_MANAGER', 'VIEW_WAREHOUSE'), -- Can view transaction history
 ('ROLE_INVENTORY_MANAGER', 'CREATE_ITEMS'), -- Can create item masters (API 6.9)
@@ -557,7 +561,9 @@ VALUES
 ('ROLE_INVENTORY_MANAGER', 'IMPORT_ITEMS'), -- Can create import transactions
 ('ROLE_INVENTORY_MANAGER', 'EXPORT_ITEMS'), -- Can create export transactions
 ('ROLE_INVENTORY_MANAGER', 'DISPOSE_ITEMS'), -- Can create disposal transactions
-('ROLE_INVENTORY_MANAGER', 'APPROVE_TRANSACTION') -- Can approve transactions
+('ROLE_INVENTORY_MANAGER', 'APPROVE_TRANSACTION'), -- Can approve transactions
+('ROLE_INVENTORY_MANAGER', 'MANAGE_SUPPLIERS'), -- Can manage suppliers (API 6.13, 6.14)
+('ROLE_INVENTORY_MANAGER', 'MANAGE_WAREHOUSE') -- Full warehouse management authority
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
@@ -3249,12 +3255,13 @@ WHERE cached_total_quantity IS NULL;
 -- =============================================
 
 -- 1. SUPPLIERS (Nha cung cap)
-INSERT INTO suppliers (supplier_code, supplier_name, phone_number, email, address, tier_level, rating_score, total_orders, last_order_date, notes, is_active, created_at)
+INSERT INTO suppliers (supplier_code, supplier_name, phone_number, email, address, tier_level, rating_score, total_orders, last_order_date, is_blacklisted, notes, is_active, created_at)
 VALUES
-('SUP-001', 'Cong ty Vat tu Nha khoa A', '0901234567', 'info@vatlieunk.vn', '123 Nguyen Van Linh, Q.7, TP.HCM', 'TIER_1', 4.8, 25, '2024-01-15', 'Nha cung cap chinh, chat luong tot', TRUE, NOW() - INTERVAL '6 months'),
-('SUP-002', 'Cong ty Duoc pham B', '0912345678', 'contact@duocphamb.com', '456 Le Van Viet, Q.9, TP.HCM', 'TIER_2', 4.2, 18, '2024-01-10', 'Cung cap thuoc va hoa chat', TRUE, NOW() - INTERVAL '5 months'),
-('SUP-003', 'Cong ty Thiet bi Y te C', '0923456789', 'sales@thietbiyc.vn', '789 Pham Van Dong, Thu Duc, TP.HCM', 'TIER_1', 4.7, 15, '2024-01-12', 'Thiet bi cao cap, gia hop ly', TRUE, NOW() - INTERVAL '4 months'),
-('SUP-004', 'Cong ty Vat tu Nha khoa D', '0934567890', 'support@vatlieud.com', '321 Tran Hung Dao, Q.1, TP.HCM', 'TIER_3', 3.9, 8, '2023-12-20', 'Nha cung cap du phong', TRUE, NOW() - INTERVAL '7 months')
+('SUP-001', 'Cong ty Vat tu Nha khoa A', '0901234567', 'info@vatlieunk.vn', '123 Nguyen Van Linh, Q.7, TP.HCM', 'TIER_1', 4.8, 25, '2024-01-15', FALSE, 'Nha cung cap chinh, chat luong tot', TRUE, NOW() - INTERVAL '6 months'),
+('SUP-002', 'Cong ty Duoc pham B', '0912345678', 'contact@duocphamb.com', '456 Le Van Viet, Q.9, TP.HCM', 'TIER_2', 4.2, 18, '2024-01-10', FALSE, 'Cung cap thuoc va hoa chat', TRUE, NOW() - INTERVAL '5 months'),
+('SUP-003', 'Cong ty Thiet bi Y te C', '0923456789', 'sales@thietbiyc.vn', '789 Pham Van Dong, Thu Duc, TP.HCM', 'TIER_1', 4.7, 15, '2024-01-12', FALSE, 'Thiet bi cao cap, gia hop ly', TRUE, NOW() - INTERVAL '4 months'),
+('SUP-004', 'Cong ty Vat tu Nha khoa D', '0934567890', 'support@vatlieud.com', '321 Tran Hung Dao, Q.1, TP.HCM', 'TIER_3', 3.9, 8, '2023-12-20', FALSE, 'Nha cung cap du phong', TRUE, NOW() - INTERVAL '7 months'),
+('SUP-099', 'Cong ty Ma - BLACKLISTED', '0999999999', 'fraud@blacklisted.com', '666 Duong Bi Cam, Quan 13, TP.HCM', 'TIER_3', 1.0, 3, '2023-06-01', TRUE, 'CANH BAO: Chat luong kem, giao hang tre', FALSE, NOW() - INTERVAL '8 months')
 ON CONFLICT (supplier_code) DO NOTHING;
 
 -- Reset supplier sequence

@@ -14,7 +14,12 @@ spring:
   # JPA Configuration
   jpa:
     hibernate:
-      ddl-auto: update # Hibernate creates tables using ENUMs
+      # ddl-auto: update
+      # ⚠️ CRITICAL: Hibernate AUTO-GENERATES all tables from @Entity classes
+      # ❌ schema.sql is NOT USED - it's for DOCUMENTATION/REFERENCE only
+      # ✅ Database schema is created by Hibernate based on Entity annotations
+      # 🔄 When adding new fields to Entity, Hibernate will ALTER TABLE automatically
+      ddl-auto: update
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
@@ -24,7 +29,11 @@ spring:
 
   # SQL Init Configuration - Creates ENUM types only
   # This is the ONLY SQL file used in the project (dental-clinic-seed-data.sql)
-  # EXECUTION ORDER: ENUMs created -> Hibernate creates tables -> DataInitializer loads seed data
+  # EXECUTION ORDER:
+  #   1. dental-clinic-seed-data.sql creates ENUM types
+  #   2. Hibernate auto-generates tables from @Entity classes (NOT from schema.sql!)
+  #   3. DataInitializer bean loads INSERT statements
+  # 📝 schema.sql = DOCUMENTATION ONLY (not executed)
   sql:
     init:
       mode: always
