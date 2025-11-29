@@ -16,15 +16,15 @@ import java.util.List;
 @Schema(description = "Response containing item units for dropdown selection")
 public class GetItemUnitsResponse {
 
-    @Schema(description = "Item master information for context", required = true)
+    @Schema(description = "Item master information for context", requiredMode = Schema.RequiredMode.REQUIRED)
     @JsonProperty("itemMaster")
     private ItemMasterInfo itemMaster;
 
-    @Schema(description = "Base unit information for calculation", required = true)
+    @Schema(description = "Base unit information for calculation", requiredMode = Schema.RequiredMode.REQUIRED)
     @JsonProperty("baseUnit")
     private BaseUnitInfo baseUnit;
 
-    @Schema(description = "List of units sorted by display order", required = true)
+    @Schema(description = "List of units sorted by display order", requiredMode = Schema.RequiredMode.REQUIRED)
     @JsonProperty("units")
     private List<UnitInfo> units;
 
