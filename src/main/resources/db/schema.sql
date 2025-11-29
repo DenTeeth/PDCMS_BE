@@ -670,14 +670,14 @@ CREATE TABLE suppliers (
     phone_number VARCHAR(20),
     email VARCHAR(100),
     address TEXT,
-    
+
     -- Business Metrics (API 6.13)
     tier_level VARCHAR(20) NOT NULL DEFAULT 'TIER_3',
     rating_score DECIMAL(3,1) DEFAULT 0.0,
     total_orders INTEGER DEFAULT 0,
     last_order_date DATE,
     is_blacklisted BOOLEAN NOT NULL DEFAULT FALSE,
-    
+
     notes TEXT,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,

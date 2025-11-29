@@ -35,10 +35,7 @@ public class SupplierFilterRequest {
     @Parameter(description = "Filter by active status", example = "true")
     private Boolean isActive;
 
-    @Parameter(
-        description = "Sort field: supplierName, totalOrders, lastOrderDate, createdAt",
-        example = "supplierName"
-    )
+    @Parameter(description = "Sort field: supplierName, totalOrders, lastOrderDate, createdAt", example = "supplierName")
     @Builder.Default
     private String sortBy = "supplierName";
 
@@ -62,10 +59,10 @@ public class SupplierFilterRequest {
 
         // Validate sort field (whitelist approach for security)
         String[] validSortFields = {
-            "supplierName", "supplierCode", "totalOrders", 
-            "lastOrderDate", "createdAt", "tierLevel", "ratingScore"
+                "supplierName", "supplierCode", "totalOrders",
+                "lastOrderDate", "createdAt", "tierLevel", "ratingScore"
         };
-        
+
         boolean isValidSortField = false;
         if (sortBy != null) {
             for (String validField : validSortFields) {
@@ -76,7 +73,7 @@ public class SupplierFilterRequest {
                 }
             }
         }
-        
+
         if (!isValidSortField) {
             sortBy = "supplierName"; // Default
         }
@@ -85,7 +82,7 @@ public class SupplierFilterRequest {
         if (page == null || page < 0) {
             page = 0;
         }
-        
+
         if (size == null || size < 1) {
             size = 20;
         } else if (size > 100) {
@@ -103,6 +100,7 @@ public class SupplierFilterRequest {
 
     /**
      * Convert sortBy field name to database column name
+     * 
      * @return Database column name for sorting
      */
     public String getSortColumn() {

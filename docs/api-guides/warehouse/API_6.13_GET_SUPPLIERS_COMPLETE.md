@@ -2,12 +2,13 @@
 
 ## 📋 Overview
 
-**API**: GET `/api/v1/warehouse/suppliers`  
-**Version**: 1.0 (Pragmatic - No Rating System)  
-**Status**: ✅ **IMPLEMENTED & READY FOR TESTING**  
+**API**: GET `/api/v1/warehouse/suppliers`
+**Version**: 1.0 (Pragmatic - No Rating System)
+**Status**: ✅ **IMPLEMENTED & READY FOR TESTING**
 **Date**: January 2025
 
 ### Purpose
+
 Advanced supplier listing API with business metrics to support smart procurement decisions. Helps identify reliable suppliers, detect inactive ones, and avoid blacklisted vendors.
 
 ---
@@ -15,36 +16,43 @@ Advanced supplier listing API with business metrics to support smart procurement
 ## 🎯 Key Features
 
 ### 1. Multi-Field Search
+
 - Search across: `supplierName`, `supplierCode`, `phoneNumber`, `email`
 - Case-insensitive LIKE search
 - Example: `?search=ABC` finds "ABC Corp", "abc@example.com", "SUP-ABC-001"
 
 ### 2. Business Metrics (Denormalized)
+
 - **totalOrders**: Number of import transactions from this supplier
+
   - Use case: Identify reliable suppliers (high order count = proven track record)
   - Updated automatically on each successful import
-  
+
 - **lastOrderDate**: Date of most recent order
   - Use case: Detect inactive suppliers (> 6 months = needs follow-up)
   - Warning system: Frontend can highlight suppliers not ordered from recently
 
 ### 3. Blacklist Warning System
+
 - **isBlacklisted**: Boolean flag for problematic suppliers
   - TRUE = Quality issues, fraud, late delivery, fake invoices
   - Frontend should display prominent warning: ⚠️ "DO NOT ORDER FROM THIS SUPPLIER"
   - Filter: `?isBlacklisted=false` to exclude blacklisted suppliers from procurement
 
 ### 4. Advanced Filtering
+
 - `isBlacklisted`: Filter by blacklist status (true/false/null)
 - `isActive`: Filter by active status (true/false/null)
 - `search`: Multi-field keyword search
 
 ### 5. Flexible Sorting
+
 - Sort fields: `supplierName`, `supplierCode`, `totalOrders`, `lastOrderDate`, `createdAt`, `tierLevel`, `ratingScore`
 - Sort directions: `ASC` | `DESC`
 - Default: `supplierName ASC`
 
 ### 6. Pagination
+
 - Page size: 1-100 items (default 20)
 - Zero-indexed pages
 - Returns full pagination metadata
@@ -56,14 +64,18 @@ Advanced supplier listing API with business metrics to support smart procurement
 ### Files Created/Modified
 
 #### ✅ 1. Migration
+
 **File**: `V25_add_is_blacklisted_to_suppliers.sql`
+
 ```sql
 ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS is_blacklisted BOOLEAN DEFAULT FALSE NOT NULL;
 CREATE INDEX idx_suppliers_blacklisted ON suppliers(is_blacklisted);
 ```
 
 #### ✅ 2. Entity Update
+
 **File**: `Supplier.java`
+
 ```java
 @Column(name = "is_blacklisted", nullable = false)
 @Builder.Default
@@ -73,21 +85,26 @@ private Boolean isBlacklisted = false;
 **Note**: `totalOrders` and `lastOrderDate` fields already existed! No need to add them.
 
 #### ✅ 3. DTOs Created
+
 1. **SupplierListDTO.java** - Full supplier info with metrics
+
    - All supplier fields + business metrics
    - Helper method: `isInactive()` - checks if lastOrderDate > 6 months ago
-   
+
 2. **SupplierFilterRequest.java** - Query parameters
+
    - Validation & normalization logic
    - Whitelist approach for sort fields (security)
    - Max page size: 100
-   
+
 3. **SupplierPageResponse.java** - Pagination wrapper
    - Supplier list + metadata
    - Factory method: `fromPage()`
 
 #### ✅ 4. Repository Update
+
 **File**: `SupplierRepository.java`
+
 ```java
 @Query("SELECT s FROM Supplier s WHERE " +
     "(:search IS NULL OR :search = '' OR " +
@@ -101,7 +118,9 @@ Page<Supplier> findAllWithFilters(...);
 ```
 
 #### ✅ 5. Service Update
+
 **File**: `SupplierService.java`
+
 - Method: `getSuppliers(SupplierFilterRequest)`
 - Validates and normalizes parameters
 - Builds dynamic Sort from request
@@ -109,14 +128,18 @@ Page<Supplier> findAllWithFilters(...);
 - Comprehensive logging
 
 #### ✅ 6. Controller Update
+
 **File**: `SupplierController.java`
+
 - Endpoint: `GET /api/v1/warehouse/suppliers`
 - 40+ lines of Swagger documentation
 - Security: `@PreAuthorize("hasRole(ADMIN) or hasAnyAuthority('VIEW_WAREHOUSE', 'MANAGE_SUPPLIERS')")`
 - Supports all query parameters
 
 #### ✅ 7. Metrics Auto-Update
+
 **File**: `ImportTransactionService.java`
+
 ```java
 private void updateSupplierMetrics(Supplier supplier, LocalDate transactionDate) {
     supplier.setTotalOrders(currentOrders + 1);
@@ -124,13 +147,16 @@ private void updateSupplierMetrics(Supplier supplier, LocalDate transactionDate)
     supplierRepository.save(supplier);
 }
 ```
+
 - Called after successful import transaction
 - Increments `totalOrders`
 - Updates `lastOrderDate`
 - Error handling: logs but doesn't fail transaction
 
 #### ✅ 8. Seed Data Update
+
 **File**: `dental-clinic-seed-data.sql`
+
 - Added `is_blacklisted` column to all supplier inserts
 - Added sample blacklisted supplier: `SUP-099` - "Công ty Ma"
   - isBlacklisted: TRUE
@@ -142,23 +168,25 @@ private void updateSupplierMetrics(Supplier supplier, LocalDate transactionDate)
 ## 📡 API Specification
 
 ### Endpoint
+
 ```
 GET /api/v1/warehouse/suppliers
 ```
 
 ### Query Parameters
 
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `page` | Integer | No | 0 | Page number (0-indexed) |
-| `size` | Integer | No | 20 | Page size (max 100) |
-| `search` | String | No | null | Search keyword (name, phone, email, code) |
-| `isBlacklisted` | Boolean | No | null | Filter by blacklist status |
-| `isActive` | Boolean | No | null | Filter by active status |
-| `sortBy` | String | No | supplierName | Sort field (see allowed values) |
-| `sortDir` | String | No | ASC | Sort direction (ASC/DESC) |
+| Parameter       | Type    | Required | Default      | Description                               |
+| --------------- | ------- | -------- | ------------ | ----------------------------------------- |
+| `page`          | Integer | No       | 0            | Page number (0-indexed)                   |
+| `size`          | Integer | No       | 20           | Page size (max 100)                       |
+| `search`        | String  | No       | null         | Search keyword (name, phone, email, code) |
+| `isBlacklisted` | Boolean | No       | null         | Filter by blacklist status                |
+| `isActive`      | Boolean | No       | null         | Filter by active status                   |
+| `sortBy`        | String  | No       | supplierName | Sort field (see allowed values)           |
+| `sortDir`       | String  | No       | ASC          | Sort direction (ASC/DESC)                 |
 
 **Allowed Sort Fields**:
+
 - `supplierName`
 - `supplierCode`
 - `totalOrders`
@@ -203,19 +231,20 @@ GET /api/v1/warehouse/suppliers
 
 ### HTTP Status Codes
 
-| Code | Description |
-|------|-------------|
-| 200 | Success - Returns supplier list |
-| 400 | Bad Request - Invalid parameters |
-| 401 | Unauthorized - No authentication |
-| 403 | Forbidden - Insufficient permissions |
-| 500 | Server Error |
+| Code | Description                          |
+| ---- | ------------------------------------ |
+| 200  | Success - Returns supplier list      |
+| 400  | Bad Request - Invalid parameters     |
+| 401  | Unauthorized - No authentication     |
+| 403  | Forbidden - Insufficient permissions |
+| 500  | Server Error                         |
 
 ---
 
 ## 🧪 Test Scenarios
 
 ### 1. Basic Pagination Test
+
 ```bash
 # Get first page (default 20 items)
 GET /api/v1/warehouse/suppliers
@@ -224,11 +253,13 @@ GET /api/v1/warehouse/suppliers
 GET /api/v1/warehouse/suppliers?page=1&size=50
 ```
 
-**Expected**: 
+**Expected**:
+
 - Returns suppliers with pagination metadata
 - Should see SUP-001, SUP-002, SUP-003, SUP-004, SUP-099
 
 ### 2. Search Test
+
 ```bash
 # Search by name
 GET /api/v1/warehouse/suppliers?search=Vat tu
@@ -243,11 +274,13 @@ GET /api/v1/warehouse/suppliers?search=@vatlieunk.vn
 GET /api/v1/warehouse/suppliers?search=SUP-001
 ```
 
-**Expected**: 
+**Expected**:
+
 - Case-insensitive search
 - Finds matches in any of the 4 fields
 
 ### 3. Blacklist Filter Test
+
 ```bash
 # Get only blacklisted suppliers (should return SUP-099)
 GET /api/v1/warehouse/suppliers?isBlacklisted=true
@@ -259,12 +292,14 @@ GET /api/v1/warehouse/suppliers?isBlacklisted=false
 GET /api/v1/warehouse/suppliers
 ```
 
-**Expected**: 
+**Expected**:
+
 - `isBlacklisted=true` returns SUP-099 only
 - `isBlacklisted=false` returns SUP-001 to SUP-004
 - No filter returns all 5 suppliers
 
 ### 4. Active Status Filter Test
+
 ```bash
 # Get only active suppliers
 GET /api/v1/warehouse/suppliers?isActive=true
@@ -276,12 +311,14 @@ GET /api/v1/warehouse/suppliers?isActive=false
 GET /api/v1/warehouse/suppliers?isActive=true&isBlacklisted=false
 ```
 
-**Expected**: 
+**Expected**:
+
 - `isActive=true` returns SUP-001 to SUP-004
 - `isActive=false` returns SUP-099 (blacklisted supplier is inactive)
 - Combined filter returns only safe, active suppliers
 
 ### 5. Sorting Test
+
 ```bash
 # Sort by total orders (descending - most reliable first)
 GET /api/v1/warehouse/suppliers?sortBy=totalOrders&sortDir=DESC
@@ -293,12 +330,14 @@ GET /api/v1/warehouse/suppliers?sortBy=lastOrderDate&sortDir=ASC
 GET /api/v1/warehouse/suppliers?sortBy=supplierName&sortDir=ASC
 ```
 
-**Expected**: 
+**Expected**:
+
 - `totalOrders DESC`: SUP-001 (25) > SUP-002 (18) > SUP-003 (15) > ...
 - `lastOrderDate ASC`: SUP-099 (oldest) first, SUP-001 (newest) last
 - `supplierName ASC`: Alphabetical order
 
 ### 6. Complex Query Test
+
 ```bash
 # Smart procurement query:
 # - Active suppliers only
@@ -311,21 +350,25 @@ GET /api/v1/warehouse/suppliers?isActive=true&isBlacklisted=false&sortBy=totalOr
 GET /api/v1/warehouse/suppliers?sortBy=lastOrderDate&sortDir=ASC
 ```
 
-**Expected**: 
+**Expected**:
+
 - First query returns SUP-001, SUP-002, SUP-003, SUP-004 ordered by reliability
 - Second query highlights suppliers not ordered from recently
 
 ### 7. Business Logic Test
+
 ```bash
 # Check if SupplierListDTO.isInactive() works
 # Suppliers with lastOrderDate > 6 months ago should be flagged
 ```
 
-**Expected**: 
+**Expected**:
+
 - SUP-099 (lastOrderDate: 2023-06-01) should be inactive
 - Recent suppliers should NOT be inactive
 
 ### 8. Metrics Auto-Update Test
+
 ```bash
 # 1. Check current totalOrders for SUP-001
 GET /api/v1/warehouse/suppliers?search=SUP-001
@@ -343,11 +386,13 @@ GET /api/v1/warehouse/suppliers?search=SUP-001
 # 4. Verify lastOrderDate is updated to today
 ```
 
-**Expected**: 
+**Expected**:
+
 - totalOrders: 25 → 26
 - lastOrderDate: updated to transaction date
 
 ### 9. Security Test
+
 ```bash
 # Test without authentication
 GET /api/v1/warehouse/suppliers
@@ -364,6 +409,7 @@ GET /api/v1/warehouse/suppliers
 ```
 
 ### 10. Edge Cases
+
 ```bash
 # Empty search
 GET /api/v1/warehouse/suppliers?search=
@@ -381,7 +427,8 @@ GET /api/v1/warehouse/suppliers?size=999
 GET /api/v1/warehouse/suppliers?page=-1
 ```
 
-**Expected**: 
+**Expected**:
+
 - All requests should succeed with normalized parameters
 - No errors, graceful fallback to defaults
 
@@ -394,8 +441,10 @@ GET /api/v1/warehouse/suppliers?page=-1
 ```jsx
 // React example
 function SupplierCard({ supplier }) {
-  const isInactive = supplier.lastOrderDate && 
-    new Date(supplier.lastOrderDate) < new Date(Date.now() - 6*30*24*60*60*1000);
+  const isInactive =
+    supplier.lastOrderDate &&
+    new Date(supplier.lastOrderDate) <
+      new Date(Date.now() - 6 * 30 * 24 * 60 * 60 * 1000);
 
   return (
     <Card>
@@ -403,17 +452,19 @@ function SupplierCard({ supplier }) {
         <h3>{supplier.supplierName}</h3>
         <Badge>{supplier.supplierCode}</Badge>
       </CardHeader>
-      
+
       <CardBody>
         {/* ⚠️ CRITICAL WARNING */}
         {supplier.isBlacklisted && (
           <Alert variant="danger">
             <AlertIcon />
             <strong>⛔ BLACKLISTED SUPPLIER - DO NOT USE!</strong>
-            <p>This supplier has quality/fraud issues. Contact admin for details.</p>
+            <p>
+              This supplier has quality/fraud issues. Contact admin for details.
+            </p>
           </Alert>
         )}
-        
+
         {/* 🟡 INACTIVE WARNING */}
         {isInactive && !supplier.isBlacklisted && (
           <Alert variant="warning">
@@ -422,7 +473,7 @@ function SupplierCard({ supplier }) {
             <p>No orders in 6+ months. Consider checking supplier status.</p>
           </Alert>
         )}
-        
+
         {/* Business Metrics */}
         <div className="metrics">
           <MetricItem label="Total Orders" value={supplier.totalOrders} />
@@ -430,7 +481,7 @@ function SupplierCard({ supplier }) {
           <MetricItem label="Rating" value={supplier.ratingScore} />
           <MetricItem label="Tier" value={supplier.tierLevel} />
         </div>
-        
+
         {/* Contact Info */}
         <div className="contact">
           <p>📞 {supplier.phoneNumber}</p>
@@ -448,7 +499,7 @@ function SupplierCard({ supplier }) {
 ```jsx
 // Safe suppliers only (exclude blacklisted)
 const safeSuppliers = await fetch(
-  '/api/v1/warehouse/suppliers?isActive=true&isBlacklisted=false&sortBy=totalOrders&sortDir=DESC'
+  "/api/v1/warehouse/suppliers?isActive=true&isBlacklisted=false&sortBy=totalOrders&sortDir=DESC"
 );
 
 // Show most reliable suppliers first
@@ -459,7 +510,7 @@ const safeSuppliers = await fetch(
 ```jsx
 // Find suppliers needing attention
 const inactiveSuppliers = await fetch(
-  '/api/v1/warehouse/suppliers?sortBy=lastOrderDate&sortDir=ASC'
+  "/api/v1/warehouse/suppliers?sortBy=lastOrderDate&sortDir=ASC"
 );
 
 // Display with warning badges
@@ -470,11 +521,13 @@ const inactiveSuppliers = await fetch(
 ## 🔒 Security
 
 ### Permissions Required
+
 - **VIEW_WAREHOUSE**: Read-only access to supplier list
 - **MANAGE_SUPPLIERS**: Full access (read + write)
 - **ADMIN**: Full access to all endpoints
 
 ### Implementation
+
 ```java
 @PreAuthorize("hasRole('" + ADMIN + "') or hasAnyAuthority('VIEW_WAREHOUSE', 'MANAGE_SUPPLIERS')")
 ```
@@ -484,21 +537,24 @@ const inactiveSuppliers = await fetch(
 ## 📊 Performance Considerations
 
 ### Database Indexes
+
 - ✅ `idx_suppliers_blacklisted` on `is_blacklisted` column
 - ✅ Existing indexes on primary key, supplier_code
 - ✅ Consider adding composite index for common queries:
   ```sql
-  CREATE INDEX idx_suppliers_active_blacklisted 
+  CREATE INDEX idx_suppliers_active_blacklisted
   ON suppliers(is_active, is_blacklisted);
   ```
 
 ### Query Optimization
+
 - **Denormalization Strategy**: `totalOrders` and `lastOrderDate` stored directly in `suppliers` table
   - No JOIN needed for sorting/filtering
   - Fast query performance (< 50ms for 1000+ suppliers)
   - Trade-off: Extra UPDATE on each import (negligible overhead)
 
 ### Pagination Best Practices
+
 - Default page size: 20 (reasonable for most UIs)
 - Max page size: 100 (prevents memory issues)
 - Use `totalElements` and `totalPages` for pagination UI
@@ -524,6 +580,7 @@ const inactiveSuppliers = await fetch(
 ## 📝 Notes
 
 ### Removed Features (Pragmatic Decision)
+
 Based on expert review, the following features were **intentionally removed** as they are overkill for a clinic-scale application:
 
 - ❌ **Rating System (1-5 stars)**: Requires reviews table, review UI, CRON jobs to recalculate averages
@@ -532,12 +589,15 @@ Based on expert review, the following features were **intentionally removed** as
 - ❌ **Performance Dashboard**: Analytics overhead, separate reporting system more appropriate
 
 ### Kept Features (Business Value)
+
 - ✅ **totalOrders**: Identify reliable suppliers (proven track record)
 - ✅ **lastOrderDate**: Detect inactive suppliers (> 6 months warning)
 - ✅ **isBlacklisted**: Critical safety feature (prevent fraud/quality issues)
 
 ### Future Enhancements (Phase 2)
+
 If business needs grow:
+
 1. **Review System**: Add `supplier_reviews` table with rating scores
 2. **Tier Auto-Calculation**: CRON job based on totalOrders, rating, on-time delivery
 3. **Analytics Dashboard**: Separate reporting module with charts/graphs
@@ -546,6 +606,7 @@ If business needs grow:
 ---
 
 ## 👥 Author
+
 - **Implementation**: AI Assistant
 - **Review**: Expert panel (Google Senior Dev Lead + Dentist perspective)
 - **Decision**: Pragmatic approach - "vừa miếng" for clinic scale
@@ -553,12 +614,13 @@ If business needs grow:
 ---
 
 ## 🔗 Related Documentation
+
 - [API 6.12 - Unit Conversion](./API_6.12_CONVERT_UNITS_COMPLETE.md)
 - [API 6.13 - Spec (Original)](./API_6.13_GET_SUPPLIERS_SPEC.md)
 - [Warehouse API Guide](./warehouse/README.md)
 
 ---
 
-**Status**: ✅ **READY FOR PRODUCTION**  
-**Last Updated**: January 2025  
+**Status**: ✅ **READY FOR PRODUCTION**
+**Last Updated**: January 2025
 **Version**: 1.0

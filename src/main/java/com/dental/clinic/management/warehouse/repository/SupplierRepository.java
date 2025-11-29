@@ -14,69 +14,68 @@ import java.util.Optional;
 @Repository
 public interface SupplierRepository extends JpaRepository<Supplier, Long> {
 
-    Optional<Supplier> findBySupplierCode(String supplierCode);
+        Optional<Supplier> findBySupplierCode(String supplierCode);
 
-    List<Supplier> findByIsActiveTrue();
+        List<Supplier> findByIsActiveTrue();
 
-    @Query("SELECT MAX(s.supplierId) FROM Supplier s")
-    Long findMaxSupplierId();
+        @Query("SELECT MAX(s.supplierId) FROM Supplier s")
+        Long findMaxSupplierId();
 
-    //  Pagination + Search Query
-    @Query("SELECT s FROM Supplier s WHERE " +
-            "(:search IS NULL OR :search = '' OR " +
-            "LOWER(s.supplierName) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-            "LOWER(s.supplierCode) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-            "s.phoneNumber LIKE CONCAT('%', :search, '%') OR " +
-            "LOWER(s.email) LIKE LOWER(CONCAT('%', :search, '%')))")
-    Page<Supplier> findAllWithSearch(@Param("search") String search, Pageable pageable);
+        // Pagination + Search Query
+        @Query("SELECT s FROM Supplier s WHERE " +
+                        "(:search IS NULL OR :search = '' OR " +
+                        "LOWER(s.supplierName) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+                        "LOWER(s.supplierCode) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+                        "s.phoneNumber LIKE CONCAT('%', :search, '%') OR " +
+                        "LOWER(s.email) LIKE LOWER(CONCAT('%', :search, '%')))")
+        Page<Supplier> findAllWithSearch(@Param("search") String search, Pageable pageable);
 
-    // Validation queries
-    boolean existsBySupplierNameIgnoreCase(String supplierName);
+        // Validation queries
+        boolean existsBySupplierNameIgnoreCase(String supplierName);
 
-    boolean existsByPhoneNumber(String phoneNumber);
+        boolean existsByPhoneNumber(String phoneNumber);
 
-    boolean existsByEmailIgnoreCase(String email);
+        boolean existsByEmailIgnoreCase(String email);
 
-    boolean existsByAddressIgnoreCase(String address);
+        boolean existsByAddressIgnoreCase(String address);
 
-    // Validation queries excluding current supplier (for update)
-    @Query("SELECT CASE WHEN COUNT(s) > 0 THEN true ELSE false END FROM Supplier s " +
-            "WHERE LOWER(s.supplierName) = LOWER(:supplierName) AND s.supplierId != :supplierId")
-    boolean existsBySupplierNameIgnoreCaseAndIdNot(@Param("supplierName") String supplierName,
-            @Param("supplierId") Long supplierId);
+        // Validation queries excluding current supplier (for update)
+        @Query("SELECT CASE WHEN COUNT(s) > 0 THEN true ELSE false END FROM Supplier s " +
+                        "WHERE LOWER(s.supplierName) = LOWER(:supplierName) AND s.supplierId != :supplierId")
+        boolean existsBySupplierNameIgnoreCaseAndIdNot(@Param("supplierName") String supplierName,
+                        @Param("supplierId") Long supplierId);
 
-    @Query("SELECT CASE WHEN COUNT(s) > 0 THEN true ELSE false END FROM Supplier s " +
-            "WHERE s.phoneNumber = :phoneNumber AND s.supplierId != :supplierId")
-    boolean existsByPhoneNumberAndIdNot(@Param("phoneNumber") String phoneNumber,
-            @Param("supplierId") Long supplierId);
+        @Query("SELECT CASE WHEN COUNT(s) > 0 THEN true ELSE false END FROM Supplier s " +
+                        "WHERE s.phoneNumber = :phoneNumber AND s.supplierId != :supplierId")
+        boolean existsByPhoneNumberAndIdNot(@Param("phoneNumber") String phoneNumber,
+                        @Param("supplierId") Long supplierId);
 
-    @Query("SELECT CASE WHEN COUNT(s) > 0 THEN true ELSE false END FROM Supplier s " +
-            "WHERE LOWER(s.email) = LOWER(:email) AND s.supplierId != :supplierId")
-    boolean existsByEmailIgnoreCaseAndIdNot(@Param("email") String email,
-            @Param("supplierId") Long supplierId);
+        @Query("SELECT CASE WHEN COUNT(s) > 0 THEN true ELSE false END FROM Supplier s " +
+                        "WHERE LOWER(s.email) = LOWER(:email) AND s.supplierId != :supplierId")
+        boolean existsByEmailIgnoreCaseAndIdNot(@Param("email") String email,
+                        @Param("supplierId") Long supplierId);
 
-    /**
-     * API 6.13: Advanced supplier search with business metrics
-     * Features: multi-field search, blacklist filter, active filter, sorting
-     * 
-     * @param search Search keyword (searches in name, phone, email, code)
-     * @param isBlacklisted Filter by blacklist status (null = all)
-     * @param isActive Filter by active status (null = all)
-     * @param pageable Pagination and sort parameters
-     * @return Page of suppliers with all fields
-     */
-    @Query("SELECT s FROM Supplier s WHERE " +
-            "(:search IS NULL OR :search = '' OR " +
-            "LOWER(s.supplierName) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-            "LOWER(s.supplierCode) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-            "s.phoneNumber LIKE CONCAT('%', :search, '%') OR " +
-            "LOWER(s.email) LIKE LOWER(CONCAT('%', :search, '%'))) AND " +
-            "(:isBlacklisted IS NULL OR s.isBlacklisted = :isBlacklisted) AND " +
-            "(:isActive IS NULL OR s.isActive = :isActive)")
-    Page<Supplier> findAllWithFilters(
-            @Param("search") String search,
-            @Param("isBlacklisted") Boolean isBlacklisted,
-            @Param("isActive") Boolean isActive,
-            Pageable pageable
-    );
+        /**
+         * API 6.13: Advanced supplier search with business metrics
+         * Features: multi-field search, blacklist filter, active filter, sorting
+         *
+         * @param search        Search keyword (searches in name, phone, email, code)
+         * @param isBlacklisted Filter by blacklist status (null = all)
+         * @param isActive      Filter by active status (null = all)
+         * @param pageable      Pagination and sort parameters
+         * @return Page of suppliers with all fields
+         */
+        @Query("SELECT s FROM Supplier s WHERE " +
+                        "(:search IS NULL OR :search = '' OR " +
+                        "LOWER(s.supplierName) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+                        "LOWER(s.supplierCode) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+                        "s.phoneNumber LIKE CONCAT('%', :search, '%') OR " +
+                        "LOWER(s.email) LIKE LOWER(CONCAT('%', :search, '%'))) AND " +
+                        "(:isBlacklisted IS NULL OR s.isBlacklisted = :isBlacklisted) AND " +
+                        "(:isActive IS NULL OR s.isActive = :isActive)")
+        Page<Supplier> findAllWithFilters(
+                        @Param("search") String search,
+                        @Param("isBlacklisted") Boolean isBlacklisted,
+                        @Param("isActive") Boolean isActive,
+                        Pageable pageable);
 }

@@ -29,7 +29,7 @@ spring:
 
   # SQL Init Configuration - Creates ENUM types only
   # This is the ONLY SQL file used in the project (dental-clinic-seed-data.sql)
-  # EXECUTION ORDER: 
+  # EXECUTION ORDER:
   #   1. dental-clinic-seed-data.sql creates ENUM types
   #   2. Hibernate auto-generates tables from @Entity classes (NOT from schema.sql!)
   #   3. DataInitializer bean loads INSERT statements

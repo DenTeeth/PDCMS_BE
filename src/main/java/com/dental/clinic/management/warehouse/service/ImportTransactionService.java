@@ -445,8 +445,8 @@ public class ImportTransactionService {
         /**
          * API 6.13: Update supplier business metrics after successful import
          * Updates totalOrders (increment) and lastOrderDate (set to transaction date)
-         * 
-         * @param supplier The supplier who provided the items
+         *
+         * @param supplier        The supplier who provided the items
          * @param transactionDate Date of the import transaction
          */
         private void updateSupplierMetrics(Supplier supplier, java.time.LocalDate transactionDate) {
@@ -454,22 +454,22 @@ public class ImportTransactionService {
                         // Increment total orders
                         Integer currentOrders = supplier.getTotalOrders();
                         supplier.setTotalOrders(currentOrders != null ? currentOrders + 1 : 1);
-                        
+
                         // Update last order date
                         supplier.setLastOrderDate(transactionDate);
-                        
+
                         // Save supplier
                         supplierRepository.save(supplier);
-                        
+
                         log.info("✓ Updated supplier metrics - ID: {}, Total Orders: {}, Last Order: {}",
-                                supplier.getSupplierId(),
-                                supplier.getTotalOrders(),
-                                transactionDate);
-                        
+                                        supplier.getSupplierId(),
+                                        supplier.getTotalOrders(),
+                                        transactionDate);
+
                 } catch (Exception e) {
                         // Log error but don't fail the transaction
                         log.error("✗ Failed to update supplier metrics for supplier ID {}: {}",
-                                supplier.getSupplierId(), e.getMessage());
+                                        supplier.getSupplierId(), e.getMessage());
                         // Continue - metrics update failure should not block import transaction
                 }
         }

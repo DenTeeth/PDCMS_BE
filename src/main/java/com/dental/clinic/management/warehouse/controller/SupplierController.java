@@ -81,61 +81,50 @@ public class SupplierController {
      * - Sort by: supplierName, totalOrders, lastOrderDate, etc.
      * - Returns full supplier info + business metrics
      */
-    @Operation(
-        summary = "API 6.13 - Lấy danh sách nhà cung cấp với metrics",
-        description = """
+    @Operation(summary = "API 6.13 - Lấy danh sách nhà cung cấp với metrics", description = """
             Advanced supplier list với business metrics cho procurement decisions.
-            
+
             **Search**: Tìm kiếm đa trường (name, phone, email, code)
-            
+
             **Filters**:
             - isBlacklisted: Lọc NCC đen (fraud/quality issues)
             - isActive: Lọc NCC hoạt động
-            
+
             **Sort Fields**: supplierName, totalOrders, lastOrderDate, createdAt, tierLevel, ratingScore
-            
+
             **Business Metrics**:
             - totalOrders: Số lần đã nhập hàng từ NCC này (reliability indicator)
             - lastOrderDate: Ngày nhập gần nhất (detect inactive suppliers > 6 months)
             - isBlacklisted: Cảnh báo NCC có vấn đề chất lượng/fraud
-            
+
             **Use Cases**:
             - Smart procurement: Chọn NCC đáng tin cậy (high totalOrders)
             - Risk management: Tránh NCC blacklisted
             - Supplier relationship: Detect inactive suppliers cần follow-up
-            """
-    )
+            """)
     @ApiMessage("Lấy danh sách nhà cung cấp với metrics thành công")
     @GetMapping("/list")
     @PreAuthorize("hasRole('" + ADMIN + "') or hasAnyAuthority('VIEW_WAREHOUSE', 'MANAGE_SUPPLIERS')")
     public ResponseEntity<com.dental.clinic.management.warehouse.dto.SupplierPageResponse> getSuppliersWithMetrics(
-            @Parameter(description = "Page number (0-indexed)", example = "0")
-            @RequestParam(required = false) Integer page,
-            
-            @Parameter(description = "Page size (max 100)", example = "20")
-            @RequestParam(required = false) Integer size,
-            
-            @Parameter(description = "Search keyword (searches in name, phone, email, code)", example = "ABC")
-            @RequestParam(required = false) String search,
-            
-            @Parameter(description = "Filter by blacklist status (true = only blacklisted, false = only non-blacklisted, null = all)", example = "false")
-            @RequestParam(required = false) Boolean isBlacklisted,
-            
-            @Parameter(description = "Filter by active status (true = only active, false = only inactive, null = all)", example = "true")
-            @RequestParam(required = false) Boolean isActive,
-            
-            @Parameter(description = "Sort field: supplierName, totalOrders, lastOrderDate, createdAt, tierLevel, ratingScore", example = "totalOrders")
-            @RequestParam(required = false) String sortBy,
-            
-            @Parameter(description = "Sort direction: ASC or DESC", example = "DESC")
-            @RequestParam(required = false) String sortDir
-    ) {
+            @Parameter(description = "Page number (0-indexed)", example = "0") @RequestParam(required = false) Integer page,
+
+            @Parameter(description = "Page size (max 100)", example = "20") @RequestParam(required = false) Integer size,
+
+            @Parameter(description = "Search keyword (searches in name, phone, email, code)", example = "ABC") @RequestParam(required = false) String search,
+
+            @Parameter(description = "Filter by blacklist status (true = only blacklisted, false = only non-blacklisted, null = all)", example = "false") @RequestParam(required = false) Boolean isBlacklisted,
+
+            @Parameter(description = "Filter by active status (true = only active, false = only inactive, null = all)", example = "true") @RequestParam(required = false) Boolean isActive,
+
+            @Parameter(description = "Sort field: supplierName, totalOrders, lastOrderDate, createdAt, tierLevel, ratingScore", example = "totalOrders") @RequestParam(required = false) String sortBy,
+
+            @Parameter(description = "Sort direction: ASC or DESC", example = "DESC") @RequestParam(required = false) String sortDir) {
         log.info("API 6.13 - GET /api/v1/suppliers/list - search='{}', isBlacklisted={}, isActive={}",
                 search, isBlacklisted, isActive);
 
         // Build filter request
-        com.dental.clinic.management.warehouse.dto.SupplierFilterRequest filterRequest = 
-            com.dental.clinic.management.warehouse.dto.SupplierFilterRequest.builder()
+        com.dental.clinic.management.warehouse.dto.SupplierFilterRequest filterRequest = com.dental.clinic.management.warehouse.dto.SupplierFilterRequest
+                .builder()
                 .page(page)
                 .size(size)
                 .search(search)
@@ -146,8 +135,8 @@ public class SupplierController {
                 .build();
 
         // Get suppliers with metrics
-        com.dental.clinic.management.warehouse.dto.SupplierPageResponse response = 
-            supplierService.getSuppliers(filterRequest);
+        com.dental.clinic.management.warehouse.dto.SupplierPageResponse response = supplierService
+                .getSuppliers(filterRequest);
 
         return ResponseEntity.ok(response);
     }
@@ -181,13 +170,13 @@ public class SupplierController {
 
     /**
      * API 6.14: Create New Supplier
-     * 
+     *
      * Features:
      * - Auto-generate supplier code (SUP-001, SUP-002, ...)
      * - Validate name uniqueness (case-insensitive)
      * - Validate email uniqueness (case-insensitive)
      * - Set default values: isActive=true, totalOrders=0
-     * 
+     *
      * Validation Rules:
      * - supplierName: Required, 2-255 characters, must be unique
      * - phone: Required, 10-11 digits
@@ -196,15 +185,12 @@ public class SupplierController {
      * - isBlacklisted: Optional, default false
      * - notes: Optional, max 1000 characters
      */
-    @Operation(
-        summary = "API 6.14 - Create new supplier",
-        description = """
+    @Operation(summary = "API 6.14 - Create new supplier", description = """
             Create a new supplier record for procurement management.
-            
+
             Auto-generates supplier code (SUP-XXX format).
             Validates name and email uniqueness.
-            """
-    )
+            """)
     @ApiMessage("Supplier created successfully")
     @PostMapping
     @PreAuthorize("hasRole('" + ADMIN + "') or hasAnyAuthority('MANAGE_SUPPLIERS', 'MANAGE_WAREHOUSE')")

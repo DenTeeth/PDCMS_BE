@@ -74,6 +74,7 @@ public class SupplierListDTO {
 
     /**
      * Business logic: Check if supplier is inactive (> 6 months since last order)
+     * 
      * @return true if lastOrderDate is more than 6 months ago
      */
     public boolean isInactive() {

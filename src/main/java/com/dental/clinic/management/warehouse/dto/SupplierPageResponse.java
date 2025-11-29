@@ -50,7 +50,8 @@ public class SupplierPageResponse {
 
     /**
      * Factory method to create response from Spring Data Page
-     * @param page Spring Data Page object
+     * 
+     * @param page      Spring Data Page object
      * @param suppliers List of SupplierListDTO
      * @return SupplierPageResponse with metadata
      */
