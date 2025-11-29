@@ -138,7 +138,7 @@ public class ImportTransactionService {
          */
         private void validateImportRequest(ImportTransactionRequest request) {
                 // Transaction date must not be in future
-                if (request.getTransactionDate().isAfter(LocalDateTime.now())) {
+                if (request.getTransactionDate().isAfter(LocalDate.now())) {
                         throw new BadRequestException(
                                         "INVALID_DATE",
                                         "Transaction date cannot be in the future");
@@ -147,10 +147,10 @@ public class ImportTransactionService {
                 // Expected delivery date validation
                 if (request.getExpectedDeliveryDate() != null) {
                         if (request.getExpectedDeliveryDate().isAfter(
-                                        request.getTransactionDate().toLocalDate())) {
+                                        request.getTransactionDate())) {
                                 log.warn("⚠️ Delivery was late - Expected: {}, Actual: {}",
                                                 request.getExpectedDeliveryDate(),
-                                                request.getTransactionDate().toLocalDate());
+                                                request.getTransactionDate());
                         }
                 }
 
@@ -175,7 +175,7 @@ public class ImportTransactionService {
                 return StorageTransaction.builder()
                                 .transactionCode(transactionCode)
                                 .transactionType(TransactionType.IMPORT)
-                                .transactionDate(request.getTransactionDate())
+                                .transactionDate(request.getTransactionDate().atStartOfDay())
                                 .supplier(supplier)
                                 .invoiceNumber(request.getInvoiceNumber())
                                 .expectedDeliveryDate(request.getExpectedDeliveryDate())

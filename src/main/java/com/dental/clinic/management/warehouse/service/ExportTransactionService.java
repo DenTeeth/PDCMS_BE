@@ -123,7 +123,7 @@ public class ExportTransactionService {
      */
     private void validateExportRequest(ExportTransactionRequest request) {
         // Transaction date must not be in future
-        if (request.getTransactionDate().isAfter(LocalDateTime.now())) {
+        if (request.getTransactionDate().isAfter(LocalDate.now())) {
             throw new BadRequestException(
                     "INVALID_DATE",
                     "Transaction date cannot be in the future");
@@ -155,7 +155,7 @@ public class ExportTransactionService {
         return StorageTransaction.builder()
                 .transactionCode(transactionCode)
                 .transactionType(TransactionType.EXPORT)
-                .transactionDate(request.getTransactionDate())
+                .transactionDate(request.getTransactionDate().atStartOfDay())
                 .exportType(request.getExportType().name())
                 .referenceCode(request.getReferenceCode())
                 .departmentName(request.getDepartmentName())

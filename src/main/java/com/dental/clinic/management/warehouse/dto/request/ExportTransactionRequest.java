@@ -8,7 +8,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -26,7 +26,7 @@ import java.util.List;
 public class ExportTransactionRequest {
 
     @NotNull(message = "Transaction date is required")
-    private LocalDateTime transactionDate;
+    private LocalDate transactionDate;
 
     @NotNull(message = "Export type is required")
     private ExportType exportType; // USAGE, DISPOSAL, RETURN
