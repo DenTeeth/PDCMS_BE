@@ -282,14 +282,14 @@ public class PatientService {
                         account.getEmail(),
                         patientName,
                         setupToken.getToken());
-                log.info("✅ Welcome email with password setup link sent to: {}", account.getEmail());
+                log.info(" Welcome email with password setup link sent to: {}", account.getEmail());
 
             } catch (Exception e) {
                 // Log error but don't fail the entire patient creation
-                log.error("⚠️ Failed to send welcome email to {}: {}", account.getEmail(), e.getMessage(), e);
+                log.error(" Failed to send welcome email to {}: {}", account.getEmail(), e.getMessage(), e);
                 log.warn(
-                        "⚠️ Patient account created successfully, but email not sent. Manual password setup may be required.");
-                log.warn("⚠️ Possible causes: SMTP server not configured, network error, invalid email address");
+                        " Patient account created successfully, but email not sent. Manual password setup may be required.");
+                log.warn(" Possible causes: SMTP server not configured, network error, invalid email address");
                 // Don't throw exception - allow patient creation to succeed
             }
         } else {

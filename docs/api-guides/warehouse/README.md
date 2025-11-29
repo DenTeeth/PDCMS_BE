@@ -2,7 +2,7 @@
 
 **Last Updated:** November 28, 2025
 **Total APIs:** 11 APIs (6.1 - 6.11)
-**Status:** 10/11 Production Ready ✅
+**Status:** 10/11 Production Ready [YES]
 
 ---
 
@@ -24,8 +24,8 @@
 - **`API_X.Y_FEATURE_NAME_COMPLETE.md`** - Complete API specification
 
 ### Removed (28/11/2025):
-- ❌ `*_TESTING_GUIDE.md` - Replaced by automated tests
-- ❌ `*_IMPLEMENTATION_SUMMARY.md` - Merged into _COMPLETE docs
+- [NO] `*_TESTING_GUIDE.md` - Replaced by automated tests
+- [NO] `*_IMPLEMENTATION_SUMMARY.md` - Merged into _COMPLETE docs
 
 ---
 
@@ -83,7 +83,7 @@
 
 📄 **Specification:**
 
-- ⚠️ Documentation pending (API implemented)
+- [WARN] Documentation pending (API implemented)
 
 **Endpoint:** `POST /api/v1/inventory/export`
 **Purpose:** Tạo phiếu xuất kho với FEFO và auto-unpacking
@@ -103,7 +103,7 @@
 
 ---
 
-### API 6.7 - Transaction Detail (View) ✨ NEW
+### API 6.7 - Transaction Detail (View)  NEW
 
 📄 **Specification:**
 
@@ -116,10 +116,10 @@
 
 **Key Features:**
 
-- ✅ Hiển thị full item details với batch info
-- ✅ Unpacking information (nếu có)
-- ✅ RBAC data masking (VIEW_COST permission)
-- ✅ Support cả IMPORT và EXPORT transactions
+- [YES] Hiển thị full item details với batch info
+- [YES] Unpacking information (nếu có)
+- [YES] RBAC data masking (VIEW_COST permission)
+- [YES] Support cả IMPORT và EXPORT transactions
 
 ---
 
@@ -149,14 +149,14 @@
 
 | API | Endpoint                       | Method | Purpose            | Docs        |
 | --- | ------------------------------ | ------ | ------------------ | ----------- |
-| 6.1 | `/warehouse/summary`           | GET    | Inventory summary  | ✅ Complete |
-| 6.2 | `/warehouse/batches/{id}`      | GET    | Batch details      | ✅ Complete |
-| 6.3 | `/warehouse/alerts/expiring`   | GET    | Expiring alerts    | ✅ Complete |
-| 6.4 | `/warehouse/import`            | POST   | Create import      | ✅ Complete |
-| 6.5 | `/inventory/export`            | POST   | Create export      | ⚠️ Pending  |
-| 6.6 | `/warehouse/transactions`      | GET    | Transaction list   | ✅ Complete |
-| 6.7 | `/warehouse/transactions/{id}` | GET    | Transaction detail | ✅ Complete |
-| 6.8 | `/warehouse/items`             | GET    | Item masters list  | ✅ Complete |
+| 6.1 | `/warehouse/summary`           | GET    | Inventory summary  | [YES] Complete |
+| 6.2 | `/warehouse/batches/{id}`      | GET    | Batch details      | [YES] Complete |
+| 6.3 | `/warehouse/alerts/expiring`   | GET    | Expiring alerts    | [YES] Complete |
+| 6.4 | `/warehouse/import`            | POST   | Create import      | [YES] Complete |
+| 6.5 | `/inventory/export`            | POST   | Create export      | [WARN] Pending  |
+| 6.6 | `/warehouse/transactions`      | GET    | Transaction list   | [YES] Complete |
+| 6.7 | `/warehouse/transactions/{id}` | GET    | Transaction detail | [YES] Complete |
+| 6.8 | `/warehouse/items`             | GET    | Item masters list  | [YES] Complete |
 
 ---
 
@@ -196,12 +196,12 @@
 
 ### Content Requirements:
 
-- ✅ Request/Response examples
-- ✅ Authorization & RBAC details
-- ✅ Error handling
-- ✅ Use cases & business logic
-- ✅ Frontend integration examples
-- ✅ Performance considerations
+- [YES] Request/Response examples
+- [YES] Authorization & RBAC details
+- [YES] Error handling
+- [YES] Use cases & business logic
+- [YES] Frontend integration examples
+- [YES] Performance considerations
 
 ---
 
@@ -209,19 +209,19 @@
 
 ### November 27, 2025
 
-- ✅ Added API 6.7 (Transaction Detail)
-- ✅ Renumbered API 6.7 → 6.8 (Item Masters)
-- ✅ Standardized file naming convention
-- ✅ Created this README index
+- [YES] Added API 6.7 (Transaction Detail)
+- [YES] Renumbered API 6.7 → 6.8 (Item Masters)
+- [YES] Standardized file naming convention
+- [YES] Created this README index
 
 ### November 26, 2025
 
-- ✅ Added API 6.6 documentation
-- ✅ Legacy code cleanup
+- [YES] Added API 6.6 documentation
+- [YES] Legacy code cleanup
 
 ### Earlier
 
-- ✅ APIs 6.1 - 6.4 documentation completed
+- [YES] APIs 6.1 - 6.4 documentation completed
 
 ---
 

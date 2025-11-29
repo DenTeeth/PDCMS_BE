@@ -14,11 +14,11 @@ echo "$LOGIN_RESPONSE" > /tmp/login_raw.json
 TOKEN=$(echo "$LOGIN_RESPONSE" | grep -o '"token":"[^"]*"' | cut -d'"' -f4)
 
 if [ -z "$TOKEN" ]; then
-  echo "❌ Login failed!"
+  echo "FAIL Login failed!"
   exit 1
 fi
 
-echo "✅ Login successful, token length: ${#TOKEN}"
+echo "OK Login successful, token length: ${#TOKEN}"
 echo ""
 
 # Test API 6.1 - Inventory Summary

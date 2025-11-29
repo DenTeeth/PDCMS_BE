@@ -191,10 +191,10 @@ public class EmailService {
             helper.setText(htmlContent, true);
 
             mailSender.send(message);
-            logger.info("✅ Welcome email with password setup sent to: {}", toEmail);
+            logger.info(" Welcome email with password setup sent to: {}", toEmail);
 
         } catch (MessagingException e) {
-            logger.error("❌ Failed to send welcome email to {}: {}", toEmail, e.getMessage());
+            logger.error(" Failed to send welcome email to {}: {}", toEmail, e.getMessage());
             throw new RuntimeException("Failed to send welcome email", e);
         }
     }

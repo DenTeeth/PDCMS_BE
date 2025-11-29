@@ -56,10 +56,10 @@ test_api() {
     
     # Check result
     if [[ "$http_code" =~ ^(200|201)$ ]]; then
-        echo -e "${GREEN}✅ PASS - HTTP $http_code${NC}"
+        echo -e "${GREEN}OK PASS - HTTP $http_code${NC}"
         ((PASS_COUNT++))
     else
-        echo -e "${RED}❌ FAIL - HTTP $http_code${NC}"
+        echo -e "${RED}FAIL FAIL - HTTP $http_code${NC}"
         ((FAIL_COUNT++))
     fi
     
@@ -81,11 +81,11 @@ LOGIN_RESPONSE=$(curl -s -X POST "$BASE_URL/api/v1/auth/login" \
 TOKEN=$(echo "$LOGIN_RESPONSE" | grep -o '"token":"[^"]*"' | cut -d'"' -f4)
 
 if [ -z "$TOKEN" ]; then
-  echo -e "${RED}❌ Login failed! Cannot proceed with tests.${NC}"
+  echo -e "${RED}FAIL Login failed! Cannot proceed with tests.${NC}"
   exit 1
 fi
 
-echo -e "${GREEN}✅ Login successful${NC}"
+echo -e "${GREEN}OK Login successful${NC}"
 echo "Token length: ${#TOKEN}"
 echo ""
 echo ""
@@ -277,7 +277,7 @@ if [ ! -z "$ITEM_ID" ]; then
           }' \
           '$BASE_URL/api/v1/warehouse/items/$ITEM_ID'"
 else
-    echo -e "${YELLOW}⚠️  Skipping API 6.10 - No item found to update${NC}"
+    echo -e "${YELLOW}WARN  Skipping API 6.10 - No item found to update${NC}"
     echo ""
 fi
 
@@ -304,8 +304,8 @@ echo ""
 echo "=================================================="
 echo "TEST SUMMARY"
 echo "=================================================="
-echo -e "${GREEN}✅ PASSED: $PASS_COUNT${NC}"
-echo -e "${RED}❌ FAILED: $FAIL_COUNT${NC}"
+echo -e "${GREEN}OK PASSED: $PASS_COUNT${NC}"
+echo -e "${RED}FAIL FAILED: $FAIL_COUNT${NC}"
 echo "Total Tests: $((PASS_COUNT + FAIL_COUNT))"
 echo ""
 echo "Detailed results saved to: $RESULTS_FILE"
@@ -315,6 +315,6 @@ if [ $FAIL_COUNT -eq 0 ]; then
     echo -e "${GREEN}🎉 ALL TESTS PASSED! 🎉${NC}"
     exit 0
 else
-    echo -e "${RED}⚠️  SOME TESTS FAILED - Check $RESULTS_FILE for details${NC}"
+    echo -e "${RED}WARN  SOME TESTS FAILED - Check $RESULTS_FILE for details${NC}"
     exit 1
 fi

@@ -9,21 +9,21 @@
 
 | API | Endpoint | Method | Status | Description |
 |-----|----------|--------|--------|-------------|
-| **6.1** | `/api/v1/warehouse/summary` | GET | ✅ 200 | Inventory Summary Dashboard |
-| **6.2** | `/api/v1/warehouse/batches/{id}` | GET | ✅ 200 | Item Batches Detail (FEFO) |
-| **6.3** | `/api/v1/warehouse/alerts/expiring` | GET | ✅ 200 | Expiring Items Alert |
-| **6.4** | `/api/v1/warehouse/import` | POST | ✅ 201 | Create Import Transaction |
-| **6.5** | `/api/v1/inventory/export` | POST | ✅ 201 | Create Export Transaction (FEFO) |
-| **6.6** | `/api/v1/warehouse/transactions` | GET | ✅ 200 | Transaction History (with filters) |
-| **6.7** | `/api/v1/warehouse/transactions/{id}` | GET | ✅ 200 | Transaction Detail |
-| **6.8** | `/api/v1/warehouse/items` | GET | ✅ 200 | Item Master List (with search) |
-| **6.9** | `/api/v1/warehouse/items` | POST | ❌ 500 | Create Item Master |
-| **6.10** | `/api/v1/warehouse/items/{id}` | PUT | ✅ 200 | Update Item Master |
-| **6.11** | `/api/v1/warehouse/items/{id}/units` | GET | ❌ 500 | Get Item Units |
+| **6.1** | `/api/v1/warehouse/summary` | GET | [YES] 200 | Inventory Summary Dashboard |
+| **6.2** | `/api/v1/warehouse/batches/{id}` | GET | [YES] 200 | Item Batches Detail (FEFO) |
+| **6.3** | `/api/v1/warehouse/alerts/expiring` | GET | [YES] 200 | Expiring Items Alert |
+| **6.4** | `/api/v1/warehouse/import` | POST | [YES] 201 | Create Import Transaction |
+| **6.5** | `/api/v1/inventory/export` | POST | [YES] 201 | Create Export Transaction (FEFO) |
+| **6.6** | `/api/v1/warehouse/transactions` | GET | [YES] 200 | Transaction History (with filters) |
+| **6.7** | `/api/v1/warehouse/transactions/{id}` | GET | [YES] 200 | Transaction Detail |
+| **6.8** | `/api/v1/warehouse/items` | GET | [YES] 200 | Item Master List (with search) |
+| **6.9** | `/api/v1/warehouse/items` | POST | [NO] 500 | Create Item Master |
+| **6.10** | `/api/v1/warehouse/items/{id}` | PUT | [YES] 200 | Update Item Master |
+| **6.11** | `/api/v1/warehouse/items/{id}/units` | GET | [NO] 500 | Get Item Units |
 
 ---
 
-## ✅ Working APIs (10/11)
+## [YES] Working APIs (10/11)
 
 ### API 6.1 - Inventory Summary
 ```http
@@ -172,7 +172,7 @@ Content-Type: application/json
 }
 ```
 
-**✅ FIX APPLIED**: Changed `transactionDate` from `LocalDateTime` to `LocalDate` format
+**[YES] FIX APPLIED**: Changed `transactionDate` from `LocalDateTime` to `LocalDate` format
 
 ---
 
@@ -227,13 +227,13 @@ Content-Type: application/json
 ```
 
 **Features**:
-- ✅ FEFO Auto-Allocation (chọn lô sắp hết hạn trước)
-- ✅ Multi-Batch Allocation (xuất từ nhiều lô nếu cần)
-- ✅ Auto-Unpacking (tự động xé lẻ từ đơn vị lớn)
-- ✅ Warning System (cảnh báo hàng sắp hết hạn)
-- ✅ FIFO Pricing (giá vốn theo FIFO)
+- [YES] FEFO Auto-Allocation (chọn lô sắp hết hạn trước)
+- [YES] Multi-Batch Allocation (xuất từ nhiều lô nếu cần)
+- [YES] Auto-Unpacking (tự động xé lẻ từ đơn vị lớn)
+- [YES] Warning System (cảnh báo hàng sắp hết hạn)
+- [YES] FIFO Pricing (giá vốn theo FIFO)
 
-**✅ FIX APPLIED**: Changed `transactionDate` from `LocalDateTime` to `LocalDate` format
+**[YES] FIX APPLIED**: Changed `transactionDate` from `LocalDateTime` to `LocalDate` format
 
 ---
 
@@ -341,19 +341,19 @@ Content-Type: application/json
 }
 ```
 
-**✅ FIX APPLIED**: 
+**[YES] FIX APPLIED**: 
 - Made `isActive` field optional (defaults to existing value if not provided)
 - Made `units` array optional (keeps existing units if not provided or empty)
 - Allows partial updates without touching unit configuration
 
 **Safety Lock Feature**:
 - When `cachedTotalQuantity > 0`, blocks dangerous changes:
-  - ❌ Cannot change unit conversion rates
-  - ❌ Cannot change isBaseUnit flag
-  - ❌ Cannot hard delete units
-  - ✅ Can rename units (cosmetic)
-  - ✅ Can add new units
-  - ✅ Can soft delete units (set isActive=false)
+  - [NO] Cannot change unit conversion rates
+  - [NO] Cannot change isBaseUnit flag
+  - [NO] Cannot hard delete units
+  - [YES] Can rename units (cosmetic)
+  - [YES] Can add new units
+  - [YES] Can soft delete units (set isActive=false)
 
 **Response**: 200 OK
 ```json
@@ -369,7 +369,7 @@ Content-Type: application/json
 
 ---
 
-## ❌ APIs Need Fix (2/11)
+## [NO] APIs Need Fix (2/11)
 
 ### API 6.9 - Create Item Master
 ```http
@@ -377,7 +377,7 @@ POST /api/v1/warehouse/items
 Content-Type: application/json
 ```
 
-**Status**: ❌ 500 Internal Server Error
+**Status**: [NO] 500 Internal Server Error
 
 **Request Body**:
 ```json
@@ -423,7 +423,7 @@ Content-Type: application/json
 GET /api/v1/warehouse/items/1/units?status=active
 ```
 
-**Status**: ❌ 500 Internal Server Error
+**Status**: [NO] 500 Internal Server Error
 
 **Issue**: Backend crashes when querying units
 **Priority**: CRITICAL - Blocks FE form dropdowns for import/export
@@ -438,7 +438,7 @@ GET /api/v1/warehouse/items/1/units?status=active
 
 ## 🔧 Recent Fixes Applied
 
-### Fix 1: LocalDate Format (APIs 6.4, 6.5) ✅
+### Fix 1: LocalDate Format (APIs 6.4, 6.5) [YES]
 **Problem**: FE sent "2025-11-28" but BE expected "2025-11-28T10:30:00"  
 **Solution**: Changed DTOs to accept `LocalDate` instead of `LocalDateTime`  
 **Files Changed**:
@@ -447,7 +447,7 @@ GET /api/v1/warehouse/items/1/units?status=active
 - `ImportTransactionService.java` - Line 178: Convert to LocalDateTime with `.atStartOfDay()`
 - `ExportTransactionService.java` - Line 158: Convert to LocalDateTime with `.atStartOfDay()`
 
-### Fix 2: Optional Fields in Update (API 6.10) ✅
+### Fix 2: Optional Fields in Update (API 6.10) [YES]
 **Problem**: Required `isActive` and `units` fields even for simple updates  
 **Solution**: Made both fields optional in `UpdateItemMasterRequest`  
 **Benefits**:
@@ -455,14 +455,14 @@ GET /api/v1/warehouse/items/1/units?status=active
 - Can update stock levels without sending unit hierarchy
 - More flexible API for FE
 
-### Fix 3: Filter Parameter Documentation (API 6.1b) ✅
+### Fix 3: Filter Parameter Documentation (API 6.1b) [YES]
 **Problem**: Test used `stockStatus=IN_STOCK` but enum doesn't have this value  
 **Solution**: Documented correct enum values:
-- ✅ `OUT_OF_STOCK`
-- ✅ `LOW_STOCK`
-- ✅ `NORMAL`
-- ✅ `OVERSTOCK`
-- ❌ `IN_STOCK` (not valid)
+- [YES] `OUT_OF_STOCK`
+- [YES] `LOW_STOCK`
+- [YES] `NORMAL`
+- [YES] `OVERSTOCK`
+- [NO] `IN_STOCK` (not valid)
 
 ---
 
@@ -474,43 +474,43 @@ GET /api/v1/warehouse/items/1/units?status=active
 
 | Status | Count | Percentage |
 |--------|-------|------------|
-| ✅ PASS | 10 | 67% |
-| ❌ FAIL | 5 | 33% |
+| [YES] PASS | 10 | 67% |
+| [NO] FAIL | 5 | 33% |
 
 **Passing Tests**:
-1. ✅ API 6.1 - Inventory Summary (basic)
-2. ✅ API 6.2 - Item Batches
-3. ✅ API 6.3 - Expiring Alerts
-4. ✅ API 6.4 - Import Transaction
-5. ✅ API 6.5 - Export Transaction
-6. ✅ API 6.6 - Transaction History (basic)
-7. ✅ API 6.6b - Transaction History (filter)
-8. ✅ API 6.7 - Transaction Detail
-9. ✅ API 6.8 - Item Master List
-10. ✅ API 6.8b - Item Master Search
+1. [YES] API 6.1 - Inventory Summary (basic)
+2. [YES] API 6.2 - Item Batches
+3. [YES] API 6.3 - Expiring Alerts
+4. [YES] API 6.4 - Import Transaction
+5. [YES] API 6.5 - Export Transaction
+6. [YES] API 6.6 - Transaction History (basic)
+7. [YES] API 6.6b - Transaction History (filter)
+8. [YES] API 6.7 - Transaction Detail
+9. [YES] API 6.8 - Item Master List
+10. [YES] API 6.8b - Item Master Search
 
 **Failing Tests**:
-1. ❌ API 6.1b - Filter (wrong enum value in test)
-2. ❌ API 6.9 - Create Item (500 error)
-3. ❌ API 6.10 - Update Item (fixed - needs retest)
-4. ❌ API 6.11 - Get Units (500 error)
-5. ❌ API 6.11b - Get Units All (500 error)
+1. [NO] API 6.1b - Filter (wrong enum value in test)
+2. [NO] API 6.9 - Create Item (500 error)
+3. [NO] API 6.10 - Update Item (fixed - needs retest)
+4. [NO] API 6.11 - Get Units (500 error)
+5. [NO] API 6.11b - Get Units All (500 error)
 
 ---
 
 ## 🚀 Production Readiness
 
-### Ready for Production ✅
+### Ready for Production [YES]
 - **API 6.1-6.3**: Inventory queries - All working
 - **API 6.4-6.5**: Import/Export transactions - All working with FEFO
 - **API 6.6-6.7**: Transaction history - All working with filters
 - **API 6.8**: Item master list - All working with search
 
-### Need Fix Before Production ⚠️
+### Need Fix Before Production [WARN]
 - **API 6.9**: Create Item - 500 error, need debugging
 - **API 6.11**: Get Units - 500 error, blocks FE dropdowns
 
-### Recently Fixed ✅
+### Recently Fixed [YES]
 - **API 6.10**: Update Item - Now supports partial updates
 
 ---
@@ -518,35 +518,35 @@ GET /api/v1/warehouse/items/1/units?status=active
 ## 📚 Documentation Files
 
 ### Keep (Current & Relevant)
-- ✅ `WAREHOUSE_MODULE_API_REFERENCE.md` - This file (comprehensive reference)
-- ✅ `WAREHOUSE_API_TEST_SUMMARY.md` - Test results summary
-- ✅ `WAREHOUSE_API_TEST_REPORT_28112025.md` - Detailed test report
-- ✅ `API_6.1_INVENTORY_SUMMARY_COMPLETE.md` - API 6.1 documentation
-- ✅ `API_6.2_ITEM_BATCHES_COMPLETE.md` - API 6.2 documentation
-- ✅ `API_6.3_EXPIRING_ALERTS_COMPLETE.md` - API 6.3 documentation
-- ✅ `API_6.4_IMPORT_TRANSACTION_COMPLETE.md` - API 6.4 documentation
-- ✅ `API_6.6_TRANSACTION_HISTORY_COMPLETE.md` - API 6.6 documentation
-- ✅ `API_6.7_TRANSACTION_DETAIL_COMPLETE.md` - API 6.7 documentation
-- ✅ `API_6.8_ITEM_MASTERS_COMPLETE.md` - API 6.8 documentation
-- ✅ `API_6.9_CREATE_ITEM_MASTER_COMPLETE.md` - API 6.9 documentation
-- ✅ `API_6.10_UPDATE_ITEM_MASTER_COMPLETE.md` - API 6.10 documentation
-- ✅ `API_6.11_GET_ITEM_UNITS_COMPLETE.md` - API 6.11 documentation
-- ✅ `LEGACY_CODE_CLEANUP_SUMMARY.md` - Cleanup history
-- ✅ `COMPLETE_API_INVENTORY.md` - Full API inventory
+- [YES] `WAREHOUSE_MODULE_API_REFERENCE.md` - This file (comprehensive reference)
+- [YES] `WAREHOUSE_API_TEST_SUMMARY.md` - Test results summary
+- [YES] `WAREHOUSE_API_TEST_REPORT_28112025.md` - Detailed test report
+- [YES] `API_6.1_INVENTORY_SUMMARY_COMPLETE.md` - API 6.1 documentation
+- [YES] `API_6.2_ITEM_BATCHES_COMPLETE.md` - API 6.2 documentation
+- [YES] `API_6.3_EXPIRING_ALERTS_COMPLETE.md` - API 6.3 documentation
+- [YES] `API_6.4_IMPORT_TRANSACTION_COMPLETE.md` - API 6.4 documentation
+- [YES] `API_6.6_TRANSACTION_HISTORY_COMPLETE.md` - API 6.6 documentation
+- [YES] `API_6.7_TRANSACTION_DETAIL_COMPLETE.md` - API 6.7 documentation
+- [YES] `API_6.8_ITEM_MASTERS_COMPLETE.md` - API 6.8 documentation
+- [YES] `API_6.9_CREATE_ITEM_MASTER_COMPLETE.md` - API 6.9 documentation
+- [YES] `API_6.10_UPDATE_ITEM_MASTER_COMPLETE.md` - API 6.10 documentation
+- [YES] `API_6.11_GET_ITEM_UNITS_COMPLETE.md` - API 6.11 documentation
+- [YES] `LEGACY_CODE_CLEANUP_SUMMARY.md` - Cleanup history
+- [YES] `COMPLETE_API_INVENTORY.md` - Full API inventory
 
 ### Removed (Outdated)
-- ❌ All `*_TESTING_GUIDE.md` files (replaced by automated tests)
-- ❌ All `*_IMPLEMENTATION_SUMMARY.md` files (merged into _COMPLETE docs)
-- ❌ `docs/troubleshooting/*` duplicates
-- ❌ `docs/BUG_FIXES_2025_11_27.md` (outdated)
+- [NO] All `*_TESTING_GUIDE.md` files (replaced by automated tests)
+- [NO] All `*_IMPLEMENTATION_SUMMARY.md` files (merged into _COMPLETE docs)
+- [NO] `docs/troubleshooting/*` duplicates
+- [NO] `docs/BUG_FIXES_2025_11_27.md` (outdated)
 
 ---
 
 ## 🎯 Next Steps
 
 ### Immediate (Critical)
-1. ⚠️ **Debug API 6.11** - Get server logs, fix 500 error
-2. ⚠️ **Debug API 6.9** - Fix item creation with units
+1. [WARN] **Debug API 6.11** - Get server logs, fix 500 error
+2. [WARN] **Debug API 6.9** - Fix item creation with units
 
 ### Short Term (This Week)
 3. ⚡ **Re-test API 6.10** - Verify optional fields work

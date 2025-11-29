@@ -73,7 +73,7 @@ public class ItemUnitService {
 
         // Fallback: Auto-create base unit from unitOfMeasure
         if (itemMaster.getUnitOfMeasure() != null && !itemMaster.getUnitOfMeasure().trim().isEmpty()) {
-            log.warn("⚠️ Base unit not found for item {}, auto-creating from unitOfMeasure: {}",
+            log.warn(" Base unit not found for item {}, auto-creating from unitOfMeasure: {}",
                     itemMaster.getItemCode(), itemMaster.getUnitOfMeasure());
 
             ItemUnit fallbackUnit = ItemUnit.builder()
@@ -85,7 +85,7 @@ public class ItemUnitService {
                     .build();
 
             ItemUnit saved = itemUnitRepository.save(fallbackUnit);
-            log.info("✅ Auto-created base unit '{}' (ID: {}) for item master: {}",
+            log.info(" Auto-created base unit '{}' (ID: {}) for item master: {}",
                     itemMaster.getUnitOfMeasure(), saved.getUnitId(), itemMaster.getItemCode());
 
             return mapToResponse(saved);

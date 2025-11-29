@@ -171,7 +171,7 @@ ON CONFLICT (permission_id) DO NOTHING;
 INSERT INTO permissions (permission_id, permission_name, module, description, display_order, parent_permission_id, is_active, created_at)
 VALUES
 ('VIEW_APPOINTMENT', 'VIEW_APPOINTMENT', 'APPOINTMENT', 'Xem danh sách lịch hẹn (deprecated - use VIEW_APPOINTMENT_ALL or VIEW_APPOINTMENT_OWN)', 50, NULL, TRUE, NOW()),
--- ✅ NEW: RBAC-compliant permissions (P3.3)
+-- NEW: RBAC-compliant permissions (P3.3)
 ('VIEW_APPOINTMENT_ALL', 'VIEW_APPOINTMENT_ALL', 'APPOINTMENT', 'Xem TẤT CẢ lịch hẹn (Lễ tân/Quản lý)', 51, NULL, TRUE, NOW()),
 ('VIEW_APPOINTMENT_OWN', 'VIEW_APPOINTMENT_OWN', 'APPOINTMENT', 'Chỉ xem lịch hẹn LIÊN QUAN (Bác sĩ/Y tá/Observer/Bệnh nhân)', 52, 'VIEW_APPOINTMENT_ALL', TRUE, NOW()),
 ('CREATE_APPOINTMENT', 'CREATE_APPOINTMENT', 'APPOINTMENT', 'Đặt lịch hẹn mới', 53, NULL, TRUE, NOW()),
@@ -390,9 +390,9 @@ VALUES
 ('ROLE_DENTIST', 'VIEW_PATIENT'), ('ROLE_DENTIST', 'UPDATE_PATIENT'),
 ('ROLE_DENTIST', 'VIEW_TREATMENT'), ('ROLE_DENTIST', 'CREATE_TREATMENT'), ('ROLE_DENTIST', 'UPDATE_TREATMENT'),
 ('ROLE_DENTIST', 'VIEW_APPOINTMENT'), -- Deprecated
-('ROLE_DENTIST', 'VIEW_APPOINTMENT_OWN'), -- ✅ NEW: Only see own appointments
-('ROLE_DENTIST', 'UPDATE_APPOINTMENT_STATUS'), -- ✅ NEW API 3.5: Start, Complete treatment
-('ROLE_DENTIST', 'DELAY_APPOINTMENT'), -- ✅ NEW API 3.6: Delay appointment when needed
+('ROLE_DENTIST', 'VIEW_APPOINTMENT_OWN'), -- NEW: Only see own appointments
+('ROLE_DENTIST', 'UPDATE_APPOINTMENT_STATUS'), -- NEW API 3.5: Start, Complete treatment
+('ROLE_DENTIST', 'DELAY_APPOINTMENT'), -- NEW API 3.6: Delay appointment when needed
 ('ROLE_DENTIST', 'VIEW_REGISTRATION_OWN'), ('ROLE_DENTIST', 'VIEW_RENEWAL_OWN'), ('ROLE_DENTIST', 'RESPOND_RENEWAL_OWN'),
 ('ROLE_DENTIST', 'CREATE_REGISTRATION'),
 ('ROLE_DENTIST', 'VIEW_LEAVE_OWN'), ('ROLE_DENTIST', 'CREATE_TIME_OFF'), ('ROLE_DENTIST', 'CREATE_OVERTIME'),
@@ -413,8 +413,8 @@ INSERT INTO role_permissions (role_id, permission_id)
 VALUES
 ('ROLE_NURSE', 'VIEW_PATIENT'), ('ROLE_NURSE', 'VIEW_TREATMENT'),
 ('ROLE_NURSE', 'VIEW_APPOINTMENT'), -- Deprecated
-('ROLE_NURSE', 'VIEW_APPOINTMENT_OWN'), -- ✅ NEW: Only see participating appointments
-('ROLE_NURSE', 'UPDATE_APPOINTMENT_STATUS'), -- ✅ NEW API 3.5: Help check-in patients
+('ROLE_NURSE', 'VIEW_APPOINTMENT_OWN'), -- NEW: Only see participating appointments
+('ROLE_NURSE', 'UPDATE_APPOINTMENT_STATUS'), -- NEW API 3.5: Help check-in patients
 ('ROLE_NURSE', 'VIEW_REGISTRATION_OWN'), ('ROLE_NURSE', 'VIEW_RENEWAL_OWN'), ('ROLE_NURSE', 'RESPOND_RENEWAL_OWN'),
 ('ROLE_NURSE', 'CREATE_REGISTRATION'),
 ('ROLE_NURSE', 'VIEW_LEAVE_OWN'), ('ROLE_NURSE', 'CREATE_TIME_OFF'), ('ROLE_NURSE', 'CREATE_OVERTIME'),
@@ -441,11 +441,11 @@ INSERT INTO role_permissions (role_id, permission_id)
 VALUES
 ('ROLE_RECEPTIONIST', 'VIEW_PATIENT'), ('ROLE_RECEPTIONIST', 'CREATE_PATIENT'), ('ROLE_RECEPTIONIST', 'UPDATE_PATIENT'),
 ('ROLE_RECEPTIONIST', 'VIEW_APPOINTMENT'), -- Deprecated
-('ROLE_RECEPTIONIST', 'VIEW_APPOINTMENT_ALL'), -- ✅ NEW: Xem TẤT CẢ lịch hẹn
+('ROLE_RECEPTIONIST', 'VIEW_APPOINTMENT_ALL'), -- NEW: Xem TẤT CẢ lịch hẹn
 ('ROLE_RECEPTIONIST', 'CREATE_APPOINTMENT'),
 ('ROLE_RECEPTIONIST', 'UPDATE_APPOINTMENT'),
-('ROLE_RECEPTIONIST', 'UPDATE_APPOINTMENT_STATUS'), -- ✅ NEW API 3.5: Check-in, In-progress, Complete
-('ROLE_RECEPTIONIST', 'DELAY_APPOINTMENT'), -- ✅ NEW API 3.6: Delay appointment for patients
+('ROLE_RECEPTIONIST', 'UPDATE_APPOINTMENT_STATUS'), -- NEW API 3.5: Check-in, In-progress, Complete
+('ROLE_RECEPTIONIST', 'DELAY_APPOINTMENT'), -- NEW API 3.6: Delay appointment for patients
 ('ROLE_RECEPTIONIST', 'DELETE_APPOINTMENT'),
 -- CUSTOMER_MANAGEMENT
 ('ROLE_RECEPTIONIST', 'VIEW_CONTACT'), ('ROLE_RECEPTIONIST', 'CREATE_CONTACT'),
@@ -470,9 +470,9 @@ VALUES
 ('ROLE_MANAGER', 'VIEW_EMPLOYEE'), ('ROLE_MANAGER', 'CREATE_EMPLOYEE'),
 ('ROLE_MANAGER', 'UPDATE_EMPLOYEE'), ('ROLE_MANAGER', 'DELETE_EMPLOYEE'),
 ('ROLE_MANAGER', 'VIEW_PATIENT'), ('ROLE_MANAGER', 'VIEW_APPOINTMENT'),
-('ROLE_MANAGER', 'VIEW_APPOINTMENT_ALL'), -- ✅ See all appointments
-('ROLE_MANAGER', 'UPDATE_APPOINTMENT_STATUS'), -- ✅ NEW API 3.5: Full appointment status control
-('ROLE_MANAGER', 'DELAY_APPOINTMENT'), -- ✅ NEW API 3.6: Reschedule appointments
+('ROLE_MANAGER', 'VIEW_APPOINTMENT_ALL'), -- See all appointments
+('ROLE_MANAGER', 'UPDATE_APPOINTMENT_STATUS'), -- NEW API 3.5: Full appointment status control
+('ROLE_MANAGER', 'DELAY_APPOINTMENT'), -- NEW API 3.6: Reschedule appointments
 -- CUSTOMER_MANAGEMENT
 ('ROLE_MANAGER', 'VIEW_CONTACT'), ('ROLE_MANAGER', 'CREATE_CONTACT'),
 ('ROLE_MANAGER', 'UPDATE_CONTACT'), ('ROLE_MANAGER', 'DELETE_CONTACT'),
@@ -513,14 +513,14 @@ VALUES
 -- SERVICE_MANAGEMENT (V16: Full management of services)
 ('ROLE_MANAGER', 'VIEW_SERVICE'), ('ROLE_MANAGER', 'CREATE_SERVICE'),
 ('ROLE_MANAGER', 'UPDATE_SERVICE'), ('ROLE_MANAGER', 'DELETE_SERVICE'),
--- ✅ TREATMENT_PLAN (V19/V20/V21: Full management of treatment plans)
+-- TREATMENT_PLAN (V19/V20/V21: Full management of treatment plans)
 ('ROLE_MANAGER', 'VIEW_TREATMENT_PLAN_ALL'), -- Can view all patients' treatment plans
-('ROLE_MANAGER', 'VIEW_ALL_TREATMENT_PLANS'), -- ✅ V21: Can view system-wide treatment plan list
+('ROLE_MANAGER', 'VIEW_ALL_TREATMENT_PLANS'), -- V21: Can view system-wide treatment plan list
 ('ROLE_MANAGER', 'CREATE_TREATMENT_PLAN'), -- Can create treatment plans
 ('ROLE_MANAGER', 'UPDATE_TREATMENT_PLAN'), -- Can update treatment plans
 ('ROLE_MANAGER', 'DELETE_TREATMENT_PLAN'), -- Can delete treatment plans
-('ROLE_MANAGER', 'APPROVE_TREATMENT_PLAN'), -- ✅ V20: Can approve/reject treatment plans (API 5.9)
-('ROLE_MANAGER', 'MANAGE_PLAN_PRICING'), -- ✅ V21: Can adjust pricing/discounts on treatment plans
+('ROLE_MANAGER', 'APPROVE_TREATMENT_PLAN'), -- V20: Can approve/reject treatment plans (API 5.9)
+('ROLE_MANAGER', 'MANAGE_PLAN_PRICING'), -- V21: Can adjust pricing/discounts on treatment plans
 ('ROLE_MANAGER', 'VIEW_WAREHOUSE'),
 ('ROLE_MANAGER', 'VIEW_COST'),
 ('ROLE_MANAGER', 'VIEW_ITEMS'),
@@ -566,9 +566,9 @@ INSERT INTO role_permissions (role_id, permission_id)
 VALUES
 ('ROLE_PATIENT', 'VIEW_PATIENT'), ('ROLE_PATIENT', 'VIEW_TREATMENT'),
 ('ROLE_PATIENT', 'VIEW_APPOINTMENT'), -- Deprecated (use VIEW_APPOINTMENT_OWN)
-('ROLE_PATIENT', 'VIEW_APPOINTMENT_OWN'), -- ✅ NEW: Patient can view their own appointments
+('ROLE_PATIENT', 'VIEW_APPOINTMENT_OWN'), -- NEW: Patient can view their own appointments
 ('ROLE_PATIENT', 'CREATE_APPOINTMENT'),
--- ✅ NEW: Treatment Plan permissions
+-- NEW: Treatment Plan permissions
 ('ROLE_PATIENT', 'VIEW_TREATMENT_PLAN_OWN') -- Can only view their own treatment plans
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
@@ -861,7 +861,7 @@ VALUES
 (10, 10, 'EMP010', 'Ngô Đình', 'Chính', '0910101010', '2000-02-28', '666 Nguyễn Thị Minh Khai, Q3, TPHCM', 'PART_TIME_FLEX', TRUE, NOW()),
 -- Manager
 (11, 11, 'EMP011', 'Võ Nguyễn Minh', 'Quân', '0911111111', '1987-09-05', '777 Nguyễn Huệ, Q1, TPHCM', 'FULL_TIME', TRUE, NOW()),
--- ✅ NEW: Thực tập sinh (OBSERVER for testing P3.3)
+-- NEW: Thực tập sinh (OBSERVER for testing P3.3)
 (12, 16, 'EMP012', 'Nguyễn Khánh', 'Linh', '0912121212', '2003-05-15', '888 Võ Thị Sáu, Q3, TPHCM', 'PART_TIME_FLEX', TRUE, NOW())
 ON CONFLICT (employee_id) DO NOTHING;
 
@@ -880,7 +880,7 @@ VALUES
 (8, 8), -- Y tá Khang
 (9, 8), -- Y tá Nhật (Part-time fixed)
 (10, 8), -- Y tá Chính (Part-time flex)
--- ✅ NEW: Thực tập sinh - INTERN specialization
+-- NEW: Thực tập sinh - INTERN specialization
 (12, 9) -- Thực tập sinh Linh
 ON CONFLICT (employee_id, specialization_id) DO NOTHING;
 
@@ -1222,10 +1222,10 @@ ON CONFLICT (holiday_date, definition_id) DO NOTHING;
 
 
 -- Expected Behavior:
--- ✅ Creating shifts on 2025-11-04 (Tuesday) or 2025-11-06 (Thursday) should SUCCEED
--- ❌ Creating shifts on 2025-11-03 (Monday), 2025-11-05 (Wednesday), or 2025-11-07 (Friday) should return 409 HOLIDAY_CONFLICT
--- ✅ Time-off requests spanning these dates should SUCCEED (expected behavior)
--- ✅ Batch jobs should SKIP these dates when auto-creating shifts
+-- Creating shifts on 2025-11-04 (Tuesday) or 2025-11-06 (Thursday) should SUCCEED
+-- Creating shifts on 2025-11-03 (Monday), 2025-11-05 (Wednesday), or 2025-11-07 (Friday) should return 409 HOLIDAY_CONFLICT
+-- Time-off requests spanning these dates should SUCCEED (expected behavior)
+-- Batch jobs should SKIP these dates when auto-creating shifts
 
 -- ============================================
 -- WORKING SCHEDULE SAMPLE DATA (Schema V14 Hybrid)
@@ -2435,7 +2435,7 @@ ON CONFLICT (appointment_id, employee_id) DO NOTHING;
 
 
 -- ============================================
--- ✅ NEW: FUTURE APPOINTMENTS (Nov 6-8, 2025) for current date testing
+-- NEW: FUTURE APPOINTMENTS (Nov 6-8, 2025) for current date testing
 -- ============================================
 
 -- APT-004: Nov 6 Morning - BS Khoa (EMP001) - NOW HAS SHIFT!
@@ -2460,7 +2460,7 @@ VALUES (4, 7, 'ASSISTANT')  -- EMP007 - Y tá Nguyên
 ON CONFLICT (appointment_id, employee_id) DO NOTHING;
 
 
--- APT-005: Nov 6 Afternoon - BS Lê Anh Khoa (EMP001) - ✅ FIXED: EMP001 has PERIODONTICS specialization
+-- APT-005: Nov 6 Afternoon - BS Lê Anh Khoa (EMP001) - FIXED: EMP001 has PERIODONTICS specialization
 INSERT INTO appointments (
     appointment_id, appointment_code, patient_id, employee_id, room_id,
     appointment_start_time, appointment_end_time, expected_duration_minutes,
@@ -3315,63 +3315,63 @@ SELECT setval('storage_transactions_storage_transaction_id_seq', (SELECT COALESC
 -- =============================================
 -- STEP 1: ITEM_UNITS (Don vi do luong - Unit hierarchy)
 -- =============================================
--- Consumables: Găng tay y tế
+-- Consumables: Gang tay y te
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'Chiếc', 1, TRUE, TRUE, TRUE, TRUE, FALSE, TRUE, 3, NOW()
+SELECT im.item_master_id, 'Chiec', 1, TRUE, TRUE, FALSE, TRUE, 3, NOW()
 FROM item_masters im WHERE im.item_code = 'CON-GLOVE-01'
 ON CONFLICT DO NOTHING;
 
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'Cặp', 2, FALSE, TRUE, FALSE, FALSE, 2, NOW()
+SELECT im.item_master_id, 'Cap', 2, FALSE, TRUE, FALSE, FALSE, 2, NOW()
 FROM item_masters im WHERE im.item_code = 'CON-GLOVE-01'
 ON CONFLICT DO NOTHING;
 
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'Hộp', 200, FALSE, TRUE, TRUE, FALSE, 1, NOW()
+SELECT im.item_master_id, 'Hop', 200, FALSE, TRUE, TRUE, FALSE, 1, NOW()
 FROM item_masters im WHERE im.item_code = 'CON-GLOVE-01'
 ON CONFLICT DO NOTHING;
 
--- Khẩu trang y tế
+-- Khau trang y te
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'Cái', 1, TRUE, TRUE, TRUE, FALSE, TRUE, 3, NOW()
+SELECT im.item_master_id, 'Cai', 1, TRUE, TRUE, FALSE, TRUE, 3, NOW()
 FROM item_masters im WHERE im.item_code = 'CON-MASK-01'
 ON CONFLICT DO NOTHING;
 
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'Hộp', 50, FALSE, TRUE, TRUE, FALSE, 1, NOW()
+SELECT im.item_master_id, 'Hop', 50, FALSE, TRUE, TRUE, FALSE, 1, NOW()
 FROM item_masters im WHERE im.item_code = 'CON-MASK-01'
 ON CONFLICT DO NOTHING;
 
--- Kim tiêm nha khoa
+-- Kim tiem nha khoa
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'Cái', 1, TRUE, TRUE, TRUE, FALSE, TRUE, 2, NOW()
+SELECT im.item_master_id, 'Cai', 1, TRUE, TRUE, FALSE, TRUE, 2, NOW()
 FROM item_masters im WHERE im.item_code = 'CON-NEEDLE-01'
 ON CONFLICT DO NOTHING;
 
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'Hộp', 100, FALSE, TRUE, TRUE, FALSE, 1, NOW()
+SELECT im.item_master_id, 'Hop', 100, FALSE, TRUE, TRUE, FALSE, 1, NOW()
 FROM item_masters im WHERE im.item_code = 'CON-NEEDLE-01'
 ON CONFLICT DO NOTHING;
 
--- Medicine: Thuốc tê Septodont
+-- Medicine: Thuoc te Septodont
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'Ống', 1, TRUE, TRUE, TRUE, FALSE, TRUE, 2, NOW()
+SELECT im.item_master_id, 'Ong', 1, TRUE, TRUE, FALSE, TRUE, 2, NOW()
 FROM item_masters im WHERE im.item_code = 'MED-SEPT-01'
 ON CONFLICT DO NOTHING;
 
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'Hộp', 50, FALSE, TRUE, TRUE, FALSE, 1, NOW()
+SELECT im.item_master_id, 'Hop', 50, FALSE, TRUE, TRUE, FALSE, 1, NOW()
 FROM item_masters im WHERE im.item_code = 'MED-SEPT-01'
 ON CONFLICT DO NOTHING;
 
 -- Material: Composite
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'g', 1, TRUE, TRUE, TRUE, FALSE, TRUE, 2, NOW()
+SELECT im.item_master_id, 'g', 1, TRUE, TRUE, FALSE, TRUE, 2, NOW()
 FROM item_masters im WHERE im.item_code = 'MAT-COMP-01'
 ON CONFLICT DO NOTHING;
 
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'Tuýp', 4, FALSE, TRUE, TRUE, FALSE, 1, NOW()
+SELECT im.item_master_id, 'Tuyp', 4, FALSE, TRUE, TRUE, FALSE, 1, NOW()
 FROM item_masters im WHERE im.item_code = 'MAT-COMP-01'
 ON CONFLICT DO NOTHING;
 

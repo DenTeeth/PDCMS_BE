@@ -489,41 +489,58 @@ public class ItemMasterService {
                                         "Item '" + itemMaster.getItemCode() + "' is no longer active");
                 }
 
-                // 3. Get units based on status filter
-                List<ItemUnit> units;
-                if ("inactive".equalsIgnoreCase(status)) {
-                        units = itemUnitRepository.findByItemMaster_ItemMasterIdAndIsActiveFalseOrderByDisplayOrderAsc(
-                                        itemMasterId);
-                        log.debug("Found {} inactive units", units.size());
-                } else if ("all".equalsIgnoreCase(status)) {
-                        units = itemUnitRepository.findByItemMaster_ItemMasterIdOrderByDisplayOrderAsc(itemMasterId);
-                        log.debug("Found {} total units (active + inactive)", units.size());
-                } else {
-                        // Default: active only
-                        units = itemUnitRepository.findByItemMaster_ItemMasterIdAndIsActiveTrueOrderByDisplayOrderAsc(
-                                        itemMasterId);
-                        log.debug("Found {} active units", units.size());
-                }
+        // 3. Get ALL units first (for finding base unit)
+        List<ItemUnit> allUnits = itemUnitRepository.findByItemMaster_ItemMasterIdOrderByDisplayOrderAsc(itemMasterId);
+        
+        if (allUnits.isEmpty()) {
+                log.warn("No units configured for item master ID: {}", itemMasterId);
+                throw new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "No units configured for this item");
+        }
 
-                if (units.isEmpty()) {
-                        log.warn("No units configured for item master ID: {}", itemMasterId);
-                        throw new ResponseStatusException(
-                                        HttpStatus.NOT_FOUND,
-                                        "No units configured for this item");
-                }
+        // 4. Find base unit from ALL units (base unit might be inactive)
+        // Fallback: If no unit marked as base, use unit with conversion_rate=1
+        ItemUnit baseUnit = allUnits.stream()
+                        .filter(ItemUnit::getIsBaseUnit)
+                        .findFirst()
+                        .orElseGet(() -> {
+                                log.warn("No unit marked as base for item master ID: {}. Using unit with conversion_rate=1 as fallback", itemMasterId);
+                                return allUnits.stream()
+                                                .filter(u -> u.getConversionRate() == 1)
+                                                .findFirst()
+                                                .orElseThrow(() -> {
+                                                        log.error("Neither base unit nor unit with conversion_rate=1 found for item master ID: {}", itemMasterId);
+                                                        return new ResponseStatusException(
+                                                                        HttpStatus.INTERNAL_SERVER_ERROR,
+                                                                        "Base unit not configured properly. Please ensure at least one unit has conversion_rate=1");
+                                                });
+                        });
 
-                // 4. Find base unit
-                ItemUnit baseUnit = units.stream()
-                                .filter(ItemUnit::getIsBaseUnit)
-                                .findFirst()
-                                .orElseThrow(() -> {
-                                        log.error("Base unit not found for item master ID: {}", itemMasterId);
-                                        return new ResponseStatusException(
-                                                        HttpStatus.INTERNAL_SERVER_ERROR,
-                                                        "Base unit not configured properly");
-                                });
+        // 5. Filter units based on status parameter (for response)
+        List<ItemUnit> units;
+        if ("inactive".equalsIgnoreCase(status)) {
+                units = allUnits.stream()
+                                .filter(u -> !u.getIsActive())
+                                .collect(Collectors.toList());
+                log.debug("Found {} inactive units", units.size());
+        } else if ("all".equalsIgnoreCase(status)) {
+                units = allUnits;
+                log.debug("Found {} total units (active + inactive)", units.size());
+        } else {
+                // Default: active only
+                units = allUnits.stream()
+                                .filter(ItemUnit::getIsActive)
+                                .collect(Collectors.toList());
+                log.debug("Found {} active units", units.size());
+        }
 
-                // 5. Build response
+        if (units.isEmpty()) {
+                log.warn("No {} units found for item master ID: {}", status, itemMasterId);
+                throw new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "No " + status + " units found for this item");
+        }                // 5. Build response
                 GetItemUnitsResponse.ItemMasterInfo itemMasterInfo = GetItemUnitsResponse.ItemMasterInfo.builder()
                                 .itemMasterId(itemMaster.getItemMasterId())
                                 .itemCode(itemMaster.getItemCode())

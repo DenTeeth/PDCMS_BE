@@ -4,9 +4,9 @@
 
 Guide for Frontend team on how to create patient accounts following hospital standard workflow where:
 
-- ✅ Staff provides **username** (not password)
-- ✅ Patient sets their own **password** via email verification
-- ✅ Staff **NEVER** sees or knows patient's password
+- [YES] Staff provides **username** (not password)
+- [YES] Patient sets their own **password** via email verification
+- [YES] Staff **NEVER** sees or knows patient's password
 
 ---
 
@@ -21,7 +21,7 @@ Guide for Frontend team on how to create patient accounts following hospital sta
        │ 1. Creates patient record
        │    - Enters: username (e.g., "nguyenvana", "BN001")
        │    - Enters: patient info (name, email, phone, etc.)
-       │    - Does NOT enter password ❌
+       │    - Does NOT enter password [NO]
        │
        ▼
 ┌──────────────────┐
@@ -45,7 +45,7 @@ Guide for Frontend team on how to create patient accounts following hospital sta
     │ 4. Clicks link      │
     │ 5. Verifies email   │
     │ 6. Sets password    │
-    │ 7. Can login ✅     │
+    │ 7. Can login [YES]     │
     └─────────────────────┘
 ```
 
@@ -53,7 +53,7 @@ Guide for Frontend team on how to create patient accounts following hospital sta
 
 ## 🔧 API Request Format
 
-### ✅ CORRECT (V23/V24)
+### [YES] CORRECT (V23/V24)
 
 **Endpoint**: `POST /api/v1/patients`
 
@@ -61,10 +61,10 @@ Guide for Frontend team on how to create patient accounts following hospital sta
 
 ```json
 {
-  "username": "nguyenvana", // ✅ REQUIRED (staff provides)
+  "username": "nguyenvana", // [YES] REQUIRED (staff provides)
   "firstName": "Văn A",
   "lastName": "Nguyễn",
-  "email": "nguyenvana@gmail.com", // ✅ REQUIRED for account creation
+  "email": "nguyenvana@gmail.com", // [YES] REQUIRED for account creation
   "phone": "0901234567",
   "dateOfBirth": "1990-01-15",
   "gender": "MALE",
@@ -72,20 +72,20 @@ Guide for Frontend team on how to create patient accounts following hospital sta
 }
 ```
 
-**⚠️ BREAKING CHANGE**:
+**[WARN] BREAKING CHANGE**:
 
-- ❌ **DO NOT send `password` field** (will be ignored or cause validation error)
-- ✅ **MUST send `username`** if you want to create account
-- ✅ **MUST send `email`** for account creation and verification
+- [NO] **DO NOT send `password` field** (will be ignored or cause validation error)
+- [YES] **MUST send `username`** if you want to create account
+- [YES] **MUST send `email`** for account creation and verification
 
 ---
 
-### ❌ WRONG (Old behavior - V22 and before)
+### [NO] WRONG (Old behavior - V22 and before)
 
 ```json
 {
   "username": "nguyenvana",
-  "password": "SecurePass123!", // ❌ DON'T SEND THIS ANYMORE
+  "password": "SecurePass123!", // [NO] DON'T SEND THIS ANYMORE
   "email": "nguyenvana@gmail.com",
   "firstName": "Văn A",
   "lastName": "Nguyễn"
@@ -119,7 +119,7 @@ Guide for Frontend team on how to create patient accounts following hospital sta
     "isActive": true,
     "createdAt": "2025-11-25T23:30:00",
 
-    // ✅ V23/V24: New account fields
+    // [YES] V23/V24: New account fields
     "accountId": 456,
     "accountStatus": "PENDING_VERIFICATION", // ← Account waiting for email verification
     "isEmailVerified": false // ← Patient hasn't verified email yet
@@ -133,11 +133,11 @@ Guide for Frontend team on how to create patient accounts following hospital sta
 
 | Status                 | Meaning                                         | Patient Can Login? |
 | ---------------------- | ----------------------------------------------- | ------------------ |
-| `PENDING_VERIFICATION` | Account created, waiting for email verification | ❌ No              |
-| `ACTIVE`               | Email verified, password set                    | ✅ Yes             |
-| `INACTIVE`             | Account disabled by admin                       | ❌ No              |
-| `SUSPENDED`            | Temporarily suspended                           | ❌ No              |
-| `LOCKED`               | Too many failed login attempts                  | ❌ No              |
+| `PENDING_VERIFICATION` | Account created, waiting for email verification | [NO] No              |
+| `ACTIVE`               | Email verified, password set                    | [YES] Yes             |
+| `INACTIVE`             | Account disabled by admin                       | [NO] No              |
+| `SUSPENDED`            | Temporarily suspended                           | [NO] No              |
+| `LOCKED`               | Too many failed login attempts                  | [NO] No              |
 
 ---
 
@@ -253,12 +253,12 @@ POST /api/v1/patients
 
 **Expected**:
 
-1. ✅ Patient created with `patientCode`
-2. ✅ Account created with `accountId`
-3. ✅ `accountStatus` = `PENDING_VERIFICATION`
-4. ✅ `isEmailVerified` = `false`
-5. ✅ Email sent to `test@example.com`
-6. ✅ Response includes all account fields
+1. [YES] Patient created with `patientCode`
+2. [YES] Account created with `accountId`
+3. [YES] `accountStatus` = `PENDING_VERIFICATION`
+4. [YES] `isEmailVerified` = `false`
+5. [YES] Email sent to `test@example.com`
+6. [YES] Response includes all account fields
 
 **Verify Email**:
 
@@ -278,18 +278,18 @@ POST /api/v1/patients
   "firstName": "Walk-in",
   "lastName": "Patient",
   "phone": "0901234567"
-  // ❌ No email, no username
+  // [NO] No email, no username
 }
 ```
 
 **Expected**:
 
-1. ✅ Patient created (record-only)
-2. ✅ `accountId` = `null`
-3. ✅ `accountStatus` = `null`
-4. ✅ `isEmailVerified` = `null`
-5. ✅ No email sent
-6. ✅ Patient cannot login (no account)
+1. [YES] Patient created (record-only)
+2. [YES] `accountId` = `null`
+3. [YES] `accountStatus` = `null`
+4. [YES] `isEmailVerified` = `null`
+5. [YES] No email sent
+6. [YES] Patient cannot login (no account)
 
 **Use Case**: Walk-in patients without email, or patients who don't need online access
 
@@ -364,7 +364,7 @@ POST /api/v1/patients
 │  ┌────────────────────────────────┐   │
 │  │ Username: [nguyenvana_______]  │   │  ← Staff enters
 │  └────────────────────────────────┘   │
-│  ⚠️ Lưu ý: Không cần nhập mật khẩu    │
+│  [WARN] Lưu ý: Không cần nhập mật khẩu    │
 │     Bệnh nhân sẽ tự đặt qua email      │
 │                                        │
 │  Thông Tin Cá Nhân                    │
@@ -386,7 +386,7 @@ POST /api/v1/patients
 
 ```
 ┌────────────────────────────────────────┐
-│  ✅ Tạo bệnh nhân thành công!          │
+│  [YES] Tạo bệnh nhân thành công!          │
 ├────────────────────────────────────────┤
 │                                        │
 │  Mã bệnh nhân: BN000123               │
@@ -502,12 +502,12 @@ type AccountStatus =
 
 | Aspect                    | V22 (Old)               | V23/V24 (New)                |
 | ------------------------- | ----------------------- | ---------------------------- |
-| **Password in Request**   | ✅ Required             | ❌ Removed (security)        |
-| **Username in Request**   | ✅ Required             | ✅ Still Required            |
+| **Password in Request**   | [YES] Required             | [NO] Removed (security)        |
+| **Username in Request**   | [YES] Required             | [YES] Still Required            |
 | **Account Creation**      | Immediate with password | Immediate with temp password |
-| **Email Verification**    | ❌ Not required         | ✅ Required                  |
-| **Patient Sets Password** | ❌ No                   | ✅ Yes (via email)           |
-| **Staff Knows Password**  | ✅ Yes                  | ❌ No (security)             |
+| **Email Verification**    | [NO] Not required         | [YES] Required                  |
+| **Patient Sets Password** | [NO] No                   | [YES] Yes (via email)           |
+| **Staff Knows Password**  | [YES] Yes                  | [NO] No (security)             |
 
 ### Migration Checklist for FE
 
@@ -576,28 +576,28 @@ type AccountStatus =
 **Check logs**:
 
 ```
-⚠️ Failed to send welcome email to nguyenvana@gmail.com: Connection refused
-⚠️ Patient account created successfully, but email not sent
+[WARN] Failed to send welcome email to nguyenvana@gmail.com: Connection refused
+[WARN] Patient account created successfully, but email not sent
 ```
 
 ---
 
 ## 🎯 Summary for FE Team
 
-### DO ✅
+### DO [YES]
 
-1. ✅ Send `username` when creating patient (staff provides)
-2. ✅ Send `email` if you want account created
-3. ✅ Show success message mentioning email verification
-4. ✅ Handle `accountStatus` = `PENDING_VERIFICATION`
-5. ✅ Implement password setup page (`/setup-password?token=...`)
+1. [YES] Send `username` when creating patient (staff provides)
+2. [YES] Send `email` if you want account created
+3. [YES] Show success message mentioning email verification
+4. [YES] Handle `accountStatus` = `PENDING_VERIFICATION`
+5. [YES] Implement password setup page (`/setup-password?token=...`)
 
-### DON'T ❌
+### DON'T [NO]
 
-1. ❌ Send `password` in create patient request (will be ignored/error)
-2. ❌ Show password field in create patient form
-3. ❌ Allow staff to see/set patient passwords
-4. ❌ Skip email verification step
+1. [NO] Send `password` in create patient request (will be ignored/error)
+2. [NO] Show password field in create patient form
+3. [NO] Allow staff to see/set patient passwords
+4. [NO] Skip email verification step
 
 ---
 
@@ -614,4 +614,4 @@ For questions or issues:
 **Document Version**: V23/V24
 **Last Updated**: November 25, 2025
 **Author**: Backend Team
-**Status**: ✅ Active
+**Status**: [YES] Active

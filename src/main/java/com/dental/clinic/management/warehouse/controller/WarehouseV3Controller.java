@@ -17,7 +17,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * ✨ API 6.4: Warehouse Import Transaction Controller
+ *  API 6.4: Warehouse Import Transaction Controller
  *
  * Enhanced features:
  * - Invoice number tracking
@@ -46,7 +46,7 @@ public class WarehouseV3Controller {
         @PostMapping("/import")
         @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('IMPORT_ITEMS')")
         @Operation(summary = "Tạo Phiếu Nhập Kho", description = """
-                        ✨ API 6.4 - Tạo phiếu nhập kho với đầy đủ tính năng:
+                         API 6.4 - Tạo phiếu nhập kho với đầy đủ tính năng:
 
                         **Tính năng chính:**
                         - Nhập hàng từ nhà cung cấp
@@ -80,7 +80,7 @@ public class WarehouseV3Controller {
                 ImportTransactionResponse response = importTransactionService
                                 .createImportTransaction(request, employeeCode);
 
-                log.info("✅ Import transaction created - Code: {}, Total: {} VNĐ",
+                log.info(" Import transaction created - Code: {}, Total: {} VNĐ",
                                 response.getTransactionCode(), response.getTotalValue());
 
                 return ResponseEntity.status(HttpStatus.CREATED).body(response);

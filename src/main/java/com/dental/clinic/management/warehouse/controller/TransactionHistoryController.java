@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 
 /**
- * ✨ API 6.6 & 6.7: Transaction History Controller
+ *  API 6.6 & 6.7: Transaction History Controller
  *
  * Features:
  * - API 6.6: List with comprehensive filtering (type, status, payment, date,
@@ -61,7 +61,7 @@ public class TransactionHistoryController {
         @GetMapping("/transactions")
         @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('VIEW_WAREHOUSE')")
         @Operation(summary = "Lấy Lịch sử Giao dịch Kho", description = """
-                        ✨ API 6.6 - Lấy lịch sử các phiếu Nhập/Xuất/Điều chỉnh kho
+                         API 6.6 - Lấy lịch sử các phiếu Nhập/Xuất/Điều chỉnh kho
 
                         **Tính năng chính:**
                         - Bộ lọc mạnh mẽ (loại, trạng thái, thanh toán, ngày, NCC, ca bệnh)
@@ -148,7 +148,7 @@ public class TransactionHistoryController {
         @GetMapping("/transactions/{id}")
         @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('VIEW_WAREHOUSE')")
         @Operation(summary = "Xem Chi tiết Giao dịch Kho", description = """
-                        ✨ API 6.7 - Xem chi tiết đầy đủ của một phiếu Nhập/Xuất/Điều chỉnh kho
+                         API 6.7 - Xem chi tiết đầy đủ của một phiếu Nhập/Xuất/Điều chỉnh kho
 
                         **Tính năng chính:**
                         - Hiển thị đầy đủ thông tin phiếu (header, supplier/appointment, payment)

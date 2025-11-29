@@ -107,13 +107,13 @@ public class ExportTransactionService {
             ExportTransactionResponse response = buildResponse(
                     transaction, employee, itemResponses, warnings);
 
-            log.info("✅ Export transaction created successfully - Code: {}, Total: {} VNĐ",
+            log.info(" Export transaction created successfully - Code: {}, Total: {} VNĐ",
                     transaction.getTransactionCode(), totalValue);
 
             return response;
 
         } catch (Exception e) {
-            log.error("❌ Failed to create export transaction: {}", e.getMessage(), e);
+            log.error(" Failed to create export transaction: {}", e.getMessage(), e);
             throw e;
         }
     }
@@ -138,7 +138,7 @@ public class ExportTransactionService {
 
         // Validate export type specific rules
         if (request.getExportType() == ExportType.DISPOSAL && !request.getAllowExpired()) {
-            log.warn("⚠️ DISPOSAL type should typically allow expired items. Setting allowExpired=true");
+            log.warn(" DISPOSAL type should typically allow expired items. Setting allowExpired=true");
             request.setAllowExpired(true);
         }
     }
@@ -377,13 +377,13 @@ public class ExportTransactionService {
                 allocations.add(new BatchAllocation(batch, quantityToTake, unitPrice));
                 remainingQuantity -= quantityToTake;
 
-                log.debug("✅ Allocated {} units, remaining: {}", quantityToTake, remainingQuantity);
+                log.debug(" Allocated {} units, remaining: {}", quantityToTake, remainingQuantity);
             }
         }
 
         // Phase 2: If still insufficient, try unpacking from larger units
         if (remainingQuantity > 0) {
-            log.warn("⚠️ Still need {} units. Attempting auto-unpacking...", remainingQuantity);
+            log.warn(" Still need {} units. Attempting auto-unpacking...", remainingQuantity);
 
             // Get all units for this item (sorted by conversion rate DESC - larger units
             // first)
@@ -394,7 +394,7 @@ public class ExportTransactionService {
                     .collect(Collectors.toList());
 
             if (largerUnits.isEmpty()) {
-                log.error("❌ No larger units available for unpacking");
+                log.error(" No larger units available for unpacking");
                 // Stock is truly insufficient - error will be thrown by caller
             } else {
                 // Try unpacking from each larger unit
@@ -427,7 +427,7 @@ public class ExportTransactionService {
                         allocations.addAll(unpackResult.getAllocations());
                         remainingQuantity = unpackResult.getRemainingQuantity();
 
-                        log.info("✅ Unpacking complete. Remaining: {}", remainingQuantity);
+                        log.info(" Unpacking complete. Remaining: {}", remainingQuantity);
                     }
                 }
             }
@@ -528,7 +528,7 @@ public class ExportTransactionService {
         allocations.add(new BatchAllocation(childBatch, quantityToTake, unitPrice));
         remainingQuantity -= quantityToTake;
 
-        log.info("✅ Unpacked and allocated {} units", quantityToTake);
+        log.info(" Unpacked and allocated {} units", quantityToTake);
 
         return new UnpackResult(allocations, responses, totalValue, remainingQuantity);
     }
