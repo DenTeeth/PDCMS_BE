@@ -639,6 +639,42 @@ CREATE INDEX idx_audit_logs_transaction ON warehouse_audit_logs(transaction_id);
 CREATE INDEX idx_audit_logs_timestamp ON warehouse_audit_logs(action_timestamp);
 
 -- ============================================
+-- SUPPLIERS (Nhà cung cấp)
+-- ============================================
+CREATE TABLE suppliers (
+    supplier_id SERIAL PRIMARY KEY,
+    supplier_code VARCHAR(50) NOT NULL UNIQUE,
+    supplier_name VARCHAR(255) NOT NULL,
+    phone_number VARCHAR(20),
+    email VARCHAR(100),
+    address TEXT,
+    
+    -- Business Metrics (API 6.13)
+    tier_level VARCHAR(20) NOT NULL DEFAULT 'TIER_3',
+    rating_score DECIMAL(3,1) DEFAULT 0.0,
+    total_orders INTEGER DEFAULT 0,
+    last_order_date DATE,
+    is_blacklisted BOOLEAN NOT NULL DEFAULT FALSE,
+    
+    notes TEXT,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP
+);
+
+CREATE INDEX idx_suppliers_code ON suppliers(supplier_code);
+CREATE INDEX idx_suppliers_name ON suppliers(supplier_name);
+CREATE INDEX idx_suppliers_active ON suppliers(is_active);
+CREATE INDEX idx_suppliers_blacklisted ON suppliers(is_blacklisted);
+
+COMMENT ON TABLE suppliers IS 'Nhà cung cấp vật tư nha khoa';
+COMMENT ON COLUMN suppliers.tier_level IS 'Phân loại ưu tiên: TIER_1 (cao nhất), TIER_2 (ổn định), TIER_3 (dự phòng)';
+COMMENT ON COLUMN suppliers.rating_score IS 'Điểm đánh giá chất lượng (0.0 - 5.0)';
+COMMENT ON COLUMN suppliers.total_orders IS 'Tổng số đơn hàng đã nhập từ NCC này - dùng để đánh giá độ tin cậy';
+COMMENT ON COLUMN suppliers.last_order_date IS 'Ngày nhập hàng gần nhất - tracking hoạt động của NCC';
+COMMENT ON COLUMN suppliers.is_blacklisted IS 'Cờ đánh dấu NCC bị đưa vào danh sách đen (quality/fraud issues)';
+
+-- ============================================
 -- SUPPLIER ITEMS (Many-to-Many)
 -- ============================================
 CREATE TABLE supplier_items (

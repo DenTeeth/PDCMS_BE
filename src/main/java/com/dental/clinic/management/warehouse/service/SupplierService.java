@@ -55,6 +55,97 @@ public class SupplierService {
         }
 
         /**
+         * API 6.13: GET Suppliers with Business Metrics
+         * Advanced filtering: search, blacklist status, active status
+         * Returns: SupplierPageResponse with all fields including metrics
+         * 
+         * @param filterRequest Filter and pagination parameters
+         * @return Paginated supplier list with business metrics
+         */
+        @Transactional(readOnly = true)
+        public com.dental.clinic.management.warehouse.dto.SupplierPageResponse getSuppliers(
+                        com.dental.clinic.management.warehouse.dto.SupplierFilterRequest filterRequest) {
+                
+                // Validate and normalize parameters
+                filterRequest.validateAndNormalize();
+                
+                log.info("API 6.13 - Getting suppliers with filters: search='{}', isBlacklisted={}, isActive={}, " +
+                        "page={}, size={}, sortBy={}, sortDir={}",
+                        filterRequest.getSearch(),
+                        filterRequest.getIsBlacklisted(),
+                        filterRequest.getIsActive(),
+                        filterRequest.getPage(),
+                        filterRequest.getSize(),
+                        filterRequest.getSortBy(),
+                        filterRequest.getSortDir()
+                );
+
+                // Create Pageable with dynamic sorting
+                org.springframework.data.domain.Sort sort = org.springframework.data.domain.Sort.by(
+                        filterRequest.getSortDir().equalsIgnoreCase("DESC")
+                                ? org.springframework.data.domain.Sort.Direction.DESC
+                                : org.springframework.data.domain.Sort.Direction.ASC,
+                        filterRequest.getSortColumn()
+                );
+                
+                Pageable pageable = org.springframework.data.domain.PageRequest.of(
+                        filterRequest.getPage(),
+                        filterRequest.getSize(),
+                        sort
+                );
+
+                // Execute query with filters
+                Page<Supplier> suppliers = supplierRepository.findAllWithFilters(
+                        filterRequest.getSearch(),
+                        filterRequest.getIsBlacklisted(),
+                        filterRequest.getIsActive(),
+                        pageable
+                );
+
+                // Map to SupplierListDTO
+                List<com.dental.clinic.management.warehouse.dto.SupplierListDTO> supplierDTOs = suppliers.getContent()
+                        .stream()
+                        .map(this::mapToSupplierListDTO)
+                        .collect(Collectors.toList());
+
+                log.info("API 6.13 - Found {} suppliers (total: {}, page: {}/{})",
+                        supplierDTOs.size(),
+                        suppliers.getTotalElements(),
+                        suppliers.getNumber() + 1,
+                        suppliers.getTotalPages()
+                );
+
+                // Build response with pagination metadata
+                return com.dental.clinic.management.warehouse.dto.SupplierPageResponse.fromPage(
+                        suppliers,
+                        supplierDTOs
+                );
+        }
+
+        /**
+         * Mapper: Supplier -> SupplierListDTO (for API 6.13)
+         */
+        private com.dental.clinic.management.warehouse.dto.SupplierListDTO mapToSupplierListDTO(Supplier supplier) {
+                return com.dental.clinic.management.warehouse.dto.SupplierListDTO.builder()
+                        .supplierId(supplier.getSupplierId())
+                        .supplierCode(supplier.getSupplierCode())
+                        .supplierName(supplier.getSupplierName())
+                        .phoneNumber(supplier.getPhoneNumber())
+                        .email(supplier.getEmail())
+                        .address(supplier.getAddress())
+                        .tierLevel(supplier.getTierLevel())
+                        .ratingScore(supplier.getRatingScore())
+                        .totalOrders(supplier.getTotalOrders())
+                        .lastOrderDate(supplier.getLastOrderDate())
+                        .isBlacklisted(supplier.getIsBlacklisted())
+                        .isActive(supplier.getIsActive())
+                        .notes(supplier.getNotes())
+                        .createdAt(supplier.getCreatedAt())
+                        .updatedAt(supplier.getUpdatedAt())
+                        .build();
+        }
+
+        /**
          *  GET Supplier By ID (Detail)
          * Trả về SupplierDetailResponse (đầy đủ + danh sách vật tư)
          */

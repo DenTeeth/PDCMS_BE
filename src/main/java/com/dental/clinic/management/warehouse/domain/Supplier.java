@@ -71,6 +71,15 @@ public class Supplier {
     @Column(name = "last_order_date")
     private java.time.LocalDate lastOrderDate;
 
+    /**
+     * Cờ đánh dấu nhà cung cấp bị đưa vào danh sách đen
+     * TRUE = Không nên đặt hàng từ NCC này (quality/fraud issues)
+     * FALSE = NCC đáng tin cậy (default)
+     */
+    @Column(name = "is_blacklisted", nullable = false)
+    @Builder.Default
+    private Boolean isBlacklisted = false;
+
     @Column(columnDefinition = "TEXT")
     private String notes;
 

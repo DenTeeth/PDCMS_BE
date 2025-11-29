@@ -54,4 +54,29 @@ public interface SupplierRepository extends JpaRepository<Supplier, Long> {
             "WHERE LOWER(s.email) = LOWER(:email) AND s.supplierId != :supplierId")
     boolean existsByEmailIgnoreCaseAndIdNot(@Param("email") String email,
             @Param("supplierId") Long supplierId);
+
+    /**
+     * API 6.13: Advanced supplier search with business metrics
+     * Features: multi-field search, blacklist filter, active filter, sorting
+     * 
+     * @param search Search keyword (searches in name, phone, email, code)
+     * @param isBlacklisted Filter by blacklist status (null = all)
+     * @param isActive Filter by active status (null = all)
+     * @param pageable Pagination and sort parameters
+     * @return Page of suppliers with all fields
+     */
+    @Query("SELECT s FROM Supplier s WHERE " +
+            "(:search IS NULL OR :search = '' OR " +
+            "LOWER(s.supplierName) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+            "LOWER(s.supplierCode) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+            "s.phoneNumber LIKE CONCAT('%', :search, '%') OR " +
+            "LOWER(s.email) LIKE LOWER(CONCAT('%', :search, '%'))) AND " +
+            "(:isBlacklisted IS NULL OR s.isBlacklisted = :isBlacklisted) AND " +
+            "(:isActive IS NULL OR s.isActive = :isActive)")
+    Page<Supplier> findAllWithFilters(
+            @Param("search") String search,
+            @Param("isBlacklisted") Boolean isBlacklisted,
+            @Param("isActive") Boolean isActive,
+            Pageable pageable
+    );
 }

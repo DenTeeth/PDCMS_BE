@@ -31,7 +31,7 @@ import java.util.List;
  * Quản lý nhà cung cấp với Pagination + Search + Sort
  */
 @RestController
-@RequestMapping("/api/v1/suppliers")
+@RequestMapping("/api/v1/warehouse/suppliers")
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Supplier Management", description = "APIs quản lý nhà cung cấp")
@@ -70,6 +70,86 @@ public class SupplierController {
         Page<SupplierSummaryResponse> suppliers = supplierService.getAllSuppliers(search, pageable);
 
         return ResponseEntity.ok(suppliers);
+    }
+
+    /**
+     * API 6.13: GET Suppliers with Business Metrics (Advanced)
+     * Features:
+     * - Multi-field search (name, phone, email, code)
+     * - Filter by blacklist status
+     * - Filter by active status
+     * - Sort by: supplierName, totalOrders, lastOrderDate, etc.
+     * - Returns full supplier info + business metrics
+     */
+    @Operation(
+        summary = "API 6.13 - Lấy danh sách nhà cung cấp với metrics",
+        description = """
+            Advanced supplier list với business metrics cho procurement decisions.
+            
+            **Search**: Tìm kiếm đa trường (name, phone, email, code)
+            
+            **Filters**:
+            - isBlacklisted: Lọc NCC đen (fraud/quality issues)
+            - isActive: Lọc NCC hoạt động
+            
+            **Sort Fields**: supplierName, totalOrders, lastOrderDate, createdAt, tierLevel, ratingScore
+            
+            **Business Metrics**:
+            - totalOrders: Số lần đã nhập hàng từ NCC này (reliability indicator)
+            - lastOrderDate: Ngày nhập gần nhất (detect inactive suppliers > 6 months)
+            - isBlacklisted: Cảnh báo NCC có vấn đề chất lượng/fraud
+            
+            **Use Cases**:
+            - Smart procurement: Chọn NCC đáng tin cậy (high totalOrders)
+            - Risk management: Tránh NCC blacklisted
+            - Supplier relationship: Detect inactive suppliers cần follow-up
+            """
+    )
+    @ApiMessage("Lấy danh sách nhà cung cấp với metrics thành công")
+    @GetMapping("/list")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAnyAuthority('VIEW_WAREHOUSE', 'MANAGE_SUPPLIERS')")
+    public ResponseEntity<com.dental.clinic.management.warehouse.dto.SupplierPageResponse> getSuppliersWithMetrics(
+            @Parameter(description = "Page number (0-indexed)", example = "0")
+            @RequestParam(required = false) Integer page,
+            
+            @Parameter(description = "Page size (max 100)", example = "20")
+            @RequestParam(required = false) Integer size,
+            
+            @Parameter(description = "Search keyword (searches in name, phone, email, code)", example = "ABC")
+            @RequestParam(required = false) String search,
+            
+            @Parameter(description = "Filter by blacklist status (true = only blacklisted, false = only non-blacklisted, null = all)", example = "false")
+            @RequestParam(required = false) Boolean isBlacklisted,
+            
+            @Parameter(description = "Filter by active status (true = only active, false = only inactive, null = all)", example = "true")
+            @RequestParam(required = false) Boolean isActive,
+            
+            @Parameter(description = "Sort field: supplierName, totalOrders, lastOrderDate, createdAt, tierLevel, ratingScore", example = "totalOrders")
+            @RequestParam(required = false) String sortBy,
+            
+            @Parameter(description = "Sort direction: ASC or DESC", example = "DESC")
+            @RequestParam(required = false) String sortDir
+    ) {
+        log.info("API 6.13 - GET /api/v1/suppliers/list - search='{}', isBlacklisted={}, isActive={}",
+                search, isBlacklisted, isActive);
+
+        // Build filter request
+        com.dental.clinic.management.warehouse.dto.SupplierFilterRequest filterRequest = 
+            com.dental.clinic.management.warehouse.dto.SupplierFilterRequest.builder()
+                .page(page)
+                .size(size)
+                .search(search)
+                .isBlacklisted(isBlacklisted)
+                .isActive(isActive)
+                .sortBy(sortBy)
+                .sortDir(sortDir)
+                .build();
+
+        // Get suppliers with metrics
+        com.dental.clinic.management.warehouse.dto.SupplierPageResponse response = 
+            supplierService.getSuppliers(filterRequest);
+
+        return ResponseEntity.ok(response);
     }
 
     /**
