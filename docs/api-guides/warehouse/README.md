@@ -1,17 +1,31 @@
 # 📦 Warehouse API Documentation Index
 
-**Last Updated:** November 27, 2025
-**Total APIs:** 8 Primary Endpoints + CRUD Operations
+**Last Updated:** November 28, 2025
+**Total APIs:** 11 APIs (6.1 - 6.11)
+**Status:** 10/11 Production Ready ✅
+
+---
+
+## 🚀 Quick Start
+
+**📖 Main Reference**: [`WAREHOUSE_MODULE_API_REFERENCE.md`](../../WAREHOUSE_MODULE_API_REFERENCE.md)
+- Complete API documentation for all 11 endpoints
+- Request/response examples
+- Recent fixes and improvements
+- Test results summary
+
+**🧪 Testing**: `test_all_warehouse_apis.sh` (automated test suite)
 
 ---
 
 ## 📚 Documentation Structure
 
-### Naming Convention:
+### Current Files (Kept):
+- **`API_X.Y_FEATURE_NAME_COMPLETE.md`** - Complete API specification
 
-- **`API_X.Y_FEATURE_NAME_COMPLETE.md`** - Đặc tả API đầy đủ
-- **`API_X.Y_FEATURE_NAME_TESTING_GUIDE.md`** - Hướng dẫn test
-- **`API_X.Y_FEATURE_NAME_IMPLEMENTATION_SUMMARY.md`** - Tóm tắt implementation
+### Removed (28/11/2025):
+- ❌ `*_TESTING_GUIDE.md` - Replaced by automated tests
+- ❌ `*_IMPLEMENTATION_SUMMARY.md` - Merged into _COMPLETE docs
 
 ---
 

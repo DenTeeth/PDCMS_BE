@@ -577,27 +577,28 @@ public class ExportTransactionService {
 
     /**
      * Get unit price from batch (for COGS tracking)
-     * 
-     * Uses FIFO pricing: tries to get the purchase price from import transactions for this batch.
+     *
+     * Uses FIFO pricing: tries to get the purchase price from import transactions
+     * for this batch.
      * Falls back to average price or default if not found.
      */
     private BigDecimal getUnitPrice(ItemBatch batch) {
         // Try to get the price from the most recent import transaction for this batch
         List<StorageTransaction> transactions = transactionRepository.findByTransactionType(TransactionType.IMPORT);
-        
+
         for (StorageTransaction tx : transactions) {
             if (tx.getItems() != null) {
                 for (var item : tx.getItems()) {
-                    if (item.getBatch() != null && 
-                        item.getBatch().getBatchId().equals(batch.getBatchId()) &&
-                        item.getPrice() != null &&
-                        item.getPrice().compareTo(BigDecimal.ZERO) > 0) {
+                    if (item.getBatch() != null &&
+                            item.getBatch().getBatchId().equals(batch.getBatchId()) &&
+                            item.getPrice() != null &&
+                            item.getPrice().compareTo(BigDecimal.ZERO) > 0) {
                         return item.getPrice(); // Return the import price
                     }
                 }
             }
         }
-        
+
         // Fallback: Use a reasonable default price for legacy data
         // In production, this should query from a price_history table or item master
         return BigDecimal.valueOf(50000); // 50,000 VNĐ per unit
