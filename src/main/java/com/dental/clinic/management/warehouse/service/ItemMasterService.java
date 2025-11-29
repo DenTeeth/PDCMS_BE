@@ -596,43 +596,44 @@ public class ItemMasterService {
 
         /**
          * API 6.12: Convert item quantity between units (Batch support)
-         * 
+         *
          * Business logic:
          * 1. Validate all units belong to their respective items (security)
          * 2. Validate base units exist and conversion rates > 0
          * 3. Convert using intermediate base unit pattern:
-         *    baseQty = quantity * fromUnit.conversionRate
-         *    result = baseQty / toUnit.conversionRate
+         * baseQty = quantity * fromUnit.conversionRate
+         * result = baseQty / toUnit.conversionRate
          * 4. Apply rounding strategy (FLOOR/CEILING/HALF_UP)
-         * 
+         *
          * @param request Batch conversion request with rounding mode
          * @return Conversion results with formula for transparency
          */
         @Transactional(readOnly = true)
         public com.dental.clinic.management.warehouse.dto.response.ConversionResponse convertUnits(
                         com.dental.clinic.management.warehouse.dto.request.ConversionRequest request) {
-                
-                log.info("Processing {} unit conversions with rounding mode: {}", 
-                        request.getConversions().size(), request.getRoundingMode());
+
+                log.info("Processing {} unit conversions with rounding mode: {}",
+                                request.getConversions().size(), request.getRoundingMode());
 
                 List<com.dental.clinic.management.warehouse.dto.response.ConversionResult> results = new ArrayList<>();
-                
-                for (com.dental.clinic.management.warehouse.dto.request.ConversionItemRequest item : request.getConversions()) {
+
+                for (com.dental.clinic.management.warehouse.dto.request.ConversionItemRequest item : request
+                                .getConversions()) {
                         try {
-                                com.dental.clinic.management.warehouse.dto.response.ConversionResult result = 
-                                        convertSingleUnit(item, request.getRoundingMode());
+                                com.dental.clinic.management.warehouse.dto.response.ConversionResult result = convertSingleUnit(
+                                                item, request.getRoundingMode());
                                 results.add(result);
                         } catch (Exception e) {
                                 log.error("Failed to convert item {}: {}", item.getItemMasterId(), e.getMessage());
                                 throw new ResponseStatusException(
-                                        HttpStatus.BAD_REQUEST,
-                                        String.format("Conversion failed for item ID %d: %s", 
-                                                item.getItemMasterId(), e.getMessage()));
+                                                HttpStatus.BAD_REQUEST,
+                                                String.format("Conversion failed for item ID %d: %s",
+                                                                item.getItemMasterId(), e.getMessage()));
                         }
                 }
 
                 return new com.dental.clinic.management.warehouse.dto.response.ConversionResponse(
-                        results.size(), results);
+                                results.size(), results);
         }
 
         /**
@@ -641,53 +642,53 @@ public class ItemMasterService {
         private com.dental.clinic.management.warehouse.dto.response.ConversionResult convertSingleUnit(
                         com.dental.clinic.management.warehouse.dto.request.ConversionItemRequest request,
                         String roundingMode) {
-                
+
                 // 1. Fetch item master
                 ItemMaster itemMaster = itemMasterRepository.findById(request.getItemMasterId())
-                        .orElseThrow(() -> new ResourceNotFoundException(
-                                "ITEM_NOT_FOUND",
-                                String.format("Item with ID %d not found", request.getItemMasterId())));
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "ITEM_NOT_FOUND",
+                                                String.format("Item with ID %d not found", request.getItemMasterId())));
 
                 // 2. Fetch from unit and validate ownership
                 ItemUnit fromUnit = itemUnitRepository.findById(request.getFromUnitId())
-                        .orElseThrow(() -> new ResourceNotFoundException(
-                                "UNIT_NOT_FOUND",
-                                String.format("Unit with ID %d not found", request.getFromUnitId())));
-                
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "UNIT_NOT_FOUND",
+                                                String.format("Unit with ID %d not found", request.getFromUnitId())));
+
                 if (!fromUnit.getItemMaster().getItemMasterId().equals(request.getItemMasterId())) {
                         throw new ResponseStatusException(
-                                HttpStatus.BAD_REQUEST,
-                                String.format("Unit ID %d does not belong to Item ID %d",
-                                        request.getFromUnitId(), request.getItemMasterId()));
+                                        HttpStatus.BAD_REQUEST,
+                                        String.format("Unit ID %d does not belong to Item ID %d",
+                                                        request.getFromUnitId(), request.getItemMasterId()));
                 }
 
                 // 3. Fetch to unit and validate ownership
                 ItemUnit toUnit = itemUnitRepository.findById(request.getToUnitId())
-                        .orElseThrow(() -> new ResourceNotFoundException(
-                                "UNIT_NOT_FOUND",
-                                String.format("Unit with ID %d not found", request.getToUnitId())));
-                
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "UNIT_NOT_FOUND",
+                                                String.format("Unit with ID %d not found", request.getToUnitId())));
+
                 if (!toUnit.getItemMaster().getItemMasterId().equals(request.getItemMasterId())) {
                         throw new ResponseStatusException(
-                                HttpStatus.BAD_REQUEST,
-                                String.format("Unit ID %d does not belong to Item ID %d",
-                                        request.getToUnitId(), request.getItemMasterId()));
+                                        HttpStatus.BAD_REQUEST,
+                                        String.format("Unit ID %d does not belong to Item ID %d",
+                                                        request.getToUnitId(), request.getItemMasterId()));
                 }
 
                 // 4. Validate conversion rates > 0
                 if (fromUnit.getConversionRate() <= 0 || toUnit.getConversionRate() <= 0) {
                         throw new ResponseStatusException(
-                                HttpStatus.BAD_REQUEST,
-                                "Conversion rate must be greater than 0");
+                                        HttpStatus.BAD_REQUEST,
+                                        "Conversion rate must be greater than 0");
                 }
 
                 // 5. Validate base unit exists (optional but good practice)
                 itemUnitRepository
-                        .findBaseUnitByItemMasterId(itemMaster.getItemMasterId())
-                        .orElseThrow(() -> new ResponseStatusException(
-                                HttpStatus.INTERNAL_SERVER_ERROR,
-                                String.format("Base unit not found for item %s. Data integrity issue.",
-                                        itemMaster.getItemName())));
+                                .findBaseUnitByItemMasterId(itemMaster.getItemMasterId())
+                                .orElseThrow(() -> new ResponseStatusException(
+                                                HttpStatus.INTERNAL_SERVER_ERROR,
+                                                String.format("Base unit not found for item %s. Data integrity issue.",
+                                                                itemMaster.getItemName())));
 
                 // 6. Perform conversion using intermediate base unit
                 // Formula: baseQty = quantity * fromRate; result = baseQty / toRate
@@ -699,16 +700,15 @@ public class ItemMasterService {
 
                 // 8. Build formula string for transparency
                 String formula = String.format("(%s * %d) / %d",
-                        formatNumber(request.getQuantity()),
-                        fromUnit.getConversionRate(),
-                        toUnit.getConversionRate());
+                                formatNumber(request.getQuantity()),
+                                fromUnit.getConversionRate(),
+                                toUnit.getConversionRate());
 
                 // 9. Calculate conversion factor for frontend reference
                 double conversionFactor = (double) fromUnit.getConversionRate() / toUnit.getConversionRate();
 
                 // 10. Build result DTO
-                com.dental.clinic.management.warehouse.dto.response.ConversionResult result = 
-                        new com.dental.clinic.management.warehouse.dto.response.ConversionResult();
+                com.dental.clinic.management.warehouse.dto.response.ConversionResult result = new com.dental.clinic.management.warehouse.dto.response.ConversionResult();
                 result.setItemMasterId(itemMaster.getItemMasterId());
                 result.setItemName(itemMaster.getItemName());
                 result.setFromUnitName(fromUnit.getUnitName());
@@ -723,9 +723,10 @@ public class ItemMasterService {
 
         /**
          * Apply rounding strategy to conversion result
-         * 
+         *
          * @param value Raw calculation result
-         * @param mode FLOOR (round down), CEILING (round up), HALF_UP (standard rounding)
+         * @param mode  FLOOR (round down), CEILING (round up), HALF_UP (standard
+         *              rounding)
          * @return Rounded value
          */
         private double applyRounding(double value, String mode) {

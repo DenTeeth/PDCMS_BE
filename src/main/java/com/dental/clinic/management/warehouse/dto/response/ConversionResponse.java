@@ -16,10 +16,10 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ConversionResponse {
-    
+
     private Integer totalProcessed;
     private List<ConversionResult> results;
-    
+
     /**
      * Constructor for single conversion (backward compatibility)
      */

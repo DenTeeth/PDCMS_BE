@@ -2,8 +2,8 @@
 
 ## API Overview
 
-**Endpoint**: `POST /api/v1/warehouse/items/units/convert`  
-**Method**: POST  
+**Endpoint**: `POST /api/v1/warehouse/items/units/convert`
+**Method**: POST
 **Authorization**: Requires one of: `ADMIN`, `VIEW_ITEMS`, `VIEW_WAREHOUSE`, `MANAGE_WAREHOUSE`
 
 ## Purpose
@@ -11,6 +11,7 @@
 Utility API for converting quantities between different units of the same item. Supports batch processing for better performance in prescription and transaction forms.
 
 **Use Cases**:
+
 - Prescription forms: Show "0.5 Hop (= 50 Vien)" for doctor verification
 - Import forms: Convert "10 Thung" to "10,000 Vien" for inventory calculation
 - Stock reports: Display quantities in user-preferred units
@@ -20,16 +21,19 @@ Utility API for converting quantities between different units of the same item. 
 Based on `dental-clinic-seed-data.sql`, we have these items with multiple units:
 
 ### Item 1: Kim tiem nha khoa 27G x 1 inch
+
 - Base Unit: Chiec (conversion_rate: 1)
 - Cap (conversion_rate: 2) - 1 Cap = 2 Chiec
 - Hop (conversion_rate: 200) - 1 Hop = 200 Chiec
 
 ### Item 2: Gang tay nha khoa size M
+
 - Base Unit: Cai (conversion_rate: 1)
 - Cap (conversion_rate: 2) - 1 Cap = 2 Cai
 - Hop (conversion_rate: 100) - 1 Hop = 100 Cai
 
 ### Item 3: Lidocaine 2% - 20ml
+
 - Base Unit: Ong (conversion_rate: 1)
 - Tuyp (conversion_rate: 1) - 1 Tuyp = 1 Ong (same thing, different name)
 - Hop (conversion_rate: 50) - 1 Hop = 50 Ong
@@ -51,6 +55,7 @@ echo "Token: $TOKEN"
 ```
 
 3. Verify token is valid:
+
 ```bash
 curl -s http://localhost:8080/api/v1/accounts/current \
   -H "Authorization: Bearer $TOKEN" | jq
@@ -63,6 +68,7 @@ curl -s http://localhost:8080/api/v1/accounts/current \
 **Scenario**: Convert 2.5 boxes to individual needles
 
 **Request**:
+
 ```bash
 curl -X POST http://localhost:8080/api/v1/warehouse/items/units/convert \
   -H "Authorization: Bearer $TOKEN" \
@@ -81,6 +87,7 @@ curl -X POST http://localhost:8080/api/v1/warehouse/items/units/convert \
 ```
 
 **Expected Response**:
+
 ```json
 {
   "statusCode": 200,
@@ -105,8 +112,9 @@ curl -X POST http://localhost:8080/api/v1/warehouse/items/units/convert \
 ```
 
 **Verification**:
+
 - Total processed: 1
-- Result: 500 needles (2.5 boxes * 200 needles/box)
+- Result: 500 needles (2.5 boxes \* 200 needles/box)
 - Formula shows transparent calculation
 - Display format removes unnecessary ".0"
 
@@ -117,6 +125,7 @@ curl -X POST http://localhost:8080/api/v1/warehouse/items/units/convert \
 **Scenario**: Convert quantities for 3 different items in one request
 
 **Request**:
+
 ```bash
 curl -X POST http://localhost:8080/api/v1/warehouse/items/units/convert \
   -H "Authorization: Bearer $TOKEN" \
@@ -147,6 +156,7 @@ curl -X POST http://localhost:8080/api/v1/warehouse/items/units/convert \
 ```
 
 **Expected Response**:
+
 ```json
 {
   "statusCode": 200,
@@ -193,6 +203,7 @@ curl -X POST http://localhost:8080/api/v1/warehouse/items/units/convert \
 ```
 
 **Verification**:
+
 - Total processed: 3
 - All conversions successful in single request
 - Performance: 1 HTTP request instead of 3
@@ -204,6 +215,7 @@ curl -X POST http://localhost:8080/api/v1/warehouse/items/units/convert \
 **Scenario**: Convert 2.5 boxes to pairs, round down (cannot have 0.5 pair)
 
 **Request**:
+
 ```bash
 curl -X POST http://localhost:8080/api/v1/warehouse/items/units/convert \
   -H "Authorization: Bearer $TOKEN" \
@@ -222,6 +234,7 @@ curl -X POST http://localhost:8080/api/v1/warehouse/items/units/convert \
 ```
 
 **Expected Response**:
+
 ```json
 {
   "statusCode": 200,
@@ -246,6 +259,7 @@ curl -X POST http://localhost:8080/api/v1/warehouse/items/units/convert \
 ```
 
 **Calculation**:
+
 - 2.5 Hop = 500 Chiec (base)
 - 500 Chiec / 2 = 250 Cap (exact, no rounding needed in this case)
 
@@ -256,6 +270,7 @@ curl -X POST http://localhost:8080/api/v1/warehouse/items/units/convert \
 **Scenario**: Convert fractional quantity, round up (buy extra instead of shortage)
 
 **Request**:
+
 ```bash
 curl -X POST http://localhost:8080/api/v1/warehouse/items/units/convert \
   -H "Authorization: Bearer $TOKEN" \
@@ -274,6 +289,7 @@ curl -X POST http://localhost:8080/api/v1/warehouse/items/units/convert \
 ```
 
 **Expected Response**:
+
 ```json
 {
   "statusCode": 200,
@@ -298,6 +314,7 @@ curl -X POST http://localhost:8080/api/v1/warehouse/items/units/convert \
 ```
 
 **Calculation**:
+
 - 83 Cai = 83 Cai (base)
 - 83 Cai / 100 = 0.83 Hop
 - CEILING: Round up to 1 Hop (need to buy full box)
@@ -309,6 +326,7 @@ curl -X POST http://localhost:8080/api/v1/warehouse/items/units/convert \
 **Scenario**: Fractional conversion with standard rounding
 
 **Request**:
+
 ```bash
 curl -X POST http://localhost:8080/api/v1/warehouse/items/units/convert \
   -H "Authorization: Bearer $TOKEN" \
@@ -327,6 +345,7 @@ curl -X POST http://localhost:8080/api/v1/warehouse/items/units/convert \
 ```
 
 **Expected Response**:
+
 ```json
 {
   "statusCode": 200,
@@ -351,6 +370,7 @@ curl -X POST http://localhost:8080/api/v1/warehouse/items/units/convert \
 ```
 
 **Calculation**:
+
 - 25 Chiec / 2 = 12.5 Cap (exact)
 - Display keeps 1 decimal place
 
@@ -361,6 +381,7 @@ curl -X POST http://localhost:8080/api/v1/warehouse/items/units/convert \
 **Scenario**: Security test - try to convert using unit from different item
 
 **Request**:
+
 ```bash
 curl -X POST http://localhost:8080/api/v1/warehouse/items/units/convert \
   -H "Authorization: Bearer $TOKEN" \
@@ -379,6 +400,7 @@ curl -X POST http://localhost:8080/api/v1/warehouse/items/units/convert \
 ```
 
 **Expected Response**:
+
 ```json
 {
   "statusCode": 400,
@@ -388,6 +410,7 @@ curl -X POST http://localhost:8080/api/v1/warehouse/items/units/convert \
 ```
 
 **Verification**:
+
 - Status code: 400 BAD_REQUEST
 - Clear error message
 - Security validation prevents cross-item unit mixing
@@ -399,6 +422,7 @@ curl -X POST http://localhost:8080/api/v1/warehouse/items/units/convert \
 **Scenario**: Try to convert non-existent item
 
 **Request**:
+
 ```bash
 curl -X POST http://localhost:8080/api/v1/warehouse/items/units/convert \
   -H "Authorization: Bearer $TOKEN" \
@@ -417,6 +441,7 @@ curl -X POST http://localhost:8080/api/v1/warehouse/items/units/convert \
 ```
 
 **Expected Response**:
+
 ```json
 {
   "statusCode": 404,
@@ -426,6 +451,7 @@ curl -X POST http://localhost:8080/api/v1/warehouse/items/units/convert \
 ```
 
 **Verification**:
+
 - Status code: 404 NOT_FOUND
 - Resource not found error
 
@@ -436,6 +462,7 @@ curl -X POST http://localhost:8080/api/v1/warehouse/items/units/convert \
 **Scenario**: Send empty conversions array
 
 **Request**:
+
 ```bash
 curl -X POST http://localhost:8080/api/v1/warehouse/items/units/convert \
   -H "Authorization: Bearer $TOKEN" \
@@ -447,6 +474,7 @@ curl -X POST http://localhost:8080/api/v1/warehouse/items/units/convert \
 ```
 
 **Expected Response**:
+
 ```json
 {
   "statusCode": 400,
@@ -456,6 +484,7 @@ curl -X POST http://localhost:8080/api/v1/warehouse/items/units/convert \
 ```
 
 **Verification**:
+
 - Status code: 400 BAD_REQUEST
 - Validation error for empty list
 
@@ -466,6 +495,7 @@ curl -X POST http://localhost:8080/api/v1/warehouse/items/units/convert \
 **Scenario**: Try to convert negative quantity
 
 **Request**:
+
 ```bash
 curl -X POST http://localhost:8080/api/v1/warehouse/items/units/convert \
   -H "Authorization: Bearer $TOKEN" \
@@ -484,6 +514,7 @@ curl -X POST http://localhost:8080/api/v1/warehouse/items/units/convert \
 ```
 
 **Expected Response**:
+
 ```json
 {
   "statusCode": 400,
@@ -493,6 +524,7 @@ curl -X POST http://localhost:8080/api/v1/warehouse/items/units/convert \
 ```
 
 **Verification**:
+
 - Status code: 400 BAD_REQUEST
 - Validation prevents negative quantities
 
@@ -503,6 +535,7 @@ curl -X POST http://localhost:8080/api/v1/warehouse/items/units/convert \
 **Scenario**: Try to convert with non-existent unit ID
 
 **Request**:
+
 ```bash
 curl -X POST http://localhost:8080/api/v1/warehouse/items/units/convert \
   -H "Authorization: Bearer $TOKEN" \
@@ -521,6 +554,7 @@ curl -X POST http://localhost:8080/api/v1/warehouse/items/units/convert \
 ```
 
 **Expected Response**:
+
 ```json
 {
   "statusCode": 404,
@@ -530,6 +564,7 @@ curl -X POST http://localhost:8080/api/v1/warehouse/items/units/convert \
 ```
 
 **Verification**:
+
 - Status code: 404 NOT_FOUND
 - Unit resource not found
 
@@ -537,21 +572,21 @@ curl -X POST http://localhost:8080/api/v1/warehouse/items/units/convert \
 
 ## Test Summary
 
-| Test | Description | Expected Status | Validation |
-|------|-------------|----------------|------------|
-| TEST 1 | Single conversion (Hop to Chiec) | 200 OK | Correct calculation, formula shown |
-| TEST 2 | Batch conversion (3 items) | 200 OK | All 3 processed successfully |
-| TEST 3 | Rounding FLOOR | 200 OK | Round down applied |
-| TEST 4 | Rounding CEILING | 200 OK | Round up applied (0.83 -> 1) |
-| TEST 5 | Rounding HALF_UP (decimal) | 200 OK | 12.5 displayed with 1 decimal |
-| TEST 6 | Invalid unit relation | 400 ERROR | Security validation |
-| TEST 7 | Item not found | 404 ERROR | Resource validation |
-| TEST 8 | Empty conversions | 400 ERROR | Input validation |
-| TEST 9 | Negative quantity | 400 ERROR | Business rule validation |
-| TEST 10 | Unit not found | 404 ERROR | Resource validation |
+| Test    | Description                      | Expected Status | Validation                         |
+| ------- | -------------------------------- | --------------- | ---------------------------------- |
+| TEST 1  | Single conversion (Hop to Chiec) | 200 OK          | Correct calculation, formula shown |
+| TEST 2  | Batch conversion (3 items)       | 200 OK          | All 3 processed successfully       |
+| TEST 3  | Rounding FLOOR                   | 200 OK          | Round down applied                 |
+| TEST 4  | Rounding CEILING                 | 200 OK          | Round up applied (0.83 -> 1)       |
+| TEST 5  | Rounding HALF_UP (decimal)       | 200 OK          | 12.5 displayed with 1 decimal      |
+| TEST 6  | Invalid unit relation            | 400 ERROR       | Security validation                |
+| TEST 7  | Item not found                   | 404 ERROR       | Resource validation                |
+| TEST 8  | Empty conversions                | 400 ERROR       | Input validation                   |
+| TEST 9  | Negative quantity                | 400 ERROR       | Business rule validation           |
+| TEST 10 | Unit not found                   | 404 ERROR       | Resource validation                |
 
-**Total Test Cases**: 10  
-**Success Cases**: 5  
+**Total Test Cases**: 10
+**Success Cases**: 5
 **Error Cases**: 5
 
 ## Quick Test Script
@@ -601,11 +636,12 @@ echo -e "\n=== All Tests Completed ==="
 
 ## Performance Benchmarks
 
-**Single conversion**: ~30ms  
-**Batch (3 items)**: ~50ms  
+**Single conversion**: ~30ms
+**Batch (3 items)**: ~50ms
 **Batch (10 items)**: ~100ms
 
 **Comparison**:
+
 - Individual requests: 3 items = 90ms (3 × 30ms + HTTP overhead)
 - Batch request: 3 items = 50ms (45% faster)
 

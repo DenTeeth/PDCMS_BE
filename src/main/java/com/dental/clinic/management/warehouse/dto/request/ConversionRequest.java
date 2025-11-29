@@ -18,11 +18,11 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ConversionRequest {
-    
+
     @NotEmpty(message = "Conversions list cannot be empty")
     @Valid
     private List<ConversionItemRequest> conversions;
-    
+
     /**
      * Rounding mode for conversion results
      * FLOOR: Round down (default for medications - cannot split pills)

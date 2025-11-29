@@ -16,19 +16,19 @@ import jakarta.validation.constraints.Positive;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ConversionItemRequest {
-    
+
     @NotNull(message = "Item master ID is required")
     @Positive(message = "Item master ID must be positive")
     private Long itemMasterId;
-    
+
     @NotNull(message = "From unit ID is required")
     @Positive(message = "From unit ID must be positive")
     private Long fromUnitId;
-    
+
     @NotNull(message = "To unit ID is required")
     @Positive(message = "To unit ID must be positive")
     private Long toUnitId;
-    
+
     @NotNull(message = "Quantity is required")
     @Positive(message = "Quantity must be positive")
     private Double quantity;
