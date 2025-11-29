@@ -321,7 +321,8 @@ public class SupplierService {
         /**
          * API 6.15: Update Supplier
          * Updates supplier profile and risk management flags
-         * Validates: (1) Supplier exists (404), (2) Duplicate name with other suppliers (409)
+         * Validates: (1) Supplier exists (404), (2) Duplicate name with other suppliers
+         * (409)
          * Note: Metrics (totalOrders, lastOrderDate) are NOT updated via this API
          */
         @Transactional

@@ -60,7 +60,7 @@ public class SupplierMapper {
         supplier.setPhoneNumber(request.getPhoneNumber());
         supplier.setEmail(request.getEmail());
         supplier.setAddress(request.getAddress());
-        
+
         // Risk management flags
         if (request.getIsActive() != null) {
             supplier.setIsActive(request.getIsActive());
@@ -68,7 +68,7 @@ public class SupplierMapper {
         if (request.getIsBlacklisted() != null) {
             supplier.setIsBlacklisted(request.getIsBlacklisted());
         }
-        
+
         supplier.setNotes(request.getNotes());
     }
 }

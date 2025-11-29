@@ -8,7 +8,8 @@ import lombok.NoArgsConstructor;
 
 /**
  * API 6.15: Update Supplier Request
- * Allows updating supplier profile and risk management flags (isActive, isBlacklisted)
+ * Allows updating supplier profile and risk management flags (isActive,
+ * isBlacklisted)
  */
 @Data
 @Builder
