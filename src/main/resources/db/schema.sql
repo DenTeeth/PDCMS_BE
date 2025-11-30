@@ -650,6 +650,30 @@ COMMENT ON COLUMN item_units.is_active IS 'Soft delete flag: false = deprecated 
 COMMENT ON COLUMN item_units.is_default_import_unit IS 'UX optimization: default unit for import transactions';
 COMMENT ON COLUMN item_units.is_default_export_unit IS 'UX optimization: default unit for export transactions';
 
+-- Service Consumables (Dinh muc tieu hao vat tu cho dich vu - API 6.17)
+CREATE TABLE service_consumables (
+    link_id SERIAL PRIMARY KEY,
+    service_id BIGINT NOT NULL,
+    item_master_id INTEGER NOT NULL,
+    quantity_per_service DECIMAL(10,2) NOT NULL CHECK (quantity_per_service > 0),
+    unit_id INTEGER NOT NULL,
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP,
+
+    CONSTRAINT fk_service_consumable_item FOREIGN KEY (item_master_id)
+        REFERENCES item_masters(item_master_id) ON DELETE CASCADE,
+    CONSTRAINT fk_service_consumable_unit FOREIGN KEY (unit_id)
+        REFERENCES item_units(unit_id) ON DELETE RESTRICT,
+    CONSTRAINT uq_service_item UNIQUE (service_id, item_master_id)
+);
+
+CREATE INDEX idx_service_consumables_service ON service_consumables(service_id);
+CREATE INDEX idx_service_consumables_item ON service_consumables(item_master_id);
+
+COMMENT ON TABLE service_consumables IS 'Bill of Materials (BOM) - Material consumption standards per service - API 6.17';
+COMMENT ON COLUMN service_consumables.quantity_per_service IS 'Required quantity per service (e.g., 2.5 pills, 1.0 tube, 0.5 pack)';
+
 -- ============================================
 -- WAREHOUSE AUDIT LOGS
 -- ============================================

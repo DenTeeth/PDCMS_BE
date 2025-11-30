@@ -3626,6 +3626,184 @@ ON CONFLICT DO NOTHING;
 SELECT setval('storage_transaction_items_transaction_item_id_seq', (SELECT COALESCE(MAX(transaction_item_id), 0) FROM storage_transaction_items));
 
 -- =============================================
+-- SERVICE CONSUMABLES (API 6.17)
+-- =============================================
+-- Dinh muc tieu hao vat tu cho dich vu (BOM - Bill of Materials)
+-- VD: Dich vu "Cao voi rang" can bao nhieu goi bong gac, khau trang, etc.
+
+-- Dich vu: Kham tong quat
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes, created_at)
+SELECT s.service_id, im.item_master_id, 1, u.unit_id, 'Dung khi kham sang loc ban dau', NOW()
+FROM services s
+CROSS JOIN item_masters im
+CROSS JOIN item_units u
+WHERE s.service_code = 'GEN_EXAM'
+AND im.item_code = 'CON-GLOVE-01'
+AND u.item_master_id = im.item_master_id
+AND u.unit_name = 'Đôi'
+ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes, created_at)
+SELECT s.service_id, im.item_master_id, 1, u.unit_id, 'Bao ve bac si va benh nhan', NOW()
+FROM services s
+CROSS JOIN item_masters im
+CROSS JOIN item_units u
+WHERE s.service_code = 'GEN_EXAM'
+AND im.item_code = 'CON-MASK-01'
+AND u.item_master_id = im.item_master_id
+AND u.unit_name = 'Cái'
+ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+-- Dich vu: Cao voi rang Muc 1
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes, created_at)
+SELECT s.service_id, im.item_master_id, 2, u.unit_id, 'Thay doi 2 lan trong qua trinh cao voi', NOW()
+FROM services s
+CROSS JOIN item_masters im
+CROSS JOIN item_units u
+WHERE s.service_code = 'SCALING_L1'
+AND im.item_code = 'CON-GLOVE-01'
+AND u.item_master_id = im.item_master_id
+AND u.unit_name = 'Đôi'
+ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes, created_at)
+SELECT s.service_id, im.item_master_id, 1, u.unit_id, 'Khau trang bao ve', NOW()
+FROM services s
+CROSS JOIN item_masters im
+CROSS JOIN item_units u
+WHERE s.service_code = 'SCALING_L1'
+AND im.item_code = 'CON-MASK-01'
+AND u.item_master_id = im.item_master_id
+AND u.unit_name = 'Cái'
+ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes, created_at)
+SELECT s.service_id, im.item_master_id, 3, u.unit_id, 'Lau mau va nuoc bot', NOW()
+FROM services s
+CROSS JOIN item_masters im
+CROSS JOIN item_units u
+WHERE s.service_code = 'SCALING_L1'
+AND im.item_code = 'CON-GAUZE-01'
+AND u.item_master_id = im.item_master_id
+AND u.unit_name = 'Gói'
+ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes, created_at)
+SELECT s.service_id, im.item_master_id, 15, u.unit_id, 'Sau khi cao voi', NOW()
+FROM services s
+CROSS JOIN item_masters im
+CROSS JOIN item_units u
+WHERE s.service_code = 'SCALING_L1'
+AND im.item_code = 'MAT-POL-01'
+AND u.item_master_id = im.item_master_id
+AND u.unit_name = 'g'
+ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+-- Dich vu: Tram rang Composite
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes, created_at)
+SELECT s.service_id, im.item_master_id, 1, u.unit_id, 'Thay doi khi tiep xuc chat long', NOW()
+FROM services s
+CROSS JOIN item_masters im
+CROSS JOIN item_units u
+WHERE s.service_code = 'FILLING_COMP'
+AND im.item_code = 'CON-GLOVE-01'
+AND u.item_master_id = im.item_master_id
+AND u.unit_name = 'Đôi'
+ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes, created_at)
+SELECT s.service_id, im.item_master_id, 1, u.unit_id, 'Bao ve bac si', NOW()
+FROM services s
+CROSS JOIN item_masters im
+CROSS JOIN item_units u
+WHERE s.service_code = 'FILLING_COMP'
+AND im.item_code = 'CON-MASK-01'
+AND u.item_master_id = im.item_master_id
+AND u.unit_name = 'Cái'
+ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes, created_at)
+SELECT s.service_id, im.item_master_id, 2, u.unit_id, 'Thau nuoc bot va lau kho', NOW()
+FROM services s
+CROSS JOIN item_masters im
+CROSS JOIN item_units u
+WHERE s.service_code = 'FILLING_COMP'
+AND im.item_code = 'CON-GAUZE-01'
+AND u.item_master_id = im.item_master_id
+AND u.unit_name = 'Gói'
+ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes, created_at)
+SELECT s.service_id, im.item_master_id, 8, u.unit_id, 'Tram 1 rang trung binh', NOW()
+FROM services s
+CROSS JOIN item_masters im
+CROSS JOIN item_units u
+WHERE s.service_code = 'FILLING_COMP'
+AND im.item_code = 'MAT-COMP-01'
+AND u.item_master_id = im.item_master_id
+AND u.unit_name = 'g'
+ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes, created_at)
+SELECT s.service_id, im.item_master_id, 3, u.unit_id, 'Gel xoi mon men rang truoc khi tram', NOW()
+FROM services s
+CROSS JOIN item_masters im
+CROSS JOIN item_units u
+WHERE s.service_code = 'FILLING_COMP'
+AND im.item_code = 'MAT-ETCH-01'
+AND u.item_master_id = im.item_master_id
+AND u.unit_name = 'ml'
+ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes, created_at)
+SELECT s.service_id, im.item_master_id, 5, u.unit_id, 'Keo dan tram', NOW()
+FROM services s
+CROSS JOIN item_masters im
+CROSS JOIN item_units u
+WHERE s.service_code = 'FILLING_COMP'
+AND im.item_code = 'MAT-BOND-01'
+AND u.item_master_id = im.item_master_id
+AND u.unit_name = 'Giọt'
+ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+-- Dich vu: Nhoi rang sua
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes, created_at)
+SELECT s.service_id, im.item_master_id, 1, u.unit_id, 'Gang tay cho thao tac nhe nhang', NOW()
+FROM services s
+CROSS JOIN item_masters im
+CROSS JOIN item_units u
+WHERE s.service_code = 'EXTRACT_MILK'
+AND im.item_code = 'CON-GLOVE-01'
+AND u.item_master_id = im.item_master_id
+AND u.unit_name = 'Đôi'
+ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes, created_at)
+SELECT s.service_id, im.item_master_id, 5, u.unit_id, 'Cam mau sau khi nhoi', NOW()
+FROM services s
+CROSS JOIN item_masters im
+CROSS JOIN item_units u
+WHERE s.service_code = 'EXTRACT_MILK'
+AND im.item_code = 'CON-GAUZE-01'
+AND u.item_master_id = im.item_master_id
+AND u.unit_name = 'Gói'
+ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes, created_at)
+SELECT s.service_id, im.item_master_id, 1, u.unit_id, 'Te boi neu tre khong hop tac', NOW()
+FROM services s
+CROSS JOIN item_masters im
+CROSS JOIN item_units u
+WHERE s.service_code = 'EXTRACT_MILK'
+AND im.item_code = 'MED-GEL-01'
+AND u.item_master_id = im.item_master_id
+AND u.unit_name = 'g'
+ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+-- Reset sequence
+SELECT setval('service_consumables_link_id_seq', (SELECT COALESCE(MAX(link_id), 0) FROM service_consumables));
+
+-- =============================================
 -- WAREHOUSE SEED DATA COMPLETE
 -- =============================================
 -- Note: warehouse_audit_logs and supplier_items are NOT seeded

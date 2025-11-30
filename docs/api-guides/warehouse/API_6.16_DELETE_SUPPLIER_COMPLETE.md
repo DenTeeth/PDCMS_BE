@@ -1,8 +1,8 @@
 # API 6.16: Soft Delete Supplier - Complete Implementation Guide
 
-**Version**: V30  
-**Author**: Backend Team  
-**Date**: November 29, 2025  
+**Version**: V30
+**Author**: Backend Team
+**Date**: November 29, 2025
 **Status**: IMPLEMENTED
 
 ---
@@ -307,29 +307,29 @@ Content-Type: application/json
 ```java
 public void deleteSupplier(Long id) {
     log.info("API 6.16: Processing soft delete for supplier ID: {}", id);
-    
+
     // 1. Validate supplier exists (404 if not found)
     Supplier supplier = supplierRepository.findById(id)
         .orElseThrow(() -> new SupplierNotFoundException(id));
-    
-    log.info("API 6.16: Found supplier to delete - Code: {}, Name: {}", 
+
+    log.info("API 6.16: Found supplier to delete - Code: {}, Name: {}",
              supplier.getSupplierCode(), supplier.getSupplierName());
-    
+
     // 2. Business Rule: Cannot delete if has transactions (409 if exists)
     if (storageTransactionRepository.existsBySupplier(id)) {
-        log.warn("API 6.16: Cannot delete supplier {} - has transaction history", 
+        log.warn("API 6.16: Cannot delete supplier {} - has transaction history",
                  supplier.getSupplierCode());
         throw new BusinessException(
             "SUPPLIER_HAS_TRANSACTIONS",
-            "Cannot delete supplier '" + supplier.getSupplierName() + 
+            "Cannot delete supplier '" + supplier.getSupplierName() +
             "' because it has transaction history. You can only set it to INACTIVE status.");
     }
-    
+
     // 3. Soft Delete: Set isActive=false
     supplier.setIsActive(false);
     supplierRepository.save(supplier);
-    
-    log.info("API 6.16: Successfully soft deleted supplier {} (ID: {})", 
+
+    log.info("API 6.16: Successfully soft deleted supplier {} (ID: {})",
              supplier.getSupplierCode(), id);
 }
 ```
@@ -406,10 +406,10 @@ boolean existsBySupplier(@Param("supplierId") Long supplierId);
 ```
 1. Check if supplier has transactions:
    GET /api/v1/warehouse/suppliers/{id}
-   
+
 2. If transactions exist (transactionCount > 0):
    → Use API 6.15 to set isActive=false
-   
+
 3. If no transactions (transactionCount = 0):
    → Use API 6.16 to soft delete
 ```
@@ -431,7 +431,7 @@ async function deleteSuppli(supplierId) {
         },
       }
     );
-    
+
     if (response.status === 204) {
       showNotification('Supplier successfully deleted', 'success');
       refreshSupplierList();
@@ -455,7 +455,7 @@ async function handleSupplierDelete(supplierId) {
         },
       }
     );
-    
+
     if (response.status === 204) {
       showNotification('Supplier deleted successfully', 'success');
       refreshSupplierList();
