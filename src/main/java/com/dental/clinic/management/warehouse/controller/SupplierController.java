@@ -219,16 +219,16 @@ public class SupplierController {
     }
 
     /**
-     * SOFT DELETE Supplier (World-class approach)
-     * - Không xóa cứng, chỉ set isActive = false
-     * - Validate: Không cho xóa NCC đã có giao dịch
+     * API 6.16: Soft Delete Supplier
+     * Business Rule: Cannot delete if has transaction history
+     * Authorization: MANAGE_SUPPLIERS or MANAGE_WAREHOUSE
      */
-    @Operation(summary = "Xóa mềm nhà cung cấp", description = "Set isActive = false. Không xóa nếu đã có giao dịch nhập hàng.")
-    @ApiMessage("Xóa nhà cung cấp thành công")
+    @Operation(summary = "Soft delete supplier", description = "Set isActive = false. Cannot delete if supplier has transaction history.")
+    @ApiMessage("Supplier deleted successfully")
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('DELETE_WAREHOUSE')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAnyAuthority('MANAGE_SUPPLIERS', 'MANAGE_WAREHOUSE')")
     public ResponseEntity<Void> deleteSupplier(@PathVariable Long id) {
-        log.info("DELETE /api/v1/suppliers/{}", id);
+        log.info("DELETE /api/v1/warehouse/suppliers/{}", id);
         supplierService.deleteSupplier(id);
         return ResponseEntity.noContent().build();
     }
