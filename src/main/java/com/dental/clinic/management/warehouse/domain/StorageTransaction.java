@@ -83,11 +83,13 @@ public class StorageTransaction {
 
     /**
      * API 6.6: Enhanced Transaction History Features
+     * Issue #23: Payment status defaults to UNPAID for IMPORT transactions
      */
     // Payment tracking (for IMPORT transactions)
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_status", length = 20)
-    private PaymentStatus paymentStatus; // UNPAID, PARTIAL, PAID
+    @Builder.Default
+    private PaymentStatus paymentStatus = PaymentStatus.UNPAID; // Default: UNPAID
 
     @Column(name = "paid_amount", precision = 15, scale = 2)
     private BigDecimal paidAmount; // Số tiền đã thanh toán
