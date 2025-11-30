@@ -12,6 +12,7 @@ import com.dental.clinic.management.warehouse.dto.response.ExportTransactionResp
 import com.dental.clinic.management.warehouse.dto.response.ExportTransactionResponse.WarningDTO;
 import com.dental.clinic.management.warehouse.enums.ExportType;
 import com.dental.clinic.management.warehouse.enums.TransactionType;
+import com.dental.clinic.management.warehouse.enums.TransactionStatus;
 import com.dental.clinic.management.warehouse.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -162,6 +163,7 @@ public class ExportTransactionService {
                 .requestedBy(request.getRequestedBy())
                 .notes(request.getNotes())
                 .status("COMPLETED")
+                .approvalStatus(TransactionStatus.PENDING_APPROVAL)
                 .createdBy(employee)
                 .createdAt(LocalDateTime.now())
                 .items(new ArrayList<>())

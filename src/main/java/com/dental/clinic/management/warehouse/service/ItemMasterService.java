@@ -619,17 +619,11 @@ public class ItemMasterService {
 
                 for (com.dental.clinic.management.warehouse.dto.request.ConversionItemRequest item : request
                                 .getConversions()) {
-                        try {
-                                com.dental.clinic.management.warehouse.dto.response.ConversionResult result = convertSingleUnit(
-                                                item, request.getRoundingMode());
-                                results.add(result);
-                        } catch (Exception e) {
-                                log.error("Failed to convert item {}: {}", item.getItemMasterId(), e.getMessage());
-                                throw new ResponseStatusException(
-                                                HttpStatus.BAD_REQUEST,
-                                                String.format("Conversion failed for item ID %d: %s",
-                                                                item.getItemMasterId(), e.getMessage()));
-                        }
+                        // Don't catch exceptions - let ResourceNotFoundException and other exceptions bubble up
+                        // GlobalExceptionHandler will format them properly with detailed error messages
+                        com.dental.clinic.management.warehouse.dto.response.ConversionResult result = convertSingleUnit(
+                                        item, request.getRoundingMode());
+                        results.add(result);
                 }
 
                 return new com.dental.clinic.management.warehouse.dto.response.ConversionResponse(

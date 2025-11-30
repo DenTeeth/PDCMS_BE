@@ -3320,67 +3320,93 @@ SELECT setval('storage_transactions_storage_transaction_id_seq', (SELECT COALESC
 -- =============================================
 
 -- =============================================
+-- STEP 0: DATA INTEGRITY CONSTRAINTS
+-- Date: 2025-11-30
+-- Purpose: Prevent duplicate unit insertions when seed script runs multiple times
+-- =============================================
+
+-- Add unique constraint on (item_master_id, unit_name) to prevent duplicate unit names per item
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'uq_item_unit_name'
+    ) THEN
+        ALTER TABLE item_units ADD CONSTRAINT uq_item_unit_name UNIQUE (item_master_id, unit_name);
+    END IF;
+END $$;
+
+-- Add unique partial index to ensure only one base unit per item
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_indexes WHERE indexname = 'idx_item_units_one_base_per_item'
+    ) THEN
+        CREATE UNIQUE INDEX idx_item_units_one_base_per_item ON item_units (item_master_id) WHERE is_base_unit = true;
+    END IF;
+END $$;
+
+-- =============================================
 -- STEP 1: ITEM_UNITS (Don vi do luong - Unit hierarchy)
 -- =============================================
 -- Consumables: Gang tay y te
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
 SELECT im.item_master_id, 'Chiec', 1, TRUE, TRUE, FALSE, TRUE, 3, NOW()
 FROM item_masters im WHERE im.item_code = 'CON-GLOVE-01'
-ON CONFLICT DO NOTHING;
+ON CONFLICT (item_master_id, unit_name) DO NOTHING;
 
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
 SELECT im.item_master_id, 'Cap', 2, FALSE, TRUE, FALSE, FALSE, 2, NOW()
 FROM item_masters im WHERE im.item_code = 'CON-GLOVE-01'
-ON CONFLICT DO NOTHING;
+ON CONFLICT (item_master_id, unit_name) DO NOTHING;
 
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
 SELECT im.item_master_id, 'Hop', 200, FALSE, TRUE, TRUE, FALSE, 1, NOW()
 FROM item_masters im WHERE im.item_code = 'CON-GLOVE-01'
-ON CONFLICT DO NOTHING;
+ON CONFLICT (item_master_id, unit_name) DO NOTHING;
 
 -- Khau trang y te
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
 SELECT im.item_master_id, 'Cai', 1, TRUE, TRUE, FALSE, TRUE, 3, NOW()
 FROM item_masters im WHERE im.item_code = 'CON-MASK-01'
-ON CONFLICT DO NOTHING;
+ON CONFLICT (item_master_id, unit_name) DO NOTHING;
 
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
 SELECT im.item_master_id, 'Hop', 50, FALSE, TRUE, TRUE, FALSE, 1, NOW()
 FROM item_masters im WHERE im.item_code = 'CON-MASK-01'
-ON CONFLICT DO NOTHING;
+ON CONFLICT (item_master_id, unit_name) DO NOTHING;
 
 -- Kim tiem nha khoa
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
 SELECT im.item_master_id, 'Cai', 1, TRUE, TRUE, FALSE, TRUE, 2, NOW()
 FROM item_masters im WHERE im.item_code = 'CON-NEEDLE-01'
-ON CONFLICT DO NOTHING;
+ON CONFLICT (item_master_id, unit_name) DO NOTHING;
 
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
 SELECT im.item_master_id, 'Hop', 100, FALSE, TRUE, TRUE, FALSE, 1, NOW()
 FROM item_masters im WHERE im.item_code = 'CON-NEEDLE-01'
-ON CONFLICT DO NOTHING;
+ON CONFLICT (item_master_id, unit_name) DO NOTHING;
 
 -- Medicine: Thuoc te Septodont
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
 SELECT im.item_master_id, 'Ong', 1, TRUE, TRUE, FALSE, TRUE, 2, NOW()
 FROM item_masters im WHERE im.item_code = 'MED-SEPT-01'
-ON CONFLICT DO NOTHING;
+ON CONFLICT (item_master_id, unit_name) DO NOTHING;
 
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
 SELECT im.item_master_id, 'Hop', 50, FALSE, TRUE, TRUE, FALSE, 1, NOW()
 FROM item_masters im WHERE im.item_code = 'MED-SEPT-01'
-ON CONFLICT DO NOTHING;
+ON CONFLICT (item_master_id, unit_name) DO NOTHING;
 
 -- Material: Composite
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
 SELECT im.item_master_id, 'g', 1, TRUE, TRUE, FALSE, TRUE, 2, NOW()
 FROM item_masters im WHERE im.item_code = 'MAT-COMP-01'
-ON CONFLICT DO NOTHING;
+ON CONFLICT (item_master_id, unit_name) DO NOTHING;
 
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
 SELECT im.item_master_id, 'Tuyp', 4, FALSE, TRUE, TRUE, FALSE, 1, NOW()
 FROM item_masters im WHERE im.item_code = 'MAT-COMP-01'
-ON CONFLICT DO NOTHING;
+ON CONFLICT (item_master_id, unit_name) DO NOTHING;
 
 -- Reset sequence
 SELECT setval('item_units_unit_id_seq', (SELECT COALESCE(MAX(unit_id), 0) FROM item_units));

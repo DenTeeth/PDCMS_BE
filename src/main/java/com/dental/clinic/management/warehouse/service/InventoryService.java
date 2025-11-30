@@ -155,6 +155,7 @@ public class InventoryService {
                         "Không tìm thấy danh mục với ID: " + request.getCategoryId()));
 
         // Create entity using mapper
+        @SuppressWarnings("deprecation")
         ItemMaster itemMaster = itemMasterMapper.toEntity(request);
         itemMaster.setCategory(category);
         itemMaster.setIsActive(true);
@@ -168,7 +169,8 @@ public class InventoryService {
     /**
      * Update Item Master
      */
-    @Transactional
+    @SuppressWarnings("deprecation")
+@Transactional
     public ItemMasterSummaryResponse updateItemMaster(Long id, UpdateItemMasterRequest request) {
         log.info("Updating item master: {}", id);
 
