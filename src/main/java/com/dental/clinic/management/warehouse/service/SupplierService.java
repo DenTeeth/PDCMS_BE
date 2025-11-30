@@ -160,30 +160,37 @@ public class SupplierService {
         }
 
         /**
-         * SOFT DELETE Supplier (World-class approach)
-         * - Không xóa cứng (hard delete) để giữ lịch sử audit
-         * - Chuyển isActive = false
-         * - Kiểm tra xem có giao dịch nhập hàng không (business rule)
+         * API 6.16: Soft Delete Supplier
+         * Business Rule: Cannot delete supplier if has transaction history
+         * Action: Set isActive = false (soft delete, keeps audit trail)
          */
         @Transactional
         public void deleteSupplier(Long id) {
-                log.info("Soft deleting supplier: {}", id);
+                log.info("API 6.16 - Soft deleting supplier ID: {}", id);
 
+                // 1. Validate supplier exists
                 Supplier supplier = supplierRepository.findById(id)
-                                .orElseThrow(() -> new SupplierNotFoundException(id));
+                                .orElseThrow(() -> {
+                                        log.warn("Supplier not found: ID {}", id);
+                                        return new SupplierNotFoundException(id);
+                                });
 
-                // Business Rule: Không cho xóa NCC đã có giao dịch nhập hàng
+                // 2. Business Rule: Cannot delete if has transaction history
                 if (storageTransactionRepository.existsBySupplier(id)) {
-                        throw new IllegalStateException(
-                                        "Không thể xóa nhà cung cấp '" + supplier.getSupplierName()
-                                                        + "' vì đã có lịch sử giao dịch nhập hàng. Chỉ có thể đặt trạng thái INACTIVE.");
+                        log.warn("Cannot delete supplier '{}' ({}) - has transaction history",
+                                        supplier.getSupplierCode(), supplier.getSupplierName());
+                        throw new com.dental.clinic.management.exception.BusinessException(
+                                        "SUPPLIER_HAS_TRANSACTIONS",
+                                        "Cannot delete supplier '" + supplier.getSupplierName()
+                                                        + "' because it has transaction history. You can only set it to INACTIVE status.");
                 }
 
-                // Soft Delete: Set isActive = false
+                // 3. Soft Delete: Set isActive = false
                 supplier.setIsActive(false);
                 supplierRepository.save(supplier);
 
-                log.info("Supplier {} marked as INACTIVE (soft deleted)", supplier.getSupplierCode());
+                log.info("API 6.16 - Supplier '{}' ({}) marked as INACTIVE (soft deleted)",
+                                supplier.getSupplierCode(), supplier.getSupplierName());
         }
 
         /**
