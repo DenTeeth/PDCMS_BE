@@ -12,6 +12,7 @@ import com.dental.clinic.management.warehouse.dto.response.ImportTransactionResp
 import com.dental.clinic.management.warehouse.dto.response.ImportTransactionResponse.WarningDTO;
 import com.dental.clinic.management.warehouse.enums.TransactionType;
 import com.dental.clinic.management.warehouse.repository.*;
+import com.dental.clinic.management.warehouse.enums.TransactionStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -185,6 +186,7 @@ public class ImportTransactionService {
                                 .expectedDeliveryDate(request.getExpectedDeliveryDate())
                                 .notes(request.getNotes())
                                 .status("COMPLETED")
+                                .approvalStatus(TransactionStatus.PENDING_APPROVAL)
                                 .createdBy(employee)
                                 .createdAt(LocalDateTime.now())
                                 .items(new ArrayList<>())

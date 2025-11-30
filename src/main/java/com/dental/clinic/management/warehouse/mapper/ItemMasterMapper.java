@@ -31,7 +31,6 @@ public class ItemMasterMapper {
      * Keeping this commented until InventoryService is refactored.
      */
     @Deprecated
-    @SuppressWarnings("deprecation")
     public ItemMaster toEntity(CreateItemMasterRequest request) {
         if (request == null) {
             return null;
