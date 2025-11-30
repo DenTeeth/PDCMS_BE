@@ -371,8 +371,9 @@ VALUES
 ('EXPORT_ITEMS', 'EXPORT_ITEMS', 'WAREHOUSE', 'Tạo phiếu xuất kho', 278, NULL, TRUE, NOW()),
 ('DISPOSE_ITEMS', 'DISPOSE_ITEMS', 'WAREHOUSE', 'Tạo phiếu thanh lý', 279, NULL, TRUE, NOW()),
 ('APPROVE_TRANSACTION', 'APPROVE_TRANSACTION', 'WAREHOUSE', 'Duyệt/Từ chối phiếu nhập xuất kho', 280, NULL, TRUE, NOW()),
-('MANAGE_SUPPLIERS', 'MANAGE_SUPPLIERS', 'WAREHOUSE', 'Quản lý nhà cung cấp (API 6.13, 6.14)', 281, NULL, TRUE, NOW()),
-('MANAGE_WAREHOUSE', 'MANAGE_WAREHOUSE', 'WAREHOUSE', 'Toàn quyền quản lý kho', 282, NULL, TRUE, NOW())
+('CANCEL_WAREHOUSE', 'CANCEL_WAREHOUSE', 'WAREHOUSE', 'Hủy phiếu nhập xuất kho (API 6.6.3)', 281, NULL, TRUE, NOW()),
+('MANAGE_SUPPLIERS', 'MANAGE_SUPPLIERS', 'WAREHOUSE', 'Quản lý nhà cung cấp (API 6.13, 6.14)', 282, NULL, TRUE, NOW()),
+('MANAGE_WAREHOUSE', 'MANAGE_WAREHOUSE', 'WAREHOUSE', 'Toàn quyền quản lý kho', 283, NULL, TRUE, NOW())
 ON CONFLICT (permission_id) DO NOTHING;
 
 
@@ -529,6 +530,7 @@ VALUES
 ('ROLE_MANAGER', 'IMPORT_ITEMS'),
 ('ROLE_MANAGER', 'EXPORT_ITEMS'),
 ('ROLE_MANAGER', 'APPROVE_TRANSACTION'),
+('ROLE_MANAGER', 'CANCEL_WAREHOUSE'), -- Can cancel import/export transactions (API 6.6.3)
 ('ROLE_MANAGER', 'MANAGE_SUPPLIERS'), -- V28: Can manage suppliers (API 6.13, 6.14)
 ('ROLE_MANAGER', 'MANAGE_WAREHOUSE') -- V28: Full warehouse management authority
 ON CONFLICT (role_id, permission_id) DO NOTHING;
@@ -562,6 +564,7 @@ VALUES
 ('ROLE_INVENTORY_MANAGER', 'EXPORT_ITEMS'), -- Can create export transactions
 ('ROLE_INVENTORY_MANAGER', 'DISPOSE_ITEMS'), -- Can create disposal transactions
 ('ROLE_INVENTORY_MANAGER', 'APPROVE_TRANSACTION'), -- Can approve transactions
+('ROLE_INVENTORY_MANAGER', 'CANCEL_WAREHOUSE'), -- Can cancel import/export transactions (API 6.6.3)
 ('ROLE_INVENTORY_MANAGER', 'MANAGE_SUPPLIERS'), -- Can manage suppliers (API 6.13, 6.14)
 ('ROLE_INVENTORY_MANAGER', 'MANAGE_WAREHOUSE') -- Full warehouse management authority
 ON CONFLICT (role_id, permission_id) DO NOTHING;
