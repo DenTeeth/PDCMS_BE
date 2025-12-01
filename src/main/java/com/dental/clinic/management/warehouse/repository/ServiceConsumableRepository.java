@@ -34,4 +34,16 @@ public interface ServiceConsumableRepository extends JpaRepository<ServiceConsum
      * Used to return 404 "No consumables defined" vs 200 empty list
      */
     boolean existsByServiceId(Long serviceId);
+
+    /**
+     * Find consumable by service ID and item master ID (for upsert in API 6.18)
+     */
+    @Query("""
+                SELECT sc FROM ServiceConsumable sc
+                WHERE sc.serviceId = :serviceId
+                AND sc.itemMaster.itemMasterId = :itemMasterId
+            """)
+    java.util.Optional<ServiceConsumable> findByServiceIdAndItemMasterId(
+            @Param("serviceId") Long serviceId,
+            @Param("itemMasterId") Long itemMasterId);
 }
