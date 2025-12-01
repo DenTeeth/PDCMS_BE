@@ -749,84 +749,84 @@ ON CONFLICT (specialization_id) DO NOTHING;
 -- Default password: "123456" (BCrypt encoded)
 -- ============================================
 
-INSERT INTO accounts (account_id, account_code, username, email, password, role_id, status, created_at)
+INSERT INTO accounts (account_id, account_code, username, email, password, role_id, status, is_email_verified, created_at)
 VALUES
 -- Dentists (Nha sĩ)
 -- EMP001 - Lê Anh Khoa - FULL_TIME (Cả sáng 08:00-12:00 và chiều 13:00-17:00)
 (1, 'ACC001', 'bacsi1', 'khoa.la@dentalclinic.com',
-'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_DENTIST', 'ACTIVE', NOW()),
+'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_DENTIST', 'ACTIVE', TRUE, NOW()),
 
 -- EMP002 - Trịnh Công Thái - FULL_TIME (Cả sáng 08:00-12:00 và chiều 13:00-17:00)
 (2, 'ACC002', 'bacsi2', 'thai.tc@dentalclinic.com',
-'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_DENTIST', 'ACTIVE', NOW()),
+'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_DENTIST', 'ACTIVE', TRUE, NOW()),
 
 -- EMP003 - Jimmy Donaldson - PART_TIME_FLEX (Chỉ sáng 08:00-12:00)
 (3, 'ACC003', 'bacsi3', 'jimmy.d@dentalclinic.com',
-'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_DENTIST', 'ACTIVE', NOW()),
+'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_DENTIST', 'ACTIVE', TRUE, NOW()),
 
 -- EMP004 - Junya Ota - PART_TIME_FIXED (Chỉ chiều 13:00-17:00)
 (4, 'ACC004', 'bacsi4', 'junya.o@dentalclinic.com',
-'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_DENTIST', 'ACTIVE', NOW()),
+'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_DENTIST', 'ACTIVE', TRUE, NOW()),
 
 -- Staff
 -- EMP005 - Đỗ Khánh Thuận - Lễ tân - FULL_TIME
 (5, 'ACC005', 'letan1', 'thuan.dkb@dentalclinic.com',
-'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_RECEPTIONIST', 'ACTIVE', NOW()),
+'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_RECEPTIONIST', 'ACTIVE', TRUE, NOW()),
 
 -- EMP006 - Chử Quốc Thành - Kế toán - FULL_TIME
 (6, 'ACC006', 'ketoan1', 'thanh.cq@dentalclinic.com',
-'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_ACCOUNTANT', 'ACTIVE', NOW()),
+'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_ACCOUNTANT', 'ACTIVE', TRUE, NOW()),
 
 -- Nurses (Y tá)
 -- EMP007 - Đoàn Nguyễn Khôi Nguyên - FULL_TIME (Cả sáng và chiều)
 (7, 'ACC007', 'yta1', 'nguyen.dnkn@dentalclinic.com',
-'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_NURSE', 'ACTIVE', NOW()),
+'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_NURSE', 'ACTIVE', TRUE, NOW()),
 
 -- EMP008 - Nguyễn Trần Tuấn Khang - FULL_TIME (Cả sáng và chiều)
 (8, 'ACC008', 'yta2', 'khang.nttk@dentalclinic.com',
-'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_NURSE', 'ACTIVE', NOW()),
+'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_NURSE', 'ACTIVE', TRUE, NOW()),
 
 -- EMP009 - Huỳnh Tấn Quang Nhật - PART_TIME_FIXED (Chỉ sáng 08:00-12:00)
 (9, 'ACC009', 'yta3', 'nhat.htqn@dentalclinic.com',
-'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_NURSE', 'ACTIVE', NOW()),
+'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_NURSE', 'ACTIVE', TRUE, NOW()),
 
 -- EMP010 - Ngô Đình Chính - PART_TIME_FLEX (Chỉ chiều 13:00-17:00)
 (10, 'ACC010', 'yta4', 'chinh.nd@dentalclinic.com',
-'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_NURSE', 'ACTIVE', NOW()),
+'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_NURSE', 'ACTIVE', TRUE, NOW()),
 
 -- Manager
 -- EMP011 - Võ Ngọc Minh Quân - Quản lý - FULL_TIME
 (11, 'ACC011', 'quanli1', 'quan.vnm@dentalclinic.com',
-'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_MANAGER', 'ACTIVE', NOW()),
+'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_MANAGER', 'ACTIVE', TRUE, NOW()),
 
--- Patients (Bệnh nhân)
+-- Patients (Bệnh nhân) - All with is_email_verified = TRUE for demo data
 -- Patient BN-1001 - Đoàn Thanh Phong
 (12, 'ACC012', 'benhnhan1', 'phong.dt@email.com',
-'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_PATIENT', 'ACTIVE', NOW()),
+'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_PATIENT', 'ACTIVE', TRUE, NOW()),
 
 -- Patient BN-1002 - Phạm Văn Phong
 (13, 'ACC013', 'benhnhan2', 'phong.pv@email.com',
-'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_PATIENT', 'ACTIVE', NOW()),
+'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_PATIENT', 'ACTIVE', TRUE, NOW()),
 
 -- Patient BN-1003 - Nguyễn Thị Anh
 (14, 'ACC014', 'benhnhan3', 'anh.nt@email.com',
-'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_PATIENT', 'ACTIVE', NOW()),
+'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_PATIENT', 'ACTIVE', TRUE, NOW()),
 
 -- Patient BN-1004 - Mít tơ bít
 (15, 'ACC015', 'benhnhan4', 'mit.bit@email.com',
-'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_PATIENT', 'ACTIVE', NOW()),
+'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_PATIENT', 'ACTIVE', TRUE, NOW()),
 
 -- EMP012 - Nguyễn Khánh Linh - Thực tập sinh - PART_TIME_FLEX
 (16, 'ACC016', 'thuctap1', 'linh.nk@dentalclinic.com',
-'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_DENTIST_INTERN', 'ACTIVE', NOW()),
+'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_DENTIST_INTERN', 'ACTIVE', TRUE, NOW()),
 
 -- Admin account - Super user
 (17, 'ACC017', 'admin', 'admin@dentalclinic.com',
-'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_ADMIN', 'ACTIVE', NOW()),
+'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_ADMIN', 'ACTIVE', TRUE, NOW()),
 
 -- Patient BN-1005 - Trần Văn Nam (for Treatment Plan testing)
 (18, 'ACC018', 'benhnhan5', 'nam.tv@email.com',
-'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_PATIENT', 'ACTIVE', NOW())
+'$2a$10$XOePZT251MQ7sdsoqH/jsO.vAuDoFrdWu/pAJSCD49/iwyIHQubf2', 'ROLE_PATIENT', 'ACTIVE', TRUE, NOW())
 ON CONFLICT (account_id) DO NOTHING;
 
 
@@ -906,13 +906,13 @@ VALUES
 ON CONFLICT (patient_id) DO NOTHING;
 
 -- ✅ NEW PATIENTS (All with verified emails - đã setup password)
-INSERT INTO accounts (account_id, username, password_hash, account_type, is_active, is_email_verified, created_at, updated_at)
+INSERT INTO accounts (account_id, account_code, username, email, password, role_id, status, is_email_verified, created_at)
 VALUES
-(19, 'patient006', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhkW', 'PATIENT', TRUE, TRUE, NOW(), NOW()),
-(20, 'patient007', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhkW', 'PATIENT', TRUE, TRUE, NOW(), NOW()),
-(21, 'patient008', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhkW', 'PATIENT', TRUE, TRUE, NOW(), NOW()),
-(22, 'patient009', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhkW', 'PATIENT', TRUE, TRUE, NOW(), NOW()),
-(23, 'patient010', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhkW', 'PATIENT', TRUE, TRUE, NOW(), NOW())
+(19, 'ACC019', 'patient006', 'hoa.lt@email.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhkW', 'ROLE_PATIENT', 'ACTIVE', TRUE, NOW()),
+(20, 'ACC020', 'patient007', 'khanh.vv@email.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhkW', 'ROLE_PATIENT', 'ACTIVE', TRUE, NOW()),
+(21, 'ACC021', 'patient008', 'mai.tt@email.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhkW', 'ROLE_PATIENT', 'ACTIVE', TRUE, NOW()),
+(22, 'ACC022', 'patient009', 'tu.pv@email.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhkW', 'ROLE_PATIENT', 'ACTIVE', TRUE, NOW()),
+(23, 'ACC023', 'patient010', 'lan.nt@email.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhkW', 'ROLE_PATIENT', 'ACTIVE', TRUE, NOW())
 ON CONFLICT (account_id) DO NOTHING;
 
 INSERT INTO patients (patient_id, account_id, patient_code, first_name, last_name, email, phone, date_of_birth, address, gender, is_active, created_at, updated_at)
@@ -1215,6 +1215,103 @@ VALUES
 ('EMS251107006', NOW(), NULL, FALSE, 'Ca chiều thứ 5 - Y tá Khang', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-07', 8, 'WKS_AFTERNOON_01'),
 ('EMS251108005', NOW(), NULL, FALSE, 'Ca chiều thứ 6 - Y tá Khang', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-08', 8, 'WKS_AFTERNOON_01'),
 
+
+-- ✅ NEW DATA (November 2025 Week 2) - FULL WEEK SCHEDULE (Mon-Fri, Nov 10-14, 2025)
+-- Full-time employees: 10 shifts each (Mon-Fri morning+afternoon)
+-- Part-time employees: 2-3 shifts overlapping with full-time hours
+-- All shifts created by BATCH_JOB
+
+-- EMP001 (BS Khoa) - FULL_TIME - Monday-Friday full week (10 shifts)
+('EMS251110001', NOW(), NULL, FALSE, 'Ca sáng thứ 2 - BS Khoa', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-10', 1, 'WKS_MORNING_01'),
+('EMS251110002', NOW(), NULL, FALSE, 'Ca chiều thứ 2 - BS Khoa', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-10', 1, 'WKS_AFTERNOON_01'),
+('EMS251111001', NOW(), NULL, FALSE, 'Ca sáng thứ 3 - BS Khoa', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-11', 1, 'WKS_MORNING_01'),
+('EMS251111002', NOW(), NULL, FALSE, 'Ca chiều thứ 3 - BS Khoa', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-11', 1, 'WKS_AFTERNOON_01'),
+('EMS251112001', NOW(), NULL, FALSE, 'Ca sáng thứ 4 - BS Khoa', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-12', 1, 'WKS_MORNING_01'),
+('EMS251112002', NOW(), NULL, FALSE, 'Ca chiều thứ 4 - BS Khoa', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-12', 1, 'WKS_AFTERNOON_01'),
+('EMS251113001', NOW(), NULL, FALSE, 'Ca sáng thứ 5 - BS Khoa', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-13', 1, 'WKS_MORNING_01'),
+('EMS251113002', NOW(), NULL, FALSE, 'Ca chiều thứ 5 - BS Khoa', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-13', 1, 'WKS_AFTERNOON_01'),
+('EMS251114001', NOW(), NULL, FALSE, 'Ca sáng thứ 6 - BS Khoa', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-14', 1, 'WKS_MORNING_01'),
+('EMS251114002', NOW(), NULL, FALSE, 'Ca chiều thứ 6 - BS Khoa', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-14', 1, 'WKS_AFTERNOON_01'),
+
+-- EMP002 (BS Thái) - FULL_TIME - Monday-Friday full week (10 shifts)
+('EMS251110003', NOW(), NULL, FALSE, 'Ca sáng thứ 2 - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-10', 2, 'WKS_MORNING_01'),
+('EMS251110004', NOW(), NULL, FALSE, 'Ca chiều thứ 2 - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-10', 2, 'WKS_AFTERNOON_01'),
+('EMS251111003', NOW(), NULL, FALSE, 'Ca sáng thứ 3 - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-11', 2, 'WKS_MORNING_01'),
+('EMS251111004', NOW(), NULL, FALSE, 'Ca chiều thứ 3 - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-11', 2, 'WKS_AFTERNOON_01'),
+('EMS251112003', NOW(), NULL, FALSE, 'Ca sáng thứ 4 - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-12', 2, 'WKS_MORNING_01'),
+('EMS251112004', NOW(), NULL, FALSE, 'Ca chiều thứ 4 - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-12', 2, 'WKS_AFTERNOON_01'),
+('EMS251113003', NOW(), NULL, FALSE, 'Ca sáng thứ 5 - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-13', 2, 'WKS_MORNING_01'),
+('EMS251113004', NOW(), NULL, FALSE, 'Ca chiều thứ 5 - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-13', 2, 'WKS_AFTERNOON_01'),
+('EMS251114003', NOW(), NULL, FALSE, 'Ca sáng thứ 6 - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-14', 2, 'WKS_MORNING_01'),
+('EMS251114004', NOW(), NULL, FALSE, 'Ca chiều thứ 6 - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-14', 2, 'WKS_AFTERNOON_01'),
+
+-- EMP007 (Y tá Nguyên) - FULL_TIME - Monday-Friday full week (10 shifts)
+('EMS251110005', NOW(), NULL, FALSE, 'Ca sáng thứ 2 - Y tá Nguyên', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-10', 7, 'WKS_MORNING_01'),
+('EMS251110006', NOW(), NULL, FALSE, 'Ca chiều thứ 2 - Y tá Nguyên', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-10', 7, 'WKS_AFTERNOON_01'),
+('EMS251111005', NOW(), NULL, FALSE, 'Ca sáng thứ 3 - Y tá Nguyên', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-11', 7, 'WKS_MORNING_01'),
+('EMS251111006', NOW(), NULL, FALSE, 'Ca chiều thứ 3 - Y tá Nguyên', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-11', 7, 'WKS_AFTERNOON_01'),
+('EMS251112005', NOW(), NULL, FALSE, 'Ca sáng thứ 4 - Y tá Nguyên', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-12', 7, 'WKS_MORNING_01'),
+('EMS251112006', NOW(), NULL, FALSE, 'Ca chiều thứ 4 - Y tá Nguyên', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-12', 7, 'WKS_AFTERNOON_01'),
+('EMS251113005', NOW(), NULL, FALSE, 'Ca sáng thứ 5 - Y tá Nguyên', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-13', 7, 'WKS_MORNING_01'),
+('EMS251113006', NOW(), NULL, FALSE, 'Ca chiều thứ 5 - Y tá Nguyên', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-13', 7, 'WKS_AFTERNOON_01'),
+('EMS251114005', NOW(), NULL, FALSE, 'Ca sáng thứ 6 - Y tá Nguyên', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-14', 7, 'WKS_MORNING_01'),
+('EMS251114006', NOW(), NULL, FALSE, 'Ca chiều thứ 6 - Y tá Nguyên', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-14', 7, 'WKS_AFTERNOON_01'),
+
+-- EMP008 (Y tá Khang) - FULL_TIME - Monday-Friday full week (10 shifts)
+('EMS251110007', NOW(), NULL, FALSE, 'Ca sáng thứ 2 - Y tá Khang', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-10', 8, 'WKS_MORNING_01'),
+('EMS251110008', NOW(), NULL, FALSE, 'Ca chiều thứ 2 - Y tá Khang', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-10', 8, 'WKS_AFTERNOON_01'),
+('EMS251111007', NOW(), NULL, FALSE, 'Ca sáng thứ 3 - Y tá Khang', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-11', 8, 'WKS_MORNING_01'),
+('EMS251111008', NOW(), NULL, FALSE, 'Ca chiều thứ 3 - Y tá Khang', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-11', 8, 'WKS_AFTERNOON_01'),
+('EMS251112007', NOW(), NULL, FALSE, 'Ca sáng thứ 4 - Y tá Khang', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-12', 8, 'WKS_MORNING_01'),
+('EMS251112008', NOW(), NULL, FALSE, 'Ca chiều thứ 4 - Y tá Khang', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-12', 8, 'WKS_AFTERNOON_01'),
+('EMS251113007', NOW(), NULL, FALSE, 'Ca sáng thứ 5 - Y tá Khang', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-13', 8, 'WKS_MORNING_01'),
+('EMS251113008', NOW(), NULL, FALSE, 'Ca chiều thứ 5 - Y tá Khang', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-13', 8, 'WKS_AFTERNOON_01'),
+('EMS251114007', NOW(), NULL, FALSE, 'Ca sáng thứ 6 - Y tá Khang', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-14', 8, 'WKS_MORNING_01'),
+('EMS251114008', NOW(), NULL, FALSE, 'Ca chiều thứ 6 - Y tá Khang', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-14', 8, 'WKS_AFTERNOON_01'),
+
+-- EMP005 (Lễ tân Thuận) - FULL_TIME - Monday-Friday full week (10 shifts)
+('EMS251110011', NOW(), NULL, FALSE, 'Ca sáng thứ 2 - Lễ tân Thuận', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-10', 5, 'WKS_MORNING_01'),
+('EMS251110012', NOW(), NULL, FALSE, 'Ca chiều thứ 2 - Lễ tân Thuận', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-10', 5, 'WKS_AFTERNOON_01'),
+('EMS251111011', NOW(), NULL, FALSE, 'Ca sáng thứ 3 - Lễ tân Thuận', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-11', 5, 'WKS_MORNING_01'),
+('EMS251111012', NOW(), NULL, FALSE, 'Ca chiều thứ 3 - Lễ tân Thuận', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-11', 5, 'WKS_AFTERNOON_01'),
+('EMS251112011', NOW(), NULL, FALSE, 'Ca sáng thứ 4 - Lễ tân Thuận', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-12', 5, 'WKS_MORNING_01'),
+('EMS251112012', NOW(), NULL, FALSE, 'Ca chiều thứ 4 - Lễ tân Thuận', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-12', 5, 'WKS_AFTERNOON_01'),
+('EMS251113011', NOW(), NULL, FALSE, 'Ca sáng thứ 5 - Lễ tân Thuận', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-13', 5, 'WKS_MORNING_01'),
+('EMS251113012', NOW(), NULL, FALSE, 'Ca chiều thứ 5 - Lễ tân Thuận', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-13', 5, 'WKS_AFTERNOON_01'),
+('EMS251114011', NOW(), NULL, FALSE, 'Ca sáng thứ 6 - Lễ tân Thuận', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-14', 5, 'WKS_MORNING_01'),
+('EMS251114012', NOW(), NULL, FALSE, 'Ca chiều thứ 6 - Lễ tân Thuận', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-14', 5, 'WKS_AFTERNOON_01'),
+
+-- EMP011 (Quản lý Quân) - FULL_TIME - Monday-Friday full week (10 shifts)
+('EMS251110013', NOW(), NULL, FALSE, 'Ca sáng thứ 2 - Quản lý Quân', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-10', 11, 'WKS_MORNING_01'),
+('EMS251110014', NOW(), NULL, FALSE, 'Ca chiều thứ 2 - Quản lý Quân', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-10', 11, 'WKS_AFTERNOON_01'),
+('EMS251111013', NOW(), NULL, FALSE, 'Ca sáng thứ 3 - Quản lý Quân', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-11', 11, 'WKS_MORNING_01'),
+('EMS251111014', NOW(), NULL, FALSE, 'Ca chiều thứ 3 - Quản lý Quân', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-11', 11, 'WKS_AFTERNOON_01'),
+('EMS251112013', NOW(), NULL, FALSE, 'Ca sáng thứ 4 - Quản lý Quân', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-12', 11, 'WKS_MORNING_01'),
+('EMS251112014', NOW(), NULL, FALSE, 'Ca chiều thứ 4 - Quản lý Quân', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-12', 11, 'WKS_AFTERNOON_01'),
+('EMS251113013', NOW(), NULL, FALSE, 'Ca sáng thứ 5 - Quản lý Quân', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-13', 11, 'WKS_MORNING_01'),
+('EMS251113014', NOW(), NULL, FALSE, 'Ca chiều thứ 5 - Quản lý Quân', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-13', 11, 'WKS_AFTERNOON_01'),
+('EMS251114013', NOW(), NULL, FALSE, 'Ca sáng thứ 6 - Quản lý Quân', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-14', 11, 'WKS_MORNING_01'),
+('EMS251114014', NOW(), NULL, FALSE, 'Ca chiều thứ 6 - Quản lý Quân', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-14', 11, 'WKS_AFTERNOON_01'),
+
+-- EMP003 (BS Minh) - PART_TIME_FLEX - Mon, Wed, Fri mornings (3 shifts overlapping)
+('EMS251110009', NOW(), NULL, FALSE, 'Ca sáng thứ 2 - BS Minh', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-11-10', 3, 'WKS_MORNING_02'),
+('EMS251112009', NOW(), NULL, FALSE, 'Ca sáng thứ 4 - BS Minh', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-11-12', 3, 'WKS_MORNING_02'),
+('EMS251114009', NOW(), NULL, FALSE, 'Ca sáng thứ 6 - BS Minh', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-11-14', 3, 'WKS_MORNING_02'),
+
+-- EMP004 (BS Lan) - PART_TIME_FIXED - Tue, Thu afternoons (2 shifts overlapping)
+('EMS251111009', NOW(), NULL, FALSE, 'Ca chiều thứ 3 - BS Lan', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-11-11', 4, 'WKS_AFTERNOON_02'),
+('EMS251113009', NOW(), NULL, FALSE, 'Ca chiều thứ 5 - BS Lan', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-11-13', 4, 'WKS_AFTERNOON_02'),
+
+-- EMP009 (Y tá Nhật) - PART_TIME_FIXED - Mon, Wed, Fri mornings (M/W/F as per spec)
+('EMS251110015', NOW(), NULL, FALSE, 'Ca sáng thứ 2 - Y tá Nhật', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-11-10', 9, 'WKS_MORNING_02'),
+('EMS251112015', NOW(), NULL, FALSE, 'Ca sáng thứ 4 - Y tá Nhật', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-11-12', 9, 'WKS_MORNING_02'),
+('EMS251114015', NOW(), NULL, FALSE, 'Ca sáng thứ 6 - Y tá Nhật', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-11-14', 9, 'WKS_MORNING_02'),
+
+-- EMP010 (Y tá Chính) - PART_TIME_FLEX - Wed, Fri afternoons (2 shifts overlapping)
+('EMS251112011', NOW(), NULL, FALSE, 'Ca chiều thứ 4 - Y tá Chính', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-11-12', 10, 'WKS_AFTERNOON_02'),
+('EMS251114011', NOW(), NULL, FALSE, 'Ca chiều thứ 6 - Y tá Chính', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-11-14', 10, 'WKS_AFTERNOON_02'),
+
+
 -- ✅ NEW DATA (December 2025) - Employee shifts for normal operations
 ('EMS251203001', NOW(), NULL, FALSE, 'Ca sáng thứ 2 - BS Minh', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-12-03', 2, 'WKS_MORNING_01'),
 ('EMS251203002', NOW(), NULL, FALSE, 'Ca chiều thứ 3 - BS Lan', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-12-04', 3, 'WKS_AFTERNOON_01'),
@@ -1289,6 +1386,30 @@ VALUES
 ('EMS251206041', NOW(), NULL, FALSE, 'Thứ 6 sáng - Y tá Khang', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-06', 8, 'WKS_MORNING_01'),
 ('EMS251206042', NOW(), NULL, FALSE, 'Thứ 6 chiều - Y tá Khang', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-06', 8, 'WKS_AFTERNOON_01'),
 
+-- Lễ tân Thuận (EMP005 - FULL_TIME RECEPTIONIST) - Full week Mon-Fri
+('EMS251202081', NOW(), NULL, FALSE, 'Thứ 2 sáng - Lễ tân Thuận', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-02', 5, 'WKS_MORNING_01'),
+('EMS251202082', NOW(), NULL, FALSE, 'Thứ 2 chiều - Lễ tân Thuận', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-02', 5, 'WKS_AFTERNOON_01'),
+('EMS251203081', NOW(), NULL, FALSE, 'Thứ 3 sáng - Lễ tân Thuận', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-03', 5, 'WKS_MORNING_01'),
+('EMS251203082', NOW(), NULL, FALSE, 'Thứ 3 chiều - Lễ tân Thuận', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-03', 5, 'WKS_AFTERNOON_01'),
+('EMS251204081', NOW(), NULL, FALSE, 'Thứ 4 sáng - Lễ tân Thuận', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-04', 5, 'WKS_MORNING_01'),
+('EMS251204082', NOW(), NULL, FALSE, 'Thứ 4 chiều - Lễ tân Thuận', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-04', 5, 'WKS_AFTERNOON_01'),
+('EMS251205081', NOW(), NULL, FALSE, 'Thứ 5 sáng - Lễ tân Thuận', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-05', 5, 'WKS_MORNING_01'),
+('EMS251205082', NOW(), NULL, FALSE, 'Thứ 5 chiều - Lễ tân Thuận', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-05', 5, 'WKS_AFTERNOON_01'),
+('EMS251206081', NOW(), NULL, FALSE, 'Thứ 6 sáng - Lễ tân Thuận', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-06', 5, 'WKS_MORNING_01'),
+('EMS251206082', NOW(), NULL, FALSE, 'Thứ 6 chiều - Lễ tân Thuận', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-06', 5, 'WKS_AFTERNOON_01'),
+
+-- Quản lý Quân (EMP011 - FULL_TIME MANAGER) - Full week Mon-Fri
+('EMS251202091', NOW(), NULL, FALSE, 'Thứ 2 sáng - Quản lý Quân', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-02', 11, 'WKS_MORNING_01'),
+('EMS251202092', NOW(), NULL, FALSE, 'Thứ 2 chiều - Quản lý Quân', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-02', 11, 'WKS_AFTERNOON_01'),
+('EMS251203091', NOW(), NULL, FALSE, 'Thứ 3 sáng - Quản lý Quân', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-03', 11, 'WKS_MORNING_01'),
+('EMS251203092', NOW(), NULL, FALSE, 'Thứ 3 chiều - Quản lý Quân', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-03', 11, 'WKS_AFTERNOON_01'),
+('EMS251204091', NOW(), NULL, FALSE, 'Thứ 4 sáng - Quản lý Quân', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-04', 11, 'WKS_MORNING_01'),
+('EMS251204092', NOW(), NULL, FALSE, 'Thứ 4 chiều - Quản lý Quân', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-04', 11, 'WKS_AFTERNOON_01'),
+('EMS251205091', NOW(), NULL, FALSE, 'Thứ 5 sáng - Quản lý Quân', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-05', 11, 'WKS_MORNING_01'),
+('EMS251205092', NOW(), NULL, FALSE, 'Thứ 5 chiều - Quản lý Quân', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-05', 11, 'WKS_AFTERNOON_01'),
+('EMS251206091', NOW(), NULL, FALSE, 'Thứ 6 sáng - Quản lý Quân', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-06', 11, 'WKS_MORNING_01'),
+('EMS251206092', NOW(), NULL, FALSE, 'Thứ 6 chiều - Quản lý Quân', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-06', 11, 'WKS_AFTERNOON_01'),
+
 -- ============================================
 -- ✅ PART-TIME EMPLOYEES working same hours with FULL-TIME
 -- Part-time làm chung giờ với full-time employees
@@ -1303,14 +1424,10 @@ VALUES
 ('EMS251203051', NOW(), NULL, FALSE, 'Thứ 3 chiều - BS Lan (Part-time)', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-12-03', 4, 'WKS_AFTERNOON_02'),
 ('EMS251205051', NOW(), NULL, FALSE, 'Thứ 5 chiều - BS Lan (Part-time)', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-12-05', 4, 'WKS_AFTERNOON_02'),
 
--- Y tá Hoa (EMP006 - PART_TIME_FIXED NURSE) - Works Mon, Wed, Fri mornings (same time as full-time nurses)
-('EMS251202061', NOW(), NULL, FALSE, 'Thứ 2 sáng - Y tá Hoa (Part-time)', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-12-02', 6, 'WKS_MORNING_02'),
-('EMS251204061', NOW(), NULL, FALSE, 'Thứ 4 sáng - Y tá Hoa (Part-time)', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-12-04', 6, 'WKS_MORNING_02'),
-('EMS251206061', NOW(), NULL, FALSE, 'Thứ 6 sáng - Y tá Hoa (Part-time)', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-12-06', 6, 'WKS_MORNING_02'),
-
--- Y tá Nhật (EMP009 - PART_TIME_FIXED NURSE) - Works Tue, Thu afternoons (same time as full-time nurses)
-('EMS251203061', NOW(), NULL, FALSE, 'Thứ 3 chiều - Y tá Nhật (Part-time)', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-12-03', 9, 'WKS_AFTERNOON_02'),
-('EMS251205061', NOW(), NULL, FALSE, 'Thứ 5 chiều - Y tá Nhật (Part-time)', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-12-05', 9, 'WKS_AFTERNOON_02'),
+-- Y tá Nhật (EMP009 - PART_TIME_FIXED NURSE) - Works Mon, Wed, Fri mornings (M/W/F as per spec)
+('EMS251202101', NOW(), NULL, FALSE, 'Thứ 2 sáng - Y tá Nhật (Part-time)', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-12-02', 9, 'WKS_MORNING_02'),
+('EMS251204101', NOW(), NULL, FALSE, 'Thứ 4 sáng - Y tá Nhật (Part-time)', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-12-04', 9, 'WKS_MORNING_02'),
+('EMS251206101', NOW(), NULL, FALSE, 'Thứ 6 sáng - Y tá Nhật (Part-time)', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-12-06', 9, 'WKS_MORNING_02'),
 
 -- Y tá Chính (EMP010 - PART_TIME_FLEX NURSE) - Works Wed, Fri afternoons (same time as full-time nurses)
 ('EMS251204071', NOW(), NULL, FALSE, 'Thứ 4 chiều - Y tá Chính (Part-time flex)', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-12-04', 10, 'WKS_AFTERNOON_02'),
@@ -1319,7 +1436,106 @@ VALUES
 -- October 2025 shifts (Past month for historical data)
 ('EMS251001001', NOW(), NULL, FALSE, 'Ca tháng trước đã hoàn thành', 'MANUAL_ENTRY', 'COMPLETED', NOW(), '2025-10-15', 2, 'WKS_MORNING_01'),
 ('EMS251001002', NOW(), NULL, FALSE, 'Ca tháng trước đã hoàn thành', 'BATCH_JOB', 'COMPLETED', NOW(), '2025-10-16', 3, 'WKS_AFTERNOON_01'),
-('EMS251001003', NOW(), NULL, FALSE, 'Ca tháng trước bị hủy', 'MANUAL_ENTRY', 'CANCELLED', NOW(), '2025-10-17', 5, 'WKS_MORNING_01')
+('EMS251001003', NOW(), NULL, FALSE, 'Ca tháng trước bị hủy', 'MANUAL_ENTRY', 'CANCELLED', NOW(), '2025-10-17', 5, 'WKS_MORNING_01'),
+
+
+-- ============================================
+-- ✅ NEW DATA (January 2026 Week 1) - FULL WEEK SCHEDULE (Mon-Fri, Jan 6-10, 2026)
+-- Next month coverage for Issue #29
+-- Full-time employees: 10 shifts each (Mon-Fri morning+afternoon)
+-- Part-time employees: 2-3 shifts overlapping with full-time hours
+-- ============================================
+
+-- BS Khoa (EMP001 - FULL_TIME DENTIST) - Full week Mon-Fri
+('EMS260106011', NOW(), NULL, FALSE, 'Thứ 2 sáng - BS Khoa', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-06', 1, 'WKS_MORNING_01'),
+('EMS260106012', NOW(), NULL, FALSE, 'Thứ 2 chiều - BS Khoa', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-06', 1, 'WKS_AFTERNOON_01'),
+('EMS260107011', NOW(), NULL, FALSE, 'Thứ 3 sáng - BS Khoa', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-07', 1, 'WKS_MORNING_01'),
+('EMS260107012', NOW(), NULL, FALSE, 'Thứ 3 chiều - BS Khoa', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-07', 1, 'WKS_AFTERNOON_01'),
+('EMS260108011', NOW(), NULL, FALSE, 'Thứ 4 sáng - BS Khoa', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-08', 1, 'WKS_MORNING_01'),
+('EMS260108012', NOW(), NULL, FALSE, 'Thứ 4 chiều - BS Khoa', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-08', 1, 'WKS_AFTERNOON_01'),
+('EMS260109011', NOW(), NULL, FALSE, 'Thứ 5 sáng - BS Khoa', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-09', 1, 'WKS_MORNING_01'),
+('EMS260109012', NOW(), NULL, FALSE, 'Thứ 5 chiều - BS Khoa', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-09', 1, 'WKS_AFTERNOON_01'),
+('EMS260110011', NOW(), NULL, FALSE, 'Thứ 6 sáng - BS Khoa', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-10', 1, 'WKS_MORNING_01'),
+('EMS260110012', NOW(), NULL, FALSE, 'Thứ 6 chiều - BS Khoa', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-10', 1, 'WKS_AFTERNOON_01'),
+
+-- BS Thái (EMP002 - FULL_TIME DENTIST) - Full week Mon-Fri
+('EMS260106021', NOW(), NULL, FALSE, 'Thứ 2 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-06', 2, 'WKS_MORNING_01'),
+('EMS260106022', NOW(), NULL, FALSE, 'Thứ 2 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-06', 2, 'WKS_AFTERNOON_01'),
+('EMS260107021', NOW(), NULL, FALSE, 'Thứ 3 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-07', 2, 'WKS_MORNING_01'),
+('EMS260107022', NOW(), NULL, FALSE, 'Thứ 3 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-07', 2, 'WKS_AFTERNOON_01'),
+('EMS260108021', NOW(), NULL, FALSE, 'Thứ 4 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-08', 2, 'WKS_MORNING_01'),
+('EMS260108022', NOW(), NULL, FALSE, 'Thứ 4 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-08', 2, 'WKS_AFTERNOON_01'),
+('EMS260109021', NOW(), NULL, FALSE, 'Thứ 5 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-09', 2, 'WKS_MORNING_01'),
+('EMS260109022', NOW(), NULL, FALSE, 'Thứ 5 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-09', 2, 'WKS_AFTERNOON_01'),
+('EMS260110021', NOW(), NULL, FALSE, 'Thứ 6 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-10', 2, 'WKS_MORNING_01'),
+('EMS260110022', NOW(), NULL, FALSE, 'Thứ 6 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-10', 2, 'WKS_AFTERNOON_01'),
+
+-- Y tá Nguyên (EMP007 - FULL_TIME NURSE) - Full week Mon-Fri
+('EMS260106031', NOW(), NULL, FALSE, 'Thứ 2 sáng - Y tá Nguyên', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-06', 7, 'WKS_MORNING_01'),
+('EMS260106032', NOW(), NULL, FALSE, 'Thứ 2 chiều - Y tá Nguyên', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-06', 7, 'WKS_AFTERNOON_01'),
+('EMS260107031', NOW(), NULL, FALSE, 'Thứ 3 sáng - Y tá Nguyên', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-07', 7, 'WKS_MORNING_01'),
+('EMS260107032', NOW(), NULL, FALSE, 'Thứ 3 chiều - Y tá Nguyên', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-07', 7, 'WKS_AFTERNOON_01'),
+('EMS260108031', NOW(), NULL, FALSE, 'Thứ 4 sáng - Y tá Nguyên', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-08', 7, 'WKS_MORNING_01'),
+('EMS260108032', NOW(), NULL, FALSE, 'Thứ 4 chiều - Y tá Nguyên', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-08', 7, 'WKS_AFTERNOON_01'),
+('EMS260109031', NOW(), NULL, FALSE, 'Thứ 5 sáng - Y tá Nguyên', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-09', 7, 'WKS_MORNING_01'),
+('EMS260109032', NOW(), NULL, FALSE, 'Thứ 5 chiều - Y tá Nguyên', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-09', 7, 'WKS_AFTERNOON_01'),
+('EMS260110031', NOW(), NULL, FALSE, 'Thứ 6 sáng - Y tá Nguyên', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-10', 7, 'WKS_MORNING_01'),
+('EMS260110032', NOW(), NULL, FALSE, 'Thứ 6 chiều - Y tá Nguyên', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-10', 7, 'WKS_AFTERNOON_01'),
+
+-- Y tá Khang (EMP008 - FULL_TIME NURSE) - Full week Mon-Fri
+('EMS260106041', NOW(), NULL, FALSE, 'Thứ 2 sáng - Y tá Khang', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-06', 8, 'WKS_MORNING_01'),
+('EMS260106042', NOW(), NULL, FALSE, 'Thứ 2 chiều - Y tá Khang', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-06', 8, 'WKS_AFTERNOON_01'),
+('EMS260107041', NOW(), NULL, FALSE, 'Thứ 3 sáng - Y tá Khang', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-07', 8, 'WKS_MORNING_01'),
+('EMS260107042', NOW(), NULL, FALSE, 'Thứ 3 chiều - Y tá Khang', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-07', 8, 'WKS_AFTERNOON_01'),
+('EMS260108041', NOW(), NULL, FALSE, 'Thứ 4 sáng - Y tá Khang', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-08', 8, 'WKS_MORNING_01'),
+('EMS260108042', NOW(), NULL, FALSE, 'Thứ 4 chiều - Y tá Khang', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-08', 8, 'WKS_AFTERNOON_01'),
+('EMS260109041', NOW(), NULL, FALSE, 'Thứ 5 sáng - Y tá Khang', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-09', 8, 'WKS_MORNING_01'),
+('EMS260109042', NOW(), NULL, FALSE, 'Thứ 5 chiều - Y tá Khang', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-09', 8, 'WKS_AFTERNOON_01'),
+('EMS260110041', NOW(), NULL, FALSE, 'Thứ 6 sáng - Y tá Khang', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-10', 8, 'WKS_MORNING_01'),
+('EMS260110042', NOW(), NULL, FALSE, 'Thứ 6 chiều - Y tá Khang', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-10', 8, 'WKS_AFTERNOON_01'),
+
+-- Lễ tân Thuận (EMP005 - FULL_TIME RECEPTIONIST) - Full week Mon-Fri
+('EMS260106081', NOW(), NULL, FALSE, 'Thứ 2 sáng - Lễ tân Thuận', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-06', 5, 'WKS_MORNING_01'),
+('EMS260106082', NOW(), NULL, FALSE, 'Thứ 2 chiều - Lễ tân Thuận', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-06', 5, 'WKS_AFTERNOON_01'),
+('EMS260107081', NOW(), NULL, FALSE, 'Thứ 3 sáng - Lễ tân Thuận', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-07', 5, 'WKS_MORNING_01'),
+('EMS260107082', NOW(), NULL, FALSE, 'Thứ 3 chiều - Lễ tân Thuận', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-07', 5, 'WKS_AFTERNOON_01'),
+('EMS260108081', NOW(), NULL, FALSE, 'Thứ 4 sáng - Lễ tân Thuận', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-08', 5, 'WKS_MORNING_01'),
+('EMS260108082', NOW(), NULL, FALSE, 'Thứ 4 chiều - Lễ tân Thuận', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-08', 5, 'WKS_AFTERNOON_01'),
+('EMS260109081', NOW(), NULL, FALSE, 'Thứ 5 sáng - Lễ tân Thuận', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-09', 5, 'WKS_MORNING_01'),
+('EMS260109082', NOW(), NULL, FALSE, 'Thứ 5 chiều - Lễ tân Thuận', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-09', 5, 'WKS_AFTERNOON_01'),
+('EMS260110081', NOW(), NULL, FALSE, 'Thứ 6 sáng - Lễ tân Thuận', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-10', 5, 'WKS_MORNING_01'),
+('EMS260110082', NOW(), NULL, FALSE, 'Thứ 6 chiều - Lễ tân Thuận', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-10', 5, 'WKS_AFTERNOON_01'),
+
+-- Quản lý Quân (EMP011 - FULL_TIME MANAGER) - Full week Mon-Fri
+('EMS260106091', NOW(), NULL, FALSE, 'Thứ 2 sáng - Quản lý Quân', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-06', 11, 'WKS_MORNING_01'),
+('EMS260106092', NOW(), NULL, FALSE, 'Thứ 2 chiều - Quản lý Quân', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-06', 11, 'WKS_AFTERNOON_01'),
+('EMS260107091', NOW(), NULL, FALSE, 'Thứ 3 sáng - Quản lý Quân', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-07', 11, 'WKS_MORNING_01'),
+('EMS260107092', NOW(), NULL, FALSE, 'Thứ 3 chiều - Quản lý Quân', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-07', 11, 'WKS_AFTERNOON_01'),
+('EMS260108091', NOW(), NULL, FALSE, 'Thứ 4 sáng - Quản lý Quân', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-08', 11, 'WKS_MORNING_01'),
+('EMS260108092', NOW(), NULL, FALSE, 'Thứ 4 chiều - Quản lý Quân', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-08', 11, 'WKS_AFTERNOON_01'),
+('EMS260109091', NOW(), NULL, FALSE, 'Thứ 5 sáng - Quản lý Quân', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-09', 11, 'WKS_MORNING_01'),
+('EMS260109092', NOW(), NULL, FALSE, 'Thứ 5 chiều - Quản lý Quân', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-09', 11, 'WKS_AFTERNOON_01'),
+('EMS260110091', NOW(), NULL, FALSE, 'Thứ 6 sáng - Quản lý Quân', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-10', 11, 'WKS_MORNING_01'),
+('EMS260110092', NOW(), NULL, FALSE, 'Thứ 6 chiều - Quản lý Quân', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-10', 11, 'WKS_AFTERNOON_01'),
+
+-- BS Minh (EMP003 - PART_TIME_FLEX DENTIST) - Mon, Wed, Fri mornings
+('EMS260106051', NOW(), NULL, FALSE, 'Thứ 2 sáng - BS Minh (Part-time)', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2026-01-06', 3, 'WKS_MORNING_02'),
+('EMS260108051', NOW(), NULL, FALSE, 'Thứ 4 sáng - BS Minh (Part-time)', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2026-01-08', 3, 'WKS_MORNING_02'),
+('EMS260110051', NOW(), NULL, FALSE, 'Thứ 6 sáng - BS Minh (Part-time)', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2026-01-10', 3, 'WKS_MORNING_02'),
+
+-- BS Lan (EMP004 - PART_TIME_FIXED DENTIST) - Tue, Thu afternoons
+('EMS260107051', NOW(), NULL, FALSE, 'Thứ 3 chiều - BS Lan (Part-time)', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2026-01-07', 4, 'WKS_AFTERNOON_02'),
+('EMS260109051', NOW(), NULL, FALSE, 'Thứ 5 chiều - BS Lan (Part-time)', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2026-01-09', 4, 'WKS_AFTERNOON_02'),
+
+-- Y tá Nhật (EMP009 - PART_TIME_FIXED NURSE) - Mon, Wed, Fri mornings (M/W/F as per spec)
+('EMS260106101', NOW(), NULL, FALSE, 'Thứ 2 sáng - Y tá Nhật (Part-time)', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2026-01-06', 9, 'WKS_MORNING_02'),
+('EMS260108101', NOW(), NULL, FALSE, 'Thứ 4 sáng - Y tá Nhật (Part-time)', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2026-01-08', 9, 'WKS_MORNING_02'),
+('EMS260110101', NOW(), NULL, FALSE, 'Thứ 6 sáng - Y tá Nhật (Part-time)', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2026-01-10', 9, 'WKS_MORNING_02'),
+
+-- Y tá Chính (EMP010 - PART_TIME_FLEX NURSE) - Wed, Fri afternoons
+('EMS260108071', NOW(), NULL, FALSE, 'Thứ 4 chiều - Y tá Chính (Part-time flex)', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2026-01-08', 10, 'WKS_AFTERNOON_02'),
+('EMS260110071', NOW(), NULL, FALSE, 'Thứ 6 chiều - Y tá Chính (Part-time flex)', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2026-01-10', 10, 'WKS_AFTERNOON_02')
+
 ON CONFLICT (employee_shift_id) DO NOTHING;
 
 
@@ -2118,11 +2334,11 @@ VALUES ('TPL_ORTHO_METAL', 'Niềng răng mắc cài kim loại trọn gói 2 n�
 ON CONFLICT (template_code) DO NOTHING;
 
 
--- Template 2: Implant Hàn Quốc (6 tháng)
+-- Template 2: Implant Hàn Quốc (6 tháng) - Changed specialization_id from 5 to 4 (all services are spec 4)
 INSERT INTO treatment_plan_templates (template_code, template_name, description, estimated_duration_days, total_price, specialization_id, is_active, created_at)
 VALUES ('TPL_IMPLANT_OSSTEM', 'Cấy ghép Implant Hàn Quốc (Osstem) - Trọn gói',
         'Gói cấy ghép Implant hoàn chỉnh từ phẫu thuật đến gắn răng sứ, sử dụng trụ Osstem Hàn Quốc.',
-        180, 19000000, 5, true, NOW())
+        180, 19000000, 4, true, NOW())
 ON CONFLICT (template_code) DO NOTHING;
 
 
@@ -2133,11 +2349,57 @@ VALUES ('TPL_CROWN_CERCON_SIMPLE', 'Bọc răng sứ Cercon HT - 1 răng (đơn 
         4, 3500000, 4, true, NOW())
 ON CONFLICT (template_code) DO NOTHING;
 
--- Template 3B: Bọc răng sứ Cercon HT + Điều trị tủy (7 ngày)
+-- Template 3B: Disable old mixed-spec template
 INSERT INTO treatment_plan_templates (template_code, template_name, description, estimated_duration_days, total_price, specialization_id, is_active, created_at)
-VALUES ('TPL_CROWN_CERCON_ENDO', 'Bọc răng sứ Cercon HT - 1 răng (kèm điều trị tủy)',
-        'Gói bọc răng sứ toàn sứ Cercon HT cho răng cần điều trị tủy, bao gồm điều trị tủy + trụ sợi + bọc sứ.',
-        7, 5000000, 4, true, NOW())
+VALUES ('TPL_CROWN_CERCON_ENDO', 'Bọc răng sứ Cercon HT - 1 răng (kèm điều trị tủy) - DEPRECATED',
+        'DEPRECATED: Template cũ có mixed specializations. Use TPL_ENDO_TREATMENT and TPL_CROWN_AFTER_ENDO instead.',
+        7, 5000000, 4, false, NOW())
+ON CONFLICT (template_code) DO UPDATE SET is_active = false;
+
+-- ============================================
+-- ✅ NEW TEMPLATES - One specialization per template
+-- ============================================
+
+-- Template 4: Điều trị tủy răng (spec 2: Nội nha) - Only endodontic treatment
+INSERT INTO treatment_plan_templates (template_code, template_name, description, estimated_duration_days, total_price, specialization_id, is_active, created_at)
+VALUES ('TPL_ENDO_TREATMENT', 'Điều trị tủy răng sau', 
+        'Gói điều trị tủy răng tiền cối/răng cối, bao gồm lấy tủy, làm sạch và trám bít ống tủy.',
+        3, 2000000, 2, true, NOW())
+ON CONFLICT (template_code) DO NOTHING;
+
+-- Template 5: Bọc sứ sau điều trị tủy (spec 4: Phục hồi răng) - Restorative work
+INSERT INTO treatment_plan_templates (template_code, template_name, description, estimated_duration_days, total_price, specialization_id, is_active, created_at)
+VALUES ('TPL_CROWN_AFTER_ENDO', 'Bọc sứ sau điều trị tủy', 
+        'Gói bọc răng sứ Cercon HT cho răng đã điều trị tủy, bao gồm đóng chốt tái tạo cùi răng, mài răng, lấy dấu và gắn sứ.',
+        4, 4500000, 4, true, NOW())
+ON CONFLICT (template_code) DO NOTHING;
+
+-- Template 6: Cạo vôi răng định kỳ (spec 3: Nha chu)
+INSERT INTO treatment_plan_templates (template_code, template_name, description, estimated_duration_days, total_price, specialization_id, is_active, created_at)
+VALUES ('TPL_PERIO_SCALING', 'Cạo vôi răng toàn hàm', 
+        'Gói cạo vôi răng định kỳ cho cả 2 hàm, bao gồm cạo vôi cơ bản + đánh bóng răng.',
+        1, 500000, 3, true, NOW())
+ON CONFLICT (template_code) DO NOTHING;
+
+-- Template 7: Nhổ răng khôn (spec 5: Phẫu thuật hàm mặt)
+INSERT INTO treatment_plan_templates (template_code, template_name, description, estimated_duration_days, total_price, specialization_id, is_active, created_at)
+VALUES ('TPL_SURGERY_WISDOM', 'Nhổ răng khôn', 
+        'Gói nhổ răng khôn mọc lệch/ngầm, bao gồm chụp phim, phẫu thuật và tái khám.',
+        7, 2000000, 5, true, NOW())
+ON CONFLICT (template_code) DO NOTHING;
+
+-- Template 8: Trám răng sữa trẻ em (spec 6: Nha khoa trẻ em)
+INSERT INTO treatment_plan_templates (template_code, template_name, description, estimated_duration_days, total_price, specialization_id, is_active, created_at)
+VALUES ('TPL_PEDO_FILLING', 'Trám răng sữa', 
+        'Gói trám răng sữa bị sâu cho trẻ em, sử dụng vật liệu GIC an toàn.',
+        1, 300000, 6, true, NOW())
+ON CONFLICT (template_code) DO NOTHING;
+
+-- Template 9: Tẩy trắng răng (spec 7: Răng thẩm mỹ)
+INSERT INTO treatment_plan_templates (template_code, template_name, description, estimated_duration_days, total_price, specialization_id, is_active, created_at)
+VALUES ('TPL_COSMETIC_BLEACHING', 'Tẩy trắng răng tại phòng khám', 
+        'Gói tẩy trắng răng bằng công nghệ Laser/Zoom, bao gồm kiểm tra và làm sạch răng trước tẩy trắng.',
+        1, 3000000, 7, true, NOW())
 ON CONFLICT (template_code) DO NOTHING;
 
 
@@ -2384,6 +2646,116 @@ FROM template_phases tp
 JOIN treatment_plan_templates t ON tp.template_id = t.template_id
 JOIN services s ON s.service_code = 'PROS_CEMENT'
 WHERE t.template_code = 'TPL_CROWN_CERCON_ENDO' AND tp.phase_number = 2
+ON CONFLICT (phase_id, service_id) DO NOTHING;
+
+
+-- =============================================
+-- ✅ NEW TEMPLATE PHASES AND SERVICES
+-- =============================================
+
+-- TPL_ENDO_TREATMENT: 1 phase (spec 2: Nội nha) - ONLY spec 2 services
+INSERT INTO template_phases (template_id, phase_number, phase_name, estimated_duration_days, created_at)
+SELECT t.template_id, 1, 'Điều trị tủy răng sau', 3, NOW()
+FROM treatment_plan_templates t WHERE t.template_code = 'TPL_ENDO_TREATMENT'
+ON CONFLICT (template_id, phase_number) DO NOTHING;
+
+INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
+SELECT tp.phase_id, s.service_id, 1, 1, 75, NOW()
+FROM template_phases tp
+JOIN treatment_plan_templates t ON tp.template_id = t.template_id
+JOIN services s ON s.service_code = 'ENDO_TREAT_POST'
+WHERE t.template_code = 'TPL_ENDO_TREATMENT' AND tp.phase_number = 1
+ON CONFLICT (phase_id, service_id) DO NOTHING;
+
+
+-- TPL_CROWN_AFTER_ENDO: 1 phase (spec 4: Phục hồi răng) - Includes post/core for restored teeth
+INSERT INTO template_phases (template_id, phase_number, phase_name, estimated_duration_days, created_at)
+SELECT t.template_id, 1, 'Đóng chốt + Bọc răng sứ Cercon HT', 4, NOW()
+FROM treatment_plan_templates t WHERE t.template_code = 'TPL_CROWN_AFTER_ENDO'
+ON CONFLICT (template_id, phase_number) DO NOTHING;
+
+INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
+SELECT tp.phase_id, s.service_id, 1, 1, 45, NOW()
+FROM template_phases tp
+JOIN treatment_plan_templates t ON tp.template_id = t.template_id
+JOIN services s ON s.service_code = 'ENDO_POST_CORE'
+WHERE t.template_code = 'TPL_CROWN_AFTER_ENDO' AND tp.phase_number = 1
+ON CONFLICT (phase_id, service_id) DO NOTHING;
+
+INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
+SELECT tp.phase_id, s.service_id, 2, 1, 60, NOW()
+FROM template_phases tp
+JOIN treatment_plan_templates t ON tp.template_id = t.template_id
+JOIN services s ON s.service_code = 'CROWN_ZIR_CERCON'
+WHERE t.template_code = 'TPL_CROWN_AFTER_ENDO' AND tp.phase_number = 1
+ON CONFLICT (phase_id, service_id) DO NOTHING;
+
+INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
+SELECT tp.phase_id, s.service_id, 3, 1, 30, NOW()
+FROM template_phases tp
+JOIN treatment_plan_templates t ON tp.template_id = t.template_id
+JOIN services s ON s.service_code = 'PROS_CEMENT'
+WHERE t.template_code = 'TPL_CROWN_AFTER_ENDO' AND tp.phase_number = 1
+ON CONFLICT (phase_id, service_id) DO NOTHING;
+
+
+-- TPL_PERIO_SCALING: 1 phase (spec 3: Nha chu)
+INSERT INTO template_phases (template_id, phase_number, phase_name, estimated_duration_days, created_at)
+SELECT t.template_id, 1, 'Cạo vôi răng + Đánh bóng', 1, NOW()
+FROM treatment_plan_templates t WHERE t.template_code = 'TPL_PERIO_SCALING'
+ON CONFLICT (template_id, phase_number) DO NOTHING;
+
+INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
+SELECT tp.phase_id, s.service_id, 1, 1, 45, NOW()
+FROM template_phases tp
+JOIN treatment_plan_templates t ON tp.template_id = t.template_id
+JOIN services s ON s.service_code = 'SCALING_L1'
+WHERE t.template_code = 'TPL_PERIO_SCALING' AND tp.phase_number = 1
+ON CONFLICT (phase_id, service_id) DO NOTHING;
+
+
+-- TPL_SURGERY_WISDOM: 1 phase (spec 5: Phẫu thuật)
+INSERT INTO template_phases (template_id, phase_number, phase_name, estimated_duration_days, created_at)
+SELECT t.template_id, 1, 'Nhổ răng khôn + Tái khám', 7, NOW()
+FROM treatment_plan_templates t WHERE t.template_code = 'TPL_SURGERY_WISDOM'
+ON CONFLICT (template_id, phase_number) DO NOTHING;
+
+INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
+SELECT tp.phase_id, s.service_id, 1, 1, 60, NOW()
+FROM template_phases tp
+JOIN treatment_plan_templates t ON tp.template_id = t.template_id
+JOIN services s ON s.service_code = 'EXTRACT_WISDOM_L1'
+WHERE t.template_code = 'TPL_SURGERY_WISDOM' AND tp.phase_number = 1
+ON CONFLICT (phase_id, service_id) DO NOTHING;
+
+
+-- TPL_PEDO_FILLING: 1 phase (spec 6: Nha khoa trẻ em)
+INSERT INTO template_phases (template_id, phase_number, phase_name, estimated_duration_days, created_at)
+SELECT t.template_id, 1, 'Trám răng sữa', 1, NOW()
+FROM treatment_plan_templates t WHERE t.template_code = 'TPL_PEDO_FILLING'
+ON CONFLICT (template_id, phase_number) DO NOTHING;
+
+INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
+SELECT tp.phase_id, s.service_id, 1, 1, 45, NOW()
+FROM template_phases tp
+JOIN treatment_plan_templates t ON tp.template_id = t.template_id
+JOIN services s ON s.service_code = 'FILLING_COMP'
+WHERE t.template_code = 'TPL_PEDO_FILLING' AND tp.phase_number = 1
+ON CONFLICT (phase_id, service_id) DO NOTHING;
+
+
+-- TPL_COSMETIC_BLEACHING: 1 phase (spec 7: Răng thẩm mỹ)
+INSERT INTO template_phases (template_id, phase_number, phase_name, estimated_duration_days, created_at)
+SELECT t.template_id, 1, 'Tẩy trắng răng Laser', 1, NOW()
+FROM treatment_plan_templates t WHERE t.template_code = 'TPL_COSMETIC_BLEACHING'
+ON CONFLICT (template_id, phase_number) DO NOTHING;
+
+INSERT INTO template_phase_services (phase_id, service_id, sequence_number, quantity, estimated_time_minutes, created_at)
+SELECT tp.phase_id, s.service_id, 1, 1, 90, NOW()
+FROM template_phases tp
+JOIN treatment_plan_templates t ON tp.template_id = t.template_id
+JOIN services s ON s.service_code = 'BLEACH_INOFFICE'
+WHERE t.template_code = 'TPL_COSMETIC_BLEACHING' AND tp.phase_number = 1
 ON CONFLICT (phase_id, service_id) DO NOTHING;
 
 
