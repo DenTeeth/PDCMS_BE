@@ -46,16 +46,41 @@ public class DataInitializer {
             Integer itemCount = jdbcTemplate.queryForObject(
                     "SELECT COUNT(*) FROM item_masters",
                     Integer.class);
+            Integer serviceCount = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM services",
+                    Integer.class);
 
-            if (roleCount != null && roleCount > 0 && itemCount != null && itemCount > 0) {
-                log.info("Seed data already exists (roles: {}, items: {}), skipping initialization",
-                        roleCount, itemCount);
+            // API 6.17: Check service_consumables separately (may need reload)
+            Integer consumablesCount = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM service_consumables",
+                    Integer.class);
+
+            // Log counts for debugging
+            log.info("Data counts: roles={}, items={}, services={}, consumables={}",
+                    roleCount, itemCount, serviceCount, consumablesCount);
+
+            // If ALL tables have data, skip initialization
+            if (roleCount != null && roleCount > 0 &&
+                    itemCount != null && itemCount > 0 &&
+                    serviceCount != null && serviceCount > 0 &&
+                    consumablesCount != null && consumablesCount > 0) {
+                log.info(
+                        "Seed data already exists (roles: {}, items: {}, services: {}, consumables: {}), skipping initialization",
+                        roleCount, itemCount, serviceCount, consumablesCount);
                 return;
             }
 
-            if (roleCount != null && roleCount > 0) {
-                log.info(
-                        "Partial seed data detected (roles exist but items missing), will attempt to load missing data...");
+            // If ANY critical table is empty, reload ALL data
+            if (serviceCount != null && serviceCount == 0) {
+                log.warn("Services table is empty - will reload ALL seed data");
+            }
+
+            if (consumablesCount != null && consumablesCount == 0) {
+                log.warn("Service consumables table is empty - will reload ALL seed data for API 6.17");
+            }
+
+            if (roleCount != null && roleCount > 0 && (serviceCount == 0 || itemCount == 0)) {
+                log.info("Partial seed data detected - will attempt to load missing data...");
             }
 
             // Read seed data file
@@ -102,16 +127,19 @@ public class DataInitializer {
                             jdbcTemplate.execute(trimmed);
                             executedCount++;
 
-                            // Log first few inserts for verification
-                            if (executedCount <= 5) {
-                                log.debug("Executed: {}", trimmed.substring(0, Math.min(80, trimmed.length())));
+                            // Log first few inserts and service_consumables for verification
+                            if (executedCount <= 5 || trimmed.toUpperCase().contains("SERVICE_CONSUMABLES")) {
+                                log.debug("Executed: {}", trimmed.substring(0, Math.min(150, trimmed.length())));
                             }
                         } catch (Exception e) {
                             // Log but continue (some statements might fail due to FK constraints - that's
                             // OK)
-                            if (executedCount < 10) {
-                                log.warn("Failed statement: {}", trimmed.substring(0, Math.min(100, trimmed.length())));
+                            // Log service_consumables failures for debugging API 6.17
+                            if (executedCount < 10 || trimmed.toUpperCase().contains("SERVICE_CONSUMABLES")) {
+                                log.warn("Failed statement: {}", trimmed.substring(0, Math.min(150, trimmed.length())));
                                 log.warn("Error: {}", e.getMessage());
+                                log.warn("Root cause: {}",
+                                        e.getCause() != null ? e.getCause().getMessage() : "No cause");
                             }
                             skippedCount++;
                         }

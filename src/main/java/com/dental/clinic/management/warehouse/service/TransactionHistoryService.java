@@ -4,6 +4,7 @@ package com.dental.clinic.management.warehouse.service;
 import com.dental.clinic.management.exception.BadRequestException;
 import com.dental.clinic.management.patient.domain.Patient;
 import com.dental.clinic.management.patient.repository.PatientRepository;
+import com.dental.clinic.management.utils.security.AuthoritiesConstants;
 import com.dental.clinic.management.utils.security.SecurityUtil;
 import com.dental.clinic.management.warehouse.domain.StorageTransaction;
 import com.dental.clinic.management.warehouse.dto.request.TransactionHistoryRequest;
@@ -63,7 +64,7 @@ public class TransactionHistoryService {
         validateRequest(request);
 
         // 2. Check permissions
-        boolean hasViewCostPermission = hasPermission("VIEW_COST");
+        boolean hasViewCostPermission = hasPermission(AuthoritiesConstants.VIEW_WAREHOUSE_COST);
         log.debug("Permission check - VIEW_COST: {}", hasViewCostPermission);
 
         // 3. Build dynamic query specification
@@ -254,7 +255,7 @@ public class TransactionHistoryService {
                         "Transaction with ID " + id + " not found"));
 
         // 2. Check permissions
-        boolean hasViewCostPermission = hasPermission("VIEW_COST");
+        boolean hasViewCostPermission = hasPermission(AuthoritiesConstants.VIEW_WAREHOUSE_COST);
         log.debug("Permission check - VIEW_COST: {}", hasViewCostPermission);
 
         // 3. Map to appropriate response based on transaction type
@@ -482,7 +483,7 @@ public class TransactionHistoryService {
 
         log.info("Transaction approved - ID: {}, Code: {}", id, transaction.getTransactionCode());
 
-        boolean hasViewCostPermission = hasPermission("VIEW_COST");
+        boolean hasViewCostPermission = hasPermission(AuthoritiesConstants.VIEW_WAREHOUSE_COST);
         return mapToDetailResponse(transaction, hasViewCostPermission);
     }
 
@@ -524,7 +525,7 @@ public class TransactionHistoryService {
         log.info("Transaction rejected - ID: {}, Code: {}, Reason: {}",
                 id, transaction.getTransactionCode(), rejectionReason);
 
-        boolean hasViewCostPermission = hasPermission("VIEW_COST");
+        boolean hasViewCostPermission = hasPermission(AuthoritiesConstants.VIEW_WAREHOUSE_COST);
         return mapToDetailResponse(transaction, hasViewCostPermission);
     }
 
@@ -563,7 +564,7 @@ public class TransactionHistoryService {
         log.info("Transaction cancelled - ID: {}, Code: {}",
                 id, transaction.getTransactionCode());
 
-        boolean hasViewCostPermission = hasPermission("VIEW_COST");
+        boolean hasViewCostPermission = hasPermission(AuthoritiesConstants.VIEW_WAREHOUSE_COST);
         return mapToDetailResponse(transaction, hasViewCostPermission);
     }
 
