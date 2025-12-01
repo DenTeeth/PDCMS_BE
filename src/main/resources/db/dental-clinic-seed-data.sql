@@ -1669,7 +1669,7 @@ INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at,
 VALUES ('2025-12-31', 'MAINTENANCE_WEEK', 'New Year Eve - System maintenance', NOW(), NOW())
 ON CONFLICT (holiday_date, definition_id) DO NOTHING;
 
--- ✅ NEW DATA (January 2026) - Add New Year and Tet preparation maintenance days  
+-- ✅ NEW DATA (January 2026) - Add New Year and Tet preparation maintenance days
 INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
 VALUES ('2026-01-01', 'NEW_YEAR', 'Tết Dương lịch 2026', NOW(), NOW())
 ON CONFLICT (holiday_date, definition_id) DO NOTHING;
@@ -4649,3 +4649,157 @@ SELECT setval('service_consumables_link_id_seq', (SELECT COALESCE(MAX(link_id), 
 -- These tables will be populated through normal application usage
 -- Audit logs: Created automatically when transactions are approved/rejected
 -- Supplier items: Managed through supplier management UI
+
+-- =============================================
+-- CLINICAL RECORDS MODULE (Module #9)
+-- =============================================
+-- Test data for API 8.1: GET /api/v1/appointments/{appointmentId}/clinical-record
+-- Test scenarios:
+--   1. Appointment 1: Has clinical record (SUCCESS case for admin/doctor/patient)
+--   2. Appointment 2: Has clinical record (SUCCESS case for another doctor)
+--   3. Appointment 5: No clinical record (404 RECORD_NOT_FOUND - shows CREATE form)
+
+-- Clinical Record #1 (for appointment_id=1, patient_id=1, employee_id=1)
+INSERT INTO clinical_records (
+    clinical_record_id, appointment_id, diagnosis, vital_signs,
+    chief_complaint, examination_findings, treatment_notes,
+    created_at, updated_at
+) VALUES (
+    1, 1,
+    'Gingivitis (Viêm lợi) + Dental calculus (Cao răng)',
+    '{"blood_pressure": "120/80", "heart_rate": "72", "temperature": "36.5"}',
+    'Đau nhức và chảy máu lợi khi đánh răng, cảm giác răng ố vàng',
+    'Lợi sưng đỏ, có nhiều mảng cao răng, không có sâu răng',
+    'Đã thực hiện lấy cao răng (scaling), hướng dẫn cách đánh răng đúng cách',
+    NOW(), NOW()
+) ON CONFLICT (clinical_record_id) DO NOTHING;
+
+-- Procedures for Clinical Record #1
+INSERT INTO clinical_record_procedures (
+    procedure_id, clinical_record_id, service_id, patient_plan_item_id,
+    tooth_number, procedure_description, notes, created_at
+) VALUES
+(1, 1, 1, NULL, NULL, 'Khám tổng quát răng miệng', 'Bệnh nhân không có sâu răng', NOW()),
+(2, 1, 3, NULL, NULL, 'Lấy cao răng (Scaling Level 1)', 'Đã lấy cao răng toàn hàm', NOW())
+ON CONFLICT (procedure_id) DO NOTHING;
+
+-- Prescription for Clinical Record #1
+INSERT INTO clinical_prescriptions (
+    prescription_id, clinical_record_id, prescription_notes, created_at
+) VALUES (
+    1, 1, 'Thuốc súc miệng và giảm đau', NOW()
+) ON CONFLICT (prescription_id) DO NOTHING;
+
+-- Prescription Items for Prescription #1
+INSERT INTO clinical_prescription_items (
+    prescription_item_id, prescription_id, item_master_id, item_name,
+    quantity, dosage_instructions, created_at
+) VALUES
+(1, 1, 10, 'Nước súc miệng Listerine', 1, 'Súc miệng 2 lần/ngày sau khi đánh răng', NOW()),
+(2, 1, 11, 'Paracetamol 500mg', 10, 'Uống 1 viên khi đau, cách 4-6 giờ, tối đa 3 viên/ngày', NOW())
+ON CONFLICT (prescription_item_id) DO NOTHING;
+
+-- Tooth Status for Patient #1
+INSERT INTO patient_tooth_status (
+    tooth_status_id, patient_id, tooth_number, status, notes, recorded_at
+) VALUES
+(1, 1, '11', 'HEALTHY', 'Răng cửa trên phải khỏe mạnh', NOW()),
+(2, 1, '21', 'HEALTHY', 'Răng cửa trên trái khỏe mạnh', NOW()),
+(3, 1, '16', 'HEALTHY', 'Răng hàm trên phải khỏe mạnh', NOW()),
+(4, 1, '26', 'HEALTHY', 'Răng hàm trên trái khỏe mạnh', NOW())
+ON CONFLICT (patient_id, tooth_number) DO NOTHING;
+
+-- Clinical Record #2 (for appointment_id=2, patient_id=2, employee_id=2)
+INSERT INTO clinical_records (
+    clinical_record_id, appointment_id, diagnosis, vital_signs,
+    chief_complaint, examination_findings, treatment_notes,
+    created_at, updated_at
+) VALUES (
+    2, 2,
+    'Dental caries (Sâu răng) - răng số 36',
+    '{"blood_pressure": "115/75", "heart_rate": "68"}',
+    'Đau răng hàm dưới bên trái khi ăn đồ ngọt và lạnh',
+    'Phát hiện lỗ sâu sâu trên bề mặt nhai răng số 36, chưa tổn thương tủy',
+    'Đã trám răng composite, khuyên theo dõi và tái khám sau 6 tháng',
+    NOW(), NOW()
+) ON CONFLICT (clinical_record_id) DO NOTHING;
+
+-- Procedures for Clinical Record #2
+INSERT INTO clinical_record_procedures (
+    procedure_id, clinical_record_id, service_id, patient_plan_item_id,
+    tooth_number, procedure_description, notes, created_at
+) VALUES
+(3, 2, 1, NULL, NULL, 'Khám tổng quát răng miệng', 'Phát hiện sâu răng số 36', NOW()),
+(4, 2, 5, NULL, '36', 'Trám răng Composite', 'Đã trám hoàn tất, bệnh nhân không đau', NOW())
+ON CONFLICT (procedure_id) DO NOTHING;
+
+-- Prescription for Clinical Record #2
+INSERT INTO clinical_prescriptions (
+    prescription_id, clinical_record_id, prescription_notes, created_at
+) VALUES (
+    2, 2, 'Thuốc giảm đau dự phòng', NOW()
+) ON CONFLICT (prescription_id) DO NOTHING;
+
+-- Prescription Items for Prescription #2
+INSERT INTO clinical_prescription_items (
+    prescription_item_id, prescription_id, item_master_id, item_name,
+    quantity, dosage_instructions, created_at
+) VALUES
+(3, 2, 11, 'Paracetamol 500mg', 6, 'Uống 1 viên khi đau, tối đa 3 viên/ngày', NOW())
+ON CONFLICT (prescription_item_id) DO NOTHING;
+
+-- Tooth Status for Patient #2
+INSERT INTO patient_tooth_status (
+    tooth_status_id, patient_id, tooth_number, status, notes, recorded_at
+) VALUES
+(5, 2, '36', 'FILLED', 'Đã trám răng composite', NOW())
+ON CONFLICT (patient_id, tooth_number) DO NOTHING;
+
+-- Clinical Record #3 (for appointment_id=3, patient_id=3, employee_id=1)
+-- This one has procedure linked to treatment plan
+INSERT INTO clinical_records (
+    clinical_record_id, appointment_id, diagnosis, vital_signs,
+    chief_complaint, examination_findings, treatment_notes,
+    created_at, updated_at
+) VALUES (
+    3, 3,
+    'Orthodontic treatment progress check',
+    '{"blood_pressure": "118/78"}',
+    'Tái khám niềng răng định kỳ',
+    'Răng đã dịch chuyển tốt, không có viêm nướu',
+    'Thay dây cung mới, hẹn tái khám sau 4 tuần',
+    NOW(), NOW()
+) ON CONFLICT (clinical_record_id) DO NOTHING;
+
+-- Procedures for Clinical Record #3 (linked to treatment plan)
+INSERT INTO clinical_record_procedures (
+    procedure_id, clinical_record_id, service_id, patient_plan_item_id,
+    tooth_number, procedure_description, notes, created_at
+) VALUES
+(5, 3, 1, NULL, NULL, 'Khám tổng quát răng miệng', 'Kiểm tra tiến độ niềng răng', NOW()),
+(6, 3, 7, 1, NULL, 'Thay dây cung niềng răng', 'Đã thay dây cung theo kế hoạch điều trị', NOW())
+ON CONFLICT (procedure_id) DO NOTHING;
+
+-- No prescription for this record (orthodontic follow-up doesn't need medicine)
+
+-- Reset sequences
+SELECT setval('clinical_records_clinical_record_id_seq', (SELECT COALESCE(MAX(clinical_record_id), 0) FROM clinical_records));
+SELECT setval('clinical_record_procedures_procedure_id_seq', (SELECT COALESCE(MAX(procedure_id), 0) FROM clinical_record_procedures));
+SELECT setval('clinical_prescriptions_prescription_id_seq', (SELECT COALESCE(MAX(prescription_id), 0) FROM clinical_prescriptions));
+SELECT setval('clinical_prescription_items_prescription_item_id_seq', (SELECT COALESCE(MAX(prescription_item_id), 0) FROM clinical_prescription_items));
+SELECT setval('patient_tooth_status_tooth_status_id_seq', (SELECT COALESCE(MAX(tooth_status_id), 0) FROM patient_tooth_status));
+
+-- =============================================
+-- CLINICAL RECORDS SEED DATA COMPLETE
+-- =============================================
+-- Test cases:
+-- 1. GET /api/v1/appointments/1/clinical-record (SUCCESS - has record)
+-- 2. GET /api/v1/appointments/2/clinical-record (SUCCESS - has record)
+-- 3. GET /api/v1/appointments/3/clinical-record (SUCCESS - has record with plan link)
+-- 4. GET /api/v1/appointments/5/clinical-record (404 RECORD_NOT_FOUND - no record)
+-- Authorization test:
+-- - Admin token: Can access all records
+-- - Doctor token (employee_id=1): Can access appointment 1, 3 (own appointments)
+-- - Doctor token (employee_id=2): Can access appointment 2 (own appointment)
+-- - Patient token (patient_id=1): Can access appointment 1 (own appointment)
+-- - Patient token (patient_id=2): Can access appointment 2 (own appointment)

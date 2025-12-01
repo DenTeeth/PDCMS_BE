@@ -1,6 +1,6 @@
 -- ============================================
--- DENTAL CLINIC MANAGEMENT SYSTEM - SCHEMA V30
--- Date: 2025-11-29
+-- DENTAL CLINIC MANAGEMENT SYSTEM - SCHEMA V31
+-- Date: 2025-11-30
 -- PostgreSQL Database Schema - REFERENCE ONLY
 -- ============================================
 -- IMPORTANT: This file is for REFERENCE/DOCUMENTATION purposes only
@@ -14,6 +14,16 @@
 --
 -- This file documents the expected schema structure for reference
 -- ============================================
+-- CHANGES IN V31 (Module #9 - Clinical Records):
+--   - Added clinical_records table (1-to-1 with appointments)
+--   - Added clinical_record_procedures table (with service_id, patient_plan_item_id)
+--   - Added clinical_prescriptions and clinical_prescription_items tables
+--   - Added patient_tooth_status table (dental chart)
+--   - JSONB vital_signs for flexibility
+--   - No workflow states (Write Once, Query Many)
+--   - API 8.1: GET /api/v1/appointments/{appointmentId}/clinical-record
+--   - Authorization: ROLE_ADMIN or VIEW_APPOINTMENT_ALL or VIEW_APPOINTMENT_OWN
+--   - RBAC: Reuse Appointment module ownership validation
 -- CHANGES IN V30 (API 6.15 + Issue #23):
 --   - API 6.15: PUT /api/v1/warehouse/suppliers/{id} endpoint
 --   - Added contact_person column to suppliers table (VARCHAR 255)
@@ -778,5 +788,97 @@ CREATE INDEX idx_time_off_requests_employee ON time_off_requests(employee_id);
 CREATE INDEX idx_time_off_requests_status ON time_off_requests(status);
 
 -- ============================================
--- END OF SCHEMA V23 (Updated with warehouse tables)
+-- CLINICAL RECORDS MODULE (Module #9)
+-- ============================================
+-- Simple "Write Once, Query Many" schema
+-- No workflow states - pharmacist workflow not applicable to dental clinic
+-- JSONB for vital_signs flexibility
+
+-- Clinical Records (1-to-1 with appointments)
+CREATE TABLE clinical_records (
+    clinical_record_id SERIAL PRIMARY KEY,
+    appointment_id INTEGER NOT NULL UNIQUE REFERENCES appointments(appointment_id) ON DELETE CASCADE,
+    diagnosis TEXT,
+    vital_signs JSONB,
+    chief_complaint TEXT,
+    examination_findings TEXT,
+    treatment_notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+COMMENT ON TABLE clinical_records IS 'Clinical records linked 1-to-1 with appointments';
+COMMENT ON COLUMN clinical_records.vital_signs IS 'Flexible JSONB field: blood_pressure, heart_rate, temperature, etc.';
+COMMENT ON COLUMN clinical_records.chief_complaint IS 'Patient reported symptoms (main reason for visit)';
+COMMENT ON COLUMN clinical_records.examination_findings IS 'Doctor observations during examination';
+COMMENT ON COLUMN clinical_records.treatment_notes IS 'Treatment performed and recommendations';
+
+-- Clinical Record Procedures (linked to services and treatment plans)
+CREATE TABLE clinical_record_procedures (
+    procedure_id SERIAL PRIMARY KEY,
+    clinical_record_id INTEGER NOT NULL REFERENCES clinical_records(clinical_record_id) ON DELETE CASCADE,
+    service_id INTEGER REFERENCES services(service_id),
+    patient_plan_item_id INTEGER REFERENCES patient_plan_items(patient_plan_item_id),
+    tooth_number VARCHAR(10),
+    procedure_description TEXT NOT NULL,
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+COMMENT ON TABLE clinical_record_procedures IS 'Procedures performed during appointment';
+COMMENT ON COLUMN clinical_record_procedures.service_id IS 'Reference to service catalog (optional)';
+COMMENT ON COLUMN clinical_record_procedures.patient_plan_item_id IS 'Link to treatment plan item if applicable';
+COMMENT ON COLUMN clinical_record_procedures.tooth_number IS 'Tooth number if procedure specific to tooth';
+
+-- Clinical Prescriptions (header)
+CREATE TABLE clinical_prescriptions (
+    prescription_id SERIAL PRIMARY KEY,
+    clinical_record_id INTEGER NOT NULL REFERENCES clinical_records(clinical_record_id) ON DELETE CASCADE,
+    prescription_notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+COMMENT ON TABLE clinical_prescriptions IS 'Prescription header for clinical record';
+
+-- Clinical Prescription Items (detail lines)
+CREATE TABLE clinical_prescription_items (
+    prescription_item_id SERIAL PRIMARY KEY,
+    prescription_id INTEGER NOT NULL REFERENCES clinical_prescriptions(prescription_id) ON DELETE CASCADE,
+    item_master_id INTEGER REFERENCES item_masters(item_master_id),
+    item_name VARCHAR(255) NOT NULL,
+    quantity INTEGER NOT NULL,
+    dosage_instructions TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+COMMENT ON TABLE clinical_prescription_items IS 'Individual prescription items (medications)';
+COMMENT ON COLUMN clinical_prescription_items.item_master_id IS 'Link to inventory (optional - some items may not be in stock)';
+COMMENT ON COLUMN clinical_prescription_items.item_name IS 'Medicine name (required even if not in inventory)';
+
+-- Patient Tooth Status (dental chart)
+CREATE TABLE patient_tooth_status (
+    tooth_status_id SERIAL PRIMARY KEY,
+    patient_id INTEGER NOT NULL REFERENCES patients(patient_id) ON DELETE CASCADE,
+    tooth_number VARCHAR(10) NOT NULL,
+    status VARCHAR(50) NOT NULL,
+    notes TEXT,
+    recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (patient_id, tooth_number)
+);
+
+COMMENT ON TABLE patient_tooth_status IS 'Current status of each tooth for patient (dental chart)';
+COMMENT ON COLUMN patient_tooth_status.status IS 'HEALTHY, CAVITY, MISSING, CROWN, ROOT_CANAL, etc.';
+
+-- Indexes for Clinical Records Module
+CREATE INDEX idx_clinical_records_appointment ON clinical_records(appointment_id);
+CREATE INDEX idx_clinical_procedures_record ON clinical_record_procedures(clinical_record_id);
+CREATE INDEX idx_clinical_procedures_service ON clinical_record_procedures(service_id);
+CREATE INDEX idx_clinical_procedures_plan_item ON clinical_record_procedures(patient_plan_item_id);
+CREATE INDEX idx_clinical_prescriptions_record ON clinical_prescriptions(clinical_record_id);
+CREATE INDEX idx_prescription_items_prescription ON clinical_prescription_items(prescription_id);
+CREATE INDEX idx_prescription_items_item_master ON clinical_prescription_items(item_master_id);
+CREATE INDEX idx_tooth_status_patient ON patient_tooth_status(patient_id);
+
+-- ============================================
+-- END OF SCHEMA V31 (Added Clinical Records Module)
 -- ============================================
