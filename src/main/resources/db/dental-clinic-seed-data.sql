@@ -955,7 +955,7 @@ SELECT setval(pg_get_serial_sequence('specializations', 'specialization_id'), CO
 -- BƯỚC 14: SAMPLE DATA FOR TIME-OFF, RENEWAL, HOLIDAYS
 -- ============================================
 
--- Sample time-off requests
+-- ⚠️ OLD DATA (November 2025) - Sample time-off requests
 INSERT INTO time_off_requests (request_id, employee_id, time_off_type_id, work_shift_id, start_date, end_date, status, approved_by, approved_at, requested_at, requested_by)
 VALUES
 ('TOR251025001', 2, 'ANNUAL_LEAVE', 'WKS_MORNING_01', '2025-10-28', '2025-10-29', 'PENDING', NULL, NULL, NOW(), 2),
@@ -963,9 +963,25 @@ VALUES
 ('TOR251025003', 4, 'UNPAID_PERSONAL', 'WKS_MORNING_02', '2025-11-05', '2025-11-06', 'REJECTED', 1, NOW() - INTERVAL '1 day', NOW() - INTERVAL '2 days', 4)
 ON CONFLICT (request_id) DO NOTHING;
 
+-- ✅ NEW DATA (December 2025) - Sample time-off requests
+INSERT INTO time_off_requests (request_id, employee_id, time_off_type_id, work_shift_id, start_date, end_date, status, approved_by, approved_at, requested_at, requested_by)
+VALUES
+('TOR251201001', 2, 'ANNUAL_LEAVE', 'WKS_MORNING_01', '2025-12-10', '2025-12-11', 'PENDING', NULL, NULL, NOW(), 2),
+('TOR251201002', 3, 'SICK_LEAVE', 'WKS_AFTERNOON_01', '2025-12-15', '2025-12-15', 'APPROVED', 1, NOW() - INTERVAL '1 day', NOW() - INTERVAL '2 days', 3),
+('TOR251201003', 4, 'UNPAID_PERSONAL', 'WKS_MORNING_02', '2025-12-20', '2025-12-21', 'REJECTED', 1, NOW() - INTERVAL '1 day', NOW() - INTERVAL '2 days', 4)
+ON CONFLICT (request_id) DO NOTHING;
+
+-- ✅ NEW DATA (January 2026) - Sample time-off requests
+INSERT INTO time_off_requests (request_id, employee_id, time_off_type_id, work_shift_id, start_date, end_date, status, approved_by, approved_at, requested_at, requested_by)
+VALUES
+('TOR260101001', 2, 'ANNUAL_LEAVE', 'WKS_MORNING_01', '2026-01-15', '2026-01-16', 'PENDING', NULL, NULL, NOW(), 2),
+('TOR260101002', 3, 'SICK_LEAVE', 'WKS_AFTERNOON_01', '2026-01-20', '2026-01-20', 'APPROVED', 1, NOW() - INTERVAL '1 day', NOW() - INTERVAL '2 days', 3),
+('TOR260101003', 4, 'UNPAID_PERSONAL', 'WKS_MORNING_02', '2026-01-25', '2026-01-26', 'REJECTED', 1, NOW() - INTERVAL '1 day', NOW() - INTERVAL '2 days', 4)
+ON CONFLICT (request_id) DO NOTHING;
+
 
 -- ============================================
--- SAMPLE OVERTIME REQUESTS (BE-304)
+-- ⚠️ OLD DATA (November 2025) - SAMPLE OVERTIME REQUESTS (BE-304)
 -- ============================================
 -- Sample OT requests covering all statuses for FE testing
 -- PENDING, APPROVED, REJECTED, CANCELLED
@@ -1001,9 +1017,55 @@ VALUES
  'Yêu cầu tăng ca cuối tháng', 'CANCELLED', NULL, NULL, NULL, 'Có việc đột xuất không thể tham gia', NOW() - INTERVAL '1 day')
 ON CONFLICT (request_id) DO NOTHING;
 
+-- ✅ NEW DATA (December 2025) - OVERTIME REQUESTS
+INSERT INTO overtime_requests (
+    request_id, employee_id, requested_by, work_date, work_shift_id,
+    reason, status, approved_by, approved_at, rejected_reason, cancellation_reason, created_at
+)
+VALUES
+-- PENDING overtime requests
+('OTR251201001', 2, 2, '2025-12-18', 'WKS_AFTERNOON_02',
+ 'Hoàn thành báo cáo cuối năm', 'PENDING', NULL, NULL, NULL, NULL, NOW()),
+
+('OTR251201002', 3, 3, '2025-12-20', 'WKS_MORNING_01',
+ 'Hỗ trợ dự án khẩn cấp', 'PENDING', NULL, NULL, NULL, NULL, NOW()),
+
+-- APPROVED overtime requests
+('OTR251201003', 5, 5, '2025-12-25', 'WKS_MORNING_02',
+ 'Xử lý công việc kế toán cuối năm', 'APPROVED', 7, NOW() - INTERVAL '2 days', NULL, NULL, NOW() - INTERVAL '3 days'),
+
+('OTR251201004', 6, 6, '2025-12-27', 'WKS_AFTERNOON_02',
+ 'Chăm sóc bệnh nhân ngày lễ', 'APPROVED', 7, NOW() - INTERVAL '1 day', NULL, NULL, NOW() - INTERVAL '2 days'),
+
+-- REJECTED
+('OTR251201005', 2, 2, '2025-12-28', 'WKS_MORNING_01',
+ 'Yêu cầu tăng ca thêm', 'REJECTED', 7, NOW() - INTERVAL '1 day', 'Đã đủ nhân sự cho ngày này', NULL, NOW() - INTERVAL '2 days')
+ON CONFLICT (request_id) DO NOTHING;
+
+-- ✅ NEW DATA (January 2026) - OVERTIME REQUESTS
+INSERT INTO overtime_requests (
+    request_id, employee_id, requested_by, work_date, work_shift_id,
+    reason, status, approved_by, approved_at, rejected_reason, cancellation_reason, created_at
+)
+VALUES
+-- PENDING overtime requests
+('OTR260101001', 2, 2, '2026-01-18', 'WKS_AFTERNOON_02',
+ 'Hoàn thành báo cáo đầu năm', 'PENDING', NULL, NULL, NULL, NULL, NOW()),
+
+('OTR260101002', 3, 3, '2026-01-20', 'WKS_MORNING_01',
+ 'Hỗ trợ triển khai hệ thống mới', 'PENDING', NULL, NULL, NULL, NULL, NOW()),
+
+-- APPROVED overtime requests
+('OTR260101003', 5, 5, '2026-01-25', 'WKS_MORNING_02',
+ 'Xử lý công việc kế toán đầu năm', 'APPROVED', 7, NOW() - INTERVAL '2 days', NULL, NULL, NOW() - INTERVAL '3 days'),
+
+('OTR260101004', 6, 6, '2026-01-27', 'WKS_AFTERNOON_02',
+ 'Chăm sóc bệnh nhân dịp Tết', 'APPROVED', 7, NOW() - INTERVAL '1 day', NULL, NULL, NOW() - INTERVAL '2 days')
+ON CONFLICT (request_id) DO NOTHING;
 
 
--- Create corresponding employee shifts for APPROVED OT requests
+
+-- ⚠️ OLD DATA (November 2025) - Create corresponding employee shifts for APPROVED OT requests
 INSERT INTO employee_shifts (
     employee_shift_id, created_at, created_by, is_overtime, notes,
     source, source_off_request_id, source_ot_request_id, status, updated_at,
@@ -1023,9 +1085,45 @@ VALUES
  '2025-11-27', 6, 'WKS_AFTERNOON_02')
 ON CONFLICT (employee_shift_id) DO NOTHING;
 
+-- ✅ NEW DATA (December 2025) - Employee shifts for APPROVED OT requests
+INSERT INTO employee_shifts (
+    employee_shift_id, created_at, created_by, is_overtime, notes,
+    source, source_off_request_id, source_ot_request_id, status, updated_at,
+    work_date, employee_id, work_shift_id
+)
+VALUES
+('EMS251201001', NOW() - INTERVAL '2 days', 7, TRUE,
+ 'Tạo từ yêu cầu OT OTR251201003 - Xử lý công việc kế toán cuối năm',
+ 'OT_APPROVAL', NULL, 'OTR251201003', 'SCHEDULED', NULL,
+ '2025-12-25', 5, 'WKS_MORNING_02'),
+
+('EMS251201002', NOW() - INTERVAL '1 day', 7, TRUE,
+ 'Tạo từ yêu cầu OT OTR251201004 - Chăm sóc bệnh nhân ngày lễ',
+ 'OT_APPROVAL', NULL, 'OTR251201004', 'SCHEDULED', NULL,
+ '2025-12-27', 6, 'WKS_AFTERNOON_02')
+ON CONFLICT (employee_shift_id) DO NOTHING;
+
+-- ✅ NEW DATA (January 2026) - Employee shifts for APPROVED OT requests
+INSERT INTO employee_shifts (
+    employee_shift_id, created_at, created_by, is_overtime, notes,
+    source, source_off_request_id, source_ot_request_id, status, updated_at,
+    work_date, employee_id, work_shift_id
+)
+VALUES
+('EMS260101001', NOW() - INTERVAL '2 days', 7, TRUE,
+ 'Tạo từ yêu cầu OT OTR260101003 - Xử lý công việc kế toán đầu năm',
+ 'OT_APPROVAL', NULL, 'OTR260101003', 'SCHEDULED', NULL,
+ '2026-01-25', 5, 'WKS_MORNING_02'),
+
+('EMS260101002', NOW() - INTERVAL '1 day', 7, TRUE,
+ 'Tạo từ yêu cầu OT OTR260101004 - Chăm sóc bệnh nhân dịp Tết',
+ 'OT_APPROVAL', NULL, 'OTR260101004', 'SCHEDULED', NULL,
+ '2026-01-27', 6, 'WKS_AFTERNOON_02')
+ON CONFLICT (employee_shift_id) DO NOTHING;
+
 
 -- ============================================
--- EMPLOYEE SHIFT SAMPLE DATA (BE-302)
+-- ⚠️ OLD DATA (November 2025) - EMPLOYEE SHIFT SAMPLE DATA (BE-302)
 -- ============================================
 -- Sample employee shifts for testing Employee Shift Management API
 -- Covers different statuses, shift types, and scenarios
@@ -1036,7 +1134,7 @@ INSERT INTO employee_shifts (
     source, status, updated_at, work_date, employee_id, work_shift_id
 )
 VALUES
--- November 2025 shifts (Current month for testing)
+-- ⚠️ November 2025 shifts (OLD DATA for testing)
 -- Dr. Minh (employee_id=2) - SCHEDULED shifts
 ('EMS251101001', NOW(), NULL, FALSE, 'Ca sáng thứ 2', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-11-03', 2, 'WKS_MORNING_01'),
 ('EMS251101002', NOW(), NULL, FALSE, 'Ca chiều thứ 3', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-11-04', 2, 'WKS_AFTERNOON_01'),
@@ -1096,10 +1194,26 @@ VALUES
 ('EMS251107006', NOW(), NULL, FALSE, 'Ca chiều thứ 5 - Y tá Khang', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-07', 8, 'WKS_AFTERNOON_01'),
 ('EMS251108005', NOW(), NULL, FALSE, 'Ca chiều thứ 6 - Y tá Khang', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-08', 8, 'WKS_AFTERNOON_01'),
 
--- December 2025 shifts (Future month)
-('EMS251201001', NOW(), NULL, FALSE, 'Ca tháng 12', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-02', 2, 'WKS_MORNING_01'),
-('EMS251201002', NOW(), NULL, FALSE, 'Ca tháng 12', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-12-03', 3, 'WKS_AFTERNOON_01'),
-('EMS251201003', NOW(), NULL, FALSE, 'Ca tháng 12', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-04', 5, 'WKS_MORNING_01'),
+-- ✅ NEW DATA (December 2025) - Employee shifts for normal operations
+('EMS251203001', NOW(), NULL, FALSE, 'Ca sáng thứ 2 - BS Minh', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-12-03', 2, 'WKS_MORNING_01'),
+('EMS251203002', NOW(), NULL, FALSE, 'Ca chiều thứ 3 - BS Lan', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-12-04', 3, 'WKS_AFTERNOON_01'),
+('EMS251203003', NOW(), NULL, FALSE, 'Ca tự động từ batch job', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-05', 2, 'WKS_MORNING_01'),
+('EMS251203004', NOW(), NULL, FALSE, 'Ca sáng đã hoàn thành', 'MANUAL_ENTRY', 'COMPLETED', NOW(), '2025-12-01', 3, 'WKS_MORNING_01'),
+('EMS251203005', NOW(), NULL, FALSE, 'Ca chiều đã hoàn thành', 'BATCH_JOB', 'COMPLETED', NOW(), '2025-12-02', 3, 'WKS_AFTERNOON_01'),
+('EMS251206001', NOW(), NULL, FALSE, 'Ca sáng thứ 4 - BS Khoa', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-12-06', 1, 'WKS_MORNING_01'),
+('EMS251206002', NOW(), NULL, FALSE, 'Ca chiều thứ 4 - BS Khoa', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-12-06', 1, 'WKS_AFTERNOON_01'),
+('EMS251207001', NOW(), NULL, FALSE, 'Ca sáng thứ 5 - BS Khoa', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-07', 1, 'WKS_MORNING_01'),
+('EMS251208001', NOW(), NULL, FALSE, 'Ca sáng thứ 6 - BS Khoa', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-08', 1, 'WKS_MORNING_01'),
+
+-- ✅ NEW DATA (January 2026) - Employee shifts for normal operations
+('EMS260103001', NOW(), NULL, FALSE, 'Ca sáng thứ 2 - BS Minh', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2026-01-03', 2, 'WKS_MORNING_01'),
+('EMS260103002', NOW(), NULL, FALSE, 'Ca chiều thứ 3 - BS Lan', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2026-01-04', 3, 'WKS_AFTERNOON_01'),
+('EMS260103003', NOW(), NULL, FALSE, 'Ca tự động từ batch job', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-05', 2, 'WKS_MORNING_01'),
+('EMS260106001', NOW(), NULL, FALSE, 'Ca sáng thứ 4 - BS Khoa', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2026-01-06', 1, 'WKS_MORNING_01'),
+('EMS260106002', NOW(), NULL, FALSE, 'Ca chiều thứ 4 - BS Khoa', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2026-01-06', 1, 'WKS_AFTERNOON_01'),
+('EMS260107001', NOW(), NULL, FALSE, 'Ca sáng thứ 5 - BS Khoa', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-07', 1, 'WKS_MORNING_01'),
+('EMS260108001', NOW(), NULL, FALSE, 'Ca sáng thứ 6 - BS Khoa', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-08', 1, 'WKS_MORNING_01'),
+('EMS260108002', NOW(), NULL, FALSE, 'Ca chiều thứ 6 - BS Khoa', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-08', 1, 'WKS_AFTERNOON_01'),
 
 -- October 2025 shifts (Past month for historical data)
 ('EMS251001001', NOW(), NULL, FALSE, 'Ca tháng trước đã hoàn thành', 'MANUAL_ENTRY', 'COMPLETED', NOW(), '2025-10-15', 2, 'WKS_MORNING_01'),
@@ -1215,7 +1329,7 @@ VALUES ('MAINTENANCE_WEEK', 'System Maintenance Week', 'COMPANY', 'Scheduled sys
 ON CONFLICT (definition_id) DO NOTHING;
 
 
--- Add 3 maintenance days (Monday, Wednesday, Friday of a test week)
+-- ⚠️ OLD DATA (November 2025) - Add 3 maintenance days (Monday, Wednesday, Friday of a test week)
 -- Example: November 3, 5, 7, 2025
 INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
 VALUES ('2025-11-03', 'MAINTENANCE_WEEK', 'Monday maintenance - Test holiday blocking', NOW(), NOW())
@@ -1229,8 +1343,30 @@ INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at,
 VALUES ('2025-11-07', 'MAINTENANCE_WEEK', 'Friday maintenance - Test holiday blocking', NOW(), NOW())
 ON CONFLICT (holiday_date, definition_id) DO NOTHING;
 
+-- ✅ NEW DATA (December 2025) - Add Christmas and Year-end maintenance days
+INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
+VALUES ('2025-12-25', 'MAINTENANCE_WEEK', 'Christmas Day - System maintenance', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
 
--- Expected Behavior:
+INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
+VALUES ('2025-12-31', 'MAINTENANCE_WEEK', 'New Year Eve - System maintenance', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
+
+-- ✅ NEW DATA (January 2026) - Add New Year and Tet preparation maintenance days  
+INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
+VALUES ('2026-01-01', 'NEW_YEAR', 'Tết Dương lịch 2026', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
+
+INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
+VALUES ('2026-01-26', 'MAINTENANCE_WEEK', 'Pre-Tet system maintenance', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
+
+INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
+VALUES ('2026-01-27', 'MAINTENANCE_WEEK', 'Pre-Tet system maintenance', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
+
+
+-- ⚠️ Expected Behavior (OLD DATA - November 2025):
 -- Creating shifts on 2025-11-04 (Tuesday) or 2025-11-06 (Thursday) should SUCCEED
 -- Creating shifts on 2025-11-03 (Monday), 2025-11-05 (Wednesday), or 2025-11-07 (Friday) should return 409 HOLIDAY_CONFLICT
 -- Time-off requests spanning these dates should SUCCEED (expected behavior)
@@ -1287,7 +1423,7 @@ VALUES
 ON CONFLICT (registration_id, day_of_week) DO NOTHING;
 
 
--- Fixed registration for Receptionist Mai (FULL_TIME) - Weekdays Morning Part-time
+-- ⚠️ OLD DATA (November 2025 start date) - Fixed registration for Receptionist Mai (FULL_TIME) - Weekdays Morning Part-time
 INSERT INTO fixed_shift_registrations (
     registration_id, employee_id, work_shift_id,
     effective_from, effective_to, is_active, created_at
@@ -1326,7 +1462,7 @@ VALUES
 ON CONFLICT (registration_id, day_of_week) DO NOTHING;
 
 
--- Fixed registration for Nurse Hoa (PART_TIME_FIXED) - Monday, Wednesday, Friday Morning
+-- ⚠️ OLD DATA (November 2025 start date) - Fixed registration for Nurse Hoa (PART_TIME_FIXED) - Monday, Wednesday, Friday Morning
 INSERT INTO fixed_shift_registrations (
     registration_id, employee_id, work_shift_id,
     effective_from, effective_to, is_active, created_at
@@ -1359,7 +1495,7 @@ VALUES
 ON CONFLICT (registration_id, day_of_week) DO NOTHING;
 
 
--- Fixed registration for Nurse Trang (PART_TIME_FIXED) - Tuesday, Thursday, Saturday Afternoon
+-- ⚠️ OLD DATA (November 2025 start date) - Fixed registration for Nurse Trang (PART_TIME_FIXED) - Tuesday, Thursday, Saturday Afternoon
 INSERT INTO fixed_shift_registrations (
     registration_id, employee_id, work_shift_id,
     effective_from, effective_to, is_active, created_at
@@ -1382,7 +1518,7 @@ SELECT setval('fixed_shift_registrations_registration_id_seq',
     false);
 
 -- ============================================
--- SCHEMA MIGRATION: Add effective_from, effective_to to part_time_slots
+-- ⚠️ OLD DATA (November 2025 dates) - SCHEMA MIGRATION: Add effective_from, effective_to to part_time_slots
 -- BE-403: Dynamic quota system for part-time flex scheduling
 -- ============================================
 ALTER TABLE part_time_slots
@@ -1404,7 +1540,7 @@ ALTER COLUMN effective_to DROP DEFAULT;
 -- BE-403: Added effective_from, effective_to for dynamic quota system
 -- REDUCED TO 5 SLOTS FOR CLEANER TESTING
 
--- MONDAY Slots
+-- ⚠️ OLD DATA (November 2025 dates) - MONDAY Slots
 INSERT INTO part_time_slots (
     slot_id, work_shift_id, day_of_week, quota, is_active, effective_from, effective_to, created_at
 )
@@ -1413,7 +1549,7 @@ VALUES
 ON CONFLICT (slot_id) DO NOTHING;
 
 
--- WEDNESDAY Slots
+-- ⚠️ OLD DATA (November 2025 dates) - WEDNESDAY Slots
 INSERT INTO part_time_slots (
     slot_id, work_shift_id, day_of_week, quota, is_active, effective_from, effective_to, created_at
 )
@@ -1422,7 +1558,7 @@ VALUES
 ON CONFLICT (slot_id) DO NOTHING;
 
 
--- FRIDAY Slots
+-- ⚠️ OLD DATA (November 2025 dates) - FRIDAY Slots
 INSERT INTO part_time_slots (
     slot_id, work_shift_id, day_of_week, quota, is_active, effective_from, effective_to, created_at
 )
@@ -1431,7 +1567,7 @@ VALUES
 ON CONFLICT (slot_id) DO NOTHING;
 
 
--- SATURDAY Slots (Higher quota for weekend)
+-- ⚠️ OLD DATA (November 2025 dates) - SATURDAY Slots (Higher quota for weekend)
 INSERT INTO part_time_slots (
     slot_id, work_shift_id, day_of_week, quota, is_active, effective_from, effective_to, created_at
 )
@@ -1440,7 +1576,7 @@ VALUES
 ON CONFLICT (slot_id) DO NOTHING;
 
 
--- SUNDAY Slots (Inactive slot for testing)
+-- ⚠️ OLD DATA (November 2025 dates) - SUNDAY Slots (Inactive slot for testing)
 INSERT INTO part_time_slots (
     slot_id, work_shift_id, day_of_week, quota, is_active, effective_from, effective_to, created_at
 )
@@ -2173,13 +2309,13 @@ VALUES
 ON CONFLICT (specialization_id) DO NOTHING;
 
 -- =====================================================
--- 8. EMPLOYEE SHIFTS (Test date: 2025-11-15 - Thứ Bảy)
+-- ⚠️ OLD DATA (November 2025) - 8. EMPLOYEE SHIFTS (Test date: 2025-11-15 - Thứ Bảy)
 -- Phòng khám KHÔNG làm Chủ nhật - muốn làm phải overtime
 -- Full-time: Ca Sáng (8h-12h) + Ca Chiều (13h-17h)
 -- Part-time fixed: Ca Part-time Sáng (8h-12h) hoặc Ca Part-time Chiều (13h-17h)
 -- Part-time flex: Đăng ký linh hoạt
 
--- Dentist 1: Lê Anh Khoa (Full-time) - Ca Sáng
+-- ⚠️ OLD DATA - Dentist 1: Lê Anh Khoa (Full-time) - Ca Sáng
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
 SELECT 'EMS251115001', 1, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
 FROM work_shifts WHERE shift_name = 'Ca Sáng (8h-12h)' LIMIT 1
@@ -2252,10 +2388,10 @@ FROM work_shifts WHERE shift_name = 'Ca Part-time Chiều (13h-17h)' LIMIT 1
 ON CONFLICT (employee_shift_id) DO NOTHING;
 
 -- ============================================
--- SHIFTS FOR 2025-11-21 (FOR TESTING TREATMENT PLAN BOOKING - CURRENT DATE)
+-- ⚠️ OLD DATA (November 2025) - SHIFTS FOR 2025-11-21 (FOR TESTING TREATMENT PLAN BOOKING)
 -- ============================================
 
--- Dentist 1: Lê Anh Khoa (EMP001 - Full-time) - Ca Sáng
+-- ⚠️ OLD DATA - Dentist 1: Lê Anh Khoa (EMP001 - Full-time) - Ca Sáng
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
 SELECT 'EMS251121001', 1, DATE '2025-11-21', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
 FROM work_shifts WHERE shift_name = 'Ca Sáng (8h-12h)' LIMIT 1
@@ -2292,10 +2428,10 @@ FROM work_shifts WHERE shift_name = 'Ca Part-time Chiều (13h-17h)' LIMIT 1
 ON CONFLICT (employee_shift_id) DO NOTHING;
 
 -- ============================================
--- SHIFTS FOR 2025-11-25 (FOR TESTING TREATMENT PLAN BOOKING)
+-- ⚠️ OLD DATA (November 2025) - SHIFTS FOR 2025-11-25 (FOR TESTING TREATMENT PLAN BOOKING)
 -- ============================================
 
--- Dentist 1: Lê Anh Khoa (EMP001 - Full-time) - Ca Sáng
+-- ⚠️ OLD DATA - Dentist 1: Lê Anh Khoa (EMP001 - Full-time) - Ca Sáng
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
 SELECT 'EMS251125001', 1, DATE '2025-11-25', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
 FROM work_shifts WHERE shift_name = 'Ca Sáng (8h-12h)' LIMIT 1
@@ -2368,11 +2504,11 @@ FROM work_shifts WHERE shift_name = 'Ca Part-time Chiều (13h-17h)' LIMIT 1
 ON CONFLICT (employee_shift_id) DO NOTHING;
 
 -- ============================================
--- 9. SAMPLE APPOINTMENTS (Test date: 2025-11-04 - TODAY)
+-- ⚠️ OLD DATA (November 2025) - 9. SAMPLE APPOINTMENTS (Test date: 2025-11-04)
 -- For testing GET /api/v1/appointments with OBSERVER role
 -- ============================================
 
--- APT-001: Lịch hẹn Ca Sáng - Bác sĩ Khoa + Y tá Nguyên + OBSERVER (EMP012)
+-- ⚠️ OLD DATA - APT-001: Lịch hẹn Ca Sáng - Bác sĩ Khoa + Y tá Nguyên + OBSERVER (EMP012)
 INSERT INTO appointments (
     appointment_id, appointment_code, patient_id, employee_id, room_id,
     appointment_start_time, appointment_end_time, expected_duration_minutes,
@@ -2400,7 +2536,7 @@ VALUES
 ON CONFLICT (appointment_id, employee_id) DO NOTHING;
 
 
--- APT-002: Lịch hẹn Ca Chiều - Bác sĩ Thái (KHÔNG có OBSERVER)
+-- ⚠️ OLD DATA - APT-002: Lịch hẹn Ca Chiều - Bác sĩ Thái (KHÔNG có OBSERVER)
 INSERT INTO appointments (
     appointment_id, appointment_code, patient_id, employee_id, room_id,
     appointment_start_time, appointment_end_time, expected_duration_minutes,
@@ -2418,7 +2554,7 @@ VALUES (2, 1)  -- GEN_EXAM service_id=1
 ON CONFLICT (appointment_id, service_id) DO NOTHING;
 
 
--- APT-003: Lịch hẹn LATE (quá giờ 15 phút) - Test computedStatus
+-- ⚠️ OLD DATA - APT-003: Lịch hẹn LATE (quá giờ 15 phút) - Test computedStatus
 INSERT INTO appointments (
     appointment_id, appointment_code, patient_id, employee_id, room_id,
     appointment_start_time, appointment_end_time, expected_duration_minutes,
@@ -2444,10 +2580,10 @@ ON CONFLICT (appointment_id, employee_id) DO NOTHING;
 
 
 -- ============================================
--- NEW: FUTURE APPOINTMENTS (Nov 6-8, 2025) for current date testing
+-- ⚠️ OLD DATA (November 2025) - NEW: FUTURE APPOINTMENTS (Nov 6-8, 2025) for current date testing
 -- ============================================
 
--- APT-004: Nov 6 Morning - BS Khoa (EMP001) - NOW HAS SHIFT!
+-- ⚠️ OLD DATA - APT-004: Nov 6 Morning - BS Khoa (EMP001) - NOW HAS SHIFT!
 INSERT INTO appointments (
     appointment_id, appointment_code, patient_id, employee_id, room_id,
     appointment_start_time, appointment_end_time, expected_duration_minutes,
@@ -2563,6 +2699,349 @@ ON CONFLICT (appointment_id, employee_id) DO NOTHING;
 SELECT setval('appointments_appointment_id_seq',
               (SELECT COALESCE(MAX(appointment_id), 0) FROM appointments) + 1,
               false);
+
+-- ============================================
+-- ✅ NEW DATA (December 2025) - APPOINTMENTS
+-- ============================================
+
+-- APT-D001: Dec 4 Morning - BS Khoa + Y tá Nguyên + OBSERVER (EMP012)
+INSERT INTO appointments (
+    appointment_id, appointment_code, patient_id, employee_id, room_id,
+    appointment_start_time, appointment_end_time, expected_duration_minutes,
+    status, notes, created_by, created_at, updated_at
+) VALUES (
+    101, 'APT-20251204-001', 1, 1, 'GHE251103001',
+    '2025-12-04 09:00:00', '2025-12-04 09:45:00', 45,
+    'SCHEDULED', 'Khám tổng quát + Lấy cao răng - Test OBSERVER', 5, NOW(), NOW()
+)
+ON CONFLICT (appointment_id) DO NOTHING;
+
+INSERT INTO appointment_services (appointment_id, service_id)
+VALUES
+    (101, 1),  -- GEN_EXAM
+    (101, 3)   -- SCALING_L1
+ON CONFLICT (appointment_id, service_id) DO NOTHING;
+
+INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
+VALUES
+    (101, 7, 'ASSISTANT'),    -- EMP007 - Y tá Nguyên
+    (101, 12, 'OBSERVER')    -- EMP012 - Thực tập sinh Linh
+ON CONFLICT (appointment_id, employee_id) DO NOTHING;
+
+
+-- APT-D002: Dec 4 Afternoon - BS Thái (NO OBSERVER)
+INSERT INTO appointments (
+    appointment_id, appointment_code, patient_id, employee_id, room_id,
+    appointment_start_time, appointment_end_time, expected_duration_minutes,
+    status, notes, created_by, created_at, updated_at
+) VALUES (
+    102, 'APT-20251204-002', 2, 2, 'GHE251103002',
+    '2025-12-04 14:00:00', '2025-12-04 14:30:00', 30,
+    'SCHEDULED', 'Khám tổng quát - NO OBSERVER', 5, NOW(), NOW()
+)
+ON CONFLICT (appointment_id) DO NOTHING;
+
+INSERT INTO appointment_services (appointment_id, service_id)
+VALUES (102, 1)  -- GEN_EXAM
+ON CONFLICT (appointment_id, service_id) DO NOTHING;
+
+
+-- APT-D003: Dec 4 Early Morning - Test LATE status
+INSERT INTO appointments (
+    appointment_id, appointment_code, patient_id, employee_id, room_id,
+    appointment_start_time, appointment_end_time, expected_duration_minutes,
+    status, notes, created_by, created_at, updated_at
+) VALUES (
+    103, 'APT-20251204-003', 3, 1, 'GHE251103001',
+    '2025-12-04 08:00:00', '2025-12-04 08:30:00', 30,
+    'SCHEDULED', 'Test LATE status - Bệnh nhân chưa check-in', 5, NOW(), NOW()
+)
+ON CONFLICT (appointment_id) DO NOTHING;
+
+INSERT INTO appointment_services (appointment_id, service_id)
+VALUES (103, 1)  -- GEN_EXAM
+ON CONFLICT (appointment_id, service_id) DO NOTHING;
+
+INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
+VALUES (103, 12, 'OBSERVER')  -- EMP012 - Thực tập sinh Linh
+ON CONFLICT (appointment_id, employee_id) DO NOTHING;
+
+
+-- APT-D004: Dec 6 Morning - BS Khoa
+INSERT INTO appointments (
+    appointment_id, appointment_code, patient_id, employee_id, room_id,
+    appointment_start_time, appointment_end_time, expected_duration_minutes,
+    status, notes, created_by, created_at, updated_at
+) VALUES (
+    104, 'APT-20251206-001', 1, 1, 'GHE251103001',
+    '2025-12-06 09:00:00', '2025-12-06 09:30:00', 30,
+    'SCHEDULED', 'Khám tổng quát - BS Khoa ca sáng', 5, NOW(), NOW()
+)
+ON CONFLICT (appointment_id) DO NOTHING;
+
+INSERT INTO appointment_services (appointment_id, service_id)
+VALUES (104, 1)  -- GEN_EXAM
+ON CONFLICT (appointment_id, service_id) DO NOTHING;
+
+
+-- APT-D005: Dec 6 Afternoon - BS Minh
+INSERT INTO appointments (
+    appointment_id, appointment_code, patient_id, employee_id, room_id,
+    appointment_start_time, appointment_end_time, expected_duration_minutes,
+    status, notes, created_by, created_at, updated_at
+) VALUES (
+    105, 'APT-20251206-002', 3, 3, 'GHE251103003',
+    '2025-12-06 14:30:00', '2025-12-06 15:00:00', 30,
+    'SCHEDULED', 'Khám tổng quát - BS Minh ca chiều', 5, NOW(), NOW()
+)
+ON CONFLICT (appointment_id) DO NOTHING;
+
+INSERT INTO appointment_services (appointment_id, service_id)
+VALUES (105, 1)  -- GEN_EXAM
+ON CONFLICT (appointment_id, service_id) DO NOTHING;
+
+INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
+VALUES (105, 8, 'ASSISTANT')  -- EMP008 - Y tá Khang
+ON CONFLICT (appointment_id, employee_id) DO NOTHING;
+
+
+-- APT-D006: Dec 7 Morning - BS Lan + Multiple services
+INSERT INTO appointments (
+    appointment_id, appointment_code, patient_id, employee_id, room_id,
+    appointment_start_time, appointment_end_time, expected_duration_minutes,
+    status, notes, created_by, created_at, updated_at
+) VALUES (
+    106, 'APT-20251207-001', 4, 4, 'GHE251103004',
+    '2025-12-07 10:00:00', '2025-12-07 10:45:00', 45,
+    'SCHEDULED', 'Khám tổng quát + Nhổ răng - BS Lan', 5, NOW(), NOW()
+)
+ON CONFLICT (appointment_id) DO NOTHING;
+
+INSERT INTO appointment_services (appointment_id, service_id)
+VALUES
+    (106, 1),  -- GEN_EXAM
+    (106, 7)   -- EXTRACTION (Nhổ răng)
+ON CONFLICT (appointment_id, service_id) DO NOTHING;
+
+INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
+VALUES (106, 7, 'ASSISTANT')  -- EMP007 - Y tá Nguyên
+ON CONFLICT (appointment_id, employee_id) DO NOTHING;
+
+
+-- APT-D007: Dec 7 Afternoon - BS Thái
+INSERT INTO appointments (
+    appointment_id, appointment_code, patient_id, employee_id, room_id,
+    appointment_start_time, appointment_end_time, expected_duration_minutes,
+    status, notes, created_by, created_at, updated_at
+) VALUES (
+    107, 'APT-20251207-002', 4, 2, 'GHE251103002',
+    '2025-12-07 15:00:00', '2025-12-07 15:30:00', 30,
+    'SCHEDULED', 'Khám định kỳ - BN Mít tơ bít', 5, NOW(), NOW()
+)
+ON CONFLICT (appointment_id) DO NOTHING;
+
+INSERT INTO appointment_services (appointment_id, service_id)
+VALUES (107, 1)  -- GEN_EXAM
+ON CONFLICT (appointment_id, service_id) DO NOTHING;
+
+INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
+VALUES (107, 8, 'ASSISTANT')  -- EMP008 - Y tá Khang
+ON CONFLICT (appointment_id, employee_id) DO NOTHING;
+
+
+-- APT-D008: Dec 8 Morning - BS Khoa + Multiple services
+INSERT INTO appointments (
+    appointment_id, appointment_code, patient_id, employee_id, room_id,
+    appointment_start_time, appointment_end_time, expected_duration_minutes,
+    status, notes, created_by, created_at, updated_at
+) VALUES (
+    108, 'APT-20251208-001', 2, 1, 'GHE251103001',
+    '2025-12-08 09:30:00', '2025-12-08 10:15:00', 45,
+    'SCHEDULED', 'Lấy cao răng nâng cao - BS Khoa', 5, NOW(), NOW()
+)
+ON CONFLICT (appointment_id) DO NOTHING;
+
+INSERT INTO appointment_services (appointment_id, service_id)
+VALUES
+    (108, 1),  -- GEN_EXAM
+    (108, 4)   -- SCALING_L2 (Advanced scaling)
+ON CONFLICT (appointment_id, service_id) DO NOTHING;
+
+INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
+VALUES (108, 7, 'ASSISTANT')  -- EMP007 - Y tá Nguyên
+ON CONFLICT (appointment_id, employee_id) DO NOTHING;
+
+
+-- ============================================
+-- ✅ NEW DATA (January 2026) - APPOINTMENTS
+-- ============================================
+
+-- APT-J001: Jan 6 Morning - BS Khoa + Y tá Nguyên + OBSERVER
+INSERT INTO appointments (
+    appointment_id, appointment_code, patient_id, employee_id, room_id,
+    appointment_start_time, appointment_end_time, expected_duration_minutes,
+    status, notes, created_by, created_at, updated_at
+) VALUES (
+    201, 'APT-20260106-001', 1, 1, 'GHE251103001',
+    '2026-01-06 09:00:00', '2026-01-06 09:45:00', 45,
+    'SCHEDULED', 'Khám tổng quát + Lấy cao răng - Test OBSERVER', 5, NOW(), NOW()
+)
+ON CONFLICT (appointment_id) DO NOTHING;
+
+INSERT INTO appointment_services (appointment_id, service_id)
+VALUES
+    (201, 1),  -- GEN_EXAM
+    (201, 3)   -- SCALING_L1
+ON CONFLICT (appointment_id, service_id) DO NOTHING;
+
+INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
+VALUES
+    (201, 7, 'ASSISTANT'),    -- EMP007 - Y tá Nguyên
+    (201, 12, 'OBSERVER')    -- EMP012 - Thực tập sinh Linh
+ON CONFLICT (appointment_id, employee_id) DO NOTHING;
+
+
+-- APT-J002: Jan 6 Afternoon - BS Thái (NO OBSERVER)
+INSERT INTO appointments (
+    appointment_id, appointment_code, patient_id, employee_id, room_id,
+    appointment_start_time, appointment_end_time, expected_duration_minutes,
+    status, notes, created_by, created_at, updated_at
+) VALUES (
+    202, 'APT-20260106-002', 2, 2, 'GHE251103002',
+    '2026-01-06 14:00:00', '2026-01-06 14:30:00', 30,
+    'SCHEDULED', 'Khám tổng quát - NO OBSERVER', 5, NOW(), NOW()
+)
+ON CONFLICT (appointment_id) DO NOTHING;
+
+INSERT INTO appointment_services (appointment_id, service_id)
+VALUES (202, 1)  -- GEN_EXAM
+ON CONFLICT (appointment_id, service_id) DO NOTHING;
+
+
+-- APT-J003: Jan 6 Early Morning - Test LATE status
+INSERT INTO appointments (
+    appointment_id, appointment_code, patient_id, employee_id, room_id,
+    appointment_start_time, appointment_end_time, expected_duration_minutes,
+    status, notes, created_by, created_at, updated_at
+) VALUES (
+    203, 'APT-20260106-003', 3, 1, 'GHE251103001',
+    '2026-01-06 08:00:00', '2026-01-06 08:30:00', 30,
+    'SCHEDULED', 'Test LATE status - Bệnh nhân chưa check-in', 5, NOW(), NOW()
+)
+ON CONFLICT (appointment_id) DO NOTHING;
+
+INSERT INTO appointment_services (appointment_id, service_id)
+VALUES (203, 1)  -- GEN_EXAM
+ON CONFLICT (appointment_id, service_id) DO NOTHING;
+
+INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
+VALUES (203, 12, 'OBSERVER')  -- EMP012 - Thực tập sinh Linh
+ON CONFLICT (appointment_id, employee_id) DO NOTHING;
+
+
+-- APT-J004: Jan 8 Morning - BS Khoa
+INSERT INTO appointments (
+    appointment_id, appointment_code, patient_id, employee_id, room_id,
+    appointment_start_time, appointment_end_time, expected_duration_minutes,
+    status, notes, created_by, created_at, updated_at
+) VALUES (
+    204, 'APT-20260108-001', 1, 1, 'GHE251103001',
+    '2026-01-08 09:00:00', '2026-01-08 09:30:00', 30,
+    'SCHEDULED', 'Khám tổng quát - BS Khoa ca sáng', 5, NOW(), NOW()
+)
+ON CONFLICT (appointment_id) DO NOTHING;
+
+INSERT INTO appointment_services (appointment_id, service_id)
+VALUES (204, 1)  -- GEN_EXAM
+ON CONFLICT (appointment_id, service_id) DO NOTHING;
+
+
+-- APT-J005: Jan 8 Afternoon - BS Minh
+INSERT INTO appointments (
+    appointment_id, appointment_code, patient_id, employee_id, room_id,
+    appointment_start_time, appointment_end_time, expected_duration_minutes,
+    status, notes, created_by, created_at, updated_at
+) VALUES (
+    205, 'APT-20260108-002', 3, 3, 'GHE251103003',
+    '2026-01-08 14:30:00', '2026-01-08 15:00:00', 30,
+    'SCHEDULED', 'Khám tổng quát - BS Minh ca chiều', 5, NOW(), NOW()
+)
+ON CONFLICT (appointment_id) DO NOTHING;
+
+INSERT INTO appointment_services (appointment_id, service_id)
+VALUES (205, 1)  -- GEN_EXAM
+ON CONFLICT (appointment_id, service_id) DO NOTHING;
+
+INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
+VALUES (205, 8, 'ASSISTANT')  -- EMP008 - Y tá Khang
+ON CONFLICT (appointment_id, employee_id) DO NOTHING;
+
+
+-- APT-J006: Jan 9 Morning - BS Lan + Multiple services
+INSERT INTO appointments (
+    appointment_id, appointment_code, patient_id, employee_id, room_id,
+    appointment_start_time, appointment_end_time, expected_duration_minutes,
+    status, notes, created_by, created_at, updated_at
+) VALUES (
+    206, 'APT-20260109-001', 4, 4, 'GHE251103004',
+    '2026-01-09 10:00:00', '2026-01-09 10:45:00', 45,
+    'SCHEDULED', 'Khám tổng quát + Nhổ răng - BS Lan', 5, NOW(), NOW()
+)
+ON CONFLICT (appointment_id) DO NOTHING;
+
+INSERT INTO appointment_services (appointment_id, service_id)
+VALUES
+    (206, 1),  -- GEN_EXAM
+    (206, 7)   -- EXTRACTION (Nhổ răng)
+ON CONFLICT (appointment_id, service_id) DO NOTHING;
+
+INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
+VALUES (206, 7, 'ASSISTANT')  -- EMP007 - Y tá Nguyên
+ON CONFLICT (appointment_id, employee_id) DO NOTHING;
+
+
+-- APT-J007: Jan 9 Afternoon - BS Thái
+INSERT INTO appointments (
+    appointment_id, appointment_code, patient_id, employee_id, room_id,
+    appointment_start_time, appointment_end_time, expected_duration_minutes,
+    status, notes, created_by, created_at, updated_at
+) VALUES (
+    207, 'APT-20260109-002', 4, 2, 'GHE251103002',
+    '2026-01-09 15:00:00', '2026-01-09 15:30:00', 30,
+    'SCHEDULED', 'Khám định kỳ - BN Mít tơ bít', 5, NOW(), NOW()
+)
+ON CONFLICT (appointment_id) DO NOTHING;
+
+INSERT INTO appointment_services (appointment_id, service_id)
+VALUES (207, 1)  -- GEN_EXAM
+ON CONFLICT (appointment_id, service_id) DO NOTHING;
+
+INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
+VALUES (207, 8, 'ASSISTANT')  -- EMP008 - Y tá Khang
+ON CONFLICT (appointment_id, employee_id) DO NOTHING;
+
+
+-- APT-J008: Jan 10 Morning - BS Khoa + Multiple services
+INSERT INTO appointments (
+    appointment_id, appointment_code, patient_id, employee_id, room_id,
+    appointment_start_time, appointment_end_time, expected_duration_minutes,
+    status, notes, created_by, created_at, updated_at
+) VALUES (
+    208, 'APT-20260110-001', 2, 1, 'GHE251103001',
+    '2026-01-10 09:30:00', '2026-01-10 10:15:00', 45,
+    'SCHEDULED', 'Lấy cao răng nâng cao - BS Khoa', 5, NOW(), NOW()
+)
+ON CONFLICT (appointment_id) DO NOTHING;
+
+INSERT INTO appointment_services (appointment_id, service_id)
+VALUES
+    (208, 1),  -- GEN_EXAM
+    (208, 4)   -- SCALING_L2 (Advanced scaling)
+ON CONFLICT (appointment_id, service_id) DO NOTHING;
+
+INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
+VALUES (208, 7, 'ASSISTANT')  -- EMP007 - Y tá Nguyên
+ON CONFLICT (appointment_id, employee_id) DO NOTHING;
 
 -- ============================================
 
