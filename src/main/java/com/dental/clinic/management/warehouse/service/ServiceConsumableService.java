@@ -1,15 +1,18 @@
 package com.dental.clinic.management.warehouse.service;
 
-import com.dental.clinic.management.booking_appointment.domain.DentalService;
-import com.dental.clinic.management.booking_appointment.repository.BookingDentalServiceRepository;
 import com.dental.clinic.management.exception.NoConsumablesDefinedException;
 import com.dental.clinic.management.exception.ServiceNotFoundException;
+import com.dental.clinic.management.service.domain.DentalService;
+import com.dental.clinic.management.service.repository.DentalServiceRepository;
 import com.dental.clinic.management.utils.security.AuthoritiesConstants;
 import com.dental.clinic.management.utils.security.SecurityUtil;
 import com.dental.clinic.management.warehouse.domain.ItemMaster;
+import com.dental.clinic.management.warehouse.domain.ItemUnit;
 import com.dental.clinic.management.warehouse.domain.ServiceConsumable;
 import com.dental.clinic.management.warehouse.dto.response.ConsumableItemResponse;
 import com.dental.clinic.management.warehouse.dto.response.ServiceConsumablesResponse;
+import com.dental.clinic.management.warehouse.repository.ItemMasterRepository;
+import com.dental.clinic.management.warehouse.repository.ItemUnitRepository;
 import com.dental.clinic.management.warehouse.repository.ServiceConsumableRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +39,9 @@ import java.util.stream.Collectors;
 public class ServiceConsumableService {
 
         private final ServiceConsumableRepository serviceConsumableRepository;
-        private final BookingDentalServiceRepository dentalServiceRepository;
+        private final DentalServiceRepository dentalServiceRepository;
+        private final ItemMasterRepository itemMasterRepository;
+        private final ItemUnitRepository itemUnitRepository;
 
         /**
          * Get consumables for a service with stock and cost enrichment
@@ -54,7 +59,7 @@ public class ServiceConsumableService {
                 log.debug("Permission check - VIEW_WAREHOUSE_COST: {}", hasViewCostPermission);
 
                 // 1. Validate service exists
-                DentalService service = dentalServiceRepository.findById(serviceId.intValue())
+                DentalService service = dentalServiceRepository.findById(serviceId)
                                 .orElseThrow(() -> {
                                         log.warn("Service not found: ID {}", serviceId);
                                         return new ServiceNotFoundException(serviceId);
@@ -165,5 +170,112 @@ public class ServiceConsumableService {
                 } else {
                         return "OK";
                 }
+        }
+
+        /**
+         * API 6.18: Set service consumables (Bulk upsert)
+         * Create or update BOM for multiple services
+         *
+         * @param requests List of service consumable configurations
+         * @return Number of affected records
+         */
+        @Transactional
+        public int setServiceConsumables(
+                        List<com.dental.clinic.management.warehouse.dto.request.SetServiceConsumablesRequest> requests) {
+                log.info("API 6.18 - Setting consumables for {} services", requests.size());
+
+                int totalAffected = 0;
+
+                for (var request : requests) {
+                        Long serviceId = request.getServiceId();
+
+                        // Validate service exists
+                        DentalService service = dentalServiceRepository.findById(serviceId)
+                                        .orElseThrow(() -> new ServiceNotFoundException(serviceId));
+
+                        log.debug("Processing service: {} ({})", service.getServiceName(), serviceId);
+
+                        // Process each consumable item (upsert)
+                        for (var item : request.getConsumables()) {
+                                // Find existing or create new
+                                ServiceConsumable consumable = serviceConsumableRepository
+                                                .findByServiceIdAndItemMasterId(serviceId, item.getItemMasterId())
+                                                .orElse(new ServiceConsumable());
+
+                                // Load item_master and unit entities
+                                ItemMaster itemMaster = itemMasterRepository.findById(item.getItemMasterId())
+                                                .orElseThrow(() -> new IllegalArgumentException(
+                                                                "Item not found with ID: " + item.getItemMasterId()));
+
+                                ItemUnit unit = itemUnitRepository.findById(item.getUnitId())
+                                                .orElseThrow(() -> new IllegalArgumentException(
+                                                                "Unit not found with ID: " + item.getUnitId()));
+
+                                // Set/update fields
+                                consumable.setServiceId(serviceId);
+                                consumable.setItemMaster(itemMaster);
+                                consumable.setQuantityPerService(item.getQuantityPerService());
+                                consumable.setUnit(unit);
+                                consumable.setNotes(item.getNotes());
+
+                                serviceConsumableRepository.save(consumable);
+                                totalAffected++;
+                        }
+                }
+
+                log.info("API 6.18 - Successfully set {} consumable records", totalAffected);
+                return totalAffected;
+        }
+
+        /**
+         * API 6.19: Update service consumables (Replace all)
+         * Delete existing BOM and insert new configuration
+         *
+         * @param serviceId   Service ID
+         * @param consumables New consumable configuration
+         * @return Number of inserted records
+         */
+        @Transactional
+        public int updateServiceConsumables(Long serviceId,
+                        List<com.dental.clinic.management.warehouse.dto.request.ConsumableItemRequest> consumables) {
+                log.info("API 6.19 - Replacing consumables for service ID: {}", serviceId);
+
+                // Validate service exists
+                DentalService service = dentalServiceRepository.findById(serviceId)
+                                .orElseThrow(() -> new ServiceNotFoundException(serviceId));
+
+                // Delete existing consumables
+                List<ServiceConsumable> existing = serviceConsumableRepository
+                                .findByServiceIdWithDetails(serviceId);
+                if (!existing.isEmpty()) {
+                        serviceConsumableRepository.deleteAll(existing);
+                        log.debug("Deleted {} existing consumables for service {}", existing.size(), serviceId);
+                }
+
+                // Insert new consumables
+                int inserted = 0;
+                for (var item : consumables) {
+                        // Load item_master and unit entities
+                        ItemMaster itemMaster = itemMasterRepository.findById(item.getItemMasterId())
+                                        .orElseThrow(() -> new IllegalArgumentException(
+                                                        "Item not found with ID: " + item.getItemMasterId()));
+
+                        ItemUnit unit = itemUnitRepository.findById(item.getUnitId())
+                                        .orElseThrow(() -> new IllegalArgumentException(
+                                                        "Unit not found with ID: " + item.getUnitId()));
+
+                        ServiceConsumable consumable = new ServiceConsumable();
+                        consumable.setServiceId(serviceId);
+                        consumable.setItemMaster(itemMaster);
+                        consumable.setQuantityPerService(item.getQuantityPerService());
+                        consumable.setUnit(unit);
+                        consumable.setNotes(item.getNotes());
+
+                        serviceConsumableRepository.save(consumable);
+                        inserted++;
+                }
+
+                log.info("API 6.19 - Successfully replaced with {} new consumable records", inserted);
+                return inserted;
         }
 }

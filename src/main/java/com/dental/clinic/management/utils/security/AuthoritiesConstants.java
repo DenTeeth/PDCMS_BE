@@ -143,4 +143,6 @@ public final class AuthoritiesConstants {
     public static final String DISPOSE_ITEMS = "DISPOSE_ITEMS"; // API 6.5: Create disposal transactions
     public static final String APPROVE_TRANSACTION = "APPROVE_TRANSACTION"; // API 6.6: Approve/reject warehouse
                                                                             // transactions
+    public static final String MANAGE_CONSUMABLES = "MANAGE_CONSUMABLES"; // API 6.18, 6.19: Manage service consumables
+                                                                          // BOM (Bill of Materials)
 }
