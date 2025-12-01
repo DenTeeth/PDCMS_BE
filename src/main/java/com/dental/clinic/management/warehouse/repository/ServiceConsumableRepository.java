@@ -14,21 +14,21 @@ import java.util.List;
  */
 @Repository
 public interface ServiceConsumableRepository extends JpaRepository<ServiceConsumable, Long> {
-    
+
     /**
      * Get all consumables for a service with item and unit details
      * Uses JOIN FETCH to avoid N+1 queries
      */
     @Query("""
-        SELECT sc FROM ServiceConsumable sc
-        JOIN FETCH sc.itemMaster im
-        JOIN FETCH sc.unit u
-        WHERE sc.serviceId = :serviceId
-        AND im.isActive = true
-        ORDER BY sc.quantityPerService DESC
-    """)
+                SELECT sc FROM ServiceConsumable sc
+                JOIN FETCH sc.itemMaster im
+                JOIN FETCH sc.unit u
+                WHERE sc.serviceId = :serviceId
+                AND im.isActive = true
+                ORDER BY sc.quantityPerService DESC
+            """)
     List<ServiceConsumable> findByServiceIdWithDetails(@Param("serviceId") Long serviceId);
-    
+
     /**
      * Check if service has any consumables defined
      * Used to return 404 "No consumables defined" vs 200 empty list

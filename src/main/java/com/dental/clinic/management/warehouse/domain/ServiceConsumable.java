@@ -15,7 +15,8 @@ import java.math.BigDecimal;
  * - 2 đôi găng tay
  */
 @Entity
-@Table(name = "service_consumables")
+@Table(name = "service_consumables", uniqueConstraints = @UniqueConstraint(columnNames = { "service_id",
+        "item_master_id" }))
 @Getter
 @Setter
 @NoArgsConstructor

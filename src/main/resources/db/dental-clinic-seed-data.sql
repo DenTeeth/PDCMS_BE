@@ -366,7 +366,7 @@ VALUES
 ('CREATE_WAREHOUSE', 'CREATE_WAREHOUSE', 'WAREHOUSE', 'Tạo danh mục, nhà cung cấp', 273, NULL, TRUE, NOW()),
 ('UPDATE_WAREHOUSE', 'UPDATE_WAREHOUSE', 'WAREHOUSE', 'Cập nhật danh mục, nhà cung cấp', 274, NULL, TRUE, NOW()),
 ('DELETE_WAREHOUSE', 'DELETE_WAREHOUSE', 'WAREHOUSE', 'Xóa vật tư, danh mục, nhà cung cấp', 275, NULL, TRUE, NOW()),
-('VIEW_COST', 'VIEW_COST', 'WAREHOUSE', 'Xem thông tin tài chính (giá trị, công nợ, thanh toán)', 276, NULL, TRUE, NOW()),
+('VIEW_WAREHOUSE_COST', 'VIEW_WAREHOUSE_COST', 'WAREHOUSE', 'Xem giá tiền kho (unitCost, totalValue, totalCost) - Chỉ Admin/Kế toán', 276, NULL, TRUE, NOW()),
 ('IMPORT_ITEMS', 'IMPORT_ITEMS', 'WAREHOUSE', 'Tạo phiếu nhập kho', 277, NULL, TRUE, NOW()),
 ('EXPORT_ITEMS', 'EXPORT_ITEMS', 'WAREHOUSE', 'Tạo phiếu xuất kho', 278, NULL, TRUE, NOW()),
 ('DISPOSE_ITEMS', 'DISPOSE_ITEMS', 'WAREHOUSE', 'Tạo phiếu thanh lý', 279, NULL, TRUE, NOW()),
@@ -525,7 +525,7 @@ VALUES
 ('ROLE_MANAGER', 'APPROVE_TREATMENT_PLAN'), -- V20: Can approve/reject treatment plans (API 5.9)
 ('ROLE_MANAGER', 'MANAGE_PLAN_PRICING'), -- V21: Can adjust pricing/discounts on treatment plans
 ('ROLE_MANAGER', 'VIEW_WAREHOUSE'),
-('ROLE_MANAGER', 'VIEW_COST'),
+('ROLE_MANAGER', 'VIEW_WAREHOUSE_COST'), -- Can view cost/price fields in warehouse APIs
 ('ROLE_MANAGER', 'VIEW_ITEMS'),
 ('ROLE_MANAGER', 'IMPORT_ITEMS'),
 ('ROLE_MANAGER', 'EXPORT_ITEMS'),
@@ -547,7 +547,7 @@ VALUES
 ('ROLE_ACCOUNTANT', 'MANAGE_PLAN_PRICING'), -- Can adjust pricing/discounts
 -- WAREHOUSE (V22: Accountant can view transactions and financial data - API 6.6)
 ('ROLE_ACCOUNTANT', 'VIEW_WAREHOUSE'), -- Can view transaction history
-('ROLE_ACCOUNTANT', 'VIEW_COST'), -- Can view financial data (cost, payment info)
+('ROLE_ACCOUNTANT', 'VIEW_WAREHOUSE_COST'), -- Can view financial data (cost, payment info)
 ('ROLE_INVENTORY_MANAGER', 'VIEW_LEAVE_OWN'), ('ROLE_INVENTORY_MANAGER', 'CREATE_TIME_OFF'), ('ROLE_INVENTORY_MANAGER', 'CREATE_OVERTIME'),
 ('ROLE_INVENTORY_MANAGER', 'CANCEL_TIME_OFF_OWN'), ('ROLE_INVENTORY_MANAGER', 'CANCEL_OVERTIME_OWN'),
 ('ROLE_INVENTORY_MANAGER', 'VIEW_HOLIDAY'),
@@ -559,7 +559,7 @@ VALUES
 ('ROLE_INVENTORY_MANAGER', 'CREATE_WAREHOUSE'), -- Can create categories/suppliers
 ('ROLE_INVENTORY_MANAGER', 'UPDATE_WAREHOUSE'), -- Can update items/categories/suppliers
 ('ROLE_INVENTORY_MANAGER', 'DELETE_WAREHOUSE'), -- Can delete items/categories/suppliers
-('ROLE_INVENTORY_MANAGER', 'VIEW_COST'), -- Can view financial data
+-- REMOVED VIEW_WAREHOUSE_COST: Inventory Manager only sees quantities, NOT prices
 ('ROLE_INVENTORY_MANAGER', 'IMPORT_ITEMS'), -- Can create import transactions
 ('ROLE_INVENTORY_MANAGER', 'EXPORT_ITEMS'), -- Can create export transactions
 ('ROLE_INVENTORY_MANAGER', 'DISPOSE_ITEMS'), -- Can create disposal transactions
@@ -3369,7 +3369,7 @@ ON CONFLICT (item_master_id, unit_name) DO NOTHING;
 
 -- Khau trang y te
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'Cai', 1, TRUE, TRUE, FALSE, TRUE, 3, NOW()
+SELECT im.item_master_id, 'Cái', 1, TRUE, TRUE, FALSE, TRUE, 3, NOW()
 FROM item_masters im WHERE im.item_code = 'CON-MASK-01'
 ON CONFLICT (item_master_id, unit_name) DO NOTHING;
 
@@ -3380,7 +3380,7 @@ ON CONFLICT (item_master_id, unit_name) DO NOTHING;
 
 -- Kim tiem nha khoa
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'Cai', 1, TRUE, TRUE, FALSE, TRUE, 2, NOW()
+SELECT im.item_master_id, 'Cái', 1, TRUE, TRUE, FALSE, TRUE, 2, NOW()
 FROM item_masters im WHERE im.item_code = 'CON-NEEDLE-01'
 ON CONFLICT (item_master_id, unit_name) DO NOTHING;
 
@@ -3410,6 +3410,28 @@ INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit
 SELECT im.item_master_id, 'Tuyp', 4, FALSE, TRUE, TRUE, FALSE, 1, NOW()
 FROM item_masters im WHERE im.item_code = 'MAT-COMP-01'
 ON CONFLICT (item_master_id, unit_name) DO NOTHING;
+
+-- Missing units for API 6.17 service_consumables
+-- Fix: Add Doi, Goi, ml, Giot units for consumable items
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
+SELECT im.item_master_id, 'Đôi', 1, TRUE, TRUE, FALSE, TRUE, 1, NOW()
+FROM item_masters im WHERE im.item_code = 'CON-GLOVE-01'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
+SELECT im.item_master_id, 'Gói', 1, TRUE, TRUE, FALSE, TRUE, 1, NOW()
+FROM item_masters im WHERE im.item_code = 'CON-GAUZE-01'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
+SELECT im.item_master_id, 'ml', 1, TRUE, TRUE, FALSE, TRUE, 1, NOW()
+FROM item_masters im WHERE im.item_code = 'MAT-ETCH-01'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
+SELECT im.item_master_id, 'drop', 1, TRUE, TRUE, FALSE, TRUE, 1, NOW()
+FROM item_masters im WHERE im.item_code = 'MAT-BOND-01'
+ON CONFLICT DO NOTHING;
 
 -- Reset sequence
 SELECT setval('item_units_unit_id_seq', (SELECT COALESCE(MAX(unit_id), 0) FROM item_units));
@@ -3632,173 +3654,38 @@ SELECT setval('storage_transaction_items_transaction_item_id_seq', (SELECT COALE
 -- VD: Dich vu "Cao voi rang" can bao nhieu goi bong gac, khau trang, etc.
 
 -- Dich vu: Kham tong quat
-INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes, created_at)
-SELECT s.service_id, im.item_master_id, 1, u.unit_id, 'Dung khi kham sang loc ban dau', NOW()
-FROM services s
-CROSS JOIN item_masters im
-CROSS JOIN item_units u
-WHERE s.service_code = 'GEN_EXAM'
-AND im.item_code = 'CON-GLOVE-01'
-AND u.item_master_id = im.item_master_id
-AND u.unit_name = 'Đôi'
-ON CONFLICT (service_id, item_master_id) DO NOTHING;
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 1, u.unit_id, 'Dung khi kham sang loc ban dau' FROM services s, item_masters im, item_units u WHERE s.service_code = 'GEN_EXAM' AND im.item_code = 'CON-GLOVE-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'Đôi' ON CONFLICT (service_id, item_master_id) DO NOTHING;
 
-INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes, created_at)
-SELECT s.service_id, im.item_master_id, 1, u.unit_id, 'Bao ve bac si va benh nhan', NOW()
-FROM services s
-CROSS JOIN item_masters im
-CROSS JOIN item_units u
-WHERE s.service_code = 'GEN_EXAM'
-AND im.item_code = 'CON-MASK-01'
-AND u.item_master_id = im.item_master_id
-AND u.unit_name = 'Cái'
-ON CONFLICT (service_id, item_master_id) DO NOTHING;
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 1, u.unit_id, 'Bao ve bac si va benh nhan' FROM services s, item_masters im, item_units u WHERE s.service_code = 'GEN_EXAM' AND im.item_code = 'CON-MASK-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'Cái' ON CONFLICT (service_id, item_master_id) DO NOTHING;
 
 -- Dich vu: Cao voi rang Muc 1
-INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes, created_at)
-SELECT s.service_id, im.item_master_id, 2, u.unit_id, 'Thay doi 2 lan trong qua trinh cao voi', NOW()
-FROM services s
-CROSS JOIN item_masters im
-CROSS JOIN item_units u
-WHERE s.service_code = 'SCALING_L1'
-AND im.item_code = 'CON-GLOVE-01'
-AND u.item_master_id = im.item_master_id
-AND u.unit_name = 'Đôi'
-ON CONFLICT (service_id, item_master_id) DO NOTHING;
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 2, u.unit_id, 'Thay doi 2 lan trong qua trinh cao voi' FROM services s, item_masters im, item_units u WHERE s.service_code = 'SCALING_L1' AND im.item_code = 'CON-GLOVE-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'Đôi' ON CONFLICT (service_id, item_master_id) DO NOTHING;
 
-INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes, created_at)
-SELECT s.service_id, im.item_master_id, 1, u.unit_id, 'Khau trang bao ve', NOW()
-FROM services s
-CROSS JOIN item_masters im
-CROSS JOIN item_units u
-WHERE s.service_code = 'SCALING_L1'
-AND im.item_code = 'CON-MASK-01'
-AND u.item_master_id = im.item_master_id
-AND u.unit_name = 'Cái'
-ON CONFLICT (service_id, item_master_id) DO NOTHING;
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 1, u.unit_id, 'Khau trang bao ve' FROM services s, item_masters im, item_units u WHERE s.service_code = 'SCALING_L1' AND im.item_code = 'CON-MASK-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'Cái' ON CONFLICT (service_id, item_master_id) DO NOTHING;
 
-INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes, created_at)
-SELECT s.service_id, im.item_master_id, 3, u.unit_id, 'Lau mau va nuoc bot', NOW()
-FROM services s
-CROSS JOIN item_masters im
-CROSS JOIN item_units u
-WHERE s.service_code = 'SCALING_L1'
-AND im.item_code = 'CON-GAUZE-01'
-AND u.item_master_id = im.item_master_id
-AND u.unit_name = 'Gói'
-ON CONFLICT (service_id, item_master_id) DO NOTHING;
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 3, u.unit_id, 'Lau mau va nuoc bot' FROM services s, item_masters im, item_units u WHERE s.service_code = 'SCALING_L1' AND im.item_code = 'CON-GAUZE-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'Gói' ON CONFLICT (service_id, item_master_id) DO NOTHING;
 
-INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes, created_at)
-SELECT s.service_id, im.item_master_id, 15, u.unit_id, 'Sau khi cao voi', NOW()
-FROM services s
-CROSS JOIN item_masters im
-CROSS JOIN item_units u
-WHERE s.service_code = 'SCALING_L1'
-AND im.item_code = 'MAT-POL-01'
-AND u.item_master_id = im.item_master_id
-AND u.unit_name = 'g'
-ON CONFLICT (service_id, item_master_id) DO NOTHING;
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 15, u.unit_id, 'Sau khi cao voi' FROM services s, item_masters im, item_units u WHERE s.service_code = 'SCALING_L1' AND im.item_code = 'MAT-POL-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'g' ON CONFLICT (service_id, item_master_id) DO NOTHING;
 
 -- Dich vu: Tram rang Composite
-INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes, created_at)
-SELECT s.service_id, im.item_master_id, 1, u.unit_id, 'Thay doi khi tiep xuc chat long', NOW()
-FROM services s
-CROSS JOIN item_masters im
-CROSS JOIN item_units u
-WHERE s.service_code = 'FILLING_COMP'
-AND im.item_code = 'CON-GLOVE-01'
-AND u.item_master_id = im.item_master_id
-AND u.unit_name = 'Đôi'
-ON CONFLICT (service_id, item_master_id) DO NOTHING;
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 1, u.unit_id, 'Thay doi khi tiep xuc chat long' FROM services s, item_masters im, item_units u WHERE s.service_code = 'FILLING_COMP' AND im.item_code = 'CON-GLOVE-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'Đôi' ON CONFLICT (service_id, item_master_id) DO NOTHING;
 
-INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes, created_at)
-SELECT s.service_id, im.item_master_id, 1, u.unit_id, 'Bao ve bac si', NOW()
-FROM services s
-CROSS JOIN item_masters im
-CROSS JOIN item_units u
-WHERE s.service_code = 'FILLING_COMP'
-AND im.item_code = 'CON-MASK-01'
-AND u.item_master_id = im.item_master_id
-AND u.unit_name = 'Cái'
-ON CONFLICT (service_id, item_master_id) DO NOTHING;
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 1, u.unit_id, 'Bao ve bac si' FROM services s, item_masters im, item_units u WHERE s.service_code = 'FILLING_COMP' AND im.item_code = 'CON-MASK-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'Cái' ON CONFLICT (service_id, item_master_id) DO NOTHING;
 
-INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes, created_at)
-SELECT s.service_id, im.item_master_id, 2, u.unit_id, 'Thau nuoc bot va lau kho', NOW()
-FROM services s
-CROSS JOIN item_masters im
-CROSS JOIN item_units u
-WHERE s.service_code = 'FILLING_COMP'
-AND im.item_code = 'CON-GAUZE-01'
-AND u.item_master_id = im.item_master_id
-AND u.unit_name = 'Gói'
-ON CONFLICT (service_id, item_master_id) DO NOTHING;
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 2, u.unit_id, 'Thau nuoc bot va lau kho' FROM services s, item_masters im, item_units u WHERE s.service_code = 'FILLING_COMP' AND im.item_code = 'CON-GAUZE-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'Gói' ON CONFLICT (service_id, item_master_id) DO NOTHING;
 
-INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes, created_at)
-SELECT s.service_id, im.item_master_id, 8, u.unit_id, 'Tram 1 rang trung binh', NOW()
-FROM services s
-CROSS JOIN item_masters im
-CROSS JOIN item_units u
-WHERE s.service_code = 'FILLING_COMP'
-AND im.item_code = 'MAT-COMP-01'
-AND u.item_master_id = im.item_master_id
-AND u.unit_name = 'g'
-ON CONFLICT (service_id, item_master_id) DO NOTHING;
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 8, u.unit_id, 'Tram 1 rang trung binh' FROM services s, item_masters im, item_units u WHERE s.service_code = 'FILLING_COMP' AND im.item_code = 'MAT-COMP-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'g' ON CONFLICT (service_id, item_master_id) DO NOTHING;
 
-INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes, created_at)
-SELECT s.service_id, im.item_master_id, 3, u.unit_id, 'Gel xoi mon men rang truoc khi tram', NOW()
-FROM services s
-CROSS JOIN item_masters im
-CROSS JOIN item_units u
-WHERE s.service_code = 'FILLING_COMP'
-AND im.item_code = 'MAT-ETCH-01'
-AND u.item_master_id = im.item_master_id
-AND u.unit_name = 'ml'
-ON CONFLICT (service_id, item_master_id) DO NOTHING;
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 3, u.unit_id, 'Gel xoi mon men rang truoc khi tram' FROM services s, item_masters im, item_units u WHERE s.service_code = 'FILLING_COMP' AND im.item_code = 'MAT-ETCH-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'ml' ON CONFLICT (service_id, item_master_id) DO NOTHING;
 
-INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes, created_at)
-SELECT s.service_id, im.item_master_id, 5, u.unit_id, 'Keo dan tram', NOW()
-FROM services s
-CROSS JOIN item_masters im
-CROSS JOIN item_units u
-WHERE s.service_code = 'FILLING_COMP'
-AND im.item_code = 'MAT-BOND-01'
-AND u.item_master_id = im.item_master_id
-AND u.unit_name = 'Giọt'
-ON CONFLICT (service_id, item_master_id) DO NOTHING;
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 5, u.unit_id, 'Keo dan tram' FROM services s, item_masters im, item_units u WHERE s.service_code = 'FILLING_COMP' AND im.item_code = 'MAT-BOND-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'drop' ON CONFLICT (service_id, item_master_id) DO NOTHING;
 
 -- Dich vu: Nhoi rang sua
-INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes, created_at)
-SELECT s.service_id, im.item_master_id, 1, u.unit_id, 'Gang tay cho thao tac nhe nhang', NOW()
-FROM services s
-CROSS JOIN item_masters im
-CROSS JOIN item_units u
-WHERE s.service_code = 'EXTRACT_MILK'
-AND im.item_code = 'CON-GLOVE-01'
-AND u.item_master_id = im.item_master_id
-AND u.unit_name = 'Đôi'
-ON CONFLICT (service_id, item_master_id) DO NOTHING;
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 1, u.unit_id, 'Gang tay cho thao tac nhe nhang' FROM services s, item_masters im, item_units u WHERE s.service_code = 'EXTRACT_MILK' AND im.item_code = 'CON-GLOVE-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'Đôi' ON CONFLICT (service_id, item_master_id) DO NOTHING;
 
-INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes, created_at)
-SELECT s.service_id, im.item_master_id, 5, u.unit_id, 'Cam mau sau khi nhoi', NOW()
-FROM services s
-CROSS JOIN item_masters im
-CROSS JOIN item_units u
-WHERE s.service_code = 'EXTRACT_MILK'
-AND im.item_code = 'CON-GAUZE-01'
-AND u.item_master_id = im.item_master_id
-AND u.unit_name = 'Gói'
-ON CONFLICT (service_id, item_master_id) DO NOTHING;
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 5, u.unit_id, 'Cam mau sau khi nhoi' FROM services s, item_masters im, item_units u WHERE s.service_code = 'EXTRACT_MILK' AND im.item_code = 'CON-GAUZE-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'Gói' ON CONFLICT (service_id, item_master_id) DO NOTHING;
 
-INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes, created_at)
-SELECT s.service_id, im.item_master_id, 1, u.unit_id, 'Te boi neu tre khong hop tac', NOW()
-FROM services s
-CROSS JOIN item_masters im
-CROSS JOIN item_units u
-WHERE s.service_code = 'EXTRACT_MILK'
-AND im.item_code = 'MED-GEL-01'
-AND u.item_master_id = im.item_master_id
-AND u.unit_name = 'g'
-ON CONFLICT (service_id, item_master_id) DO NOTHING;
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 1, u.unit_id, 'Te boi neu tre khong hop tac' FROM services s, item_masters im, item_units u WHERE s.service_code = 'EXTRACT_MILK' AND im.item_code = 'MED-GEL-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'g' ON CONFLICT (service_id, item_master_id) DO NOTHING;
 
 -- Reset sequence
 SELECT setval('service_consumables_link_id_seq', (SELECT COALESCE(MAX(link_id), 0) FROM service_consumables));

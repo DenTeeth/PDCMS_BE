@@ -135,7 +135,9 @@ public final class AuthoritiesConstants {
     public static final String CREATE_WAREHOUSE = "CREATE_WAREHOUSE"; // Create item masters, categories, suppliers
     public static final String UPDATE_WAREHOUSE = "UPDATE_WAREHOUSE"; // Update item masters, categories, suppliers
     public static final String DELETE_WAREHOUSE = "DELETE_WAREHOUSE"; // Delete item masters, categories, suppliers
-    public static final String VIEW_COST = "VIEW_COST"; // API 6.6: View financial data (totalValue, paidAmount, debt)
+    public static final String VIEW_WAREHOUSE_COST = "VIEW_WAREHOUSE_COST"; // View cost/price fields (unitCost,
+                                                                            // totalValue, totalCost) - Admin/Accountant
+                                                                            // only
     public static final String IMPORT_ITEMS = "IMPORT_ITEMS"; // API 6.4: Create import transactions
     public static final String EXPORT_ITEMS = "EXPORT_ITEMS"; // API 6.5: Create export transactions
     public static final String DISPOSE_ITEMS = "DISPOSE_ITEMS"; // API 6.5: Create disposal transactions
