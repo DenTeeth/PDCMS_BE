@@ -57,7 +57,7 @@ public class ClinicalRecordAttachmentService {
      */
     @Transactional
     public UploadAttachmentResponse uploadAttachment(Integer recordId, MultipartFile file,
-                                                      AttachmentTypeEnum attachmentType, String description) {
+            AttachmentTypeEnum attachmentType, String description) {
         log.info("Uploading attachment for clinical record ID: {}", recordId);
 
         // Step 1: Load clinical record
@@ -306,10 +306,9 @@ public class ClinicalRecordAttachmentService {
                 .mimeType(attachment.getMimeType())
                 .attachmentType(attachment.getAttachmentType())
                 .description(attachment.getDescription())
-                .uploadedBy(attachment.getUploadedBy() != null ?
-                        attachment.getUploadedBy().getEmployeeId() : null)
-                .uploadedByName(attachment.getUploadedBy() != null ?
-                        attachment.getUploadedBy().getFullName() : "System")
+                .uploadedBy(attachment.getUploadedBy() != null ? attachment.getUploadedBy().getEmployeeId() : null)
+                .uploadedByName(
+                        attachment.getUploadedBy() != null ? attachment.getUploadedBy().getFullName() : "System")
                 .uploadedAt(attachment.getUploadedAt().format(FORMATTER))
                 .build();
     }

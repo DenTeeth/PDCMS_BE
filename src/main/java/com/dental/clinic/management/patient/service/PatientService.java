@@ -440,13 +440,14 @@ public class PatientService {
      * Update tooth status for a patient (API 8.10)
      * Creates history record on every status change
      *
-     * @param patientId the patient ID
+     * @param patientId   the patient ID
      * @param toothNumber the tooth number
-     * @param request the update request
-     * @param changedBy the employee making the change
+     * @param request     the update request
+     * @param changedBy   the employee making the change
      * @return updated tooth status response
      */
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_PATIENT + "') or hasAuthority('" + UPDATE_PATIENT + "')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_PATIENT + "') or hasAuthority('" + UPDATE_PATIENT
+            + "')")
     @Transactional
     public UpdateToothStatusResponse updateToothStatus(
             Integer patientId,
@@ -462,8 +463,8 @@ public class PatientService {
                         "patientnotfound"));
 
         // Find existing tooth status or create new one
-        Optional<PatientToothStatus> existingStatusOpt =
-                patientToothStatusRepository.findByPatient_PatientIdAndToothNumber(patientId, toothNumber);
+        Optional<PatientToothStatus> existingStatusOpt = patientToothStatusRepository
+                .findByPatient_PatientIdAndToothNumber(patientId, toothNumber);
 
         PatientToothStatus toothStatus;
         ToothConditionEnum oldStatus = null;
@@ -489,12 +490,12 @@ public class PatientService {
         history.setToothNumber(toothNumber);
         history.setOldStatus(oldStatus);
         history.setNewStatus(request.getStatus());
-        
+
         // Set changedBy employee
         Employee employee = new Employee();
         employee.setEmployeeId(changedBy);
         history.setChangedBy(employee);
-        
+
         history.setReason(request.getReason());
 
         patientToothStatusHistoryRepository.save(history);

@@ -20,13 +20,13 @@ package com.dental.clinic.management.patient.domain;
  * @since API 8.9
  */
 public enum ToothConditionEnum {
-    HEALTHY,      // Rang khoe
-    CARIES,       // Sau rang
-    FILLED,       // Da tram
-    CROWN,        // Boc su
-    MISSING,      // Mat rang
-    IMPLANT,      // Cay ghep
-    ROOT_CANAL,   // Dieu tri tuy
-    FRACTURED,    // Gay rang
-    IMPACTED      // Moc ngam
+    HEALTHY, // Rang khoe
+    CARIES, // Sau rang
+    FILLED, // Da tram
+    CROWN, // Boc su
+    MISSING, // Mat rang
+    IMPLANT, // Cay ghep
+    ROOT_CANAL, // Dieu tri tuy
+    FRACTURED, // Gay rang
+    IMPACTED // Moc ngam
 }

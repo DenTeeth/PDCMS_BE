@@ -16,7 +16,7 @@ public interface ClinicalRecordAttachmentRepository extends JpaRepository<Clinic
      * Ordered by upload time (newest first)
      */
     @Query("SELECT a FROM ClinicalRecordAttachment a " +
-           "WHERE a.clinicalRecord.clinicalRecordId = :recordId " +
-           "ORDER BY a.uploadedAt DESC")
+            "WHERE a.clinicalRecord.clinicalRecordId = :recordId " +
+            "ORDER BY a.uploadedAt DESC")
     List<ClinicalRecordAttachment> findByClinicalRecord_ClinicalRecordId(@Param("recordId") Integer recordId);
 }

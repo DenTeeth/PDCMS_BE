@@ -107,18 +107,18 @@ curl -X GET "http://localhost:8080/api/v1/clinical-records/1/attachments" \
 
 ### Response Fields
 
-| Field              | Type               | Description                                  |
-| ------------------ | ------------------ | -------------------------------------------- |
-| `attachmentId`     | Integer            | Unique attachment ID                         |
-| `clinicalRecordId` | Integer            | Associated clinical record                   |
-| `fileName`         | String             | Original filename                            |
-| `fileSize`         | Long               | File size in bytes                           |
-| `mimeType`         | String             | Content type (image/jpeg, application/pdf)   |
-| `attachmentType`   | AttachmentTypeEnum | File category (XRAY, PHOTO_BEFORE, etc.)     |
-| `description`      | String             | Optional description (null if not provided)  |
-| `uploadedBy`       | Integer            | Employee ID who uploaded (null if system)    |
-| `uploadedByName`   | String             | Full name of uploader                        |
-| `uploadedAt`       | String             | Upload timestamp (yyyy-MM-dd HH:mm:ss)       |
+| Field              | Type               | Description                                 |
+| ------------------ | ------------------ | ------------------------------------------- |
+| `attachmentId`     | Integer            | Unique attachment ID                        |
+| `clinicalRecordId` | Integer            | Associated clinical record                  |
+| `fileName`         | String             | Original filename                           |
+| `fileSize`         | Long               | File size in bytes                          |
+| `mimeType`         | String             | Content type (image/jpeg, application/pdf)  |
+| `attachmentType`   | AttachmentTypeEnum | File category (XRAY, PHOTO_BEFORE, etc.)    |
+| `description`      | String             | Optional description (null if not provided) |
+| `uploadedBy`       | Integer            | Employee ID who uploaded (null if system)   |
+| `uploadedByName`   | String             | Full name of uploader                       |
+| `uploadedAt`       | String             | Upload timestamp (yyyy-MM-dd HH:mm:ss)      |
 
 ---
 
@@ -154,12 +154,12 @@ curl -X GET "http://localhost:8080/api/v1/clinical-records/1/attachments" \
 
 ### Roles with Permission
 
-| Role       | Permission       | Access Level                           |
-| ---------- | ---------------- | -------------------------------------- |
-| Admin      | VIEW_ATTACHMENT  | Can view all attachments               |
-| Doctor     | VIEW_ATTACHMENT  | Can view attachments of own appointments|
-| Nurse      | VIEW_ATTACHMENT  | Can view attachments of participated appointments|
-| Patient    | VIEW_ATTACHMENT  | Can view attachments of own records    |
+| Role    | Permission      | Access Level                                      |
+| ------- | --------------- | ------------------------------------------------- |
+| Admin   | VIEW_ATTACHMENT | Can view all attachments                          |
+| Doctor  | VIEW_ATTACHMENT | Can view attachments of own appointments          |
+| Nurse   | VIEW_ATTACHMENT | Can view attachments of participated appointments |
+| Patient | VIEW_ATTACHMENT | Can view attachments of own records               |
 
 ### RBAC Logic (reuses API 8.1 logic)
 
@@ -179,11 +179,13 @@ View is allowed if user can view the clinical record:
 ### Test Case 1: Get Attachments as Doctor (Success)
 
 **Pre-conditions**:
+
 - Doctor `bacsi1` (employee_id: 1) logged in
 - Clinical record ID 1 exists with 3 uploaded files
 - Appointment doctor_id = 1
 
 **Request**:
+
 ```bash
 TOKEN=$(curl -X POST "http://localhost:8080/api/v1/auth/login" \
   -H "Content-Type: application/json" \
@@ -200,10 +202,12 @@ curl -X GET "http://localhost:8080/api/v1/clinical-records/1/attachments" \
 ### Test Case 2: Get Empty Attachments List (No Files Yet)
 
 **Pre-conditions**:
+
 - Doctor logged in
 - Clinical record ID 2 exists but has no attachments
 
 **Request**:
+
 ```bash
 curl -X GET "http://localhost:8080/api/v1/clinical-records/2/attachments" \
   -H "Authorization: Bearer $TOKEN" | jq
@@ -216,10 +220,12 @@ curl -X GET "http://localhost:8080/api/v1/clinical-records/2/attachments" \
 ### Test Case 3: Get Attachments as Patient (Own Record)
 
 **Pre-conditions**:
+
 - Patient `benhnhan1` (patient_id: 1) logged in
 - Clinical record ID 1 belongs to appointment with patient_id = 1
 
 **Request**:
+
 ```bash
 TOKEN=$(curl -X POST "http://localhost:8080/api/v1/auth/login" \
   -H "Content-Type: application/json" \
@@ -236,10 +242,12 @@ curl -X GET "http://localhost:8080/api/v1/clinical-records/1/attachments" \
 ### Test Case 4: Get Attachments as Nurse (Participated Appointment)
 
 **Pre-conditions**:
+
 - Nurse `yta1` (employee_id: 8) logged in
 - Nurse is participant in appointment for clinical record ID 1
 
 **Request**:
+
 ```bash
 TOKEN=$(curl -X POST "http://localhost:8080/api/v1/auth/login" \
   -H "Content-Type: application/json" \
@@ -256,10 +264,12 @@ curl -X GET "http://localhost:8080/api/v1/clinical-records/1/attachments" \
 ### Test Case 5: Get Attachments for Non-Existent Record (Not Found)
 
 **Pre-conditions**:
+
 - Doctor logged in
 - Clinical record ID 999 does not exist
 
 **Request**:
+
 ```bash
 curl -X GET "http://localhost:8080/api/v1/clinical-records/999/attachments" \
   -H "Authorization: Bearer $TOKEN" | jq
@@ -272,10 +282,12 @@ curl -X GET "http://localhost:8080/api/v1/clinical-records/999/attachments" \
 ### Test Case 6: Get Attachments as Wrong Patient (Forbidden)
 
 **Pre-conditions**:
+
 - Patient `benhnhan2` (patient_id: 2) logged in
 - Clinical record ID 1 belongs to patient_id = 1 (different patient)
 
 **Request**:
+
 ```bash
 TOKEN=$(curl -X POST "http://localhost:8080/api/v1/auth/login" \
   -H "Content-Type: application/json" \
@@ -292,10 +304,12 @@ curl -X GET "http://localhost:8080/api/v1/clinical-records/1/attachments" \
 ### Test Case 7: Get Attachments as Admin (Full Access)
 
 **Pre-conditions**:
+
 - Admin logged in
 - Any clinical record ID
 
 **Request**:
+
 ```bash
 TOKEN=$(curl -X POST "http://localhost:8080/api/v1/auth/login" \
   -H "Content-Type: application/json" \
@@ -338,29 +352,29 @@ curl -X GET "http://localhost:8080/api/v1/clinical-records/1/attachments" \
 
 ### Clinical Records (from seed-data.sql)
 
-| Record ID | Appointment ID | Doctor ID | Patient ID | Has Attachments |
-| --------- | -------------- | --------- | ---------- | --------------- |
-| 1         | 1              | 1         | 1          | Yes (after API 8.11 test)|
-| 2         | 2              | 2         | 2          | No              |
+| Record ID | Appointment ID | Doctor ID | Patient ID | Has Attachments           |
+| --------- | -------------- | --------- | ---------- | ------------------------- |
+| 1         | 1              | 1         | 1          | Yes (after API 8.11 test) |
+| 2         | 2              | 2         | 2          | No                        |
 
 ### Test Users
 
-| Username  | Password  | Role         | Employee ID | Patient ID | Notes                    |
-| --------- | --------- | ------------ | ----------- | ---------- | ------------------------ |
-| admin     | admin123  | ROLE_ADMIN   | NULL        | NULL       | Full access              |
-| bacsi1    | 123456    | ROLE_DENTIST | 1           | NULL       | Doctor for record 1      |
-| bacsi2    | 123456    | ROLE_DENTIST | 2           | NULL       | Doctor for record 2      |
-| yta1      | 123456    | ROLE_NURSE   | 8           | NULL       | Can view as participant  |
-| benhnhan1 | 123456    | ROLE_PATIENT | NULL        | 1          | Patient of record 1      |
-| benhnhan2 | 123456    | ROLE_PATIENT | NULL        | 2          | Patient of record 2      |
+| Username  | Password | Role         | Employee ID | Patient ID | Notes                   |
+| --------- | -------- | ------------ | ----------- | ---------- | ----------------------- |
+| admin     | admin123 | ROLE_ADMIN   | NULL        | NULL       | Full access             |
+| bacsi1    | 123456   | ROLE_DENTIST | 1           | NULL       | Doctor for record 1     |
+| bacsi2    | 123456   | ROLE_DENTIST | 2           | NULL       | Doctor for record 2     |
+| yta1      | 123456   | ROLE_NURSE   | 8           | NULL       | Can view as participant |
+| benhnhan1 | 123456   | ROLE_PATIENT | NULL        | 1          | Patient of record 1     |
+| benhnhan2 | 123456   | ROLE_PATIENT | NULL        | 2          | Patient of record 2     |
 
 ---
 
 ## Changelog
 
-| Version | Date       | Author    | Changes                        |
-| ------- | ---------- | --------- | ------------------------------ |
-| 1.0     | 2025-12-02 | AI Agent  | Initial API specification      |
+| Version | Date       | Author   | Changes                   |
+| ------- | ---------- | -------- | ------------------------- |
+| 1.0     | 2025-12-02 | AI Agent | Initial API specification |
 
 ---
 
@@ -370,25 +384,29 @@ curl -X GET "http://localhost:8080/api/v1/clinical-records/1/attachments" \
 // React component example
 const ClinicalRecordAttachments = ({ recordId }) => {
   const [attachments, setAttachments] = useState([]);
-  
+
   useEffect(() => {
     fetch(`/api/v1/clinical-records/${recordId}/attachments`, {
-      headers: { 'Authorization': `Bearer ${token}` }
+      headers: { Authorization: `Bearer ${token}` },
     })
-    .then(res => res.json())
-    .then(data => setAttachments(data.data));
+      .then((res) => res.json())
+      .then((data) => setAttachments(data.data));
   }, [recordId]);
-  
+
   return (
     <div className="attachments-gallery">
       {attachments.length === 0 ? (
         <p>No attachments uploaded yet</p>
       ) : (
-        attachments.map(att => (
+        attachments.map((att) => (
           <div key={att.attachmentId} className="attachment-card">
             <img src={`/uploads/${att.filePath}`} alt={att.fileName} />
-            <p>{att.attachmentType}: {att.description}</p>
-            <small>Uploaded by {att.uploadedByName} on {att.uploadedAt}</small>
+            <p>
+              {att.attachmentType}: {att.description}
+            </p>
+            <small>
+              Uploaded by {att.uploadedByName} on {att.uploadedAt}
+            </small>
           </div>
         ))
       )}

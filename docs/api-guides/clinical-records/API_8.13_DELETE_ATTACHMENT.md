@@ -24,9 +24,9 @@
 
 ### Path Parameters
 
-| Parameter    | Type    | Required | Description    |
-| ------------ | ------- | -------- | -------------- |
-| attachmentId | Integer | Yes      | Attachment ID  |
+| Parameter    | Type    | Required | Description   |
+| ------------ | ------- | -------- | ------------- |
+| attachmentId | Integer | Yes      | Attachment ID |
 
 ### Example Request (cURL)
 
@@ -86,14 +86,15 @@ No response body. Status code 204 indicates successful deletion.
 
 ### Roles with Permission
 
-| Role     | Permission         | Access Level                                  |
-| -------- | ------------------ | --------------------------------------------- |
-| Admin    | DELETE_ATTACHMENT  | Can delete any attachment                     |
-| Doctor   | DELETE_ATTACHMENT  | Can only delete own uploads                   |
+| Role   | Permission        | Access Level                |
+| ------ | ----------------- | --------------------------- |
+| Admin  | DELETE_ATTACHMENT | Can delete any attachment   |
+| Doctor | DELETE_ATTACHMENT | Can only delete own uploads |
 
 ### Business Logic
 
 Delete is allowed if:
+
 1. User is **Admin** (`ROLE_ADMIN`): Can delete any attachment
 2. User is **uploader** (`uploaded_by = current_employee_id`): Can delete own uploads
 
@@ -106,10 +107,12 @@ Delete is allowed if:
 ### Test Case 1: Delete Own Attachment as Doctor (Success)
 
 **Pre-conditions**:
+
 - Doctor `bacsi1` (employee_id: 1) logged in
 - Attachment ID 1 exists with `uploaded_by = 1`
 
 **Request**:
+
 ```bash
 TOKEN=$(curl -X POST "http://localhost:8080/api/v1/auth/login" \
   -H "Content-Type: application/json" \
@@ -122,6 +125,7 @@ curl -X DELETE "http://localhost:8080/api/v1/attachments/1" \
 **Expected Response**: `204 No Content`
 
 **Verification**:
+
 ```bash
 # Try to get attachments list again
 curl -X GET "http://localhost:8080/api/v1/clinical-records/1/attachments" \
@@ -134,10 +138,12 @@ curl -X GET "http://localhost:8080/api/v1/clinical-records/1/attachments" \
 ### Test Case 2: Delete Other Doctor's Attachment (Forbidden)
 
 **Pre-conditions**:
+
 - Doctor `bacsi2` (employee_id: 2) logged in
 - Attachment ID 1 exists with `uploaded_by = 1` (different doctor)
 
 **Request**:
+
 ```bash
 TOKEN=$(curl -X POST "http://localhost:8080/api/v1/auth/login" \
   -H "Content-Type: application/json" \
@@ -154,10 +160,12 @@ curl -X DELETE "http://localhost:8080/api/v1/attachments/1" \
 ### Test Case 3: Delete Attachment as Admin (Success)
 
 **Pre-conditions**:
+
 - Admin logged in
 - Any attachment exists (any uploader)
 
 **Request**:
+
 ```bash
 TOKEN=$(curl -X POST "http://localhost:8080/api/v1/auth/login" \
   -H "Content-Type: application/json" \
@@ -174,10 +182,12 @@ curl -X DELETE "http://localhost:8080/api/v1/attachments/1" \
 ### Test Case 4: Delete Non-Existent Attachment (Not Found)
 
 **Pre-conditions**:
+
 - Doctor logged in
 - Attachment ID 999 does not exist
 
 **Request**:
+
 ```bash
 curl -X DELETE "http://localhost:8080/api/v1/attachments/999" \
   -H "Authorization: Bearer $TOKEN" -v
@@ -190,10 +200,12 @@ curl -X DELETE "http://localhost:8080/api/v1/attachments/999" \
 ### Test Case 5: Delete Without Permission (Forbidden)
 
 **Pre-conditions**:
+
 - Nurse `yta1` logged in (has VIEW_ATTACHMENT but NOT DELETE_ATTACHMENT)
 - Attachment ID 1 exists
 
 **Request**:
+
 ```bash
 TOKEN=$(curl -X POST "http://localhost:8080/api/v1/auth/login" \
   -H "Content-Type: application/json" \
@@ -210,10 +222,12 @@ curl -X DELETE "http://localhost:8080/api/v1/attachments/1" \
 ### Test Case 6: Re-upload After Delete (Success)
 
 **Pre-conditions**:
+
 - Doctor deleted attachment ID 1
 - Same file needs to be re-uploaded
 
 **Request**:
+
 ```bash
 # Step 1: Delete
 curl -X DELETE "http://localhost:8080/api/v1/attachments/1" \
@@ -227,7 +241,8 @@ curl -X POST "http://localhost:8080/api/v1/clinical-records/1/attachments" \
   -F "description=Corrected X-ray image"
 ```
 
-**Expected Response**: 
+**Expected Response**:
+
 - Step 1: `204 No Content`
 - Step 2: `201 Created` with new attachment ID (e.g., ID 4)
 
@@ -272,28 +287,28 @@ curl -X POST "http://localhost:8080/api/v1/clinical-records/1/attachments" \
 
 ### Test Attachments (created via API 8.11)
 
-| Attachment ID | Record ID | File Name            | Type         | Uploaded By | Created At          |
-| ------------- | --------- | -------------------- | ------------ | ----------- | ------------------- |
-| 1             | 1         | xray_initial.jpg     | XRAY         | 1           | 2025-12-02 10:15:00 |
-| 2             | 1         | consent_form.pdf     | CONSENT_FORM | 1           | 2025-12-02 14:30:00 |
-| 3             | 1         | xray_after.jpg       | PHOTO_AFTER  | 1           | 2025-12-02 15:45:00 |
+| Attachment ID | Record ID | File Name        | Type         | Uploaded By | Created At          |
+| ------------- | --------- | ---------------- | ------------ | ----------- | ------------------- |
+| 1             | 1         | xray_initial.jpg | XRAY         | 1           | 2025-12-02 10:15:00 |
+| 2             | 1         | consent_form.pdf | CONSENT_FORM | 1           | 2025-12-02 14:30:00 |
+| 3             | 1         | xray_after.jpg   | PHOTO_AFTER  | 1           | 2025-12-02 15:45:00 |
 
 ### Test Users
 
-| Username | Password  | Role         | Employee ID | Has DELETE_ATTACHMENT |
-| -------- | --------- | ------------ | ----------- | --------------------- |
-| admin    | admin123  | ROLE_ADMIN   | NULL        | Yes                   |
-| bacsi1   | 123456    | ROLE_DENTIST | 1           | Yes                   |
-| bacsi2   | 123456    | ROLE_DENTIST | 2           | Yes                   |
-| yta1     | 123456    | ROLE_NURSE   | 8           | No                    |
+| Username | Password | Role         | Employee ID | Has DELETE_ATTACHMENT |
+| -------- | -------- | ------------ | ----------- | --------------------- |
+| admin    | admin123 | ROLE_ADMIN   | NULL        | Yes                   |
+| bacsi1   | 123456   | ROLE_DENTIST | 1           | Yes                   |
+| bacsi2   | 123456   | ROLE_DENTIST | 2           | Yes                   |
+| yta1     | 123456   | ROLE_NURSE   | 8           | No                    |
 
 ---
 
 ## Changelog
 
-| Version | Date       | Author    | Changes                        |
-| ------- | ---------- | --------- | ------------------------------ |
-| 1.0     | 2025-12-02 | AI Agent  | Initial API specification      |
+| Version | Date       | Author   | Changes                   |
+| ------- | ---------- | -------- | ------------------------- |
+| 1.0     | 2025-12-02 | AI Agent | Initial API specification |
 
 ---
 
@@ -303,39 +318,42 @@ curl -X POST "http://localhost:8080/api/v1/clinical-records/1/attachments" \
 // React component example
 const AttachmentCard = ({ attachment, onDelete }) => {
   const [isDeleting, setIsDeleting] = useState(false);
-  
+
   const handleDelete = async () => {
     if (!confirm(`Delete ${attachment.fileName}?`)) return;
-    
+
     setIsDeleting(true);
     try {
-      const res = await fetch(`/api/v1/attachments/${attachment.attachmentId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      
+      const res = await fetch(
+        `/api/v1/attachments/${attachment.attachmentId}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
       if (res.status === 204) {
         onDelete(attachment.attachmentId);
-        toast.success('File deleted successfully');
+        toast.success("File deleted successfully");
       } else if (res.status === 403) {
-        toast.error('You can only delete files you uploaded');
+        toast.error("You can only delete files you uploaded");
       }
     } catch (error) {
-      toast.error('Failed to delete file');
+      toast.error("Failed to delete file");
     } finally {
       setIsDeleting(false);
     }
   };
-  
+
   return (
     <div className="attachment-card">
       <img src={attachment.filePath} alt={attachment.fileName} />
-      <button 
-        onClick={handleDelete} 
+      <button
+        onClick={handleDelete}
         disabled={isDeleting}
         className="delete-btn"
       >
-        {isDeleting ? 'Deleting...' : 'Delete'}
+        {isDeleting ? "Deleting..." : "Delete"}
       </button>
     </div>
   );
