@@ -15,6 +15,10 @@ import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.exception.NotFoundException;
 import com.dental.clinic.management.patient.domain.Patient;
 import com.dental.clinic.management.patient.repository.PatientRepository;
+import com.dental.clinic.management.service.domain.DentalService;
+import com.dental.clinic.management.service.repository.DentalServiceRepository;
+import com.dental.clinic.management.treatment_plans.domain.PatientPlanItem;
+import com.dental.clinic.management.booking_appointment.repository.PatientPlanItemRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
@@ -38,6 +42,8 @@ public class ClinicalRecordService {
         private final EmployeeRepository employeeRepository;
         private final PatientRepository patientRepository;
         private final RoomRepository roomRepository;
+        private final DentalServiceRepository dentalServiceRepository;
+        private final PatientPlanItemRepository planItemRepository;
 
         private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -463,5 +469,83 @@ public class ClinicalRecordService {
                 }
 
                 return builder.build();
+        }
+
+        /**
+         * API 8.5: Add procedure to clinical record
+         *
+         * Purpose: Record a procedure/service performed during appointment
+         * 
+         * Authorization: WRITE_CLINICAL_RECORD (Doctor, Assistant, Admin)
+         * 
+         * Business Logic:
+         * 1. Validate clinical record exists
+         * 2. Validate service exists and is active
+         * 3. Validate treatment plan item exists (if provided)
+         * 4. Create procedure record with passive plan link
+         * 5. Return procedure details with service info
+         * 
+         * Note: Does NOT update treatment plan item status
+         * Status updates handled by:
+         * - Appointment completion (AppointmentStatusService)
+         * - Manual update (API 5.6 UpdateItemStatus)
+         */
+        @Transactional
+        public AddProcedureResponse addProcedure(Integer recordId, AddProcedureRequest request) {
+                log.info("Adding procedure to clinical record ID: {}", recordId);
+
+                // Step 1: Load clinical record (throws 404 if not found)
+                ClinicalRecord record = clinicalRecordRepository.findById(recordId)
+                                .orElseThrow(() -> new NotFoundException("RECORD_NOT_FOUND",
+                                                "Clinical record not found with ID: " + recordId));
+
+                // Step 2: Validate service exists and is active
+                DentalService service = dentalServiceRepository.findById(request.getServiceId())
+                                .orElseThrow(() -> new NotFoundException("SERVICE_NOT_FOUND",
+                                                "Service not found with ID: " + request.getServiceId()));
+
+                if (!service.getIsActive()) {
+                        throw new NotFoundException("SERVICE_NOT_FOUND",
+                                        "Service ID " + request.getServiceId() + " is inactive");
+                }
+
+                log.info("Service validated: {} ({})", service.getServiceName(), service.getServiceCode());
+
+                // Step 3: Validate treatment plan item exists (if provided)
+                PatientPlanItem planItem = null;
+                if (request.getPatientPlanItemId() != null) {
+                        planItem = planItemRepository.findById(request.getPatientPlanItemId())
+                                        .orElseThrow(() -> new NotFoundException("PLAN_ITEM_NOT_FOUND",
+                                                        "Treatment plan item not found with ID: " + request.getPatientPlanItemId()));
+                        log.info("Treatment plan item linked: ID {}", request.getPatientPlanItemId());
+                }
+
+                // Step 4: Create procedure entity
+                ClinicalRecordProcedure procedure = ClinicalRecordProcedure.builder()
+                                .clinicalRecord(record)
+                                .service(service)
+                                .patientPlanItem(planItem)
+                                .toothNumber(request.getToothNumber())
+                                .procedureDescription(request.getProcedureDescription())
+                                .notes(request.getNotes())
+                                .build();
+
+                // Step 5: Save procedure
+                ClinicalRecordProcedure savedProcedure = procedureRepository.save(procedure);
+                log.info("Procedure saved with ID: {}", savedProcedure.getProcedureId());
+
+                // Step 6: Build response
+                return AddProcedureResponse.builder()
+                                .procedureId(savedProcedure.getProcedureId())
+                                .clinicalRecordId(record.getClinicalRecordId())
+                                .serviceId(service.getServiceId())
+                                .serviceName(service.getServiceName())
+                                .serviceCode(service.getServiceCode())
+                                .patientPlanItemId(request.getPatientPlanItemId())
+                                .toothNumber(savedProcedure.getToothNumber())
+                                .procedureDescription(savedProcedure.getProcedureDescription())
+                                .notes(savedProcedure.getNotes())
+                                .createdAt(savedProcedure.getCreatedAt())
+                                .build();
         }
 }

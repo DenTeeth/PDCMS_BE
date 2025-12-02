@@ -1,11 +1,15 @@
 package com.dental.clinic.management.clinical_records.controller;
 
+import com.dental.clinic.management.clinical_records.dto.AddProcedureRequest;
+import com.dental.clinic.management.clinical_records.dto.AddProcedureResponse;
 import com.dental.clinic.management.clinical_records.dto.ClinicalRecordResponse;
 import com.dental.clinic.management.clinical_records.dto.ProcedureResponse;
 import com.dental.clinic.management.clinical_records.service.ClinicalRecordService;
 import com.dental.clinic.management.utils.annotation.ApiMessage;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -92,5 +96,45 @@ public class ClinicalRecordController {
         List<ProcedureResponse> procedures = clinicalRecordService.getProcedures(recordId);
 
         return ResponseEntity.ok(procedures);
+    }
+
+    /**
+     * API 8.5: Add Procedure to Clinical Record
+     *
+     * Records a procedure/service performed during the appointment.
+     * This API allows doctors to document work done in real-time or post-visit.
+     *
+     * Business Logic:
+     * 1. Validates clinical record exists
+     * 2. Validates service exists and is active
+     * 3. Creates passive link to treatment plan item (if provided)
+     * 4. Does NOT update treatment plan item status (handled by appointment completion or API 5.6)
+     *
+     * Authorization:
+     * - WRITE_CLINICAL_RECORD: Doctor, Assistant, Admin
+     *
+     * Returns:
+     * - 201 CREATED: Procedure added successfully
+     * - 404 RECORD_NOT_FOUND: Clinical record doesn't exist
+     * - 404 SERVICE_NOT_FOUND: Service doesn't exist or is inactive
+     * - 404 PLAN_ITEM_NOT_FOUND: Treatment plan item doesn't exist (if provided)
+     * - 400 VALIDATION_ERROR: Invalid request body
+     *
+     * @param recordId The clinical record ID
+     * @param request Procedure details (service, plan item, description, notes)
+     * @return AddProcedureResponse with created procedure details
+     */
+    @PostMapping("/clinical-records/{recordId}/procedures")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasAuthority('WRITE_CLINICAL_RECORD')")
+    @ApiMessage("Procedure added successfully")
+    public ResponseEntity<AddProcedureResponse> addProcedure(
+            @PathVariable Integer recordId,
+            @Valid @RequestBody AddProcedureRequest request) {
+
+        log.info("API 8.5: POST /api/v1/appointments/clinical-records/{}/procedures", recordId);
+
+        AddProcedureResponse response = clinicalRecordService.addProcedure(recordId, request);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }
