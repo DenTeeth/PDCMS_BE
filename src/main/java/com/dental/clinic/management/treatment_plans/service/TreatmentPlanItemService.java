@@ -188,6 +188,10 @@ public class TreatmentPlanItemService {
 
         PatientPlanItem savedItem = itemRepository.save(item);
 
+        // CRITICAL: Flush changes to database before checking completion
+        // This ensures phase.getItems() will reflect the updated item status
+        entityManager.flush();
+
         // STEP 6: Auto-activate next item in phase
         if (newStatus == PlanItemStatus.COMPLETED) {
             activateNextItemInPhase(phase, item.getSequenceNumber());
@@ -198,13 +202,19 @@ public class TreatmentPlanItemService {
             unlockDependentItems(plan, savedItem.getServiceId().longValue());
         }
 
-        // STEP 7: Check and auto-complete phase
+        // STEP 7: Refresh phase to get latest item statuses before completion check
+        // Without this, phase.getItems() may contain stale data
+        entityManager.refresh(phase);
+
+        // STEP 7A: Check and auto-complete phase
         checkAndCompletePhase(phase);
 
-        // STEP 7A: V21 - Check and activate plan (if first item scheduled/started)
+        // STEP 7B: V21 - Check and activate plan (if first item scheduled/started)
         checkAndActivatePlan(plan);
 
-        // STEP 7B: V21 - Check and auto-complete plan (if all phases done)
+        // STEP 7C: V21 - Check and auto-complete plan (if all phases done)
+        // Need to refresh plan to get updated phase statuses
+        entityManager.refresh(plan);
         checkAndCompletePlan(plan);
 
         // STEP 8: Audit log (implement if audit table exists)
@@ -354,9 +364,16 @@ public class TreatmentPlanItemService {
     /**
      * Check if all items in phase are completed/skipped, then mark phase as
      * COMPLETED
+     * 
+     * IMPORTANT: Assumes phase has been refreshed by caller to get latest item statuses
      */
     private void checkAndCompletePhase(PatientPlanPhase phase) {
         List<PatientPlanItem> items = phase.getItems();
+
+        if (items.isEmpty()) {
+            log.debug("Phase {} has no items, skipping completion check", phase.getPatientPhaseId());
+            return;
+        }
 
         boolean allDone = items.stream()
                 .allMatch(item -> item.getStatus() == PlanItemStatus.COMPLETED ||
@@ -366,7 +383,9 @@ public class TreatmentPlanItemService {
             phase.setStatus(PhaseStatus.COMPLETED);
             phase.setCompletionDate(java.time.LocalDate.now());
             entityManager.merge(phase); // Update phase
-            log.info(" Phase {} auto-completed: all items are done", phase.getPatientPhaseId());
+            entityManager.flush(); // Ensure phase status is persisted immediately
+            log.info(" Phase {} auto-completed: all {} items are done", 
+                    phase.getPatientPhaseId(), items.size());
         }
     }
 
@@ -412,7 +431,7 @@ public class TreatmentPlanItemService {
             }
 
             planRepository.save(plan);
-            log.info("✅ V21: Auto-activated treatment plan {} ({} → IN_PROGRESS) - First item scheduled/started",
+            log.info("V21: Auto-activated treatment plan {} ({} -> IN_PROGRESS) - First item scheduled/started",
                     plan.getPlanCode(), currentStatus == null ? "null" : currentStatus);
         }
     }
@@ -438,27 +457,40 @@ public class TreatmentPlanItemService {
      * - Logs completion for audit trail
      * - Transactional - rolls back if fails
      *
-     * @param plan The treatment plan to check
+     * @param plan The treatment plan to check (should be refreshed by caller)
      */
     private void checkAndCompletePlan(PatientTreatmentPlan plan) {
         // Only check if plan is currently IN_PROGRESS
         if (plan.getStatus() != TreatmentPlanStatus.IN_PROGRESS) {
+            log.debug("Plan {} not IN_PROGRESS (current: {}), skipping completion check", 
+                    plan.getPlanCode(), plan.getStatus());
             return;
         }
 
         List<PatientPlanPhase> phases = plan.getPhases();
 
+        if (phases.isEmpty()) {
+            log.debug("Plan {} has no phases, skipping completion check", plan.getPlanCode());
+            return;
+        }
+
         // Check if ALL phases are COMPLETED
-        boolean allPhasesCompleted = phases.stream()
-                .allMatch(phase -> phase.getStatus() == PhaseStatus.COMPLETED);
+        long completedPhases = phases.stream()
+                .filter(phase -> phase.getStatus() == PhaseStatus.COMPLETED)
+                .count();
+        
+        boolean allPhasesCompleted = completedPhases == phases.size();
 
         if (allPhasesCompleted) {
             // AUTO-COMPLETE: IN_PROGRESS → COMPLETED
             plan.setStatus(TreatmentPlanStatus.COMPLETED);
             planRepository.save(plan);
 
-            log.info(" V21: Auto-completed treatment plan {} (IN_PROGRESS → COMPLETED) - All {} phases done",
-                    plan.getPlanCode(), phases.size());
+            log.info(" Treatment plan {} (code: {}) auto-completed: IN_PROGRESS → COMPLETED - All {} phases done",
+                    plan.getPlanId(), plan.getPlanCode(), phases.size());
+        } else {
+            log.debug("Plan {} not completed yet: {}/{} phases done", 
+                    plan.getPlanCode(), completedPhases, phases.size());
         }
     }
 
