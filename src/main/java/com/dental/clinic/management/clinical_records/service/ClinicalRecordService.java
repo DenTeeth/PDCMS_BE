@@ -284,4 +284,110 @@ public class ClinicalRecordService {
                                 .prescriptions(prescriptions)
                                 .build();
         }
+
+        /**
+         * Create new clinical record for an appointment
+         *
+         * Authorization: Requires WRITE_CLINICAL_RECORD permission
+         *
+         * Business Rules:
+         * 1. Appointment must exist
+         * 2. Appointment must be IN_PROGRESS (checked in)
+         * 3. No existing clinical record for this appointment (409 if duplicate)
+         * 4. All required fields must be provided
+         */
+        @Transactional
+        public CreateClinicalRecordResponse createClinicalRecord(CreateClinicalRecordRequest request) {
+                log.info("Creating clinical record for appointment ID: {}", request.getAppointmentId());
+
+                // Step 1: Validate appointment exists
+                Appointment appointment = appointmentRepository.findById(request.getAppointmentId())
+                                .orElseThrow(() -> new NotFoundException("APPOINTMENT_NOT_FOUND",
+                                                "Appointment not found with ID: " + request.getAppointmentId()));
+
+                // Step 2: Check appointment status
+                if (!appointment.getStatus().name().equals("IN_PROGRESS")
+                                && !appointment.getStatus().name().equals("CHECKED_IN")) {
+                        throw new com.dental.clinic.management.exception.BadRequestException("INVALID_STATUS",
+                                        "Cannot create clinical record. Appointment must be IN_PROGRESS or CHECKED_IN. Current status: "
+                                                        + appointment.getStatus());
+                }
+
+                // Step 3: Check duplicate
+                if (clinicalRecordRepository.findByAppointment_AppointmentId(request.getAppointmentId())
+                                .isPresent()) {
+                        throw new com.dental.clinic.management.exception.ConflictException("RECORD_ALREADY_EXISTS",
+                                        "Clinical record already exists for appointment ID "
+                                                        + request.getAppointmentId()
+                                                        + ". Please use PUT to update.");
+                }
+
+                // Step 4: Create clinical record
+                ClinicalRecord record = ClinicalRecord.builder()
+                                .appointment(appointment)
+                                .chiefComplaint(request.getChiefComplaint())
+                                .examinationFindings(request.getExaminationFindings())
+                                .diagnosis(request.getDiagnosis())
+                                .treatmentNotes(request.getTreatmentNotes())
+                                .vitalSigns(request.getVitalSigns())
+                                .build();
+
+                ClinicalRecord saved = clinicalRecordRepository.save(record);
+
+                log.info("Created clinical record ID: {} for appointment ID: {}", saved.getClinicalRecordId(),
+                                request.getAppointmentId());
+
+                return CreateClinicalRecordResponse.builder()
+                                .clinicalRecordId(saved.getClinicalRecordId())
+                                .appointmentId(request.getAppointmentId())
+                                .createdAt(saved.getCreatedAt().format(FORMATTER))
+                                .build();
+        }
+
+        /**
+         * Update existing clinical record
+         *
+         * Authorization: Requires WRITE_CLINICAL_RECORD permission
+         *
+         * Business Rules:
+         * 1. Record must exist
+         * 2. Only update provided fields (partial update)
+         * 3. Cannot update appointmentId, chiefComplaint, diagnosis (use separate API)
+         * 4. Auto update updated_at timestamp
+         */
+        @Transactional
+        public UpdateClinicalRecordResponse updateClinicalRecord(Integer recordId,
+                        UpdateClinicalRecordRequest request) {
+                log.info("Updating clinical record ID: {}", recordId);
+
+                // Step 1: Load existing record
+                ClinicalRecord record = clinicalRecordRepository.findById(recordId)
+                                .orElseThrow(() -> new NotFoundException("RECORD_NOT_FOUND",
+                                                "Clinical record ID " + recordId + " does not exist"));
+
+                // Step 2: Update only provided fields
+                if (request.getExaminationFindings() != null) {
+                        record.setExaminationFindings(request.getExaminationFindings());
+                }
+
+                if (request.getTreatmentNotes() != null) {
+                        record.setTreatmentNotes(request.getTreatmentNotes());
+                }
+
+                if (request.getVitalSigns() != null) {
+                        record.setVitalSigns(request.getVitalSigns());
+                }
+
+                // Step 3: Save changes (updated_at auto-updated by @PreUpdate)
+                ClinicalRecord updated = clinicalRecordRepository.save(record);
+
+                log.info("Updated clinical record ID: {}", recordId);
+
+                return UpdateClinicalRecordResponse.builder()
+                                .clinicalRecordId(updated.getClinicalRecordId())
+                                .updatedAt(updated.getUpdatedAt().format(FORMATTER))
+                                .examinationFindings(updated.getExaminationFindings())
+                                .treatmentNotes(updated.getTreatmentNotes())
+                                .build();
+        }
 }
