@@ -66,7 +66,7 @@ public class ClinicalRecordService {
         checkAccessPermission(appointment);
 
         // Step 3: Load clinical record (throws 404 if not found)
-        ClinicalRecord record = clinicalRecordRepository.findByAppointmentIdWithDetails(appointmentId)
+        ClinicalRecord record = clinicalRecordRepository.findByAppointment_AppointmentId(appointmentId)
                 .orElseThrow(() -> new NotFoundException("RECORD_NOT_FOUND",
                         "Clinical record not found for appointment ID: " + appointmentId));
 
