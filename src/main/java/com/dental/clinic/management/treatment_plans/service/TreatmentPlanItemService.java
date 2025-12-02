@@ -364,8 +364,9 @@ public class TreatmentPlanItemService {
     /**
      * Check if all items in phase are completed/skipped, then mark phase as
      * COMPLETED
-     * 
-     * IMPORTANT: Assumes phase has been refreshed by caller to get latest item statuses
+     *
+     * IMPORTANT: Assumes phase has been refreshed by caller to get latest item
+     * statuses
      */
     private void checkAndCompletePhase(PatientPlanPhase phase) {
         List<PatientPlanItem> items = phase.getItems();
@@ -384,7 +385,7 @@ public class TreatmentPlanItemService {
             phase.setCompletionDate(java.time.LocalDate.now());
             entityManager.merge(phase); // Update phase
             entityManager.flush(); // Ensure phase status is persisted immediately
-            log.info(" Phase {} auto-completed: all {} items are done", 
+            log.info(" Phase {} auto-completed: all {} items are done",
                     phase.getPatientPhaseId(), items.size());
         }
     }
@@ -416,10 +417,8 @@ public class TreatmentPlanItemService {
         // Check if any item is SCHEDULED or IN_PROGRESS
         boolean hasActiveItems = plan.getPhases().stream()
                 .flatMap(phase -> phase.getItems().stream())
-                .anyMatch(item ->
-                        item.getStatus() == PlanItemStatus.SCHEDULED ||
-                                item.getStatus() == PlanItemStatus.IN_PROGRESS
-                );
+                .anyMatch(item -> item.getStatus() == PlanItemStatus.SCHEDULED ||
+                        item.getStatus() == PlanItemStatus.IN_PROGRESS);
 
         if (hasActiveItems) {
             // AUTO-ACTIVATE: null/PENDING → IN_PROGRESS
@@ -462,7 +461,7 @@ public class TreatmentPlanItemService {
     private void checkAndCompletePlan(PatientTreatmentPlan plan) {
         // Only check if plan is currently IN_PROGRESS
         if (plan.getStatus() != TreatmentPlanStatus.IN_PROGRESS) {
-            log.debug("Plan {} not IN_PROGRESS (current: {}), skipping completion check", 
+            log.debug("Plan {} not IN_PROGRESS (current: {}), skipping completion check",
                     plan.getPlanCode(), plan.getStatus());
             return;
         }
@@ -478,7 +477,7 @@ public class TreatmentPlanItemService {
         long completedPhases = phases.stream()
                 .filter(phase -> phase.getStatus() == PhaseStatus.COMPLETED)
                 .count();
-        
+
         boolean allPhasesCompleted = completedPhases == phases.size();
 
         if (allPhasesCompleted) {
@@ -489,7 +488,7 @@ public class TreatmentPlanItemService {
             log.info(" Treatment plan {} (code: {}) auto-completed: IN_PROGRESS → COMPLETED - All {} phases done",
                     plan.getPlanId(), plan.getPlanCode(), phases.size());
         } else {
-            log.debug("Plan {} not completed yet: {}/{} phases done", 
+            log.debug("Plan {} not completed yet: {}/{} phases done",
                     plan.getPlanCode(), completedPhases, phases.size());
         }
     }

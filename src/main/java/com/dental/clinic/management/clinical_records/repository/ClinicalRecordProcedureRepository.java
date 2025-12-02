@@ -16,8 +16,8 @@ public interface ClinicalRecordProcedureRepository extends JpaRepository<Clinica
      * Ordered by created_at DESC (newest first)
      */
     @Query("SELECT p FROM ClinicalRecordProcedure p " +
-           "LEFT JOIN FETCH p.service " +
-           "WHERE p.clinicalRecord.clinicalRecordId = :recordId " +
-           "ORDER BY p.createdAt DESC")
+            "LEFT JOIN FETCH p.service " +
+            "WHERE p.clinicalRecord.clinicalRecordId = :recordId " +
+            "ORDER BY p.createdAt DESC")
     List<ClinicalRecordProcedure> findByClinicalRecordIdWithService(@Param("recordId") Integer recordId);
 }

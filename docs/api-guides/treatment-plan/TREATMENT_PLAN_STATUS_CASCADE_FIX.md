@@ -9,6 +9,7 @@
 ## Solution
 
 Added entity manager flush and refresh operations at critical points to ensure:
+
 1. Item status changes are immediately persisted to database
 2. Phase entity is refreshed before completion check
 3. Plan entity is refreshed before completion check
@@ -71,7 +72,7 @@ private void checkAndCompletePhase(PatientPlanPhase phase) {
         phase.setCompletionDate(java.time.LocalDate.now());
         entityManager.merge(phase);
         entityManager.flush(); // Ensure phase status is persisted immediately
-        log.info("Phase {} auto-completed: all {} items are done", 
+        log.info("Phase {} auto-completed: all {} items are done",
                 phase.getPatientPhaseId(), items.size());
     }
 }
@@ -82,7 +83,7 @@ private void checkAndCompletePhase(PatientPlanPhase phase) {
 ```java
 private void checkAndCompletePlan(PatientTreatmentPlan plan) {
     if (plan.getStatus() != TreatmentPlanStatus.IN_PROGRESS) {
-        log.debug("Plan {} not IN_PROGRESS (current: {}), skipping completion check", 
+        log.debug("Plan {} not IN_PROGRESS (current: {}), skipping completion check",
                 plan.getPlanCode(), plan.getStatus());
         return;
     }
@@ -98,7 +99,7 @@ private void checkAndCompletePlan(PatientTreatmentPlan plan) {
     long completedPhases = phases.stream()
             .filter(phase -> phase.getStatus() == PhaseStatus.COMPLETED)
             .count();
-    
+
     boolean allPhasesCompleted = completedPhases == phases.size();
 
     if (allPhasesCompleted) {
@@ -109,7 +110,7 @@ private void checkAndCompletePlan(PatientTreatmentPlan plan) {
         log.info("Treatment plan {} (code: {}) auto-completed: IN_PROGRESS -> COMPLETED - All {} phases done",
                 plan.getPlanId(), plan.getPlanCode(), phases.size());
     } else {
-        log.debug("Plan {} not completed yet: {}/{} phases done", 
+        log.debug("Plan {} not completed yet: {}/{} phases done",
                 plan.getPlanCode(), completedPhases, phases.size());
     }
 }
@@ -120,6 +121,7 @@ private void checkAndCompletePlan(PatientTreatmentPlan plan) {
 ### Rule 1: Item Status Change Triggers Phase Check
 
 When an item status changes to COMPLETED or SKIPPED:
+
 1. Flush item changes to database
 2. Refresh phase entity to get latest item statuses
 3. Check if ALL items in phase are COMPLETED or SKIPPED
@@ -128,6 +130,7 @@ When an item status changes to COMPLETED or SKIPPED:
 ### Rule 2: Phase Completion Triggers Plan Check
 
 When a phase status changes to COMPLETED:
+
 1. Flush phase changes to database
 2. Refresh plan entity to get latest phase statuses
 3. Check if ALL phases in plan are COMPLETED
@@ -158,17 +161,20 @@ Plan: IN_PROGRESS -> COMPLETED
 ### Scenario 1: Single Phase Plan - All Items Complete
 
 **Setup**:
+
 - Plan with 1 phase containing 3 items
 - Plan status: IN_PROGRESS
 - Phase status: PENDING
 - All items status: PENDING
 
 **Action**:
+
 1. Update Item 1 -> COMPLETED
 2. Update Item 2 -> COMPLETED
 3. Update Item 3 -> COMPLETED
 
 **Expected Result**:
+
 - After Item 3 completes:
   - Phase status -> COMPLETED
   - Plan status -> COMPLETED
@@ -176,16 +182,19 @@ Plan: IN_PROGRESS -> COMPLETED
 ### Scenario 2: Multi-Phase Plan - Sequential Completion
 
 **Setup**:
+
 - Plan with 2 phases, each with 2 items
 - Plan status: IN_PROGRESS
 - Phase 1 status: PENDING
 - Phase 2 status: PENDING
 
 **Action**:
+
 1. Complete all items in Phase 1
 2. Complete all items in Phase 2
 
 **Expected Result**:
+
 - After Phase 1 all items complete:
   - Phase 1 status -> COMPLETED
   - Plan status -> IN_PROGRESS (Phase 2 still pending)
@@ -196,15 +205,18 @@ Plan: IN_PROGRESS -> COMPLETED
 ### Scenario 3: Mixed Complete and Skip
 
 **Setup**:
+
 - Plan with 1 phase containing 3 items
 - Plan status: IN_PROGRESS
 
 **Action**:
+
 1. Update Item 1 -> COMPLETED
 2. Update Item 2 -> SKIPPED
 3. Update Item 3 -> COMPLETED
 
 **Expected Result**:
+
 - After Item 3 completes:
   - Phase status -> COMPLETED (all items done: 2 completed + 1 skipped)
   - Plan status -> COMPLETED
@@ -212,6 +224,7 @@ Plan: IN_PROGRESS -> COMPLETED
 ### Scenario 4: Plan Not IN_PROGRESS - No Auto-Complete
 
 **Setup**:
+
 - Plan status: PENDING
 - Phase with all items PENDING
 
@@ -219,6 +232,7 @@ Plan: IN_PROGRESS -> COMPLETED
 Complete all items in phase
 
 **Expected Result**:
+
 - Phase status -> COMPLETED
 - Plan status -> PENDING (unchanged, not IN_PROGRESS)
 
@@ -227,10 +241,12 @@ Complete all items in phase
 ### Common Issues Fixed
 
 1. **Stale Entity References**
+
    - Problem: Phase.getItems() returns cached collection
    - Fix: entityManager.refresh(phase) before checking
 
 2. **Uncommitted Changes**
+
    - Problem: Item save not flushed to DB
    - Fix: entityManager.flush() after save
 
@@ -260,6 +276,7 @@ No schema changes required. Only service layer logic updated.
 ## RBAC Considerations
 
 No permission changes required. Existing RBAC logic in `TreatmentPlanItemService` remains unchanged:
+
 - Employees can only update items in plans they created
 - Admin/Finance can update all plans (if needed)
 

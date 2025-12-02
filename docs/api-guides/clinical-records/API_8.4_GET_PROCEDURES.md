@@ -15,6 +15,7 @@ Retrieves all procedures/services performed during a specific clinical visit. Th
 ## Business Rules
 
 ### Authorization Logic (Same as API 8.1)
+
 1. **ROLE_ADMIN**: Access all clinical records
 2. **VIEW_APPOINTMENT_ALL**: Access all records (Receptionist, Manager)
 3. **VIEW_APPOINTMENT_OWN**: Access only if:
@@ -23,12 +24,14 @@ Retrieves all procedures/services performed during a specific clinical visit. Th
    - **Assistant/Observer**: User is appointment participant
 
 ### Data Processing
+
 - Query `clinical_record_procedures` table filtered by `clinical_record_id`
 - LEFT JOIN with `services` table to get service name and code
 - Sort by `created_at DESC` (newest procedures first)
 - Return empty array if no procedures added yet (not an error)
 
 ### Field Mapping
+
 - **procedureDescription**: REQUIRED field from schema (describes what was done)
 - **toothNumber**: Tooth identifier (e.g., "36", "46-47", "ALL" for full arch)
 - **serviceId/serviceName**: Reference to service catalog (optional)
@@ -39,15 +42,16 @@ Retrieves all procedures/services performed during a specific clinical visit. Th
 ## Request
 
 ### Headers
+
 ```
 Authorization: Bearer {JWT_TOKEN}
 ```
 
 ### Path Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `recordId` | Integer | Yes | Clinical record ID (from API 8.1 response) |
+| Parameter  | Type    | Required | Description                                |
+| ---------- | ------- | -------- | ------------------------------------------ |
+| `recordId` | Integer | Yes      | Clinical record ID (from API 8.1 response) |
 
 ### Example Request
 
@@ -70,33 +74,33 @@ Authorization: Bearer {JWT_TOKEN}
     {
       "procedureId": 1,
       "clinicalRecordId": 1,
-      
+
       "serviceId": 2,
       "serviceName": "Tram rang Composite (Xoang I)",
       "serviceCode": "FILL_COMP_1",
-      
+
       "patientPlanItemId": 5,
-      
+
       "procedureDescription": "Tram rang 36 mat O, lot MTA, tram Composite mau A3, danh bong",
       "toothNumber": "36",
       "notes": "Benh nhan chiu dung tot, khong dau",
-      
+
       "createdAt": "2025-11-04 10:15:00"
     },
     {
       "procedureId": 2,
       "clinicalRecordId": 1,
-      
+
       "serviceId": 1,
       "serviceName": "Cao voi rang (Toan ham)",
       "serviceCode": "SCALE_FULL",
-      
+
       "patientPlanItemId": null,
-      
+
       "procedureDescription": "Cao voi rang toan ham, lam sach tui nha chu, danh bong",
       "toothNumber": "ALL",
       "notes": "Benh nhan chay mau nuou nhieu, huong dan danh rang dung cach",
-      
+
       "createdAt": "2025-11-04 09:50:00"
     }
   ]
@@ -105,18 +109,18 @@ Authorization: Bearer {JWT_TOKEN}
 
 ### Response Fields
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `procedureId` | Integer | Unique procedure ID |
-| `clinicalRecordId` | Integer | Parent clinical record ID |
-| `serviceId` | Integer | Service catalog reference (null if custom procedure) |
-| `serviceName` | String | Service name from catalog |
-| `serviceCode` | String | Service code from catalog |
-| `patientPlanItemId` | Integer | Link to treatment plan item (null if unplanned) |
-| `procedureDescription` | String | REQUIRED - Detailed description of work done |
-| `toothNumber` | String | Tooth identifier (36, 46-47, ALL, etc.) |
-| `notes` | String | Additional notes about procedure |
-| `createdAt` | String | Timestamp when procedure was recorded (yyyy-MM-dd HH:mm:ss) |
+| Field                  | Type    | Description                                                 |
+| ---------------------- | ------- | ----------------------------------------------------------- |
+| `procedureId`          | Integer | Unique procedure ID                                         |
+| `clinicalRecordId`     | Integer | Parent clinical record ID                                   |
+| `serviceId`            | Integer | Service catalog reference (null if custom procedure)        |
+| `serviceName`          | String  | Service name from catalog                                   |
+| `serviceCode`          | String  | Service code from catalog                                   |
+| `patientPlanItemId`    | Integer | Link to treatment plan item (null if unplanned)             |
+| `procedureDescription` | String  | REQUIRED - Detailed description of work done                |
+| `toothNumber`          | String  | Tooth identifier (36, 46-47, ALL, etc.)                     |
+| `notes`                | String  | Additional notes about procedure                            |
+| `createdAt`            | String  | Timestamp when procedure was recorded (yyyy-MM-dd HH:mm:ss) |
 
 ---
 
@@ -167,6 +171,7 @@ Authorization: Bearer {JWT_TOKEN}
 ```
 
 **Test Cases**:
+
 - Doctor trying to view another doctor's patient record
 - Patient trying to view other patient's records
 - Receptionist without VIEW_APPOINTMENT_ALL permission
@@ -177,12 +182,14 @@ Authorization: Bearer {JWT_TOKEN}
 
 ### Test Case 1: Get Procedures Successfully
 
-**Given**: 
+**Given**:
+
 - User has `VIEW_APPOINTMENT_OWN` permission
 - Clinical record ID 1 exists and belongs to user's appointment
 - Record has 2 procedures
 
 **Request**:
+
 ```bash
 curl -X GET http://localhost:8080/api/v1/appointments/clinical-records/1/procedures \
   -H "Authorization: Bearer {DOCTOR_TOKEN}"
@@ -194,11 +201,13 @@ curl -X GET http://localhost:8080/api/v1/appointments/clinical-records/1/procedu
 
 ### Test Case 2: Empty Procedures List
 
-**Given**: 
+**Given**:
+
 - Clinical record ID 3 exists
 - No procedures added yet
 
 **Request**:
+
 ```bash
 curl -X GET http://localhost:8080/api/v1/appointments/clinical-records/3/procedures \
   -H "Authorization: Bearer {DOCTOR_TOKEN}"
@@ -213,6 +222,7 @@ curl -X GET http://localhost:8080/api/v1/appointments/clinical-records/3/procedu
 **Given**: Clinical record ID 9999 doesn't exist
 
 **Request**:
+
 ```bash
 curl -X GET http://localhost:8080/api/v1/appointments/clinical-records/9999/procedures \
   -H "Authorization: Bearer {DOCTOR_TOKEN}"
@@ -224,11 +234,13 @@ curl -X GET http://localhost:8080/api/v1/appointments/clinical-records/9999/proc
 
 ### Test Case 4: Unauthorized Access (403)
 
-**Given**: 
+**Given**:
+
 - Clinical record ID 2 belongs to doctor bacsi2
 - User is bacsi1 (different doctor)
 
 **Request**:
+
 ```bash
 curl -X GET http://localhost:8080/api/v1/appointments/clinical-records/2/procedures \
   -H "Authorization: Bearer {BACSI1_TOKEN}"
@@ -243,6 +255,7 @@ curl -X GET http://localhost:8080/api/v1/appointments/clinical-records/2/procedu
 **Given**: Admin user can view all records
 
 **Request**:
+
 ```bash
 curl -X GET http://localhost:8080/api/v1/appointments/clinical-records/1/procedures \
   -H "Authorization: Bearer {ADMIN_TOKEN}"
@@ -257,6 +270,7 @@ curl -X GET http://localhost:8080/api/v1/appointments/clinical-records/1/procedu
 **Given**: Patient trying to access API
 
 **Request**:
+
 ```bash
 curl -X GET http://localhost:8080/api/v1/appointments/clinical-records/1/procedures \
   -H "Authorization: Bearer {PATIENT_TOKEN}"
@@ -269,6 +283,7 @@ curl -X GET http://localhost:8080/api/v1/appointments/clinical-records/1/procedu
 ## Implementation Notes
 
 ### Schema Alignment
+
 - Entity: `ClinicalRecordProcedure.java`
 - Table: `clinical_record_procedures`
 - Key fields: `procedure_description` (REQUIRED), `tooth_number`, `notes`
@@ -276,6 +291,7 @@ curl -X GET http://localhost:8080/api/v1/appointments/clinical-records/1/procedu
 - NO `tooth_surface` field (not in schema) - surface info encoded in toothNumber or description
 
 ### Query Optimization
+
 ```sql
 SELECT p.* FROM clinical_record_procedures p
 LEFT JOIN services s ON p.service_id = s.service_id
@@ -286,7 +302,9 @@ ORDER BY p.created_at DESC
 Uses `LEFT JOIN FETCH` to avoid N+1 queries when loading service information.
 
 ### RBAC Implementation
+
 Reuses `checkAccessPermission()` method from API 8.1:
+
 1. Load clinical record (404 if not found)
 2. Load associated appointment
 3. Check user permission against appointment
@@ -308,11 +326,11 @@ Reuses `checkAccessPermission()` method from API 8.1:
 
 ### Available Test Records
 
-| Record ID | Appointment ID | Doctor | Has Procedures | Test Scenario |
-|-----------|---------------|--------|----------------|---------------|
-| 1 | 1 | bacsi1 (EMP001) | Yes (2) | Success test |
-| 2 | 2 | bacsi2 (EMP002) | Yes (1) | RBAC test |
-| 3 | 3 | bacsi1 (EMP001) | No | Empty list test |
+| Record ID | Appointment ID | Doctor          | Has Procedures | Test Scenario   |
+| --------- | -------------- | --------------- | -------------- | --------------- |
+| 1         | 1              | bacsi1 (EMP001) | Yes (2)        | Success test    |
+| 2         | 2              | bacsi2 (EMP002) | Yes (1)        | RBAC test       |
+| 3         | 3              | bacsi1 (EMP001) | No             | Empty list test |
 
 ### Test Credentials
 
@@ -342,11 +360,13 @@ Password: 123456
 
 ```javascript
 // Step 1: Load clinical record (API 8.1)
-const record = await GET('/api/v1/appointments/1/clinical-record');
+const record = await GET("/api/v1/appointments/1/clinical-record");
 // Response includes: recordId, appointment, doctor, patient, etc.
 
 // Step 2: Load procedures for this record (API 8.4)
-const procedures = await GET(`/api/v1/appointments/clinical-records/${record.clinicalRecordId}/procedures`);
+const procedures = await GET(
+  `/api/v1/appointments/clinical-records/${record.clinicalRecordId}/procedures`
+);
 
 // Step 3: Display procedures table
 if (procedures.length === 0) {
@@ -356,7 +376,7 @@ if (procedures.length === 0) {
 }
 
 // Step 4: Handle procedure actions
-procedures.forEach(proc => {
+procedures.forEach((proc) => {
   if (proc.patientPlanItemId) {
     // Link to treatment plan
     showPlanBadge(proc.patientPlanItemId);
@@ -369,6 +389,7 @@ procedures.forEach(proc => {
 ```
 
 ### Best Practices
+
 1. **Cache procedures**: Store in state after first load
 2. **Auto-refresh**: Reload after adding/editing/deleting procedures
 3. **Show service details**: Display serviceCode with serviceName for clarity
@@ -379,6 +400,6 @@ procedures.forEach(proc => {
 
 ## Changelog
 
-| Version | Date | Changes |
-|---------|------|---------|
-| 1.0 | 2025-12-01 | Initial API specification |
+| Version | Date       | Changes                   |
+| ------- | ---------- | ------------------------- |
+| 1.0     | 2025-12-01 | Initial API specification |

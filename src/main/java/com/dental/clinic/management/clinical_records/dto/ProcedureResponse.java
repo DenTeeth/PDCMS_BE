@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 
 /**
  * Response DTO for Clinical Record Procedure (API 8.4)
- * 
+ *
  * Maps to clinical_record_procedures table
  * Includes service information via JOIN
  */
@@ -21,26 +21,26 @@ import java.time.LocalDateTime;
 public class ProcedureResponse {
 
     private Integer procedureId;
-    
+
     private Integer clinicalRecordId;
-    
+
     // Service information (from JOIN)
-    private Long serviceId;  // DentalService uses Long
-    
+    private Long serviceId; // DentalService uses Long
+
     private String serviceName;
-    
+
     private String serviceCode;
-    
+
     // Link to treatment plan
-    private Long patientPlanItemId;  // PatientPlanItem uses Long itemId
-    
+    private Long patientPlanItemId; // PatientPlanItem uses Long itemId
+
     // Procedure details
-    private String procedureDescription;  // REQUIRED field from schema
-    
+    private String procedureDescription; // REQUIRED field from schema
+
     private String toothNumber;
-    
+
     private String notes;
-    
+
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
 }
