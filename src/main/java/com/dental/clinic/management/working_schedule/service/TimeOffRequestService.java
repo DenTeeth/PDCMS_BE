@@ -566,10 +566,15 @@ public class TimeOffRequestService {
                 balance.setUsed(balance.getUsed() + daysToDeduct.doubleValue());
                 balanceRepository.save(balance);
 
-                // Create history record with proper changedBy value
+                // Fetch the approver employee entity
+                com.dental.clinic.management.employee.domain.Employee approverEmployee = employeeRepository
+                                .findById(approvedBy)
+                                .orElseThrow(() -> new EmployeeNotFoundException(approvedBy));
+
+                // Create history record with proper entity relationships
                 LeaveBalanceHistory history = LeaveBalanceHistory.builder()
-                                .balanceId(balance.getBalanceId())
-                                .changedBy(approvedBy) // Use parameter instead of timeOffRequest.getApprovedBy()
+                                .balance(balance) // Set the entity relationship
+                                .changedByEmployee(approverEmployee) // Set the entity relationship
                                 .changeAmount(daysToDeduct.negate().doubleValue()) // Negative for deduction
                                 .reason(BalanceChangeReason.APPROVED_REQUEST)
                                 .notes(String.format("Trừ %.1f ngày nghỉ phép do yêu cầu %s được phê duyệt",

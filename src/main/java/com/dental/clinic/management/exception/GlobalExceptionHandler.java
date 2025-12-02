@@ -957,14 +957,67 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handle Spring DataIntegrityViolationException (duplicate keys, constraint violations at JPA level).
+     * Returns 409 Conflict for duplicate entries, 400 for other violations.
+     */
+    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleDataIntegrityViolation(
+            org.springframework.dao.DataIntegrityViolationException ex,
+            HttpServletRequest request) {
+
+        String message = ex.getMessage() != null ? ex.getMessage() : "Lỗi toàn vẹn dữ liệu";
+        
+        log.error("Data integrity violation at {}: {}", request.getRequestURI(), message);
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        String errorCode = "DATA_INTEGRITY_VIOLATION";
+        
+        // Check if it's a duplicate key error
+        if (message.contains("duplicate key") || message.contains("unique constraint") || 
+            message.contains("Unique index or primary key violation")) {
+            res.setStatusCode(HttpStatus.CONFLICT.value());
+            res.setMessage("Dữ liệu đã tồn tại trong hệ thống. Vui lòng kiểm tra lại.");
+            errorCode = "DUPLICATE_ENTRY";
+            res.setError(errorCode);
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(res);
+        }
+        
+        // Other data integrity violations return 400 Bad Request
+        res.setStatusCode(HttpStatus.BAD_REQUEST.value());
+        res.setMessage("Lỗi dữ liệu: " + (ex.getMostSpecificCause() != null ? 
+                       ex.getMostSpecificCause().getMessage() : "Vi phạm ràng buộc dữ liệu"));
+        res.setError(errorCode);
+        res.setData(null);
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+    }
+
+    /**
      * Fallback handler for any other unexpected exceptions.
      * Returns 500 Internal Server Error.
+     * 
+     * IMPORTANT: This handler checks for nested ErrorResponseException (like BadRequestAlertException)
+     * that may be wrapped by other exceptions, and unwraps them to preserve proper HTTP status codes.
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleGenericException(
             Exception ex, HttpServletRequest request) {
 
-        log.error("Unexpected error at {}: {}", request.getRequestURI(), ex.getMessage(), ex);
+        // CRITICAL FIX: Check if this is a wrapped ErrorResponseException (e.g., BadRequestAlertException)
+        // This can happen when exceptions are thrown inside @Transactional methods or async operations
+        Throwable cause = ex;
+        while (cause != null) {
+            if (cause instanceof org.springframework.web.ErrorResponseException ere) {
+                log.warn("Unwrapping ErrorResponseException from {}: {} -> delegating to specific handler",
+                        ex.getClass().getSimpleName(), ere.getClass().getSimpleName());
+                return handleErrorResponseException(ere, request);
+            }
+            cause = cause.getCause();
+        }
+
+        // Log full stack trace for true unexpected errors
+        log.error("Unexpected error at {}: {} (Class: {})", 
+                request.getRequestURI(), ex.getMessage(), ex.getClass().getName(), ex);
 
         FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
         res.setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR.value());

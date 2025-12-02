@@ -46,11 +46,50 @@ public class RoomService {
 
     /**
      * Inject IdGenerator into Room entity after bean creation
+     * Also initialize counter from existing room IDs in database
      */
     @PostConstruct
     public void init() {
         Room.setIdGenerator(idGenerator);
         log.info("IdGenerator injected into Room entity");
+        
+        // Initialize IdGenerator counter from database to prevent duplicate IDs after restart
+        initializeRoomIdCounter();
+    }
+    
+    /**
+     * Initialize room ID counter from existing room IDs in database
+     * This prevents duplicate ID generation after application restart
+     */
+    private void initializeRoomIdCounter() {
+        try {
+            List<Room> allRooms = roomRepository.findAll();
+            String todayPrefix = "GHE" + java.time.LocalDate.now().format(
+                java.time.format.DateTimeFormatter.ofPattern("yyMMdd"));
+            
+            int maxSequence = 0;
+            for (Room room : allRooms) {
+                if (room.getRoomId() != null && room.getRoomId().startsWith(todayPrefix)) {
+                    // Extract sequence number (last 3 digits)
+                    String sequenceStr = room.getRoomId().substring(todayPrefix.length());
+                    try {
+                        int sequence = Integer.parseInt(sequenceStr);
+                        maxSequence = Math.max(maxSequence, sequence);
+                    } catch (NumberFormatException e) {
+                        log.warn("Invalid room ID format: {}", room.getRoomId());
+                    }
+                }
+            }
+            
+            // Pre-generate IDs to set counter to max sequence
+            for (int i = 0; i < maxSequence; i++) {
+                idGenerator.generateId("GHE");
+            }
+            
+            log.info("Initialized room ID counter from database. Max sequence today: {}", maxSequence);
+        } catch (Exception e) {
+            log.warn("Failed to initialize room ID counter from database: {}", e.getMessage());
+        }
     }
 
     /**
@@ -178,11 +217,40 @@ public class RoomService {
         }
 
         Room room = roomMapper.toEntity(request);
-        room = roomRepository.save(room);
-
-        log.info("Created room with ID: {} and code: {}", room.getRoomId(), room.getRoomCode());
-
-        return roomMapper.toResponse(room);
+        
+        // Ensure unique room ID (retry if duplicate due to counter reset after restart)
+        int maxRetries = 10;
+        int attempt = 0;
+        while (attempt < maxRetries) {
+            try {
+                room = roomRepository.save(room);
+                log.info("Created room with ID: {} and code: {}", room.getRoomId(), room.getRoomCode());
+                return roomMapper.toResponse(room);
+            } catch (org.springframework.dao.DataIntegrityViolationException ex) {
+                if (ex.getMessage() != null && ex.getMessage().contains("rooms_pkey")) {
+                    // Duplicate room_id - regenerate and retry
+                    attempt++;
+                    log.warn("Duplicate room_id detected on attempt {}, regenerating...", attempt);
+                    String newId = idGenerator.generateId("GHE");
+                    room.setRoomId(newId);
+                    if (attempt >= maxRetries) {
+                        throw new BadRequestAlertException(
+                                "Không thể tạo ID phòng duy nhất sau " + maxRetries + " lần thử",
+                                "room",
+                                "id_generation_failed");
+                    }
+                } else {
+                    // Other data integrity violation - rethrow
+                    throw ex;
+                }
+            }
+        }
+        
+        // Should not reach here
+        throw new BadRequestAlertException(
+                "Không thể tạo phòng",
+                "room",
+                "creation_failed");
     }
 
     /**
