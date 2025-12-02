@@ -374,7 +374,8 @@ VALUES
 ('CANCEL_WAREHOUSE', 'CANCEL_WAREHOUSE', 'WAREHOUSE', 'Hủy phiếu nhập xuất kho (API 6.6.3)', 281, NULL, TRUE, NOW()),
 ('MANAGE_SUPPLIERS', 'MANAGE_SUPPLIERS', 'WAREHOUSE', 'Quản lý nhà cung cấp (API 6.13, 6.14)', 282, NULL, TRUE, NOW()),
 ('MANAGE_CONSUMABLES', 'MANAGE_CONSUMABLES', 'WAREHOUSE', 'Quản lý định mức tiêu hao vật tư (BOM) - API 6.18, 6.19', 283, NULL, TRUE, NOW()),
-('MANAGE_WAREHOUSE', 'MANAGE_WAREHOUSE', 'WAREHOUSE', 'Toàn quyền quản lý kho', 284, NULL, TRUE, NOW())
+('MANAGE_WAREHOUSE', 'MANAGE_WAREHOUSE', 'WAREHOUSE', 'Toàn quyền quản lý kho', 284, NULL, TRUE, NOW()),
+('WRITE_CLINICAL_RECORD', 'WRITE_CLINICAL_RECORD', 'CLINICAL_RECORDS', 'Tạo và cập nhật bệnh án (API 9.2, 9.3)', 285, NULL, TRUE, NOW())
 ON CONFLICT (permission_id) DO NOTHING;
 
 
@@ -408,7 +409,8 @@ VALUES
 ('ROLE_DENTIST', 'UPDATE_TREATMENT_PLAN'),
 ('ROLE_DENTIST', 'DELETE_TREATMENT_PLAN'),
 ('ROLE_DENTIST', 'VIEW_SERVICE'),
-('ROLE_DENTIST', 'VIEW_ITEMS')
+('ROLE_DENTIST', 'VIEW_ITEMS'),
+('ROLE_DENTIST', 'WRITE_CLINICAL_RECORD')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
@@ -2407,42 +2409,42 @@ ON CONFLICT (template_code) DO UPDATE SET is_active = false;
 
 -- Template 4: Điều trị tủy răng (spec 2: Nội nha) - Only endodontic treatment
 INSERT INTO treatment_plan_templates (template_code, template_name, description, estimated_duration_days, total_price, specialization_id, is_active, created_at)
-VALUES ('TPL_ENDO_TREATMENT', 'Điều trị tủy răng sau', 
+VALUES ('TPL_ENDO_TREATMENT', 'Điều trị tủy răng sau',
         'Gói điều trị tủy răng tiền cối/răng cối, bao gồm lấy tủy, làm sạch và trám bít ống tủy.',
         3, 2000000, 2, true, NOW())
 ON CONFLICT (template_code) DO NOTHING;
 
 -- Template 5: Bọc sứ sau điều trị tủy (spec 4: Phục hồi răng) - Restorative work
 INSERT INTO treatment_plan_templates (template_code, template_name, description, estimated_duration_days, total_price, specialization_id, is_active, created_at)
-VALUES ('TPL_CROWN_AFTER_ENDO', 'Bọc sứ sau điều trị tủy', 
+VALUES ('TPL_CROWN_AFTER_ENDO', 'Bọc sứ sau điều trị tủy',
         'Gói bọc răng sứ Cercon HT cho răng đã điều trị tủy, bao gồm đóng chốt tái tạo cùi răng, mài răng, lấy dấu và gắn sứ.',
         4, 4500000, 4, true, NOW())
 ON CONFLICT (template_code) DO NOTHING;
 
 -- Template 6: Cạo vôi răng định kỳ (spec 3: Nha chu)
 INSERT INTO treatment_plan_templates (template_code, template_name, description, estimated_duration_days, total_price, specialization_id, is_active, created_at)
-VALUES ('TPL_PERIO_SCALING', 'Cạo vôi răng toàn hàm', 
+VALUES ('TPL_PERIO_SCALING', 'Cạo vôi răng toàn hàm',
         'Gói cạo vôi răng định kỳ cho cả 2 hàm, bao gồm cạo vôi cơ bản + đánh bóng răng.',
         1, 500000, 3, true, NOW())
 ON CONFLICT (template_code) DO NOTHING;
 
 -- Template 7: Nhổ răng khôn (spec 5: Phẫu thuật hàm mặt)
 INSERT INTO treatment_plan_templates (template_code, template_name, description, estimated_duration_days, total_price, specialization_id, is_active, created_at)
-VALUES ('TPL_SURGERY_WISDOM', 'Nhổ răng khôn', 
+VALUES ('TPL_SURGERY_WISDOM', 'Nhổ răng khôn',
         'Gói nhổ răng khôn mọc lệch/ngầm, bao gồm chụp phim, phẫu thuật và tái khám.',
         7, 2000000, 5, true, NOW())
 ON CONFLICT (template_code) DO NOTHING;
 
 -- Template 8: Trám răng sữa trẻ em (spec 6: Nha khoa trẻ em)
 INSERT INTO treatment_plan_templates (template_code, template_name, description, estimated_duration_days, total_price, specialization_id, is_active, created_at)
-VALUES ('TPL_PEDO_FILLING', 'Trám răng sữa', 
+VALUES ('TPL_PEDO_FILLING', 'Trám răng sữa',
         'Gói trám răng sữa bị sâu cho trẻ em, sử dụng vật liệu GIC an toàn.',
         1, 300000, 6, true, NOW())
 ON CONFLICT (template_code) DO NOTHING;
 
 -- Template 9: Tẩy trắng răng (spec 7: Răng thẩm mỹ)
 INSERT INTO treatment_plan_templates (template_code, template_name, description, estimated_duration_days, total_price, specialization_id, is_active, created_at)
-VALUES ('TPL_COSMETIC_BLEACHING', 'Tẩy trắng răng tại phòng khám', 
+VALUES ('TPL_COSMETIC_BLEACHING', 'Tẩy trắng răng tại phòng khám',
         'Gói tẩy trắng răng bằng công nghệ Laser/Zoom, bao gồm kiểm tra và làm sạch răng trước tẩy trắng.',
         1, 3000000, 7, true, NOW())
 ON CONFLICT (template_code) DO NOTHING;
@@ -3109,7 +3111,7 @@ INSERT INTO appointments (
 ) VALUES (
     4, 'APT-20251106-001', 1, 1, 'GHE251103001',
     '2025-11-06 09:00:00', '2025-11-06 09:30:00', 30,
-    'SCHEDULED', 'Khám tổng quát - BS Khoa ca sáng', 5, NOW(), NOW()
+    'IN_PROGRESS', 'Khám tổng quát - BS Khoa ca sáng - Benh nhan dang kham', 5, NOW(), NOW()
 )
 ON CONFLICT (appointment_id) DO NOTHING;
 
