@@ -5,7 +5,10 @@ import com.dental.clinic.management.booking_appointment.dto.AppointmentFilterCri
 import com.dental.clinic.management.booking_appointment.dto.AppointmentSummaryDTO;
 import com.dental.clinic.management.booking_appointment.dto.CreateAppointmentResponse;
 import com.dental.clinic.management.booking_appointment.enums.AppointmentStatus;
+import com.dental.clinic.management.booking_appointment.domain.AppointmentParticipant;
+import com.dental.clinic.management.booking_appointment.repository.AppointmentParticipantRepository;
 import com.dental.clinic.management.booking_appointment.repository.AppointmentRepository;
+import com.dental.clinic.management.booking_appointment.repository.RoomRepository;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.patient.repository.PatientRepository;
 import lombok.RequiredArgsConstructor;
@@ -44,7 +47,8 @@ public class AppointmentListService {
     private final AppointmentRepository appointmentRepository;
     private final PatientRepository patientRepository;
     private final EmployeeRepository employeeRepository;
-    // TODO: Add RoomRepository, ServiceRepository, AppointmentParticipantRepository
+    private final RoomRepository roomRepository;
+    private final AppointmentParticipantRepository appointmentParticipantRepository;
 
     /**
      * Get paginated appointment list with RBAC filtering
@@ -349,11 +353,57 @@ public class AppointmentListService {
                     appointment.getAppointmentId(), e.getMessage());
         }
 
-        // TODO: Load room, services, participants
-        CreateAppointmentResponse.RoomSummary roomSummary = CreateAppointmentResponse.RoomSummary.builder()
-                .roomCode(appointment.getRoomId())
-                .roomName("Room " + appointment.getRoomId()) // TODO: Load from RoomRepository
-                .build();
+        // Load room
+        CreateAppointmentResponse.RoomSummary roomSummary = null;
+        try {
+            var room = roomRepository.findById(appointment.getRoomId()).orElse(null);
+            if (room != null) {
+                roomSummary = CreateAppointmentResponse.RoomSummary.builder()
+                        .roomCode(room.getRoomCode())
+                        .roomName(room.getRoomName())
+                        .build();
+            }
+        } catch (Exception e) {
+            log.warn("Failed to load room for appointmentId={}: {}",
+                    appointment.getAppointmentId(), e.getMessage());
+        }
+
+        // Load services
+        List<CreateAppointmentResponse.ServiceSummary> services = new ArrayList<>();
+        try {
+            List<Object[]> serviceData = appointmentRepository.findServicesByAppointmentId(appointment.getAppointmentId());
+            for (Object[] row : serviceData) {
+                String serviceCode = (String) row[0];
+                String serviceName = (String) row[1];
+                services.add(CreateAppointmentResponse.ServiceSummary.builder()
+                        .serviceCode(serviceCode)
+                        .serviceName(serviceName)
+                        .build());
+            }
+        } catch (Exception e) {
+            log.warn("Failed to load services for appointmentId={}: {}",
+                    appointment.getAppointmentId(), e.getMessage());
+        }
+
+        // Load participants
+        List<CreateAppointmentResponse.ParticipantSummary> participants = new ArrayList<>();
+        try {
+            List<AppointmentParticipant> appointmentParticipants = appointmentParticipantRepository
+                    .findByIdAppointmentId(appointment.getAppointmentId());
+            for (AppointmentParticipant ap : appointmentParticipants) {
+                var participantEmployee = employeeRepository.findById(ap.getId().getEmployeeId()).orElse(null);
+                if (participantEmployee != null) {
+                    participants.add(CreateAppointmentResponse.ParticipantSummary.builder()
+                            .employeeCode(participantEmployee.getEmployeeCode())
+                            .fullName(participantEmployee.getFirstName() + " " + participantEmployee.getLastName())
+                            .role(ap.getRole())
+                            .build());
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Failed to load participants for appointmentId={}: {}",
+                    appointment.getAppointmentId(), e.getMessage());
+        }
 
         // Compute dynamic fields based on current time
         LocalDateTime now = LocalDateTime.now();
@@ -371,8 +421,8 @@ public class AppointmentListService {
                 .patient(patientSummary)
                 .doctor(doctorSummary)
                 .room(roomSummary)
-                .services(new ArrayList<>()) // TODO: Load from AppointmentServiceRepository
-                .participants(new ArrayList<>()) // TODO: Load from AppointmentParticipantRepository
+                .services(services)
+                .participants(participants)
                 .notes(appointment.getNotes())
                 .build();
     }
