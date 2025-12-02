@@ -6,13 +6,19 @@ import com.dental.clinic.management.booking_appointment.repository.AppointmentPa
 import com.dental.clinic.management.booking_appointment.repository.AppointmentRepository;
 import com.dental.clinic.management.booking_appointment.repository.RoomRepository;
 import com.dental.clinic.management.clinical_records.domain.ClinicalRecord;
+import com.dental.clinic.management.clinical_records.domain.ClinicalRecordProcedure;
 import com.dental.clinic.management.clinical_records.dto.*;
+import com.dental.clinic.management.clinical_records.repository.ClinicalRecordProcedureRepository;
 import com.dental.clinic.management.clinical_records.repository.ClinicalRecordRepository;
 import com.dental.clinic.management.employee.domain.Employee;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.exception.NotFoundException;
 import com.dental.clinic.management.patient.domain.Patient;
 import com.dental.clinic.management.patient.repository.PatientRepository;
+import com.dental.clinic.management.service.domain.DentalService;
+import com.dental.clinic.management.service.repository.DentalServiceRepository;
+import com.dental.clinic.management.treatment_plans.domain.PatientPlanItem;
+import com.dental.clinic.management.booking_appointment.repository.PatientPlanItemRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
@@ -30,11 +36,14 @@ import java.util.stream.Collectors;
 public class ClinicalRecordService {
 
         private final ClinicalRecordRepository clinicalRecordRepository;
+        private final ClinicalRecordProcedureRepository procedureRepository;
         private final AppointmentRepository appointmentRepository;
         private final AppointmentParticipantRepository appointmentParticipantRepository;
         private final EmployeeRepository employeeRepository;
         private final PatientRepository patientRepository;
         private final RoomRepository roomRepository;
+        private final DentalServiceRepository dentalServiceRepository;
+        private final PatientPlanItemRepository planItemRepository;
 
         private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -389,5 +398,309 @@ public class ClinicalRecordService {
                                 .examinationFindings(updated.getExaminationFindings())
                                 .treatmentNotes(updated.getTreatmentNotes())
                                 .build();
+        }
+
+        /**
+         * API 8.4: Get Procedures for Clinical Record
+         *
+         * Authorization Logic (SAME as API 8.1):
+         * 1. Admin (ROLE_ADMIN): Can access all records
+         * 2. VIEW_APPOINTMENT_ALL: Can access all records (Receptionist, Manager)
+         * 3. VIEW_APPOINTMENT_OWN: Can only access if:
+         * - Doctor: appointment.employee_id matches user's employee_id
+         * - Patient: appointment.patient_id matches user's patient_id
+         * - Observer/Nurse: appointment participant matches user's employee_id
+         *
+         * Returns empty list if no procedures added yet (200 OK with data: [])
+         */
+        @Transactional(readOnly = true)
+        public java.util.List<ProcedureResponse> getProcedures(Integer recordId) {
+                log.info("Fetching procedures for clinical record ID: {}", recordId);
+
+                // Step 1: Load clinical record (throws 404 if not found)
+                ClinicalRecord record = clinicalRecordRepository.findById(recordId)
+                                .orElseThrow(() -> new NotFoundException("RECORD_NOT_FOUND",
+                                                "Clinical record not found with ID: " + recordId));
+
+                // Step 2: Load appointment for RBAC check
+                Appointment appointment = record.getAppointment();
+                if (appointment == null) {
+                        throw new NotFoundException("APPOINTMENT_NOT_FOUND",
+                                        "Appointment not found for clinical record ID: " + recordId);
+                }
+
+                // Step 3: Check RBAC authorization (reuse from API 8.1)
+                checkAccessPermission(appointment);
+
+                // Step 4: Load procedures with service info (LEFT JOIN FETCH)
+                java.util.List<ClinicalRecordProcedure> procedures = procedureRepository
+                                .findByClinicalRecordIdWithService(recordId);
+
+                log.info("Found {} procedures for clinical record ID: {}", procedures.size(), recordId);
+
+                // Step 5: Map to DTOs
+                return procedures.stream()
+                                .map(this::mapToProcedureResponse)
+                                .collect(Collectors.toList());
+        }
+
+        /**
+         * Map ClinicalRecordProcedure entity to ProcedureResponse DTO
+         */
+        private ProcedureResponse mapToProcedureResponse(ClinicalRecordProcedure procedure) {
+                ProcedureResponse.ProcedureResponseBuilder builder = ProcedureResponse.builder()
+                                .procedureId(procedure.getProcedureId())
+                                .clinicalRecordId(procedure.getClinicalRecord().getClinicalRecordId())
+                                .procedureDescription(procedure.getProcedureDescription())
+                                .toothNumber(procedure.getToothNumber())
+                                .notes(procedure.getNotes())
+                                .createdAt(procedure.getCreatedAt());
+
+                // Add service info if exists
+                if (procedure.getService() != null) {
+                        builder.serviceId(procedure.getService().getServiceId())
+                                        .serviceName(procedure.getService().getServiceName())
+                                        .serviceCode(procedure.getService().getServiceCode());
+                }
+
+                // Add plan item ID if exists
+                if (procedure.getPatientPlanItem() != null) {
+                        builder.patientPlanItemId(procedure.getPatientPlanItem().getItemId());
+                }
+
+                return builder.build();
+        }
+
+        /**
+         * API 8.5: Add procedure to clinical record
+         *
+         * Purpose: Record a procedure/service performed during appointment
+         *
+         * Authorization: WRITE_CLINICAL_RECORD (Doctor, Assistant, Admin)
+         *
+         * Business Logic:
+         * 1. Validate clinical record exists
+         * 2. Validate service exists and is active
+         * 3. Validate treatment plan item exists (if provided)
+         * 4. Create procedure record with passive plan link
+         * 5. Return procedure details with service info
+         *
+         * Note: Does NOT update treatment plan item status
+         * Status updates handled by:
+         * - Appointment completion (AppointmentStatusService)
+         * - Manual update (API 5.6 UpdateItemStatus)
+         */
+        @Transactional
+        public AddProcedureResponse addProcedure(Integer recordId, AddProcedureRequest request) {
+                log.info("Adding procedure to clinical record ID: {}", recordId);
+
+                // Step 1: Load clinical record (throws 404 if not found)
+                ClinicalRecord record = clinicalRecordRepository.findById(recordId)
+                                .orElseThrow(() -> new NotFoundException("RECORD_NOT_FOUND",
+                                                "Clinical record not found with ID: " + recordId));
+
+                // Step 2: Validate service exists and is active
+                DentalService service = dentalServiceRepository.findById(request.getServiceId())
+                                .orElseThrow(() -> new NotFoundException("SERVICE_NOT_FOUND",
+                                                "Service not found with ID: " + request.getServiceId()));
+
+                if (!service.getIsActive()) {
+                        throw new NotFoundException("SERVICE_NOT_FOUND",
+                                        "Service ID " + request.getServiceId() + " is inactive");
+                }
+
+                log.info("Service validated: {} ({})", service.getServiceName(), service.getServiceCode());
+
+                // Step 3: Validate treatment plan item exists (if provided)
+                PatientPlanItem planItem = null;
+                if (request.getPatientPlanItemId() != null) {
+                        planItem = planItemRepository.findById(request.getPatientPlanItemId())
+                                        .orElseThrow(() -> new NotFoundException("PLAN_ITEM_NOT_FOUND",
+                                                        "Treatment plan item not found with ID: "
+                                                                        + request.getPatientPlanItemId()));
+                        log.info("Treatment plan item linked: ID {}", request.getPatientPlanItemId());
+                }
+
+                // Step 4: Create procedure entity
+                ClinicalRecordProcedure procedure = ClinicalRecordProcedure.builder()
+                                .clinicalRecord(record)
+                                .service(service)
+                                .patientPlanItem(planItem)
+                                .toothNumber(request.getToothNumber())
+                                .procedureDescription(request.getProcedureDescription())
+                                .notes(request.getNotes())
+                                .build();
+
+                // Step 5: Save procedure
+                ClinicalRecordProcedure savedProcedure = procedureRepository.save(procedure);
+                log.info("Procedure saved with ID: {}", savedProcedure.getProcedureId());
+
+                // Step 6: Build response
+                return AddProcedureResponse.builder()
+                                .procedureId(savedProcedure.getProcedureId())
+                                .clinicalRecordId(record.getClinicalRecordId())
+                                .serviceId(service.getServiceId())
+                                .serviceName(service.getServiceName())
+                                .serviceCode(service.getServiceCode())
+                                .patientPlanItemId(request.getPatientPlanItemId())
+                                .toothNumber(savedProcedure.getToothNumber())
+                                .procedureDescription(savedProcedure.getProcedureDescription())
+                                .notes(savedProcedure.getNotes())
+                                .createdAt(savedProcedure.getCreatedAt())
+                                .build();
+        }
+
+        /**
+         * Update an existing procedure in a clinical record (API 8.6)
+         *
+         * <p>
+         * Business Rules:
+         * </p>
+         * <ul>
+         * <li>Validates clinical record exists</li>
+         * <li>Validates procedure belongs to the specified record</li>
+         * <li>Validates new service exists and is active</li>
+         * <li>Validates plan item exists if provided</li>
+         * <li>Updates all fields except createdAt (audit trail)</li>
+         * <li>Does NOT update procedure status (separation of concerns)</li>
+         * </ul>
+         *
+         * @param recordId    Clinical record ID
+         * @param procedureId Procedure ID to update
+         * @param request     Update request with new values
+         * @return Updated procedure details with service info
+         * @throws NotFoundException if record, procedure, service, or plan item not
+         *                           found
+         */
+        @Transactional
+        public UpdateProcedureResponse updateProcedure(Integer recordId, Integer procedureId,
+                        UpdateProcedureRequest request) {
+                log.info("Updating procedure ID {} in clinical record ID {}", procedureId, recordId);
+
+                // Step 1: Validate clinical record exists
+                ClinicalRecord record = clinicalRecordRepository.findById(recordId)
+                                .orElseThrow(() -> {
+                                        log.error("Clinical record not found with ID: {}", recordId);
+                                        return new NotFoundException("RECORD_NOT_FOUND");
+                                });
+                log.debug("Clinical record found: ID {}", record.getClinicalRecordId());
+
+                // Step 2: Validate procedure exists and belongs to this record
+                ClinicalRecordProcedure procedure = procedureRepository.findById(procedureId)
+                                .orElseThrow(() -> {
+                                        log.error("Procedure not found with ID: {}", procedureId);
+                                        return new NotFoundException("PROCEDURE_NOT_FOUND");
+                                });
+
+                if (!procedure.getClinicalRecord().getClinicalRecordId().equals(recordId)) {
+                        log.error("Procedure ID {} does not belong to clinical record ID {}",
+                                        procedureId, recordId);
+                        throw new NotFoundException("PROCEDURE_NOT_FOUND",
+                                        "Procedure does not belong to this clinical record");
+                }
+                log.debug("Procedure found and belongs to record: ID {}", procedure.getProcedureId());
+
+                // Step 3: Validate new service exists and is active
+                DentalService service = dentalServiceRepository.findById(request.getServiceId())
+                                .orElseThrow(() -> {
+                                        log.error("Service not found with ID: {}", request.getServiceId());
+                                        return new NotFoundException("SERVICE_NOT_FOUND");
+                                });
+
+                if (!service.getIsActive()) {
+                        log.error("Service ID {} is inactive", request.getServiceId());
+                        throw new NotFoundException("SERVICE_NOT_FOUND",
+                                        "Service ID " + request.getServiceId() + " is inactive");
+                }
+                log.debug("Service found and active: ID {}, Name: {}", service.getServiceId(),
+                                service.getServiceName());
+
+                // Step 4: Validate plan item exists if provided (optional)
+                PatientPlanItem planItem = null;
+                if (request.getPatientPlanItemId() != null) {
+                        planItem = planItemRepository.findById(request.getPatientPlanItemId())
+                                        .orElseThrow(() -> {
+                                                log.error("Treatment plan item not found with ID: {}",
+                                                                request.getPatientPlanItemId());
+                                                return new NotFoundException("PLAN_ITEM_NOT_FOUND");
+                                        });
+                        log.debug("Treatment plan item found: ID {}", planItem.getItemId());
+                }
+
+                // Step 5: Update procedure fields
+                procedure.setService(service);
+                procedure.setPatientPlanItem(planItem);
+                procedure.setToothNumber(request.getToothNumber());
+                procedure.setProcedureDescription(request.getProcedureDescription());
+                procedure.setNotes(request.getNotes());
+                // createdAt is NOT updated (audit trail)
+                // updatedAt will be set automatically by @PreUpdate
+
+                ClinicalRecordProcedure updatedProcedure = procedureRepository.save(procedure);
+                log.info("Procedure updated successfully: ID {}", updatedProcedure.getProcedureId());
+
+                // Step 6: Build response with service info
+                return UpdateProcedureResponse.builder()
+                                .procedureId(updatedProcedure.getProcedureId())
+                                .clinicalRecordId(record.getClinicalRecordId())
+                                .serviceId(service.getServiceId())
+                                .serviceName(service.getServiceName())
+                                .serviceCode(service.getServiceCode())
+                                .patientPlanItemId(request.getPatientPlanItemId())
+                                .toothNumber(updatedProcedure.getToothNumber())
+                                .procedureDescription(updatedProcedure.getProcedureDescription())
+                                .notes(updatedProcedure.getNotes())
+                                .createdAt(updatedProcedure.getCreatedAt())
+                                .updatedAt(updatedProcedure.getUpdatedAt())
+                                .build();
+        }
+
+        /**
+         * Delete a procedure from a clinical record (API 8.7)
+         *
+         * <p>
+         * Business Rules:
+         * </p>
+         * <ul>
+         * <li>Validates clinical record exists</li>
+         * <li>Validates procedure belongs to the specified record</li>
+         * <li>Soft delete or hard delete based on business requirements</li>
+         * <li>Does NOT cascade to treatment plan (passive link only)</li>
+         * </ul>
+         *
+         * @param recordId    Clinical record ID
+         * @param procedureId Procedure ID to delete
+         * @throws NotFoundException if record or procedure not found
+         */
+        @Transactional
+        public void deleteProcedure(Integer recordId, Integer procedureId) {
+                log.info("Deleting procedure ID {} from clinical record ID {}", procedureId, recordId);
+
+                // Step 1: Validate clinical record exists
+                ClinicalRecord record = clinicalRecordRepository.findById(recordId)
+                                .orElseThrow(() -> {
+                                        log.error("Clinical record not found with ID: {}", recordId);
+                                        return new NotFoundException("RECORD_NOT_FOUND");
+                                });
+                log.debug("Clinical record found: ID {}", record.getClinicalRecordId());
+
+                // Step 2: Validate procedure exists and belongs to this record
+                ClinicalRecordProcedure procedure = procedureRepository.findById(procedureId)
+                                .orElseThrow(() -> {
+                                        log.error("Procedure not found with ID: {}", procedureId);
+                                        return new NotFoundException("PROCEDURE_NOT_FOUND");
+                                });
+
+                if (!procedure.getClinicalRecord().getClinicalRecordId().equals(recordId)) {
+                        log.error("Procedure ID {} does not belong to clinical record ID {}",
+                                        procedureId, recordId);
+                        throw new NotFoundException("PROCEDURE_NOT_FOUND",
+                                        "Procedure does not belong to this clinical record");
+                }
+                log.debug("Procedure found and belongs to record: ID {}", procedure.getProcedureId());
+
+                // Step 3: Delete procedure (hard delete - no cascade to treatment plan)
+                procedureRepository.delete(procedure);
+                log.info("Procedure deleted successfully: ID {}", procedureId);
         }
 }

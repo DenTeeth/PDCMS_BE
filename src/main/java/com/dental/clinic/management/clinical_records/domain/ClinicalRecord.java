@@ -64,6 +64,11 @@ public class ClinicalRecord {
     @Builder.Default
     private List<ClinicalPrescription> prescriptions = new ArrayList<>();
 
+    @OneToMany(mappedBy = "clinicalRecord", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonManagedReference
+    @Builder.Default
+    private List<ClinicalRecordAttachment> attachments = new ArrayList<>();
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

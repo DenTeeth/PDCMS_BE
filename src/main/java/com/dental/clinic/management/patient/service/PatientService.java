@@ -11,12 +11,21 @@ import com.dental.clinic.management.account.repository.PasswordResetTokenReposit
 import com.dental.clinic.management.role.domain.Role;
 import com.dental.clinic.management.role.repository.RoleRepository;
 import com.dental.clinic.management.patient.domain.Patient;
+import com.dental.clinic.management.clinical_records.domain.PatientToothStatus;
+import com.dental.clinic.management.clinical_records.domain.PatientToothStatusHistory;
+import com.dental.clinic.management.patient.domain.ToothConditionEnum;
 import com.dental.clinic.management.patient.dto.request.CreatePatientRequest;
 import com.dental.clinic.management.patient.dto.request.ReplacePatientRequest;
 import com.dental.clinic.management.patient.dto.request.UpdatePatientRequest;
 import com.dental.clinic.management.patient.dto.response.PatientInfoResponse;
+import com.dental.clinic.management.patient.dto.ToothStatusResponse;
+import com.dental.clinic.management.patient.dto.UpdateToothStatusRequest;
+import com.dental.clinic.management.patient.dto.UpdateToothStatusResponse;
 import com.dental.clinic.management.patient.mapper.PatientMapper;
 import com.dental.clinic.management.patient.repository.PatientRepository;
+import com.dental.clinic.management.clinical_records.repository.PatientToothStatusRepository;
+import com.dental.clinic.management.clinical_records.repository.PatientToothStatusHistoryRepository;
+import com.dental.clinic.management.employee.domain.Employee;
 import com.dental.clinic.management.utils.EmailService;
 import com.dental.clinic.management.utils.SequentialCodeGenerator;
 
@@ -32,7 +41,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static com.dental.clinic.management.utils.security.AuthoritiesConstants.*;
 
@@ -53,6 +65,8 @@ public class PatientService {
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final EmailService emailService;
     private final RoleRepository roleRepository;
+    private final PatientToothStatusRepository patientToothStatusRepository;
+    private final PatientToothStatusHistoryRepository patientToothStatusHistoryRepository;
 
     public PatientService(
             PatientRepository patientRepository,
@@ -63,7 +77,9 @@ public class PatientService {
             AccountVerificationTokenRepository verificationTokenRepository,
             PasswordResetTokenRepository passwordResetTokenRepository,
             EmailService emailService,
-            RoleRepository roleRepository) {
+            RoleRepository roleRepository,
+            PatientToothStatusRepository patientToothStatusRepository,
+            PatientToothStatusHistoryRepository patientToothStatusHistoryRepository) {
         this.patientRepository = patientRepository;
         this.patientMapper = patientMapper;
         this.accountRepository = accountRepository;
@@ -73,6 +89,8 @@ public class PatientService {
         this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.emailService = emailService;
         this.roleRepository = roleRepository;
+        this.patientToothStatusRepository = patientToothStatusRepository;
+        this.patientToothStatusHistoryRepository = patientToothStatusHistoryRepository;
     }
 
     /**
@@ -384,5 +402,112 @@ public class PatientService {
         // Soft delete
         patient.setIsActive(false);
         patientRepository.save(patient);
+    }
+
+    /**
+     * Get all tooth statuses for a patient (API 8.9)
+     * Only returns abnormal teeth - teeth not in response are considered HEALTHY
+     *
+     * @param patientId the patient ID
+     * @return list of tooth status responses
+     */
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_PATIENT + "')")
+    @Transactional(readOnly = true)
+    public List<ToothStatusResponse> getToothStatus(Integer patientId) {
+        // Verify patient exists
+        patientRepository.findById(patientId)
+                .orElseThrow(() -> new BadRequestAlertException(
+                        "Patient not found with ID: " + patientId,
+                        "Patient",
+                        "patientnotfound"));
+
+        List<PatientToothStatus> statuses = patientToothStatusRepository.findByPatient_PatientId(patientId);
+
+        return statuses.stream()
+                .map(status -> ToothStatusResponse.builder()
+                        .toothStatusId(status.getToothStatusId())
+                        .patientId(status.getPatient().getPatientId())
+                        .toothNumber(status.getToothNumber())
+                        .status(status.getStatus())
+                        .notes(status.getNotes())
+                        .recordedAt(status.getRecordedAt())
+                        .updatedAt(status.getUpdatedAt())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Update tooth status for a patient (API 8.10)
+     * Creates history record on every status change
+     *
+     * @param patientId the patient ID
+     * @param toothNumber the tooth number
+     * @param request the update request
+     * @param changedBy the employee making the change
+     * @return updated tooth status response
+     */
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_PATIENT + "') or hasAuthority('" + UPDATE_PATIENT + "')")
+    @Transactional
+    public UpdateToothStatusResponse updateToothStatus(
+            Integer patientId,
+            String toothNumber,
+            UpdateToothStatusRequest request,
+            Integer changedBy) {
+
+        // Verify patient exists
+        Patient patient = patientRepository.findById(patientId)
+                .orElseThrow(() -> new BadRequestAlertException(
+                        "Patient not found with ID: " + patientId,
+                        "Patient",
+                        "patientnotfound"));
+
+        // Find existing tooth status or create new one
+        Optional<PatientToothStatus> existingStatusOpt =
+                patientToothStatusRepository.findByPatient_PatientIdAndToothNumber(patientId, toothNumber);
+
+        PatientToothStatus toothStatus;
+        ToothConditionEnum oldStatus = null;
+
+        if (existingStatusOpt.isPresent()) {
+            toothStatus = existingStatusOpt.get();
+            oldStatus = toothStatus.getStatus();
+            toothStatus.setStatus(request.getStatus());
+            toothStatus.setNotes(request.getNotes());
+        } else {
+            toothStatus = new PatientToothStatus();
+            toothStatus.setPatient(patient);
+            toothStatus.setToothNumber(toothNumber);
+            toothStatus.setStatus(request.getStatus());
+            toothStatus.setNotes(request.getNotes());
+        }
+
+        PatientToothStatus savedStatus = patientToothStatusRepository.save(toothStatus);
+
+        // Create history record
+        PatientToothStatusHistory history = new PatientToothStatusHistory();
+        history.setPatient(patient);
+        history.setToothNumber(toothNumber);
+        history.setOldStatus(oldStatus);
+        history.setNewStatus(request.getStatus());
+        
+        // Set changedBy employee
+        Employee employee = new Employee();
+        employee.setEmployeeId(changedBy);
+        history.setChangedBy(employee);
+        
+        history.setReason(request.getReason());
+
+        patientToothStatusHistoryRepository.save(history);
+
+        return UpdateToothStatusResponse.builder()
+                .toothStatusId(savedStatus.getToothStatusId())
+                .patientId(savedStatus.getPatient().getPatientId())
+                .toothNumber(savedStatus.getToothNumber())
+                .status(savedStatus.getStatus())
+                .notes(savedStatus.getNotes())
+                .recordedAt(savedStatus.getRecordedAt())
+                .updatedAt(savedStatus.getUpdatedAt())
+                .message("Tooth status updated successfully")
+                .build();
     }
 }

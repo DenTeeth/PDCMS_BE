@@ -55,6 +55,12 @@ CREATE TYPE paymenttype AS ENUM ('FULL', 'PHASED', 'INSTALLMENT');
 CREATE TYPE phasestatus AS ENUM ('PENDING', 'IN_PROGRESS', 'COMPLETED');
 CREATE TYPE planactiontype AS ENUM ('STATUS_CHANGE', 'PRICE_UPDATE', 'PHASE_UPDATE', 'APPROVAL');
 
+-- Patient Tooth Status ENUM (Odontogram)
+CREATE TYPE tooth_condition_enum AS ENUM ('HEALTHY', 'CARIES', 'FILLED', 'CROWN', 'MISSING', 'IMPLANT', 'ROOT_CANAL', 'FRACTURED', 'IMPACTED');
+
+-- Clinical Record Attachment ENUM
+CREATE TYPE attachment_type_enum AS ENUM ('XRAY', 'PHOTO_BEFORE', 'PHOTO_AFTER', 'LAB_RESULT', 'CONSENT_FORM', 'OTHER');
+
 -- Warehouse ENUMs
 CREATE TYPE batchstatus AS ENUM ('ACTIVE', 'EXPIRED', 'DEPLETED');
 CREATE TYPE exporttype AS ENUM ('SERVICE', 'SALE', 'WASTAGE', 'TRANSFER');
@@ -67,7 +73,7 @@ CREATE TYPE warehouseactiontype AS ENUM ('IMPORT', 'EXPORT', 'TRANSFER', 'ADJUST
 CREATE TYPE transactiontype AS ENUM ('PURCHASE', 'SALE', 'SERVICE', 'TRANSFER_IN', 'TRANSFER_OUT', 'ADJUSTMENT');
 
 -- ============================================
--- END ENUM TYPE DEFINITIONS (36 types total)
+-- END ENUM TYPE DEFINITIONS (38 types total)
 -- ============================================
 
 -- ============================================
@@ -375,7 +381,10 @@ VALUES
 ('MANAGE_SUPPLIERS', 'MANAGE_SUPPLIERS', 'WAREHOUSE', 'Quản lý nhà cung cấp (API 6.13, 6.14)', 282, NULL, TRUE, NOW()),
 ('MANAGE_CONSUMABLES', 'MANAGE_CONSUMABLES', 'WAREHOUSE', 'Quản lý định mức tiêu hao vật tư (BOM) - API 6.18, 6.19', 283, NULL, TRUE, NOW()),
 ('MANAGE_WAREHOUSE', 'MANAGE_WAREHOUSE', 'WAREHOUSE', 'Toàn quyền quản lý kho', 284, NULL, TRUE, NOW()),
-('WRITE_CLINICAL_RECORD', 'WRITE_CLINICAL_RECORD', 'CLINICAL_RECORDS', 'Tạo và cập nhật bệnh án (API 9.2, 9.3)', 285, NULL, TRUE, NOW())
+('WRITE_CLINICAL_RECORD', 'WRITE_CLINICAL_RECORD', 'CLINICAL_RECORDS', 'Tạo và cập nhật bệnh án, thêm thủ thuật (API 8.5, 9.2, 9.3)', 285, NULL, TRUE, NOW()),
+('UPLOAD_ATTACHMENT', 'UPLOAD_ATTACHMENT', 'CLINICAL_RECORDS', 'Upload file đính kèm vào bệnh án (X-quang, ảnh, PDF) - API 8.11', 286, NULL, TRUE, NOW()),
+('VIEW_ATTACHMENT', 'VIEW_ATTACHMENT', 'CLINICAL_RECORDS', 'Xem danh sách file đính kèm của bệnh án - API 8.12', 287, NULL, TRUE, NOW()),
+('DELETE_ATTACHMENT', 'DELETE_ATTACHMENT', 'CLINICAL_RECORDS', 'Xóa file đính kèm (chỉ Admin hoặc người upload) - API 8.13', 288, NULL, TRUE, NOW())
 ON CONFLICT (permission_id) DO NOTHING;
 
 
@@ -410,7 +419,10 @@ VALUES
 ('ROLE_DENTIST', 'DELETE_TREATMENT_PLAN'),
 ('ROLE_DENTIST', 'VIEW_SERVICE'),
 ('ROLE_DENTIST', 'VIEW_ITEMS'),
-('ROLE_DENTIST', 'WRITE_CLINICAL_RECORD')
+('ROLE_DENTIST', 'WRITE_CLINICAL_RECORD'),
+('ROLE_DENTIST', 'UPLOAD_ATTACHMENT'),
+('ROLE_DENTIST', 'VIEW_ATTACHMENT'),
+('ROLE_DENTIST', 'DELETE_ATTACHMENT')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
@@ -425,7 +437,8 @@ VALUES
 ('ROLE_NURSE', 'CREATE_REGISTRATION'),
 ('ROLE_NURSE', 'VIEW_LEAVE_OWN'), ('ROLE_NURSE', 'CREATE_TIME_OFF'), ('ROLE_NURSE', 'CREATE_OVERTIME'),
 ('ROLE_NURSE', 'CANCEL_TIME_OFF_OWN'), ('ROLE_NURSE', 'CANCEL_OVERTIME_OWN'),
-('ROLE_NURSE', 'VIEW_HOLIDAY')
+('ROLE_NURSE', 'VIEW_HOLIDAY'),
+('ROLE_NURSE', 'VIEW_ATTACHMENT')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
@@ -582,7 +595,8 @@ VALUES
 ('ROLE_PATIENT', 'VIEW_APPOINTMENT_OWN'), -- NEW: Patient can view their own appointments
 ('ROLE_PATIENT', 'CREATE_APPOINTMENT'),
 -- NEW: Treatment Plan permissions
-('ROLE_PATIENT', 'VIEW_TREATMENT_PLAN_OWN') -- Can only view their own treatment plans
+('ROLE_PATIENT', 'VIEW_TREATMENT_PLAN_OWN'), -- Can only view their own treatment plans
+('ROLE_PATIENT', 'VIEW_ATTACHMENT') -- Can view attachments of own clinical records
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
@@ -907,7 +921,7 @@ VALUES
 (5, 18, 'BN-1005', 'Trần Văn', 'Nam', 'nam.tv@email.com', '0975555555', '1992-05-25', '555 Hoàng Diệu, Q4, TPHCM', 'MALE', TRUE, NOW(), NOW())
 ON CONFLICT (patient_id) DO NOTHING;
 
--- ✅ NEW PATIENTS (All with verified emails - đã setup password)
+-- NEW PATIENTS (All with verified emails - da setup password)
 INSERT INTO accounts (account_id, account_code, username, email, password, role_id, status, is_email_verified, created_at)
 VALUES
 (19, 'ACC019', 'patient006', 'hoa.lt@email.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhkW', 'ROLE_PATIENT', 'ACTIVE', TRUE, NOW()),
@@ -978,7 +992,7 @@ SELECT setval(pg_get_serial_sequence('specializations', 'specialization_id'), CO
 -- BƯỚC 14: SAMPLE DATA FOR TIME-OFF, RENEWAL, HOLIDAYS
 -- ============================================
 
--- ⚠️ OLD DATA (November 2025) - Sample time-off requests
+--  OLD DATA (November 2025) - Sample time-off requests
 INSERT INTO time_off_requests (request_id, employee_id, time_off_type_id, work_shift_id, start_date, end_date, status, approved_by, approved_at, requested_at, requested_by)
 VALUES
 ('TOR251025001', 2, 'ANNUAL_LEAVE', 'WKS_MORNING_01', '2025-10-28', '2025-10-29', 'PENDING', NULL, NULL, NOW(), 2),
@@ -986,7 +1000,7 @@ VALUES
 ('TOR251025003', 4, 'UNPAID_PERSONAL', 'WKS_MORNING_02', '2025-11-05', '2025-11-06', 'REJECTED', 1, NOW() - INTERVAL '1 day', NOW() - INTERVAL '2 days', 4)
 ON CONFLICT (request_id) DO NOTHING;
 
--- ✅ NEW DATA (December 2025) - Sample time-off requests
+--  NEW DATA (December 2025) - Sample time-off requests
 INSERT INTO time_off_requests (request_id, employee_id, time_off_type_id, work_shift_id, start_date, end_date, status, approved_by, approved_at, requested_at, requested_by)
 VALUES
 ('TOR251201001', 2, 'ANNUAL_LEAVE', 'WKS_MORNING_01', '2025-12-10', '2025-12-11', 'PENDING', NULL, NULL, NOW(), 2),
@@ -994,7 +1008,7 @@ VALUES
 ('TOR251201003', 4, 'UNPAID_PERSONAL', 'WKS_MORNING_02', '2025-12-20', '2025-12-21', 'REJECTED', 1, NOW() - INTERVAL '1 day', NOW() - INTERVAL '2 days', 4)
 ON CONFLICT (request_id) DO NOTHING;
 
--- ✅ NEW DATA (January 2026) - Sample time-off requests
+--  NEW DATA (January 2026) - Sample time-off requests
 INSERT INTO time_off_requests (request_id, employee_id, time_off_type_id, work_shift_id, start_date, end_date, status, approved_by, approved_at, requested_at, requested_by)
 VALUES
 ('TOR260101001', 2, 'ANNUAL_LEAVE', 'WKS_MORNING_01', '2026-01-15', '2026-01-16', 'PENDING', NULL, NULL, NOW(), 2),
@@ -1004,7 +1018,7 @@ ON CONFLICT (request_id) DO NOTHING;
 
 
 -- ============================================
--- ⚠️ OLD DATA (November 2025) - SAMPLE OVERTIME REQUESTS (BE-304)
+--  OLD DATA (November 2025) - SAMPLE OVERTIME REQUESTS (BE-304)
 -- ============================================
 -- Sample OT requests covering all statuses for FE testing
 -- PENDING, APPROVED, REJECTED, CANCELLED
@@ -1040,7 +1054,7 @@ VALUES
  'Yêu cầu tăng ca cuối tháng', 'CANCELLED', NULL, NULL, NULL, 'Có việc đột xuất không thể tham gia', NOW() - INTERVAL '1 day')
 ON CONFLICT (request_id) DO NOTHING;
 
--- ✅ NEW DATA (December 2025) - OVERTIME REQUESTS
+--  NEW DATA (December 2025) - OVERTIME REQUESTS
 INSERT INTO overtime_requests (
     request_id, employee_id, requested_by, work_date, work_shift_id,
     reason, status, approved_by, approved_at, rejected_reason, cancellation_reason, created_at
@@ -1065,7 +1079,7 @@ VALUES
  'Yêu cầu tăng ca thêm', 'REJECTED', 7, NOW() - INTERVAL '1 day', 'Đã đủ nhân sự cho ngày này', NULL, NOW() - INTERVAL '2 days')
 ON CONFLICT (request_id) DO NOTHING;
 
--- ✅ NEW DATA (January 2026) - OVERTIME REQUESTS
+--  NEW DATA (January 2026) - OVERTIME REQUESTS
 INSERT INTO overtime_requests (
     request_id, employee_id, requested_by, work_date, work_shift_id,
     reason, status, approved_by, approved_at, rejected_reason, cancellation_reason, created_at
@@ -1088,7 +1102,7 @@ ON CONFLICT (request_id) DO NOTHING;
 
 
 
--- ⚠️ OLD DATA (November 2025) - Create corresponding employee shifts for APPROVED OT requests
+--  OLD DATA (November 2025) - Create corresponding employee shifts for APPROVED OT requests
 INSERT INTO employee_shifts (
     employee_shift_id, created_at, created_by, is_overtime, notes,
     source, source_off_request_id, source_ot_request_id, status, updated_at,
@@ -1108,7 +1122,7 @@ VALUES
  '2025-11-27', 6, 'WKS_AFTERNOON_02')
 ON CONFLICT (employee_shift_id) DO NOTHING;
 
--- ✅ NEW DATA (December 2025) - Employee shifts for APPROVED OT requests
+--  NEW DATA (December 2025) - Employee shifts for APPROVED OT requests
 INSERT INTO employee_shifts (
     employee_shift_id, created_at, created_by, is_overtime, notes,
     source, source_off_request_id, source_ot_request_id, status, updated_at,
@@ -1126,7 +1140,7 @@ VALUES
  '2025-12-27', 6, 'WKS_AFTERNOON_02')
 ON CONFLICT (employee_shift_id) DO NOTHING;
 
--- ✅ NEW DATA (January 2026) - Employee shifts for APPROVED OT requests
+--  NEW DATA (January 2026) - Employee shifts for APPROVED OT requests
 INSERT INTO employee_shifts (
     employee_shift_id, created_at, created_by, is_overtime, notes,
     source, source_off_request_id, source_ot_request_id, status, updated_at,
@@ -1146,7 +1160,7 @@ ON CONFLICT (employee_shift_id) DO NOTHING;
 
 
 -- ============================================
--- ⚠️ OLD DATA (November 2025) - EMPLOYEE SHIFT SAMPLE DATA (BE-302)
+--  OLD DATA (November 2025) - EMPLOYEE SHIFT SAMPLE DATA (BE-302)
 -- ============================================
 -- Sample employee shifts for testing Employee Shift Management API
 -- Covers different statuses, shift types, and scenarios
@@ -1157,7 +1171,7 @@ INSERT INTO employee_shifts (
     source, status, updated_at, work_date, employee_id, work_shift_id
 )
 VALUES
--- ⚠️ November 2025 shifts (OLD DATA for testing)
+--  November 2025 shifts (OLD DATA for testing)
 -- Dr. Minh (employee_id=2) - SCHEDULED shifts
 ('EMS251101001', NOW(), NULL, FALSE, 'Ca sáng thứ 2', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-11-03', 2, 'WKS_MORNING_01'),
 ('EMS251101002', NOW(), NULL, FALSE, 'Ca chiều thứ 3', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-11-04', 2, 'WKS_AFTERNOON_01'),
@@ -1218,7 +1232,7 @@ VALUES
 ('EMS251108005', NOW(), NULL, FALSE, 'Ca chiều thứ 6 - Y tá Khang', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-11-08', 8, 'WKS_AFTERNOON_01'),
 
 
--- ✅ NEW DATA (November 2025 Week 2) - FULL WEEK SCHEDULE (Mon-Fri, Nov 10-14, 2025)
+--  NEW DATA (November 2025 Week 2) - FULL WEEK SCHEDULE (Mon-Fri, Nov 10-14, 2025)
 -- Full-time employees: 10 shifts each (Mon-Fri morning+afternoon)
 -- Part-time employees: 2-3 shifts overlapping with full-time hours
 -- All shifts created by BATCH_JOB
@@ -1314,7 +1328,7 @@ VALUES
 ('EMS251114011', NOW(), NULL, FALSE, 'Ca chiều thứ 6 - Y tá Chính', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-11-14', 10, 'WKS_AFTERNOON_02'),
 
 
--- ✅ NEW DATA (December 2025) - Employee shifts for normal operations
+--  NEW DATA (December 2025) - Employee shifts for normal operations
 ('EMS251203001', NOW(), NULL, FALSE, 'Ca sáng thứ 2 - BS Minh', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-12-03', 2, 'WKS_MORNING_01'),
 ('EMS251203002', NOW(), NULL, FALSE, 'Ca chiều thứ 3 - BS Lan', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-12-04', 3, 'WKS_AFTERNOON_01'),
 ('EMS251203003', NOW(), NULL, FALSE, 'Ca tự động từ batch job', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-05', 2, 'WKS_MORNING_01'),
@@ -1325,7 +1339,7 @@ VALUES
 ('EMS251207001', NOW(), NULL, FALSE, 'Ca sáng thứ 5 - BS Khoa', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-07', 1, 'WKS_MORNING_01'),
 ('EMS251208001', NOW(), NULL, FALSE, 'Ca sáng thứ 6 - BS Khoa', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-08', 1, 'WKS_MORNING_01'),
 
--- ✅ NEW DATA (January 2026) - Employee shifts for normal operations
+--  NEW DATA (January 2026) - Employee shifts for normal operations
 ('EMS260103001', NOW(), NULL, FALSE, 'Ca sáng thứ 2 - BS Minh', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2026-01-03', 2, 'WKS_MORNING_01'),
 ('EMS260103002', NOW(), NULL, FALSE, 'Ca chiều thứ 3 - BS Lan', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2026-01-04', 3, 'WKS_AFTERNOON_01'),
 ('EMS260103003', NOW(), NULL, FALSE, 'Ca tự động từ batch job', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-05', 2, 'WKS_MORNING_01'),
@@ -1336,7 +1350,7 @@ VALUES
 ('EMS260108002', NOW(), NULL, FALSE, 'Ca chiều thứ 6 - BS Khoa', 'BATCH_JOB', 'SCHEDULED', NOW(), '2026-01-08', 1, 'WKS_AFTERNOON_01'),
 
 -- ============================================
--- ✅ NEW DATA (December 2025) - FULL WEEK SCHEDULES FOR FULL-TIME EMPLOYEES
+--  NEW DATA (December 2025) - FULL WEEK SCHEDULES FOR FULL-TIME EMPLOYEES
 -- Tuần đầy đủ từ thứ 2 đến thứ 6 (Dec 2-6, 2025)
 -- ============================================
 
@@ -1413,7 +1427,7 @@ VALUES
 ('EMS251206092', NOW(), NULL, FALSE, 'Thứ 6 chiều - Quản lý Quân', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-06', 11, 'WKS_AFTERNOON_01'),
 
 -- ============================================
--- ✅ PART-TIME EMPLOYEES working same hours with FULL-TIME
+--  PART-TIME EMPLOYEES working same hours with FULL-TIME
 -- Part-time làm chung giờ với full-time employees
 -- ============================================
 
@@ -1431,55 +1445,6 @@ VALUES
 ('EMS251204101', NOW(), NULL, FALSE, 'Thứ 4 sáng - Y tá Nhật (Part-time)', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-12-04', 9, 'WKS_MORNING_02'),
 ('EMS251206101', NOW(), NULL, FALSE, 'Thứ 6 sáng - Y tá Nhật (Part-time)', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-12-06', 9, 'WKS_MORNING_02'),
 
--- Y tá Chính (EMP010 - PART_TIME_FLEX NURSE) - Works Wed, Fri afternoons (same time as full-time nurses)
-('EMS251204071', NOW(), NULL, FALSE, 'Thứ 4 chiều - Y tá Chính (Part-time flex)', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-12-04', 10, 'WKS_AFTERNOON_02'),
-('EMS251206071', NOW(), NULL, FALSE, 'Thứ 6 chiều - Y tá Chính (Part-time flex)', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-12-06', 10, 'WKS_AFTERNOON_02'),
-
--- ============================================
--- ✅ NEW DATA - Thêm lịch làm cho BS Thái (EMP002) cho tháng 12/2025
--- Week Dec 9-13, 2025 (Thứ 2 - Thứ 6)
--- ============================================
-('EMS251209021', NOW(), NULL, FALSE, 'Thứ 2 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-09', 2, 'WKS_MORNING_01'),
-('EMS251209022', NOW(), NULL, FALSE, 'Thứ 2 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-09', 2, 'WKS_AFTERNOON_01'),
-('EMS251210021', NOW(), NULL, FALSE, 'Thứ 3 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-10', 2, 'WKS_MORNING_01'),
-('EMS251210022', NOW(), NULL, FALSE, 'Thứ 3 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-10', 2, 'WKS_AFTERNOON_01'),
-('EMS251211021', NOW(), NULL, FALSE, 'Thứ 4 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-11', 2, 'WKS_MORNING_01'),
-('EMS251211022', NOW(), NULL, FALSE, 'Thứ 4 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-11', 2, 'WKS_AFTERNOON_01'),
-('EMS251212021', NOW(), NULL, FALSE, 'Thứ 5 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-12', 2, 'WKS_MORNING_01'),
-('EMS251212022', NOW(), NULL, FALSE, 'Thứ 5 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-12', 2, 'WKS_AFTERNOON_01'),
-('EMS251213021', NOW(), NULL, FALSE, 'Thứ 6 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-13', 2, 'WKS_MORNING_01'),
-('EMS251213022', NOW(), NULL, FALSE, 'Thứ 6 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-13', 2, 'WKS_AFTERNOON_01'),
-
--- Week Dec 16-20, 2025 (Thứ 2 - Thứ 6)
-('EMS251216021', NOW(), NULL, FALSE, 'Thứ 2 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-16', 2, 'WKS_MORNING_01'),
-('EMS251216022', NOW(), NULL, FALSE, 'Thứ 2 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-16', 2, 'WKS_AFTERNOON_01'),
-('EMS251217021', NOW(), NULL, FALSE, 'Thứ 3 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-17', 2, 'WKS_MORNING_01'),
-('EMS251217022', NOW(), NULL, FALSE, 'Thứ 3 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-17', 2, 'WKS_AFTERNOON_01'),
-('EMS251218021', NOW(), NULL, FALSE, 'Thứ 4 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-18', 2, 'WKS_MORNING_01'),
-('EMS251218022', NOW(), NULL, FALSE, 'Thứ 4 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-18', 2, 'WKS_AFTERNOON_01'),
-('EMS251219021', NOW(), NULL, FALSE, 'Thứ 5 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-19', 2, 'WKS_MORNING_01'),
-('EMS251219022', NOW(), NULL, FALSE, 'Thứ 5 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-19', 2, 'WKS_AFTERNOON_01'),
-('EMS251220021', NOW(), NULL, FALSE, 'Thứ 6 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-20', 2, 'WKS_MORNING_01'),
-('EMS251220022', NOW(), NULL, FALSE, 'Thứ 6 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-20', 2, 'WKS_AFTERNOON_01'),
-
--- Week Dec 23-27, 2025 (Thứ 2 - Thứ 6)
-('EMS251223021', NOW(), NULL, FALSE, 'Thứ 2 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-23', 2, 'WKS_MORNING_01'),
-('EMS251223022', NOW(), NULL, FALSE, 'Thứ 2 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-23', 2, 'WKS_AFTERNOON_01'),
-('EMS251224021', NOW(), NULL, FALSE, 'Thứ 3 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-24', 2, 'WKS_MORNING_01'),
-('EMS251224022', NOW(), NULL, FALSE, 'Thứ 3 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-24', 2, 'WKS_AFTERNOON_01'),
-('EMS251225021', NOW(), NULL, FALSE, 'Thứ 4 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-25', 2, 'WKS_MORNING_01'),
-('EMS251225022', NOW(), NULL, FALSE, 'Thứ 4 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-25', 2, 'WKS_AFTERNOON_01'),
-('EMS251226021', NOW(), NULL, FALSE, 'Thứ 5 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-26', 2, 'WKS_MORNING_01'),
-('EMS251226022', NOW(), NULL, FALSE, 'Thứ 5 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-26', 2, 'WKS_AFTERNOON_01'),
-('EMS251227021', NOW(), NULL, FALSE, 'Thứ 6 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-27', 2, 'WKS_MORNING_01'),
-('EMS251227022', NOW(), NULL, FALSE, 'Thứ 6 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-27', 2, 'WKS_AFTERNOON_01'),
-
--- Week Dec 30-31, 2025 (Thứ 2 - Thứ 4)
-('EMS251230021', NOW(), NULL, FALSE, 'Thứ 2 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-30', 2, 'WKS_MORNING_01'),
-('EMS251230022', NOW(), NULL, FALSE, 'Thứ 2 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-30', 2, 'WKS_AFTERNOON_01'),
-('EMS251231021', NOW(), NULL, FALSE, 'Thứ 3 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-31', 2, 'WKS_MORNING_01'),
-('EMS251231022', NOW(), NULL, FALSE, 'Thứ 3 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-31', 2, 'WKS_AFTERNOON_01'),
-
 -- October 2025 shifts (Past month for historical data)
 ('EMS251001001', NOW(), NULL, FALSE, 'Ca tháng trước đã hoàn thành', 'MANUAL_ENTRY', 'COMPLETED', NOW(), '2025-10-15', 2, 'WKS_MORNING_01'),
 ('EMS251001002', NOW(), NULL, FALSE, 'Ca tháng trước đã hoàn thành', 'BATCH_JOB', 'COMPLETED', NOW(), '2025-10-16', 3, 'WKS_AFTERNOON_01'),
@@ -1487,7 +1452,7 @@ VALUES
 
 
 -- ============================================
--- ✅ NEW DATA (January 2026 Week 1) - FULL WEEK SCHEDULE (Mon-Fri, Jan 6-10, 2026)
+--  NEW DATA (January 2026 Week 1) - FULL WEEK SCHEDULE (Mon-Fri, Jan 6-10, 2026)
 -- Next month coverage for Issue #29
 -- Full-time employees: 10 shifts each (Mon-Fri morning+afternoon)
 -- Part-time employees: 2-3 shifts overlapping with full-time hours
@@ -1581,7 +1546,52 @@ VALUES
 
 -- Y tá Chính (EMP010 - PART_TIME_FLEX NURSE) - Wed, Fri afternoons
 ('EMS260108071', NOW(), NULL, FALSE, 'Thứ 4 chiều - Y tá Chính (Part-time flex)', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2026-01-08', 10, 'WKS_AFTERNOON_02'),
-('EMS260110071', NOW(), NULL, FALSE, 'Thứ 6 chiều - Y tá Chính (Part-time flex)', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2026-01-10', 10, 'WKS_AFTERNOON_02')
+('EMS260110071', NOW(), NULL, FALSE, 'Thứ 6 chiều - Y tá Chính (Part-time flex)', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2026-01-10', 10, 'WKS_AFTERNOON_02'),
+
+-- ============================================
+--  NEW DATA - Thêm lịch làm cho BS Thái (EMP002) cho tháng 12/2025
+-- Week Dec 9-13, 2025 (Thứ 2 - Thứ 6)
+-- ============================================
+('EMS251209021', NOW(), NULL, FALSE, 'Thứ 2 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-09', 2, 'WKS_MORNING_01'),
+('EMS251209022', NOW(), NULL, FALSE, 'Thứ 2 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-09', 2, 'WKS_AFTERNOON_01'),
+('EMS251210021', NOW(), NULL, FALSE, 'Thứ 3 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-10', 2, 'WKS_MORNING_01'),
+('EMS251210022', NOW(), NULL, FALSE, 'Thứ 3 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-10', 2, 'WKS_AFTERNOON_01'),
+('EMS251211021', NOW(), NULL, FALSE, 'Thứ 4 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-11', 2, 'WKS_MORNING_01'),
+('EMS251211022', NOW(), NULL, FALSE, 'Thứ 4 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-11', 2, 'WKS_AFTERNOON_01'),
+('EMS251212021', NOW(), NULL, FALSE, 'Thứ 5 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-12', 2, 'WKS_MORNING_01'),
+('EMS251212022', NOW(), NULL, FALSE, 'Thứ 5 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-12', 2, 'WKS_AFTERNOON_01'),
+('EMS251213021', NOW(), NULL, FALSE, 'Thứ 6 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-13', 2, 'WKS_MORNING_01'),
+('EMS251213022', NOW(), NULL, FALSE, 'Thứ 6 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-13', 2, 'WKS_AFTERNOON_01'),
+
+-- Week Dec 16-20, 2025 (Thứ 2 - Thứ 6)
+('EMS251216021', NOW(), NULL, FALSE, 'Thứ 2 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-16', 2, 'WKS_MORNING_01'),
+('EMS251216022', NOW(), NULL, FALSE, 'Thứ 2 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-16', 2, 'WKS_AFTERNOON_01'),
+('EMS251217021', NOW(), NULL, FALSE, 'Thứ 3 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-17', 2, 'WKS_MORNING_01'),
+('EMS251217022', NOW(), NULL, FALSE, 'Thứ 3 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-17', 2, 'WKS_AFTERNOON_01'),
+('EMS251218021', NOW(), NULL, FALSE, 'Thứ 4 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-18', 2, 'WKS_MORNING_01'),
+('EMS251218022', NOW(), NULL, FALSE, 'Thứ 4 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-18', 2, 'WKS_AFTERNOON_01'),
+('EMS251219021', NOW(), NULL, FALSE, 'Thứ 5 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-19', 2, 'WKS_MORNING_01'),
+('EMS251219022', NOW(), NULL, FALSE, 'Thứ 5 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-19', 2, 'WKS_AFTERNOON_01'),
+('EMS251220021', NOW(), NULL, FALSE, 'Thứ 6 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-20', 2, 'WKS_MORNING_01'),
+('EMS251220022', NOW(), NULL, FALSE, 'Thứ 6 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-20', 2, 'WKS_AFTERNOON_01'),
+
+-- Week Dec 23-27, 2025 (Thứ 2 - Thứ 6)
+('EMS251223021', NOW(), NULL, FALSE, 'Thứ 2 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-23', 2, 'WKS_MORNING_01'),
+('EMS251223022', NOW(), NULL, FALSE, 'Thứ 2 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-23', 2, 'WKS_AFTERNOON_01'),
+('EMS251224021', NOW(), NULL, FALSE, 'Thứ 3 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-24', 2, 'WKS_MORNING_01'),
+('EMS251224022', NOW(), NULL, FALSE, 'Thứ 3 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-24', 2, 'WKS_AFTERNOON_01'),
+('EMS251225021', NOW(), NULL, FALSE, 'Thứ 4 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-25', 2, 'WKS_MORNING_01'),
+('EMS251225022', NOW(), NULL, FALSE, 'Thứ 4 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-25', 2, 'WKS_AFTERNOON_01'),
+('EMS251226021', NOW(), NULL, FALSE, 'Thứ 5 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-26', 2, 'WKS_MORNING_01'),
+('EMS251226022', NOW(), NULL, FALSE, 'Thứ 5 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-26', 2, 'WKS_AFTERNOON_01'),
+('EMS251227021', NOW(), NULL, FALSE, 'Thứ 6 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-27', 2, 'WKS_MORNING_01'),
+('EMS251227022', NOW(), NULL, FALSE, 'Thứ 6 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-27', 2, 'WKS_AFTERNOON_01'),
+
+-- Week Dec 30-31, 2025 (Thứ 2 - Thứ 4)
+('EMS251230021', NOW(), NULL, FALSE, 'Thứ 2 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-30', 2, 'WKS_MORNING_01'),
+('EMS251230022', NOW(), NULL, FALSE, 'Thứ 2 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-30', 2, 'WKS_AFTERNOON_01'),
+('EMS251231021', NOW(), NULL, FALSE, 'Thứ 3 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-31', 2, 'WKS_MORNING_01'),
+('EMS251231022', NOW(), NULL, FALSE, 'Thứ 3 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-31', 2, 'WKS_AFTERNOON_01')
 
 ON CONFLICT (employee_shift_id) DO NOTHING;
 
@@ -1693,7 +1703,7 @@ VALUES ('MAINTENANCE_WEEK', 'System Maintenance Week', 'COMPANY', 'Scheduled sys
 ON CONFLICT (definition_id) DO NOTHING;
 
 
--- ⚠️ OLD DATA (November 2025) - Add 3 maintenance days (Monday, Wednesday, Friday of a test week)
+--  OLD DATA (November 2025) - Add 3 maintenance days (Monday, Wednesday, Friday of a test week)
 -- Example: November 3, 5, 7, 2025
 INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
 VALUES ('2025-11-03', 'MAINTENANCE_WEEK', 'Monday maintenance - Test holiday blocking', NOW(), NOW())
@@ -1707,7 +1717,7 @@ INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at,
 VALUES ('2025-11-07', 'MAINTENANCE_WEEK', 'Friday maintenance - Test holiday blocking', NOW(), NOW())
 ON CONFLICT (holiday_date, definition_id) DO NOTHING;
 
--- ✅ NEW DATA (December 2025) - Add Christmas and Year-end maintenance days
+--  NEW DATA (December 2025) - Add Christmas and Year-end maintenance days
 INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
 VALUES ('2025-12-25', 'MAINTENANCE_WEEK', 'Christmas Day - System maintenance', NOW(), NOW())
 ON CONFLICT (holiday_date, definition_id) DO NOTHING;
@@ -1716,7 +1726,7 @@ INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at,
 VALUES ('2025-12-31', 'MAINTENANCE_WEEK', 'New Year Eve - System maintenance', NOW(), NOW())
 ON CONFLICT (holiday_date, definition_id) DO NOTHING;
 
--- ✅ NEW DATA (January 2026) - Add New Year and Tet preparation maintenance days
+--  NEW DATA (January 2026) - Add New Year and Tet preparation maintenance days
 INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
 VALUES ('2026-01-01', 'NEW_YEAR', 'Tết Dương lịch 2026', NOW(), NOW())
 ON CONFLICT (holiday_date, definition_id) DO NOTHING;
@@ -1730,7 +1740,7 @@ VALUES ('2026-01-27', 'MAINTENANCE_WEEK', 'Pre-Tet system maintenance', NOW(), N
 ON CONFLICT (holiday_date, definition_id) DO NOTHING;
 
 
--- ⚠️ Expected Behavior (OLD DATA - November 2025):
+--  Expected Behavior (OLD DATA - November 2025):
 -- Creating shifts on 2025-11-04 (Tuesday) or 2025-11-06 (Thursday) should SUCCEED
 -- Creating shifts on 2025-11-03 (Monday), 2025-11-05 (Wednesday), or 2025-11-07 (Friday) should return 409 HOLIDAY_CONFLICT
 -- Time-off requests spanning these dates should SUCCEED (expected behavior)
@@ -1787,7 +1797,7 @@ VALUES
 ON CONFLICT (registration_id, day_of_week) DO NOTHING;
 
 
--- ⚠️ OLD DATA (November 2025 start date) - Fixed registration for Receptionist Mai (FULL_TIME) - Weekdays Morning Part-time
+--  OLD DATA (November 2025 start date) - Fixed registration for Receptionist Mai (FULL_TIME) - Weekdays Morning Part-time
 INSERT INTO fixed_shift_registrations (
     registration_id, employee_id, work_shift_id,
     effective_from, effective_to, is_active, created_at
@@ -1826,7 +1836,7 @@ VALUES
 ON CONFLICT (registration_id, day_of_week) DO NOTHING;
 
 
--- ⚠️ OLD DATA (November 2025 start date) - Fixed registration for Nurse Hoa (PART_TIME_FIXED) - Monday, Wednesday, Friday Morning
+--  OLD DATA (November 2025 start date) - Fixed registration for Nurse Hoa (PART_TIME_FIXED) - Monday, Wednesday, Friday Morning
 INSERT INTO fixed_shift_registrations (
     registration_id, employee_id, work_shift_id,
     effective_from, effective_to, is_active, created_at
@@ -1859,7 +1869,7 @@ VALUES
 ON CONFLICT (registration_id, day_of_week) DO NOTHING;
 
 
--- ⚠️ OLD DATA (November 2025 start date) - Fixed registration for Nurse Trang (PART_TIME_FIXED) - Tuesday, Thursday, Saturday Afternoon
+--  OLD DATA (November 2025 start date) - Fixed registration for Nurse Trang (PART_TIME_FIXED) - Tuesday, Thursday, Saturday Afternoon
 INSERT INTO fixed_shift_registrations (
     registration_id, employee_id, work_shift_id,
     effective_from, effective_to, is_active, created_at
@@ -1882,7 +1892,7 @@ SELECT setval('fixed_shift_registrations_registration_id_seq',
     false);
 
 -- ============================================
--- ⚠️ OLD DATA (November 2025 dates) - SCHEMA MIGRATION: Add effective_from, effective_to to part_time_slots
+--  OLD DATA (November 2025 dates) - SCHEMA MIGRATION: Add effective_from, effective_to to part_time_slots
 -- BE-403: Dynamic quota system for part-time flex scheduling
 -- ============================================
 ALTER TABLE part_time_slots
@@ -1904,7 +1914,7 @@ ALTER COLUMN effective_to DROP DEFAULT;
 -- BE-403: Added effective_from, effective_to for dynamic quota system
 -- REDUCED TO 5 SLOTS FOR CLEANER TESTING
 
--- ⚠️ OLD DATA (November 2025 dates) - MONDAY Slots
+--  OLD DATA (November 2025 dates) - MONDAY Slots
 INSERT INTO part_time_slots (
     slot_id, work_shift_id, day_of_week, quota, is_active, effective_from, effective_to, created_at
 )
@@ -1913,7 +1923,7 @@ VALUES
 ON CONFLICT (slot_id) DO NOTHING;
 
 
--- ⚠️ OLD DATA (November 2025 dates) - WEDNESDAY Slots
+--  OLD DATA (November 2025 dates) - WEDNESDAY Slots
 INSERT INTO part_time_slots (
     slot_id, work_shift_id, day_of_week, quota, is_active, effective_from, effective_to, created_at
 )
@@ -1922,7 +1932,7 @@ VALUES
 ON CONFLICT (slot_id) DO NOTHING;
 
 
--- ⚠️ OLD DATA (November 2025 dates) - FRIDAY Slots
+--  OLD DATA (November 2025 dates) - FRIDAY Slots
 INSERT INTO part_time_slots (
     slot_id, work_shift_id, day_of_week, quota, is_active, effective_from, effective_to, created_at
 )
@@ -1931,7 +1941,7 @@ VALUES
 ON CONFLICT (slot_id) DO NOTHING;
 
 
--- ⚠️ OLD DATA (November 2025 dates) - SATURDAY Slots (Higher quota for weekend)
+--  OLD DATA (November 2025 dates) - SATURDAY Slots (Higher quota for weekend)
 INSERT INTO part_time_slots (
     slot_id, work_shift_id, day_of_week, quota, is_active, effective_from, effective_to, created_at
 )
@@ -1940,7 +1950,7 @@ VALUES
 ON CONFLICT (slot_id) DO NOTHING;
 
 
--- ⚠️ OLD DATA (November 2025 dates) - SUNDAY Slots (Inactive slot for testing)
+--  OLD DATA (November 2025 dates) - SUNDAY Slots (Inactive slot for testing)
 INSERT INTO part_time_slots (
     slot_id, work_shift_id, day_of_week, quota, is_active, effective_from, effective_to, created_at
 )
@@ -2404,7 +2414,7 @@ VALUES ('TPL_CROWN_CERCON_ENDO', 'Bọc răng sứ Cercon HT - 1 răng (kèm đi
 ON CONFLICT (template_code) DO UPDATE SET is_active = false;
 
 -- ============================================
--- ✅ NEW TEMPLATES - One specialization per template
+--  NEW TEMPLATES - One specialization per template
 -- ============================================
 
 -- Template 4: Điều trị tủy răng (spec 2: Nội nha) - Only endodontic treatment
@@ -2697,7 +2707,7 @@ ON CONFLICT (phase_id, service_id) DO NOTHING;
 
 
 -- =============================================
--- ✅ NEW TEMPLATE PHASES AND SERVICES
+--  NEW TEMPLATE PHASES AND SERVICES
 -- =============================================
 
 -- TPL_ENDO_TREATMENT: 1 phase (spec 2: Nội nha) - ONLY spec 2 services
@@ -2829,13 +2839,13 @@ VALUES
 ON CONFLICT (specialization_id) DO NOTHING;
 
 -- =====================================================
--- ⚠️ OLD DATA (November 2025) - 8. EMPLOYEE SHIFTS (Test date: 2025-11-15 - Thứ Bảy)
+--  OLD DATA (November 2025) - 8. EMPLOYEE SHIFTS (Test date: 2025-11-15 - Thứ Bảy)
 -- Phòng khám KHÔNG làm Chủ nhật - muốn làm phải overtime
 -- Full-time: Ca Sáng (8h-12h) + Ca Chiều (13h-17h)
 -- Part-time fixed: Ca Part-time Sáng (8h-12h) hoặc Ca Part-time Chiều (13h-17h)
 -- Part-time flex: Đăng ký linh hoạt
 
--- ⚠️ OLD DATA - Dentist 1: Lê Anh Khoa (Full-time) - Ca Sáng
+--  OLD DATA - Dentist 1: Lê Anh Khoa (Full-time) - Ca Sáng
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
 SELECT 'EMS251115001', 1, DATE '2025-11-15', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
 FROM work_shifts WHERE shift_name = 'Ca Sáng (8h-12h)' LIMIT 1
@@ -2908,10 +2918,10 @@ FROM work_shifts WHERE shift_name = 'Ca Part-time Chiều (13h-17h)' LIMIT 1
 ON CONFLICT (employee_shift_id) DO NOTHING;
 
 -- ============================================
--- ⚠️ OLD DATA (November 2025) - SHIFTS FOR 2025-11-21 (FOR TESTING TREATMENT PLAN BOOKING)
+--  OLD DATA (November 2025) - SHIFTS FOR 2025-11-21 (FOR TESTING TREATMENT PLAN BOOKING)
 -- ============================================
 
--- ⚠️ OLD DATA - Dentist 1: Lê Anh Khoa (EMP001 - Full-time) - Ca Sáng
+--  OLD DATA - Dentist 1: Lê Anh Khoa (EMP001 - Full-time) - Ca Sáng
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
 SELECT 'EMS251121001', 1, DATE '2025-11-21', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
 FROM work_shifts WHERE shift_name = 'Ca Sáng (8h-12h)' LIMIT 1
@@ -2948,10 +2958,10 @@ FROM work_shifts WHERE shift_name = 'Ca Part-time Chiều (13h-17h)' LIMIT 1
 ON CONFLICT (employee_shift_id) DO NOTHING;
 
 -- ============================================
--- ⚠️ OLD DATA (November 2025) - SHIFTS FOR 2025-11-25 (FOR TESTING TREATMENT PLAN BOOKING)
+--  OLD DATA (November 2025) - SHIFTS FOR 2025-11-25 (FOR TESTING TREATMENT PLAN BOOKING)
 -- ============================================
 
--- ⚠️ OLD DATA - Dentist 1: Lê Anh Khoa (EMP001 - Full-time) - Ca Sáng
+--  OLD DATA - Dentist 1: Lê Anh Khoa (EMP001 - Full-time) - Ca Sáng
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
 SELECT 'EMS251125001', 1, DATE '2025-11-25', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
 FROM work_shifts WHERE shift_name = 'Ca Sáng (8h-12h)' LIMIT 1
@@ -3024,11 +3034,11 @@ FROM work_shifts WHERE shift_name = 'Ca Part-time Chiều (13h-17h)' LIMIT 1
 ON CONFLICT (employee_shift_id) DO NOTHING;
 
 -- ============================================
--- ⚠️ OLD DATA (November 2025) - 9. SAMPLE APPOINTMENTS (Test date: 2025-11-04)
+--  OLD DATA (November 2025) - 9. SAMPLE APPOINTMENTS (Test date: 2025-11-04)
 -- For testing GET /api/v1/appointments with OBSERVER role
 -- ============================================
 
--- ⚠️ OLD DATA - APT-001: Lịch hẹn Ca Sáng - Bác sĩ Khoa + Y tá Nguyên + OBSERVER (EMP012)
+--  OLD DATA - APT-001: Lịch hẹn Ca Sáng - Bác sĩ Khoa + Y tá Nguyên + OBSERVER (EMP012)
 INSERT INTO appointments (
     appointment_id, appointment_code, patient_id, employee_id, room_id,
     appointment_start_time, appointment_end_time, expected_duration_minutes,
@@ -3056,7 +3066,7 @@ VALUES
 ON CONFLICT (appointment_id, employee_id) DO NOTHING;
 
 
--- ⚠️ OLD DATA - APT-002: Lịch hẹn Ca Chiều - Bác sĩ Thái (KHÔNG có OBSERVER)
+--  OLD DATA - APT-002: Lịch hẹn Ca Chiều - Bác sĩ Thái (KHÔNG có OBSERVER)
 INSERT INTO appointments (
     appointment_id, appointment_code, patient_id, employee_id, room_id,
     appointment_start_time, appointment_end_time, expected_duration_minutes,
@@ -3074,7 +3084,7 @@ VALUES (2, 1)  -- GEN_EXAM service_id=1
 ON CONFLICT (appointment_id, service_id) DO NOTHING;
 
 
--- ⚠️ OLD DATA - APT-003: Lịch hẹn LATE (quá giờ 15 phút) - Test computedStatus
+--  OLD DATA - APT-003: Lịch hẹn LATE (quá giờ 15 phút) - Test computedStatus
 INSERT INTO appointments (
     appointment_id, appointment_code, patient_id, employee_id, room_id,
     appointment_start_time, appointment_end_time, expected_duration_minutes,
@@ -3100,10 +3110,10 @@ ON CONFLICT (appointment_id, employee_id) DO NOTHING;
 
 
 -- ============================================
--- ⚠️ OLD DATA (November 2025) - NEW: FUTURE APPOINTMENTS (Nov 6-8, 2025) for current date testing
+--  OLD DATA (November 2025) - NEW: FUTURE APPOINTMENTS (Nov 6-8, 2025) for current date testing
 -- ============================================
 
--- ⚠️ OLD DATA - APT-004: Nov 6 Morning - BS Khoa (EMP001) - NOW HAS SHIFT!
+--  OLD DATA - APT-004: Nov 6 Morning - BS Khoa (EMP001) - NOW HAS SHIFT!
 INSERT INTO appointments (
     appointment_id, appointment_code, patient_id, employee_id, room_id,
     appointment_start_time, appointment_end_time, expected_duration_minutes,
@@ -3221,7 +3231,7 @@ SELECT setval('appointments_appointment_id_seq',
               false);
 
 -- ============================================
--- ✅ NEW DATA (December 2025) - APPOINTMENTS
+--  NEW DATA (December 2025) - APPOINTMENTS
 -- ============================================
 
 -- APT-D001: Dec 4 Morning - BS Khoa + Y tá Nguyên + OBSERVER (EMP012)
@@ -3393,7 +3403,7 @@ ON CONFLICT (appointment_id, employee_id) DO NOTHING;
 
 
 -- ============================================
--- ✅ NEW DATA (January 2026) - APPOINTMENTS
+--  NEW DATA (January 2026) - APPOINTMENTS
 -- ============================================
 
 -- APT-J001: Jan 6 Morning - BS Khoa + Y tá Nguyên + OBSERVER
@@ -4747,13 +4757,14 @@ INSERT INTO clinical_prescription_items (
 ON CONFLICT (prescription_item_id) DO NOTHING;
 
 -- Tooth Status for Patient #1
+-- Patient 1 has multiple tooth conditions for testing odontogram
 INSERT INTO patient_tooth_status (
     tooth_status_id, patient_id, tooth_number, status, notes, recorded_at
 ) VALUES
-(1, 1, '11', 'HEALTHY', 'Răng cửa trên phải khỏe mạnh', NOW()),
-(2, 1, '21', 'HEALTHY', 'Răng cửa trên trái khỏe mạnh', NOW()),
-(3, 1, '16', 'HEALTHY', 'Răng hàm trên phải khỏe mạnh', NOW()),
-(4, 1, '26', 'HEALTHY', 'Răng hàm trên trái khỏe mạnh', NOW())
+(1, 1, '18', 'MISSING', 'Rang khon da nhổ năm 2023', NOW()),
+(2, 1, '36', 'CROWN', 'Boc su kim loai', NOW()),
+(3, 1, '46', 'CARIES', 'Sau rang sau, can dieu tri', NOW()),
+(4, 1, '21', 'IMPLANT', 'Cay ghep Implant thanh cong', NOW())
 ON CONFLICT (patient_id, tooth_number) DO NOTHING;
 
 -- Clinical Record #2 (for appointment_id=2, patient_id=2, employee_id=2)
@@ -4829,12 +4840,23 @@ ON CONFLICT (procedure_id) DO NOTHING;
 
 -- No prescription for this record (orthodontic follow-up doesn't need medicine)
 
+-- Tooth Status History (audit trail)
+INSERT INTO patient_tooth_status_history (
+    history_id, patient_id, tooth_number, old_status, new_status, changed_by, changed_at, reason
+) VALUES
+(1, 1, '18', 'HEALTHY', 'MISSING', 1, '2023-05-15 10:00:00', 'Nhổ rang khon ham tren phai do mac ngam'),
+(2, 1, '36', 'CARIES', 'CROWN', 1, '2024-03-20 14:30:00', 'Boc su kim loai sau khi dieu tri tuy'),
+(3, 1, '21', 'MISSING', 'IMPLANT', 1, '2024-08-10 11:00:00', 'Cay ghep Implant thanh cong'),
+(4, 2, '36', 'CARIES', 'FILLED', 2, NOW(), 'Tram rang composite')
+ON CONFLICT DO NOTHING;
+
 -- Reset sequences
 SELECT setval('clinical_records_clinical_record_id_seq', (SELECT COALESCE(MAX(clinical_record_id), 0) FROM clinical_records));
 SELECT setval('clinical_record_procedures_procedure_id_seq', (SELECT COALESCE(MAX(procedure_id), 0) FROM clinical_record_procedures));
 SELECT setval('clinical_prescriptions_prescription_id_seq', (SELECT COALESCE(MAX(prescription_id), 0) FROM clinical_prescriptions));
 SELECT setval('clinical_prescription_items_prescription_item_id_seq', (SELECT COALESCE(MAX(prescription_item_id), 0) FROM clinical_prescription_items));
 SELECT setval('patient_tooth_status_tooth_status_id_seq', (SELECT COALESCE(MAX(tooth_status_id), 0) FROM patient_tooth_status));
+SELECT setval('patient_tooth_status_history_history_id_seq', (SELECT COALESCE(MAX(history_id), 0) FROM patient_tooth_status_history));
 
 -- =============================================
 -- CLINICAL RECORDS SEED DATA COMPLETE
