@@ -166,7 +166,9 @@ public class PatientTreatmentPlan {
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
-        if (status == null) {
+        // Only auto-set PENDING if approval_status is not DRAFT
+        // DRAFT plans should keep status = null until approved
+        if (status == null && approvalStatus != ApprovalStatus.DRAFT) {
             status = TreatmentPlanStatus.PENDING;
         }
     }

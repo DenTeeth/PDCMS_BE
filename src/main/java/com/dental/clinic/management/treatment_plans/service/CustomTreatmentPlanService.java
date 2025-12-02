@@ -98,7 +98,7 @@ public class CustomTreatmentPlanService {
                                 .planName(request.getPlanName())
                                 .patient(patient)
                                 .createdBy(doctor)
-                                .status(TreatmentPlanStatus.PENDING)
+                                .status(null) // Keep null when approval_status = DRAFT
                                 .approvalStatus(ApprovalStatus.DRAFT) // V19: Default DRAFT
                                 .paymentType(request.getPaymentType())
                                 .startDate(request.getStartDate())
