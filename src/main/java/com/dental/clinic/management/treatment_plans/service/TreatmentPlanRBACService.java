@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
  *
  * Pattern for UPDATE operations (APIs 5.6, 5.7, 5.10, 5.11):
  * - EMPLOYEE with UPDATE_TREATMENT_PLAN → check createdBy == current employee
+ * - MANAGER with UPDATE_TREATMENT_PLAN → ALLOW (can modify all)
  * - PATIENT with UPDATE_TREATMENT_PLAN → REJECT (patients cannot modify)
  * - ADMIN with UPDATE_TREATMENT_PLAN → ALLOW (can modify all)
  *
@@ -98,6 +99,7 @@ public class TreatmentPlanRBACService {
      *
      * RBAC Rules:
      * - EMPLOYEE: Can only modify plans where createdBy == current employee
+     * - MANAGER: Can modify all plans (skip createdBy verification)
      * - PATIENT: Cannot modify plans (throw AccessDeniedException)
      * - ADMIN: Can modify all plans (skip verification)
      *
@@ -137,8 +139,16 @@ public class TreatmentPlanRBACService {
                     "Patients cannot modify treatment plans. Please contact your dentist.");
         }
 
-        // EMPLOYEE: Verify createdBy
+        // EMPLOYEE: Verify createdBy (unless MANAGER role)
         if (baseRoleId.equals(BaseRoleConstants.EMPLOYEE)) {
+            String roleName = account.getRole().getRoleName();
+            
+            // MANAGER role can modify all plans (like ADMIN)
+            if ("ROLE_MANAGER".equals(roleName)) {
+                log.info(" MANAGER role - Access granted to modify any plan");
+                return;
+            }
+            
             Employee employee = employeeRepository.findOneByAccountAccountId(accountId)
                     .orElseThrow(() -> new ResourceNotFoundException(
                             "EMPLOYEE_NOT_FOUND",

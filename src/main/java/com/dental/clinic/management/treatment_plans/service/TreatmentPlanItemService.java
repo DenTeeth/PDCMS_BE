@@ -295,11 +295,11 @@ public class TreatmentPlanItemService {
     @SuppressWarnings("unchecked")
     private List<Map<String, Object>> findAppointmentsForItem(Long itemId) {
         String sql = """
-                SELECT a.appointment_code, a.scheduled_date, a.status, a.notes
+                SELECT a.appointment_code, a.appointment_start_time, a.status, a.notes
                 FROM appointments a
                 JOIN appointment_plan_items api ON a.appointment_id = api.appointment_id
                 WHERE api.item_id = :itemId
-                ORDER BY a.scheduled_date DESC
+                ORDER BY a.appointment_start_time DESC
                 """;
 
         Query query = entityManager.createNativeQuery(sql);
@@ -311,7 +311,7 @@ public class TreatmentPlanItemService {
                 .map(row -> {
                     Map<String, Object> map = new HashMap<>();
                     map.put("code", row[0]);
-                    map.put("scheduled_date", row[1]);
+                    map.put("scheduled_date", row[1]); // Keep map key for DTO compatibility
                     map.put("status", row[2]);
                     map.put("notes", row[3]); // Include notes from appointment
                     return map;
@@ -438,6 +438,9 @@ public class TreatmentPlanItemService {
     /**
      * V21: Check if all phases are completed, then mark plan as COMPLETED.
      *
+     * FIX Issue #35: Auto-complete plan regardless of current status (not just IN_PROGRESS)
+     * to ensure UX consistency between list and detail views.
+     *
      * Business Logic:
      * - When an item is marked COMPLETED/SKIPPED
      * - After phase auto-completion check
@@ -445,13 +448,13 @@ public class TreatmentPlanItemService {
      * - Then automatically set plan.status = COMPLETED
      *
      * Use Case:
-     * - Plan was IN_PROGRESS (patient being treated)
+     * - Plan with status = null, PENDING, or IN_PROGRESS
      * - Last item in last phase is marked COMPLETED
      * - All phases → COMPLETED
-     * - Plan automatically → COMPLETED
+     * - Plan automatically → COMPLETED (regardless of previous status)
      *
      * Safety:
-     * - Only completes if plan is IN_PROGRESS (no double completion)
+     * - Skips if plan is already COMPLETED or CANCELLED
      * - Only completes if ALL phases are COMPLETED
      * - Logs completion for audit trail
      * - Transactional - rolls back if fails
@@ -459,10 +462,9 @@ public class TreatmentPlanItemService {
      * @param plan The treatment plan to check (should be refreshed by caller)
      */
     private void checkAndCompletePlan(PatientTreatmentPlan plan) {
-        // Only check if plan is currently IN_PROGRESS
-        if (plan.getStatus() != TreatmentPlanStatus.IN_PROGRESS) {
-            log.debug("Plan {} not IN_PROGRESS (current: {}), skipping completion check",
-                    plan.getPlanCode(), plan.getStatus());
+        // Skip if plan is already COMPLETED or CANCELLED
+        if (plan.getStatus() == TreatmentPlanStatus.COMPLETED ||
+                plan.getStatus() == TreatmentPlanStatus.CANCELLED) {
             return;
         }
 
@@ -481,12 +483,15 @@ public class TreatmentPlanItemService {
         boolean allPhasesCompleted = completedPhases == phases.size();
 
         if (allPhasesCompleted) {
-            // AUTO-COMPLETE: IN_PROGRESS → COMPLETED
+            // AUTO-COMPLETE: Any status → COMPLETED (if all phases done)
+            TreatmentPlanStatus oldStatus = plan.getStatus();
             plan.setStatus(TreatmentPlanStatus.COMPLETED);
             planRepository.save(plan);
 
-            log.info(" Treatment plan {} (code: {}) auto-completed: IN_PROGRESS → COMPLETED - All {} phases done",
-                    plan.getPlanId(), plan.getPlanCode(), phases.size());
+            log.info("Treatment plan {} (code: {}) auto-completed: {} → COMPLETED - All {} phases done",
+                    plan.getPlanId(), plan.getPlanCode(),
+                    oldStatus == null ? "null" : oldStatus,
+                    phases.size());
         } else {
             log.debug("Plan {} not completed yet: {}/{} phases done",
                     plan.getPlanCode(), completedPhases, phases.size());

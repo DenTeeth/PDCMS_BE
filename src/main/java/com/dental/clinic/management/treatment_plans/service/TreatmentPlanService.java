@@ -343,33 +343,34 @@ public class TreatmentPlanService {
 
         if (baseRoleId.equals(com.dental.clinic.management.security.constants.BaseRoleConstants.EMPLOYEE)) {
             // ============================================
-            // EMPLOYEE (Doctor): Filter by createdBy
-
-            if (!hasViewOwnPermission) {
-                throw new AccessDeniedException(
-                        "Employee must have VIEW_TREATMENT_PLAN_OWN permission");
-            }
-
+            // EMPLOYEE: Apply filters based on permissions
+            
+            // FIX: Users with VIEW_ALL permission (ADMIN/MANAGER) should not be restricted
             if (hasViewAllPermission) {
-                log.warn("Employee (accountId={}) has VIEW_TREATMENT_PLAN_ALL permission. " +
-                        "This should only be assigned to ADMIN/MANAGER roles. Filtering by employeeId anyway.",
-                        accountId);
-            }
+                // User has VIEW_ALL - no filtering needed, can see all plans
+                log.info("EMPLOYEE mode: User has VIEW_ALL_TREATMENT_PLANS, no filtering applied");
+                // Admin filters (doctorEmployeeCode, patientCode) are allowed
+            } else if (hasViewOwnPermission) {
+                // User has VIEW_OWN - filter by createdBy (Doctor can only see their own plans)
+                com.dental.clinic.management.employee.domain.Employee employee = employeeRepository
+                        .findOneByAccountAccountId(accountId)
+                        .orElseThrow(() -> new AccessDeniedException("Employee not found for account: " + accountId));
 
-            com.dental.clinic.management.employee.domain.Employee employee = employeeRepository
-                    .findOneByAccountAccountId(accountId)
-                    .orElseThrow(() -> new AccessDeniedException("Employee not found for account: " + accountId));
+                log.info("EMPLOYEE mode: Filtering by createdBy employeeId={}", employee.getEmployeeId());
 
-            log.info("EMPLOYEE mode: Filtering by employeeId={}", employee.getEmployeeId());
+                specification = specification.and(
+                        com.dental.clinic.management.treatment_plans.specification.TreatmentPlanSpecification
+                                .filterByCreatedByEmployee(employee.getEmployeeId()));
 
-            specification = specification.and(
-                    com.dental.clinic.management.treatment_plans.specification.TreatmentPlanSpecification
-                            .filterByCreatedByEmployee(employee.getEmployeeId()));
-
-            // Ignore admin-only filters
-            if (request.getDoctorEmployeeCode() != null || request.getPatientCode() != null) {
-                log.warn("Employee (id={}) attempting to use admin-only filters. Ignoring.",
-                        employee.getEmployeeId());
+                // Ignore admin-only filters for regular employees
+                if (request.getDoctorEmployeeCode() != null || request.getPatientCode() != null) {
+                    log.warn("Employee (id={}) attempting to use admin-only filters without VIEW_ALL. Ignoring.",
+                            employee.getEmployeeId());
+                }
+            } else {
+                // No permission - deny access
+                throw new AccessDeniedException(
+                        "Employee must have VIEW_TREATMENT_PLAN_ALL or VIEW_TREATMENT_PLAN_OWN permission");
             }
 
         } else if (baseRoleId.equals(com.dental.clinic.management.security.constants.BaseRoleConstants.PATIENT)) {
