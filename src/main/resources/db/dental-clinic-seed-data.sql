@@ -374,7 +374,8 @@ VALUES
 ('CANCEL_WAREHOUSE', 'CANCEL_WAREHOUSE', 'WAREHOUSE', 'Hủy phiếu nhập xuất kho (API 6.6.3)', 281, NULL, TRUE, NOW()),
 ('MANAGE_SUPPLIERS', 'MANAGE_SUPPLIERS', 'WAREHOUSE', 'Quản lý nhà cung cấp (API 6.13, 6.14)', 282, NULL, TRUE, NOW()),
 ('MANAGE_CONSUMABLES', 'MANAGE_CONSUMABLES', 'WAREHOUSE', 'Quản lý định mức tiêu hao vật tư (BOM) - API 6.18, 6.19', 283, NULL, TRUE, NOW()),
-('MANAGE_WAREHOUSE', 'MANAGE_WAREHOUSE', 'WAREHOUSE', 'Toàn quyền quản lý kho', 284, NULL, TRUE, NOW())
+('MANAGE_WAREHOUSE', 'MANAGE_WAREHOUSE', 'WAREHOUSE', 'Toàn quyền quản lý kho', 284, NULL, TRUE, NOW()),
+('WRITE_CLINICAL_RECORD', 'WRITE_CLINICAL_RECORD', 'CLINICAL_RECORDS', 'Tạo và cập nhật bệnh án (API 9.2, 9.3)', 285, NULL, TRUE, NOW())
 ON CONFLICT (permission_id) DO NOTHING;
 
 
@@ -408,7 +409,8 @@ VALUES
 ('ROLE_DENTIST', 'UPDATE_TREATMENT_PLAN'),
 ('ROLE_DENTIST', 'DELETE_TREATMENT_PLAN'),
 ('ROLE_DENTIST', 'VIEW_SERVICE'),
-('ROLE_DENTIST', 'VIEW_ITEMS')
+('ROLE_DENTIST', 'VIEW_ITEMS'),
+('ROLE_DENTIST', 'WRITE_CLINICAL_RECORD')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
@@ -1433,6 +1435,51 @@ VALUES
 ('EMS251204071', NOW(), NULL, FALSE, 'Thứ 4 chiều - Y tá Chính (Part-time flex)', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-12-04', 10, 'WKS_AFTERNOON_02'),
 ('EMS251206071', NOW(), NULL, FALSE, 'Thứ 6 chiều - Y tá Chính (Part-time flex)', 'MANUAL_ENTRY', 'SCHEDULED', NOW(), '2025-12-06', 10, 'WKS_AFTERNOON_02'),
 
+-- ============================================
+-- ✅ NEW DATA - Thêm lịch làm cho BS Thái (EMP002) cho tháng 12/2025
+-- Week Dec 9-13, 2025 (Thứ 2 - Thứ 6)
+-- ============================================
+('EMS251209021', NOW(), NULL, FALSE, 'Thứ 2 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-09', 2, 'WKS_MORNING_01'),
+('EMS251209022', NOW(), NULL, FALSE, 'Thứ 2 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-09', 2, 'WKS_AFTERNOON_01'),
+('EMS251210021', NOW(), NULL, FALSE, 'Thứ 3 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-10', 2, 'WKS_MORNING_01'),
+('EMS251210022', NOW(), NULL, FALSE, 'Thứ 3 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-10', 2, 'WKS_AFTERNOON_01'),
+('EMS251211021', NOW(), NULL, FALSE, 'Thứ 4 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-11', 2, 'WKS_MORNING_01'),
+('EMS251211022', NOW(), NULL, FALSE, 'Thứ 4 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-11', 2, 'WKS_AFTERNOON_01'),
+('EMS251212021', NOW(), NULL, FALSE, 'Thứ 5 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-12', 2, 'WKS_MORNING_01'),
+('EMS251212022', NOW(), NULL, FALSE, 'Thứ 5 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-12', 2, 'WKS_AFTERNOON_01'),
+('EMS251213021', NOW(), NULL, FALSE, 'Thứ 6 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-13', 2, 'WKS_MORNING_01'),
+('EMS251213022', NOW(), NULL, FALSE, 'Thứ 6 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-13', 2, 'WKS_AFTERNOON_01'),
+
+-- Week Dec 16-20, 2025 (Thứ 2 - Thứ 6)
+('EMS251216021', NOW(), NULL, FALSE, 'Thứ 2 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-16', 2, 'WKS_MORNING_01'),
+('EMS251216022', NOW(), NULL, FALSE, 'Thứ 2 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-16', 2, 'WKS_AFTERNOON_01'),
+('EMS251217021', NOW(), NULL, FALSE, 'Thứ 3 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-17', 2, 'WKS_MORNING_01'),
+('EMS251217022', NOW(), NULL, FALSE, 'Thứ 3 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-17', 2, 'WKS_AFTERNOON_01'),
+('EMS251218021', NOW(), NULL, FALSE, 'Thứ 4 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-18', 2, 'WKS_MORNING_01'),
+('EMS251218022', NOW(), NULL, FALSE, 'Thứ 4 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-18', 2, 'WKS_AFTERNOON_01'),
+('EMS251219021', NOW(), NULL, FALSE, 'Thứ 5 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-19', 2, 'WKS_MORNING_01'),
+('EMS251219022', NOW(), NULL, FALSE, 'Thứ 5 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-19', 2, 'WKS_AFTERNOON_01'),
+('EMS251220021', NOW(), NULL, FALSE, 'Thứ 6 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-20', 2, 'WKS_MORNING_01'),
+('EMS251220022', NOW(), NULL, FALSE, 'Thứ 6 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-20', 2, 'WKS_AFTERNOON_01'),
+
+-- Week Dec 23-27, 2025 (Thứ 2 - Thứ 6)
+('EMS251223021', NOW(), NULL, FALSE, 'Thứ 2 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-23', 2, 'WKS_MORNING_01'),
+('EMS251223022', NOW(), NULL, FALSE, 'Thứ 2 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-23', 2, 'WKS_AFTERNOON_01'),
+('EMS251224021', NOW(), NULL, FALSE, 'Thứ 3 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-24', 2, 'WKS_MORNING_01'),
+('EMS251224022', NOW(), NULL, FALSE, 'Thứ 3 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-24', 2, 'WKS_AFTERNOON_01'),
+('EMS251225021', NOW(), NULL, FALSE, 'Thứ 4 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-25', 2, 'WKS_MORNING_01'),
+('EMS251225022', NOW(), NULL, FALSE, 'Thứ 4 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-25', 2, 'WKS_AFTERNOON_01'),
+('EMS251226021', NOW(), NULL, FALSE, 'Thứ 5 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-26', 2, 'WKS_MORNING_01'),
+('EMS251226022', NOW(), NULL, FALSE, 'Thứ 5 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-26', 2, 'WKS_AFTERNOON_01'),
+('EMS251227021', NOW(), NULL, FALSE, 'Thứ 6 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-27', 2, 'WKS_MORNING_01'),
+('EMS251227022', NOW(), NULL, FALSE, 'Thứ 6 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-27', 2, 'WKS_AFTERNOON_01'),
+
+-- Week Dec 30-31, 2025 (Thứ 2 - Thứ 4)
+('EMS251230021', NOW(), NULL, FALSE, 'Thứ 2 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-30', 2, 'WKS_MORNING_01'),
+('EMS251230022', NOW(), NULL, FALSE, 'Thứ 2 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-30', 2, 'WKS_AFTERNOON_01'),
+('EMS251231021', NOW(), NULL, FALSE, 'Thứ 3 sáng - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-31', 2, 'WKS_MORNING_01'),
+('EMS251231022', NOW(), NULL, FALSE, 'Thứ 3 chiều - BS Thái', 'BATCH_JOB', 'SCHEDULED', NOW(), '2025-12-31', 2, 'WKS_AFTERNOON_01'),
+
 -- October 2025 shifts (Past month for historical data)
 ('EMS251001001', NOW(), NULL, FALSE, 'Ca tháng trước đã hoàn thành', 'MANUAL_ENTRY', 'COMPLETED', NOW(), '2025-10-15', 2, 'WKS_MORNING_01'),
 ('EMS251001002', NOW(), NULL, FALSE, 'Ca tháng trước đã hoàn thành', 'BATCH_JOB', 'COMPLETED', NOW(), '2025-10-16', 3, 'WKS_AFTERNOON_01'),
@@ -2362,42 +2409,42 @@ ON CONFLICT (template_code) DO UPDATE SET is_active = false;
 
 -- Template 4: Điều trị tủy răng (spec 2: Nội nha) - Only endodontic treatment
 INSERT INTO treatment_plan_templates (template_code, template_name, description, estimated_duration_days, total_price, specialization_id, is_active, created_at)
-VALUES ('TPL_ENDO_TREATMENT', 'Điều trị tủy răng sau', 
+VALUES ('TPL_ENDO_TREATMENT', 'Điều trị tủy răng sau',
         'Gói điều trị tủy răng tiền cối/răng cối, bao gồm lấy tủy, làm sạch và trám bít ống tủy.',
         3, 2000000, 2, true, NOW())
 ON CONFLICT (template_code) DO NOTHING;
 
 -- Template 5: Bọc sứ sau điều trị tủy (spec 4: Phục hồi răng) - Restorative work
 INSERT INTO treatment_plan_templates (template_code, template_name, description, estimated_duration_days, total_price, specialization_id, is_active, created_at)
-VALUES ('TPL_CROWN_AFTER_ENDO', 'Bọc sứ sau điều trị tủy', 
+VALUES ('TPL_CROWN_AFTER_ENDO', 'Bọc sứ sau điều trị tủy',
         'Gói bọc răng sứ Cercon HT cho răng đã điều trị tủy, bao gồm đóng chốt tái tạo cùi răng, mài răng, lấy dấu và gắn sứ.',
         4, 4500000, 4, true, NOW())
 ON CONFLICT (template_code) DO NOTHING;
 
 -- Template 6: Cạo vôi răng định kỳ (spec 3: Nha chu)
 INSERT INTO treatment_plan_templates (template_code, template_name, description, estimated_duration_days, total_price, specialization_id, is_active, created_at)
-VALUES ('TPL_PERIO_SCALING', 'Cạo vôi răng toàn hàm', 
+VALUES ('TPL_PERIO_SCALING', 'Cạo vôi răng toàn hàm',
         'Gói cạo vôi răng định kỳ cho cả 2 hàm, bao gồm cạo vôi cơ bản + đánh bóng răng.',
         1, 500000, 3, true, NOW())
 ON CONFLICT (template_code) DO NOTHING;
 
 -- Template 7: Nhổ răng khôn (spec 5: Phẫu thuật hàm mặt)
 INSERT INTO treatment_plan_templates (template_code, template_name, description, estimated_duration_days, total_price, specialization_id, is_active, created_at)
-VALUES ('TPL_SURGERY_WISDOM', 'Nhổ răng khôn', 
+VALUES ('TPL_SURGERY_WISDOM', 'Nhổ răng khôn',
         'Gói nhổ răng khôn mọc lệch/ngầm, bao gồm chụp phim, phẫu thuật và tái khám.',
         7, 2000000, 5, true, NOW())
 ON CONFLICT (template_code) DO NOTHING;
 
 -- Template 8: Trám răng sữa trẻ em (spec 6: Nha khoa trẻ em)
 INSERT INTO treatment_plan_templates (template_code, template_name, description, estimated_duration_days, total_price, specialization_id, is_active, created_at)
-VALUES ('TPL_PEDO_FILLING', 'Trám răng sữa', 
+VALUES ('TPL_PEDO_FILLING', 'Trám răng sữa',
         'Gói trám răng sữa bị sâu cho trẻ em, sử dụng vật liệu GIC an toàn.',
         1, 300000, 6, true, NOW())
 ON CONFLICT (template_code) DO NOTHING;
 
 -- Template 9: Tẩy trắng răng (spec 7: Răng thẩm mỹ)
 INSERT INTO treatment_plan_templates (template_code, template_name, description, estimated_duration_days, total_price, specialization_id, is_active, created_at)
-VALUES ('TPL_COSMETIC_BLEACHING', 'Tẩy trắng răng tại phòng khám', 
+VALUES ('TPL_COSMETIC_BLEACHING', 'Tẩy trắng răng tại phòng khám',
         'Gói tẩy trắng răng bằng công nghệ Laser/Zoom, bao gồm kiểm tra và làm sạch răng trước tẩy trắng.',
         1, 3000000, 7, true, NOW())
 ON CONFLICT (template_code) DO NOTHING;
@@ -3064,7 +3111,7 @@ INSERT INTO appointments (
 ) VALUES (
     4, 'APT-20251106-001', 1, 1, 'GHE251103001',
     '2025-11-06 09:00:00', '2025-11-06 09:30:00', 30,
-    'SCHEDULED', 'Khám tổng quát - BS Khoa ca sáng', 5, NOW(), NOW()
+    'IN_PROGRESS', 'Khám tổng quát - BS Khoa ca sáng - Benh nhan dang kham', 5, NOW(), NOW()
 )
 ON CONFLICT (appointment_id) DO NOTHING;
 
