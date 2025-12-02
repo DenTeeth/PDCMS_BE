@@ -56,10 +56,12 @@ public class ClinicalRecord {
 
     @OneToMany(mappedBy = "clinicalRecord", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonManagedReference
+    @Builder.Default
     private List<ClinicalRecordProcedure> procedures = new ArrayList<>();
 
     @OneToMany(mappedBy = "clinicalRecord", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonManagedReference
+    @Builder.Default
     private List<ClinicalPrescription> prescriptions = new ArrayList<>();
 
     @PrePersist

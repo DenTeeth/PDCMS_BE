@@ -38,6 +38,7 @@ public class ClinicalPrescription {
 
     @OneToMany(mappedBy = "prescription", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonManagedReference
+    @Builder.Default
     private List<ClinicalPrescriptionItem> items = new ArrayList<>();
 
     @PrePersist
