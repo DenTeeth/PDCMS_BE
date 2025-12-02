@@ -489,12 +489,20 @@ public class TimeOffRequestService {
                 int currentYear = Year.now().getValue();
 
                 // Find balance record for current year
-                EmployeeLeaveBalance balance = balanceRepository
-                                .findByEmployeeIdAndTimeOffTypeIdAndYear(employeeId, timeOffTypeId, currentYear)
-                                .orElseThrow(() -> new InvalidRequestException(
-                                                "BALANCE_NOT_FOUND",
-                                                String.format("Không tìm thấy số dư nghỉ phép cho nhân viên %d và loại nghỉ %s trong năm %d",
-                                                                employeeId, timeOffTypeId, currentYear)));
+                EmployeeLeaveBalance balance;
+                try {
+                        balance = balanceRepository
+                                        .findByEmployeeIdAndTimeOffTypeIdAndYear(employeeId, timeOffTypeId, currentYear)
+                                        .orElseThrow(() -> new InvalidRequestException(
+                                                        "BALANCE_NOT_FOUND",
+                                                        String.format("Không tìm thấy số dư nghỉ phép cho nhân viên %d và loại nghỉ %s trong năm %d",
+                                                                        employeeId, timeOffTypeId, currentYear)));
+                } catch (org.springframework.dao.IncorrectResultSizeDataAccessException e) {
+                        throw new InvalidRequestException(
+                                        "DUPLICATE_BALANCE_RECORDS",
+                                        String.format("Phát hiện dữ liệu bị trùng lặp cho nhân viên %d và loại nghỉ %s trong năm %d. Vui lòng liên hệ quản trị viên để xử lý.",
+                                                        employeeId, timeOffTypeId, currentYear));
+                }
 
                 // Calculate days requested
                 BigDecimal daysRequested = calculateDaysRequested(startDate, endDate, workShiftId);
@@ -545,16 +553,24 @@ public class TimeOffRequestService {
                 int currentYear = Year.now().getValue();
 
                 // Find balance record
-                EmployeeLeaveBalance balance = balanceRepository
-                                .findByEmployeeIdAndTimeOffTypeIdAndYear(
-                                                timeOffRequest.getEmployeeId(),
-                                                timeOffRequest.getTimeOffTypeId(),
-                                                currentYear)
-                                .orElseThrow(() -> new InvalidRequestException(
-                                                "BALANCE_NOT_FOUND",
-                                                String.format("Không tìm thấy số dư nghỉ phép cho nhân viên %d và loại nghỉ %s trong năm %d",
-                                                                timeOffRequest.getEmployeeId(),
-                                                                timeOffRequest.getTimeOffTypeId(), currentYear)));
+                EmployeeLeaveBalance balance;
+                try {
+                        balance = balanceRepository
+                                        .findByEmployeeIdAndTimeOffTypeIdAndYear(
+                                                        timeOffRequest.getEmployeeId(),
+                                                        timeOffRequest.getTimeOffTypeId(),
+                                                        currentYear)
+                                        .orElseThrow(() -> new InvalidRequestException(
+                                                        "BALANCE_NOT_FOUND",
+                                                        String.format("Không tìm thấy số dư nghỉ phép cho nhân viên %d và loại nghỉ %s trong năm %d",
+                                                                        timeOffRequest.getEmployeeId(),
+                                                                        timeOffRequest.getTimeOffTypeId(), currentYear)));
+                } catch (org.springframework.dao.IncorrectResultSizeDataAccessException e) {
+                        throw new InvalidRequestException(
+                                        "DUPLICATE_BALANCE_RECORDS",
+                                        String.format("Phát hiện dữ liệu bị trùng lặp cho nhân viên %d và loại nghỉ %s trong năm %d. Vui lòng liên hệ quản trị viên để xử lý.",
+                                                        timeOffRequest.getEmployeeId(), timeOffRequest.getTimeOffTypeId(), currentYear));
+                }
 
                 // Calculate days to deduct
                 BigDecimal daysToDeduct = calculateDaysRequested(

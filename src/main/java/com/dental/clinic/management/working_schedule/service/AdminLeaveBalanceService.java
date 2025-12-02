@@ -161,16 +161,24 @@ public class AdminLeaveBalanceService {
                 .orElseThrow(() -> new TimeOffTypeNotFoundException(request.getTimeOffTypeId()));
 
         // 3. Find or create balance record
-        EmployeeLeaveBalance balance = balanceRepository
-                .findByEmployeeIdAndTimeOffTypeIdAndYear(
-                        request.getEmployeeId(),
-                        request.getTimeOffTypeId(),
-                        request.getCycleYear())
-                .orElseGet(() -> {
-                    log.info("Balance not found, creating new balance record for employee {} type {} year {}",
-                            request.getEmployeeId(), request.getTimeOffTypeId(), request.getCycleYear());
-                    return createNewBalance(request.getEmployeeId(), request.getTimeOffTypeId(), request.getCycleYear());
-                });
+        EmployeeLeaveBalance balance;
+        try {
+                balance = balanceRepository
+                        .findByEmployeeIdAndTimeOffTypeIdAndYear(
+                                request.getEmployeeId(),
+                                request.getTimeOffTypeId(),
+                                request.getCycleYear())
+                        .orElseGet(() -> {
+                            log.info("Balance not found, creating new balance record for employee {} type {} year {}",
+                                    request.getEmployeeId(), request.getTimeOffTypeId(), request.getCycleYear());
+                            return createNewBalance(request.getEmployeeId(), request.getTimeOffTypeId(), request.getCycleYear());
+                        });
+        } catch (org.springframework.dao.IncorrectResultSizeDataAccessException e) {
+                throw new InvalidRequestException(
+                        "DUPLICATE_BALANCE_RECORDS",
+                        String.format("Phát hiện dữ liệu bị trùng lặp cho nhân viên %d loại %s năm %d. Vui lòng liên hệ quản trị viên để xử lý.",
+                                request.getEmployeeId(), request.getTimeOffTypeId(), request.getCycleYear()));
+        }
 
         // 4. Apply adjustment
         Double oldTotalAllotted = balance.getTotalAllotted();
@@ -256,11 +264,19 @@ public class AdminLeaveBalanceService {
         // 4. For each employee, create or reset balance
         for (Integer employeeId : activeEmployeeIds) {
             try {
-                Optional<EmployeeLeaveBalance> existingBalanceOpt = balanceRepository
-                        .findByEmployeeIdAndTimeOffTypeIdAndYear(
-                                employeeId,
-                                request.getApplyToTypeId(),
-                                request.getCycleYear());
+                Optional<EmployeeLeaveBalance> existingBalanceOpt;
+                try {
+                        existingBalanceOpt = balanceRepository
+                                .findByEmployeeIdAndTimeOffTypeIdAndYear(
+                                        employeeId,
+                                        request.getApplyToTypeId(),
+                                        request.getCycleYear());
+                } catch (org.springframework.dao.IncorrectResultSizeDataAccessException e) {
+                        log.error("Duplicate balance records found for employee {} type {} year {}, skipping",
+                                employeeId, request.getApplyToTypeId(), request.getCycleYear());
+                        skippedCount++;
+                        continue;
+                }
 
                 EmployeeLeaveBalance balance;
                 boolean isUpdate = false;
