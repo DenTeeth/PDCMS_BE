@@ -19,6 +19,7 @@
 ### Real-World Scenario
 
 During a dental appointment, the doctor performs various procedures:
+
 - Examination
 - Cleaning/Scaling
 - Filling
@@ -30,6 +31,7 @@ This API allows real-time documentation of these procedures, creating a permanen
 ### Treatment Plan Integration
 
 If the procedure is part of a treatment plan:
+
 - API creates a **passive link** via `patientPlanItemId`
 - Does **NOT** update treatment plan item status
 - Status updates handled by:
@@ -50,9 +52,9 @@ POST /api/v1/appointments/clinical-records/{recordId}/procedures
 
 ### Path Parameters
 
-| Parameter | Type      | Required | Description                    |
-| --------- | --------- | -------- | ------------------------------ |
-| recordId  | `Integer` | Yes      | Clinical record ID             |
+| Parameter | Type      | Required | Description        |
+| --------- | --------- | -------- | ------------------ |
+| recordId  | `Integer` | Yes      | Clinical record ID |
 
 ### Request Headers
 
@@ -75,26 +77,29 @@ Content-Type: application/json
 
 ### Field Specifications
 
-| Field                | Type      | Required | Constraints                  | Description                                                                      |
-| -------------------- | --------- | -------- | ---------------------------- | -------------------------------------------------------------------------------- |
-| serviceId            | `Long`    | **Yes**  | Must exist, must be active   | Service ID from catalog (services table)                                         |
-| patientPlanItemId    | `Long`    | No       | Must exist if provided       | Treatment plan item ID (creates passive link)                                    |
-| toothNumber          | `String`  | No       | Max 10 chars                 | Tooth identifier (e.g., "36", "21", "ALL")                                       |
-| procedureDescription | `String`  | **Yes**  | 3-1000 chars                 | Detailed description of what was performed                                       |
-| notes                | `String`  | No       | Max 1000 chars               | Additional observations or follow-up instructions                                |
+| Field                | Type     | Required | Constraints                | Description                                       |
+| -------------------- | -------- | -------- | -------------------------- | ------------------------------------------------- |
+| serviceId            | `Long`   | **Yes**  | Must exist, must be active | Service ID from catalog (services table)          |
+| patientPlanItemId    | `Long`   | No       | Must exist if provided     | Treatment plan item ID (creates passive link)     |
+| toothNumber          | `String` | No       | Max 10 chars               | Tooth identifier (e.g., "36", "21", "ALL")        |
+| procedureDescription | `String` | **Yes**  | 3-1000 chars               | Detailed description of what was performed        |
+| notes                | `String` | No       | Max 1000 chars             | Additional observations or follow-up instructions |
 
 ### Validation Rules
 
 1. **Service Validation**
+
    - Must exist in `services` table
    - Must have `is_active = true`
    - Error: `SERVICE_NOT_FOUND` (404)
 
 2. **Clinical Record Validation**
+
    - Must exist in `clinical_records` table
    - Error: `RECORD_NOT_FOUND` (404)
 
 3. **Treatment Plan Item Validation** (if provided)
+
    - Must exist in `patient_plan_items` table
    - No ownership validation (trust treatment plan module)
    - Error: `PLAN_ITEM_NOT_FOUND` (404)
@@ -167,18 +172,18 @@ Content-Type: application/json
 
 ### Response Fields
 
-| Field                | Type        | Description                                       |
-| -------------------- | ----------- | ------------------------------------------------- |
-| procedureId          | `Integer`   | Generated procedure ID (primary key)              |
-| clinicalRecordId     | `Integer`   | Parent clinical record ID                         |
-| serviceId            | `Long`      | Service ID from catalog                           |
-| serviceName          | `String`    | Service name (joined from services table)         |
-| serviceCode          | `String`    | Service code (joined from services table)         |
-| patientPlanItemId    | `Long`      | Treatment plan item ID (null if not linked)       |
-| toothNumber          | `String`    | Tooth identifier                                  |
-| procedureDescription | `String`    | Detailed procedure description                    |
-| notes                | `String`    | Additional clinical notes                         |
-| createdAt            | `DateTime`  | Timestamp when procedure was recorded             |
+| Field                | Type       | Description                                 |
+| -------------------- | ---------- | ------------------------------------------- |
+| procedureId          | `Integer`  | Generated procedure ID (primary key)        |
+| clinicalRecordId     | `Integer`  | Parent clinical record ID                   |
+| serviceId            | `Long`     | Service ID from catalog                     |
+| serviceName          | `String`   | Service name (joined from services table)   |
+| serviceCode          | `String`   | Service code (joined from services table)   |
+| patientPlanItemId    | `Long`     | Treatment plan item ID (null if not linked) |
+| toothNumber          | `String`   | Tooth identifier                            |
+| procedureDescription | `String`   | Detailed procedure description              |
+| notes                | `String`   | Additional clinical notes                   |
+| createdAt            | `DateTime` | Timestamp when procedure was recorded       |
 
 ---
 
@@ -258,11 +263,11 @@ Content-Type: application/json
 
 ### Roles with Permission
 
-| Role       | Permission              | Access Level                         |
-| ---------- | ----------------------- | ------------------------------------ |
-| Admin      | WRITE_CLINICAL_RECORD   | Can add procedures to any record     |
-| Doctor     | WRITE_CLINICAL_RECORD   | Can add procedures to own records    |
-| Assistant  | WRITE_CLINICAL_RECORD   | Can add procedures to assisted cases |
+| Role      | Permission            | Access Level                         |
+| --------- | --------------------- | ------------------------------------ |
+| Admin     | WRITE_CLINICAL_RECORD | Can add procedures to any record     |
+| Doctor    | WRITE_CLINICAL_RECORD | Can add procedures to own records    |
+| Assistant | WRITE_CLINICAL_RECORD | Can add procedures to assisted cases |
 
 ### Authorization Logic
 
@@ -305,6 +310,7 @@ CREATE TABLE clinical_record_procedures (
 ### Setup Test Data
 
 Use existing seed data:
+
 - **Clinical Record 1**: Appointment 1, Patient BN-1001, Doctor bacsi1
 - **Service 1**: "Dong chot tai tao cui rang" (Active)
 - **Service 5**: "Nho rang khon muc 1" (Active)
@@ -312,6 +318,7 @@ Use existing seed data:
 ### Test Case 1: Add Simple Procedure (No Plan Link)
 
 **Request**:
+
 ```bash
 curl -X POST "http://localhost:8080/api/v1/appointments/clinical-records/1/procedures" \
   -H "Authorization: Bearer {BACSI1_TOKEN}" \
@@ -325,6 +332,7 @@ curl -X POST "http://localhost:8080/api/v1/appointments/clinical-records/1/proce
 ```
 
 **Expected**: 201 CREATED
+
 ```json
 {
   "statusCode": 201,
@@ -347,6 +355,7 @@ curl -X POST "http://localhost:8080/api/v1/appointments/clinical-records/1/proce
 ### Test Case 2: Add Procedure with Plan Link
 
 **Request**:
+
 ```bash
 curl -X POST "http://localhost:8080/api/v1/appointments/clinical-records/1/procedures" \
   -H "Authorization: Bearer {BACSI1_TOKEN}" \
@@ -365,6 +374,7 @@ curl -X POST "http://localhost:8080/api/v1/appointments/clinical-records/1/proce
 ### Test Case 3: Add Procedure - Record Not Found
 
 **Request**:
+
 ```bash
 curl -X POST "http://localhost:8080/api/v1/appointments/clinical-records/9999/procedures" \
   -H "Authorization: Bearer {BACSI1_TOKEN}" \
@@ -380,6 +390,7 @@ curl -X POST "http://localhost:8080/api/v1/appointments/clinical-records/9999/pr
 ### Test Case 4: Add Procedure - Service Not Found
 
 **Request**:
+
 ```bash
 curl -X POST "http://localhost:8080/api/v1/appointments/clinical-records/1/procedures" \
   -H "Authorization: Bearer {BACSI1_TOKEN}" \
@@ -395,6 +406,7 @@ curl -X POST "http://localhost:8080/api/v1/appointments/clinical-records/1/proce
 ### Test Case 5: Add Procedure - Missing Required Field
 
 **Request**:
+
 ```bash
 curl -X POST "http://localhost:8080/api/v1/appointments/clinical-records/1/procedures" \
   -H "Authorization: Bearer {BACSI1_TOKEN}" \
@@ -410,6 +422,7 @@ curl -X POST "http://localhost:8080/api/v1/appointments/clinical-records/1/proce
 ### Test Case 6: Add Procedure - Plan Item Not Found
 
 **Request**:
+
 ```bash
 curl -X POST "http://localhost:8080/api/v1/appointments/clinical-records/1/procedures" \
   -H "Authorization: Bearer {BACSI1_TOKEN}" \
@@ -426,6 +439,7 @@ curl -X POST "http://localhost:8080/api/v1/appointments/clinical-records/1/proce
 ### Test Case 7: Unauthorized Access (Patient Role)
 
 **Request**:
+
 ```bash
 curl -X POST "http://localhost:8080/api/v1/appointments/clinical-records/1/procedures" \
   -H "Authorization: Bearer {PATIENT_TOKEN}" \
@@ -456,7 +470,7 @@ public AddProcedureResponse addProcedure(Integer recordId, AddProcedureRequest r
     // 2. Validate service exists and is active
     DentalService service = dentalServiceRepository.findById(request.getServiceId())
             .orElseThrow(() -> new NotFoundException("SERVICE_NOT_FOUND"));
-    
+
     if (!service.getIsActive()) {
         throw new NotFoundException("SERVICE_NOT_FOUND", "Service is inactive");
     }
@@ -477,7 +491,7 @@ public AddProcedureResponse addProcedure(Integer recordId, AddProcedureRequest r
             .procedureDescription(request.getProcedureDescription())
             .notes(request.getNotes())
             .build();
-    
+
     ClinicalRecordProcedure saved = procedureRepository.save(procedure);
 
     // 5. Build response with service info
@@ -507,7 +521,7 @@ public AddProcedureResponse addProcedure(Integer recordId, AddProcedureRequest r
 public ResponseEntity<AddProcedureResponse> addProcedure(
         @PathVariable Integer recordId,
         @Valid @RequestBody AddProcedureRequest request) {
-    
+
     AddProcedureResponse response = clinicalRecordService.addProcedure(recordId, request);
     return ResponseEntity.status(HttpStatus.CREATED).body(response);
 }
@@ -550,13 +564,13 @@ public ResponseEntity<AddProcedureResponse> addProcedure(
 
 ## Changelog
 
-| Date       | Version | Changes                           |
-| ---------- | ------- | --------------------------------- |
-| 2025-12-02 | 1.0     | Initial implementation            |
-|            |         | - Removed quantity field          |
-|            |         | - Removed toothSurface field      |
-|            |         | - Added procedureDescription req  |
-|            |         | - Passive treatment plan linking  |
+| Date       | Version | Changes                          |
+| ---------- | ------- | -------------------------------- |
+| 2025-12-02 | 1.0     | Initial implementation           |
+|            |         | - Removed quantity field         |
+|            |         | - Removed toothSurface field     |
+|            |         | - Added procedureDescription req |
+|            |         | - Passive treatment plan linking |
 
 ---
 
@@ -565,6 +579,7 @@ public ResponseEntity<AddProcedureResponse> addProcedure(
 ### Why procedureDescription is Required
 
 In real dental practice:
+
 - "Filling" is too vague
 - Need to document: cavity size, material, technique, color match
 - Example: "Tram xoang II mat O-D, rang 36, Composite mau A3, lot MTA, keo 20 phut"
@@ -577,6 +592,7 @@ In real dental practice:
 - **Separation**: Clinical records independent of billing/planning workflows
 
 This design allows:
+
 - Real-time clinical documentation
 - Flexible workflow (complete appointment later)
 - Audit trail (procedure recorded with timestamp)

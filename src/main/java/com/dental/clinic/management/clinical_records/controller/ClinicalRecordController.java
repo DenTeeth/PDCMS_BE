@@ -4,6 +4,8 @@ import com.dental.clinic.management.clinical_records.dto.AddProcedureRequest;
 import com.dental.clinic.management.clinical_records.dto.AddProcedureResponse;
 import com.dental.clinic.management.clinical_records.dto.ClinicalRecordResponse;
 import com.dental.clinic.management.clinical_records.dto.ProcedureResponse;
+import com.dental.clinic.management.clinical_records.dto.UpdateProcedureRequest;
+import com.dental.clinic.management.clinical_records.dto.UpdateProcedureResponse;
 import com.dental.clinic.management.clinical_records.service.ClinicalRecordService;
 import com.dental.clinic.management.utils.annotation.ApiMessage;
 import jakarta.validation.Valid;
@@ -108,7 +110,8 @@ public class ClinicalRecordController {
      * 1. Validates clinical record exists
      * 2. Validates service exists and is active
      * 3. Creates passive link to treatment plan item (if provided)
-     * 4. Does NOT update treatment plan item status (handled by appointment completion or API 5.6)
+     * 4. Does NOT update treatment plan item status (handled by appointment
+     * completion or API 5.6)
      *
      * Authorization:
      * - WRITE_CLINICAL_RECORD: Doctor, Assistant, Admin
@@ -121,7 +124,7 @@ public class ClinicalRecordController {
      * - 400 VALIDATION_ERROR: Invalid request body
      *
      * @param recordId The clinical record ID
-     * @param request Procedure details (service, plan item, description, notes)
+     * @param request  Procedure details (service, plan item, description, notes)
      * @return AddProcedureResponse with created procedure details
      */
     @PostMapping("/clinical-records/{recordId}/procedures")
@@ -136,5 +139,82 @@ public class ClinicalRecordController {
         AddProcedureResponse response = clinicalRecordService.addProcedure(recordId, request);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    /**
+     * API 8.6: Update Procedure in Clinical Record
+     *
+     * Business Rules:
+     * 1. Validates clinical record and procedure exist
+     * 2. Validates procedure belongs to the specified record
+     * 3. Validates new service exists and is active
+     * 4. Validates plan item exists if provided
+     * 5. Updates all fields except createdAt (audit trail)
+     * 6. Does NOT update procedure status (separation of concerns)
+     *
+     * Authorization:
+     * - WRITE_CLINICAL_RECORD: Doctor, Assistant, Admin
+     *
+     * Returns:
+     * - 200 OK: Procedure updated successfully
+     * - 404 RECORD_NOT_FOUND: Clinical record doesn't exist
+     * - 404 PROCEDURE_NOT_FOUND: Procedure doesn't exist or doesn't belong to this record
+     * - 404 SERVICE_NOT_FOUND: Service doesn't exist or is inactive
+     * - 404 PLAN_ITEM_NOT_FOUND: Treatment plan item doesn't exist (if provided)
+     * - 400 VALIDATION_ERROR: Invalid request body
+     *
+     * @param recordId    The clinical record ID
+     * @param procedureId The procedure ID to update
+     * @param request     Updated procedure details
+     * @return UpdateProcedureResponse with updated procedure details
+     */
+    @PutMapping("/clinical-records/{recordId}/procedures/{procedureId}")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasAuthority('WRITE_CLINICAL_RECORD')")
+    @ApiMessage("Procedure updated successfully")
+    public ResponseEntity<UpdateProcedureResponse> updateProcedure(
+            @PathVariable Integer recordId,
+            @PathVariable Integer procedureId,
+            @Valid @RequestBody UpdateProcedureRequest request) {
+
+        log.info("API 8.6: PUT /api/v1/appointments/clinical-records/{}/procedures/{}", recordId, procedureId);
+
+        UpdateProcedureResponse response = clinicalRecordService.updateProcedure(recordId, procedureId, request);
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * API 8.7: Delete Procedure from Clinical Record
+     *
+     * Business Rules:
+     * 1. Validates clinical record and procedure exist
+     * 2. Validates procedure belongs to the specified record
+     * 3. Hard delete from database
+     * 4. Does NOT cascade to treatment plan (passive link only)
+     *
+     * Authorization:
+     * - WRITE_CLINICAL_RECORD: Doctor, Assistant, Admin
+     *
+     * Returns:
+     * - 204 NO_CONTENT: Procedure deleted successfully
+     * - 404 RECORD_NOT_FOUND: Clinical record doesn't exist
+     * - 404 PROCEDURE_NOT_FOUND: Procedure doesn't exist or doesn't belong to this record
+     *
+     * @param recordId    The clinical record ID
+     * @param procedureId The procedure ID to delete
+     * @return 204 No Content
+     */
+    @DeleteMapping("/clinical-records/{recordId}/procedures/{procedureId}")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasAuthority('WRITE_CLINICAL_RECORD')")
+    @ApiMessage("Procedure deleted successfully")
+    public ResponseEntity<Void> deleteProcedure(
+            @PathVariable Integer recordId,
+            @PathVariable Integer procedureId) {
+
+        log.info("API 8.7: DELETE /api/v1/appointments/clinical-records/{}/procedures/{}", recordId, procedureId);
+
+        clinicalRecordService.deleteProcedure(recordId, procedureId);
+
+        return ResponseEntity.noContent().build();
     }
 }

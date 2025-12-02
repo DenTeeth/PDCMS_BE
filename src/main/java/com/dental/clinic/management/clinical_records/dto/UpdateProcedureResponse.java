@@ -1,5 +1,6 @@
 package com.dental.clinic.management.clinical_records.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -8,23 +9,26 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 /**
- * Response DTO for API 8.5: Add Procedure to Clinical Record
+ * Response DTO for updating an existing procedure (API 8.6)
  *
- * Returns procedure details with service information
+ * <p>Returns complete procedure details after successful update</p>
+ *
+ * @author Dental Clinic System
+ * @since API 8.6
  */
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class AddProcedureResponse {
+public class UpdateProcedureResponse {
 
     /**
-     * Generated procedure ID
+     * Procedure ID (primary key)
      */
     private Integer procedureId;
 
     /**
-     * Clinical record ID (parent record)
+     * Parent clinical record ID
      */
     private Integer clinicalRecordId;
 
@@ -44,13 +48,12 @@ public class AddProcedureResponse {
     private String serviceCode;
 
     /**
-     * Treatment plan item ID (if linked)
-     * Null if procedure not part of treatment plan
+     * Treatment plan item ID (null if not linked)
      */
     private Long patientPlanItemId;
 
     /**
-     * Tooth number or identifier
+     * Tooth identifier
      */
     private String toothNumber;
 
@@ -65,7 +68,14 @@ public class AddProcedureResponse {
     private String notes;
 
     /**
-     * Timestamp when procedure was recorded
+     * Original creation timestamp (unchanged by update)
      */
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime createdAt;
+
+    /**
+     * Last update timestamp
+     */
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime updatedAt;
 }

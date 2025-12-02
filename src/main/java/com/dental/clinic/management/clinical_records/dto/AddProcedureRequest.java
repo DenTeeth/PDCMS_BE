@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 
 /**
  * Request DTO for API 8.5: Add Procedure to Clinical Record
- * 
+ *
  * Purpose: Record a procedure/service performed during the appointment
  * Authorization: WRITE_CLINICAL_RECORD
  */
@@ -46,8 +46,9 @@ public class AddProcedureRequest {
 
     /**
      * Detailed description of what was performed
-     * Required by schema (clinical_record_procedures.procedure_description NOT NULL)
-     * 
+     * Required by schema (clinical_record_procedures.procedure_description NOT
+     * NULL)
+     *
      * Examples:
      * - "Tram xoang II mat O-D, rang 36, mau A3, lot MTA"
      * - "Lay cao rang toan ham, sieu am rang so 3"
@@ -60,7 +61,7 @@ public class AddProcedureRequest {
     /**
      * Additional clinical notes
      * Optional - for extra observations or follow-up instructions
-     * 
+     *
      * Examples:
      * - "Benh nhan khong dau, hen tai kham sau 1 tuan"
      * - "Can theo doi tinh trang sau 3 ngay"
