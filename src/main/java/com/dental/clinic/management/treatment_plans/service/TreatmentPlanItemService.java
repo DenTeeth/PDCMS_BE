@@ -201,6 +201,9 @@ public class TreatmentPlanItemService {
         // STEP 7: Check and auto-complete phase
         checkAndCompletePhase(phase);
 
+        // STEP 7A: V21 - Check and activate plan (if first item scheduled/started)
+        checkAndActivatePlan(plan);
+
         // STEP 7B: V21 - Check and auto-complete plan (if all phases done)
         checkAndCompletePlan(plan);
 
@@ -364,6 +367,53 @@ public class TreatmentPlanItemService {
             phase.setCompletionDate(java.time.LocalDate.now());
             entityManager.merge(phase); // Update phase
             log.info(" Phase {} auto-completed: all items are done", phase.getPatientPhaseId());
+        }
+    }
+
+    /**
+     * V21: Auto-activate treatment plan when first item is scheduled or started.
+     *
+     * Business Logic:
+     * - When an item status changes to SCHEDULED or IN_PROGRESS
+     * - If plan status is null or PENDING
+     * - Then automatically set plan.status = IN_PROGRESS
+     * - Set plan.startDate = today (if not set)
+     *
+     * Use Case:
+     * - Plan was created with status = null (DRAFT) or PENDING
+     * - First appointment is scheduled → Plan should be IN_PROGRESS
+     * - First item starts → Plan should be IN_PROGRESS
+     *
+     * @param plan The treatment plan to check
+     */
+    private void checkAndActivatePlan(PatientTreatmentPlan plan) {
+        TreatmentPlanStatus currentStatus = plan.getStatus();
+
+        // Only activate if plan is not already activated
+        if (currentStatus != null && currentStatus != TreatmentPlanStatus.PENDING) {
+            return;
+        }
+
+        // Check if any item is SCHEDULED or IN_PROGRESS
+        boolean hasActiveItems = plan.getPhases().stream()
+                .flatMap(phase -> phase.getItems().stream())
+                .anyMatch(item ->
+                        item.getStatus() == PlanItemStatus.SCHEDULED ||
+                                item.getStatus() == PlanItemStatus.IN_PROGRESS
+                );
+
+        if (hasActiveItems) {
+            // AUTO-ACTIVATE: null/PENDING → IN_PROGRESS
+            plan.setStatus(TreatmentPlanStatus.IN_PROGRESS);
+
+            // Set startDate if not set
+            if (plan.getStartDate() == null) {
+                plan.setStartDate(java.time.LocalDate.now());
+            }
+
+            planRepository.save(plan);
+            log.info("✅ V21: Auto-activated treatment plan {} ({} → IN_PROGRESS) - First item scheduled/started",
+                    plan.getPlanCode(), currentStatus == null ? "null" : currentStatus);
         }
     }
 
