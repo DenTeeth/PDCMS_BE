@@ -11,6 +11,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -55,11 +56,11 @@ public class ClinicalRecord {
 
     @OneToMany(mappedBy = "clinicalRecord", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonManagedReference
-    private List<ClinicalRecordProcedure> procedures;
+    private List<ClinicalRecordProcedure> procedures = new ArrayList<>();
 
     @OneToMany(mappedBy = "clinicalRecord", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonManagedReference
-    private List<ClinicalPrescription> prescriptions;
+    private List<ClinicalPrescription> prescriptions = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {
