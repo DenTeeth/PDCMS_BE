@@ -1,6 +1,7 @@
 package com.dental.clinic.management.clinical_records.controller;
 
 import com.dental.clinic.management.clinical_records.dto.ClinicalRecordResponse;
+import com.dental.clinic.management.clinical_records.dto.ProcedureResponse;
 import com.dental.clinic.management.clinical_records.service.ClinicalRecordService;
 import com.dental.clinic.management.utils.annotation.ApiMessage;
 import lombok.RequiredArgsConstructor;
@@ -8,6 +9,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * Clinical Records API Controller
@@ -55,5 +58,39 @@ public class ClinicalRecordController {
         ClinicalRecordResponse response = clinicalRecordService.getClinicalRecord(appointmentId);
 
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * API 8.4: Get Procedures for Clinical Record
+     *
+     * Retrieves all procedures performed during a clinical visit.
+     * This API is typically called after loading clinical record detail to display
+     * the "Work Done" table.
+     *
+     * Authorization:
+     * - ROLE_ADMIN: Full access to all records
+     * - VIEW_APPOINTMENT_ALL: Access to all records (Receptionist, Manager)
+     * - VIEW_APPOINTMENT_OWN: Access only to related records (Doctor, Patient,
+     * Observer)
+     *
+     * Returns:
+     * - 200 OK: List of procedures (empty array if none added yet)
+     * - 404 RECORD_NOT_FOUND: Clinical record doesn't exist
+     * - 403 UNAUTHORIZED_ACCESS: User doesn't have permission to view this record
+     *
+     * @param recordId The clinical record ID
+     * @return List of ProcedureResponse with service information
+     */
+    @GetMapping("/clinical-records/{recordId}/procedures")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasAuthority('VIEW_APPOINTMENT_ALL') or hasAuthority('VIEW_APPOINTMENT_OWN')")
+    @ApiMessage("Procedures retrieved successfully")
+    public ResponseEntity<List<ProcedureResponse>> getProcedures(
+            @PathVariable Integer recordId) {
+
+        log.info("API 8.4: GET /api/v1/appointments/clinical-records/{}/procedures", recordId);
+
+        List<ProcedureResponse> procedures = clinicalRecordService.getProcedures(recordId);
+
+        return ResponseEntity.ok(procedures);
     }
 }

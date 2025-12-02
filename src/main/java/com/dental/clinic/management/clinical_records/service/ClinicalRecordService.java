@@ -6,7 +6,9 @@ import com.dental.clinic.management.booking_appointment.repository.AppointmentPa
 import com.dental.clinic.management.booking_appointment.repository.AppointmentRepository;
 import com.dental.clinic.management.booking_appointment.repository.RoomRepository;
 import com.dental.clinic.management.clinical_records.domain.ClinicalRecord;
+import com.dental.clinic.management.clinical_records.domain.ClinicalRecordProcedure;
 import com.dental.clinic.management.clinical_records.dto.*;
+import com.dental.clinic.management.clinical_records.repository.ClinicalRecordProcedureRepository;
 import com.dental.clinic.management.clinical_records.repository.ClinicalRecordRepository;
 import com.dental.clinic.management.employee.domain.Employee;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
@@ -30,6 +32,7 @@ import java.util.stream.Collectors;
 public class ClinicalRecordService {
 
         private final ClinicalRecordRepository clinicalRecordRepository;
+        private final ClinicalRecordProcedureRepository procedureRepository;
         private final AppointmentRepository appointmentRepository;
         private final AppointmentParticipantRepository appointmentParticipantRepository;
         private final EmployeeRepository employeeRepository;
@@ -389,5 +392,76 @@ public class ClinicalRecordService {
                                 .examinationFindings(updated.getExaminationFindings())
                                 .treatmentNotes(updated.getTreatmentNotes())
                                 .build();
+        }
+
+        /**
+         * API 8.4: Get Procedures for Clinical Record
+         *
+         * Authorization Logic (SAME as API 8.1):
+         * 1. Admin (ROLE_ADMIN): Can access all records
+         * 2. VIEW_APPOINTMENT_ALL: Can access all records (Receptionist, Manager)
+         * 3. VIEW_APPOINTMENT_OWN: Can only access if:
+         * - Doctor: appointment.employee_id matches user's employee_id
+         * - Patient: appointment.patient_id matches user's patient_id
+         * - Observer/Nurse: appointment participant matches user's employee_id
+         *
+         * Returns empty list if no procedures added yet (200 OK with data: [])
+         */
+        @Transactional(readOnly = true)
+        public java.util.List<ProcedureResponse> getProcedures(Integer recordId) {
+                log.info("Fetching procedures for clinical record ID: {}", recordId);
+
+                // Step 1: Load clinical record (throws 404 if not found)
+                ClinicalRecord record = clinicalRecordRepository.findById(recordId)
+                                .orElseThrow(() -> new NotFoundException("RECORD_NOT_FOUND",
+                                                "Clinical record not found with ID: " + recordId));
+
+                // Step 2: Load appointment for RBAC check
+                Appointment appointment = record.getAppointment();
+                if (appointment == null) {
+                        throw new NotFoundException("APPOINTMENT_NOT_FOUND",
+                                        "Appointment not found for clinical record ID: " + recordId);
+                }
+
+                // Step 3: Check RBAC authorization (reuse from API 8.1)
+                checkAccessPermission(appointment);
+
+                // Step 4: Load procedures with service info (LEFT JOIN FETCH)
+                java.util.List<ClinicalRecordProcedure> procedures = procedureRepository
+                                .findByClinicalRecordIdWithService(recordId);
+
+                log.info("Found {} procedures for clinical record ID: {}", procedures.size(), recordId);
+
+                // Step 5: Map to DTOs
+                return procedures.stream()
+                                .map(this::mapToProcedureResponse)
+                                .collect(Collectors.toList());
+        }
+
+        /**
+         * Map ClinicalRecordProcedure entity to ProcedureResponse DTO
+         */
+        private ProcedureResponse mapToProcedureResponse(ClinicalRecordProcedure procedure) {
+                ProcedureResponse.ProcedureResponseBuilder builder = ProcedureResponse.builder()
+                                .procedureId(procedure.getProcedureId())
+                                .clinicalRecordId(procedure.getClinicalRecord().getClinicalRecordId())
+                                .procedureDescription(procedure.getProcedureDescription())
+                                .toothNumber(procedure.getToothNumber())
+                                .notes(procedure.getNotes())
+                                .createdAt(procedure.getCreatedAt());
+
+                // Add service info if exists
+                if (procedure.getService() != null) {
+                        builder.serviceId(procedure.getService().getServiceId())
+                                        .serviceName(procedure.getService().getServiceName())
+                                        .serviceCode(procedure.getService().getServiceCode());
+                }
+
+                // Add plan item ID if exists
+                if (procedure.getPatientPlanItem() != null) {
+                        builder.patientPlanItemId(procedure.getPatientPlanItem().getItemId());
+                }
+
+                return builder.build();
         }
 }
