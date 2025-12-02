@@ -187,16 +187,41 @@ public class AppointmentListService {
                         pageableNative); //  Use NATIVE pageable (snake_case)
             } else {
                 log.info("Executing search with individual filters");
+                
+                // Resolve patientCode to patientId if provided
+                Integer patientId = null;
+                if (criteria.getPatientCode() != null && !criteria.getPatientCode().isBlank()) {
+                    var patient = patientRepository.findOneByPatientCode(criteria.getPatientCode()).orElse(null);
+                    if (patient != null) {
+                        patientId = patient.getPatientId();
+                        log.debug("Resolved patientCode {} to patientId {}", criteria.getPatientCode(), patientId);
+                    } else {
+                        log.warn("Patient not found for patientCode: {}", criteria.getPatientCode());
+                    }
+                }
+                
+                // Resolve employeeCode to employeeId if provided
+                Integer employeeId = null;
+                if (criteria.getEmployeeCode() != null && !criteria.getEmployeeCode().isBlank()) {
+                    var employee = employeeRepository.findByEmployeeCodeAndIsActiveTrue(criteria.getEmployeeCode()).orElse(null);
+                    if (employee != null) {
+                        employeeId = employee.getEmployeeId();
+                        log.debug("Resolved employeeCode {} to employeeId {}", criteria.getEmployeeCode(), employeeId);
+                    } else {
+                        log.warn("Employee not found for employeeCode: {}", criteria.getEmployeeCode());
+                    }
+                }
+                
                 appointments = appointmentRepository.findByFilters(
                         startDate,
                         endDate,
-                        statusArray, //  Pass String[] instead of List
-                        null, // patientId - TODO: resolve from patientCode if needed
-                        null, // employeeId - TODO: resolve from employeeCode if needed
+                        statusArray,
+                        patientId,
+                        employeeId,
                         criteria.getRoomCode(),
-                        criteria.getPatientName(), //  NEW: Search by name
-                        criteria.getPatientPhone(), //  NEW: Search by phone
-                        pageableNative); //  Use NATIVE pageable (snake_case)
+                        criteria.getPatientName(),
+                        criteria.getPatientPhone(),
+                        pageableNative);
             }
         }
 
@@ -233,13 +258,16 @@ public class AppointmentListService {
         }
 
         // Try to find patient
-        // TODO: Need Patient.account relationship or query by account_id
-        // For now, this is placeholder
-        log.warn("Patient RBAC filter not yet implemented - need Patient.account mapping");
+        var patientOpt = patientRepository.findByAccount_Username(username);
+        if (patientOpt.isPresent()) {
+            Integer patientId = patientOpt.get().getPatientId();
+            log.info("User {} is patient with ID: {}", username, patientId);
+            criteria.setCurrentUserPatientId(patientId);
+            return;
+        }
 
-        // Placeholder: If not employee, assume patient
-        // TODO: Query patients table: findByAccount_Username(username)
-        // criteria.setCurrentUserPatientId(patientId);
+        // User not found as employee or patient
+        log.warn("User {} not found as employee or patient - no appointments will be visible", username);
     }
 
     /**
