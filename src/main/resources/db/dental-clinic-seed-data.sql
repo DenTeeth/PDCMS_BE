@@ -58,6 +58,9 @@ CREATE TYPE planactiontype AS ENUM ('STATUS_CHANGE', 'PRICE_UPDATE', 'PHASE_UPDA
 -- Patient Tooth Status ENUM (Odontogram)
 CREATE TYPE tooth_condition_enum AS ENUM ('HEALTHY', 'CARIES', 'FILLED', 'CROWN', 'MISSING', 'IMPLANT', 'ROOT_CANAL', 'FRACTURED', 'IMPACTED');
 
+-- Clinical Record Attachment ENUM
+CREATE TYPE attachment_type_enum AS ENUM ('XRAY', 'PHOTO_BEFORE', 'PHOTO_AFTER', 'LAB_RESULT', 'CONSENT_FORM', 'OTHER');
+
 -- Warehouse ENUMs
 CREATE TYPE batchstatus AS ENUM ('ACTIVE', 'EXPIRED', 'DEPLETED');
 CREATE TYPE exporttype AS ENUM ('SERVICE', 'SALE', 'WASTAGE', 'TRANSFER');
@@ -70,7 +73,7 @@ CREATE TYPE warehouseactiontype AS ENUM ('IMPORT', 'EXPORT', 'TRANSFER', 'ADJUST
 CREATE TYPE transactiontype AS ENUM ('PURCHASE', 'SALE', 'SERVICE', 'TRANSFER_IN', 'TRANSFER_OUT', 'ADJUSTMENT');
 
 -- ============================================
--- END ENUM TYPE DEFINITIONS (37 types total)
+-- END ENUM TYPE DEFINITIONS (38 types total)
 -- ============================================
 
 -- ============================================
@@ -378,7 +381,10 @@ VALUES
 ('MANAGE_SUPPLIERS', 'MANAGE_SUPPLIERS', 'WAREHOUSE', 'Quản lý nhà cung cấp (API 6.13, 6.14)', 282, NULL, TRUE, NOW()),
 ('MANAGE_CONSUMABLES', 'MANAGE_CONSUMABLES', 'WAREHOUSE', 'Quản lý định mức tiêu hao vật tư (BOM) - API 6.18, 6.19', 283, NULL, TRUE, NOW()),
 ('MANAGE_WAREHOUSE', 'MANAGE_WAREHOUSE', 'WAREHOUSE', 'Toàn quyền quản lý kho', 284, NULL, TRUE, NOW()),
-('WRITE_CLINICAL_RECORD', 'WRITE_CLINICAL_RECORD', 'CLINICAL_RECORDS', 'Tạo và cập nhật bệnh án, thêm thủ thuật (API 8.5, 9.2, 9.3)', 285, NULL, TRUE, NOW())
+('WRITE_CLINICAL_RECORD', 'WRITE_CLINICAL_RECORD', 'CLINICAL_RECORDS', 'Tạo và cập nhật bệnh án, thêm thủ thuật (API 8.5, 9.2, 9.3)', 285, NULL, TRUE, NOW()),
+('UPLOAD_ATTACHMENT', 'UPLOAD_ATTACHMENT', 'CLINICAL_RECORDS', 'Upload file đính kèm vào bệnh án (X-quang, ảnh, PDF) - API 8.11', 286, NULL, TRUE, NOW()),
+('VIEW_ATTACHMENT', 'VIEW_ATTACHMENT', 'CLINICAL_RECORDS', 'Xem danh sách file đính kèm của bệnh án - API 8.12', 287, NULL, TRUE, NOW()),
+('DELETE_ATTACHMENT', 'DELETE_ATTACHMENT', 'CLINICAL_RECORDS', 'Xóa file đính kèm (chỉ Admin hoặc người upload) - API 8.13', 288, NULL, TRUE, NOW())
 ON CONFLICT (permission_id) DO NOTHING;
 
 
@@ -413,7 +419,10 @@ VALUES
 ('ROLE_DENTIST', 'DELETE_TREATMENT_PLAN'),
 ('ROLE_DENTIST', 'VIEW_SERVICE'),
 ('ROLE_DENTIST', 'VIEW_ITEMS'),
-('ROLE_DENTIST', 'WRITE_CLINICAL_RECORD')
+('ROLE_DENTIST', 'WRITE_CLINICAL_RECORD'),
+('ROLE_DENTIST', 'UPLOAD_ATTACHMENT'),
+('ROLE_DENTIST', 'VIEW_ATTACHMENT'),
+('ROLE_DENTIST', 'DELETE_ATTACHMENT')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
@@ -428,7 +437,8 @@ VALUES
 ('ROLE_NURSE', 'CREATE_REGISTRATION'),
 ('ROLE_NURSE', 'VIEW_LEAVE_OWN'), ('ROLE_NURSE', 'CREATE_TIME_OFF'), ('ROLE_NURSE', 'CREATE_OVERTIME'),
 ('ROLE_NURSE', 'CANCEL_TIME_OFF_OWN'), ('ROLE_NURSE', 'CANCEL_OVERTIME_OWN'),
-('ROLE_NURSE', 'VIEW_HOLIDAY')
+('ROLE_NURSE', 'VIEW_HOLIDAY'),
+('ROLE_NURSE', 'VIEW_ATTACHMENT')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
@@ -585,7 +595,8 @@ VALUES
 ('ROLE_PATIENT', 'VIEW_APPOINTMENT_OWN'), -- NEW: Patient can view their own appointments
 ('ROLE_PATIENT', 'CREATE_APPOINTMENT'),
 -- NEW: Treatment Plan permissions
-('ROLE_PATIENT', 'VIEW_TREATMENT_PLAN_OWN') -- Can only view their own treatment plans
+('ROLE_PATIENT', 'VIEW_TREATMENT_PLAN_OWN'), -- Can only view their own treatment plans
+('ROLE_PATIENT', 'VIEW_ATTACHMENT') -- Can view attachments of own clinical records
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 

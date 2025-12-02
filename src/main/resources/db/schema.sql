@@ -870,6 +870,29 @@ CREATE TABLE patient_tooth_status (
 COMMENT ON TABLE patient_tooth_status IS 'Current status of each tooth for patient (dental chart/odontogram)';
 COMMENT ON COLUMN patient_tooth_status.status IS 'Tooth condition: HEALTHY, CARIES, FILLED, CROWN, MISSING, IMPLANT, ROOT_CANAL, FRACTURED, IMPACTED';
 
+-- Clinical Record Attachments (X-ray, images, documents)
+-- TODO: Migrate to S3/Cloud storage in production
+CREATE TABLE clinical_record_attachments (
+    attachment_id SERIAL PRIMARY KEY,
+    clinical_record_id INTEGER NOT NULL REFERENCES clinical_records(clinical_record_id) ON DELETE CASCADE,
+    file_name VARCHAR(255) NOT NULL,
+    file_path VARCHAR(500) NOT NULL,
+    file_size BIGINT NOT NULL,
+    mime_type VARCHAR(100) NOT NULL,
+    attachment_type attachment_type_enum NOT NULL,
+    description TEXT,
+    uploaded_by INTEGER REFERENCES employees(employee_id),
+    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_attachments_clinical_record ON clinical_record_attachments(clinical_record_id);
+CREATE INDEX idx_attachments_type ON clinical_record_attachments(attachment_type);
+CREATE INDEX idx_attachments_uploaded_by ON clinical_record_attachments(uploaded_by);
+
+COMMENT ON TABLE clinical_record_attachments IS 'Files attached to clinical records (X-rays, photos, consent forms)';
+COMMENT ON COLUMN clinical_record_attachments.file_path IS 'Local path (development) or S3 URL (production) - TODO: migrate to cloud storage';
+COMMENT ON COLUMN clinical_record_attachments.attachment_type IS 'File category: XRAY, PHOTO_BEFORE, PHOTO_AFTER, LAB_RESULT, CONSENT_FORM, OTHER';
+
 -- History table for tooth status changes (audit trail)
 CREATE TABLE patient_tooth_status_history (
     history_id SERIAL PRIMARY KEY,
