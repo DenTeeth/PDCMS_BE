@@ -6,7 +6,12 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "employee_leave_balances")
+@Table(name = "employee_leave_balances",
+    uniqueConstraints = @UniqueConstraint(
+        name = "uk_employee_leave_balance",
+        columnNames = {"employee_id", "time_off_type_id", "cycle_year"}
+    )
+)
 @Getter
 @Setter
 @NoArgsConstructor

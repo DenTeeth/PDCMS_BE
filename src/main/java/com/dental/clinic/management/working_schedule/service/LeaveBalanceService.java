@@ -173,11 +173,18 @@ public class LeaveBalanceService {
                 employeeId, timeOffTypeId, year, adjustment);
 
         // Find existing balance
-        EmployeeLeaveBalance balance = balanceRepository
-                .findByEmployeeIdAndTimeOffTypeIdAndYear(employeeId, timeOffTypeId, year)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        String.format("Không tìm thấy số dư nghỉ phép cho nhân viên %d loại %s năm %d",
-                                employeeId, timeOffTypeId, year)));
+        EmployeeLeaveBalance balance;
+        try {
+                balance = balanceRepository
+                        .findByEmployeeIdAndTimeOffTypeIdAndYear(employeeId, timeOffTypeId, year)
+                        .orElseThrow(() -> new IllegalArgumentException(
+                                String.format("Không tìm thấy số dư nghỉ phép cho nhân viên %d loại %s năm %d",
+                                        employeeId, timeOffTypeId, year)));
+        } catch (org.springframework.dao.IncorrectResultSizeDataAccessException e) {
+                throw new IllegalArgumentException(
+                        String.format("Phát hiện dữ liệu bị trùng lặp cho nhân viên %d loại %s năm %d. Vui lòng liên hệ quản trị viên để xử lý.",
+                                employeeId, timeOffTypeId, year));
+        }
 
         // Apply adjustment to total allotted
         balance.setTotalAllotted(balance.getTotalAllotted() + adjustment);
