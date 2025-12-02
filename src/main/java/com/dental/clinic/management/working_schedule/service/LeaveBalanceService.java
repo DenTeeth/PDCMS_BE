@@ -109,10 +109,10 @@ public class LeaveBalanceService {
 
         EmployeeLeaveBalance balance;
         if (isNew) {
-            // Create new balance
+            // Create new balance - Set Employee and TimeOffType entities (required because fields are insertable=false)
             balance = new EmployeeLeaveBalance();
-            balance.setEmployeeId(employee.getEmployeeId());
-            balance.setTimeOffTypeId(timeOffType.getTypeId());
+            balance.setEmployee(employee);  // Set Employee entity, not employeeId
+            balance.setTimeOffType(timeOffType);  // Set TimeOffType entity, not timeOffTypeId
             balance.setYear(year);
             balance.setUsed(0.0);
         } else {

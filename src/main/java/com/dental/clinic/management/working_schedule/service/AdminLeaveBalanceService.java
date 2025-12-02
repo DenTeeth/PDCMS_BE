@@ -298,9 +298,13 @@ public class AdminLeaveBalanceService {
                             employeeId, request.getDefaultAllowance(), oldUsed, oldAllowed);
                 } else {
                     // Balance doesn't exist - CREATE new
+                    // Load Employee entity (required because employeeId is insertable=false)
+                    var employee = employeeRepository.findById(employeeId)
+                            .orElseThrow(() -> new EmployeeNotFoundException(employeeId));
+                    
                     balance = EmployeeLeaveBalance.builder()
-                            .employeeId(employeeId)
-                            .timeOffTypeId(request.getApplyToTypeId())
+                            .employee(employee)  // Set Employee entity, not employeeId
+                            .timeOffType(timeOffType)  // Set TimeOffType entity, not timeOffTypeId
                             .year(request.getCycleYear())
                             .totalAllotted(request.getDefaultAllowance())
                             .used(0.0)
@@ -362,13 +366,18 @@ public class AdminLeaveBalanceService {
      * Helper: Create a new empty balance record
      */
     private EmployeeLeaveBalance createNewBalance(Integer employeeId, String timeOffTypeId, Integer year) {
+        // Load Employee and TimeOffType entities (required because fields are insertable=false)
+        var employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new EmployeeNotFoundException(employeeId));
+        var timeOffType = timeOffTypeRepository.findById(timeOffTypeId)
+                .orElseThrow(() -> new TimeOffTypeNotFoundException(timeOffTypeId));
+        
         EmployeeLeaveBalance balance = EmployeeLeaveBalance.builder()
-                .employeeId(employeeId)
-                .timeOffTypeId(timeOffTypeId)
+                .employee(employee)  // Set Employee entity, not employeeId
+                .timeOffType(timeOffType)  // Set TimeOffType entity, not timeOffTypeId
                 .year(year)
                 .totalAllotted(0.0)
                 .used(0.0)
-                .remaining(0.0)
                 .build();
 
         return balanceRepository.save(balance);
