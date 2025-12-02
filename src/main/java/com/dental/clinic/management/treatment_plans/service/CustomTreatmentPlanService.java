@@ -12,7 +12,7 @@ import com.dental.clinic.management.treatment_plans.dto.request.CreateCustomPlan
 import com.dental.clinic.management.treatment_plans.dto.TreatmentPlanDetailResponse;
 import com.dental.clinic.management.treatment_plans.enums.PhaseStatus;
 import com.dental.clinic.management.treatment_plans.enums.PlanItemStatus;
-import com.dental.clinic.management.treatment_plans.enums.TreatmentPlanStatus;
+// import com.dental.clinic.management.treatment_plans.enums.TreatmentPlanStatus;
 import com.dental.clinic.management.treatment_plans.repository.PatientTreatmentPlanRepository;
 import com.dental.clinic.management.treatment_plans.util.PlanCodeGenerator;
 import lombok.RequiredArgsConstructor;

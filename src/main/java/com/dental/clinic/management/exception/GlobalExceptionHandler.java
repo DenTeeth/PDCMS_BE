@@ -957,6 +957,42 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handle Spring DataIntegrityViolationException (duplicate keys, constraint violations at JPA level).
+     * Returns 409 Conflict for duplicate entries, 400 for other violations.
+     */
+    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleDataIntegrityViolation(
+            org.springframework.dao.DataIntegrityViolationException ex,
+            HttpServletRequest request) {
+
+        String message = ex.getMessage() != null ? ex.getMessage() : "Lỗi toàn vẹn dữ liệu";
+        
+        log.error("Data integrity violation at {}: {}", request.getRequestURI(), message);
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        String errorCode = "DATA_INTEGRITY_VIOLATION";
+        
+        // Check if it's a duplicate key error
+        if (message.contains("duplicate key") || message.contains("unique constraint") || 
+            message.contains("Unique index or primary key violation")) {
+            res.setStatusCode(HttpStatus.CONFLICT.value());
+            res.setMessage("Dữ liệu đã tồn tại trong hệ thống. Vui lòng kiểm tra lại.");
+            errorCode = "DUPLICATE_ENTRY";
+            res.setError(errorCode);
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(res);
+        }
+        
+        // Other data integrity violations return 400 Bad Request
+        res.setStatusCode(HttpStatus.BAD_REQUEST.value());
+        res.setMessage("Lỗi dữ liệu: " + (ex.getMostSpecificCause() != null ? 
+                       ex.getMostSpecificCause().getMessage() : "Vi phạm ràng buộc dữ liệu"));
+        res.setError(errorCode);
+        res.setData(null);
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+    }
+
+    /**
      * Fallback handler for any other unexpected exceptions.
      * Returns 500 Internal Server Error.
      */
