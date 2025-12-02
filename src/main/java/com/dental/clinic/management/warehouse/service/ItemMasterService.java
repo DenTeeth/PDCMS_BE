@@ -265,9 +265,31 @@ public class ItemMasterService {
                 boolean updateUnits = request.getUnits() != null && !request.getUnits().isEmpty();
 
                 if (updateUnits) {
+                        // Validate required fields before processing
+                        for (UpdateItemMasterRequest.UnitRequest unit : request.getUnits()) {
+                                if (unit.getIsBaseUnit() == null) {
+                                        log.warn("isBaseUnit is null in update request");
+                                        throw new ResponseStatusException(
+                                                        HttpStatus.BAD_REQUEST,
+                                                        "isBaseUnit flag is required for all units");
+                                }
+                                if (unit.getConversionRate() == null || unit.getConversionRate() < 1) {
+                                        log.warn("Invalid conversion rate: {}", unit.getConversionRate());
+                                        throw new ResponseStatusException(
+                                                        HttpStatus.BAD_REQUEST,
+                                                        "Conversion rate must be >= 1 for all units");
+                                }
+                                if (unit.getIsActive() == null) {
+                                        log.warn("isActive is null in update request");
+                                        throw new ResponseStatusException(
+                                                        HttpStatus.BAD_REQUEST,
+                                                        "isActive flag is required for all units");
+                                }
+                        }
+
                         // Validate exactly one base unit in request
                         long baseUnitCount = request.getUnits().stream()
-                                        .filter(UpdateItemMasterRequest.UnitRequest::getIsBaseUnit)
+                                        .filter(unit -> unit.getIsBaseUnit() != null && unit.getIsBaseUnit())
                                         .count();
 
                         if (baseUnitCount != 1) {
@@ -282,6 +304,14 @@ public class ItemMasterService {
                 if (updateUnits) {
                         Set<String> unitNames = new HashSet<>();
                         for (UpdateItemMasterRequest.UnitRequest unit : request.getUnits()) {
+                                // Defensive null check for unit name
+                                if (unit.getUnitName() == null || unit.getUnitName().trim().isEmpty()) {
+                                        log.warn("Unit name is null or empty in update request");
+                                        throw new ResponseStatusException(
+                                                        HttpStatus.BAD_REQUEST,
+                                                        "Unit name cannot be null or empty");
+                                }
+                                
                                 if (!unitNames.add(unit.getUnitName().toLowerCase())) {
                                         log.warn("Duplicate unit name: {}", unit.getUnitName());
                                         throw new ResponseStatusException(
@@ -375,9 +405,11 @@ public class ItemMasterService {
 
                 if (updateUnits) {
                         baseUnitRequest = request.getUnits().stream()
-                                        .filter(UpdateItemMasterRequest.UnitRequest::getIsBaseUnit)
+                                        .filter(unit -> unit.getIsBaseUnit() != null && unit.getIsBaseUnit())
                                         .findFirst()
-                                        .orElseThrow();
+                                        .orElseThrow(() -> new ResponseStatusException(
+                                                        HttpStatus.BAD_REQUEST,
+                                                        "Base unit not found in request"));
 
                         for (UpdateItemMasterRequest.UnitRequest unitRequest : request.getUnits()) {
                                 ItemUnit unit;
