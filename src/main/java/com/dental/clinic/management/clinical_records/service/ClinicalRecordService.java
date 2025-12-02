@@ -2,6 +2,7 @@ package com.dental.clinic.management.clinical_records.service;
 
 import com.dental.clinic.management.booking_appointment.domain.Appointment;
 import com.dental.clinic.management.booking_appointment.domain.Room;
+import com.dental.clinic.management.booking_appointment.repository.AppointmentParticipantRepository;
 import com.dental.clinic.management.booking_appointment.repository.AppointmentRepository;
 import com.dental.clinic.management.booking_appointment.repository.RoomRepository;
 import com.dental.clinic.management.clinical_records.domain.ClinicalRecord;
@@ -30,6 +31,7 @@ public class ClinicalRecordService {
 
     private final ClinicalRecordRepository clinicalRecordRepository;
     private final AppointmentRepository appointmentRepository;
+    private final AppointmentParticipantRepository appointmentParticipantRepository;
     private final EmployeeRepository employeeRepository;
     private final PatientRepository patientRepository;
     private final RoomRepository roomRepository;
@@ -120,20 +122,43 @@ public class ClinicalRecordService {
                 return;
             }
 
-            // TODO: Check if user is a participant (observer/nurse)
-            // For now, deny access if not primary doctor
-            log.warn("Employee {} is not the primary doctor for appointment {}", employeeId,
+            // Check if user is a participant (observer/nurse)
+            boolean isParticipant = appointmentParticipantRepository
+                    .findByIdAppointmentId(appointment.getAppointmentId())
+                    .stream()
+                    .anyMatch(ap -> ap.getId().getEmployeeId().equals(employeeId));
+
+            if (isParticipant) {
+                log.info("Employee {} is a participant for appointment {}", employeeId,
+                        appointment.getAppointmentId());
+                return;
+            }
+
+            // Not primary doctor nor participant
+            log.warn("Employee {} is neither primary doctor nor participant for appointment {}", employeeId,
                     appointment.getAppointmentId());
             throw new AccessDeniedException(
-                    "You can only view clinical records for appointments where you are the primary doctor");
+                    "You can only view clinical records for appointments where you are the primary doctor or a participant");
         }
 
-        // TODO: Try patient (need Patient.account relationship)
-        // Patient RBAC not yet implemented - need findByAccount_Username method
-        log.warn("Patient RBAC not yet implemented for clinical records");
+        // Try patient (check if appointment belongs to this patient)
+        var patientOpt = patientRepository.findByAccount_Username(username);
+        if (patientOpt.isPresent()) {
+            Integer patientId = patientOpt.get().getPatientId();
 
-        // User not found as employee
-        log.warn("User {} not found as employee (patient RBAC not implemented)", username);
+            if (appointment.getPatientId().equals(patientId)) {
+                log.info("Patient {} is viewing their own clinical record for appointment {}", patientId,
+                        appointment.getAppointmentId());
+                return;
+            }
+
+            log.warn("Patient {} attempted to access clinical record for different patient's appointment {}",
+                    patientId, appointment.getAppointmentId());
+            throw new AccessDeniedException("You can only view your own clinical records");
+        }
+
+        // User not found as employee or patient
+        log.warn("User {} not found as employee or patient", username);
         throw new AccessDeniedException("Access Denied");
     }
 
