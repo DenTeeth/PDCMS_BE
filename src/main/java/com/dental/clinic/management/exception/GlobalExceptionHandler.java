@@ -995,12 +995,29 @@ public class GlobalExceptionHandler {
     /**
      * Fallback handler for any other unexpected exceptions.
      * Returns 500 Internal Server Error.
+     * 
+     * IMPORTANT: This handler checks for nested ErrorResponseException (like BadRequestAlertException)
+     * that may be wrapped by other exceptions, and unwraps them to preserve proper HTTP status codes.
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleGenericException(
             Exception ex, HttpServletRequest request) {
 
-        log.error("Unexpected error at {}: {}", request.getRequestURI(), ex.getMessage(), ex);
+        // CRITICAL FIX: Check if this is a wrapped ErrorResponseException (e.g., BadRequestAlertException)
+        // This can happen when exceptions are thrown inside @Transactional methods or async operations
+        Throwable cause = ex;
+        while (cause != null) {
+            if (cause instanceof org.springframework.web.ErrorResponseException ere) {
+                log.warn("Unwrapping ErrorResponseException from {}: {} -> delegating to specific handler",
+                        ex.getClass().getSimpleName(), ere.getClass().getSimpleName());
+                return handleErrorResponseException(ere, request);
+            }
+            cause = cause.getCause();
+        }
+
+        // Log full stack trace for true unexpected errors
+        log.error("Unexpected error at {}: {} (Class: {})", 
+                request.getRequestURI(), ex.getMessage(), ex.getClass().getName(), ex);
 
         FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
         res.setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
