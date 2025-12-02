@@ -235,6 +235,7 @@ public class ServiceConsumableService {
          * @param consumables New consumable configuration
          * @return Number of inserted records
          */
+        @SuppressWarnings("unused")
         @Transactional
         public int updateServiceConsumables(Long serviceId,
                         List<com.dental.clinic.management.warehouse.dto.request.ConsumableItemRequest> consumables) {
