@@ -36,6 +36,16 @@ public interface PatientRepository extends JpaRepository<Patient, Integer>, JpaS
   @Query("SELECT p FROM Patient p WHERE p.account.accountId = :accountId")
   Optional<Patient> findOneByAccountAccountId(@Param("accountId") Integer accountId);
 
+  /**
+   * Find patient by account username (for RBAC checks).
+   * Used when determining current patient from JWT username.
+   *
+   * @param username Account username from JWT
+   * @return Optional Patient entity
+   */
+  @Query("SELECT p FROM Patient p WHERE p.account.username = :username")
+  Optional<Patient> findByAccount_Username(@Param("username") String username);
+
   Optional<Patient> findOneByEmail(String email);
 
   Optional<Patient> findOneByPhone(String phone);

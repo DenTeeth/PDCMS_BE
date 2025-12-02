@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -37,7 +38,8 @@ public class ClinicalPrescription {
 
     @OneToMany(mappedBy = "prescription", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonManagedReference
-    private List<ClinicalPrescriptionItem> items;
+    @Builder.Default
+    private List<ClinicalPrescriptionItem> items = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {

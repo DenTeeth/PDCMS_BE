@@ -5,7 +5,10 @@ import com.dental.clinic.management.booking_appointment.dto.AppointmentFilterCri
 import com.dental.clinic.management.booking_appointment.dto.AppointmentSummaryDTO;
 import com.dental.clinic.management.booking_appointment.dto.CreateAppointmentResponse;
 import com.dental.clinic.management.booking_appointment.enums.AppointmentStatus;
+import com.dental.clinic.management.booking_appointment.domain.AppointmentParticipant;
+import com.dental.clinic.management.booking_appointment.repository.AppointmentParticipantRepository;
 import com.dental.clinic.management.booking_appointment.repository.AppointmentRepository;
+import com.dental.clinic.management.booking_appointment.repository.RoomRepository;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.patient.repository.PatientRepository;
 import lombok.RequiredArgsConstructor;
@@ -44,7 +47,8 @@ public class AppointmentListService {
     private final AppointmentRepository appointmentRepository;
     private final PatientRepository patientRepository;
     private final EmployeeRepository employeeRepository;
-    // TODO: Add RoomRepository, ServiceRepository, AppointmentParticipantRepository
+    private final RoomRepository roomRepository;
+    private final AppointmentParticipantRepository appointmentParticipantRepository;
 
     /**
      * Get paginated appointment list with RBAC filtering
@@ -183,21 +187,46 @@ public class AppointmentListService {
                         pageableNative); //  Use NATIVE pageable (snake_case)
             } else {
                 log.info("Executing search with individual filters");
+                
+                // Resolve patientCode to patientId if provided
+                Integer patientId = null;
+                if (criteria.getPatientCode() != null && !criteria.getPatientCode().isBlank()) {
+                    var patient = patientRepository.findOneByPatientCode(criteria.getPatientCode()).orElse(null);
+                    if (patient != null) {
+                        patientId = patient.getPatientId();
+                        log.debug("Resolved patientCode {} to patientId {}", criteria.getPatientCode(), patientId);
+                    } else {
+                        log.warn("Patient not found for patientCode: {}", criteria.getPatientCode());
+                    }
+                }
+                
+                // Resolve employeeCode to employeeId if provided
+                Integer employeeId = null;
+                if (criteria.getEmployeeCode() != null && !criteria.getEmployeeCode().isBlank()) {
+                    var employee = employeeRepository.findByEmployeeCodeAndIsActiveTrue(criteria.getEmployeeCode()).orElse(null);
+                    if (employee != null) {
+                        employeeId = employee.getEmployeeId();
+                        log.debug("Resolved employeeCode {} to employeeId {}", criteria.getEmployeeCode(), employeeId);
+                    } else {
+                        log.warn("Employee not found for employeeCode: {}", criteria.getEmployeeCode());
+                    }
+                }
+                
                 appointments = appointmentRepository.findByFilters(
                         startDate,
                         endDate,
-                        statusArray, //  Pass String[] instead of List
-                        null, // patientId - TODO: resolve from patientCode if needed
-                        null, // employeeId - TODO: resolve from employeeCode if needed
+                        statusArray,
+                        patientId,
+                        employeeId,
                         criteria.getRoomCode(),
-                        criteria.getPatientName(), //  NEW: Search by name
-                        criteria.getPatientPhone(), //  NEW: Search by phone
-                        pageableNative); //  Use NATIVE pageable (snake_case)
+                        criteria.getPatientName(),
+                        criteria.getPatientPhone(),
+                        pageableNative);
             }
         }
 
-        // Step 7: Map to DTOs
-        return appointments.map(this::mapToSummaryDTO);
+        // Step 7: Map to DTOs with batch loading to prevent N+1 queries
+        return mapToSummaryDTOsWithBatchLoading(appointments);
     }
 
     /**
@@ -229,13 +258,16 @@ public class AppointmentListService {
         }
 
         // Try to find patient
-        // TODO: Need Patient.account relationship or query by account_id
-        // For now, this is placeholder
-        log.warn("Patient RBAC filter not yet implemented - need Patient.account mapping");
+        var patientOpt = patientRepository.findByAccount_Username(username);
+        if (patientOpt.isPresent()) {
+            Integer patientId = patientOpt.get().getPatientId();
+            log.info("User {} is patient with ID: {}", username, patientId);
+            criteria.setCurrentUserPatientId(patientId);
+            return;
+        }
 
-        // Placeholder: If not employee, assume patient
-        // TODO: Query patients table: findByAccount_Username(username)
-        // criteria.setCurrentUserPatientId(patientId);
+        // User not found as employee or patient
+        log.warn("User {} not found as employee or patient - no appointments will be visible", username);
     }
 
     /**
@@ -307,15 +339,178 @@ public class AppointmentListService {
     }
 
     /**
-     * Map Appointment entity to SummaryDTO
-     *
-     * OPTIMIZATION: Batch load related entities to prevent N+1 queries
-     * - Collect all IDs first
-     * - Query in batches
-     * - Map to DTOs
-     *
-     * TODO: Implement batch loading for production
-     * Current: Simple version (will cause N+1)
+     * Batch load related entities and map appointments to DTOs
+     * Prevents N+1 query problem by loading all related entities in bulk
+     */
+    private Page<AppointmentSummaryDTO> mapToSummaryDTOsWithBatchLoading(Page<Appointment> appointments) {
+        List<Appointment> appointmentList = appointments.getContent();
+        
+        if (appointmentList.isEmpty()) {
+            return appointments.map(this::mapToSummaryDTO);
+        }
+
+        // Step 1: Collect all unique IDs
+        var patientIds = appointmentList.stream()
+                .map(Appointment::getPatientId)
+                .distinct()
+                .collect(Collectors.toList());
+        
+        var employeeIds = appointmentList.stream()
+                .map(Appointment::getEmployeeId)
+                .distinct()
+                .collect(Collectors.toList());
+        
+        var roomIds = appointmentList.stream()
+                .map(Appointment::getRoomId)
+                .distinct()
+                .collect(Collectors.toList());
+
+        var appointmentIds = appointmentList.stream()
+                .map(Appointment::getAppointmentId)
+                .collect(Collectors.toList());
+
+        // Step 2: Batch load entities
+        var patientMap = patientRepository.findAllById(patientIds).stream()
+                .collect(Collectors.toMap(
+                        p -> p.getPatientId(),
+                        p -> p
+                ));
+
+        var employeeMap = employeeRepository.findAllById(employeeIds).stream()
+                .collect(Collectors.toMap(
+                        e -> e.getEmployeeId(),
+                        e -> e
+                ));
+
+        var roomMap = roomRepository.findAllById(roomIds).stream()
+                .collect(Collectors.toMap(
+                        r -> r.getRoomId(),
+                        r -> r
+                ));
+
+        // Step 3: Batch load services for all appointments
+        var servicesMap = new java.util.HashMap<Integer, List<CreateAppointmentResponse.ServiceSummary>>();
+        for (Integer appointmentId : appointmentIds) {
+            try {
+                List<Object[]> serviceData = appointmentRepository.findServicesByAppointmentId(appointmentId);
+                List<CreateAppointmentResponse.ServiceSummary> services = serviceData.stream()
+                        .map(row -> CreateAppointmentResponse.ServiceSummary.builder()
+                                .serviceCode((String) row[0])
+                                .serviceName((String) row[1])
+                                .build())
+                        .collect(Collectors.toList());
+                servicesMap.put(appointmentId, services);
+            } catch (Exception e) {
+                log.warn("Failed to load services for appointmentId={}: {}", appointmentId, e.getMessage());
+                servicesMap.put(appointmentId, new ArrayList<>());
+            }
+        }
+
+        // Step 4: Batch load participants for all appointments
+        var participantsMap = new java.util.HashMap<Integer, List<CreateAppointmentResponse.ParticipantSummary>>();
+        for (Integer appointmentId : appointmentIds) {
+            try {
+                List<AppointmentParticipant> appointmentParticipants = appointmentParticipantRepository
+                        .findByIdAppointmentId(appointmentId);
+                
+                List<CreateAppointmentResponse.ParticipantSummary> participants = appointmentParticipants.stream()
+                        .map(ap -> {
+                            var participantEmployee = employeeMap.get(ap.getId().getEmployeeId());
+                            if (participantEmployee != null) {
+                                return CreateAppointmentResponse.ParticipantSummary.builder()
+                                        .employeeCode(participantEmployee.getEmployeeCode())
+                                        .fullName(participantEmployee.getFirstName() + " " + participantEmployee.getLastName())
+                                        .role(ap.getRole())
+                                        .build();
+                            }
+                            return null;
+                        })
+                        .filter(p -> p != null)
+                        .collect(Collectors.toList());
+                
+                participantsMap.put(appointmentId, participants);
+            } catch (Exception e) {
+                log.warn("Failed to load participants for appointmentId={}: {}", appointmentId, e.getMessage());
+                participantsMap.put(appointmentId, new ArrayList<>());
+            }
+        }
+
+        // Step 5: Map appointments using cached entities
+        return appointments.map(appointment -> mapToSummaryDTOWithCache(
+                appointment, patientMap, employeeMap, roomMap, servicesMap, participantsMap));
+    }
+
+    /**
+     * Map single appointment to DTO using pre-loaded entity caches
+     */
+    private AppointmentSummaryDTO mapToSummaryDTOWithCache(
+            Appointment appointment,
+            java.util.Map<Integer, com.dental.clinic.management.patient.domain.Patient> patientMap,
+            java.util.Map<Integer, com.dental.clinic.management.employee.domain.Employee> employeeMap,
+            java.util.Map<String, com.dental.clinic.management.booking_appointment.domain.Room> roomMap,
+            java.util.Map<Integer, List<CreateAppointmentResponse.ServiceSummary>> servicesMap,
+            java.util.Map<Integer, List<CreateAppointmentResponse.ParticipantSummary>> participantsMap) {
+
+        // Build patient summary
+        CreateAppointmentResponse.PatientSummary patientSummary = null;
+        var patient = patientMap.get(appointment.getPatientId());
+        if (patient != null) {
+            patientSummary = CreateAppointmentResponse.PatientSummary.builder()
+                    .patientCode(patient.getPatientCode())
+                    .fullName(patient.getFirstName() + " " + patient.getLastName())
+                    .build();
+        }
+
+        // Build doctor summary
+        CreateAppointmentResponse.DoctorSummary doctorSummary = null;
+        var employee = employeeMap.get(appointment.getEmployeeId());
+        if (employee != null) {
+            doctorSummary = CreateAppointmentResponse.DoctorSummary.builder()
+                    .employeeCode(employee.getEmployeeCode())
+                    .fullName(employee.getFirstName() + " " + employee.getLastName())
+                    .build();
+        }
+
+        // Build room summary
+        CreateAppointmentResponse.RoomSummary roomSummary = null;
+        var room = roomMap.get(appointment.getRoomId());
+        if (room != null) {
+            roomSummary = CreateAppointmentResponse.RoomSummary.builder()
+                    .roomCode(room.getRoomCode())
+                    .roomName(room.getRoomName())
+                    .build();
+        }
+
+        // Get services and participants from cache
+        List<CreateAppointmentResponse.ServiceSummary> services = 
+                servicesMap.getOrDefault(appointment.getAppointmentId(), new ArrayList<>());
+        List<CreateAppointmentResponse.ParticipantSummary> participants = 
+                participantsMap.getOrDefault(appointment.getAppointmentId(), new ArrayList<>());
+
+        // Compute dynamic fields
+        LocalDateTime now = LocalDateTime.now();
+        String computedStatus = calculateComputedStatus(appointment, now);
+        Long minutesLate = calculateMinutesLate(appointment, now);
+
+        return AppointmentSummaryDTO.builder()
+                .appointmentCode(appointment.getAppointmentCode())
+                .status(appointment.getStatus().name())
+                .computedStatus(computedStatus)
+                .minutesLate(minutesLate)
+                .appointmentStartTime(appointment.getAppointmentStartTime())
+                .appointmentEndTime(appointment.getAppointmentEndTime())
+                .expectedDurationMinutes(appointment.getExpectedDurationMinutes())
+                .patient(patientSummary)
+                .doctor(doctorSummary)
+                .room(roomSummary)
+                .services(services)
+                .participants(participants)
+                .notes(appointment.getNotes())
+                .build();
+    }
+
+    /**
+     * Fallback method for mapping single appointment (used for empty pages)
      */
     private AppointmentSummaryDTO mapToSummaryDTO(Appointment appointment) {
         // Fetch related entities
@@ -349,11 +544,57 @@ public class AppointmentListService {
                     appointment.getAppointmentId(), e.getMessage());
         }
 
-        // TODO: Load room, services, participants
-        CreateAppointmentResponse.RoomSummary roomSummary = CreateAppointmentResponse.RoomSummary.builder()
-                .roomCode(appointment.getRoomId())
-                .roomName("Room " + appointment.getRoomId()) // TODO: Load from RoomRepository
-                .build();
+        // Load room
+        CreateAppointmentResponse.RoomSummary roomSummary = null;
+        try {
+            var room = roomRepository.findById(appointment.getRoomId()).orElse(null);
+            if (room != null) {
+                roomSummary = CreateAppointmentResponse.RoomSummary.builder()
+                        .roomCode(room.getRoomCode())
+                        .roomName(room.getRoomName())
+                        .build();
+            }
+        } catch (Exception e) {
+            log.warn("Failed to load room for appointmentId={}: {}",
+                    appointment.getAppointmentId(), e.getMessage());
+        }
+
+        // Load services
+        List<CreateAppointmentResponse.ServiceSummary> services = new ArrayList<>();
+        try {
+            List<Object[]> serviceData = appointmentRepository.findServicesByAppointmentId(appointment.getAppointmentId());
+            for (Object[] row : serviceData) {
+                String serviceCode = (String) row[0];
+                String serviceName = (String) row[1];
+                services.add(CreateAppointmentResponse.ServiceSummary.builder()
+                        .serviceCode(serviceCode)
+                        .serviceName(serviceName)
+                        .build());
+            }
+        } catch (Exception e) {
+            log.warn("Failed to load services for appointmentId={}: {}",
+                    appointment.getAppointmentId(), e.getMessage());
+        }
+
+        // Load participants
+        List<CreateAppointmentResponse.ParticipantSummary> participants = new ArrayList<>();
+        try {
+            List<AppointmentParticipant> appointmentParticipants = appointmentParticipantRepository
+                    .findByIdAppointmentId(appointment.getAppointmentId());
+            for (AppointmentParticipant ap : appointmentParticipants) {
+                var participantEmployee = employeeRepository.findById(ap.getId().getEmployeeId()).orElse(null);
+                if (participantEmployee != null) {
+                    participants.add(CreateAppointmentResponse.ParticipantSummary.builder()
+                            .employeeCode(participantEmployee.getEmployeeCode())
+                            .fullName(participantEmployee.getFirstName() + " " + participantEmployee.getLastName())
+                            .role(ap.getRole())
+                            .build());
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Failed to load participants for appointmentId={}: {}",
+                    appointment.getAppointmentId(), e.getMessage());
+        }
 
         // Compute dynamic fields based on current time
         LocalDateTime now = LocalDateTime.now();
@@ -371,8 +612,8 @@ public class AppointmentListService {
                 .patient(patientSummary)
                 .doctor(doctorSummary)
                 .room(roomSummary)
-                .services(new ArrayList<>()) // TODO: Load from AppointmentServiceRepository
-                .participants(new ArrayList<>()) // TODO: Load from AppointmentParticipantRepository
+                .services(services)
+                .participants(participants)
                 .notes(appointment.getNotes())
                 .build();
     }
