@@ -55,6 +55,9 @@ CREATE TYPE paymenttype AS ENUM ('FULL', 'PHASED', 'INSTALLMENT');
 CREATE TYPE phasestatus AS ENUM ('PENDING', 'IN_PROGRESS', 'COMPLETED');
 CREATE TYPE planactiontype AS ENUM ('STATUS_CHANGE', 'PRICE_UPDATE', 'PHASE_UPDATE', 'APPROVAL');
 
+-- Patient Tooth Status ENUM (Odontogram)
+CREATE TYPE tooth_condition_enum AS ENUM ('HEALTHY', 'CARIES', 'FILLED', 'CROWN', 'MISSING', 'IMPLANT', 'ROOT_CANAL', 'FRACTURED', 'IMPACTED');
+
 -- Warehouse ENUMs
 CREATE TYPE batchstatus AS ENUM ('ACTIVE', 'EXPIRED', 'DEPLETED');
 CREATE TYPE exporttype AS ENUM ('SERVICE', 'SALE', 'WASTAGE', 'TRANSFER');
@@ -67,7 +70,7 @@ CREATE TYPE warehouseactiontype AS ENUM ('IMPORT', 'EXPORT', 'TRANSFER', 'ADJUST
 CREATE TYPE transactiontype AS ENUM ('PURCHASE', 'SALE', 'SERVICE', 'TRANSFER_IN', 'TRANSFER_OUT', 'ADJUSTMENT');
 
 -- ============================================
--- END ENUM TYPE DEFINITIONS (36 types total)
+-- END ENUM TYPE DEFINITIONS (37 types total)
 -- ============================================
 
 -- ============================================
@@ -4743,13 +4746,14 @@ INSERT INTO clinical_prescription_items (
 ON CONFLICT (prescription_item_id) DO NOTHING;
 
 -- Tooth Status for Patient #1
+-- Patient 1 has multiple tooth conditions for testing odontogram
 INSERT INTO patient_tooth_status (
     tooth_status_id, patient_id, tooth_number, status, notes, recorded_at
 ) VALUES
-(1, 1, '11', 'HEALTHY', 'Răng cửa trên phải khỏe mạnh', NOW()),
-(2, 1, '21', 'HEALTHY', 'Răng cửa trên trái khỏe mạnh', NOW()),
-(3, 1, '16', 'HEALTHY', 'Răng hàm trên phải khỏe mạnh', NOW()),
-(4, 1, '26', 'HEALTHY', 'Răng hàm trên trái khỏe mạnh', NOW())
+(1, 1, '18', 'MISSING', 'Rang khon da nhổ năm 2023', NOW()),
+(2, 1, '36', 'CROWN', 'Boc su kim loai', NOW()),
+(3, 1, '46', 'CARIES', 'Sau rang sau, can dieu tri', NOW()),
+(4, 1, '21', 'IMPLANT', 'Cay ghep Implant thanh cong', NOW())
 ON CONFLICT (patient_id, tooth_number) DO NOTHING;
 
 -- Clinical Record #2 (for appointment_id=2, patient_id=2, employee_id=2)
@@ -4825,12 +4829,23 @@ ON CONFLICT (procedure_id) DO NOTHING;
 
 -- No prescription for this record (orthodontic follow-up doesn't need medicine)
 
+-- Tooth Status History (audit trail)
+INSERT INTO patient_tooth_status_history (
+    history_id, patient_id, tooth_number, old_status, new_status, changed_by, changed_at, reason
+) VALUES
+(1, 1, '18', 'HEALTHY', 'MISSING', 1, '2023-05-15 10:00:00', 'Nhổ rang khon ham tren phai do mac ngam'),
+(2, 1, '36', 'CARIES', 'CROWN', 1, '2024-03-20 14:30:00', 'Boc su kim loai sau khi dieu tri tuy'),
+(3, 1, '21', 'MISSING', 'IMPLANT', 1, '2024-08-10 11:00:00', 'Cay ghep Implant thanh cong'),
+(4, 2, '36', 'CARIES', 'FILLED', 2, NOW(), 'Tram rang composite')
+ON CONFLICT DO NOTHING;
+
 -- Reset sequences
 SELECT setval('clinical_records_clinical_record_id_seq', (SELECT COALESCE(MAX(clinical_record_id), 0) FROM clinical_records));
 SELECT setval('clinical_record_procedures_procedure_id_seq', (SELECT COALESCE(MAX(procedure_id), 0) FROM clinical_record_procedures));
 SELECT setval('clinical_prescriptions_prescription_id_seq', (SELECT COALESCE(MAX(prescription_id), 0) FROM clinical_prescriptions));
 SELECT setval('clinical_prescription_items_prescription_item_id_seq', (SELECT COALESCE(MAX(prescription_item_id), 0) FROM clinical_prescription_items));
 SELECT setval('patient_tooth_status_tooth_status_id_seq', (SELECT COALESCE(MAX(tooth_status_id), 0) FROM patient_tooth_status));
+SELECT setval('patient_tooth_status_history_history_id_seq', (SELECT COALESCE(MAX(history_id), 0) FROM patient_tooth_status_history));
 
 -- =============================================
 -- CLINICAL RECORDS SEED DATA COMPLETE

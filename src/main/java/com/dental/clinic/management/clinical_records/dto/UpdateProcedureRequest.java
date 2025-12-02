@@ -11,13 +11,15 @@ import lombok.NoArgsConstructor;
 /**
  * Request DTO for updating an existing procedure in a clinical record (API 8.6)
  *
- * <p>Business Rules:</p>
+ * <p>
+ * Business Rules:
+ * </p>
  * <ul>
- *   <li>Can update service, toothNumber, procedureDescription, notes</li>
- *   <li>Can update patientPlanItemId (link/unlink from treatment plan)</li>
- *   <li>Does NOT update procedure status (handled by appointment completion)</li>
- *   <li>serviceId required - procedure must always reference a service</li>
- *   <li>procedureDescription required - database constraint</li>
+ * <li>Can update service, toothNumber, procedureDescription, notes</li>
+ * <li>Can update patientPlanItemId (link/unlink from treatment plan)</li>
+ * <li>Does NOT update procedure status (handled by appointment completion)</li>
+ * <li>serviceId required - procedure must always reference a service</li>
+ * <li>procedureDescription required - database constraint</li>
  * </ul>
  *
  * @author Dental Clinic System

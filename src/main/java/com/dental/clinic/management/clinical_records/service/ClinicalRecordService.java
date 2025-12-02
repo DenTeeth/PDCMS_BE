@@ -553,25 +553,28 @@ public class ClinicalRecordService {
         /**
          * Update an existing procedure in a clinical record (API 8.6)
          *
-         * <p>Business Rules:</p>
+         * <p>
+         * Business Rules:
+         * </p>
          * <ul>
-         *   <li>Validates clinical record exists</li>
-         *   <li>Validates procedure belongs to the specified record</li>
-         *   <li>Validates new service exists and is active</li>
-         *   <li>Validates plan item exists if provided</li>
-         *   <li>Updates all fields except createdAt (audit trail)</li>
-         *   <li>Does NOT update procedure status (separation of concerns)</li>
+         * <li>Validates clinical record exists</li>
+         * <li>Validates procedure belongs to the specified record</li>
+         * <li>Validates new service exists and is active</li>
+         * <li>Validates plan item exists if provided</li>
+         * <li>Updates all fields except createdAt (audit trail)</li>
+         * <li>Does NOT update procedure status (separation of concerns)</li>
          * </ul>
          *
-         * @param recordId Clinical record ID
+         * @param recordId    Clinical record ID
          * @param procedureId Procedure ID to update
-         * @param request Update request with new values
+         * @param request     Update request with new values
          * @return Updated procedure details with service info
-         * @throws NotFoundException if record, procedure, service, or plan item not found
+         * @throws NotFoundException if record, procedure, service, or plan item not
+         *                           found
          */
         @Transactional
         public UpdateProcedureResponse updateProcedure(Integer recordId, Integer procedureId,
-                                                       UpdateProcedureRequest request) {
+                        UpdateProcedureRequest request) {
                 log.info("Updating procedure ID {} in clinical record ID {}", procedureId, recordId);
 
                 // Step 1: Validate clinical record exists
@@ -655,15 +658,17 @@ public class ClinicalRecordService {
         /**
          * Delete a procedure from a clinical record (API 8.7)
          *
-         * <p>Business Rules:</p>
+         * <p>
+         * Business Rules:
+         * </p>
          * <ul>
-         *   <li>Validates clinical record exists</li>
-         *   <li>Validates procedure belongs to the specified record</li>
-         *   <li>Soft delete or hard delete based on business requirements</li>
-         *   <li>Does NOT cascade to treatment plan (passive link only)</li>
+         * <li>Validates clinical record exists</li>
+         * <li>Validates procedure belongs to the specified record</li>
+         * <li>Soft delete or hard delete based on business requirements</li>
+         * <li>Does NOT cascade to treatment plan (passive link only)</li>
          * </ul>
          *
-         * @param recordId Clinical record ID
+         * @param recordId    Clinical record ID
          * @param procedureId Procedure ID to delete
          * @throws NotFoundException if record or procedure not found
          */

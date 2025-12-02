@@ -19,6 +19,7 @@
 ### Real-World Scenario
 
 A doctor may need to delete a procedure record when:
+
 - **Duplicate entry** - Same procedure recorded twice by mistake
 - **Wrong procedure** - Incorrect service selected, easier to delete and re-add
 - **Data entry error** - Procedure recorded in wrong clinical record
@@ -43,10 +44,10 @@ DELETE /api/v1/appointments/clinical-records/{recordId}/procedures/{procedureId}
 
 ### Path Parameters
 
-| Parameter   | Type      | Required | Description                    |
-| ----------- | --------- | -------- | ------------------------------ |
-| recordId    | `Integer` | Yes      | Clinical record ID             |
-| procedureId | `Integer` | Yes      | Procedure ID to delete         |
+| Parameter   | Type      | Required | Description            |
+| ----------- | --------- | -------- | ---------------------- |
+| recordId    | `Integer` | Yes      | Clinical record ID     |
+| procedureId | `Integer` | Yes      | Procedure ID to delete |
 
 ### Request Headers
 
@@ -134,10 +135,10 @@ HTTP/1.1 204 No Content
 
 ### Roles with Permission
 
-| Role       | Permission              | Access Level                         |
-| ---------- | ----------------------- | ------------------------------------ |
-| Admin      | WRITE_CLINICAL_RECORD   | Can delete any procedure             |
-| Doctor     | WRITE_CLINICAL_RECORD   | Can delete procedures in own records |
+| Role   | Permission            | Access Level                         |
+| ------ | --------------------- | ------------------------------------ |
+| Admin  | WRITE_CLINICAL_RECORD | Can delete any procedure             |
+| Doctor | WRITE_CLINICAL_RECORD | Can delete procedures in own records |
 
 ### Authorization Logic
 
@@ -187,6 +188,7 @@ HTTP/1.1 204 No Content
 ### Setup Test Data
 
 Use procedures created by API 8.5:
+
 - **Clinical Record 1**: Appointment 1, Patient BN-1001, Doctor bacsi1
 - **Procedure 7**: serviceId=1, toothNumber="16"
 - **Procedure 8**: serviceId=5, planItemId=1, toothNumber="38"
@@ -194,6 +196,7 @@ Use procedures created by API 8.5:
 ### Test Case 1: Delete Procedure Successfully
 
 **Request**:
+
 ```bash
 TOKEN=$(curl -s -X POST "http://localhost:8080/api/v1/auth/login" \
   -H "Content-Type: application/json" \
@@ -204,13 +207,15 @@ curl -w "\nHTTP_CODE:%{http_code}\n" \
   -H "Authorization: Bearer $TOKEN"
 ```
 
-**Expected**: 
+**Expected**:
+
 - HTTP 204 No Content
 - Empty response body
 
 ### Test Case 2: Delete Non-Existent Procedure
 
 **Request**:
+
 ```bash
 curl -w "\nHTTP_CODE:%{http_code}\n" \
   -X DELETE "http://localhost:8080/api/v1/appointments/clinical-records/1/procedures/99999" \
@@ -222,6 +227,7 @@ curl -w "\nHTTP_CODE:%{http_code}\n" \
 ### Test Case 3: Delete Procedure from Wrong Record
 
 **Request**:
+
 ```bash
 curl -w "\nHTTP_CODE:%{http_code}\n" \
   -X DELETE "http://localhost:8080/api/v1/appointments/clinical-records/999/procedures/8" \
@@ -233,6 +239,7 @@ curl -w "\nHTTP_CODE:%{http_code}\n" \
 ### Test Case 4: Unauthorized Delete (Patient Role)
 
 **Request**:
+
 ```bash
 TOKEN=$(curl -s -X POST "http://localhost:8080/api/v1/auth/login" \
   -H "Content-Type: application/json" \
@@ -250,6 +257,7 @@ curl -w "\nHTTP_CODE:%{http_code}\n" \
 **Setup**: Procedure 8 has patientPlanItemId=1
 
 **Request**:
+
 ```bash
 # Delete procedure with plan link
 curl -X DELETE "http://localhost:8080/api/v1/appointments/clinical-records/1/procedures/8" \
@@ -260,7 +268,8 @@ curl "http://localhost:8080/api/v1/treatment-plans/items/1" \
   -H "Authorization: Bearer $TOKEN"
 ```
 
-**Expected**: 
+**Expected**:
+
 - DELETE returns 204
 - GET plan item returns 200 with item details (item still exists)
 
@@ -282,7 +291,7 @@ public void deleteProcedure(Integer recordId, Integer procedureId) {
     // 2. Validate procedure exists and belongs to this record
     ClinicalRecordProcedure procedure = procedureRepository.findById(procedureId)
             .orElseThrow(() -> new NotFoundException("PROCEDURE_NOT_FOUND"));
-    
+
     if (!procedure.getClinicalRecord().getClinicalRecordId().equals(recordId)) {
         throw new NotFoundException("PROCEDURE_NOT_FOUND",
                 "Procedure does not belong to this clinical record");
@@ -304,7 +313,7 @@ public void deleteProcedure(Integer recordId, Integer procedureId) {
 public ResponseEntity<Void> deleteProcedure(
         @PathVariable Integer recordId,
         @PathVariable Integer procedureId) {
-    
+
     clinicalRecordService.deleteProcedure(recordId, procedureId);
     return ResponseEntity.noContent().build();
 }
@@ -350,12 +359,14 @@ public ResponseEntity<Void> deleteProcedure(
 ### When to Delete vs Update
 
 **Use DELETE when**:
+
 - Procedure recorded in wrong clinical record
 - Duplicate entry (same procedure twice)
 - Procedure never actually performed
 - Complete data entry error
 
 **Use UPDATE when**:
+
 - Wrong service selected (change serviceId)
 - Incorrect tooth number
 - Need to add/update description or notes
@@ -371,6 +382,7 @@ public ResponseEntity<Void> deleteProcedure(
 ### Alternative: Soft Delete
 
 If regulatory requirements need audit trail, consider:
+
 ```sql
 -- Add column to schema
 ALTER TABLE clinical_record_procedures ADD COLUMN is_deleted BOOLEAN DEFAULT FALSE;
@@ -384,12 +396,12 @@ procedureRepository.save(procedure);
 
 ## Changelog
 
-| Date       | Version | Changes                           |
-| ---------- | ------- | --------------------------------- |
-| 2025-12-02 | 1.0     | Initial implementation            |
-|            |         | - Hard delete implementation      |
-|            |         | - No cascade to treatment plan    |
-|            |         | - Ownership validation            |
+| Date       | Version | Changes                        |
+| ---------- | ------- | ------------------------------ |
+| 2025-12-02 | 1.0     | Initial implementation         |
+|            |         | - Hard delete implementation   |
+|            |         | - No cascade to treatment plan |
+|            |         | - Ownership validation         |
 
 ---
 

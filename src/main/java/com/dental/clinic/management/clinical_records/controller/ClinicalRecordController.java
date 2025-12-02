@@ -158,7 +158,8 @@ public class ClinicalRecordController {
      * Returns:
      * - 200 OK: Procedure updated successfully
      * - 404 RECORD_NOT_FOUND: Clinical record doesn't exist
-     * - 404 PROCEDURE_NOT_FOUND: Procedure doesn't exist or doesn't belong to this record
+     * - 404 PROCEDURE_NOT_FOUND: Procedure doesn't exist or doesn't belong to this
+     * record
      * - 404 SERVICE_NOT_FOUND: Service doesn't exist or is inactive
      * - 404 PLAN_ITEM_NOT_FOUND: Treatment plan item doesn't exist (if provided)
      * - 400 VALIDATION_ERROR: Invalid request body
@@ -198,7 +199,8 @@ public class ClinicalRecordController {
      * Returns:
      * - 204 NO_CONTENT: Procedure deleted successfully
      * - 404 RECORD_NOT_FOUND: Clinical record doesn't exist
-     * - 404 PROCEDURE_NOT_FOUND: Procedure doesn't exist or doesn't belong to this record
+     * - 404 PROCEDURE_NOT_FOUND: Procedure doesn't exist or doesn't belong to this
+     * record
      *
      * @param recordId    The clinical record ID
      * @param procedureId The procedure ID to delete

@@ -19,6 +19,7 @@
 ### Real-World Scenario
 
 After recording a procedure, the doctor may need to:
+
 - Correct procedure description or notes
 - Update tooth number if initially recorded incorrectly
 - Change service reference (e.g., wrong service selected)
@@ -46,10 +47,10 @@ PUT /api/v1/appointments/clinical-records/{recordId}/procedures/{procedureId}
 
 ### Path Parameters
 
-| Parameter   | Type      | Required | Description                    |
-| ----------- | --------- | -------- | ------------------------------ |
-| recordId    | `Integer` | Yes      | Clinical record ID             |
-| procedureId | `Integer` | Yes      | Procedure ID to update         |
+| Parameter   | Type      | Required | Description            |
+| ----------- | --------- | -------- | ---------------------- |
+| recordId    | `Integer` | Yes      | Clinical record ID     |
+| procedureId | `Integer` | Yes      | Procedure ID to update |
 
 ### Request Headers
 
@@ -72,31 +73,35 @@ Content-Type: application/json
 
 ### Field Specifications
 
-| Field                | Type      | Required | Constraints                  | Description                                                                      |
-| -------------------- | --------- | -------- | ---------------------------- | -------------------------------------------------------------------------------- |
-| serviceId            | `Long`    | No       | Must exist, must be active   | Service ID from catalog (services table)                                         |
-| patientPlanItemId    | `Long`    | No       | Must exist if provided       | Treatment plan item ID (set to null to unlink)                                   |
-| toothNumber          | `String`  | No       | Max 10 chars                 | Tooth identifier (e.g., "36", "21", "ALL")                                       |
-| procedureDescription | `String`  | **Yes**  | 3-1000 chars                 | Detailed description of what was performed                                       |
-| notes                | `String`  | No       | Max 1000 chars               | Additional observations or follow-up instructions                                |
+| Field                | Type     | Required | Constraints                | Description                                       |
+| -------------------- | -------- | -------- | -------------------------- | ------------------------------------------------- |
+| serviceId            | `Long`   | No       | Must exist, must be active | Service ID from catalog (services table)          |
+| patientPlanItemId    | `Long`   | No       | Must exist if provided     | Treatment plan item ID (set to null to unlink)    |
+| toothNumber          | `String` | No       | Max 10 chars               | Tooth identifier (e.g., "36", "21", "ALL")        |
+| procedureDescription | `String` | **Yes**  | 3-1000 chars               | Detailed description of what was performed        |
+| notes                | `String` | No       | Max 1000 chars             | Additional observations or follow-up instructions |
 
 ### Validation Rules
 
 1. **Clinical Record Validation**
+
    - Must exist in `clinical_records` table
    - Error: `RECORD_NOT_FOUND` (404)
 
 2. **Procedure Validation**
+
    - Must exist in `clinical_record_procedures` table
    - Must belong to specified clinical record
    - Error: `PROCEDURE_NOT_FOUND` (404)
 
 3. **Service Validation** (if serviceId provided)
+
    - Must exist in `services` table
    - Must have `is_active = true`
    - Error: `SERVICE_NOT_FOUND` (404)
 
 4. **Treatment Plan Item Validation** (if patientPlanItemId provided)
+
    - Must exist in `patient_plan_items` table
    - Error: `PLAN_ITEM_NOT_FOUND` (404)
 
@@ -180,19 +185,19 @@ Content-Type: application/json
 
 ### Response Fields
 
-| Field                | Type        | Description                                       |
-| -------------------- | ----------- | ------------------------------------------------- |
-| procedureId          | `Integer`   | Procedure ID (unchanged)                          |
-| clinicalRecordId     | `Integer`   | Parent clinical record ID (unchanged)             |
-| serviceId            | `Long`      | Service ID from catalog                           |
-| serviceName          | `String`    | Service name (joined from services table)         |
-| serviceCode          | `String`    | Service code (joined from services table)         |
-| patientPlanItemId    | `Long`      | Treatment plan item ID (null if not linked)       |
-| toothNumber          | `String`    | Tooth identifier                                  |
-| procedureDescription | `String`    | Detailed procedure description                    |
-| notes                | `String`    | Additional clinical notes                         |
-| createdAt            | `DateTime`  | Original creation timestamp (NEVER changes)       |
-| updatedAt            | `DateTime`  | Last update timestamp (NEW after update)          |
+| Field                | Type       | Description                                 |
+| -------------------- | ---------- | ------------------------------------------- |
+| procedureId          | `Integer`  | Procedure ID (unchanged)                    |
+| clinicalRecordId     | `Integer`  | Parent clinical record ID (unchanged)       |
+| serviceId            | `Long`     | Service ID from catalog                     |
+| serviceName          | `String`   | Service name (joined from services table)   |
+| serviceCode          | `String`   | Service code (joined from services table)   |
+| patientPlanItemId    | `Long`     | Treatment plan item ID (null if not linked) |
+| toothNumber          | `String`   | Tooth identifier                            |
+| procedureDescription | `String`   | Detailed procedure description              |
+| notes                | `String`   | Additional clinical notes                   |
+| createdAt            | `DateTime` | Original creation timestamp (NEVER changes) |
+| updatedAt            | `DateTime` | Last update timestamp (NEW after update)    |
 
 ---
 
@@ -286,10 +291,10 @@ Content-Type: application/json
 
 ### Roles with Permission
 
-| Role       | Permission              | Access Level                         |
-| ---------- | ----------------------- | ------------------------------------ |
-| Admin      | WRITE_CLINICAL_RECORD   | Can update any procedure             |
-| Doctor     | WRITE_CLINICAL_RECORD   | Can update procedures in own records |
+| Role   | Permission            | Access Level                         |
+| ------ | --------------------- | ------------------------------------ |
+| Admin  | WRITE_CLINICAL_RECORD | Can update any procedure             |
+| Doctor | WRITE_CLINICAL_RECORD | Can update procedures in own records |
 
 ### Authorization Logic
 
@@ -306,6 +311,7 @@ Content-Type: application/json
 ### Table: clinical_record_procedures
 
 **Updated Fields**:
+
 - `service_id` - Changed to new service
 - `patient_plan_item_id` - Updated or set to NULL
 - `tooth_number` - Updated value
@@ -314,6 +320,7 @@ Content-Type: application/json
 - `updated_at` - Set to current timestamp (via @PreUpdate)
 
 **Preserved Fields**:
+
 - `procedure_id` - Never changes (primary key)
 - `clinical_record_id` - Never changes (foreign key)
 - `created_at` - Never changes (audit trail)
@@ -325,6 +332,7 @@ Content-Type: application/json
 ### Setup Test Data
 
 Use procedures created by API 8.5:
+
 - **Clinical Record 1**: Appointment 1, Patient BN-1001, Doctor bacsi1
 - **Procedure 7**: serviceId=1, toothNumber="16", description="Kham tong quat"
 - **Procedure 8**: serviceId=5, planItemId=1, toothNumber="38"
@@ -332,6 +340,7 @@ Use procedures created by API 8.5:
 ### Test Case 1: Update Procedure Description
 
 **Request**:
+
 ```bash
 TOKEN=$(curl -s -X POST "http://localhost:8080/api/v1/auth/login" \
   -H "Content-Type: application/json" \
@@ -353,6 +362,7 @@ curl -X PUT "http://localhost:8080/api/v1/appointments/clinical-records/1/proced
 ### Test Case 2: Link Procedure to Treatment Plan
 
 **Request**:
+
 ```bash
 curl -X PUT "http://localhost:8080/api/v1/appointments/clinical-records/1/procedures/7" \
   -H "Authorization: Bearer $TOKEN" \
@@ -370,6 +380,7 @@ curl -X PUT "http://localhost:8080/api/v1/appointments/clinical-records/1/proced
 ### Test Case 3: Unlink from Treatment Plan
 
 **Request**:
+
 ```bash
 curl -X PUT "http://localhost:8080/api/v1/appointments/clinical-records/1/procedures/8" \
   -H "Authorization: Bearer $TOKEN" \
@@ -387,6 +398,7 @@ curl -X PUT "http://localhost:8080/api/v1/appointments/clinical-records/1/proced
 ### Test Case 4: Update with Invalid Service
 
 **Request**:
+
 ```bash
 curl -w "\nHTTP_CODE:%{http_code}\n" \
   -X PUT "http://localhost:8080/api/v1/appointments/clinical-records/1/procedures/7" \
@@ -403,6 +415,7 @@ curl -w "\nHTTP_CODE:%{http_code}\n" \
 ### Test Case 5: Update Procedure Not Belonging to Record
 
 **Request**:
+
 ```bash
 curl -w "\nHTTP_CODE:%{http_code}\n" \
   -X PUT "http://localhost:8080/api/v1/appointments/clinical-records/999/procedures/7" \
@@ -419,6 +432,7 @@ curl -w "\nHTTP_CODE:%{http_code}\n" \
 ### Test Case 6: Missing Required Field
 
 **Request**:
+
 ```bash
 curl -w "\nHTTP_CODE:%{http_code}\n" \
   -X PUT "http://localhost:8080/api/v1/appointments/clinical-records/1/procedures/7" \
@@ -451,7 +465,7 @@ public UpdateProcedureResponse updateProcedure(Integer recordId, Integer procedu
     // 2. Validate procedure exists and belongs to this record
     ClinicalRecordProcedure procedure = procedureRepository.findById(procedureId)
             .orElseThrow(() -> new NotFoundException("PROCEDURE_NOT_FOUND"));
-    
+
     if (!procedure.getClinicalRecord().getClinicalRecordId().equals(recordId)) {
         throw new NotFoundException("PROCEDURE_NOT_FOUND",
                 "Procedure does not belong to this clinical record");
@@ -460,7 +474,7 @@ public UpdateProcedureResponse updateProcedure(Integer recordId, Integer procedu
     // 3. Validate new service exists and is active
     DentalService service = dentalServiceRepository.findById(request.getServiceId())
             .orElseThrow(() -> new NotFoundException("SERVICE_NOT_FOUND"));
-    
+
     if (!service.getIsActive()) {
         throw new NotFoundException("SERVICE_NOT_FOUND", "Service is inactive");
     }
@@ -511,7 +525,7 @@ public ResponseEntity<UpdateProcedureResponse> updateProcedure(
         @PathVariable Integer recordId,
         @PathVariable Integer procedureId,
         @Valid @RequestBody UpdateProcedureRequest request) {
-    
+
     UpdateProcedureResponse response = clinicalRecordService.updateProcedure(
             recordId, procedureId, request);
     return ResponseEntity.ok(response);
@@ -554,12 +568,12 @@ public ResponseEntity<UpdateProcedureResponse> updateProcedure(
 
 ## Changelog
 
-| Date       | Version | Changes                           |
-| ---------- | ------- | --------------------------------- |
-| 2025-12-02 | 1.0     | Initial implementation            |
-|            |         | - Update all fields except audit  |
-|            |         | - Link/unlink treatment plan      |
-|            |         | - Ownership validation            |
+| Date       | Version | Changes                          |
+| ---------- | ------- | -------------------------------- |
+| 2025-12-02 | 1.0     | Initial implementation           |
+|            |         | - Update all fields except audit |
+|            |         | - Link/unlink treatment plan     |
+|            |         | - Ownership validation           |
 
 ---
 

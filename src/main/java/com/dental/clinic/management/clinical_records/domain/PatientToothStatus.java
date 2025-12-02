@@ -1,6 +1,7 @@
 package com.dental.clinic.management.clinical_records.domain;
 
 import com.dental.clinic.management.patient.domain.Patient;
+import com.dental.clinic.management.patient.domain.ToothConditionEnum;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,6 +10,13 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
+/**
+ * Entity for Patient Tooth Status (Odontogram)
+ * API 8.9 and 8.10
+ *
+ * @author Dental Clinic System
+ * @since API 8.9
+ */
 @Entity
 @Table(name = "patient_tooth_status", uniqueConstraints = @UniqueConstraint(columnNames = { "patient_id",
         "tooth_number" }))
@@ -30,8 +38,9 @@ public class PatientToothStatus {
     @Column(name = "tooth_number", nullable = false, length = 10)
     private String toothNumber;
 
-    @Column(name = "status", nullable = false, length = 50)
-    private String status;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private ToothConditionEnum status;
 
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
@@ -39,8 +48,17 @@ public class PatientToothStatus {
     @Column(name = "recorded_at")
     private LocalDateTime recordedAt;
 
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
     @PrePersist
     protected void onCreate() {
         recordedAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 }

@@ -860,14 +860,29 @@ CREATE TABLE patient_tooth_status (
     tooth_status_id SERIAL PRIMARY KEY,
     patient_id INTEGER NOT NULL REFERENCES patients(patient_id) ON DELETE CASCADE,
     tooth_number VARCHAR(10) NOT NULL,
-    status VARCHAR(50) NOT NULL,
+    status tooth_condition_enum NOT NULL,
     notes TEXT,
     recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP,
     UNIQUE (patient_id, tooth_number)
 );
 
-COMMENT ON TABLE patient_tooth_status IS 'Current status of each tooth for patient (dental chart)';
-COMMENT ON COLUMN patient_tooth_status.status IS 'HEALTHY, CAVITY, MISSING, CROWN, ROOT_CANAL, etc.';
+COMMENT ON TABLE patient_tooth_status IS 'Current status of each tooth for patient (dental chart/odontogram)';
+COMMENT ON COLUMN patient_tooth_status.status IS 'Tooth condition: HEALTHY, CARIES, FILLED, CROWN, MISSING, IMPLANT, ROOT_CANAL, FRACTURED, IMPACTED';
+
+-- History table for tooth status changes (audit trail)
+CREATE TABLE patient_tooth_status_history (
+    history_id SERIAL PRIMARY KEY,
+    patient_id INTEGER NOT NULL REFERENCES patients(patient_id) ON DELETE CASCADE,
+    tooth_number VARCHAR(10) NOT NULL,
+    old_status tooth_condition_enum,
+    new_status tooth_condition_enum NOT NULL,
+    changed_by INTEGER REFERENCES employees(employee_id),
+    changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    reason TEXT
+);
+
+COMMENT ON TABLE patient_tooth_status_history IS 'Audit trail for tooth status changes';
 
 -- Indexes for Clinical Records Module
 CREATE INDEX idx_clinical_records_appointment ON clinical_records(appointment_id);
@@ -878,7 +893,9 @@ CREATE INDEX idx_clinical_prescriptions_record ON clinical_prescriptions(clinica
 CREATE INDEX idx_prescription_items_prescription ON clinical_prescription_items(prescription_id);
 CREATE INDEX idx_prescription_items_item_master ON clinical_prescription_items(item_master_id);
 CREATE INDEX idx_tooth_status_patient ON patient_tooth_status(patient_id);
+CREATE INDEX idx_tooth_status_history_patient ON patient_tooth_status_history(patient_id);
+CREATE INDEX idx_tooth_status_history_changed_by ON patient_tooth_status_history(changed_by);
 
 -- ============================================
--- END OF SCHEMA V31 (Added Clinical Records Module)
+-- END OF SCHEMA V32 (Added Tooth Status ENUM + History Tracking)
 -- ============================================

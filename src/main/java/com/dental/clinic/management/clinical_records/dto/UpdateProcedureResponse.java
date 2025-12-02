@@ -11,7 +11,9 @@ import java.time.LocalDateTime;
 /**
  * Response DTO for updating an existing procedure (API 8.6)
  *
- * <p>Returns complete procedure details after successful update</p>
+ * <p>
+ * Returns complete procedure details after successful update
+ * </p>
  *
  * @author Dental Clinic System
  * @since API 8.6
