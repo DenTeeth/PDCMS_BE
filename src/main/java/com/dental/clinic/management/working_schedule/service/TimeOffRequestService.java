@@ -396,8 +396,8 @@ public class TimeOffRequestService {
                 timeOffRequest.setApprovedBy(approvedBy);
                 timeOffRequest.setApprovedAt(LocalDateTime.now());
 
-                // Deduct leave balance if applicable
-                deductLeaveBalance(timeOffRequest);
+                // Deduct leave balance if applicable (pass approvedBy explicitly)
+                deductLeaveBalance(timeOffRequest, approvedBy);
 
                 // Update employee_shifts status to ON_LEAVE
                 updateEmployeeShiftsToOnLeave(timeOffRequest);
@@ -526,8 +526,10 @@ public class TimeOffRequestService {
 
         /**
          * Deduct leave balance when request is approved
+         * @param timeOffRequest the approved time-off request
+         * @param approvedBy the employee ID of the approver
          */
-        private void deductLeaveBalance(TimeOffRequest timeOffRequest) {
+        private void deductLeaveBalance(TimeOffRequest timeOffRequest, Integer approvedBy) {
                 // Get time-off type to check type code
                 TimeOffType timeOffType = typeRepository.findById(timeOffRequest.getTimeOffTypeId())
                                 .orElseThrow(() -> new TimeOffTypeNotFoundException(timeOffRequest.getTimeOffTypeId()));
@@ -564,10 +566,10 @@ public class TimeOffRequestService {
                 balance.setUsed(balance.getUsed() + daysToDeduct.doubleValue());
                 balanceRepository.save(balance);
 
-                // Create history record
+                // Create history record with proper changedBy value
                 LeaveBalanceHistory history = LeaveBalanceHistory.builder()
                                 .balanceId(balance.getBalanceId())
-                                .changedBy(timeOffRequest.getApprovedBy())
+                                .changedBy(approvedBy) // Use parameter instead of timeOffRequest.getApprovedBy()
                                 .changeAmount(daysToDeduct.negate().doubleValue()) // Negative for deduction
                                 .reason(BalanceChangeReason.APPROVED_REQUEST)
                                 .notes(String.format("Trừ %.1f ngày nghỉ phép do yêu cầu %s được phê duyệt",
@@ -576,8 +578,8 @@ public class TimeOffRequestService {
 
                 historyRepository.save(history);
 
-                log.info("Deducted {} days from balance {} for request {}",
-                                daysToDeduct, balance.getBalanceId(), timeOffRequest.getRequestId());
+                log.info("Deducted {} days from balance {} for request {} by approver {}",
+                                daysToDeduct, balance.getBalanceId(), timeOffRequest.getRequestId(), approvedBy);
         }
 
         /**

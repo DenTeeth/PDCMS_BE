@@ -3,6 +3,7 @@ package com.dental.clinic.management.exception;
 import com.dental.clinic.management.exception.account.AccountNotVerifiedException;
 import com.dental.clinic.management.exception.authentication.InvalidTokenException;
 import com.dental.clinic.management.exception.authentication.TokenExpiredException;
+import com.dental.clinic.management.exception.time_off.InsufficientLeaveBalanceException;
 import com.dental.clinic.management.exception.time_off.ShiftNotFoundForLeaveException;
 import com.dental.clinic.management.exception.time_off.TimeOffTypeInUseException;
 import com.dental.clinic.management.exception.time_off.TimeOffTypeNotFoundException;
@@ -888,6 +889,68 @@ public class GlobalExceptionHandler {
         res.setStatusCode(HttpStatus.BAD_REQUEST.value());
         res.setMessage(ex.getMessage());
         res.setError("INVALID_BALANCE");
+        res.setData(null);
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+    }
+
+    /**
+     * Handle insufficient leave balance exception.
+     * Returns 400 Bad Request with proper error code.
+     */
+    @ExceptionHandler(InsufficientLeaveBalanceException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleInsufficientLeaveBalance(
+            InsufficientLeaveBalanceException ex,
+            HttpServletRequest request) {
+
+        log.warn("Insufficient leave balance at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.BAD_REQUEST.value());
+        res.setMessage(ex.getMessage());
+        res.setError("INSUFFICIENT_LEAVE_BALANCE");
+        res.setData(null);
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+    }
+
+    /**
+     * Handle Hibernate ConstraintViolationException (database constraints).
+     * Returns 400 Bad Request with detailed constraint information.
+     */
+    @ExceptionHandler(org.hibernate.exception.ConstraintViolationException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleDatabaseConstraintViolation(
+            org.hibernate.exception.ConstraintViolationException ex,
+            HttpServletRequest request) {
+
+        String constraintName = ex.getConstraintName();
+        String sqlState = ex.getSQLState();
+        
+        log.error("Database constraint violation at {}: constraint={}, sqlState={}, message={}", 
+                  request.getRequestURI(), constraintName, sqlState, ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.BAD_REQUEST.value());
+        
+        // Provide user-friendly message based on constraint type
+        String message = "Lỗi ràng buộc dữ liệu";
+        String errorCode = "DATABASE_CONSTRAINT_VIOLATION";
+        
+        if (ex.getMessage() != null) {
+            if (ex.getMessage().contains("null value in column")) {
+                message = "Thiếu dữ liệu bắt buộc. Vui lòng liên hệ quản trị viên.";
+                errorCode = "REQUIRED_FIELD_MISSING";
+            } else if (ex.getMessage().contains("duplicate key")) {
+                message = "Dữ liệu đã tồn tại trong hệ thống.";
+                errorCode = "DUPLICATE_ENTRY";
+            } else if (ex.getMessage().contains("foreign key")) {
+                message = "Dữ liệu tham chiếu không hợp lệ.";
+                errorCode = "INVALID_REFERENCE";
+            }
+        }
+        
+        res.setMessage(message);
+        res.setError(errorCode);
         res.setData(null);
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
