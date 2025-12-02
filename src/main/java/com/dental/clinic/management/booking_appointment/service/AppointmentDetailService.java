@@ -13,6 +13,7 @@ import com.dental.clinic.management.booking_appointment.repository.AppointmentPa
 import com.dental.clinic.management.booking_appointment.repository.AppointmentPlanItemRepository;
 import com.dental.clinic.management.booking_appointment.repository.AppointmentRepository;
 import com.dental.clinic.management.booking_appointment.repository.PatientPlanItemRepository;
+import com.dental.clinic.management.booking_appointment.repository.RoomRepository;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.exception.ResourceNotFoundException;
 import com.dental.clinic.management.patient.repository.PatientRepository;
@@ -50,6 +51,7 @@ public class AppointmentDetailService {
     private final AppointmentRepository appointmentRepository;
     private final PatientRepository patientRepository;
     private final EmployeeRepository employeeRepository;
+    private final RoomRepository roomRepository;
     private final AppointmentParticipantRepository appointmentParticipantRepository;
     private final AppointmentAuditLogRepository appointmentAuditLogRepository;
     private final AppointmentPlanItemRepository appointmentPlanItemRepository;
@@ -229,11 +231,19 @@ public class AppointmentDetailService {
             log.warn("Failed to load doctor: {}", e.getMessage());
         }
 
-        // TODO: Load room from RoomRepository
-        CreateAppointmentResponse.RoomSummary roomSummary = CreateAppointmentResponse.RoomSummary.builder()
-                .roomCode(appointment.getRoomId())
-                .roomName("Room " + appointment.getRoomId())
-                .build();
+        // Load room from RoomRepository
+        CreateAppointmentResponse.RoomSummary roomSummary = null;
+        try {
+            var room = roomRepository.findById(appointment.getRoomId()).orElse(null);
+            if (room != null) {
+                roomSummary = CreateAppointmentResponse.RoomSummary.builder()
+                        .roomCode(room.getRoomCode())
+                        .roomName(room.getRoomName())
+                        .build();
+            }
+        } catch (Exception e) {
+            log.warn("Failed to load room: {}", e.getMessage());
+        }
 
         // Load services using direct JPQL query
         List<CreateAppointmentResponse.ServiceSummary> services = new ArrayList<>();
