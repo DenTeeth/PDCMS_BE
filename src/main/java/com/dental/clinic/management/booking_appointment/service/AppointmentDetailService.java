@@ -185,13 +185,25 @@ public class AppointmentDetailService {
                 throw new AccessDeniedException("You can only view appointments where you are involved");
             }
         } else {
-            // Assume patient role - check if they own this appointment
-            // Note: For now, we skip patient check since Patient table doesn't have
-            // account_id mapping
-            // In a real system, you'd need Patient.findByAccount_Username() or similar
-            log.debug("Patient role detected - allowing access (patient validation not implemented)");
-            // TODO: Implement patient ownership check when Patient-Account mapping is
-            // available
+            // Patient role - check if they own this appointment
+            var patientOpt = patientRepository.findByAccount_Username(username);
+            if (patientOpt.isPresent()) {
+                Integer patientId = patientOpt.get().getPatientId();
+
+                if (appointment.getPatientId().equals(patientId)) {
+                    log.debug("Patient {} is viewing their own appointment {}", patientId,
+                            appointment.getAppointmentCode());
+                    return;
+                }
+
+                log.warn("Patient {} attempted to access different patient's appointment {}",
+                        patientId, appointment.getAppointmentCode());
+                throw new AccessDeniedException("You can only view your own appointments");
+            }
+
+            // User not found as employee or patient
+            log.warn("User {} not found as employee or patient", username);
+            throw new AccessDeniedException("Access Denied");
         }
 
         log.debug("RBAC check passed - access granted");
