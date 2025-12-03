@@ -37,10 +37,11 @@ public interface PatientPlanPhaseRepository extends JpaRepository<PatientPlanPha
     /**
      * Find all phases in a treatment plan
      * Used in checkAndCompletePlan() to avoid lazy loading issues
-     * 
-     * FIX Issue #40: Query phases directly from database instead of relying on lazy collection
+     *
+     * FIX Issue #40: Query phases directly from database instead of relying on lazy
+     * collection
      * This ensures we get fresh data from DB with updated phase statuses
-     * 
+     *
      * @param planId Treatment plan ID
      * @return List of all phases in the plan
      */

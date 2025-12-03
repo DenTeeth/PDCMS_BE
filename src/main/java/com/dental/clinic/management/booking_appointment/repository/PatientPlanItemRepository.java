@@ -45,10 +45,11 @@ public interface PatientPlanItemRepository extends JpaRepository<PatientPlanItem
     /**
      * Find all items in a phase
      * Used in checkAndCompletePhase() to avoid lazy loading issues
-     * 
-     * FIX Issue #40: Query items directly from database instead of relying on lazy collection
+     *
+     * FIX Issue #40: Query items directly from database instead of relying on lazy
+     * collection
      * This ensures we get fresh data from DB, not stale cached data
-     * 
+     *
      * @param phaseId Phase ID
      * @return List of all items in the phase
      */

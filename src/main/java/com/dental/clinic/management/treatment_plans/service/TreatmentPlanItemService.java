@@ -366,11 +366,14 @@ public class TreatmentPlanItemService {
      * Check if all items in phase are completed/skipped, then mark phase as
      * COMPLETED
      *
-     * FIX Issue #40: Query items directly from database to avoid lazy loading issues
-     * Lazy collections may be empty or contain stale data after entityManager.refresh()
+     * FIX Issue #40: Query items directly from database to avoid lazy loading
+     * issues
+     * Lazy collections may be empty or contain stale data after
+     * entityManager.refresh()
      */
     private void checkAndCompletePhase(PatientPlanPhase phase) {
-        // FIX Issue #40: Query items directly from database instead of using lazy collection
+        // FIX Issue #40: Query items directly from database instead of using lazy
+        // collection
         // phase.getItems() may be empty or stale after refresh
         List<PatientPlanItem> items = itemRepository.findByPhase_PatientPhaseId(phase.getPatientPhaseId());
 
@@ -473,7 +476,8 @@ public class TreatmentPlanItemService {
             return;
         }
 
-        // FIX Issue #40: Query phases directly from database instead of using lazy collection
+        // FIX Issue #40: Query phases directly from database instead of using lazy
+        // collection
         // plan.getPhases() may be empty or contain stale phase statuses after refresh
         List<PatientPlanPhase> phases = phaseRepository.findByTreatmentPlan_PlanId(plan.getPlanId());
 
