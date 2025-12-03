@@ -50,8 +50,7 @@ public class ClinicalRecordAttachmentController {
      * - 404 RECORD_NOT_FOUND: Clinical record doesn't exist
      * - 403 FORBIDDEN: No permission to access this record
      */
-    @PostMapping(value = "/api/v1/clinical-records/{recordId}/attachments",
-            consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/api/v1/clinical-records/{recordId}/attachments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('ROLE_ADMIN') or hasAuthority('UPLOAD_ATTACHMENT')")
     @ApiMessage("File uploaded successfully")
     public ResponseEntity<UploadAttachmentResponse> uploadAttachment(

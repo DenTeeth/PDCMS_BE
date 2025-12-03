@@ -28,7 +28,7 @@ public interface PatientToothStatusRepository extends JpaRepository<PatientTooth
     /**
      * Find specific tooth status for a patient
      *
-     * @param patientId Patient ID
+     * @param patientId   Patient ID
      * @param toothNumber Tooth number
      * @return Optional tooth status
      */

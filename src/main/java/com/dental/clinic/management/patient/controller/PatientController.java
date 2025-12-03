@@ -205,12 +205,14 @@ public class PatientController {
     }
 
     /**
-     * {@code GET  /patients/:patientId/tooth-status} : get all tooth statuses for a patient
+     * {@code GET  /patients/:patientId/tooth-status} : get all tooth statuses for a
+     * patient
      * API 8.9 - Used for Odontogram visualization
      * Only returns abnormal teeth - teeth not in response are considered HEALTHY
      *
      * @param patientId the patient ID
-     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the list of tooth statuses
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the list
+     *         of tooth statuses
      */
     @GetMapping("/{patientId}/tooth-status")
     @Operation(summary = "Get patient tooth status", description = "Get all abnormal tooth conditions for Odontogram visualization (API 8.9)")
@@ -222,13 +224,15 @@ public class PatientController {
     }
 
     /**
-     * {@code PUT  /patients/:patientId/tooth-status/:toothNumber} : update tooth status
+     * {@code PUT  /patients/:patientId/tooth-status/:toothNumber} : update tooth
+     * status
      * API 8.10 - Updates tooth status with automatic history tracking
      *
-     * @param patientId the patient ID
+     * @param patientId   the patient ID
      * @param toothNumber the tooth number
-     * @param request the update request
-     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the updated tooth status
+     * @param request     the update request
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the
+     *         updated tooth status
      */
     @PutMapping("/{patientId}/tooth-status/{toothNumber}")
     @Operation(summary = "Update tooth status", description = "Update tooth status with automatic history tracking (API 8.10)")
@@ -237,11 +241,13 @@ public class PatientController {
             @Parameter(description = "Patient ID", required = true) @PathVariable("patientId") Integer patientId,
             @Parameter(description = "Tooth number", required = true) @PathVariable("toothNumber") String toothNumber,
             @Valid @RequestBody UpdateToothStatusRequest request) {
-        
-        // For now, using a hardcoded employee ID (will be replaced with SecurityUtils.getCurrentUser())
+
+        // For now, using a hardcoded employee ID (will be replaced with
+        // SecurityUtils.getCurrentUser())
         Integer changedBy = 1;
-        
-        UpdateToothStatusResponse response = patientService.updateToothStatus(patientId, toothNumber, request, changedBy);
+
+        UpdateToothStatusResponse response = patientService.updateToothStatus(patientId, toothNumber, request,
+                changedBy);
         return ResponseEntity.ok().body(response);
     }
 }

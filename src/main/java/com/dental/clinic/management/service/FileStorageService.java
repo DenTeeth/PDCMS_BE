@@ -41,15 +41,15 @@ public class FileStorageService {
             "image/jpg",
             "image/png",
             "image/gif",
-            "application/pdf"
-    );
+            "application/pdf");
 
     /**
      * Store file to local filesystem
      *
-     * @param file MultipartFile from controller
+     * @param file             MultipartFile from controller
      * @param clinicalRecordId Record ID for folder organization
-     * @return Relative file path (e.g., "uploads/clinical-records/1/20251202_143022_xray.jpg")
+     * @return Relative file path (e.g.,
+     *         "uploads/clinical-records/1/20251202_143022_xray.jpg")
      */
     public String storeFile(MultipartFile file, Integer clinicalRecordId) throws IOException {
         log.info("Storing file for clinical record ID: {}", clinicalRecordId);

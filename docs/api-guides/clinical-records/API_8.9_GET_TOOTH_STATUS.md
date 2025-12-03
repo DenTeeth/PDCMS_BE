@@ -29,9 +29,9 @@ Required Permissions (OR logic):
 
 ### Path Parameters
 
-| Parameter | Type    | Required | Description      |
-| --------- | ------- | -------- | ---------------- |
-| patientId | Integer | Yes      | The patient ID   |
+| Parameter | Type    | Required | Description    |
+| --------- | ------- | -------- | -------------- |
+| patientId | Integer | Yes      | The patient ID |
 
 ### Example Requests
 
@@ -92,29 +92,29 @@ curl -X GET "http://localhost:8080/api/v1/patients/1/tooth-status" \
 
 ### Response Fields
 
-| Field          | Type     | Description                                    |
-| -------------- | -------- | ---------------------------------------------- |
-| toothStatusId  | Integer  | Unique ID of the tooth status record           |
-| patientId      | Integer  | Patient ID                                     |
-| toothNumber    | String   | Tooth number (FDI notation: 11-18, 21-28, etc) |
-| status         | Enum     | Tooth condition (see Tooth Condition Enum)     |
-| notes          | String   | Additional notes about the condition           |
-| recordedAt     | DateTime | When the condition was first recorded          |
-| updatedAt      | DateTime | When the condition was last updated (nullable) |
+| Field         | Type     | Description                                    |
+| ------------- | -------- | ---------------------------------------------- |
+| toothStatusId | Integer  | Unique ID of the tooth status record           |
+| patientId     | Integer  | Patient ID                                     |
+| toothNumber   | String   | Tooth number (FDI notation: 11-18, 21-28, etc) |
+| status        | Enum     | Tooth condition (see Tooth Condition Enum)     |
+| notes         | String   | Additional notes about the condition           |
+| recordedAt    | DateTime | When the condition was first recorded          |
+| updatedAt     | DateTime | When the condition was last updated (nullable) |
 
 ### Tooth Condition Enum
 
-| Value      | Description                      |
-| ---------- | -------------------------------- |
-| HEALTHY    | Rang khoe manh (default)         |
-| CARIES     | Sau rang (cavity)                |
-| FILLED     | Da tram rang                     |
-| CROWN      | Boc rang su (crowned)            |
-| MISSING    | Mat rang / Da nhổ                |
-| IMPLANT    | Cay ghep Implant                 |
-| ROOT_CANAL | Dieu tri tuy rang                |
-| FRACTURED  | Rang bi gay                      |
-| IMPACTED   | Rang khon moc lech (wisdom tooth)|
+| Value      | Description                       |
+| ---------- | --------------------------------- |
+| HEALTHY    | Rang khoe manh (default)          |
+| CARIES     | Sau rang (cavity)                 |
+| FILLED     | Da tram rang                      |
+| CROWN      | Boc rang su (crowned)             |
+| MISSING    | Mat rang / Da nhổ                 |
+| IMPLANT    | Cay ghep Implant                  |
+| ROOT_CANAL | Dieu tri tuy rang                 |
+| FRACTURED  | Rang bi gay                       |
+| IMPACTED   | Rang khon moc lech (wisdom tooth) |
 
 ### Error Responses
 
@@ -156,16 +156,19 @@ curl -X GET "http://localhost:8080/api/v1/patients/1/tooth-status" \
 ### Scenario 1: Get Tooth Status for Patient with Multiple Conditions
 
 **Setup:**
+
 - Patient ID: 1
 - Has 4 teeth with abnormal conditions
 
 **Request:**
+
 ```bash
 curl -X GET "http://localhost:8080/api/v1/patients/1/tooth-status" \
   -H "Authorization: Bearer {{doctor_token}}"
 ```
 
 **Expected Result:**
+
 - Status Code: 200 OK
 - Response contains 4 tooth status records
 - Tooth 18: MISSING
@@ -176,16 +179,19 @@ curl -X GET "http://localhost:8080/api/v1/patients/1/tooth-status" \
 ### Scenario 2: Get Tooth Status for Patient with One Condition
 
 **Setup:**
+
 - Patient ID: 2
 - Has 1 tooth with filled condition
 
 **Request:**
+
 ```bash
 curl -X GET "http://localhost:8080/api/v1/patients/2/tooth-status" \
   -H "Authorization: Bearer {{doctor_token}}"
 ```
 
 **Expected Result:**
+
 - Status Code: 200 OK
 - Response contains 1 tooth status record
 - Tooth 36: FILLED
@@ -193,44 +199,53 @@ curl -X GET "http://localhost:8080/api/v1/patients/2/tooth-status" \
 ### Scenario 3: Get Tooth Status for Non-Existent Patient
 
 **Setup:**
+
 - Patient ID: 999 (does not exist)
 
 **Request:**
+
 ```bash
 curl -X GET "http://localhost:8080/api/v1/patients/999/tooth-status" \
   -H "Authorization: Bearer {{doctor_token}}"
 ```
 
 **Expected Result:**
+
 - Status Code: 400 Bad Request
 - Error message: "Patient not found with ID: 999"
 
 ### Scenario 4: Access Without Authentication
 
 **Setup:**
+
 - No authentication token provided
 
 **Request:**
+
 ```bash
 curl -X GET "http://localhost:8080/api/v1/patients/1/tooth-status"
 ```
 
 **Expected Result:**
+
 - Status Code: 401 Unauthorized
 - Error message: "Full authentication is required to access this resource"
 
 ### Scenario 5: Access Without VIEW_PATIENT Permission
 
 **Setup:**
+
 - User without VIEW_PATIENT permission
 
 **Request:**
+
 ```bash
 curl -X GET "http://localhost:8080/api/v1/patients/1/tooth-status" \
   -H "Authorization: Bearer {{limited_user_token}}"
 ```
 
 **Expected Result:**
+
 - Status Code: 403 Forbidden
 - Error message: "Access is denied"
 
@@ -241,12 +256,14 @@ curl -X GET "http://localhost:8080/api/v1/patients/1/tooth-status" \
 This API uses the FDI (Federation Dentaire Internationale) two-digit notation:
 
 **Adult Teeth (Permanent Dentition):**
+
 - Upper Right: 11-18
 - Upper Left: 21-28
 - Lower Left: 31-38
 - Lower Right: 41-48
 
 **Example Mapping:**
+
 - 11 = Upper right central incisor
 - 18 = Upper right wisdom tooth
 - 21 = Upper left central incisor
@@ -257,6 +274,7 @@ This API uses the FDI (Federation Dentaire Internationale) two-digit notation:
 
 1. **Missing Teeth = HEALTHY**: If a tooth number is not in the response, consider it HEALTHY
 2. **Visual Representation**: Map each status to appropriate colors/icons:
+
    - HEALTHY: Green or no marking
    - CARIES: Red (needs treatment)
    - FILLED: Blue (already treated)

@@ -47,25 +47,25 @@ Required Permissions (OR logic):
 
 ### Request Fields
 
-| Field  | Type   | Required | Description                                |
-| ------ | ------ | -------- | ------------------------------------------ |
+| Field  | Type   | Required | Description                                    |
+| ------ | ------ | -------- | ---------------------------------------------- |
 | status | Enum   | Yes      | New tooth condition (see Tooth Condition Enum) |
-| notes  | String | No       | Additional notes about the condition       |
-| reason | String | No       | Reason for the status change (for history) |
+| notes  | String | No       | Additional notes about the condition           |
+| reason | String | No       | Reason for the status change (for history)     |
 
 ### Tooth Condition Enum
 
-| Value      | Description                      |
-| ---------- | -------------------------------- |
-| HEALTHY    | Rang khoe manh                   |
-| CARIES     | Sau rang (cavity)                |
-| FILLED     | Da tram rang                     |
-| CROWN      | Boc rang su (crowned)            |
-| MISSING    | Mat rang / Da nhổ                |
-| IMPLANT    | Cay ghep Implant                 |
-| ROOT_CANAL | Dieu tri tuy rang                |
-| FRACTURED  | Rang bi gay                      |
-| IMPACTED   | Rang khon moc lech (wisdom tooth)|
+| Value      | Description                       |
+| ---------- | --------------------------------- |
+| HEALTHY    | Rang khoe manh                    |
+| CARIES     | Sau rang (cavity)                 |
+| FILLED     | Da tram rang                      |
+| CROWN      | Boc rang su (crowned)             |
+| MISSING    | Mat rang / Da nhổ                 |
+| IMPLANT    | Cay ghep Implant                  |
+| ROOT_CANAL | Dieu tri tuy rang                 |
+| FRACTURED  | Rang bi gay                       |
+| IMPACTED   | Rang khon moc lech (wisdom tooth) |
 
 ### Example Requests
 
@@ -110,16 +110,16 @@ curl -X PUT "http://localhost:8080/api/v1/patients/1/tooth-status/15" \
 
 ### Response Fields
 
-| Field          | Type     | Description                                    |
-| -------------- | -------- | ---------------------------------------------- |
-| toothStatusId  | Integer  | Unique ID of the tooth status record           |
-| patientId      | Integer  | Patient ID                                     |
-| toothNumber    | String   | Tooth number (FDI notation)                    |
-| status         | Enum     | Current tooth condition                        |
-| notes          | String   | Additional notes about the condition           |
-| recordedAt     | DateTime | When the condition was first recorded          |
-| updatedAt      | DateTime | When the condition was last updated            |
-| message        | String   | Success message                                |
+| Field         | Type     | Description                           |
+| ------------- | -------- | ------------------------------------- |
+| toothStatusId | Integer  | Unique ID of the tooth status record  |
+| patientId     | Integer  | Patient ID                            |
+| toothNumber   | String   | Tooth number (FDI notation)           |
+| status        | Enum     | Current tooth condition               |
+| notes         | String   | Additional notes about the condition  |
+| recordedAt    | DateTime | When the condition was first recorded |
+| updatedAt     | DateTime | When the condition was last updated   |
+| message       | String   | Success message                       |
 
 ### Error Responses
 
@@ -174,11 +174,13 @@ curl -X PUT "http://localhost:8080/api/v1/patients/1/tooth-status/15" \
 ### Scenario 1: Update Existing Tooth Status
 
 **Setup:**
+
 - Patient ID: 1
 - Tooth 18 exists with status MISSING
 - Change to IMPLANT
 
 **Request:**
+
 ```bash
 curl -X PUT "http://localhost:8080/api/v1/patients/1/tooth-status/18" \
   -H "Authorization: Bearer {{doctor_token}}" \
@@ -191,6 +193,7 @@ curl -X PUT "http://localhost:8080/api/v1/patients/1/tooth-status/18" \
 ```
 
 **Expected Result:**
+
 - Status Code: 200 OK
 - Response contains updated tooth status
 - History record created with oldStatus=MISSING, newStatus=IMPLANT
@@ -199,11 +202,13 @@ curl -X PUT "http://localhost:8080/api/v1/patients/1/tooth-status/18" \
 ### Scenario 2: Create New Tooth Status
 
 **Setup:**
+
 - Patient ID: 1
 - Tooth 15 does not exist yet
 - Create with status ROOT_CANAL
 
 **Request:**
+
 ```bash
 curl -X PUT "http://localhost:8080/api/v1/patients/1/tooth-status/15" \
   -H "Authorization: Bearer {{doctor_token}}" \
@@ -216,6 +221,7 @@ curl -X PUT "http://localhost:8080/api/v1/patients/1/tooth-status/15" \
 ```
 
 **Expected Result:**
+
 - Status Code: 200 OK
 - New tooth status created
 - History record created with oldStatus=null, newStatus=ROOT_CANAL
@@ -224,9 +230,11 @@ curl -X PUT "http://localhost:8080/api/v1/patients/1/tooth-status/15" \
 ### Scenario 3: Update for Non-Existent Patient
 
 **Setup:**
+
 - Patient ID: 999 (does not exist)
 
 **Request:**
+
 ```bash
 curl -X PUT "http://localhost:8080/api/v1/patients/999/tooth-status/18" \
   -H "Authorization: Bearer {{doctor_token}}" \
@@ -239,6 +247,7 @@ curl -X PUT "http://localhost:8080/api/v1/patients/999/tooth-status/18" \
 ```
 
 **Expected Result:**
+
 - Status Code: 400 Bad Request
 - Error message: "Patient not found with ID: 999"
 - No history record created
@@ -246,10 +255,12 @@ curl -X PUT "http://localhost:8080/api/v1/patients/999/tooth-status/18" \
 ### Scenario 4: Update Without Required Status Field
 
 **Setup:**
+
 - Patient ID: 1
 - Missing required field: status
 
 **Request:**
+
 ```bash
 curl -X PUT "http://localhost:8080/api/v1/patients/1/tooth-status/18" \
   -H "Authorization: Bearer {{doctor_token}}" \
@@ -260,6 +271,7 @@ curl -X PUT "http://localhost:8080/api/v1/patients/1/tooth-status/18" \
 ```
 
 **Expected Result:**
+
 - Status Code: 400 Bad Request
 - Error message: "status: Status is required"
 - No history record created
@@ -267,9 +279,11 @@ curl -X PUT "http://localhost:8080/api/v1/patients/1/tooth-status/18" \
 ### Scenario 5: Access Without Authentication
 
 **Setup:**
+
 - No authentication token provided
 
 **Request:**
+
 ```bash
 curl -X PUT "http://localhost:8080/api/v1/patients/1/tooth-status/18" \
   -H "Content-Type: application/json" \
@@ -281,24 +295,28 @@ curl -X PUT "http://localhost:8080/api/v1/patients/1/tooth-status/18" \
 ```
 
 **Expected Result:**
+
 - Status Code: 401 Unauthorized
 - Error message: "Full authentication is required to access this resource"
 
 ### Scenario 6: Verify History Tracking
 
 **Setup:**
+
 - After updating tooth 18 from MISSING to IMPLANT (Scenario 1)
 - Query the history table directly
 
 **Verification:**
+
 ```sql
-SELECT * FROM patient_tooth_status_history 
+SELECT * FROM patient_tooth_status_history
 WHERE patient_id = 1 AND tooth_number = '18'
 ORDER BY changed_at DESC
 LIMIT 1;
 ```
 
 **Expected Result:**
+
 - History record exists
 - old_status = 'MISSING'
 - new_status = 'IMPLANT'
@@ -323,7 +341,7 @@ Every time a tooth status is created or updated, a history record is automatical
 To view the complete history of a tooth:
 
 ```sql
-SELECT 
+SELECT
   history_id,
   tooth_number,
   old_status,
@@ -338,6 +356,7 @@ ORDER BY h.changed_at DESC;
 ```
 
 Example output:
+
 ```
 history_id | tooth_number | old_status | new_status | changed_at          | reason                          | changed_by_name
 -----------|--------------|------------|------------|---------------------|--------------------------------|----------------

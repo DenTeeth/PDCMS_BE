@@ -127,20 +127,33 @@ public class TreatmentPlanSpecification {
             }
 
             // Filter: searchTerm (P1 Enhancement)
-            // Search in: plan_name, patient full_name
+            // Search in: plan_name, patient firstName, patient lastName
+            // FIX Issue #34: Handle both SELECT (with fetch) and COUNT (without fetch) queries
             if (request.getSearchTerm() != null && !request.getSearchTerm().isBlank()) {
-                String searchPattern = "%" + request.getSearchTerm().toLowerCase() + "%";
+                String searchPattern = "%" + request.getSearchTerm().toLowerCase().trim() + "%";
 
-                Join<Object, Object> patientJoin = root.join("patient", JoinType.INNER);
+                // For COUNT queries, patient fetch doesn't exist, so we need to join
+                // For SELECT queries, patient is already fetched, so reuse it
+                Path<Object> patientPath;
+                if (query.getResultType() == PatientTreatmentPlan.class) {
+                    // SELECT query - patient is already fetched, just get the path
+                    patientPath = root.get("patient");
+                } else {
+                    // COUNT query - need to create join
+                    patientPath = root.join("patient", JoinType.LEFT);
+                }
 
                 Predicate planNameMatch = criteriaBuilder.like(
                         criteriaBuilder.lower(root.get("planName")),
                         searchPattern);
-                Predicate patientNameMatch = criteriaBuilder.like(
-                        criteriaBuilder.lower(patientJoin.get("fullName")),
+                Predicate patientFirstNameMatch = criteriaBuilder.like(
+                        criteriaBuilder.lower(patientPath.get("firstName")),
+                        searchPattern);
+                Predicate patientLastNameMatch = criteriaBuilder.like(
+                        criteriaBuilder.lower(patientPath.get("lastName")),
                         searchPattern);
 
-                predicates.add(criteriaBuilder.or(planNameMatch, patientNameMatch));
+                predicates.add(criteriaBuilder.or(planNameMatch, patientFirstNameMatch, patientLastNameMatch));
             }
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));

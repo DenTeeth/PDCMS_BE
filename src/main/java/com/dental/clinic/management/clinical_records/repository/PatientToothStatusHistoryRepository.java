@@ -27,7 +27,7 @@ public interface PatientToothStatusHistoryRepository extends JpaRepository<Patie
     /**
      * Find history for a specific tooth
      *
-     * @param patientId Patient ID
+     * @param patientId   Patient ID
      * @param toothNumber Tooth number
      * @return List of history records for that tooth
      */
