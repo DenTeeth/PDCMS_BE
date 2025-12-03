@@ -27,11 +27,11 @@ public class LeaveBalanceHistory {
     @JoinColumn(name = "balance_id", nullable = false)
     private EmployeeLeaveBalance balance;
 
-    @Column(name = "changed_by", nullable = false, insertable = false, updatable = false)
+    @Column(name = "changed_by", nullable = false)
     private Integer changedBy;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "changed_by", nullable = false)
+    @JoinColumn(name = "changed_by", nullable = false, insertable = false, updatable = false)
     private com.dental.clinic.management.employee.domain.Employee changedByEmployee;
 
     @Column(name = "change_amount", nullable = false)

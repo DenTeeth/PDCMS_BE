@@ -38,10 +38,12 @@ public interface ItemMasterRepository extends JpaRepository<ItemMaster, Long>, J
          * - Search by itemName or itemCode (LIKE)
          * - Filter by warehouseType
          * - Filter by categoryId
+         * - Exclude tools (is_tool = false) to prevent tools from appearing in medicine searches
          */
         @Query("SELECT DISTINCT im FROM ItemMaster im " +
                         "LEFT JOIN im.category cat " +
                         "WHERE im.isActive = true " +
+                        "AND im.isTool = false " +
                         "AND (:search IS NULL OR :search = '' OR " +
                         "LOWER(im.itemName) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
                         "LOWER(im.itemCode) LIKE LOWER(CONCAT('%', :search, '%'))) " +

@@ -14,8 +14,12 @@ import com.dental.clinic.management.booking_appointment.repository.AppointmentPl
 import com.dental.clinic.management.booking_appointment.repository.AppointmentRepository;
 import com.dental.clinic.management.booking_appointment.repository.AppointmentServiceRepository;
 import com.dental.clinic.management.booking_appointment.repository.BookingDentalServiceRepository;
+import com.dental.clinic.management.booking_appointment.repository.PatientPlanItemRepository;
 import com.dental.clinic.management.employee.domain.Employee;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
+import com.dental.clinic.management.treatment_plans.domain.PatientPlanItem;
+import com.dental.clinic.management.treatment_plans.enums.PlanItemStatus;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -53,6 +57,8 @@ public class AppointmentRescheduleService {
         private final AppointmentCreationService creationService;
         private final AppointmentDetailService detailService;
         private final AppointmentPlanItemRepository appointmentPlanItemRepository;
+        private final PatientPlanItemRepository itemRepository;
+        private final EntityManager entityManager;
 
         /**
          * Reschedule appointment: Cancel old and create new in one transaction.
@@ -82,6 +88,14 @@ public class AppointmentRescheduleService {
 
                 // STEP 3.5: FIX Issue #39 - Get plan item IDs from old appointment
                 List<Long> planItemIds = getPlanItemIdsFromOldAppointment(oldAppointment);
+
+                // STEP 3.6: FIX Issue #42 - Reset plan items status from SCHEDULED to READY_FOR_BOOKING
+                // This is necessary because old appointment will be cancelled, allowing re-booking
+                if (planItemIds != null && !planItemIds.isEmpty()) {
+                        resetPlanItemsStatusForReschedule(planItemIds);
+                        log.info("Reset {} plan items from SCHEDULED to READY_FOR_BOOKING for reschedule",
+                                        planItemIds.size());
+                }
 
                 // STEP 4: Get patient code from old appointment
                 String patientCode = getPatientCode(oldAppointment);
@@ -314,5 +328,35 @@ public class AppointmentRescheduleService {
                                                 "Current user is not an employee: " + username));
 
                 return employee.getEmployeeId();
+        }
+
+        /**
+         * FIX Issue #42: Reset plan items status from SCHEDULED to READY_FOR_BOOKING for reschedule.
+         * Only resets items that are currently SCHEDULED (from old appointment).
+         *
+         * Why this is needed:
+         * - When rescheduling, we need to create a new appointment with the same plan items
+         * - AppointmentCreationService.validatePlanItems() requires all items to be READY_FOR_BOOKING
+         * - But items from old appointment are still in SCHEDULED status
+         * - We reset them here before validation to allow the new appointment to be created
+         * - The old appointment will be cancelled afterwards, which would normally trigger this reset
+         *
+         * @param planItemIds List of plan item IDs to reset
+         */
+        private void resetPlanItemsStatusForReschedule(List<Long> planItemIds) {
+                List<PatientPlanItem> items = itemRepository.findAllById(planItemIds);
+
+                for (PatientPlanItem item : items) {
+                        if (item.getStatus() == PlanItemStatus.SCHEDULED) {
+                                item.setStatus(PlanItemStatus.READY_FOR_BOOKING);
+                                itemRepository.save(item);
+                                log.debug("Reset plan item {} from SCHEDULED to READY_FOR_BOOKING for reschedule",
+                                                item.getItemId());
+                        }
+                }
+
+                // Ensure changes are persisted before validation
+                entityManager.flush();
+                log.info("Successfully reset {} plan items for reschedule", items.size());
         }
 }

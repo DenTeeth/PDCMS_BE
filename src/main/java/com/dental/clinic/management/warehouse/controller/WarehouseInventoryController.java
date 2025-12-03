@@ -74,7 +74,7 @@ public class WarehouseInventoryController {
                         "Hỗ trợ filters: search, stockStatus, warehouseType, categoryId. Pagination enabled.")
         @ApiMessage("Lấy inventory summary thành công")
         @GetMapping("/summary")
-        @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('VIEW_WAREHOUSE')")
+        @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('VIEW_WAREHOUSE') or hasAuthority('VIEW_ITEMS')")
         public ResponseEntity<InventorySummaryResponse> getInventorySummary(
                         @Parameter(description = "Tìm kiếm theo itemName hoặc itemCode (LIKE)") @RequestParam(required = false) String search,
 
@@ -97,6 +97,49 @@ public class WarehouseInventoryController {
                                 search, stockStatus, warehouseType, categoryId, pageable);
 
                 log.info(" Returned {} items out of {} total", response.getContent().size(), response.getTotalItems());
+                return ResponseEntity.ok(response);
+        }
+
+        /**
+         * API 6.1.1: Medicine Search for Prescription (Dentist-only)
+         * 
+         * Only returns items from MEDICINE category
+         * Filters out tools, equipment, and consumables for prescription safety
+         * 
+         * Request:
+         * GET /api/v1/warehouse/medicines?search=kháng sinh&page=0&size=20
+         * 
+         * Response: Same as API 6.1 but MEDICINE category only
+         * 
+         * Business Logic:
+         * - Auto-filter by MEDICINE category
+         * - Exclude tools (is_tool = false)
+         * - For dentists to search medicines when prescribing
+         */
+        @Operation(summary = "API 6.1.1 - Medicine Search for Prescription", 
+                description = "Tìm kiếm THUỐC MEN để kê đơn (chỉ MEDICINE category). Không trả về dụng cụ/vật tư. Dành cho Bác sĩ.")
+        @ApiMessage("Lấy danh sách thuốc men thành công")
+        @GetMapping("/medicines")
+        @PreAuthorize("hasAuthority('VIEW_ITEMS') or hasAuthority('VIEW_WAREHOUSE')")
+        public ResponseEntity<InventorySummaryResponse> getMedicinesForPrescription(
+                        @Parameter(description = "Tìm kiếm theo tên thuốc") @RequestParam(required = false) String search,
+                        @Parameter(description = "Số trang (0-based)") @RequestParam(defaultValue = "0") int page,
+                        @Parameter(description = "Số lượng items mỗi trang") @RequestParam(defaultValue = "20") int size) {
+
+                log.info("🩺 API 6.1.1 - GET /api/v1/warehouse/medicines - search='{}', page={}, size={}", 
+                        search, page, size);
+
+                Pageable pageable = PageRequest.of(page, size);
+                
+                // Get category ID for MEDICINE
+                Long medicineCategoryId = inventoryService.getMedicineCategoryId();
+                
+                // Force filter by MEDICINE category only
+                InventorySummaryResponse response = inventoryService.getInventorySummaryV2(
+                        search, null, null, medicineCategoryId, pageable);
+
+                log.info("✅ Returned {} medicines out of {} total", 
+                        response.getContent().size(), response.getTotalItems());
                 return ResponseEntity.ok(response);
         }
 
