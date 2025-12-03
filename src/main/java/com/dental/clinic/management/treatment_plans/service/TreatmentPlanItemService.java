@@ -488,10 +488,22 @@ public class TreatmentPlanItemService {
             plan.setStatus(TreatmentPlanStatus.COMPLETED);
             planRepository.save(plan);
 
-            log.info("Treatment plan {} (code: {}) auto-completed: {} → COMPLETED - All {} phases done",
+            // FIX Issue #38: Force persist status to DB immediately and refresh entity
+            // Without flush/refresh, status may not be visible in subsequent queries
+            entityManager.flush();  // Force DB write NOW (within current transaction)
+            entityManager.refresh(plan);  // Reload from DB to ensure consistency
+
+            log.info("✅ Treatment plan {} (code: {}) auto-completed: {} → COMPLETED - All {} phases done",
                     plan.getPlanId(), plan.getPlanCode(),
                     oldStatus == null ? "null" : oldStatus,
                     phases.size());
+
+            // Verify status was persisted correctly
+            if (plan.getStatus() == TreatmentPlanStatus.COMPLETED) {
+                log.debug("✅ VERIFIED: Plan {} status confirmed as COMPLETED in DB", plan.getPlanCode());
+            } else {
+                log.error("❌ CRITICAL: Plan {} status not persisted! Current: {}", plan.getPlanCode(), plan.getStatus());
+            }
         } else {
             log.debug("Plan {} not completed yet: {}/{} phases done",
                     plan.getPlanCode(), completedPhases, phases.size());

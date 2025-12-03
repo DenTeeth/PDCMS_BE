@@ -135,7 +135,7 @@ public class LeaveBalanceService {
 
         // Create history record
         LeaveBalanceHistory history = LeaveBalanceHistory.builder()
-                .balanceId(balance.getBalanceId())
+                .balance(balance) // Set the relationship, not just the ID
                 .changedBy(null) // System action, no specific user
                 .changeAmount(defaultDays)
                 .reason(BalanceChangeReason.ANNUAL_RESET)
@@ -192,7 +192,7 @@ public class LeaveBalanceService {
 
         // Record in history
         LeaveBalanceHistory history = LeaveBalanceHistory.builder()
-                .balanceId(balance.getBalanceId())
+                .balance(balance) // Set the relationship, not just the ID
                 .changedBy(changedBy)
                 .changeAmount(adjustment)
                 .reason(BalanceChangeReason.MANUAL_ADJUSTMENT)

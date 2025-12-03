@@ -5,14 +5,22 @@ import com.dental.clinic.management.booking_appointment.domain.Room;
 import com.dental.clinic.management.booking_appointment.repository.AppointmentParticipantRepository;
 import com.dental.clinic.management.booking_appointment.repository.AppointmentRepository;
 import com.dental.clinic.management.booking_appointment.repository.RoomRepository;
+import com.dental.clinic.management.clinical_records.domain.ClinicalPrescription;
+import com.dental.clinic.management.clinical_records.domain.ClinicalPrescriptionItem;
 import com.dental.clinic.management.clinical_records.domain.ClinicalRecord;
 import com.dental.clinic.management.clinical_records.domain.ClinicalRecordProcedure;
+import com.dental.clinic.management.clinical_records.domain.PatientToothStatus;
 import com.dental.clinic.management.clinical_records.dto.*;
+import com.dental.clinic.management.clinical_records.repository.ClinicalPrescriptionRepository;
 import com.dental.clinic.management.clinical_records.repository.ClinicalRecordProcedureRepository;
 import com.dental.clinic.management.clinical_records.repository.ClinicalRecordRepository;
+import com.dental.clinic.management.clinical_records.repository.PatientToothStatusRepository;
 import com.dental.clinic.management.employee.domain.Employee;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
+import com.dental.clinic.management.exception.BadRequestException;
 import com.dental.clinic.management.exception.NotFoundException;
+import com.dental.clinic.management.warehouse.domain.ItemMaster;
+import com.dental.clinic.management.warehouse.repository.ItemMasterRepository;
 import com.dental.clinic.management.patient.domain.Patient;
 import com.dental.clinic.management.patient.repository.PatientRepository;
 import com.dental.clinic.management.service.domain.DentalService;
@@ -37,6 +45,7 @@ public class ClinicalRecordService {
 
         private final ClinicalRecordRepository clinicalRecordRepository;
         private final ClinicalRecordProcedureRepository procedureRepository;
+        private final ClinicalPrescriptionRepository prescriptionRepository;
         private final AppointmentRepository appointmentRepository;
         private final AppointmentParticipantRepository appointmentParticipantRepository;
         private final EmployeeRepository employeeRepository;
@@ -44,6 +53,8 @@ public class ClinicalRecordService {
         private final RoomRepository roomRepository;
         private final DentalServiceRepository dentalServiceRepository;
         private final PatientPlanItemRepository planItemRepository;
+        private final ItemMasterRepository itemMasterRepository;
+        private final PatientToothStatusRepository toothStatusRepository;
 
         private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -251,26 +262,37 @@ public class ClinicalRecordService {
                 var prescriptions = record.getPrescriptions().stream()
                                 .map(presc -> {
                                         var items = presc.getItems().stream()
-                                                        .map(item -> PrescriptionItemDTO.builder()
-                                                                        .prescriptionItemId(
-                                                                                        item.getPrescriptionItemId())
-                                                                        .itemCode(item.getItemMaster() != null
-                                                                                        ? item.getItemMaster()
-                                                                                                        .getItemCode()
-                                                                                        : null)
-                                                                        .itemName(item.getItemName())
-                                                                        .quantity(item.getQuantity())
-                                                                        .dosageInstructions(
-                                                                                        item.getDosageInstructions())
-                                                                        .createdAt(item.getCreatedAt()
-                                                                                        .format(FORMATTER))
-                                                                        .build())
+                                                        .map(item -> {
+                                                                PrescriptionItemDTO.PrescriptionItemDTOBuilder builder = PrescriptionItemDTO
+                                                                                .builder()
+                                                                                .prescriptionItemId(item
+                                                                                                .getPrescriptionItemId())
+                                                                                .itemName(item.getItemName())
+                                                                                .quantity(item.getQuantity())
+                                                                                .dosageInstructions(item
+                                                                                                .getDosageInstructions());
+
+                                                                if (item.getItemMaster() != null) {
+                                                                        builder.itemMasterId(item.getItemMaster()
+                                                                                        .getItemMasterId().intValue())
+                                                                                        .itemCode(item.getItemMaster()
+                                                                                                        .getItemCode())
+                                                                                        .unitName(item.getItemMaster()
+                                                                                                        .getUnitOfMeasure());
+                                                                }
+
+                                                                return builder.build();
+                                                        })
                                                         .collect(Collectors.toList());
 
                                         return PrescriptionDTO.builder()
                                                         .prescriptionId(presc.getPrescriptionId())
+                                                        .clinicalRecordId(
+                                                                        presc.getClinicalRecord().getClinicalRecordId())
                                                         .prescriptionNotes(presc.getPrescriptionNotes())
-                                                        .createdAt(presc.getCreatedAt().format(FORMATTER))
+                                                        .createdAt(presc.getCreatedAt() != null
+                                                                        ? presc.getCreatedAt().format(FORMATTER)
+                                                                        : null)
                                                         .items(items)
                                                         .build();
                                 })
@@ -284,6 +306,9 @@ public class ClinicalRecordService {
                                 .chiefComplaint(record.getChiefComplaint())
                                 .examinationFindings(record.getExaminationFindings())
                                 .treatmentNotes(record.getTreatmentNotes())
+                                .followUpDate(record.getFollowUpDate() != null
+                                                ? record.getFollowUpDate().format(DATE_FORMATTER)
+                                                : null)
                                 .createdAt(record.getCreatedAt().format(FORMATTER))
                                 .updatedAt(record.getUpdatedAt().format(FORMATTER))
                                 .appointment(appointmentDTO)
@@ -339,6 +364,7 @@ public class ClinicalRecordService {
                                 .diagnosis(request.getDiagnosis())
                                 .treatmentNotes(request.getTreatmentNotes())
                                 .vitalSigns(request.getVitalSigns())
+                                .followUpDate(request.getFollowUpDate())
                                 .build();
 
                 ClinicalRecord saved = clinicalRecordRepository.save(record);
@@ -387,6 +413,10 @@ public class ClinicalRecordService {
                         record.setVitalSigns(request.getVitalSigns());
                 }
 
+                if (request.getFollowUpDate() != null) {
+                        record.setFollowUpDate(request.getFollowUpDate());
+                }
+
                 // Step 3: Save changes (updated_at auto-updated by @PreUpdate)
                 ClinicalRecord updated = clinicalRecordRepository.save(record);
 
@@ -397,6 +427,9 @@ public class ClinicalRecordService {
                                 .updatedAt(updated.getUpdatedAt().format(FORMATTER))
                                 .examinationFindings(updated.getExaminationFindings())
                                 .treatmentNotes(updated.getTreatmentNotes())
+                                .followUpDate(updated.getFollowUpDate() != null
+                                                ? updated.getFollowUpDate().format(DATE_FORMATTER)
+                                                : null)
                                 .build();
         }
 
@@ -702,5 +735,316 @@ public class ClinicalRecordService {
                 // Step 3: Delete procedure (hard delete - no cascade to treatment plan)
                 procedureRepository.delete(procedure);
                 log.info("Procedure deleted successfully: ID {}", procedureId);
+        }
+
+        /**
+         * Get prescription for a clinical record
+         *
+         * Authorization Logic (reuse from getClinicalRecord):
+         * 1. Admin (ROLE_ADMIN): Can access all prescriptions
+         * 2. VIEW_APPOINTMENT_ALL: Can access all prescriptions
+         * 3. VIEW_APPOINTMENT_OWN: Can only access if user has permission to view the
+         * appointment
+         *
+         * Returns 404 RECORD_NOT_FOUND if clinical record doesn't exist
+         * Returns 404 PRESCRIPTION_NOT_FOUND if prescription hasn't been created yet
+         */
+        @Transactional(readOnly = true)
+        public PrescriptionDTO getPrescription(Integer recordId) {
+                log.info("Fetching prescription for clinical record ID: {}", recordId);
+
+                // Step 1: Load clinical record (throws 404 if not found)
+                ClinicalRecord record = clinicalRecordRepository.findById(recordId)
+                                .orElseThrow(() -> new NotFoundException("RECORD_NOT_FOUND",
+                                                "Clinical record not found with ID: " + recordId));
+
+                // Step 2: Load appointment and check RBAC authorization
+                Appointment appointment = record.getAppointment();
+                checkAccessPermission(appointment);
+
+                // Step 3: Load prescription (throws 404 if not found)
+                ClinicalPrescription prescription = prescriptionRepository
+                                .findByClinicalRecord_ClinicalRecordId(recordId)
+                                .orElseThrow(() -> new NotFoundException("PRESCRIPTION_NOT_FOUND",
+                                                "No prescription found for clinical record ID: " + recordId));
+
+                // Step 4: Map to DTO
+                return mapPrescriptionToDTO(prescription);
+        }
+
+        private PrescriptionDTO mapPrescriptionToDTO(ClinicalPrescription prescription) {
+                return PrescriptionDTO.builder()
+                                .prescriptionId(prescription.getPrescriptionId())
+                                .clinicalRecordId(prescription.getClinicalRecord().getClinicalRecordId())
+                                .prescriptionNotes(prescription.getPrescriptionNotes())
+                                .createdAt(prescription.getCreatedAt() != null
+                                                ? prescription.getCreatedAt().format(FORMATTER)
+                                                : null)
+                                .items(prescription.getItems().stream()
+                                                .map(this::mapPrescriptionItemToDTO)
+                                                .collect(Collectors.toList()))
+                                .build();
+        }
+
+        private PrescriptionItemDTO mapPrescriptionItemToDTO(ClinicalPrescriptionItem item) {
+                PrescriptionItemDTO.PrescriptionItemDTOBuilder builder = PrescriptionItemDTO.builder()
+                                .prescriptionItemId(item.getPrescriptionItemId())
+                                .itemName(item.getItemName())
+                                .quantity(item.getQuantity())
+                                .dosageInstructions(item.getDosageInstructions());
+
+                // Add warehouse data if item is linked to inventory
+                if (item.getItemMaster() != null) {
+                        builder.itemMasterId(item.getItemMaster().getItemMasterId().intValue())
+                                        .itemCode(item.getItemMaster().getItemCode())
+                                        .unitName(item.getItemMaster().getUnitOfMeasure());
+                }
+
+                return builder.build();
+        }
+
+        /**
+         * API 8.15: Save Prescription (Create/Update with Replace Strategy)
+         *
+         * Business Logic:
+         * 1. Validate clinical record exists
+         * 2. Check RBAC (reuse checkAccessPermission from API 8.1)
+         * 3. If prescription exists: Update notes, HARD DELETE all old items
+         * 4. If prescription doesn't exist: Create new prescription header
+         * 5. Validate each item: itemName required, itemMasterId must be valid if
+         * provided
+         * 6. Insert all new items from request
+         * 7. Return full prescription DTO (reuse mapper from API 8.14)
+         *
+         * Authorization: WRITE_CLINICAL_RECORD (Doctor, Assistant, Admin)
+         *
+         * @param recordId Clinical record ID
+         * @param request  SavePrescriptionRequest with prescriptionNotes and items
+         * @return PrescriptionDTO with all items
+         * @throws NotFoundException     if clinical record not found
+         * @throws AccessDeniedException if user lacks permission to modify this record
+         * @throws BadRequestException   if itemMasterId invalid or itemName missing
+         */
+        @Transactional
+        public PrescriptionDTO savePrescription(Integer recordId, SavePrescriptionRequest request) {
+                log.info("Saving prescription for clinical record ID: {}", recordId);
+
+                // Step 1: Load clinical record (404 if not found)
+                ClinicalRecord record = clinicalRecordRepository.findById(recordId)
+                                .orElseThrow(() -> new NotFoundException("RECORD_NOT_FOUND",
+                                                "Clinical record not found with ID: " + recordId));
+
+                // Step 2: Check RBAC authorization (reuse from API 8.1)
+                Appointment appointment = record.getAppointment();
+                checkAccessPermission(appointment);
+
+                // Step 3: Load or create prescription header
+                ClinicalPrescription prescription = prescriptionRepository
+                                .findByClinicalRecord_ClinicalRecordId(recordId)
+                                .orElse(null);
+
+                if (prescription != null) {
+                        // UPDATE case: Clear old items and update notes
+                        log.info("Updating existing prescription ID: {}", prescription.getPrescriptionId());
+                        prescription.getItems().clear(); // CASCADE DELETE will remove from DB
+                        prescription.setPrescriptionNotes(request.getPrescriptionNotes());
+                } else {
+                        // CREATE case: New prescription
+                        log.info("Creating new prescription for clinical record ID: {}", recordId);
+                        prescription = ClinicalPrescription.builder()
+                                        .clinicalRecord(record)
+                                        .prescriptionNotes(request.getPrescriptionNotes())
+                                        .build();
+                }
+
+                // Step 4: Validate and add new items
+                for (PrescriptionItemRequest itemReq : request.getItems()) {
+                        // Validate itemMasterId if provided
+                        ItemMaster itemMaster = null;
+                        if (itemReq.getItemMasterId() != null) {
+                                Long itemMasterId = itemReq.getItemMasterId().longValue();
+                                itemMaster = itemMasterRepository.findById(itemMasterId)
+                                                .orElseThrow(() -> new NotFoundException("ITEM_NOT_FOUND",
+                                                                "Item Master ID " + itemReq.getItemMasterId()
+                                                                                + " does not exist"));
+
+                                if (!itemMaster.getIsActive()) {
+                                        throw new BadRequestException("ITEM_NOT_ACTIVE",
+                                                        "Item Master ID " + itemReq.getItemMasterId()
+                                                                        + " is not active");
+                                }
+                        }
+
+                        // Build prescription item
+                        ClinicalPrescriptionItem item = ClinicalPrescriptionItem.builder()
+                                        .prescription(prescription)
+                                        .itemMaster(itemMaster)
+                                        .itemName(itemReq.getItemName())
+                                        .quantity(itemReq.getQuantity())
+                                        .dosageInstructions(itemReq.getDosageInstructions())
+                                        .build();
+
+                        prescription.getItems().add(item);
+                }
+
+                // Step 5: Save (cascades to items)
+                ClinicalPrescription saved = prescriptionRepository.save(prescription);
+
+                log.info("Prescription saved successfully with {} items", saved.getItems().size());
+
+                // Step 6: Map to DTO and return (reuse mapper from API 8.14)
+                return mapPrescriptionToDTO(saved);
+        }
+
+        /**
+         * API 8.9: Get Tooth Status for Patient (Odontogram)
+         *
+         * Authorization:
+         * - ROLE_ADMIN: Full access
+         * - VIEW_PATIENT permission: Doctors, Nurses, Receptionists
+         *
+         * Business Logic:
+         * - Only returns teeth with abnormal conditions (not HEALTHY)
+         * - Teeth not in response are considered HEALTHY
+         * - Empty array means all teeth are healthy
+         *
+         * @param patientId Patient ID
+         * @return List of tooth statuses (only abnormal teeth)
+         */
+        @Transactional(readOnly = true)
+        public java.util.List<ToothStatusResponse> getToothStatus(Integer patientId) {
+                log.info("Fetching tooth status for patient ID: {}", patientId);
+
+                // Step 1: Validate patient exists
+                Patient patient = patientRepository.findById(patientId)
+                                .orElseThrow(() -> new NotFoundException("PATIENT_NOT_FOUND",
+                                                "Patient not found with ID: " + patientId));
+
+                // Step 2: Check authorization (VIEW_PATIENT permission required)
+                Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+                boolean isAdmin = authentication.getAuthorities().stream()
+                                .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
+                boolean hasViewPatient = authentication.getAuthorities().stream()
+                                .anyMatch(auth -> auth.getAuthority().equals("VIEW_PATIENT"));
+
+                if (!isAdmin && !hasViewPatient) {
+                        throw new AccessDeniedException(
+                                        "Access denied: You need VIEW_PATIENT permission to view tooth status");
+                }
+
+                // Step 3: Fetch all tooth statuses for patient
+                java.util.List<PatientToothStatus> toothStatuses = toothStatusRepository
+                                .findByPatient_PatientId(patientId);
+
+                log.info("Found {} tooth statuses for patient ID: {}", toothStatuses.size(), patientId);
+
+                // Step 4: Map to DTO (only abnormal teeth, filter out HEALTHY if any)
+                return toothStatuses.stream()
+                                .filter(status -> status
+                                                .getStatus() != com.dental.clinic.management.patient.domain.ToothConditionEnum.HEALTHY)
+                                .map(this::mapToothStatusToDTO)
+                                .collect(Collectors.toList());
+        }
+
+        /**
+         * API 8.10: Update Tooth Status for Patient (Odontogram)
+         *
+         * Authorization:
+         * - ROLE_ADMIN: Full access
+         * - WRITE_CLINICAL_RECORD permission: Doctors only
+         *
+         * Business Logic:
+         * - If tooth status exists: UPDATE
+         * - If tooth status doesn't exist: CREATE
+         * - If status = HEALTHY: DELETE record (tooth returns to default state)
+         *
+         * @param patientId Patient ID
+         * @param request   Update tooth status request
+         * @return Updated tooth status response (or null if deleted)
+         */
+        @Transactional
+        public ToothStatusResponse updateToothStatus(Integer patientId, UpdateToothStatusRequest request) {
+                log.info("Updating tooth status for patient ID: {}, tooth: {}, status: {}",
+                                patientId, request.getToothNumber(), request.getStatus());
+
+                // Step 1: Validate patient exists
+                Patient patient = patientRepository.findById(patientId)
+                                .orElseThrow(() -> new NotFoundException("PATIENT_NOT_FOUND",
+                                                "Patient not found with ID: " + patientId));
+
+                // Step 2: Check authorization (WRITE_CLINICAL_RECORD permission required)
+                Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+                boolean isAdmin = authentication.getAuthorities().stream()
+                                .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
+                boolean hasWritePermission = authentication.getAuthorities().stream()
+                                .anyMatch(auth -> auth.getAuthority().equals("WRITE_CLINICAL_RECORD"));
+
+                if (!isAdmin && !hasWritePermission) {
+                        throw new AccessDeniedException(
+                                        "Access denied: You need WRITE_CLINICAL_RECORD permission to update tooth status");
+                }
+
+                // Step 3: Check if tooth status exists
+                java.util.Optional<PatientToothStatus> existingStatus = toothStatusRepository
+                                .findByPatient_PatientIdAndToothNumber(patientId, request.getToothNumber());
+
+                // Step 4: Business logic based on status
+                if (request.getStatus() == com.dental.clinic.management.patient.domain.ToothConditionEnum.HEALTHY) {
+                        // HEALTHY status: Delete record if exists (tooth returns to default state)
+                        if (existingStatus.isPresent()) {
+                                toothStatusRepository.delete(existingStatus.get());
+                                log.info("Deleted tooth status for patient ID: {}, tooth: {} (set to HEALTHY)",
+                                                patientId, request.getToothNumber());
+                        } else {
+                                log.info("No tooth status to delete for patient ID: {}, tooth: {} (already HEALTHY)",
+                                                patientId, request.getToothNumber());
+                        }
+                        return null; // Return null for deleted/HEALTHY status
+                } else {
+                        // Non-HEALTHY status: Create or Update
+                        PatientToothStatus toothStatus;
+
+                        if (existingStatus.isPresent()) {
+                                // UPDATE existing record
+                                toothStatus = existingStatus.get();
+                                toothStatus.setStatus(request.getStatus());
+                                toothStatus.setNotes(request.getNotes());
+                                log.info("Updating existing tooth status ID: {}", toothStatus.getToothStatusId());
+                        } else {
+                                // CREATE new record
+                                toothStatus = PatientToothStatus.builder()
+                                                .patient(patient)
+                                                .toothNumber(request.getToothNumber())
+                                                .status(request.getStatus())
+                                                .notes(request.getNotes())
+                                                .build();
+                                log.info("Creating new tooth status for tooth: {}", request.getToothNumber());
+                        }
+
+                        // Save and return
+                        PatientToothStatus saved = toothStatusRepository.save(toothStatus);
+                        log.info("Tooth status saved successfully: ID {}", saved.getToothStatusId());
+
+                        return mapToothStatusToDTO(saved);
+                }
+        }
+
+        /**
+         * Helper method: Map PatientToothStatus entity to ToothStatusResponse DTO
+         */
+        private ToothStatusResponse mapToothStatusToDTO(PatientToothStatus status) {
+                return ToothStatusResponse.builder()
+                                .toothStatusId(status.getToothStatusId())
+                                .patientId(status.getPatient().getPatientId())
+                                .toothNumber(status.getToothNumber())
+                                .status(status.getStatus())
+                                .notes(status.getNotes())
+                                .recordedAt(status.getRecordedAt() != null
+                                                ? status.getRecordedAt().format(FORMATTER)
+                                                : null)
+                                .updatedAt(status.getUpdatedAt() != null
+                                                ? status.getUpdatedAt().format(FORMATTER)
+                                                : null)
+                                .build();
         }
 }

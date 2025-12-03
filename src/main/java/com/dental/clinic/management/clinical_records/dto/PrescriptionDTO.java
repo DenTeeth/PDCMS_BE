@@ -13,6 +13,7 @@ import java.util.List;
 @Builder
 public class PrescriptionDTO {
     private Integer prescriptionId;
+    private Integer clinicalRecordId;
     private String prescriptionNotes;
     private String createdAt;
     private List<PrescriptionItemDTO> items;
