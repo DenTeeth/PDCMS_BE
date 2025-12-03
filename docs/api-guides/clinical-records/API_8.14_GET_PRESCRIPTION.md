@@ -31,9 +31,9 @@ Required Permissions (OR logic):
 
 ### Path Parameters
 
-| Parameter | Type    | Required | Description                        |
-|-----------|---------|----------|------------------------------------|
-| recordId  | Integer | Yes      | Clinical record ID                 |
+| Parameter | Type    | Required | Description        |
+| --------- | ------- | -------- | ------------------ |
+| recordId  | Integer | Yes      | Clinical record ID |
 
 ### Request Headers
 
@@ -162,34 +162,36 @@ curl -X GET "http://localhost:8080/api/v1/appointments/clinical-records/1/prescr
 
 ### PrescriptionDTO
 
-| Field              | Type                    | Description                                    |
-|--------------------|-------------------------|------------------------------------------------|
-| prescriptionId     | Integer                 | Prescription ID                                |
-| clinicalRecordId   | Integer                 | Clinical record ID                             |
-| prescriptionNotes  | String                  | General notes (e.g., dietary restrictions)     |
-| createdAt          | String                  | Creation timestamp (yyyy-MM-dd HH:mm:ss)       |
-| items              | List<PrescriptionItemDTO> | List of prescribed medications               |
+| Field             | Type                      | Description                                |
+| ----------------- | ------------------------- | ------------------------------------------ |
+| prescriptionId    | Integer                   | Prescription ID                            |
+| clinicalRecordId  | Integer                   | Clinical record ID                         |
+| prescriptionNotes | String                    | General notes (e.g., dietary restrictions) |
+| createdAt         | String                    | Creation timestamp (yyyy-MM-dd HH:mm:ss)   |
+| items             | List<PrescriptionItemDTO> | List of prescribed medications             |
 
 ### PrescriptionItemDTO
 
-| Field                | Type    | Description                                                |
-|----------------------|---------|------------------------------------------------------------|
-| prescriptionItemId   | Integer | Prescription item ID                                       |
-| itemMasterId         | Integer | Item master ID (NULL if not in warehouse)                  |
-| itemCode             | String  | Item code from warehouse (NULL if not in warehouse)        |
-| itemName             | String  | Medication name (always present)                           |
-| unitName             | String  | Unit name from warehouse (NULL if not in warehouse)        |
-| quantity             | Integer | Quantity prescribed                                        |
-| dosageInstructions   | String  | Dosage instructions (e.g., "Take 1 tablet 3 times daily") |
+| Field              | Type    | Description                                               |
+| ------------------ | ------- | --------------------------------------------------------- |
+| prescriptionItemId | Integer | Prescription item ID                                      |
+| itemMasterId       | Integer | Item master ID (NULL if not in warehouse)                 |
+| itemCode           | String  | Item code from warehouse (NULL if not in warehouse)       |
+| itemName           | String  | Medication name (always present)                          |
+| unitName           | String  | Unit name from warehouse (NULL if not in warehouse)       |
+| quantity           | Integer | Quantity prescribed                                       |
+| dosageInstructions | String  | Dosage instructions (e.g., "Take 1 tablet 3 times daily") |
 
 ## Business Rules
 
 1. **Prescription Existence**:
+
    - If `404 PRESCRIPTION_NOT_FOUND`: Clinical record exists but prescription not created yet
    - Frontend should show "Create Prescription" button
    - If `404 RECORD_NOT_FOUND`: Clinical record ID is invalid
 
 2. **Warehouse Integration**:
+
    - If `itemMasterId` is NOT NULL: Medication is in inventory
      - `itemCode`, `unitName` populated from warehouse
    - If `itemMasterId` is NULL: Medication NOT in inventory
@@ -197,6 +199,7 @@ curl -X GET "http://localhost:8080/api/v1/appointments/clinical-records/1/prescr
      - `itemName` is manually entered by doctor
 
 3. **RBAC**:
+
    - Reuses same authorization logic as API 8.1 (Get Clinical Record)
    - Doctor can only view prescriptions for their own appointments
    - Patient can only view prescriptions for their own appointments
@@ -212,19 +215,23 @@ curl -X GET "http://localhost:8080/api/v1/appointments/clinical-records/1/prescr
 ### Scenario 1: Doctor Views Own Prescription
 
 **Setup**:
+
 - Clinical record ID 1 belongs to appointment of doctor bacsi1
 - Prescription exists with 2 items
 
 **Steps**:
+
 1. Login as doctor bacsi1
 2. GET `/api/v1/appointments/clinical-records/1/prescription`
 
 **Expected Result**:
+
 - Status: 200 OK
 - Response contains prescriptionId, clinicalRecordId, prescriptionNotes, createdAt
 - Items array contains 2 medication items with warehouse data
 
 **Test Command**:
+
 ```bash
 TOKEN=$(curl -X POST "http://localhost:8080/api/v1/auth/login" \
   -H "Content-Type: application/json" \
@@ -240,19 +247,23 @@ curl -X GET "http://localhost:8080/api/v1/appointments/clinical-records/1/prescr
 ### Scenario 2: Patient Views Own Prescription
 
 **Setup**:
+
 - Clinical record ID 1 belongs to patient benhnhan1
 - Prescription exists with items
 
 **Steps**:
+
 1. Login as patient benhnhan1
 2. GET `/api/v1/appointments/clinical-records/1/prescription`
 
 **Expected Result**:
+
 - Status: 200 OK
 - Response contains full prescription details
 - Patient can see medications prescribed for their own appointment
 
 **Test Command**:
+
 ```bash
 TOKEN=$(curl -X POST "http://localhost:8080/api/v1/auth/login" \
   -H "Content-Type: application/json" \
@@ -268,19 +279,23 @@ curl -X GET "http://localhost:8080/api/v1/appointments/clinical-records/1/prescr
 ### Scenario 3: Admin Views Any Prescription
 
 **Setup**:
+
 - Clinical record ID 2 exists with prescription
 - Admin should have full access
 
 **Steps**:
+
 1. Login as admin
 2. GET `/api/v1/appointments/clinical-records/2/prescription`
 
 **Expected Result**:
+
 - Status: 200 OK
 - Response contains full prescription details
 - Admin can view any prescription regardless of ownership
 
 **Test Command**:
+
 ```bash
 TOKEN=$(curl -X POST "http://localhost:8080/api/v1/auth/login" \
   -H "Content-Type: application/json" \
@@ -296,19 +311,23 @@ curl -X GET "http://localhost:8080/api/v1/appointments/clinical-records/2/prescr
 ### Scenario 4: No Prescription Created Yet (404)
 
 **Setup**:
+
 - Clinical record ID 3 exists
 - No prescription has been created for this record
 
 **Steps**:
+
 1. Login as doctor
 2. GET `/api/v1/appointments/clinical-records/3/prescription`
 
 **Expected Result**:
+
 - Status: 404 NOT FOUND
 - Error code: PRESCRIPTION_NOT_FOUND
 - Message: "No prescription found for clinical record ID 3"
 
 **Test Command**:
+
 ```bash
 TOKEN=$(curl -X POST "http://localhost:8080/api/v1/auth/login" \
   -H "Content-Type: application/json" \
@@ -324,18 +343,22 @@ curl -X GET "http://localhost:8080/api/v1/appointments/clinical-records/3/prescr
 ### Scenario 5: Clinical Record Not Found (404)
 
 **Setup**:
+
 - Clinical record ID 99999 does not exist
 
 **Steps**:
+
 1. Login as doctor
 2. GET `/api/v1/appointments/clinical-records/99999/prescription`
 
 **Expected Result**:
+
 - Status: 404 NOT FOUND
 - Error code: RECORD_NOT_FOUND
 - Message: "Clinical record not found with ID: 99999"
 
 **Test Command**:
+
 ```bash
 TOKEN=$(curl -X POST "http://localhost:8080/api/v1/auth/login" \
   -H "Content-Type: application/json" \
@@ -351,19 +374,23 @@ curl -X GET "http://localhost:8080/api/v1/appointments/clinical-records/99999/pr
 ### Scenario 6: Doctor Tries to View Other Doctor's Prescription (403)
 
 **Setup**:
+
 - Clinical record ID 2 belongs to doctor bacsi2
 - Login as doctor bacsi1 (different doctor)
 
 **Steps**:
+
 1. Login as doctor bacsi1
 2. GET `/api/v1/appointments/clinical-records/2/prescription`
 
 **Expected Result**:
+
 - Status: 403 FORBIDDEN
 - Error code: FORBIDDEN
 - Message: "You do not have permission to view clinical records"
 
 **Test Command**:
+
 ```bash
 TOKEN=$(curl -X POST "http://localhost:8080/api/v1/auth/login" \
   -H "Content-Type: application/json" \
@@ -379,19 +406,23 @@ curl -X GET "http://localhost:8080/api/v1/appointments/clinical-records/2/prescr
 ### Scenario 7: Patient Tries to View Other Patient's Prescription (403)
 
 **Setup**:
+
 - Clinical record ID 2 belongs to patient benhnhan2
 - Login as patient benhnhan1 (different patient)
 
 **Steps**:
+
 1. Login as patient benhnhan1
 2. GET `/api/v1/appointments/clinical-records/2/prescription`
 
 **Expected Result**:
+
 - Status: 403 FORBIDDEN
 - Error code: FORBIDDEN
 - Message: "You can only view clinical records for your own appointments"
 
 **Test Command**:
+
 ```bash
 TOKEN=$(curl -X POST "http://localhost:8080/api/v1/auth/login" \
   -H "Content-Type: application/json" \
@@ -441,14 +472,17 @@ CREATE TABLE clinical_prescription_items (
 ## Notes
 
 1. **Prescription vs Clinical Record**:
+
    - Clinical record can exist without prescription (patient didn't need medication)
    - 404 PRESCRIPTION_NOT_FOUND is NOT an error, it's a valid state
 
 2. **Warehouse Integration**:
+
    - If medication is in warehouse: `itemMasterId`, `itemCode`, `unitName` populated
    - If medication NOT in warehouse: Doctor manually enters `itemName`, other fields NULL
 
 3. **Frontend Handling**:
+
    - On 404 PRESCRIPTION_NOT_FOUND: Show "Create Prescription" button
    - On 404 RECORD_NOT_FOUND: Show error "Invalid clinical record"
    - On 403: Show "You don't have permission to view this prescription"
@@ -460,6 +494,6 @@ CREATE TABLE clinical_prescription_items (
 
 ---
 
-**Last Updated**: 2025-12-02  
-**API Version**: 1.0  
+**Last Updated**: 2025-12-02
+**API Version**: 1.0
 **Status**: Production Ready

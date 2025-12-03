@@ -4,6 +4,7 @@ import com.dental.clinic.management.clinical_records.dto.AddProcedureRequest;
 import com.dental.clinic.management.clinical_records.dto.AddProcedureResponse;
 import com.dental.clinic.management.clinical_records.dto.ClinicalRecordResponse;
 import com.dental.clinic.management.clinical_records.dto.ProcedureResponse;
+import com.dental.clinic.management.clinical_records.dto.SavePrescriptionRequest;
 import com.dental.clinic.management.clinical_records.dto.UpdateProcedureRequest;
 import com.dental.clinic.management.clinical_records.dto.UpdateProcedureResponse;
 import com.dental.clinic.management.clinical_records.service.ClinicalRecordService;
@@ -230,13 +231,16 @@ public class ClinicalRecordController {
      * Authorization:
      * - ROLE_ADMIN: Full access to all prescriptions
      * - VIEW_APPOINTMENT_ALL: Access to all prescriptions (Receptionist, Manager)
-     * - VIEW_APPOINTMENT_OWN: Access only to related prescriptions (Doctor, Patient, Observer)
+     * - VIEW_APPOINTMENT_OWN: Access only to related prescriptions (Doctor,
+     * Patient, Observer)
      *
      * Returns:
      * - 200 OK: Prescription found with all items
-     * - 404 PRESCRIPTION_NOT_FOUND: Clinical record exists but no prescription created yet (frontend shows CREATE form)
+     * - 404 PRESCRIPTION_NOT_FOUND: Clinical record exists but no prescription
+     * created yet (frontend shows CREATE form)
      * - 404 RECORD_NOT_FOUND: Clinical record doesn't exist
-     * - 403 UNAUTHORIZED_ACCESS: User doesn't have permission to view this prescription
+     * - 403 UNAUTHORIZED_ACCESS: User doesn't have permission to view this
+     * prescription
      *
      * @param recordId The clinical record ID
      * @return PrescriptionDTO with all prescription items
@@ -249,7 +253,56 @@ public class ClinicalRecordController {
 
         log.info("API 8.14: GET /api/v1/appointments/clinical-records/{}/prescription", recordId);
 
-        com.dental.clinic.management.clinical_records.dto.PrescriptionDTO prescription = clinicalRecordService.getPrescription(recordId);
+        com.dental.clinic.management.clinical_records.dto.PrescriptionDTO prescription = clinicalRecordService
+                .getPrescription(recordId);
+
+        return ResponseEntity.ok(prescription);
+    }
+
+    /**
+     * API 8.15: Save Prescription (Create/Update with Replace Strategy)
+     *
+     * Saves prescription for a clinical record. Uses "Replace Strategy":
+     * - If prescription exists: Updates notes and replaces all items
+     * - If prescription doesn't exist: Creates new prescription with items
+     *
+     * Business Rules:
+     * - prescriptionNotes: Optional field for doctor's notes
+     * - items: Must contain at least one item (use DELETE API to remove
+     * prescription)
+     * - itemName: Required for all items (even if not in warehouse)
+     * - itemMasterId: Optional (NULL for medications not in inventory)
+     * - If itemMasterId provided, must exist in item_masters and be active
+     *
+     * Authorization:
+     * - ROLE_ADMIN: Can save prescriptions for any clinical record
+     * - WRITE_CLINICAL_RECORD: Can save prescriptions only for own appointments
+     * (Doctor, Assistant)
+     *
+     * Returns:
+     * - 200 OK: Prescription saved successfully with full DTO
+     * - 404 RECORD_NOT_FOUND: Clinical record doesn't exist
+     * - 404 ITEM_NOT_FOUND: itemMasterId doesn't exist in warehouse
+     * - 400 ITEM_NOT_ACTIVE: itemMasterId exists but is inactive
+     * - 400 VALIDATION_ERROR: Empty items array or invalid field values
+     * - 403 UNAUTHORIZED_ACCESS: User doesn't have permission to modify this
+     * record
+     *
+     * @param recordId The clinical record ID
+     * @param request  SavePrescriptionRequest with prescriptionNotes and items
+     * @return Full PrescriptionDTO with all saved items
+     */
+    @PostMapping("/clinical-records/{recordId}/prescription")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasAuthority('WRITE_CLINICAL_RECORD')")
+    @ApiMessage("Prescription saved successfully")
+    public ResponseEntity<com.dental.clinic.management.clinical_records.dto.PrescriptionDTO> savePrescription(
+            @PathVariable Integer recordId,
+            @Valid @RequestBody SavePrescriptionRequest request) {
+
+        log.info("API 8.15: POST /api/v1/appointments/clinical-records/{}/prescription", recordId);
+
+        com.dental.clinic.management.clinical_records.dto.PrescriptionDTO prescription = clinicalRecordService
+                .savePrescription(recordId, request);
 
         return ResponseEntity.ok(prescription);
     }

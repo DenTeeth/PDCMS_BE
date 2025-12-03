@@ -15,7 +15,10 @@ import com.dental.clinic.management.clinical_records.repository.ClinicalRecordPr
 import com.dental.clinic.management.clinical_records.repository.ClinicalRecordRepository;
 import com.dental.clinic.management.employee.domain.Employee;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
+import com.dental.clinic.management.exception.BadRequestException;
 import com.dental.clinic.management.exception.NotFoundException;
+import com.dental.clinic.management.warehouse.domain.ItemMaster;
+import com.dental.clinic.management.warehouse.repository.ItemMasterRepository;
 import com.dental.clinic.management.patient.domain.Patient;
 import com.dental.clinic.management.patient.repository.PatientRepository;
 import com.dental.clinic.management.service.domain.DentalService;
@@ -48,6 +51,7 @@ public class ClinicalRecordService {
         private final RoomRepository roomRepository;
         private final DentalServiceRepository dentalServiceRepository;
         private final PatientPlanItemRepository planItemRepository;
+        private final ItemMasterRepository itemMasterRepository;
 
         private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -256,27 +260,36 @@ public class ClinicalRecordService {
                                 .map(presc -> {
                                         var items = presc.getItems().stream()
                                                         .map(item -> {
-                                                                PrescriptionItemDTO.PrescriptionItemDTOBuilder builder = PrescriptionItemDTO.builder()
-                                                                        .prescriptionItemId(item.getPrescriptionItemId())
-                                                                        .itemName(item.getItemName())
-                                                                        .quantity(item.getQuantity())
-                                                                        .dosageInstructions(item.getDosageInstructions());
-                                                                
+                                                                PrescriptionItemDTO.PrescriptionItemDTOBuilder builder = PrescriptionItemDTO
+                                                                                .builder()
+                                                                                .prescriptionItemId(item
+                                                                                                .getPrescriptionItemId())
+                                                                                .itemName(item.getItemName())
+                                                                                .quantity(item.getQuantity())
+                                                                                .dosageInstructions(item
+                                                                                                .getDosageInstructions());
+
                                                                 if (item.getItemMaster() != null) {
-                                                                        builder.itemMasterId(item.getItemMaster().getItemMasterId().intValue())
-                                                                                .itemCode(item.getItemMaster().getItemCode())
-                                                                                .unitName(item.getItemMaster().getUnitOfMeasure());
+                                                                        builder.itemMasterId(item.getItemMaster()
+                                                                                        .getItemMasterId().intValue())
+                                                                                        .itemCode(item.getItemMaster()
+                                                                                                        .getItemCode())
+                                                                                        .unitName(item.getItemMaster()
+                                                                                                        .getUnitOfMeasure());
                                                                 }
-                                                                
+
                                                                 return builder.build();
                                                         })
                                                         .collect(Collectors.toList());
 
                                         return PrescriptionDTO.builder()
                                                         .prescriptionId(presc.getPrescriptionId())
-                                                        .clinicalRecordId(presc.getClinicalRecord().getClinicalRecordId())
+                                                        .clinicalRecordId(
+                                                                        presc.getClinicalRecord().getClinicalRecordId())
                                                         .prescriptionNotes(presc.getPrescriptionNotes())
-                                                        .createdAt(presc.getCreatedAt() != null ? presc.getCreatedAt().format(FORMATTER) : null)
+                                                        .createdAt(presc.getCreatedAt() != null
+                                                                        ? presc.getCreatedAt().format(FORMATTER)
+                                                                        : null)
                                                         .items(items)
                                                         .build();
                                 })
@@ -716,7 +729,8 @@ public class ClinicalRecordService {
          * Authorization Logic (reuse from getClinicalRecord):
          * 1. Admin (ROLE_ADMIN): Can access all prescriptions
          * 2. VIEW_APPOINTMENT_ALL: Can access all prescriptions
-         * 3. VIEW_APPOINTMENT_OWN: Can only access if user has permission to view the appointment
+         * 3. VIEW_APPOINTMENT_OWN: Can only access if user has permission to view the
+         * appointment
          *
          * Returns 404 RECORD_NOT_FOUND if clinical record doesn't exist
          * Returns 404 PRESCRIPTION_NOT_FOUND if prescription hasn't been created yet
@@ -773,5 +787,98 @@ public class ClinicalRecordService {
                 }
 
                 return builder.build();
+        }
+
+        /**
+         * API 8.15: Save Prescription (Create/Update with Replace Strategy)
+         *
+         * Business Logic:
+         * 1. Validate clinical record exists
+         * 2. Check RBAC (reuse checkAccessPermission from API 8.1)
+         * 3. If prescription exists: Update notes, HARD DELETE all old items
+         * 4. If prescription doesn't exist: Create new prescription header
+         * 5. Validate each item: itemName required, itemMasterId must be valid if
+         * provided
+         * 6. Insert all new items from request
+         * 7. Return full prescription DTO (reuse mapper from API 8.14)
+         *
+         * Authorization: WRITE_CLINICAL_RECORD (Doctor, Assistant, Admin)
+         *
+         * @param recordId Clinical record ID
+         * @param request  SavePrescriptionRequest with prescriptionNotes and items
+         * @return PrescriptionDTO with all items
+         * @throws NotFoundException     if clinical record not found
+         * @throws AccessDeniedException if user lacks permission to modify this record
+         * @throws BadRequestException   if itemMasterId invalid or itemName missing
+         */
+        @Transactional
+        public PrescriptionDTO savePrescription(Integer recordId, SavePrescriptionRequest request) {
+                log.info("Saving prescription for clinical record ID: {}", recordId);
+
+                // Step 1: Load clinical record (404 if not found)
+                ClinicalRecord record = clinicalRecordRepository.findById(recordId)
+                                .orElseThrow(() -> new NotFoundException("RECORD_NOT_FOUND",
+                                                "Clinical record not found with ID: " + recordId));
+
+                // Step 2: Check RBAC authorization (reuse from API 8.1)
+                Appointment appointment = record.getAppointment();
+                checkAccessPermission(appointment);
+
+                // Step 3: Load or create prescription header
+                ClinicalPrescription prescription = prescriptionRepository
+                                .findByClinicalRecord_ClinicalRecordId(recordId)
+                                .orElse(null);
+
+                if (prescription != null) {
+                        // UPDATE case: Clear old items and update notes
+                        log.info("Updating existing prescription ID: {}", prescription.getPrescriptionId());
+                        prescription.getItems().clear(); // CASCADE DELETE will remove from DB
+                        prescription.setPrescriptionNotes(request.getPrescriptionNotes());
+                } else {
+                        // CREATE case: New prescription
+                        log.info("Creating new prescription for clinical record ID: {}", recordId);
+                        prescription = ClinicalPrescription.builder()
+                                        .clinicalRecord(record)
+                                        .prescriptionNotes(request.getPrescriptionNotes())
+                                        .build();
+                }
+
+                // Step 4: Validate and add new items
+                for (PrescriptionItemRequest itemReq : request.getItems()) {
+                        // Validate itemMasterId if provided
+                        ItemMaster itemMaster = null;
+                        if (itemReq.getItemMasterId() != null) {
+                                Long itemMasterId = itemReq.getItemMasterId().longValue();
+                                itemMaster = itemMasterRepository.findById(itemMasterId)
+                                                .orElseThrow(() -> new NotFoundException("ITEM_NOT_FOUND",
+                                                                "Item Master ID " + itemReq.getItemMasterId()
+                                                                                + " does not exist"));
+
+                                if (!itemMaster.getIsActive()) {
+                                        throw new BadRequestException("ITEM_NOT_ACTIVE",
+                                                        "Item Master ID " + itemReq.getItemMasterId()
+                                                                        + " is not active");
+                                }
+                        }
+
+                        // Build prescription item
+                        ClinicalPrescriptionItem item = ClinicalPrescriptionItem.builder()
+                                        .prescription(prescription)
+                                        .itemMaster(itemMaster)
+                                        .itemName(itemReq.getItemName())
+                                        .quantity(itemReq.getQuantity())
+                                        .dosageInstructions(itemReq.getDosageInstructions())
+                                        .build();
+
+                        prescription.getItems().add(item);
+                }
+
+                // Step 5: Save (cascades to items)
+                ClinicalPrescription saved = prescriptionRepository.save(prescription);
+
+                log.info("Prescription saved successfully with {} items", saved.getItems().size());
+
+                // Step 6: Map to DTO and return (reuse mapper from API 8.14)
+                return mapPrescriptionToDTO(saved);
         }
 }
