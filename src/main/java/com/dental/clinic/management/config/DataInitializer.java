@@ -97,8 +97,8 @@ public class DataInitializer {
             // Remove all CREATE TYPE blocks (they're already executed by spring.sql.init)
             String insertOnlyContent = sqlContent.replaceAll("(?i)CREATE\\s+TYPE[^;]+;", "");
 
-            // Remove comment blocks
-            insertOnlyContent = insertOnlyContent.replaceAll("--[^\n]*", "");
+            // Remove comment blocks while preserving newlines to avoid breaking multi-line statements
+            insertOnlyContent = insertOnlyContent.replaceAll("--[^\n]*\n", "\n");
 
             // Execute the filtered SQL content as a single script
             int executedCount = 0;

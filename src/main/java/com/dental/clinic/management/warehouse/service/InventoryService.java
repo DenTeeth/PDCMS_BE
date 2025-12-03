@@ -515,6 +515,17 @@ private ItemMasterSummaryResponse mapToSummaryDto(ItemMaster item) {
     }
 
     /**
+     * API 6.1.1: Get MEDICINE category ID for filtering prescriptions
+     * Used by medicine-only search endpoint to ensure only medicines are returned
+     */
+    @Transactional(readOnly = true)
+    public Long getMedicineCategoryId() {
+        return itemCategoryRepository.findByCategoryCode("MEDICINE")
+                .map(ItemCategory::getCategoryId)
+                .orElseThrow(() -> new RuntimeException("MEDICINE category not found in database. Please check seed data."));
+    }
+
+    /**
      * Map ItemMaster sang InventoryItemDTO với computed fields
      * - totalQuantity: SUM(quantity_on_hand) từ batches
      * - stockStatus: calculated từ totalQuantity vs min/max levels

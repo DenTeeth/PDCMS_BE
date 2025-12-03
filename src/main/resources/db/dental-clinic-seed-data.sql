@@ -375,6 +375,7 @@ ON CONFLICT (permission_id) DO NOTHING;
 INSERT INTO permissions (permission_id, permission_name, module, description, display_order, parent_permission_id, is_active, created_at)
 VALUES
 ('VIEW_ITEMS', 'VIEW_ITEMS', 'WAREHOUSE', 'Xem danh sách vật tư (cho Bác sĩ/Lễ tân)', 269, NULL, TRUE, NOW()),
+('VIEW_MEDICINES', 'VIEW_MEDICINES', 'WAREHOUSE', 'Xem và tìm kiếm thuốc men (chỉ MEDICINE category) - Cho Bác sĩ kê đơn - API 6.1.1', 268, NULL, TRUE, NOW()),
 ('VIEW_WAREHOUSE', 'VIEW_WAREHOUSE', 'WAREHOUSE', 'Xem danh sách giao dịch kho', 270, NULL, TRUE, NOW()),
 ('CREATE_ITEMS', 'CREATE_ITEMS', 'WAREHOUSE', 'Tạo vật tư mới với hệ thống đơn vị', 271, NULL, TRUE, NOW()),
 ('UPDATE_ITEMS', 'UPDATE_ITEMS', 'WAREHOUSE', 'Cập nhật thông tin vật tư và đơn vị tính', 272, NULL, TRUE, NOW()),
@@ -428,6 +429,7 @@ VALUES
 ('ROLE_DENTIST', 'DELETE_TREATMENT_PLAN'),
 ('ROLE_DENTIST', 'VIEW_SERVICE'),
 ('ROLE_DENTIST', 'VIEW_ITEMS'),
+('ROLE_DENTIST', 'VIEW_MEDICINES'),
 ('ROLE_DENTIST', 'WRITE_CLINICAL_RECORD'),
 ('ROLE_DENTIST', 'UPLOAD_ATTACHMENT'),
 ('ROLE_DENTIST', 'VIEW_ATTACHMENT'),
@@ -2306,18 +2308,10 @@ ON CONFLICT (room_id, service_id) DO NOTHING;
 -- Quy tắc lâm sàng để đảm bảo an toàn và hiệu quả điều trị
 -- =============================================
 
--- Rule 1: GEN_EXAM (Khám) là tiền đề cho FILLING_COMP (Trám răng)
-INSERT INTO service_dependencies (service_id, dependent_service_id, rule_type, receptionist_note, created_at)
-SELECT
-    s1.service_id,
-    s2.service_id,
-    'REQUIRES_PREREQUISITE',
-    'Bệnh nhân phải KHÁM tổng quát trước khi được trám răng.',
-    NOW()
-FROM services s1, services s2
-WHERE s1.service_code = 'GEN_EXAM'
-  AND s2.service_code = 'FILLING_COMP'
-ON CONFLICT DO NOTHING;
+-- ❌ REMOVED: Rule 1 - GEN_EXAM prerequisite for FILLING_COMP
+-- (Removed per Issue #43 - Business requirement: No prerequisite services)
+-- Reason: prerequisite rules cause items to be set to WAITING_FOR_PREREQUISITE status
+-- which prevents users from booking appointments immediately after plan approval
 
 -- Rule 2: EXTRACT_WISDOM_L2 (Nhổ răng khôn) -> SURG_CHECKUP (Cắt chỉ) phải cách nhau ÍT NHẤT 7 ngày
 INSERT INTO service_dependencies (service_id, dependent_service_id, rule_type, min_days_apart, receptionist_note, created_at)
@@ -2992,6 +2986,50 @@ ON CONFLICT (employee_shift_id) DO NOTHING;
 INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
 SELECT 'EMS251125002B', 2, DATE '2025-11-25', work_shift_id, 'MANUAL_ENTRY', FALSE, 'SCHEDULED', CURRENT_TIMESTAMP
 FROM work_shifts WHERE shift_name = 'Ca Chiều (13h-17h)' LIMIT 1
+ON CONFLICT (employee_shift_id) DO NOTHING;
+
+-- ============================================
+-- NEW SHIFTS FOR EMPLOYEE 2 (Trịnh Công Thái) - December 2025, January 2026, February 2026
+-- ============================================
+
+-- December 2025: 10 shifts (Dec 2-6)
+INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
+SELECT 'EMS251202001', 2, DATE '2025-12-02', 'WKS_MORNING_01', 'MANUAL_ENTRY', FALSE, 'SCHEDULED', NOW() UNION ALL
+SELECT 'EMS251202002', 2, DATE '2025-12-02', 'WKS_AFTERNOON_01', 'MANUAL_ENTRY', FALSE, 'SCHEDULED', NOW() UNION ALL
+SELECT 'EMS251203001', 2, DATE '2025-12-03', 'WKS_MORNING_01', 'MANUAL_ENTRY', FALSE, 'SCHEDULED', NOW() UNION ALL
+SELECT 'EMS251203002', 2, DATE '2025-12-03', 'WKS_AFTERNOON_01', 'MANUAL_ENTRY', FALSE, 'SCHEDULED', NOW() UNION ALL
+SELECT 'EMS251204001', 2, DATE '2025-12-04', 'WKS_MORNING_01', 'MANUAL_ENTRY', FALSE, 'SCHEDULED', NOW() UNION ALL
+SELECT 'EMS251204002', 2, DATE '2025-12-04', 'WKS_AFTERNOON_01', 'MANUAL_ENTRY', FALSE, 'SCHEDULED', NOW() UNION ALL
+SELECT 'EMS251205001', 2, DATE '2025-12-05', 'WKS_MORNING_01', 'MANUAL_ENTRY', FALSE, 'SCHEDULED', NOW() UNION ALL
+SELECT 'EMS251205002', 2, DATE '2025-12-05', 'WKS_AFTERNOON_01', 'MANUAL_ENTRY', FALSE, 'SCHEDULED', NOW() UNION ALL
+SELECT 'EMS251206001', 2, DATE '2025-12-06', 'WKS_MORNING_01', 'MANUAL_ENTRY', FALSE, 'SCHEDULED', NOW() UNION ALL
+SELECT 'EMS251206002', 2, DATE '2025-12-06', 'WKS_AFTERNOON_01', 'MANUAL_ENTRY', FALSE, 'SCHEDULED', NOW()
+ON CONFLICT (employee_shift_id) DO NOTHING;
+
+-- January 2026: 10 shifts (Jan 5-9)
+INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
+SELECT 'EMS260105001', 2, DATE '2026-01-05', 'WKS_MORNING_01', 'MANUAL_ENTRY', FALSE, 'SCHEDULED', NOW() UNION ALL
+SELECT 'EMS260105002', 2, DATE '2026-01-05', 'WKS_AFTERNOON_01', 'MANUAL_ENTRY', FALSE, 'SCHEDULED', NOW() UNION ALL
+SELECT 'EMS260106001', 2, DATE '2026-01-06', 'WKS_MORNING_01', 'MANUAL_ENTRY', FALSE, 'SCHEDULED', NOW() UNION ALL
+SELECT 'EMS260106002', 2, DATE '2026-01-06', 'WKS_AFTERNOON_01', 'MANUAL_ENTRY', FALSE, 'SCHEDULED', NOW() UNION ALL
+SELECT 'EMS260107001', 2, DATE '2026-01-07', 'WKS_MORNING_01', 'MANUAL_ENTRY', FALSE, 'SCHEDULED', NOW() UNION ALL
+SELECT 'EMS260107002', 2, DATE '2026-01-07', 'WKS_AFTERNOON_01', 'MANUAL_ENTRY', FALSE, 'SCHEDULED', NOW() UNION ALL
+SELECT 'EMS260108001', 2, DATE '2026-01-08', 'WKS_MORNING_01', 'MANUAL_ENTRY', FALSE, 'SCHEDULED', NOW() UNION ALL
+SELECT 'EMS260108002', 2, DATE '2026-01-08', 'WKS_AFTERNOON_01', 'MANUAL_ENTRY', FALSE, 'SCHEDULED', NOW() UNION ALL
+SELECT 'EMS260109001', 2, DATE '2026-01-09', 'WKS_MORNING_01', 'MANUAL_ENTRY', FALSE, 'SCHEDULED', NOW() UNION ALL
+SELECT 'EMS260109002', 2, DATE '2026-01-09', 'WKS_AFTERNOON_01', 'MANUAL_ENTRY', FALSE, 'SCHEDULED', NOW()
+ON CONFLICT (employee_shift_id) DO NOTHING;
+
+-- February 2026: 8 shifts (Feb 3-6)
+INSERT INTO employee_shifts (employee_shift_id, employee_id, work_date, work_shift_id, source, is_overtime, status, created_at)
+SELECT 'EMS260203001', 2, DATE '2026-02-03', 'WKS_MORNING_01', 'MANUAL_ENTRY', FALSE, 'SCHEDULED', NOW() UNION ALL
+SELECT 'EMS260203002', 2, DATE '2026-02-03', 'WKS_AFTERNOON_01', 'MANUAL_ENTRY', FALSE, 'SCHEDULED', NOW() UNION ALL
+SELECT 'EMS260204001', 2, DATE '2026-02-04', 'WKS_MORNING_01', 'MANUAL_ENTRY', FALSE, 'SCHEDULED', NOW() UNION ALL
+SELECT 'EMS260204002', 2, DATE '2026-02-04', 'WKS_AFTERNOON_01', 'MANUAL_ENTRY', FALSE, 'SCHEDULED', NOW() UNION ALL
+SELECT 'EMS260205001', 2, DATE '2026-02-05', 'WKS_MORNING_01', 'MANUAL_ENTRY', FALSE, 'SCHEDULED', NOW() UNION ALL
+SELECT 'EMS260205002', 2, DATE '2026-02-05', 'WKS_AFTERNOON_01', 'MANUAL_ENTRY', FALSE, 'SCHEDULED', NOW() UNION ALL
+SELECT 'EMS260206001', 2, DATE '2026-02-06', 'WKS_MORNING_01', 'MANUAL_ENTRY', FALSE, 'SCHEDULED', NOW() UNION ALL
+SELECT 'EMS260206002', 2, DATE '2026-02-06', 'WKS_AFTERNOON_01', 'MANUAL_ENTRY', FALSE, 'SCHEDULED', NOW()
 ON CONFLICT (employee_shift_id) DO NOTHING;
 
 -- Dentist 3: Jimmy Donaldson (EMP003 - Part-time flex) - Ca Part-time Sáng
