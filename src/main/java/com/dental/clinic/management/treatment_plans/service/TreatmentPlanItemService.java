@@ -46,6 +46,7 @@ public class TreatmentPlanItemService {
 
     private final PatientPlanItemRepository itemRepository;
     private final PatientTreatmentPlanRepository planRepository;
+    private final com.dental.clinic.management.treatment_plans.repository.PatientPlanPhaseRepository phaseRepository;
     private final EntityManager entityManager;
     private final TreatmentPlanRBACService rbacService;
 
@@ -365,11 +366,16 @@ public class TreatmentPlanItemService {
      * Check if all items in phase are completed/skipped, then mark phase as
      * COMPLETED
      *
-     * IMPORTANT: Assumes phase has been refreshed by caller to get latest item
-     * statuses
+     * FIX Issue #40: Query items directly from database to avoid lazy loading
+     * issues
+     * Lazy collections may be empty or contain stale data after
+     * entityManager.refresh()
      */
     private void checkAndCompletePhase(PatientPlanPhase phase) {
-        List<PatientPlanItem> items = phase.getItems();
+        // FIX Issue #40: Query items directly from database instead of using lazy
+        // collection
+        // phase.getItems() may be empty or stale after refresh
+        List<PatientPlanItem> items = itemRepository.findByPhase_PatientPhaseId(phase.getPatientPhaseId());
 
         if (items.isEmpty()) {
             log.debug("Phase {} has no items, skipping completion check", phase.getPatientPhaseId());
@@ -383,9 +389,10 @@ public class TreatmentPlanItemService {
         if (allDone && phase.getStatus() != PhaseStatus.COMPLETED) {
             phase.setStatus(PhaseStatus.COMPLETED);
             phase.setCompletionDate(java.time.LocalDate.now());
-            entityManager.merge(phase); // Update phase
-            entityManager.flush(); // Ensure phase status is persisted immediately
-            log.info(" Phase {} auto-completed: all {} items are done",
+            entityManager.merge(phase);
+            entityManager.flush();
+            entityManager.refresh(phase);
+            log.info("Phase {} auto-completed: all {} items are done",
                     phase.getPatientPhaseId(), items.size());
         }
     }
@@ -469,7 +476,10 @@ public class TreatmentPlanItemService {
             return;
         }
 
-        List<PatientPlanPhase> phases = plan.getPhases();
+        // FIX Issue #40: Query phases directly from database instead of using lazy
+        // collection
+        // plan.getPhases() may be empty or contain stale phase statuses after refresh
+        List<PatientPlanPhase> phases = phaseRepository.findByTreatmentPlan_PlanId(plan.getPlanId());
 
         if (phases.isEmpty()) {
             log.debug("Plan {} has no phases, skipping completion check", plan.getPlanCode());
@@ -484,15 +494,15 @@ public class TreatmentPlanItemService {
         boolean allPhasesCompleted = completedPhases == phases.size();
 
         if (allPhasesCompleted) {
-            // AUTO-COMPLETE: Any status → COMPLETED (if all phases done)
+            // AUTO-COMPLETE: Any status -> COMPLETED (if all phases done)
             TreatmentPlanStatus oldStatus = plan.getStatus();
             plan.setStatus(TreatmentPlanStatus.COMPLETED);
             planRepository.save(plan);
 
             // FIX Issue #38: Force persist status to DB immediately and refresh entity
             // Without flush/refresh, status may not be visible in subsequent queries
-            entityManager.flush(); // Force DB write NOW (within current transaction)
-            entityManager.refresh(plan); // Reload from DB to ensure consistency
+            entityManager.flush();
+            entityManager.refresh(plan);
 
             log.info("Treatment plan {} (code: {}) auto-completed: {} -> COMPLETED - All {} phases done",
                     plan.getPlanId(), plan.getPlanCode(),

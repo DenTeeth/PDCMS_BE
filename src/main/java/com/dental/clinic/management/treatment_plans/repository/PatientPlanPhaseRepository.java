@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -32,4 +33,18 @@ public interface PatientPlanPhaseRepository extends JpaRepository<PatientPlanPha
             "LEFT JOIN FETCH p.items " +
             "WHERE p.patientPhaseId = :phaseId")
     Optional<PatientPlanPhase> findByIdWithPlanAndItems(@Param("phaseId") Long phaseId);
+
+    /**
+     * Find all phases in a treatment plan
+     * Used in checkAndCompletePlan() to avoid lazy loading issues
+     *
+     * FIX Issue #40: Query phases directly from database instead of relying on lazy
+     * collection
+     * This ensures we get fresh data from DB with updated phase statuses
+     *
+     * @param planId Treatment plan ID
+     * @return List of all phases in the plan
+     */
+    @Query("SELECT p FROM PatientPlanPhase p WHERE p.treatmentPlan.planId = :planId ORDER BY p.phaseNumber")
+    List<PatientPlanPhase> findByTreatmentPlan_PlanId(@Param("planId") Long planId);
 }
