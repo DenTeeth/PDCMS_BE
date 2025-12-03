@@ -9,10 +9,12 @@ import com.dental.clinic.management.clinical_records.domain.ClinicalPrescription
 import com.dental.clinic.management.clinical_records.domain.ClinicalPrescriptionItem;
 import com.dental.clinic.management.clinical_records.domain.ClinicalRecord;
 import com.dental.clinic.management.clinical_records.domain.ClinicalRecordProcedure;
+import com.dental.clinic.management.clinical_records.domain.PatientToothStatus;
 import com.dental.clinic.management.clinical_records.dto.*;
 import com.dental.clinic.management.clinical_records.repository.ClinicalPrescriptionRepository;
 import com.dental.clinic.management.clinical_records.repository.ClinicalRecordProcedureRepository;
 import com.dental.clinic.management.clinical_records.repository.ClinicalRecordRepository;
+import com.dental.clinic.management.clinical_records.repository.PatientToothStatusRepository;
 import com.dental.clinic.management.employee.domain.Employee;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.exception.BadRequestException;
@@ -52,6 +54,7 @@ public class ClinicalRecordService {
         private final DentalServiceRepository dentalServiceRepository;
         private final PatientPlanItemRepository planItemRepository;
         private final ItemMasterRepository itemMasterRepository;
+        private final PatientToothStatusRepository toothStatusRepository;
 
         private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -424,9 +427,9 @@ public class ClinicalRecordService {
                                 .updatedAt(updated.getUpdatedAt().format(FORMATTER))
                                 .examinationFindings(updated.getExaminationFindings())
                                 .treatmentNotes(updated.getTreatmentNotes())
-                                .followUpDate(updated.getFollowUpDate() != null 
-                                        ? updated.getFollowUpDate().format(DATE_FORMATTER) 
-                                        : null)
+                                .followUpDate(updated.getFollowUpDate() != null
+                                                ? updated.getFollowUpDate().format(DATE_FORMATTER)
+                                                : null)
                                 .build();
         }
 
@@ -891,5 +894,157 @@ public class ClinicalRecordService {
 
                 // Step 6: Map to DTO and return (reuse mapper from API 8.14)
                 return mapPrescriptionToDTO(saved);
+        }
+
+        /**
+         * API 8.9: Get Tooth Status for Patient (Odontogram)
+         *
+         * Authorization:
+         * - ROLE_ADMIN: Full access
+         * - VIEW_PATIENT permission: Doctors, Nurses, Receptionists
+         *
+         * Business Logic:
+         * - Only returns teeth with abnormal conditions (not HEALTHY)
+         * - Teeth not in response are considered HEALTHY
+         * - Empty array means all teeth are healthy
+         *
+         * @param patientId Patient ID
+         * @return List of tooth statuses (only abnormal teeth)
+         */
+        @Transactional(readOnly = true)
+        public java.util.List<ToothStatusResponse> getToothStatus(Integer patientId) {
+                log.info("Fetching tooth status for patient ID: {}", patientId);
+
+                // Step 1: Validate patient exists
+                Patient patient = patientRepository.findById(patientId)
+                                .orElseThrow(() -> new NotFoundException("PATIENT_NOT_FOUND",
+                                                "Patient not found with ID: " + patientId));
+
+                // Step 2: Check authorization (VIEW_PATIENT permission required)
+                Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+                boolean isAdmin = authentication.getAuthorities().stream()
+                                .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
+                boolean hasViewPatient = authentication.getAuthorities().stream()
+                                .anyMatch(auth -> auth.getAuthority().equals("VIEW_PATIENT"));
+
+                if (!isAdmin && !hasViewPatient) {
+                        throw new AccessDeniedException(
+                                        "Access denied: You need VIEW_PATIENT permission to view tooth status");
+                }
+
+                // Step 3: Fetch all tooth statuses for patient
+                java.util.List<PatientToothStatus> toothStatuses = toothStatusRepository
+                                .findByPatient_PatientId(patientId);
+
+                log.info("Found {} tooth statuses for patient ID: {}", toothStatuses.size(), patientId);
+
+                // Step 4: Map to DTO (only abnormal teeth, filter out HEALTHY if any)
+                return toothStatuses.stream()
+                                .filter(status -> status
+                                                .getStatus() != com.dental.clinic.management.patient.domain.ToothConditionEnum.HEALTHY)
+                                .map(this::mapToothStatusToDTO)
+                                .collect(Collectors.toList());
+        }
+
+        /**
+         * API 8.10: Update Tooth Status for Patient (Odontogram)
+         *
+         * Authorization:
+         * - ROLE_ADMIN: Full access
+         * - WRITE_CLINICAL_RECORD permission: Doctors only
+         *
+         * Business Logic:
+         * - If tooth status exists: UPDATE
+         * - If tooth status doesn't exist: CREATE
+         * - If status = HEALTHY: DELETE record (tooth returns to default state)
+         *
+         * @param patientId Patient ID
+         * @param request   Update tooth status request
+         * @return Updated tooth status response (or null if deleted)
+         */
+        @Transactional
+        public ToothStatusResponse updateToothStatus(Integer patientId, UpdateToothStatusRequest request) {
+                log.info("Updating tooth status for patient ID: {}, tooth: {}, status: {}",
+                                patientId, request.getToothNumber(), request.getStatus());
+
+                // Step 1: Validate patient exists
+                Patient patient = patientRepository.findById(patientId)
+                                .orElseThrow(() -> new NotFoundException("PATIENT_NOT_FOUND",
+                                                "Patient not found with ID: " + patientId));
+
+                // Step 2: Check authorization (WRITE_CLINICAL_RECORD permission required)
+                Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+                boolean isAdmin = authentication.getAuthorities().stream()
+                                .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
+                boolean hasWritePermission = authentication.getAuthorities().stream()
+                                .anyMatch(auth -> auth.getAuthority().equals("WRITE_CLINICAL_RECORD"));
+
+                if (!isAdmin && !hasWritePermission) {
+                        throw new AccessDeniedException(
+                                        "Access denied: You need WRITE_CLINICAL_RECORD permission to update tooth status");
+                }
+
+                // Step 3: Check if tooth status exists
+                java.util.Optional<PatientToothStatus> existingStatus = toothStatusRepository
+                                .findByPatient_PatientIdAndToothNumber(patientId, request.getToothNumber());
+
+                // Step 4: Business logic based on status
+                if (request.getStatus() == com.dental.clinic.management.patient.domain.ToothConditionEnum.HEALTHY) {
+                        // HEALTHY status: Delete record if exists (tooth returns to default state)
+                        if (existingStatus.isPresent()) {
+                                toothStatusRepository.delete(existingStatus.get());
+                                log.info("Deleted tooth status for patient ID: {}, tooth: {} (set to HEALTHY)",
+                                                patientId, request.getToothNumber());
+                        } else {
+                                log.info("No tooth status to delete for patient ID: {}, tooth: {} (already HEALTHY)",
+                                                patientId, request.getToothNumber());
+                        }
+                        return null; // Return null for deleted/HEALTHY status
+                } else {
+                        // Non-HEALTHY status: Create or Update
+                        PatientToothStatus toothStatus;
+
+                        if (existingStatus.isPresent()) {
+                                // UPDATE existing record
+                                toothStatus = existingStatus.get();
+                                toothStatus.setStatus(request.getStatus());
+                                toothStatus.setNotes(request.getNotes());
+                                log.info("Updating existing tooth status ID: {}", toothStatus.getToothStatusId());
+                        } else {
+                                // CREATE new record
+                                toothStatus = PatientToothStatus.builder()
+                                                .patient(patient)
+                                                .toothNumber(request.getToothNumber())
+                                                .status(request.getStatus())
+                                                .notes(request.getNotes())
+                                                .build();
+                                log.info("Creating new tooth status for tooth: {}", request.getToothNumber());
+                        }
+
+                        // Save and return
+                        PatientToothStatus saved = toothStatusRepository.save(toothStatus);
+                        log.info("Tooth status saved successfully: ID {}", saved.getToothStatusId());
+
+                        return mapToothStatusToDTO(saved);
+                }
+        }
+
+        /**
+         * Helper method: Map PatientToothStatus entity to ToothStatusResponse DTO
+         */
+        private ToothStatusResponse mapToothStatusToDTO(PatientToothStatus status) {
+                return ToothStatusResponse.builder()
+                                .toothStatusId(status.getToothStatusId())
+                                .patientId(status.getPatient().getPatientId())
+                                .toothNumber(status.getToothNumber())
+                                .status(status.getStatus())
+                                .notes(status.getNotes())
+                                .recordedAt(status.getRecordedAt() != null
+                                                ? status.getRecordedAt().format(FORMATTER)
+                                                : null)
+                                .updatedAt(status.getUpdatedAt() != null
+                                                ? status.getUpdatedAt().format(FORMATTER)
+                                                : null)
+                                .build();
         }
 }
