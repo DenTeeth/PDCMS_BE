@@ -114,8 +114,8 @@ public class DataInitializer {
             // CREATE TYPE statements need to be executed before Hibernate creates tables
             String insertOnlyContent = sqlContent;
 
-            // Remove comment blocks
-            insertOnlyContent = insertOnlyContent.replaceAll("--[^\n]*", "");
+            // Remove comment blocks while preserving newlines to avoid breaking multi-line statements
+            insertOnlyContent = insertOnlyContent.replaceAll("--[^\n]*\n", "\n");
 
             // Execute the filtered SQL content as a single script
             int executedCount = 0;
