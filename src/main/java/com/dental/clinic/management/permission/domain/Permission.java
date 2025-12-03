@@ -23,7 +23,7 @@ import com.dental.clinic.management.role.domain.Role;
 public class Permission {
 
     @Id
-    @Column(name = "permission_id", length = 30)
+    @Column(name = "permission_id", length = 50)
     private String permissionId;
 
     @NotBlank

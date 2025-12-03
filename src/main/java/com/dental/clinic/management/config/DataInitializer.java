@@ -56,18 +56,35 @@ public class DataInitializer {
                     "SELECT COUNT(*) FROM service_consumables",
                     Integer.class);
 
-            // Log counts for debugging
-            log.info("Data counts: roles={}, items={}, services={}, consumables={}",
-                    roleCount, itemCount, serviceCount, consumablesCount);
+            // Check critical tables that should have data
+            Integer supplierCount = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM suppliers",
+                    Integer.class);
+            Integer itemBatchCount = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM item_batches",
+                    Integer.class);
+            Integer employeeShiftCount = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM employee_shifts",
+                    Integer.class);
+            Integer customerContactCount = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM customer_contacts",
+                    Integer.class);
 
-            // If ALL tables have data, skip initialization
+            // Log counts for debugging
+            log.info("Data counts: roles={}, items={}, services={}, consumables={}, suppliers={}, batches={}, shifts={}, contacts={}",
+                    roleCount, itemCount, serviceCount, consumablesCount, supplierCount, itemBatchCount, employeeShiftCount, customerContactCount);
+
+            // If ALL critical tables have data, skip initialization
             if (roleCount != null && roleCount > 0 &&
                     itemCount != null && itemCount > 0 &&
                     serviceCount != null && serviceCount > 0 &&
-                    consumablesCount != null && consumablesCount > 0) {
+                    consumablesCount != null && consumablesCount > 0 &&
+                    supplierCount != null && supplierCount >= 9 &&
+                    itemBatchCount != null && itemBatchCount >= 18 &&
+                    employeeShiftCount != null && employeeShiftCount >= 600 &&
+                    customerContactCount != null && customerContactCount >= 6) {
                 log.info(
-                        "Seed data already exists (roles: {}, items: {}, services: {}, consumables: {}), skipping initialization",
-                        roleCount, itemCount, serviceCount, consumablesCount);
+                        "Seed data fully loaded (all critical tables populated), skipping initialization");
                 return;
             }
 
@@ -93,9 +110,9 @@ public class DataInitializer {
                 sqlContent = reader.lines().collect(Collectors.joining("\n"));
             }
 
-            // Filter out CREATE TYPE statements, keep only INSERT/UPDATE/DELETE
-            // Remove all CREATE TYPE blocks (they're already executed by spring.sql.init)
-            String insertOnlyContent = sqlContent.replaceAll("(?i)CREATE\\s+TYPE[^;]+;", "");
+            // Filter out only DDL table creation statements, but keep CREATE TYPE for ENUMs
+            // CREATE TYPE statements need to be executed before Hibernate creates tables
+            String insertOnlyContent = sqlContent;
 
             // Remove comment blocks
             insertOnlyContent = insertOnlyContent.replaceAll("--[^\n]*", "");
@@ -116,13 +133,16 @@ public class DataInitializer {
                         continue;
                     }
 
-                    // Execute only DML statements (INSERT, UPDATE, DELETE, SELECT, ALTER SEQUENCE)
+                    // Execute DML statements, DDL for ENUMs (DROP/CREATE TYPE), and constraints (ALTER TABLE)
                     String upperStatement = trimmed.toUpperCase();
                     if (upperStatement.startsWith("INSERT") ||
                             upperStatement.startsWith("UPDATE") ||
                             upperStatement.startsWith("DELETE") ||
                             upperStatement.startsWith("SELECT") ||
-                            upperStatement.startsWith("ALTER SEQUENCE")) {
+                            upperStatement.startsWith("ALTER SEQUENCE") ||
+                            upperStatement.startsWith("DROP TYPE") ||
+                            upperStatement.startsWith("CREATE TYPE") ||
+                            upperStatement.startsWith("ALTER TABLE")) {
 
                         try {
                             jdbcTemplate.execute(trimmed);
