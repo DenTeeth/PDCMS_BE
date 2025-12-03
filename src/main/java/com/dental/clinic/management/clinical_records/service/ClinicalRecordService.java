@@ -897,6 +897,61 @@ public class ClinicalRecordService {
         }
 
         /**
+         * API 8.16: Delete Prescription
+         * DELETE /api/v1/appointments/clinical-records/{recordId}/prescription
+         *
+         * Deletes the entire prescription and all prescription items for a clinical
+         * record.
+         * If inventory integration exists in the future, this should restore inventory
+         * levels.
+         *
+         * Authorization:
+         * - ROLE_ADMIN: Full access
+         * - WRITE_CLINICAL_RECORD permission: Doctors who created the record
+         *
+         * @param recordId Clinical record ID
+         * @throws NotFoundException     if clinical record not found
+         * @throws AccessDeniedException if user lacks permission to modify this record
+         */
+        @Transactional
+        public void deletePrescription(Integer recordId) {
+                log.info("Deleting prescription for clinical record ID: {}", recordId);
+
+                // Step 1: Load clinical record (404 if not found)
+                ClinicalRecord record = clinicalRecordRepository.findById(recordId)
+                                .orElseThrow(() -> new NotFoundException("RECORD_NOT_FOUND",
+                                                "Clinical record not found with ID: " + recordId));
+
+                // Step 2: Check RBAC authorization (same as API 8.15)
+                Appointment appointment = record.getAppointment();
+                checkAccessPermission(appointment);
+
+                // Step 3: Find prescription (if exists)
+                ClinicalPrescription prescription = prescriptionRepository
+                                .findByClinicalRecord_ClinicalRecordId(recordId)
+                                .orElse(null);
+
+                if (prescription == null) {
+                        log.info("No prescription found for clinical record ID: {}", recordId);
+                        return; // No prescription to delete - success (idempotent)
+                }
+
+                // Step 4: Delete prescription (CASCADE will delete items automatically)
+                log.info("Deleting prescription ID: {} with {} items",
+                                prescription.getPrescriptionId(),
+                                prescription.getItems().size());
+
+                prescriptionRepository.delete(prescription);
+
+                log.info("Prescription deleted successfully for clinical record ID: {}", recordId);
+
+                // TODO: If inventory integration exists, restore stock levels here
+                // For each item in prescription.getItems():
+                // - If item.getItemMaster() != null
+                // - Call inventoryService.restoreStock(itemMasterId, quantity)
+        }
+
+        /**
          * API 8.9: Get Tooth Status for Patient (Odontogram)
          *
          * Authorization:
