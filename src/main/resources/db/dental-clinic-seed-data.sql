@@ -369,6 +369,7 @@ ON CONFLICT (permission_id) DO NOTHING;
 INSERT INTO permissions (permission_id, permission_name, module, description, display_order, parent_permission_id, is_active, created_at)
 VALUES
 ('VIEW_ITEMS', 'VIEW_ITEMS', 'WAREHOUSE', 'Xem danh sách vật tư (cho Bác sĩ/Lễ tân)', 269, NULL, TRUE, NOW()),
+('VIEW_MEDICINES', 'VIEW_MEDICINES', 'WAREHOUSE', 'Xem và tìm kiếm thuốc men (chỉ MEDICINE category) - Cho Bác sĩ kê đơn - API 6.1.1', 268, NULL, TRUE, NOW()),
 ('VIEW_WAREHOUSE', 'VIEW_WAREHOUSE', 'WAREHOUSE', 'Xem danh sách giao dịch kho', 270, NULL, TRUE, NOW()),
 ('CREATE_ITEMS', 'CREATE_ITEMS', 'WAREHOUSE', 'Tạo vật tư mới với hệ thống đơn vị', 271, NULL, TRUE, NOW()),
 ('UPDATE_ITEMS', 'UPDATE_ITEMS', 'WAREHOUSE', 'Cập nhật thông tin vật tư và đơn vị tính', 272, NULL, TRUE, NOW()),
@@ -422,6 +423,7 @@ VALUES
 ('ROLE_DENTIST', 'DELETE_TREATMENT_PLAN'),
 ('ROLE_DENTIST', 'VIEW_SERVICE'),
 ('ROLE_DENTIST', 'VIEW_ITEMS'),
+('ROLE_DENTIST', 'VIEW_MEDICINES'),
 ('ROLE_DENTIST', 'WRITE_CLINICAL_RECORD'),
 ('ROLE_DENTIST', 'UPLOAD_ATTACHMENT'),
 ('ROLE_DENTIST', 'VIEW_ATTACHMENT'),
