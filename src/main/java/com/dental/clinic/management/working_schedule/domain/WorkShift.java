@@ -31,9 +31,9 @@ import com.dental.clinic.management.working_schedule.enums.WorkShiftCategory;
 public class WorkShift {
 
     @Id
-    @Column(name = "work_shift_id", length = 20)
+    @Column(name = "work_shift_id", length = 30)
     @NotBlank(message = "Work shift ID is required")
-    @Size(max = 20, message = "Work shift ID must not exceed 20 characters")
+    @Size(max = 30, message = "Work shift ID must not exceed 30 characters")
     private String workShiftId;
 
     @Column(name = "shift_name", nullable = false, length = 100)

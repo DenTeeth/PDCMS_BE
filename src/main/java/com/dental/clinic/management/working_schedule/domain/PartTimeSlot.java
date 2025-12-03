@@ -34,7 +34,7 @@ public class PartTimeSlot {
     @Column(name = "slot_id")
     private Long slotId;
 
-    @Column(name = "work_shift_id", length = 20, nullable = false)
+    @Column(name = "work_shift_id", length = 30, nullable = false)
     private String workShiftId;
 
     @ManyToOne(fetch = FetchType.LAZY)

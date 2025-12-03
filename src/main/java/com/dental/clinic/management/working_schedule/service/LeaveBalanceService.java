@@ -136,7 +136,7 @@ public class LeaveBalanceService {
         // Create history record
         LeaveBalanceHistory history = LeaveBalanceHistory.builder()
                 .balance(balance) // Set the relationship, not just the ID
-                .changedBy(null) // System action, no specific user
+                .changedBy(0) // System user for automatic actions
                 .changeAmount(defaultDays)
                 .reason(BalanceChangeReason.ANNUAL_RESET)
                 .notes(String.format("Cấp %s ngày nghỉ phép %s cho năm %d",
