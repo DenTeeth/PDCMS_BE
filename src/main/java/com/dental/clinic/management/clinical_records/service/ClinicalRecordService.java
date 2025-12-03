@@ -70,8 +70,9 @@ public class ClinicalRecordService {
          * - Patient: appointment.patient_id matches user's patient_id
          * - Observer/Nurse: appointment participant matches user's employee_id
          *
-         * Returns 404 RECORD_NOT_FOUND if clinical record doesn't exist
-         * Frontend uses this to show CREATE form
+         * Returns 200 OK with null if clinical record doesn't exist (allows FE to show
+         * empty state)
+         * Frontend uses this to determine whether to show CREATE or VIEW/EDIT form
          */
         @Transactional(readOnly = true)
         public ClinicalRecordResponse getClinicalRecord(Integer appointmentId) {
@@ -85,13 +86,17 @@ public class ClinicalRecordService {
                 // Step 2: Check RBAC authorization
                 checkAccessPermission(appointment);
 
-                // Step 3: Load clinical record (throws 404 if not found)
-                ClinicalRecord record = clinicalRecordRepository.findByAppointment_AppointmentId(appointmentId)
-                                .orElseThrow(() -> new NotFoundException("RECORD_NOT_FOUND",
-                                                "Clinical record not found for appointment ID: " + appointmentId));
+                // Step 3: Load clinical record (return null if not found - allows FE to access
+                // tab)
+                var recordOpt = clinicalRecordRepository.findByAppointment_AppointmentId(appointmentId);
+
+                if (recordOpt.isEmpty()) {
+                        log.info("No clinical record found for appointment ID: {} - returning null", appointmentId);
+                        return null;
+                }
 
                 // Step 4: Build response with nested data
-                return buildClinicalRecordResponse(record, appointment);
+                return buildClinicalRecordResponse(recordOpt.get(), appointment);
         }
 
         /**
@@ -326,7 +331,7 @@ public class ClinicalRecordService {
          *
          * Business Rules:
          * 1. Appointment must exist
-         * 2. Appointment must be IN_PROGRESS (checked in)
+         * 2. Allows retroactive creation for COMPLETED appointments (Issue 37 fix)
          * 3. No existing clinical record for this appointment (409 if duplicate)
          * 4. All required fields must be provided
          */
@@ -339,13 +344,10 @@ public class ClinicalRecordService {
                                 .orElseThrow(() -> new NotFoundException("APPOINTMENT_NOT_FOUND",
                                                 "Appointment not found with ID: " + request.getAppointmentId()));
 
-                // Step 2: Check appointment status
-                if (!appointment.getStatus().name().equals("IN_PROGRESS")
-                                && !appointment.getStatus().name().equals("CHECKED_IN")) {
-                        throw new com.dental.clinic.management.exception.BadRequestException("INVALID_STATUS",
-                                        "Cannot create clinical record. Appointment must be IN_PROGRESS or CHECKED_IN. Current status: "
-                                                        + appointment.getStatus());
-                }
+                // Step 2: Check access permission (removed status restriction - Issue 37 fix)
+                checkAccessPermission(appointment);
+                log.info("Creating clinical record for appointment {} with status: {}",
+                                request.getAppointmentId(), appointment.getStatus());
 
                 // Step 3: Check duplicate
                 if (clinicalRecordRepository.findByAppointment_AppointmentId(request.getAppointmentId())
