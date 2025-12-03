@@ -48,6 +48,9 @@ public class ClinicalRecord {
     @Column(name = "treatment_notes", columnDefinition = "TEXT")
     private String treatmentNotes;
 
+    @Column(name = "follow_up_date")
+    private java.time.LocalDate followUpDate;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

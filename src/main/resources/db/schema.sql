@@ -803,6 +803,7 @@ CREATE TABLE clinical_records (
     chief_complaint TEXT,
     examination_findings TEXT,
     treatment_notes TEXT,
+    follow_up_date DATE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -812,6 +813,7 @@ COMMENT ON COLUMN clinical_records.vital_signs IS 'Flexible JSONB field: blood_p
 COMMENT ON COLUMN clinical_records.chief_complaint IS 'Patient reported symptoms (main reason for visit)';
 COMMENT ON COLUMN clinical_records.examination_findings IS 'Doctor observations during examination';
 COMMENT ON COLUMN clinical_records.treatment_notes IS 'Treatment performed and recommendations';
+COMMENT ON COLUMN clinical_records.follow_up_date IS 'Scheduled follow-up appointment date (nullable)';
 
 -- Clinical Record Procedures (linked to services and treatment plans)
 CREATE TABLE clinical_record_procedures (

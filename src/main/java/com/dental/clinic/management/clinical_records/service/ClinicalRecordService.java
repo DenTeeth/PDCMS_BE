@@ -303,6 +303,9 @@ public class ClinicalRecordService {
                                 .chiefComplaint(record.getChiefComplaint())
                                 .examinationFindings(record.getExaminationFindings())
                                 .treatmentNotes(record.getTreatmentNotes())
+                                .followUpDate(record.getFollowUpDate() != null
+                                                ? record.getFollowUpDate().format(DATE_FORMATTER)
+                                                : null)
                                 .createdAt(record.getCreatedAt().format(FORMATTER))
                                 .updatedAt(record.getUpdatedAt().format(FORMATTER))
                                 .appointment(appointmentDTO)
@@ -358,6 +361,7 @@ public class ClinicalRecordService {
                                 .diagnosis(request.getDiagnosis())
                                 .treatmentNotes(request.getTreatmentNotes())
                                 .vitalSigns(request.getVitalSigns())
+                                .followUpDate(request.getFollowUpDate())
                                 .build();
 
                 ClinicalRecord saved = clinicalRecordRepository.save(record);
@@ -406,6 +410,10 @@ public class ClinicalRecordService {
                         record.setVitalSigns(request.getVitalSigns());
                 }
 
+                if (request.getFollowUpDate() != null) {
+                        record.setFollowUpDate(request.getFollowUpDate());
+                }
+
                 // Step 3: Save changes (updated_at auto-updated by @PreUpdate)
                 ClinicalRecord updated = clinicalRecordRepository.save(record);
 
@@ -416,6 +424,9 @@ public class ClinicalRecordService {
                                 .updatedAt(updated.getUpdatedAt().format(FORMATTER))
                                 .examinationFindings(updated.getExaminationFindings())
                                 .treatmentNotes(updated.getTreatmentNotes())
+                                .followUpDate(updated.getFollowUpDate() != null 
+                                        ? updated.getFollowUpDate().format(DATE_FORMATTER) 
+                                        : null)
                                 .build();
         }
 

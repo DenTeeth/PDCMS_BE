@@ -18,6 +18,7 @@ public class ClinicalRecordResponse {
     private String chiefComplaint;
     private String examinationFindings;
     private String treatmentNotes;
+    private String followUpDate; // yyyy-MM-dd format, nullable
     private String createdAt;
     private String updatedAt;
 
