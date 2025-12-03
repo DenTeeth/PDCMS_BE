@@ -10,16 +10,19 @@
 ## Problem Description
 
 When rescheduling an appointment created from treatment plan items, the backend had the following behavior:
+
 1. Cancel old appointment -> `updateLinkedPlanItemsStatus()` was called -> plan items status = `READY_FOR_BOOKING` (Correct)
 2. Create new appointment -> **Plan items NOT linked** (Bug)
 
 ### Expected Behavior
+
 - When rescheduling appointment from treatment plan:
   1. Cancel old appointment -> plan items = `READY_FOR_BOOKING` (Correct)
   2. Create new appointment -> **re-link plan items** -> plan items = `SCHEDULED` (Correct)
   3. Treatment plan detail page displays new appointment linked with items (Correct)
 
 ### Actual Behavior (Before Fix)
+
 - Cancel old appointment -> plan items = `READY_FOR_BOOKING` (Correct)
 - Create new appointment -> **NOT linked with plan items** (Bug)
 - Plan items remained at `READY_FOR_BOOKING` status (could be booked again incorrectly)
@@ -32,6 +35,7 @@ When rescheduling an appointment created from treatment plan items, the backend 
 ### Code Review
 
 **1. `AppointmentRescheduleService.rescheduleAppointment()` (Before Fix):**
+
 ```java
 // STEP 5: Create new appointment using AppointmentCreationService
 CreateAppointmentRequest createRequest = buildCreateRequest(request, patientCode, serviceCodes);
@@ -40,12 +44,13 @@ Appointment newAppointment = creationService.createAppointmentInternal(createReq
 ```
 
 **2. `AppointmentRescheduleService.buildCreateRequest()` (Before Fix):**
+
 ```java
 private CreateAppointmentRequest buildCreateRequest(
     RescheduleAppointmentRequest request,
     String patientCode,
     List<String> serviceCodes) {
-    
+
     return CreateAppointmentRequest.builder()
         .patientCode(patientCode)
         .employeeCode(request.getNewEmployeeCode())
@@ -60,6 +65,7 @@ private CreateAppointmentRequest buildCreateRequest(
 ```
 
 **3. `AppointmentCreationService.createAppointmentInternal()`:**
+
 ```java
 // V2: Treatment Plan integration
 if (isBookingFromPlan) {  // isBookingFromPlan = false because patientPlanItemIds = null
@@ -70,6 +76,7 @@ if (isBookingFromPlan) {  // isBookingFromPlan = false because patientPlanItemId
 ```
 
 ### Root Causes
+
 1. `buildCreateRequest()` didn't pass `patientPlanItemIds` from old appointment
 2. `createAppointmentInternal()` only links plan items if `patientPlanItemIds` is provided
 3. Result: New appointment not linked to treatment plan
@@ -81,6 +88,7 @@ if (isBookingFromPlan) {  // isBookingFromPlan = false because patientPlanItemId
 ### Changes Made
 
 **1. Added `AppointmentPlanItemRepository` dependency:**
+
 ```java
 @Service
 @RequiredArgsConstructor
@@ -92,6 +100,7 @@ public class AppointmentRescheduleService {
 ```
 
 **2. Modified `rescheduleAppointment()` to get and pass plan item IDs:**
+
 ```java
 // STEP 3: Get service codes from old appointment
 List<String> serviceCodes = getServiceCodes(oldAppointment, request);
@@ -108,6 +117,7 @@ Appointment newAppointment = creationService.createAppointmentInternal(createReq
 ```
 
 **3. Added `getPlanItemIdsFromOldAppointment()` helper method:**
+
 ```java
 /**
  * FIX Issue #39: Get plan item IDs linked to old appointment.
@@ -138,6 +148,7 @@ private List<Long> getPlanItemIdsFromOldAppointment(Appointment oldAppointment) 
 ```
 
 **4. Modified `buildCreateRequest()` to accept and use plan item IDs:**
+
 ```java
 /**
  * Build CreateAppointmentRequest from reschedule request.
@@ -193,7 +204,7 @@ private CreateAppointmentRequest buildCreateRequest(
 
 1. **Database Setup**: Treatment plan with items in `READY_FOR_BOOKING` or `SCHEDULED` status
 2. **Test Account**: User with `CREATE_APPOINTMENT` and `CANCEL_APPOINTMENT` permissions
-3. **Test Data**: 
+3. **Test Data**:
    - Patient: BN-1001 (from seed data)
    - Treatment Plan: PLAN-20251001-001 (from seed data)
    - Plan Items: 301, 302 (example IDs - adjust based on actual seed data)
@@ -201,6 +212,7 @@ private CreateAppointmentRequest buildCreateRequest(
 ### Test Scenario 1: Reschedule Appointment from Treatment Plan
 
 **Step 1: Create appointment from treatment plan items**
+
 ```bash
 POST http://localhost:8080/api/v1/appointments
 Authorization: Bearer {token}
@@ -217,26 +229,29 @@ Content-Type: application/json
 ```
 
 **Expected Response:**
+
 ```json
 {
   "appointmentCode": "APT-20251210-001",
   "status": "SCHEDULED",
   "linkedPlanItems": [
-    {"itemId": 301, "status": "SCHEDULED"},
-    {"itemId": 302, "status": "SCHEDULED"}
+    { "itemId": 301, "status": "SCHEDULED" },
+    { "itemId": 302, "status": "SCHEDULED" }
   ]
 }
 ```
 
 **Step 2: Verify plan items are linked**
+
 ```sql
-SELECT * FROM appointment_plan_items 
+SELECT * FROM appointment_plan_items
 WHERE appointment_id = (SELECT appointment_id FROM appointments WHERE appointment_code = 'APT-20251210-001');
 
 -- Expected: 2 rows showing (appointment_id, item_id)
 ```
 
 **Step 3: Reschedule the appointment**
+
 ```bash
 POST http://localhost:8080/api/v1/appointments/APT-20251210-001/reschedule
 Authorization: Bearer {token}
@@ -252,33 +267,36 @@ Content-Type: application/json
 ```
 
 **Expected Response:**
+
 ```json
 {
   "cancelledAppointment": {
     "appointmentCode": "APT-20251210-001",
     "status": "CANCELLED",
-    "linkedPlanItems": []  // Plan items unlinked
+    "linkedPlanItems": [] // Plan items unlinked
   },
   "newAppointment": {
     "appointmentCode": "APT-20251215-001",
     "status": "SCHEDULED",
-    "linkedPlanItems": [  // FIX: Plan items re-linked to new appointment
-      {"itemId": 301, "status": "SCHEDULED"},
-      {"itemId": 302, "status": "SCHEDULED"}
+    "linkedPlanItems": [
+      // FIX: Plan items re-linked to new appointment
+      { "itemId": 301, "status": "SCHEDULED" },
+      { "itemId": 302, "status": "SCHEDULED" }
     ]
   }
 }
 ```
 
 **Step 4: Verify plan items are re-linked to new appointment**
+
 ```sql
 -- Check old appointment has no plan items
-SELECT * FROM appointment_plan_items 
+SELECT * FROM appointment_plan_items
 WHERE appointment_id = (SELECT appointment_id FROM appointments WHERE appointment_code = 'APT-20251210-001');
 -- Expected: 0 rows
 
 -- Check new appointment has plan items
-SELECT * FROM appointment_plan_items 
+SELECT * FROM appointment_plan_items
 WHERE appointment_id = (SELECT appointment_id FROM appointments WHERE appointment_code = 'APT-20251215-001');
 -- Expected: 2 rows showing (new_appointment_id, item_id)
 
@@ -288,6 +306,7 @@ SELECT item_id, status FROM patient_plan_items WHERE item_id IN (301, 302);
 ```
 
 **Step 5: Check backend logs**
+
 ```
 Expected logs:
 - "Old appointment APT-20251210-001 linked to 2 plan items: [301, 302]"
@@ -298,6 +317,7 @@ Expected logs:
 ### Test Scenario 2: Reschedule Standalone Appointment (No Plan Items)
 
 **Step 1: Create standalone appointment**
+
 ```bash
 POST http://localhost:8080/api/v1/appointments
 Authorization: Bearer {token}
@@ -314,6 +334,7 @@ Content-Type: application/json
 ```
 
 **Step 2: Reschedule the appointment**
+
 ```bash
 POST http://localhost:8080/api/v1/appointments/APT-20251210-002/reschedule
 Authorization: Bearer {token}
@@ -329,6 +350,7 @@ Content-Type: application/json
 ```
 
 **Expected Behavior:**
+
 - Old appointment cancelled
 - New appointment created with same services
 - No plan items linked (because old appointment was standalone)
@@ -339,6 +361,7 @@ Content-Type: application/json
 ## Verification Results
 
 ### Compilation
+
 ```bash
 $ ./mvnw clean compile -DskipTests
 [INFO] BUILD SUCCESS
@@ -347,12 +370,14 @@ $ ./mvnw clean compile -DskipTests
 ```
 
 ### Runtime Verification (Backend Logs)
+
 ```
 2025-12-04 21:40:51 INFO  AppointmentRescheduleService - Rescheduling appointment APT-20251104-001 to new time 2025-12-15T10:00
 2025-12-04 21:40:51 DEBUG AppointmentRescheduleService - Old appointment APT-20251104-001 is standalone (not from treatment plan)
 ```
 
 Code successfully:
+
 - Checks for plan items in old appointment
 - Logs correctly when appointment is standalone
 - Logs correctly when appointment has plan items
@@ -362,12 +387,14 @@ Code successfully:
 ## Impact
 
 ### Before Fix
+
 - Medium Priority: Data inconsistency between appointment and treatment plan
 - Users couldn't track new appointment in treatment plan detail page
 - Plan items stayed `READY_FOR_BOOKING` -> could be booked again incorrectly
 - Reporting: Statistics about appointments from treatment plans were inaccurate
 
 ### After Fix
+
 - Plan items correctly re-linked to new appointment
 - Plan items status updated to `SCHEDULED`
 - Treatment plan detail page shows new appointment
@@ -379,11 +406,13 @@ Code successfully:
 ## Frontend Impact
 
 ### Before Fix
+
 - FE validated `item.status === READY_FOR_BOOKING` before allowing booking (Correct)
 - FE displayed linked appointments in treatment plan detail page (Correct)
 - **Problem:** After reschedule, FE didn't see new appointment in treatment plan detail page
 
 ### After Fix
+
 - FE will see new appointment linked with plan items (Correct)
 - Plan items status = `SCHEDULED` -> cannot be booked again incorrectly (Correct)
 - Treatment plan detail page shows appointment history correctly

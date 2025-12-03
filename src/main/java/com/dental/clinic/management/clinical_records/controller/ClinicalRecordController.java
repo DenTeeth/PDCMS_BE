@@ -306,4 +306,27 @@ public class ClinicalRecordController {
 
         return ResponseEntity.ok(prescription);
     }
+
+    /**
+     * API 8.16: Delete Prescription
+     * DELETE /api/v1/appointments/clinical-records/{recordId}/prescription
+     *
+     * Deletes the entire prescription and all prescription items for a clinical
+     * record.
+     * If inventory integration exists, this should restore inventory levels.
+     *
+     * @param recordId The clinical record ID
+     * @return 204 No Content
+     */
+    @DeleteMapping("/clinical-records/{recordId}/prescription")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasAuthority('WRITE_CLINICAL_RECORD')")
+    @ApiMessage("Prescription deleted successfully")
+    public ResponseEntity<Void> deletePrescription(@PathVariable Integer recordId) {
+
+        log.info("API 8.16: DELETE /api/v1/appointments/clinical-records/{}/prescription", recordId);
+
+        clinicalRecordService.deletePrescription(recordId);
+
+        return ResponseEntity.noContent().build();
+    }
 }
