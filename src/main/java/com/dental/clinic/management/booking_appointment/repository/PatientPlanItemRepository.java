@@ -41,4 +41,17 @@ public interface PatientPlanItemRepository extends JpaRepository<PatientPlanItem
             "JOIN FETCH pl.patient " +
             "WHERE i.itemId IN :itemIds")
     List<PatientPlanItem> findByIdInWithPlanAndPhase(@Param("itemIds") List<Long> itemIds);
+
+    /**
+     * Find all items in a phase
+     * Used in checkAndCompletePhase() to avoid lazy loading issues
+     * 
+     * FIX Issue #40: Query items directly from database instead of relying on lazy collection
+     * This ensures we get fresh data from DB, not stale cached data
+     * 
+     * @param phaseId Phase ID
+     * @return List of all items in the phase
+     */
+    @Query("SELECT i FROM PatientPlanItem i WHERE i.phase.patientPhaseId = :phaseId")
+    List<PatientPlanItem> findByPhase_PatientPhaseId(@Param("phaseId") Long phaseId);
 }
