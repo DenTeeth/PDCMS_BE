@@ -438,7 +438,8 @@ public class TreatmentPlanItemService {
     /**
      * V21: Check if all phases are completed, then mark plan as COMPLETED.
      *
-     * FIX Issue #35: Auto-complete plan regardless of current status (not just IN_PROGRESS)
+     * FIX Issue #35: Auto-complete plan regardless of current status (not just
+     * IN_PROGRESS)
      * to ensure UX consistency between list and detail views.
      *
      * Business Logic:
@@ -490,19 +491,20 @@ public class TreatmentPlanItemService {
 
             // FIX Issue #38: Force persist status to DB immediately and refresh entity
             // Without flush/refresh, status may not be visible in subsequent queries
-            entityManager.flush();  // Force DB write NOW (within current transaction)
-            entityManager.refresh(plan);  // Reload from DB to ensure consistency
+            entityManager.flush(); // Force DB write NOW (within current transaction)
+            entityManager.refresh(plan); // Reload from DB to ensure consistency
 
-            log.info("✅ Treatment plan {} (code: {}) auto-completed: {} → COMPLETED - All {} phases done",
+            log.info("Treatment plan {} (code: {}) auto-completed: {} -> COMPLETED - All {} phases done",
                     plan.getPlanId(), plan.getPlanCode(),
                     oldStatus == null ? "null" : oldStatus,
                     phases.size());
 
             // Verify status was persisted correctly
             if (plan.getStatus() == TreatmentPlanStatus.COMPLETED) {
-                log.debug("✅ VERIFIED: Plan {} status confirmed as COMPLETED in DB", plan.getPlanCode());
+                log.debug("VERIFIED: Plan {} status confirmed as COMPLETED in DB", plan.getPlanCode());
             } else {
-                log.error("❌ CRITICAL: Plan {} status not persisted! Current: {}", plan.getPlanCode(), plan.getStatus());
+                log.error("CRITICAL: Plan {} status not persisted! Current: {}", plan.getPlanCode(),
+                        plan.getStatus());
             }
         } else {
             log.debug("Plan {} not completed yet: {}/{} phases done",

@@ -2,6 +2,7 @@ package com.dental.clinic.management.booking_appointment.service;
 
 import com.dental.clinic.management.booking_appointment.domain.Appointment;
 import com.dental.clinic.management.booking_appointment.domain.AppointmentAuditLog;
+import com.dental.clinic.management.booking_appointment.domain.AppointmentPlanItemBridge;
 
 import com.dental.clinic.management.booking_appointment.dto.CreateAppointmentRequest;
 import com.dental.clinic.management.booking_appointment.dto.request.RescheduleAppointmentRequest;
@@ -9,6 +10,7 @@ import com.dental.clinic.management.booking_appointment.dto.response.RescheduleA
 import com.dental.clinic.management.booking_appointment.enums.AppointmentActionType;
 import com.dental.clinic.management.booking_appointment.enums.AppointmentStatus;
 import com.dental.clinic.management.booking_appointment.repository.AppointmentAuditLogRepository;
+import com.dental.clinic.management.booking_appointment.repository.AppointmentPlanItemRepository;
 import com.dental.clinic.management.booking_appointment.repository.AppointmentRepository;
 import com.dental.clinic.management.booking_appointment.repository.AppointmentServiceRepository;
 import com.dental.clinic.management.booking_appointment.repository.BookingDentalServiceRepository;
@@ -50,6 +52,7 @@ public class AppointmentRescheduleService {
         private final EmployeeRepository employeeRepository;
         private final AppointmentCreationService creationService;
         private final AppointmentDetailService detailService;
+        private final AppointmentPlanItemRepository appointmentPlanItemRepository;
 
         /**
          * Reschedule appointment: Cancel old and create new in one transaction.
@@ -77,11 +80,14 @@ public class AppointmentRescheduleService {
                 // STEP 3: Get service codes from old appointment
                 List<String> serviceCodes = getServiceCodes(oldAppointment, request);
 
+                // STEP 3.5: FIX Issue #39 - Get plan item IDs from old appointment
+                List<Long> planItemIds = getPlanItemIdsFromOldAppointment(oldAppointment);
+
                 // STEP 4: Get patient code from old appointment
                 String patientCode = getPatientCode(oldAppointment);
 
-                // STEP 5: Create new appointment using AppointmentCreationService
-                CreateAppointmentRequest createRequest = buildCreateRequest(request, patientCode, serviceCodes);
+                // STEP 5: Create new appointment with plan items linked
+                CreateAppointmentRequest createRequest = buildCreateRequest(request, patientCode, serviceCodes, planItemIds);
                 Appointment newAppointment = creationService.createAppointmentInternal(createRequest);
 
                 // STEP 6: Cancel old appointment and link to new one
@@ -177,21 +183,58 @@ public class AppointmentRescheduleService {
         /**
          * Build CreateAppointmentRequest from reschedule request.
          * Reuses patient and services from old appointment.
+         * FIX Issue #39: Link plan items if old appointment was from treatment plan.
          */
         private CreateAppointmentRequest buildCreateRequest(
                         RescheduleAppointmentRequest request,
                         String patientCode,
-                        List<String> serviceCodes) {
+                        List<String> serviceCodes,
+                        List<Long> planItemIds) {
 
-                return CreateAppointmentRequest.builder()
+                CreateAppointmentRequest.CreateAppointmentRequestBuilder builder = CreateAppointmentRequest.builder()
                                 .patientCode(patientCode)
                                 .employeeCode(request.getNewEmployeeCode())
                                 .roomCode(request.getNewRoomCode())
                                 .appointmentStartTime(request.getNewStartTime().toString())
                                 .serviceCodes(serviceCodes)
                                 .participantCodes(request.getNewParticipantCodes())
-                                .notes("Rescheduled from previous appointment")
-                                .build();
+                                .notes("Rescheduled from previous appointment");
+
+                // FIX Issue #39: Link plan items if old appointment was from treatment plan
+                if (planItemIds != null && !planItemIds.isEmpty()) {
+                        builder.patientPlanItemIds(planItemIds);
+                        log.info("Rescheduling appointment from treatment plan: {} plan items will be linked",
+                                        planItemIds.size());
+                }
+
+                return builder.build();
+        }
+
+        /**
+         * FIX Issue #39: Get plan item IDs linked to old appointment.
+         * Returns empty list if appointment was not from treatment plan.
+         *
+         * @param oldAppointment The appointment being rescheduled
+         * @return List of plan item IDs or empty list if standalone appointment
+         */
+        private List<Long> getPlanItemIdsFromOldAppointment(Appointment oldAppointment) {
+                List<AppointmentPlanItemBridge> bridges = appointmentPlanItemRepository
+                                .findById_AppointmentId(oldAppointment.getAppointmentId());
+
+                if (bridges.isEmpty()) {
+                        log.debug("Old appointment {} is standalone (not from treatment plan)",
+                                        oldAppointment.getAppointmentCode());
+                        return List.of();
+                }
+
+                List<Long> planItemIds = bridges.stream()
+                                .map(bridge -> bridge.getId().getItemId())
+                                .collect(Collectors.toList());
+
+                log.info("Old appointment {} linked to {} plan items: {}",
+                                oldAppointment.getAppointmentCode(), planItemIds.size(), planItemIds);
+
+                return planItemIds;
         }
 
         /**
