@@ -1,6 +1,8 @@
 HELP.md
 target/
 build/
+docker_compose/
+pgdata_dental/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
@@ -35,3 +37,15 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Environment Variables ###
+.env
+.env.local
+application-local.yaml
+application-local.yml
+
+### Log Files ###
+*.log
+logs/
+app-startup.log
+app.log
