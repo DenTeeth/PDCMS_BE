@@ -87,7 +87,8 @@ public class AppointmentRescheduleService {
                 String patientCode = getPatientCode(oldAppointment);
 
                 // STEP 5: Create new appointment with plan items linked
-                CreateAppointmentRequest createRequest = buildCreateRequest(request, patientCode, serviceCodes, planItemIds);
+                CreateAppointmentRequest createRequest = buildCreateRequest(request, patientCode, serviceCodes,
+                                planItemIds);
                 Appointment newAppointment = creationService.createAppointmentInternal(createRequest);
 
                 // STEP 6: Cancel old appointment and link to new one
