@@ -1,7 +1,6 @@
 
 package com.dental.clinic.management.patient.dto.request;
 
-
 import com.dental.clinic.management.employee.enums.Gender;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -9,37 +8,48 @@ import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
-
 import java.time.LocalDate;
 
 /**
  * DTO for creating a new patient
  *
- * FLOW 1: Patient CÓ ACCOUNT (có thể đăng nhập)
- * - Cung cấp: username, password + thông tin patient
- * - System tạo account + patient
+ * ACCOUNT CREATION FLOW (Hospital Standard):
  *
- * FLOW 2: Patient KHÔNG ACCOUNT (chỉ lưu hồ sơ)
- * - Không cung cấp username/password
- * - System chỉ tạo patient (không tạo account)
+ * Step 1: Staff creates patient record
+ * - Staff enters: username (e.g., "nguyenvana", "BN001")
+ * - Staff enters: patient info (name, email, phone, DOB, etc.)
+ * - Staff does NOT enter password (security best practice)
+ *
+ * Step 2: Backend auto-creates account (if email provided)
+ * - Backend generates temporary password (random UUID)
+ * - Account status: PENDING_VERIFICATION
+ * - Backend sends welcome email with password setup link
+ *
+ * Step 3: Patient verifies & sets password
+ * - Patient clicks link in email
+ * - Patient verifies email address
+ * - Patient sets their own password
+ * - Patient can now login
+ *
+ * Security: Staff NEVER sees or knows patient's password
+ *
+ *  BREAKING CHANGE (V23/V24):
+ * - Removed `password` field from request (patient sets via email)
+ * - Kept `username` field (staff must provide username)
+ * - Username is REQUIRED if creating account
+ * - If no email → patient created without account (record-only)
  */
 public class CreatePatientRequest {
 
-    // ===== ACCOUNT FIELDS (Optional - nếu muốn patient đăng nhập) =====
+    // ===== ACCOUNT FIELDS (Required for login-enabled patients) =====
 
     /**
-     * Username for patient account (optional)
-     * Nếu cung cấp username → cần cả password và email
+     * Username for patient account (required if email provided)
+     * Staff enters this - examples: "nguyenvana", "patient001", "BN12345"
+     * Must be unique in the system
      */
     @Size(max = 50)
     private String username;
-
-    /**
-     * Password for patient account (optional)
-     * Bắt buộc nếu có username
-     */
-    @Size(min = 8, max = 100)
-    private String password;
 
     // ===== PATIENT FIELDS =====
 
@@ -94,14 +104,6 @@ public class CreatePatientRequest {
 
     public void setUsername(String username) {
         this.username = username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
     }
 
     public String getFirstName() {

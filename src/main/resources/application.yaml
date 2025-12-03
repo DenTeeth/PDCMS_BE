@@ -6,29 +6,65 @@ spring:
   # Database Configuration
   # ==============================
   datasource:
-    url: jdbc:mysql://localhost:3306/dental_clinic_db
+    url: jdbc:postgresql://localhost:5432/dental_clinic_db
     username: root
     password: 123456
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    driver-class-name: org.postgresql.Driver
 
   # JPA Configuration
   jpa:
     hibernate:
+      # ddl-auto: update
+      # ⚠️ CRITICAL: Hibernate AUTO-GENERATES all tables from @Entity classes
+      # ❌ schema.sql is NOT USED - it's for DOCUMENTATION/REFERENCE only
+      # ✅ Database schema is created by Hibernate based on Entity annotations
+      # 🔄 When adding new fields to Entity, Hibernate will ALTER TABLE automatically
       ddl-auto: update
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQLDialect
+        dialect: org.hibernate.dialect.PostgreSQLDialect
         "[format_sql]": true
-    show-sql: true
-    defer-datasource-initialization: true
+    show-sql: false
+    defer-datasource-initialization: false # SQL runs BEFORE Hibernate to create ENUMs
 
-  # SQL Init Configuration - Auto-run seed data
+  # SQL Init Configuration - Creates ENUM types only
+  # This is the ONLY SQL file used in the project (dental-clinic-seed-data.sql)
+  # EXECUTION ORDER:
+  #   1. dental-clinic-seed-data.sql creates ENUM types
+  #   2. Hibernate auto-generates tables from @Entity classes (NOT from schema.sql!)
+  #   3. DataInitializer bean loads INSERT statements
+  # 📝 schema.sql = DOCUMENTATION ONLY (not executed)
   sql:
     init:
       mode: always
       data-locations: classpath:db/dental-clinic-seed-data.sql
       encoding: UTF-8
-      continue-on-error: true
+      continue-on-error: true # Ignore "already exists" errors for ENUMs
+
+  # ==============================
+  # Mail Configuration (Email Verification & Password Reset)
+  # ==============================
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME:dentalclinicPDCMS@gmail.com}
+    password: ${MAIL_PASSWORD:mit-to-bit-viet-nam}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
+# ==============================
+# Application Configuration
+# ==============================
+app:
+  frontend-url: ${FRONTEND_URL:http://localhost:3000}
 
 # ==============================
 # Custom JWT Configuration
@@ -36,9 +72,9 @@ spring:
 dentalclinic:
   jwt:
     base64-secret: OOWH6vzvKUVsTUWvDEUz0SMnO3mfXiwIbXSKX6ey7fLI/oGjlrSOrucHd2qvsaZ+ZbxH/6TosGTtBxRMOOW0Bg==
-    # 15 minutes
-    access-token-validity-in-seconds: 2592000
-    # 30 days
+    # 15 minutes = 900 seconds
+    access-token-validity-in-seconds: 9000
+    # 30 days = 2592000 seconds
     refresh-token-validity-in-seconds: 2592000
 
 # ==============================

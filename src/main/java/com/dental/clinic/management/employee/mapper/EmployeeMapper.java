@@ -1,4 +1,3 @@
-
 package com.dental.clinic.management.employee.mapper;
 
 import java.util.List;
@@ -7,7 +6,6 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
-
 import com.dental.clinic.management.employee.domain.Employee;
 import com.dental.clinic.management.employee.dto.response.EmployeeInfoResponse;
 import com.dental.clinic.management.specialization.domain.Specialization;
@@ -15,9 +13,6 @@ import com.dental.clinic.management.specialization.domain.Specialization;
 @Component
 public class EmployeeMapper {
 
-  /**
-   * Convert Employee entity to EmployeeInfoResponse DTO.
-   */
   public EmployeeInfoResponse toEmployeeInfoResponse(Employee employee) {
     if (employee == null) {
       return null;
@@ -30,20 +25,19 @@ public class EmployeeMapper {
     response.setFirstName(employee.getFirstName());
     response.setLastName(employee.getLastName());
     response.setFullName(employee.getFirstName() + " " + employee.getLastName());
+    response.setEmployeeType(employee.getEmploymentType());
     response.setPhone(employee.getPhone());
     response.setDateOfBirth(employee.getDateOfBirth());
     response.setAddress(employee.getAddress());
-    response.setRoleId(employee.getRoleId());
 
-    // Map roleName from Role entity (via ManyToOne relationship)
-    if (employee.getRole() != null) {
-      response.setRoleName(employee.getRole().getRoleName());
+    if (employee.getAccount() != null && employee.getAccount().getRole() != null) {
+      response.setRoleId(employee.getAccount().getRole().getRoleId());
+      response.setRoleName(employee.getAccount().getRole().getRoleName());
     }
 
     response.setIsActive(employee.getIsActive());
     response.setCreatedAt(employee.getCreatedAt());
 
-    // Map specializations
     if (employee.getSpecializations() != null) {
       Set<EmployeeInfoResponse.SpecializationResponse> specializationResponses = employee.getSpecializations().stream()
           .map(this::toSpecializationResponse)
@@ -51,7 +45,6 @@ public class EmployeeMapper {
       response.setSpecializations(specializationResponses);
     }
 
-    // Map account info
     if (employee.getAccount() != null) {
       EmployeeInfoResponse.AccountInfoResponse accountResponse = new EmployeeInfoResponse.AccountInfoResponse();
       accountResponse.setAccountId(employee.getAccount().getAccountId());
@@ -64,9 +57,6 @@ public class EmployeeMapper {
     return response;
   }
 
-  /**
-   * Convert list of Employee entities to list of EmployeeInfoResponse DTOs.
-   */
   public List<EmployeeInfoResponse> toEmployeeInfoResponseList(List<Employee> employees) {
     if (employees == null) {
       return null;
@@ -77,9 +67,6 @@ public class EmployeeMapper {
         .collect(Collectors.toList());
   }
 
-  /**
-   * Convert Specialization entity to SpecializationResponse DTO.
-   */
   private EmployeeInfoResponse.SpecializationResponse toSpecializationResponse(Specialization specialization) {
     if (specialization == null) {
       return null;

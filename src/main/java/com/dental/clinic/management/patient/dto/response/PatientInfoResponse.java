@@ -1,6 +1,7 @@
 
 package com.dental.clinic.management.patient.dto.response;
 
+import com.dental.clinic.management.account.enums.AccountStatus;
 import com.dental.clinic.management.employee.enums.Gender;
 
 import java.time.LocalDate;
@@ -28,6 +29,12 @@ public class PatientInfoResponse {
     private Boolean isActive;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    // Account-related fields
+    private Boolean hasAccount;
+    private Integer accountId;
+    private AccountStatus accountStatus;
+    private Boolean isEmailVerified;
 
     // Constructors
     public PatientInfoResponse() {
@@ -168,6 +175,38 @@ public class PatientInfoResponse {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Boolean getHasAccount() {
+        return hasAccount;
+    }
+
+    public void setHasAccount(Boolean hasAccount) {
+        this.hasAccount = hasAccount;
+    }
+
+    public Integer getAccountId() {
+        return accountId;
+    }
+
+    public void setAccountId(Integer accountId) {
+        this.accountId = accountId;
+    }
+
+    public AccountStatus getAccountStatus() {
+        return accountStatus;
+    }
+
+    public void setAccountStatus(AccountStatus accountStatus) {
+        this.accountStatus = accountStatus;
+    }
+
+    public Boolean getIsEmailVerified() {
+        return isEmailVerified;
+    }
+
+    public void setIsEmailVerified(Boolean isEmailVerified) {
+        this.isEmailVerified = isEmailVerified;
     }
 
     @Override

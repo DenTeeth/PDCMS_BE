@@ -7,6 +7,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
@@ -15,9 +16,7 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.dental.clinic.management.account.domain.Account;
 import com.dental.clinic.management.permission.domain.Permission;
-
 
 /**
  * A Role entity.
@@ -38,6 +37,11 @@ public class Role {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
+    // Base role reference (admin/employee/patient)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "base_role_id", nullable = false)
+    private BaseRole baseRole;
+
     @Column(name = "requires_specialization")
     private Boolean requiresSpecialization = false;
 
@@ -46,9 +50,6 @@ public class Role {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
-
-    @ManyToMany(mappedBy = "roles")
-    private Set<Account> accounts = new HashSet<>();
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "role_permissions", joinColumns = @JoinColumn(name = "role_id"), inverseJoinColumns = @JoinColumn(name = "permission_id"))
@@ -94,6 +95,14 @@ public class Role {
         this.description = description;
     }
 
+    public BaseRole getBaseRole() {
+        return baseRole;
+    }
+
+    public void setBaseRole(BaseRole baseRole) {
+        this.baseRole = baseRole;
+    }
+
     public Boolean getRequiresSpecialization() {
         return requiresSpecialization;
     }
@@ -116,14 +125,6 @@ public class Role {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
-    }
-
-    public Set<Account> getAccounts() {
-        return accounts;
-    }
-
-    public void setAccounts(Set<Account> accounts) {
-        this.accounts = accounts;
     }
 
     public Set<Permission> getPermissions() {

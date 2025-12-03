@@ -16,34 +16,52 @@ import java.util.Optional;
 @Repository
 public interface AccountRepository extends JpaRepository<Account, Integer> {
 
-    Optional<Account> findOneByEmail(String email);
+        Optional<Account> findOneByEmail(String email);
 
-    Optional<Account> findOneByUsername(String username);
+        Optional<Account> findOneByUsername(String username);
 
-    Boolean existsByEmail(String email);
+        Boolean existsByEmail(String email);
 
-    Boolean existsByUsername(String username);
+        Boolean existsByUsername(String username);
 
-    /**
-     * Fetch account by email eagerly with roles and permissions.
-     */
-    @Query("SELECT a FROM Account a JOIN FETCH a.roles r JOIN FETCH r.permissions WHERE a.email = :email")
-    Optional<Account> findByEmailWithRolesAndPermissions(@Param("email") String email);
+        /**
+         * Fetch account by email eagerly with role, base role and permissions.
+         */
+        @Query("SELECT a FROM Account a " +
+                        "JOIN FETCH a.role r " +
+                        "JOIN FETCH r.baseRole " +
+                        "JOIN FETCH r.permissions " +
+                        "WHERE a.email = :email")
+        Optional<Account> findByEmailWithRoleAndPermissions(@Param("email") String email);
 
-    /**
-     * Fetch account by username eagerly with roles and permissions.
-     */
-    @Query("SELECT a FROM Account a JOIN FETCH a.roles r JOIN FETCH r.permissions WHERE a.username = :username")
-    Optional<Account> findByUsernameWithRolesAndPermissions(@Param("username") String username);
+        /**
+         * Fetch account by username eagerly with role, base role and permissions.
+         */
+        @Query("SELECT a FROM Account a " +
+                        "JOIN FETCH a.role r " +
+                        "JOIN FETCH r.baseRole " +
+                        "JOIN FETCH r.permissions " +
+                        "WHERE a.username = :username")
+        Optional<Account> findByUsernameWithRoleAndPermissions(@Param("username") String username);
 
-    /**
-     * Fetch account by id eagerly with roles and permissions.
-     */
-    @Query("SELECT a FROM Account a JOIN FETCH a.roles r JOIN FETCH r.permissions WHERE a.accountId = :accountId")
-    Optional<Account> findByAccountIdWithRolesAndPermissions(@Param("accountId") String accountId);
+        /**
+         * Fetch account by id eagerly with role, base role and permissions.
+         */
+        @Query("SELECT a FROM Account a " +
+                        "JOIN FETCH a.role r " +
+                        "JOIN FETCH r.baseRole " +
+                        "JOIN FETCH r.permissions " +
+                        "WHERE a.accountId = :accountId")
+        Optional<Account> findByAccountIdWithRoleAndPermissions(@Param("accountId") Integer accountId);
 
-    /**
-     * Find all active accounts.
-     */
-    List<Account> findByStatus(AccountStatus status);
+        /**
+         * Find all active accounts.
+         */
+        List<Account> findByStatus(AccountStatus status);
+
+        /**
+         * Find account by email (simple query for email verification and password
+         * reset)
+         */
+        Optional<Account> findByEmail(String email);
 }

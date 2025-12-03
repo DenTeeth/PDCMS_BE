@@ -1,13 +1,15 @@
-
 package com.dental.clinic.management.authentication.dto.response;
 
 import java.util.List;
-import com.fasterxml.jackson.annotation.JsonInclude;
+import java.util.Map;
+
+import com.dental.clinic.management.employee.enums.EmploymentType;
 
 /**
  * Login response với access token trong body và refresh token trong cookie.
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
+// @JsonInclude(JsonInclude.Include.NON_NULL) // Commented out for debugging -
+// fields should always be present
 public class LoginResponse {
 
     private String token; // Access token
@@ -18,6 +20,18 @@ public class LoginResponse {
     private String email;
     private List<String> roles;
     private List<String> permissions;
+
+    // Base role for determining FE layout (admin/employee/patient)
+    private String baseRole;
+
+    // Grouped permissions by module for efficient FE processing
+    private Map<String, List<String>> groupedPermissions;
+
+    // Employee-specific info
+    private EmploymentType employmentType; // FULL_TIME or PART_TIME
+
+    // Password change requirement (for email verification flow)
+    private Boolean mustChangePassword;
 
     public LoginResponse() {
     }
@@ -96,5 +110,37 @@ public class LoginResponse {
 
     public void setPermissions(List<String> permissions) {
         this.permissions = permissions;
+    }
+
+    public EmploymentType getEmploymentType() {
+        return employmentType;
+    }
+
+    public void setEmploymentType(EmploymentType employmentType) {
+        this.employmentType = employmentType;
+    }
+
+    public Map<String, List<String>> getGroupedPermissions() {
+        return groupedPermissions;
+    }
+
+    public void setGroupedPermissions(Map<String, List<String>> groupedPermissions) {
+        this.groupedPermissions = groupedPermissions;
+    }
+
+    public Boolean getMustChangePassword() {
+        return mustChangePassword;
+    }
+
+    public void setMustChangePassword(Boolean mustChangePassword) {
+        this.mustChangePassword = mustChangePassword;
+    }
+
+    public String getBaseRole() {
+        return baseRole;
+    }
+
+    public void setBaseRole(String baseRole) {
+        this.baseRole = baseRole;
     }
 }

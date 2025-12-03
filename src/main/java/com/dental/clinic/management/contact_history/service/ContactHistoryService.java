@@ -6,7 +6,7 @@ import com.dental.clinic.management.contact_history.dto.response.ContactHistoryR
 import com.dental.clinic.management.contact_history.mapper.ContactHistoryMapper;
 import com.dental.clinic.management.contact_history.repository.ContactHistoryRepository;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
-import com.dental.clinic.management.exception.BadRequestAlertException;
+import com.dental.clinic.management.exception.validation.BadRequestAlertException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

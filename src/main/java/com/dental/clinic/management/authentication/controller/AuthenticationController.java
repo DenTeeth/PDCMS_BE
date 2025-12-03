@@ -54,7 +54,7 @@ public class AuthenticationController {
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         LoginResponse loginResponse = authenticationService.login(request);
 
-        // Tạo response body không chứa refresh token
+        // Tạo response body - COPY ALL FIELDS từ loginResponse
         LoginResponse responseBody = new LoginResponse(
                 loginResponse.getToken(),
                 loginResponse.getTokenExpiresAt(),
@@ -64,6 +64,12 @@ public class AuthenticationController {
                 loginResponse.getEmail(),
                 loginResponse.getRoles(),
                 loginResponse.getPermissions());
+
+        // Copy các fields quan trọng khác
+        responseBody.setBaseRole(loginResponse.getBaseRole());
+        responseBody.setGroupedPermissions(loginResponse.getGroupedPermissions());
+        responseBody.setEmploymentType(loginResponse.getEmploymentType());
+        responseBody.setMustChangePassword(loginResponse.getMustChangePassword());
 
         // Set refresh token vào HTTP-only cookie
         if (loginResponse.getRefreshToken() != null) {
@@ -154,6 +160,109 @@ public class AuthenticationController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, clearCookie.toString())
                 .build();
+    }
+
+    /**
+     * Get grouped permissions for the currently authenticated user.
+     *
+     * @return Map of module name to list of permission IDs that the user has
+     */
+    @GetMapping("/my-permissions")
+    @Operation(summary = "Get my permissions grouped by module", description = "Get all permissions of the currently authenticated user, grouped by module")
+    @ApiMessage("Lấy danh sách quyền thành công")
+    public ResponseEntity<java.util.Map<String, java.util.List<String>>> getMyPermissions() {
+        String username = org.springframework.security.core.context.SecurityContextHolder.getContext()
+                .getAuthentication().getName();
+        java.util.Map<String, java.util.List<String>> groupedPermissions = authenticationService
+                .getMyPermissionsGrouped(username);
+        return ResponseEntity.ok(groupedPermissions);
+    }
+
+    /**
+     * Verify email address using token from email link.
+     *
+     * @param token verification token from email
+     * @return 200 OK if verification successful
+     * @throws com.dental.clinic.management.exception.InvalidTokenException if token
+     *                                                                      is
+     *                                                                      invalid
+     * @throws com.dental.clinic.management.exception.TokenExpiredException if token
+     *                                                                      has
+     *                                                                      expired
+     */
+    @GetMapping("/verify-email")
+    @Operation(summary = "Verify email address", description = "Verify email address using token sent via email. This endpoint is called when user clicks verification link in email.")
+    @ApiMessage("Xác thực email thành công")
+    public ResponseEntity<Void> verifyEmail(
+            @Parameter(description = "Verification token from email", required = true) @RequestParam String token) {
+        authenticationService.verifyEmail(token);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Resend verification email to user.
+     *
+     * @param request contains email address
+     * @return 200 OK if email sent successfully
+     * @throws com.dental.clinic.management.exception.AccountNotFoundException if
+     *                                                                         account
+     *                                                                         not
+     *                                                                         found
+     */
+    @PostMapping("/resend-verification")
+    @Operation(summary = "Resend verification email", description = "Resend verification email to user if they didn't receive it or token expired")
+    @ApiMessage("Đã gửi lại email xác thực")
+    public ResponseEntity<Void> resendVerification(
+            @Valid @RequestBody com.dental.clinic.management.authentication.dto.ResendVerificationRequest request) {
+        authenticationService.resendVerificationEmail(request.getEmail());
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Initiate password reset process.
+     *
+     * @param request contains email address
+     * @return 200 OK if reset email sent successfully
+     * @throws com.dental.clinic.management.exception.AccountNotFoundException if
+     *                                                                         account
+     *                                                                         not
+     *                                                                         found
+     */
+    @PostMapping("/forgot-password")
+    @Operation(summary = "Forgot password", description = "Initiate password reset process. Sends password reset email to user.")
+    @ApiMessage("Đã gửi email đặt lại mật khẩu")
+    public ResponseEntity<Void> forgotPassword(
+            @Valid @RequestBody com.dental.clinic.management.authentication.dto.ForgotPasswordRequest request) {
+        authenticationService.forgotPassword(request.getEmail());
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Reset password using token from email.
+     *
+     * @param request contains token, new password and confirm password
+     * @return 200 OK if password reset successful
+     * @throws com.dental.clinic.management.exception.InvalidTokenException if
+     *                                                                      token
+     *                                                                      is
+     *                                                                      invalid
+     * @throws com.dental.clinic.management.exception.TokenExpiredException if
+     *                                                                      token
+     *                                                                      has
+     *                                                                      expired
+     * @throws IllegalArgumentException                                     if
+     *                                                                      passwords
+     *                                                                      don't
+     *                                                                      match
+     */
+    @PostMapping("/reset-password")
+    @Operation(summary = "Reset password", description = "Reset password using token from email. User must provide new password and confirm password.")
+    @ApiMessage("Đặt lại mật khẩu thành công")
+    public ResponseEntity<Void> resetPassword(
+            @Valid @RequestBody com.dental.clinic.management.authentication.dto.ResetPasswordRequest request) {
+        authenticationService.resetPassword(request.getToken(), request.getNewPassword(),
+                request.getConfirmPassword());
+        return ResponseEntity.ok().build();
     }
 
 }

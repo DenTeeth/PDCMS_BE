@@ -3,7 +3,9 @@ package com.dental.clinic.management.permission.domain;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
@@ -21,7 +23,7 @@ import com.dental.clinic.management.role.domain.Role;
 public class Permission {
 
     @Id
-    @Column(name = "permission_id", length = 30)
+    @Column(name = "permission_id", length = 50)
     private String permissionId;
 
     @NotBlank
@@ -36,6 +38,27 @@ public class Permission {
 
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
+
+    // --- Sidebar fields ---
+    // REMOVED: path field - FE handles routing independently
+
+    /**
+     * Display order for sorting items within the same module.
+     * Example: 10, 20, 30
+     */
+    @Column(name = "display_order")
+    private Integer displayOrder;
+
+    /**
+     * Parent permission ID for hierarchical permissions (e.g.,
+     * VIEW_REGISTRATION_OWN -> VIEW_REGISTRATION_ALL).
+     * If user has parent permission, child permission will be hidden in sidebar.
+     */
+    @ManyToOne
+    @JoinColumn(name = "parent_permission_id")
+    private Permission parentPermission;
+
+    // --- End sidebar fields ---
 
     @Column(name = "is_active")
     private Boolean isActive = true;
@@ -93,6 +116,22 @@ public class Permission {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Integer getDisplayOrder() {
+        return displayOrder;
+    }
+
+    public void setDisplayOrder(Integer displayOrder) {
+        this.displayOrder = displayOrder;
+    }
+
+    public Permission getParentPermission() {
+        return parentPermission;
+    }
+
+    public void setParentPermission(Permission parentPermission) {
+        this.parentPermission = parentPermission;
     }
 
     public Boolean getIsActive() {

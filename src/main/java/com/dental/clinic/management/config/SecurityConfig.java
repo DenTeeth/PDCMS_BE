@@ -95,6 +95,14 @@ public class SecurityConfig {
                                                 .requestMatchers(mvc.pattern("/api/v1/auth/refresh-token")).permitAll()
                                                 .requestMatchers(mvc.pattern("/api/v1/auth/logout")).permitAll()
 
+                                                // Public endpoints - Email verification & password reset
+                                                .requestMatchers(mvc.pattern("/api/v1/auth/verify-email")).permitAll()
+                                                .requestMatchers(mvc.pattern("/api/v1/auth/resend-verification"))
+                                                .permitAll()
+                                                .requestMatchers(mvc.pattern("/api/v1/auth/forgot-password"))
+                                                .permitAll()
+                                                .requestMatchers(mvc.pattern("/api/v1/auth/reset-password")).permitAll()
+
                                                 // Public endpoints - Setup & Error
                                                 .requestMatchers(mvc.pattern("/api/v1/setup/**")).permitAll()
                                                 .requestMatchers(mvc.pattern("/error")).permitAll()

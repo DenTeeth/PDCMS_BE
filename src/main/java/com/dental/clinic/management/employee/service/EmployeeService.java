@@ -6,10 +6,14 @@ import com.dental.clinic.management.employee.dto.request.CreateEmployeeRequest;
 import com.dental.clinic.management.employee.dto.request.UpdateEmployeeRequest;
 import com.dental.clinic.management.employee.dto.request.ReplaceEmployeeRequest;
 import com.dental.clinic.management.employee.dto.response.EmployeeInfoResponse;
+import com.dental.clinic.management.employee.enums.EmploymentType;
 import com.dental.clinic.management.employee.mapper.EmployeeMapper;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
-import com.dental.clinic.management.exception.BadRequestAlertException;
-import com.dental.clinic.management.exception.EmployeeNotFoundException;
+import com.dental.clinic.management.exception.validation.BadRequestAlertException;
+import com.dental.clinic.management.exception.employee.EmployeeNotFoundException;
+import com.dental.clinic.management.working_schedule.repository.EmployeeShiftRepository;
+import com.dental.clinic.management.working_schedule.repository.FixedShiftRegistrationRepository;
+import com.dental.clinic.management.working_schedule.repository.PartTimeRegistrationRepository;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,6 +52,11 @@ public class EmployeeService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final SequentialCodeGenerator codeGenerator;
+    
+    // Job P3 related repositories for cleanup when employee deactivated
+    private final FixedShiftRegistrationRepository fixedRegistrationRepository;
+    private final PartTimeRegistrationRepository partTimeRegistrationRepository;
+    private final EmployeeShiftRepository employeeShiftRepository;
 
     public EmployeeService(
             EmployeeRepository employeeRepository,
@@ -56,7 +65,10 @@ public class EmployeeService {
             SpecializationRepository specializationRepository,
             RoleRepository roleRepository,
             PasswordEncoder passwordEncoder,
-            SequentialCodeGenerator codeGenerator) {
+            SequentialCodeGenerator codeGenerator,
+            FixedShiftRegistrationRepository fixedRegistrationRepository,
+            PartTimeRegistrationRepository partTimeRegistrationRepository,
+            EmployeeShiftRepository employeeShiftRepository) {
         this.employeeRepository = employeeRepository;
         this.employeeMapper = employeeMapper;
         this.accountRepository = accountRepository;
@@ -64,22 +76,29 @@ public class EmployeeService {
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.codeGenerator = codeGenerator;
+        this.fixedRegistrationRepository = fixedRegistrationRepository;
+        this.partTimeRegistrationRepository = partTimeRegistrationRepository;
+        this.employeeShiftRepository = employeeShiftRepository;
     }
 
     /**
-     * Get all ACTIVE employees only (isActive = true) with pagination, sorting and
-     * mapping to DTO
+     * Get all ACTIVE employees only (isActive = true) with pagination, sorting,
+     * search and filters
      * This is the default method for normal operations
      *
-     * @param page          page number (zero-based)
-     * @param size          number of items per page
-     * @param sortBy        field name to sort by
-     * @param sortDirection ASC or DESC
+     * @param page           page number (zero-based)
+     * @param size           number of items per page
+     * @param sortBy         field name to sort by
+     * @param sortDirection  ASC or DESC
+     * @param search         search by employee code, first name, or last name
+     * @param roleId         filter by role ID
+     * @param employmentType filter by employment type
      * @return Page of EmployeeInfoResponse
      */
-    @PreAuthorize("hasRole('" + ADMIN + "')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('VIEW_EMPLOYEE')")
     public Page<EmployeeInfoResponse> getAllActiveEmployees(
-            int page, int size, String sortBy, String sortDirection) {
+            int page, int size, String sortBy, String sortDirection,
+            String search, String roleId, String employmentType) {
 
         // Validate and sanitize inputs
         page = Math.max(0, page); // Ensure page is not negative
@@ -97,8 +116,41 @@ public class EmployeeService {
         Pageable pageable = PageRequest.of(page, size, sort);
 
         // Create specification to filter only active employees
-        Specification<Employee> spec = (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("isActive"),
-                true);
+        Specification<Employee> spec = (root, query, criteriaBuilder) -> {
+            var predicates = new java.util.ArrayList<jakarta.persistence.criteria.Predicate>();
+            
+            // Always filter by isActive = true
+            predicates.add(criteriaBuilder.equal(root.get("isActive"), true));
+            
+            // Add search filter (employee code, first name, or last name)
+            if (search != null && !search.trim().isEmpty()) {
+                String searchPattern = "%" + search.toLowerCase() + "%";
+                predicates.add(criteriaBuilder.or(
+                    criteriaBuilder.like(criteriaBuilder.lower(root.get("employeeCode")), searchPattern),
+                    criteriaBuilder.like(criteriaBuilder.lower(root.get("firstName")), searchPattern),
+                    criteriaBuilder.like(criteriaBuilder.lower(root.get("lastName")), searchPattern)
+                ));
+            }
+            
+            // Add roleId filter (role is in Account entity, roleId is in Role entity)
+            if (roleId != null && !roleId.trim().isEmpty()) {
+                var accountJoin = root.join("account");
+                var roleJoin = accountJoin.join("role");
+                predicates.add(criteriaBuilder.equal(roleJoin.get("roleId"), roleId));
+            }
+            
+            // Add employmentType filter (EmploymentType enum)
+            if (employmentType != null && !employmentType.trim().isEmpty()) {
+                try {
+                    EmploymentType empType = EmploymentType.valueOf(employmentType);
+                    predicates.add(criteriaBuilder.equal(root.get("employmentType"), empType));
+                } catch (IllegalArgumentException e) {
+                    log.warn("Invalid employment type: {}", employmentType);
+                }
+            }
+            
+            return criteriaBuilder.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
+        };
 
         // Fetch employees and map to DTO
         Page<Employee> employeePage = employeeRepository.findAll(spec, pageable);
@@ -286,26 +338,25 @@ public class EmployeeService {
         account.setStatus(AccountStatus.ACTIVE);
         account.setCreatedAt(java.time.LocalDateTime.now());
 
-        // Assign role to account (for authentication)
-        Set<Role> accountRoles = new HashSet<>();
-        accountRoles.add(role); // Use the role we already fetched above
-        account.setRoles(accountRoles);
+        // Assign role to account (single role)
+        account.setRole(role); // Use the role we already fetched above
 
         account = accountRepository.save(account);
         account.setAccountCode(codeGenerator.generateAccountCode(account.getAccountId()));
         account = accountRepository.save(account);
-        log.info("Created account with ID: {} and code: {} and role: {} for employee", 
+        log.info("Created account with ID: {} and code: {} and role: {} for employee",
                 account.getAccountId(), account.getAccountCode(), role.getRoleName());
 
         // Create new employee
         Employee employee = new Employee();
         employee.setAccount(account);
-        employee.setRoleId(request.getRoleId());
+        // Note: roleId is now in Account, not Employee
         employee.setFirstName(request.getFirstName());
         employee.setLastName(request.getLastName());
         employee.setPhone(request.getPhone());
         employee.setDateOfBirth(request.getDateOfBirth());
         employee.setAddress(request.getAddress());
+        employee.setEmploymentType(request.getEmploymentType()); // Set employment type
         employee.setIsActive(true);
         employee.setCreatedAt(java.time.LocalDateTime.now());
 
@@ -325,7 +376,7 @@ public class EmployeeService {
 
         // Save employee to get auto-generated ID
         Employee savedEmployee = employeeRepository.save(employee);
-        
+
         // Generate and set employee code
         savedEmployee.setEmployeeCode(codeGenerator.generateEmployeeCode(savedEmployee.getEmployeeId()));
         savedEmployee = employeeRepository.save(savedEmployee);
@@ -351,7 +402,13 @@ public class EmployeeService {
 
         // Update only non-null fields
         if (request.getRoleId() != null) {
-            employee.setRoleId(request.getRoleId());
+            // Update role in account, not in employee
+            Role role = roleRepository.findById(request.getRoleId())
+                    .orElseThrow(() -> new BadRequestAlertException(
+                            "Role not found with ID: " + request.getRoleId(),
+                            "role",
+                            "rolenotfound"));
+            employee.getAccount().setRole(role);
         }
 
         if (request.getFirstName() != null) {
@@ -374,8 +431,37 @@ public class EmployeeService {
             employee.setAddress(request.getAddress());
         }
 
+        if (request.getEmploymentType() != null) {
+            employee.setEmploymentType(request.getEmploymentType());
+        }
+
         if (request.getIsActive() != null) {
-            employee.setIsActive(request.getIsActive());
+            boolean wasActive = employee.getIsActive();
+            boolean newActiveStatus = request.getIsActive();
+            
+            employee.setIsActive(newActiveStatus);
+            
+            // Job P3 INLINE CLEANUP: When employee is deactivated, cleanup their registrations
+            if (wasActive && !newActiveStatus) {
+                log.info("Employee {} ({}) is being deactivated. Cleaning up registrations and future shifts...",
+                    employee.getEmployeeCode(), employee.getFullName());
+                
+                // Deactivate Fixed registrations
+                int fixedCount = fixedRegistrationRepository.deactivateByEmployeeId(employee.getEmployeeId());
+                log.info("  - Deactivated {} Fixed registration(s)", fixedCount);
+                
+                // Deactivate Flex registrations
+                int flexCount = partTimeRegistrationRepository.deactivateByEmployeeId(employee.getEmployeeId());
+                log.info("  - Deactivated {} Flex registration(s)", flexCount);
+                
+                // Delete future SCHEDULED shifts (work_date >= TODAY)
+                java.time.LocalDate today = java.time.LocalDate.now();
+                int shiftsCount = employeeShiftRepository.deleteFutureScheduledShiftsByEmployeeId(
+                    employee.getEmployeeId(), today);
+                log.info("  - Deleted {} future SCHEDULED shift(s)", shiftsCount);
+                
+                log.info(" Cleanup completed for deactivated employee {}", employee.getEmployeeCode());
+            }
         }
 
         // Update specializations if provided
@@ -416,20 +502,21 @@ public class EmployeeService {
                 .orElseThrow(() -> new EmployeeNotFoundException("Employee not found with code: " + employeeCode));
 
         // Verify role exists
-        if (!roleRepository.existsById(request.getRoleId())) {
-            throw new BadRequestAlertException(
-                    "Role not found with ID: " + request.getRoleId(),
-                    "role",
-                    "rolenotfound");
-        }
+        Role role = roleRepository.findById(request.getRoleId())
+                .orElseThrow(() -> new BadRequestAlertException(
+                        "Role not found with ID: " + request.getRoleId(),
+                        "role",
+                        "rolenotfound"));
 
         // Replace ALL fields (required by PUT semantics)
-        employee.setRoleId(request.getRoleId());
+        // Update role in account, not in employee
+        employee.getAccount().setRole(role);
         employee.setFirstName(request.getFirstName());
         employee.setLastName(request.getLastName());
         employee.setPhone(request.getPhone());
         employee.setDateOfBirth(request.getDateOfBirth());
         employee.setAddress(request.getAddress());
+        employee.setEmploymentType(request.getEmploymentType()); // Set employment type
         employee.setIsActive(request.getIsActive());
 
         // Replace specializations
@@ -481,5 +568,32 @@ public class EmployeeService {
     @Transactional(readOnly = true)
     public java.util.List<Specialization> getAllActiveSpecializations() {
         return specializationRepository.findAllActiveSpecializations();
+    }
+
+    /**
+     * Get active medical staff only (employees with STANDARD specialization ID 8)
+     * Used for appointment doctor/participant selection
+     * Excludes Admin/Receptionist who don't have STANDARD specialization
+     *
+     * @return List of employees with STANDARD specialization (ID 8)
+     */
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + READ_ALL_EMPLOYEES + "')")
+    @Transactional(readOnly = true)
+    public java.util.List<EmployeeInfoResponse> getActiveMedicalStaff() {
+        java.util.List<Employee> employees = employeeRepository.findActiveEmployeesWithSpecializations();
+        return employees.stream()
+                .map(employeeMapper::toEmployeeInfoResponse)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    /**
+     * Check if employee is medical staff (has specializations)
+     *
+     * @param employeeId Employee ID
+     * @return True if employee has at least one specialization
+     */
+    @Transactional(readOnly = true)
+    public boolean isMedicalStaff(Integer employeeId) {
+        return employeeRepository.hasSpecializations(employeeId);
     }
 }

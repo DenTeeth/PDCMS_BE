@@ -14,7 +14,7 @@ import com.dental.clinic.management.customer_contact.mapper.CustomerContactMappe
 import com.dental.clinic.management.customer_contact.repository.CustomerContactRepository;
 import com.dental.clinic.management.employee.domain.Employee;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
-import com.dental.clinic.management.exception.BadRequestAlertException;
+import com.dental.clinic.management.exception.validation.BadRequestAlertException;
 import com.dental.clinic.management.patient.dto.request.CreatePatientRequest;
 import com.dental.clinic.management.patient.dto.response.PatientInfoResponse;
 import com.dental.clinic.management.patient.service.PatientService;
@@ -195,10 +195,14 @@ public class CustomerContactService {
                     .orElseThrow(() -> new BadRequestAlertException("Assigned employee not found: " + employeeId,
                             "customer_contact", "employee_not_found"));
 
-            // Validate employee has Receptionist role (check roleId directly)
-            if (!"ROLE_RECEPTIONIST".equals(employee.getRoleId())) {
+            // Validate employee has Receptionist role (check from Account)
+            if (employee.getAccount() == null || employee.getAccount().getRole() == null ||
+                    !"ROLE_RECEPTIONIST".equals(employee.getAccount().getRole().getRoleId())) {
+                String currentRole = employee.getAccount() != null && employee.getAccount().getRole() != null
+                        ? employee.getAccount().getRole().getRoleId()
+                        : "NONE";
                 throw new BadRequestAlertException(
-                        "Employee must have Receptionist role. Current roleId: " + employee.getRoleId(),
+                        "Employee must have Receptionist role. Current roleId: " + currentRole,
                         "customer_contact", "invalid_role");
             }
 
@@ -208,10 +212,11 @@ public class CustomerContactService {
             // Auto mode: find receptionist with least NEW contacts
             List<Employee> allEmployees = employeeRepository.findAll();
 
-            // Filter only active receptionists (check roleId directly)
+            // Filter only active receptionists (check role from Account)
             List<Employee> receptionists = allEmployees.stream()
                     .filter(e -> e.getIsActive() != null && e.getIsActive())
-                    .filter(e -> "ROLE_RECEPTIONIST".equals(e.getRoleId()))
+                    .filter(e -> e.getAccount() != null && e.getAccount().getRole() != null &&
+                            "ROLE_RECEPTIONIST".equals(e.getAccount().getRole().getRoleId()))
                     .toList();
 
             if (receptionists.isEmpty()) {
@@ -262,7 +267,7 @@ public class CustomerContactService {
                     "not_interested");
         }
 
-        // ✅ Tạo Patient thực sự
+        //  Tạo Patient thực sự
         CreatePatientRequest patientRequest = new CreatePatientRequest();
 
         // Map từ contact sang patient
@@ -298,7 +303,8 @@ public class CustomerContactService {
                 .collect(Collectors.groupingBy(c -> (c.getSource() == null ? "UNKNOWN" : c.getSource().name()),
                         Collectors.counting()));
         Map<String, Long> byAssigned = all.stream()
-                .collect(Collectors.groupingBy(c -> (c.getAssignedTo() == null ? "UNASSIGNED" : c.getAssignedTo().toString()),
+                .collect(Collectors.groupingBy(
+                        c -> (c.getAssignedTo() == null ? "UNASSIGNED" : c.getAssignedTo().toString()),
                         Collectors.counting()));
 
         Map<String, Object> out = new HashMap<>();

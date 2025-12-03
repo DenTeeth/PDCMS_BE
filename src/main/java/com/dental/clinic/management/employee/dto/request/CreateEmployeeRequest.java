@@ -3,12 +3,15 @@ package com.dental.clinic.management.employee.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
 import java.util.Set;
+
+import com.dental.clinic.management.employee.enums.EmploymentType;
 
 /**
  * DTO for creating a new employee
@@ -54,6 +57,9 @@ public class CreateEmployeeRequest {
 
     @Size(max = 500, message = "Address must not exceed 500 characters")
     private String address;
+
+    @NotNull(message = "Employment type is required")
+    private EmploymentType employmentType;
 
     private Set<Integer> specializationIds;
 
@@ -149,6 +155,14 @@ public class CreateEmployeeRequest {
         this.specializationIds = specializationIds;
     }
 
+    public EmploymentType getEmploymentType() {
+        return employmentType;
+    }
+
+    public void setEmploymentType(EmploymentType employmentType) {
+        this.employmentType = employmentType;
+    }
+
     @Override
     public String toString() {
         return "CreateEmployeeRequest{" +
@@ -159,6 +173,7 @@ public class CreateEmployeeRequest {
                 ", lastName='" + lastName + '\'' +
                 ", phone='" + phone + '\'' +
                 ", dateOfBirth=" + dateOfBirth +
+                ", employmentType=" + employmentType +
                 ", specializationIds=" + specializationIds +
                 '}';
     }

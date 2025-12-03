@@ -1,16 +1,32 @@
 package com.dental.clinic.management.patient.service;
 
-import com.dental.clinic.management.exception.BadRequestAlertException;
+import com.dental.clinic.management.exception.validation.BadRequestAlertException;
 import com.dental.clinic.management.account.enums.AccountStatus;
 import com.dental.clinic.management.account.domain.Account;
+// import com.dental.clinic.management.account.domain.AccountVerificationToken;
+import com.dental.clinic.management.account.domain.PasswordResetToken;
 import com.dental.clinic.management.account.repository.AccountRepository;
+import com.dental.clinic.management.account.repository.AccountVerificationTokenRepository;
+import com.dental.clinic.management.account.repository.PasswordResetTokenRepository;
+import com.dental.clinic.management.role.domain.Role;
+import com.dental.clinic.management.role.repository.RoleRepository;
 import com.dental.clinic.management.patient.domain.Patient;
+import com.dental.clinic.management.clinical_records.domain.PatientToothStatus;
+import com.dental.clinic.management.clinical_records.domain.PatientToothStatusHistory;
+import com.dental.clinic.management.patient.domain.ToothConditionEnum;
 import com.dental.clinic.management.patient.dto.request.CreatePatientRequest;
 import com.dental.clinic.management.patient.dto.request.ReplacePatientRequest;
 import com.dental.clinic.management.patient.dto.request.UpdatePatientRequest;
 import com.dental.clinic.management.patient.dto.response.PatientInfoResponse;
+import com.dental.clinic.management.patient.dto.ToothStatusResponse;
+import com.dental.clinic.management.patient.dto.UpdateToothStatusRequest;
+import com.dental.clinic.management.patient.dto.UpdateToothStatusResponse;
 import com.dental.clinic.management.patient.mapper.PatientMapper;
 import com.dental.clinic.management.patient.repository.PatientRepository;
+import com.dental.clinic.management.clinical_records.repository.PatientToothStatusRepository;
+import com.dental.clinic.management.clinical_records.repository.PatientToothStatusHistoryRepository;
+import com.dental.clinic.management.employee.domain.Employee;
+import com.dental.clinic.management.utils.EmailService;
 import com.dental.clinic.management.utils.SequentialCodeGenerator;
 
 import org.slf4j.Logger;
@@ -24,6 +40,11 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static com.dental.clinic.management.utils.security.AuthoritiesConstants.*;
 
@@ -39,18 +60,37 @@ public class PatientService {
     private final AccountRepository accountRepository;
     private final PasswordEncoder passwordEncoder;
     private final SequentialCodeGenerator codeGenerator;
+    @SuppressWarnings("unused")
+    private final AccountVerificationTokenRepository verificationTokenRepository;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final EmailService emailService;
+    private final RoleRepository roleRepository;
+    private final PatientToothStatusRepository patientToothStatusRepository;
+    private final PatientToothStatusHistoryRepository patientToothStatusHistoryRepository;
 
     public PatientService(
             PatientRepository patientRepository,
             PatientMapper patientMapper,
             AccountRepository accountRepository,
             PasswordEncoder passwordEncoder,
-            SequentialCodeGenerator codeGenerator) {
+            SequentialCodeGenerator codeGenerator,
+            AccountVerificationTokenRepository verificationTokenRepository,
+            PasswordResetTokenRepository passwordResetTokenRepository,
+            EmailService emailService,
+            RoleRepository roleRepository,
+            PatientToothStatusRepository patientToothStatusRepository,
+            PatientToothStatusHistoryRepository patientToothStatusHistoryRepository) {
         this.patientRepository = patientRepository;
         this.patientMapper = patientMapper;
         this.accountRepository = accountRepository;
         this.passwordEncoder = passwordEncoder;
         this.codeGenerator = codeGenerator;
+        this.verificationTokenRepository = verificationTokenRepository;
+        this.passwordResetTokenRepository = passwordResetTokenRepository;
+        this.emailService = emailService;
+        this.roleRepository = roleRepository;
+        this.patientToothStatusRepository = patientToothStatusRepository;
+        this.patientToothStatusHistoryRepository = patientToothStatusHistoryRepository;
     }
 
     /**
@@ -156,12 +196,14 @@ public class PatientService {
     /**
      * Create new patient with account
      *
-     * FLOW: Tạo Patient → Tự động tạo Account mới
-     * - Admin/Receptionist tạo patient
-     * - System tự động tạo account với username/password
-     * - Patient có thể đăng nhập xem hồ sơ
+     * FLOW: Tạo Patient → Tự động tạo Account → Gửi email cho patient để đặt mật
+     * khẩu
+     * - Admin/Receptionist tạo patient với email
+     * - System tự động tạo account KHÔNG CÓ PASSWORD (patient sẽ tự đặt)
+     * - Gửi welcome email với link để patient đặt mật khẩu lần đầu
+     * - Patient nhận email → Bấm link → Đặt mật khẩu → Đăng nhập
      *
-     * @param request patient information including username/password
+     * @param request patient information (email required if creating account)
      * @return PatientInfoResponse
      */
     @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + CREATE_PATIENT + "')")
@@ -171,28 +213,14 @@ public class PatientService {
 
         Account account = null;
 
-        // Check if patient needs account (username & password provided)
-        if (request.getUsername() != null && !request.getUsername().trim().isEmpty()
-                && request.getPassword() != null && !request.getPassword().trim().isEmpty()) {
+        // Check if patient needs account (email provided)
+        // NOTE: We no longer require username/password - patient will set password via
+        // email
+        if (request.getEmail() != null && !request.getEmail().trim().isEmpty()) {
 
-            log.debug("Creating account for patient with username: {}", request.getUsername());
-
-            // Validate email required for account
-            if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
-                throw new BadRequestAlertException(
-                        "Email is required when creating account",
-                        "patient",
-                        "emailrequired");
-            }
+            log.debug("Creating account for patient with email: {}", request.getEmail());
 
             // Check uniqueness
-            if (accountRepository.existsByUsername(request.getUsername())) {
-                throw new BadRequestAlertException(
-                        "Username already exists",
-                        "account",
-                        "usernameexists");
-            }
-
             if (accountRepository.existsByEmail(request.getEmail())) {
                 throw new BadRequestAlertException(
                         "Email already exists",
@@ -200,20 +228,90 @@ public class PatientService {
                         "emailexists");
             }
 
-            // Create account for patient
+            // V23/V24: Get username from request or auto-generate from email
+            String username = request.getUsername();
+            if (username == null || username.trim().isEmpty()) {
+                // Fallback: Extract username from email (before @)
+                username = request.getEmail().split("@")[0];
+
+                // Make sure username is unique by adding counter if needed
+                String baseUsername = username;
+                int counter = 1;
+                while (accountRepository.existsByUsername(username)) {
+                    username = baseUsername + counter;
+                    counter++;
+                }
+                log.debug("Auto-generated username from email: {}", username);
+            } else {
+                // Check username uniqueness if provided by staff
+                if (accountRepository.existsByUsername(username)) {
+                    throw new BadRequestAlertException(
+                            "Username already exists",
+                            "account",
+                            "usernameexists");
+                }
+                log.debug("Using staff-provided username: {}", username);
+            }
+
+            // Create account for patient with TEMPORARY PASSWORD (patient will set real
+            // password via email)
+            // We create a temporary random password so the account can be saved,
+            // but patient MUST reset it via email link before they can login
+            String temporaryPassword = UUID.randomUUID().toString(); // Random temp password
+
+            // Get ROLE_PATIENT from database
+            Role patientRole = roleRepository.findById("ROLE_PATIENT")
+                    .orElseThrow(() -> new BadRequestAlertException(
+                            "ROLE_PATIENT not found in database",
+                            "role",
+                            "rolenotfound"));
+
             account = new Account();
-            account.setUsername(request.getUsername());
+            account.setUsername(username);
             account.setEmail(request.getEmail());
-            account.setPassword(passwordEncoder.encode(request.getPassword()));
-            account.setStatus(AccountStatus.ACTIVE);
+            account.setPassword(passwordEncoder.encode(temporaryPassword)); // Temporary password (unusable)
+            account.setStatus(AccountStatus.PENDING_VERIFICATION); // Waiting for password setup
+            account.setMustChangePassword(true); // MUST change password via email link
+            account.setRole(patientRole); // Set ROLE_PATIENT
             account.setCreatedAt(java.time.LocalDateTime.now());
 
             account = accountRepository.save(account);
             account.setAccountCode(codeGenerator.generateAccountCode(account.getAccountId()));
             account = accountRepository.save(account);
-            log.info("Created account with ID: {} and code: {} for patient", account.getAccountId(), account.getAccountCode());
+            log.info("Created account with ID: {} and code: {} for patient (TEMP PASSWORD - waiting for setup)",
+                    account.getAccountId(), account.getAccountCode());
+
+            // Create and send password setup token using PasswordResetToken
+            // (We use password reset flow for new patient password setup)
+            try {
+                PasswordResetToken setupToken = new PasswordResetToken(account);
+                passwordResetTokenRepository.save(setupToken);
+
+                // Send welcome email with password setup link
+                // Build patient full name from firstName and lastName
+                String patientName = username; // Default to username
+                if (request.getFirstName() != null && request.getLastName() != null) {
+                    patientName = request.getFirstName() + " " + request.getLastName();
+                } else if (request.getFirstName() != null) {
+                    patientName = request.getFirstName();
+                }
+
+                emailService.sendWelcomeEmailWithPasswordSetup(
+                        account.getEmail(),
+                        patientName,
+                        setupToken.getToken());
+                log.info(" Welcome email with password setup link sent to: {}", account.getEmail());
+
+            } catch (Exception e) {
+                // Log error but don't fail the entire patient creation
+                log.error(" Failed to send welcome email to {}: {}", account.getEmail(), e.getMessage(), e);
+                log.warn(
+                        " Patient account created successfully, but email not sent. Manual password setup may be required.");
+                log.warn(" Possible causes: SMTP server not configured, network error, invalid email address");
+                // Don't throw exception - allow patient creation to succeed
+            }
         } else {
-            log.debug("Creating patient without account (no username/password provided)");
+            log.debug("Creating patient without account (no email provided)");
         }
 
         // Convert DTO to entity
@@ -229,7 +327,7 @@ public class PatientService {
 
         // Save to get auto-generated ID
         Patient savedPatient = patientRepository.save(patient);
-        
+
         // Generate and set code
         savedPatient.setPatientCode(codeGenerator.generatePatientCode(savedPatient.getPatientId()));
         savedPatient = patientRepository.save(savedPatient);
@@ -304,5 +402,113 @@ public class PatientService {
         // Soft delete
         patient.setIsActive(false);
         patientRepository.save(patient);
+    }
+
+    /**
+     * Get all tooth statuses for a patient (API 8.9)
+     * Only returns abnormal teeth - teeth not in response are considered HEALTHY
+     *
+     * @param patientId the patient ID
+     * @return list of tooth status responses
+     */
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_PATIENT + "')")
+    @Transactional(readOnly = true)
+    public List<ToothStatusResponse> getToothStatus(Integer patientId) {
+        // Verify patient exists
+        patientRepository.findById(patientId)
+                .orElseThrow(() -> new BadRequestAlertException(
+                        "Patient not found with ID: " + patientId,
+                        "Patient",
+                        "patientnotfound"));
+
+        List<PatientToothStatus> statuses = patientToothStatusRepository.findByPatient_PatientId(patientId);
+
+        return statuses.stream()
+                .map(status -> ToothStatusResponse.builder()
+                        .toothStatusId(status.getToothStatusId())
+                        .patientId(status.getPatient().getPatientId())
+                        .toothNumber(status.getToothNumber())
+                        .status(status.getStatus())
+                        .notes(status.getNotes())
+                        .recordedAt(status.getRecordedAt())
+                        .updatedAt(status.getUpdatedAt())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Update tooth status for a patient (API 8.10)
+     * Creates history record on every status change
+     *
+     * @param patientId   the patient ID
+     * @param toothNumber the tooth number
+     * @param request     the update request
+     * @param changedBy   the employee making the change
+     * @return updated tooth status response
+     */
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_PATIENT + "') or hasAuthority('" + UPDATE_PATIENT
+            + "')")
+    @Transactional
+    public UpdateToothStatusResponse updateToothStatus(
+            Integer patientId,
+            String toothNumber,
+            UpdateToothStatusRequest request,
+            Integer changedBy) {
+
+        // Verify patient exists
+        Patient patient = patientRepository.findById(patientId)
+                .orElseThrow(() -> new BadRequestAlertException(
+                        "Patient not found with ID: " + patientId,
+                        "Patient",
+                        "patientnotfound"));
+
+        // Find existing tooth status or create new one
+        Optional<PatientToothStatus> existingStatusOpt = patientToothStatusRepository
+                .findByPatient_PatientIdAndToothNumber(patientId, toothNumber);
+
+        PatientToothStatus toothStatus;
+        ToothConditionEnum oldStatus = null;
+
+        if (existingStatusOpt.isPresent()) {
+            toothStatus = existingStatusOpt.get();
+            oldStatus = toothStatus.getStatus();
+            toothStatus.setStatus(request.getStatus());
+            toothStatus.setNotes(request.getNotes());
+        } else {
+            toothStatus = new PatientToothStatus();
+            toothStatus.setPatient(patient);
+            toothStatus.setToothNumber(toothNumber);
+            toothStatus.setStatus(request.getStatus());
+            toothStatus.setNotes(request.getNotes());
+        }
+
+        PatientToothStatus savedStatus = patientToothStatusRepository.save(toothStatus);
+
+        // Create history record
+        PatientToothStatusHistory history = new PatientToothStatusHistory();
+        history.setPatient(patient);
+        history.setToothNumber(toothNumber);
+        history.setOldStatus(oldStatus);
+        history.setNewStatus(request.getStatus());
+
+        // Set changedBy employee
+        Employee employee = new Employee();
+        employee.setEmployeeId(changedBy);
+        history.setChangedBy(employee);
+
+        history.setReason(request.getReason());
+
+        patientToothStatusHistoryRepository.save(history);
+
+        return UpdateToothStatusResponse.builder()
+                .toothStatusId(savedStatus.getToothStatusId())
+                .patientId(savedStatus.getPatient().getPatientId())
+                .toothNumber(savedStatus.getToothNumber())
+                .status(savedStatus.getStatus())
+                .notes(savedStatus.getNotes())
+                .recordedAt(savedStatus.getRecordedAt())
+                .updatedAt(savedStatus.getUpdatedAt())
+                .message("Tooth status updated successfully")
+                .build();
     }
 }

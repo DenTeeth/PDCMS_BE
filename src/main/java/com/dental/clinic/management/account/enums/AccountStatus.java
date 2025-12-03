@@ -4,5 +4,6 @@ public enum AccountStatus {
     ACTIVE,
     INACTIVE,
     SUSPENDED,
-    LOCKED
+    LOCKED,
+    PENDING_VERIFICATION // Waiting for email verification
 }

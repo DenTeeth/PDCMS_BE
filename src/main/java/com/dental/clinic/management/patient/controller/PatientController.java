@@ -5,6 +5,9 @@ import com.dental.clinic.management.patient.dto.request.CreatePatientRequest;
 import com.dental.clinic.management.patient.dto.request.ReplacePatientRequest;
 import com.dental.clinic.management.patient.dto.request.UpdatePatientRequest;
 import com.dental.clinic.management.patient.dto.response.PatientInfoResponse;
+import com.dental.clinic.management.patient.dto.ToothStatusResponse;
+import com.dental.clinic.management.patient.dto.UpdateToothStatusRequest;
+import com.dental.clinic.management.patient.dto.UpdateToothStatusResponse;
 import com.dental.clinic.management.patient.service.PatientService;
 import com.dental.clinic.management.utils.annotation.ApiMessage;
 
@@ -28,6 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
 
 /**
  * REST controller for managing patients
@@ -198,5 +202,94 @@ public class PatientController {
             @Parameter(description = "Patient code", required = true) @PathVariable("patientCode") String patientCode) {
         patientService.deletePatient(patientCode);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * {@code GET  /patients/:patientId/tooth-status} : get all tooth statuses for a
+     * patient
+     * API 8.9 - Used for Odontogram visualization
+     * Only returns abnormal teeth - teeth not in response are considered HEALTHY
+     *
+     * @param patientId the patient ID
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the list
+     *         of tooth statuses
+     */
+    @GetMapping("/{patientId}/tooth-status")
+    @Operation(summary = "Get patient tooth status", description = "Get all abnormal tooth conditions for Odontogram visualization (API 8.9)")
+    @ApiMessage("Get tooth status successfully")
+    public ResponseEntity<List<ToothStatusResponse>> getToothStatus(
+            @Parameter(description = "Patient ID", required = true) @PathVariable("patientId") Integer patientId) {
+        List<ToothStatusResponse> response = patientService.getToothStatus(patientId);
+        return ResponseEntity.ok().body(response);
+    }
+
+    /**
+     * {@code PUT  /patients/:patientId/tooth-status/:toothNumber} : update tooth
+     * status (OLD PATH PARAMETER STYLE - KEPT FOR BACKWARD COMPATIBILITY)
+     * API 8.10 - Updates tooth status with automatic history tracking
+     *
+     * @param patientId   the patient ID
+     * @param toothNumber the tooth number
+     * @param request     the update request
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the
+     *         updated tooth status
+     */
+    @PutMapping("/{patientId}/tooth-status/{toothNumber}")
+    @Operation(summary = "Update tooth status (path param style)", description = "Update tooth status with automatic history tracking - OLD ENDPOINT (API 8.10)")
+    @ApiMessage("Update tooth status successfully")
+    public ResponseEntity<UpdateToothStatusResponse> updateToothStatusWithPathParam(
+            @Parameter(description = "Patient ID", required = true) @PathVariable("patientId") Integer patientId,
+            @Parameter(description = "Tooth number", required = true) @PathVariable("toothNumber") String toothNumber,
+            @Valid @RequestBody UpdateToothStatusRequest request) {
+
+        // For now, using a hardcoded employee ID (will be replaced with
+        // SecurityUtils.getCurrentUser())
+        Integer changedBy = 1;
+
+        UpdateToothStatusResponse response = patientService.updateToothStatus(patientId, toothNumber, request,
+                changedBy);
+        return ResponseEntity.ok().body(response);
+    }
+
+    /**
+     * {@code PUT  /patients/:patientId/tooth-status} : update tooth status
+     * API 8.10 - Updates tooth status with toothNumber in request body (NEW
+     * STANDARD)
+     * Frontend sends toothNumber in body, not path parameter
+     *
+     * Business Logic:
+     * - If tooth status doesn't exist: CREATE new record
+     * - If tooth status exists: UPDATE existing record
+     * - If status = HEALTHY: DELETE record (tooth returns to default state)
+     *
+     * @param patientId the patient ID
+     * @param request   the update request (includes toothNumber, status, notes)
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the
+     *         updated tooth status, or null if deleted (HEALTHY)
+     */
+    @PutMapping("/{patientId}/tooth-status")
+    @Operation(summary = "Update tooth status (body param style)", description = "Update tooth status with toothNumber in body - NEW STANDARD (API 8.10)")
+    @ApiMessage("Update tooth status successfully")
+    public ResponseEntity<UpdateToothStatusResponse> updateToothStatus(
+            @Parameter(description = "Patient ID", required = true) @PathVariable("patientId") Integer patientId,
+            @Valid @RequestBody com.dental.clinic.management.clinical_records.dto.UpdateToothStatusRequest request) {
+
+        // For now, using a hardcoded employee ID (will be replaced with
+        // SecurityUtils.getCurrentUser())
+        Integer changedBy = 1;
+
+        // Convert clinical_records DTO (with toothNumber validation) to patient DTO
+        com.dental.clinic.management.patient.dto.UpdateToothStatusRequest patientRequest = com.dental.clinic.management.patient.dto.UpdateToothStatusRequest
+                .builder()
+                .status(request.getStatus())
+                .notes(request.getNotes())
+                .build();
+
+        UpdateToothStatusResponse response = patientService.updateToothStatus(
+                patientId,
+                request.getToothNumber(),
+                patientRequest,
+                changedBy);
+        return ResponseEntity.ok().body(response);
     }
 }

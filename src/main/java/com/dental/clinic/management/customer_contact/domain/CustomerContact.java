@@ -8,7 +8,10 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
@@ -61,11 +64,19 @@ public class CustomerContact {
     @Column(name = "assigned_to")
     private Integer assignedTo;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assigned_to", insertable = false, updatable = false)
+    private com.dental.clinic.management.employee.domain.Employee assignedToEmployee;
+
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
 
     @Column(name = "converted_patient_id")
     private Integer convertedPatientId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "converted_patient_id", insertable = false, updatable = false)
+    private com.dental.clinic.management.patient.domain.Patient convertedPatient;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -168,6 +179,14 @@ public class CustomerContact {
         this.assignedTo = assignedTo;
     }
 
+    public com.dental.clinic.management.employee.domain.Employee getAssignedToEmployee() {
+        return assignedToEmployee;
+    }
+
+    public void setAssignedToEmployee(com.dental.clinic.management.employee.domain.Employee assignedToEmployee) {
+        this.assignedToEmployee = assignedToEmployee;
+    }
+
     public String getNotes() {
         return notes;
     }
@@ -182,6 +201,14 @@ public class CustomerContact {
 
     public void setConvertedPatientId(Integer convertedPatientId) {
         this.convertedPatientId = convertedPatientId;
+    }
+
+    public com.dental.clinic.management.patient.domain.Patient getConvertedPatient() {
+        return convertedPatient;
+    }
+
+    public void setConvertedPatient(com.dental.clinic.management.patient.domain.Patient convertedPatient) {
+        this.convertedPatient = convertedPatient;
     }
 
     public LocalDateTime getCreatedAt() {
@@ -226,7 +253,7 @@ public class CustomerContact {
                 ", email='" + email + '\'' +
                 ", source=" + source +
                 ", status=" + status +
-                ", assignedTo='" + assignedTo + '\'' +
+                ", assignedTo='" + getAssignedTo() + '\'' +
                 ", createdAt=" + createdAt +
                 ", updatedAt=" + updatedAt +
                 '}';

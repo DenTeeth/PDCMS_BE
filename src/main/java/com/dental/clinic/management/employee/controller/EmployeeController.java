@@ -1,6 +1,5 @@
 package com.dental.clinic.management.employee.controller;
 
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -43,15 +42,18 @@ public class EmployeeController {
   }
 
   @GetMapping("")
-  @Operation(summary = "Get all active employees", description = "Retrieve a paginated list of active employees only")
+  @Operation(summary = "Get all active employees", description = "Retrieve a paginated list of active employees with optional search and filters")
   @ApiMessage("Get all active employees successfully")
   public ResponseEntity<Page<EmployeeInfoResponse>> getAllActiveEmployees(
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "10") int size,
       @RequestParam(defaultValue = "employeeCode") String sortBy,
-      @RequestParam(defaultValue = "ASC") String sortDirection) {
+      @RequestParam(defaultValue = "ASC") String sortDirection,
+      @Parameter(description = "Search by employee code, first name, or last name") @RequestParam(required = false) String search,
+      @Parameter(description = "Filter by role ID (e.g., ROLE_DENTIST)") @RequestParam(required = false) String roleId,
+      @Parameter(description = "Filter by employment type (FULL_TIME, PART_TIME_FIXED, PART_TIME_FLEX)") @RequestParam(required = false) String employmentType) {
 
-    Page<EmployeeInfoResponse> response = employeeService.getAllActiveEmployees(page, size, sortBy, sortDirection);
+    Page<EmployeeInfoResponse> response = employeeService.getAllActiveEmployees(page, size, sortBy, sortDirection, search, roleId, employmentType);
     return ResponseEntity.ok().body(response);
   }
 
@@ -192,7 +194,7 @@ public class EmployeeController {
 
   /**
    * Get all active specializations
-   * 
+   *
    * @return List of active specializations
    */
   @GetMapping("/specializations")
@@ -201,5 +203,20 @@ public class EmployeeController {
   public ResponseEntity<java.util.List<Specialization>> getAllSpecializations() {
     java.util.List<Specialization> specializations = employeeService.getAllActiveSpecializations();
     return ResponseEntity.ok(specializations);
+  }
+
+  /**
+   * Get active medical staff only (employees with specializations)
+   * Used for appointment doctor/participant selection dropdown
+   * Excludes Admin/Receptionist who don't have medical specializations
+   *
+   * @return List of medical staff (doctors, nurses, assistants)
+   */
+  @GetMapping("/medical-staff")
+  @Operation(summary = "Get medical staff for appointments", description = "Get active employees with specializations (excludes admin/receptionist)")
+  @ApiMessage("Get medical staff successfully")
+  public ResponseEntity<java.util.List<EmployeeInfoResponse>> getActiveMedicalStaff() {
+    java.util.List<EmployeeInfoResponse> medicalStaff = employeeService.getActiveMedicalStaff();
+    return ResponseEntity.ok(medicalStaff);
   }
 }

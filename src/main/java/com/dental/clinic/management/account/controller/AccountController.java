@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.dental.clinic.management.account.dto.response.UserInfoResponse;
 import com.dental.clinic.management.account.dto.response.UserPermissionsResponse;
 import com.dental.clinic.management.account.dto.response.UserProfileResponse;
+import com.dental.clinic.management.account.dto.response.MeResponse;
 import com.dental.clinic.management.authentication.service.AuthenticationService;
 import com.dental.clinic.management.utils.annotation.ApiMessage;
 
@@ -37,10 +38,32 @@ public class AccountController {
     }
 
     /**
+     * Get complete user context (me endpoint).
+     * {@code GET /api/v1/account/me}
+     * Returns comprehensive user info including role, permissions, sidebar,
+     * homePath, and employmentType.
+     *
+     * @param jwt injected JWT bearer token (lấy username từ claim "sub")
+     * @return 200 OK with {@link MeResponse} containing complete user context
+     * @throws com.dental.clinic.management.exception.AccountNotFoundException if
+     *                                                                         the
+     *                                                                         account
+     *                                                                         no
+     *                                                                         longer
+     *                                                                         exists
+     */
+    @GetMapping("/me")
+    @Operation(summary = "Get current user context", description = "Retrieve complete user context including role, permissions, sidebar, and navigation info")
+    @ApiMessage("Lấy thông tin người dùng hiện tại thành công")
+    public ResponseEntity<MeResponse> getMe(@Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
+        String username = jwt.getClaimAsString("sub");
+        MeResponse meResponse = authenticationService.getMe(username);
+        return ResponseEntity.ok(meResponse);
+    }
+
+    /**
      * Get the personal profile of the currently authenticated user.
-     * <p>
      * {@code GET /api/v1/account/profile}
-     * </p>
      *
      * @param jwt injected JWT bearer token (lấy username từ claim "sub")
      * @return 200 OK with {@link UserProfileResponse} containing personal info and

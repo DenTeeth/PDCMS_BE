@@ -8,6 +8,8 @@ import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 import java.util.Set;
 
+import com.dental.clinic.management.employee.enums.EmploymentType;
+
 /**
  * DTO for partial updating an existing employee
  * All fields are optional - only non-null fields will be updated
@@ -31,6 +33,8 @@ public class UpdateEmployeeRequest {
 
     @Size(max = 500, message = "Address must not exceed 500 characters")
     private String address;
+
+    private EmploymentType employmentType;
 
     private Boolean isActive;
 
@@ -105,6 +109,14 @@ public class UpdateEmployeeRequest {
         this.specializationIds = specializationIds;
     }
 
+    public EmploymentType getEmploymentType() {
+        return employmentType;
+    }
+
+    public void setEmploymentType(EmploymentType employmentType) {
+        this.employmentType = employmentType;
+    }
+
     @Override
     public String toString() {
         return "UpdateEmployeeRequest{" +
@@ -113,6 +125,7 @@ public class UpdateEmployeeRequest {
                 ", lastName='" + lastName + '\'' +
                 ", phone='" + phone + '\'' +
                 ", dateOfBirth=" + dateOfBirth +
+                ", employmentType=" + employmentType +
                 ", isActive=" + isActive +
                 ", specializationIds=" + specializationIds +
                 '}';

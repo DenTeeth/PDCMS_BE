@@ -1,11 +1,12 @@
 package com.dental.clinic.management.permission.service;
 
-import com.dental.clinic.management.exception.BadRequestAlertException;
-import com.dental.clinic.management.exception.PermissionNotFoundException;
+import com.dental.clinic.management.exception.validation.BadRequestAlertException;
+import com.dental.clinic.management.exception.authorization.PermissionNotFoundException;
 import com.dental.clinic.management.permission.domain.Permission;
 import com.dental.clinic.management.permission.dto.request.CreatePermissionRequest;
 import com.dental.clinic.management.permission.dto.request.UpdatePermissionRequest;
 import com.dental.clinic.management.permission.dto.response.PermissionInfoResponse;
+import com.dental.clinic.management.permission.dto.PermissionHierarchyDTO;
 import com.dental.clinic.management.permission.mapper.PermissionMapper;
 import com.dental.clinic.management.permission.repository.PermissionRepository;
 
@@ -18,9 +19,9 @@ import org.springframework.stereotype.Service;
 
 import static com.dental.clinic.management.utils.security.AuthoritiesConstants.*;
 
-
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -163,5 +164,110 @@ public class PermissionService {
         return permissions.stream()
                 .map(permissionMapper::toPermissionInfoResponse)
                 .collect(Collectors.groupingBy(PermissionInfoResponse::getModule));
+    }
+
+    /**
+     * Get all active permissions grouped by module with parent-child hierarchy
+     * information.
+     * This is used by the frontend to display permission checkboxes with three
+     * levels:
+     * NONE (no permission), OWN (child permission), ALL (parent permission).
+     *
+     * @return Map of module name to list of permissions with hierarchy info
+     */
+    @PreAuthorize("hasRole('" + ADMIN + "')")
+    @Transactional(readOnly = true)
+    public Map<String, List<PermissionHierarchyDTO>> getGroupedPermissions() {
+        List<Permission> permissions = permissionRepository.findAllActivePermissions();
+
+        // Group by module and maintain order using LinkedHashMap
+        return permissions.stream()
+                .sorted((p1, p2) -> {
+                    // Sort by module first, then by displayOrder
+                    int moduleCompare = p1.getModule().compareTo(p2.getModule());
+                    if (moduleCompare != 0)
+                        return moduleCompare;
+
+                    Integer order1 = p1.getDisplayOrder() != null ? p1.getDisplayOrder() : 999;
+                    Integer order2 = p2.getDisplayOrder() != null ? p2.getDisplayOrder() : 999;
+                    return order1.compareTo(order2);
+                })
+                .map(permission -> {
+                    PermissionHierarchyDTO dto = new PermissionHierarchyDTO();
+                    dto.setPermissionId(permission.getPermissionId());
+                    dto.setPermissionName(permission.getPermissionName());
+                    dto.setDisplayOrder(permission.getDisplayOrder());
+
+                    if (permission.getParentPermission() != null) {
+                        dto.setParentPermissionId(permission.getParentPermission().getPermissionId());
+                        dto.setSelectionLevel("OWN"); // Child permission
+                    } else {
+                        dto.setParentPermissionId(null);
+                        // Check if this permission has any children
+                        boolean hasChildren = permissions.stream()
+                                .anyMatch(p -> p.getParentPermission() != null &&
+                                        p.getParentPermission().getPermissionId().equals(permission.getPermissionId()));
+                        dto.setSelectionLevel(hasChildren ? "ALL" : "NONE");
+                    }
+
+                    return dto;
+                })
+                .collect(Collectors.groupingBy(
+                        dto -> {
+                            // Find the module from original permission
+                            return permissions.stream()
+                                    .filter(p -> p.getPermissionId().equals(dto.getPermissionId()))
+                                    .findFirst()
+                                    .map(Permission::getModule)
+                                    .orElse("Unknown");
+                        },
+                        LinkedHashMap::new, // Maintain insertion order
+                        Collectors.toList()));
+    }
+
+    /**
+     * Get all active permissions grouped by module in simple format (Map<Module,
+     * List<PermissionId>>).
+     * This is useful for frontend display where you only need permission IDs
+     * grouped by module.
+     * Example output:
+     * {
+     * "PATIENT": ["VIEW_PATIENT", "CREATE_PATIENT", "EDIT_PATIENT"],
+     * "APPOINTMENT": ["VIEW_APPOINTMENT", "CREATE_APPOINTMENT"],
+     * ...
+     * }
+     *
+     * @return Map of module name to list of permission IDs
+     */
+    @PreAuthorize("hasRole('" + ADMIN + "')")
+    @Transactional(readOnly = true)
+    public Map<String, List<String>> getPermissionsGroupedByModuleSimple() {
+        List<Permission> permissions = permissionRepository.findAllActivePermissions();
+
+        // Group by module and maintain order
+        return permissions.stream()
+                .sorted((p1, p2) -> {
+                    // Sort by module first, then by displayOrder
+                    int moduleCompare = p1.getModule().compareTo(p2.getModule());
+                    if (moduleCompare != 0)
+                        return moduleCompare;
+
+                    // If both have displayOrder, compare them
+                    if (p1.getDisplayOrder() != null && p2.getDisplayOrder() != null) {
+                        return p1.getDisplayOrder().compareTo(p2.getDisplayOrder());
+                    }
+                    // If only one has displayOrder, prioritize it
+                    if (p1.getDisplayOrder() != null)
+                        return -1;
+                    if (p2.getDisplayOrder() != null)
+                        return 1;
+
+                    // If neither has displayOrder, sort by permission ID
+                    return p1.getPermissionId().compareTo(p2.getPermissionId());
+                })
+                .collect(Collectors.groupingBy(
+                        Permission::getModule,
+                        LinkedHashMap::new, // Maintain insertion order
+                        Collectors.mapping(Permission::getPermissionId, Collectors.toList())));
     }
 }
