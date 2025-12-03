@@ -219,4 +219,38 @@ public class ClinicalRecordController {
 
         return ResponseEntity.noContent().build();
     }
+
+    /**
+     * API 8.14: Get Prescription for Clinical Record
+     *
+     * Retrieves the prescription details for a specific clinical record.
+     * This API is used to display existing prescriptions for doctors to review,
+     * edit, or print for patients.
+     *
+     * Authorization:
+     * - ROLE_ADMIN: Full access to all prescriptions
+     * - VIEW_APPOINTMENT_ALL: Access to all prescriptions (Receptionist, Manager)
+     * - VIEW_APPOINTMENT_OWN: Access only to related prescriptions (Doctor, Patient, Observer)
+     *
+     * Returns:
+     * - 200 OK: Prescription found with all items
+     * - 404 PRESCRIPTION_NOT_FOUND: Clinical record exists but no prescription created yet (frontend shows CREATE form)
+     * - 404 RECORD_NOT_FOUND: Clinical record doesn't exist
+     * - 403 UNAUTHORIZED_ACCESS: User doesn't have permission to view this prescription
+     *
+     * @param recordId The clinical record ID
+     * @return PrescriptionDTO with all prescription items
+     */
+    @GetMapping("/clinical-records/{recordId}/prescription")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasAuthority('VIEW_APPOINTMENT_ALL') or hasAuthority('VIEW_APPOINTMENT_OWN')")
+    @ApiMessage("Prescription retrieved successfully")
+    public ResponseEntity<com.dental.clinic.management.clinical_records.dto.PrescriptionDTO> getPrescription(
+            @PathVariable Integer recordId) {
+
+        log.info("API 8.14: GET /api/v1/appointments/clinical-records/{}/prescription", recordId);
+
+        com.dental.clinic.management.clinical_records.dto.PrescriptionDTO prescription = clinicalRecordService.getPrescription(recordId);
+
+        return ResponseEntity.ok(prescription);
+    }
 }

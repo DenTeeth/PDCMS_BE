@@ -5,9 +5,12 @@ import com.dental.clinic.management.booking_appointment.domain.Room;
 import com.dental.clinic.management.booking_appointment.repository.AppointmentParticipantRepository;
 import com.dental.clinic.management.booking_appointment.repository.AppointmentRepository;
 import com.dental.clinic.management.booking_appointment.repository.RoomRepository;
+import com.dental.clinic.management.clinical_records.domain.ClinicalPrescription;
+import com.dental.clinic.management.clinical_records.domain.ClinicalPrescriptionItem;
 import com.dental.clinic.management.clinical_records.domain.ClinicalRecord;
 import com.dental.clinic.management.clinical_records.domain.ClinicalRecordProcedure;
 import com.dental.clinic.management.clinical_records.dto.*;
+import com.dental.clinic.management.clinical_records.repository.ClinicalPrescriptionRepository;
 import com.dental.clinic.management.clinical_records.repository.ClinicalRecordProcedureRepository;
 import com.dental.clinic.management.clinical_records.repository.ClinicalRecordRepository;
 import com.dental.clinic.management.employee.domain.Employee;
@@ -37,6 +40,7 @@ public class ClinicalRecordService {
 
         private final ClinicalRecordRepository clinicalRecordRepository;
         private final ClinicalRecordProcedureRepository procedureRepository;
+        private final ClinicalPrescriptionRepository prescriptionRepository;
         private final AppointmentRepository appointmentRepository;
         private final AppointmentParticipantRepository appointmentParticipantRepository;
         private final EmployeeRepository employeeRepository;
@@ -251,26 +255,28 @@ public class ClinicalRecordService {
                 var prescriptions = record.getPrescriptions().stream()
                                 .map(presc -> {
                                         var items = presc.getItems().stream()
-                                                        .map(item -> PrescriptionItemDTO.builder()
-                                                                        .prescriptionItemId(
-                                                                                        item.getPrescriptionItemId())
-                                                                        .itemCode(item.getItemMaster() != null
-                                                                                        ? item.getItemMaster()
-                                                                                                        .getItemCode()
-                                                                                        : null)
+                                                        .map(item -> {
+                                                                PrescriptionItemDTO.PrescriptionItemDTOBuilder builder = PrescriptionItemDTO.builder()
+                                                                        .prescriptionItemId(item.getPrescriptionItemId())
                                                                         .itemName(item.getItemName())
                                                                         .quantity(item.getQuantity())
-                                                                        .dosageInstructions(
-                                                                                        item.getDosageInstructions())
-                                                                        .createdAt(item.getCreatedAt()
-                                                                                        .format(FORMATTER))
-                                                                        .build())
+                                                                        .dosageInstructions(item.getDosageInstructions());
+                                                                
+                                                                if (item.getItemMaster() != null) {
+                                                                        builder.itemMasterId(item.getItemMaster().getItemMasterId().intValue())
+                                                                                .itemCode(item.getItemMaster().getItemCode())
+                                                                                .unitName(item.getItemMaster().getUnitOfMeasure());
+                                                                }
+                                                                
+                                                                return builder.build();
+                                                        })
                                                         .collect(Collectors.toList());
 
                                         return PrescriptionDTO.builder()
                                                         .prescriptionId(presc.getPrescriptionId())
+                                                        .clinicalRecordId(presc.getClinicalRecord().getClinicalRecordId())
                                                         .prescriptionNotes(presc.getPrescriptionNotes())
-                                                        .createdAt(presc.getCreatedAt().format(FORMATTER))
+                                                        .createdAt(presc.getCreatedAt() != null ? presc.getCreatedAt().format(FORMATTER) : null)
                                                         .items(items)
                                                         .build();
                                 })
@@ -702,5 +708,70 @@ public class ClinicalRecordService {
                 // Step 3: Delete procedure (hard delete - no cascade to treatment plan)
                 procedureRepository.delete(procedure);
                 log.info("Procedure deleted successfully: ID {}", procedureId);
+        }
+
+        /**
+         * Get prescription for a clinical record
+         *
+         * Authorization Logic (reuse from getClinicalRecord):
+         * 1. Admin (ROLE_ADMIN): Can access all prescriptions
+         * 2. VIEW_APPOINTMENT_ALL: Can access all prescriptions
+         * 3. VIEW_APPOINTMENT_OWN: Can only access if user has permission to view the appointment
+         *
+         * Returns 404 RECORD_NOT_FOUND if clinical record doesn't exist
+         * Returns 404 PRESCRIPTION_NOT_FOUND if prescription hasn't been created yet
+         */
+        @Transactional(readOnly = true)
+        public PrescriptionDTO getPrescription(Integer recordId) {
+                log.info("Fetching prescription for clinical record ID: {}", recordId);
+
+                // Step 1: Load clinical record (throws 404 if not found)
+                ClinicalRecord record = clinicalRecordRepository.findById(recordId)
+                                .orElseThrow(() -> new NotFoundException("RECORD_NOT_FOUND",
+                                                "Clinical record not found with ID: " + recordId));
+
+                // Step 2: Load appointment and check RBAC authorization
+                Appointment appointment = record.getAppointment();
+                checkAccessPermission(appointment);
+
+                // Step 3: Load prescription (throws 404 if not found)
+                ClinicalPrescription prescription = prescriptionRepository
+                                .findByClinicalRecord_ClinicalRecordId(recordId)
+                                .orElseThrow(() -> new NotFoundException("PRESCRIPTION_NOT_FOUND",
+                                                "No prescription found for clinical record ID: " + recordId));
+
+                // Step 4: Map to DTO
+                return mapPrescriptionToDTO(prescription);
+        }
+
+        private PrescriptionDTO mapPrescriptionToDTO(ClinicalPrescription prescription) {
+                return PrescriptionDTO.builder()
+                                .prescriptionId(prescription.getPrescriptionId())
+                                .clinicalRecordId(prescription.getClinicalRecord().getClinicalRecordId())
+                                .prescriptionNotes(prescription.getPrescriptionNotes())
+                                .createdAt(prescription.getCreatedAt() != null
+                                                ? prescription.getCreatedAt().format(FORMATTER)
+                                                : null)
+                                .items(prescription.getItems().stream()
+                                                .map(this::mapPrescriptionItemToDTO)
+                                                .collect(Collectors.toList()))
+                                .build();
+        }
+
+        private PrescriptionItemDTO mapPrescriptionItemToDTO(ClinicalPrescriptionItem item) {
+                PrescriptionItemDTO.PrescriptionItemDTOBuilder builder = PrescriptionItemDTO.builder()
+                                .prescriptionItemId(item.getPrescriptionItemId())
+                                .itemName(item.getItemName())
+                                .quantity(item.getQuantity())
+                                .dosageInstructions(item.getDosageInstructions());
+
+                // Add warehouse data if item is linked to inventory
+                if (item.getItemMaster() != null) {
+                        builder.itemMasterId(item.getItemMaster().getItemMasterId().intValue())
+                                        .itemCode(item.getItemMaster().getItemCode())
+                                        .unitName(item.getItemMaster().getUnitOfMeasure());
+                }
+
+                return builder.build();
         }
 }

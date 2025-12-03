@@ -11,9 +11,10 @@ import lombok.NoArgsConstructor;
 @Builder
 public class PrescriptionItemDTO {
     private Integer prescriptionItemId;
+    private Integer itemMasterId;
     private String itemCode;
     private String itemName;
+    private String unitName;
     private Integer quantity;
     private String dosageInstructions;
-    private String createdAt;
 }
