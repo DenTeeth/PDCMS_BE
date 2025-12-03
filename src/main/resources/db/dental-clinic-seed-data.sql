@@ -2874,18 +2874,10 @@ ON CONFLICT (room_id, service_id) DO NOTHING;
 -- Quy tắc lâm sàng để đảm bảo an toàn và hiệu quả điều trị
 -- =============================================
 
--- Rule 1: GEN_EXAM (Khám) là tiền đề cho FILLING_COMP (Trám răng)
-INSERT INTO service_dependencies (service_id, dependent_service_id, rule_type, receptionist_note, created_at)
-SELECT
-    s1.service_id,
-    s2.service_id,
-    'REQUIRES_PREREQUISITE',
-    'Bệnh nhân phải KHÁM tổng quát trước khi được trám răng.',
-    NOW()
-FROM services s1, services s2
-WHERE s1.service_code = 'GEN_EXAM'
-  AND s2.service_code = 'FILLING_COMP'
-ON CONFLICT DO NOTHING;
+-- ❌ REMOVED: Rule 1 - GEN_EXAM prerequisite for FILLING_COMP
+-- (Removed per Issue #43 - Business requirement: No prerequisite services)
+-- Reason: prerequisite rules cause items to be set to WAITING_FOR_PREREQUISITE status
+-- which prevents users from booking appointments immediately after plan approval
 
 -- Rule 2: EXTRACT_WISDOM_L2 (Nhổ răng khôn) -> SURG_CHECKUP (Cắt chỉ) phải cách nhau ÍT NHẤT 7 ngày
 INSERT INTO service_dependencies (service_id, dependent_service_id, rule_type, min_days_apart, receptionist_note, created_at)
