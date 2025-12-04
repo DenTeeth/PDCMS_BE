@@ -34,7 +34,6 @@ public class TokenBlacklistService {
     public void blacklistToken(String token) {
         try {
             Jwt jwt = jwtDecoder.decode(token);
-            @SuppressWarnings("null")
             Long expiryTime = jwt.getExpiresAt() != null ? jwt.getExpiresAt().getEpochSecond() : null;
             if (expiryTime != null) {
                 blacklistedTokens.put(token, expiryTime);
