@@ -76,14 +76,16 @@ public class WarehouseInventoryController {
          * - nearestExpiryDate: MIN(expiry_date) WHERE quantity > 0 (FEFO)
          * - unitName: Lấy từ item_units WHERE is_base_unit = true
          */
-        @Operation(summary = "API 6.1 - Inventory Summary Dashboard", 
-                description = "Lấy danh sách inventory với computed fields: totalQuantity (aggregation), stockStatus (calculated), nearestExpiryDate (FEFO). " +
-                              "Hỗ trợ filters: search, stockStatus, warehouseType, categoryId. " +
-                              "⚠️ KHI KÊ ĐƠN THUỐC: FE PHẢI truyền categoryId của MEDICINE để CHỈ LẤY THUỐC, không lấy vật tư/dụng cụ/consumables. " +
-                              "Gọi API GET /api/v1/warehouse/item-categories để lấy categoryId của 'MEDICINE'.")
+        @Operation(summary = "API 6.1 - Inventory Summary Dashboard", description = "Lấy danh sách inventory với computed fields: totalQuantity (aggregation), stockStatus (calculated), nearestExpiryDate (FEFO). "
+                        +
+                        "Hỗ trợ filters: search, stockStatus, warehouseType, categoryId. " +
+                        "⚠️ KHI KÊ ĐƠN THUỐC: FE PHẢI truyền categoryId của MEDICINE để CHỈ LẤY THUỐC, không lấy vật tư/dụng cụ/consumables. "
+                        +
+                        "Gọi API GET /api/v1/warehouse/item-categories để lấy categoryId của 'MEDICINE'.")
         @ApiMessage("Lấy inventory summary thành công")
         @GetMapping("/summary")
-        @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('VIEW_WAREHOUSE') or hasAuthority('VIEW_ITEMS') or hasAuthority('VIEW_MEDICINES')")
+        @PreAuthorize("hasRole('" + ADMIN
+                        + "') or hasAuthority('VIEW_WAREHOUSE') or hasAuthority('VIEW_ITEMS') or hasAuthority('VIEW_MEDICINES')")
         public ResponseEntity<InventorySummaryResponse> getInventorySummary(
                         @Parameter(description = "Tìm kiếm theo itemName hoặc itemCode (LIKE)") @RequestParam(required = false) String search,
 
@@ -105,8 +107,9 @@ public class WarehouseInventoryController {
                 InventorySummaryResponse response = inventoryService.getInventorySummaryV2(
                                 search, stockStatus, warehouseType, categoryId, pageable);
 
-                log.info("✅ Returned {} items out of {} total (filtered by categoryId: {})", 
-                        response.getContent().size(), response.getTotalItems(), categoryId != null ? categoryId : "ALL");
+                log.info("✅ Returned {} items out of {} total (filtered by categoryId: {})",
+                                response.getContent().size(), response.getTotalItems(),
+                                categoryId != null ? categoryId : "ALL");
                 return ResponseEntity.ok(response);
         }
 
@@ -114,39 +117,40 @@ public class WarehouseInventoryController {
          * API 6.0: Get Item Categories
          * Returns all active item categories (MEDICINE, CONSUMABLE, EQUIPMENT, etc.)
          * FE uses this to get categoryId for filtering in API 6.1
-         * 
+         *
          * Example Response:
          * [
-         *   {"categoryId": 3, "categoryCode": "MEDICINE", "categoryName": "Thuốc men", "description": "...", "isActive": true},
-         *   {"categoryId": 1, "categoryCode": "CONSUMABLE", "categoryName": "Vật tư tiêu hao", ...}
+         * {"categoryId": 3, "categoryCode": "MEDICINE", "categoryName": "Thuốc men",
+         * "description": "...", "isActive": true},
+         * {"categoryId": 1, "categoryCode": "CONSUMABLE", "categoryName": "Vật tư tiêu
+         * hao", ...}
          * ]
          */
-        @Operation(summary = "API 6.0 - Get Item Categories", 
-                description = "Lấy danh sách các loại vật tư/thuốc (MEDICINE, CONSUMABLE, EQUIPMENT, etc.). " +
-                              "FE dùng API này để lấy categoryId của MEDICINE khi kê đơn thuốc.")
+        @Operation(summary = "API 6.0 - Get Item Categories", description = "Lấy danh sách các loại vật tư/thuốc (MEDICINE, CONSUMABLE, EQUIPMENT, etc.). "
+                        +
+                        "FE dùng API này để lấy categoryId của MEDICINE khi kê đơn thuốc.")
         @ApiMessage("Lấy danh sách categories thành công")
         @GetMapping("/item-categories")
-        @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('VIEW_WAREHOUSE') or hasAuthority('VIEW_ITEMS') or hasAuthority('VIEW_MEDICINES')")
+        @PreAuthorize("hasRole('" + ADMIN
+                        + "') or hasAuthority('VIEW_WAREHOUSE') or hasAuthority('VIEW_ITEMS') or hasAuthority('VIEW_MEDICINES')")
         public ResponseEntity<List<ItemCategoryResponse>> getItemCategories() {
                 log.info("🏥 API 6.0 - GET /api/v1/warehouse/item-categories");
 
                 List<ItemCategory> categories = itemCategoryRepository.findByIsActiveTrue();
-                
+
                 List<ItemCategoryResponse> response = categories.stream()
-                        .map(cat -> ItemCategoryResponse.builder()
-                                .categoryId(cat.getCategoryId())
-                                .categoryCode(cat.getCategoryCode())
-                                .categoryName(cat.getCategoryName())
-                                .description(cat.getDescription())
-                                .isActive(cat.getIsActive())
-                                .build())
-                        .collect(Collectors.toList());
+                                .map(cat -> ItemCategoryResponse.builder()
+                                                .categoryId(cat.getCategoryId())
+                                                .categoryCode(cat.getCategoryCode())
+                                                .categoryName(cat.getCategoryName())
+                                                .description(cat.getDescription())
+                                                .isActive(cat.getIsActive())
+                                                .build())
+                                .collect(Collectors.toList());
 
                 log.info("✅ Returned {} categories", response.size());
                 return ResponseEntity.ok(response);
         }
-
-
 
         /**
          * API 6.2: Get Item Batches Detail (Operational View)

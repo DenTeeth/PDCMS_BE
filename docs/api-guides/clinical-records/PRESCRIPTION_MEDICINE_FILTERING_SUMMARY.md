@@ -15,25 +15,31 @@ Khi bác sĩ kê đơn thuốc trong Clinical Record, hệ thống hiện tại 
 **KHÔNG CẦN TẠO API MỚI**. Chỉ cần FE thực hiện 2 bước:
 
 ### Bước 1: Lấy categoryId của MEDICINE
+
 ```bash
 GET /api/v1/warehouse/item-categories
 ```
+
 → Tìm category có `categoryCode = "MEDICINE"`, lấy `categoryId` (ví dụ: 3)
 
 ### Bước 2: Filter inventory theo categoryId
+
 ```bash
 GET /api/v1/warehouse/summary?categoryId=3&search=thuốc&page=0&size=20
 ```
+
 → Backend tự động chỉ trả về **THUỐC MEN**, không có vật tư/dụng cụ
 
 ## 📝 THAY ĐỔI BACKEND
 
 ### 1. Thêm API 6.0 - Get Item Categories
+
 **File**: `WarehouseInventoryController.java`
 
 **Endpoint**: `GET /api/v1/warehouse/item-categories`
 
 **Response**:
+
 ```json
 [
   {"categoryId": 3, "categoryCode": "MEDICINE", "categoryName": "Thuốc men", ...},
@@ -42,9 +48,11 @@ GET /api/v1/warehouse/summary?categoryId=3&search=thuốc&page=0&size=20
 ```
 
 ### 2. Cập nhật API 6.1 - Inventory Summary
+
 **File**: `WarehouseInventoryController.java`
 
 **Thay đổi**:
+
 - Thêm `VIEW_MEDICINES` vào `@PreAuthorize`
 - Cập nhật description: "⚠️ KHI KÊ ĐƠN THUỐC: FE PHẢI truyền categoryId của MEDICINE"
 - Cập nhật log để hiển thị categoryId filter
@@ -54,6 +62,7 @@ GET /api/v1/warehouse/summary?categoryId=3&search=thuốc&page=0&size=20
 **Behavior**: Khi `categoryId != null` → chỉ trả về items thuộc category đó
 
 ### 3. Xóa API 6.1.1 (Không cần thiết)
+
 **Lý do**: API 6.1 đã hỗ trợ filter `categoryId` rồi, không cần tạo endpoint riêng cho medicine
 
 ## 📚 YÊU CẦU FE
@@ -91,6 +100,7 @@ await fetch(`/api/v1/clinical-records/${recordId}/prescription`, {
 ## 📁 FILES CHANGED
 
 1. **WarehouseInventoryController.java**
+
    - Thêm: API 6.0 `getItemCategories()`
    - Sửa: API 6.1 description + permission + log
    - Xóa: API 6.1.1 `getMedicinesForPrescription()` (không cần)
@@ -102,18 +112,21 @@ await fetch(`/api/v1/clinical-records/${recordId}/prescription`, {
 ## 🧪 TESTING
 
 ### Test 1: Verify API 6.0
+
 ```bash
 curl GET /api/v1/warehouse/item-categories
 # Expected: List of categories including MEDICINE with categoryId
 ```
 
 ### Test 2: Verify API 6.1 với filter
+
 ```bash
 curl GET "/api/v1/warehouse/summary?categoryId=3"
 # Expected: Only medicines, no consumables/equipment
 ```
 
 ### Test 3: Verify API 6.1 không filter
+
 ```bash
 curl GET "/api/v1/warehouse/summary"
 # Expected: ALL items (medicines + consumables + equipment)
