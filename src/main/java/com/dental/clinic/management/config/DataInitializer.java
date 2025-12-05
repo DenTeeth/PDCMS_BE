@@ -34,7 +34,7 @@ public class DataInitializer {
     @Autowired
     private final JdbcTemplate jdbcTemplate;
 
-
+    @SuppressWarnings("null")
     @PostConstruct
     public void initData() {
         try {
@@ -97,7 +97,8 @@ public class DataInitializer {
             // Remove all CREATE TYPE blocks (they're already executed by spring.sql.init)
             String insertOnlyContent = sqlContent.replaceAll("(?i)CREATE\\s+TYPE[^;]+;", "");
 
-            // Remove comment blocks while preserving newlines to avoid breaking multi-line statements
+            // Remove comment blocks while preserving newlines to avoid breaking multi-line
+            // statements
             insertOnlyContent = insertOnlyContent.replaceAll("--[^\n]*\n", "\n");
 
             // Execute the filtered SQL content as a single script
@@ -159,16 +160,5 @@ public class DataInitializer {
             log.error("Failed to initialize seed data", e);
             // Don't throw exception - allow server to start even if seed data fails
         }
-    }}
-
-    
-    
-
-    
-
-    
-    
-    
-        
-        
-    
+    }
+}
