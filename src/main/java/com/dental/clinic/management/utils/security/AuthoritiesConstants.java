@@ -128,6 +128,7 @@ public final class AuthoritiesConstants {
                                                                                       // across patients
     public static final String MANAGE_PLAN_PRICING = "MANAGE_PLAN_PRICING"; // V21.4: Finance/Accountant adjusts prices
                                                                             // (API 5.13)
+    public static final String ASSIGN_DOCTOR_TO_ITEM = "ASSIGN_DOCTOR_TO_ITEM"; // V32: Assign doctor to plan item (API 5.X)
 
     // Warehouse Module Permissions (Added 2025-11-24)
     public static final String VIEW_WAREHOUSE = "VIEW_WAREHOUSE"; // View inventory, batches, expiring alerts (API 6.1,

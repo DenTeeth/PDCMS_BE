@@ -1,12 +1,15 @@
 package com.dental.clinic.management.warehouse.controller;
 
 import com.dental.clinic.management.utils.annotation.ApiMessage;
+import com.dental.clinic.management.warehouse.domain.ItemCategory;
 import com.dental.clinic.management.warehouse.dto.response.InventorySummaryResponse;
 import static com.dental.clinic.management.utils.security.AuthoritiesConstants.*;
 import com.dental.clinic.management.warehouse.dto.response.ItemBatchesResponse;
+import com.dental.clinic.management.warehouse.dto.response.ItemCategoryResponse;
 import com.dental.clinic.management.warehouse.enums.BatchStatus;
 import com.dental.clinic.management.warehouse.enums.StockStatus;
 import com.dental.clinic.management.warehouse.enums.WarehouseType;
+import com.dental.clinic.management.warehouse.repository.ItemCategoryRepository;
 import com.dental.clinic.management.warehouse.service.InventoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -20,6 +23,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 /**
  * Warehouse Inventory Controller
  * APIs for inventory summary, batch tracking, and expiring alerts
@@ -32,6 +38,7 @@ import org.springframework.web.bind.annotation.*;
 public class WarehouseInventoryController {
 
         private final InventoryService inventoryService;
+        private final ItemCategoryRepository itemCategoryRepository;
 
         /**
          * API 6.1: Inventory Summary với Aggregation & Computed Fields
@@ -71,10 +78,14 @@ public class WarehouseInventoryController {
          */
         @Operation(summary = "API 6.1 - Inventory Summary Dashboard", description = "Lấy danh sách inventory với computed fields: totalQuantity (aggregation), stockStatus (calculated), nearestExpiryDate (FEFO). "
                         +
-                        "Hỗ trợ filters: search, stockStatus, warehouseType, categoryId. Pagination enabled.")
+                        "Hỗ trợ filters: search, stockStatus, warehouseType, categoryId. " +
+                        "⚠️ KHI KÊ ĐƠN THUỐC: FE PHẢI truyền categoryId của MEDICINE để CHỈ LẤY THUỐC, không lấy vật tư/dụng cụ/consumables. "
+                        +
+                        "Gọi API GET /api/v1/warehouse/item-categories để lấy categoryId của 'MEDICINE'.")
         @ApiMessage("Lấy inventory summary thành công")
         @GetMapping("/summary")
-        @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('VIEW_WAREHOUSE') or hasAuthority('VIEW_ITEMS')")
+        @PreAuthorize("hasRole('" + ADMIN
+                        + "') or hasAuthority('VIEW_WAREHOUSE') or hasAuthority('VIEW_ITEMS') or hasAuthority('VIEW_MEDICINES')")
         public ResponseEntity<InventorySummaryResponse> getInventorySummary(
                         @Parameter(description = "Tìm kiếm theo itemName hoặc itemCode (LIKE)") @RequestParam(required = false) String search,
 
@@ -82,64 +93,62 @@ public class WarehouseInventoryController {
 
                         @Parameter(description = "Lọc theo warehouse type: COLD | NORMAL") @RequestParam(required = false) WarehouseType warehouseType,
 
-                        @Parameter(description = "Lọc theo category ID") @RequestParam(required = false) Long categoryId,
+                        @Parameter(description = "Lọc theo category ID (QUAN TRỌNG: Khi kê đơn thuốc, PHẢI truyền categoryId của MEDICINE)") @RequestParam(required = false) Long categoryId,
 
                         @Parameter(description = "Số trang (0-based)") @RequestParam(defaultValue = "0") int page,
 
                         @Parameter(description = "Số lượng items mỗi trang") @RequestParam(defaultValue = "20") int size) {
 
                 log.info(
-                                " API 6.1 - GET /api/v1/warehouse/summary - search='{}', stockStatus={}, warehouseType={}, categoryId={}, page={}, size={}",
+                                "🏥 API 6.1 - GET /api/v1/warehouse/summary - search='{}', stockStatus={}, warehouseType={}, categoryId={}, page={}, size={}",
                                 search, stockStatus, warehouseType, categoryId, page, size);
 
                 Pageable pageable = PageRequest.of(page, size);
                 InventorySummaryResponse response = inventoryService.getInventorySummaryV2(
                                 search, stockStatus, warehouseType, categoryId, pageable);
 
-                log.info(" Returned {} items out of {} total", response.getContent().size(), response.getTotalItems());
+                log.info("✅ Returned {} items out of {} total (filtered by categoryId: {})",
+                                response.getContent().size(), response.getTotalItems(),
+                                categoryId != null ? categoryId : "ALL");
                 return ResponseEntity.ok(response);
         }
 
         /**
-         * API 6.1.1: Medicine Search for Prescription (Dentist-only)
-         * 
-         * Only returns items from MEDICINE category
-         * Filters out tools, equipment, and consumables for prescription safety
-         * 
-         * Request:
-         * GET /api/v1/warehouse/medicines?search=kháng sinh&page=0&size=20
-         * 
-         * Response: Same as API 6.1 but MEDICINE category only
-         * 
-         * Business Logic:
-         * - Auto-filter by MEDICINE category
-         * - Exclude tools (is_tool = false)
-         * - For dentists to search medicines when prescribing
+         * API 6.0: Get Item Categories
+         * Returns all active item categories (MEDICINE, CONSUMABLE, EQUIPMENT, etc.)
+         * FE uses this to get categoryId for filtering in API 6.1
+         *
+         * Example Response:
+         * [
+         * {"categoryId": 3, "categoryCode": "MEDICINE", "categoryName": "Thuốc men",
+         * "description": "...", "isActive": true},
+         * {"categoryId": 1, "categoryCode": "CONSUMABLE", "categoryName": "Vật tư tiêu
+         * hao", ...}
+         * ]
          */
-        @Operation(summary = "API 6.1.1 - Medicine Search for Prescription", 
-                description = "Tìm kiếm THUỐC MEN để kê đơn (chỉ MEDICINE category). Không trả về dụng cụ/vật tư. Dành cho Bác sĩ.")
-        @ApiMessage("Lấy danh sách thuốc men thành công")
-        @GetMapping("/medicines")
-        @PreAuthorize("hasAuthority('VIEW_ITEMS') or hasAuthority('VIEW_WAREHOUSE')")
-        public ResponseEntity<InventorySummaryResponse> getMedicinesForPrescription(
-                        @Parameter(description = "Tìm kiếm theo tên thuốc") @RequestParam(required = false) String search,
-                        @Parameter(description = "Số trang (0-based)") @RequestParam(defaultValue = "0") int page,
-                        @Parameter(description = "Số lượng items mỗi trang") @RequestParam(defaultValue = "20") int size) {
+        @Operation(summary = "API 6.0 - Get Item Categories", description = "Lấy danh sách các loại vật tư/thuốc (MEDICINE, CONSUMABLE, EQUIPMENT, etc.). "
+                        +
+                        "FE dùng API này để lấy categoryId của MEDICINE khi kê đơn thuốc.")
+        @ApiMessage("Lấy danh sách categories thành công")
+        @GetMapping("/item-categories")
+        @PreAuthorize("hasRole('" + ADMIN
+                        + "') or hasAuthority('VIEW_WAREHOUSE') or hasAuthority('VIEW_ITEMS') or hasAuthority('VIEW_MEDICINES')")
+        public ResponseEntity<List<ItemCategoryResponse>> getItemCategories() {
+                log.info("🏥 API 6.0 - GET /api/v1/warehouse/item-categories");
 
-                log.info("🩺 API 6.1.1 - GET /api/v1/warehouse/medicines - search='{}', page={}, size={}", 
-                        search, page, size);
+                List<ItemCategory> categories = itemCategoryRepository.findByIsActiveTrue();
 
-                Pageable pageable = PageRequest.of(page, size);
-                
-                // Get category ID for MEDICINE
-                Long medicineCategoryId = inventoryService.getMedicineCategoryId();
-                
-                // Force filter by MEDICINE category only
-                InventorySummaryResponse response = inventoryService.getInventorySummaryV2(
-                        search, null, null, medicineCategoryId, pageable);
+                List<ItemCategoryResponse> response = categories.stream()
+                                .map(cat -> ItemCategoryResponse.builder()
+                                                .categoryId(cat.getCategoryId())
+                                                .categoryCode(cat.getCategoryCode())
+                                                .categoryName(cat.getCategoryName())
+                                                .description(cat.getDescription())
+                                                .isActive(cat.getIsActive())
+                                                .build())
+                                .collect(Collectors.toList());
 
-                log.info("✅ Returned {} medicines out of {} total", 
-                        response.getContent().size(), response.getTotalItems());
+                log.info("✅ Returned {} categories", response.size());
                 return ResponseEntity.ok(response);
         }
 

@@ -90,6 +90,15 @@ public class PatientPlanItem {
     private String priceUpdateReason;
 
     /**
+     * V32: Doctor assigned to perform this specific item
+     * Allows different doctors for different items within same plan/phase
+     * Can be updated when scheduling appointments or reorganizing phases
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assigned_doctor_id")
+    private com.dental.clinic.management.employee.domain.Employee assignedDoctor;
+
+    /**
      * When this item was completed
      */
     @Column(name = "completed_at")
