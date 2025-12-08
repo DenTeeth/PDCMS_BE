@@ -113,6 +113,22 @@ public class Patient {
   @Column(name = "blocked_at")
   private LocalDateTime blockedAt;
 
+  /**
+   * Rule #14: Guardian information for minors (<16 years old)
+   * Required for patients under 16 years old
+   */
+  @Column(name = "guardian_name", length = 100)
+  private String guardianName;
+
+  @Column(name = "guardian_phone", length = 15)
+  private String guardianPhone;
+
+  @Column(name = "guardian_relationship", length = 50)
+  private String guardianRelationship;
+
+  @Column(name = "guardian_citizen_id", length = 20)
+  private String guardianCitizenId;
+
   @Column(name = "created_at")
   private LocalDateTime createdAt;
 
@@ -307,6 +323,38 @@ public class Patient {
 
   public void setBlockedAt(LocalDateTime blockedAt) {
     this.blockedAt = blockedAt;
+  }
+
+  public String getGuardianName() {
+    return guardianName;
+  }
+
+  public void setGuardianName(String guardianName) {
+    this.guardianName = guardianName;
+  }
+
+  public String getGuardianPhone() {
+    return guardianPhone;
+  }
+
+  public void setGuardianPhone(String guardianPhone) {
+    this.guardianPhone = guardianPhone;
+  }
+
+  public String getGuardianRelationship() {
+    return guardianRelationship;
+  }
+
+  public void setGuardianRelationship(String guardianRelationship) {
+    this.guardianRelationship = guardianRelationship;
+  }
+
+  public String getGuardianCitizenId() {
+    return guardianCitizenId;
+  }
+
+  public void setGuardianCitizenId(String guardianCitizenId) {
+    this.guardianCitizenId = guardianCitizenId;
   }
 
   // Helper methods

@@ -26,6 +26,10 @@ public class PatientInfoResponse {
     private String allergies;
     private String emergencyContactName;
     private String emergencyContactPhone;
+    private String guardianName;
+    private String guardianPhone;
+    private String guardianRelationship;
+    private String guardianCitizenId;
     private Boolean isActive;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -207,6 +211,38 @@ public class PatientInfoResponse {
 
     public void setIsEmailVerified(Boolean isEmailVerified) {
         this.isEmailVerified = isEmailVerified;
+    }
+
+    public String getGuardianName() {
+        return guardianName;
+    }
+
+    public void setGuardianName(String guardianName) {
+        this.guardianName = guardianName;
+    }
+
+    public String getGuardianPhone() {
+        return guardianPhone;
+    }
+
+    public void setGuardianPhone(String guardianPhone) {
+        this.guardianPhone = guardianPhone;
+    }
+
+    public String getGuardianRelationship() {
+        return guardianRelationship;
+    }
+
+    public void setGuardianRelationship(String guardianRelationship) {
+        this.guardianRelationship = guardianRelationship;
+    }
+
+    public String getGuardianCitizenId() {
+        return guardianCitizenId;
+    }
+
+    public void setGuardianCitizenId(String guardianCitizenId) {
+        this.guardianCitizenId = guardianCitizenId;
     }
 
     @Override

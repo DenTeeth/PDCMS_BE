@@ -6,9 +6,11 @@ package com.dental.clinic.management.employee.enums;
  * - FULL_TIME: Uses Fixed Schedule (Luồng 1 - fixed_shift_registrations)
  * - PART_TIME_FIXED: Uses Fixed Schedule (Luồng 1 - fixed_shift_registrations)
  * - PART_TIME_FLEX: Uses Flexible Schedule (Luồng 2 - part_time_registrations)
+ * - PROBATION: Employee on probation period (can only use unpaid leave)
  */
 public enum EmploymentType {
     FULL_TIME,
     PART_TIME_FIXED,
-    PART_TIME_FLEX
+    PART_TIME_FLEX,
+    PROBATION
 }

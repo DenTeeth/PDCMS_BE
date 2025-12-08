@@ -48,6 +48,18 @@ public class UpdatePatientRequest {
     @Pattern(regexp = "^[0-9]{10,15}$")
     private String emergencyContactPhone;
 
+    @Size(max = 100)
+    private String guardianName;
+
+    @Pattern(regexp = "^[0-9]{10,15}$")
+    private String guardianPhone;
+
+    @Size(max = 50)
+    private String guardianRelationship;
+
+    @Size(max = 20)
+    private String guardianCitizenId;
+
     private Boolean isActive;
 
     // Constructors
@@ -149,6 +161,38 @@ public class UpdatePatientRequest {
 
     public void setIsActive(Boolean isActive) {
         this.isActive = isActive;
+    }
+
+    public String getGuardianName() {
+        return guardianName;
+    }
+
+    public void setGuardianName(String guardianName) {
+        this.guardianName = guardianName;
+    }
+
+    public String getGuardianPhone() {
+        return guardianPhone;
+    }
+
+    public void setGuardianPhone(String guardianPhone) {
+        this.guardianPhone = guardianPhone;
+    }
+
+    public String getGuardianRelationship() {
+        return guardianRelationship;
+    }
+
+    public void setGuardianRelationship(String guardianRelationship) {
+        this.guardianRelationship = guardianRelationship;
+    }
+
+    public String getGuardianCitizenId() {
+        return guardianCitizenId;
+    }
+
+    public void setGuardianCitizenId(String guardianCitizenId) {
+        this.guardianCitizenId = guardianCitizenId;
     }
 
     @Override

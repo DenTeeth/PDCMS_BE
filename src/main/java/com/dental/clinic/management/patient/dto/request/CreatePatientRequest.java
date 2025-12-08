@@ -88,6 +88,32 @@ public class CreatePatientRequest {
     @Pattern(regexp = "^[0-9]{10,15}$")
     private String emergencyContactPhone;
 
+    // ===== GUARDIAN FIELDS (Rule #14: Required for minors <16 years) =====
+
+    /**
+     * Guardian name (required if patient age < 16)
+     */
+    @Size(max = 100)
+    private String guardianName;
+
+    /**
+     * Guardian phone number
+     */
+    @Pattern(regexp = "^[0-9]{10,15}$")
+    private String guardianPhone;
+
+    /**
+     * Guardian relationship to patient (e.g., "Cha", "Mẹ", "Ông/Bà")
+     */
+    @Size(max = 50)
+    private String guardianRelationship;
+
+    /**
+     * Guardian citizen ID
+     */
+    @Size(max = 20)
+    private String guardianCitizenId;
+
     // Constructors
     public CreatePatientRequest() {
     }
@@ -192,6 +218,38 @@ public class CreatePatientRequest {
 
     public void setEmergencyContactPhone(String emergencyContactPhone) {
         this.emergencyContactPhone = emergencyContactPhone;
+    }
+
+    public String getGuardianName() {
+        return guardianName;
+    }
+
+    public void setGuardianName(String guardianName) {
+        this.guardianName = guardianName;
+    }
+
+    public String getGuardianPhone() {
+        return guardianPhone;
+    }
+
+    public void setGuardianPhone(String guardianPhone) {
+        this.guardianPhone = guardianPhone;
+    }
+
+    public String getGuardianRelationship() {
+        return guardianRelationship;
+    }
+
+    public void setGuardianRelationship(String guardianRelationship) {
+        this.guardianRelationship = guardianRelationship;
+    }
+
+    public String getGuardianCitizenId() {
+        return guardianCitizenId;
+    }
+
+    public void setGuardianCitizenId(String guardianCitizenId) {
+        this.guardianCitizenId = guardianCitizenId;
     }
 
     @Override

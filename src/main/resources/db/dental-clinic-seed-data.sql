@@ -102,6 +102,12 @@ UPDATE patients SET consecutive_no_shows = 0 WHERE consecutive_no_shows IS NULL;
 UPDATE patients SET is_booking_blocked = FALSE WHERE is_booking_blocked IS NULL;
 UPDATE appointments SET reschedule_count = 0 WHERE reschedule_count IS NULL;
 
+-- Rule #14: Guardian information for minors (<16 years old)
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS guardian_name VARCHAR(100);
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS guardian_phone VARCHAR(15);
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS guardian_relationship VARCHAR(50);
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS guardian_citizen_id VARCHAR(20);
+
 -- ============================================
 -- BƯỚC 1: TẠO BASE ROLES (3 loại cố định)
 -- ============================================
