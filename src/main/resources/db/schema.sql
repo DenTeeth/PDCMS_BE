@@ -797,6 +797,38 @@ CREATE INDEX idx_time_off_requests_employee ON time_off_requests(employee_id);
 CREATE INDEX idx_time_off_requests_status ON time_off_requests(status);
 
 -- ============================================
+-- PATIENT IMAGES MODULE (Module #10)
+-- ============================================
+-- Store patient images uploaded to Cloudinary
+-- Each patient has dedicated folder structure on Cloudinary
+-- Images can be linked to clinical records
+
+-- Patient Images
+CREATE TABLE patient_images (
+    image_id BIGSERIAL PRIMARY KEY,
+    patient_id INTEGER NOT NULL REFERENCES patients(patient_id) ON DELETE CASCADE,
+    clinical_record_id INTEGER REFERENCES clinical_records(clinical_record_id) ON DELETE SET NULL,
+    image_url TEXT NOT NULL,
+    cloudinary_public_id VARCHAR(255) NOT NULL,
+    image_type VARCHAR(50) NOT NULL,
+    description TEXT,
+    captured_date DATE,
+    uploaded_by INTEGER REFERENCES employees(employee_id),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_patient_images_patient ON patient_images(patient_id);
+CREATE INDEX idx_patient_images_clinical_record ON patient_images(clinical_record_id);
+CREATE INDEX idx_patient_images_type ON patient_images(image_type);
+CREATE INDEX idx_patient_images_created ON patient_images(created_at);
+
+COMMENT ON TABLE patient_images IS 'Patient images stored on Cloudinary, organized by patient folder';
+COMMENT ON COLUMN patient_images.image_url IS 'Full Cloudinary URL for image';
+COMMENT ON COLUMN patient_images.cloudinary_public_id IS 'Cloudinary public_id for deletion';
+COMMENT ON COLUMN patient_images.image_type IS 'Type: XRAY, PHOTO, BEFORE_TREATMENT, AFTER_TREATMENT, SCAN, OTHER';
+
+-- ============================================
 -- CLINICAL RECORDS MODULE (Module #9)
 -- ============================================
 -- Simple "Write Once, Query Many" schema

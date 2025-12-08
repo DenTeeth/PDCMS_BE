@@ -61,6 +61,9 @@ CREATE TYPE tooth_condition_enum AS ENUM ('HEALTHY', 'CARIES', 'FILLED', 'CROWN'
 -- Clinical Record Attachment ENUM
 CREATE TYPE attachment_type_enum AS ENUM ('XRAY', 'PHOTO_BEFORE', 'PHOTO_AFTER', 'LAB_RESULT', 'CONSENT_FORM', 'OTHER');
 
+-- Patient Image Type ENUM
+CREATE TYPE image_type AS ENUM ('XRAY', 'PHOTO', 'BEFORE_TREATMENT', 'AFTER_TREATMENT', 'SCAN', 'OTHER');
+
 -- Warehouse ENUMs
 CREATE TYPE batchstatus AS ENUM ('ACTIVE', 'EXPIRED', 'DEPLETED');
 CREATE TYPE exporttype AS ENUM ('SERVICE', 'SALE', 'WASTAGE', 'TRANSFER');
@@ -73,7 +76,7 @@ CREATE TYPE warehouseactiontype AS ENUM ('IMPORT', 'EXPORT', 'TRANSFER', 'ADJUST
 CREATE TYPE transactiontype AS ENUM ('PURCHASE', 'SALE', 'SERVICE', 'TRANSFER_IN', 'TRANSFER_OUT', 'ADJUSTMENT');
 
 -- ============================================
--- END ENUM TYPE DEFINITIONS (38 types total)
+-- END ENUM TYPE DEFINITIONS (39 types total)
 -- ============================================
 
 -- ============================================
@@ -415,6 +418,12 @@ VALUES
 ('MANAGE_SUPPLIERS', 'MANAGE_SUPPLIERS', 'WAREHOUSE', 'Quản lý nhà cung cấp (API 6.13, 6.14)', 282, NULL, TRUE, NOW()),
 ('MANAGE_CONSUMABLES', 'MANAGE_CONSUMABLES', 'WAREHOUSE', 'Quản lý định mức tiêu hao vật tư (BOM) - API 6.18, 6.19', 283, NULL, TRUE, NOW()),
 ('MANAGE_WAREHOUSE', 'MANAGE_WAREHOUSE', 'WAREHOUSE', 'Toàn quyền quản lý kho', 284, NULL, TRUE, NOW()),
+
+-- MODULE 15: PATIENT_IMAGES (Quản lý hình ảnh bệnh nhân - API 9.1 to 9.6)
+('PATIENT_IMAGE_CREATE', 'PATIENT_IMAGE_CREATE', 'PATIENT_IMAGES', 'Tạo hình ảnh bệnh nhân (Upload metadata)', 290, NULL, TRUE, NOW()),
+('PATIENT_IMAGE_READ', 'PATIENT_IMAGE_READ', 'PATIENT_IMAGES', 'Xem hình ảnh bệnh nhân', 291, NULL, TRUE, NOW()),
+('PATIENT_IMAGE_UPDATE', 'PATIENT_IMAGE_UPDATE', 'PATIENT_IMAGES', 'Cập nhật metadata hình ảnh', 292, NULL, TRUE, NOW()),
+('PATIENT_IMAGE_DELETE', 'PATIENT_IMAGE_DELETE', 'PATIENT_IMAGES', 'Xóa hình ảnh bệnh nhân', 293, NULL, TRUE, NOW()),
 ('WRITE_CLINICAL_RECORD', 'WRITE_CLINICAL_RECORD', 'CLINICAL_RECORDS', 'Tạo và cập nhật bệnh án, thêm thủ thuật (API 8.5, 9.2, 9.3)', 285, NULL, TRUE, NOW()),
 ('UPLOAD_ATTACHMENT', 'UPLOAD_ATTACHMENT', 'CLINICAL_RECORDS', 'Upload file đính kèm vào bệnh án (X-quang, ảnh, PDF) - API 8.11', 286, NULL, TRUE, NOW()),
 ('VIEW_ATTACHMENT', 'VIEW_ATTACHMENT', 'CLINICAL_RECORDS', 'Xem danh sách file đính kèm của bệnh án - API 8.12', 287, NULL, TRUE, NOW()),
@@ -457,7 +466,12 @@ VALUES
 ('ROLE_DENTIST', 'WRITE_CLINICAL_RECORD'),
 ('ROLE_DENTIST', 'UPLOAD_ATTACHMENT'),
 ('ROLE_DENTIST', 'VIEW_ATTACHMENT'),
-('ROLE_DENTIST', 'DELETE_ATTACHMENT')
+('ROLE_DENTIST', 'DELETE_ATTACHMENT'),
+-- Patient Images permissions
+('ROLE_DENTIST', 'PATIENT_IMAGE_CREATE'),
+('ROLE_DENTIST', 'PATIENT_IMAGE_READ'),
+('ROLE_DENTIST', 'PATIENT_IMAGE_UPDATE'),
+('ROLE_DENTIST', 'PATIENT_IMAGE_DELETE')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
@@ -514,7 +528,9 @@ VALUES
 ('ROLE_RECEPTIONIST', 'VIEW_HOLIDAY'),
 ('ROLE_RECEPTIONIST', 'VIEW_TREATMENT_PLAN_ALL'),
 ('ROLE_RECEPTIONIST', 'VIEW_WAREHOUSE'),
-('ROLE_RECEPTIONIST', 'VIEW_ITEMS')
+('ROLE_RECEPTIONIST', 'VIEW_ITEMS'),
+-- Patient Images (read only for receptionist)
+('ROLE_RECEPTIONIST', 'PATIENT_IMAGE_READ')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
