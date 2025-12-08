@@ -101,6 +101,14 @@ public class Appointment {
     private String notes;
 
     /**
+     * Rule #9: Reschedule counter
+     * Tracks how many times this appointment has been rescheduled
+     * Max allowed: 2 times
+     */
+    @Column(name = "reschedule_count", nullable = false)
+    private Integer rescheduleCount = 0;
+
+    /**
      * FK to employees - Lễ tân tạo lịch hẹn này
      */
     @Column(name = "created_by", insertable = false, updatable = false)
@@ -294,6 +302,14 @@ public class Appointment {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Integer getRescheduleCount() {
+        return rescheduleCount;
+    }
+
+    public void setRescheduleCount(Integer rescheduleCount) {
+        this.rescheduleCount = rescheduleCount;
     }
 
     @Override

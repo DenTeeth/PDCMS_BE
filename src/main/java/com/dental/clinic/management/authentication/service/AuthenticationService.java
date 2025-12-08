@@ -63,6 +63,7 @@ public class AuthenticationService {
         private final PasswordResetTokenRepository passwordResetTokenRepository;
         private final EmailService emailService;
         private final PasswordEncoder passwordEncoder;
+        private final SessionManagementService sessionManagementService;
 
         public AuthenticationService(
                         AuthenticationManager authenticationManager,
@@ -72,7 +73,8 @@ public class AuthenticationService {
                         AccountVerificationTokenRepository verificationTokenRepository,
                         PasswordResetTokenRepository passwordResetTokenRepository,
                         EmailService emailService,
-                        PasswordEncoder passwordEncoder) {
+                        PasswordEncoder passwordEncoder,
+                        SessionManagementService sessionManagementService) {
                 this.authenticationManager = authenticationManager;
                 this.securityUtil = securityUtil;
                 this.accountRepository = accountRepository;
@@ -81,6 +83,7 @@ public class AuthenticationService {
                 this.passwordResetTokenRepository = passwordResetTokenRepository;
                 this.emailService = emailService;
                 this.passwordEncoder = passwordEncoder;
+                this.sessionManagementService = sessionManagementService;
         }
 
         /**
@@ -195,6 +198,9 @@ public class AuthenticationService {
                 log.info("  groupedPermissions modules: {}",
                                 groupedPermissions != null ? groupedPermissions.keySet() : null);
                 log.info("  employmentType: {}", response.getEmploymentType());
+
+                // Rule #3: Register new session and invalidate any existing sessions
+                sessionManagementService.registerNewSession(account.getUsername(), accessToken);
 
                 return response;
         }

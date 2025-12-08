@@ -475,4 +475,16 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
         long countByEmployeeIdAndLinkedToPlan(
                 @Param("employeeId") Integer employeeId,
                 @Param("planId") Long planId);
+
+        /**
+         * Rule #6: Find appointments that are late (>15 minutes past start time)
+         * Used by scheduled job to auto-mark as NO_SHOW
+         * 
+         * @param status Status to filter (typically SCHEDULED)
+         * @param cutoffTime Start time threshold (now - 15 minutes)
+         * @return List of late appointments
+         */
+        List<Appointment> findByStatusAndAppointmentStartTimeBefore(
+                AppointmentStatus status,
+                LocalDateTime cutoffTime);
 }

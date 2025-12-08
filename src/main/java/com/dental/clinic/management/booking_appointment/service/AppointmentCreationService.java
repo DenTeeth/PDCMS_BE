@@ -149,6 +149,15 @@ public class AppointmentCreationService {
                 LocalDateTime endTime = startTime.plusMinutes(totalDuration);
                 log.debug("Appointment duration: {} minutes, end time: {}", totalDuration, endTime);
 
+                // STEP 5B: Rule #2 - Validate 2-hour minimum lead time
+                validateMinimumLeadTime(startTime);
+
+                // STEP 5C: Rule #1 - Validate maximum 3-month advance booking
+                validateMaximumAdvanceBooking(startTime);
+
+                // STEP 5D: Rule #5 - Check if patient is blocked from booking
+                validatePatientNotBlocked(patient);
+
                 // STEP 6: Validate shifts (doctor and participants have working shifts)
                 validateDoctorShift(doctor, startTime, endTime);
                 validateParticipantShifts(participants, startTime, endTime);
@@ -1096,6 +1105,65 @@ public class AppointmentCreationService {
                         // critical
                         log.warn("V21: Failed to auto-activate plan for appointment {}. Plan activation can be done manually.",
                                         appointment.getAppointmentCode(), e);
+                }
+        }
+
+        /**
+         * Rule #2: Validate minimum 2-hour lead time for appointment booking
+         * Patient must book at least 2 hours before appointment time
+         * 
+         * @param startTime Appointment start time
+         * @throws BadRequestAlertException if lead time is less than 2 hours
+         */
+        private void validateMinimumLeadTime(LocalDateTime startTime) {
+                LocalDateTime now = LocalDateTime.now();
+                LocalDateTime minimumStartTime = now.plusHours(2);
+
+                if (startTime.isBefore(minimumStartTime)) {
+                        long minutesUntil = java.time.Duration.between(now, startTime).toMinutes();
+                        throw new BadRequestAlertException(
+                                        String.format("Phải đặt lịch trước ít nhất 2 giờ. Thời gian yêu cầu: %s (chỉ còn %d phút). Thời gian tối thiểu cho phép: %s",
+                                                        startTime, minutesUntil, minimumStartTime),
+                                        ENTITY_NAME,
+                                        "MINIMUM_LEAD_TIME_VIOLATION");
+                }
+        }
+
+        /**
+         * Rule #1: Validate maximum 3-month advance booking
+         * Patient cannot book more than 3 months in advance
+         * 
+         * @param startTime Appointment start time
+         * @throws BadRequestAlertException if booking is more than 3 months ahead
+         */
+        private void validateMaximumAdvanceBooking(LocalDateTime startTime) {
+                LocalDateTime now = LocalDateTime.now();
+                LocalDateTime maxAllowedTime = now.plusMonths(3);
+
+                if (startTime.isAfter(maxAllowedTime)) {
+                        throw new BadRequestAlertException(
+                                        String.format("Không thể đặt lịch quá xa. Thời gian yêu cầu: %s. Thời gian tối đa cho phép: %s (3 tháng kể từ hôm nay)",
+                                                        startTime, maxAllowedTime),
+                                        ENTITY_NAME,
+                                        "MAXIMUM_ADVANCE_BOOKING_VIOLATION");
+                }
+        }
+
+        /**
+         * Rule #5: Validate patient is not blocked from booking
+         * Patients with 3+ consecutive no-shows are blocked from online booking
+         * 
+         * @param patient Patient entity
+         * @throws BadRequestAlertException if patient is blocked
+         */
+        private void validatePatientNotBlocked(Patient patient) {
+                if (Boolean.TRUE.equals(patient.getIsBookingBlocked())) {
+                        throw new BadRequestAlertException(
+                                        String.format("Bệnh nhân %s đã bị chặn đặt lịch online. Lý do: %s. Vui lòng liên hệ lễ tân để được hỗ trợ.",
+                                                        patient.getPatientCode(),
+                                                        patient.getBookingBlockReason() != null ? patient.getBookingBlockReason() : "Bỏ hẹn nhiều lần"),
+                                        ENTITY_NAME,
+                                        "PATIENT_BOOKING_BLOCKED");
                 }
         }
 }

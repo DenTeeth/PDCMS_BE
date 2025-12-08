@@ -87,6 +87,32 @@ public class Patient {
   @Column(name = "is_active")
   private Boolean isActive = true;
 
+  /**
+   * Rule #5: No-show tracking for booking restriction
+   * Consecutive no-shows counter (resets when patient shows up)
+   */
+  @Column(name = "consecutive_no_shows", nullable = false)
+  private Integer consecutiveNoShows = 0;
+
+  /**
+   * Rule #5: Booking blocked flag
+   * Set to true when consecutiveNoShows >= 3
+   */
+  @Column(name = "is_booking_blocked", nullable = false)
+  private Boolean isBookingBlocked = false;
+
+  /**
+   * Rule #5: Reason for booking block
+   */
+  @Column(name = "booking_block_reason", length = 500)
+  private String bookingBlockReason;
+
+  /**
+   * Rule #5: When booking was blocked
+   */
+  @Column(name = "blocked_at")
+  private LocalDateTime blockedAt;
+
   @Column(name = "created_at")
   private LocalDateTime createdAt;
 
@@ -249,6 +275,38 @@ public class Patient {
 
   public void setUpdatedAt(LocalDateTime updatedAt) {
     this.updatedAt = updatedAt;
+  }
+
+  public Integer getConsecutiveNoShows() {
+    return consecutiveNoShows;
+  }
+
+  public void setConsecutiveNoShows(Integer consecutiveNoShows) {
+    this.consecutiveNoShows = consecutiveNoShows;
+  }
+
+  public Boolean getIsBookingBlocked() {
+    return isBookingBlocked;
+  }
+
+  public void setIsBookingBlocked(Boolean isBookingBlocked) {
+    this.isBookingBlocked = isBookingBlocked;
+  }
+
+  public String getBookingBlockReason() {
+    return bookingBlockReason;
+  }
+
+  public void setBookingBlockReason(String bookingBlockReason) {
+    this.bookingBlockReason = bookingBlockReason;
+  }
+
+  public LocalDateTime getBlockedAt() {
+    return blockedAt;
+  }
+
+  public void setBlockedAt(LocalDateTime blockedAt) {
+    this.blockedAt = blockedAt;
   }
 
   // Helper methods

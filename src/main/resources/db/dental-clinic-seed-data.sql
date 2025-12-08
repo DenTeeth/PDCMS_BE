@@ -86,6 +86,23 @@ ALTER TABLE patient_treatment_plans ADD CONSTRAINT patient_treatment_plans_statu
 CHECK (status IN ('PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'));
 
 -- ============================================
+-- ADD NEW COLUMNS FOR APPOINTMENT BUSINESS RULES
+-- ============================================
+-- Rule #5: Patient no-show tracking and blocking (3 strikes rule)
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS consecutive_no_shows INTEGER DEFAULT 0;
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS is_booking_blocked BOOLEAN DEFAULT FALSE;
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS booking_block_reason VARCHAR(500);
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS blocked_at TIMESTAMP;
+
+-- Rule #9: Appointment reschedule tracking (max 2 reschedules)
+ALTER TABLE appointments ADD COLUMN IF NOT EXISTS reschedule_count INTEGER DEFAULT 0;
+
+-- Update existing rows to have default values
+UPDATE patients SET consecutive_no_shows = 0 WHERE consecutive_no_shows IS NULL;
+UPDATE patients SET is_booking_blocked = FALSE WHERE is_booking_blocked IS NULL;
+UPDATE appointments SET reschedule_count = 0 WHERE reschedule_count IS NULL;
+
+-- ============================================
 -- BƯỚC 1: TẠO BASE ROLES (3 loại cố định)
 -- ============================================
 -- Base roles xác định LAYOUT FE (AdminLayout/EmployeeLayout/PatientLayout)
