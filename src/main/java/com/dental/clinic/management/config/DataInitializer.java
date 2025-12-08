@@ -34,7 +34,6 @@ public class DataInitializer {
     @Autowired
     private final JdbcTemplate jdbcTemplate;
 
-    @SuppressWarnings("null")
     @PostConstruct
     public void initData() {
         try {

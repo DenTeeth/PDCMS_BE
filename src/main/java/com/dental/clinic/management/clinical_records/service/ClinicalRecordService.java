@@ -973,6 +973,7 @@ public class ClinicalRecordService {
                 log.info("Fetching tooth status for patient ID: {}", patientId);
 
                 // Step 1: Validate patient exists
+                @SuppressWarnings("unused")
                 Patient patient = patientRepository.findById(patientId)
                                 .orElseThrow(() -> new NotFoundException("PATIENT_NOT_FOUND",
                                                 "Patient not found with ID: " + patientId));
