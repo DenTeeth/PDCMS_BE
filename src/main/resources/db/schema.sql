@@ -1,6 +1,6 @@
 -- ============================================
--- DENTAL CLINIC MANAGEMENT SYSTEM - SCHEMA V31
--- Date: 2025-11-30
+-- DENTAL CLINIC MANAGEMENT SYSTEM - SCHEMA V32
+-- Date: 2025-12-05
 -- PostgreSQL Database Schema - REFERENCE ONLY
 -- ============================================
 -- IMPORTANT: This file is for REFERENCE/DOCUMENTATION purposes only
@@ -14,6 +14,15 @@
 --
 -- This file documents the expected schema structure for reference
 -- ============================================
+-- CHANGES IN V32 (Treatment Plan Doctor Assignment):
+--   - Added assigned_doctor_id column to patient_plan_items table
+--   - Purpose: Allow assigning different doctors to different items within same plan/phase
+--   - Use case: When scheduling appointments or reorganizing phases during treatment
+--   - Column: assigned_doctor_id INTEGER REFERENCES employees(employee_id)
+--   - Nullable: YES (optional assignment)
+--   - API: PUT /api/v1/treatment-plans/items/{itemId}/assign-doctor
+--   - Permission: ASSIGN_DOCTOR_TO_ITEM (TREATMENT module)
+--   - NOTE: Appointments already support multiple assistants via participant_codes (no schema change needed)
 -- CHANGES IN V31 (Module #9 - Clinical Records):
 --   - Added clinical_records table (1-to-1 with appointments)
 --   - Added clinical_record_procedures table (with service_id, patient_plan_item_id)

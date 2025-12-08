@@ -53,6 +53,12 @@ public class TreatmentPlanItemService {
     // V21: Clinical Rules Validation
     private final com.dental.clinic.management.service.service.ClinicalRulesValidationService clinicalRulesValidationService;
 
+    // V32: Employee repository for doctor assignment
+    private final com.dental.clinic.management.employee.repository.EmployeeRepository employeeRepository;
+
+    // V32: Service repository for specialization validation
+    private final com.dental.clinic.management.service.repository.DentalServiceRepository dentalServiceRepository;
+
     /**
      * State Machine Map: current_status → allowed_next_statuses
      * V21: Added WAITING_FOR_PREREQUISITE with auto-unlock to READY_FOR_BOOKING
@@ -591,6 +597,115 @@ public class TreatmentPlanItemService {
         } else {
             log.debug("V21: No items were waiting for service {}", completedServiceId);
         }
+    }
+
+    /**
+     * V32: Assign doctor to treatment plan item
+     * Use case: When organizing phases or preparing for appointment scheduling
+     *
+     * Business rules:
+     * - Doctor must exist and be active
+     * - Doctor must have required specialization for item's service
+     * - Item must exist and belong to a valid treatment plan
+     *
+     * @param itemId     ID of the item to assign doctor to
+     * @param doctorCode Employee code of doctor to assign
+     * @param notes      Optional reason for assignment
+     * @return Updated item details
+     */
+    @Transactional
+    public PatientPlanItemResponse assignDoctorToItem(Long itemId, String doctorCode, String notes) {
+        log.info("V32: Assigning doctor {} to item {}", doctorCode, itemId);
+
+        // STEP 1: Find item with phase and plan data
+        PatientPlanItem item = itemRepository.findById(itemId)
+                .orElseThrow(() -> new ResourceNotFoundException("ITEM_NOT_FOUND",
+                    "Plan item not found with id: " + itemId));
+
+        PatientPlanPhase phase = item.getPhase();
+        if (phase == null) {
+            throw new ResourceNotFoundException("PHASE_NOT_FOUND",
+                "Phase not found for item: " + itemId);
+        }
+
+        PatientTreatmentPlan plan = phase.getTreatmentPlan();
+        if (plan == null) {
+            throw new ResourceNotFoundException("PLAN_NOT_FOUND",
+                "Treatment plan not found for item: " + itemId);
+        }
+
+        // STEP 2: RBAC - Check if current user can modify this plan
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        rbacService.verifyEmployeeCanModifyPlan(plan, authentication);
+
+        // STEP 3: Find doctor by employee code (must be active)
+        com.dental.clinic.management.employee.domain.Employee doctor = employeeRepository
+                .findByEmployeeCodeAndIsActiveTrue(doctorCode)
+                .orElseThrow(() -> new ResourceNotFoundException("DOCTOR_NOT_FOUND",
+                    "Active doctor not found with code: " + doctorCode));
+
+        // STEP 4: Validate doctor has required specialization for service
+        if (item.getServiceId() != null) {
+            com.dental.clinic.management.service.domain.DentalService service = dentalServiceRepository
+                    .findById(Long.valueOf(item.getServiceId()))
+                    .orElseThrow(() -> new ResourceNotFoundException("SERVICE_NOT_FOUND",
+                        "Service not found with id: " + item.getServiceId()));
+
+            // Check if service requires specialization
+            if (service.getSpecialization() != null) {
+                Set<com.dental.clinic.management.specialization.domain.Specialization> doctorSpecs =
+                    doctor.getSpecializations();
+
+                boolean hasSpecialization = doctorSpecs.stream()
+                        .anyMatch(spec -> spec.getSpecializationId()
+                                .equals(service.getSpecialization().getSpecializationId()));
+
+                if (!hasSpecialization) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                            String.format("Doctor %s does not have required specialization '%s' for service '%s'",
+                                    doctorCode,
+                                    service.getSpecialization().getSpecializationName(),
+                                    service.getServiceName()));
+                }
+                log.info("V32: Verified doctor has specialization: {}",
+                    service.getSpecialization().getSpecializationName());
+            }
+        }
+
+        // STEP 5: Assign doctor to item
+        item.setAssignedDoctor(doctor);
+        PatientPlanItem savedItem = itemRepository.save(item);
+
+        log.info("V32: Successfully assigned doctor {} {} ({}) to item {}",
+                doctor.getFirstName(), doctor.getLastName(), doctorCode, itemId);
+
+        // STEP 6: Build response (simplified version)
+        List<LinkedAppointmentDTO> linkedAppointments = findAppointmentsForItem(itemId).stream()
+                .map(apt -> LinkedAppointmentDTO.builder()
+                        .code((String) apt.get("code"))
+                        .scheduledDate((LocalDateTime) apt.get("scheduled_date"))
+                        .status((String) apt.get("status"))
+                        .notes((String) apt.get("notes"))
+                        .build())
+                .toList();
+
+        return PatientPlanItemResponse.builder()
+                .itemId(savedItem.getItemId())
+                .sequenceNumber(savedItem.getSequenceNumber())
+                .itemName(savedItem.getItemName())
+                .serviceId(savedItem.getServiceId())
+                .price(savedItem.getPrice())
+                .estimatedTimeMinutes(savedItem.getEstimatedTimeMinutes())
+                .status(savedItem.getStatus().name())
+                .completedAt(savedItem.getCompletedAt())
+                .notes(notes)
+                .phaseId(phase.getPatientPhaseId())
+                .phaseName(phase.getPhaseName())
+                .phaseSequenceNumber(phase.getPhaseNumber())
+                .linkedAppointments(linkedAppointments)
+                .updatedAt(LocalDateTime.now())
+                .updatedBy(getCurrentUsername())
+                .build();
     }
 
     /**

@@ -1163,4 +1163,47 @@ public class TreatmentPlanController {
 
                 return ResponseEntity.ok(response);
         }
+
+        /**
+         * API 5.X: Assign Doctor to Treatment Plan Item (V32).
+         * Allows assigning or reassigning a doctor to a specific treatment item.
+         * Use case: When organizing phases or preparing for appointment scheduling.
+         *
+         * Business Rules:
+         * - Doctor must exist and be active
+         * - Doctor must have required specialization for item's service
+         * - Item must exist and belong to a valid treatment plan
+         * - User must have permission to modify the plan
+         *
+         * Required Permission: ASSIGN_DOCTOR_TO_ITEM (assigned to ROLE_DENTIST, ROLE_MANAGER)
+         *
+         * @param itemId  Plan item ID
+         * @param request Assign doctor request with doctor code
+         * @return Updated item details with assigned doctor info
+         */
+        @Operation(summary = "API 5.X: Assign Doctor to Plan Item",
+                description = "Assign or reassign a doctor to a specific treatment item. " +
+                              "Doctor must have required specialization for the service. " +
+                              "Useful for organizing phases or preparing appointment scheduling.")
+        @org.springframework.security.access.prepost.PreAuthorize("hasRole('"
+                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.ADMIN + "') or " +
+                        "hasAuthority('"
+                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.ASSIGN_DOCTOR_TO_ITEM + "')")
+        @PutMapping("/patient-plan-items/{itemId}/assign-doctor")
+        public ResponseEntity<com.dental.clinic.management.treatment_plans.dto.response.PatientPlanItemResponse> assignDoctorToItem(
+                        @Parameter(description = "Plan item ID", required = true, example = "101") @PathVariable Long itemId,
+                        @Parameter(description = "Assign doctor request", required = true)
+                        @org.springframework.web.bind.annotation.RequestBody
+                        @jakarta.validation.Valid
+                        com.dental.clinic.management.treatment_plans.dto.request.AssignDoctorToItemRequest request) {
+
+                log.info("REST request to assign doctor {} to item {}", request.getDoctorCode(), itemId);
+
+                com.dental.clinic.management.treatment_plans.dto.response.PatientPlanItemResponse response =
+                        treatmentPlanItemService.assignDoctorToItem(itemId, request.getDoctorCode(), request.getNotes());
+
+                log.info("Successfully assigned doctor {} to item {}", request.getDoctorCode(), itemId);
+
+                return ResponseEntity.ok(response);
+        }
 }
