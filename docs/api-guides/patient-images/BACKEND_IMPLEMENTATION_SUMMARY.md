@@ -4,6 +4,8 @@
 
 Đã implement module quản lý hình ảnh bệnh nhân với Cloudinary integration. Backend chỉ lưu metadata, FE handle upload file lên Cloudinary.
 
+**7 API Endpoints** đã được implement và document riêng biệt.
+
 ## Simplified Design (So với FE docs)
 
 **Điều chỉnh để phù hợp với quy mô đồ án:**
@@ -13,6 +15,7 @@
 3. **Đơn giản hóa Image Types** - Chỉ 6 types thay vì 12 types
 4. **Không có batch delete** - Xóa từng ảnh một
 5. **Không có statistics API** - Có thể thêm sau nếu cần
+6. **Thêm Get by Appointment** - API mới để lấy ảnh theo appointmentId
 
 ## Database Schema
 
@@ -45,11 +48,26 @@ CREATE INDEX idx_patient_images_type ON patient_images(image_type);
 CREATE INDEX idx_patient_images_created ON patient_images(created_at);
 ```
 
-## API Endpoints (6 endpoints)
+## API Endpoints (7 endpoints)
+
+**Chi tiết từng API xem trong các file riêng:**
+
+| API | Endpoint                                      | Method | Description                       | Documentation                                                                            |
+| --- | --------------------------------------------- | ------ | --------------------------------- | ---------------------------------------------------------------------------------------- |
+| 9.1 | `/api/v1/patient-images`                      | POST   | Tạo image record                  | [API_9.1_Create_Patient_Image.md](API_9.1_Create_Patient_Image.md)                       |
+| 9.2 | `/api/v1/patient-images/patient/{id}`         | GET    | Get images by patient với filters | [API_9.2_Get_Patient_Images_With_Filters.md](API_9.2_Get_Patient_Images_With_Filters.md) |
+| 9.3 | `/api/v1/patient-images/{id}`                 | GET    | Get image by ID                   | [API_9.3_Get_Patient_Image_By_ID.md](API_9.3_Get_Patient_Image_By_ID.md)                 |
+| 9.4 | `/api/v1/patient-images/{id}`                 | PUT    | Update metadata                   | [API_9.4_Update_Patient_Image_Metadata.md](API_9.4_Update_Patient_Image_Metadata.md)     |
+| 9.5 | `/api/v1/patient-images/{id}`                 | DELETE | Delete image                      | [API_9.5_Delete_Patient_Image.md](API_9.5_Delete_Patient_Image.md)                       |
+| 9.6 | `/api/v1/patient-images/clinical-record/{id}` | GET    | Get images by clinical record     | [API_9.6_Get_Images_By_Clinical_Record.md](API_9.6_Get_Images_By_Clinical_Record.md)     |
+| 9.7 | `/api/v1/patient-images/appointment/{id}`     | GET    | Get images by appointment         | [API_9.7_Get_Images_By_Appointment.md](API_9.7_Get_Images_By_Appointment.md)             |
+
+### Quick Reference
 
 ### 1. POST /api/v1/patient-images
 
 **Description:** Tạo record sau khi FE đã upload lên Cloudinary
+**Details:** See [API_9.1_Create_Patient_Image.md](API_9.1_Create_Patient_Image.md)
 
 **Request:**
 
@@ -87,6 +105,7 @@ CREATE INDEX idx_patient_images_created ON patient_images(created_at);
 ### 2. GET /api/v1/patient-images/patient/{patientId}
 
 **Description:** Lấy danh sách ảnh của bệnh nhân với filter
+**Details:** See [API_9.2_Get_Patient_Images_With_Filters.md](API_9.2_Get_Patient_Images_With_Filters.md)
 
 **Query Parameters:**
 
@@ -112,12 +131,12 @@ CREATE INDEX idx_patient_images_created ON patient_images(created_at);
 ### 3. GET /api/v1/patient-images/{imageId}
 
 **Description:** Lấy chi tiết một ảnh
-
-**Response:** 200 OK (same structure as create response)
+**Details:** See [API_9.3_Get_Patient_Image_By_ID.md](API_9.3_Get_Patient_Image_By_ID.md)
 
 ### 4. PUT /api/v1/patient-images/{imageId}
 
 **Description:** Cập nhật metadata (không upload lại file)
+**Details:** See [API_9.4_Update_Patient_Image_Metadata.md](API_9.4_Update_Patient_Image_Metadata.md)
 
 **Request:** (all fields optional)
 
@@ -135,16 +154,21 @@ CREATE INDEX idx_patient_images_created ON patient_images(created_at);
 ### 5. DELETE /api/v1/patient-images/{imageId}
 
 **Description:** Xóa record trong database
-
-**Response:** 204 No Content
+**Details:** See [API_9.5_Delete_Patient_Image.md](API_9.5_Delete_Patient_Image.md)
 
 **Note:** FE nên xóa file trên Cloudinary riêng (hoặc để Cloudinary tự cleanup)
 
 ### 6. GET /api/v1/patient-images/clinical-record/{clinicalRecordId}
 
 **Description:** Lấy tất cả ảnh của một clinical record
+**Details:** See [API_9.6_Get_Images_By_Clinical_Record.md](API_9.6_Get_Images_By_Clinical_Record.md)
 
-**Response:** 200 OK (array of images)
+### 7. GET /api/v1/patient-images/appointment/{appointmentId}
+
+**Description:** Lấy tất cả ảnh của một appointment (qua clinical record)
+**Details:** See [API_9.7_Get_Images_By_Appointment.md](API_9.7_Get_Images_By_Appointment.md)
+
+**New API:** Lấy ảnh theo appointmentId thay vì lấy tất cả ảnh của patient
 
 ## Permissions
 
@@ -183,23 +207,31 @@ CREATE INDEX idx_patient_images_created ON patient_images(created_at);
 
 ### Documentation
 
-13. `docs/api-guides/patient-images/API_9.1_to_9.6_Patient_Images.md` - Complete API test guide
+13. `docs/api-guides/patient-images/API_9.1_Create_Patient_Image.md`
+14. `docs/api-guides/patient-images/API_9.2_Get_Patient_Images_With_Filters.md`
+15. `docs/api-guides/patient-images/API_9.3_Get_Patient_Image_By_ID.md`
+16. `docs/api-guides/patient-images/API_9.4_Update_Patient_Image_Metadata.md`
+17. `docs/api-guides/patient-images/API_9.5_Delete_Patient_Image.md`
+18. `docs/api-guides/patient-images/API_9.6_Get_Images_By_Clinical_Record.md`
+19. `docs/api-guides/patient-images/API_9.7_Get_Images_By_Appointment.md` - NEW
+20. `docs/api-guides/patient-images/BACKEND_IMPLEMENTATION_SUMMARY.md` - This file
 
 ### Test Scripts
 
-14. `test_patient_images.sh` - Bash test script
-15. `test_patient_images.ps1` - PowerShell test script
+21. `test_patient_images.sh` - Bash test script
+22. `test_patient_images.ps1` - PowerShell test script
 
 ## Changes from FE Documentation
 
-| FE Proposal                  | Backend Implementation      | Reason                 |
-| ---------------------------- | --------------------------- | ---------------------- |
-| 12 Image Types               | 6 Image Types               | Đơn giản hóa cho đồ án |
-| Backend upload to Cloudinary | FE upload, BE save metadata | Giảm complexity        |
-| CloudinaryService class      | No Cloudinary service       | FE handle upload       |
-| Delete multiple images API   | Single delete only          | Đơn giản hóa           |
-| Statistics API               | Not implemented             | Có thể thêm sau        |
-| Batch operations             | Not implemented             | Out of scope           |
+| FE Proposal                  | Backend Implementation      | Reason                                                 |
+| ---------------------------- | --------------------------- | ------------------------------------------------------ |
+| 12 Image Types               | 6 Image Types               | Đơn giản hóa cho đồ án                                 |
+| Backend upload to Cloudinary | FE upload, BE save metadata | Giảm complexity                                        |
+| CloudinaryService class      | No Cloudinary service       | FE handle upload                                       |
+| Delete multiple images API   | Single delete only          | Đơn giản hóa                                           |
+| Statistics API               | Not implemented             | Có thể thêm sau                                        |
+| Batch operations             | Not implemented             | Out of scope                                           |
+| Get by appointment           | **NEW - Implemented**       | **User request - thêm API lấy ảnh theo appointmentId** |
 
 ## Frontend Integration Guide
 
@@ -216,13 +248,23 @@ User chọn file
   → FE refresh gallery
 ```
 
-**2. View Images:**
+**2. View Images by Patient:**
 
 ```
 FE gọi GET /api/v1/patient-images/patient/{patientId}
   → BE query database với filters
   → BE return paginated list
-  → FE hiển thị gallery
+  → FE hiển thị patient gallery
+```
+
+**2b. View Images by Appointment (NEW):**
+
+```
+FE gọi GET /api/v1/patient-images/appointment/{appointmentId}
+  → BE tìm clinical record của appointment
+  → BE lấy tất cả ảnh của clinical record đó
+  → BE return array of images
+  → FE hiển thị ảnh trong appointment detail page
 ```
 
 **3. Delete Image:**
@@ -241,6 +283,7 @@ User click Delete
 2. **Image Types:** Chỉ 6 types thay vì 12
 3. **Delete Flow:** Xóa từng ảnh, không có batch delete
 4. **No Statistics:** Không có API GET statistics
+5. **NEW - API 9.7:** Có thêm endpoint lấy ảnh theo appointment_id
 
 ### Cloudinary Folder Structure (FE Handle)
 
@@ -316,7 +359,14 @@ curl -X PUT http://localhost:8080/api/v1/patient-images/1 \
   -d '{"description":"Updated"}'
 ```
 
-**6. Delete:**
+**6. Get Images by Appointment (NEW):**
+
+```bash
+curl -X GET http://localhost:8080/api/v1/patient-images/appointment/12 \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+**7. Delete:**
 
 ```bash
 curl -X DELETE http://localhost:8080/api/v1/patient-images/1 \
@@ -373,12 +423,26 @@ bash test_patient_images.sh
 5. Integrate with AI analysis
 6. Add image quality validation
 
+## API Documentation Structure
+
+**Mỗi API có file MD riêng:**
+
+- [API 9.1 - Create Patient Image](API_9.1_Create_Patient_Image.md)
+- [API 9.2 - Get Patient Images with Filters](API_9.2_Get_Patient_Images_With_Filters.md)
+- [API 9.3 - Get Patient Image by ID](API_9.3_Get_Patient_Image_By_ID.md)
+- [API 9.4 - Update Patient Image Metadata](API_9.4_Update_Patient_Image_Metadata.md)
+- [API 9.5 - Delete Patient Image](API_9.5_Delete_Patient_Image.md)
+- [API 9.6 - Get Images by Clinical Record](API_9.6_Get_Images_By_Clinical_Record.md)
+- [API 9.7 - Get Images by Appointment](API_9.7_Get_Images_By_Appointment.md) - **NEW**
+
 ---
 
 **Status:** IMPLEMENTED AND READY FOR TESTING
 
-**Date:** December 8, 2025
+**Date:** December 9, 2025
 
-**Module:** Patient Images (API 9.1 - 9.6)
+**Module:** Patient Images (API 9.1 - 9.7)
+
+**Total APIs:** 7 endpoints (1 POST, 5 GET, 1 PUT, 1 DELETE)
 
 **Test Account:** bacsi1 / 123456 (ROLE_DENTIST with full permissions)
