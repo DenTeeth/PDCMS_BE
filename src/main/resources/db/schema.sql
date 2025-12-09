@@ -1,6 +1,6 @@
 -- ============================================
--- DENTAL CLINIC MANAGEMENT SYSTEM - SCHEMA V32
--- Date: 2025-12-05
+-- DENTAL CLINIC MANAGEMENT SYSTEM - SCHEMA V33
+-- Date: 2025-01-15
 -- PostgreSQL Database Schema - REFERENCE ONLY
 -- ============================================
 -- IMPORTANT: This file is for REFERENCE/DOCUMENTATION purposes only
@@ -14,6 +14,16 @@
 --
 -- This file documents the expected schema structure for reference
 -- ============================================
+-- CHANGES IN V33 (Patient Unban Audit Logs):
+--   - Added patient_unban_audit_logs table for BR-085/BR-086 compliance
+--   - Purpose: Track all patient unban actions for accountability
+--   - BR-085: Receptionists can unban without Manager approval
+--   - BR-086: Mandatory reason logging (10-500 chars) for every unban
+--   - Columns: audit_id, patient_id, previous_no_show_count, performed_by, performed_by_role, reason, timestamp
+--   - Indexes: patient_id, performed_by, timestamp, performed_by_role
+--   - API: POST /api/v1/patients/{id}/unban
+--   - API: GET /api/v1/patients/{id}/unban-history
+--   - Permission: RECEPTIONIST, MANAGER, ADMIN
 -- CHANGES IN V32 (Treatment Plan Doctor Assignment):
 --   - Added assigned_doctor_id column to patient_plan_items table
 --   - Purpose: Allow assigning different doctors to different items within same plan/phase
@@ -963,5 +973,37 @@ CREATE INDEX idx_tooth_status_history_patient ON patient_tooth_status_history(pa
 CREATE INDEX idx_tooth_status_history_changed_by ON patient_tooth_status_history(changed_by);
 
 -- ============================================
--- END OF SCHEMA V32 (Added Tooth Status ENUM + History Tracking)
+-- PATIENT UNBAN AUDIT LOG (BR-085/BR-086)
+-- ============================================
+-- Purpose: Track all patient unban actions for accountability
+-- BR-085: Receptionists can unban without Manager approval
+-- BR-086: Mandatory reason logging for every unban action
+-- ============================================
+
+CREATE TABLE patient_unban_audit_logs (
+    audit_id BIGSERIAL PRIMARY KEY,
+    patient_id INTEGER NOT NULL REFERENCES patients(patient_id) ON DELETE CASCADE,
+    previous_no_show_count INTEGER NOT NULL DEFAULT 0,
+    performed_by VARCHAR(100) NOT NULL,
+    performed_by_role VARCHAR(50) NOT NULL,
+    reason TEXT NOT NULL,
+    timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+COMMENT ON TABLE patient_unban_audit_logs IS 'Audit trail for patient unban actions (BR-085/BR-086)';
+COMMENT ON COLUMN patient_unban_audit_logs.patient_id IS 'Patient who was unbanned';
+COMMENT ON COLUMN patient_unban_audit_logs.previous_no_show_count IS 'No-show count before unban';
+COMMENT ON COLUMN patient_unban_audit_logs.performed_by IS 'Username of staff who performed unban';
+COMMENT ON COLUMN patient_unban_audit_logs.performed_by_role IS 'Role of staff (RECEPTIONIST/MANAGER/ADMIN)';
+COMMENT ON COLUMN patient_unban_audit_logs.reason IS 'Mandatory reason for unban (10-500 chars)';
+COMMENT ON COLUMN patient_unban_audit_logs.timestamp IS 'When the unban action occurred';
+
+-- Indexes for Patient Unban Audit Logs
+CREATE INDEX idx_unban_audit_patient ON patient_unban_audit_logs(patient_id);
+CREATE INDEX idx_unban_audit_performer ON patient_unban_audit_logs(performed_by);
+CREATE INDEX idx_unban_audit_timestamp ON patient_unban_audit_logs(timestamp);
+CREATE INDEX idx_unban_audit_role ON patient_unban_audit_logs(performed_by_role);
+
+-- ============================================
+-- END OF SCHEMA V33 (Added Patient Unban Audit Logs)
 -- ============================================

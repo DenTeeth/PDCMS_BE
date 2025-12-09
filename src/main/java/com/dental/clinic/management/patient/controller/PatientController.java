@@ -8,7 +8,11 @@ import com.dental.clinic.management.patient.dto.response.PatientInfoResponse;
 import com.dental.clinic.management.patient.dto.ToothStatusResponse;
 import com.dental.clinic.management.patient.dto.UpdateToothStatusRequest;
 import com.dental.clinic.management.patient.dto.UpdateToothStatusResponse;
+import com.dental.clinic.management.patient.dto.UnbanPatientRequest;
+import com.dental.clinic.management.patient.dto.UnbanPatientResponse;
+import com.dental.clinic.management.patient.dto.AuditLogResponse;
 import com.dental.clinic.management.patient.service.PatientService;
+import com.dental.clinic.management.patient.service.PatientUnbanService;
 import com.dental.clinic.management.utils.annotation.ApiMessage;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,6 +22,7 @@ import jakarta.validation.Valid;
 
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -42,9 +47,11 @@ import java.util.List;
 public class PatientController {
 
     private final PatientService patientService;
+    private final PatientUnbanService patientUnbanService;
 
-    public PatientController(PatientService patientService) {
+    public PatientController(PatientService patientService, PatientUnbanService patientUnbanService) {
         this.patientService = patientService;
+        this.patientUnbanService = patientUnbanService;
     }
 
     /**
@@ -291,5 +298,43 @@ public class PatientController {
                 patientRequest,
                 changedBy);
         return ResponseEntity.ok().body(response);
+    }
+
+    /**
+     * {@code POST  /patients/:id/unban} : Unban a patient (reset no-show count and booking block)
+     * 
+     * BR-085: Receptionist has authority to unban without Manager approval
+     * BR-086: Must log reason for accountability
+     *
+     * @param patientId the patient ID to unban
+     * @param request   the unban request with reason
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and unban details
+     */
+    @PostMapping("/{id}/unban")
+    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'MANAGER', 'ADMIN')")
+    @ApiMessage("Mở khóa bệnh nhân thành công")
+    @Operation(summary = "Unban patient", description = "Receptionist/Manager/Admin can unban a patient and reset no-show count. Requires reason (10-500 chars) for audit log.")
+    public ResponseEntity<UnbanPatientResponse> unbanPatient(
+            @PathVariable("id") Integer patientId,
+            @Valid @RequestBody UnbanPatientRequest request) {
+        
+        UnbanPatientResponse response = patientUnbanService.unbanPatient(patientId, request.getReason());
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * {@code GET  /patients/:id/unban-history} : Get unban history for a patient
+     *
+     * @param patientId the patient ID
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and audit log list
+     */
+    @GetMapping("/{id}/unban-history")
+    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'MANAGER', 'ADMIN')")
+    @ApiMessage("Lấy lịch sử mở khóa bệnh nhân")
+    @Operation(summary = "Get patient unban history", description = "Get audit log of all unban actions for a specific patient")
+    public ResponseEntity<List<AuditLogResponse>> getUnbanHistory(@PathVariable("id") Integer patientId) {
+        
+        List<AuditLogResponse> history = patientUnbanService.getPatientUnbanHistory(patientId);
+        return ResponseEntity.ok(history);
     }
 }
