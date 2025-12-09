@@ -194,6 +194,25 @@ public class PatientImageService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public List<PatientImageResponse> getImagesByAppointment(Long appointmentId) {
+        log.info("Fetching images for appointment ID: {}", appointmentId);
+
+        Integer appointmentIdInt = appointmentId.intValue();
+        
+        // Find clinical record for this appointment
+        ClinicalRecord clinicalRecord = clinicalRecordRepository.findByAppointment_AppointmentId(appointmentIdInt)
+                .orElseThrow(() -> new NotFoundException("Clinical record not found for appointment ID: " + appointmentId));
+
+        // Get all images for this clinical record
+        List<PatientImage> images = patientImageRepository
+                .findByClinicalRecordClinicalRecordIdOrderByCreatedAtDesc(clinicalRecord.getClinicalRecordId());
+
+        return images.stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
     private Integer getCurrentEmployeeId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.isAuthenticated()) {

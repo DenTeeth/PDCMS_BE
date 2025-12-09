@@ -85,4 +85,13 @@ public class PatientImageController {
         List<PatientImageResponse> response = patientImageService.getImagesByClinicalRecord(clinicalRecordId);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/appointment/{appointmentId}")
+    @PreAuthorize("hasAuthority('PATIENT_IMAGE_READ')")
+    public ResponseEntity<List<PatientImageResponse>> getImagesByAppointment(
+            @PathVariable Long appointmentId) {
+        log.info("REST request to get images for appointment ID: {}", appointmentId);
+        List<PatientImageResponse> response = patientImageService.getImagesByAppointment(appointmentId);
+        return ResponseEntity.ok(response);
+    }
 }
