@@ -5,10 +5,12 @@
 Lấy tất cả hình ảnh liên quan đến một appointment cụ thể. API này truy vấn qua clinical record để lấy tất cả ảnh của appointment đó. Hữu ích khi cần xem tất cả ảnh của một buổi khám cụ thể.
 
 **Khác biệt với API 9.6:**
+
 - **API 9.6** lấy ảnh theo clinical_record_id
 - **API 9.7** lấy ảnh theo appointment_id (một appointment có thể có nhiều ảnh qua clinical record)
 
 **Relationship:**
+
 ```
 Appointment (1) ----> (1) Clinical Record ----> (N) Patient Images
 ```
@@ -27,9 +29,9 @@ GET /api/v1/patient-images/appointment/{appointmentId}
 
 ### Path Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| appointmentId | Long | Yes | ID của appointment |
+| Parameter     | Type | Required | Description        |
+| ------------- | ---- | -------- | ------------------ |
+| appointmentId | Long | Yes      | ID của appointment |
 
 ### Headers
 
@@ -88,10 +90,10 @@ Authorization: Bearer {accessToken}
 
 ### Error Responses
 
-| Status Code | Error Message | Description |
-|-------------|---------------|-------------|
-| 403 | Forbidden | Không có quyền PATIENT_IMAGE_READ |
-| 404 | Not Found | Clinical record not found for appointment (appointment chưa có clinical record) |
+| Status Code | Error Message | Description                                                                     |
+| ----------- | ------------- | ------------------------------------------------------------------------------- |
+| 403         | Forbidden     | Không có quyền PATIENT_IMAGE_READ                                               |
+| 404         | Not Found     | Clinical record not found for appointment (appointment chưa có clinical record) |
 
 ## Curl Command
 
@@ -113,16 +115,16 @@ async function getImagesByAppointment(
     `http://localhost:8080/api/v1/patient-images/appointment/${appointmentId}`,
     {
       headers: {
-        'Authorization': `Bearer ${token}`
-      }
+        Authorization: `Bearer ${token}`,
+      },
     }
   );
 
   if (!response.ok) {
     if (response.status === 404) {
-      throw new Error('No clinical record found for this appointment');
+      throw new Error("No clinical record found for this appointment");
     }
-    throw new Error('Failed to fetch images');
+    throw new Error("Failed to fetch images");
   }
 
   return await response.json();
@@ -149,7 +151,7 @@ const AppointmentDetail = ({ appointmentId }) => {
         const imgs = await getImagesByAppointment(appointmentId, accessToken);
         setImages(imgs);
       } catch (error) {
-        console.error('Failed to load data:', error);
+        console.error("Failed to load data:", error);
         // If no clinical record yet, images will be empty
         setImages([]);
       } finally {
@@ -175,7 +177,7 @@ const AppointmentDetail = ({ appointmentId }) => {
         <p>Loading images...</p>
       ) : images.length > 0 ? (
         <div className="image-gallery">
-          {images.map(image => (
+          {images.map((image) => (
             <div key={image.imageId} className="image-card">
               <img src={image.imageUrl} alt={image.description} />
               <p className="image-type">{image.imageType}</p>
@@ -222,22 +224,25 @@ const AppointmentDetail = ({ appointmentId }) => {
 
 ## Comparison with Other APIs
 
-| API | Scope | Use Case |
-|-----|-------|----------|
-| **API 9.2** | All images of patient | Patient gallery, search across all appointments |
-| **API 9.6** | Images of clinical record | Clinical record detail page |
-| **API 9.7** | Images of appointment | Appointment detail page, session review |
+| API         | Scope                     | Use Case                                        |
+| ----------- | ------------------------- | ----------------------------------------------- |
+| **API 9.2** | All images of patient     | Patient gallery, search across all appointments |
+| **API 9.6** | Images of clinical record | Clinical record detail page                     |
+| **API 9.7** | Images of appointment     | Appointment detail page, session review         |
 
 **When to use API 9.7:**
+
 - Bạn có appointment_id và muốn xem tất cả ảnh của appointment đó
 - Hiển thị trong appointment detail page
 - Không cần biết clinical_record_id
 
 **When to use API 9.6:**
+
 - Bạn đã có clinical_record_id
 - Hiển thị trong clinical record detail page
 
 **When to use API 9.2:**
+
 - Muốn xem tất cả ảnh của bệnh nhân
 - Cần filter theo type, date
 - Patient image gallery
@@ -328,13 +333,13 @@ async function loadAppointmentImages(appointmentId: number, token: string) {
     const images = await getImagesByAppointment(appointmentId, token);
     return images;
   } catch (error) {
-    if (error.message.includes('No clinical record')) {
+    if (error.message.includes("No clinical record")) {
       // Appointment chưa có clinical record
-      console.log('This appointment has no clinical record yet');
+      console.log("This appointment has no clinical record yet");
       return [];
     }
     // Other errors
-    console.error('Failed to load images:', error);
+    console.error("Failed to load images:", error);
     throw error;
   }
 }
@@ -355,7 +360,7 @@ interface AppointmentWithImages {
   appointmentStartTime: string;
   appointmentEndTime: string;
   status: string;
-  
+
   // Images
   images: PatientImage[];
   imageCount: number;
@@ -367,11 +372,11 @@ async function getAppointmentWithImages(
 ): Promise<AppointmentWithImages> {
   const appointment = await getAppointmentDetails(appointmentId, token);
   const images = await getImagesByAppointment(appointmentId, token);
-  
+
   return {
     ...appointment,
     images,
-    imageCount: images.length
+    imageCount: images.length,
   };
 }
 ```
@@ -379,11 +384,13 @@ async function getAppointmentWithImages(
 ## Test Data
 
 **Appointments (from seed):**
+
 - Create appointments first using Appointment API
 - Then create clinical records
 - Then create images
 
 **Test Credentials:**
+
 - Username: `bacsi1`, Password: `123456` (ROLE_DENTIST)
 - Username: `admin`, Password: `123456` (ROLE_ADMIN)
 - Username: `reception1`, Password: `123456` (ROLE_RECEPTIONIST)
@@ -391,10 +398,12 @@ async function getAppointmentWithImages(
 ## Performance Notes
 
 1. **Two Queries:**
+
    - First: Find clinical record by appointment_id
    - Second: Find images by clinical_record_id
 
 2. **Indexes Used:**
+
    - `clinical_records.appointment_id` (unique index)
    - `patient_images.clinical_record_id` (index)
 
@@ -409,6 +418,6 @@ async function getAppointmentWithImages(
 
 ---
 
-**Module:** Patient Images (API 9.7)  
-**Last Updated:** December 9, 2025  
+**Module:** Patient Images (API 9.7)
+**Last Updated:** December 9, 2025
 **Version:** 1.0

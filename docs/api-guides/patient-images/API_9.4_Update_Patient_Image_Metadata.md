@@ -18,9 +18,9 @@ PUT /api/v1/patient-images/{imageId}
 
 ### Path Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| imageId | Long | Yes | ID của hình ảnh cần cập nhật |
+| Parameter | Type | Required | Description                  |
+| --------- | ---- | -------- | ---------------------------- |
+| imageId   | Long | Yes      | ID của hình ảnh cần cập nhật |
 
 ### Headers
 
@@ -44,12 +44,12 @@ All fields are **OPTIONAL**. Chỉ gửi fields cần update.
 
 ### Field Descriptions
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| imageType | Enum | No | Loại ảnh: XRAY, PHOTO, BEFORE_TREATMENT, AFTER_TREATMENT, SCAN, OTHER |
-| description | String | No | Mô tả ảnh mới |
-| capturedDate | Date | No | Ngày chụp ảnh (YYYY-MM-DD) |
-| clinicalRecordId | Long | No | Link đến clinical record |
+| Field            | Type   | Required | Description                                                           |
+| ---------------- | ------ | -------- | --------------------------------------------------------------------- |
+| imageType        | Enum   | No       | Loại ảnh: XRAY, PHOTO, BEFORE_TREATMENT, AFTER_TREATMENT, SCAN, OTHER |
+| description      | String | No       | Mô tả ảnh mới                                                         |
+| capturedDate     | Date   | No       | Ngày chụp ảnh (YYYY-MM-DD)                                            |
+| clinicalRecordId | Long   | No       | Link đến clinical record                                              |
 
 **Note:** Không thể update `imageUrl` hoặc `cloudinaryPublicId`. Nếu cần thay đổi file, phải DELETE và CREATE mới.
 
@@ -79,12 +79,12 @@ All fields are **OPTIONAL**. Chỉ gửi fields cần update.
 
 ### Error Responses
 
-| Status Code | Error Message | Description |
-|-------------|---------------|-------------|
-| 400 | Bad Request | Clinical record không thuộc về bệnh nhân này |
-| 403 | Forbidden | Không có quyền PATIENT_IMAGE_UPDATE |
-| 404 | Not Found | Image không tồn tại |
-| 404 | Not Found | Clinical record không tồn tại (nếu có clinicalRecordId) |
+| Status Code | Error Message | Description                                             |
+| ----------- | ------------- | ------------------------------------------------------- |
+| 400         | Bad Request   | Clinical record không thuộc về bệnh nhân này            |
+| 403         | Forbidden     | Không có quyền PATIENT_IMAGE_UPDATE                     |
+| 404         | Not Found     | Image không tồn tại                                     |
+| 404         | Not Found     | Clinical record không tồn tại (nếu có clinicalRecordId) |
 
 ## Curl Commands
 
@@ -159,27 +159,31 @@ async function updateImageMetadata(
   const response = await fetch(
     `http://localhost:8080/api/v1/patient-images/${imageId}`,
     {
-      method: 'PUT',
+      method: "PUT",
       headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
       },
-      body: JSON.stringify(updates)
+      body: JSON.stringify(updates),
     }
   );
 
   if (!response.ok) {
-    throw new Error('Failed to update image');
+    throw new Error("Failed to update image");
   }
 
   return await response.json();
 }
 
 // Usage
-await updateImageMetadata(1, {
-  description: 'New description',
-  imageType: 'BEFORE_TREATMENT'
-}, accessToken);
+await updateImageMetadata(
+  1,
+  {
+    description: "New description",
+    imageType: "BEFORE_TREATMENT",
+  },
+  accessToken
+);
 ```
 
 ### Edit Form Example
@@ -190,7 +194,7 @@ const [formData, setFormData] = useState({
   imageType: image.imageType,
   description: image.description,
   capturedDate: image.capturedDate,
-  clinicalRecordId: image.clinicalRecordId
+  clinicalRecordId: image.clinicalRecordId,
 });
 
 const handleSubmit = async () => {
@@ -201,9 +205,9 @@ const handleSubmit = async () => {
       accessToken
     );
     // Update UI with new data
-    console.log('Updated successfully:', updated);
+    console.log("Updated successfully:", updated);
   } catch (error) {
-    console.error('Update failed:', error);
+    console.error("Update failed:", error);
   }
 };
 ```
@@ -232,6 +236,7 @@ const handleSubmit = async () => {
 ## Test Data
 
 **Test Credentials:**
+
 - Username: `bacsi1`, Password: `123456` (ROLE_DENTIST - can update)
 - Username: `admin`, Password: `123456` (ROLE_ADMIN - can update)
 - Username: `reception1`, Password: `123456` (ROLE_RECEPTIONIST - CANNOT update)
@@ -244,6 +249,6 @@ const handleSubmit = async () => {
 
 ---
 
-**Module:** Patient Images (API 9.4)  
-**Last Updated:** December 9, 2025  
+**Module:** Patient Images (API 9.4)
+**Last Updated:** December 9, 2025
 **Version:** 1.0

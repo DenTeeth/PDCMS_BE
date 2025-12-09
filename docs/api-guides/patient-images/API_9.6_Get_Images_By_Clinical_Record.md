@@ -18,9 +18,9 @@ GET /api/v1/patient-images/clinical-record/{clinicalRecordId}
 
 ### Path Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| clinicalRecordId | Long | Yes | ID của clinical record |
+| Parameter        | Type | Required | Description            |
+| ---------------- | ---- | -------- | ---------------------- |
+| clinicalRecordId | Long | Yes      | ID của clinical record |
 
 ### Headers
 
@@ -79,10 +79,10 @@ Authorization: Bearer {accessToken}
 
 ### Error Responses
 
-| Status Code | Error Message | Description |
-|-------------|---------------|-------------|
-| 403 | Forbidden | Không có quyền PATIENT_IMAGE_READ |
-| 404 | Not Found | Clinical record không tồn tại |
+| Status Code | Error Message | Description                       |
+| ----------- | ------------- | --------------------------------- |
+| 403         | Forbidden     | Không có quyền PATIENT_IMAGE_READ |
+| 404         | Not Found     | Clinical record không tồn tại     |
 
 ## Curl Command
 
@@ -104,16 +104,16 @@ async function getImagesByClinicalRecord(
     `http://localhost:8080/api/v1/patient-images/clinical-record/${clinicalRecordId}`,
     {
       headers: {
-        'Authorization': `Bearer ${token}`
-      }
+        Authorization: `Bearer ${token}`,
+      },
     }
   );
 
   if (!response.ok) {
     if (response.status === 404) {
-      throw new Error('Clinical record not found');
+      throw new Error("Clinical record not found");
     }
-    throw new Error('Failed to fetch images');
+    throw new Error("Failed to fetch images");
   }
 
   return await response.json();
@@ -126,29 +126,29 @@ async function getImagesByClinicalRecord(
 // React/Vue component for Clinical Record Detail
 const ClinicalRecordDetail = ({ recordId }) => {
   const [images, setImages] = useState([]);
-  
+
   useEffect(() => {
     async function loadImages() {
       try {
         const data = await getImagesByClinicalRecord(recordId, accessToken);
         setImages(data);
       } catch (error) {
-        console.error('Failed to load images:', error);
+        console.error("Failed to load images:", error);
       }
     }
-    
+
     loadImages();
   }, [recordId]);
 
   return (
     <div>
       <h3>Clinical Record #{recordId}</h3>
-      
+
       {/* Clinical record details */}
-      
+
       <h4>Attached Images ({images.length})</h4>
       <div className="image-gallery">
-        {images.map(image => (
+        {images.map((image) => (
           <div key={image.imageId} className="image-card">
             <img src={image.imageUrl} alt={image.description} />
             <p>{image.imageType}</p>
@@ -156,10 +156,8 @@ const ClinicalRecordDetail = ({ recordId }) => {
           </div>
         ))}
       </div>
-      
-      {images.length === 0 && (
-        <p>Không có ảnh nào được đính kèm</p>
-      )}
+
+      {images.length === 0 && <p>Không có ảnh nào được đính kèm</p>}
     </div>
   );
 };
@@ -191,12 +189,12 @@ Clinical Record (1) -----> (N) Patient Images
 
 ## Comparison with API 9.2
 
-| Feature | API 9.2 (Get by Patient) | API 9.6 (Get by Clinical Record) |
-|---------|-------------------------|----------------------------------|
-| Scope | Tất cả ảnh của patient | Chỉ ảnh của 1 clinical record |
-| Filter | ✅ imageType, date range | ❌ No filters |
-| Pagination | ✅ Yes | ❌ No (full list) |
-| Use Case | Patient gallery | Clinical record detail |
+| Feature    | API 9.2 (Get by Patient) | API 9.6 (Get by Clinical Record) |
+| ---------- | ------------------------ | -------------------------------- |
+| Scope      | Tất cả ảnh của patient   | Chỉ ảnh của 1 clinical record    |
+| Filter     | ✅ imageType, date range | ❌ No filters                    |
+| Pagination | ✅ Yes                   | ❌ No (full list)                |
+| Use Case   | Patient gallery          | Clinical record detail           |
 
 ## Test Scenarios
 
@@ -255,7 +253,7 @@ interface ClinicalRecord {
   examinationFindings: string;
   treatmentNotes: string;
   followUpDate: string;
-  
+
   // Can include images
   images?: PatientImage[];
 }
@@ -268,15 +266,15 @@ async function loadClinicalRecordWithImages(recordId: number, token: string) {
   // Load clinical record details
   const record = await fetch(
     `http://localhost:8080/api/v1/clinical-records/${recordId}`,
-    { headers: { 'Authorization': `Bearer ${token}` } }
-  ).then(r => r.json());
-  
+    { headers: { Authorization: `Bearer ${token}` } }
+  ).then((r) => r.json());
+
   // Load associated images
   const images = await getImagesByClinicalRecord(recordId, token);
-  
+
   return {
     ...record,
-    images
+    images,
   };
 }
 ```
@@ -284,11 +282,13 @@ async function loadClinicalRecordWithImages(recordId: number, token: string) {
 ## Test Data
 
 **Clinical Records (from seed or created):**
+
 - Create clinical records using Clinical Records API first
 - Then link images to clinical records
 - Use this API to retrieve linked images
 
 **Test Credentials:**
+
 - Username: `bacsi1`, Password: `123456` (ROLE_DENTIST)
 - Username: `admin`, Password: `123456` (ROLE_ADMIN)
 - Username: `reception1`, Password: `123456` (ROLE_RECEPTIONIST)
@@ -315,6 +315,6 @@ async function loadClinicalRecordWithImages(recordId: number, token: string) {
 
 ---
 
-**Module:** Patient Images (API 9.6)  
-**Last Updated:** December 9, 2025  
+**Module:** Patient Images (API 9.6)
+**Last Updated:** December 9, 2025
 **Version:** 1.0

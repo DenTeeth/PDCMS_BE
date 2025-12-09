@@ -18,9 +18,9 @@ GET /api/v1/patient-images/{imageId}
 
 ### Path Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| imageId | Long | Yes | ID của hình ảnh cần lấy |
+| Parameter | Type | Required | Description             |
+| --------- | ---- | -------- | ----------------------- |
+| imageId   | Long | Yes      | ID của hình ảnh cần lấy |
 
 ### Headers
 
@@ -54,28 +54,28 @@ Authorization: Bearer {accessToken}
 
 ### Response Fields
 
-| Field | Type | Description |
-|-------|------|-------------|
-| imageId | Long | ID của hình ảnh |
-| patientId | Long | ID của bệnh nhân |
-| patientName | String | Tên bệnh nhân |
-| clinicalRecordId | Long | ID của clinical record (nullable) |
-| imageUrl | String | URL đầy đủ trên Cloudinary |
-| cloudinaryPublicId | String | Public ID trên Cloudinary |
-| imageType | Enum | Loại ảnh: XRAY, PHOTO, etc. |
-| description | String | Mô tả ảnh |
-| capturedDate | Date | Ngày chụp ảnh |
-| uploadedBy | Long | ID của employee đã upload |
-| uploaderName | String | Tên của employee đã upload |
-| createdAt | DateTime | Thời gian tạo record |
-| updatedAt | DateTime | Thời gian cập nhật gần nhất |
+| Field              | Type     | Description                       |
+| ------------------ | -------- | --------------------------------- |
+| imageId            | Long     | ID của hình ảnh                   |
+| patientId          | Long     | ID của bệnh nhân                  |
+| patientName        | String   | Tên bệnh nhân                     |
+| clinicalRecordId   | Long     | ID của clinical record (nullable) |
+| imageUrl           | String   | URL đầy đủ trên Cloudinary        |
+| cloudinaryPublicId | String   | Public ID trên Cloudinary         |
+| imageType          | Enum     | Loại ảnh: XRAY, PHOTO, etc.       |
+| description        | String   | Mô tả ảnh                         |
+| capturedDate       | Date     | Ngày chụp ảnh                     |
+| uploadedBy         | Long     | ID của employee đã upload         |
+| uploaderName       | String   | Tên của employee đã upload        |
+| createdAt          | DateTime | Thời gian tạo record              |
+| updatedAt          | DateTime | Thời gian cập nhật gần nhất       |
 
 ### Error Responses
 
-| Status Code | Error Message | Description |
-|-------------|---------------|-------------|
-| 403 | Forbidden | Không có quyền PATIENT_IMAGE_READ |
-| 404 | Not Found | Image không tồn tại với ID đã cho |
+| Status Code | Error Message | Description                       |
+| ----------- | ------------- | --------------------------------- |
+| 403         | Forbidden     | Không có quyền PATIENT_IMAGE_READ |
+| 404         | Not Found     | Image không tồn tại với ID đã cho |
 
 ## Curl Command
 
@@ -94,16 +94,16 @@ async function getImageDetails(imageId: number, token: string) {
     `http://localhost:8080/api/v1/patient-images/${imageId}`,
     {
       headers: {
-        'Authorization': `Bearer ${token}`
-      }
+        Authorization: `Bearer ${token}`,
+      },
     }
   );
 
   if (!response.ok) {
     if (response.status === 404) {
-      throw new Error('Image not found');
+      throw new Error("Image not found");
     }
-    throw new Error('Failed to fetch image details');
+    throw new Error("Failed to fetch image details");
   }
 
   return await response.json();
@@ -124,7 +124,7 @@ const image = await getImageDetails(1, accessToken);
   <p>Captured Date: {image.capturedDate}</p>
   <p>Uploaded by: {image.uploaderName}</p>
   <p>Patient: {image.patientName}</p>
-</div>
+</div>;
 ```
 
 ## Use Cases
@@ -137,10 +137,12 @@ const image = await getImageDetails(1, accessToken);
 ## Test Data
 
 **Available Images (after seeding or creation):**
+
 - Create test images using API 9.1 first
 - Then use returned imageId to test this API
 
 **Test Credentials:**
+
 - Username: `bacsi1`, Password: `123456` (ROLE_DENTIST)
 - Username: `admin`, Password: `123456` (ROLE_ADMIN)
 - Username: `reception1`, Password: `123456` (ROLE_RECEPTIONIST)
@@ -160,6 +162,6 @@ const image = await getImageDetails(1, accessToken);
 
 ---
 
-**Module:** Patient Images (API 9.3)  
-**Last Updated:** December 9, 2025  
+**Module:** Patient Images (API 9.3)
+**Last Updated:** December 9, 2025
 **Version:** 1.0

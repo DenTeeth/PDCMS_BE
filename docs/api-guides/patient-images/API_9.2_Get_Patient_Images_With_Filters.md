@@ -18,20 +18,20 @@ GET /api/v1/patient-images/patient/{patientId}
 
 ### Path Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| patientId | Long | Yes | ID của bệnh nhân |
+| Parameter | Type | Required | Description      |
+| --------- | ---- | -------- | ---------------- |
+| patientId | Long | Yes      | ID của bệnh nhân |
 
 ### Query Parameters
 
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| imageType | Enum | No | - | Filter theo loại ảnh: XRAY, PHOTO, BEFORE_TREATMENT, AFTER_TREATMENT, SCAN, OTHER |
-| clinicalRecordId | Long | No | - | Filter theo clinical record |
-| fromDate | Date | No | - | Lọc từ ngày (format: YYYY-MM-DD) |
-| toDate | Date | No | - | Lọc đến ngày (format: YYYY-MM-DD) |
-| page | Integer | No | 0 | Số trang (bắt đầu từ 0) |
-| size | Integer | No | 20 | Số items mỗi trang |
+| Parameter        | Type    | Required | Default | Description                                                                       |
+| ---------------- | ------- | -------- | ------- | --------------------------------------------------------------------------------- |
+| imageType        | Enum    | No       | -       | Filter theo loại ảnh: XRAY, PHOTO, BEFORE_TREATMENT, AFTER_TREATMENT, SCAN, OTHER |
+| clinicalRecordId | Long    | No       | -       | Filter theo clinical record                                                       |
+| fromDate         | Date    | No       | -       | Lọc từ ngày (format: YYYY-MM-DD)                                                  |
+| toDate           | Date    | No       | -       | Lọc đến ngày (format: YYYY-MM-DD)                                                 |
+| page             | Integer | No       | 0       | Số trang (bắt đầu từ 0)                                                           |
+| size             | Integer | No       | 20      | Số items mỗi trang                                                                |
 
 ### Headers
 
@@ -88,21 +88,21 @@ Authorization: Bearer {accessToken}
 
 ### Response Fields
 
-| Field | Type | Description |
-|-------|------|-------------|
-| images | Array | Danh sách hình ảnh |
-| currentPage | Integer | Trang hiện tại |
-| totalPages | Integer | Tổng số trang |
-| totalElements | Long | Tổng số phần tử |
-| pageSize | Integer | Kích thước trang |
+| Field         | Type    | Description        |
+| ------------- | ------- | ------------------ |
+| images        | Array   | Danh sách hình ảnh |
+| currentPage   | Integer | Trang hiện tại     |
+| totalPages    | Integer | Tổng số trang      |
+| totalElements | Long    | Tổng số phần tử    |
+| pageSize      | Integer | Kích thước trang   |
 
 ### Error Responses
 
-| Status Code | Error Message | Description |
-|-------------|---------------|-------------|
-| 400 | Bad Request | Patient ID không được cung cấp |
-| 403 | Forbidden | Không có quyền PATIENT_IMAGE_READ |
-| 404 | Not Found | Patient không tồn tại |
+| Status Code | Error Message | Description                       |
+| ----------- | ------------- | --------------------------------- |
+| 400         | Bad Request   | Patient ID không được cung cấp    |
+| 403         | Forbidden     | Không có quyền PATIENT_IMAGE_READ |
+| 404         | Not Found     | Patient không tồn tại             |
 
 ## Curl Commands
 
@@ -170,8 +170,8 @@ const response = await fetch(
   `http://localhost:8080/api/v1/patient-images/patient/${patientId}`,
   {
     headers: {
-      'Authorization': `Bearer ${token}`
-    }
+      Authorization: `Bearer ${token}`,
+    },
   }
 );
 
@@ -188,8 +188,8 @@ const response = await fetch(
   `http://localhost:8080/api/v1/patient-images/patient/${patientId}?imageType=XRAY`,
   {
     headers: {
-      'Authorization': `Bearer ${token}`
-    }
+      Authorization: `Bearer ${token}`,
+    },
   }
 );
 ```
@@ -202,8 +202,8 @@ const response = await fetch(
   `http://localhost:8080/api/v1/patient-images/patient/${patientId}?page=1&size=10`,
   {
     headers: {
-      'Authorization': `Bearer ${token}`
-    }
+      Authorization: `Bearer ${token}`,
+    },
   }
 );
 ```
@@ -211,10 +211,12 @@ const response = await fetch(
 ## Test Data
 
 **Available Patients (from seed):**
+
 - Patient ID: 1 - Nguyen Van A (BN001)
 - Patient ID: 2 - Tran Thi B (BN002)
 
 **Test Credentials:**
+
 - Username: `bacsi1`, Password: `123456` (ROLE_DENTIST)
 - Username: `admin`, Password: `123456` (ROLE_ADMIN)
 - Username: `reception1`, Password: `123456` (ROLE_RECEPTIONIST - Read only)
@@ -235,6 +237,6 @@ const response = await fetch(
 
 ---
 
-**Module:** Patient Images (API 9.2)  
-**Last Updated:** December 9, 2025  
+**Module:** Patient Images (API 9.2)
+**Last Updated:** December 9, 2025
 **Version:** 1.0

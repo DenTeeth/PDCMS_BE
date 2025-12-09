@@ -199,10 +199,11 @@ public class PatientImageService {
         log.info("Fetching images for appointment ID: {}", appointmentId);
 
         Integer appointmentIdInt = appointmentId.intValue();
-        
+
         // Find clinical record for this appointment
         ClinicalRecord clinicalRecord = clinicalRecordRepository.findByAppointment_AppointmentId(appointmentIdInt)
-                .orElseThrow(() -> new NotFoundException("Clinical record not found for appointment ID: " + appointmentId));
+                .orElseThrow(
+                        () -> new NotFoundException("Clinical record not found for appointment ID: " + appointmentId));
 
         // Get all images for this clinical record
         List<PatientImage> images = patientImageRepository

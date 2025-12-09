@@ -39,15 +39,15 @@ Content-Type: application/json
 
 ### Field Descriptions
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| patientId | Long | Yes | ID của bệnh nhân |
-| clinicalRecordId | Long | No | ID của clinical record (optional) |
-| imageUrl | String | Yes | Full URL từ Cloudinary |
-| cloudinaryPublicId | String | Yes | Public ID trên Cloudinary (dùng để xóa) |
-| imageType | Enum | Yes | Loại ảnh: XRAY, PHOTO, BEFORE_TREATMENT, AFTER_TREATMENT, SCAN, OTHER |
-| description | String | No | Mô tả ảnh |
-| capturedDate | Date | No | Ngày chụp ảnh (YYYY-MM-DD) |
+| Field              | Type   | Required | Description                                                           |
+| ------------------ | ------ | -------- | --------------------------------------------------------------------- |
+| patientId          | Long   | Yes      | ID của bệnh nhân                                                      |
+| clinicalRecordId   | Long   | No       | ID của clinical record (optional)                                     |
+| imageUrl           | String | Yes      | Full URL từ Cloudinary                                                |
+| cloudinaryPublicId | String | Yes      | Public ID trên Cloudinary (dùng để xóa)                               |
+| imageType          | Enum   | Yes      | Loại ảnh: XRAY, PHOTO, BEFORE_TREATMENT, AFTER_TREATMENT, SCAN, OTHER |
+| description        | String | No       | Mô tả ảnh                                                             |
+| capturedDate       | Date   | No       | Ngày chụp ảnh (YYYY-MM-DD)                                            |
 
 ### Image Types
 
@@ -84,13 +84,13 @@ Content-Type: application/json
 
 ### Error Responses
 
-| Status Code | Error Message | Description |
-|-------------|---------------|-------------|
-| 400 | Bad Request | Thiếu required fields hoặc dữ liệu không hợp lệ |
-| 403 | Forbidden | Không có quyền PATIENT_IMAGE_CREATE |
-| 404 | Not Found | Patient không tồn tại |
-| 404 | Not Found | Clinical record không tồn tại (nếu có clinicalRecordId) |
-| 400 | Bad Request | Clinical record không thuộc về bệnh nhân này |
+| Status Code | Error Message | Description                                             |
+| ----------- | ------------- | ------------------------------------------------------- |
+| 400         | Bad Request   | Thiếu required fields hoặc dữ liệu không hợp lệ         |
+| 403         | Forbidden     | Không có quyền PATIENT_IMAGE_CREATE                     |
+| 404         | Not Found     | Patient không tồn tại                                   |
+| 404         | Not Found     | Clinical record không tồn tại (nếu có clinicalRecordId) |
+| 400         | Bad Request   | Clinical record không thuộc về bệnh nhân này            |
 
 ## Curl Command
 
@@ -136,6 +136,7 @@ patients/
 ```
 
 **Naming Convention:**
+
 ```
 patients/patient_{patientId}/{imageType}/patient_{patientId}_{timestamp}_{random}.{ext}
 ```
@@ -143,10 +144,12 @@ patients/patient_{patientId}/{imageType}/patient_{patientId}_{timestamp}_{random
 ## Test Data
 
 **Available Patients (from seed):**
+
 - Patient ID: 1 - Nguyen Van A (BN001)
 - Patient ID: 2 - Tran Thi B (BN002)
 
 **Test Credentials:**
+
 - Username: `bacsi1`, Password: `123456` (ROLE_DENTIST)
 - Username: `admin`, Password: `123456` (ROLE_ADMIN)
 
@@ -166,6 +169,6 @@ patients/patient_{patientId}/{imageType}/patient_{patientId}_{timestamp}_{random
 
 ---
 
-**Module:** Patient Images (API 9.1)  
-**Last Updated:** December 9, 2025  
+**Module:** Patient Images (API 9.1)
+**Last Updated:** December 9, 2025
 **Version:** 1.0
