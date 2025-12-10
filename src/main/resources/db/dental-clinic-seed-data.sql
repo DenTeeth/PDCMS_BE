@@ -4881,46 +4881,73 @@ SELECT setval('service_consumables_link_id_seq', (SELECT COALESCE(MAX(link_id), 
 -- ============================================
 
 -- Blood Pressure - Systolic (mmHg)
-INSERT INTO vital_signs_reference (vital_type, age_min, age_max, normal_min, normal_max, low_threshold, high_threshold, unit, description, effective_date, is_active) VALUES
-('BLOOD_PRESSURE_SYSTOLIC', 0, 12, 80, 110, 70, 120, 'mmHg', 'Huyet ap tam thu - Tre em 0-12 tuoi', '2025-01-01', TRUE),
-('BLOOD_PRESSURE_SYSTOLIC', 13, 17, 90, 120, 80, 130, 'mmHg', 'Huyet ap tam thu - Thanh thieu nien 13-17 tuoi', '2025-01-01', TRUE),
-('BLOOD_PRESSURE_SYSTOLIC', 18, 59, 90, 120, 80, 140, 'mmHg', 'Huyet ap tam thu - Nguoi lon 18-59 tuoi', '2025-01-01', TRUE),
-('BLOOD_PRESSURE_SYSTOLIC', 60, NULL, 90, 130, 80, 150, 'mmHg', 'Huyet ap tam thu - Nguoi cao tuoi >= 60 tuoi', '2025-01-01', TRUE);
+INSERT INTO vital_signs_reference (vital_type, age_min, age_max, normal_min, normal_max, low_threshold, high_threshold, unit, description, effective_date, is_active, created_at, updated_at) VALUES
+('BLOOD_PRESSURE_SYSTOLIC', 0, 12, 80, 110, 70, 120, 'mmHg', 'Huyet ap tam thu - Tre em 0-12 tuoi', '2025-01-01', TRUE, NOW(), NOW()),
+('BLOOD_PRESSURE_SYSTOLIC', 13, 17, 90, 120, 80, 130, 'mmHg', 'Huyet ap tam thu - Thanh thieu nien 13-17 tuoi', '2025-01-01', TRUE, NOW(), NOW()),
+('BLOOD_PRESSURE_SYSTOLIC', 18, 59, 90, 120, 80, 140, 'mmHg', 'Huyet ap tam thu - Nguoi lon 18-59 tuoi', '2025-01-01', TRUE, NOW(), NOW()),
+('BLOOD_PRESSURE_SYSTOLIC', 60, NULL, 90, 130, 80, 150, 'mmHg', 'Huyet ap tam thu - Nguoi cao tuoi >= 60 tuoi', '2025-01-01', TRUE, NOW(), NOW());
 
 -- Blood Pressure - Diastolic (mmHg)
-INSERT INTO vital_signs_reference (vital_type, age_min, age_max, normal_min, normal_max, low_threshold, high_threshold, unit, description, effective_date, is_active) VALUES
-('BLOOD_PRESSURE_DIASTOLIC', 0, 12, 50, 70, 40, 80, 'mmHg', 'Huyet ap tam truong - Tre em 0-12 tuoi', '2025-01-01', TRUE),
-('BLOOD_PRESSURE_DIASTOLIC', 13, 17, 60, 80, 50, 85, 'mmHg', 'Huyet ap tam truong - Thanh thieu nien 13-17 tuoi', '2025-01-01', TRUE),
-('BLOOD_PRESSURE_DIASTOLIC', 18, 59, 60, 80, 50, 90, 'mmHg', 'Huyet ap tam truong - Nguoi lon 18-59 tuoi', '2025-01-01', TRUE),
-('BLOOD_PRESSURE_DIASTOLIC', 60, NULL, 60, 85, 50, 95, 'mmHg', 'Huyet ap tam truong - Nguoi cao tuoi >= 60 tuoi', '2025-01-01', TRUE);
+INSERT INTO vital_signs_reference (vital_type, age_min, age_max, normal_min, normal_max, low_threshold, high_threshold, unit, description, effective_date, is_active, created_at, updated_at) VALUES
+('BLOOD_PRESSURE_DIASTOLIC', 0, 12, 50, 70, 40, 80, 'mmHg', 'Huyet ap tam truong - Tre em 0-12 tuoi', '2025-01-01', TRUE, NOW(), NOW()),
+('BLOOD_PRESSURE_DIASTOLIC', 13, 17, 60, 80, 50, 85, 'mmHg', 'Huyet ap tam truong - Thanh thieu nien 13-17 tuoi', '2025-01-01', TRUE, NOW(), NOW()),
+('BLOOD_PRESSURE_DIASTOLIC', 18, 59, 60, 80, 50, 90, 'mmHg', 'Huyet ap tam truong - Nguoi lon 18-59 tuoi', '2025-01-01', TRUE, NOW(), NOW()),
+('BLOOD_PRESSURE_DIASTOLIC', 60, NULL, 60, 85, 50, 95, 'mmHg', 'Huyet ap tam truong - Nguoi cao tuoi >= 60 tuoi', '2025-01-01', TRUE, NOW(), NOW());
 
 -- Heart Rate (bpm - beats per minute)
-INSERT INTO vital_signs_reference (vital_type, age_min, age_max, normal_min, normal_max, low_threshold, high_threshold, unit, description, effective_date, is_active) VALUES
-('HEART_RATE', 0, 1, 100, 160, 90, 180, 'bpm', 'Nhip tim - Tre so sinh', '2025-01-01', TRUE),
-('HEART_RATE', 2, 5, 80, 130, 70, 150, 'bpm', 'Nhip tim - Tre nho 2-5 tuoi', '2025-01-01', TRUE),
-('HEART_RATE', 6, 12, 70, 110, 60, 130, 'bpm', 'Nhip tim - Tre em 6-12 tuoi', '2025-01-01', TRUE),
-('HEART_RATE', 13, 17, 60, 100, 50, 120, 'bpm', 'Nhip tim - Thanh thieu nien 13-17 tuoi', '2025-01-01', TRUE),
-('HEART_RATE', 18, 64, 60, 100, 50, 120, 'bpm', 'Nhip tim - Nguoi lon 18-64 tuoi', '2025-01-01', TRUE),
-('HEART_RATE', 65, NULL, 60, 100, 50, 110, 'bpm', 'Nhip tim - Nguoi cao tuoi >= 65 tuoi', '2025-01-01', TRUE);
+INSERT INTO vital_signs_reference (vital_type, age_min, age_max, normal_min, normal_max, low_threshold, high_threshold, unit, description, effective_date, is_active, created_at, updated_at) VALUES
+('HEART_RATE', 0, 1, 100, 160, 90, 180, 'bpm', 'Nhip tim - Tre so sinh', '2025-01-01', TRUE, NOW(), NOW()),
+('HEART_RATE', 2, 5, 80, 130, 70, 150, 'bpm', 'Nhip tim - Tre nho 2-5 tuoi', '2025-01-01', TRUE, NOW(), NOW()),
+('HEART_RATE', 6, 12, 70, 110, 60, 130, 'bpm', 'Nhip tim - Tre em 6-12 tuoi', '2025-01-01', TRUE, NOW(), NOW()),
+('HEART_RATE', 13, 17, 60, 100, 50, 120, 'bpm', 'Nhip tim - Thanh thieu nien 13-17 tuoi', '2025-01-01', TRUE, NOW(), NOW()),
+('HEART_RATE', 18, 64, 60, 100, 50, 120, 'bpm', 'Nhip tim - Nguoi lon 18-64 tuoi', '2025-01-01', TRUE, NOW(), NOW()),
+('HEART_RATE', 65, NULL, 60, 100, 50, 110, 'bpm', 'Nhip tim - Nguoi cao tuoi >= 65 tuoi', '2025-01-01', TRUE, NOW(), NOW());
 
 -- Oxygen Saturation (SpO2 %)
-INSERT INTO vital_signs_reference (vital_type, age_min, age_max, normal_min, normal_max, low_threshold, high_threshold, unit, description, effective_date, is_active) VALUES
-('OXYGEN_SATURATION', 0, NULL, 95, 100, 90, NULL, '%', 'Do bao hoa oxy - Tat ca moi do tuoi', '2025-01-01', TRUE);
+INSERT INTO vital_signs_reference (vital_type, age_min, age_max, normal_min, normal_max, low_threshold, high_threshold, unit, description, effective_date, is_active, created_at, updated_at) VALUES
+('OXYGEN_SATURATION', 0, NULL, 95, 100, 90, NULL, '%', 'Do bao hoa oxy - Tat ca moi do tuoi', '2025-01-01', TRUE, NOW(), NOW());
 
 -- Body Temperature (Celsius)
-INSERT INTO vital_signs_reference (vital_type, age_min, age_max, normal_min, normal_max, low_threshold, high_threshold, unit, description, effective_date, is_active) VALUES
-('TEMPERATURE', 0, NULL, 36.1, 37.2, 35.0, 38.0, 'C', 'Nhiet do co the - Tat ca moi do tuoi', '2025-01-01', TRUE);
+INSERT INTO vital_signs_reference (vital_type, age_min, age_max, normal_min, normal_max, low_threshold, high_threshold, unit, description, effective_date, is_active, created_at, updated_at) VALUES
+('TEMPERATURE', 0, NULL, 36.1, 37.2, 35.0, 38.0, 'C', 'Nhiet do co the - Tat ca moi do tuoi', '2025-01-01', TRUE, NOW(), NOW());
 
 -- Respiratory Rate (breaths per minute)
-INSERT INTO vital_signs_reference (vital_type, age_min, age_max, normal_min, normal_max, low_threshold, high_threshold, unit, description, effective_date, is_active) VALUES
-('RESPIRATORY_RATE', 0, 1, 30, 60, 25, 70, 'breaths/min', 'Nhip tho - Tre so sinh', '2025-01-01', TRUE),
-('RESPIRATORY_RATE', 2, 5, 20, 30, 15, 40, 'breaths/min', 'Nhip tho - Tre nho 2-5 tuoi', '2025-01-01', TRUE),
-('RESPIRATORY_RATE', 6, 12, 18, 25, 12, 35, 'breaths/min', 'Nhip tho - Tre em 6-12 tuoi', '2025-01-01', TRUE),
-('RESPIRATORY_RATE', 13, NULL, 12, 20, 10, 25, 'breaths/min', 'Nhip tho - Tu 13 tuoi tro len', '2025-01-01', TRUE);
+INSERT INTO vital_signs_reference (vital_type, age_min, age_max, normal_min, normal_max, low_threshold, high_threshold, unit, description, effective_date, is_active, created_at, updated_at) VALUES
+('RESPIRATORY_RATE', 0, 1, 30, 60, 25, 70, 'breaths/min', 'Nhip tho - Tre so sinh', '2025-01-01', TRUE, NOW(), NOW()),
+('RESPIRATORY_RATE', 2, 5, 20, 30, 15, 40, 'breaths/min', 'Nhip tho - Tre nho 2-5 tuoi', '2025-01-01', TRUE, NOW(), NOW()),
+('RESPIRATORY_RATE', 6, 12, 18, 25, 12, 35, 'breaths/min', 'Nhip tho - Tre em 6-12 tuoi', '2025-01-01', TRUE, NOW(), NOW()),
+('RESPIRATORY_RATE', 13, NULL, 12, 20, 10, 25, 'breaths/min', 'Nhip tho - Tu 13 tuoi tro len', '2025-01-01', TRUE, NOW(), NOW());
+
+-- Weight (kg - kilogram)
+INSERT INTO vital_signs_reference (vital_type, age_min, age_max, normal_min, normal_max, low_threshold, high_threshold, unit, description, effective_date, is_active, created_at, updated_at) VALUES
+('WEIGHT', 0, 1, 3, 5, 2, 6, 'kg', 'Can nang - Tre so sinh', '2025-01-01', TRUE, NOW(), NOW()),
+('WEIGHT', 2, 5, 10, 20, 8, 25, 'kg', 'Can nang - Tre nho 2-5 tuoi', '2025-01-01', TRUE, NOW(), NOW()),
+('WEIGHT', 6, 12, 20, 45, 15, 60, 'kg', 'Can nang - Tre em 6-12 tuoi', '2025-01-01', TRUE, NOW(), NOW()),
+('WEIGHT', 13, 17, 40, 75, 35, 90, 'kg', 'Can nang - Thanh thieu nien 13-17 tuoi', '2025-01-01', TRUE, NOW(), NOW()),
+('WEIGHT', 18, NULL, 45, 90, 35, 120, 'kg', 'Can nang - Nguoi lon >= 18 tuoi', '2025-01-01', TRUE, NOW(), NOW());
+
+-- Height (cm - centimeter)
+INSERT INTO vital_signs_reference (vital_type, age_min, age_max, normal_min, normal_max, low_threshold, high_threshold, unit, description, effective_date, is_active, created_at, updated_at) VALUES
+('HEIGHT', 0, 1, 45, 60, 40, 65, 'cm', 'Chieu cao - Tre so sinh', '2025-01-01', TRUE, NOW(), NOW()),
+('HEIGHT', 2, 5, 80, 110, 70, 120, 'cm', 'Chieu cao - Tre nho 2-5 tuoi', '2025-01-01', TRUE, NOW(), NOW()),
+('HEIGHT', 6, 12, 110, 155, 100, 165, 'cm', 'Chieu cao - Tre em 6-12 tuoi', '2025-01-01', TRUE, NOW(), NOW()),
+('HEIGHT', 13, 17, 150, 180, 140, 190, 'cm', 'Chieu cao - Thanh thieu nien 13-17 tuoi', '2025-01-01', TRUE, NOW(), NOW()),
+('HEIGHT', 18, NULL, 150, 190, 140, 210, 'cm', 'Chieu cao - Nguoi lon >= 18 tuoi', '2025-01-01', TRUE, NOW(), NOW());
+
+-- BMI (Body Mass Index - kg/m²)
+INSERT INTO vital_signs_reference (vital_type, age_min, age_max, normal_min, normal_max, low_threshold, high_threshold, unit, description, effective_date, is_active, created_at, updated_at) VALUES
+('BMI', 0, 12, 14, 18, 12, 22, 'kg/m2', 'Chi so BMI - Tre em 0-12 tuoi', '2025-01-01', TRUE, NOW(), NOW()),
+('BMI', 13, 17, 17, 24, 15, 28, 'kg/m2', 'Chi so BMI - Thanh thieu nien 13-17 tuoi', '2025-01-01', TRUE, NOW(), NOW()),
+('BMI', 18, NULL, 18.5, 24.9, 16, 30, 'kg/m2', 'Chi so BMI - Nguoi lon >= 18 tuoi (Binh thuong: 18.5-24.9, Thieu can: <18.5, Thua can: 25-29.9, Beo phi: >=30)', '2025-01-01', TRUE, NOW(), NOW());
+
+-- Blood Glucose (mg/dL - milligrams per deciliter)
+INSERT INTO vital_signs_reference (vital_type, age_min, age_max, normal_min, normal_max, low_threshold, high_threshold, unit, description, effective_date, is_active, created_at, updated_at) VALUES
+('BLOOD_GLUCOSE', 0, 12, 70, 140, 60, 180, 'mg/dL', 'Duong huyet - Tre em 0-12 tuoi', '2025-01-01', TRUE, NOW(), NOW()),
+('BLOOD_GLUCOSE', 13, NULL, 70, 100, 60, 126, 'mg/dL', 'Duong huyet luc doi - Tu 13 tuoi tro len (Binh thuong: 70-100, Tien tieu duong: 100-125, Tieu duong: >=126)', '2025-01-01', TRUE, NOW(), NOW());
 
 -- Historical example for audit (inactive reference that was updated)
-INSERT INTO vital_signs_reference (vital_type, age_min, age_max, normal_min, normal_max, low_threshold, high_threshold, unit, description, effective_date, is_active) VALUES
-('BLOOD_PRESSURE_SYSTOLIC', 18, 59, 90, 120, 80, 135, 'mmHg', 'Huyet ap tam thu - Cu (truoc ngay 1/1/2025)', '2024-01-01', FALSE);
+INSERT INTO vital_signs_reference (vital_type, age_min, age_max, normal_min, normal_max, low_threshold, high_threshold, unit, description, effective_date, is_active, created_at, updated_at) VALUES
+('BLOOD_PRESSURE_SYSTOLIC', 18, 59, 90, 120, 80, 135, 'mmHg', 'Huyet ap tam thu - Cu (truoc ngay 1/1/2025)', '2024-01-01', FALSE, NOW(), NOW());
 
 -- ============================================
 -- Clinical Records Data

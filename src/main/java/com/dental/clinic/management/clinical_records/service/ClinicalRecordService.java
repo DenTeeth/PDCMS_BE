@@ -378,6 +378,66 @@ public class ClinicalRecordService {
                                         log.warn("Failed to parse temperature: {}", tempObj);
                                 }
                         }
+
+                        // Assess respiratory rate
+                        Object respObj = record.getVitalSigns().get("respiratory_rate");
+                        if (respObj != null) {
+                                try {
+                                        java.math.BigDecimal respRate = new java.math.BigDecimal(respObj.toString());
+                                        vitalSignsAssessment.add(vitalSignsReferenceService.assessVitalSign(
+                                                        "RESPIRATORY_RATE", respRate, age));
+                                } catch (Exception e) {
+                                        log.warn("Failed to parse respiratory rate: {}", respObj);
+                                }
+                        }
+
+                        // Assess weight
+                        Object weightObj = record.getVitalSigns().get("weight");
+                        if (weightObj != null) {
+                                try {
+                                        java.math.BigDecimal weight = new java.math.BigDecimal(weightObj.toString());
+                                        vitalSignsAssessment.add(vitalSignsReferenceService.assessVitalSign(
+                                                        "WEIGHT", weight, age));
+                                } catch (Exception e) {
+                                        log.warn("Failed to parse weight: {}", weightObj);
+                                }
+                        }
+
+                        // Assess height
+                        Object heightObj = record.getVitalSigns().get("height");
+                        if (heightObj != null) {
+                                try {
+                                        java.math.BigDecimal height = new java.math.BigDecimal(heightObj.toString());
+                                        vitalSignsAssessment.add(vitalSignsReferenceService.assessVitalSign(
+                                                        "HEIGHT", height, age));
+                                } catch (Exception e) {
+                                        log.warn("Failed to parse height: {}", heightObj);
+                                }
+                        }
+
+                        // Assess BMI
+                        Object bmiObj = record.getVitalSigns().get("bmi");
+                        if (bmiObj != null) {
+                                try {
+                                        java.math.BigDecimal bmi = new java.math.BigDecimal(bmiObj.toString());
+                                        vitalSignsAssessment.add(vitalSignsReferenceService.assessVitalSign(
+                                                        "BMI", bmi, age));
+                                } catch (Exception e) {
+                                        log.warn("Failed to parse BMI: {}", bmiObj);
+                                }
+                        }
+
+                        // Assess blood glucose
+                        Object glucoseObj = record.getVitalSigns().get("blood_glucose");
+                        if (glucoseObj != null) {
+                                try {
+                                        java.math.BigDecimal glucose = new java.math.BigDecimal(glucoseObj.toString());
+                                        vitalSignsAssessment.add(vitalSignsReferenceService.assessVitalSign(
+                                                        "BLOOD_GLUCOSE", glucose, age));
+                                } catch (Exception e) {
+                                        log.warn("Failed to parse blood glucose: {}", glucoseObj);
+                                }
+                        }
                 }
 
                 // Build final response
