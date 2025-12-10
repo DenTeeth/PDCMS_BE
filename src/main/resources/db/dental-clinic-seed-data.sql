@@ -155,15 +155,9 @@ ALTER TABLE patients ADD COLUMN IF NOT EXISTS guardian_phone VARCHAR(15);
 ALTER TABLE patients ADD COLUMN IF NOT EXISTS guardian_relationship VARCHAR(50);
 ALTER TABLE patients ADD COLUMN IF NOT EXISTS guardian_citizen_id VARCHAR(20);
 
--- BR-044: Patient blacklist management
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS is_blacklisted BOOLEAN DEFAULT FALSE;
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS blacklist_reason VARCHAR(100);
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS blacklist_notes TEXT;
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS blacklisted_by INTEGER;
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS blacklisted_at TIMESTAMP;
-
--- Update existing rows to have default values for blacklist
-UPDATE patients SET is_blacklisted = FALSE WHERE is_blacklisted IS NULL;
+-- BR-044 + BR-005 + BR-043: Unified booking block management
+-- Note: These columns are now managed by Hibernate based on Patient entity
+-- Old columns (is_blacklisted, blacklist_reason, etc.) removed - use unified structure instead
 
 -- ============================================
 -- BƯỚC 1: TẠO BASE ROLES (3 loại cố định)
@@ -1023,24 +1017,24 @@ ON CONFLICT (employee_id, specialization_id) DO NOTHING;
 INSERT INTO patients (
     patient_id, account_id, patient_code, first_name, last_name, email, phone, date_of_birth, address, gender,
     medical_history, allergies, emergency_contact_name, emergency_contact_phone,
-    consecutive_no_shows, is_booking_blocked, is_blacklisted, is_active, created_at, updated_at
+    consecutive_no_shows, is_booking_blocked, is_active, created_at, updated_at
 )
 VALUES
 (1, 12, 'BN-1001', 'Đoàn Thanh', 'Phong', 'phong.dt@email.com', '0971111111', '1995-03-15', '123 Lê Văn Việt, Q9, TPHCM', 'MALE',
     'Tiền sử viêm lợi, đã điều trị năm 2020', 'Dị ứng Penicillin', 'Đoàn Văn Nam', '0901111111',
-    0, FALSE, FALSE, TRUE, NOW(), NOW()),
+    0, FALSE, TRUE, NOW(), NOW()),
 (2, 13, 'BN-1002', 'Phạm Văn', 'Phong', 'phong.pv@email.com', '0972222222', '1990-07-20', '456 Võ Văn Ngân, Thủ Đức, TPHCM', 'MALE',
     'Không có tiền sử bệnh lý', 'Không có dị ứng', 'Phạm Thị Lan', '0902222222',
-    0, FALSE, FALSE, TRUE, NOW(), NOW()),
+    0, FALSE, TRUE, NOW(), NOW()),
 (3, 14, 'BN-1003', 'Nguyễn Tuấn', 'Anh', 'anh.nt@email.com', '0973333333', '1988-11-10', '789 Đường D2, Bình Thạnh, TPHCM', 'MALE',
     'Cao huyết áp, đang dùng thuốc kiểm soát', 'Dị ứng thuốc gây tê Lidocaine', 'Nguyễn Thị Hoa', '0903333333',
-    0, FALSE, FALSE, TRUE, NOW(), NOW()),
+    0, FALSE, TRUE, NOW(), NOW()),
 (4, 15, 'BN-1004', 'Mít tơ', 'Bít', 'mit.bit@email.com', '0974444444', '2000-01-01', '321 Nguyễn Thị Minh Khai, Q1, TPHCM', 'OTHER',
     'Không có', 'Không có', 'Bố Mít', '0904444444',
-    0, FALSE, FALSE, TRUE, NOW(), NOW()),
+    0, FALSE, TRUE, NOW(), NOW()),
 (5, 18, 'BN-1005', 'Trần Văn', 'Nam', 'nam.tv@email.com', '0975555555', '1992-05-25', '555 Hoàng Diệu, Q4, TPHCM', 'MALE',
     'Tiểu đường type 2, HbA1c: 7.2%', 'Dị ứng tôm cua, aspirin', 'Trần Thị Mai', '0905555555',
-    0, FALSE, FALSE, TRUE, NOW(), NOW())
+    0, FALSE, TRUE, NOW(), NOW())
 ON CONFLICT (patient_id) DO NOTHING;
 
 -- NEW PATIENTS (All with verified emails - da setup password)
@@ -1056,24 +1050,24 @@ ON CONFLICT (account_id) DO NOTHING;
 INSERT INTO patients (
     patient_id, account_id, patient_code, first_name, last_name, email, phone, date_of_birth, address, gender,
     medical_history, allergies, emergency_contact_name, emergency_contact_phone, guardian_name, guardian_phone, guardian_relationship, guardian_citizen_id,
-    consecutive_no_shows, is_booking_blocked, is_blacklisted, is_active, created_at, updated_at
+    consecutive_no_shows, is_booking_blocked, is_active, created_at, updated_at
 )
 VALUES
 (6, 19, 'BN-1006', 'Lê Thị', 'Hoa', 'hoa.lt@email.com', '0976666666', '1993-08-12', '88 Trần Hưng Đạo, Q5, TPHCM', 'FEMALE',
     'Đã nhổ 2 răng khôn', 'Dị ứng phấn hoa', 'Lê Văn Hùng', '0906666666', NULL, NULL, NULL, NULL,
-    0, FALSE, FALSE, TRUE, NOW(), NOW()),
+    0, FALSE, TRUE, NOW(), NOW()),
 (7, 20, 'BN-1007', 'Võ Văn', 'Khánh', 'khanh.vv@email.com', '0977777777', '1985-04-18', '99 Lê Lợi, Q1, TPHCM', 'MALE',
     'Hen suyễn nhẹ', 'Dị ứng bụi', 'Võ Thị Thanh', '0907777777', NULL, NULL, NULL, NULL,
-    0, FALSE, FALSE, TRUE, NOW(), NOW()),
+    0, FALSE, TRUE, NOW(), NOW()),
 (8, 21, 'BN-1008', 'Trần Thị', 'Mai', 'mai.tt@email.com', '0978888888', '1998-12-25', '77 Nguyễn Huệ, Q1, TPHCM', 'FEMALE',
     'Không có', 'Không có', 'Trần Văn Long', '0908888888', NULL, NULL, NULL, NULL,
-    0, FALSE, FALSE, TRUE, NOW(), NOW()),
+    0, FALSE, TRUE, NOW(), NOW()),
 (9, 22, 'BN-1009', 'Phan Văn', 'Tú', 'tu.pv@email.com', '0979999999', '1991-06-30', '66 Pasteur, Q3, TPHCM', 'MALE',
     'Viêm xoang mạn tính', 'Không có', 'Phan Thị Kim', '0909999999', NULL, NULL, NULL, NULL,
-    0, FALSE, FALSE, TRUE, NOW(), NOW()),
+    0, FALSE, TRUE, NOW(), NOW()),
 (10, 23, 'BN-1010', 'Nguyễn Thị', 'Lan', 'lan.nt@email.com', '0970000000', '2011-09-15', '55 Cách Mạng Tháng 8, Q10, TPHCM', 'FEMALE',
     'Trẻ em khỏe mạnh', 'Không có', 'Nguyễn Văn Minh', '0900000000', 'Nguyễn Văn Minh', '0900000000', 'Bố', '079088001234',
-    0, FALSE, FALSE, TRUE, NOW(), NOW())
+    0, FALSE, TRUE, NOW(), NOW())
 ON CONFLICT (patient_id) DO NOTHING;
 
 INSERT INTO work_shifts (work_shift_id, shift_name, start_time, end_time, category, is_active)
