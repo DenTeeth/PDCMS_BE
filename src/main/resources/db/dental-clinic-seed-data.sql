@@ -111,6 +111,16 @@ ALTER TABLE patients ADD COLUMN IF NOT EXISTS guardian_phone VARCHAR(15);
 ALTER TABLE patients ADD COLUMN IF NOT EXISTS guardian_relationship VARCHAR(50);
 ALTER TABLE patients ADD COLUMN IF NOT EXISTS guardian_citizen_id VARCHAR(20);
 
+-- BR-044: Patient blacklist management
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS is_blacklisted BOOLEAN DEFAULT FALSE;
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS blacklist_reason VARCHAR(100);
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS blacklist_notes TEXT;
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS blacklisted_by INTEGER;
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS blacklisted_at TIMESTAMP;
+
+-- Update existing rows to have default values for blacklist
+UPDATE patients SET is_blacklisted = FALSE WHERE is_blacklisted IS NULL;
+
 -- ============================================
 -- BƯỚC 1: TẠO BASE ROLES (3 loại cố định)
 -- ============================================
