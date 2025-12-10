@@ -42,6 +42,8 @@ public class TreatmentPlanDetailService {
         private final com.dental.clinic.management.employee.repository.EmployeeRepository employeeRepository;
         private final com.dental.clinic.management.treatment_plans.repository.PlanAuditLogRepository auditLogRepository;
         private final com.dental.clinic.management.booking_appointment.repository.AppointmentRepository appointmentRepository;
+        private final com.dental.clinic.management.treatment_plans.repository.PatientPlanPhaseRepository phaseRepository;
+        private final jakarta.persistence.EntityManager entityManager;
 
         /**
          * Get complete treatment plan details with nested structure.
@@ -70,7 +72,7 @@ public class TreatmentPlanDetailService {
          * @throws IllegalArgumentException if patient or plan not found
          * @throws AccessDeniedException    if user doesn't have permission
          */
-        @Transactional(readOnly = true)
+        @Transactional
         public TreatmentPlanDetailResponse getTreatmentPlanDetail(String patientCode, String planCode) {
                 log.info("Getting treatment plan detail - Patient: {}, Plan: {}", patientCode, planCode);
 
@@ -97,6 +99,9 @@ public class TreatmentPlanDetailService {
 
                 // STEP 3: Transform flat DTOs to nested response structure
                 TreatmentPlanDetailResponse response = buildNestedResponse(flatDTOs);
+
+                // STEP 3.5: Auto-complete plan if all phases are completed (Issue #51 fix)
+                autoCompletePlanIfNeeded(response);
 
                 // STEP 4: Add approval metadata if plan has been approved/rejected
                 addApprovalMetadataIfPresent(response, patientCode, planCode);
@@ -699,5 +704,66 @@ public class TreatmentPlanDetailService {
 
                 log.debug("Hid prices from {} phases in treatment plan detail response",
                                 response.getPhases() != null ? response.getPhases().size() : 0);
+        }
+
+        /**
+         * Auto-complete treatment plan if all phases are completed.
+         * Issue #51 Fix: Plans with all phases completed should auto-update status to COMPLETED on detail load.
+         *
+         * Logic:
+         * 1. Check if plan has phases (skip if empty)
+         * 2. Query fresh phase data from DB to avoid stale DTO state
+         * 3. Check if all phases have status = COMPLETED
+         * 4. If yes AND plan status != COMPLETED, update plan to COMPLETED
+         * 5. Flush and refresh to persist immediately
+         * 6. Update response DTO to reflect new status
+         *
+         * @param response Treatment plan detail response to potentially update
+         */
+        private void autoCompletePlanIfNeeded(TreatmentPlanDetailResponse response) {
+                // Skip if no phases (nothing to complete)
+                if (response.getPhases() == null || response.getPhases().isEmpty()) {
+                        return;
+                }
+
+                // Skip if plan already completed
+                if ("COMPLETED".equals(response.getStatus())) {
+                        return;
+                }
+
+                // Query fresh phases from database to check current status
+                List<com.dental.clinic.management.treatment_plans.domain.PatientPlanPhase> phases = 
+                        phaseRepository.findByTreatmentPlan_PlanId(response.getPlanId());
+
+                // Check if all phases are completed
+                boolean allPhasesCompleted = !phases.isEmpty() && phases.stream()
+                        .allMatch(phase -> phase.getStatus() == com.dental.clinic.management.treatment_plans.enums.PhaseStatus.COMPLETED);
+
+                if (!allPhasesCompleted) {
+                        return; // Not ready to complete yet
+                }
+
+                // Fetch plan entity and update status
+                PatientTreatmentPlan plan = treatmentPlanRepository.findById(response.getPlanId())
+                        .orElse(null);
+
+                if (plan == null) {
+                        log.warn("Plan {} not found when attempting auto-complete", response.getPlanId());
+                        return;
+                }
+
+                // Update plan status to COMPLETED
+                com.dental.clinic.management.treatment_plans.enums.TreatmentPlanStatus oldStatus = plan.getStatus();
+                plan.setStatus(com.dental.clinic.management.treatment_plans.enums.TreatmentPlanStatus.COMPLETED);
+
+                // Persist immediately
+                entityManager.flush();
+                entityManager.refresh(plan);
+
+                // Update response DTO to reflect new status
+                response.setStatus("COMPLETED");
+
+                log.info("Treatment plan {} auto-completed: {} -> COMPLETED - All {} phases done (Issue #51 fix)",
+                        response.getPlanCode(), oldStatus, phases.size());
         }
 }

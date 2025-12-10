@@ -29,6 +29,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 /**
@@ -56,6 +57,7 @@ public class AppointmentStatusService {
     private final PatientPlanItemRepository itemRepository;
     private final EntityManager entityManager;
     private final PatientTreatmentPlanRepository planRepository;
+    private final com.dental.clinic.management.patient.repository.PatientRepository patientRepository;
 
     /**
      * Valid state transitions map.
@@ -124,7 +126,7 @@ public class AppointmentStatusService {
         validateStateTransition(currentStatus, newStatus);
 
         // Step 3: Validate business rules
-        validateBusinessRules(newStatus, request);
+        validateBusinessRules(appointment, newStatus, request);
 
         // Step 4: Update side-effects (actualStartTime/actualEndTime)
         LocalDateTime now = LocalDateTime.now();
@@ -145,6 +147,9 @@ public class AppointmentStatusService {
 
         // Step 7: Auto-update linked plan item statuses (V21.5)
         updateLinkedPlanItemsStatus(appointment.getAppointmentId(), newStatus, now);
+
+        // Step 8: Rule #5 - Track no-shows and update patient blocking status
+        updatePatientNoShowTracking(appointment, newStatus, currentStatus);
 
         log.info(" Successfully updated appointment status: code={}, {} -> {}",
                 appointmentCode, currentStatus, newStatus);
@@ -174,12 +179,29 @@ public class AppointmentStatusService {
      *
      * Rules:
      * - CANCELLED: Must provide reasonCode
+     * - Rule #4: 24h cancellation deadline - late cancellation causes penalty
      */
-    private void validateBusinessRules(AppointmentStatus newStatus, UpdateAppointmentStatusRequest request) {
+    private void validateBusinessRules(Appointment appointment, AppointmentStatus newStatus, UpdateAppointmentStatusRequest request) {
         if (newStatus == AppointmentStatus.CANCELLED) {
+            // Check reason code is provided
             if (request.getReasonCode() == null || request.getReasonCode().trim().isEmpty()) {
                 throw new IllegalArgumentException(
                         "Reason code is required when cancelling an appointment");
+            }
+
+            // Rule #4: Check 24-hour cancellation deadline
+            LocalDateTime appointmentStartTime = appointment.getAppointmentStartTime();
+            LocalDateTime cancellationDeadline = appointmentStartTime.minusHours(24);
+            LocalDateTime now = LocalDateTime.now();
+
+            if (now.isAfter(cancellationDeadline)) {
+                // Late cancellation - within 24 hours of appointment
+                throw new IllegalStateException(
+                        String.format("Cannot cancel appointment within 24 hours of scheduled time. " +
+                                "Appointment start: %s, Cancellation deadline: %s. " +
+                                "Please contact clinic staff for assistance.",
+                                appointmentStartTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
+                                cancellationDeadline.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))));
             }
         }
     }
@@ -540,5 +562,70 @@ public class AppointmentStatusService {
             log.debug("Plan {} not completed yet: {}/{} phases done",
                     planId, completedPhasesCount, phases.size());
         }
+    }
+
+    /**
+     * Rule #5: Update patient no-show tracking and booking blocking status
+     * 
+     * Business Logic:
+     * - NO_SHOW → Increment consecutiveNoShows
+     * - If consecutiveNoShows >= 3 → Block booking (isBookingBlocked = true)
+     * - COMPLETED/CHECKED_IN/IN_PROGRESS → Reset consecutiveNoShows to 0 (patient showed up)
+     * 
+     * @param appointment The appointment being updated
+     * @param newStatus New appointment status
+     * @param oldStatus Previous appointment status
+     */
+    private void updatePatientNoShowTracking(Appointment appointment, AppointmentStatus newStatus, AppointmentStatus oldStatus) {
+        // Only track if status changed to NO_SHOW or patient showed up
+        if (newStatus == oldStatus) {
+            return;
+        }
+
+        com.dental.clinic.management.patient.domain.Patient patient = patientRepository
+                .findById(appointment.getPatientId())
+                .orElse(null);
+
+        if (patient == null) {
+            log.warn("Patient {} not found for no-show tracking", appointment.getPatientId());
+            return;
+        }
+
+        if (newStatus == AppointmentStatus.NO_SHOW) {
+            // Increment no-show counter
+            int currentNoShows = patient.getConsecutiveNoShows() != null ? patient.getConsecutiveNoShows() : 0;
+            patient.setConsecutiveNoShows(currentNoShows + 1);
+
+            log.info("Patient {} no-show count increased: {} -> {}", 
+                    patient.getPatientCode(), currentNoShows, currentNoShows + 1);
+
+            // Check if threshold reached (3 consecutive no-shows)
+            if (patient.getConsecutiveNoShows() >= 3 && !Boolean.TRUE.equals(patient.getIsBookingBlocked())) {
+                patient.setIsBookingBlocked(true);
+                patient.setBookingBlockReason(
+                        String.format("Bị chặn do bỏ hẹn %d lần liên tiếp. Lần cuối: %s", 
+                                patient.getConsecutiveNoShows(),
+                                appointment.getAppointmentCode()));
+                patient.setBlockedAt(LocalDateTime.now());
+
+                log.warn(" Patient {} BLOCKED from booking: {} consecutive no-shows", 
+                        patient.getPatientCode(), patient.getConsecutiveNoShows());
+            }
+
+        } else if (newStatus == AppointmentStatus.COMPLETED 
+                || newStatus == AppointmentStatus.IN_PROGRESS 
+                || newStatus == AppointmentStatus.CHECKED_IN) {
+            // Patient showed up - reset no-show counter
+            if (patient.getConsecutiveNoShows() != null && patient.getConsecutiveNoShows() > 0) {
+                log.info("Patient {} showed up - resetting no-show count from {} to 0", 
+                        patient.getPatientCode(), patient.getConsecutiveNoShows());
+                patient.setConsecutiveNoShows(0);
+                
+                // Optionally unblock if they were blocked (admin can manually unblock via patient management)
+                // Not auto-unblocking here to require admin approval
+            }
+        }
+
+        patientRepository.save(patient);
     }
 }

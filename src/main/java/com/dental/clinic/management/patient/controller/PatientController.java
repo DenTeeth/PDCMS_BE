@@ -8,7 +8,14 @@ import com.dental.clinic.management.patient.dto.response.PatientInfoResponse;
 import com.dental.clinic.management.patient.dto.ToothStatusResponse;
 import com.dental.clinic.management.patient.dto.UpdateToothStatusRequest;
 import com.dental.clinic.management.patient.dto.UpdateToothStatusResponse;
+import com.dental.clinic.management.patient.dto.UnbanPatientRequest;
+import com.dental.clinic.management.patient.dto.UnbanPatientResponse;
+import com.dental.clinic.management.patient.dto.AuditLogResponse;
+import com.dental.clinic.management.patient.dto.DuplicatePatientCheckResult;
+import com.dental.clinic.management.patient.dto.BlacklistPatientRequest;
+import com.dental.clinic.management.patient.dto.BlacklistPatientResponse;
 import com.dental.clinic.management.patient.service.PatientService;
+import com.dental.clinic.management.patient.service.PatientUnbanService;
 import com.dental.clinic.management.utils.annotation.ApiMessage;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,6 +25,7 @@ import jakarta.validation.Valid;
 
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -42,9 +50,19 @@ import java.util.List;
 public class PatientController {
 
     private final PatientService patientService;
+    private final PatientUnbanService patientUnbanService;
+    private final com.dental.clinic.management.patient.service.DuplicatePatientDetectionService duplicateDetectionService;
+    private final com.dental.clinic.management.patient.service.PatientBlacklistService blacklistService;
 
-    public PatientController(PatientService patientService) {
+    public PatientController(
+            PatientService patientService,
+            PatientUnbanService patientUnbanService,
+            com.dental.clinic.management.patient.service.DuplicatePatientDetectionService duplicateDetectionService,
+            com.dental.clinic.management.patient.service.PatientBlacklistService blacklistService) {
         this.patientService = patientService;
+        this.patientUnbanService = patientUnbanService;
+        this.duplicateDetectionService = duplicateDetectionService;
+        this.blacklistService = blacklistService;
     }
 
     /**
@@ -291,5 +309,143 @@ public class PatientController {
                 patientRequest,
                 changedBy);
         return ResponseEntity.ok().body(response);
+    }
+
+    /**
+     * {@code POST  /patients/:id/unban} : Unban a patient (reset no-show count and
+     * booking block)
+     *
+     * BR-085: Receptionist has authority to unban without Manager approval
+     * BR-086: Must log reason for accountability
+     *
+     * @param patientId the patient ID to unban
+     * @param request   the unban request with reason
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and unban
+     *         details
+     */
+    @PostMapping("/{id}/unban")
+    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'MANAGER', 'ADMIN')")
+    @ApiMessage("Mở khóa bệnh nhân thành công")
+    @Operation(summary = "Unban patient", description = "Receptionist/Manager/Admin can unban a patient and reset no-show count. Requires reason (10-500 chars) for audit log.")
+    public ResponseEntity<UnbanPatientResponse> unbanPatient(
+            @PathVariable("id") Integer patientId,
+            @Valid @RequestBody UnbanPatientRequest request) {
+
+        UnbanPatientResponse response = patientUnbanService.unbanPatient(patientId, request.getReason());
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * {@code GET  /patients/:id/unban-history} : Get unban history for a patient
+     *
+     * @param patientId the patient ID
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and audit log
+     *         list
+     */
+    @GetMapping("/{id}/unban-history")
+    @PreAuthorize("hasAnyRole('RECEPTIONIST', 'MANAGER', 'ADMIN')")
+    @ApiMessage("Lấy lịch sử mở khóa bệnh nhân")
+    @Operation(summary = "Get patient unban history", description = "Get audit log of all unban actions for a specific patient")
+    public ResponseEntity<List<AuditLogResponse>> getUnbanHistory(@PathVariable("id") Integer patientId) {
+
+        List<AuditLogResponse> history = patientUnbanService.getPatientUnbanHistory(patientId);
+        return ResponseEntity.ok(history);
+    }
+
+    /**
+     * {@code GET  /patients/check-duplicate} : Check for duplicate patients
+     *
+     * BR-043: Check for duplicates by Name + DOB or Phone
+     *
+     * @param firstName   First name
+     * @param lastName    Last name
+     * @param dateOfBirth Date of birth (YYYY-MM-DD)
+     * @param phone       Phone number (optional)
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and duplicate
+     *         check result
+     */
+    @GetMapping("/check-duplicate")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('RECEPTIONIST') or hasRole('MANAGER')")
+    @ApiMessage("Kiểm tra bệnh nhân trùng")
+    @Operation(summary = "Check for duplicate patients", description = "Check if a patient with similar information already exists. Returns potential matches by Name+DOB or Phone.")
+    public ResponseEntity<DuplicatePatientCheckResult> checkDuplicate(
+            @RequestParam String firstName,
+            @RequestParam String lastName,
+            @RequestParam java.time.LocalDate dateOfBirth,
+            @RequestParam(required = false) String phone) {
+
+        DuplicatePatientCheckResult result = duplicateDetectionService.checkForDuplicates(
+                firstName, lastName, dateOfBirth, phone);
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * {@code POST  /patients/:id/blacklist} : Add patient to blacklist
+     *
+     * BR-044: Mandatory predefined reason when blacklisting
+     *
+     * @param patientId the patient ID to blacklist
+     * @param request   the blacklist request with reason
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and blacklist
+     *         details
+     */
+    @PostMapping("/{id}/blacklist")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
+    @ApiMessage("Thêm bệnh nhân vào blacklist thành công")
+    @Operation(summary = "Blacklist patient", description = "Manager/Admin can add a patient to blacklist with mandatory predefined reason. Patient will also be blocked from booking.")
+    public ResponseEntity<BlacklistPatientResponse> blacklistPatient(
+            @PathVariable("id") Integer patientId,
+            @Valid @RequestBody BlacklistPatientRequest request) {
+
+        BlacklistPatientResponse response = blacklistService.blacklistPatient(
+                patientId, request.getReason(), request.getNotes());
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * {@code DELETE  /patients/:id/blacklist} : Remove patient from blacklist
+     *
+     * @param patientId the patient ID to remove from blacklist
+     * @param reason    Reason for removal (audit trail)
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and removal
+     *         details
+     */
+    @DeleteMapping("/{id}/blacklist")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
+    @ApiMessage("Xóa bệnh nhân khỏi blacklist")
+    @Operation(summary = "Remove from blacklist", description = "Manager/Admin can remove a patient from blacklist")
+    public ResponseEntity<BlacklistPatientResponse> removeFromBlacklist(
+            @PathVariable("id") Integer patientId,
+            @RequestParam(required = false) String reason) {
+
+        BlacklistPatientResponse response = blacklistService.removeFromBlacklist(patientId, reason);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * {@code GET  /patients/me/profile} : Get current patient profile (Patient
+     * Portal API for Mobile App)
+     *
+     * Patient can access their own profile with full details including:
+     * - Personal information (name, email, phone, DOB, address)
+     * - Medical information (medical history, allergies)
+     * - Emergency contact
+     * - Guardian information (for minors)
+     * - Booking status
+     *
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and patient
+     *         profile
+     */
+    @GetMapping("/me/profile")
+    @PreAuthorize("hasRole('PATIENT')")
+    @ApiMessage("Get patient profile for mobile app")
+    @Operation(summary = "Get current patient profile", description = "Patient can view their own full profile details (for mobile app)")
+    public ResponseEntity<com.dental.clinic.management.patient.dto.response.PatientDetailResponse> getCurrentPatientProfile(
+            @Parameter(hidden = true) org.springframework.security.core.Authentication authentication) {
+
+        String username = authentication.getName();
+        com.dental.clinic.management.patient.dto.response.PatientDetailResponse response = patientService
+                .getCurrentPatientProfile(username);
+        return ResponseEntity.ok(response);
     }
 }

@@ -55,6 +55,7 @@ public class ClinicalRecordService {
         private final PatientPlanItemRepository planItemRepository;
         private final ItemMasterRepository itemMasterRepository;
         private final PatientToothStatusRepository toothStatusRepository;
+        private final VitalSignsReferenceService vitalSignsReferenceService;
 
         private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -70,8 +71,9 @@ public class ClinicalRecordService {
          * - Patient: appointment.patient_id matches user's patient_id
          * - Observer/Nurse: appointment participant matches user's employee_id
          *
-         * Returns 404 RECORD_NOT_FOUND if clinical record doesn't exist
-         * Frontend uses this to show CREATE form
+         * Returns 200 OK with null if clinical record doesn't exist (allows FE to show
+         * empty state)
+         * Frontend uses this to determine whether to show CREATE or VIEW/EDIT form
          */
         @Transactional(readOnly = true)
         public ClinicalRecordResponse getClinicalRecord(Integer appointmentId) {
@@ -85,13 +87,17 @@ public class ClinicalRecordService {
                 // Step 2: Check RBAC authorization
                 checkAccessPermission(appointment);
 
-                // Step 3: Load clinical record (throws 404 if not found)
-                ClinicalRecord record = clinicalRecordRepository.findByAppointment_AppointmentId(appointmentId)
-                                .orElseThrow(() -> new NotFoundException("RECORD_NOT_FOUND",
-                                                "Clinical record not found for appointment ID: " + appointmentId));
+                // Step 3: Load clinical record (return null if not found - allows FE to access
+                // tab)
+                var recordOpt = clinicalRecordRepository.findByAppointment_AppointmentId(appointmentId);
+
+                if (recordOpt.isEmpty()) {
+                        log.info("No clinical record found for appointment ID: {} - returning null", appointmentId);
+                        return null;
+                }
 
                 // Step 4: Build response with nested data
-                return buildClinicalRecordResponse(record, appointment);
+                return buildClinicalRecordResponse(recordOpt.get(), appointment);
         }
 
         /**
@@ -223,7 +229,12 @@ public class ClinicalRecordService {
                                 .email(null) // Email stored in Account, not Employee
                                 .build();
 
-                // Build PatientDTO
+                // Build PatientDTO with full medical information
+                Integer age = null;
+                if (patient.getDateOfBirth() != null) {
+                        age = java.time.Period.between(patient.getDateOfBirth(), java.time.LocalDate.now()).getYears();
+                }
+
                 PatientDTO patientDTO = PatientDTO.builder()
                                 .patientId(patient.getPatientId())
                                 .patientCode(patient.getPatientCode())
@@ -233,7 +244,17 @@ public class ClinicalRecordService {
                                 .dateOfBirth(patient.getDateOfBirth() != null
                                                 ? patient.getDateOfBirth().format(DATE_FORMATTER)
                                                 : null)
+                                .age(age)
                                 .gender(patient.getGender() != null ? patient.getGender().name() : null)
+                                .address(patient.getAddress())
+                                .medicalHistory(patient.getMedicalHistory())
+                                .allergies(patient.getAllergies())
+                                .emergencyContactName(patient.getEmergencyContactName())
+                                .emergencyContactPhone(patient.getEmergencyContactPhone())
+                                .guardianName(patient.getGuardianName())
+                                .guardianPhone(patient.getGuardianPhone())
+                                .guardianRelationship(patient.getGuardianRelationship())
+                                .guardianCitizenId(patient.getGuardianCitizenId())
                                 .build();
 
                 // Build ProcedureDTOs
@@ -298,11 +319,73 @@ public class ClinicalRecordService {
                                 })
                                 .collect(Collectors.toList());
 
+                // Assess vital signs if available
+                java.util.List<VitalSignAssessment> vitalSignsAssessment = new java.util.ArrayList<>();
+                if (record.getVitalSigns() != null && !record.getVitalSigns().isEmpty() && age != null) {
+                        // Parse blood pressure
+                        Object bpObj = record.getVitalSigns().get("blood_pressure");
+                        if (bpObj != null) {
+                                String bp = bpObj.toString();
+                                if (bp.contains("/")) {
+                                        String[] parts = bp.split("/");
+                                        try {
+                                                java.math.BigDecimal systolic = new java.math.BigDecimal(
+                                                                parts[0].trim());
+                                                java.math.BigDecimal diastolic = new java.math.BigDecimal(
+                                                                parts[1].trim());
+                                                vitalSignsAssessment.add(vitalSignsReferenceService.assessVitalSign(
+                                                                "BLOOD_PRESSURE_SYSTOLIC", systolic, age));
+                                                vitalSignsAssessment.add(vitalSignsReferenceService.assessVitalSign(
+                                                                "BLOOD_PRESSURE_DIASTOLIC", diastolic, age));
+                                        } catch (Exception e) {
+                                                log.warn("Failed to parse blood pressure: {}", bp);
+                                        }
+                                }
+                        }
+
+                        // Assess heart rate
+                        Object hrObj = record.getVitalSigns().get("heart_rate");
+                        if (hrObj != null) {
+                                try {
+                                        java.math.BigDecimal heartRate = new java.math.BigDecimal(hrObj.toString());
+                                        vitalSignsAssessment.add(vitalSignsReferenceService.assessVitalSign(
+                                                        "HEART_RATE", heartRate, age));
+                                } catch (Exception e) {
+                                        log.warn("Failed to parse heart rate: {}", hrObj);
+                                }
+                        }
+
+                        // Assess oxygen saturation
+                        Object o2Obj = record.getVitalSigns().get("oxygen_saturation");
+                        if (o2Obj != null) {
+                                try {
+                                        java.math.BigDecimal o2 = new java.math.BigDecimal(o2Obj.toString());
+                                        vitalSignsAssessment.add(vitalSignsReferenceService.assessVitalSign(
+                                                        "OXYGEN_SATURATION", o2, age));
+                                } catch (Exception e) {
+                                        log.warn("Failed to parse oxygen saturation: {}", o2Obj);
+                                }
+                        }
+
+                        // Assess temperature
+                        Object tempObj = record.getVitalSigns().get("temperature");
+                        if (tempObj != null) {
+                                try {
+                                        java.math.BigDecimal temp = new java.math.BigDecimal(tempObj.toString());
+                                        vitalSignsAssessment.add(vitalSignsReferenceService.assessVitalSign(
+                                                        "TEMPERATURE", temp, age));
+                                } catch (Exception e) {
+                                        log.warn("Failed to parse temperature: {}", tempObj);
+                                }
+                        }
+                }
+
                 // Build final response
                 return ClinicalRecordResponse.builder()
                                 .clinicalRecordId(record.getClinicalRecordId())
                                 .diagnosis(record.getDiagnosis())
                                 .vitalSigns(record.getVitalSigns())
+                                .vitalSignsAssessment(vitalSignsAssessment)
                                 .chiefComplaint(record.getChiefComplaint())
                                 .examinationFindings(record.getExaminationFindings())
                                 .treatmentNotes(record.getTreatmentNotes())
@@ -326,7 +409,7 @@ public class ClinicalRecordService {
          *
          * Business Rules:
          * 1. Appointment must exist
-         * 2. Appointment must be IN_PROGRESS (checked in)
+         * 2. Allows retroactive creation for COMPLETED appointments (Issue 37 fix)
          * 3. No existing clinical record for this appointment (409 if duplicate)
          * 4. All required fields must be provided
          */
@@ -339,13 +422,10 @@ public class ClinicalRecordService {
                                 .orElseThrow(() -> new NotFoundException("APPOINTMENT_NOT_FOUND",
                                                 "Appointment not found with ID: " + request.getAppointmentId()));
 
-                // Step 2: Check appointment status
-                if (!appointment.getStatus().name().equals("IN_PROGRESS")
-                                && !appointment.getStatus().name().equals("CHECKED_IN")) {
-                        throw new com.dental.clinic.management.exception.BadRequestException("INVALID_STATUS",
-                                        "Cannot create clinical record. Appointment must be IN_PROGRESS or CHECKED_IN. Current status: "
-                                                        + appointment.getStatus());
-                }
+                // Step 2: Check access permission (removed status restriction - Issue 37 fix)
+                checkAccessPermission(appointment);
+                log.info("Creating clinical record for appointment {} with status: {}",
+                                request.getAppointmentId(), appointment.getStatus());
 
                 // Step 3: Check duplicate
                 if (clinicalRecordRepository.findByAppointment_AppointmentId(request.getAppointmentId())
@@ -971,6 +1051,7 @@ public class ClinicalRecordService {
                 log.info("Fetching tooth status for patient ID: {}", patientId);
 
                 // Step 1: Validate patient exists
+                @SuppressWarnings("unused")
                 Patient patient = patientRepository.findById(patientId)
                                 .orElseThrow(() -> new NotFoundException("PATIENT_NOT_FOUND",
                                                 "Patient not found with ID: " + patientId));

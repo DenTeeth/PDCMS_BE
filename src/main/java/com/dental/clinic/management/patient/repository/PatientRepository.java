@@ -53,4 +53,36 @@ public interface PatientRepository extends JpaRepository<Patient, Integer>, JpaS
   Boolean existsByEmail(String email);
 
   Boolean existsByPhone(String phone);
+
+  /**
+   * BR-043: Find patients by name and date of birth (for duplicate detection).
+   * Case-insensitive name matching.
+   *
+   * @param firstName First name (case-insensitive)
+   * @param lastName Last name (case-insensitive)
+   * @param dateOfBirth Date of birth
+   * @return List of matching patients
+   */
+  @Query("SELECT p FROM Patient p WHERE LOWER(p.firstName) = LOWER(:firstName) AND LOWER(p.lastName) = LOWER(:lastName) AND p.dateOfBirth = :dateOfBirth AND p.isActive = true")
+  java.util.List<Patient> findByNameAndDateOfBirth(
+      @Param("firstName") String firstName,
+      @Param("lastName") String lastName,
+      @Param("dateOfBirth") java.time.LocalDate dateOfBirth);
+
+  /**
+   * BR-043: Find patients by phone number (for duplicate detection).
+   *
+   * @param phone Phone number
+   * @return List of matching patients
+   */
+  @Query("SELECT p FROM Patient p WHERE p.phone = :phone AND p.isActive = true")
+  java.util.List<Patient> findByPhoneNumber(@Param("phone") String phone);
+
+  /**
+   * BR-044: Find all blacklisted patients.
+   *
+   * @return List of blacklisted patients
+   */
+  @Query("SELECT p FROM Patient p WHERE p.isBlacklisted = true ORDER BY p.blacklistedAt DESC")
+  java.util.List<Patient> findAllBlacklisted();
 }

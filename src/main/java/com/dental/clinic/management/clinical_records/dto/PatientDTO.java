@@ -16,5 +16,21 @@ public class PatientDTO {
     private String phone;
     private String email;
     private String dateOfBirth;
+    private Integer age;
     private String gender;
+    private String address;
+
+    // Medical information - critical for clinical records
+    private String medicalHistory;
+    private String allergies;
+
+    // Emergency contact
+    private String emergencyContactName;
+    private String emergencyContactPhone;
+
+    // Guardian information (for minors <16 years old)
+    private String guardianName;
+    private String guardianPhone;
+    private String guardianRelationship;
+    private String guardianCitizenId;
 }

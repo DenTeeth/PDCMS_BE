@@ -34,11 +34,15 @@ public class PatientMapper {
         response.setPhone(patient.getPhone());
         response.setDateOfBirth(patient.getDateOfBirth());
         response.setAddress(patient.getAddress());
-        response.setGender(patient.getGender());
+        response.setGender(patient.getGender() != null ? patient.getGender().name() : null);
         response.setMedicalHistory(patient.getMedicalHistory());
         response.setAllergies(patient.getAllergies());
         response.setEmergencyContactName(patient.getEmergencyContactName());
         response.setEmergencyContactPhone(patient.getEmergencyContactPhone());
+        response.setGuardianName(patient.getGuardianName());
+        response.setGuardianPhone(patient.getGuardianPhone());
+        response.setGuardianRelationship(patient.getGuardianRelationship());
+        response.setGuardianCitizenId(patient.getGuardianCitizenId());
         response.setIsActive(patient.getIsActive());
         response.setCreatedAt(patient.getCreatedAt());
         response.setUpdatedAt(patient.getUpdatedAt());
@@ -47,8 +51,8 @@ public class PatientMapper {
         if (patient.getAccount() != null) {
             response.setHasAccount(true);
             response.setAccountId(patient.getAccount().getAccountId());
-            response.setAccountStatus(patient.getAccount().getStatus()); // Fixed: use getStatus() not
-                                                                         // getAccountStatus()
+            response.setAccountStatus(
+                    patient.getAccount().getStatus() != null ? patient.getAccount().getStatus().name() : null);
             response.setIsEmailVerified(patient.getAccount().getIsEmailVerified());
         } else {
             response.setHasAccount(false);
@@ -78,6 +82,10 @@ public class PatientMapper {
         patient.setAllergies(request.getAllergies());
         patient.setEmergencyContactName(request.getEmergencyContactName());
         patient.setEmergencyContactPhone(request.getEmergencyContactPhone());
+        patient.setGuardianName(request.getGuardianName());
+        patient.setGuardianPhone(request.getGuardianPhone());
+        patient.setGuardianRelationship(request.getGuardianRelationship());
+        patient.setGuardianCitizenId(request.getGuardianCitizenId());
 
         return patient;
     }
@@ -123,6 +131,18 @@ public class PatientMapper {
         }
         if (request.getEmergencyContactPhone() != null) {
             patient.setEmergencyContactPhone(request.getEmergencyContactPhone());
+        }
+        if (request.getGuardianName() != null) {
+            patient.setGuardianName(request.getGuardianName());
+        }
+        if (request.getGuardianPhone() != null) {
+            patient.setGuardianPhone(request.getGuardianPhone());
+        }
+        if (request.getGuardianRelationship() != null) {
+            patient.setGuardianRelationship(request.getGuardianRelationship());
+        }
+        if (request.getGuardianCitizenId() != null) {
+            patient.setGuardianCitizenId(request.getGuardianCitizenId());
         }
         if (request.getIsActive() != null) {
             patient.setIsActive(request.getIsActive());

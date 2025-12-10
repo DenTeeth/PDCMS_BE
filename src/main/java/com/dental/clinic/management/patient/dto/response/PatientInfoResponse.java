@@ -1,9 +1,6 @@
 
 package com.dental.clinic.management.patient.dto.response;
 
-import com.dental.clinic.management.account.enums.AccountStatus;
-import com.dental.clinic.management.employee.enums.Gender;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -21,11 +18,15 @@ public class PatientInfoResponse {
     private String phone;
     private LocalDate dateOfBirth;
     private String address;
-    private Gender gender;
+    private String gender;
     private String medicalHistory;
     private String allergies;
     private String emergencyContactName;
     private String emergencyContactPhone;
+    private String guardianName;
+    private String guardianPhone;
+    private String guardianRelationship;
+    private String guardianCitizenId;
     private Boolean isActive;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -33,7 +34,7 @@ public class PatientInfoResponse {
     // Account-related fields
     private Boolean hasAccount;
     private Integer accountId;
-    private AccountStatus accountStatus;
+    private String accountStatus;
     private Boolean isEmailVerified;
 
     // Constructors
@@ -113,11 +114,11 @@ public class PatientInfoResponse {
         this.address = address;
     }
 
-    public Gender getGender() {
+    public String getGender() {
         return gender;
     }
 
-    public void setGender(Gender gender) {
+    public void setGender(String gender) {
         this.gender = gender;
     }
 
@@ -193,11 +194,11 @@ public class PatientInfoResponse {
         this.accountId = accountId;
     }
 
-    public AccountStatus getAccountStatus() {
+    public String getAccountStatus() {
         return accountStatus;
     }
 
-    public void setAccountStatus(AccountStatus accountStatus) {
+    public void setAccountStatus(String accountStatus) {
         this.accountStatus = accountStatus;
     }
 
@@ -207,6 +208,38 @@ public class PatientInfoResponse {
 
     public void setIsEmailVerified(Boolean isEmailVerified) {
         this.isEmailVerified = isEmailVerified;
+    }
+
+    public String getGuardianName() {
+        return guardianName;
+    }
+
+    public void setGuardianName(String guardianName) {
+        this.guardianName = guardianName;
+    }
+
+    public String getGuardianPhone() {
+        return guardianPhone;
+    }
+
+    public void setGuardianPhone(String guardianPhone) {
+        this.guardianPhone = guardianPhone;
+    }
+
+    public String getGuardianRelationship() {
+        return guardianRelationship;
+    }
+
+    public void setGuardianRelationship(String guardianRelationship) {
+        this.guardianRelationship = guardianRelationship;
+    }
+
+    public String getGuardianCitizenId() {
+        return guardianCitizenId;
+    }
+
+    public void setGuardianCitizenId(String guardianCitizenId) {
+        this.guardianCitizenId = guardianCitizenId;
     }
 
     @Override

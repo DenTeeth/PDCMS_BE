@@ -14,66 +14,107 @@
 -- STEP 0: CREATE ALL POSTGRESQL ENUM TYPES
 -- ============================================
 -- These ENUMs MUST exist before Hibernate creates tables
--- Spring Boot SQL parser cannot handle DO blocks, so using simple CREATE TYPE
--- continue-on-error=true will ignore "already exists" errors
+-- Using DROP TYPE IF EXISTS + CREATE TYPE pattern (Spring Boot compatible)
 -- ============================================
 
 -- Appointment ENUMs
+DROP TYPE IF EXISTS appointment_action_type CASCADE;
 CREATE TYPE appointment_action_type AS ENUM ('CREATE', 'DELAY', 'RESCHEDULE_SOURCE', 'RESCHEDULE_TARGET', 'CANCEL', 'STATUS_CHANGE');
+DROP TYPE IF EXISTS appointment_status_enum CASCADE;
 CREATE TYPE appointment_status_enum AS ENUM ('SCHEDULED', 'CHECKED_IN', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'NO_SHOW');
+DROP TYPE IF EXISTS appointment_participant_role_enum CASCADE;
 CREATE TYPE appointment_participant_role_enum AS ENUM ('ASSISTANT', 'SECONDARY_DOCTOR', 'OBSERVER');
+DROP TYPE IF EXISTS appointment_reason_code CASCADE;
 CREATE TYPE appointment_reason_code AS ENUM ('PREVIOUS_CASE_OVERRUN', 'DOCTOR_UNAVAILABLE', 'EQUIPMENT_FAILURE', 'PATIENT_REQUEST', 'OPERATIONAL_REDIRECT', 'OTHER');
 
 -- Account & Employee ENUMs
+DROP TYPE IF EXISTS gender CASCADE;
 CREATE TYPE gender AS ENUM ('MALE', 'FEMALE', 'OTHER');
+DROP TYPE IF EXISTS employment_type CASCADE;
 CREATE TYPE employment_type AS ENUM ('FULL_TIME', 'PART_TIME_FIXED', 'PART_TIME_FLEX');
+DROP TYPE IF EXISTS account_status CASCADE;
 CREATE TYPE account_status AS ENUM ('ACTIVE', 'INACTIVE', 'SUSPENDED', 'LOCKED', 'PENDING_VERIFICATION');
 
 -- Customer Contact ENUMs
+DROP TYPE IF EXISTS contact_history_action CASCADE;
 CREATE TYPE contact_history_action AS ENUM ('CALL', 'MESSAGE', 'NOTE');
+DROP TYPE IF EXISTS customer_contact_status CASCADE;
 CREATE TYPE customer_contact_status AS ENUM ('NEW', 'CONTACTED', 'APPOINTMENT_SET', 'NOT_INTERESTED', 'CONVERTED');
+DROP TYPE IF EXISTS customer_contact_source CASCADE;
 CREATE TYPE customer_contact_source AS ENUM ('WEBSITE', 'FACEBOOK', 'ZALO', 'WALK_IN', 'REFERRAL');
 
 -- Working Schedule ENUMs
+DROP TYPE IF EXISTS shift_status CASCADE;
 CREATE TYPE shift_status AS ENUM ('SCHEDULED', 'ON_LEAVE', 'COMPLETED', 'ABSENT', 'CANCELLED');
+DROP TYPE IF EXISTS request_status CASCADE;
 CREATE TYPE request_status AS ENUM ('PENDING', 'APPROVED', 'REJECTED', 'CANCELLED');
+DROP TYPE IF EXISTS work_shift_category CASCADE;
 CREATE TYPE work_shift_category AS ENUM ('NORMAL', 'NIGHT');
+DROP TYPE IF EXISTS shift_source CASCADE;
 CREATE TYPE shift_source AS ENUM ('BATCH_JOB', 'REGISTRATION_JOB', 'OT_APPROVAL', 'MANUAL_ENTRY');
+DROP TYPE IF EXISTS employee_shifts_source CASCADE;
 CREATE TYPE employee_shifts_source AS ENUM ('BATCH_JOB', 'REGISTRATION_JOB', 'OT_APPROVAL', 'MANUAL_ENTRY');
+DROP TYPE IF EXISTS day_of_week CASCADE;
 CREATE TYPE day_of_week AS ENUM ('MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY');
+DROP TYPE IF EXISTS holiday_type CASCADE;
 CREATE TYPE holiday_type AS ENUM ('NATIONAL', 'COMPANY');
+DROP TYPE IF EXISTS renewal_status CASCADE;
 CREATE TYPE renewal_status AS ENUM ('PENDING_ACTION', 'CONFIRMED', 'FINALIZED', 'DECLINED', 'EXPIRED');
+DROP TYPE IF EXISTS time_off_status CASCADE;
 CREATE TYPE time_off_status AS ENUM ('PENDING', 'APPROVED', 'REJECTED', 'CANCELLED');
+DROP TYPE IF EXISTS balance_change_reason CASCADE;
 CREATE TYPE balance_change_reason AS ENUM ('ANNUAL_RESET', 'APPROVED_REQUEST', 'REJECTED_REQUEST', 'CANCELLED_REQUEST', 'MANUAL_ADJUSTMENT');
+DROP TYPE IF EXISTS registrationstatus CASCADE;
 CREATE TYPE registrationstatus AS ENUM ('PENDING', 'APPROVED', 'REJECTED');
 
 -- Treatment Plan ENUMs
+DROP TYPE IF EXISTS approval_status CASCADE;
 CREATE TYPE approval_status AS ENUM ('DRAFT', 'PENDING_REVIEW', 'APPROVED', 'REJECTED');
-CREATE TYPE plan_item_status AS ENUM ('READY_FOR_BOOKING', 'SCHEDULED', 'PENDING', 'IN_PROGRESS', 'COMPLETED');
+DROP TYPE IF EXISTS plan_item_status CASCADE;
+CREATE TYPE plan_item_status AS ENUM ('READY_FOR_BOOKING', 'SCHEDULED', 'PENDING', 'IN_PROGRESS', 'COMPLETED','WAITING_FOR_PREREQUISITE','SKIPPED');
+DROP TYPE IF EXISTS treatmentplanstatus CASCADE;
 CREATE TYPE treatmentplanstatus AS ENUM ('PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED');
+DROP TYPE IF EXISTS paymenttype CASCADE;
 CREATE TYPE paymenttype AS ENUM ('FULL', 'PHASED', 'INSTALLMENT');
+DROP TYPE IF EXISTS phasestatus CASCADE;
 CREATE TYPE phasestatus AS ENUM ('PENDING', 'IN_PROGRESS', 'COMPLETED');
+DROP TYPE IF EXISTS planactiontype CASCADE;
 CREATE TYPE planactiontype AS ENUM ('STATUS_CHANGE', 'PRICE_UPDATE', 'PHASE_UPDATE', 'APPROVAL');
 
 -- Patient Tooth Status ENUM (Odontogram)
+DROP TYPE IF EXISTS tooth_condition_enum CASCADE;
 CREATE TYPE tooth_condition_enum AS ENUM ('HEALTHY', 'CARIES', 'FILLED', 'CROWN', 'MISSING', 'IMPLANT', 'ROOT_CANAL', 'FRACTURED', 'IMPACTED');
 
 -- Clinical Record Attachment ENUM
+DROP TYPE IF EXISTS attachment_type_enum CASCADE;
 CREATE TYPE attachment_type_enum AS ENUM ('XRAY', 'PHOTO_BEFORE', 'PHOTO_AFTER', 'LAB_RESULT', 'CONSENT_FORM', 'OTHER');
 
+-- Patient Image Type ENUM
+DROP TYPE IF EXISTS image_type CASCADE;
+CREATE TYPE image_type AS ENUM ('XRAY', 'PHOTO', 'BEFORE_TREATMENT', 'AFTER_TREATMENT', 'SCAN', 'OTHER');
+
 -- Warehouse ENUMs
+DROP TYPE IF EXISTS batchstatus CASCADE;
 CREATE TYPE batchstatus AS ENUM ('ACTIVE', 'EXPIRED', 'DEPLETED');
+DROP TYPE IF EXISTS exporttype CASCADE;
 CREATE TYPE exporttype AS ENUM ('SERVICE', 'SALE', 'WASTAGE', 'TRANSFER');
+DROP TYPE IF EXISTS suppliertier CASCADE;
 CREATE TYPE suppliertier AS ENUM ('PLATINUM', 'GOLD', 'SILVER', 'BRONZE');
+DROP TYPE IF EXISTS stockstatus CASCADE;
 CREATE TYPE stockstatus AS ENUM ('IN_STOCK', 'LOW_STOCK', 'OUT_OF_STOCK');
+DROP TYPE IF EXISTS transactionstatus CASCADE;
 CREATE TYPE transactionstatus AS ENUM ('PENDING', 'COMPLETED', 'CANCELLED');
+DROP TYPE IF EXISTS paymentstatus CASCADE;
 CREATE TYPE paymentstatus AS ENUM ('UNPAID', 'PARTIAL', 'PAID');
+DROP TYPE IF EXISTS warehousetype CASCADE;
 CREATE TYPE warehousetype AS ENUM ('MAIN', 'BRANCH');
+DROP TYPE IF EXISTS warehouseactiontype CASCADE;
 CREATE TYPE warehouseactiontype AS ENUM ('IMPORT', 'EXPORT', 'TRANSFER', 'ADJUSTMENT');
+DROP TYPE IF EXISTS transactiontype CASCADE;
 CREATE TYPE transactiontype AS ENUM ('PURCHASE', 'SALE', 'SERVICE', 'TRANSFER_IN', 'TRANSFER_OUT', 'ADJUSTMENT');
 
 -- ============================================
--- END ENUM TYPE DEFINITIONS (38 types total)
+-- END ENUM TYPE DEFINITIONS (39 types total)
 -- ============================================
 
 -- ============================================
@@ -82,8 +123,47 @@ CREATE TYPE transactiontype AS ENUM ('PURCHASE', 'SALE', 'SERVICE', 'TRANSFER_IN
 -- Fix patient_treatment_plans status constraint to include PENDING
 -- Hibernate may generate constraint missing PENDING due to old migration files
 ALTER TABLE patient_treatment_plans DROP CONSTRAINT IF EXISTS patient_treatment_plans_status_check;
-ALTER TABLE patient_treatment_plans ADD CONSTRAINT patient_treatment_plans_status_check 
+ALTER TABLE patient_treatment_plans ADD CONSTRAINT patient_treatment_plans_status_check
 CHECK (status IN ('PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'));
+
+-- Fix patient_plan_items status constraint to include all valid workflow states
+-- Hibernate may generate constraint with incomplete status values
+ALTER TABLE patient_plan_items DROP CONSTRAINT IF EXISTS patient_plan_items_status_check;
+ALTER TABLE patient_plan_items ADD CONSTRAINT patient_plan_items_status_check
+CHECK (status IN ('PENDING', 'READY_FOR_BOOKING', 'SCHEDULED', 'IN_PROGRESS', 'COMPLETED', 'WAITING_FOR_PREREQUISITE', 'SKIPPED'));
+
+-- ============================================
+-- ADD NEW COLUMNS FOR APPOINTMENT BUSINESS RULES
+-- ============================================
+-- Rule #5: Patient no-show tracking and blocking (3 strikes rule)
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS consecutive_no_shows INTEGER DEFAULT 0;
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS is_booking_blocked BOOLEAN DEFAULT FALSE;
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS booking_block_reason VARCHAR(500);
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS blocked_at TIMESTAMP;
+
+-- Rule #9: Appointment reschedule tracking (max 2 reschedules)
+ALTER TABLE appointments ADD COLUMN IF NOT EXISTS reschedule_count INTEGER DEFAULT 0;
+
+-- Update existing rows to have default values
+UPDATE patients SET consecutive_no_shows = 0 WHERE consecutive_no_shows IS NULL;
+UPDATE patients SET is_booking_blocked = FALSE WHERE is_booking_blocked IS NULL;
+UPDATE appointments SET reschedule_count = 0 WHERE reschedule_count IS NULL;
+
+-- Rule #14: Guardian information for minors (<16 years old)
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS guardian_name VARCHAR(100);
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS guardian_phone VARCHAR(15);
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS guardian_relationship VARCHAR(50);
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS guardian_citizen_id VARCHAR(20);
+
+-- BR-044: Patient blacklist management
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS is_blacklisted BOOLEAN DEFAULT FALSE;
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS blacklist_reason VARCHAR(100);
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS blacklist_notes TEXT;
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS blacklisted_by INTEGER;
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS blacklisted_at TIMESTAMP;
+
+-- Update existing rows to have default values for blacklist
+UPDATE patients SET is_blacklisted = FALSE WHERE is_blacklisted IS NULL;
 
 -- ============================================
 -- BƯỚC 1: TẠO BASE ROLES (3 loại cố định)
@@ -178,7 +258,8 @@ INSERT INTO permissions (permission_id, permission_name, module, description, di
 VALUES
 ('VIEW_TREATMENT', 'VIEW_TREATMENT', 'TREATMENT', 'Xem danh sách điều trị', 40, NULL, TRUE, NOW()),
 ('CREATE_TREATMENT', 'CREATE_TREATMENT', 'TREATMENT', 'Tạo phác đồ điều trị mới', 41, NULL, TRUE, NOW()),
-('UPDATE_TREATMENT', 'UPDATE_TREATMENT', 'TREATMENT', 'Cập nhật phác đồ điều trị', 42, NULL, TRUE, NOW())
+('UPDATE_TREATMENT', 'UPDATE_TREATMENT', 'TREATMENT', 'Cập nhật phác đồ điều trị', 42, NULL, TRUE, NOW()),
+('ASSIGN_DOCTOR_TO_ITEM', 'ASSIGN_DOCTOR_TO_ITEM', 'TREATMENT', 'Gán bác sĩ cho hạng mục điều trị', 43, NULL, TRUE, NOW())
 ON CONFLICT (permission_id) DO NOTHING;
 
 
@@ -391,10 +472,17 @@ VALUES
 ('MANAGE_SUPPLIERS', 'MANAGE_SUPPLIERS', 'WAREHOUSE', 'Quản lý nhà cung cấp (API 6.13, 6.14)', 282, NULL, TRUE, NOW()),
 ('MANAGE_CONSUMABLES', 'MANAGE_CONSUMABLES', 'WAREHOUSE', 'Quản lý định mức tiêu hao vật tư (BOM) - API 6.18, 6.19', 283, NULL, TRUE, NOW()),
 ('MANAGE_WAREHOUSE', 'MANAGE_WAREHOUSE', 'WAREHOUSE', 'Toàn quyền quản lý kho', 284, NULL, TRUE, NOW()),
-('WRITE_CLINICAL_RECORD', 'WRITE_CLINICAL_RECORD', 'CLINICAL_RECORDS', 'Tạo và cập nhật bệnh án, thêm thủ thuật (API 8.5, 9.2, 9.3)', 285, NULL, TRUE, NOW()),
-('UPLOAD_ATTACHMENT', 'UPLOAD_ATTACHMENT', 'CLINICAL_RECORDS', 'Upload file đính kèm vào bệnh án (X-quang, ảnh, PDF) - API 8.11', 286, NULL, TRUE, NOW()),
-('VIEW_ATTACHMENT', 'VIEW_ATTACHMENT', 'CLINICAL_RECORDS', 'Xem danh sách file đính kèm của bệnh án - API 8.12', 287, NULL, TRUE, NOW()),
-('DELETE_ATTACHMENT', 'DELETE_ATTACHMENT', 'CLINICAL_RECORDS', 'Xóa file đính kèm (chỉ Admin hoặc người upload) - API 8.13', 288, NULL, TRUE, NOW())
+
+-- MODULE 15: PATIENT_IMAGES (Quản lý hình ảnh bệnh nhân - API 9.1 to 9.6)
+('PATIENT_IMAGE_CREATE', 'PATIENT_IMAGE_CREATE', 'PATIENT_IMAGES', 'Tạo hình ảnh bệnh nhân (Upload metadata)', 290, NULL, TRUE, NOW()),
+('PATIENT_IMAGE_READ', 'PATIENT_IMAGE_READ', 'PATIENT_IMAGES', 'Xem hình ảnh bệnh nhân', 291, NULL, TRUE, NOW()),
+('PATIENT_IMAGE_UPDATE', 'PATIENT_IMAGE_UPDATE', 'PATIENT_IMAGES', 'Cập nhật metadata hình ảnh', 292, NULL, TRUE, NOW()),
+('PATIENT_IMAGE_DELETE', 'PATIENT_IMAGE_DELETE', 'PATIENT_IMAGES', 'Xoa hinh anh benh nhan', 293, NULL, TRUE, NOW()),
+('WRITE_CLINICAL_RECORD', 'WRITE_CLINICAL_RECORD', 'CLINICAL_RECORDS', 'Tao va cap nhat benh an, them thu thuat (API 8.5, 9.2, 9.3)', 285, NULL, TRUE, NOW()),
+('UPLOAD_ATTACHMENT', 'UPLOAD_ATTACHMENT', 'CLINICAL_RECORDS', 'Upload file dinh kem vao benh an (X-quang, anh, PDF) - API 8.11', 286, NULL, TRUE, NOW()),
+('VIEW_ATTACHMENT', 'VIEW_ATTACHMENT', 'CLINICAL_RECORDS', 'Xem danh sach file dinh kem cua benh an - API 8.12', 287, NULL, TRUE, NOW()),
+('DELETE_ATTACHMENT', 'DELETE_ATTACHMENT', 'CLINICAL_RECORDS', 'Xoa file dinh kem (chi Admin hoac nguoi upload) - API 8.13', 288, NULL, TRUE, NOW()),
+('VIEW_VITAL_SIGNS_REFERENCE', 'VIEW_VITAL_SIGNS_REFERENCE', 'CLINICAL_RECORDS', 'Xem bang tham chieu chi so sinh ton theo do tuoi', 289, NULL, TRUE, NOW())
 ON CONFLICT (permission_id) DO NOTHING;
 
 
@@ -412,7 +500,7 @@ ON CONFLICT (role_id, permission_id) DO NOTHING;
 INSERT INTO role_permissions (role_id, permission_id)
 VALUES
 ('ROLE_DENTIST', 'VIEW_PATIENT'), ('ROLE_DENTIST', 'UPDATE_PATIENT'),
-('ROLE_DENTIST', 'VIEW_TREATMENT'), ('ROLE_DENTIST', 'CREATE_TREATMENT'), ('ROLE_DENTIST', 'UPDATE_TREATMENT'),
+('ROLE_DENTIST', 'VIEW_TREATMENT'), ('ROLE_DENTIST', 'CREATE_TREATMENT'), ('ROLE_DENTIST', 'UPDATE_TREATMENT'), ('ROLE_DENTIST', 'ASSIGN_DOCTOR_TO_ITEM'),
 ('ROLE_DENTIST', 'VIEW_APPOINTMENT'), -- Deprecated
 ('ROLE_DENTIST', 'VIEW_APPOINTMENT_OWN'), -- NEW: Only see own appointments
 ('ROLE_DENTIST', 'UPDATE_APPOINTMENT_STATUS'), -- NEW API 3.5: Start, Complete treatment
@@ -433,7 +521,13 @@ VALUES
 ('ROLE_DENTIST', 'WRITE_CLINICAL_RECORD'),
 ('ROLE_DENTIST', 'UPLOAD_ATTACHMENT'),
 ('ROLE_DENTIST', 'VIEW_ATTACHMENT'),
-('ROLE_DENTIST', 'DELETE_ATTACHMENT')
+('ROLE_DENTIST', 'DELETE_ATTACHMENT'),
+('ROLE_DENTIST', 'VIEW_VITAL_SIGNS_REFERENCE'),
+-- Patient Images permissions
+('ROLE_DENTIST', 'PATIENT_IMAGE_CREATE'),
+('ROLE_DENTIST', 'PATIENT_IMAGE_READ'),
+('ROLE_DENTIST', 'PATIENT_IMAGE_UPDATE'),
+('ROLE_DENTIST', 'PATIENT_IMAGE_DELETE')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
@@ -490,7 +584,9 @@ VALUES
 ('ROLE_RECEPTIONIST', 'VIEW_HOLIDAY'),
 ('ROLE_RECEPTIONIST', 'VIEW_TREATMENT_PLAN_ALL'),
 ('ROLE_RECEPTIONIST', 'VIEW_WAREHOUSE'),
-('ROLE_RECEPTIONIST', 'VIEW_ITEMS')
+('ROLE_RECEPTIONIST', 'VIEW_ITEMS'),
+-- Patient Images (read only for receptionist)
+('ROLE_RECEPTIONIST', 'PATIENT_IMAGE_READ')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
@@ -547,6 +643,7 @@ VALUES
 ('ROLE_MANAGER', 'VIEW_TREATMENT_PLAN_ALL'), -- Can view all patients' treatment plans
 ('ROLE_MANAGER', 'VIEW_ALL_TREATMENT_PLANS'), -- V21: Can view system-wide treatment plan list
 ('ROLE_MANAGER', 'CREATE_TREATMENT_PLAN'), -- Can create treatment plans
+('ROLE_MANAGER', 'ASSIGN_DOCTOR_TO_ITEM'), -- V32: Can assign doctors to plan items
 ('ROLE_MANAGER', 'UPDATE_TREATMENT_PLAN'), -- Can update treatment plans
 ('ROLE_MANAGER', 'DELETE_TREATMENT_PLAN'), -- Can delete treatment plans
 ('ROLE_MANAGER', 'APPROVE_TREATMENT_PLAN'), -- V20: Can approve/reject treatment plans (API 5.9)
@@ -923,13 +1020,27 @@ VALUES
 ON CONFLICT (employee_id, specialization_id) DO NOTHING;
 
 
-INSERT INTO patients (patient_id, account_id, patient_code, first_name, last_name, email, phone, date_of_birth, address, gender, is_active, created_at, updated_at)
+INSERT INTO patients (
+    patient_id, account_id, patient_code, first_name, last_name, email, phone, date_of_birth, address, gender,
+    medical_history, allergies, emergency_contact_name, emergency_contact_phone,
+    consecutive_no_shows, is_booking_blocked, is_blacklisted, is_active, created_at, updated_at
+)
 VALUES
-(1, 12, 'BN-1001', 'Đoàn Thanh', 'Phong', 'phong.dt@email.com', '0971111111', '1995-03-15', '123 Lê Văn Việt, Q9, TPHCM', 'MALE', TRUE, NOW(), NOW()),
-(2, 13, 'BN-1002', 'Phạm Văn', 'Phong', 'phong.pv@email.com', '0972222222', '1990-07-20', '456 Võ Văn Ngân, Thủ Đức, TPHCM', 'MALE', TRUE, NOW(), NOW()),
-(3, 14, 'BN-1003', 'Nguyễn Tuấn', 'Anh', 'anh.nt@email.com', '0973333333', '1988-11-10', '789 Đường D2, Bình Thạnh, TPHCM', 'MALE', TRUE, NOW(), NOW()),
-(4, 15, 'BN-1004', 'Mít tơ', 'Bít', 'mit.bit@email.com', '0974444444', '2000-01-01', '321 Nguyễn Thị Minh Khai, Q1, TPHCM', 'OTHER', TRUE, NOW(), NOW()),
-(5, 18, 'BN-1005', 'Trần Văn', 'Nam', 'nam.tv@email.com', '0975555555', '1992-05-25', '555 Hoàng Diệu, Q4, TPHCM', 'MALE', TRUE, NOW(), NOW())
+(1, 12, 'BN-1001', 'Đoàn Thanh', 'Phong', 'phong.dt@email.com', '0971111111', '1995-03-15', '123 Lê Văn Việt, Q9, TPHCM', 'MALE',
+    'Tiền sử viêm lợi, đã điều trị năm 2020', 'Dị ứng Penicillin', 'Đoàn Văn Nam', '0901111111',
+    0, FALSE, FALSE, TRUE, NOW(), NOW()),
+(2, 13, 'BN-1002', 'Phạm Văn', 'Phong', 'phong.pv@email.com', '0972222222', '1990-07-20', '456 Võ Văn Ngân, Thủ Đức, TPHCM', 'MALE',
+    'Không có tiền sử bệnh lý', 'Không có dị ứng', 'Phạm Thị Lan', '0902222222',
+    0, FALSE, FALSE, TRUE, NOW(), NOW()),
+(3, 14, 'BN-1003', 'Nguyễn Tuấn', 'Anh', 'anh.nt@email.com', '0973333333', '1988-11-10', '789 Đường D2, Bình Thạnh, TPHCM', 'MALE',
+    'Cao huyết áp, đang dùng thuốc kiểm soát', 'Dị ứng thuốc gây tê Lidocaine', 'Nguyễn Thị Hoa', '0903333333',
+    0, FALSE, FALSE, TRUE, NOW(), NOW()),
+(4, 15, 'BN-1004', 'Mít tơ', 'Bít', 'mit.bit@email.com', '0974444444', '2000-01-01', '321 Nguyễn Thị Minh Khai, Q1, TPHCM', 'OTHER',
+    'Không có', 'Không có', 'Bố Mít', '0904444444',
+    0, FALSE, FALSE, TRUE, NOW(), NOW()),
+(5, 18, 'BN-1005', 'Trần Văn', 'Nam', 'nam.tv@email.com', '0975555555', '1992-05-25', '555 Hoàng Diệu, Q4, TPHCM', 'MALE',
+    'Tiểu đường type 2, HbA1c: 7.2%', 'Dị ứng tôm cua, aspirin', 'Trần Thị Mai', '0905555555',
+    0, FALSE, FALSE, TRUE, NOW(), NOW())
 ON CONFLICT (patient_id) DO NOTHING;
 
 -- NEW PATIENTS (All with verified emails - da setup password)
@@ -942,13 +1053,27 @@ VALUES
 (23, 'ACC023', 'patient010', 'lan.nt@email.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhkW', 'ROLE_PATIENT', 'ACTIVE', TRUE, NOW())
 ON CONFLICT (account_id) DO NOTHING;
 
-INSERT INTO patients (patient_id, account_id, patient_code, first_name, last_name, email, phone, date_of_birth, address, gender, is_active, created_at, updated_at)
+INSERT INTO patients (
+    patient_id, account_id, patient_code, first_name, last_name, email, phone, date_of_birth, address, gender,
+    medical_history, allergies, emergency_contact_name, emergency_contact_phone, guardian_name, guardian_phone, guardian_relationship, guardian_citizen_id,
+    consecutive_no_shows, is_booking_blocked, is_blacklisted, is_active, created_at, updated_at
+)
 VALUES
-(6, 19, 'BN-1006', 'Lê Thị', 'Hoa', 'hoa.lt@email.com', '0976666666', '1993-08-12', '88 Trần Hưng Đạo, Q5, TPHCM', 'FEMALE', TRUE, NOW(), NOW()),
-(7, 20, 'BN-1007', 'Võ Văn', 'Khánh', 'khanh.vv@email.com', '0977777777', '1985-04-18', '99 Lê Lợi, Q1, TPHCM', 'MALE', TRUE, NOW(), NOW()),
-(8, 21, 'BN-1008', 'Trần Thị', 'Mai', 'mai.tt@email.com', '0978888888', '1998-12-25', '77 Nguyễn Huệ, Q1, TPHCM', 'FEMALE', TRUE, NOW(), NOW()),
-(9, 22, 'BN-1009', 'Phan Văn', 'Tú', 'tu.pv@email.com', '0979999999', '1991-06-30', '66 Pasteur, Q3, TPHCM', 'MALE', TRUE, NOW(), NOW()),
-(10, 23, 'BN-1010', 'Nguyễn Thị', 'Lan', 'lan.nt@email.com', '0970000000', '1996-09-15', '55 Cách Mạng Tháng 8, Q10, TPHCM', 'FEMALE', TRUE, NOW(), NOW())
+(6, 19, 'BN-1006', 'Lê Thị', 'Hoa', 'hoa.lt@email.com', '0976666666', '1993-08-12', '88 Trần Hưng Đạo, Q5, TPHCM', 'FEMALE',
+    'Đã nhổ 2 răng khôn', 'Dị ứng phấn hoa', 'Lê Văn Hùng', '0906666666', NULL, NULL, NULL, NULL,
+    0, FALSE, FALSE, TRUE, NOW(), NOW()),
+(7, 20, 'BN-1007', 'Võ Văn', 'Khánh', 'khanh.vv@email.com', '0977777777', '1985-04-18', '99 Lê Lợi, Q1, TPHCM', 'MALE',
+    'Hen suyễn nhẹ', 'Dị ứng bụi', 'Võ Thị Thanh', '0907777777', NULL, NULL, NULL, NULL,
+    0, FALSE, FALSE, TRUE, NOW(), NOW()),
+(8, 21, 'BN-1008', 'Trần Thị', 'Mai', 'mai.tt@email.com', '0978888888', '1998-12-25', '77 Nguyễn Huệ, Q1, TPHCM', 'FEMALE',
+    'Không có', 'Không có', 'Trần Văn Long', '0908888888', NULL, NULL, NULL, NULL,
+    0, FALSE, FALSE, TRUE, NOW(), NOW()),
+(9, 22, 'BN-1009', 'Phan Văn', 'Tú', 'tu.pv@email.com', '0979999999', '1991-06-30', '66 Pasteur, Q3, TPHCM', 'MALE',
+    'Viêm xoang mạn tính', 'Không có', 'Phan Thị Kim', '0909999999', NULL, NULL, NULL, NULL,
+    0, FALSE, FALSE, TRUE, NOW(), NOW()),
+(10, 23, 'BN-1010', 'Nguyễn Thị', 'Lan', 'lan.nt@email.com', '0970000000', '2011-09-15', '55 Cách Mạng Tháng 8, Q10, TPHCM', 'FEMALE',
+    'Trẻ em khỏe mạnh', 'Không có', 'Nguyễn Văn Minh', '0900000000', 'Nguyễn Văn Minh', '0900000000', 'Bố', '079088001234',
+    0, FALSE, FALSE, TRUE, NOW(), NOW())
 ON CONFLICT (patient_id) DO NOTHING;
 
 INSERT INTO work_shifts (work_shift_id, shift_name, start_time, end_time, category, is_active)
@@ -4167,15 +4292,6 @@ SELECT setval('patient_plan_phases_patient_phase_id_seq', (SELECT MAX(patient_ph
 SELECT setval('patient_plan_items_item_id_seq', (SELECT MAX(item_id) FROM patient_plan_items));
 
 -- ============================================
--- FIX: Add PENDING status to patient_plan_items constraint
--- (Required for API 5.3 - Create Treatment Plan from Template)
--- ============================================
-ALTER TABLE patient_plan_items DROP CONSTRAINT IF EXISTS patient_plan_items_status_check;
-ALTER TABLE patient_plan_items ADD CONSTRAINT patient_plan_items_status_check
-    CHECK (status IN ('PENDING', 'READY_FOR_BOOKING', 'SCHEDULED', 'IN_PROGRESS', 'COMPLETED'));
-
-
--- ============================================
 -- SEED DATA CHO WAREHOUSE MODULE (V3 API)
 -- ============================================
 
@@ -4758,6 +4874,57 @@ SELECT setval('service_consumables_link_id_seq', (SELECT COALESCE(MAX(link_id), 
 -- CLINICAL RECORDS MODULE (Module #9)
 -- =============================================
 -- Test data for API 8.1: GET /api/v1/appointments/{appointmentId}/clinical-record
+-- ============================================
+-- Vital Signs Reference Data
+-- Purpose: Provide reference ranges for dentists to assess if patient vital signs are normal/abnormal
+-- Age-based thresholds with audit support (effective_date, is_active)
+-- ============================================
+
+-- Blood Pressure - Systolic (mmHg)
+INSERT INTO vital_signs_reference (vital_type, age_min, age_max, normal_min, normal_max, low_threshold, high_threshold, unit, description, effective_date, is_active) VALUES
+('BLOOD_PRESSURE_SYSTOLIC', 0, 12, 80, 110, 70, 120, 'mmHg', 'Huyet ap tam thu - Tre em 0-12 tuoi', '2025-01-01', TRUE),
+('BLOOD_PRESSURE_SYSTOLIC', 13, 17, 90, 120, 80, 130, 'mmHg', 'Huyet ap tam thu - Thanh thieu nien 13-17 tuoi', '2025-01-01', TRUE),
+('BLOOD_PRESSURE_SYSTOLIC', 18, 59, 90, 120, 80, 140, 'mmHg', 'Huyet ap tam thu - Nguoi lon 18-59 tuoi', '2025-01-01', TRUE),
+('BLOOD_PRESSURE_SYSTOLIC', 60, NULL, 90, 130, 80, 150, 'mmHg', 'Huyet ap tam thu - Nguoi cao tuoi >= 60 tuoi', '2025-01-01', TRUE);
+
+-- Blood Pressure - Diastolic (mmHg)
+INSERT INTO vital_signs_reference (vital_type, age_min, age_max, normal_min, normal_max, low_threshold, high_threshold, unit, description, effective_date, is_active) VALUES
+('BLOOD_PRESSURE_DIASTOLIC', 0, 12, 50, 70, 40, 80, 'mmHg', 'Huyet ap tam truong - Tre em 0-12 tuoi', '2025-01-01', TRUE),
+('BLOOD_PRESSURE_DIASTOLIC', 13, 17, 60, 80, 50, 85, 'mmHg', 'Huyet ap tam truong - Thanh thieu nien 13-17 tuoi', '2025-01-01', TRUE),
+('BLOOD_PRESSURE_DIASTOLIC', 18, 59, 60, 80, 50, 90, 'mmHg', 'Huyet ap tam truong - Nguoi lon 18-59 tuoi', '2025-01-01', TRUE),
+('BLOOD_PRESSURE_DIASTOLIC', 60, NULL, 60, 85, 50, 95, 'mmHg', 'Huyet ap tam truong - Nguoi cao tuoi >= 60 tuoi', '2025-01-01', TRUE);
+
+-- Heart Rate (bpm - beats per minute)
+INSERT INTO vital_signs_reference (vital_type, age_min, age_max, normal_min, normal_max, low_threshold, high_threshold, unit, description, effective_date, is_active) VALUES
+('HEART_RATE', 0, 1, 100, 160, 90, 180, 'bpm', 'Nhip tim - Tre so sinh', '2025-01-01', TRUE),
+('HEART_RATE', 2, 5, 80, 130, 70, 150, 'bpm', 'Nhip tim - Tre nho 2-5 tuoi', '2025-01-01', TRUE),
+('HEART_RATE', 6, 12, 70, 110, 60, 130, 'bpm', 'Nhip tim - Tre em 6-12 tuoi', '2025-01-01', TRUE),
+('HEART_RATE', 13, 17, 60, 100, 50, 120, 'bpm', 'Nhip tim - Thanh thieu nien 13-17 tuoi', '2025-01-01', TRUE),
+('HEART_RATE', 18, 64, 60, 100, 50, 120, 'bpm', 'Nhip tim - Nguoi lon 18-64 tuoi', '2025-01-01', TRUE),
+('HEART_RATE', 65, NULL, 60, 100, 50, 110, 'bpm', 'Nhip tim - Nguoi cao tuoi >= 65 tuoi', '2025-01-01', TRUE);
+
+-- Oxygen Saturation (SpO2 %)
+INSERT INTO vital_signs_reference (vital_type, age_min, age_max, normal_min, normal_max, low_threshold, high_threshold, unit, description, effective_date, is_active) VALUES
+('OXYGEN_SATURATION', 0, NULL, 95, 100, 90, NULL, '%', 'Do bao hoa oxy - Tat ca moi do tuoi', '2025-01-01', TRUE);
+
+-- Body Temperature (Celsius)
+INSERT INTO vital_signs_reference (vital_type, age_min, age_max, normal_min, normal_max, low_threshold, high_threshold, unit, description, effective_date, is_active) VALUES
+('TEMPERATURE', 0, NULL, 36.1, 37.2, 35.0, 38.0, 'C', 'Nhiet do co the - Tat ca moi do tuoi', '2025-01-01', TRUE);
+
+-- Respiratory Rate (breaths per minute)
+INSERT INTO vital_signs_reference (vital_type, age_min, age_max, normal_min, normal_max, low_threshold, high_threshold, unit, description, effective_date, is_active) VALUES
+('RESPIRATORY_RATE', 0, 1, 30, 60, 25, 70, 'breaths/min', 'Nhip tho - Tre so sinh', '2025-01-01', TRUE),
+('RESPIRATORY_RATE', 2, 5, 20, 30, 15, 40, 'breaths/min', 'Nhip tho - Tre nho 2-5 tuoi', '2025-01-01', TRUE),
+('RESPIRATORY_RATE', 6, 12, 18, 25, 12, 35, 'breaths/min', 'Nhip tho - Tre em 6-12 tuoi', '2025-01-01', TRUE),
+('RESPIRATORY_RATE', 13, NULL, 12, 20, 10, 25, 'breaths/min', 'Nhip tho - Tu 13 tuoi tro len', '2025-01-01', TRUE);
+
+-- Historical example for audit (inactive reference that was updated)
+INSERT INTO vital_signs_reference (vital_type, age_min, age_max, normal_min, normal_max, low_threshold, high_threshold, unit, description, effective_date, is_active) VALUES
+('BLOOD_PRESSURE_SYSTOLIC', 18, 59, 90, 120, 80, 135, 'mmHg', 'Huyet ap tam thu - Cu (truoc ngay 1/1/2025)', '2024-01-01', FALSE);
+
+-- ============================================
+-- Clinical Records Data
+-- ============================================
 -- Test scenarios:
 --   1. Appointment 1: Has clinical record (SUCCESS case for admin/doctor/patient)
 --   2. Appointment 2: Has clinical record (SUCCESS case for another doctor)

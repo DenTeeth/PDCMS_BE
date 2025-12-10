@@ -94,7 +94,8 @@ public class TreatmentPlanSummaryDTO {
     // ===== Inner DTOs =====
 
     /**
-     * Patient summary (lightweight)
+     * Patient summary - enhanced with medical history, allergies, emergency
+     * contact, and guardian info
      */
     @Getter
     @Setter
@@ -102,9 +103,35 @@ public class TreatmentPlanSummaryDTO {
     @AllArgsConstructor
     @Builder
     public static class PatientSummary {
+        private Integer patientId;
         private String patientCode;
         private String fullName;
         private String phone;
+        private String email;
+        private java.time.LocalDate dateOfBirth;
+        private Integer age;
+        private String gender;
+        private String address;
+
+        // Medical information
+        private String medicalHistory;
+        private String allergies;
+
+        // Emergency contact
+        private String emergencyContactName;
+        private String emergencyContactPhone;
+
+        // Guardian information (for minors <16 years old)
+        private String guardianName;
+        private String guardianPhone;
+        private String guardianRelationship;
+        private String guardianCitizenId;
+
+        // Booking status
+        private Boolean isActive;
+        private Integer consecutiveNoShows;
+        private Boolean isBookingBlocked;
+        private String bookingBlockReason;
     }
 
     /**

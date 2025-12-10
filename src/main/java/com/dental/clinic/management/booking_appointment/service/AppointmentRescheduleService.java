@@ -105,6 +105,16 @@ public class AppointmentRescheduleService {
                                 planItemIds);
                 Appointment newAppointment = creationService.createAppointmentInternal(createRequest);
 
+                // STEP 5.5: Rule #9 - Inherit and increment reschedule counter
+                Integer oldRescheduleCount = oldAppointment.getRescheduleCount();
+                if (oldRescheduleCount == null) {
+                        oldRescheduleCount = 0; // Handle null for legacy data
+                }
+                newAppointment.setRescheduleCount(oldRescheduleCount + 1);
+                appointmentRepository.save(newAppointment);
+                log.info("Incremented reschedule count: {} -> {} for new appointment {}",
+                                oldRescheduleCount, oldRescheduleCount + 1, newAppointment.getAppointmentCode());
+
                 // STEP 6: Cancel old appointment and link to new one
                 cancelOldAppointment(oldAppointment, newAppointment, request);
 
@@ -124,6 +134,7 @@ public class AppointmentRescheduleService {
         /**
          * Validate old appointment can be rescheduled.
          * Only SCHEDULED or CHECKED_IN can be rescheduled.
+         * Rule #9: Maximum 2 reschedules allowed per appointment.
          */
         private void validateOldAppointment(Appointment oldAppointment) {
                 AppointmentStatus status = oldAppointment.getStatus();
@@ -150,7 +161,21 @@ public class AppointmentRescheduleService {
                                         String.format("Cannot reschedule appointment in status %s", status));
                 }
 
-                log.debug("Old appointment {} validated for reschedule", oldAppointment.getAppointmentCode());
+                // Rule #9: Check reschedule limit (max 2 reschedules)
+                Integer rescheduleCount = oldAppointment.getRescheduleCount();
+                if (rescheduleCount == null) {
+                        rescheduleCount = 0; // Handle null for legacy data
+                }
+                if (rescheduleCount >= 2) {
+                        throw new IllegalStateException(
+                                        String.format("Appointment has reached maximum reschedule limit (2 times). " +
+                                                        "Current reschedule count: %d. " +
+                                                        "Please contact clinic staff for assistance.",
+                                                        rescheduleCount));
+                }
+
+                log.debug("Old appointment {} validated for reschedule (reschedule count: {})", 
+                                oldAppointment.getAppointmentCode(), rescheduleCount);
         }
 
         /**

@@ -1,6 +1,6 @@
 -- ============================================
--- DENTAL CLINIC MANAGEMENT SYSTEM - SCHEMA V31
--- Date: 2025-11-30
+-- DENTAL CLINIC MANAGEMENT SYSTEM - SCHEMA V34
+-- Date: 2025-01-15
 -- PostgreSQL Database Schema - REFERENCE ONLY
 -- ============================================
 -- IMPORTANT: This file is for REFERENCE/DOCUMENTATION purposes only
@@ -14,6 +14,38 @@
 --
 -- This file documents the expected schema structure for reference
 -- ============================================
+-- CHANGES IN V34 (Duplicate Detection & Patient Blacklist):
+--   - BR-043: Duplicate patient detection by Name+DOB or Phone
+--     - Added repository queries for duplicate detection
+--     - System checks for duplicates during patient creation
+--     - Blocks exact matches, warns for similar patients
+--     - API: GET /api/v1/patients/check-duplicate
+--   - BR-044: Patient blacklist with mandatory predefined reasons
+--     - Added is_blacklisted, blacklist_reason, blacklist_notes, blacklisted_by, blacklisted_at to patients table
+--     - PatientBlacklistReason enum: STAFF_ABUSE, DEBT_DEFAULT, FRIVOLOUS_LAWSUIT, PROPERTY_DAMAGE, INTOXICATION, DISRUPTIVE_BEHAVIOR, POLICY_VIOLATION, OTHER_SERIOUS
+--     - Blacklisting also blocks booking automatically
+--     - API: POST /api/v1/patients/{id}/blacklist
+--     - API: DELETE /api/v1/patients/{id}/blacklist
+--     - Permission: MANAGER, ADMIN only
+-- CHANGES IN V33 (Patient Unban Audit Logs):
+--   - Added patient_unban_audit_logs table for BR-085/BR-086 compliance
+--   - Purpose: Track all patient unban actions for accountability
+--   - BR-085: Receptionists can unban without Manager approval
+--   - BR-086: Mandatory reason logging (10-500 chars) for every unban
+--   - Columns: audit_id, patient_id, previous_no_show_count, performed_by, performed_by_role, reason, timestamp
+--   - Indexes: patient_id, performed_by, timestamp, performed_by_role
+--   - API: POST /api/v1/patients/{id}/unban
+--   - API: GET /api/v1/patients/{id}/unban-history
+--   - Permission: RECEPTIONIST, MANAGER, ADMIN
+-- CHANGES IN V32 (Treatment Plan Doctor Assignment):
+--   - Added assigned_doctor_id column to patient_plan_items table
+--   - Purpose: Allow assigning different doctors to different items within same plan/phase
+--   - Use case: When scheduling appointments or reorganizing phases during treatment
+--   - Column: assigned_doctor_id INTEGER REFERENCES employees(employee_id)
+--   - Nullable: YES (optional assignment)
+--   - API: PUT /api/v1/treatment-plans/items/{itemId}/assign-doctor
+--   - Permission: ASSIGN_DOCTOR_TO_ITEM (TREATMENT module)
+--   - NOTE: Appointments already support multiple assistants via participant_codes (no schema change needed)
 -- CHANGES IN V31 (Module #9 - Clinical Records):
 --   - Added clinical_records table (1-to-1 with appointments)
 --   - Added clinical_record_procedures table (with service_id, patient_plan_item_id)
@@ -245,10 +277,54 @@ CREATE TABLE patients (
     date_of_birth DATE,
     address TEXT,
     gender VARCHAR(10),
+    medical_history TEXT,
+    allergies TEXT,
+    emergency_contact_name VARCHAR(100),
+    emergency_contact_phone VARCHAR(15),
     is_active BOOLEAN DEFAULT TRUE,
+    -- Rule #5: No-show tracking
+    consecutive_no_shows INTEGER DEFAULT 0 NOT NULL,
+    is_booking_blocked BOOLEAN DEFAULT FALSE NOT NULL,
+    booking_block_reason VARCHAR(500),
+    blocked_at TIMESTAMP,
+    -- Rule #14: Guardian information for minors (<16 years old)
+    guardian_name VARCHAR(100),
+    guardian_phone VARCHAR(15),
+    guardian_relationship VARCHAR(50),
+    guardian_citizen_id VARCHAR(20),
+    -- BR-044: Blacklist management
+    is_blacklisted BOOLEAN DEFAULT FALSE NOT NULL,
+    blacklist_reason VARCHAR(50),
+    blacklist_notes TEXT,
+    blacklisted_by VARCHAR(100),
+    blacklisted_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+COMMENT ON TABLE patients IS 'Patient records with full medical and contact information';
+COMMENT ON COLUMN patients.medical_history IS 'Patient medical history and past conditions';
+COMMENT ON COLUMN patients.allergies IS 'Known allergies (medicine, food, etc)';
+COMMENT ON COLUMN patients.emergency_contact_name IS 'Emergency contact person full name';
+COMMENT ON COLUMN patients.emergency_contact_phone IS 'Emergency contact phone number';
+COMMENT ON COLUMN patients.consecutive_no_shows IS 'Counter for consecutive no-shows (Rule #5)';
+COMMENT ON COLUMN patients.is_booking_blocked IS 'Booking blocked flag (true when consecutive_no_shows >= 3)';
+COMMENT ON COLUMN patients.guardian_name IS 'Guardian name for minors (<16 years old) - Rule #14';
+COMMENT ON COLUMN patients.guardian_phone IS 'Guardian phone number';
+COMMENT ON COLUMN patients.guardian_relationship IS 'Relationship to patient (parent, grandparent, etc)';
+COMMENT ON COLUMN patients.guardian_citizen_id IS 'Guardian citizen ID/CMND/CCCD';
+COMMENT ON COLUMN patients.is_blacklisted IS 'BR-044: Patient is on blacklist (blocks booking)';
+COMMENT ON COLUMN patients.blacklist_reason IS 'BR-044: Predefined reason from PatientBlacklistReason enum';
+COMMENT ON COLUMN patients.blacklist_notes IS 'BR-044: Optional additional notes for blacklist';
+COMMENT ON COLUMN patients.blacklisted_by IS 'BR-044: Username of Manager/Admin who blacklisted patient';
+COMMENT ON COLUMN patients.blacklisted_at IS 'BR-044: Timestamp when patient was blacklisted';
+
+-- Indexes for BR-043 (Duplicate Detection)
+CREATE INDEX idx_patients_name_dob ON patients(first_name, last_name, date_of_birth);
+CREATE INDEX idx_patients_phone ON patients(phone);
+
+-- Index for BR-044 (Blacklist)
+CREATE INDEX idx_patients_blacklisted ON patients(is_blacklisted);
 
 -- Services (Dịch vụ nha khoa)
 -- ============================================
@@ -788,6 +864,38 @@ CREATE INDEX idx_time_off_requests_employee ON time_off_requests(employee_id);
 CREATE INDEX idx_time_off_requests_status ON time_off_requests(status);
 
 -- ============================================
+-- PATIENT IMAGES MODULE (Module #10)
+-- ============================================
+-- Store patient images uploaded to Cloudinary
+-- Each patient has dedicated folder structure on Cloudinary
+-- Images can be linked to clinical records
+
+-- Patient Images
+CREATE TABLE patient_images (
+    image_id BIGSERIAL PRIMARY KEY,
+    patient_id INTEGER NOT NULL REFERENCES patients(patient_id) ON DELETE CASCADE,
+    clinical_record_id INTEGER REFERENCES clinical_records(clinical_record_id) ON DELETE SET NULL,
+    image_url TEXT NOT NULL,
+    cloudinary_public_id VARCHAR(255) NOT NULL,
+    image_type VARCHAR(50) NOT NULL,
+    description TEXT,
+    captured_date DATE,
+    uploaded_by INTEGER REFERENCES employees(employee_id),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_patient_images_patient ON patient_images(patient_id);
+CREATE INDEX idx_patient_images_clinical_record ON patient_images(clinical_record_id);
+CREATE INDEX idx_patient_images_type ON patient_images(image_type);
+CREATE INDEX idx_patient_images_created ON patient_images(created_at);
+
+COMMENT ON TABLE patient_images IS 'Patient images stored on Cloudinary, organized by patient folder';
+COMMENT ON COLUMN patient_images.image_url IS 'Full Cloudinary URL for image';
+COMMENT ON COLUMN patient_images.cloudinary_public_id IS 'Cloudinary public_id for deletion';
+COMMENT ON COLUMN patient_images.image_type IS 'Type: XRAY, PHOTO, BEFORE_TREATMENT, AFTER_TREATMENT, SCAN, OTHER';
+
+-- ============================================
 -- CLINICAL RECORDS MODULE (Module #9)
 -- ============================================
 -- Simple "Write Once, Query Many" schema
@@ -857,6 +965,39 @@ COMMENT ON TABLE clinical_prescription_items IS 'Individual prescription items (
 COMMENT ON COLUMN clinical_prescription_items.item_master_id IS 'Link to inventory (optional - some items may not be in stock)';
 COMMENT ON COLUMN clinical_prescription_items.item_name IS 'Medicine name (required even if not in inventory)';
 
+-- Vital Signs Reference Table (for clinical assessment)
+CREATE TABLE vital_signs_reference (
+    reference_id SERIAL PRIMARY KEY,
+    vital_type VARCHAR(50) NOT NULL,
+    age_min INTEGER NOT NULL,
+    age_max INTEGER,
+    normal_min DECIMAL(10,2),
+    normal_max DECIMAL(10,2),
+    low_threshold DECIMAL(10,2),
+    high_threshold DECIMAL(10,2),
+    unit VARCHAR(20) NOT NULL,
+    description TEXT,
+    effective_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+COMMENT ON TABLE vital_signs_reference IS 'Reference ranges for vital signs by age group - helps dentists assess if patient vital signs are normal/abnormal';
+COMMENT ON COLUMN vital_signs_reference.vital_type IS 'Type of vital sign: BLOOD_PRESSURE_SYSTOLIC, BLOOD_PRESSURE_DIASTOLIC, HEART_RATE, OXYGEN_SATURATION, TEMPERATURE, RESPIRATORY_RATE';
+COMMENT ON COLUMN vital_signs_reference.age_min IS 'Minimum age for this reference range (inclusive)';
+COMMENT ON COLUMN vital_signs_reference.age_max IS 'Maximum age for this reference range (inclusive, NULL for no upper limit)';
+COMMENT ON COLUMN vital_signs_reference.normal_min IS 'Lower bound of normal range';
+COMMENT ON COLUMN vital_signs_reference.normal_max IS 'Upper bound of normal range';
+COMMENT ON COLUMN vital_signs_reference.low_threshold IS 'Threshold below which value is considered abnormally low';
+COMMENT ON COLUMN vital_signs_reference.high_threshold IS 'Threshold above which value is considered abnormally high';
+COMMENT ON COLUMN vital_signs_reference.unit IS 'Unit of measurement: mmHg, bpm, %, C, breaths/min';
+COMMENT ON COLUMN vital_signs_reference.effective_date IS 'Date when this reference becomes effective (for audit trail)';
+COMMENT ON COLUMN vital_signs_reference.is_active IS 'Whether this reference is currently active (supports historical changes)';
+
+CREATE INDEX idx_vital_signs_ref_type_age ON vital_signs_reference(vital_type, age_min, age_max) WHERE is_active = TRUE;
+CREATE INDEX idx_vital_signs_ref_effective ON vital_signs_reference(effective_date, is_active);
+
 -- Patient Tooth Status (dental chart)
 CREATE TABLE patient_tooth_status (
     tooth_status_id SERIAL PRIMARY KEY,
@@ -922,5 +1063,37 @@ CREATE INDEX idx_tooth_status_history_patient ON patient_tooth_status_history(pa
 CREATE INDEX idx_tooth_status_history_changed_by ON patient_tooth_status_history(changed_by);
 
 -- ============================================
--- END OF SCHEMA V32 (Added Tooth Status ENUM + History Tracking)
+-- PATIENT UNBAN AUDIT LOG (BR-085/BR-086)
+-- ============================================
+-- Purpose: Track all patient unban actions for accountability
+-- BR-085: Receptionists can unban without Manager approval
+-- BR-086: Mandatory reason logging for every unban action
+-- ============================================
+
+CREATE TABLE patient_unban_audit_logs (
+    audit_id BIGSERIAL PRIMARY KEY,
+    patient_id INTEGER NOT NULL REFERENCES patients(patient_id) ON DELETE CASCADE,
+    previous_no_show_count INTEGER NOT NULL DEFAULT 0,
+    performed_by VARCHAR(100) NOT NULL,
+    performed_by_role VARCHAR(50) NOT NULL,
+    reason TEXT NOT NULL,
+    timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+COMMENT ON TABLE patient_unban_audit_logs IS 'Audit trail for patient unban actions (BR-085/BR-086)';
+COMMENT ON COLUMN patient_unban_audit_logs.patient_id IS 'Patient who was unbanned';
+COMMENT ON COLUMN patient_unban_audit_logs.previous_no_show_count IS 'No-show count before unban';
+COMMENT ON COLUMN patient_unban_audit_logs.performed_by IS 'Username of staff who performed unban';
+COMMENT ON COLUMN patient_unban_audit_logs.performed_by_role IS 'Role of staff (RECEPTIONIST/MANAGER/ADMIN)';
+COMMENT ON COLUMN patient_unban_audit_logs.reason IS 'Mandatory reason for unban (10-500 chars)';
+COMMENT ON COLUMN patient_unban_audit_logs.timestamp IS 'When the unban action occurred';
+
+-- Indexes for Patient Unban Audit Logs
+CREATE INDEX idx_unban_audit_patient ON patient_unban_audit_logs(patient_id);
+CREATE INDEX idx_unban_audit_performer ON patient_unban_audit_logs(performed_by);
+CREATE INDEX idx_unban_audit_timestamp ON patient_unban_audit_logs(timestamp);
+CREATE INDEX idx_unban_audit_role ON patient_unban_audit_logs(performed_by_role);
+
+-- ============================================
+-- END OF SCHEMA V34 (Duplicate Detection + Patient Blacklist)
 -- ============================================
