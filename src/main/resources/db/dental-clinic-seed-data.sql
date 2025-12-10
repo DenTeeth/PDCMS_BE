@@ -126,6 +126,12 @@ ALTER TABLE patient_treatment_plans DROP CONSTRAINT IF EXISTS patient_treatment_
 ALTER TABLE patient_treatment_plans ADD CONSTRAINT patient_treatment_plans_status_check
 CHECK (status IN ('PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'));
 
+-- Fix patient_plan_items status constraint to include all valid workflow states
+-- Hibernate may generate constraint with incomplete status values
+ALTER TABLE patient_plan_items DROP CONSTRAINT IF EXISTS patient_plan_items_status_check;
+ALTER TABLE patient_plan_items ADD CONSTRAINT patient_plan_items_status_check
+CHECK (status IN ('PENDING', 'READY_FOR_BOOKING', 'SCHEDULED', 'IN_PROGRESS', 'COMPLETED', 'WAITING_FOR_PREREQUISITE', 'SKIPPED'));
+
 -- ============================================
 -- ADD NEW COLUMNS FOR APPOINTMENT BUSINESS RULES
 -- ============================================
@@ -4284,20 +4290,6 @@ ON CONFLICT (item_id) DO NOTHING;
 SELECT setval('patient_treatment_plans_plan_id_seq', (SELECT MAX(plan_id) FROM patient_treatment_plans));
 SELECT setval('patient_plan_phases_patient_phase_id_seq', (SELECT MAX(patient_phase_id) FROM patient_plan_phases));
 SELECT setval('patient_plan_items_item_id_seq', (SELECT MAX(item_id) FROM patient_plan_items));
-
--- ============================================
--- FIX: Add PENDING status to patient_plan_items constraint
--- (Required for API 5.3 - Create Treatment Plan from Template)
--- ============================================
--- Ensure 'status' column exists (some DB schemas may be missing this column).
--- We add the column if it does not exist, with a kssensible default 'PENDING'.
-ALTER TABLE patient_plan_items ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'PENDING';
-
--- Recreate or add the status check constraint to enforce allowed workflow states
-ALTER TABLE patient_plan_items DROP CONSTRAINT IF EXISTS patient_plan_items_status_check;
-ALTER TABLE patient_plan_items ADD CONSTRAINT patient_plan_items_status_check
-    CHECK (status IN ('PENDING', 'READY_FOR_BOOKING', 'SCHEDULED', 'IN_PROGRESS', 'COMPLETED', 'WAITING_FOR_PREREQUISITE', 'SKIPPED'));
-
 
 -- ============================================
 -- SEED DATA CHO WAREHOUSE MODULE (V3 API)
