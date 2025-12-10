@@ -55,6 +55,7 @@ public class ClinicalRecordService {
         private final PatientPlanItemRepository planItemRepository;
         private final ItemMasterRepository itemMasterRepository;
         private final PatientToothStatusRepository toothStatusRepository;
+        private final VitalSignsReferenceService vitalSignsReferenceService;
 
         private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -228,7 +229,12 @@ public class ClinicalRecordService {
                                 .email(null) // Email stored in Account, not Employee
                                 .build();
 
-                // Build PatientDTO
+                // Build PatientDTO with full medical information
+                Integer age = null;
+                if (patient.getDateOfBirth() != null) {
+                        age = java.time.Period.between(patient.getDateOfBirth(), java.time.LocalDate.now()).getYears();
+                }
+
                 PatientDTO patientDTO = PatientDTO.builder()
                                 .patientId(patient.getPatientId())
                                 .patientCode(patient.getPatientCode())
@@ -238,7 +244,17 @@ public class ClinicalRecordService {
                                 .dateOfBirth(patient.getDateOfBirth() != null
                                                 ? patient.getDateOfBirth().format(DATE_FORMATTER)
                                                 : null)
+                                .age(age)
                                 .gender(patient.getGender() != null ? patient.getGender().name() : null)
+                                .address(patient.getAddress())
+                                .medicalHistory(patient.getMedicalHistory())
+                                .allergies(patient.getAllergies())
+                                .emergencyContactName(patient.getEmergencyContactName())
+                                .emergencyContactPhone(patient.getEmergencyContactPhone())
+                                .guardianName(patient.getGuardianName())
+                                .guardianPhone(patient.getGuardianPhone())
+                                .guardianRelationship(patient.getGuardianRelationship())
+                                .guardianCitizenId(patient.getGuardianCitizenId())
                                 .build();
 
                 // Build ProcedureDTOs
@@ -303,11 +319,73 @@ public class ClinicalRecordService {
                                 })
                                 .collect(Collectors.toList());
 
+                // Assess vital signs if available
+                java.util.List<VitalSignAssessment> vitalSignsAssessment = new java.util.ArrayList<>();
+                if (record.getVitalSigns() != null && !record.getVitalSigns().isEmpty() && age != null) {
+                        // Parse blood pressure
+                        Object bpObj = record.getVitalSigns().get("blood_pressure");
+                        if (bpObj != null) {
+                                String bp = bpObj.toString();
+                                if (bp.contains("/")) {
+                                        String[] parts = bp.split("/");
+                                        try {
+                                                java.math.BigDecimal systolic = new java.math.BigDecimal(
+                                                                parts[0].trim());
+                                                java.math.BigDecimal diastolic = new java.math.BigDecimal(
+                                                                parts[1].trim());
+                                                vitalSignsAssessment.add(vitalSignsReferenceService.assessVitalSign(
+                                                                "BLOOD_PRESSURE_SYSTOLIC", systolic, age));
+                                                vitalSignsAssessment.add(vitalSignsReferenceService.assessVitalSign(
+                                                                "BLOOD_PRESSURE_DIASTOLIC", diastolic, age));
+                                        } catch (Exception e) {
+                                                log.warn("Failed to parse blood pressure: {}", bp);
+                                        }
+                                }
+                        }
+
+                        // Assess heart rate
+                        Object hrObj = record.getVitalSigns().get("heart_rate");
+                        if (hrObj != null) {
+                                try {
+                                        java.math.BigDecimal heartRate = new java.math.BigDecimal(hrObj.toString());
+                                        vitalSignsAssessment.add(vitalSignsReferenceService.assessVitalSign(
+                                                        "HEART_RATE", heartRate, age));
+                                } catch (Exception e) {
+                                        log.warn("Failed to parse heart rate: {}", hrObj);
+                                }
+                        }
+
+                        // Assess oxygen saturation
+                        Object o2Obj = record.getVitalSigns().get("oxygen_saturation");
+                        if (o2Obj != null) {
+                                try {
+                                        java.math.BigDecimal o2 = new java.math.BigDecimal(o2Obj.toString());
+                                        vitalSignsAssessment.add(vitalSignsReferenceService.assessVitalSign(
+                                                        "OXYGEN_SATURATION", o2, age));
+                                } catch (Exception e) {
+                                        log.warn("Failed to parse oxygen saturation: {}", o2Obj);
+                                }
+                        }
+
+                        // Assess temperature
+                        Object tempObj = record.getVitalSigns().get("temperature");
+                        if (tempObj != null) {
+                                try {
+                                        java.math.BigDecimal temp = new java.math.BigDecimal(tempObj.toString());
+                                        vitalSignsAssessment.add(vitalSignsReferenceService.assessVitalSign(
+                                                        "TEMPERATURE", temp, age));
+                                } catch (Exception e) {
+                                        log.warn("Failed to parse temperature: {}", tempObj);
+                                }
+                        }
+                }
+
                 // Build final response
                 return ClinicalRecordResponse.builder()
                                 .clinicalRecordId(record.getClinicalRecordId())
                                 .diagnosis(record.getDiagnosis())
                                 .vitalSigns(record.getVitalSigns())
+                                .vitalSignsAssessment(vitalSignsAssessment)
                                 .chiefComplaint(record.getChiefComplaint())
                                 .examinationFindings(record.getExaminationFindings())
                                 .treatmentNotes(record.getTreatmentNotes())

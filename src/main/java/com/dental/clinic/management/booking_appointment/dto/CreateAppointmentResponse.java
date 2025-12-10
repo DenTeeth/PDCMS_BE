@@ -72,16 +72,43 @@ public class CreateAppointmentResponse {
 
     /**
      * Nested DTO: Patient Summary
+     * Enhanced to include medical history, allergies, emergency contact, and
+     * guardian info
      */
     @Data
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
     public static class PatientSummary {
+        private Integer patientId;
         private String patientCode;
         private String fullName;
-        private String phone; // For detail view
-        private java.time.LocalDate dateOfBirth; // For detail view
+        private String phone;
+        private String email;
+        private java.time.LocalDate dateOfBirth;
+        private Integer age;
+        private String gender;
+        private String address;
+
+        // Medical information
+        private String medicalHistory;
+        private String allergies;
+
+        // Emergency contact
+        private String emergencyContactName;
+        private String emergencyContactPhone;
+
+        // Guardian information (for minors <16 years old)
+        private String guardianName;
+        private String guardianPhone;
+        private String guardianRelationship;
+        private String guardianCitizenId;
+
+        // Booking status
+        private Boolean isActive;
+        private Integer consecutiveNoShows;
+        private Boolean isBookingBlocked;
+        private String bookingBlockReason;
     }
 
     /**

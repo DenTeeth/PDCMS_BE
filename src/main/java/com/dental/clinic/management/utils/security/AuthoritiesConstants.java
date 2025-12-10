@@ -128,7 +128,8 @@ public final class AuthoritiesConstants {
                                                                                       // across patients
     public static final String MANAGE_PLAN_PRICING = "MANAGE_PLAN_PRICING"; // V21.4: Finance/Accountant adjusts prices
                                                                             // (API 5.13)
-    public static final String ASSIGN_DOCTOR_TO_ITEM = "ASSIGN_DOCTOR_TO_ITEM"; // V32: Assign doctor to plan item (API 5.X)
+    public static final String ASSIGN_DOCTOR_TO_ITEM = "ASSIGN_DOCTOR_TO_ITEM"; // V32: Assign doctor to plan item (API
+                                                                                // 5.X)
 
     // Warehouse Module Permissions (Added 2025-11-24)
     public static final String VIEW_WAREHOUSE = "VIEW_WAREHOUSE"; // View inventory, batches, expiring alerts (API 6.1,
@@ -146,4 +147,18 @@ public final class AuthoritiesConstants {
                                                                             // transactions
     public static final String MANAGE_CONSUMABLES = "MANAGE_CONSUMABLES"; // API 6.18, 6.19: Manage service consumables
                                                                           // BOM (Bill of Materials)
+
+    // Clinical Records Permissions
+    public static final String WRITE_CLINICAL_RECORD = "WRITE_CLINICAL_RECORD"; // Create/update clinical records
+    public static final String VIEW_ATTACHMENT = "VIEW_ATTACHMENT"; // View clinical record attachments
+    public static final String UPLOAD_ATTACHMENT = "UPLOAD_ATTACHMENT"; // Upload attachments to clinical records
+    public static final String DELETE_ATTACHMENT = "DELETE_ATTACHMENT"; // Delete attachments from clinical records
+    public static final String VIEW_VITAL_SIGNS_REFERENCE = "VIEW_VITAL_SIGNS_REFERENCE"; // View vital signs reference
+                                                                                          // ranges
+
+    // Treatment Permissions
+    public static final String VIEW_TREATMENT = "VIEW_TREATMENT"; // View treatment details
+    public static final String CREATE_TREATMENT = "CREATE_TREATMENT"; // Create treatment records
+    public static final String UPDATE_TREATMENT = "UPDATE_TREATMENT"; // Update treatment records
+    public static final String DELETE_TREATMENT = "DELETE_TREATMENT"; // Delete treatment records
 }

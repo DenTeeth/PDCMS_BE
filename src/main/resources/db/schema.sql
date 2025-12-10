@@ -294,7 +294,7 @@ CREATE TABLE patients (
     guardian_citizen_id VARCHAR(20),
     -- BR-044: Blacklist management
     is_blacklisted BOOLEAN DEFAULT FALSE NOT NULL,
-    blacklist_reason VARCHAR(50), -- Enum: STAFF_ABUSE, DEBT_DEFAULT, etc.
+    blacklist_reason VARCHAR(50),
     blacklist_notes TEXT,
     blacklisted_by VARCHAR(100),
     blacklisted_at TIMESTAMP,
@@ -302,6 +302,17 @@ CREATE TABLE patients (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+COMMENT ON TABLE patients IS 'Patient records with full medical and contact information';
+COMMENT ON COLUMN patients.medical_history IS 'Patient medical history and past conditions';
+COMMENT ON COLUMN patients.allergies IS 'Known allergies (medicine, food, etc)';
+COMMENT ON COLUMN patients.emergency_contact_name IS 'Emergency contact person full name';
+COMMENT ON COLUMN patients.emergency_contact_phone IS 'Emergency contact phone number';
+COMMENT ON COLUMN patients.consecutive_no_shows IS 'Counter for consecutive no-shows (Rule #5)';
+COMMENT ON COLUMN patients.is_booking_blocked IS 'Booking blocked flag (true when consecutive_no_shows >= 3)';
+COMMENT ON COLUMN patients.guardian_name IS 'Guardian name for minors (<16 years old) - Rule #14';
+COMMENT ON COLUMN patients.guardian_phone IS 'Guardian phone number';
+COMMENT ON COLUMN patients.guardian_relationship IS 'Relationship to patient (parent, grandparent, etc)';
+COMMENT ON COLUMN patients.guardian_citizen_id IS 'Guardian citizen ID/CMND/CCCD';
 COMMENT ON COLUMN patients.is_blacklisted IS 'BR-044: Patient is on blacklist (blocks booking)';
 COMMENT ON COLUMN patients.blacklist_reason IS 'BR-044: Predefined reason from PatientBlacklistReason enum';
 COMMENT ON COLUMN patients.blacklist_notes IS 'BR-044: Optional additional notes for blacklist';
@@ -953,6 +964,39 @@ CREATE TABLE clinical_prescription_items (
 COMMENT ON TABLE clinical_prescription_items IS 'Individual prescription items (medications)';
 COMMENT ON COLUMN clinical_prescription_items.item_master_id IS 'Link to inventory (optional - some items may not be in stock)';
 COMMENT ON COLUMN clinical_prescription_items.item_name IS 'Medicine name (required even if not in inventory)';
+
+-- Vital Signs Reference Table (for clinical assessment)
+CREATE TABLE vital_signs_reference (
+    reference_id SERIAL PRIMARY KEY,
+    vital_type VARCHAR(50) NOT NULL,
+    age_min INTEGER NOT NULL,
+    age_max INTEGER,
+    normal_min DECIMAL(10,2),
+    normal_max DECIMAL(10,2),
+    low_threshold DECIMAL(10,2),
+    high_threshold DECIMAL(10,2),
+    unit VARCHAR(20) NOT NULL,
+    description TEXT,
+    effective_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+COMMENT ON TABLE vital_signs_reference IS 'Reference ranges for vital signs by age group - helps dentists assess if patient vital signs are normal/abnormal';
+COMMENT ON COLUMN vital_signs_reference.vital_type IS 'Type of vital sign: BLOOD_PRESSURE_SYSTOLIC, BLOOD_PRESSURE_DIASTOLIC, HEART_RATE, OXYGEN_SATURATION, TEMPERATURE, RESPIRATORY_RATE';
+COMMENT ON COLUMN vital_signs_reference.age_min IS 'Minimum age for this reference range (inclusive)';
+COMMENT ON COLUMN vital_signs_reference.age_max IS 'Maximum age for this reference range (inclusive, NULL for no upper limit)';
+COMMENT ON COLUMN vital_signs_reference.normal_min IS 'Lower bound of normal range';
+COMMENT ON COLUMN vital_signs_reference.normal_max IS 'Upper bound of normal range';
+COMMENT ON COLUMN vital_signs_reference.low_threshold IS 'Threshold below which value is considered abnormally low';
+COMMENT ON COLUMN vital_signs_reference.high_threshold IS 'Threshold above which value is considered abnormally high';
+COMMENT ON COLUMN vital_signs_reference.unit IS 'Unit of measurement: mmHg, bpm, %, C, breaths/min';
+COMMENT ON COLUMN vital_signs_reference.effective_date IS 'Date when this reference becomes effective (for audit trail)';
+COMMENT ON COLUMN vital_signs_reference.is_active IS 'Whether this reference is currently active (supports historical changes)';
+
+CREATE INDEX idx_vital_signs_ref_type_age ON vital_signs_reference(vital_type, age_min, age_max) WHERE is_active = TRUE;
+CREATE INDEX idx_vital_signs_ref_effective ON vital_signs_reference(effective_date, is_active);
 
 -- Patient Tooth Status (dental chart)
 CREATE TABLE patient_tooth_status (

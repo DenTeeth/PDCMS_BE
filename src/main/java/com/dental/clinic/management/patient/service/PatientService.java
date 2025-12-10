@@ -547,4 +547,76 @@ public class PatientService {
                 .message("Tooth status updated successfully")
                 .build();
     }
+
+    /**
+     * Get current patient profile (for mobile app - Patient Portal)
+     * Patient can only access their own profile
+     *
+     * @param username the logged-in username from JWT
+     * @return PatientDetailResponse with full information
+     */
+    @Transactional(readOnly = true)
+    public com.dental.clinic.management.patient.dto.response.PatientDetailResponse getCurrentPatientProfile(
+            String username) {
+        log.info("Getting patient profile for username: {}", username);
+
+        Account account = accountRepository.findOneByUsername(username)
+                .orElseThrow(() -> new BadRequestAlertException(
+                        "Account not found",
+                        "Account",
+                        "accountnotfound"));
+
+        Patient patient = patientRepository.findOneByAccountAccountId(account.getAccountId())
+                .orElseThrow(() -> new BadRequestAlertException(
+                        "Patient not found for this account",
+                        "Patient",
+                        "patientnotfound"));
+
+        return mapToPatientDetailResponse(patient, account);
+    }
+
+    /**
+     * Map Patient entity to PatientDetailResponse with full details
+     */
+    private com.dental.clinic.management.patient.dto.response.PatientDetailResponse mapToPatientDetailResponse(
+            Patient patient, Account account) {
+
+        String fullName = patient.getFirstName() + " " + patient.getLastName();
+
+        Integer age = null;
+        if (patient.getDateOfBirth() != null) {
+            age = java.time.Period.between(patient.getDateOfBirth(), java.time.LocalDate.now()).getYears();
+        }
+
+        return com.dental.clinic.management.patient.dto.response.PatientDetailResponse.builder()
+                .patientId(patient.getPatientId())
+                .patientCode(patient.getPatientCode())
+                .firstName(patient.getFirstName())
+                .lastName(patient.getLastName())
+                .fullName(fullName)
+                .email(patient.getEmail())
+                .phone(patient.getPhone())
+                .dateOfBirth(patient.getDateOfBirth())
+                .age(age)
+                .address(patient.getAddress())
+                .gender(patient.getGender() != null ? patient.getGender().name() : null)
+                .medicalHistory(patient.getMedicalHistory())
+                .allergies(patient.getAllergies())
+                .emergencyContactName(patient.getEmergencyContactName())
+                .emergencyContactPhone(patient.getEmergencyContactPhone())
+                .guardianName(patient.getGuardianName())
+                .guardianPhone(patient.getGuardianPhone())
+                .guardianRelationship(patient.getGuardianRelationship())
+                .guardianCitizenId(patient.getGuardianCitizenId())
+                .isActive(patient.getIsActive())
+                .consecutiveNoShows(patient.getConsecutiveNoShows())
+                .isBookingBlocked(patient.getIsBookingBlocked())
+                .bookingBlockReason(patient.getBookingBlockReason())
+                .blockedAt(patient.getBlockedAt())
+                .accountId(account != null ? account.getAccountId() : null)
+                .username(account != null ? account.getUsername() : null)
+                .createdAt(patient.getCreatedAt())
+                .updatedAt(patient.getUpdatedAt())
+                .build();
+    }
 }

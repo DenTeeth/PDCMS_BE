@@ -90,8 +90,10 @@ public class AppointmentDetailService {
         log.info("Fetching appointment detail for code: {}", appointmentCode);
 
         // Step 1: Find appointment
-        // Using repository query with @Transactional(readOnly = true) ensures fresh data from DB
-        // No need for entityManager.clear() which would detach entities and break lazy loading
+        // Using repository query with @Transactional(readOnly = true) ensures fresh
+        // data from DB
+        // No need for entityManager.clear() which would detach entities and break lazy
+        // loading
         Appointment appointment = appointmentRepository.findDetailByCode(appointmentCode)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "APPOINTMENT_NOT_FOUND",
@@ -213,16 +215,39 @@ public class AppointmentDetailService {
      * Map Appointment entity to DetailDTO with all related entities
      */
     private AppointmentDetailDTO mapToDetailDTO(Appointment appointment) {
-        // Load patient (with phone and DOB for detail view)
+        // Load patient with full details (including medical history, allergies, etc.)
         CreateAppointmentResponse.PatientSummary patientSummary = null;
         try {
             var patient = patientRepository.findById(appointment.getPatientId()).orElse(null);
             if (patient != null) {
+                // Calculate age
+                Integer age = null;
+                if (patient.getDateOfBirth() != null) {
+                    age = java.time.Period.between(patient.getDateOfBirth(), java.time.LocalDate.now()).getYears();
+                }
+
                 patientSummary = CreateAppointmentResponse.PatientSummary.builder()
+                        .patientId(patient.getPatientId())
                         .patientCode(patient.getPatientCode())
                         .fullName(patient.getFirstName() + " " + patient.getLastName())
                         .phone(patient.getPhone())
+                        .email(patient.getEmail())
                         .dateOfBirth(patient.getDateOfBirth())
+                        .age(age)
+                        .gender(patient.getGender() != null ? patient.getGender().name() : null)
+                        .address(patient.getAddress())
+                        .medicalHistory(patient.getMedicalHistory())
+                        .allergies(patient.getAllergies())
+                        .emergencyContactName(patient.getEmergencyContactName())
+                        .emergencyContactPhone(patient.getEmergencyContactPhone())
+                        .guardianName(patient.getGuardianName())
+                        .guardianPhone(patient.getGuardianPhone())
+                        .guardianRelationship(patient.getGuardianRelationship())
+                        .guardianCitizenId(patient.getGuardianCitizenId())
+                        .isActive(patient.getIsActive())
+                        .consecutiveNoShows(patient.getConsecutiveNoShows())
+                        .isBookingBlocked(patient.getIsBookingBlocked())
+                        .bookingBlockReason(patient.getBookingBlockReason())
                         .build();
             }
         } catch (Exception e) {
@@ -260,8 +285,9 @@ public class AppointmentDetailService {
         // Load services using direct JPQL query
         List<CreateAppointmentResponse.ServiceSummary> services = new ArrayList<>();
         try {
-            List<Object[]> serviceData = appointmentRepository.findServicesByAppointmentId(appointment.getAppointmentId());
-            
+            List<Object[]> serviceData = appointmentRepository
+                    .findServicesByAppointmentId(appointment.getAppointmentId());
+
             for (Object[] row : serviceData) {
                 String serviceCode = (String) row[0];
                 String serviceName = (String) row[1];
@@ -271,7 +297,8 @@ public class AppointmentDetailService {
                         .build());
             }
         } catch (Exception e) {
-            log.error("Failed to load services for appointment {}: {}", appointment.getAppointmentCode(), e.getMessage());
+            log.error("Failed to load services for appointment {}: {}", appointment.getAppointmentCode(),
+                    e.getMessage());
         }
 
         // Load participants
@@ -345,19 +372,20 @@ public class AppointmentDetailService {
             // Query: appointment_plan_items → patient_plan_items → phases → treatment_plan
             List<AppointmentPlanItemBridge> bridges = appointmentPlanItemRepository
                     .findById_AppointmentId(appointment.getAppointmentId());
-            
+
             if (!bridges.isEmpty()) {
-                // Get first item's plan code (all items in same appointment should be from same plan)
+                // Get first item's plan code (all items in same appointment should be from same
+                // plan)
                 Long firstItemId = bridges.get(0).getId().getItemId();
                 PatientPlanItem item = patientPlanItemRepository.findById(firstItemId).orElse(null);
                 if (item != null && item.getPhase() != null && item.getPhase().getTreatmentPlan() != null) {
                     linkedPlanCode = item.getPhase().getTreatmentPlan().getPlanCode();
-                    log.debug("Found linked treatment plan: {} for appointment: {}", 
+                    log.debug("Found linked treatment plan: {} for appointment: {}",
                             linkedPlanCode, appointment.getAppointmentCode());
                 }
             }
         } catch (Exception e) {
-            log.warn("Failed to load linked treatment plan code for appointment {}: {}", 
+            log.warn("Failed to load linked treatment plan code for appointment {}: {}",
                     appointment.getAppointmentCode(), e.getMessage());
         }
 

@@ -15,6 +15,7 @@ public class ClinicalRecordResponse {
     private Integer clinicalRecordId;
     private String diagnosis;
     private Map<String, Object> vitalSigns;
+    private java.util.List<VitalSignAssessment> vitalSignsAssessment;
     private String chiefComplaint;
     private String examinationFindings;
     private String treatmentNotes;

@@ -944,6 +944,12 @@ public class AppointmentCreationService {
                         Employee doctor, Room room,
                         List<DentalService> services,
                         List<Employee> participants) {
+                // Calculate patient age
+                Integer age = null;
+                if (patient.getDateOfBirth() != null) {
+                        age = java.time.Period.between(patient.getDateOfBirth(), java.time.LocalDate.now()).getYears();
+                }
+
                 return CreateAppointmentResponse.builder()
                                 .appointmentCode(appointment.getAppointmentCode())
                                 .status(appointment.getStatus().name())
@@ -951,8 +957,27 @@ public class AppointmentCreationService {
                                 .appointmentEndTime(appointment.getAppointmentEndTime())
                                 .expectedDurationMinutes(appointment.getExpectedDurationMinutes())
                                 .patient(PatientSummary.builder()
+                                                .patientId(patient.getPatientId())
                                                 .patientCode(patient.getPatientCode())
                                                 .fullName(patient.getFullName())
+                                                .phone(patient.getPhone())
+                                                .email(patient.getEmail())
+                                                .dateOfBirth(patient.getDateOfBirth())
+                                                .age(age)
+                                                .gender(patient.getGender() != null ? patient.getGender().name() : null)
+                                                .address(patient.getAddress())
+                                                .medicalHistory(patient.getMedicalHistory())
+                                                .allergies(patient.getAllergies())
+                                                .emergencyContactName(patient.getEmergencyContactName())
+                                                .emergencyContactPhone(patient.getEmergencyContactPhone())
+                                                .guardianName(patient.getGuardianName())
+                                                .guardianPhone(patient.getGuardianPhone())
+                                                .guardianRelationship(patient.getGuardianRelationship())
+                                                .guardianCitizenId(patient.getGuardianCitizenId())
+                                                .isActive(patient.getIsActive())
+                                                .consecutiveNoShows(patient.getConsecutiveNoShows())
+                                                .isBookingBlocked(patient.getIsBookingBlocked())
+                                                .bookingBlockReason(patient.getBookingBlockReason())
                                                 .build())
                                 .doctor(DoctorSummary.builder()
                                                 .employeeCode(doctor.getEmployeeCode())
@@ -1111,7 +1136,7 @@ public class AppointmentCreationService {
         /**
          * Rule #2: Validate minimum 2-hour lead time for appointment booking
          * Patient must book at least 2 hours before appointment time
-         * 
+         *
          * @param startTime Appointment start time
          * @throws BadRequestAlertException if lead time is less than 2 hours
          */
@@ -1132,7 +1157,7 @@ public class AppointmentCreationService {
         /**
          * Rule #1: Validate maximum 3-month advance booking
          * Patient cannot book more than 3 months in advance
-         * 
+         *
          * @param startTime Appointment start time
          * @throws BadRequestAlertException if booking is more than 3 months ahead
          */
@@ -1152,7 +1177,7 @@ public class AppointmentCreationService {
         /**
          * Rule #5: Validate patient is not blocked from booking
          * Patients with 3+ consecutive no-shows are blocked from online booking
-         * 
+         *
          * @param patient Patient entity
          * @throws BadRequestAlertException if patient is blocked
          */
@@ -1161,7 +1186,9 @@ public class AppointmentCreationService {
                         throw new BadRequestAlertException(
                                         String.format("Bệnh nhân %s đã bị chặn đặt lịch online. Lý do: %s. Vui lòng liên hệ lễ tân để được hỗ trợ.",
                                                         patient.getPatientCode(),
-                                                        patient.getBookingBlockReason() != null ? patient.getBookingBlockReason() : "Bỏ hẹn nhiều lần"),
+                                                        patient.getBookingBlockReason() != null
+                                                                        ? patient.getBookingBlockReason()
+                                                                        : "Bỏ hẹn nhiều lần"),
                                         ENTITY_NAME,
                                         "PATIENT_BOOKING_BLOCKED");
                 }

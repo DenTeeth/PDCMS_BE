@@ -151,7 +151,7 @@ public class AppointmentListService {
                     startDate,
                     endDate,
                     statuses,
-                    pageableJpql); //  Use JPQL pageable (camelCase)
+                    pageableJpql); // Use JPQL pageable (camelCase)
         } else if (criteria.getCurrentUserEmployeeId() != null) {
             // Employee view: Where they are primary doctor OR participant (JPQL query)
             // This includes: Doctor, Nurse/Assistant, OBSERVER (thực tập sinh)
@@ -162,7 +162,7 @@ public class AppointmentListService {
                     startDate,
                     endDate,
                     statuses,
-                    pageableJpql); //  Use JPQL pageable (camelCase)
+                    pageableJpql); // Use JPQL pageable (camelCase)
         } else {
             // Admin/Receptionist view: All appointments with optional filters (NATIVE
             // queries)
@@ -184,10 +184,10 @@ public class AppointmentListService {
                         endDate,
                         statusArray,
                         criteria.getSearchCode(),
-                        pageableNative); //  Use NATIVE pageable (snake_case)
+                        pageableNative); // Use NATIVE pageable (snake_case)
             } else {
                 log.info("Executing search with individual filters");
-                
+
                 // Resolve patientCode to patientId if provided
                 Integer patientId = null;
                 if (criteria.getPatientCode() != null && !criteria.getPatientCode().isBlank()) {
@@ -199,11 +199,12 @@ public class AppointmentListService {
                         log.warn("Patient not found for patientCode: {}", criteria.getPatientCode());
                     }
                 }
-                
+
                 // Resolve employeeCode to employeeId if provided
                 Integer employeeId = null;
                 if (criteria.getEmployeeCode() != null && !criteria.getEmployeeCode().isBlank()) {
-                    var employee = employeeRepository.findByEmployeeCodeAndIsActiveTrue(criteria.getEmployeeCode()).orElse(null);
+                    var employee = employeeRepository.findByEmployeeCodeAndIsActiveTrue(criteria.getEmployeeCode())
+                            .orElse(null);
                     if (employee != null) {
                         employeeId = employee.getEmployeeId();
                         log.debug("Resolved employeeCode {} to employeeId {}", criteria.getEmployeeCode(), employeeId);
@@ -211,7 +212,7 @@ public class AppointmentListService {
                         log.warn("Employee not found for employeeCode: {}", criteria.getEmployeeCode());
                     }
                 }
-                
+
                 appointments = appointmentRepository.findByFilters(
                         startDate,
                         endDate,
@@ -344,7 +345,7 @@ public class AppointmentListService {
      */
     private Page<AppointmentSummaryDTO> mapToSummaryDTOsWithBatchLoading(Page<Appointment> appointments) {
         List<Appointment> appointmentList = appointments.getContent();
-        
+
         if (appointmentList.isEmpty()) {
             return appointments.map(this::mapToSummaryDTO);
         }
@@ -354,12 +355,12 @@ public class AppointmentListService {
                 .map(Appointment::getPatientId)
                 .distinct()
                 .collect(Collectors.toList());
-        
+
         var employeeIds = appointmentList.stream()
                 .map(Appointment::getEmployeeId)
                 .distinct()
                 .collect(Collectors.toList());
-        
+
         var roomIds = appointmentList.stream()
                 .map(Appointment::getRoomId)
                 .distinct()
@@ -373,20 +374,17 @@ public class AppointmentListService {
         var patientMap = patientRepository.findAllById(patientIds).stream()
                 .collect(Collectors.toMap(
                         p -> p.getPatientId(),
-                        p -> p
-                ));
+                        p -> p));
 
         var employeeMap = employeeRepository.findAllById(employeeIds).stream()
                 .collect(Collectors.toMap(
                         e -> e.getEmployeeId(),
-                        e -> e
-                ));
+                        e -> e));
 
         var roomMap = roomRepository.findAllById(roomIds).stream()
                 .collect(Collectors.toMap(
                         r -> r.getRoomId(),
-                        r -> r
-                ));
+                        r -> r));
 
         // Step 3: Batch load services for all appointments
         var servicesMap = new java.util.HashMap<Integer, List<CreateAppointmentResponse.ServiceSummary>>();
@@ -412,14 +410,15 @@ public class AppointmentListService {
             try {
                 List<AppointmentParticipant> appointmentParticipants = appointmentParticipantRepository
                         .findByIdAppointmentId(appointmentId);
-                
+
                 List<CreateAppointmentResponse.ParticipantSummary> participants = appointmentParticipants.stream()
                         .map(ap -> {
                             var participantEmployee = employeeMap.get(ap.getId().getEmployeeId());
                             if (participantEmployee != null) {
                                 return CreateAppointmentResponse.ParticipantSummary.builder()
                                         .employeeCode(participantEmployee.getEmployeeCode())
-                                        .fullName(participantEmployee.getFirstName() + " " + participantEmployee.getLastName())
+                                        .fullName(participantEmployee.getFirstName() + " "
+                                                + participantEmployee.getLastName())
                                         .role(ap.getRole())
                                         .build();
                             }
@@ -427,7 +426,7 @@ public class AppointmentListService {
                         })
                         .filter(p -> p != null)
                         .collect(Collectors.toList());
-                
+
                 participantsMap.put(appointmentId, participants);
             } catch (Exception e) {
                 log.warn("Failed to load participants for appointmentId={}: {}", appointmentId, e.getMessage());
@@ -451,13 +450,38 @@ public class AppointmentListService {
             java.util.Map<Integer, List<CreateAppointmentResponse.ServiceSummary>> servicesMap,
             java.util.Map<Integer, List<CreateAppointmentResponse.ParticipantSummary>> participantsMap) {
 
-        // Build patient summary
+        // Build patient summary with full details
         CreateAppointmentResponse.PatientSummary patientSummary = null;
         var patient = patientMap.get(appointment.getPatientId());
         if (patient != null) {
+            // Calculate age
+            Integer age = null;
+            if (patient.getDateOfBirth() != null) {
+                age = java.time.Period.between(patient.getDateOfBirth(), java.time.LocalDate.now()).getYears();
+            }
+
             patientSummary = CreateAppointmentResponse.PatientSummary.builder()
+                    .patientId(patient.getPatientId())
                     .patientCode(patient.getPatientCode())
                     .fullName(patient.getFirstName() + " " + patient.getLastName())
+                    .phone(patient.getPhone())
+                    .email(patient.getEmail())
+                    .dateOfBirth(patient.getDateOfBirth())
+                    .age(age)
+                    .gender(patient.getGender() != null ? patient.getGender().name() : null)
+                    .address(patient.getAddress())
+                    .medicalHistory(patient.getMedicalHistory())
+                    .allergies(patient.getAllergies())
+                    .emergencyContactName(patient.getEmergencyContactName())
+                    .emergencyContactPhone(patient.getEmergencyContactPhone())
+                    .guardianName(patient.getGuardianName())
+                    .guardianPhone(patient.getGuardianPhone())
+                    .guardianRelationship(patient.getGuardianRelationship())
+                    .guardianCitizenId(patient.getGuardianCitizenId())
+                    .isActive(patient.getIsActive())
+                    .consecutiveNoShows(patient.getConsecutiveNoShows())
+                    .isBookingBlocked(patient.getIsBookingBlocked())
+                    .bookingBlockReason(patient.getBookingBlockReason())
                     .build();
         }
 
@@ -482,10 +506,10 @@ public class AppointmentListService {
         }
 
         // Get services and participants from cache
-        List<CreateAppointmentResponse.ServiceSummary> services = 
-                servicesMap.getOrDefault(appointment.getAppointmentId(), new ArrayList<>());
-        List<CreateAppointmentResponse.ParticipantSummary> participants = 
-                participantsMap.getOrDefault(appointment.getAppointmentId(), new ArrayList<>());
+        List<CreateAppointmentResponse.ServiceSummary> services = servicesMap
+                .getOrDefault(appointment.getAppointmentId(), new ArrayList<>());
+        List<CreateAppointmentResponse.ParticipantSummary> participants = participantsMap
+                .getOrDefault(appointment.getAppointmentId(), new ArrayList<>());
 
         // Compute dynamic fields
         LocalDateTime now = LocalDateTime.now();
@@ -520,9 +544,34 @@ public class AppointmentListService {
         try {
             var patient = patientRepository.findById(appointment.getPatientId()).orElse(null);
             if (patient != null) {
+                // Calculate age
+                Integer age = null;
+                if (patient.getDateOfBirth() != null) {
+                    age = java.time.Period.between(patient.getDateOfBirth(), java.time.LocalDate.now()).getYears();
+                }
+
                 patientSummary = CreateAppointmentResponse.PatientSummary.builder()
+                        .patientId(patient.getPatientId())
                         .patientCode(patient.getPatientCode())
                         .fullName(patient.getFirstName() + " " + patient.getLastName())
+                        .phone(patient.getPhone())
+                        .email(patient.getEmail())
+                        .dateOfBirth(patient.getDateOfBirth())
+                        .age(age)
+                        .gender(patient.getGender() != null ? patient.getGender().name() : null)
+                        .address(patient.getAddress())
+                        .medicalHistory(patient.getMedicalHistory())
+                        .allergies(patient.getAllergies())
+                        .emergencyContactName(patient.getEmergencyContactName())
+                        .emergencyContactPhone(patient.getEmergencyContactPhone())
+                        .guardianName(patient.getGuardianName())
+                        .guardianPhone(patient.getGuardianPhone())
+                        .guardianRelationship(patient.getGuardianRelationship())
+                        .guardianCitizenId(patient.getGuardianCitizenId())
+                        .isActive(patient.getIsActive())
+                        .consecutiveNoShows(patient.getConsecutiveNoShows())
+                        .isBookingBlocked(patient.getIsBookingBlocked())
+                        .bookingBlockReason(patient.getBookingBlockReason())
                         .build();
             }
         } catch (Exception e) {
@@ -562,7 +611,8 @@ public class AppointmentListService {
         // Load services
         List<CreateAppointmentResponse.ServiceSummary> services = new ArrayList<>();
         try {
-            List<Object[]> serviceData = appointmentRepository.findServicesByAppointmentId(appointment.getAppointmentId());
+            List<Object[]> serviceData = appointmentRepository
+                    .findServicesByAppointmentId(appointment.getAppointmentId());
             for (Object[] row : serviceData) {
                 String serviceCode = (String) row[0];
                 String serviceName = (String) row[1];

@@ -312,14 +312,16 @@ public class PatientController {
     }
 
     /**
-     * {@code POST  /patients/:id/unban} : Unban a patient (reset no-show count and booking block)
-     * 
+     * {@code POST  /patients/:id/unban} : Unban a patient (reset no-show count and
+     * booking block)
+     *
      * BR-085: Receptionist has authority to unban without Manager approval
      * BR-086: Must log reason for accountability
      *
      * @param patientId the patient ID to unban
      * @param request   the unban request with reason
-     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and unban details
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and unban
+     *         details
      */
     @PostMapping("/{id}/unban")
     @PreAuthorize("hasAnyRole('RECEPTIONIST', 'MANAGER', 'ADMIN')")
@@ -328,7 +330,7 @@ public class PatientController {
     public ResponseEntity<UnbanPatientResponse> unbanPatient(
             @PathVariable("id") Integer patientId,
             @Valid @RequestBody UnbanPatientRequest request) {
-        
+
         UnbanPatientResponse response = patientUnbanService.unbanPatient(patientId, request.getReason());
         return ResponseEntity.ok(response);
     }
@@ -337,14 +339,15 @@ public class PatientController {
      * {@code GET  /patients/:id/unban-history} : Get unban history for a patient
      *
      * @param patientId the patient ID
-     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and audit log list
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and audit log
+     *         list
      */
     @GetMapping("/{id}/unban-history")
     @PreAuthorize("hasAnyRole('RECEPTIONIST', 'MANAGER', 'ADMIN')")
     @ApiMessage("Lấy lịch sử mở khóa bệnh nhân")
     @Operation(summary = "Get patient unban history", description = "Get audit log of all unban actions for a specific patient")
     public ResponseEntity<List<AuditLogResponse>> getUnbanHistory(@PathVariable("id") Integer patientId) {
-        
+
         List<AuditLogResponse> history = patientUnbanService.getPatientUnbanHistory(patientId);
         return ResponseEntity.ok(history);
     }
@@ -413,6 +416,33 @@ public class PatientController {
             @RequestParam(required = false) String reason) {
         
         BlacklistPatientResponse response = blacklistService.removeFromBlacklist(patientId, reason);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * {@code GET  /patients/me/profile} : Get current patient profile (Patient
+     * Portal API for Mobile App)
+     *
+     * Patient can access their own profile with full details including:
+     * - Personal information (name, email, phone, DOB, address)
+     * - Medical information (medical history, allergies)
+     * - Emergency contact
+     * - Guardian information (for minors)
+     * - Booking status
+     *
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and patient
+     *         profile
+     */
+    @GetMapping("/me/profile")
+    @PreAuthorize("hasRole('PATIENT')")
+    @ApiMessage("Get patient profile for mobile app")
+    @Operation(summary = "Get current patient profile", description = "Patient can view their own full profile details (for mobile app)")
+    public ResponseEntity<com.dental.clinic.management.patient.dto.response.PatientDetailResponse> getCurrentPatientProfile(
+            @Parameter(hidden = true) org.springframework.security.core.Authentication authentication) {
+
+        String username = authentication.getName();
+        com.dental.clinic.management.patient.dto.response.PatientDetailResponse response = patientService
+                .getCurrentPatientProfile(username);
         return ResponseEntity.ok(response);
     }
 }
