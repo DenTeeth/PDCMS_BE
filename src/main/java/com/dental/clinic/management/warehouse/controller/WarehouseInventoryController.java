@@ -11,6 +11,7 @@ import com.dental.clinic.management.warehouse.enums.StockStatus;
 import com.dental.clinic.management.warehouse.enums.WarehouseType;
 import com.dental.clinic.management.warehouse.repository.ItemCategoryRepository;
 import com.dental.clinic.management.warehouse.service.InventoryService;
+import com.dental.clinic.management.warehouse.service.WarehouseExcelExportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -39,6 +40,7 @@ public class WarehouseInventoryController {
 
         private final InventoryService inventoryService;
         private final ItemCategoryRepository itemCategoryRepository;
+        private final WarehouseExcelExportService excelExportService;
 
         /**
          * API 6.1: Inventory Summary với Aggregation & Computed Fields
@@ -330,5 +332,118 @@ public class WarehouseInventoryController {
                                 response.getStats().getExpiringSoonCount());
 
                 return ResponseEntity.ok(response);
+        }
+
+        /**
+         * API 6.1.1: Export Inventory Summary to Excel
+         * Issue #50: Export warehouse inventory to Excel file
+         */
+        @GetMapping("/summary/export")
+        @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('VIEW_WAREHOUSE')")
+        @Operation(summary = "Xuất báo cáo tồn kho ra Excel", description = """
+                        Export Inventory Summary to Excel file (.xlsx)
+                        
+                        **Features:**
+                        - Exports ALL inventory items (not paginated)
+                        - Preserves filters from UI (warehouseType, stockStatus, search, categoryId)
+                        - Formatted headers with bold styling
+                        - Auto-sized columns
+                        - Frozen header row for better navigation
+                        
+                        **Permissions:**
+                        - VIEW_WAREHOUSE: Required to export
+                        """)
+        @ApiMessage("Xuất báo cáo tồn kho thành công")
+        public ResponseEntity<byte[]> exportInventorySummary(
+                        @Parameter(description = "Tìm kiếm theo tên hoặc mã item") @RequestParam(required = false) String search,
+
+                        @Parameter(description = "Lọc theo trạng thái tồn kho") @RequestParam(required = false) StockStatus stockStatus,
+
+                        @Parameter(description = "Lọc theo loại kho") @RequestParam(required = false) WarehouseType warehouseType,
+
+                        @Parameter(description = "Lọc theo category ID") @RequestParam(required = false) Long categoryId) {
+
+                log.info("API 6.1.1 - GET /api/v1/warehouse/summary/export - search={}, stockStatus={}, warehouseType={}, categoryId={}",
+                                search, stockStatus, warehouseType, categoryId);
+
+                try {
+                        // Get ALL data without pagination for export
+                        Pageable pageable = PageRequest.of(0, Integer.MAX_VALUE);
+                        InventorySummaryResponse response = inventoryService.getInventorySummaryV2(
+                                        search, stockStatus, warehouseType, categoryId, pageable);
+
+                        // Generate Excel file
+                        byte[] excelBytes = excelExportService.exportInventorySummary(response);
+
+                        log.info("Exported {} inventory items to Excel", response.getContent().size());
+
+                        return ResponseEntity.ok()
+                                        .header("Content-Disposition", "attachment; filename=inventory_summary.xlsx")
+                                        .header("Content-Type",
+                                                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                                        .body(excelBytes);
+
+                } catch (Exception e) {
+                        log.error("Error exporting inventory summary to Excel", e);
+                        throw new RuntimeException("Failed to export inventory summary: " + e.getMessage());
+                }
+        }
+
+        /**
+         * API 6.3.1: Export Expiring Alerts to Excel
+         * Issue #50: Export expiring items report to Excel file
+         */
+        @GetMapping("/alerts/expiring/export")
+        @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('VIEW_WAREHOUSE')")
+        @Operation(summary = "Xuất báo cáo hàng sắp hết hạn ra Excel", description = """
+                        Export Expiring Alerts to Excel file (.xlsx)
+                        
+                        **Features:**
+                        - Exports ALL expiring items (not paginated)
+                        - Preserves filters from UI (days, warehouseType, categoryId, statusFilter)
+                        - Formatted headers with bold styling
+                        - Warning highlights for EXPIRED items
+                        - Auto-sized columns
+                        - Frozen header row
+                        
+                        **Permissions:**
+                        - VIEW_WAREHOUSE: Required to export
+                        """)
+        @ApiMessage("Xuất báo cáo hàng sắp hết hạn thành công")
+        public ResponseEntity<byte[]> exportExpiringAlerts(
+                        @Parameter(description = "Số ngày quét tới (1-1095)") @RequestParam(defaultValue = "30") Integer days,
+
+                        @Parameter(description = "Lọc theo category ID") @RequestParam(required = false) Long categoryId,
+
+                        @Parameter(description = "Lọc theo loại kho") @RequestParam(required = false) WarehouseType warehouseType,
+
+                        @Parameter(description = "Lọc theo trạng thái") @RequestParam(required = false) BatchStatus statusFilter) {
+
+                log.info("API 6.3.1 - GET /api/v1/warehouse/alerts/expiring/export - days={}, categoryId={}, warehouseType={}, statusFilter={}",
+                                days, categoryId, warehouseType, statusFilter);
+
+                try {
+                        // Get ALL data without pagination for export
+                        Pageable pageable = PageRequest.of(0, Integer.MAX_VALUE,
+                                        Sort.by(Sort.Direction.ASC, "expiryDate"));
+
+                        com.dental.clinic.management.warehouse.dto.response.ExpiringAlertsResponse response = inventoryService
+                                        .getExpiringAlerts(days, categoryId, warehouseType, statusFilter, pageable);
+
+                        // Generate Excel file
+                        byte[] excelBytes = excelExportService.exportExpiringAlerts(response);
+
+                        log.info("Exported {} expiring alerts to Excel", response.getAlerts().size());
+
+                        return ResponseEntity.ok()
+                                        .header("Content-Disposition", "attachment; filename=expiring_alerts.xlsx")
+                                        .header("Content-Type",
+                                                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                                        .body(excelBytes);
+
+                } catch (Exception e) {
+                        log.error("Error exporting expiring alerts to Excel", e);
+                        throw new RuntimeException("Failed to export expiring alerts: " + e.getMessage());
+                }
         }
 }

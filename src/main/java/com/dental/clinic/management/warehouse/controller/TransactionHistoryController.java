@@ -8,6 +8,7 @@ import com.dental.clinic.management.warehouse.enums.PaymentStatus;
 import com.dental.clinic.management.warehouse.enums.TransactionStatus;
 import com.dental.clinic.management.warehouse.enums.TransactionType;
 import com.dental.clinic.management.warehouse.service.TransactionHistoryService;
+import com.dental.clinic.management.warehouse.service.WarehouseExcelExportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -39,6 +40,7 @@ import java.time.LocalDate;
 public class TransactionHistoryController {
 
         private final TransactionHistoryService transactionHistoryService;
+        private final WarehouseExcelExportService excelExportService;
 
         /**
          * API 6.6: Get Transaction History
@@ -282,5 +284,90 @@ public class TransactionHistoryController {
                 log.info("Transaction cancelled - ID: {}", id);
 
                 return ResponseEntity.ok(response);
+        }
+
+        /**
+         * API 6.6.4: Export Transaction History to Excel
+         * Issue #50: Export warehouse transactions to Excel file
+         */
+        @GetMapping("/transactions/export")
+        @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('VIEW_WAREHOUSE')")
+        @Operation(summary = "Xuất lịch sử giao dịch kho ra Excel", description = """
+                        Export Transaction History to Excel file (.xlsx)
+                        
+                        **Features:**
+                        - Exports ALL transactions (not paginated)
+                        - Preserves filters from UI (type, status, paymentStatus, dateRange, supplierId, etc.)
+                        - Formatted headers with bold styling
+                        - Currency formatting for financial columns
+                        - Auto-sized columns
+                        - Frozen header row for better navigation
+                        
+                        **Permissions:**
+                        - VIEW_WAREHOUSE: Required to export
+                        - VIEW_COST: Required to see financial values (totalValue, paidAmount, debt)
+                        """)
+        @ApiMessage("Xuất lịch sử giao dịch thành công")
+        public ResponseEntity<byte[]> exportTransactionHistory(
+                        @Parameter(description = "Tìm kiếm theo mã phiếu hoặc số hóa đơn") @RequestParam(required = false) String search,
+
+                        @Parameter(description = "Loại phiếu: IMPORT, EXPORT, ADJUSTMENT") @RequestParam(required = false) TransactionType type,
+
+                        @Parameter(description = "Trạng thái duyệt") @RequestParam(required = false) TransactionStatus status,
+
+                        @Parameter(description = "Trạng thái thanh toán (chỉ IMPORT)") @RequestParam(required = false) PaymentStatus paymentStatus,
+
+                        @Parameter(description = "Lấy giao dịch từ ngày (YYYY-MM-DD)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+
+                        @Parameter(description = "Lấy giao dịch đến ngày (YYYY-MM-DD)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+
+                        @Parameter(description = "Lọc theo nhà cung cấp (chỉ IMPORT)") @RequestParam(required = false) Long supplierId,
+
+                        @Parameter(description = "Lọc theo ca điều trị (chỉ EXPORT)") @RequestParam(required = false) Long appointmentId,
+
+                        @Parameter(description = "Lọc theo người tạo") @RequestParam(required = false) Long createdBy,
+
+                        @Parameter(description = "Trường sắp xếp") @RequestParam(defaultValue = "transactionDate") String sortBy,
+
+                        @Parameter(description = "Hướng sắp xếp: asc, desc") @RequestParam(defaultValue = "desc") String sortDir) {
+
+                log.info("API 6.6.4 - GET /api/v1/warehouse/transactions/export - Type: {}, Status: {}, DateRange: {} to {}",
+                                type, status, fromDate, toDate);
+
+                try {
+                        // Build request to get ALL data without pagination
+                        TransactionHistoryRequest request = TransactionHistoryRequest.builder()
+                                        .page(0)
+                                        .size(Integer.MAX_VALUE)
+                                        .search(search)
+                                        .type(type)
+                                        .status(status)
+                                        .paymentStatus(paymentStatus)
+                                        .fromDate(fromDate)
+                                        .toDate(toDate)
+                                        .supplierId(supplierId)
+                                        .appointmentId(appointmentId)
+                                        .createdBy(createdBy)
+                                        .sortBy(sortBy)
+                                        .sortDir(sortDir)
+                                        .build();
+
+                        TransactionHistoryResponse response = transactionHistoryService.getTransactionHistory(request);
+
+                        // Generate Excel file
+                        byte[] excelBytes = excelExportService.exportTransactionHistory(response);
+
+                        log.info("Exported {} transactions to Excel", response.getContent().size());
+
+                        return ResponseEntity.ok()
+                                        .header("Content-Disposition", "attachment; filename=transaction_history.xlsx")
+                                        .header("Content-Type",
+                                                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                                        .body(excelBytes);
+
+                } catch (Exception e) {
+                        log.error("Error exporting transaction history to Excel", e);
+                        throw new RuntimeException("Failed to export transaction history: " + e.getMessage());
+                }
         }
 }
