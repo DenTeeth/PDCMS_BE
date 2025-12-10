@@ -49,6 +49,8 @@ public class PatientDetailResponse {
     private Integer consecutiveNoShows;
     private Boolean isBookingBlocked;
     private String bookingBlockReason;
+    private String bookingBlockNotes;
+    private String blockedBy;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime blockedAt;

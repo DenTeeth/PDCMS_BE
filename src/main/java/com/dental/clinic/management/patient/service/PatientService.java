@@ -389,8 +389,29 @@ public class PatientService {
                         "Patient",
                         "patientnotfound"));
 
+        // Track if booking block status is being changed
+        boolean blockingStatusChanged = request.getIsBookingBlocked() != null && 
+                                        !request.getIsBookingBlocked().equals(patient.getIsBookingBlocked());
+
         // Update only non-null fields
         patientMapper.updatePatientFromRequest(request, patient);
+
+        // If admin is blocking/unblocking patient, track who and when
+        if (blockingStatusChanged) {
+            if (Boolean.TRUE.equals(request.getIsBookingBlocked())) {
+                // Blocking patient - set blocked_by and blocked_at
+                org.springframework.security.core.Authentication auth = 
+                    org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+                patient.setBlockedBy(auth.getName());
+                patient.setBlockedAt(java.time.LocalDateTime.now());
+            } else {
+                // Unblocking patient - clear blocking fields
+                patient.setBlockedBy(null);
+                patient.setBlockedAt(null);
+                patient.setBookingBlockReason(null);
+                patient.setBookingBlockNotes(null);
+            }
+        }
 
         Patient updatedPatient = patientRepository.save(patient);
 
@@ -614,6 +635,8 @@ public class PatientService {
                 .bookingBlockReason(patient.getBookingBlockReason() != null 
                         ? patient.getBookingBlockReason().name() 
                         : null)
+                .bookingBlockNotes(patient.getBookingBlockNotes())
+                .blockedBy(patient.getBlockedBy())
                 .blockedAt(patient.getBlockedAt())
                 .accountId(account != null ? account.getAccountId() : null)
                 .username(account != null ? account.getUsername() : null)

@@ -62,6 +62,14 @@ public class UpdatePatientRequest {
 
     private Boolean isActive;
 
+    // Admin-only fields for booking block management
+    private Boolean isBookingBlocked;
+    
+    private String bookingBlockReason; // Will be converted to enum
+    
+    @Size(max = 5000)
+    private String bookingBlockNotes;
+
     // Constructors
     public UpdatePatientRequest() {
     }
@@ -193,6 +201,30 @@ public class UpdatePatientRequest {
 
     public void setGuardianCitizenId(String guardianCitizenId) {
         this.guardianCitizenId = guardianCitizenId;
+    }
+
+    public Boolean getIsBookingBlocked() {
+        return isBookingBlocked;
+    }
+
+    public void setIsBookingBlocked(Boolean isBookingBlocked) {
+        this.isBookingBlocked = isBookingBlocked;
+    }
+
+    public String getBookingBlockReason() {
+        return bookingBlockReason;
+    }
+
+    public void setBookingBlockReason(String bookingBlockReason) {
+        this.bookingBlockReason = bookingBlockReason;
+    }
+
+    public String getBookingBlockNotes() {
+        return bookingBlockNotes;
+    }
+
+    public void setBookingBlockNotes(String bookingBlockNotes) {
+        this.bookingBlockNotes = bookingBlockNotes;
     }
 
     @Override

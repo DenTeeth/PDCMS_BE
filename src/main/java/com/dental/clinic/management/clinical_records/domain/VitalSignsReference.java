@@ -51,6 +51,7 @@ public class VitalSignsReference {
     @Column(name = "effective_date", nullable = false)
     private LocalDate effectiveDate;
 
+    @Builder.Default
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 

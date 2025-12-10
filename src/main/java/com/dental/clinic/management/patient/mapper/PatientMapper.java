@@ -147,6 +147,23 @@ public class PatientMapper {
         if (request.getIsActive() != null) {
             patient.setIsActive(request.getIsActive());
         }
+        
+        // Admin-only: Update booking block fields
+        if (request.getIsBookingBlocked() != null) {
+            patient.setIsBookingBlocked(request.getIsBookingBlocked());
+        }
+        if (request.getBookingBlockReason() != null) {
+            try {
+                com.dental.clinic.management.patient.enums.BookingBlockReason reason = 
+                    com.dental.clinic.management.patient.enums.BookingBlockReason.valueOf(request.getBookingBlockReason());
+                patient.setBookingBlockReason(reason);
+            } catch (IllegalArgumentException e) {
+                // Invalid enum value - ignore or could throw validation error
+            }
+        }
+        if (request.getBookingBlockNotes() != null) {
+            patient.setBookingBlockNotes(request.getBookingBlockNotes());
+        }
     }
 
     /**
