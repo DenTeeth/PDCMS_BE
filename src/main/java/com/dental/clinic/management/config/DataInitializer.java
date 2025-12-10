@@ -116,13 +116,14 @@ public class DataInitializer {
                         continue;
                     }
 
-                    // Execute only DML statements (INSERT, UPDATE, DELETE, SELECT, ALTER SEQUENCE)
+                    // Execute DML statements (INSERT, UPDATE, DELETE, SELECT) and constraint fixes (ALTER TABLE)
                     String upperStatement = trimmed.toUpperCase();
                     if (upperStatement.startsWith("INSERT") ||
                             upperStatement.startsWith("UPDATE") ||
                             upperStatement.startsWith("DELETE") ||
                             upperStatement.startsWith("SELECT") ||
-                            upperStatement.startsWith("ALTER SEQUENCE")) {
+                            upperStatement.startsWith("ALTER SEQUENCE") ||
+                            upperStatement.startsWith("ALTER TABLE")) {
 
                         try {
                             jdbcTemplate.execute(trimmed);
