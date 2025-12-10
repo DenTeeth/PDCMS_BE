@@ -603,6 +603,8 @@ public class AppointmentStatusService {
             if (patient.getConsecutiveNoShows() >= 3 && !Boolean.TRUE.equals(patient.getIsBookingBlocked())) {
                 patient.setIsBookingBlocked(true);
                 patient.setBookingBlockReason(
+                        com.dental.clinic.management.patient.enums.BookingBlockReason.EXCESSIVE_NO_SHOWS);
+                patient.setBookingBlockNotes(
                         String.format("Bị chặn do bỏ hẹn %d lần liên tiếp. Lần cuối: %s", 
                                 patient.getConsecutiveNoShows(),
                                 appointment.getAppointmentCode()));

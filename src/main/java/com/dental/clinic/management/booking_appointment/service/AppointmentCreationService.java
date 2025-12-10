@@ -977,7 +977,9 @@ public class AppointmentCreationService {
                                                 .isActive(patient.getIsActive())
                                                 .consecutiveNoShows(patient.getConsecutiveNoShows())
                                                 .isBookingBlocked(patient.getIsBookingBlocked())
-                                                .bookingBlockReason(patient.getBookingBlockReason())
+                                                .bookingBlockReason(patient.getBookingBlockReason() != null 
+                                                        ? patient.getBookingBlockReason().name() 
+                                                        : null)
                                                 .build())
                                 .doctor(DoctorSummary.builder()
                                                 .employeeCode(doctor.getEmployeeCode())

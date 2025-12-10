@@ -80,9 +80,23 @@ public interface PatientRepository extends JpaRepository<Patient, Integer>, JpaS
 
   /**
    * BR-044: Find all blacklisted patients.
+   * 
+   * Updated to use unified booking block structure:
+   * - isBookingBlocked = true (patient is blocked)
+   * - bookingBlockReason IN (blacklist reasons, excluding EXCESSIVE_NO_SHOWS which is temporary)
    *
    * @return List of blacklisted patients
    */
-  @Query("SELECT p FROM Patient p WHERE p.isBlacklisted = true ORDER BY p.blacklistedAt DESC")
+  @Query("SELECT p FROM Patient p WHERE p.isBookingBlocked = true " +
+         "AND p.bookingBlockReason IN (com.dental.clinic.management.patient.enums.BookingBlockReason.EXCESSIVE_CANCELLATIONS, " +
+         "com.dental.clinic.management.patient.enums.BookingBlockReason.STAFF_ABUSE, " +
+         "com.dental.clinic.management.patient.enums.BookingBlockReason.DEBT_DEFAULT, " +
+         "com.dental.clinic.management.patient.enums.BookingBlockReason.FRIVOLOUS_LAWSUIT, " +
+         "com.dental.clinic.management.patient.enums.BookingBlockReason.PROPERTY_DAMAGE, " +
+         "com.dental.clinic.management.patient.enums.BookingBlockReason.INTOXICATION, " +
+         "com.dental.clinic.management.patient.enums.BookingBlockReason.DISRUPTIVE_BEHAVIOR, " +
+         "com.dental.clinic.management.patient.enums.BookingBlockReason.POLICY_VIOLATION, " +
+         "com.dental.clinic.management.patient.enums.BookingBlockReason.OTHER_SERIOUS) " +
+         "ORDER BY p.blockedAt DESC")
   java.util.List<Patient> findAllBlacklisted();
 }

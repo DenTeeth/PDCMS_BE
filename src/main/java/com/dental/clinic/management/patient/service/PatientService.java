@@ -611,7 +611,9 @@ public class PatientService {
                 .isActive(patient.getIsActive())
                 .consecutiveNoShows(patient.getConsecutiveNoShows())
                 .isBookingBlocked(patient.getIsBookingBlocked())
-                .bookingBlockReason(patient.getBookingBlockReason())
+                .bookingBlockReason(patient.getBookingBlockReason() != null 
+                        ? patient.getBookingBlockReason().name() 
+                        : null)
                 .blockedAt(patient.getBlockedAt())
                 .accountId(account != null ? account.getAccountId() : null)
                 .username(account != null ? account.getUsername() : null)

@@ -247,7 +247,9 @@ public class AppointmentDetailService {
                         .isActive(patient.getIsActive())
                         .consecutiveNoShows(patient.getConsecutiveNoShows())
                         .isBookingBlocked(patient.getIsBookingBlocked())
-                        .bookingBlockReason(patient.getBookingBlockReason())
+                        .bookingBlockReason(patient.getBookingBlockReason() != null 
+                                ? patient.getBookingBlockReason().name() 
+                                : null)
                         .build();
             }
         } catch (Exception e) {
