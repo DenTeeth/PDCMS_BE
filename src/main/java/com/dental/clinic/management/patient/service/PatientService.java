@@ -67,6 +67,7 @@ public class PatientService {
     private final RoleRepository roleRepository;
     private final PatientToothStatusRepository patientToothStatusRepository;
     private final PatientToothStatusHistoryRepository patientToothStatusHistoryRepository;
+    private final DuplicatePatientDetectionService duplicateDetectionService;
 
     public PatientService(
             PatientRepository patientRepository,
@@ -79,7 +80,8 @@ public class PatientService {
             EmailService emailService,
             RoleRepository roleRepository,
             PatientToothStatusRepository patientToothStatusRepository,
-            PatientToothStatusHistoryRepository patientToothStatusHistoryRepository) {
+            PatientToothStatusHistoryRepository patientToothStatusHistoryRepository,
+            DuplicatePatientDetectionService duplicateDetectionService) {
         this.patientRepository = patientRepository;
         this.patientMapper = patientMapper;
         this.accountRepository = accountRepository;
@@ -88,6 +90,7 @@ public class PatientService {
         this.verificationTokenRepository = verificationTokenRepository;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.emailService = emailService;
+        this.duplicateDetectionService = duplicateDetectionService;
         this.roleRepository = roleRepository;
         this.patientToothStatusRepository = patientToothStatusRepository;
         this.patientToothStatusHistoryRepository = patientToothStatusHistoryRepository;
@@ -210,6 +213,39 @@ public class PatientService {
     @Transactional
     public PatientInfoResponse createPatient(CreatePatientRequest request) {
         log.debug("Request to create patient: {}", request);
+
+        // BR-043: Check for duplicate patients (by Name + DOB or Phone)
+        com.dental.clinic.management.patient.dto.DuplicatePatientCheckResult duplicateCheck = 
+                duplicateDetectionService.checkForDuplicates(
+                        request.getFirstName(),
+                        request.getLastName(),
+                        request.getDateOfBirth(),
+                        request.getPhone()
+                );
+
+        if (duplicateCheck.isHasDuplicates()) {
+            log.warn("Duplicate patients found: {} matches", duplicateCheck.getMatches().size());
+            
+            // Check if it's an exact match (should be blocked)
+            boolean hasExactMatch = duplicateDetectionService.hasExactMatch(
+                    request.getFirstName(),
+                    request.getLastName(),
+                    request.getDateOfBirth(),
+                    request.getPhone()
+            );
+
+            if (hasExactMatch) {
+                throw new BadRequestAlertException(
+                        "Bệnh nhân với thông tin này đã tồn tại trong hệ thống. Vui lòng kiểm tra lại.",
+                        "patient",
+                        "duplicatepatient"
+                );
+            }
+
+            // If not exact match, log warning but allow creation
+            // (Staff can decide if it's actually a duplicate or not)
+            log.info("Creating patient despite duplicate warning (not exact match)");
+        }
 
         Account account = null;
 

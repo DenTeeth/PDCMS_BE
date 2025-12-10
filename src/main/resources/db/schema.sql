@@ -1,5 +1,5 @@
 -- ============================================
--- DENTAL CLINIC MANAGEMENT SYSTEM - SCHEMA V33
+-- DENTAL CLINIC MANAGEMENT SYSTEM - SCHEMA V34
 -- Date: 2025-01-15
 -- PostgreSQL Database Schema - REFERENCE ONLY
 -- ============================================
@@ -14,6 +14,19 @@
 --
 -- This file documents the expected schema structure for reference
 -- ============================================
+-- CHANGES IN V34 (Duplicate Detection & Patient Blacklist):
+--   - BR-043: Duplicate patient detection by Name+DOB or Phone
+--     - Added repository queries for duplicate detection
+--     - System checks for duplicates during patient creation
+--     - Blocks exact matches, warns for similar patients
+--     - API: GET /api/v1/patients/check-duplicate
+--   - BR-044: Patient blacklist with mandatory predefined reasons
+--     - Added is_blacklisted, blacklist_reason, blacklist_notes, blacklisted_by, blacklisted_at to patients table
+--     - PatientBlacklistReason enum: STAFF_ABUSE, DEBT_DEFAULT, FRIVOLOUS_LAWSUIT, PROPERTY_DAMAGE, INTOXICATION, DISRUPTIVE_BEHAVIOR, POLICY_VIOLATION, OTHER_SERIOUS
+--     - Blacklisting also blocks booking automatically
+--     - API: POST /api/v1/patients/{id}/blacklist
+--     - API: DELETE /api/v1/patients/{id}/blacklist
+--     - Permission: MANAGER, ADMIN only
 -- CHANGES IN V33 (Patient Unban Audit Logs):
 --   - Added patient_unban_audit_logs table for BR-085/BR-086 compliance
 --   - Purpose: Track all patient unban actions for accountability
@@ -264,10 +277,43 @@ CREATE TABLE patients (
     date_of_birth DATE,
     address TEXT,
     gender VARCHAR(10),
+    medical_history TEXT,
+    allergies TEXT,
+    emergency_contact_name VARCHAR(100),
+    emergency_contact_phone VARCHAR(15),
     is_active BOOLEAN DEFAULT TRUE,
+    -- Rule #5: No-show tracking
+    consecutive_no_shows INTEGER DEFAULT 0 NOT NULL,
+    is_booking_blocked BOOLEAN DEFAULT FALSE NOT NULL,
+    booking_block_reason VARCHAR(500),
+    blocked_at TIMESTAMP,
+    -- Rule #14: Guardian information for minors (<16 years old)
+    guardian_name VARCHAR(100),
+    guardian_phone VARCHAR(15),
+    guardian_relationship VARCHAR(50),
+    guardian_citizen_id VARCHAR(20),
+    -- BR-044: Blacklist management
+    is_blacklisted BOOLEAN DEFAULT FALSE NOT NULL,
+    blacklist_reason VARCHAR(50), -- Enum: STAFF_ABUSE, DEBT_DEFAULT, etc.
+    blacklist_notes TEXT,
+    blacklisted_by VARCHAR(100),
+    blacklisted_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+COMMENT ON COLUMN patients.is_blacklisted IS 'BR-044: Patient is on blacklist (blocks booking)';
+COMMENT ON COLUMN patients.blacklist_reason IS 'BR-044: Predefined reason from PatientBlacklistReason enum';
+COMMENT ON COLUMN patients.blacklist_notes IS 'BR-044: Optional additional notes for blacklist';
+COMMENT ON COLUMN patients.blacklisted_by IS 'BR-044: Username of Manager/Admin who blacklisted patient';
+COMMENT ON COLUMN patients.blacklisted_at IS 'BR-044: Timestamp when patient was blacklisted';
+
+-- Indexes for BR-043 (Duplicate Detection)
+CREATE INDEX idx_patients_name_dob ON patients(first_name, last_name, date_of_birth);
+CREATE INDEX idx_patients_phone ON patients(phone);
+
+-- Index for BR-044 (Blacklist)
+CREATE INDEX idx_patients_blacklisted ON patients(is_blacklisted);
 
 -- Services (Dịch vụ nha khoa)
 -- ============================================
@@ -1005,5 +1051,5 @@ CREATE INDEX idx_unban_audit_timestamp ON patient_unban_audit_logs(timestamp);
 CREATE INDEX idx_unban_audit_role ON patient_unban_audit_logs(performed_by_role);
 
 -- ============================================
--- END OF SCHEMA V33 (Added Patient Unban Audit Logs)
+-- END OF SCHEMA V34 (Duplicate Detection + Patient Blacklist)
 -- ============================================

@@ -11,6 +11,9 @@ import com.dental.clinic.management.patient.dto.UpdateToothStatusResponse;
 import com.dental.clinic.management.patient.dto.UnbanPatientRequest;
 import com.dental.clinic.management.patient.dto.UnbanPatientResponse;
 import com.dental.clinic.management.patient.dto.AuditLogResponse;
+import com.dental.clinic.management.patient.dto.DuplicatePatientCheckResult;
+import com.dental.clinic.management.patient.dto.BlacklistPatientRequest;
+import com.dental.clinic.management.patient.dto.BlacklistPatientResponse;
 import com.dental.clinic.management.patient.service.PatientService;
 import com.dental.clinic.management.patient.service.PatientUnbanService;
 import com.dental.clinic.management.utils.annotation.ApiMessage;
@@ -48,10 +51,18 @@ public class PatientController {
 
     private final PatientService patientService;
     private final PatientUnbanService patientUnbanService;
+    private final com.dental.clinic.management.patient.service.DuplicatePatientDetectionService duplicateDetectionService;
+    private final com.dental.clinic.management.patient.service.PatientBlacklistService blacklistService;
 
-    public PatientController(PatientService patientService, PatientUnbanService patientUnbanService) {
+    public PatientController(
+            PatientService patientService, 
+            PatientUnbanService patientUnbanService,
+            com.dental.clinic.management.patient.service.DuplicatePatientDetectionService duplicateDetectionService,
+            com.dental.clinic.management.patient.service.PatientBlacklistService blacklistService) {
         this.patientService = patientService;
         this.patientUnbanService = patientUnbanService;
+        this.duplicateDetectionService = duplicateDetectionService;
+        this.blacklistService = blacklistService;
     }
 
     /**
@@ -336,5 +347,72 @@ public class PatientController {
         
         List<AuditLogResponse> history = patientUnbanService.getPatientUnbanHistory(patientId);
         return ResponseEntity.ok(history);
+    }
+
+    /**
+     * {@code GET  /patients/check-duplicate} : Check for duplicate patients
+     * 
+     * BR-043: Check for duplicates by Name + DOB or Phone
+     *
+     * @param firstName First name
+     * @param lastName Last name
+     * @param dateOfBirth Date of birth (YYYY-MM-DD)
+     * @param phone Phone number (optional)
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and duplicate check result
+     */
+    @GetMapping("/check-duplicate")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('RECEPTIONIST') or hasRole('MANAGER')")
+    @ApiMessage("Kiểm tra bệnh nhân trùng")
+    @Operation(summary = "Check for duplicate patients", description = "Check if a patient with similar information already exists. Returns potential matches by Name+DOB or Phone.")
+    public ResponseEntity<DuplicatePatientCheckResult> checkDuplicate(
+            @RequestParam String firstName,
+            @RequestParam String lastName,
+            @RequestParam java.time.LocalDate dateOfBirth,
+            @RequestParam(required = false) String phone) {
+        
+        DuplicatePatientCheckResult result = duplicateDetectionService.checkForDuplicates(
+                firstName, lastName, dateOfBirth, phone);
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * {@code POST  /patients/:id/blacklist} : Add patient to blacklist
+     * 
+     * BR-044: Mandatory predefined reason when blacklisting
+     *
+     * @param patientId the patient ID to blacklist
+     * @param request the blacklist request with reason
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and blacklist details
+     */
+    @PostMapping("/{id}/blacklist")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
+    @ApiMessage("Thêm bệnh nhân vào blacklist thành công")
+    @Operation(summary = "Blacklist patient", description = "Manager/Admin can add a patient to blacklist with mandatory predefined reason. Patient will also be blocked from booking.")
+    public ResponseEntity<BlacklistPatientResponse> blacklistPatient(
+            @PathVariable("id") Integer patientId,
+            @Valid @RequestBody BlacklistPatientRequest request) {
+        
+        BlacklistPatientResponse response = blacklistService.blacklistPatient(
+                patientId, request.getReason(), request.getNotes());
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * {@code DELETE  /patients/:id/blacklist} : Remove patient from blacklist
+     *
+     * @param patientId the patient ID to remove from blacklist
+     * @param reason Reason for removal (audit trail)
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and removal details
+     */
+    @DeleteMapping("/{id}/blacklist")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
+    @ApiMessage("Xóa bệnh nhân khỏi blacklist")
+    @Operation(summary = "Remove from blacklist", description = "Manager/Admin can remove a patient from blacklist")
+    public ResponseEntity<BlacklistPatientResponse> removeFromBlacklist(
+            @PathVariable("id") Integer patientId,
+            @RequestParam(required = false) String reason) {
+        
+        BlacklistPatientResponse response = blacklistService.removeFromBlacklist(patientId, reason);
+        return ResponseEntity.ok(response);
     }
 }

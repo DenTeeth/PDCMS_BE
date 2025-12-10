@@ -129,6 +129,40 @@ public class Patient {
   @Column(name = "guardian_citizen_id", length = 20)
   private String guardianCitizenId;
 
+  /**
+   * BR-044: Blacklist flag
+   * Set to true when patient is added to blacklist
+   */
+  @Column(name = "is_blacklisted", nullable = false)
+  private Boolean isBlacklisted = false;
+
+  /**
+   * BR-044: Predefined blacklist reason
+   * Required when isBlacklisted = true
+   */
+  @Enumerated(EnumType.STRING)
+  @Column(name = "blacklist_reason", length = 50)
+  private com.dental.clinic.management.patient.enums.PatientBlacklistReason blacklistReason;
+
+  /**
+   * BR-044: Additional notes for blacklist
+   * Optional explanation or details
+   */
+  @Column(name = "blacklist_notes", columnDefinition = "TEXT")
+  private String blacklistNotes;
+
+  /**
+   * BR-044: Who blacklisted the patient
+   */
+  @Column(name = "blacklisted_by", length = 100)
+  private String blacklistedBy;
+
+  /**
+   * BR-044: When patient was blacklisted
+   */
+  @Column(name = "blacklisted_at")
+  private LocalDateTime blacklistedAt;
+
   @Column(name = "created_at")
   private LocalDateTime createdAt;
 
@@ -355,6 +389,46 @@ public class Patient {
 
   public void setGuardianCitizenId(String guardianCitizenId) {
     this.guardianCitizenId = guardianCitizenId;
+  }
+
+  public Boolean getIsBlacklisted() {
+    return isBlacklisted;
+  }
+
+  public void setIsBlacklisted(Boolean isBlacklisted) {
+    this.isBlacklisted = isBlacklisted;
+  }
+
+  public com.dental.clinic.management.patient.enums.PatientBlacklistReason getBlacklistReason() {
+    return blacklistReason;
+  }
+
+  public void setBlacklistReason(com.dental.clinic.management.patient.enums.PatientBlacklistReason blacklistReason) {
+    this.blacklistReason = blacklistReason;
+  }
+
+  public String getBlacklistNotes() {
+    return blacklistNotes;
+  }
+
+  public void setBlacklistNotes(String blacklistNotes) {
+    this.blacklistNotes = blacklistNotes;
+  }
+
+  public String getBlacklistedBy() {
+    return blacklistedBy;
+  }
+
+  public void setBlacklistedBy(String blacklistedBy) {
+    this.blacklistedBy = blacklistedBy;
+  }
+
+  public LocalDateTime getBlacklistedAt() {
+    return blacklistedAt;
+  }
+
+  public void setBlacklistedAt(LocalDateTime blacklistedAt) {
+    this.blacklistedAt = blacklistedAt;
   }
 
   // Helper methods
