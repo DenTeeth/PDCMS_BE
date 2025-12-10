@@ -1,7 +1,7 @@
 package com.dental.clinic.management.patient.enums;
 
 /**
- * Unified booking block reasons for both temporary and permanent restrictions.
+ * Simplified unified booking block reasons (Based on FE feedback).
  * 
  * Business Rules:
  * - BR-005: Automatic temporary block after 3 consecutive no-shows
@@ -9,61 +9,41 @@ package com.dental.clinic.management.patient.enums;
  * - BR-044: Manual blacklist by staff for serious violations
  * 
  * Purpose: Consolidate is_booking_blocked and is_blacklisted into single flag
+ * 
+ * CONSOLIDATED: Reduced from 10 to 5 reasons for better UX
  */
 public enum BookingBlockReason {
     
     // ===== TEMPORARY BLOCKS (BR-005) =====
     /**
-     * BR-005: Patient has 3 consecutive no-shows
+     * 🟠 BR-005: Patient has 3 consecutive no-shows
      * Can be unblocked when patient shows up for next appointment
      */
-    EXCESSIVE_NO_SHOWS("3 lần không đến liên tiếp", true, false),
+    EXCESSIVE_NO_SHOWS("Bỏ hẹn quá nhiều", true, false),
     
-    // ===== AUTOMATIC BLACKLIST (BR-043) =====
+    // ===== PERMANENT BLACKLIST =====
     /**
-     * BR-043: Patient cancelled 3 appointments within 30 days
-     * Automatically added to blacklist, requires manual unban
+     * 🔴 Payment issues: debt default, refuses to pay, payment disputes
+     * Consolidates: DEBT_DEFAULT
      */
-    EXCESSIVE_CANCELLATIONS("Hủy lịch quá nhiều (3 lần trong 30 ngày)", false, true),
+    PAYMENT_ISSUES("Vấn đề thanh toán", false, true),
     
-    // ===== MANUAL BLACKLIST (BR-044) =====
     /**
-     * BR-044: Patient verbally or physically abused staff members
+     * 🔴 Staff abuse: verbal/physical abuse, harassment, disruptive behavior
+     * Consolidates: STAFF_ABUSE + DISRUPTIVE_BEHAVIOR
      */
-    STAFF_ABUSE("Xúc phạm nhân viên", false, true),
+    STAFF_ABUSE("Bạo lực/quấy rối nhân viên", false, true),
     
     /**
-     * BR-044: Patient has unpaid bills or refuses to pay
+     * 🔴 Policy violations: excessive cancellations, repeated rule violations
+     * Consolidates: POLICY_VIOLATION + EXCESSIVE_CANCELLATIONS (BR-043)
      */
-    DEBT_DEFAULT("Bùng nợ", false, true),
+    POLICY_VIOLATION("Vi phạm quy định", false, true),
     
     /**
-     * BR-044: Patient threatened legal action frivolously
-     */
-    FRIVOLOUS_LAWSUIT("Doạ kiện không có cơ sở", false, true),
-    
-    /**
-     * BR-044: Patient damaged clinic property
-     */
-    PROPERTY_DAMAGE("Phá hoại tài sản phòng khám", false, true),
-    
-    /**
-     * BR-044: Patient showed up intoxicated or under influence
-     */
-    INTOXICATION("Vi phạm quy định (say rượu/ma túy)", false, true),
-    
-    /**
-     * BR-044: Patient repeatedly creates disturbances
-     */
-    DISRUPTIVE_BEHAVIOR("Gây rối trật tự liên tục", false, true),
-    
-    /**
-     * BR-044: Patient violated clinic policies multiple times
-     */
-    POLICY_VIOLATION("Vi phạm nội quy nhiều lần", false, true),
-    
-    /**
-     * BR-044: Other serious reason (Manager must document separately)
+     * 🔴 Other serious reasons: property damage, intoxication, frivolous lawsuits, etc.
+     * Consolidates: PROPERTY_DAMAGE + INTOXICATION + FRIVOLOUS_LAWSUIT + OTHER_SERIOUS
+     * Manager must document details in bookingBlockNotes
      */
     OTHER_SERIOUS("Lý do nghiêm trọng khác", false, true);
 
@@ -94,13 +74,8 @@ public enum BookingBlockReason {
      */
     public static BookingBlockReason[] getBlacklistReasons() {
         return new BookingBlockReason[]{
-            EXCESSIVE_CANCELLATIONS,
+            PAYMENT_ISSUES,
             STAFF_ABUSE,
-            DEBT_DEFAULT,
-            FRIVOLOUS_LAWSUIT,
-            PROPERTY_DAMAGE,
-            INTOXICATION,
-            DISRUPTIVE_BEHAVIOR,
             POLICY_VIOLATION,
             OTHER_SERIOUS
         };

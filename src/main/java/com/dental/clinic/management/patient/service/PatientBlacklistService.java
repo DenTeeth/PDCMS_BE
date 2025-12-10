@@ -198,36 +198,28 @@ public class PatientBlacklistService {
     }
 
     /**
-     * Map old PatientBlacklistReason to new BookingBlockReason
+     * Map old PatientBlacklistReason to new BookingBlockReason (CONSOLIDATED)
      */
     private com.dental.clinic.management.patient.enums.BookingBlockReason mapToBookingBlockReason(PatientBlacklistReason reason) {
         return switch (reason) {
+            case PAYMENT_ISSUES -> com.dental.clinic.management.patient.enums.BookingBlockReason.PAYMENT_ISSUES;
             case STAFF_ABUSE -> com.dental.clinic.management.patient.enums.BookingBlockReason.STAFF_ABUSE;
-            case DEBT_DEFAULT -> com.dental.clinic.management.patient.enums.BookingBlockReason.DEBT_DEFAULT;
-            case FRIVOLOUS_LAWSUIT -> com.dental.clinic.management.patient.enums.BookingBlockReason.FRIVOLOUS_LAWSUIT;
-            case PROPERTY_DAMAGE -> com.dental.clinic.management.patient.enums.BookingBlockReason.PROPERTY_DAMAGE;
-            case INTOXICATION -> com.dental.clinic.management.patient.enums.BookingBlockReason.INTOXICATION;
-            case DISRUPTIVE_BEHAVIOR -> com.dental.clinic.management.patient.enums.BookingBlockReason.DISRUPTIVE_BEHAVIOR;
             case POLICY_VIOLATION -> com.dental.clinic.management.patient.enums.BookingBlockReason.POLICY_VIOLATION;
             case OTHER_SERIOUS -> com.dental.clinic.management.patient.enums.BookingBlockReason.OTHER_SERIOUS;
         };
     }
 
     /**
-     * Map new BookingBlockReason back to old PatientBlacklistReason for response
+     * Map new BookingBlockReason back to old PatientBlacklistReason for response (CONSOLIDATED)
      */
     private PatientBlacklistReason mapFromBookingBlockReason(com.dental.clinic.management.patient.enums.BookingBlockReason blockReason) {
         if (blockReason == null) return null;
         return switch (blockReason) {
+            case PAYMENT_ISSUES -> PatientBlacklistReason.PAYMENT_ISSUES;
             case STAFF_ABUSE -> PatientBlacklistReason.STAFF_ABUSE;
-            case DEBT_DEFAULT -> PatientBlacklistReason.DEBT_DEFAULT;
-            case FRIVOLOUS_LAWSUIT -> PatientBlacklistReason.FRIVOLOUS_LAWSUIT;
-            case PROPERTY_DAMAGE -> PatientBlacklistReason.PROPERTY_DAMAGE;
-            case INTOXICATION -> PatientBlacklistReason.INTOXICATION;
-            case DISRUPTIVE_BEHAVIOR -> PatientBlacklistReason.DISRUPTIVE_BEHAVIOR;
             case POLICY_VIOLATION -> PatientBlacklistReason.POLICY_VIOLATION;
             case OTHER_SERIOUS -> PatientBlacklistReason.OTHER_SERIOUS;
-            default -> null; // EXCESSIVE_NO_SHOWS, EXCESSIVE_CANCELLATIONS not in old enum
+            default -> null; // EXCESSIVE_NO_SHOWS is temporary, not in blacklist enum
         };
     }
 }
