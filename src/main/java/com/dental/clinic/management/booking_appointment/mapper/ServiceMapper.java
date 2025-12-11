@@ -31,6 +31,12 @@ public class ServiceMapper {
         response.setCreatedAt(service.getCreatedAt());
         response.setUpdatedAt(service.getUpdatedAt());
 
+        // BE_4: Map service constraints
+        response.setMinimumPreparationDays(service.getMinimumPreparationDays());
+        response.setRecoveryDays(service.getRecoveryDays());
+        response.setSpacingDays(service.getSpacingDays());
+        response.setMaxAppointmentsPerDay(service.getMaxAppointmentsPerDay());
+
         // Map specialization if exists
         if (service.getSpecialization() != null) {
             response.setSpecializationId(service.getSpecialization().getSpecializationId());
@@ -64,6 +70,12 @@ public class ServiceMapper {
         service.setPrice(request.getPrice());
         service.setDisplayOrder(request.getDisplayOrder() != null ? request.getDisplayOrder() : 0);
         service.setIsActive(request.getIsActive() != null ? request.getIsActive() : true);
+
+        // BE_4: Set service constraints
+        service.setMinimumPreparationDays(request.getMinimumPreparationDays() != null ? request.getMinimumPreparationDays() : 0);
+        service.setRecoveryDays(request.getRecoveryDays() != null ? request.getRecoveryDays() : 0);
+        service.setSpacingDays(request.getSpacingDays() != null ? request.getSpacingDays() : 0);
+        service.setMaxAppointmentsPerDay(request.getMaxAppointmentsPerDay());
 
         // Specialization will be set in service layer
         return service;

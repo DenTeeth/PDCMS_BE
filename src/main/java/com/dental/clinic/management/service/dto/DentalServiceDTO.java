@@ -25,6 +25,13 @@ public class DentalServiceDTO {
     private BigDecimal price;
     private Integer durationMinutes;
     private Integer displayOrder;
+    
+    // BE_4: Service appointment constraints
+    private Integer minimumPreparationDays;
+    private Integer recoveryDays;
+    private Integer spacingDays;
+    private Integer maxAppointmentsPerDay;
+    
     private Boolean isActive;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

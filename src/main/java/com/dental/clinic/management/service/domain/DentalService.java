@@ -64,6 +64,38 @@ public class DentalService {
     @Builder.Default
     private Integer displayOrder = 0;
 
+    /**
+     * BE_4: Minimum preparation days before this service can be performed
+     * Example: Dental implant may need 7 days preparation after initial consultation
+     */
+    @Column(name = "minimum_preparation_days")
+    @Builder.Default
+    private Integer minimumPreparationDays = 0;
+
+    /**
+     * BE_4: Recovery days needed after this service before another appointment
+     * Example: Tooth extraction may need 7 days recovery before next procedure
+     */
+    @Column(name = "recovery_days")
+    @Builder.Default
+    private Integer recoveryDays = 0;
+
+    /**
+     * BE_4: Spacing days required between consecutive appointments for this service
+     * Example: Orthodontic adjustments may need 30 days spacing
+     */
+    @Column(name = "spacing_days")
+    @Builder.Default
+    private Integer spacingDays = 0;
+
+    /**
+     * BE_4: Maximum appointments allowed per day for this service
+     * Example: Complex surgeries may be limited to 2 per day
+     * NULL or 0 means no limit
+     */
+    @Column(name = "max_appointments_per_day")
+    private Integer maxAppointmentsPerDay;
+
     @Column(name = "is_active", nullable = false)
     @Builder.Default
     private Boolean isActive = true;

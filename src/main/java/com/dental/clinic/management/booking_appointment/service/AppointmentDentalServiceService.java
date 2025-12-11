@@ -207,6 +207,20 @@ public class AppointmentDentalServiceService {
             service.setIsActive(request.getIsActive());
         }
 
+        // BE_4: Update service constraints
+        if (request.getMinimumPreparationDays() != null) {
+            service.setMinimumPreparationDays(request.getMinimumPreparationDays());
+        }
+        if (request.getRecoveryDays() != null) {
+            service.setRecoveryDays(request.getRecoveryDays());
+        }
+        if (request.getSpacingDays() != null) {
+            service.setSpacingDays(request.getSpacingDays());
+        }
+        if (request.getMaxAppointmentsPerDay() != null) {
+            service.setMaxAppointmentsPerDay(request.getMaxAppointmentsPerDay());
+        }
+
         // Update specialization if provided
         if (request.getSpecializationId() != null) {
             Specialization specialization = specializationRepository.findById(request.getSpecializationId())

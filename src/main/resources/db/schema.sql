@@ -355,9 +355,18 @@ CREATE TABLE services (
     category_id INTEGER REFERENCES service_categories(category_id) ON DELETE SET NULL,
     display_order INTEGER NOT NULL DEFAULT 0,
     specialization_id INTEGER REFERENCES specializations(specialization_id),
+    -- BE_4: Service appointment constraints for scheduling
+    minimum_preparation_days INTEGER DEFAULT 0,
+    recovery_days INTEGER DEFAULT 0,
+    spacing_days INTEGER DEFAULT 0,
+    max_appointments_per_day INTEGER,
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT chk_minimum_preparation_days CHECK (minimum_preparation_days >= 0),
+    CONSTRAINT chk_recovery_days CHECK (recovery_days >= 0),
+    CONSTRAINT chk_spacing_days CHECK (spacing_days >= 0),
+    CONSTRAINT chk_max_appointments_per_day CHECK (max_appointments_per_day IS NULL OR max_appointments_per_day > 0)
 );
 
 CREATE INDEX idx_services_category ON services(category_id);

@@ -57,6 +57,22 @@ public class CreateServiceRequest {
     @Schema(description = "Display order for sorting services", example = "1")
     private Integer displayOrder;
 
+    @Min(value = 0, message = "Minimum preparation days cannot be negative")
+    @Schema(description = "BE_4: Minimum preparation days before this service (days)", example = "0")
+    private Integer minimumPreparationDays;
+
+    @Min(value = 0, message = "Recovery days cannot be negative")
+    @Schema(description = "BE_4: Recovery days needed after this service (days)", example = "0")
+    private Integer recoveryDays;
+
+    @Min(value = 0, message = "Spacing days cannot be negative")
+    @Schema(description = "BE_4: Spacing days between consecutive appointments (days)", example = "0")
+    private Integer spacingDays;
+
+    @Min(value = 1, message = "Max appointments per day must be at least 1")
+    @Schema(description = "BE_4: Maximum appointments allowed per day (null = no limit)", example = "5")
+    private Integer maxAppointmentsPerDay;
+
     @Builder.Default
     @Schema(description = "Active status", example = "true")
     private Boolean isActive = true;

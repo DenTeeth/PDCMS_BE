@@ -487,4 +487,60 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
         List<Appointment> findByStatusAndAppointmentStartTimeBefore(
                 AppointmentStatus status,
                 LocalDateTime cutoffTime);
+
+        /**
+         * BE_4: Count appointments for a specific service on a specific date
+         * Used to validate max_appointments_per_day constraint
+         * Note: Requires join with appointment_services junction table
+         * 
+         * @param serviceId The service ID
+         * @param date The date to check
+         * @return Count of appointments
+         */
+        @Query("SELECT COUNT(DISTINCT a) FROM Appointment a " +
+                "JOIN AppointmentService aps ON aps.id.appointmentId = a.appointmentId " +
+                "WHERE aps.id.serviceId = :serviceId " +
+                "AND FUNCTION('DATE', a.appointmentStartTime) = :date " +
+                "AND a.status NOT IN ('CANCELLED', 'NO_SHOW')")
+        long countByServiceAndDate(
+                @Param("serviceId") Long serviceId,
+                @Param("date") java.time.LocalDate date);
+
+        /**
+         * BE_4: Find recent completed appointments for a patient (for constraint validation)
+         * Ordered by appointment date DESC
+         * 
+         * @param patientId The patient ID
+         * @param limit Maximum number of results
+         * @return List of recent completed appointments
+         */
+        @Query(value = "SELECT a.* FROM appointments a " +
+                "WHERE a.patient_id = :patientId " +
+                "AND a.status = 'COMPLETED' " +
+                "ORDER BY a.appointment_start_time DESC " +
+                "LIMIT :limit", nativeQuery = true)
+        List<Appointment> findRecentCompletedByPatient(
+                @Param("patientId") Long patientId,
+                @Param("limit") int limit);
+
+        /**
+         * BE_4: Find recent completed appointments for a patient with specific service
+         * Used for spacing validation between same service appointments
+         * 
+         * @param patientId The patient ID
+         * @param serviceId The service ID
+         * @param limit Maximum number of results
+         * @return List of recent completed appointments with this service
+         */
+        @Query(value = "SELECT a.* FROM appointments a " +
+                "JOIN appointment_services aps ON aps.appointment_id = a.appointment_id " +
+                "WHERE a.patient_id = :patientId " +
+                "AND aps.service_id = :serviceId " +
+                "AND a.status = 'COMPLETED' " +
+                "ORDER BY a.appointment_start_time DESC " +
+                "LIMIT :limit", nativeQuery = true)
+        List<Appointment> findRecentCompletedByPatientAndService(
+                @Param("patientId") Integer patientId,
+                @Param("serviceId") Long serviceId,
+                @Param("limit") int limit);
 }
