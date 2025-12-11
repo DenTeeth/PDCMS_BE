@@ -1,5 +1,6 @@
 package com.dental.clinic.management.service.domain;
 
+import com.dental.clinic.management.listener.ServiceEntityListener;
 import com.dental.clinic.management.specialization.domain.Specialization;
 import jakarta.persistence.*;
 import lombok.*;
@@ -14,6 +15,7 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "services")
+@EntityListeners(ServiceEntityListener.class)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -66,7 +68,8 @@ public class DentalService {
 
     /**
      * BE_4: Minimum preparation days before this service can be performed
-     * Example: Dental implant may need 7 days preparation after initial consultation
+     * Example: Dental implant may need 7 days preparation after initial
+     * consultation
      */
     @Column(name = "minimum_preparation_days")
     @Builder.Default

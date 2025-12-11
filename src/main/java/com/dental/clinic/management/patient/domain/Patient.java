@@ -6,8 +6,10 @@ import java.time.LocalDateTime;
 
 import com.dental.clinic.management.account.domain.Account;
 import com.dental.clinic.management.employee.enums.Gender;
+import com.dental.clinic.management.listener.PatientEntityListener;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.FetchType;
@@ -28,6 +30,7 @@ import jakarta.validation.constraints.Size;
  */
 @Entity
 @Table(name = "patients")
+@EntityListeners(PatientEntityListener.class)
 public class Patient {
 
   @Id

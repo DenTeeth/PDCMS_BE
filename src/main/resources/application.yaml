@@ -53,6 +53,31 @@ spring:
           timeout: 5000
           writetimeout: 5000
 
+  # ==============================
+  # Redis Configuration (Caching & JWT Blacklist)
+  # ==============================
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 60000
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+
+  # Cache Configuration
+  cache:
+    type: redis
+    redis:
+      time-to-live: 600000 # 10 minutes in milliseconds
+      cache-null-values: false
+      use-key-prefix: true
+      key-prefix: "dental-clinic:"
+
 # ==============================
 # Application Configuration
 # ==============================
@@ -94,3 +119,7 @@ springdoc:
     operations-sorter: method
     tags-sorter: alpha
     filter: true
+# ==============================
+# VNPay Configuration
+# ==============================
+

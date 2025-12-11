@@ -13,6 +13,25 @@ services:
       - "5432:5432"
     volumes:
       - ./pgdata_dental:/var/lib/postgresql/data
+    networks:
+      - dental-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis-dental
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - dental-network
+
+networks:
+  dental-network:
+    driver: bridge
 
 volumes:
   pgdata_dental:
+  redis-data:

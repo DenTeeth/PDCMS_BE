@@ -1,10 +1,26 @@
 [build]
 builder = "railpack/java"
 
+# Build command with tests skipped for faster deployment
 build = "mvn -B -DskipTests clean package -Pproduction"
 
 [deploy]
-start = "java -Dserver.port=$PORT -jar target/*.jar"
+# Start command with Railway profile activated
+# Railway will inject: DATABASE_URL, REDIS_HOST, REDIS_PORT, REDIS_PASSWORD
+start = "java -Dserver.port=$PORT -Dspring.profiles.active=railway -jar target/*.jar"
 
 [variables]
 JAVA_HOME = "/mise/installs/java/17.0.12"
+
+# Railway will automatically provide these from plugins:
+# - DATABASE_URL (from PostgreSQL plugin)
+# - REDIS_HOST (from Redis plugin)
+# - REDIS_PORT (from Redis plugin)
+# - REDIS_PASSWORD (from Redis plugin)
+
+# Optional: Override email configuration for production
+# MAIL_USERNAME = "your-production-email@gmail.com"
+# MAIL_PASSWORD = "your-app-password"
+
+# Optional: Set frontend URL for CORS
+# FRONTEND_URL = "https://your-frontend-domain.com"

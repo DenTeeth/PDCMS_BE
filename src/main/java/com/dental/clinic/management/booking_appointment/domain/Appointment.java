@@ -1,6 +1,7 @@
 package com.dental.clinic.management.booking_appointment.domain;
 
 import com.dental.clinic.management.booking_appointment.enums.AppointmentStatus;
+import com.dental.clinic.management.listener.AppointmentEntityListener;
 import com.dental.clinic.management.utils.IdGenerator;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -18,6 +19,7 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "appointments")
+@EntityListeners(AppointmentEntityListener.class)
 public class Appointment {
 
     @Transient
@@ -257,7 +259,8 @@ public class Appointment {
     }
 
     public void setRescheduledToAppointmentId(Integer rescheduledToAppointmentId) {
-        // For backward compatibility - set the entity to null if rescheduledToAppointmentId is null
+        // For backward compatibility - set the entity to null if
+        // rescheduledToAppointmentId is null
         if (rescheduledToAppointmentId == null) {
             this.rescheduledToAppointment = null;
         }
