@@ -47,6 +47,15 @@ public class PatientMapper {
         response.setCreatedAt(patient.getCreatedAt());
         response.setUpdatedAt(patient.getUpdatedAt());
 
+        // Map booking block fields (BR-043, BR-044, BR-005)
+        response.setIsBookingBlocked(patient.getIsBookingBlocked());
+        response.setBookingBlockReason(
+                patient.getBookingBlockReason() != null ? patient.getBookingBlockReason().name() : null);
+        response.setBookingBlockNotes(patient.getBookingBlockNotes());
+        response.setBlockedBy(patient.getBlockedBy());
+        response.setBlockedAt(patient.getBlockedAt());
+        response.setConsecutiveNoShows(patient.getConsecutiveNoShows());
+
         // Map account-related fields
         if (patient.getAccount() != null) {
             response.setHasAccount(true);

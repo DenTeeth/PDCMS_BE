@@ -37,6 +37,14 @@ public class PatientInfoResponse {
     private String accountStatus;
     private Boolean isEmailVerified;
 
+    // Booking block fields (BR-043, BR-044, BR-005)
+    private Boolean isBookingBlocked;
+    private String bookingBlockReason;
+    private String bookingBlockNotes;
+    private String blockedBy;
+    private LocalDateTime blockedAt;
+    private Integer consecutiveNoShows;
+
     // Constructors
     public PatientInfoResponse() {
     }
@@ -242,6 +250,54 @@ public class PatientInfoResponse {
         this.guardianCitizenId = guardianCitizenId;
     }
 
+    public Boolean getIsBookingBlocked() {
+        return isBookingBlocked;
+    }
+
+    public void setIsBookingBlocked(Boolean isBookingBlocked) {
+        this.isBookingBlocked = isBookingBlocked;
+    }
+
+    public String getBookingBlockReason() {
+        return bookingBlockReason;
+    }
+
+    public void setBookingBlockReason(String bookingBlockReason) {
+        this.bookingBlockReason = bookingBlockReason;
+    }
+
+    public String getBookingBlockNotes() {
+        return bookingBlockNotes;
+    }
+
+    public void setBookingBlockNotes(String bookingBlockNotes) {
+        this.bookingBlockNotes = bookingBlockNotes;
+    }
+
+    public String getBlockedBy() {
+        return blockedBy;
+    }
+
+    public void setBlockedBy(String blockedBy) {
+        this.blockedBy = blockedBy;
+    }
+
+    public LocalDateTime getBlockedAt() {
+        return blockedAt;
+    }
+
+    public void setBlockedAt(LocalDateTime blockedAt) {
+        this.blockedAt = blockedAt;
+    }
+
+    public Integer getConsecutiveNoShows() {
+        return consecutiveNoShows;
+    }
+
+    public void setConsecutiveNoShows(Integer consecutiveNoShows) {
+        this.consecutiveNoShows = consecutiveNoShows;
+    }
+
     @Override
     public String toString() {
         return "PatientInfoResponse{" +
@@ -252,6 +308,8 @@ public class PatientInfoResponse {
                 ", phone='" + phone + '\'' +
                 ", gender=" + gender +
                 ", isActive=" + isActive +
+                ", isBookingBlocked=" + isBookingBlocked +
+                ", consecutiveNoShows=" + consecutiveNoShows +
                 '}';
     }
 }
