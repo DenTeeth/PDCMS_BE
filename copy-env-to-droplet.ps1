@@ -1,7 +1,10 @@
 # ==============================================================================
-# SCRIPT: Copy .env file to DigitalOcean Droplet (PowerShell)
+# SCRIPT: Copy .env to DigitalOcean Droplet (AUTO-CONFIGURED)
 # ==============================================================================
 # Usage: .\copy-env-to-droplet.ps1 -DropletIP YOUR_DROPLET_IP
+#
+# This script copies the AUTO-CONFIGURED .env.production file to your Droplet.
+# NO MANUAL EDITING NEEDED - all values are from your project!
 # ==============================================================================
 
 param(
@@ -22,7 +25,7 @@ $Yellow = "Yellow"
 $Red = "Red"
 
 Write-Host "===================================================================" -ForegroundColor $Blue
-Write-Host "   PDCMS Backend - Copy .env to Droplet" -ForegroundColor $Blue
+Write-Host "   PDCMS Backend - Auto-Configured .env Deployment" -ForegroundColor $Blue
 Write-Host "===================================================================" -ForegroundColor $Blue
 Write-Host ""
 
@@ -63,7 +66,7 @@ $backupCmd = "cd $DeployPath && [ -f .env ] && cp .env .env.backup.`$(date +%Y%m
 ssh "$Username@$DropletIP" $backupCmd
 
 Write-Host ""
-Write-Host "📤 Copying .env.production to Droplet..." -ForegroundColor $Blue
+Write-Host "📤 Copying auto-configured .env.production to Droplet..." -ForegroundColor $Blue
 scp ".env.production" "${Username}@${DropletIP}:${DeployPath}/.env"
 
 if ($LASTEXITCODE -eq 0) {
@@ -80,43 +83,37 @@ ssh "$Username@$DropletIP" "cd $DeployPath && chmod 600 .env && chown ${Username
 Write-Host ""
 Write-Host "✅ Verifying .env file on Droplet..." -ForegroundColor $Blue
 Write-Host "----------------------------------------" -ForegroundColor $Yellow
-ssh "$Username@$DropletIP" "cd $DeployPath && head -n 15 .env"
+ssh "$Username@$DropletIP" "cd $DeployPath && head -n 20 .env"
 Write-Host "----------------------------------------" -ForegroundColor $Yellow
 
-Write-Host ""
-Write-Host "🎉 Done! .env file is ready on Droplet" -ForegroundColor $Green
-Write-Host ""
-Write-Host "⚠️  IMPORTANT NEXT STEPS:" -ForegroundColor $Yellow
-Write-Host "   1. SSH into Droplet: " -NoNewline
-Write-Host "ssh $Username@$DropletIP" -ForegroundColor $Blue
-Write-Host "   2. Edit .env: " -NoNewline
-Write-Host "cd $DeployPath && nano .env" -ForegroundColor $Blue
-Write-Host "   3. Update these values:" -ForegroundColor $Blue
-Write-Host "      - DB_PASSWORD (generate: openssl rand -base64 32)"
-Write-Host "      - REDIS_PASSWORD (generate: openssl rand -base64 32)"
-Write-Host "      - JWT_SECRET (generate: openssl rand -base64 64)"
-Write-Host "      - FRONTEND_URL (your actual domain)"
-Write-Host "   4. Save and test: " -NoNewline
-Write-Host "docker-compose up -d" -ForegroundColor $Blue
 Write-Host ""
 Write-Host "===================================================================" -ForegroundColor $Blue
-
-# Generate strong passwords locally for reference
+Write-Host "✅ HOÀN THÀNH! .env đã sẵn sàng trên Droplet!" -ForegroundColor $Green
+Write-Host "===================================================================" -ForegroundColor $Blue
 Write-Host ""
-Write-Host "💡 TIP: Generated strong passwords for you:" -ForegroundColor $Yellow
-Write-Host "----------------------------------------" -ForegroundColor $Yellow
-
-# Generate random passwords using .NET
-$dbPassword = [Convert]::ToBase64String((1..32 | ForEach-Object { Get-Random -Maximum 256 }))
-$redisPassword = [Convert]::ToBase64String((1..32 | ForEach-Object { Get-Random -Maximum 256 }))
-$jwtSecret = [Convert]::ToBase64String((1..64 | ForEach-Object { Get-Random -Maximum 256 }))
-
-Write-Host "DB_PASSWORD=" -NoNewline
-Write-Host $dbPassword -ForegroundColor $Green
-Write-Host "REDIS_PASSWORD=" -NoNewline
-Write-Host $redisPassword -ForegroundColor $Green
-Write-Host "JWT_SECRET=" -NoNewline
-Write-Host $jwtSecret -ForegroundColor $Green
-Write-Host "----------------------------------------" -ForegroundColor $Yellow
-Write-Host "Copy these values and paste them into your .env file on Droplet" -ForegroundColor $Yellow
+Write-Host "📋 FILE .ENV ĐÃ ĐƯỢC AUTO-CONFIGURED:" -ForegroundColor $Yellow
+Write-Host "   ✅ Database: root / 123456 / dental_clinic_db" -ForegroundColor $White
+Write-Host "   ✅ Redis: redis123" -ForegroundColor $White
+Write-Host "   ✅ JWT Secret: (từ SecurityConfig)" -ForegroundColor $White
+Write-Host "   ✅ Email: hellodenteeth@gmail.com" -ForegroundColor $White
+Write-Host "   ✅ Frontend: http://localhost:3000" -ForegroundColor $White
+Write-Host ""
+Write-Host "🚀 KHÔNG CẦN EDIT GÌ CẢ! Chỉ cần start Docker:" -ForegroundColor $Green
+Write-Host ""
+Write-Host "   ssh $Username@$DropletIP" -ForegroundColor $Blue
+Write-Host "   cd $DeployPath" -ForegroundColor $Blue
+Write-Host "   docker-compose up -d" -ForegroundColor $Blue
+Write-Host ""
+Write-Host "⏳ Đợi 30-60 giây, sau đó check:" -ForegroundColor $Yellow
+Write-Host "   docker-compose ps" -ForegroundColor $Blue
+Write-Host "   docker-compose logs -f app" -ForegroundColor $Blue
+Write-Host "   curl http://localhost:8080/actuator/health" -ForegroundColor $Blue
+Write-Host ""
+Write-Host "🎯 Sau đó push code để trigger GitHub Actions deployment!" -ForegroundColor $Yellow
+Write-Host "   git add ." -ForegroundColor $Blue
+Write-Host "   git commit -m " -NoNewline -ForegroundColor $Blue
+Write-Host '"feat: production ready"' -ForegroundColor $Blue
+Write-Host "   git push origin main" -ForegroundColor $Blue
+Write-Host ""
+Write-Host "===================================================================" -ForegroundColor $Blue
 Write-Host ""

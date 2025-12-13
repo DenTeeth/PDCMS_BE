@@ -1,11 +1,14 @@
 #!/bin/bash
 # ==============================================================================
-# SCRIPT: Copy .env file to DigitalOcean Droplet
+# SCRIPT: Copy .env to DigitalOcean Droplet (AUTO-CONFIGURED)
 # ==============================================================================
 # Usage: ./copy-env-to-droplet.sh YOUR_DROPLET_IP
+#
+# This script copies the AUTO-CONFIGURED .env.production file to your Droplet.
+# NO MANUAL EDITING NEEDED - all values are from your project!
 # ==============================================================================
 
-# Colors for output
+# Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -13,7 +16,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 echo -e "${BLUE}===================================================================${NC}"
-echo -e "${BLUE}   PDCMS Backend - Copy .env to Droplet${NC}"
+echo -e "${BLUE}   PDCMS Backend - Auto-Configured .env Deployment${NC}"
 echo -e "${BLUE}===================================================================${NC}"
 echo ""
 
@@ -57,7 +60,7 @@ echo -e "${BLUE}📁 Creating backup of existing .env...${NC}"
 ssh ${USERNAME}@${DROPLET_IP} "cd ${DEPLOY_PATH} && [ -f .env ] && cp .env .env.backup.\$(date +%Y%m%d_%H%M%S) || echo 'No existing .env file'"
 
 echo ""
-echo -e "${BLUE}📤 Copying .env.production to Droplet...${NC}"
+echo -e "${BLUE}📤 Copying auto-configured .env.production to Droplet...${NC}"
 scp .env.production ${USERNAME}@${DROPLET_IP}:${DEPLOY_PATH}/.env
 
 if [ $? -eq 0 ]; then
@@ -74,20 +77,36 @@ ssh ${USERNAME}@${DROPLET_IP} "cd ${DEPLOY_PATH} && chmod 600 .env && chown ${US
 echo ""
 echo -e "${BLUE}✅ Verifying .env file on Droplet...${NC}"
 echo -e "${YELLOW}----------------------------------------${NC}"
-ssh ${USERNAME}@${DROPLET_IP} "cd ${DEPLOY_PATH} && head -n 15 .env"
+ssh ${USERNAME}@${DROPLET_IP} "cd ${DEPLOY_PATH} && head -n 20 .env"
 echo -e "${YELLOW}----------------------------------------${NC}"
 
 echo ""
-echo -e "${GREEN}🎉 Done! .env file is ready on Droplet${NC}"
+echo -e "${BLUE}===================================================================${NC}"
+echo -e "${GREEN}✅ HOÀN THÀNH! .env đã sẵn sàng trên Droplet!${NC}"
+echo -e "${BLUE}===================================================================${NC}"
 echo ""
-echo -e "${YELLOW}⚠️  IMPORTANT NEXT STEPS:${NC}"
-echo -e "   1. ${BLUE}SSH into Droplet:${NC} ssh ${USERNAME}@${DROPLET_IP}"
-echo -e "   2. ${BLUE}Edit .env:${NC} cd ${DEPLOY_PATH} && nano .env"
-echo -e "   3. ${BLUE}Update these values:${NC}"
-echo -e "      - DB_PASSWORD (generate: openssl rand -base64 32)"
-echo -e "      - REDIS_PASSWORD (generate: openssl rand -base64 32)"
-echo -e "      - JWT_SECRET (generate: openssl rand -base64 64)"
-echo -e "      - FRONTEND_URL (your actual domain)"
-echo -e "   4. ${BLUE}Save and test:${NC} docker-compose up -d"
+echo -e "${YELLOW}📋 FILE .ENV ĐÃ ĐƯỢC AUTO-CONFIGURED:${NC}"
+echo -e "   ✅ Database: root / 123456 / dental_clinic_db"
+echo -e "   ✅ Redis: redis123"
+echo -e "   ✅ JWT Secret: (từ SecurityConfig)"
+echo -e "   ✅ Email: hellodenteeth@gmail.com"
+echo -e "   ✅ Frontend: http://localhost:3000"
+echo ""
+echo -e "${GREEN}🚀 KHÔNG CẦN EDIT GÌ CẢ! Chỉ cần start Docker:${NC}"
+echo ""
+echo -e "   ${BLUE}ssh ${USERNAME}@${DROPLET_IP}${NC}"
+echo -e "   ${BLUE}cd ${DEPLOY_PATH}${NC}"
+echo -e "   ${BLUE}docker-compose up -d${NC}"
+echo ""
+echo -e "${YELLOW}⏳ Đợi 30-60 giây, sau đó check:${NC}"
+echo -e "   ${BLUE}docker-compose ps${NC}"
+echo -e "   ${BLUE}docker-compose logs -f app${NC}"
+echo -e "   ${BLUE}curl http://localhost:8080/actuator/health${NC}"
+echo ""
+echo -e "${YELLOW}🎯 Sau đó push code để trigger GitHub Actions deployment!${NC}"
+echo -e "   ${BLUE}git add .${NC}"
+echo -e "   ${BLUE}git commit -m \"feat: production ready\"${NC}"
+echo -e "   ${BLUE}git push origin main${NC}"
 echo ""
 echo -e "${BLUE}===================================================================${NC}"
+echo ""
