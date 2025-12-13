@@ -9,7 +9,7 @@
 ## **TABLE OF CONTENTS**
 
 - [1. Working Schedule Management (20 functions)](#1-working-schedule-management)
-- [2. Warehouse & Inventory (18 functions)](#2-warehouse--inventory)
+- [2. Warehouse & Inventory (12 functions + 6 legacy - SKIP)](#2-warehouse--inventory)
 - [3. Treatment Plan Management (11 functions)](#3-treatment-plan-management)
 - [4. Patient Management (12 functions)](#4-patient-management)
 - [5. Appointment & Booking (10 functions)](#5-appointment--booking)
@@ -18,6 +18,8 @@
 - [8. Clinical Records (7 functions)](#8-clinical-records)
 - [9. Authentication & Account (6 functions)](#9-authentication--account)
 - [10. Permission & Role Management (7 functions)](#10-permission--role-management)
+
+**Total for Unit Testing: 92 functions** (excluding 6 legacy inventory endpoints)
 
 ---
 
@@ -714,7 +716,11 @@
 ---
 
 ### **2.5 INVENTORY (LEGACY)**
-#### **Function: `createItemMaster` (Inventory)**
+> ⚠️ **NOTE FOR UNIT TESTING:** These endpoints are DEPRECATED and replaced by V3 Warehouse APIs (Section 2.1-2.4).  
+> **NOT REQUIRED** for unit test report. Skip these 6 legacy functions.
+
+#### **Function: `createItemMaster` (Inventory)** ❌ SKIP - LEGACY
+
 - **Class:** `InventoryController`
 - **Feature:** Inventory Management (Legacy)
 - **Endpoint:** `POST /api/v1/inventory/item-master`
@@ -730,7 +736,7 @@
 }
 ```
 
-#### **Function: `updateItemMaster` (Inventory)**
+#### **Function: `updateItemMaster` (Inventory)** ❌ SKIP - LEGACY
 - **Class:** `InventoryController`
 - **Feature:** Inventory Management (Legacy)
 - **Endpoint:** `PUT /api/v1/inventory/item-master/{id}`
@@ -743,7 +749,7 @@
 }
 ```
 
-#### **Function: `createCategory`**
+#### **Function: `createCategory`** ❌ SKIP - LEGACY
 - **Class:** `InventoryController`
 - **Feature:** Category Management
 - **Endpoint:** `POST /api/v1/inventory/categories`
@@ -755,7 +761,7 @@
 }
 ```
 
-#### **Function: `updateCategory`**
+#### **Function: `updateCategory`** ❌ SKIP - LEGACY
 - **Class:** `InventoryController`
 - **Feature:** Category Management
 - **Endpoint:** `PUT /api/v1/inventory/categories/{id}`
@@ -767,7 +773,7 @@
 }
 ```
 
-#### **Function: `createImportTransaction` (Inventory)**
+#### **Function: `createImportTransaction` (Inventory)** ❌ SKIP - LEGACY
 - **Class:** `InventoryController`
 - **Feature:** Import Transaction (Legacy)
 - **Endpoint:** `POST /api/v1/inventory/import`
@@ -788,7 +794,7 @@
 }
 ```
 
-#### **Function: `createExportTransaction`**
+#### **Function: `createExportTransaction`** ❌ SKIP - LEGACY
 - **Class:** `InventoryController`
 - **Feature:** Export Transaction (Legacy)
 - **Endpoint:** `POST /api/v1/inventory/export`
@@ -1785,19 +1791,22 @@ description: "Post-treatment panoramic X-ray"
 
 ## **📊 SUMMARY BY FEATURE**
 
-| **Feature Module** | **Function Count** |
-|--------------------|-------------------|
-| Working Schedule Management | 20 |
-| Warehouse & Inventory | 18 |
-| Treatment Plan Management | 11 |
-| Patient Management | 12 |
-| Appointment & Booking | 10 |
-| Clinical Records | 7 |
-| Authentication & Account | 6 |
-| Permission & Role Management | 7 |
-| Employee Management | 3 |
-| Service Management | 4 |
-| **TOTAL** | **98** |
+| **Feature Module** | **Function Count** | **Notes** |
+|--------------------|-------------------|-----------|
+| Working Schedule Management | 20 | ✅ All required |
+| Warehouse & Inventory | 12 | ✅ V3 APIs only (excluding 6 legacy) |
+| Treatment Plan Management | 11 | ✅ All required |
+| Patient Management | 12 | ✅ All required |
+| Appointment & Booking | 10 | ✅ All required |
+| Clinical Records | 7 | ✅ All required |
+| Authentication & Account | 6 | ✅ All required |
+| Permission & Role Management | 7 | ✅ All required |
+| Employee Management | 3 | ✅ All required |
+| Service Management | 4 | ✅ All required |
+| **TOTAL FOR TESTING** | **92** | **(6 legacy inventory endpoints excluded)** |
+
+> ⚠️ **Legacy Inventory Endpoints (Section 2.5) - NOT INCLUDED:**  
+> 6 deprecated `/api/v1/inventory/*` functions replaced by V3 Warehouse APIs
 
 ---
 
