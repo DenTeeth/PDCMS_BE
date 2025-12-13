@@ -41,6 +41,9 @@ out/
 ### Environment Variables ###
 .env
 .env.local
+.env.production
+.env.*.local
+.env.backup.*
 application-local.yaml
 application-local.yml
 
