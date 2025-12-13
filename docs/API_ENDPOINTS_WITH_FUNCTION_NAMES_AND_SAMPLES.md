@@ -16,10 +16,10 @@
 - [6. Employee Management (3 functions)](#6-employee-management)
 - [7. Service Management (4 functions)](#7-service-management)
 - [8. Clinical Records (7 functions)](#8-clinical-records)
-- [9. Authentication & Account (6 functions)](#9-authentication--account)
+- [9. Authentication & Account (0 functions + 6 auth - optional skip)](#9-authentication--account)
 - [10. Permission & Role Management (7 functions)](#10-permission--role-management)
 
-**Total for Unit Testing: 92 functions** (excluding 6 legacy inventory endpoints)
+**Total for Unit Testing: 86 functions** (excluding 6 legacy + 6 auth = 12 optional skips)
 
 ---
 
@@ -1633,7 +1633,10 @@ description: "Post-treatment panoramic X-ray"
 
 ## **9. AUTHENTICATION & ACCOUNT**
 
-#### **Function: `login`**
+> ⚠️ **NOTE FOR UNIT TESTING:** All 6 auth endpoints are infrastructure/security functions typically covered by integration tests or framework security testing.  
+> **Optional to SKIP** all authentication functions. Focus unit tests on business logic endpoints.
+
+#### **Function: `login`** ❌ OPTIONAL SKIP - Basic Auth
 - **Class:** `AuthenticationController`
 - **Feature:** Authentication
 - **Endpoint:** `POST /api/v1/auth/login`
@@ -1645,7 +1648,7 @@ description: "Post-treatment panoramic X-ray"
 }
 ```
 
-#### **Function: `refreshToken`**
+#### **Function: `refreshToken`** ❌ OPTIONAL SKIP - Basic Auth
 - **Class:** `AuthenticationController`
 - **Feature:** Authentication
 - **Endpoint:** `POST /api/v1/auth/refresh`
@@ -1656,7 +1659,7 @@ description: "Post-treatment panoramic X-ray"
 }
 ```
 
-#### **Function: `logout`**
+#### **Function: `logout`** ❌ OPTIONAL SKIP - Basic Auth
 - **Class:** `AuthenticationController`
 - **Feature:** Authentication
 - **Endpoint:** `POST /api/v1/auth/logout`
@@ -1667,7 +1670,7 @@ description: "Post-treatment panoramic X-ray"
 }
 ```
 
-#### **Function: `resendVerification`**
+#### **Function: `resendVerification`** ❌ OPTIONAL SKIP - Email/Security
 - **Class:** `AuthenticationController`
 - **Feature:** Email Verification
 - **Endpoint:** `POST /api/v1/auth/resend-verification`
@@ -1678,7 +1681,7 @@ description: "Post-treatment panoramic X-ray"
 }
 ```
 
-#### **Function: `forgotPassword`**
+#### **Function: `forgotPassword`** ❌ OPTIONAL SKIP - Email/Security
 - **Class:** `AuthenticationController`
 - **Feature:** Password Reset
 - **Endpoint:** `POST /api/v1/auth/forgot-password`
@@ -1689,7 +1692,7 @@ description: "Post-treatment panoramic X-ray"
 }
 ```
 
-#### **Function: `resetPassword`**
+#### **Function: `resetPassword`** ❌ OPTIONAL SKIP - Email/Security
 - **Class:** `AuthenticationController`
 - **Feature:** Password Reset
 - **Endpoint:** `POST /api/v1/auth/reset-password`
@@ -1799,14 +1802,15 @@ description: "Post-treatment panoramic X-ray"
 | Patient Management | 12 | ✅ All required |
 | Appointment & Booking | 10 | ✅ All required |
 | Clinical Records | 7 | ✅ All required |
-| Authentication & Account | 6 | ✅ All required |
+| Authentication & Account | 0 | ❌ All 6 optional skip (auth/email/security) |
 | Permission & Role Management | 7 | ✅ All required |
 | Employee Management | 3 | ✅ All required |
 | Service Management | 4 | ✅ All required |
-| **TOTAL FOR TESTING** | **92** | **(6 legacy inventory endpoints excluded)** |
+| **TOTAL FOR TESTING** | **86** | **(12 endpoints excluded: 6 legacy + 6 auth)** |
 
-> ⚠️ **Legacy Inventory Endpoints (Section 2.5) - NOT INCLUDED:**  
-> 6 deprecated `/api/v1/inventory/*` functions replaced by V3 Warehouse APIs
+> ⚠️ **Excluded Endpoints:**  
+> - **6 Legacy Inventory** (Section 2.5): Deprecated `/api/v1/inventory/*` replaced by V3 Warehouse APIs  
+> - **6 Auth Functions** (Section 9): login, refreshToken, logout, resendVerification, forgotPassword, resetPassword - infrastructure/security typically covered by integration tests
 
 ---
 
