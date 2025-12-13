@@ -130,8 +130,8 @@ public class WarehouseExpiryEmailJob {
                     .expiryDate(batch.getExpiryDate())
                     .daysRemaining(daysRemaining)
                     .quantityOnHand(batch.getQuantityOnHand())
-                    .unitName(batch.getItemMaster().getPrimaryUnit() != null
-                            ? batch.getItemMaster().getPrimaryUnit().getUnitName()
+                    .unitName(batch.getItemMaster().getUnitOfMeasure() != null
+                            ? batch.getItemMaster().getUnitOfMeasure()
                             : "Unit")
                     .warehouseType(batch.getItemMaster().getWarehouseType().name())
                     .categoryName(batch.getItemMaster().getCategory() != null
