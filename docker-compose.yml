@@ -1,18 +1,146 @@
 version: "3.9"
 
 services:
+  # PostgreSQL Database
   postgres:
-    image: postgres:13-buster
-    container_name: postgres-dental
-    restart: always
+    image: postgres:13-alpine
+    container_name: dentalclinic-postgres
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: 123456
-      POSTGRES_DB: dental_clinic_db
+      POSTGRES_USER: ${DB_USERNAME:-root}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-123456}
+      POSTGRES_DB: ${DB_DATABASE:-dental_clinic_db}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --lc-collate=en_US.UTF-8 --lc-ctype=en_US.UTF-8"
     ports:
-      - "5432:5432"
+      - "${DB_PORT:-5432}:5432"
     volumes:
-      - ./pgdata_dental:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
+      - ./src/main/resources/db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./src/main/resources/db/dental-clinic-seed-data.sql:/docker-entrypoint-initdb.d/02-seed-data.sql:ro
+    networks:
+      - dental-network
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${DB_USERNAME:-root} -d ${DB_DATABASE:-dental_clinic_db}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: dentalclinic-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis123}
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - dental-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "redis-cli",
+          "-a",
+          "${REDIS_PASSWORD:-redis123}",
+          "--raw",
+          "incr",
+          "ping",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Spring Boot Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dentalclinic-app
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    environment:
+      # Spring Profiles
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
+
+      # Database Configuration
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DB_DATABASE:-dental_clinic_db}
+      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME:-root}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-123456}
+
+      # Redis Configuration
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD:-redis123}
+
+      # JWT Configuration
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
+      JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION:-2592000000}
+
+      # Email Configuration
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+
+      # Application Configuration
+      APP_FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+
+      # Railway/DigitalOcean specific
+      PORT: 8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - dental-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:8080/actuator/health || exit 1",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Nginx Reverse Proxy (Optional for production)
+  nginx:
+    image: nginx:alpine
+    container_name: dentalclinic-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    depends_on:
+      - app
+    networks:
+      - dental-network
+    profiles:
+      - with-nginx
 
 volumes:
-  pgdata_dental:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  dental-network:
+    driver: bridge

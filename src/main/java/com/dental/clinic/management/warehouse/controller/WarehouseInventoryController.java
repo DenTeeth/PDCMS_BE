@@ -81,9 +81,9 @@ public class WarehouseInventoryController {
         @Operation(summary = "API 6.1 - Inventory Summary Dashboard", description = "Lấy danh sách inventory với computed fields: totalQuantity (aggregation), stockStatus (calculated), nearestExpiryDate (FEFO). "
                         +
                         "Hỗ trợ filters: search, stockStatus, warehouseType, categoryId. " +
-                        "⚠️ KHI KÊ ĐƠN THUỐC: FE PHẢI truyền categoryId của MEDICINE để CHỈ LẤY THUỐC, không lấy vật tư/dụng cụ/consumables. "
+                        "WARNING: KHI KE DON THUOC - FE PHAI truyen categoryId cua MEDICINE de CHI LAY THUOC, khong lay vat tu/dung cu/consumables. "
                         +
-                        "Gọi API GET /api/v1/warehouse/item-categories để lấy categoryId của 'MEDICINE'.")
+                        "Goi API GET /api/v1/warehouse/item-categories de lay categoryId cua 'MEDICINE'.")
         @ApiMessage("Lấy inventory summary thành công")
         @GetMapping("/summary")
         @PreAuthorize("hasRole('" + ADMIN
@@ -342,14 +342,14 @@ public class WarehouseInventoryController {
         @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('VIEW_WAREHOUSE')")
         @Operation(summary = "Xuất báo cáo tồn kho ra Excel", description = """
                         Export Inventory Summary to Excel file (.xlsx)
-                        
+
                         **Features:**
                         - Exports ALL inventory items (not paginated)
                         - Preserves filters from UI (warehouseType, stockStatus, search, categoryId)
                         - Formatted headers with bold styling
                         - Auto-sized columns
                         - Frozen header row for better navigation
-                        
+
                         **Permissions:**
                         - VIEW_WAREHOUSE: Required to export
                         """)
@@ -397,7 +397,7 @@ public class WarehouseInventoryController {
         @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('VIEW_WAREHOUSE')")
         @Operation(summary = "Xuất báo cáo hàng sắp hết hạn ra Excel", description = """
                         Export Expiring Alerts to Excel file (.xlsx)
-                        
+
                         **Features:**
                         - Exports ALL expiring items (not paginated)
                         - Preserves filters from UI (days, warehouseType, categoryId, statusFilter)
@@ -405,7 +405,7 @@ public class WarehouseInventoryController {
                         - Warning highlights for EXPIRED items
                         - Auto-sized columns
                         - Frozen header row
-                        
+
                         **Permissions:**
                         - VIEW_WAREHOUSE: Required to export
                         """)

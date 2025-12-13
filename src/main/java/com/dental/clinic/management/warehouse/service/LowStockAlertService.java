@@ -15,7 +15,7 @@ import java.util.List;
 
 /**
  * Business Rules Service for Low Stock Alerts
- * 
+ *
  * Implements:
  * - Rule #19: Notify warehouse keeper when supplies hit minimum stock threshold
  */
@@ -32,7 +32,7 @@ public class LowStockAlertService {
 
     /**
      * Rule #19: Check for low stock items and generate alerts
-     * 
+     *
      * Scheduled to run daily at 8 AM
      * Finds items where total stock <= minStockLevel
      */
@@ -58,7 +58,7 @@ public class LowStockAlertService {
 
     /**
      * Find all items with stock below minimum threshold
-     * 
+     *
      * @return List of low stock alerts
      */
     public List<LowStockAlert> findLowStockItems() {
@@ -73,21 +73,21 @@ public class LowStockAlertService {
 
             // Calculate total stock across all batches
             Integer totalStock = itemBatchRepository.findByItemMasterIdFEFO(item.getItemMasterId())
-                .stream()
-                .mapToInt(batch -> batch.getQuantityOnHand() != null ? batch.getQuantityOnHand() : 0)
-                .sum();
+                    .stream()
+                    .mapToInt(batch -> batch.getQuantityOnHand() != null ? batch.getQuantityOnHand() : 0)
+                    .sum();
 
             // Check if below minimum threshold
             if (totalStock <= item.getMinStockLevel()) {
                 LowStockAlert alert = LowStockAlert.builder()
-                    .itemMasterId(item.getItemMasterId())
-                    .itemCode(item.getItemCode())
-                    .itemName(item.getItemName())
-                    .currentStock(totalStock)
-                    .minStockLevel(item.getMinStockLevel())
-                    .shortfall(item.getMinStockLevel() - totalStock)
-                    .categoryName(item.getCategory() != null ? item.getCategory().getCategoryName() : null)
-                    .build();
+                        .itemMasterId(item.getItemMasterId())
+                        .itemCode(item.getItemCode())
+                        .itemName(item.getItemName())
+                        .currentStock(totalStock)
+                        .minStockLevel(item.getMinStockLevel())
+                        .shortfall(item.getMinStockLevel() - totalStock)
+                        .categoryName(item.getCategory() != null ? item.getCategory().getCategoryName() : null)
+                        .build();
 
                 alerts.add(alert);
             }
@@ -98,27 +98,26 @@ public class LowStockAlertService {
 
     /**
      * Send low stock alert notification
-     * 
+     *
      * TODO: Integrate with notification system (email, in-app, etc.)
      * For now, just log the alert
-     * 
+     *
      * @param alert Low stock alert details
      */
     private void sendLowStockAlert(LowStockAlert alert) {
         String message = String.format(
-            "⚠️ CẢNH BÁO TỒN KHO THẤP | " +
-            "Vật tư: %s (%s) | " +
-            "Tồn kho hiện tại: %d | " +
-            "Mức tối thiểu: %d | " +
-            "Cần nhập thêm: %d | " +
-            "Danh mục: %s",
-            alert.getItemName(),
-            alert.getItemCode(),
-            alert.getCurrentStock(),
-            alert.getMinStockLevel(),
-            alert.getShortfall(),
-            alert.getCategoryName() != null ? alert.getCategoryName() : "N/A"
-        );
+                "CANH BAO TON KHO THAP | " +
+                        "Vat tu: %s (%s) | " +
+                        "Ton kho hien tai: %d | " +
+                        "Muc toi thieu: %d | " +
+                        "Can nhap them: %d | " +
+                        "Danh muc: %s",
+                alert.getItemName(),
+                alert.getItemCode(),
+                alert.getCurrentStock(),
+                alert.getMinStockLevel(),
+                alert.getShortfall(),
+                alert.getCategoryName() != null ? alert.getCategoryName() : "N/A");
 
         log.warn(message);
 
@@ -131,22 +130,22 @@ public class LowStockAlertService {
 
     /**
      * Check if a specific item is at low stock
-     * 
+     *
      * @param itemMasterId ID of the item to check
      * @return true if stock is below minimum threshold, false otherwise
      */
     public boolean isLowStock(Long itemMasterId) {
         ItemMaster item = itemMasterRepository.findById(itemMasterId)
-            .orElse(null);
+                .orElse(null);
 
         if (item == null || item.getMinStockLevel() == null || item.getMinStockLevel() <= 0) {
             return false;
         }
 
         Integer totalStock = itemBatchRepository.findByItemMasterIdFEFO(itemMasterId)
-            .stream()
-            .mapToInt(batch -> batch.getQuantityOnHand() != null ? batch.getQuantityOnHand() : 0)
-            .sum();
+                .stream()
+                .mapToInt(batch -> batch.getQuantityOnHand() != null ? batch.getQuantityOnHand() : 0)
+                .sum();
 
         return totalStock <= item.getMinStockLevel();
     }
@@ -211,12 +210,32 @@ public class LowStockAlertService {
         }
 
         // Getters
-        public Long getItemMasterId() { return itemMasterId; }
-        public String getItemCode() { return itemCode; }
-        public String getItemName() { return itemName; }
-        public Integer getCurrentStock() { return currentStock; }
-        public Integer getMinStockLevel() { return minStockLevel; }
-        public Integer getShortfall() { return shortfall; }
-        public String getCategoryName() { return categoryName; }
+        public Long getItemMasterId() {
+            return itemMasterId;
+        }
+
+        public String getItemCode() {
+            return itemCode;
+        }
+
+        public String getItemName() {
+            return itemName;
+        }
+
+        public Integer getCurrentStock() {
+            return currentStock;
+        }
+
+        public Integer getMinStockLevel() {
+            return minStockLevel;
+        }
+
+        public Integer getShortfall() {
+            return shortfall;
+        }
+
+        public String getCategoryName() {
+            return categoryName;
+        }
     }
 }

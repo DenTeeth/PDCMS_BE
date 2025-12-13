@@ -203,6 +203,42 @@ REST API backend for dental clinic management, built with Spring Boot 3.2 and Po
    mvn clean install -DskipTests
    ```
 
+### Quick Start with Docker (Recommended)
+
+The easiest way to run the application locally is using Docker Compose:
+
+```bash
+# 1. Copy environment template
+cp .env.example .env
+
+# 2. Edit .env with your values (see .env.example for details)
+
+# 3. Start all services (PostgreSQL + Redis + Spring Boot)
+docker-compose up -d
+
+# 4. Check application health
+curl http://localhost:8080/actuator/health
+
+# 5. Access Swagger UI
+# Open browser: http://localhost:8080/swagger-ui.html
+
+# 6. View logs
+docker-compose logs -f app
+
+# 7. Stop services
+docker-compose down
+```
+
+**Quick Start Scripts:**
+
+- **Windows:** `.\start.ps1`
+- **Linux/Mac:** `./start.sh` (make executable with `chmod +x start.sh`)
+
+For detailed Docker setup and deployment guides, see:
+
+- **[Docker Quick Reference](DOCKER_QUICK_REFERENCE.md)** - Commands and troubleshooting
+- **[Deployment Guide](DEPLOYMENT_GUIDE.md)** - DigitalOcean deployment instructions
+
 ### Configuration
 
 #### Application Properties
