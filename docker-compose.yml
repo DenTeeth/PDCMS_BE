@@ -1,7 +1,7 @@
 version: "3.9"
 
 services:
-  # PostgreSQL Database
+  # 1. Database (Giữ nguyên)
   postgres:
     image: postgres:13-alpine
     container_name: dentalclinic-postgres
@@ -29,7 +29,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # Redis Cache
+  # 2. Redis (Giữ nguyên)
   redis:
     image: redis:7-alpine
     container_name: dentalclinic-redis
@@ -56,7 +56,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # Spring Boot Application
+  # 3. Backend App (Giữ nguyên)
   app:
     build:
       context: .
@@ -68,32 +68,19 @@ services:
     ports:
       - "${APP_PORT:-8080}:8080"
     environment:
-      # Spring Profiles
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
-
-      # Database Configuration
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DB_DATABASE:-dental_clinic_db}
       SPRING_DATASOURCE_USERNAME: ${DB_USERNAME:-root}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-123456}
-
-      # Redis Configuration
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
       SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD:-redis123}
-
-      # JWT Configuration
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
       JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION:-2592000000}
-
-      # Email Configuration
       MAIL_USERNAME: ${MAIL_USERNAME}
       MAIL_PASSWORD: ${MAIL_PASSWORD}
-
-      # Application Configuration
       APP_FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
-
-      # Railway/DigitalOcean specific
       PORT: 8080
     depends_on:
       postgres:
@@ -103,6 +90,7 @@ services:
     networks:
       - dental-network
     healthcheck:
+      # Đã sửa lại lỗi cú pháp healthcheck gây spam log
       test:
         [
           "CMD",
@@ -110,30 +98,27 @@ services:
           "--quiet",
           "--tries=1",
           "--spider",
-          "http://localhost:8080/actuator/health || exit 1",
+          "http://localhost:8080/actuator/health",
         ]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
 
-  # Nginx Reverse Proxy (Optional for production)
-  nginx:
-    image: nginx:alpine
-    container_name: dentalclinic-nginx
+  # 4. Nginx Proxy Manager (MỚI THÊM - ĐỂ LẤY SSL MIỄN PHÍ)
+  nginx-proxy-manager:
+    image: "jc21/nginx-proxy-manager:latest"
+    container_name: nginx-proxy-manager
     restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
+      - "80:80" # Hứng web thường
+      - "81:81" # Trang quản trị Admin (vào đây để cài SSL)
+      - "443:443" # Hứng web bảo mật (HTTPS)
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - /etc/letsencrypt:/etc/letsencrypt:ro
-    depends_on:
-      - app
+      - ./npm-data:/data
+      - ./npm-letsencrypt:/etc/letsencrypt
     networks:
       - dental-network
-    profiles:
-      - with-nginx
 
 volumes:
   postgres_data:

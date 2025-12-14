@@ -20,18 +20,16 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         "[format_sql]": true
     show-sql: false
-    defer-datasource-initialization: true # SQL runs AFTER Hibernate creates tables
 
-  # SQL Init Configuration - TWO-PHASE INITIALIZATION
-  # EXECUTION ORDER (defer-datasource-initialization: true):
-  #   1. schema-locations (enums.sql) runs BEFORE Hibernate
-  #   2. Hibernate creates tables using existing ENUMs (ddl-auto: create-drop)
-  #   3. data-locations (seed-data.sql) runs AFTER tables exist
+  # SQL Init Configuration - THREE-PHASE INITIALIZATION
+  # EXECUTION ORDER:
+  #   1. schema-locations (enums.sql) runs BEFORE Hibernate - creates ENUMs
+  #   2. Hibernate creates tables using existing ENUMs (ddl-auto: update)
+  #   3. DataInitializer bean loads INSERT statements from seed-data.sql AFTER tables exist
   sql:
     init:
       mode: always
       schema-locations: classpath:db/enums.sql
-      data-locations: classpath:db/dental-clinic-seed-data.sql
       encoding: UTF-8
       continue-on-error: false
       separator: ";"
