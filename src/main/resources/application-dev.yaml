@@ -1,0 +1,63 @@
+# ============================================
+# LOCAL DEVELOPMENT CONFIGURATION
+# ============================================
+# This file is activated when SPRING_PROFILES_ACTIVE=dev
+# Use this profile when running application LOCALLY (not in Docker)
+# ============================================
+
+spring:
+  # ==============================
+  # Database Configuration (Local)
+  # ==============================
+  datasource:
+    url: jdbc:postgresql://localhost:5432/${DB_DATABASE:dental_clinic_db}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:123456}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 2
+      connection-timeout: 30000
+      idle-timeout: 300000
+
+  # ==============================
+  # Redis Configuration (Local)
+  # ==============================
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: ${REDIS_PASSWORD:redis123}
+
+  # ==============================
+  # JPA Configuration (Development)
+  # ==============================
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    defer-datasource-initialization: false
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: true
+
+  # ==============================
+  # SQL Init (Create ENUMs First)
+  # ==============================
+  sql:
+    init:
+      mode: always
+      data-locations: classpath:db/dental-clinic-seed-data.sql
+      encoding: UTF-8
+      continue-on-error: false
+
+  # ==============================
+  # Logging (Development)
+  # ==============================
+logging:
+  level:
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    com.example.dentalclinic: DEBUG

@@ -2,10 +2,43 @@
 
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.10-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![Java](https://img.shields.io/badge/Java-17-orange.svg)](https://www.oracle.com/java/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-blue.svg)](https://www.postgresql.org/)
-[![License](https://img.shields.io/badge/License-Private-red.svg)](LICENSE)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-13+-blue.svg)](https://www.postgresql.org/)
+[![Redis](https://img.shields.io/badge/Redis-7-red.svg)](https://redis.io/)
 
-REST API backend for dental clinic management, built with Spring Boot 3.2 and PostgreSQL. Provides comprehensive modules for appointments, treatment plans, clinical records, inventory management, and employee scheduling.
+REST API backend for dental clinic management system. Built with Spring Boot 3.2, PostgreSQL, and Redis.
+
+## 🚀 Quick Start
+
+### Prerequisites
+- JDK 17+
+- Docker & Docker Compose
+- Git
+
+### Run Application
+
+```bash
+# Clone repository
+git clone <your-repo-url>
+cd PDCMS_BE
+
+# Copy environment file
+cp .env.example .env
+# Edit .env with your configuration
+
+# Start database services
+docker-compose up postgres redis -d
+
+# Run application (auto-detects environment)
+./mvnw spring-boot:run
+```
+
+The application will:
+- ✅ Auto-detect if running locally or in Docker
+- ✅ Select correct profile (`dev` for local, `prod` for Docker)
+- ✅ Create database ENUMs automatically
+- ✅ Initialize seed data on first run
+
+Access API: http://localhost:8080
 
 ## Table of Contents
 

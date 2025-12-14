@@ -22,14 +22,15 @@ spring:
     show-sql: false
     defer-datasource-initialization: false # SQL runs BEFORE Hibernate to create ENUMs
 
-  # SQL Init Configuration - DISABLED (ENUMs already exist, DataInitializer handles seed data)
+  # SQL Init Configuration - AUTO CREATE ENUMs
   # This is the ONLY SQL file used in the project (dental-clinic-seed-data.sql)
-  # EXECUTION ORDER:
-  #   1. Hibernate auto-generates tables from @Entity classes
-  #   2. DataInitializer bean loads seed data from dental-clinic-seed-data.sql
+  # EXECUTION ORDER (defer-datasource-initialization: false):
+  #   1. SQL file runs FIRST to create ENUMs
+  #   2. Hibernate auto-generates tables using ENUMs
+  #   3. DataInitializer bean inserts seed data
   sql:
     init:
-      mode: never
+      mode: always
       data-locations: classpath:db/dental-clinic-seed-data.sql
       encoding: UTF-8
       continue-on-error: false

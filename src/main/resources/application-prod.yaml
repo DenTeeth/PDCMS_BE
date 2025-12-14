@@ -42,7 +42,17 @@ spring:
     defer-datasource-initialization: false
 
   # ==============================
-  # SQL Init Configuration
+  # SQL Init Configuration (Create ENUMs First)
+  # ==============================
+  sql:
+    init:
+      mode: always
+      data-locations: classpath:db/dental-clinic-seed-data.sql
+      encoding: UTF-8
+      continue-on-error: false
+
+  # ==============================
+  # OLD SQL Init Configuration
   # ==============================
   # ENUMs are created by dental-clinic-seed-data.sql via DataInitializer
   # This runs ONCE on first database initialization
