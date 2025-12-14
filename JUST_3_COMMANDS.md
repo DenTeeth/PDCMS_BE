@@ -1,5 +1,13 @@
 # 🎉 ĐÃ XONG! CHỈ CẦN 3 LỆNH!
 
+## 🔧 ĐÃ SỬA LỖI ENUM! ✅
+
+**Lỗi trước:** `type "attachment_type_enum" does not exist`
+**Đã fix:** Tạo `application-prod.yaml` với `ddl-auto: update`
+**Chi tiết:** Xem `POSTGRESQL_ENUM_FIX.md`
+
+---
+
 ## ✅ TẤT CẢ ĐÃ TỰ ĐỘNG!
 
 Tôi đã tự động đọc TẤT CẢ config từ project của bạn:
@@ -9,6 +17,7 @@ Tôi đã tự động đọc TẤT CẢ config từ project của bạn:
 - ✅ JWT Secret từ `SecurityConfig`
 - ✅ Email credentials (hellodenteeth@gmail.com)
 - ✅ Frontend URL (localhost:3000)
+- ✅ **Production config** (`application-prod.yaml`) với ENUM fix
 
 **KHÔNG CẦN NHẬP GÌ CẢ!**
 

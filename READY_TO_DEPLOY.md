@@ -1,5 +1,16 @@
 # ✅ HOÀN THÀNH! FILE .ENV ĐÃ TỰ ĐỘNG CONFIG!
 
+## 🔧 ĐÃ SỬA LỖI POSTGRESQL ENUM!
+
+**⚠️ Lỗi trước đó:** `type "attachment_type_enum" does not exist`
+**✅ Nguyên nhân:** `ddl-auto: create-drop` xóa ENUMs mỗi lần khởi động
+**✅ Giải pháp:** Tạo `application-prod.yaml` với `ddl-auto: update`
+**✅ Kết quả:** ENUMs được giữ lại, không bị xóa nữa!
+
+👉 **Xem chi tiết:** `POSTGRESQL_ENUM_FIX.md`
+
+---
+
 ## 🎉 TẤT CẢ ĐÃ XONG - KHÔNG CẦN THAY ĐỔI GÌ!
 
 Tôi đã tự động đọc TẤT CẢ giá trị từ project của bạn:
