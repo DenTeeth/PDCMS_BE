@@ -20,20 +20,21 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         "[format_sql]": true
     show-sql: false
-    defer-datasource-initialization: false # SQL runs BEFORE Hibernate to create ENUMs
+    defer-datasource-initialization: true # SQL runs AFTER Hibernate creates tables
 
-  # SQL Init Configuration - AUTO CREATE ENUMs
-  # This is the ONLY SQL file used in the project (dental-clinic-seed-data.sql)
-  # EXECUTION ORDER (defer-datasource-initialization: false):
-  #   1. SQL file runs FIRST to create ENUMs
-  #   2. Hibernate auto-generates tables using ENUMs
-  #   3. DataInitializer bean inserts seed data
+  # SQL Init Configuration - TWO-PHASE INITIALIZATION
+  # EXECUTION ORDER (defer-datasource-initialization: true):
+  #   1. schema-locations (enums.sql) runs BEFORE Hibernate
+  #   2. Hibernate creates tables using existing ENUMs (ddl-auto: create-drop)
+  #   3. data-locations (seed-data.sql) runs AFTER tables exist
   sql:
     init:
       mode: always
+      schema-locations: classpath:db/enums.sql
       data-locations: classpath:db/dental-clinic-seed-data.sql
       encoding: UTF-8
       continue-on-error: false
+      separator: ";"
 
   # ==============================
   # Mail Configuration (Email Verification & Password Reset)

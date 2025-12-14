@@ -45,9 +45,14 @@ spring:
   # ==============================
   # SQL Init (Create ENUMs First)
   # ==============================
+  # EXECUTION ORDER (defer-datasource-initialization: false):
+  #   1. enums.sql runs FIRST to create PostgreSQL ENUMs
+  #   2. Hibernate auto-generates tables using ENUMs (ddl-auto: update)
+  #   3. dental-clinic-seed-data.sql runs to insert seed data
   sql:
     init:
       mode: always
+      schema-locations: classpath:db/enums.sql
       data-locations: classpath:db/dental-clinic-seed-data.sql
       encoding: UTF-8
       continue-on-error: false
