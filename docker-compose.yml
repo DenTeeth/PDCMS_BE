@@ -15,8 +15,7 @@ services:
       - "${DB_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./src/main/resources/db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
-      - ./src/main/resources/db/dental-clinic-seed-data.sql:/docker-entrypoint-initdb.d/02-seed-data.sql:ro
+      - ./src/main/resources/db/enums.sql:/docker-entrypoint-initdb.d/01-enums.sql:ro
     networks:
       - dental-network
     healthcheck:
