@@ -36,7 +36,6 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
-    defer-datasource-initialization: false
     properties:
       hibernate:
         format_sql: true
@@ -45,7 +44,7 @@ spring:
   # ==============================
   # SQL Init (Create ENUMs First)
   # ==============================
-  # EXECUTION ORDER (defer-datasource-initialization: false):
+  # EXECUTION ORDER (defer-datasource-initialization: true):
   #   1. enums.sql runs FIRST to create PostgreSQL ENUMs
   #   2. Hibernate auto-generates tables using ENUMs (ddl-auto: update)
   #   3. dental-clinic-seed-data.sql runs to insert seed data
@@ -56,6 +55,9 @@ spring:
       data-locations: classpath:db/dental-clinic-seed-data.sql
       encoding: UTF-8
       continue-on-error: false
+
+  # SQL must run AFTER Hibernate creates tables
+  defer-datasource-initialization: true
 
   # ==============================
   # Logging (Development)
