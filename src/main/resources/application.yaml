@@ -6,9 +6,9 @@ spring:
   # Database Configuration
   # ==============================
   datasource:
-    url: jdbc:postgresql://localhost:5432/dental_clinic_db
-    username: root
-    password: 123456
+    url: jdbc:postgresql://localhost:5432/${DB_DATABASE:dental_clinic_db}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:changeme}
     driver-class-name: org.postgresql.Driver
 
   # JPA Configuration

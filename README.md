@@ -10,6 +10,7 @@ REST API backend for dental clinic management system. Built with Spring Boot 3.2
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - JDK 17+
 - Docker & Docker Compose
 - Git
@@ -33,6 +34,7 @@ docker-compose up postgres redis -d
 ```
 
 The application will:
+
 - ✅ Auto-detect if running locally or in Docker
 - ✅ Select correct profile (`dev` for local, `prod` for Docker)
 - ✅ Create database ENUMs automatically
