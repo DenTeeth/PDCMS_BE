@@ -85,6 +85,9 @@ public class SecurityConfig {
 
                                 // Authorization Rules - Using MvcRequestMatcher for better security
                                 .authorizeHttpRequests(authz -> authz
+                                                // Public endpoints - Health Check & Monitoring
+                                                .requestMatchers(mvc.pattern("/actuator/health/**")).permitAll()
+
                                                 // Public endpoints - API Documentation
                                                 .requestMatchers(mvc.pattern("/v3/api-docs/**")).permitAll()
                                                 .requestMatchers(mvc.pattern("/swagger-ui/**")).permitAll()
