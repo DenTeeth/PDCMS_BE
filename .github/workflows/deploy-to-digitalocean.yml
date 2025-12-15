@@ -75,6 +75,9 @@ jobs:
           # Escape special characters in commit message
           COMMIT_MSG=$(echo "$COMMIT_MESSAGE" | sed 's/"/\\"/g' | sed "s/'/\\'/g")
 
+          # Format timestamp for Vietnam timezone (UTC+7)
+          FORMATTED_TIME=$(TZ='Asia/Ho_Chi_Minh' date -d "$COMMIT_TIMESTAMP" '+%d/%m/%Y %H:%M:%S')
+
           curl -X POST -H "Content-Type: application/json" \
                -d "{
                  \"embeds\": [{
@@ -98,6 +101,11 @@ jobs:
                        \"inline\": true
                      },
                      {
+                       \"name\": \"⏰ Time\",
+                       \"value\": \"$FORMATTED_TIME (GMT+7)\",
+                       \"inline\": true
+                     },
+                     {
                        \"name\": \"🔗 View Commit\",
                        \"value\": \"[Click here](https://github.com/$REPO/commit/$SHA)\",
                        \"inline\": false
@@ -108,8 +116,7 @@ jobs:
                    },
                    \"footer\": {
                      \"text\": \"Dental Clinic Management System\"
-                   },
-                   \"timestamp\": \"$COMMIT_TIMESTAMP\"
+                   }
                  }]
                }" \
                "$DISCORD_WEBHOOK"
@@ -127,6 +134,9 @@ jobs:
         run: |
           # Escape special characters in commit message
           COMMIT_MSG=$(echo "$COMMIT_MESSAGE" | sed 's/"/\\"/g' | sed "s/'/\\'/g")
+
+          # Format timestamp for Vietnam timezone (UTC+7)
+          FORMATTED_TIME=$(TZ='Asia/Ho_Chi_Minh' date -d "$COMMIT_TIMESTAMP" '+%d/%m/%Y %H:%M:%S')
 
           curl -X POST -H "Content-Type: application/json" \
                -d "{
@@ -151,6 +161,11 @@ jobs:
                        \"inline\": true
                      },
                      {
+                       \"name\": \"⏰ Time\",
+                       \"value\": \"$FORMATTED_TIME (GMT+7)\",
+                       \"inline\": true
+                     },
+                     {
                        \"name\": \"🔗 View Logs\",
                        \"value\": \"[Click here](https://github.com/$REPO/actions/runs/$RUN_ID)\",
                        \"inline\": false
@@ -161,8 +176,7 @@ jobs:
                    },
                    \"footer\": {
                      \"text\": \"Vui lòng kiểm tra logs và fix lỗi!\"
-                   },
-                   \"timestamp\": \"$COMMIT_TIMESTAMP\"
+                   }
                  }]
                }" \
                "$DISCORD_WEBHOOK"
