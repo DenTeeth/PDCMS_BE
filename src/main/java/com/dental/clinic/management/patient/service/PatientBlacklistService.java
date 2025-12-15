@@ -101,6 +101,9 @@ public class PatientBlacklistService {
 
         patientRepository.save(patient);
 
+        // TODO: Send email notification to the staff member (username) who performed the blacklist action
+        // TODO: Email should include: patient name, blacklist reason, timestamp, and notes
+
         log.warn("Patient {} BLACKLISTED by {} for reason: {}", 
                  patientId, username, reason.getDisplayName());
 

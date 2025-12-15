@@ -49,8 +49,10 @@ public class WarehouseExcelExportService {
             CellStyle dataStyle = createDataStyle(workbook);
             CellStyle numberStyle = createNumberStyle(workbook);
             CellStyle dateStyle = createDateStyle(workbook);
-            CellStyle boldDataStyle = createBoldDataStyle(workbook);
-            CellStyle boldNumberStyle = createBoldNumberStyle(workbook);
+            CellStyle lowStockDataStyle = createLowStockDataStyle(workbook);
+            CellStyle lowStockNumberStyle = createLowStockNumberStyle(workbook);
+            CellStyle outOfStockDataStyle = createOutOfStockDataStyle(workbook);
+            CellStyle outOfStockNumberStyle = createOutOfStockNumberStyle(workbook);
 
             Row headerRow = sheet.createRow(0);
             String[] headers = {
@@ -70,11 +72,19 @@ public class WarehouseExcelExportService {
                 for (InventoryItemDTO item : response.getContent()) {
                     Row row = sheet.createRow(rowNum++);
 
-                    boolean isLowOrOutOfStock = item.getStockStatus() == StockStatus.LOW_STOCK ||
-                            item.getStockStatus() == StockStatus.OUT_OF_STOCK;
+                    CellStyle rowDataStyle = dataStyle;
+                    CellStyle rowNumberStyle = numberStyle;
+                    CellStyle rowDateStyle = dateStyle;
 
-                    CellStyle rowDataStyle = isLowOrOutOfStock ? boldDataStyle : dataStyle;
-                    CellStyle rowNumberStyle = isLowOrOutOfStock ? boldNumberStyle : numberStyle;
+                    if (item.getStockStatus() == StockStatus.OUT_OF_STOCK) {
+                        rowDataStyle = outOfStockDataStyle;
+                        rowNumberStyle = outOfStockNumberStyle;
+                        rowDateStyle = createOutOfStockDateStyle(workbook);
+                    } else if (item.getStockStatus() == StockStatus.LOW_STOCK) {
+                        rowDataStyle = lowStockDataStyle;
+                        rowNumberStyle = lowStockNumberStyle;
+                        rowDateStyle = createLowStockDateStyle(workbook);
+                    }
 
                     createCell(row, 0, rowNum - 1, numberStyle);
                     createCell(row, 1, item.getItemCode(), rowDataStyle);
@@ -91,7 +101,7 @@ public class WarehouseExcelExportService {
                     if (item.getNearestExpiryDate() != null) {
                         Cell dateCell = row.createCell(10);
                         dateCell.setCellValue(item.getNearestExpiryDate().format(DATE_FORMATTER));
-                        dateCell.setCellStyle(isLowOrOutOfStock ? createBoldDateStyle(workbook) : dateStyle);
+                        dateCell.setCellStyle(rowDateStyle);
                     } else {
                         createCell(row, 10, "", rowDataStyle);
                     }
@@ -361,13 +371,15 @@ public class WarehouseExcelExportService {
         return style;
     }
 
-    private CellStyle createBoldDataStyle(Workbook workbook) {
+    private CellStyle createLowStockDataStyle(Workbook workbook) {
         CellStyle style = workbook.createCellStyle();
         Font font = workbook.createFont();
         font.setBold(true);
         style.setFont(font);
         style.setAlignment(HorizontalAlignment.LEFT);
         style.setVerticalAlignment(VerticalAlignment.CENTER);
+        style.setFillForegroundColor(IndexedColors.YELLOW.getIndex());
+        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
         style.setBorderBottom(BorderStyle.THIN);
         style.setBorderTop(BorderStyle.THIN);
         style.setBorderLeft(BorderStyle.THIN);
@@ -375,7 +387,7 @@ public class WarehouseExcelExportService {
         return style;
     }
 
-    private CellStyle createBoldNumberStyle(Workbook workbook) {
+    private CellStyle createLowStockNumberStyle(Workbook workbook) {
         CellStyle style = workbook.createCellStyle();
         Font font = workbook.createFont();
         font.setBold(true);
@@ -383,6 +395,8 @@ public class WarehouseExcelExportService {
         style.setAlignment(HorizontalAlignment.RIGHT);
         style.setVerticalAlignment(VerticalAlignment.CENTER);
         style.setDataFormat(workbook.createDataFormat().getFormat("#,##0"));
+        style.setFillForegroundColor(IndexedColors.YELLOW.getIndex());
+        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
         style.setBorderBottom(BorderStyle.THIN);
         style.setBorderTop(BorderStyle.THIN);
         style.setBorderLeft(BorderStyle.THIN);
@@ -390,13 +404,64 @@ public class WarehouseExcelExportService {
         return style;
     }
 
-    private CellStyle createBoldDateStyle(Workbook workbook) {
+    private CellStyle createLowStockDateStyle(Workbook workbook) {
         CellStyle style = workbook.createCellStyle();
         Font font = workbook.createFont();
         font.setBold(true);
         style.setFont(font);
         style.setAlignment(HorizontalAlignment.CENTER);
         style.setVerticalAlignment(VerticalAlignment.CENTER);
+        style.setFillForegroundColor(IndexedColors.YELLOW.getIndex());
+        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        style.setBorderBottom(BorderStyle.THIN);
+        style.setBorderTop(BorderStyle.THIN);
+        style.setBorderLeft(BorderStyle.THIN);
+        style.setBorderRight(BorderStyle.THIN);
+        return style;
+    }
+
+    private CellStyle createOutOfStockDataStyle(Workbook workbook) {
+        CellStyle style = workbook.createCellStyle();
+        Font font = workbook.createFont();
+        font.setBold(true);
+        style.setFont(font);
+        style.setAlignment(HorizontalAlignment.LEFT);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+        style.setFillForegroundColor(IndexedColors.RED.getIndex());
+        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        style.setBorderBottom(BorderStyle.THIN);
+        style.setBorderTop(BorderStyle.THIN);
+        style.setBorderLeft(BorderStyle.THIN);
+        style.setBorderRight(BorderStyle.THIN);
+        return style;
+    }
+
+    private CellStyle createOutOfStockNumberStyle(Workbook workbook) {
+        CellStyle style = workbook.createCellStyle();
+        Font font = workbook.createFont();
+        font.setBold(true);
+        style.setFont(font);
+        style.setAlignment(HorizontalAlignment.RIGHT);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+        style.setDataFormat(workbook.createDataFormat().getFormat("#,##0"));
+        style.setFillForegroundColor(IndexedColors.RED.getIndex());
+        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        style.setBorderBottom(BorderStyle.THIN);
+        style.setBorderTop(BorderStyle.THIN);
+        style.setBorderLeft(BorderStyle.THIN);
+        style.setBorderRight(BorderStyle.THIN);
+        return style;
+    }
+
+    private CellStyle createOutOfStockDateStyle(Workbook workbook) {
+        CellStyle style = workbook.createCellStyle();
+        Font font = workbook.createFont();
+        font.setBold(true);
+        style.setFont(font);
+        style.setAlignment(HorizontalAlignment.CENTER);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+        style.setFillForegroundColor(IndexedColors.RED.getIndex());
+        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
         style.setBorderBottom(BorderStyle.THIN);
         style.setBorderTop(BorderStyle.THIN);
         style.setBorderLeft(BorderStyle.THIN);

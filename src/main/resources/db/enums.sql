@@ -71,7 +71,19 @@ CREATE TYPE planactiontype AS ENUM ('STATUS_CHANGE', 'PRICE_UPDATE', 'PHASE_UPDA
 
 -- Patient Tooth Status ENUM (Odontogram)
 DROP TYPE IF EXISTS tooth_condition_enum CASCADE;
-CREATE TYPE tooth_condition_enum AS ENUM ('HEALTHY', 'CARIES', 'FILLED', 'CROWN', 'MISSING', 'IMPLANT', 'ROOT_CANAL', 'FRACTURED', 'IMPACTED');
+CREATE TYPE tooth_condition_enum AS ENUM (
+    'HEALTHY',           -- Răng khỏe
+    'CARIES_MILD',       -- Sâu răng nhẹ (mức 1)
+    'CARIES_MODERATE',   -- Sâu răng trung bình (mức 2)
+    'CARIES_SEVERE',     -- Sâu răng nặng (mức 3)
+    'FILLED',            -- Răng trám
+    'CROWN',             -- Bọc sứ
+    'MISSING',           -- Mất răng
+    'IMPLANT',           -- Cấy ghép
+    'ROOT_CANAL',        -- Điều trị tủy
+    'FRACTURED',         -- Gãy răng
+    'IMPACTED'           -- Mọc ngầm
+);
 
 -- Clinical Record Attachment ENUM
 DROP TYPE IF EXISTS attachment_type_enum CASCADE;

@@ -24,7 +24,7 @@ public class AvailableResourcesDTO {
     private List<RoomBrief> availableRooms;
 
     /**
-     * Assistants (employees with STANDARD specialization) who:
+     * Assistants (employees with medical specializations) who:
      * 1. Have shifts covering the time range
      * 2. Are not busy in other appointments
      */

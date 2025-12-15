@@ -571,11 +571,11 @@ public class EmployeeService {
     }
 
     /**
-     * Get active medical staff only (employees with STANDARD specialization ID 8)
+     * Get active medical staff only (dentists, nurses, interns)
      * Used for appointment doctor/participant selection
-     * Excludes Admin/Receptionist who don't have STANDARD specialization
+     * Excludes Admin/Receptionist/Accountant/Manager who are non-medical
      *
-     * @return List of employees with STANDARD specialization (ID 8)
+     * @return List of medical staff employees
      */
     @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + READ_ALL_EMPLOYEES + "')")
     @Transactional(readOnly = true)

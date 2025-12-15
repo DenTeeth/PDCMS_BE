@@ -12,6 +12,48 @@
 -- ============================================
 
 -- ============================================
+-- BẢNG BỔ SUNG: PATIENT_IMAGE_COMMENTS
+-- ============================================
+-- Hibernate tự tạo các bảng chính, nhưng bảng comments mới cần tạo thủ công
+
+CREATE TABLE IF NOT EXISTS patient_image_comments (
+    comment_id BIGSERIAL PRIMARY KEY,
+    image_id BIGINT NOT NULL,
+    comment_text TEXT NOT NULL,
+    created_by INTEGER NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+    
+    -- Foreign Keys
+    CONSTRAINT fk_comment_image 
+        FOREIGN KEY (image_id) 
+        REFERENCES patient_images(image_id) 
+        ON DELETE CASCADE,
+    
+    CONSTRAINT fk_comment_creator 
+        FOREIGN KEY (created_by) 
+        REFERENCES employees(employee_id) 
+        ON DELETE RESTRICT
+);
+
+-- Indexes for performance
+CREATE INDEX IF NOT EXISTS idx_image_comments_image_id ON patient_image_comments(image_id);
+CREATE INDEX IF NOT EXISTS idx_image_comments_created_by ON patient_image_comments(created_by);
+CREATE INDEX IF NOT EXISTS idx_image_comments_created_at ON patient_image_comments(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_image_comments_active ON patient_image_comments(image_id) WHERE is_deleted = FALSE;
+
+-- Comments for documentation
+COMMENT ON TABLE patient_image_comments IS 'Nhận xét/chú thích của nhân viên y tế trên hình ảnh bệnh nhân';
+COMMENT ON COLUMN patient_image_comments.comment_id IS 'ID nhận xét (Primary Key)';
+COMMENT ON COLUMN patient_image_comments.image_id IS 'ID hình ảnh được nhận xét (Foreign Key → patient_images)';
+COMMENT ON COLUMN patient_image_comments.comment_text IS 'Nội dung nhận xét (TEXT)';
+COMMENT ON COLUMN patient_image_comments.created_by IS 'ID nhân viên tạo nhận xét (Foreign Key → employees)';
+COMMENT ON COLUMN patient_image_comments.created_at IS 'Thời gian tạo nhận xét';
+COMMENT ON COLUMN patient_image_comments.updated_at IS 'Thời gian cập nhật nhận xét';
+COMMENT ON COLUMN patient_image_comments.is_deleted IS 'Soft delete flag - TRUE nếu nhận xét đã bị xóa';
+
+-- ============================================
 -- BƯỚC 1: TẠO BASE ROLES (3 loại cố định)
 -- ============================================
 -- Base roles xác định LAYOUT FE (AdminLayout/EmployeeLayout/PatientLayout)
@@ -324,6 +366,10 @@ VALUES
 ('PATIENT_IMAGE_READ', 'PATIENT_IMAGE_READ', 'PATIENT_IMAGES', 'Xem hình ảnh bệnh nhân', 291, NULL, TRUE, NOW()),
 ('PATIENT_IMAGE_UPDATE', 'PATIENT_IMAGE_UPDATE', 'PATIENT_IMAGES', 'Cập nhật metadata hình ảnh', 292, NULL, TRUE, NOW()),
 ('PATIENT_IMAGE_DELETE', 'PATIENT_IMAGE_DELETE', 'PATIENT_IMAGES', 'Xoa hinh anh benh nhan', 293, NULL, TRUE, NOW()),
+('PATIENT_IMAGE_COMMENT_CREATE', 'PATIENT_IMAGE_COMMENT_CREATE', 'PATIENT_IMAGES', 'Thêm nhận xét vào hình ảnh', 294, NULL, TRUE, NOW()),
+('PATIENT_IMAGE_COMMENT_READ', 'PATIENT_IMAGE_COMMENT_READ', 'PATIENT_IMAGES', 'Xem nhận xét trên hình ảnh', 295, NULL, TRUE, NOW()),
+('PATIENT_IMAGE_COMMENT_UPDATE', 'PATIENT_IMAGE_COMMENT_UPDATE', 'PATIENT_IMAGES', 'Cập nhật nhận xét của mình', 296, NULL, TRUE, NOW()),
+('PATIENT_IMAGE_COMMENT_DELETE', 'PATIENT_IMAGE_COMMENT_DELETE', 'PATIENT_IMAGES', 'Xóa nhận xét của mình', 297, NULL, TRUE, NOW()),
 ('WRITE_CLINICAL_RECORD', 'WRITE_CLINICAL_RECORD', 'CLINICAL_RECORDS', 'Tao va cap nhat benh an, them thu thuat (API 8.5, 9.2, 9.3)', 285, NULL, TRUE, NOW()),
 ('UPLOAD_ATTACHMENT', 'UPLOAD_ATTACHMENT', 'CLINICAL_RECORDS', 'Upload file dinh kem vao benh an (X-quang, anh, PDF) - API 8.11', 286, NULL, TRUE, NOW()),
 ('VIEW_ATTACHMENT', 'VIEW_ATTACHMENT', 'CLINICAL_RECORDS', 'Xem danh sach file dinh kem cua benh an - API 8.12', 287, NULL, TRUE, NOW()),
@@ -706,7 +752,7 @@ VALUES
 (5, 'SPEC005', 'Phẫu thuật hàm mặt', 'Oral Surgery - Nhổ răng khôn, phẫu thuật', TRUE, NOW()),
 (6, 'SPEC006', 'Nha khoa trẻ em', 'Pediatric Dentistry - Chuyên khoa nhi', TRUE, NOW()),
 (7, 'SPEC007', 'Răng thẩm mỹ', 'Cosmetic Dentistry - Tẩy trắng, bọc sứ', TRUE, NOW()),
-(8, 'SPEC-STANDARD', 'STANDARD - Y tế cơ bản', 'Baseline medical qualification - Required for all doctors/nurses', TRUE, NOW()),
+(8, 'SPEC008', 'Chẩn đoán hình ảnh', 'Diagnostic Imaging - Chụp X-quang, phân tích hình ảnh chẩn đoán', TRUE, NOW()),
 (9, 'SPEC-INTERN', 'Thực tập sinh', 'Intern/Trainee - Nhân viên đang đào tạo, học việc', TRUE, NOW())
 ON CONFLICT (specialization_id) DO NOTHING;
 
@@ -848,21 +894,17 @@ ON CONFLICT (employee_id) DO NOTHING;
 
 INSERT INTO employee_specializations (employee_id, specialization_id)
 VALUES
--- Dentist 1: Lê Anh Khoa - Chỉnh nha + Nha chu + Phục hồi + STANDARD (REQUIRED)
-(1, 1), (1, 3), (1, 4), (1, 8),
--- Dentist 2: Trịnh Công Thái - Nội nha + Răng thẩm mỹ + STANDARD (REQUIRED)
-(2, 2), (2, 7), (2, 8),
--- Dentist 3: Jimmy Donaldson - Nha khoa trẻ em + STANDARD (REQUIRED)
-(3, 6), (3, 8),
--- Dentist 4: Junya Ota - Phẫu thuật hàm mặt + Phục hồi + STANDARD (REQUIRED)
+-- Dentist 1: Lê Anh Khoa - Chỉnh nha + Nha chu + Phục hồi
+(1, 1), (1, 3), (1, 4),
+-- Dentist 2: Trịnh Công Thái - Nội nha + Răng thẩm mỹ
+(2, 2), (2, 7),
+-- Dentist 3: Jimmy Donaldson - Nha khoa trẻ em
+(3, 6),
+-- Dentist 4: Junya Ota - Phẫu thuật hàm mặt + Phục hồi + Chẩn đoán hình ảnh (X-Ray)
 (4, 4), (4, 5), (4, 8),
--- Nurses + Staff - STANDARD (REQUIRED for medical staff)
-(7, 8), -- Y tá Nguyên
-(8, 8), -- Y tá Khang
-(9, 8), -- Y tá Nhật (Part-time fixed)
-(10, 8), -- Y tá Chính (Part-time flex)
 -- NEW: Thực tập sinh - INTERN specialization
 (12, 9) -- Thực tập sinh Linh
+-- NOTE: Nurses/Staff không cần specialization (không phải bác sĩ)
 ON CONFLICT (employee_id, specialization_id) DO NOTHING;
 
 
@@ -2159,8 +2201,8 @@ SELECT
     vals.created_at
 FROM (VALUES
 -- A. Nha khoa tổng quát (category_code = 'A_GENERAL')
-('GEN_EXAM', 'Khám tổng quát & Tư vấn', 'Khám tổng quát, chụp X-quang phim nhỏ nếu cần thiết để chẩn đoán.', 30, 15, 100000, 8, 'A_GENERAL', 1, 0, 0, 0, NULL, true, NOW()),
-('GEN_XRAY_PERI', 'Chụp X-Quang quanh chóp', 'Chụp phim X-quang nhỏ tại ghế.', 10, 5, 50000, 8, 'A_GENERAL', 2, 0, 0, 0, NULL, true, NOW()),
+('GEN_EXAM', 'Khám tổng quát & Tư vấn', 'Khám tổng quát, tư vấn chẩn đoán ban đầu.', 30, 15, 100000, 1, 'A_GENERAL', 1, 0, 0, 0, NULL, true, NOW()),
+('GEN_XRAY_PERI', 'Chụp X-Quang quanh chóp', 'Chụp phim X-quang nhỏ tại ghế - Yêu cầu chuyên môn chẩn đoán hình ảnh.', 10, 5, 50000, 8, 'A_GENERAL', 2, 0, 0, 0, NULL, true, NOW()),
 ('SCALING_L1', 'Cạo vôi răng & Đánh bóng - Mức 1', 'Làm sạch vôi răng và mảng bám mức độ ít/trung bình.', 45, 15, 300000, 3, 'A_GENERAL', 3, 0, 0, 0, NULL, true, NOW()),
 ('SCALING_L2', 'Cạo vôi răng & Đánh bóng - Mức 2', 'Làm sạch vôi răng và mảng bám mức độ nhiều.', 60, 15, 400000, 3, 'A_GENERAL', 4, 0, 0, 0, NULL, true, NOW()),
 ('SCALING_VIP', 'Cạo vôi VIP không đau', 'Sử dụng máy rung siêu âm ít ê buốt.', 60, 15, 500000, 3, 'A_GENERAL', 5, 0, 0, 0, NULL, true, NOW()),
@@ -4739,6 +4781,14 @@ SELECT setval('service_consumables_link_id_seq', (SELECT COALESCE(MAX(link_id), 
 -- Age-based thresholds with audit support (effective_date, is_active)
 -- ============================================
 
+-- ============================================
+-- Vital Signs Reference Data (Age-based normal ranges)
+-- ============================================
+-- NOTE: low_threshold and high_threshold columns are DEPRECATED and no longer used for clinical assessment.
+-- Only normal_min and normal_max are used to determine if vital signs are within normal range.
+-- The threshold columns are kept for database compatibility but can be ignored.
+-- ============================================
+
 -- Blood Pressure - Systolic (mmHg)
 INSERT INTO vital_signs_reference (vital_type, age_min, age_max, normal_min, normal_max, low_threshold, high_threshold, unit, description, effective_date, is_active, created_at, updated_at) VALUES
 ('BLOOD_PRESSURE_SYSTOLIC', 0, 12, 80, 110, 70, 120, 'mmHg', 'Huyet ap tam thu - Tre em 0-12 tuoi', '2025-01-01', TRUE, NOW(), NOW()),
@@ -4769,13 +4819,6 @@ INSERT INTO vital_signs_reference (vital_type, age_min, age_max, normal_min, nor
 -- Body Temperature (Celsius)
 INSERT INTO vital_signs_reference (vital_type, age_min, age_max, normal_min, normal_max, low_threshold, high_threshold, unit, description, effective_date, is_active, created_at, updated_at) VALUES
 ('TEMPERATURE', 0, NULL, 36.1, 37.2, 35.0, 38.0, 'C', 'Nhiet do co the - Tat ca moi do tuoi', '2025-01-01', TRUE, NOW(), NOW());
-
--- Respiratory Rate (breaths per minute)
-INSERT INTO vital_signs_reference (vital_type, age_min, age_max, normal_min, normal_max, low_threshold, high_threshold, unit, description, effective_date, is_active, created_at, updated_at) VALUES
-('RESPIRATORY_RATE', 0, 1, 30, 60, 25, 70, 'breaths/min', 'Nhip tho - Tre so sinh', '2025-01-01', TRUE, NOW(), NOW()),
-('RESPIRATORY_RATE', 2, 5, 20, 30, 15, 40, 'breaths/min', 'Nhip tho - Tre nho 2-5 tuoi', '2025-01-01', TRUE, NOW(), NOW()),
-('RESPIRATORY_RATE', 6, 12, 18, 25, 12, 35, 'breaths/min', 'Nhip tho - Tre em 6-12 tuoi', '2025-01-01', TRUE, NOW(), NOW()),
-('RESPIRATORY_RATE', 13, NULL, 12, 20, 10, 25, 'breaths/min', 'Nhip tho - Tu 13 tuoi tro len', '2025-01-01', TRUE, NOW(), NOW());
 
 -- Weight (kg - kilogram)
 INSERT INTO vital_signs_reference (vital_type, age_min, age_max, normal_min, normal_max, low_threshold, high_threshold, unit, description, effective_date, is_active, created_at, updated_at) VALUES
@@ -4827,7 +4870,7 @@ INSERT INTO clinical_records (
     '{"blood_pressure": "120/80", "heart_rate": "72", "temperature": "36.5"}',
     'Đau nhức và chảy máu lợi khi đánh răng, cảm giác răng ố vàng',
     'Lợi sưng đỏ, có nhiều mảng cao răng, không có sâu răng',
-    'Đã thực hiện lấy cao răng (scaling), hướng dẫn cách đánh răng đúng cách',
+    'Thực hiện lấy cao răng (scaling), hướng dẫn cách đánh răng đúng cách',
     NOW(), NOW()
 ) ON CONFLICT (clinical_record_id) DO NOTHING;
 
@@ -4837,7 +4880,7 @@ INSERT INTO clinical_record_procedures (
     tooth_number, procedure_description, notes, created_at
 ) VALUES
 (1, 1, 1, NULL, NULL, 'Khám tổng quát răng miệng', 'Bệnh nhân không có sâu răng', NOW()),
-(2, 1, 3, NULL, NULL, 'Lấy cao răng (Scaling Level 1)', 'Đã lấy cao răng toàn hàm', NOW())
+(2, 1, 3, NULL, NULL, 'Lấy cao răng (Scaling Level 1)', 'Lấy cao răng toàn hàm', NOW())
 ON CONFLICT (procedure_id) DO NOTHING;
 
 -- Prescription for Clinical Record #1
@@ -4861,10 +4904,12 @@ ON CONFLICT (prescription_item_id) DO NOTHING;
 INSERT INTO patient_tooth_status (
     tooth_status_id, patient_id, tooth_number, status, notes, recorded_at
 ) VALUES
-(1, 1, '18', 'MISSING', 'Rang khon da nhổ năm 2023', NOW()),
-(2, 1, '36', 'CROWN', 'Boc su kim loai', NOW()),
-(3, 1, '46', 'CARIES', 'Sau rang sau, can dieu tri', NOW()),
-(4, 1, '21', 'IMPLANT', 'Cay ghep Implant thanh cong', NOW())
+(1, 1, '18', 'MISSING', 'Răng khôn mất (nhổ năm 2023)', NOW()),
+(2, 1, '36', 'CROWN', 'Răng bọc sứ kim loại', NOW()),
+(3, 1, '46', 'CARIES_MODERATE', 'Sâu răng mức độ 2 (trung bình), cần điều trị', NOW()),
+(4, 1, '21', 'IMPLANT', 'Răng cấy ghép Implant thành công', NOW()),
+(5, 1, '16', 'CARIES_MILD', 'Sâu răng mức độ 1 (nhẹ), cần theo dõi', NOW()),
+(6, 1, '26', 'CARIES_SEVERE', 'Sâu răng mức độ 3 (nặng), cần điều trị tủy', NOW())
 ON CONFLICT (patient_id, tooth_number) DO NOTHING;
 
 -- Clinical Record #2 (for appointment_id=2, patient_id=2, employee_id=2)
@@ -4878,7 +4923,7 @@ INSERT INTO clinical_records (
     '{"blood_pressure": "115/75", "heart_rate": "68"}',
     'Đau răng hàm dưới bên trái khi ăn đồ ngọt và lạnh',
     'Phát hiện lỗ sâu sâu trên bề mặt nhai răng số 36, chưa tổn thương tủy',
-    'Đã trám răng composite, khuyên theo dõi và tái khám sau 6 tháng',
+    'Răng trám composite, khuyên theo dõi và tái khám sau 6 tháng',
     NOW(), NOW()
 ) ON CONFLICT (clinical_record_id) DO NOTHING;
 
@@ -4888,7 +4933,7 @@ INSERT INTO clinical_record_procedures (
     tooth_number, procedure_description, notes, created_at
 ) VALUES
 (3, 2, 1, NULL, NULL, 'Khám tổng quát răng miệng', 'Phát hiện sâu răng số 36', NOW()),
-(4, 2, 5, NULL, '36', 'Trám răng Composite', 'Đã trám hoàn tất, bệnh nhân không đau', NOW())
+(4, 2, 5, NULL, '36', 'Trám răng Composite', 'Trám răng hoàn tất, bệnh nhân không đau', NOW())
 ON CONFLICT (procedure_id) DO NOTHING;
 
 -- Prescription for Clinical Record #2
@@ -4910,7 +4955,7 @@ ON CONFLICT (prescription_item_id) DO NOTHING;
 INSERT INTO patient_tooth_status (
     tooth_status_id, patient_id, tooth_number, status, notes, recorded_at
 ) VALUES
-(5, 2, '36', 'FILLED', 'Đã trám răng composite', NOW())
+(5, 2, '36', 'FILLED', 'Răng trám composite', NOW())
 ON CONFLICT (patient_id, tooth_number) DO NOTHING;
 
 -- Clinical Record #3 (for appointment_id=3, patient_id=3, employee_id=1)
@@ -4935,7 +4980,7 @@ INSERT INTO clinical_record_procedures (
     tooth_number, procedure_description, notes, created_at
 ) VALUES
 (5, 3, 1, NULL, NULL, 'Khám tổng quát răng miệng', 'Kiểm tra tiến độ niềng răng', NOW()),
-(6, 3, 7, 1, NULL, 'Thay dây cung niềng răng', 'Đã thay dây cung theo kế hoạch điều trị', NOW())
+(6, 3, 7, 1, NULL, 'Thay dây cung niềng răng', 'Thay dây cung theo kế hoạch điều trị', NOW())
 ON CONFLICT (procedure_id) DO NOTHING;
 
 -- No prescription for this record (orthodontic follow-up doesn't need medicine)
@@ -4944,10 +4989,12 @@ ON CONFLICT (procedure_id) DO NOTHING;
 INSERT INTO patient_tooth_status_history (
     history_id, patient_id, tooth_number, old_status, new_status, changed_by, changed_at, reason
 ) VALUES
-(1, 1, '18', 'HEALTHY', 'MISSING', 1, '2023-05-15 10:00:00', 'Nhổ rang khon ham tren phai do mac ngam'),
-(2, 1, '36', 'CARIES', 'CROWN', 1, '2024-03-20 14:30:00', 'Boc su kim loai sau khi dieu tri tuy'),
-(3, 1, '21', 'MISSING', 'IMPLANT', 1, '2024-08-10 11:00:00', 'Cay ghep Implant thanh cong'),
-(4, 2, '36', 'CARIES', 'FILLED', 2, NOW(), 'Tram rang composite')
+(1, 1, '18', 'HEALTHY', 'MISSING', 1, '2023-05-15 10:00:00', 'Nhổ răng khôn hàm trên phải do mọc ngầm'),
+(2, 1, '36', 'CARIES_SEVERE', 'CROWN', 1, '2024-03-20 14:30:00', 'Bọc sứ kim loại sau khi điều trị tủy'),
+(3, 1, '21', 'MISSING', 'IMPLANT', 1, '2024-08-10 11:00:00', 'Cấy ghép Implant thành công'),
+(4, 2, '36', 'CARIES_MODERATE', 'FILLED', 2, NOW(), 'Trám răng composite'),
+(5, 1, '46', 'CARIES_MILD', 'CARIES_MODERATE', 1, NOW(), 'Sâu răng tiến triển từ mức nhẹ sang trung bình'),
+(6, 1, '26', 'CARIES_MODERATE', 'CARIES_SEVERE', 1, NOW(), 'Sâu răng tiến triển từ trung bình sang nặng')
 ON CONFLICT DO NOTHING;
 
 -- Reset sequences

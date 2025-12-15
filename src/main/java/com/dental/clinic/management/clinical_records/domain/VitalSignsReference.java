@@ -36,9 +36,19 @@ public class VitalSignsReference {
     @Column(name = "normal_max", precision = 10, scale = 2)
     private BigDecimal normalMax;
 
+    /**
+     * @deprecated These threshold fields are no longer used for clinical assessment.
+     * Use normalMin/normalMax only. Kept for database compatibility.
+     */
+    @Deprecated
     @Column(name = "low_threshold", precision = 10, scale = 2)
     private BigDecimal lowThreshold;
 
+    /**
+     * @deprecated These threshold fields are no longer used for clinical assessment.
+     * Use normalMin/normalMax only. Kept for database compatibility.
+     */
+    @Deprecated
     @Column(name = "high_threshold", precision = 10, scale = 2)
     private BigDecimal highThreshold;
 

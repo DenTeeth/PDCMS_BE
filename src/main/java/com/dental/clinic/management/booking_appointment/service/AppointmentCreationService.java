@@ -99,6 +99,17 @@ public class AppointmentCreationService {
                 Integer createdById = getCurrentUserId();
                 log.debug("Appointment creator: employeeId={}", createdById);
 
+                // TODO: Implement patient booking block warnings and notifications:
+                // 1. Send email to BLOCKED PATIENT when they try to book (or receptionist tries for them)
+                //    - Email content: "Tài khoản của bạn đã bị chặn đặt lịch. Lý do: [reason]. Vui lòng liên hệ phòng khám."
+                //    - Use patient.getEmail() if available
+                // 2. Return warning flag in patient response for UI to show BEFORE booking form
+                //    - Frontend should show: blocked reason, who blocked, when blocked, notes
+                //    - Warning banner at patient selection step, not after submission
+                // 3. Add allowBlockedPatient flag in request for admin override
+                //    - Only admin/receptionist with permission can book for blocked patient
+                //    - Log override in audit trail
+
                 // STEP 2: Validate all resources exist and are active
                 Patient patient = validatePatient(request.getPatientCode());
                 Employee doctor = validateDoctor(request.getEmployeeCode());
@@ -115,6 +126,10 @@ public class AppointmentCreationService {
                                         request.getPatientPlanItemIds().size());
                         List<PatientPlanItem> planItems = validatePlanItems(request.getPatientPlanItemIds(),
                                         patient.getPatientId());
+
+                        // Validate plan start date proximity for FIRST appointment
+                        validatePlanStartDateProximity(request.getPatientPlanItemIds(),
+                                        parseStartTime(request.getAppointmentStartTime()));
 
                         // Extract services from plan items
                         services = planItems.stream()
@@ -238,6 +253,11 @@ public class AppointmentCreationService {
                 if (isBookingFromPlan) {
                         List<PatientPlanItem> planItems = validatePlanItems(request.getPatientPlanItemIds(),
                                         patient.getPatientId());
+
+                        // Validate plan start date proximity for FIRST appointment
+                        validatePlanStartDateProximity(request.getPatientPlanItemIds(),
+                                        LocalDateTime.parse(request.getAppointmentStartTime()));
+
                         services = planItems.stream()
                                         .map(item -> dentalServiceRepository.findById(item.getServiceId())
                                                         .orElseThrow(() -> new BadRequestAlertException(
@@ -387,18 +407,13 @@ public class AppointmentCreationService {
                                                 ENTITY_NAME,
                                                 "EMPLOYEE_NOT_FOUND"));
 
-                // CRITICAL: Validate employee has STANDARD specialization (ID 8) - is medical
-                // staff
-                // Admin/Receptionist without STANDARD cannot be doctors
-                boolean hasStandardSpecialization = doctor.getSpecializations() != null &&
-                                doctor.getSpecializations().stream()
-                                                .anyMatch(spec -> spec.getSpecializationId() == 8);
-
-                if (!hasStandardSpecialization) {
+                // CRITICAL: Validate employee is medical staff (dentist, nurse, or intern)
+                // Admin/Receptionist/Accountant cannot be doctors
+                if (!doctor.isMedicalStaff()) {
                         throw new BadRequestAlertException(
-                                        "Employee must have STANDARD specialization (ID 8) to be assigned as doctor. " +
+                                        "Employee must be medical staff (DENTIST/NURSE/INTERN role) to be assigned as doctor. " +
                                                         "Employee " + employeeCode
-                                                        + " does not have STANDARD specialization (Admin/Receptionist cannot be doctors)",
+                                                        + " is not medical staff (Admin/Receptionist/Accountant cannot be doctors)",
                                         ENTITY_NAME,
                                         "EMPLOYEE_NOT_MEDICAL_STAFF");
                 }
@@ -488,19 +503,17 @@ public class AppointmentCreationService {
                                         "PARTICIPANT_NOT_FOUND");
                 }
 
-                // CRITICAL: Validate all participants have STANDARD specialization (ID 8)
-                // Admin/Receptionist without STANDARD (ID 8) cannot be participants
+                // CRITICAL: Validate all participants are medical staff (dentist, nurse, or intern)
+                // Admin/Receptionist/Accountant cannot be participants
                 List<String> nonMedicalStaff = participants.stream()
-                                .filter(p -> p.getSpecializations() == null ||
-                                                p.getSpecializations().stream()
-                                                                .noneMatch(spec -> spec.getSpecializationId() == 8))
+                                .filter(p -> !p.isMedicalStaff())
                                 .map(Employee::getEmployeeCode)
                                 .collect(Collectors.toList());
 
                 if (!nonMedicalStaff.isEmpty()) {
                         throw new BadRequestAlertException(
-                                        "Participants must have STANDARD specialization (ID 8). " +
-                                                        "The following employees do not have STANDARD specialization (Admin/Receptionist cannot be participants): "
+                                        "Participants must be medical staff (DENTIST/NURSE/INTERN role). " +
+                                                        "The following employees are not medical staff (Admin/Receptionist/Accountant cannot be participants): "
                                                         +
                                                         String.join(", ", nonMedicalStaff),
                                         ENTITY_NAME,
@@ -579,14 +592,30 @@ public class AppointmentCreationService {
         // ====================================================================
 
         private void validateDoctorSpecializations(Employee doctor, List<DentalService> services) {
-                // Get all specialization IDs required by services
+                // Get all specialization IDs required by services (filter out null specializations)
                 List<Integer> requiredSpecializationIds = services.stream()
+                                .filter(s -> s.getSpecialization() != null) // Some services don't require specialization
                                 .map(s -> s.getSpecialization().getSpecializationId())
                                 .distinct()
                                 .collect(Collectors.toList());
 
+                // If no services require specialization, any medical staff can perform them
+                if (requiredSpecializationIds.isEmpty()) {
+                        return;
+                }
+
                 // Get doctor's specializations (from @ManyToMany relationship)
                 Set<Specialization> doctorSpecializations = doctor.getSpecializations();
+                
+                // If doctor has no specializations (e.g., nurse), they cannot perform specialized services
+                if (doctorSpecializations == null || doctorSpecializations.isEmpty()) {
+                        throw new BadRequestAlertException(
+                                        "Doctor " + doctor.getEmployeeCode()
+                                                        + " has no specializations but services require: " + requiredSpecializationIds
+                                                        + ". Nurses cannot perform specialized services like X-Ray.",
+                                        ENTITY_NAME,
+                                        "EMPLOYEE_NOT_QUALIFIED");
+                }
 
                 List<Integer> doctorSpecIds = doctorSpecializations.stream()
                                 .map(Specialization::getSpecializationId)
@@ -603,7 +632,7 @@ public class AppointmentCreationService {
                         throw new BadRequestAlertException(
                                         "Doctor " + doctor.getEmployeeCode()
                                                         + " does not have required specializations. Missing IDs: "
-                                                        + missingSpecIds,
+                                                        + missingSpecIds + ". For example, X-Ray services require Diagnostic Imaging specialization.",
                                         ENTITY_NAME,
                                         "EMPLOYEE_NOT_QUALIFIED");
                 }
@@ -1193,6 +1222,78 @@ public class AppointmentCreationService {
                                                                         : "Bỏ hẹn nhiều lần"),
                                         ENTITY_NAME,
                                         "PATIENT_BOOKING_BLOCKED");
+                }
+        }
+
+        /**
+         * Rule: Validate first appointment date proximity to treatment plan start date
+         * First appointment must be booked within 7 days of the plan's start date
+         * to ensure timely treatment initiation.
+         *
+         * @param itemIds List of plan item IDs being booked
+         * @param appointmentStartTime Requested appointment start time
+         * @throws BadRequestAlertException if first appointment is scheduled too far from plan start
+         */
+        private void validatePlanStartDateProximity(List<Long> itemIds, LocalDateTime appointmentStartTime) {
+                try {
+                        // Get the treatment plan from first item (all items belong to same plan)
+                        PatientPlanItem firstItem = patientPlanItemRepository.findById(itemIds.get(0))
+                                        .orElseThrow(() -> new IllegalStateException(
+                                                        "Plan item not found: " + itemIds.get(0)));
+
+                        com.dental.clinic.management.treatment_plans.domain.PatientTreatmentPlan plan = firstItem
+                                        .getPhase()
+                                        .getTreatmentPlan();
+
+                        // Check if this is the FIRST appointment for this plan
+                        long existingAppointmentCount = appointmentPlanItemRepository
+                                        .countAppointmentsForPlan(plan.getPlanId().longValue());
+
+                        if (existingAppointmentCount == 0) { // This will be the FIRST appointment
+                                LocalDate planStartDate = plan.getStartDate();
+                                LocalDate appointmentDate = appointmentStartTime.toLocalDate();
+
+                                // Calculate days between plan start and appointment
+                                long daysDifference = java.time.temporal.ChronoUnit.DAYS.between(planStartDate, appointmentDate);
+
+                                if (daysDifference > 7) {
+                                        throw new BadRequestAlertException(
+                                                        String.format(
+                                                                "Lịch hẹn đầu tiên phải được đặt trong vòng 7 ngày kể từ ngày bắt đầu kế hoạch điều trị. "
+                                                                + "Ngày bắt đầu kế hoạch: %s, Ngày hẹn yêu cầu: %s (cách nhau %d ngày). "
+                                                                + "Vui lòng chọn ngày hẹn từ %s đến %s.",
+                                                                planStartDate,
+                                                                appointmentDate,
+                                                                daysDifference,
+                                                                planStartDate,
+                                                                planStartDate.plusDays(7)),
+                                                        ENTITY_NAME,
+                                                        "FIRST_APPOINTMENT_TOO_FAR_FROM_PLAN_START");
+                                } else if (daysDifference < 0) {
+                                        throw new BadRequestAlertException(
+                                                        String.format(
+                                                                "Lịch hẹn không thể đặt trước ngày bắt đầu kế hoạch điều trị. "
+                                                                + "Ngày bắt đầu kế hoạch: %s, Ngày hẹn yêu cầu: %s.",
+                                                                planStartDate,
+                                                                appointmentDate),
+                                                        ENTITY_NAME,
+                                                        "APPOINTMENT_BEFORE_PLAN_START");
+                                }
+
+                                log.debug("First appointment date validation passed: plan starts {}, appointment on {} ({} days difference)",
+                                                planStartDate, appointmentDate, daysDifference);
+                        } else {
+                                log.debug("Plan already has {} appointments - skipping start date proximity check",
+                                                existingAppointmentCount);
+                        }
+                } catch (BadRequestAlertException e) {
+                        throw e; // Re-throw validation errors
+                } catch (Exception e) {
+                        log.error("Error validating plan start date proximity", e);
+                        throw new BadRequestAlertException(
+                                        "Không thể xác thực thời gian đặt lịch với kế hoạch điều trị: " + e.getMessage(),
+                                        ENTITY_NAME,
+                                        "PLAN_DATE_VALIDATION_ERROR");
                 }
         }
 }

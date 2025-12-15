@@ -379,18 +379,6 @@ public class ClinicalRecordService {
                                 }
                         }
 
-                        // Assess respiratory rate
-                        Object respObj = record.getVitalSigns().get("respiratory_rate");
-                        if (respObj != null) {
-                                try {
-                                        java.math.BigDecimal respRate = new java.math.BigDecimal(respObj.toString());
-                                        vitalSignsAssessment.add(vitalSignsReferenceService.assessVitalSign(
-                                                        "RESPIRATORY_RATE", respRate, age));
-                                } catch (Exception e) {
-                                        log.warn("Failed to parse respiratory rate: {}", respObj);
-                                }
-                        }
-
                         // Assess weight
                         Object weightObj = record.getVitalSigns().get("weight");
                         if (weightObj != null) {

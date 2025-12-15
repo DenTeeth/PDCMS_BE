@@ -225,4 +225,27 @@ public class Employee {
         ", isActive=" + isActive +
         '}';
   }
+
+  /**
+   * Check if employee is medical staff (can participate in appointments)
+   * Medical staff = Doctors (with specializations) OR Nurses (no specializations but medical role)
+   * Non-medical staff = Admin, Receptionist, Accountant, Manager, Inventory Manager
+   * 
+   * @return true if employee has medical role or specializations
+   */
+  public boolean isMedicalStaff() {
+    if (this.account == null || this.account.getRole() == null) {
+      return false;
+    }
+    
+    String roleId = this.account.getRole().getRoleId();
+    
+    // Medical roles: DENTIST, NURSE, DENTIST_INTERN
+    boolean hasMedicalRole = roleId.equals("ROLE_DENTIST") || 
+                             roleId.equals("ROLE_NURSE") ||
+                             roleId.equals("ROLE_DENTIST_INTERN");
+    
+    // Doctors have specializations, nurses don't
+    return hasMedicalRole;
+  }
 }

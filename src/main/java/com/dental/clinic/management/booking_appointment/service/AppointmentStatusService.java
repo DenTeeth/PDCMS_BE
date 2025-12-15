@@ -28,6 +28,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -182,6 +183,26 @@ public class AppointmentStatusService {
      * - Rule #4: 24h cancellation deadline - late cancellation causes penalty
      */
     private void validateBusinessRules(Appointment appointment, AppointmentStatus newStatus, UpdateAppointmentStatusRequest request) {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime appointmentStartTime = appointment.getAppointmentStartTime();
+        LocalDateTime appointmentEndTime = appointment.getAppointmentEndTime();
+        LocalDate appointmentDate = appointmentStartTime.toLocalDate();
+        LocalDate today = now.toLocalDate();
+
+        // RULE: Date-based status restrictions
+        // CANCELLED can happen anytime
+        // CHECKED_IN, IN_PROGRESS, COMPLETED, NO_SHOW can only happen on appointment date
+        if (newStatus != AppointmentStatus.CANCELLED) {
+            if (!today.equals(appointmentDate)) {
+                throw new IllegalStateException(
+                        String.format("Không thể đổi trạng thái '%s' khi chưa tới ngày hẹn. " +
+                                "Ngày hẹn: %s, Hôm nay: %s. Chỉ có thể hủy lịch (CANCELLED) trước ngày hẹn.",
+                                newStatus,
+                                appointmentDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
+                                today.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))));
+            }
+        }
+
         if (newStatus == AppointmentStatus.CANCELLED) {
             // Check reason code is provided
             if (request.getReasonCode() == null || request.getReasonCode().trim().isEmpty()) {
@@ -190,9 +211,7 @@ public class AppointmentStatusService {
             }
 
             // Rule #4: Check 24-hour cancellation deadline
-            LocalDateTime appointmentStartTime = appointment.getAppointmentStartTime();
             LocalDateTime cancellationDeadline = appointmentStartTime.minusHours(24);
-            LocalDateTime now = LocalDateTime.now();
 
             if (now.isAfter(cancellationDeadline)) {
                 // Late cancellation - within 24 hours of appointment
@@ -202,6 +221,63 @@ public class AppointmentStatusService {
                                 "Please contact clinic staff for assistance.",
                                 appointmentStartTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
                                 cancellationDeadline.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))));
+            }
+        }
+
+        // RULE: CHECKED_IN time window
+        // Can check-in: 30 minutes before start → 45 minutes after start
+        if (newStatus == AppointmentStatus.CHECKED_IN) {
+            LocalDateTime earliestCheckIn = appointmentStartTime.minusMinutes(30);
+            LocalDateTime latestCheckIn = appointmentStartTime.plusMinutes(45);
+
+            if (now.isBefore(earliestCheckIn)) {
+                throw new IllegalStateException(
+                        String.format("Không thể check-in quá sớm. Có thể check-in từ %s (30 phút trước giờ hẹn).",
+                                earliestCheckIn.format(DateTimeFormatter.ofPattern("HH:mm"))));
+            }
+
+            if (now.isAfter(latestCheckIn)) {
+                long minutesLate = java.time.Duration.between(appointmentStartTime, now).toMinutes();
+                throw new IllegalStateException(
+                        String.format("Bệnh nhân đến trễ %d phút (quá 45 phút). Vui lòng đánh dấu NO_SHOW thay vì CHECKED_IN.",
+                                minutesLate));
+            }
+        }
+
+        // RULE: IN_PROGRESS time restriction
+        // Can only start treatment on or after scheduled start time
+        if (newStatus == AppointmentStatus.IN_PROGRESS) {
+            if (now.isBefore(appointmentStartTime)) {
+                throw new IllegalStateException(
+                        String.format("Không thể bắt đầu điều trị trước giờ hẹn. Giờ hẹn: %s, Hiện tại: %s.",
+                                appointmentStartTime.format(DateTimeFormatter.ofPattern("HH:mm")),
+                                now.format(DateTimeFormatter.ofPattern("HH:mm"))));
+            }
+        }
+
+        // RULE: COMPLETED time restriction
+        // Can complete early or up to 2 hours after scheduled end time
+        if (newStatus == AppointmentStatus.COMPLETED) {
+            LocalDateTime maxCompletionTime = appointmentEndTime.plusHours(2);
+
+            if (now.isAfter(maxCompletionTime)) {
+                long hoursLate = java.time.Duration.between(appointmentEndTime, now).toHours();
+                throw new IllegalStateException(
+                        String.format("Không thể hoàn thành cuộc hẹn quá trễ (%d giờ sau giờ kết thúc dự kiến). " +
+                                "Giờ kết thúc dự kiến: %s. Vui lòng liên hệ quản lý.",
+                                hoursLate,
+                                appointmentEndTime.format(DateTimeFormatter.ofPattern("HH:mm"))));
+            }
+        }
+
+        // RULE: NO_SHOW time restriction
+        // Can only mark NO_SHOW after appointment start time
+        if (newStatus == AppointmentStatus.NO_SHOW) {
+            if (now.isBefore(appointmentStartTime)) {
+                throw new IllegalStateException(
+                        String.format("Không thể đánh dấu NO_SHOW trước giờ hẹn. Giờ hẹn: %s, Hiện tại: %s.",
+                                appointmentStartTime.format(DateTimeFormatter.ofPattern("HH:mm")),
+                                now.format(DateTimeFormatter.ofPattern("HH:mm"))));
             }
         }
     }
@@ -610,8 +686,22 @@ public class AppointmentStatusService {
                                 appointment.getAppointmentCode()));
                 patient.setBlockedAt(LocalDateTime.now());
 
-                log.warn(" Patient {} BLOCKED from booking: {} consecutive no-shows", 
-                        patient.getPatientCode(), patient.getConsecutiveNoShows());
+                // Track who marked the appointment as NO_SHOW (blocker)
+                Integer employeeId = getCurrentEmployeeId();
+                if (employeeId != null && employeeId != 0) {
+                    com.dental.clinic.management.employee.domain.Employee employee = 
+                            employeeRepository.findById(employeeId).orElse(null);
+                    if (employee != null && employee.getAccount() != null && employee.getAccount().getUsername() != null) {
+                        patient.setBlockedBy(employee.getAccount().getUsername());
+                    } else {
+                        patient.setBlockedBy("EMPLOYEE_" + employeeId);
+                    }
+                } else {
+                    patient.setBlockedBy("SYSTEM");
+                }
+
+                log.warn("⚠️ Patient {} AUTO-BLOCKED: {} consecutive no-shows, blocked by {}", 
+                        patient.getPatientCode(), patient.getConsecutiveNoShows(), patient.getBlockedBy());
             }
 
         } else if (newStatus == AppointmentStatus.COMPLETED 

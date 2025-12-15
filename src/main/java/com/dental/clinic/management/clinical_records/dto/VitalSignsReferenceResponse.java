@@ -18,8 +18,7 @@ public class VitalSignsReferenceResponse {
     private Integer ageMax;
     private BigDecimal normalMin;
     private BigDecimal normalMax;
-    private BigDecimal lowThreshold;
-    private BigDecimal highThreshold;
+    // lowThreshold and highThreshold fields removed - deprecated and no longer used
     private String unit;
     private String description;
     private String effectiveDate;
