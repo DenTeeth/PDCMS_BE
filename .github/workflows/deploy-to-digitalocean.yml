@@ -1,0 +1,182 @@
+name: Deploy to DigitalOcean & Notify Discord
+
+on:
+  push:
+    branches:
+      - "feat/BE-903-deploy-digital-ocean" # Deploy khi push vào nhánh này
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout code
+      - name: 📦 Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Deploy to DigitalOcean Droplet via SSH
+      - name: 🚀 Deploy to DigitalOcean Droplet
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.DROPLET_IP }}
+          username: ${{ secrets.DROPLET_USERNAME }}
+          key: ${{ secrets.DROPLET_SSH_KEY }}
+          port: 22
+          script: |
+            # Navigate to project directory
+            cd ~/PDCMS_BE || exit 1
+
+            # Pull latest code
+            echo "📥 Pulling latest code..."
+            git pull origin feat/BE-903-deploy-digital-ocean
+
+            # Stop containers
+            echo "🛑 Stopping containers..."
+            docker-compose down
+
+            # Remove old images to force rebuild
+            echo "🗑️  Removing old images..."
+            docker rmi dentalclinic-app:latest || true
+
+            # Build and start containers
+            echo "🏗️  Building and starting containers..."
+            docker-compose up --build -d
+
+            # Wait for app to be healthy
+            echo "⏳ Waiting for application to be ready..."
+            sleep 30
+
+            # Health check
+            echo "🏥 Checking application health..."
+            for i in {1..10}; do
+              if curl -sf http://localhost:8080/actuator/health > /dev/null; then
+                echo "✅ Application is healthy!"
+                exit 0
+              fi
+              echo "⏳ Waiting... attempt $i/10"
+              sleep 10
+            done
+
+            echo "❌ Application health check failed!"
+            docker-compose logs --tail=50 app
+            exit 1
+
+      # 3. Discord Notification - Success
+      - name: 📢 Discord Notification - Deploy Success
+        if: success()
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          AUTHOR_NAME: ${{ github.event.head_commit.author.name }}
+          COMMIT_TIMESTAMP: ${{ github.event.head_commit.timestamp }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          # Escape special characters in commit message
+          COMMIT_MSG=$(echo "$COMMIT_MESSAGE" | sed 's/"/\\"/g' | sed "s/'/\\'/g")
+
+          # Format timestamp for Vietnam timezone (UTC+7)
+          FORMATTED_TIME=$(TZ='Asia/Ho_Chi_Minh' date -d "$COMMIT_TIMESTAMP" '+%d/%m/%Y %H:%M:%S')
+
+          curl -X POST -H "Content-Type: application/json" \
+               -d "{
+                 \"embeds\": [{
+                   \"title\": \"✅ Deploy Success!\",
+                   \"color\": 5763719,
+                   \"description\": \"**Dental Clinic Backend** đã được deploy thành công lên DigitalOcean!\",
+                   \"fields\": [
+                     {
+                       \"name\": \"🌿 Branch\",
+                       \"value\": \"\`feat/BE-903-deploy-digital-ocean\`\",
+                       \"inline\": true
+                     },
+                     {
+                       \"name\": \"📝 Commit\",
+                       \"value\": \"$COMMIT_MSG\",
+                       \"inline\": false
+                     },
+                     {
+                       \"name\": \"👤 Author\",
+                       \"value\": \"$AUTHOR_NAME\",
+                       \"inline\": true
+                     },
+                     {
+                       \"name\": \"⏰ Time\",
+                       \"value\": \"$FORMATTED_TIME (GMT+7)\",
+                       \"inline\": true
+                     },
+                     {
+                       \"name\": \"🔗 View Commit\",
+                       \"value\": \"[Click here](https://github.com/$REPO/commit/$SHA)\",
+                       \"inline\": false
+                     }
+                   ],
+                   \"thumbnail\": {
+                     \"url\": \"https://cdn-icons-png.flaticon.com/512/5610/5610944.png\"
+                   },
+                   \"footer\": {
+                     \"text\": \"Dental Clinic Management System\"
+                   }
+                 }]
+               }" \
+               "$DISCORD_WEBHOOK"
+
+      # 4. Discord Notification - Failure
+      - name: 📢 Discord Notification - Deploy Failed
+        if: failure()
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          AUTHOR_NAME: ${{ github.event.head_commit.author.name }}
+          COMMIT_TIMESTAMP: ${{ github.event.head_commit.timestamp }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          # Escape special characters in commit message
+          COMMIT_MSG=$(echo "$COMMIT_MESSAGE" | sed 's/"/\\"/g' | sed "s/'/\\'/g")
+
+          # Format timestamp for Vietnam timezone (UTC+7)
+          FORMATTED_TIME=$(TZ='Asia/Ho_Chi_Minh' date -d "$COMMIT_TIMESTAMP" '+%d/%m/%Y %H:%M:%S')
+
+          curl -X POST -H "Content-Type: application/json" \
+               -d "{
+                 \"embeds\": [{
+                   \"title\": \"❌ Deploy Failed!\",
+                   \"color\": 15158332,
+                   \"description\": \"**CẢNH BÁO:** Deploy **Dental Clinic Backend** thất bại!\",
+                   \"fields\": [
+                     {
+                       \"name\": \"🌿 Branch\",
+                       \"value\": \"\`feat/BE-903-deploy-digital-ocean\`\",
+                       \"inline\": true
+                     },
+                     {
+                       \"name\": \"📝 Commit\",
+                       \"value\": \"$COMMIT_MSG\",
+                       \"inline\": false
+                     },
+                     {
+                       \"name\": \"👤 Author\",
+                       \"value\": \"$AUTHOR_NAME\",
+                       \"inline\": true
+                     },
+                     {
+                       \"name\": \"⏰ Time\",
+                       \"value\": \"$FORMATTED_TIME (GMT+7)\",
+                       \"inline\": true
+                     },
+                     {
+                       \"name\": \"🔗 View Logs\",
+                       \"value\": \"[Click here](https://github.com/$REPO/actions/runs/$RUN_ID)\",
+                       \"inline\": false
+                     }
+                   ],
+                   \"thumbnail\": {
+                     \"url\": \"https://cdn-icons-png.flaticon.com/512/1828/1828843.png\"
+                   },
+                   \"footer\": {
+                     \"text\": \"Vui lòng kiểm tra logs và fix lỗi!\"
+                   }
+                 }]
+               }" \
+               "$DISCORD_WEBHOOK"
