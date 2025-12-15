@@ -66,85 +66,99 @@ jobs:
         if: success()
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          AUTHOR_NAME: ${{ github.event.head_commit.author.name }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
         run: |
-          curl -H "Content-Type: application/json" \
-               -d '{
-                 "embeds": [{
-                   "title": "✅ Deploy Success!",
-                   "color": 5763719,
-                   "description": "**Dental Clinic Backend** đã được deploy thành công lên DigitalOcean!",
-                   "fields": [
+          # Escape special characters in commit message
+          COMMIT_MSG=$(echo "$COMMIT_MESSAGE" | sed 's/"/\\"/g' | sed "s/'/\\'/g")
+          
+          curl -X POST -H "Content-Type: application/json" \
+               -d "{
+                 \"embeds\": [{
+                   \"title\": \"✅ Deploy Success!\",
+                   \"color\": 5763719,
+                   \"description\": \"**Dental Clinic Backend** đã được deploy thành công lên DigitalOcean!\",
+                   \"fields\": [
                      {
-                       "name": "🌿 Branch",
-                       "value": "`feat/BE-903-deploy-digital-ocean`",
-                       "inline": true
+                       \"name\": \"🌿 Branch\",
+                       \"value\": \"\`feat/BE-903-deploy-digital-ocean\`\",
+                       \"inline\": true
                      },
                      {
-                       "name": "📝 Commit",
-                       "value": "'"${{ github.event.head_commit.message }}"'",
-                       "inline": false
+                       \"name\": \"📝 Commit\",
+                       \"value\": \"$COMMIT_MSG\",
+                       \"inline\": false
                      },
                      {
-                       "name": "👤 Author",
-                       "value": "${{ github.event.head_commit.author.name }}",
-                       "inline": true
+                       \"name\": \"👤 Author\",
+                       \"value\": \"$AUTHOR_NAME\",
+                       \"inline\": true
                      },
                      {
-                       "name": "🔗 View Commit",
-                       "value": "[Click here](https://github.com/${{ github.repository }}/commit/${{ github.sha }})",
-                       "inline": false
+                       \"name\": \"🔗 View Commit\",
+                       \"value\": \"[Click here](https://github.com/$REPO/commit/$SHA)\",
+                       \"inline\": false
                      }
                    ],
-                   "thumbnail": {
-                     "url": "https://cdn-icons-png.flaticon.com/512/5610/5610944.png"
+                   \"thumbnail\": {
+                     \"url\": \"https://cdn-icons-png.flaticon.com/512/5610/5610944.png\"
                    },
-                   "footer": {
-                     "text": "Dental Clinic Management System"
+                   \"footer\": {
+                     \"text\": \"Dental Clinic Management System\"
                    }
                  }]
-               }' \
-               $DISCORD_WEBHOOK
+               }" \
+               "$DISCORD_WEBHOOK"
 
       # 4. Discord Notification - Failure
       - name: 📢 Discord Notification - Deploy Failed
         if: failure()
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          AUTHOR_NAME: ${{ github.event.head_commit.author.name }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
         run: |
-          curl -H "Content-Type: application/json" \
-               -d '{
-                 "embeds": [{
-                   "title": "❌ Deploy Failed!",
-                   "color": 15158332,
-                   "description": "**CẢNH BÁO:** Deploy **Dental Clinic Backend** thất bại!",
-                   "fields": [
+          # Escape special characters in commit message
+          COMMIT_MSG=$(echo "$COMMIT_MESSAGE" | sed 's/"/\\"/g' | sed "s/'/\\'/g")
+          
+          curl -X POST -H "Content-Type: application/json" \
+               -d "{
+                 \"embeds\": [{
+                   \"title\": \"❌ Deploy Failed!\",
+                   \"color\": 15158332,
+                   \"description\": \"**CẢNH BÁO:** Deploy **Dental Clinic Backend** thất bại!\",
+                   \"fields\": [
                      {
-                       "name": "🌿 Branch",
-                       "value": "`feat/BE-903-deploy-digital-ocean`",
-                       "inline": true
+                       \"name\": \"🌿 Branch\",
+                       \"value\": \"\`feat/BE-903-deploy-digital-ocean\`\",
+                       \"inline\": true
                      },
                      {
-                       "name": "📝 Commit",
-                       "value": "'"${{ github.event.head_commit.message }}"'",
-                       "inline": false
+                       \"name\": \"📝 Commit\",
+                       \"value\": \"$COMMIT_MSG\",
+                       \"inline\": false
                      },
                      {
-                       "name": "👤 Author",
-                       "value": "${{ github.event.head_commit.author.name }}",
-                       "inline": true
+                       \"name\": \"👤 Author\",
+                       \"value\": \"$AUTHOR_NAME\",
+                       \"inline\": true
                      },
                      {
-                       "name": "🔗 View Logs",
-                       "value": "[Click here](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})",
-                       "inline": false
+                       \"name\": \"🔗 View Logs\",
+                       \"value\": \"[Click here](https://github.com/$REPO/actions/runs/$RUN_ID)\",
+                       \"inline\": false
                      }
                    ],
-                   "thumbnail": {
-                     "url": "https://cdn-icons-png.flaticon.com/512/1828/1828843.png"
+                   \"thumbnail\": {
+                     \"url\": \"https://cdn-icons-png.flaticon.com/512/1828/1828843.png\"
                    },
-                   "footer": {
-                     "text": "Vui lòng kiểm tra logs và fix lỗi!"
+                   \"footer\": {
+                     \"text\": \"Vui lòng kiểm tra logs và fix lỗi!\"
                    }
                  }]
-               }' \
-               $DISCORD_WEBHOOK
+               }" \
+               "$DISCORD_WEBHOOK"
