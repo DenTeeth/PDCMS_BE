@@ -73,7 +73,7 @@ jobs:
         run: |
           # Escape special characters in commit message
           COMMIT_MSG=$(echo "$COMMIT_MESSAGE" | sed 's/"/\\"/g' | sed "s/'/\\'/g")
-          
+
           curl -X POST -H "Content-Type: application/json" \
                -d "{
                  \"embeds\": [{
@@ -124,7 +124,7 @@ jobs:
         run: |
           # Escape special characters in commit message
           COMMIT_MSG=$(echo "$COMMIT_MESSAGE" | sed 's/"/\\"/g' | sed "s/'/\\'/g")
-          
+
           curl -X POST -H "Content-Type: application/json" \
                -d "{
                  \"embeds\": [{
