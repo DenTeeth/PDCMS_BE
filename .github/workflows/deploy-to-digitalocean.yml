@@ -64,87 +64,87 @@ jobs:
       # 3. Discord Notification - Success
       - name: 📢 Discord Notification - Deploy Success
         if: success()
-        uses: ilshidur/action-discord@master
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-        with:
-          args: |
-            {
-              "embeds": [{
-                "title": "✅ Deploy Success!",
-                "color": 5763719,
-                "description": "**Dental Clinic Backend** đã được deploy thành công lên DigitalOcean!",
-                "fields": [
-                  {
-                    "name": "🌿 Branch",
-                    "value": "feat/BE-903-deploy-digital-ocean",
-                    "inline": true
-                  },
-                  {
-                    "name": "📝 Commit",
-                    "value": "${{ github.event.head_commit.message }}",
-                    "inline": false
-                  },
-                  {
-                    "name": "👤 Author",
-                    "value": "${{ github.event.head_commit.author.name }}",
-                    "inline": true
-                  },
-                  {
-                    "name": "🔗 Commit SHA",
-                    "value": "[`${{ github.sha }}`](https://github.com/${{ github.repository }}/commit/${{ github.sha }})",
-                    "inline": true
-                  }
-                ],
-                "thumbnail": {
-                  "url": "https://cdn-icons-png.flaticon.com/512/5610/5610944.png"
-                },
-                "footer": {
-                  "text": "Dental Clinic Management System"
-                }
-              }]
-            }
+        run: |
+          curl -H "Content-Type: application/json" \
+               -d '{
+                 "embeds": [{
+                   "title": "✅ Deploy Success!",
+                   "color": 5763719,
+                   "description": "**Dental Clinic Backend** đã được deploy thành công lên DigitalOcean!",
+                   "fields": [
+                     {
+                       "name": "🌿 Branch",
+                       "value": "`feat/BE-903-deploy-digital-ocean`",
+                       "inline": true
+                     },
+                     {
+                       "name": "📝 Commit",
+                       "value": "'"${{ github.event.head_commit.message }}"'",
+                       "inline": false
+                     },
+                     {
+                       "name": "👤 Author",
+                       "value": "${{ github.event.head_commit.author.name }}",
+                       "inline": true
+                     },
+                     {
+                       "name": "🔗 View Commit",
+                       "value": "[Click here](https://github.com/${{ github.repository }}/commit/${{ github.sha }})",
+                       "inline": false
+                     }
+                   ],
+                   "thumbnail": {
+                     "url": "https://cdn-icons-png.flaticon.com/512/5610/5610944.png"
+                   },
+                   "footer": {
+                     "text": "Dental Clinic Management System"
+                   }
+                 }]
+               }' \
+               $DISCORD_WEBHOOK
 
       # 4. Discord Notification - Failure
       - name: 📢 Discord Notification - Deploy Failed
         if: failure()
-        uses: ilshidur/action-discord@master
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-        with:
-          args: |
-            {
-              "embeds": [{
-                "title": "❌ Deploy Failed!",
-                "color": 15158332,
-                "description": "**CẢNH BÁO:** Deploy **Dental Clinic Backend** thất bại!",
-                "fields": [
-                  {
-                    "name": "🌿 Branch",
-                    "value": "feat/BE-903-deploy-digital-ocean",
-                    "inline": true
-                  },
-                  {
-                    "name": "📝 Commit",
-                    "value": "${{ github.event.head_commit.message }}",
-                    "inline": false
-                  },
-                  {
-                    "name": "👤 Author",
-                    "value": "${{ github.event.head_commit.author.name }}",
-                    "inline": true
-                  },
-                  {
-                    "name": "🔗 Action URL",
-                    "value": "[View Logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})",
-                    "inline": false
-                  }
-                ],
-                "thumbnail": {
-                  "url": "https://cdn-icons-png.flaticon.com/512/1828/1828843.png"
-                },
-                "footer": {
-                  "text": "Vui lòng kiểm tra logs và fix lỗi!"
-                }
-              }]
-            }
+        run: |
+          curl -H "Content-Type: application/json" \
+               -d '{
+                 "embeds": [{
+                   "title": "❌ Deploy Failed!",
+                   "color": 15158332,
+                   "description": "**CẢNH BÁO:** Deploy **Dental Clinic Backend** thất bại!",
+                   "fields": [
+                     {
+                       "name": "🌿 Branch",
+                       "value": "`feat/BE-903-deploy-digital-ocean`",
+                       "inline": true
+                     },
+                     {
+                       "name": "📝 Commit",
+                       "value": "'"${{ github.event.head_commit.message }}"'",
+                       "inline": false
+                     },
+                     {
+                       "name": "👤 Author",
+                       "value": "${{ github.event.head_commit.author.name }}",
+                       "inline": true
+                     },
+                     {
+                       "name": "🔗 View Logs",
+                       "value": "[Click here](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})",
+                       "inline": false
+                     }
+                   ],
+                   "thumbnail": {
+                     "url": "https://cdn-icons-png.flaticon.com/512/1828/1828843.png"
+                   },
+                   "footer": {
+                     "text": "Vui lòng kiểm tra logs và fix lỗi!"
+                   }
+                 }]
+               }' \
+               $DISCORD_WEBHOOK
