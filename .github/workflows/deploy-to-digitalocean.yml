@@ -78,48 +78,59 @@ jobs:
           # Format timestamp for Vietnam timezone (UTC+7)
           FORMATTED_TIME=$(TZ='Asia/Ho_Chi_Minh' date -d "$COMMIT_TIMESTAMP" '+%d/%m/%Y %H:%M:%S')
 
-          curl -X POST -H "Content-Type: application/json" \
-               -d "{
-                 \"embeds\": [{
-                   \"title\": \"✅ Deploy Success!\",
-                   \"color\": 5763719,
-                   \"description\": \"**Dental Clinic Backend** đã được deploy thành công lên DigitalOcean!\",
-                   \"fields\": [
-                     {
-                       \"name\": \"🌿 Branch\",
-                       \"value\": \"\`feat/BE-903-deploy-digital-ocean\`\",
-                       \"inline\": true
-                     },
-                     {
-                       \"name\": \"📝 Commit\",
-                       \"value\": \"$COMMIT_MSG\",
-                       \"inline\": false
-                     },
-                     {
-                       \"name\": \"👤 Author\",
-                       \"value\": \"$AUTHOR_NAME\",
-                       \"inline\": true
-                     },
-                     {
-                       \"name\": \"⏰ Time\",
-                       \"value\": \"$FORMATTED_TIME (GMT+7)\",
-                       \"inline\": true
-                     },
-                     {
-                       \"name\": \"🔗 View Commit\",
-                       \"value\": \"[Click here](https://github.com/$REPO/commit/$SHA)\",
-                       \"inline\": false
-                     }
-                   ],
-                   \"thumbnail\": {
-                     \"url\": \"https://cdn-icons-png.flaticon.com/512/5610/5610944.png\"
-                   },
-                   \"footer\": {
-                     \"text\": \"Dental Clinic Management System\"
-                   }
-                 }]
-               }" \
-               "$DISCORD_WEBHOOK"
+          # Download celebration GIF
+          echo "📥 Downloading celebration GIF..."
+          curl -L -o success.gif "https://media.discordapp.net/attachments/1134165112098398310/1450777439738396764/wjizi0a1cppf1.gif?ex=6943c547&is=694273c7&hm=d95c83a952e894f7d2f87a309ef1eccced89bc8d0b9a22b157ad47acd08b5380&=&width=300&height=300"
+
+          # Create JSON payload with GIF as attachment
+          PAYLOAD=$(cat <<EOF
+          {
+            "embeds": [{
+              "title": "✅ Deploy Success!",
+              "color": 5763719,
+              "description": "**Dental Clinic Backend** đã được deploy thành công lên DigitalOcean!",
+              "fields": [
+                {
+                  "name": "🌿 Branch",
+                  "value": "\`feat/BE-903-deploy-digital-ocean\`",
+                  "inline": true
+                },
+                {
+                  "name": "📝 Commit",
+                  "value": "$COMMIT_MSG",
+                  "inline": false
+                },
+                {
+                  "name": "👤 Author",
+                  "value": "$AUTHOR_NAME",
+                  "inline": true
+                },
+                {
+                  "name": "⏰ Time",
+                  "value": "$FORMATTED_TIME (GMT+7)",
+                  "inline": true
+                },
+                {
+                  "name": "🔗 View Commit",
+                  "value": "[Click here](https://github.com/$REPO/commit/$SHA)",
+                  "inline": false
+                }
+              ],
+              "image": {
+                "url": "attachment://success.gif"
+              },
+              "footer": {
+                "text": "Dental Clinic Management System"
+              }
+            }]
+          }
+          EOF
+          )
+
+          # Send to Discord with GIF attachment
+          curl -X POST "$DISCORD_WEBHOOK" \
+               -F "payload_json=$PAYLOAD" \
+               -F "file=@success.gif"
 
       # 4. Discord Notification - Failure
       - name: 📢 Discord Notification - Deploy Failed
