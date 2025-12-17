@@ -95,6 +95,10 @@ spring:
 # ==============================
 app:
   frontend-url: ${FRONTEND_URL:http://localhost:3000}
+  cors:
+    # Allow all origins for WebSocket in production
+    # TODO: Replace with specific FE domain when deployed
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:*}
 
 # ==============================
 # JWT Configuration (Production)

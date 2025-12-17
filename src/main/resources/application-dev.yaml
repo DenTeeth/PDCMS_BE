@@ -65,3 +65,12 @@ logging:
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
     com.example.dentalclinic: DEBUG
+
+# ==============================
+# Application Configuration (Development)
+# ==============================
+app:
+  frontend-url: ${FRONTEND_URL:http://localhost:3000}
+  cors:
+    # Allow localhost for development
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173,http://localhost:8080}
