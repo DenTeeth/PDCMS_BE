@@ -63,14 +63,15 @@ public class NotificationServiceImpl implements NotificationService {
         log.info("Marking notification {} as read for user: {}", notificationId, userId);
 
         Notification notification = notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new ResourceNotFoundException("Notification", "notificationId", notificationId));
+                .orElseThrow(() -> new ResourceNotFoundException("NOTIFICATION_NOT_FOUND",
+                        "Notification not found with ID: " + notificationId));
 
         if (!notification.getUserId().equals(userId)) {
             throw new IllegalArgumentException("User không có quyền đánh dấu thông báo này");
         }
 
         if (!notification.getIsRead()) {
-            notificationRepository.markAsRead(notificationId, userId, LocalDateTime.now());
+            notificationRepository.markAsRead(notificationId, userId);
             log.info("Notification {} marked as read", notificationId);
         }
     }
@@ -78,7 +79,7 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     public void markAllAsRead(Integer userId) {
         log.info("Marking all notifications as read for user: {}", userId);
-        notificationRepository.markAllAsRead(userId, LocalDateTime.now());
+        notificationRepository.markAllAsRead(userId);
     }
 
     @Override
@@ -102,7 +103,8 @@ public class NotificationServiceImpl implements NotificationService {
         log.info("Deleting notification {} for user: {}", notificationId, userId);
 
         Notification notification = notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new ResourceNotFoundException("Notification", "notificationId", notificationId));
+                .orElseThrow(() -> new ResourceNotFoundException("NOTIFICATION_NOT_FOUND",
+                        "Notification not found with ID: " + notificationId));
 
         if (!notification.getUserId().equals(userId)) {
             throw new IllegalArgumentException("User không có quyền xóa thông báo này");

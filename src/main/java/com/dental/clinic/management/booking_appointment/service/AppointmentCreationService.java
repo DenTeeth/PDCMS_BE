@@ -985,12 +985,19 @@ public class AppointmentCreationService {
          */
         private void sendAppointmentCreatedNotification(Appointment appointment, Patient patient) {
                 try {
+                        // Get userId from patient's account
+                        if (patient.getAccount() == null) {
+                                log.warn("Patient {} has no account, cannot send notification", patient.getPatientId());
+                                return;
+                        }
+
+                        Integer userId = patient.getAccount().getAccountId();
                         String formattedTime = appointment.getAppointmentStartTime()
                                         .format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
 
                         com.dental.clinic.management.notification.dto.CreateNotificationRequest notificationRequest = com.dental.clinic.management.notification.dto.CreateNotificationRequest
                                         .builder()
-                                        .userId(patient.getUserId())
+                                        .userId(userId)
                                         .type(com.dental.clinic.management.notification.enums.NotificationType.APPOINTMENT_CREATED)
                                         .title("Đặt lịch thành công")
                                         .message(String.format("Cuộc hẹn %s đã được đặt thành công vào %s",
@@ -1002,7 +1009,7 @@ public class AppointmentCreationService {
 
                         notificationService.createNotification(notificationRequest);
                         log.info("Notification sent to patient userId={} for appointment {}",
-                                        patient.getUserId(), appointment.getAppointmentCode());
+                                        userId, appointment.getAppointmentCode());
                 } catch (Exception e) {
                         log.error("Failed to send notification for appointment {}: {}",
                                         appointment.getAppointmentCode(), e.getMessage());
