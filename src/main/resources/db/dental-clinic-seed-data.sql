@@ -377,6 +377,12 @@ VALUES
 ('PATIENT_IMAGE_COMMENT_READ', 'PATIENT_IMAGE_COMMENT_READ', 'PATIENT_IMAGES', 'Xem nhận xét trên hình ảnh', 295, NULL, TRUE, NOW()),
 ('PATIENT_IMAGE_COMMENT_UPDATE', 'PATIENT_IMAGE_COMMENT_UPDATE', 'PATIENT_IMAGES', 'Cập nhật nhận xét của mình', 296, NULL, TRUE, NOW()),
 ('PATIENT_IMAGE_COMMENT_DELETE', 'PATIENT_IMAGE_COMMENT_DELETE', 'PATIENT_IMAGES', 'Xóa nhận xét của mình', 297, NULL, TRUE, NOW()),
+
+-- MODULE 16: NOTIFICATION (Hệ thống thông báo real-time)
+('VIEW_NOTIFICATION', 'VIEW_NOTIFICATION', 'NOTIFICATION', 'Xem thông báo của bản thân', 300, NULL, TRUE, NOW()),
+('DELETE_NOTIFICATION', 'DELETE_NOTIFICATION', 'NOTIFICATION', 'Xóa thông báo của bản thân', 301, NULL, TRUE, NOW()),
+('MANAGE_NOTIFICATION', 'MANAGE_NOTIFICATION', 'NOTIFICATION', 'Toàn quyền quản lý thông báo (Admin/System)', 302, NULL, TRUE, NOW()),
+
 ('WRITE_CLINICAL_RECORD', 'WRITE_CLINICAL_RECORD', 'CLINICAL_RECORDS', 'Tao va cap nhat benh an, them thu thuat (API 8.5, 9.2, 9.3)', 285, NULL, TRUE, NOW()),
 ('UPLOAD_ATTACHMENT', 'UPLOAD_ATTACHMENT', 'CLINICAL_RECORDS', 'Upload file dinh kem vao benh an (X-quang, anh, PDF) - API 8.11', 286, NULL, TRUE, NOW()),
 ('VIEW_ATTACHMENT', 'VIEW_ATTACHMENT', 'CLINICAL_RECORDS', 'Xem danh sach file dinh kem cua benh an - API 8.12', 287, NULL, TRUE, NOW()),
@@ -485,7 +491,10 @@ VALUES
 ('ROLE_RECEPTIONIST', 'VIEW_WAREHOUSE'),
 ('ROLE_RECEPTIONIST', 'VIEW_ITEMS'),
 -- Patient Images (read only for receptionist)
-('ROLE_RECEPTIONIST', 'PATIENT_IMAGE_READ')
+('ROLE_RECEPTIONIST', 'PATIENT_IMAGE_READ'),
+-- Notification permissions
+('ROLE_RECEPTIONIST', 'VIEW_NOTIFICATION'),
+('ROLE_RECEPTIONIST', 'DELETE_NOTIFICATION')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
@@ -603,7 +612,10 @@ VALUES
 ('ROLE_PATIENT', 'CREATE_APPOINTMENT'),
 -- NEW: Treatment Plan permissions
 ('ROLE_PATIENT', 'VIEW_TREATMENT_PLAN_OWN'), -- Can only view their own treatment plans
-('ROLE_PATIENT', 'VIEW_ATTACHMENT') -- Can view attachments of own clinical records
+('ROLE_PATIENT', 'VIEW_ATTACHMENT'), -- Can view attachments of own clinical records
+-- Notification permissions
+('ROLE_PATIENT', 'VIEW_NOTIFICATION'), -- Can view own notifications
+('ROLE_PATIENT', 'DELETE_NOTIFICATION') -- Can delete own notifications
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 

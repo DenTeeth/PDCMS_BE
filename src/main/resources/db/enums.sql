@@ -113,6 +113,23 @@ CREATE TYPE warehouseactiontype AS ENUM ('IMPORT', 'EXPORT', 'TRANSFER', 'ADJUST
 DROP TYPE IF EXISTS transactiontype CASCADE;
 CREATE TYPE transactiontype AS ENUM ('PURCHASE', 'SALE', 'SERVICE', 'TRANSFER_IN', 'TRANSFER_OUT', 'ADJUSTMENT');
 
+-- Notification ENUMs
+DROP TYPE IF EXISTS notification_type CASCADE;
+CREATE TYPE notification_type AS ENUM (
+    'APPOINTMENT_CREATED',
+    'APPOINTMENT_UPDATED',
+    'APPOINTMENT_CANCELLED',
+    'APPOINTMENT_REMINDER',
+    'APPOINTMENT_COMPLETED',
+    'TREATMENT_PLAN_APPROVED',
+    'TREATMENT_PLAN_UPDATED',
+    'PAYMENT_RECEIVED',
+    'SYSTEM_ANNOUNCEMENT'
+);
+
+DROP TYPE IF EXISTS notification_entity_type CASCADE;
+CREATE TYPE notification_entity_type AS ENUM ('APPOINTMENT', 'TREATMENT_PLAN', 'PAYMENT', 'SYSTEM');
+
 -- ============================================
--- END: 39 ENUM TYPES CREATED
+-- END: 41 ENUM TYPES CREATED
 -- ============================================

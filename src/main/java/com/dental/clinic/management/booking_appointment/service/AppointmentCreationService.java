@@ -80,6 +80,9 @@ public class AppointmentCreationService {
         // V21: Clinical Rules Validation
         private final com.dental.clinic.management.service.service.ClinicalRulesValidationService clinicalRulesValidationService;
 
+        // Notification Service
+        private final com.dental.clinic.management.notification.service.NotificationService notificationService;
+
         private static final DateTimeFormatter ISO_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
         private static final String ENTITY_NAME = "appointment";
 
@@ -100,15 +103,17 @@ public class AppointmentCreationService {
                 log.debug("Appointment creator: employeeId={}", createdById);
 
                 // TODO: Implement patient booking block warnings and notifications:
-                // 1. Send email to BLOCKED PATIENT when they try to book (or receptionist tries for them)
-                //    - Email content: "Tài khoản của bạn đã bị chặn đặt lịch. Lý do: [reason]. Vui lòng liên hệ phòng khám."
-                //    - Use patient.getEmail() if available
+                // 1. Send email to BLOCKED PATIENT when they try to book (or receptionist tries
+                // for them)
+                // - Email content: "Tài khoản của bạn đã bị chặn đặt lịch. Lý do: [reason]. Vui
+                // lòng liên hệ phòng khám."
+                // - Use patient.getEmail() if available
                 // 2. Return warning flag in patient response for UI to show BEFORE booking form
-                //    - Frontend should show: blocked reason, who blocked, when blocked, notes
-                //    - Warning banner at patient selection step, not after submission
+                // - Frontend should show: blocked reason, who blocked, when blocked, notes
+                // - Warning banner at patient selection step, not after submission
                 // 3. Add allowBlockedPatient flag in request for admin override
-                //    - Only admin/receptionist with permission can book for blocked patient
-                //    - Log override in audit trail
+                // - Only admin/receptionist with permission can book for blocked patient
+                // - Log override in audit trail
 
                 // STEP 2: Validate all resources exist and are active
                 Patient patient = validatePatient(request.getPatientCode());
@@ -316,6 +321,9 @@ public class AppointmentCreationService {
 
                 insertAuditLog(appointment, createdById);
 
+                // Send notification to patient
+                sendAppointmentCreatedNotification(appointment, patient);
+
                 log.info("Successfully created appointment internally: {}", appointment.getAppointmentCode());
                 return appointment;
         }
@@ -411,7 +419,8 @@ public class AppointmentCreationService {
                 // Admin/Receptionist/Accountant cannot be doctors
                 if (!doctor.isMedicalStaff()) {
                         throw new BadRequestAlertException(
-                                        "Employee must be medical staff (DENTIST/NURSE/INTERN role) to be assigned as doctor. " +
+                                        "Employee must be medical staff (DENTIST/NURSE/INTERN role) to be assigned as doctor. "
+                                                        +
                                                         "Employee " + employeeCode
                                                         + " is not medical staff (Admin/Receptionist/Accountant cannot be doctors)",
                                         ENTITY_NAME,
@@ -503,7 +512,8 @@ public class AppointmentCreationService {
                                         "PARTICIPANT_NOT_FOUND");
                 }
 
-                // CRITICAL: Validate all participants are medical staff (dentist, nurse, or intern)
+                // CRITICAL: Validate all participants are medical staff (dentist, nurse, or
+                // intern)
                 // Admin/Receptionist/Accountant cannot be participants
                 List<String> nonMedicalStaff = participants.stream()
                                 .filter(p -> !p.isMedicalStaff())
@@ -592,9 +602,11 @@ public class AppointmentCreationService {
         // ====================================================================
 
         private void validateDoctorSpecializations(Employee doctor, List<DentalService> services) {
-                // Get all specialization IDs required by services (filter out null specializations)
+                // Get all specialization IDs required by services (filter out null
+                // specializations)
                 List<Integer> requiredSpecializationIds = services.stream()
-                                .filter(s -> s.getSpecialization() != null) // Some services don't require specialization
+                                .filter(s -> s.getSpecialization() != null) // Some services don't require
+                                                                            // specialization
                                 .map(s -> s.getSpecialization().getSpecializationId())
                                 .distinct()
                                 .collect(Collectors.toList());
@@ -606,12 +618,14 @@ public class AppointmentCreationService {
 
                 // Get doctor's specializations (from @ManyToMany relationship)
                 Set<Specialization> doctorSpecializations = doctor.getSpecializations();
-                
-                // If doctor has no specializations (e.g., nurse), they cannot perform specialized services
+
+                // If doctor has no specializations (e.g., nurse), they cannot perform
+                // specialized services
                 if (doctorSpecializations == null || doctorSpecializations.isEmpty()) {
                         throw new BadRequestAlertException(
                                         "Doctor " + doctor.getEmployeeCode()
-                                                        + " has no specializations but services require: " + requiredSpecializationIds
+                                                        + " has no specializations but services require: "
+                                                        + requiredSpecializationIds
                                                         + ". Nurses cannot perform specialized services like X-Ray.",
                                         ENTITY_NAME,
                                         "EMPLOYEE_NOT_QUALIFIED");
@@ -632,7 +646,8 @@ public class AppointmentCreationService {
                         throw new BadRequestAlertException(
                                         "Doctor " + doctor.getEmployeeCode()
                                                         + " does not have required specializations. Missing IDs: "
-                                                        + missingSpecIds + ". For example, X-Ray services require Diagnostic Imaging specialization.",
+                                                        + missingSpecIds
+                                                        + ". For example, X-Ray services require Diagnostic Imaging specialization.",
                                         ENTITY_NAME,
                                         "EMPLOYEE_NOT_QUALIFIED");
                 }
@@ -965,6 +980,37 @@ public class AppointmentCreationService {
                 appointmentAuditLogRepository.save(log);
         }
 
+        /**
+         * Send notification to patient when appointment is created
+         */
+        private void sendAppointmentCreatedNotification(Appointment appointment, Patient patient) {
+                try {
+                        String formattedTime = appointment.getAppointmentStartTime()
+                                        .format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+
+                        com.dental.clinic.management.notification.dto.CreateNotificationRequest notificationRequest = com.dental.clinic.management.notification.dto.CreateNotificationRequest
+                                        .builder()
+                                        .userId(patient.getUserId())
+                                        .type(com.dental.clinic.management.notification.enums.NotificationType.APPOINTMENT_CREATED)
+                                        .title("Đặt lịch thành công")
+                                        .message(String.format("Cuộc hẹn %s đã được đặt thành công vào %s",
+                                                        appointment.getAppointmentCode(), formattedTime))
+                                        .relatedEntityType(
+                                                        com.dental.clinic.management.notification.enums.NotificationEntityType.APPOINTMENT)
+                                        .relatedEntityId(appointment.getAppointmentCode())
+                                        .build();
+
+                        notificationService.createNotification(notificationRequest);
+                        log.info("Notification sent to patient userId={} for appointment {}",
+                                        patient.getUserId(), appointment.getAppointmentCode());
+                } catch (Exception e) {
+                        log.error("Failed to send notification for appointment {}: {}",
+                                        appointment.getAppointmentCode(), e.getMessage());
+                        // Don't throw exception - notification failure should not block appointment
+                        // creation
+                }
+        }
+
         // ====================================================================
         // STEP 9: Build Response
         // ====================================================================
@@ -1006,9 +1052,9 @@ public class AppointmentCreationService {
                                                 .isActive(patient.getIsActive())
                                                 .consecutiveNoShows(patient.getConsecutiveNoShows())
                                                 .isBookingBlocked(patient.getIsBookingBlocked())
-                                                .bookingBlockReason(patient.getBookingBlockReason() != null 
-                                                        ? patient.getBookingBlockReason().name() 
-                                                        : null)
+                                                .bookingBlockReason(patient.getBookingBlockReason() != null
+                                                                ? patient.getBookingBlockReason().name()
+                                                                : null)
                                                 .build())
                                 .doctor(DoctorSummary.builder()
                                                 .employeeCode(doctor.getEmployeeCode())
@@ -1230,9 +1276,10 @@ public class AppointmentCreationService {
          * First appointment must be booked within 7 days of the plan's start date
          * to ensure timely treatment initiation.
          *
-         * @param itemIds List of plan item IDs being booked
+         * @param itemIds              List of plan item IDs being booked
          * @param appointmentStartTime Requested appointment start time
-         * @throws BadRequestAlertException if first appointment is scheduled too far from plan start
+         * @throws BadRequestAlertException if first appointment is scheduled too far
+         *                                  from plan start
          */
         private void validatePlanStartDateProximity(List<Long> itemIds, LocalDateTime appointmentStartTime) {
                 try {
@@ -1254,28 +1301,29 @@ public class AppointmentCreationService {
                                 LocalDate appointmentDate = appointmentStartTime.toLocalDate();
 
                                 // Calculate days between plan start and appointment
-                                long daysDifference = java.time.temporal.ChronoUnit.DAYS.between(planStartDate, appointmentDate);
+                                long daysDifference = java.time.temporal.ChronoUnit.DAYS.between(planStartDate,
+                                                appointmentDate);
 
                                 if (daysDifference > 7) {
                                         throw new BadRequestAlertException(
                                                         String.format(
-                                                                "Lịch hẹn đầu tiên phải được đặt trong vòng 7 ngày kể từ ngày bắt đầu kế hoạch điều trị. "
-                                                                + "Ngày bắt đầu kế hoạch: %s, Ngày hẹn yêu cầu: %s (cách nhau %d ngày). "
-                                                                + "Vui lòng chọn ngày hẹn từ %s đến %s.",
-                                                                planStartDate,
-                                                                appointmentDate,
-                                                                daysDifference,
-                                                                planStartDate,
-                                                                planStartDate.plusDays(7)),
+                                                                        "Lịch hẹn đầu tiên phải được đặt trong vòng 7 ngày kể từ ngày bắt đầu kế hoạch điều trị. "
+                                                                                        + "Ngày bắt đầu kế hoạch: %s, Ngày hẹn yêu cầu: %s (cách nhau %d ngày). "
+                                                                                        + "Vui lòng chọn ngày hẹn từ %s đến %s.",
+                                                                        planStartDate,
+                                                                        appointmentDate,
+                                                                        daysDifference,
+                                                                        planStartDate,
+                                                                        planStartDate.plusDays(7)),
                                                         ENTITY_NAME,
                                                         "FIRST_APPOINTMENT_TOO_FAR_FROM_PLAN_START");
                                 } else if (daysDifference < 0) {
                                         throw new BadRequestAlertException(
                                                         String.format(
-                                                                "Lịch hẹn không thể đặt trước ngày bắt đầu kế hoạch điều trị. "
-                                                                + "Ngày bắt đầu kế hoạch: %s, Ngày hẹn yêu cầu: %s.",
-                                                                planStartDate,
-                                                                appointmentDate),
+                                                                        "Lịch hẹn không thể đặt trước ngày bắt đầu kế hoạch điều trị. "
+                                                                                        + "Ngày bắt đầu kế hoạch: %s, Ngày hẹn yêu cầu: %s.",
+                                                                        planStartDate,
+                                                                        appointmentDate),
                                                         ENTITY_NAME,
                                                         "APPOINTMENT_BEFORE_PLAN_START");
                                 }
@@ -1291,7 +1339,8 @@ public class AppointmentCreationService {
                 } catch (Exception e) {
                         log.error("Error validating plan start date proximity", e);
                         throw new BadRequestAlertException(
-                                        "Không thể xác thực thời gian đặt lịch với kế hoạch điều trị: " + e.getMessage(),
+                                        "Không thể xác thực thời gian đặt lịch với kế hoạch điều trị: "
+                                                        + e.getMessage(),
                                         ENTITY_NAME,
                                         "PLAN_DATE_VALIDATION_ERROR");
                 }

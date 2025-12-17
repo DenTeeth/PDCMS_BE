@@ -64,6 +64,12 @@
             <artifactId>spring-boot-starter-mail</artifactId>
         </dependency>
 
+        <!-- WebSocket Support -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-websocket</artifactId>
+        </dependency>
+
         <!-- DotEnv - Load .env file for environment variables -->
         <dependency>
             <groupId>me.paulschwarz</groupId>
