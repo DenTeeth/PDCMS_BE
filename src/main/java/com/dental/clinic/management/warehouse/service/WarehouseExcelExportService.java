@@ -10,6 +10,8 @@ import com.dental.clinic.management.warehouse.enums.StockStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFCellStyle;
+import org.apache.poi.xssf.usermodel.XSSFColor;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 
@@ -421,14 +423,18 @@ public class WarehouseExcelExportService {
     }
 
     private CellStyle createOutOfStockDataStyle(Workbook workbook) {
-        CellStyle style = workbook.createCellStyle();
+        XSSFCellStyle style = (XSSFCellStyle) workbook.createCellStyle();
         Font font = workbook.createFont();
         font.setBold(true);
         style.setFont(font);
         style.setAlignment(HorizontalAlignment.LEFT);
         style.setVerticalAlignment(VerticalAlignment.CENTER);
-        style.setFillForegroundColor(IndexedColors.RED.getIndex());
+
+        // Use specific color #fa6666 (RGB: 250, 102, 102)
+        XSSFColor outOfStockColor = new XSSFColor(new byte[] { (byte) 250, (byte) 102, (byte) 102 }, null);
+        style.setFillForegroundColor(outOfStockColor);
         style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
         style.setBorderBottom(BorderStyle.THIN);
         style.setBorderTop(BorderStyle.THIN);
         style.setBorderLeft(BorderStyle.THIN);
@@ -437,15 +443,19 @@ public class WarehouseExcelExportService {
     }
 
     private CellStyle createOutOfStockNumberStyle(Workbook workbook) {
-        CellStyle style = workbook.createCellStyle();
+        XSSFCellStyle style = (XSSFCellStyle) workbook.createCellStyle();
         Font font = workbook.createFont();
         font.setBold(true);
         style.setFont(font);
         style.setAlignment(HorizontalAlignment.RIGHT);
         style.setVerticalAlignment(VerticalAlignment.CENTER);
         style.setDataFormat(workbook.createDataFormat().getFormat("#,##0"));
-        style.setFillForegroundColor(IndexedColors.RED.getIndex());
+
+        // Use specific color #fa6666 (RGB: 250, 102, 102)
+        XSSFColor outOfStockColor = new XSSFColor(new byte[] { (byte) 250, (byte) 102, (byte) 102 }, null);
+        style.setFillForegroundColor(outOfStockColor);
         style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
         style.setBorderBottom(BorderStyle.THIN);
         style.setBorderTop(BorderStyle.THIN);
         style.setBorderLeft(BorderStyle.THIN);
@@ -454,14 +464,18 @@ public class WarehouseExcelExportService {
     }
 
     private CellStyle createOutOfStockDateStyle(Workbook workbook) {
-        CellStyle style = workbook.createCellStyle();
+        XSSFCellStyle style = (XSSFCellStyle) workbook.createCellStyle();
         Font font = workbook.createFont();
         font.setBold(true);
         style.setFont(font);
         style.setAlignment(HorizontalAlignment.CENTER);
         style.setVerticalAlignment(VerticalAlignment.CENTER);
-        style.setFillForegroundColor(IndexedColors.RED.getIndex());
+
+        // Use specific color #fa6666 (RGB: 250, 102, 102)
+        XSSFColor outOfStockColor = new XSSFColor(new byte[] { (byte) 250, (byte) 102, (byte) 102 }, null);
+        style.setFillForegroundColor(outOfStockColor);
         style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
         style.setBorderBottom(BorderStyle.THIN);
         style.setBorderTop(BorderStyle.THIN);
         style.setBorderLeft(BorderStyle.THIN);

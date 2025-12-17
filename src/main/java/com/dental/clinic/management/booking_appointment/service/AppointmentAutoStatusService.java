@@ -15,9 +15,9 @@ import java.util.List;
 
 /**
  * Scheduled service for automatic appointment status transitions.
- * 
+ *
  * Rule #6: Auto-cancel appointments if patient arrives >15 minutes late
- * 
+ *
  * Business Logic:
  * - Runs every 5 minutes
  * - Finds SCHEDULED appointments where: startTime + 15 minutes < now
@@ -34,8 +34,9 @@ public class AppointmentAutoStatusService {
 
     /**
      * Cron: Every 5 minutes
-     * Check for appointments that are >15 minutes past start time and still SCHEDULED
-     * 
+     * Check for appointments that are >15 minutes past start time and still
+     * SCHEDULED
+     *
      * Rule #6: Late arrivals (>15 min) are automatically marked as NO_SHOW
      */
     @Scheduled(cron = "0 */5 * * * *") // Every 5 minutes
@@ -43,7 +44,7 @@ public class AppointmentAutoStatusService {
     public void autoMarkLateAppointmentsAsNoShow() {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime cutoffTime = now.minusMinutes(15);
-        
+
         log.info("Running scheduled job: Auto-mark late appointments as NO_SHOW (cutoff: {})", cutoffTime);
 
         // Find SCHEDULED appointments where start time + 15 minutes has passed
@@ -74,12 +75,19 @@ public class AppointmentAutoStatusService {
                 UpdateAppointmentStatusRequest request = new UpdateAppointmentStatusRequest();
                 request.setStatus(AppointmentStatus.NO_SHOW.name());
                 request.setReasonCode("OTHER");
+
+                // Format Vietnamese date/time (dd/MM/yyyy HH:mm)
+                java.time.format.DateTimeFormatter vietnameseFormatter = java.time.format.DateTimeFormatter
+                        .ofPattern("dd/MM/yyyy HH:mm");
+                String originalTime = appointment.getAppointmentStartTime().format(vietnameseFormatter);
+                String systemTime = now.format(vietnameseFormatter);
+
                 request.setNotes(String.format(
-                        "Auto-marked as NO_SHOW by system: Patient arrived >15 minutes late (%d minutes late). " +
-                        "Original appointment time: %s. System time: %s.",
+                        "Hệ thống tự động đánh dấu KHÔNG ĐẾN: Bệnh nhân đến trễ hơn 15 phút (trễ %d phút). " +
+                                "Thời gian lịch hẹn gốc: %s. Thời gian hệ thống: %s.",
                         minutesLate,
-                        appointment.getAppointmentStartTime(),
-                        now));
+                        originalTime,
+                        systemTime));
 
                 statusService.updateStatus(appointment.getAppointmentCode(), request);
 

@@ -139,7 +139,7 @@ public class AppointmentStatusService {
             appointment.setNotes(request.getNotes());
         }
         appointmentRepository.save(appointment);
-        
+
         // Force flush appointment changes before updating related entities
         entityManager.flush();
 
@@ -182,7 +182,8 @@ public class AppointmentStatusService {
      * - CANCELLED: Must provide reasonCode
      * - Rule #4: 24h cancellation deadline - late cancellation causes penalty
      */
-    private void validateBusinessRules(Appointment appointment, AppointmentStatus newStatus, UpdateAppointmentStatusRequest request) {
+    private void validateBusinessRules(Appointment appointment, AppointmentStatus newStatus,
+            UpdateAppointmentStatusRequest request) {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime appointmentStartTime = appointment.getAppointmentStartTime();
         LocalDateTime appointmentEndTime = appointment.getAppointmentEndTime();
@@ -191,7 +192,8 @@ public class AppointmentStatusService {
 
         // RULE: Date-based status restrictions
         // CANCELLED can happen anytime
-        // CHECKED_IN, IN_PROGRESS, COMPLETED, NO_SHOW can only happen on appointment date
+        // CHECKED_IN, IN_PROGRESS, COMPLETED, NO_SHOW can only happen on appointment
+        // date
         if (newStatus != AppointmentStatus.CANCELLED) {
             if (!today.equals(appointmentDate)) {
                 throw new IllegalStateException(
@@ -239,7 +241,8 @@ public class AppointmentStatusService {
             if (now.isAfter(latestCheckIn)) {
                 long minutesLate = java.time.Duration.between(appointmentStartTime, now).toMinutes();
                 throw new IllegalStateException(
-                        String.format("Bệnh nhân đến trễ %d phút (quá 45 phút). Vui lòng đánh dấu NO_SHOW thay vì CHECKED_IN.",
+                        String.format(
+                                "Bệnh nhân đến trễ %d phút (quá 45 phút). Vui lòng đánh dấu NO_SHOW thay vì CHECKED_IN.",
                                 minutesLate));
             }
         }
@@ -335,8 +338,8 @@ public class AppointmentStatusService {
         }
 
         AppointmentAuditLog auditLog = AppointmentAuditLog.builder()
-                .appointment(appointment)  // Set the relationship, not the ID
-                .performedByEmployee(performedByEmployee)  // Set the relationship
+                .appointment(appointment) // Set the relationship, not the ID
+                .performedByEmployee(performedByEmployee) // Set the relationship
                 .actionType(AppointmentActionType.STATUS_CHANGE)
                 .oldStatus(oldStatus)
                 .newStatus(newStatus)
@@ -384,25 +387,31 @@ public class AppointmentStatusService {
     }
 
     /**
-     * V21.5: Auto-update linked treatment plan item statuses when appointment status changes.
-     * 
+     * V21.5: Auto-update linked treatment plan item statuses when appointment
+     * status changes.
+     *
      * Status Mapping:
      * - Appointment IN_PROGRESS → Plan items IN_PROGRESS
      * - Appointment COMPLETED → Plan items COMPLETED (with completedAt timestamp)
      * - Appointment CANCELLED → Plan items READY_FOR_BOOKING (allow re-booking)
-     * 
-     * This ensures treatment plan items stay synchronized with appointment progress,
+     *
+     * This ensures treatment plan items stay synchronized with appointment
+     * progress,
      * eliminating manual status updates and preventing data inconsistency.
-     * 
-     * @param appointmentId The appointment ID (Integer type from Appointment entity)
+     *
+     * @param appointmentId     The appointment ID (Integer type from Appointment
+     *                          entity)
      * @param appointmentStatus The new appointment status
-     * @param timestamp The timestamp to use for completedAt (when status = COMPLETED)
+     * @param timestamp         The timestamp to use for completedAt (when status =
+     *                          COMPLETED)
      */
-    private void updateLinkedPlanItemsStatus(Integer appointmentId, AppointmentStatus appointmentStatus, LocalDateTime timestamp) {
+    private void updateLinkedPlanItemsStatus(Integer appointmentId, AppointmentStatus appointmentStatus,
+            LocalDateTime timestamp) {
         // Only update plan items for specific status transitions
-        if (appointmentStatus != AppointmentStatus.IN_PROGRESS 
-                && appointmentStatus != AppointmentStatus.COMPLETED 
-                && appointmentStatus != AppointmentStatus.CANCELLED) {
+        if (appointmentStatus != AppointmentStatus.IN_PROGRESS
+                && appointmentStatus != AppointmentStatus.COMPLETED
+                && appointmentStatus != AppointmentStatus.CANCELLED
+                && appointmentStatus != AppointmentStatus.NO_SHOW) {
             log.debug("No plan item update needed for appointment status: {}", appointmentStatus);
             return;
         }
@@ -410,9 +419,10 @@ public class AppointmentStatusService {
         // Find all plan items linked to this appointment
         String findItemsQuery = "SELECT item_id FROM appointment_plan_items WHERE appointment_id = ?";
         List<Long> itemIds = jdbcTemplate.queryForList(findItemsQuery, Long.class, appointmentId.longValue());
-        
-        log.info(" Found {} plan items linked to appointment {} for status {}", itemIds.size(), appointmentId, appointmentStatus);
-        
+
+        log.info(" Found {} plan items linked to appointment {} for status {}", itemIds.size(), appointmentId,
+                appointmentStatus);
+
         if (itemIds.isEmpty()) {
             log.debug("No plan items linked to appointment {}", appointmentId);
             return;
@@ -430,12 +440,16 @@ public class AppointmentStatusService {
             case CANCELLED:
                 targetStatus = PlanItemStatus.READY_FOR_BOOKING; // Allow re-booking
                 break;
+            case NO_SHOW:
+                targetStatus = PlanItemStatus.READY_FOR_BOOKING; // Allow re-booking after NO_SHOW
+                break;
             default:
                 log.warn("Unexpected appointment status for plan item update: {}", appointmentStatus);
                 return;
         }
 
-        // Update plan items based on appointment status using JPA (ensures same transaction)
+        // Update plan items based on appointment status using JPA (ensures same
+        // transaction)
         try {
             int updatedCount = 0;
             for (Long itemId : itemIds) {
@@ -448,19 +462,19 @@ public class AppointmentStatusService {
                     updatedCount++;
                 }
             }
-            
+
             if (updatedCount == 0) {
                 log.warn(" No plan items updated for appointment {} - itemIds: {}", appointmentId, itemIds);
             } else {
                 if (appointmentStatus == AppointmentStatus.COMPLETED) {
-                    log.info(" Updated {} plan items to COMPLETED with timestamp for appointment {}", 
-                        updatedCount, appointmentId);
+                    log.info(" Updated {} plan items to COMPLETED with timestamp for appointment {}",
+                            updatedCount, appointmentId);
                 } else {
-                    log.info(" Updated {} plan items to {} for appointment {}", 
-                        updatedCount, targetStatus, appointmentId);
+                    log.info(" Updated {} plan items to {} for appointment {}",
+                            updatedCount, targetStatus, appointmentId);
                 }
             }
-            
+
             // Force flush plan item updates to database before checking phases
             entityManager.flush();
         } catch (Exception e) {
@@ -473,19 +487,21 @@ public class AppointmentStatusService {
     }
 
     /**
-     * Check and auto-complete phases when all items in a phase are COMPLETED or SKIPPED.
-     * 
-     * This method is called after updating plan items from appointment status changes.
+     * Check and auto-complete phases when all items in a phase are COMPLETED or
+     * SKIPPED.
+     *
+     * This method is called after updating plan items from appointment status
+     * changes.
      * It ensures that when all items in a phase are completed, the phase status is
      * automatically updated to COMPLETED.
-     * 
+     *
      * Algorithm:
      * 1. Get unique phase IDs from the updated items
      * 2. For each phase, load all items
      * 3. Check if all items are COMPLETED or SKIPPED
      * 4. If yes, update phase status to COMPLETED with completion date
-     * 
-     * @param itemIds List of item IDs that were just updated
+     *
+     * @param itemIds           List of item IDs that were just updated
      * @param appointmentStatus The appointment status (only check for COMPLETED)
      */
     private void checkAndCompleteAffectedPhases(List<Long> itemIds, AppointmentStatus appointmentStatus) {
@@ -511,37 +527,39 @@ public class AppointmentStatusService {
                 return;
             }
 
-        log.debug("Checking {} phases for auto-completion", phaseIds.size());
+            log.debug("Checking {} phases for auto-completion", phaseIds.size());
 
-        // Step 2-4: Check and complete each phase
-        Set<Long> planIds = new HashSet<>();
-        for (Long phaseId : phaseIds) {
-            checkAndCompleteSinglePhase(phaseId);
-            
-            // Collect plan IDs for later treatment plan completion check
-            PatientPlanPhase phase = phaseRepository.findByIdWithPlanAndItems(phaseId).orElse(null);
-            if (phase != null && phase.getTreatmentPlan() != null) {
-                planIds.add(phase.getTreatmentPlan().getPlanId());
+            // Step 2-4: Check and complete each phase
+            Set<Long> planIds = new HashSet<>();
+            for (Long phaseId : phaseIds) {
+                checkAndCompleteSinglePhase(phaseId);
+
+                // Collect plan IDs for later treatment plan completion check
+                PatientPlanPhase phase = phaseRepository.findByIdWithPlanAndItems(phaseId).orElse(null);
+                if (phase != null && phase.getTreatmentPlan() != null) {
+                    planIds.add(phase.getTreatmentPlan().getPlanId());
+                }
             }
-        }
 
-        // Step 5: Check and complete treatment plans if all phases are done
-        log.debug("Checking {} treatment plans for auto-completion", planIds.size());
-        for (Long planId : planIds) {
-            checkAndCompletePlan(planId);
-        }
+            // Step 5: Check and complete treatment plans if all phases are done
+            log.debug("Checking {} treatment plans for auto-completion", planIds.size());
+            for (Long planId : planIds) {
+                checkAndCompletePlan(planId);
+            }
 
-    } catch (Exception e) {
-        log.error(" Failed to check phase completion: {}", e.getMessage(), e);
-        // Don't throw - phase completion is a nice-to-have feature
-        // Main plan item update should not fail because of this
+        } catch (Exception e) {
+            log.error(" Failed to check phase completion: {}", e.getMessage(), e);
+            // Don't throw - phase completion is a nice-to-have feature
+            // Main plan item update should not fail because of this
+        }
     }
-}    /**
+
+    /**
      * Check and complete a single phase if all its items are done.
-     * 
+     *
      * IMPORTANT: Clears entity manager cache before loading to avoid stale data
      * after direct SQL updates.
-     * 
+     *
      * @param phaseId The phase ID to check
      */
     private void checkAndCompleteSinglePhase(Long phaseId) {
@@ -580,7 +598,7 @@ public class AppointmentStatusService {
                     .filter(item -> item.getStatus() == PlanItemStatus.COMPLETED ||
                             item.getStatus() == PlanItemStatus.SKIPPED)
                     .count();
-            log.debug("Phase {} not completed yet: {}/{} items done", 
+            log.debug("Phase {} not completed yet: {}/{} items done",
                     phaseId, completedCount, items.size());
         }
     }
@@ -608,14 +626,14 @@ public class AppointmentStatusService {
 
         // Only check if plan is currently IN_PROGRESS
         if (plan.getStatus() != TreatmentPlanStatus.IN_PROGRESS) {
-            log.debug("Plan {} not in IN_PROGRESS status (current: {}), skipping completion check", 
+            log.debug("Plan {} not in IN_PROGRESS status (current: {}), skipping completion check",
                     planId, plan.getStatus());
             return;
         }
 
         // Load phases - need fresh data
         List<PatientPlanPhase> phases = plan.getPhases();
-        
+
         if (phases == null || phases.isEmpty()) {
             log.debug("Plan {} has no phases", planId);
             return;
@@ -642,17 +660,19 @@ public class AppointmentStatusService {
 
     /**
      * Rule #5: Update patient no-show tracking and booking blocking status
-     * 
+     *
      * Business Logic:
      * - NO_SHOW → Increment consecutiveNoShows
      * - If consecutiveNoShows >= 3 → Block booking (isBookingBlocked = true)
-     * - COMPLETED/CHECKED_IN/IN_PROGRESS → Reset consecutiveNoShows to 0 (patient showed up)
-     * 
+     * - COMPLETED/CHECKED_IN/IN_PROGRESS → Reset consecutiveNoShows to 0 (patient
+     * showed up)
+     *
      * @param appointment The appointment being updated
-     * @param newStatus New appointment status
-     * @param oldStatus Previous appointment status
+     * @param newStatus   New appointment status
+     * @param oldStatus   Previous appointment status
      */
-    private void updatePatientNoShowTracking(Appointment appointment, AppointmentStatus newStatus, AppointmentStatus oldStatus) {
+    private void updatePatientNoShowTracking(Appointment appointment, AppointmentStatus newStatus,
+            AppointmentStatus oldStatus) {
         // Only track if status changed to NO_SHOW or patient showed up
         if (newStatus == oldStatus) {
             return;
@@ -672,7 +692,7 @@ public class AppointmentStatusService {
             int currentNoShows = patient.getConsecutiveNoShows() != null ? patient.getConsecutiveNoShows() : 0;
             patient.setConsecutiveNoShows(currentNoShows + 1);
 
-            log.info("Patient {} no-show count increased: {} -> {}", 
+            log.info("Patient {} no-show count increased: {} -> {}",
                     patient.getPatientCode(), currentNoShows, currentNoShows + 1);
 
             // Check if threshold reached (3 consecutive no-shows)
@@ -681,7 +701,7 @@ public class AppointmentStatusService {
                 patient.setBookingBlockReason(
                         com.dental.clinic.management.patient.enums.BookingBlockReason.EXCESSIVE_NO_SHOWS);
                 patient.setBookingBlockNotes(
-                        String.format("Bị chặn do bỏ hẹn %d lần liên tiếp. Lần cuối: %s", 
+                        String.format("Bị chặn do bỏ hẹn %d lần liên tiếp. Lần cuối: %s",
                                 patient.getConsecutiveNoShows(),
                                 appointment.getAppointmentCode()));
                 patient.setBlockedAt(LocalDateTime.now());
@@ -689,9 +709,10 @@ public class AppointmentStatusService {
                 // Track who marked the appointment as NO_SHOW (blocker)
                 Integer employeeId = getCurrentEmployeeId();
                 if (employeeId != null && employeeId != 0) {
-                    com.dental.clinic.management.employee.domain.Employee employee = 
-                            employeeRepository.findById(employeeId).orElse(null);
-                    if (employee != null && employee.getAccount() != null && employee.getAccount().getUsername() != null) {
+                    com.dental.clinic.management.employee.domain.Employee employee = employeeRepository
+                            .findById(employeeId).orElse(null);
+                    if (employee != null && employee.getAccount() != null
+                            && employee.getAccount().getUsername() != null) {
                         patient.setBlockedBy(employee.getAccount().getUsername());
                     } else {
                         patient.setBlockedBy("EMPLOYEE_" + employeeId);
@@ -700,20 +721,21 @@ public class AppointmentStatusService {
                     patient.setBlockedBy("SYSTEM");
                 }
 
-                log.warn("⚠️ Patient {} AUTO-BLOCKED: {} consecutive no-shows, blocked by {}", 
+                log.warn("⚠️ Patient {} AUTO-BLOCKED: {} consecutive no-shows, blocked by {}",
                         patient.getPatientCode(), patient.getConsecutiveNoShows(), patient.getBlockedBy());
             }
 
-        } else if (newStatus == AppointmentStatus.COMPLETED 
-                || newStatus == AppointmentStatus.IN_PROGRESS 
+        } else if (newStatus == AppointmentStatus.COMPLETED
+                || newStatus == AppointmentStatus.IN_PROGRESS
                 || newStatus == AppointmentStatus.CHECKED_IN) {
             // Patient showed up - reset no-show counter
             if (patient.getConsecutiveNoShows() != null && patient.getConsecutiveNoShows() > 0) {
-                log.info("Patient {} showed up - resetting no-show count from {} to 0", 
+                log.info("Patient {} showed up - resetting no-show count from {} to 0",
                         patient.getPatientCode(), patient.getConsecutiveNoShows());
                 patient.setConsecutiveNoShows(0);
-                
-                // Optionally unblock if they were blocked (admin can manually unblock via patient management)
+
+                // Optionally unblock if they were blocked (admin can manually unblock via
+                // patient management)
                 // Not auto-unblocking here to require admin approval
             }
         }

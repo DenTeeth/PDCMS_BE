@@ -31,16 +31,16 @@ CREATE TABLE IF NOT EXISTS patient_image_comments (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
-    
+
     -- Foreign Keys
-    CONSTRAINT fk_comment_image 
-        FOREIGN KEY (image_id) 
-        REFERENCES patient_images(image_id) 
+    CONSTRAINT fk_comment_image
+        FOREIGN KEY (image_id)
+        REFERENCES patient_images(image_id)
         ON DELETE CASCADE,
-    
-    CONSTRAINT fk_comment_creator 
-        FOREIGN KEY (created_by) 
-        REFERENCES employees(employee_id) 
+
+    CONSTRAINT fk_comment_creator
+        FOREIGN KEY (created_by)
+        REFERENCES employees(employee_id)
         ON DELETE RESTRICT
 );
 
@@ -168,7 +168,7 @@ VALUES
 ('CREATE_APPOINTMENT', 'CREATE_APPOINTMENT', 'APPOINTMENT', 'Đặt lịch hẹn mới', 53, NULL, TRUE, NOW()),
 ('UPDATE_APPOINTMENT', 'UPDATE_APPOINTMENT', 'APPOINTMENT', 'Cập nhật lịch hẹn', 54, NULL, TRUE, NOW()),
 ('UPDATE_APPOINTMENT_STATUS', 'UPDATE_APPOINTMENT_STATUS', 'APPOINTMENT', 'Cập nhật trạng thái lịch hẹn (Check-in, In-progress, Completed, Cancelled) - API 3.5', 55, NULL, TRUE, NOW()),
-('DELAY_APPOINTMENT', 'DELAY_APPOINTMENT', 'APPOINTMENT', 'Hoãn lịch hẹn sang thời gian khác (chỉ SCHEDULED/CHECKED_IN) - API 3.6', 56, NULL, TRUE, NOW()),
+('DELAY_APPOINTMENT', 'DELAY_APPOINTMENT', 'APPOINTMENT', 'Hoãn lịch hẹn sang thời gian khác (SCHEDULED/CHECKED_IN/NO_SHOW) - API 3.6', 56, NULL, TRUE, NOW()),
 ('CANCEL_APPOINTMENT', 'CANCEL_APPOINTMENT', 'APPOINTMENT', 'Hủy lịch hẹn', 57, NULL, TRUE, NOW()),
 ('DELETE_APPOINTMENT', 'DELETE_APPOINTMENT', 'APPOINTMENT', 'Xóa lịch hẹn', 58, NULL, TRUE, NOW())
 ON CONFLICT (permission_id) DO NOTHING;
