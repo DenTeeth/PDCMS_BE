@@ -19,7 +19,14 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         "[format_sql]": true
-    show-sql: false
+        # Force Hibernate to always use explicit column names in SQL statements
+        # This prevents column ordering issues when schema changes
+        use_sql_comments: false
+        order_inserts: true
+        order_updates: true
+        jdbc:
+          batch_size: 20
+    show-sql: true  # Temporarily enable to verify SQL statements
 
   # SQL Init Configuration - THREE-PHASE INITIALIZATION
   # EXECUTION ORDER:
