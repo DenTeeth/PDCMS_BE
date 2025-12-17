@@ -62,15 +62,6 @@ DROP TYPE IF EXISTS plan_item_status CASCADE;
 CREATE TYPE plan_item_status AS ENUM ('READY_FOR_BOOKING', 'SCHEDULED', 'PENDING', 'IN_PROGRESS', 'COMPLETED','WAITING_FOR_PREREQUISITE','SKIPPED');
 DROP TYPE IF EXISTS treatmentplanstatus CASCADE;
 CREATE TYPE treatmentplanstatus AS ENUM ('PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED');
-
--- Drop old CHECK constraints that Hibernate may have created
--- These constraints are outdated and conflict with the updated enum type
-DO $$
-BEGIN
-    IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'patient_plan_items_status_check') THEN
-        ALTER TABLE patient_plan_items DROP CONSTRAINT patient_plan_items_status_check;
-    END IF;
-END $$;
 DROP TYPE IF EXISTS paymenttype CASCADE;
 CREATE TYPE paymenttype AS ENUM ('FULL', 'PHASED', 'INSTALLMENT');
 DROP TYPE IF EXISTS phasestatus CASCADE;
