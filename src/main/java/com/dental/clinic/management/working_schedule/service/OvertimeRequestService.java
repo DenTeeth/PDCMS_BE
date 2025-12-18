@@ -57,6 +57,9 @@ public class OvertimeRequestService {
     private final EmployeeShiftRegistrationRepository employeeShiftRegistrationRepository;
     private final IdGenerator idGenerator;
 
+    // ISSUE #53: Holiday Validation
+    private final com.dental.clinic.management.utils.validation.HolidayValidator holidayValidator;
+
     /**
      * Get all overtime requests with pagination and optional filtering.
      * Access control:
@@ -193,6 +196,9 @@ public class OvertimeRequestService {
             log.warn("Cannot create overtime request for past date: {}", dto.getWorkDate());
             throw new IllegalArgumentException("Ngày làm việc không được là ngày trong quá khứ.");
         }
+        
+        // Validation 3.05: ISSUE #53 - Validate work date is NOT a holiday
+        holidayValidator.validateNotHoliday(dto.getWorkDate(), "làm thêm giờ");
         
         // Validation 3.1: If workDate is today, check if shift has already ended
         if (dto.getWorkDate().isEqual(today)) {

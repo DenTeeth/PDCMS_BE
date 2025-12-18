@@ -5,7 +5,6 @@ import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.exception.employee_shift.CannotCancelBatchShiftException;
 import com.dental.clinic.management.exception.employee_shift.CannotCancelCompletedShiftException;
 import com.dental.clinic.management.exception.employee_shift.ExceedsMaxHoursException;
-import com.dental.clinic.management.exception.employee_shift.HolidayConflictException;
 import com.dental.clinic.management.exception.employee_shift.InvalidStatusTransitionException;
 import com.dental.clinic.management.exception.employee_shift.PastDateNotAllowedException;
 import com.dental.clinic.management.exception.employee_shift.RelatedResourceNotFoundException;
@@ -23,7 +22,6 @@ import com.dental.clinic.management.working_schedule.enums.ShiftSource;
 import com.dental.clinic.management.working_schedule.enums.ShiftStatus;
 import com.dental.clinic.management.working_schedule.mapper.EmployeeShiftMapper;
 import com.dental.clinic.management.working_schedule.repository.EmployeeShiftRepository;
-import com.dental.clinic.management.working_schedule.repository.HolidayDateRepository;
 import com.dental.clinic.management.working_schedule.repository.WorkShiftRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -55,9 +53,11 @@ public class EmployeeShiftService {
     private final EmployeeShiftRepository employeeShiftRepository;
     private final EmployeeRepository employeeRepository;
     private final WorkShiftRepository workShiftRepository;
-    private final HolidayDateRepository holidayDateRepository;
     private final EmployeeShiftMapper employeeShiftMapper;
     private final IdGenerator idGenerator;
+
+    // ISSUE #53: Holiday Validation
+    private final com.dental.clinic.management.utils.validation.HolidayValidator holidayValidator;
 
     /**
      * Get shift calendar for an employee with optional filters.
@@ -338,10 +338,8 @@ public class EmployeeShiftService {
             throw new PastDateNotAllowedException(workDate);
         }
 
-        // Check if work date is a holiday
-        if (holidayDateRepository.isHoliday(workDate)) {
-            throw new HolidayConflictException(workDate);
-        }
+        // ISSUE #53: Validate work date is NOT a holiday
+        holidayValidator.validateNotHoliday(workDate, "ca làm việc");
 
         // Get the new shift details
         WorkShift newWorkShift = workShiftRepository.findById(workShiftId)
@@ -462,12 +460,22 @@ public class EmployeeShiftService {
         // Calculate working days based on effectiveFrom, effectiveTo, and daysOfWeek
         List<LocalDate> workingDays = calculateWorkingDays(effectiveFrom, effectiveTo, daysOfWeek);
         
-        log.info(" Calculated {} working days from date range", workingDays.size());
+        // ISSUE #53: Filter out holidays
+        List<LocalDate> nonHolidayWorkingDays = holidayValidator.filterOutHolidays(workingDays);
+        int holidaysFiltered = workingDays.size() - nonHolidayWorkingDays.size();
+        
+        if (holidaysFiltered > 0) {
+            log.info("🎊 Filtered out {} holidays from {} total working days", 
+                     holidaysFiltered, workingDays.size());
+        }
+        
+        log.info("📅 Calculated {} working days from date range (after filtering holidays)", 
+                 nonHolidayWorkingDays.size());
 
         List<EmployeeShift> createdShifts = new java.util.ArrayList<>();
         int skippedCount = 0;
 
-        for (LocalDate workDate : workingDays) {
+        for (LocalDate workDate : nonHolidayWorkingDays) {
             // Check if shift already exists (avoid duplicates)
             boolean exists = employeeShiftRepository.existsByEmployeeAndDateAndShift(
                     employeeId, workDate, workShiftId);

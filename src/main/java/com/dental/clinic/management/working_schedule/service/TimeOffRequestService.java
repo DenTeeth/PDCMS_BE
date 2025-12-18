@@ -73,6 +73,9 @@ public class TimeOffRequestService {
         private final PartTimeSlotRepository partTimeSlotRepository;
         private final WorkShiftRepository workShiftRepository;
 
+        // ISSUE #53: Holiday Validation
+        private final com.dental.clinic.management.utils.validation.HolidayValidator holidayValidator;
+
         @PersistenceContext
         private EntityManager entityManager;
 
@@ -195,6 +198,13 @@ public class TimeOffRequestService {
                                                         "Ngày bắt đầu: " + request.getStartDate() + ", Ngày kết thúc: "
                                                         + request.getEndDate());
                 }
+
+                // 3.1: ISSUE #53 - Validate date range does NOT include holidays
+                holidayValidator.validateRangeNotIncludeHolidays(
+                        request.getStartDate(), 
+                        request.getEndDate(), 
+                        "nghỉ phép"
+                );
 
                 // 3.5. Check leave balance CHỈ cho ANNUAL_LEAVE
                 // Các loại khác (SICK_LEAVE, UNPAID_PERSONAL) không cần check balance

@@ -83,6 +83,9 @@ public class AppointmentCreationService {
         // Notification Service
         private final com.dental.clinic.management.notification.service.NotificationService notificationService;
 
+        // ISSUE #53: Holiday Validation
+        private final com.dental.clinic.management.utils.validation.HolidayValidator holidayValidator;
+
         private static final DateTimeFormatter ISO_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
         private static final String ENTITY_NAME = "appointment";
 
@@ -175,7 +178,10 @@ public class AppointmentCreationService {
                 // STEP 5C: Rule #1 - Validate maximum 3-month advance booking
                 validateMaximumAdvanceBooking(startTime);
 
-                // STEP 5D: Rule #5 - Check if patient is blocked from booking
+                // STEP 5D: ISSUE #53 - Validate appointment date is NOT a holiday
+                holidayValidator.validateNotHoliday(startTime.toLocalDate(), "lịch hẹn");
+
+                // STEP 5E: Rule #5 - Check if patient is blocked from booking
                 validatePatientNotBlocked(patient);
 
                 // STEP 6: Validate shifts (doctor and participants have working shifts)
@@ -1018,24 +1024,29 @@ public class AppointmentCreationService {
                         }
 
                         // 2. Send notifications to ALL PARTICIPANTS (dentists, assistants, observers)
-                        if (appointment.getParticipants() != null && !appointment.getParticipants().isEmpty()) {
+                        // Query participants from repository since they're not loaded in appointment entity
+                        List<AppointmentParticipant> participants = appointmentParticipantRepository
+                                        .findByIdAppointmentId(appointment.getAppointmentId());
+                        
+                        if (participants != null && !participants.isEmpty()) {
                                 log.info("Processing {} participants for appointment {}",
-                                                appointment.getParticipants().size(), appointment.getAppointmentCode());
+                                                participants.size(), appointment.getAppointmentCode());
 
-                                for (com.dental.clinic.management.booking_appointment.entity.AppointmentParticipant participant : appointment
-                                                .getParticipants()) {
+                                for (AppointmentParticipant participant : participants) {
                                         try {
-                                                if (participant.getStaff() == null
-                                                                || participant.getStaff().getAccount() == null) {
-                                                        log.warn("Participant {} has no account, skipping notification",
-                                                                        participant.getParticipantId());
+                                                // Get employee from participant
+                                                Employee participantEmployee = employeeRepository
+                                                                .findById(participant.getId().getEmployeeId())
+                                                                .orElse(null);
+                                                
+                                                if (participantEmployee == null || participantEmployee.getAccount() == null) {
+                                                        log.warn("Participant employeeId={} has no account, skipping notification",
+                                                                        participant.getId().getEmployeeId());
                                                         continue;
                                                 }
 
-                                                Integer staffUserId = participant.getStaff().getAccount()
-                                                                .getAccountId();
-                                                String role = participant.getRole().name(); // DENTIST, ASSISTANT,
-                                                                                            // OBSERVER
+                                                Integer staffUserId = participantEmployee.getAccount().getAccountId();
+                                                String role = participant.getRole().name(); // ASSISTANT
 
                                                 log.info("Sending notification to {} userId={} for appointment {}",
                                                                 role, staffUserId, appointment.getAppointmentCode());
@@ -1061,8 +1072,8 @@ public class AppointmentCreationService {
                                                 notificationService.createNotification(staffNotification);
                                                 log.info("✓ {} notification created for userId={}", role, staffUserId);
                                         } catch (Exception e) {
-                                                log.error("Failed to send notification to participant {}: {}",
-                                                                participant.getParticipantId(), e.getMessage(), e);
+                                                log.error("Failed to send notification to participant employeeId={}: {}",
+                                                                participant.getId().getEmployeeId(), e.getMessage(), e);
                                         }
                                 }
                         } else {
@@ -1082,17 +1093,11 @@ public class AppointmentCreationService {
         /**
          * Get display name for participant role
          */
-        private String getRoleDisplayName(com.dental.clinic.management.booking_appointment.enums.ParticipantRole role) {
-                switch (role) {
-                        case DENTIST:
-                                return "Nha sĩ";
-                        case ASSISTANT:
-                                return "Trợ lý";
-                        case OBSERVER:
-                                return "Quan sát viên";
-                        default:
-                                return role.name();
+        private String getRoleDisplayName(AppointmentParticipantRole role) {
+                if (role == AppointmentParticipantRole.ASSISTANT) {
+                        return "Trợ lý";
                 }
+                return role.name();
         }
 
         // ====================================================================
