@@ -1031,6 +1031,7 @@ public class AppointmentCreationService {
                         if (participants != null && !participants.isEmpty()) {
                                 log.info("Processing {} participants for appointment {}",
                                                 participants.size(), appointment.getAppointmentCode());
+                                                participants.size(), appointment.getAppointmentCode());
 
                                 for (AppointmentParticipant participant : participants) {
                                         try {
@@ -1049,10 +1050,11 @@ public class AppointmentCreationService {
                                                 String role = participant.getRole().name(); // ASSISTANT
 
                                                 log.info("Sending notification to {} userId={} for appointment {}",
-                                                                role, staffUserId, appointment.getAppointmentCode());
+                                                                role.name(), staffUserId,
+                                                                appointment.getAppointmentCode());
 
                                                 String title = String.format("Bạn đã được phân công làm %s",
-                                                                getRoleDisplayName(participant.getRole()));
+                                                                getRoleDisplayName(role));
                                                 String message = String.format("Cuộc hẹn %s vào %s - Bệnh nhân: %s",
                                                                 appointment.getAppointmentCode(),
                                                                 formattedTime,
@@ -1070,8 +1072,11 @@ public class AppointmentCreationService {
                                                                 .build();
 
                                                 notificationService.createNotification(staffNotification);
-                                                log.info("✓ {} notification created for userId={}", role, staffUserId);
+                                                log.info("✓ {} notification created for userId={}", role.name(),
+                                                                staffUserId);
                                         } catch (Exception e) {
+                                                log.error("Failed to send notification to participant employeeId={}: {}",
+                                                                participant.getId().getEmployeeId(), e.getMessage(), e);
                                                 log.error("Failed to send notification to participant employeeId={}: {}",
                                                                 participant.getId().getEmployeeId(), e.getMessage(), e);
                                         }
@@ -1091,7 +1096,7 @@ public class AppointmentCreationService {
         }
 
         /**
-         * Get display name for participant role
+         * Get display name for participant role (Vietnamese)
          */
         private String getRoleDisplayName(AppointmentParticipantRole role) {
                 if (role == AppointmentParticipantRole.ASSISTANT) {
