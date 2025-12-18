@@ -165,4 +165,33 @@ public class NotificationController {
 
                 return ResponseEntity.status(HttpStatus.CREATED).body(notification);
         }
+
+        /**
+         * Test endpoint để gửi thông báo test cho chính user hiện tại
+         * POST /api/v1/notifications/test-send
+         * Dùng để verify WebSocket và database notification hoạt động
+         */
+        @PostMapping("/test-send")
+        @ApiMessage("Gửi thông báo test thành công")
+        @PreAuthorize("hasAnyAuthority('VIEW_NOTIFICATION', 'MANAGE_NOTIFICATION')")
+        public ResponseEntity<NotificationDTO> testSendNotification(Authentication authentication) {
+                Integer userId = getUserIdFromToken(authentication);
+                log.info("TEST: Sending test notification to user: {}", userId);
+
+                CreateNotificationRequest request = CreateNotificationRequest.builder()
+                                .userId(userId)
+                                .type(com.dental.clinic.management.notification.enums.NotificationType.SYSTEM_ANNOUNCEMENT)
+                                .title("Test notification")
+                                .message("This is a test notification sent at " + java.time.LocalDateTime.now())
+                                .relatedEntityType(
+                                                com.dental.clinic.management.notification.enums.NotificationEntityType.SYSTEM)
+                                .relatedEntityId("TEST-" + System.currentTimeMillis())
+                                .build();
+
+                NotificationDTO notification = notificationService.createNotification(request);
+
+                log.info("TEST: Test notification created successfully with ID: {}", notification.getNotificationId());
+
+                return ResponseEntity.ok(notification);
+        }
 }
