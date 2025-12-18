@@ -1,5 +1,6 @@
 package com.dental.clinic.management.notification.controller;
 
+import com.dental.clinic.management.exception.ResourceNotFoundException;
 import com.dental.clinic.management.notification.dto.CreateNotificationRequest;
 import com.dental.clinic.management.notification.dto.NotificationDTO;
 import com.dental.clinic.management.notification.service.NotificationService;
@@ -14,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -23,6 +25,42 @@ import org.springframework.web.bind.annotation.*;
 public class NotificationController {
 
         private final NotificationService notificationService;
+
+        /**
+         * Extract account_id (userId) from JWT token.
+         *
+         * @param authentication Spring Security authentication object
+         * @return Account ID from token
+         */
+        private Integer getUserIdFromToken(Authentication authentication) {
+                if (authentication == null || !(authentication.getPrincipal() instanceof Jwt)) {
+                        throw new ResourceNotFoundException("AUTHENTICATION_REQUIRED",
+                                        "Valid JWT authentication required");
+                }
+
+                Jwt jwt = (Jwt) authentication.getPrincipal();
+                Object claim = jwt.getClaim("account_id");
+
+                if (claim == null) {
+                        throw new ResourceNotFoundException("ACCOUNT_ID_MISSING", "JWT token missing account_id claim");
+                }
+
+                if (claim instanceof Integer) {
+                        return (Integer) claim;
+                }
+                if (claim instanceof Number) {
+                        return ((Number) claim).intValue();
+                }
+                if (claim instanceof String) {
+                        try {
+                                return Integer.parseInt((String) claim);
+                        } catch (NumberFormatException e) {
+                                throw new IllegalArgumentException("Invalid account_id format in JWT: " + claim);
+                        }
+                }
+
+                throw new IllegalStateException("Unsupported account_id claim type: " + claim.getClass().getName());
+        }
 
         /**
          * Lấy danh sách thông báo của user hiện tại (có phân trang)
@@ -35,7 +73,7 @@ public class NotificationController {
                         @RequestParam(defaultValue = "0") int page,
                         @RequestParam(defaultValue = "20") int size,
                         Authentication authentication) {
-                Integer userId = Integer.valueOf(authentication.getName());
+                Integer userId = getUserIdFromToken(authentication);
                 log.info("Getting notifications for user: {}, page: {}, size: {}", userId, page, size);
 
                 Pageable pageable = PageRequest.of(page, size);
@@ -52,7 +90,7 @@ public class NotificationController {
         @ApiMessage("Lấy số lượng thông báo chưa đọc thành công")
         @PreAuthorize("hasAnyAuthority('VIEW_NOTIFICATION', 'MANAGE_NOTIFICATION')")
         public ResponseEntity<Long> getUnreadCount(Authentication authentication) {
-                Integer userId = Integer.valueOf(authentication.getName());
+                Integer userId = getUserIdFromToken(authentication);
                 log.info("Getting unread count for user: {}", userId);
 
                 Long count = notificationService.getUnreadCount(userId);
@@ -70,7 +108,7 @@ public class NotificationController {
         public ResponseEntity<Void> markAsRead(
                         @PathVariable Long notificationId,
                         Authentication authentication) {
-                Integer userId = Integer.valueOf(authentication.getName());
+                Integer userId = getUserIdFromToken(authentication);
                 log.info("User {} marking notification {} as read", userId, notificationId);
 
                 notificationService.markAsRead(notificationId, userId);
@@ -86,7 +124,7 @@ public class NotificationController {
         @ApiMessage("Đánh dấu tất cả đã đọc thành công")
         @PreAuthorize("hasAnyAuthority('VIEW_NOTIFICATION', 'MANAGE_NOTIFICATION')")
         public ResponseEntity<Void> markAllAsRead(Authentication authentication) {
-                Integer userId = Integer.valueOf(authentication.getName());
+                Integer userId = getUserIdFromToken(authentication);
                 log.info("User {} marking all notifications as read", userId);
 
                 notificationService.markAllAsRead(userId);
@@ -104,7 +142,7 @@ public class NotificationController {
         public ResponseEntity<Void> deleteNotification(
                         @PathVariable Long notificationId,
                         Authentication authentication) {
-                Integer userId = Integer.valueOf(authentication.getName());
+                Integer userId = getUserIdFromToken(authentication);
                 log.info("User {} deleting notification {}", userId, notificationId);
 
                 notificationService.deleteNotification(notificationId, userId);
