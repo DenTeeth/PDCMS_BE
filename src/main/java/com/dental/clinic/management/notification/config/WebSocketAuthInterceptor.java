@@ -44,8 +44,28 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
                         // Decode and validate JWT
                         Jwt jwt = jwtDecoder.decode(token);
 
-                        // Extract account_id from JWT claims
-                        Integer accountId = jwt.getClaim("account_id");
+                        // Extract account_id from JWT claims - handle Long/Integer/String
+                        Object accountIdClaim = jwt.getClaim("account_id");
+                        if (accountIdClaim == null) {
+                            throw new IllegalArgumentException("JWT token missing account_id claim");
+                        }
+
+                        Integer accountId;
+                        if (accountIdClaim instanceof Integer) {
+                            accountId = (Integer) accountIdClaim;
+                        } else if (accountIdClaim instanceof Number) {
+                            accountId = ((Number) accountIdClaim).intValue();
+                        } else if (accountIdClaim instanceof String) {
+                            try {
+                                accountId = Integer.parseInt((String) accountIdClaim);
+                            } catch (NumberFormatException e) {
+                                throw new IllegalArgumentException(
+                                        "Invalid account_id format in JWT: " + accountIdClaim, e);
+                            }
+                        } else {
+                            throw new IllegalStateException(
+                                    "Unsupported account_id claim type: " + accountIdClaim.getClass().getName());
+                        }
 
                         // Extract authorities from JWT
                         List<String> authorities = jwt.getClaim("authorities");
