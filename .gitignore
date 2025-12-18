@@ -52,3 +52,6 @@ application-local.yml
 logs/
 app-startup.log
 app.log
+
+npm-data/
+npm-letsencrypt/
