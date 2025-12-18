@@ -67,12 +67,20 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
                                     "Unsupported account_id claim type: " + accountIdClaim.getClass().getName());
                         }
 
-                        // Extract authorities from JWT
-                        List<String> authorities = jwt.getClaim("authorities");
-                        List<GrantedAuthority> grantedAuthorities = authorities.stream()
-                                .map(SimpleGrantedAuthority::new)
-                                .map(auth -> (GrantedAuthority) auth)
-                                .toList();
+                        // Extract authorities from JWT (try both 'authorities' and 'permissions'
+                        // claims)
+                        List<String> authoritiesList = jwt.getClaim("authorities");
+                        if (authoritiesList == null) {
+                            authoritiesList = jwt.getClaim("permissions");
+                        }
+
+                        List<GrantedAuthority> grantedAuthorities = List.of();
+                        if (authoritiesList != null && !authoritiesList.isEmpty()) {
+                            grantedAuthorities = authoritiesList.stream()
+                                    .map(SimpleGrantedAuthority::new)
+                                    .map(auth -> (GrantedAuthority) auth)
+                                    .toList();
+                        }
 
                         // Create authentication with account_id as principal
                         Authentication authentication = new UsernamePasswordAuthenticationToken(
