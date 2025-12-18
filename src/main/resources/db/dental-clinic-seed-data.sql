@@ -432,7 +432,10 @@ VALUES
 ('ROLE_DENTIST', 'PATIENT_IMAGE_CREATE'),
 ('ROLE_DENTIST', 'PATIENT_IMAGE_READ'),
 ('ROLE_DENTIST', 'PATIENT_IMAGE_UPDATE'),
-('ROLE_DENTIST', 'PATIENT_IMAGE_DELETE')
+('ROLE_DENTIST', 'PATIENT_IMAGE_DELETE'),
+-- Notification permissions
+('ROLE_DENTIST', 'VIEW_NOTIFICATION'),
+('ROLE_DENTIST', 'DELETE_NOTIFICATION')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
@@ -448,7 +451,10 @@ VALUES
 ('ROLE_NURSE', 'VIEW_LEAVE_OWN'), ('ROLE_NURSE', 'CREATE_TIME_OFF'), ('ROLE_NURSE', 'CREATE_OVERTIME'),
 ('ROLE_NURSE', 'CANCEL_TIME_OFF_OWN'), ('ROLE_NURSE', 'CANCEL_OVERTIME_OWN'),
 ('ROLE_NURSE', 'VIEW_HOLIDAY'),
-('ROLE_NURSE', 'VIEW_ATTACHMENT')
+('ROLE_NURSE', 'VIEW_ATTACHMENT'),
+-- Notification permissions
+('ROLE_NURSE', 'VIEW_NOTIFICATION'),
+('ROLE_NURSE', 'DELETE_NOTIFICATION')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
@@ -461,7 +467,10 @@ VALUES
 ('ROLE_DENTIST_INTERN', 'VIEW_LEAVE_OWN'), -- Xem nghỉ phép của mình
 ('ROLE_DENTIST_INTERN', 'CREATE_TIME_OFF'), -- Tạo đơn xin nghỉ
 ('ROLE_DENTIST_INTERN', 'CANCEL_TIME_OFF_OWN'), -- Hủy đơn nghỉ của mình
-('ROLE_DENTIST_INTERN', 'VIEW_HOLIDAY') -- Xem lịch nghỉ lễ
+('ROLE_DENTIST_INTERN', 'VIEW_HOLIDAY'), -- Xem lịch nghỉ lễ
+-- Notification permissions
+('ROLE_DENTIST_INTERN', 'VIEW_NOTIFICATION'),
+('ROLE_DENTIST_INTERN', 'DELETE_NOTIFICATION')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
@@ -565,7 +574,10 @@ VALUES
 ('ROLE_MANAGER', 'CANCEL_WAREHOUSE'), -- Can cancel import/export transactions (API 6.6.3)
 ('ROLE_MANAGER', 'MANAGE_SUPPLIERS'), -- V28: Can manage suppliers (API 6.13, 6.14)
 ('ROLE_MANAGER', 'MANAGE_CONSUMABLES'), -- V30: Can manage service consumables BOM (API 6.18, 6.19)
-('ROLE_MANAGER', 'MANAGE_WAREHOUSE') -- V28: Full warehouse management authority
+('ROLE_MANAGER', 'MANAGE_WAREHOUSE'), -- V28: Full warehouse management authority
+-- Notification permissions
+('ROLE_MANAGER', 'VIEW_NOTIFICATION'),
+('ROLE_MANAGER', 'DELETE_NOTIFICATION')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
@@ -581,6 +593,9 @@ VALUES
 -- WAREHOUSE (V22: Accountant can view transactions and financial data - API 6.6)
 ('ROLE_ACCOUNTANT', 'VIEW_WAREHOUSE'), -- Can view transaction history
 ('ROLE_ACCOUNTANT', 'VIEW_WAREHOUSE_COST'), -- Can view financial data (cost, payment info)
+-- Notification permissions
+('ROLE_ACCOUNTANT', 'VIEW_NOTIFICATION'),
+('ROLE_ACCOUNTANT', 'DELETE_NOTIFICATION'),
 ('ROLE_INVENTORY_MANAGER', 'VIEW_LEAVE_OWN'), ('ROLE_INVENTORY_MANAGER', 'CREATE_TIME_OFF'), ('ROLE_INVENTORY_MANAGER', 'CREATE_OVERTIME'),
 ('ROLE_INVENTORY_MANAGER', 'CANCEL_TIME_OFF_OWN'), ('ROLE_INVENTORY_MANAGER', 'CANCEL_OVERTIME_OWN'),
 ('ROLE_INVENTORY_MANAGER', 'VIEW_HOLIDAY'),
@@ -599,7 +614,10 @@ VALUES
 ('ROLE_INVENTORY_MANAGER', 'APPROVE_TRANSACTION'), -- Can approve transactions
 ('ROLE_INVENTORY_MANAGER', 'CANCEL_WAREHOUSE'), -- Can cancel import/export transactions (API 6.6.3)
 ('ROLE_INVENTORY_MANAGER', 'MANAGE_SUPPLIERS'), -- Can manage suppliers (API 6.13, 6.14)
-('ROLE_INVENTORY_MANAGER', 'MANAGE_WAREHOUSE') -- Full warehouse management authority
+('ROLE_INVENTORY_MANAGER', 'MANAGE_WAREHOUSE'), -- Full warehouse management authority
+-- Notification permissions
+('ROLE_INVENTORY_MANAGER', 'VIEW_NOTIFICATION'),
+('ROLE_INVENTORY_MANAGER', 'DELETE_NOTIFICATION')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
