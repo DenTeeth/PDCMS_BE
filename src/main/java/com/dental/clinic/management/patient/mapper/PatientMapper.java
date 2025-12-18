@@ -38,6 +38,7 @@ public class PatientMapper {
         response.setMedicalHistory(patient.getMedicalHistory());
         response.setAllergies(patient.getAllergies());
         response.setEmergencyContactName(patient.getEmergencyContactName());
+        response.setEmergencyContactRelationship(patient.getEmergencyContactRelationship());
         response.setEmergencyContactPhone(patient.getEmergencyContactPhone());
         response.setGuardianName(patient.getGuardianName());
         response.setGuardianPhone(patient.getGuardianPhone());
@@ -90,6 +91,7 @@ public class PatientMapper {
         patient.setMedicalHistory(request.getMedicalHistory());
         patient.setAllergies(request.getAllergies());
         patient.setEmergencyContactName(request.getEmergencyContactName());
+        patient.setEmergencyContactRelationship(request.getEmergencyContactRelationship());
         patient.setEmergencyContactPhone(request.getEmergencyContactPhone());
         patient.setGuardianName(request.getGuardianName());
         patient.setGuardianPhone(request.getGuardianPhone());
@@ -140,6 +142,9 @@ public class PatientMapper {
         }
         if (request.getEmergencyContactPhone() != null) {
             patient.setEmergencyContactPhone(request.getEmergencyContactPhone());
+        }
+        if (request.getEmergencyContactRelationship() != null) {
+            patient.setEmergencyContactRelationship(request.getEmergencyContactRelationship());
         }
         if (request.getGuardianName() != null) {
             patient.setGuardianName(request.getGuardianName());
@@ -194,6 +199,7 @@ public class PatientMapper {
         patient.setMedicalHistory(request.getMedicalHistory());
         patient.setAllergies(request.getAllergies());
         patient.setEmergencyContactName(request.getEmergencyContactName());
+        patient.setEmergencyContactRelationship(request.getEmergencyContactRelationship());
         patient.setEmergencyContactPhone(request.getEmergencyContactPhone());
         patient.setIsActive(request.getIsActive());
     }

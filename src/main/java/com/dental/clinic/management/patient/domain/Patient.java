@@ -84,6 +84,9 @@ public class Patient {
   @Column(name = "emergency_contact_phone", length = 15)
   private String emergencyContactPhone;
 
+  @Column(name = "emergency_contact_relationship", length = 100)
+  private String emergencyContactRelationship;
+
   @Column(name = "is_active")
   private Boolean isActive = true;
 
@@ -282,6 +285,14 @@ public class Patient {
 
   public void setEmergencyContactPhone(String emergencyContactPhone) {
     this.emergencyContactPhone = emergencyContactPhone;
+  }
+
+  public String getEmergencyContactRelationship() {
+    return emergencyContactRelationship;
+  }
+
+  public void setEmergencyContactRelationship(String emergencyContactRelationship) {
+    this.emergencyContactRelationship = emergencyContactRelationship;
   }
 
   public Boolean getIsActive() {

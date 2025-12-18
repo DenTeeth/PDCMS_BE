@@ -23,6 +23,7 @@ public class PatientInfoResponse {
     private String allergies;
     private String emergencyContactName;
     private String emergencyContactPhone;
+    private String emergencyContactRelationship;
     private String guardianName;
     private String guardianPhone;
     private String guardianRelationship;
@@ -160,6 +161,14 @@ public class PatientInfoResponse {
 
     public void setEmergencyContactPhone(String emergencyContactPhone) {
         this.emergencyContactPhone = emergencyContactPhone;
+    }
+
+    public String getEmergencyContactRelationship() {
+        return emergencyContactRelationship;
+    }
+
+    public void setEmergencyContactRelationship(String emergencyContactRelationship) {
+        this.emergencyContactRelationship = emergencyContactRelationship;
     }
 
     public Boolean getIsActive() {

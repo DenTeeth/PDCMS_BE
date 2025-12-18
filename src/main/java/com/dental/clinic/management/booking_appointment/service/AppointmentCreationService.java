@@ -998,9 +998,13 @@ public class AppointmentCreationService {
                         String formattedTime = appointment.getAppointmentStartTime()
                                         .format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
 
+                        // Reload patient with account to avoid LazyInitializationException
+                        Patient patientWithAccount = patientRepository.findById(patient.getPatientId())
+                                        .orElse(patient);
+
                         // 1. Send notification to PATIENT
-                        if (patient.getAccount() != null) {
-                                Integer patientUserId = patient.getAccount().getAccountId();
+                        if (patientWithAccount.getAccount() != null) {
+                                Integer patientUserId = patientWithAccount.getAccount().getAccountId();
                                 log.info("Sending notification to PATIENT userId={} for appointment {}",
                                                 patientUserId, appointment.getAppointmentCode());
 
@@ -1020,26 +1024,31 @@ public class AppointmentCreationService {
                                 log.info("✓ Patient notification created successfully");
                         } else {
                                 log.warn("Patient {} has no account, skipping patient notification",
-                                                patient.getPatientId());
+                                                patientWithAccount.getPatientId());
                         }
 
                         // 2. Send notifications to ALL PARTICIPANTS (dentists, assistants, observers)
-                        // Query participants from repository since they're not loaded in appointment entity
+                        // Query participants from repository since they're not loaded in appointment
+                        // entity
                         List<AppointmentParticipant> participants = appointmentParticipantRepository
                                         .findByIdAppointmentId(appointment.getAppointmentId());
-                        
+
                         if (participants != null && !participants.isEmpty()) {
                                 log.info("Processing {} participants for appointment {}",
                                                 participants.size(), appointment.getAppointmentCode());
 
                                 for (AppointmentParticipant participant : participants) {
                                         try {
-                                                // Get employee from participant
-                                                Employee participantEmployee = employeeRepository
-                                                                .findById(participant.getId().getEmployeeId())
-                                                                .orElse(null);
-                                                
-                                                if (participantEmployee == null || participantEmployee.getAccount() == null) {
+                                                // Get employee from participant (use getEmployee method we added)
+                                                Employee participantEmployee = participant.getEmployee();
+
+                                                if (participantEmployee == null) {
+                                                        log.warn("Participant employeeId={} not loaded, skipping notification",
+                                                                        participant.getId().getEmployeeId());
+                                                        continue;
+                                                }
+
+                                                if (participantEmployee.getAccount() == null) {
                                                         log.warn("Participant employeeId={} has no account, skipping notification",
                                                                         participant.getId().getEmployeeId());
                                                         continue;

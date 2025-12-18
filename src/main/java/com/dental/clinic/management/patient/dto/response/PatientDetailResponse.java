@@ -37,6 +37,7 @@ public class PatientDetailResponse {
     // Emergency Contact
     private String emergencyContactName;
     private String emergencyContactPhone;
+    private String emergencyContactRelationship;
 
     // Guardian Information (for minors <16 years old)
     private String guardianName;

@@ -49,6 +49,9 @@ public class UpdatePatientRequest {
     private String emergencyContactPhone;
 
     @Size(max = 100)
+    private String emergencyContactRelationship;
+
+    @Size(max = 100)
     private String guardianName;
 
     @Pattern(regexp = "^[0-9]{10,15}$")
@@ -64,9 +67,9 @@ public class UpdatePatientRequest {
 
     // Admin-only fields for booking block management
     private Boolean isBookingBlocked;
-    
+
     private String bookingBlockReason; // Will be converted to enum
-    
+
     @Size(max = 5000)
     private String bookingBlockNotes;
 
@@ -161,6 +164,14 @@ public class UpdatePatientRequest {
 
     public void setEmergencyContactPhone(String emergencyContactPhone) {
         this.emergencyContactPhone = emergencyContactPhone;
+    }
+
+    public String getEmergencyContactRelationship() {
+        return emergencyContactRelationship;
+    }
+
+    public void setEmergencyContactRelationship(String emergencyContactRelationship) {
+        this.emergencyContactRelationship = emergencyContactRelationship;
     }
 
     public Boolean getIsActive() {
