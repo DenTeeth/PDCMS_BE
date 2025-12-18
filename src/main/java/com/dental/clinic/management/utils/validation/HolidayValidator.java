@@ -148,4 +148,80 @@ public class HolidayValidator {
     public long countWorkingDaysBetween(LocalDate startDate, LocalDate endDate) {
         return holidayDateService.countWorkingDaysBetween(startDate, endDate);
     }
+    
+    /**
+     * Find next working day (skip holidays and weekends).
+     * Used for auto-scheduling treatment plans.
+     * 
+     * ISSUE: AUTO_SCHEDULE_HOLIDAYS_AND_SPACING_IMPLEMENTATION
+     * Business Rule: When estimated date falls on holiday/weekend, 
+     * automatically shift to next available working day.
+     * 
+     * @param startDate Starting date to check from
+     * @return Next available working day
+     */
+    public LocalDate findNextWorkingDay(LocalDate startDate) {
+        LocalDate currentDate = startDate;
+        int maxAttempts = 30; // Prevent infinite loop (1 month max)
+        int attempts = 0;
+        
+        while (attempts < maxAttempts) {
+            // Check if weekend (Saturday = 6, Sunday = 7)
+            java.time.DayOfWeek dayOfWeek = currentDate.getDayOfWeek();
+            boolean isWeekend = dayOfWeek == java.time.DayOfWeek.SATURDAY || 
+                               dayOfWeek == java.time.DayOfWeek.SUNDAY;
+            
+            // Check if holiday
+            boolean isHoliday = isHoliday(currentDate);
+            
+            if (!isWeekend && !isHoliday) {
+                if (!currentDate.equals(startDate)) {
+                    log.debug("Next working day from {} is {} (shifted {} days)", 
+                            startDate, currentDate, attempts);
+                }
+                return currentDate;
+            }
+            
+            // Move to next day
+            currentDate = currentDate.plusDays(1);
+            attempts++;
+        }
+        
+        // Fallback: return original date + 30 days if no working day found
+        log.warn("Could not find working day within 30 days from {}. Using fallback.", startDate);
+        return startDate.plusDays(30);
+    }
+    
+    /**
+     * Adjust date to working day if it falls on holiday/weekend.
+     * Returns same date if already a working day.
+     * 
+     * ISSUE: AUTO_SCHEDULE_HOLIDAYS_AND_SPACING_IMPLEMENTATION
+     * Example: 2025-01-01 (New Year - Holiday) → 2025-01-02 (Working day)
+     * 
+     * @param date Date to adjust
+     * @return Same date if working day, otherwise next working day
+     */
+    public LocalDate adjustToWorkingDay(LocalDate date) {
+        if (isWorkingDay(date)) {
+            return date;
+        }
+        return findNextWorkingDay(date.plusDays(1));
+    }
+    
+    /**
+     * Check if date is a working day (not weekend, not holiday).
+     * Used to validate dates before auto-scheduling.
+     * 
+     * @param date Date to check
+     * @return true if working day, false if weekend or holiday
+     */
+    public boolean isWorkingDay(LocalDate date) {
+        java.time.DayOfWeek dayOfWeek = date.getDayOfWeek();
+        boolean isWeekend = dayOfWeek == java.time.DayOfWeek.SATURDAY || 
+                           dayOfWeek == java.time.DayOfWeek.SUNDAY;
+        boolean isHoliday = isHoliday(date);
+        
+        return !isWeekend && !isHoliday;
+    }
 }

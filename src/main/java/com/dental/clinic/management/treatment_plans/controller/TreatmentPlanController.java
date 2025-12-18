@@ -40,6 +40,7 @@ public class TreatmentPlanController {
         private final com.dental.clinic.management.treatment_plans.service.TreatmentPlanListService treatmentPlanListService;
         private final com.dental.clinic.management.treatment_plans.service.TreatmentPlanPricingService treatmentPlanPricingService; // V21.4
         private final com.dental.clinic.management.treatment_plans.service.TreatmentPlanReorderService treatmentPlanReorderService; // V21.5
+        private final com.dental.clinic.management.treatment_plans.service.TreatmentPlanAutoScheduleService treatmentPlanAutoScheduleService; // AUTO_SCHEDULE_HOLIDAYS_AND_SPACING
 
         /**
          * NEW API: List all treatment plans across all patients (Manager view).
@@ -1203,6 +1204,58 @@ public class TreatmentPlanController {
                         treatmentPlanItemService.assignDoctorToItem(itemId, request.getDoctorCode(), request.getNotes());
 
                 log.info("Successfully assigned doctor {} to item {}", request.getDoctorCode(), itemId);
+
+                return ResponseEntity.ok(response);
+        }
+
+        /**
+         * NEW API: Generate automatic appointment suggestions for treatment plan.
+         * 
+         * ISSUE: AUTO_SCHEDULE_HOLIDAYS_AND_SPACING_IMPLEMENTATION
+         * Priority: HIGH
+         * 
+         * Features:
+         * - Uses estimated dates from plan items
+         * - Automatically skips holidays and weekends
+         * - Applies service spacing rules (preparation, recovery, intervals)
+         * - Enforces daily appointment limits
+         * - Returns suggestions (does NOT create actual appointments)
+         * 
+         * @param planId  Treatment plan ID
+         * @param request Auto-schedule request with preferences
+         * @return List of appointment suggestions with date adjustments
+         */
+        @Operation(summary = "Generate automatic appointment suggestions for treatment plan",
+                description = "Intelligently generates appointment suggestions based on treatment plan items. " +
+                              "Uses estimated dates from plan items and automatically adjusts for: " +
+                              "1) Holidays and weekends (shifts to next working day) " +
+                              "2) Service spacing rules (preparation days, recovery periods, intervals) " +
+                              "3) Daily appointment limits (max 2 appointments/day/patient by default) " +
+                              "Returns suggestions only - does NOT create actual appointments. " +
+                              "Frontend can review suggestions and proceed with booking.")
+        @org.springframework.security.access.prepost.PreAuthorize("hasRole('"
+                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.ADMIN + "') or " +
+                        "hasAuthority('"
+                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.CREATE_APPOINTMENT + "')")
+        @PostMapping("/treatment-plans/{planId}/auto-schedule")
+        public ResponseEntity<com.dental.clinic.management.treatment_plans.dto.response.AutoScheduleResponse> generateAutoSchedule(
+                        @Parameter(description = "Treatment plan ID", required = true, example = "123") 
+                        @PathVariable Long planId,
+                        @Parameter(description = "Auto-schedule request with preferences", required = true)
+                        @org.springframework.web.bind.annotation.RequestBody
+                        @jakarta.validation.Valid
+                        com.dental.clinic.management.treatment_plans.dto.request.AutoScheduleRequest request) {
+
+                log.info("REST request to generate auto-schedule for treatment plan: {}", planId);
+
+                com.dental.clinic.management.treatment_plans.dto.response.AutoScheduleResponse response =
+                        treatmentPlanAutoScheduleService.generateAutomaticAppointments(planId, request);
+
+                log.info("Generated {} appointment suggestions for plan {} ({} successful, {} failed)",
+                        response.getSuggestions().size(),
+                        planId,
+                        response.getSuccessfulSuggestions(),
+                        response.getFailedItems());
 
                 return ResponseEntity.ok(response);
         }
