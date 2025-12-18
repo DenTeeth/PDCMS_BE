@@ -1031,7 +1031,6 @@ public class AppointmentCreationService {
                         if (participants != null && !participants.isEmpty()) {
                                 log.info("Processing {} participants for appointment {}",
                                                 participants.size(), appointment.getAppointmentCode());
-                                                participants.size(), appointment.getAppointmentCode());
 
                                 for (AppointmentParticipant participant : participants) {
                                         try {
@@ -1047,7 +1046,7 @@ public class AppointmentCreationService {
                                                 }
 
                                                 Integer staffUserId = participantEmployee.getAccount().getAccountId();
-                                                String role = participant.getRole().name(); // ASSISTANT
+                                                AppointmentParticipantRole role = participant.getRole(); // ASSISTANT
 
                                                 log.info("Sending notification to {} userId={} for appointment {}",
                                                                 role.name(), staffUserId,
@@ -1075,8 +1074,6 @@ public class AppointmentCreationService {
                                                 log.info("✓ {} notification created for userId={}", role.name(),
                                                                 staffUserId);
                                         } catch (Exception e) {
-                                                log.error("Failed to send notification to participant employeeId={}: {}",
-                                                                participant.getId().getEmployeeId(), e.getMessage(), e);
                                                 log.error("Failed to send notification to participant employeeId={}: {}",
                                                                 participant.getId().getEmployeeId(), e.getMessage(), e);
                                         }
