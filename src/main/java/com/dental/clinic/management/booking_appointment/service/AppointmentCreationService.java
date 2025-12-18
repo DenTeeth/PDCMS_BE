@@ -981,7 +981,8 @@ public class AppointmentCreationService {
         }
 
         /**
-         * Send notifications to patient, dentist, and participants when appointment is created
+         * Send notifications to patient, dentist, and participants when appointment is
+         * created
          */
         private void sendAppointmentCreatedNotification(Appointment appointment, Patient patient) {
                 try {
@@ -997,15 +998,15 @@ public class AppointmentCreationService {
                                 log.info("Sending notification to PATIENT userId={} for appointment {}",
                                                 patientUserId, appointment.getAppointmentCode());
 
-                                com.dental.clinic.management.notification.dto.CreateNotificationRequest patientNotification = 
-                                        com.dental.clinic.management.notification.dto.CreateNotificationRequest.builder()
+                                com.dental.clinic.management.notification.dto.CreateNotificationRequest patientNotification = com.dental.clinic.management.notification.dto.CreateNotificationRequest
+                                                .builder()
                                                 .userId(patientUserId)
                                                 .type(com.dental.clinic.management.notification.enums.NotificationType.APPOINTMENT_CREATED)
                                                 .title("Đặt lịch thành công")
                                                 .message(String.format("Cuộc hẹn %s đã được đặt thành công vào %s",
                                                                 appointment.getAppointmentCode(), formattedTime))
                                                 .relatedEntityType(
-                                                        com.dental.clinic.management.notification.enums.NotificationEntityType.APPOINTMENT)
+                                                                com.dental.clinic.management.notification.enums.NotificationEntityType.APPOINTMENT)
                                                 .relatedEntityId(appointment.getAppointmentCode())
                                                 .build();
 
@@ -1016,7 +1017,8 @@ public class AppointmentCreationService {
                                                 patient.getPatientId());
                         }
 
-                        // 2. Query participants from database (Appointment entity doesn't have @OneToMany relationship)
+                        // 2. Query participants from database (Appointment entity doesn't have
+                        // @OneToMany relationship)
                         List<AppointmentParticipant> participants = appointmentParticipantRepository
                                         .findByIdAppointmentId(appointment.getAppointmentId());
 
@@ -1038,7 +1040,8 @@ public class AppointmentCreationService {
                                                 AppointmentParticipantRole role = participant.getRole();
 
                                                 log.info("Sending notification to {} userId={} for appointment {}",
-                                                                role.name(), staffUserId, appointment.getAppointmentCode());
+                                                                role.name(), staffUserId,
+                                                                appointment.getAppointmentCode());
 
                                                 String title = String.format("Bạn đã được phân công làm %s",
                                                                 getRoleDisplayName(role));
@@ -1047,19 +1050,20 @@ public class AppointmentCreationService {
                                                                 formattedTime,
                                                                 patient.getFullName());
 
-                                                com.dental.clinic.management.notification.dto.CreateNotificationRequest staffNotification = 
-                                                        com.dental.clinic.management.notification.dto.CreateNotificationRequest.builder()
+                                                com.dental.clinic.management.notification.dto.CreateNotificationRequest staffNotification = com.dental.clinic.management.notification.dto.CreateNotificationRequest
+                                                                .builder()
                                                                 .userId(staffUserId)
                                                                 .type(com.dental.clinic.management.notification.enums.NotificationType.APPOINTMENT_CREATED)
                                                                 .title(title)
                                                                 .message(message)
                                                                 .relatedEntityType(
-                                                                        com.dental.clinic.management.notification.enums.NotificationEntityType.APPOINTMENT)
+                                                                                com.dental.clinic.management.notification.enums.NotificationEntityType.APPOINTMENT)
                                                                 .relatedEntityId(appointment.getAppointmentCode())
                                                                 .build();
 
                                                 notificationService.createNotification(staffNotification);
-                                                log.info("✓ {} notification created for userId={}", role.name(), staffUserId);
+                                                log.info("✓ {} notification created for userId={}", role.name(),
+                                                                staffUserId);
                                         } catch (Exception e) {
                                                 log.error("Failed to send notification to participant employeeId={}: {}",
                                                                 participant.getId().getEmployeeId(), e.getMessage(), e);
@@ -1074,7 +1078,8 @@ public class AppointmentCreationService {
                 } catch (Exception e) {
                         log.error("Failed to send notifications for appointment {}: {}",
                                         appointment.getAppointmentCode(), e.getMessage(), e);
-                        // Don't throw exception - notification failure should not block appointment creation
+                        // Don't throw exception - notification failure should not block appointment
+                        // creation
                 }
         }
 
