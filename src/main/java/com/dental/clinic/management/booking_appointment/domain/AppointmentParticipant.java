@@ -57,6 +57,14 @@ public class AppointmentParticipant {
         this.role = role;
     }
 
+    public com.dental.clinic.management.employee.domain.Employee getEmployee() {
+        return employee;
+    }
+
+    public void setEmployee(com.dental.clinic.management.employee.domain.Employee employee) {
+        this.employee = employee;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o)
