@@ -1,0 +1,82 @@
+package com.dental.clinic.management.notification.config;
+
+import java.util.List;
+
+import org.springframework.messaging.Message;
+import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.simp.stomp.StompCommand;
+import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
+import org.springframework.messaging.support.ChannelInterceptor;
+import org.springframework.messaging.support.MessageHeaderAccessor;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.stereotype.Component;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Component
+@RequiredArgsConstructor
+@Slf4j
+public class WebSocketAuthInterceptor implements ChannelInterceptor {
+
+    private final JwtDecoder jwtDecoder;
+
+    @Override
+    public Message<?> preSend(Message<?> message, MessageChannel channel) {
+        StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
+
+        if (accessor != null && StompCommand.CONNECT.equals(accessor.getCommand())) {
+            // Get Authorization header from STOMP CONNECT frame
+            List<String> authorizationHeaders = accessor.getNativeHeader("Authorization");
+
+            if (authorizationHeaders != null && !authorizationHeaders.isEmpty()) {
+                String authHeader = authorizationHeaders.get(0);
+
+                if (authHeader.startsWith("Bearer ")) {
+                    String token = authHeader.substring(7);
+
+                    try {
+                        // Decode and validate JWT
+                        Jwt jwt = jwtDecoder.decode(token);
+
+                        // Extract account_id from JWT claims
+                        Integer accountId = jwt.getClaim("account_id");
+
+                        // Extract authorities from JWT
+                        List<String> authorities = jwt.getClaim("authorities");
+                        List<GrantedAuthority> grantedAuthorities = authorities.stream()
+                                .map(SimpleGrantedAuthority::new)
+                                .map(auth -> (GrantedAuthority) auth)
+                                .toList();
+
+                        // Create authentication with account_id as principal
+                        Authentication authentication = new UsernamePasswordAuthenticationToken(
+                                accountId.toString(),
+                                null,
+                                grantedAuthorities);
+
+                        // Set authentication in STOMP session
+                        accessor.setUser(authentication);
+
+                        log.info("WebSocket authenticated successfully for account_id: {}", accountId);
+
+                    } catch (Exception e) {
+                        log.error("WebSocket authentication failed: {}", e.getMessage());
+                        throw new IllegalArgumentException("Invalid JWT token for WebSocket connection");
+                    }
+                } else {
+                    log.warn("WebSocket connection without Bearer token");
+                }
+            } else {
+                log.warn("WebSocket connection without Authorization header");
+            }
+        }
+
+        return message;
+    }
+}

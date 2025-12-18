@@ -93,6 +93,12 @@ public class SecurityConfig {
                                                 .requestMatchers(mvc.pattern("/swagger-ui/**")).permitAll()
                                                 .requestMatchers(mvc.pattern("/swagger-ui.html")).permitAll()
 
+                                                // Public endpoints - WebSocket SockJS handshake
+                                                // SockJS info endpoint does not support Authorization header
+                                                // Authentication handled at STOMP CONNECT frame level
+                                                .requestMatchers(mvc.pattern("/ws/info/**")).permitAll()
+                                                .requestMatchers(mvc.pattern("/ws/**")).permitAll()
+
                                                 // Public endpoints - Authentication
                                                 .requestMatchers(mvc.pattern("/api/v1/auth/login")).permitAll()
                                                 .requestMatchers(mvc.pattern("/api/v1/auth/refresh-token")).permitAll()
