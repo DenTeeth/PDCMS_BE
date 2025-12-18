@@ -149,45 +149,54 @@ jobs:
           # Format timestamp for Vietnam timezone (UTC+7)
           FORMATTED_TIME=$(TZ='Asia/Ho_Chi_Minh' date -d "$COMMIT_TIMESTAMP" '+%d/%m/%Y %H:%M:%S')
 
-          curl -X POST -H "Content-Type: application/json" \
-               -d "{
-                 \"embeds\": [{
-                   \"title\": \"❌ Deploy Failed!\",
-                   \"color\": 15158332,
-                   \"description\": \"**CẢNH BÁO:** Deploy **Dental Clinic Backend** thất bại!\",
-                   \"fields\": [
-                     {
-                       \"name\": \"🌿 Branch\",
-                       \"value\": \"\`feat/BE-903-deploy-digital-ocean\`\",
-                       \"inline\": true
-                     },
-                     {
-                       \"name\": \"📝 Commit\",
-                       \"value\": \"$COMMIT_MSG\",
-                       \"inline\": false
-                     },
-                     {
-                       \"name\": \"👤 Author\",
-                       \"value\": \"$AUTHOR_NAME\",
-                       \"inline\": true
-                     },
-                     {
-                       \"name\": \"⏰ Time\",
-                       \"value\": \"$FORMATTED_TIME (GMT+7)\",
-                       \"inline\": true
-                     },
-                     {
-                       \"name\": \"🔗 View Logs\",
-                       \"value\": \"[Click here](https://github.com/$REPO/actions/runs/$RUN_ID)\",
-                       \"inline\": false
-                     }
-                   ],
-                   \"thumbnail\": {
-                     \"url\": \"https://cdn-icons-png.flaticon.com/512/1828/1828843.png\"
-                   },
-                   \"footer\": {
-                     \"text\": \"Vui lòng kiểm tra logs và fix lỗi!\"
-                   }
-                 }]
-               }" \
-               "$DISCORD_WEBHOOK"
+          # Download error GIF
+          echo "📥 Downloading error GIF..."
+          curl -L -o error.gif "https://media.discordapp.net/attachments/1417100980700446784/1451043622559678475/VIDEO_DOWNLOAD_1765799525512_1765963467457.gif?ex=6944bd2e&is=69436bae&hm=398ce4a4d6ab1b7f85bcb2153401a2491aa8049da67c36ae101a5a693e7defdf&=&width=600&height=542"
+
+          # Create JSON payload with GIF as attachment
+          PAYLOAD=$(cat <<EOF
+          {
+            "embeds": [{
+              "title": "Deploy Failed!",
+              "color": 15158332,
+              "description": "CANH BAO: Deploy **Dental Clinic Backend** that bai!",
+              "fields": [
+                {
+                  "name": "Branch",
+                  "value": "\`feat/BE-903-deploy-digital-ocean\`",
+                  "inline": true
+                },
+                {
+                  "name": "Commit",
+                  "value": "$COMMIT_MSG",
+                  "inline": false
+                },
+                {
+                  "name": "Author",
+                  "value": "$AUTHOR_NAME",
+                  "inline": true
+                },
+                {
+                  "name": "Time",
+                  "value": "$FORMATTED_TIME (GMT+7)",
+                  "inline": true
+                },
+                {
+                  "name": "View Logs",
+                  "value": "[Click here](https://github.com/$REPO/actions/runs/$RUN_ID)",
+                  "inline": false
+                }
+              ],
+              "image": {
+                "url": "attachment://error.gif"
+              },
+              "footer": {
+                "text": "Vui long kiem tra logs va fix loi!"
+              }
+            }]
+          }
+          EOF
+          )
+
+          # Send to Discord with GIF attachment
+          curl -F "payload_json=$PAYLOAD" -F "file=@error.gif" "$DISCORD_WEBHOOK"
