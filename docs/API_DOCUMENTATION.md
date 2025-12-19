@@ -8,7 +8,7 @@
 
 ##  Table of Contents
 
-1. [Authentication APIs](#authentication-apis)
+1. [Authentication APIs]#authentication-apis
 2. [Account Management APIs](#account-management-apis)
 3. [Employee Management APIs](#employee-management-apis)
 4. [Patient Management APIs](#patient-management-apis)

@@ -30,17 +30,26 @@ jobs:
             echo "📥 Pulling latest code..."
             git pull origin feat/BE-903-deploy-digital-ocean
 
-            # Stop containers
-            echo "🛑 Stopping containers..."
-            docker-compose down
+            # Stop containers and REMOVE VOLUMES (xóa DB để tạo mới)
+            echo "🛑 Stopping containers and removing volumes..."
+            docker-compose down -v
 
             # Remove old images to force rebuild
             echo "🗑️  Removing old images..."
+            docker rmi pdcms_be-app || true
             docker rmi dentalclinic-app:latest || true
 
-            # Build and start containers
+            # Clean up dangling volumes
+            echo "🧹 Cleaning up dangling volumes..."
+            docker volume prune -f
+
+            # Build and start containers (DB sẽ được tạo mới với seed data)
             echo "🏗️  Building and starting containers..."
             docker-compose up --build -d
+
+            # Show logs to verify seed data loading
+            echo "📋 Checking seed data initialization..."
+            docker-compose logs app | grep -i "seed data" || true
 
             # Wait for app to be healthy
             echo "⏳ Waiting for application to be ready..."

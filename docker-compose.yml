@@ -15,6 +15,8 @@ services:
       - "${DB_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      # Only mount enums.sql for first-time DB initialization
+      # Seed data is automatically loaded by SeedDataInitializer.java on app startup
       - ./src/main/resources/db/enums.sql:/docker-entrypoint-initdb.d/01-enums.sql:ro
     networks:
       - dental-network
