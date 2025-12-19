@@ -10,6 +10,8 @@ import com.dental.clinic.management.permission.dto.PermissionHierarchyDTO;
 import com.dental.clinic.management.permission.mapper.PermissionMapper;
 import com.dental.clinic.management.permission.repository.PermissionRepository;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -51,6 +53,7 @@ public class PermissionService {
 
     @PreAuthorize("hasRole('" + ADMIN + "')")
     @Transactional(readOnly = true)
+    @Cacheable(value = "permissions", key = "'allActive'")
     public List<PermissionInfoResponse> getAllActivePermissions() {
         List<Permission> permissions = permissionRepository.findAllActivePermissions();
         return permissionMapper.toPermissionInfoResponseList(permissions);
@@ -58,6 +61,7 @@ public class PermissionService {
 
     @PreAuthorize("hasRole('" + ADMIN + "')")
     @Transactional(readOnly = true)
+    @Cacheable(value = "permissionById", key = "#permissionId")
     public PermissionInfoResponse getPermissionById(String permissionId) {
         Permission permission = permissionRepository.findById(permissionId)
                 .orElseThrow(() -> new PermissionNotFoundException("Permission not found with ID: " + permissionId));
@@ -67,6 +71,7 @@ public class PermissionService {
 
     @PreAuthorize("hasRole('" + ADMIN + "')")
     @Transactional(readOnly = true)
+    @Cacheable(value = "permissionsByModule", key = "#module")
     public List<PermissionInfoResponse> getPermissionsByModule(String module) {
         List<Permission> permissions = permissionRepository.findByModuleAndIsActive(module, true);
         return permissionMapper.toPermissionInfoResponseList(permissions);
@@ -74,6 +79,7 @@ public class PermissionService {
 
     @PreAuthorize("hasRole('" + ADMIN + "')")
     @Transactional
+    @CacheEvict(value = { "permissions", "permissionsByModule", "permissionsGrouped" }, allEntries = true)
     public PermissionInfoResponse createPermission(CreatePermissionRequest request) {
         // Check if permission name already exists
         if (permissionRepository.existsByPermissionName(request.getPermissionName())) {
@@ -99,6 +105,8 @@ public class PermissionService {
 
     @PreAuthorize("hasRole('" + ADMIN + "')")
     @Transactional
+    @CacheEvict(value = { "permissions", "permissionById", "permissionsByModule",
+            "permissionsGrouped" }, allEntries = true)
     public PermissionInfoResponse updatePermission(String permissionId, UpdatePermissionRequest request) {
         Permission existingPermission = permissionRepository.findById(permissionId)
                 .orElseThrow(() -> new PermissionNotFoundException("Permission not found with ID: " + permissionId));
@@ -133,6 +141,8 @@ public class PermissionService {
 
     @PreAuthorize("hasRole('" + ADMIN + "')")
     @Transactional
+    @CacheEvict(value = { "permissions", "permissionById", "permissionsByModule",
+            "permissionsGrouped" }, allEntries = true)
     public void deletePermission(String permissionId) {
         Permission permission = permissionRepository.findById(permissionId)
                 .orElseThrow(() -> new PermissionNotFoundException("Permission not found with ID: " + permissionId));
@@ -144,6 +154,8 @@ public class PermissionService {
 
     @PreAuthorize("hasRole('" + ADMIN + "')")
     @Transactional
+    @CacheEvict(value = { "permissions", "permissionById", "permissionsByModule",
+            "permissionsGrouped" }, allEntries = true)
     public void hardDeletePermission(String permissionId) {
         Permission permission = permissionRepository.findById(permissionId)
                 .orElseThrow(() -> new PermissionNotFoundException("Permission not found with ID: " + permissionId));
@@ -159,6 +171,7 @@ public class PermissionService {
 
     @PreAuthorize("hasRole('" + ADMIN + "')")
     @Transactional(readOnly = true)
+    @Cacheable(value = "permissionsGrouped", key = "'byModule'")
     public Map<String, List<PermissionInfoResponse>> getPermissionsGroupedByModule() {
         List<Permission> permissions = permissionRepository.findAllActivePermissions();
         return permissions.stream()
@@ -177,6 +190,7 @@ public class PermissionService {
      */
     @PreAuthorize("hasRole('" + ADMIN + "')")
     @Transactional(readOnly = true)
+    @Cacheable(value = "permissionsGrouped", key = "'hierarchy'")
     public Map<String, List<PermissionHierarchyDTO>> getGroupedPermissions() {
         List<Permission> permissions = permissionRepository.findAllActivePermissions();
 

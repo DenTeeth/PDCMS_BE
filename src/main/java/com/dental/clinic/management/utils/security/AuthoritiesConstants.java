@@ -27,10 +27,8 @@ public final class AuthoritiesConstants {
     public static final String DELETE_PATIENT = "DELETE_PATIENT";// soft delete
 
     // Appointment Permissions
-    public static final String VIEW_APPOINTMENT = "VIEW_APPOINTMENT";
-    public static final String VIEW_APPOINTMENT_ALL = "VIEW_APPOINTMENT_ALL"; // View all clinic appointments (for
-                                                                              // Dashboard)
-    public static final String VIEW_APPOINTMENT_OWN = "VIEW_APPOINTMENT_OWN"; // View own appointments (Doctor/Patient)
+    public static final String VIEW_APPOINTMENT_ALL = "VIEW_APPOINTMENT_ALL";
+    public static final String VIEW_APPOINTMENT_OWN = "VIEW_APPOINTMENT_OWN";
     public static final String CREATE_APPOINTMENT = "CREATE_APPOINTMENT";
     public static final String UPDATE_APPOINTMENT = "UPDATE_APPOINTMENT";
     public static final String UPDATE_APPOINTMENT_STATUS = "UPDATE_APPOINTMENT_STATUS"; // Change status (CHECKED_IN,
@@ -62,14 +60,17 @@ public final class AuthoritiesConstants {
     public static final String UPDATE_WORK_SHIFTS = "UPDATE_WORK_SHIFTS";
     public static final String DELETE_WORK_SHIFTS = "DELETE_WORK_SHIFTS";
 
-    // Overtime Management Permissions
-    public static final String VIEW_OT_ALL = "VIEW_OT_ALL";
-    public static final String VIEW_OT_OWN = "VIEW_OT_OWN";
-    public static final String CREATE_OT = "CREATE_OT";
-    public static final String APPROVE_OT = "APPROVE_OT";
-    public static final String REJECT_OT = "REJECT_OT";
-    public static final String CANCEL_OT_OWN = "CANCEL_OT_OWN";
-    public static final String CANCEL_OT_PENDING = "CANCEL_OT_PENDING";
+    // Leave Management Permissions
+    public static final String VIEW_LEAVE_ALL = "VIEW_LEAVE_ALL";
+    public static final String VIEW_LEAVE_OWN = "VIEW_LEAVE_OWN";
+    public static final String CREATE_TIME_OFF = "CREATE_TIME_OFF";
+    public static final String APPROVE_TIME_OFF = "APPROVE_TIME_OFF";
+    public static final String REJECT_TIME_OFF = "REJECT_TIME_OFF";
+    public static final String CANCEL_TIME_OFF = "CANCEL_TIME_OFF";
+    public static final String CREATE_OVERTIME = "CREATE_OVERTIME";
+    public static final String APPROVE_OVERTIME = "APPROVE_OVERTIME";
+    public static final String REJECT_OVERTIME = "REJECT_OVERTIME";
+    public static final String CANCEL_OVERTIME = "CANCEL_OVERTIME";
 
     // Employee Shift Registration Permissions
     public static final String VIEW_REGISTRATION_ALL = "VIEW_REGISTRATION_ALL";
@@ -80,24 +81,39 @@ public final class AuthoritiesConstants {
     public static final String DELETE_REGISTRATION_ALL = "DELETE_REGISTRATION_ALL";
     public static final String DELETE_REGISTRATION_OWN = "DELETE_REGISTRATION_OWN";
 
-    // Time-Off Request Permissions
-    public static final String VIEW_TIMEOFF_ALL = "VIEW_TIMEOFF_ALL";
-    public static final String VIEW_TIMEOFF_OWN = "VIEW_TIMEOFF_OWN";
-    public static final String CREATE_TIMEOFF = "CREATE_TIMEOFF";
-    public static final String APPROVE_TIMEOFF = "APPROVE_TIMEOFF";
-    public static final String REJECT_TIMEOFF = "REJECT_TIMEOFF";
-    public static final String CANCEL_TIMEOFF_OWN = "CANCEL_TIMEOFF_OWN";
-    public static final String CANCEL_TIMEOFF_PENDING = "CANCEL_TIMEOFF_PENDING";
+    // Backwards compatibility aliases (deprecated - remove after migration)
+    /** @deprecated Use VIEW_LEAVE_ALL */
+    public static final String VIEW_TIMEOFF_ALL = VIEW_LEAVE_ALL;
+    /** @deprecated Use VIEW_LEAVE_OWN */
+    public static final String VIEW_TIMEOFF_OWN = VIEW_LEAVE_OWN;
+    /** @deprecated Use CREATE_TIME_OFF */
+    public static final String CREATE_TIMEOFF = CREATE_TIME_OFF;
+    /** @deprecated Use APPROVE_TIME_OFF */
+    public static final String APPROVE_TIMEOFF = APPROVE_TIME_OFF;
+    /** @deprecated Use REJECT_TIME_OFF */
+    public static final String REJECT_TIMEOFF = REJECT_TIME_OFF;
+    /** @deprecated Use CANCEL_TIME_OFF */
+    public static final String CANCEL_TIMEOFF_OWN = CANCEL_TIME_OFF;
+    /** @deprecated Use CANCEL_TIME_OFF */
+    public static final String CANCEL_TIMEOFF_PENDING = CANCEL_TIME_OFF;
 
-    // Time-Off Type Management Permissions
-    public static final String VIEW_TIMEOFF_TYPE_ALL = "VIEW_TIMEOFF_TYPE_ALL";
-    public static final String CREATE_TIMEOFF_TYPE = "CREATE_TIMEOFF_TYPE";
-    public static final String UPDATE_TIMEOFF_TYPE = "UPDATE_TIMEOFF_TYPE";
-    public static final String DELETE_TIMEOFF_TYPE = "DELETE_TIMEOFF_TYPE";
+    // Leave Type Management Permissions
+    public static final String VIEW_LEAVE_TYPE = "VIEW_LEAVE_TYPE";
+    public static final String MANAGE_LEAVE_TYPE = "MANAGE_LEAVE_TYPE";
+    /** @deprecated Use VIEW_LEAVE_TYPE */
+    public static final String VIEW_TIMEOFF_TYPE_ALL = VIEW_LEAVE_TYPE;
+    /** @deprecated Use MANAGE_LEAVE_TYPE */
+    public static final String CREATE_TIMEOFF_TYPE = MANAGE_LEAVE_TYPE;
+    /** @deprecated Use MANAGE_LEAVE_TYPE */
+    public static final String UPDATE_TIMEOFF_TYPE = MANAGE_LEAVE_TYPE;
+    /** @deprecated Use MANAGE_LEAVE_TYPE */
+    public static final String DELETE_TIMEOFF_TYPE = MANAGE_LEAVE_TYPE;
 
     // Leave Balance Management Permissions
-    public static final String VIEW_LEAVE_BALANCE_ALL = "VIEW_LEAVE_BALANCE_ALL";
+    public static final String VIEW_LEAVE_BALANCE = "VIEW_LEAVE_BALANCE";
     public static final String ADJUST_LEAVE_BALANCE = "ADJUST_LEAVE_BALANCE";
+    /** @deprecated Use VIEW_LEAVE_BALANCE */
+    public static final String VIEW_LEAVE_BALANCE_ALL = VIEW_LEAVE_BALANCE;
 
     // Shift Renewal Permissions
     public static final String VIEW_RENEWAL_OWN = "VIEW_RENEWAL_OWN";

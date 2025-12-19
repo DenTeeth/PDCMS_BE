@@ -26,7 +26,7 @@ spring:
         order_updates: true
         jdbc:
           batch_size: 20
-    show-sql: true  # Temporarily enable to verify SQL statements
+    show-sql: true # Temporarily enable to verify SQL statements
 
   # SQL Init Configuration - THREE-PHASE INITIALIZATION
   # EXECUTION ORDER:
@@ -59,6 +59,28 @@ spring:
           connectiontimeout: 5000
           timeout: 5000
           writetimeout: 5000
+
+  # ==============================
+  # Redis Configuration
+  # ==============================
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:redis123}
+      timeout: 2000ms
+      jedis:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+
+  # Cache Configuration
+  cache:
+    type: redis
+    redis:
+      time-to-live: 1800000
 
 # ==============================
 # Application Configuration

@@ -43,6 +43,7 @@ public class RoleController {
     @PostMapping("")
     @Operation(summary = "Create new role", description = "Create a new role with specified details")
     @ApiMessage("Create role successfully")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('CREATE_ROLE')")
     public ResponseEntity<RoleInfoResponse> createRole(
             @Valid @RequestBody CreateRoleRequest request)
             throws URISyntaxException {
@@ -53,6 +54,7 @@ public class RoleController {
     @GetMapping("")
     @Operation(summary = "Get all roles", description = "Retrieve all active roles including ROLE_PATIENT")
     @ApiMessage("Get roles successfully")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('VIEW_ROLE')")
     public ResponseEntity<List<RoleInfoResponse>> getAllRoles() {
         List<RoleInfoResponse> response = roleService.getAllRoles();
         return ResponseEntity.ok(response);
@@ -61,6 +63,7 @@ public class RoleController {
     @GetMapping("/employee-assignable")
     @Operation(summary = "Get roles for employee assignment", description = "Retrieve roles that can be assigned to employees (excludes ROLE_PATIENT)")
     @ApiMessage("Get employee assignable roles successfully")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('VIEW_ROLE')")
     public ResponseEntity<List<RoleInfoResponse>> getEmployeeAssignableRoles() {
         List<RoleInfoResponse> response = roleService.getEmployeeAssignableRoles();
         return ResponseEntity.ok(response);
@@ -69,6 +72,7 @@ public class RoleController {
     @GetMapping("/{roleId}")
     @Operation(summary = "Get role by ID", description = "Get role details by role ID")
     @ApiMessage("Get role successfully")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('VIEW_ROLE')")
     public ResponseEntity<RoleInfoResponse> getRoleById(
             @PathVariable String roleId) {
         RoleInfoResponse response = roleService.getRoleById(roleId);
@@ -78,6 +82,7 @@ public class RoleController {
     @PutMapping("/{roleId}")
     @Operation(summary = "Update role", description = "Update role data by role ID")
     @ApiMessage("Update role successfully")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('UPDATE_ROLE')")
     public ResponseEntity<RoleInfoResponse> updateRole(
             @PathVariable String roleId,
             @Valid @RequestBody UpdateRoleRequest request) {
@@ -88,6 +93,7 @@ public class RoleController {
     @DeleteMapping("/{roleId}")
     @Operation(summary = "Delete role (soft)", description = "Soft delete role by setting isActive to false")
     @ApiMessage("Delete role successfully")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('DELETE_ROLE')")
     public ResponseEntity<RoleInfoResponse> deleteRole(
             @PathVariable String roleId) {
         RoleInfoResponse response = roleService.deleteRole(roleId);
@@ -97,6 +103,7 @@ public class RoleController {
     @PostMapping("/{roleId}/permissions")
     @Operation(summary = "Assign permissions to role", description = "Dynamically assign multiple permissions to a specific role")
     @ApiMessage("Assign permissions to role successfully")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('UPDATE_ROLE')")
     public ResponseEntity<Void> assignPermissionsToRole(
             @Parameter(description = "Role ID (e.g., ROLE_ADMIN)", required = true) @PathVariable String roleId,
             @Parameter(description = "List of permission IDs to assign", required = true) @RequestBody List<String> permissionIds) {
@@ -107,6 +114,7 @@ public class RoleController {
     @GetMapping("/{roleId}/permissions")
     @Operation(summary = "Get role permissions", description = "Retrieve all permissions assigned to a specific role")
     @ApiMessage("Get permissions of role successfully")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('VIEW_ROLE')")
     public ResponseEntity<List<PermissionInfoResponse>> getRolePermissions(
             @Parameter(description = "Role ID (e.g., ROLE_ADMIN)", required = true) @PathVariable String roleId) {
         List<PermissionInfoResponse> permissions = roleService.getRolePermissions(roleId);

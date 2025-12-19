@@ -1,6 +1,7 @@
 package com.dental.clinic.management.permission.repository;
 
 import com.dental.clinic.management.permission.domain.Permission;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -22,12 +23,11 @@ public interface PermissionRepository extends JpaRepository<Permission, String> 
 
     List<Permission> findByModule(String module);
 
-    /**
-     * Return all active permissions.
-     */
-    @Query("SELECT p FROM Permission p WHERE p.isActive = true")
+    @EntityGraph(attributePaths = { "parentPermission" })
+    @Query("SELECT p FROM Permission p WHERE p.isActive = true ORDER BY p.module, p.displayOrder")
     List<Permission> findAllActivePermissions();
 
+    @EntityGraph(attributePaths = { "parentPermission" })
     List<Permission> findByModuleAndIsActive(String module, Boolean isActive);
 
     /**

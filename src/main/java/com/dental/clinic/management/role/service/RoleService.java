@@ -12,6 +12,9 @@ import com.dental.clinic.management.role.dto.request.UpdateRoleRequest;
 import com.dental.clinic.management.role.mapper.RoleMapper;
 import com.dental.clinic.management.role.repository.RoleRepository;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
@@ -47,8 +50,13 @@ public class RoleService {
 
     @PreAuthorize("hasRole('" + ADMIN + "')")
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "roles", allEntries = true),
+            @CacheEvict(value = "roleById", key = "#roleId"),
+            @CacheEvict(value = "rolePermissions", key = "#roleId")
+    })
     public void assignPermissionsToRole(String roleId, List<String> permissionIds) {
-        Role role = roleRepository.findById(roleId)
+        Role role = roleRepository.findByIdWithPermissions(roleId)
                 .orElseThrow(() -> new BadRequestAlertException(
                         "Role not found with ID: " + roleId,
                         "role",
@@ -70,8 +78,9 @@ public class RoleService {
 
     @PreAuthorize("hasRole('" + ADMIN + "')")
     @Transactional(readOnly = true)
+    @Cacheable(value = "rolePermissions", key = "#roleId")
     public List<PermissionInfoResponse> getRolePermissions(String roleId) {
-        Role role = roleRepository.findById(roleId)
+        Role role = roleRepository.findByIdWithPermissions(roleId)
                 .orElseThrow(() -> new BadRequestAlertException(
                         "Role not found with ID: " + roleId,
                         "role",
@@ -83,6 +92,7 @@ public class RoleService {
 
     @PreAuthorize("hasRole('" + ADMIN + "')")
     @Transactional
+    @CacheEvict(value = "roles", allEntries = true)
     public RoleInfoResponse createRole(
             CreateRoleRequest request) {
         if (roleRepository.existsById(request.getRoleId()) || roleRepository.existsByRoleName(request.getRoleName())) {
@@ -95,6 +105,7 @@ public class RoleService {
 
     @PreAuthorize("hasRole('" + ADMIN + "')")
     @Transactional(readOnly = true)
+    @Cacheable(value = "roles", key = "'allRoles'")
     public List<RoleInfoResponse> getAllRoles() {
         List<Role> roles = roleRepository.findAllActiveRoles();
         return roleMapper.toRoleInfoResponseList(roles);
@@ -102,6 +113,7 @@ public class RoleService {
 
     @PreAuthorize("hasRole('" + ADMIN + "')")
     @Transactional(readOnly = true)
+    @Cacheable(value = "roles", key = "'employeeAssignable'")
     public List<RoleInfoResponse> getEmployeeAssignableRoles() {
         List<Role> roles = roleRepository.findAllActiveRoles();
         // Filter out ROLE_PATIENT - patients cannot be employees
@@ -109,10 +121,13 @@ public class RoleService {
                 .filter(role -> !"ROLE_PATIENT".equals(role.getRoleName()))
                 .toList();
         return roleMapper.toRoleInfoResponseList(employeeRoles);
-    }    @PreAuthorize("hasRole('" + ADMIN + "')")
+    }
+
+    @PreAuthorize("hasRole('" + ADMIN + "')")
     @Transactional(readOnly = true)
+    @Cacheable(value = "roleById", key = "#roleId")
     public RoleInfoResponse getRoleById(String roleId) {
-        Role role = roleRepository.findById(roleId)
+        Role role = roleRepository.findByIdWithPermissions(roleId)
                 .orElseThrow(() -> new BadRequestAlertException("Role not found with ID: " + roleId, "role",
                         "rolenotfound"));
         return roleMapper.toRoleInfoResponse(role);
@@ -120,9 +135,13 @@ public class RoleService {
 
     @PreAuthorize("hasRole('" + ADMIN + "')")
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "roles", allEntries = true),
+            @CacheEvict(value = "roleById", key = "#roleId")
+    })
     public RoleInfoResponse updateRole(String roleId,
             UpdateRoleRequest request) {
-        Role role = roleRepository.findById(roleId)
+        Role role = roleRepository.findByIdWithPermissions(roleId)
                 .orElseThrow(() -> new BadRequestAlertException("Role not found with ID: " + roleId, "role",
                         "rolenotfound"));
         role.setRoleName(request.getRoleName());
@@ -136,6 +155,10 @@ public class RoleService {
 
     @PreAuthorize("hasRole('" + ADMIN + "')")
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "roles", allEntries = true),
+            @CacheEvict(value = "roleById", key = "#roleId")
+    })
     public RoleInfoResponse deleteRole(String roleId) {
         Role role = roleRepository.findById(roleId)
                 .orElseThrow(() -> new BadRequestAlertException("Role not found with ID: " + roleId, "role",

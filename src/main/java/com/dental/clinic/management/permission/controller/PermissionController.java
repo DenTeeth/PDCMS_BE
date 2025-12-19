@@ -41,6 +41,7 @@ public class PermissionController {
     @GetMapping("")
     @Operation(summary = "Get all permissions", description = "Retrieve a complete list of all active permissions in the system")
     @ApiMessage("Get all permissions successfully")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('VIEW_PERMISSION')")
     public ResponseEntity<List<PermissionInfoResponse>> getAllPermissions() {
         List<PermissionInfoResponse> response = permissionService.getAllActivePermissions();
         return ResponseEntity.ok().body(response);
@@ -49,6 +50,7 @@ public class PermissionController {
     @GetMapping("/by-module")
     @Operation(summary = "Get permissions by module", description = "Retrieve permissions grouped by their module (e.g., USER, ADMIN, EMPLOYEE)")
     @ApiMessage("Get permissions grouped by module successfully")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('VIEW_PERMISSION')")
     public ResponseEntity<Map<String, List<PermissionInfoResponse>>> getPermissionsByModule() {
         Map<String, List<PermissionInfoResponse>> response = permissionService.getPermissionsGroupedByModule();
         return ResponseEntity.ok().body(response);
@@ -57,6 +59,7 @@ public class PermissionController {
     @GetMapping("/grouped")
     @Operation(summary = "Get permissions with hierarchy", description = "Retrieve all permissions grouped by module with parent-child hierarchy information. Used for frontend permission management UI with three-level selection: NONE (no permission), OWN (child permission), ALL (parent permission)")
     @ApiMessage("Get grouped permissions with hierarchy successfully")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('VIEW_PERMISSION')")
     public ResponseEntity<Map<String, List<PermissionHierarchyDTO>>> getGroupedPermissions() {
         Map<String, List<PermissionHierarchyDTO>> response = permissionService.getGroupedPermissions();
         return ResponseEntity.ok().body(response);
@@ -65,6 +68,7 @@ public class PermissionController {
     @GetMapping("/grouped-simple")
     @Operation(summary = "Get permissions grouped by module ", description = "Retrieve permissions grouped by module in a simple, readable format. Returns Map<Module, List<PermissionId>> for easy frontend display")
     @ApiMessage("Get permissions grouped by module successfully")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('VIEW_PERMISSION')")
     public ResponseEntity<Map<String, List<String>>> getGroupedPermissionsSimple() {
         Map<String, List<String>> response = permissionService.getPermissionsGroupedByModuleSimple();
         return ResponseEntity.ok().body(response);

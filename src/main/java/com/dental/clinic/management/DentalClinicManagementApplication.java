@@ -14,7 +14,7 @@ public class DentalClinicManagementApplication {
 		// Auto-detect environment and set profile
 		String profile = detectEnvironment();
 		System.setProperty("spring.profiles.active", profile);
-		System.out.println("🚀 Auto-detected environment: " + profile);
+		System.out.println("Auto-detected environment: " + profile);
 
 		SpringApplication.run(DentalClinicManagementApplication.class, args);
 	}
