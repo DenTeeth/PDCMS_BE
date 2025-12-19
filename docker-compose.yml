@@ -11,16 +11,13 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-123456}
       POSTGRES_DB: ${DB_DATABASE:-dental_clinic_db}
       POSTGRES_INITDB_ARGS: "--encoding=UTF8 --lc-collate=en_US.UTF-8 --lc-ctype=en_US.UTF-8"
-      # Set FORCE_RESEED=true to reload seed data (requires recreating container)
-      FORCE_RESEED: ${FORCE_RESEED:-false}
     ports:
       - "${DB_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      # Mount SQL files in order: 01-enums, 02-init-script, 03-seed-data
+      # Only mount enums.sql for first-time DB initialization
+      # Seed data is automatically loaded by SeedDataInitializer.java on app startup
       - ./src/main/resources/db/enums.sql:/docker-entrypoint-initdb.d/01-enums.sql:ro
-      - ./src/main/resources/db/init-seed-data.sh:/docker-entrypoint-initdb.d/02-init-seed-data.sh:ro
-      - ./src/main/resources/db/dental-clinic-seed-data.sql:/docker-entrypoint-initdb.d/03-seed-data.sql:ro
     networks:
       - dental-network
     healthcheck:
