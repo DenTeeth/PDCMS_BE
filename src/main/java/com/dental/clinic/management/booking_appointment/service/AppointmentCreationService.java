@@ -229,6 +229,11 @@ public class AppointmentCreationService {
 
                 insertAuditLog(appointment, createdById);
 
+                // Send notification to patient, doctor, and participants
+                log.info("CALLING sendAppointmentCreatedNotification for appointment: {}", appointment.getAppointmentCode());
+                sendAppointmentCreatedNotification(appointment, patient);
+                log.info("FINISHED sendAppointmentCreatedNotification for appointment: {}", appointment.getAppointmentCode());
+
                 log.info("Successfully created appointment: {}", appointment.getAppointmentCode());
 
                 // STEP 9: Build and return response
@@ -999,7 +1004,8 @@ public class AppointmentCreationService {
                                         .format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
 
                         // Reload patient with account to avoid LazyInitializationException
-                        Patient patientWithAccount = patientRepository.findById(patient.getPatientId())
+                        // Use findOneByPatientCodeWithAccount to eagerly fetch account relationship
+                        Patient patientWithAccount = patientRepository.findOneByPatientCodeWithAccount(patient.getPatientCode())
                                         .orElse(patient);
 
                         // 1. Send notification to PATIENT
@@ -1027,7 +1033,32 @@ public class AppointmentCreationService {
                                                 patientWithAccount.getPatientId());
                         }
 
-                        // 2. Send notifications to ALL PARTICIPANTS (dentists, assistants, observers)
+                        // 2. Send notification to MAIN DOCTOR (dentist assigned to appointment)
+                        Employee mainDoctor = employeeRepository.findById(appointment.getEmployeeId()).orElse(null);
+                        if (mainDoctor != null && mainDoctor.getAccount() != null) {
+                                Integer doctorUserId = mainDoctor.getAccount().getAccountId();
+                                log.info("Sending notification to MAIN DOCTOR userId={} (employeeCode={}) for appointment {}",
+                                                doctorUserId, mainDoctor.getEmployeeCode(), appointment.getAppointmentCode());
+
+                                com.dental.clinic.management.notification.dto.CreateNotificationRequest doctorNotification = com.dental.clinic.management.notification.dto.CreateNotificationRequest
+                                                .builder()
+                                                .userId(doctorUserId)
+                                                .type(com.dental.clinic.management.notification.enums.NotificationType.APPOINTMENT_CREATED)
+                                                .title("Bạn có lịch hẹn mới")
+                                                .message(String.format("Cuộc hẹn %s vào %s - Bệnh nhân: %s",
+                                                                appointment.getAppointmentCode(), formattedTime, patient.getFullName()))
+                                                .relatedEntityType(
+                                                                com.dental.clinic.management.notification.enums.NotificationEntityType.APPOINTMENT)
+                                                .relatedEntityId(appointment.getAppointmentCode())
+                                                .build();
+
+                                notificationService.createNotification(doctorNotification);
+                                log.info("✓ Main doctor notification created successfully");
+                        } else {
+                                log.warn("Main doctor has no account, skipping doctor notification");
+                        }
+
+                        // 3. Send notifications to ALL PARTICIPANTS (assistants, observers, additional dentists)
                         // Query participants from repository since they're not loaded in appointment
                         // entity
                         List<AppointmentParticipant> participants = appointmentParticipantRepository

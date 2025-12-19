@@ -27,7 +27,7 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public NotificationDTO createNotification(CreateNotificationRequest request) {
-        log.info("Creating notification for user: {}, type: {}", request.getUserId(), request.getType());
+        log.info("NotificationService.createNotification() CALLED for user: {}, type: {}", request.getUserId(), request.getType());
 
         Notification notification = Notification.builder()
                 .userId(request.getUserId())
@@ -39,8 +39,9 @@ public class NotificationServiceImpl implements NotificationService {
                 .isRead(false)
                 .build();
 
+        log.info("Saving notification to database...");
         Notification savedNotification = notificationRepository.save(notification);
-        log.info("Notification created with ID: {}", savedNotification.getNotificationId());
+        log.info("Notification SAVED to DB with ID: {}", savedNotification.getNotificationId());
 
         NotificationDTO notificationDTO = convertToDTO(savedNotification);
 
