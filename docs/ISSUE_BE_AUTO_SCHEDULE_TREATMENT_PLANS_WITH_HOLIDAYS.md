@@ -87,6 +87,12 @@ ADD COLUMN max_appointments_per_day INTEGER DEFAULT NULL;
 
 #### 🆕 **POST** `/api/v1/treatment-plans/{planId}/auto-schedule`
 
+> ⚠️ **QUAN TRỌNG CHO FE:** 
+> - ✅ **ĐÚNG:** `/api/v1/treatment-plans/{planId}/auto-schedule`
+> - ❌ **SAI:** `/api/v1/patient-treatment-plans/{planId}/auto-schedule` (endpoint này KHÔNG tồn tại)
+> 
+> **Lỗi thường gặp:** FE gọi sai URL với `/patient-treatment-plans/` thay vì `/treatment-plans/`
+
 **Mô tả:** Tạo gợi ý lịch hẹn tự động từ treatment plan với xử lý ngày lễ và spacing rules
 
 **Authentication:** Required (Bearer Token)
