@@ -31,17 +31,22 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        // Parse allowed origins from comma-separated string or use wildcard
+        // Parse allowed origins from comma-separated string
         String[] allowedOrigins = allowedOriginsString.split(",");
+        
+        // Trim whitespace from each origin
+        for (int i = 0; i < allowedOrigins.length; i++) {
+            allowedOrigins[i] = allowedOrigins[i].trim();
+        }
 
         // Endpoint for WebSocket connection with SockJS fallback
         registry.addEndpoint("/ws")
-                .setAllowedOrigins(allowedOrigins)
+                .setAllowedOriginPatterns("*") // Allow all for SockJS compatibility
                 .withSockJS();
 
         // Endpoint for native WebSocket clients (no SockJS)
         registry.addEndpoint("/ws")
-                .setAllowedOrigins(allowedOrigins);
+                .setAllowedOriginPatterns("*"); // Allow all for native WebSocket
     }
 
     @Override
