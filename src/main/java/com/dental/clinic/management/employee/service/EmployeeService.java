@@ -122,6 +122,12 @@ public class EmployeeService {
             // Always filter by isActive = true
             predicates.add(criteriaBuilder.equal(root.get("isActive"), true));
             
+            // DATA INTEGRITY: Always exclude ROLE_PATIENT from employee queries
+            // ROLE_PATIENT must only exist in Patient table, NOT in Employee table
+            var accountJoin = root.join("account");
+            var roleJoin = accountJoin.join("role");
+            predicates.add(criteriaBuilder.notEqual(roleJoin.get("roleId"), "ROLE_PATIENT"));
+            
             // Add search filter (employee code, first name, or last name)
             if (search != null && !search.trim().isEmpty()) {
                 String searchPattern = "%" + search.toLowerCase() + "%";
@@ -132,10 +138,8 @@ public class EmployeeService {
                 ));
             }
             
-            // Add roleId filter (role is in Account entity, roleId is in Role entity)
+            // Add roleId filter (reuse the same roleJoin from above)
             if (roleId != null && !roleId.trim().isEmpty()) {
-                var accountJoin = root.join("account");
-                var roleJoin = accountJoin.join("role");
                 predicates.add(criteriaBuilder.equal(roleJoin.get("roleId"), roleId));
             }
             
@@ -297,6 +301,15 @@ public class EmployeeService {
                         "role",
                         "rolenotfound"));
 
+        // DATA INTEGRITY CHECK: Prevent ROLE_PATIENT in Employee table
+        // ROLE_PATIENT must only exist in Patient table, NOT in Employee table
+        if ("ROLE_PATIENT".equals(role.getRoleId())) {
+            throw new BadRequestAlertException(
+                    "Cannot create employee with ROLE_PATIENT. Patients must be created in the Patient table.",
+                    "employee",
+                    "invalidroleforemployee");
+        }
+
         // Check if role requires specialization
         boolean hasSpecializations = request.getSpecializationIds() != null
                 && !request.getSpecializationIds().isEmpty();
@@ -408,6 +421,16 @@ public class EmployeeService {
                             "Role not found with ID: " + request.getRoleId(),
                             "role",
                             "rolenotfound"));
+            
+            // DATA INTEGRITY CHECK: Prevent ROLE_PATIENT in Employee table
+            // ROLE_PATIENT must only exist in Patient table, NOT in Employee table
+            if ("ROLE_PATIENT".equals(role.getRoleId())) {
+                throw new BadRequestAlertException(
+                        "Cannot assign ROLE_PATIENT to employee. Patients must be created in the Patient table.",
+                        "employee",
+                        "invalidroleforemployee");
+            }
+            
             employee.getAccount().setRole(role);
         }
 
