@@ -89,7 +89,7 @@ jobs:
 
           # Download celebration GIF
           echo "📥 Downloading celebration GIF..."
-          curl -L -o success.gif "https://media.discordapp.net/attachments/1134165112098398310/1450777439738396764/wjizi0a1cppf1.gif?ex=6943c547&is=694273c7&hm=d95c83a952e894f7d2f87a309ef1eccced89bc8d0b9a22b157ad47acd08b5380&=&width=300&height=300"
+          curl -L -o success.gif "https://media.discordapp.net/attachments/1449969951010983976/1450802582200127599/success.gif?ex=69472872&is=6945d6f2&hm=39e33980bbca48a1f382fa106dd38e41ac4c1d53ae98edd36a19124c12d96243&=&width=300&height=300"
 
           # Create JSON payload with GIF as attachment
           PAYLOAD=$(cat <<EOF
@@ -166,9 +166,9 @@ jobs:
           PAYLOAD=$(cat <<EOF
           {
             "embeds": [{
-              "title": "Deploy Failed!",
+              "title": "❌ Deploy Failed!",
               "color": 15158332,
-              "description": "CANH BAO: Deploy **Dental Clinic Backend** that bai!",
+              "description": "⚠️ CANH BAO: Deploy **Dental Clinic Backend** that bai!",
               "fields": [
                 {
                   "name": "Branch",

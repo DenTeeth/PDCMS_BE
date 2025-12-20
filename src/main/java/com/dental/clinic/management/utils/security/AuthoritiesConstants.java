@@ -63,6 +63,8 @@ public final class AuthoritiesConstants {
     // Leave Management Permissions
     public static final String VIEW_LEAVE_ALL = "VIEW_LEAVE_ALL";
     public static final String VIEW_LEAVE_OWN = "VIEW_LEAVE_OWN";
+    public static final String VIEW_OT_ALL = "VIEW_OT_ALL"; // CRITICAL: View all overtime requests (Manager)
+    public static final String VIEW_OT_OWN = "VIEW_OT_OWN"; // CRITICAL: View own overtime requests only (Employee)
     public static final String CREATE_TIME_OFF = "CREATE_TIME_OFF";
     public static final String APPROVE_TIME_OFF = "APPROVE_TIME_OFF";
     public static final String REJECT_TIME_OFF = "REJECT_TIME_OFF";
