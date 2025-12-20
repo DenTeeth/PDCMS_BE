@@ -315,6 +315,10 @@ ON CONFLICT (permission_id) DO NOTHING;
 -- ============================================
 -- BƯỚC 4: PHÂN QUYỀN CHO CÁC VAI TRÒ
 -- ============================================
+-- NOTE: Using OPTIMIZED permissions (70 permissions instead of 169)
+-- - CRUD operations consolidated to MANAGE_X
+-- - RBAC patterns preserved (VIEW_ALL vs VIEW_OWN)
+-- - Workflow permissions kept (APPROVE_X, ASSIGN_X)
 
 -- Admin có TẤT CẢ quyền
 INSERT INTO role_permissions (role_id, permission_id)
@@ -322,237 +326,339 @@ SELECT 'ROLE_ADMIN', permission_id FROM permissions WHERE is_active = TRUE
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
--- Dentist (Fix: ROLE_DENTIST → ROLE_DENTIST)
+-- ============================================
+-- ROLE_DENTIST: Bác sĩ nha khoa
+-- ============================================
 INSERT INTO role_permissions (role_id, permission_id)
 VALUES
-('ROLE_DENTIST', 'VIEW_PATIENT'), ('ROLE_DENTIST', 'UPDATE_PATIENT'),
-('ROLE_DENTIST', 'VIEW_TREATMENT'), ('ROLE_DENTIST', 'CREATE_TREATMENT'), ('ROLE_DENTIST', 'UPDATE_TREATMENT'), ('ROLE_DENTIST', 'ASSIGN_DOCTOR_TO_ITEM'),
-('ROLE_DENTIST', 'VIEW_APPOINTMENT_OWN'),
-('ROLE_DENTIST', 'UPDATE_APPOINTMENT_STATUS'),
-('ROLE_DENTIST', 'DELAY_APPOINTMENT'),
-('ROLE_DENTIST', 'VIEW_REGISTRATION_OWN'), ('ROLE_DENTIST', 'VIEW_RENEWAL_OWN'), ('ROLE_DENTIST', 'RESPOND_RENEWAL_OWN'),
-('ROLE_DENTIST', 'CREATE_REGISTRATION'),
-('ROLE_DENTIST', 'VIEW_LEAVE_OWN'), ('ROLE_DENTIST', 'CREATE_TIME_OFF'), ('ROLE_DENTIST', 'CREATE_OVERTIME'), ('ROLE_DENTIST', 'CANCEL_TIME_OFF'), ('ROLE_DENTIST', 'CANCEL_OVERTIME'),
-('ROLE_DENTIST', 'VIEW_HOLIDAY'),
--- Treatment Plan permissions
-('ROLE_DENTIST', 'VIEW_TREATMENT_PLAN_OWN'),
-('ROLE_DENTIST', 'CREATE_TREATMENT_PLAN'),
-('ROLE_DENTIST', 'UPDATE_TREATMENT_PLAN'),
-('ROLE_DENTIST', 'DELETE_TREATMENT_PLAN'),
-('ROLE_DENTIST', 'VIEW_SERVICE'),
-('ROLE_DENTIST', 'VIEW_ITEMS'),
-('ROLE_DENTIST', 'VIEW_MEDICINES'),
-('ROLE_DENTIST', 'WRITE_CLINICAL_RECORD'),
-('ROLE_DENTIST', 'UPLOAD_ATTACHMENT'),
-('ROLE_DENTIST', 'VIEW_ATTACHMENT'),
-('ROLE_DENTIST', 'DELETE_ATTACHMENT'),
-('ROLE_DENTIST', 'VIEW_VITAL_SIGNS_REFERENCE'),
--- Patient Images permissions
-('ROLE_DENTIST', 'PATIENT_IMAGE_CREATE'),
-('ROLE_DENTIST', 'PATIENT_IMAGE_READ'),
-('ROLE_DENTIST', 'PATIENT_IMAGE_UPDATE'),
-('ROLE_DENTIST', 'PATIENT_IMAGE_DELETE'),
--- Notification permissions
+-- PATIENT (view + update)
+('ROLE_DENTIST', 'VIEW_PATIENT'),
+('ROLE_DENTIST', 'MANAGE_PATIENT'), -- Can update patient info (not delete)
+
+-- APPOINTMENT (own appointments only)
+('ROLE_DENTIST', 'VIEW_APPOINTMENT_OWN'), -- RBAC: Only see own appointments
+('ROLE_DENTIST', 'UPDATE_APPOINTMENT_STATUS'), -- Can mark COMPLETED, CHECKED_IN
+('ROLE_DENTIST', 'MANAGE_APPOINTMENT'), -- Can delay/cancel own appointments
+
+-- TREATMENT_PLAN (create & manage for patients)
+('ROLE_DENTIST', 'VIEW_TREATMENT_PLAN_OWN'), -- RBAC: View own treatment plans
+('ROLE_DENTIST', 'MANAGE_TREATMENT_PLAN'), -- Create/Update/Delete plans
+('ROLE_DENTIST', 'VIEW_TREATMENT'), -- View treatment items
+('ROLE_DENTIST', 'MANAGE_TREATMENT'), -- Create/Update/Assign doctor to items
+
+-- CLINICAL_RECORDS (full write access)
+('ROLE_DENTIST', 'WRITE_CLINICAL_RECORD'), -- Create & update clinical records (9 usages!)
+('ROLE_DENTIST', 'VIEW_ATTACHMENT'), -- View attachments (X-ray, PDFs)
+('ROLE_DENTIST', 'MANAGE_ATTACHMENTS'), -- Upload/Delete attachments
+('ROLE_DENTIST', 'VIEW_VITAL_SIGNS_REFERENCE'), -- View vital signs reference
+
+-- PATIENT_IMAGES (full access)
+('ROLE_DENTIST', 'VIEW_PATIENT_IMAGES'), -- View patient images
+('ROLE_DENTIST', 'MANAGE_PATIENT_IMAGES'), -- Upload/Edit/Delete images
+('ROLE_DENTIST', 'MANAGE_IMAGE_COMMENTS'), -- Add/Edit/Delete comments on images
+
+-- SERVICE & WAREHOUSE (read-only for prescription)
+('ROLE_DENTIST', 'VIEW_SERVICE'), -- View services for treatment planning
+('ROLE_DENTIST', 'VIEW_ITEMS'), -- View materials for treatment
+('ROLE_DENTIST', 'VIEW_MEDICINES'), -- View medicines for prescription
+
+-- SCHEDULE_MANAGEMENT (employee self-service)
+('ROLE_DENTIST', 'VIEW_SCHEDULE_OWN'), -- RBAC: View own schedule
+('ROLE_DENTIST', 'CREATE_REGISTRATION'), -- Register for shifts
+
+-- LEAVE_MANAGEMENT (employee self-service)
+('ROLE_DENTIST', 'VIEW_LEAVE_OWN'), -- RBAC: View own leave requests
+('ROLE_DENTIST', 'CREATE_TIME_OFF'), -- Request time-off
+('ROLE_DENTIST', 'CREATE_OVERTIME'), -- Request overtime
+
+-- HOLIDAY (read-only)
+('ROLE_DENTIST', 'VIEW_HOLIDAY'), -- View clinic holiday schedule
+
+-- NOTIFICATION
 ('ROLE_DENTIST', 'VIEW_NOTIFICATION'),
 ('ROLE_DENTIST', 'DELETE_NOTIFICATION')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
--- Nurse
+-- ============================================
+-- ROLE_NURSE: Y tá
+-- ============================================
 INSERT INTO role_permissions (role_id, permission_id)
 VALUES
-('ROLE_NURSE', 'VIEW_PATIENT'), ('ROLE_NURSE', 'VIEW_TREATMENT'),
-('ROLE_NURSE', 'VIEW_APPOINTMENT_OWN'),
-('ROLE_NURSE', 'UPDATE_APPOINTMENT_STATUS'),
-('ROLE_NURSE', 'VIEW_REGISTRATION_OWN'), ('ROLE_NURSE', 'VIEW_RENEWAL_OWN'), ('ROLE_NURSE', 'RESPOND_RENEWAL_OWN'),
-('ROLE_NURSE', 'CREATE_REGISTRATION'),
-('ROLE_NURSE', 'VIEW_LEAVE_OWN'), ('ROLE_NURSE', 'CREATE_TIME_OFF'), ('ROLE_NURSE', 'CREATE_OVERTIME'), ('ROLE_NURSE', 'CANCEL_TIME_OFF'), ('ROLE_NURSE', 'CANCEL_OVERTIME'),
-('ROLE_NURSE', 'VIEW_HOLIDAY'),
+-- PATIENT (read-only)
+('ROLE_NURSE', 'VIEW_PATIENT'),
+
+-- APPOINTMENT (own appointments only)
+('ROLE_NURSE', 'VIEW_APPOINTMENT_OWN'), -- RBAC: Only see own appointments
+('ROLE_NURSE', 'UPDATE_APPOINTMENT_STATUS'), -- Can mark patients as checked-in
+
+-- TREATMENT (read-only)
+('ROLE_NURSE', 'VIEW_TREATMENT'),
+
+-- CLINICAL_RECORDS (read attachments)
 ('ROLE_NURSE', 'VIEW_ATTACHMENT'),
--- Notification permissions
+
+-- SCHEDULE_MANAGEMENT (employee self-service)
+('ROLE_NURSE', 'VIEW_SCHEDULE_OWN'), -- RBAC: View own schedule
+('ROLE_NURSE', 'CREATE_REGISTRATION'), -- Register for shifts
+
+-- LEAVE_MANAGEMENT (employee self-service)
+('ROLE_NURSE', 'VIEW_LEAVE_OWN'), -- RBAC: View own leave requests
+('ROLE_NURSE', 'CREATE_TIME_OFF'), -- Request time-off
+('ROLE_NURSE', 'CREATE_OVERTIME'), -- Request overtime
+
+-- HOLIDAY (read-only)
+('ROLE_NURSE', 'VIEW_HOLIDAY'),
+
+-- NOTIFICATION
 ('ROLE_NURSE', 'VIEW_NOTIFICATION'),
 ('ROLE_NURSE', 'DELETE_NOTIFICATION')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
+-- ============================================
+-- ROLE_DENTIST_INTERN: Bác sĩ thực tập
+-- ============================================
 INSERT INTO role_permissions (role_id, permission_id)
 VALUES
-('ROLE_DENTIST_INTERN', 'VIEW_APPOINTMENT_OWN'), -- Chỉ thấy appointments họ tham gia
-('ROLE_DENTIST_INTERN', 'VIEW_PATIENT'), -- Chỉ xem thông tin cơ bản bệnh nhân (không có medical history)
-('ROLE_DENTIST_INTERN', 'VIEW_REGISTRATION_OWN'), -- Xem ca làm của mình
-('ROLE_DENTIST_INTERN', 'CREATE_REGISTRATION'), -- Đăng ký ca làm
-('ROLE_DENTIST_INTERN', 'VIEW_LEAVE_OWN'), -- Xem nghỉ phép của mình
-('ROLE_DENTIST_INTERN', 'CREATE_TIME_OFF'), -- Tạo đơn xin nghỉ
-('ROLE_DENTIST_INTERN', 'CANCEL_TIME_OFF_OWN'), -- Hủy đơn nghỉ của mình
-('ROLE_DENTIST_INTERN', 'VIEW_HOLIDAY'), -- Xem lịch nghỉ lễ
--- Notification permissions
+-- PATIENT (read-only basic info)
+('ROLE_DENTIST_INTERN', 'VIEW_PATIENT'),
+
+-- APPOINTMENT (own only)
+('ROLE_DENTIST_INTERN', 'VIEW_APPOINTMENT_OWN'), -- RBAC: Only see own appointments
+
+-- SCHEDULE_MANAGEMENT (employee self-service)
+('ROLE_DENTIST_INTERN', 'VIEW_SCHEDULE_OWN'), -- RBAC: View own schedule
+('ROLE_DENTIST_INTERN', 'CREATE_REGISTRATION'), -- Register for shifts
+
+-- LEAVE_MANAGEMENT (employee self-service)
+('ROLE_DENTIST_INTERN', 'VIEW_LEAVE_OWN'), -- RBAC: View own leave requests
+('ROLE_DENTIST_INTERN', 'CREATE_TIME_OFF'), -- Request time-off
+
+-- HOLIDAY (read-only)
+('ROLE_DENTIST_INTERN', 'VIEW_HOLIDAY'),
+
+-- NOTIFICATION
 ('ROLE_DENTIST_INTERN', 'VIEW_NOTIFICATION'),
 ('ROLE_DENTIST_INTERN', 'DELETE_NOTIFICATION')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
--- Receptionist
+-- ============================================
+-- ROLE_RECEPTIONIST: Lễ tân
+-- ============================================
 INSERT INTO role_permissions (role_id, permission_id)
 VALUES
-('ROLE_RECEPTIONIST', 'VIEW_PATIENT'), ('ROLE_RECEPTIONIST', 'CREATE_PATIENT'), ('ROLE_RECEPTIONIST', 'UPDATE_PATIENT'),
-('ROLE_RECEPTIONIST', 'VIEW_APPOINTMENT_ALL'),
-('ROLE_RECEPTIONIST', 'CREATE_APPOINTMENT'),
-('ROLE_RECEPTIONIST', 'UPDATE_APPOINTMENT'),
-('ROLE_RECEPTIONIST', 'UPDATE_APPOINTMENT_STATUS'),
-('ROLE_RECEPTIONIST', 'DELAY_APPOINTMENT'),
-('ROLE_RECEPTIONIST', 'DELETE_APPOINTMENT'),
--- CUSTOMER_MANAGEMENT
-('ROLE_RECEPTIONIST', 'VIEW_CONTACT'), ('ROLE_RECEPTIONIST', 'CREATE_CONTACT'),
-('ROLE_RECEPTIONIST', 'UPDATE_CONTACT'), ('ROLE_RECEPTIONIST', 'DELETE_CONTACT'),
-('ROLE_RECEPTIONIST', 'VIEW_CONTACT_HISTORY'), ('ROLE_RECEPTIONIST', 'CREATE_CONTACT_HISTORY'),
-('ROLE_RECEPTIONIST', 'UPDATE_CONTACT_HISTORY'), ('ROLE_RECEPTIONIST', 'DELETE_CONTACT_HISTORY'),
--- SCHEDULE & LEAVE
-('ROLE_RECEPTIONIST', 'VIEW_REGISTRATION_OWN'),
-('ROLE_RECEPTIONIST', 'CREATE_REGISTRATION'),
-('ROLE_RECEPTIONIST', 'VIEW_LEAVE_OWN'), ('ROLE_RECEPTIONIST', 'CREATE_TIME_OFF'), ('ROLE_RECEPTIONIST', 'CREATE_OVERTIME'),
-('ROLE_RECEPTIONIST', 'CANCEL_TIME_OFF_OWN'), ('ROLE_RECEPTIONIST', 'CANCEL_OVERTIME_OWN'),
-('ROLE_RECEPTIONIST', 'VIEW_HOLIDAY'),
-('ROLE_RECEPTIONIST', 'VIEW_TREATMENT_PLAN_ALL'),
+-- PATIENT (full management)
+('ROLE_RECEPTIONIST', 'VIEW_PATIENT'),
+('ROLE_RECEPTIONIST', 'MANAGE_PATIENT'), -- Create/Update patients
+
+-- APPOINTMENT (full management)
+('ROLE_RECEPTIONIST', 'VIEW_APPOINTMENT_ALL'), -- RBAC: See all appointments
+('ROLE_RECEPTIONIST', 'CREATE_APPOINTMENT'), -- Book appointments
+('ROLE_RECEPTIONIST', 'UPDATE_APPOINTMENT_STATUS'), -- Confirm, check-in
+('ROLE_RECEPTIONIST', 'MANAGE_APPOINTMENT'), -- Update/Delay/Cancel appointments
+
+-- CUSTOMER_CONTACT (full management for customer relations)
+('ROLE_RECEPTIONIST', 'VIEW_CUSTOMER_CONTACT'),
+('ROLE_RECEPTIONIST', 'MANAGE_CUSTOMER_CONTACT'), -- Create/Update/Delete contacts & history
+
+-- TREATMENT_PLAN (read all for scheduling)
+('ROLE_RECEPTIONIST', 'VIEW_TREATMENT_PLAN_ALL'), -- RBAC: View all treatment plans
+
+-- PATIENT_IMAGES (read-only)
+('ROLE_RECEPTIONIST', 'VIEW_PATIENT_IMAGES'),
+
+-- WAREHOUSE (read-only for inventory check)
 ('ROLE_RECEPTIONIST', 'VIEW_WAREHOUSE'),
 ('ROLE_RECEPTIONIST', 'VIEW_ITEMS'),
--- Patient Images (read only for receptionist)
-('ROLE_RECEPTIONIST', 'PATIENT_IMAGE_READ'),
--- Notification permissions
+
+-- SCHEDULE_MANAGEMENT (employee self-service)
+('ROLE_RECEPTIONIST', 'VIEW_SCHEDULE_OWN'), -- RBAC: View own schedule
+('ROLE_RECEPTIONIST', 'CREATE_REGISTRATION'), -- Register for shifts
+
+-- LEAVE_MANAGEMENT (employee self-service)
+('ROLE_RECEPTIONIST', 'VIEW_LEAVE_OWN'), -- RBAC: View own leave requests
+('ROLE_RECEPTIONIST', 'CREATE_TIME_OFF'), -- Request time-off
+('ROLE_RECEPTIONIST', 'CREATE_OVERTIME'), -- Request overtime
+
+-- HOLIDAY (read-only)
+('ROLE_RECEPTIONIST', 'VIEW_HOLIDAY'),
+
+-- NOTIFICATION
 ('ROLE_RECEPTIONIST', 'VIEW_NOTIFICATION'),
 ('ROLE_RECEPTIONIST', 'DELETE_NOTIFICATION')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
--- Manager (Full management permissions)
+-- ============================================
+-- ROLE_MANAGER: Quản lý phòng khám
+-- ============================================
 INSERT INTO role_permissions (role_id, permission_id)
 VALUES
-('ROLE_MANAGER', 'VIEW_EMPLOYEE'), ('ROLE_MANAGER', 'CREATE_EMPLOYEE'),
-('ROLE_MANAGER', 'UPDATE_EMPLOYEE'), ('ROLE_MANAGER', 'DELETE_EMPLOYEE'),
+-- EMPLOYEE (full management)
+('ROLE_MANAGER', 'VIEW_EMPLOYEE'),
+('ROLE_MANAGER', 'MANAGE_EMPLOYEE'), -- Create/Update employees
+('ROLE_MANAGER', 'DELETE_EMPLOYEE'), -- Can delete employees
+
+-- PATIENT (read-only)
 ('ROLE_MANAGER', 'VIEW_PATIENT'),
-('ROLE_MANAGER', 'VIEW_APPOINTMENT_ALL'),
+
+-- APPOINTMENT (view all)
+('ROLE_MANAGER', 'VIEW_APPOINTMENT_ALL'), -- RBAC: See all appointments
 ('ROLE_MANAGER', 'UPDATE_APPOINTMENT_STATUS'),
-('ROLE_MANAGER', 'DELAY_APPOINTMENT'),
--- CUSTOMER_MANAGEMENT
-('ROLE_MANAGER', 'VIEW_CONTACT'), ('ROLE_MANAGER', 'CREATE_CONTACT'),
-('ROLE_MANAGER', 'UPDATE_CONTACT'), ('ROLE_MANAGER', 'DELETE_CONTACT'),
-('ROLE_MANAGER', 'VIEW_CONTACT_HISTORY'), ('ROLE_MANAGER', 'CREATE_CONTACT_HISTORY'),
-('ROLE_MANAGER', 'UPDATE_CONTACT_HISTORY'), ('ROLE_MANAGER', 'DELETE_CONTACT_HISTORY'),
--- SCHEDULE_MANAGEMENT (full)
-('ROLE_MANAGER', 'VIEW_WORK_SHIFTS'), ('ROLE_MANAGER', 'CREATE_WORK_SHIFTS'),
-('ROLE_MANAGER', 'UPDATE_WORK_SHIFTS'), ('ROLE_MANAGER', 'DELETE_WORK_SHIFTS'),
-('ROLE_MANAGER', 'MANAGE_WORK_SLOTS'), ('ROLE_MANAGER', 'VIEW_AVAILABLE_SLOTS'),
-('ROLE_MANAGER', 'MANAGE_PART_TIME_REGISTRATIONS'),
-('ROLE_MANAGER', 'VIEW_REGISTRATION_ALL'), ('ROLE_MANAGER', 'CREATE_REGISTRATION'),
-('ROLE_MANAGER', 'UPDATE_REGISTRATION'), ('ROLE_MANAGER', 'DELETE_REGISTRATION'),
-('ROLE_MANAGER', 'UPDATE_REGISTRATIONS_ALL'), ('ROLE_MANAGER', 'CANCEL_REGISTRATION_OWN'),
--- Employee shift management (BE-302)
-('ROLE_MANAGER', 'VIEW_SHIFTS_ALL'), ('ROLE_MANAGER', 'VIEW_SHIFTS_SUMMARY'),
-('ROLE_MANAGER', 'CREATE_SHIFTS'), ('ROLE_MANAGER', 'UPDATE_SHIFTS'), ('ROLE_MANAGER', 'DELETE_SHIFTS'),
--- Fixed shift registration management (BE-307 V2)
-('ROLE_MANAGER', 'MANAGE_FIXED_REGISTRATIONS'), ('ROLE_MANAGER', 'VIEW_FIXED_REGISTRATIONS_ALL'),
--- Shift renewal management (P7)
-('ROLE_MANAGER', 'VIEW_RENEWAL_OWN'), ('ROLE_MANAGER', 'RESPOND_RENEWAL_OWN'),
--- LEAVE_MANAGEMENT (full management)
-('ROLE_MANAGER', 'VIEW_LEAVE_ALL'),
-('ROLE_MANAGER', 'APPROVE_TIME_OFF'), ('ROLE_MANAGER', 'REJECT_TIME_OFF'), ('ROLE_MANAGER', 'CANCEL_TIME_OFF_PENDING'),
-('ROLE_MANAGER', 'VIEW_OT_ALL'), ('ROLE_MANAGER', 'APPROVE_OT'), ('ROLE_MANAGER', 'REJECT_OT'), ('ROLE_MANAGER', 'CANCEL_OT_PENDING'),
-('ROLE_MANAGER', 'APPROVE_OVERTIME'), ('ROLE_MANAGER', 'REJECT_OVERTIME'), ('ROLE_MANAGER', 'CANCEL_OVERTIME_PENDING'),
-('ROLE_MANAGER', 'VIEW_TIMEOFF_TYPE'), ('ROLE_MANAGER', 'VIEW_TIMEOFF_TYPE_ALL'), ('ROLE_MANAGER', 'CREATE_TIMEOFF_TYPE'),
-('ROLE_MANAGER', 'UPDATE_TIMEOFF_TYPE'), ('ROLE_MANAGER', 'DELETE_TIMEOFF_TYPE'),
-('ROLE_MANAGER', 'VIEW_LEAVE_BALANCE_ALL'), ('ROLE_MANAGER', 'ADJUST_LEAVE_BALANCE'),
--- SYSTEM_CONFIGURATION (limited)
-('ROLE_MANAGER', 'VIEW_ROLE'), ('ROLE_MANAGER', 'VIEW_SPECIALIZATION'),
-('ROLE_MANAGER', 'CREATE_SPECIALIZATION'), ('ROLE_MANAGER', 'UPDATE_SPECIALIZATION'),
--- HOLIDAY
+('ROLE_MANAGER', 'MANAGE_APPOINTMENT'),
+
+-- CUSTOMER_CONTACT (full management)
+('ROLE_MANAGER', 'VIEW_CUSTOMER_CONTACT'),
+('ROLE_MANAGER', 'MANAGE_CUSTOMER_CONTACT'),
+
+-- SCHEDULE_MANAGEMENT (full management - 6 consolidated permissions)
+('ROLE_MANAGER', 'VIEW_SCHEDULE_ALL'), -- RBAC: View all schedules
+('ROLE_MANAGER', 'MANAGE_WORK_SHIFTS'), -- Manage shift templates
+('ROLE_MANAGER', 'MANAGE_WORK_SLOTS'), -- Manage part-time slots
+('ROLE_MANAGER', 'MANAGE_PART_TIME_REGISTRATIONS'), -- Approve part-time registrations (9 usages!)
+('ROLE_MANAGER', 'MANAGE_FIXED_REGISTRATIONS'), -- Manage fixed shift registrations
+
+-- LEAVE_MANAGEMENT (full management with workflows)
+('ROLE_MANAGER', 'VIEW_LEAVE_ALL'), -- RBAC: View all leave requests
+('ROLE_MANAGER', 'VIEW_OT_ALL'), -- RBAC: View all overtime requests (CRITICAL!)
+('ROLE_MANAGER', 'APPROVE_TIME_OFF'), -- Approve/Reject time-off (workflow)
+('ROLE_MANAGER', 'APPROVE_OVERTIME'), -- Approve/Reject overtime (workflow)
+
+-- ROOM_MANAGEMENT (full management)
+('ROLE_MANAGER', 'VIEW_ROOM'),
+('ROLE_MANAGER', 'MANAGE_ROOM'), -- Create/Update/Delete/Assign services
+
+-- SERVICE_MANAGEMENT (full management)
+('ROLE_MANAGER', 'VIEW_SERVICE'),
+('ROLE_MANAGER', 'MANAGE_SERVICE'), -- Create/Update/Delete services
+
+-- HOLIDAY (read-only - Admin manages holidays)
 ('ROLE_MANAGER', 'VIEW_HOLIDAY'),
--- ROOM_MANAGEMENT (V16: Full management of rooms and room-service compatibility)
-('ROLE_MANAGER', 'VIEW_ROOM'), ('ROLE_MANAGER', 'CREATE_ROOM'),
-('ROLE_MANAGER', 'UPDATE_ROOM'), ('ROLE_MANAGER', 'DELETE_ROOM'),
-('ROLE_MANAGER', 'UPDATE_ROOM_SERVICES'),
--- SERVICE_MANAGEMENT (V16: Full management of services)
-('ROLE_MANAGER', 'VIEW_SERVICE'), ('ROLE_MANAGER', 'CREATE_SERVICE'),
-('ROLE_MANAGER', 'UPDATE_SERVICE'), ('ROLE_MANAGER', 'DELETE_SERVICE'),
--- TREATMENT_PLAN (V19/V20/V21: Full management of treatment plans)
-('ROLE_MANAGER', 'VIEW_TREATMENT_PLAN_ALL'), -- Can view all patients' treatment plans
-('ROLE_MANAGER', 'VIEW_ALL_TREATMENT_PLANS'), -- V21: Can view system-wide treatment plan list
-('ROLE_MANAGER', 'CREATE_TREATMENT_PLAN'), -- Can create treatment plans
-('ROLE_MANAGER', 'ASSIGN_DOCTOR_TO_ITEM'), -- V32: Can assign doctors to plan items
-('ROLE_MANAGER', 'UPDATE_TREATMENT_PLAN'), -- Can update treatment plans
-('ROLE_MANAGER', 'DELETE_TREATMENT_PLAN'), -- Can delete treatment plans
-('ROLE_MANAGER', 'APPROVE_TREATMENT_PLAN'), -- V20: Can approve/reject treatment plans (API 5.9)
-('ROLE_MANAGER', 'MANAGE_PLAN_PRICING'), -- V21: Can adjust pricing/discounts on treatment plans
-('ROLE_MANAGER', 'VIEW_WAREHOUSE'),
-('ROLE_MANAGER', 'VIEW_WAREHOUSE_COST'), -- Can view cost/price fields in warehouse APIs
+
+-- TREATMENT_PLAN (full management)
+('ROLE_MANAGER', 'VIEW_TREATMENT_PLAN_ALL'), -- RBAC: View all treatment plans
+('ROLE_MANAGER', 'MANAGE_TREATMENT_PLAN'), -- Create/Update/Delete/Approve plans
+('ROLE_MANAGER', 'VIEW_TREATMENT'),
+('ROLE_MANAGER', 'MANAGE_TREATMENT'), -- Assign doctors to treatment items
+
+-- WAREHOUSE (full management)
+('ROLE_MANAGER', 'VIEW_WAREHOUSE'), -- View inventory (22 usages!)
+('ROLE_MANAGER', 'VIEW_WAREHOUSE_COST'), -- Can view cost/price fields
 ('ROLE_MANAGER', 'VIEW_ITEMS'),
-('ROLE_MANAGER', 'IMPORT_ITEMS'),
-('ROLE_MANAGER', 'EXPORT_ITEMS'),
-('ROLE_MANAGER', 'APPROVE_TRANSACTION'),
-('ROLE_MANAGER', 'CANCEL_WAREHOUSE'), -- Can cancel import/export transactions (API 6.6.3)
-('ROLE_MANAGER', 'MANAGE_SUPPLIERS'), -- V28: Can manage suppliers (API 6.13, 6.14)
-('ROLE_MANAGER', 'MANAGE_CONSUMABLES'), -- V30: Can manage service consumables BOM (API 6.18, 6.19)
-('ROLE_MANAGER', 'MANAGE_WAREHOUSE'), -- V28: Full warehouse management authority
--- Notification permissions
+('ROLE_MANAGER', 'MANAGE_WAREHOUSE'), -- Manage categories, items, suppliers (8 usages!)
+('ROLE_MANAGER', 'MANAGE_SUPPLIERS'), -- Manage suppliers
+('ROLE_MANAGER', 'IMPORT_ITEMS'), -- Create import transactions
+('ROLE_MANAGER', 'EXPORT_ITEMS'), -- Create export transactions
+('ROLE_MANAGER', 'APPROVE_TRANSACTION'), -- Approve/Reject warehouse transactions (workflow)
+('ROLE_MANAGER', 'MANAGE_CONSUMABLES'), -- Manage service BOM
+
+-- SYSTEM_CONFIGURATION (limited - view only)
+('ROLE_MANAGER', 'VIEW_ROLE'),
+('ROLE_MANAGER', 'VIEW_SPECIALIZATION'),
+('ROLE_MANAGER', 'MANAGE_SPECIALIZATION'), -- Can manage specializations
+
+-- NOTIFICATION
 ('ROLE_MANAGER', 'VIEW_NOTIFICATION'),
 ('ROLE_MANAGER', 'DELETE_NOTIFICATION')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
--- Accountant & Inventory Manager (LEAVE only)
+-- ============================================
+-- ROLE_ACCOUNTANT: Kế toán
+-- ============================================
 INSERT INTO role_permissions (role_id, permission_id)
 VALUES
-('ROLE_ACCOUNTANT', 'VIEW_LEAVE_OWN'), ('ROLE_ACCOUNTANT', 'CREATE_TIME_OFF'), ('ROLE_ACCOUNTANT', 'CREATE_OVERTIME'),
-('ROLE_ACCOUNTANT', 'CANCEL_TIME_OFF_OWN'), ('ROLE_ACCOUNTANT', 'CANCEL_OVERTIME_OWN'),
+-- SCHEDULE_MANAGEMENT (employee self-service)
+('ROLE_ACCOUNTANT', 'VIEW_SCHEDULE_OWN'), -- RBAC: View own schedule
+('ROLE_ACCOUNTANT', 'CREATE_REGISTRATION'), -- Register for shifts
+
+-- LEAVE_MANAGEMENT (employee self-service)
+('ROLE_ACCOUNTANT', 'VIEW_LEAVE_OWN'), -- RBAC: View own leave requests
+('ROLE_ACCOUNTANT', 'CREATE_TIME_OFF'), -- Request time-off
+('ROLE_ACCOUNTANT', 'CREATE_OVERTIME'), -- Request overtime
+
+-- HOLIDAY (read-only)
 ('ROLE_ACCOUNTANT', 'VIEW_HOLIDAY'),
--- TREATMENT_PLAN (V21: Accountant can adjust pricing - API 5.x)
-('ROLE_ACCOUNTANT', 'VIEW_TREATMENT_PLAN_ALL'), -- Can view all treatment plans
-('ROLE_ACCOUNTANT', 'MANAGE_PLAN_PRICING'), -- Can adjust pricing/discounts
--- WAREHOUSE (V22: Accountant can view transactions and financial data - API 6.6)
-('ROLE_ACCOUNTANT', 'VIEW_WAREHOUSE'), -- Can view transaction history
-('ROLE_ACCOUNTANT', 'VIEW_WAREHOUSE_COST'), -- Can view financial data (cost, payment info)
--- Notification permissions
+
+-- TREATMENT_PLAN (view all for financial management)
+('ROLE_ACCOUNTANT', 'VIEW_TREATMENT_PLAN_ALL'), -- RBAC: View all treatment plans for billing
+
+-- WAREHOUSE (view-only for financial auditing)
+('ROLE_ACCOUNTANT', 'VIEW_WAREHOUSE'), -- View transaction history
+('ROLE_ACCOUNTANT', 'VIEW_WAREHOUSE_COST'), -- View financial data (cost/price - critical for accounting!)
+
+-- NOTIFICATION
 ('ROLE_ACCOUNTANT', 'VIEW_NOTIFICATION'),
-('ROLE_ACCOUNTANT', 'DELETE_NOTIFICATION'),
-('ROLE_INVENTORY_MANAGER', 'VIEW_LEAVE_OWN'), ('ROLE_INVENTORY_MANAGER', 'CREATE_TIME_OFF'), ('ROLE_INVENTORY_MANAGER', 'CREATE_OVERTIME'),
-('ROLE_INVENTORY_MANAGER', 'CANCEL_TIME_OFF_OWN'), ('ROLE_INVENTORY_MANAGER', 'CANCEL_OVERTIME_OWN'),
+('ROLE_ACCOUNTANT', 'DELETE_NOTIFICATION')
+ON CONFLICT (role_id, permission_id) DO NOTHING;
+
+
+-- ============================================
+-- ROLE_INVENTORY_MANAGER: Quản lý kho
+-- ============================================
+INSERT INTO role_permissions (role_id, permission_id)
+VALUES
+-- SCHEDULE_MANAGEMENT (employee self-service)
+('ROLE_INVENTORY_MANAGER', 'VIEW_SCHEDULE_OWN'), -- RBAC: View own schedule
+('ROLE_INVENTORY_MANAGER', 'CREATE_REGISTRATION'), -- Register for shifts
+
+-- LEAVE_MANAGEMENT (employee self-service)
+('ROLE_INVENTORY_MANAGER', 'VIEW_LEAVE_OWN'), -- RBAC: View own leave requests
+('ROLE_INVENTORY_MANAGER', 'CREATE_TIME_OFF'), -- Request time-off
+('ROLE_INVENTORY_MANAGER', 'CREATE_OVERTIME'), -- Request overtime
+
+-- HOLIDAY (read-only)
 ('ROLE_INVENTORY_MANAGER', 'VIEW_HOLIDAY'),
--- WAREHOUSE (V28: Full warehouse management - API 6.6, 6.9, 6.10, 6.11, 6.13, 6.14)
-('ROLE_INVENTORY_MANAGER', 'VIEW_ITEMS'), -- Can view item list and units (API 6.8, 6.11)
-('ROLE_INVENTORY_MANAGER', 'VIEW_WAREHOUSE'), -- Can view transaction history
-('ROLE_INVENTORY_MANAGER', 'CREATE_ITEMS'), -- Can create item masters (API 6.9)
-('ROLE_INVENTORY_MANAGER', 'UPDATE_ITEMS'), -- Can update item masters (API 6.10)
-('ROLE_INVENTORY_MANAGER', 'CREATE_WAREHOUSE'), -- Can create categories/suppliers
-('ROLE_INVENTORY_MANAGER', 'UPDATE_WAREHOUSE'), -- Can update items/categories/suppliers
-('ROLE_INVENTORY_MANAGER', 'DELETE_WAREHOUSE'), -- Can delete items/categories/suppliers
--- REMOVED VIEW_WAREHOUSE_COST: Inventory Manager only sees quantities, NOT prices
-('ROLE_INVENTORY_MANAGER', 'IMPORT_ITEMS'), -- Can create import transactions
-('ROLE_INVENTORY_MANAGER', 'EXPORT_ITEMS'), -- Can create export transactions
-('ROLE_INVENTORY_MANAGER', 'DISPOSE_ITEMS'), -- Can create disposal transactions
-('ROLE_INVENTORY_MANAGER', 'APPROVE_TRANSACTION'), -- Can approve transactions
-('ROLE_INVENTORY_MANAGER', 'CANCEL_WAREHOUSE'), -- Can cancel import/export transactions (API 6.6.3)
-('ROLE_INVENTORY_MANAGER', 'MANAGE_SUPPLIERS'), -- Can manage suppliers (API 6.13, 6.14)
-('ROLE_INVENTORY_MANAGER', 'MANAGE_WAREHOUSE'), -- Full warehouse management authority
--- Notification permissions
+
+-- WAREHOUSE (full management - NO price/cost viewing)
+('ROLE_INVENTORY_MANAGER', 'VIEW_WAREHOUSE'), -- View inventory (22 usages!)
+('ROLE_INVENTORY_MANAGER', 'VIEW_ITEMS'), -- View items/medicines
+('ROLE_INVENTORY_MANAGER', 'VIEW_MEDICINES'), -- View medicine list
+('ROLE_INVENTORY_MANAGER', 'MANAGE_WAREHOUSE'), -- Full CRUD on items/categories/suppliers (8 usages!)
+('ROLE_INVENTORY_MANAGER', 'MANAGE_SUPPLIERS'), -- Manage suppliers
+('ROLE_INVENTORY_MANAGER', 'IMPORT_ITEMS'), -- Create import transactions
+('ROLE_INVENTORY_MANAGER', 'EXPORT_ITEMS'), -- Create export transactions
+('ROLE_INVENTORY_MANAGER', 'DISPOSE_ITEMS'), -- Create disposal transactions
+('ROLE_INVENTORY_MANAGER', 'APPROVE_TRANSACTION'), -- Approve/Reject warehouse transactions (workflow)
+
+-- NOTIFICATION
 ('ROLE_INVENTORY_MANAGER', 'VIEW_NOTIFICATION'),
 ('ROLE_INVENTORY_MANAGER', 'DELETE_NOTIFICATION')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
--- Patient (basic view only)
+-- ============================================
+-- ROLE_PATIENT: Bệnh nhân
+-- ============================================
 INSERT INTO role_permissions (role_id, permission_id)
 VALUES
-('ROLE_PATIENT', 'VIEW_PATIENT'), ('ROLE_PATIENT', 'VIEW_TREATMENT'),
-('ROLE_PATIENT', 'VIEW_APPOINTMENT_OWN'),
-('ROLE_PATIENT', 'CREATE_APPOINTMENT'),
--- NEW: Treatment Plan permissions
-('ROLE_PATIENT', 'VIEW_TREATMENT_PLAN_OWN'), -- Can only view their own treatment plans
-('ROLE_PATIENT', 'VIEW_ATTACHMENT'), -- Can view attachments of own clinical records
--- Notification permissions
-('ROLE_PATIENT', 'VIEW_NOTIFICATION'), -- Can view own notifications
-('ROLE_PATIENT', 'DELETE_NOTIFICATION') -- Can delete own notifications
+-- PATIENT (own data only)
+('ROLE_PATIENT', 'VIEW_PATIENT'), -- RBAC: View own patient record
+
+-- APPOINTMENT (own appointments only)
+('ROLE_PATIENT', 'VIEW_APPOINTMENT_OWN'), -- RBAC: View own appointments
+('ROLE_PATIENT', 'CREATE_APPOINTMENT'), -- Can book appointments online
+
+-- TREATMENT_PLAN (view own only)
+('ROLE_PATIENT', 'VIEW_TREATMENT_PLAN_OWN'), -- RBAC: View own treatment plans
+('ROLE_PATIENT', 'VIEW_TREATMENT'), -- View own treatment items
+
+-- CLINICAL_RECORDS (read-only own records)
+('ROLE_PATIENT', 'VIEW_ATTACHMENT'), -- View attachments of own clinical records
+
+-- NOTIFICATION
+('ROLE_PATIENT', 'VIEW_NOTIFICATION'), -- View own notifications
+('ROLE_PATIENT', 'DELETE_NOTIFICATION') -- Delete own notifications
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
--- Grant basic Overtime permissions to all employee roles (idempotent)
+-- ============================================
+-- GRANT LEGACY OVERTIME PERMISSIONS (deprecated - kept for backward compatibility)
+-- ============================================
+-- NOTE: These old VIEW_OT_OWN/CREATE_OT/CANCEL_OT_OWN permissions are DEPRECATED
+-- New system uses VIEW_OT_OWN/CREATE_OVERTIME/CANCEL_OVERTIME_OWN (from LEAVE_MANAGEMENT module)
 INSERT INTO role_permissions (role_id, permission_id)
 VALUES
 ('ROLE_DENTIST', 'VIEW_OT_OWN'), ('ROLE_DENTIST', 'CREATE_OT'), ('ROLE_DENTIST', 'CANCEL_OT_OWN'),
@@ -564,7 +670,11 @@ VALUES
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
--- Grant VIEW_WORK_SHIFTS to all employee roles (idempotent)
+-- ============================================
+-- GRANT LEGACY WORK_SHIFTS PERMISSIONS (deprecated - kept for backward compatibility)
+-- ============================================
+-- NOTE: These old VIEW_WORK_SHIFTS permissions are DEPRECATED
+-- New system uses VIEW_SCHEDULE_OWN/VIEW_SCHEDULE_ALL (from SCHEDULE_MANAGEMENT module)
 INSERT INTO role_permissions (role_id, permission_id)
 VALUES
 ('ROLE_DENTIST', 'VIEW_WORK_SHIFTS'),
@@ -575,7 +685,11 @@ VALUES
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
--- Grant VIEW_SHIFTS_OWN to all employee roles (BE-307)
+-- ============================================
+-- GRANT LEGACY SHIFTS PERMISSIONS (deprecated - kept for backward compatibility)
+-- ============================================
+-- NOTE: These VIEW_SHIFTS_OWN permissions may be DEPRECATED
+-- New system uses VIEW_SCHEDULE_OWN (from SCHEDULE_MANAGEMENT module)
 INSERT INTO role_permissions (role_id, permission_id)
 VALUES
 ('ROLE_DENTIST', 'VIEW_SHIFTS_OWN'),
@@ -587,109 +701,11 @@ VALUES
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
--- Grant CREATE_REGISTRATION to all employee roles (idempotent) - Allow self shift registration
-INSERT INTO role_permissions (role_id, permission_id)
-VALUES
-('ROLE_DENTIST', 'CREATE_REGISTRATION'),
-('ROLE_NURSE', 'CREATE_REGISTRATION'),
-('ROLE_RECEPTIONIST', 'CREATE_REGISTRATION'),
-('ROLE_ACCOUNTANT', 'CREATE_REGISTRATION'),
-('ROLE_INVENTORY_MANAGER', 'CREATE_REGISTRATION')
-ON CONFLICT (role_id, permission_id) DO NOTHING;
-
-
--- Grant VIEW_AVAILABLE_SLOTS to all employee roles (BE-307 V2) - Allow viewing available part-time slots
-INSERT INTO role_permissions (role_id, permission_id)
-VALUES
-('ROLE_DENTIST', 'VIEW_AVAILABLE_SLOTS'),
-('ROLE_NURSE', 'VIEW_AVAILABLE_SLOTS'),
-('ROLE_RECEPTIONIST', 'VIEW_AVAILABLE_SLOTS'),
-('ROLE_ACCOUNTANT', 'VIEW_AVAILABLE_SLOTS'),
-('ROLE_INVENTORY_MANAGER', 'VIEW_AVAILABLE_SLOTS')
-ON CONFLICT (role_id, permission_id) DO NOTHING;
-
-
--- Grant CANCEL_REGISTRATION_OWN to all employee roles (BE-307 V2) - Allow canceling own registrations
-INSERT INTO role_permissions (role_id, permission_id)
-VALUES
-('ROLE_DENTIST', 'CANCEL_REGISTRATION_OWN'),
-('ROLE_NURSE', 'CANCEL_REGISTRATION_OWN'),
-('ROLE_RECEPTIONIST', 'CANCEL_REGISTRATION_OWN'),
-('ROLE_ACCOUNTANT', 'CANCEL_REGISTRATION_OWN'),
-('ROLE_INVENTORY_MANAGER', 'CANCEL_REGISTRATION_OWN')
-ON CONFLICT (role_id, permission_id) DO NOTHING;
-
-
--- Grant VIEW_TIMEOFF_OWN to all employee roles (idempotent)
-INSERT INTO role_permissions (role_id, permission_id)
-VALUES
-('ROLE_DENTIST', 'VIEW_TIMEOFF_OWN'),
-('ROLE_NURSE', 'VIEW_TIMEOFF_OWN'),
-('ROLE_RECEPTIONIST', 'VIEW_TIMEOFF_OWN'),
-('ROLE_ACCOUNTANT', 'VIEW_TIMEOFF_OWN'),
-('ROLE_INVENTORY_MANAGER', 'VIEW_TIMEOFF_OWN'),
-('ROLE_MANAGER', 'VIEW_TIMEOFF_OWN')
-ON CONFLICT (role_id, permission_id) DO NOTHING;
-
-
--- Grant UPDATE_REGISTRATION_OWN to all employee roles (idempotent) - Allow employees to edit their own shifts
-INSERT INTO role_permissions (role_id, permission_id)
-VALUES
-('ROLE_DENTIST', 'UPDATE_REGISTRATION_OWN'),
-('ROLE_NURSE', 'UPDATE_REGISTRATION_OWN'),
-('ROLE_RECEPTIONIST', 'UPDATE_REGISTRATION_OWN'),
-('ROLE_ACCOUNTANT', 'UPDATE_REGISTRATION_OWN'),
-('ROLE_INVENTORY_MANAGER', 'UPDATE_REGISTRATION_OWN'),
-('ROLE_MANAGER', 'UPDATE_REGISTRATION_OWN')
-ON CONFLICT (role_id, permission_id) DO NOTHING;
-
-
--- Grant DELETE_REGISTRATION_OWN to all employee roles (idempotent) - Allow employees to delete their own shifts
-INSERT INTO role_permissions (role_id, permission_id)
-VALUES
-('ROLE_DENTIST', 'DELETE_REGISTRATION_OWN'),
-('ROLE_NURSE', 'DELETE_REGISTRATION_OWN'),
-('ROLE_RECEPTIONIST', 'DELETE_REGISTRATION_OWN'),
-('ROLE_ACCOUNTANT', 'DELETE_REGISTRATION_OWN'),
-('ROLE_INVENTORY_MANAGER', 'DELETE_REGISTRATION_OWN'),
-('ROLE_MANAGER', 'DELETE_REGISTRATION_OWN')
-ON CONFLICT (role_id, permission_id) DO NOTHING;
-
-
--- Grant CREATE_TIMEOFF to all employee roles (idempotent) - Allow all employees to request time-off
-INSERT INTO role_permissions (role_id, permission_id)
-VALUES
-('ROLE_DENTIST', 'CREATE_TIMEOFF'),
-('ROLE_NURSE', 'CREATE_TIMEOFF'),
-('ROLE_RECEPTIONIST', 'CREATE_TIMEOFF'),
-('ROLE_ACCOUNTANT', 'CREATE_TIMEOFF'),
-('ROLE_INVENTORY_MANAGER', 'CREATE_TIMEOFF'),
-('ROLE_MANAGER', 'CREATE_TIMEOFF')
-ON CONFLICT (role_id, permission_id) DO NOTHING;
-
-
--- Grant CANCEL_TIMEOFF_OWN to all employee roles (idempotent) - Allow employees to cancel their own time-off requests
-INSERT INTO role_permissions (role_id, permission_id)
-VALUES
-('ROLE_DENTIST', 'CANCEL_TIMEOFF_OWN'),
-('ROLE_NURSE', 'CANCEL_TIMEOFF_OWN'),
-('ROLE_RECEPTIONIST', 'CANCEL_TIMEOFF_OWN'),
-('ROLE_ACCOUNTANT', 'CANCEL_TIMEOFF_OWN'),
-('ROLE_INVENTORY_MANAGER', 'CANCEL_TIMEOFF_OWN'),
-('ROLE_MANAGER', 'CANCEL_TIMEOFF_OWN')
-ON CONFLICT (role_id, permission_id) DO NOTHING;
-
-
--- Grant VIEW_FIXED_REGISTRATIONS_OWN to all employee roles (BE-307 V2) - Allow viewing own fixed registrations
-INSERT INTO role_permissions (role_id, permission_id)
-VALUES
-('ROLE_DENTIST', 'VIEW_FIXED_REGISTRATIONS_OWN'),
-('ROLE_NURSE', 'VIEW_FIXED_REGISTRATIONS_OWN'),
-('ROLE_RECEPTIONIST', 'VIEW_FIXED_REGISTRATIONS_OWN'),
-('ROLE_ACCOUNTANT', 'VIEW_FIXED_REGISTRATIONS_OWN'),
-('ROLE_INVENTORY_MANAGER', 'VIEW_FIXED_REGISTRATIONS_OWN'),
-('ROLE_MANAGER', 'VIEW_FIXED_REGISTRATIONS_OWN')
-ON CONFLICT (role_id, permission_id) DO NOTHING;
+-- ============================================
+-- END OF ROLE PERMISSIONS CONFIGURATION
+-- All roles now use OPTIMIZED permission system (70 permissions)
+-- Legacy grants removed - deprecated permissions consolidated into MANAGE_* pattern
+-- ============================================
 
 
 -- ============================================
