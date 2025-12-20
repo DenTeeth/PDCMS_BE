@@ -82,7 +82,7 @@ public class ServiceController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + CREATE_SERVICE + "')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('MANAGE_SERVICE')")
     @Operation(summary = "Create new service")
     @ApiMessage("Tạo dịch vụ mới thành công")
     public ResponseEntity<ServiceResponse> createService(@Valid @RequestBody CreateServiceRequest request) {
@@ -91,7 +91,7 @@ public class ServiceController {
     }
 
     @PutMapping("/{serviceCode}")
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + UPDATE_SERVICE + "')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('MANAGE_SERVICE')")
     @Operation(summary = "Update service")
     @ApiMessage("Cập nhật thông tin dịch vụ thành công")
     public ResponseEntity<ServiceResponse> updateService(
@@ -101,7 +101,7 @@ public class ServiceController {
     }
 
     @DeleteMapping("/{serviceId}")
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + DELETE_SERVICE + "')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('MANAGE_SERVICE')")
     @Operation(summary = "Delete service by ID (soft delete - set isActive = false)", description = "Deactivate service using service ID. RESTful soft delete.")
     @ApiMessage("Vô hiệu hóa dịch vụ thành công")
     public ResponseEntity<Void> deleteService(@PathVariable Integer serviceId) {
@@ -110,7 +110,7 @@ public class ServiceController {
     }
 
     @DeleteMapping("/code/{serviceCode}")
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + DELETE_SERVICE + "')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('MANAGE_SERVICE')")
     @Operation(summary = "Delete service by code (soft delete - set isActive = false)", description = "Deactivate service using service code. RESTful soft delete.")
     @ApiMessage("Vô hiệu hóa dịch vụ thành công")
     public ResponseEntity<Void> deleteServiceByCode(@PathVariable String serviceCode) {
@@ -119,7 +119,7 @@ public class ServiceController {
     }
 
     @PatchMapping("/{serviceId}/toggle")
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + UPDATE_SERVICE + "')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('MANAGE_SERVICE')")
     @Operation(summary = "Toggle service active status (activate ↔ deactivate)", description = "RESTful way to activate or deactivate service. If active → set inactive, if inactive → set active. Returns updated service.")
     @ApiMessage("Chuyển đổi trạng thái dịch vụ thành công")
     public ResponseEntity<ServiceResponse> toggleServiceStatus(@PathVariable Integer serviceId) {

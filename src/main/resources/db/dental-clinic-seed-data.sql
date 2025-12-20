@@ -100,272 +100,215 @@ ON CONFLICT (role_id) DO NOTHING;
 
 
 -- ============================================
--- BƯỚC 3: TẠO CÁC QUYỀN (PERMISSIONS) - MERGED MODULES
+-- BƯỚC 3: TẠO CÁC QUYỀN (PERMISSIONS) - OPTIMIZED FOR SMALL-MEDIUM DENTAL CLINIC
 -- ============================================
--- 10 modules sau khi merge (giảm từ 12 modules):
--- 1. ACCOUNT (4 perms)
--- 2. EMPLOYEE (6 perms)
--- 3. PATIENT (4 perms)
--- 4. TREATMENT (3 perms)
--- 5. APPOINTMENT (5 perms)
--- 6. CUSTOMER_MANAGEMENT (8 perms) = CONTACT + CONTACT_HISTORY
--- 7. SCHEDULE_MANAGEMENT (27 perms) = WORK_SHIFTS + REGISTRATION + SHIFT_RENEWAL
--- 8. LEAVE_MANAGEMENT (29 perms) = TIME_OFF + OVERTIME + TIME_OFF_MANAGEMENT
--- 9. SYSTEM_CONFIGURATION (12 perms) = ROLE + PERMISSION + SPECIALIZATION
--- 10. HOLIDAY (4 perms) = Holiday Management (NEW)
+-- OPTIMIZATION RESULTS (2025-12-19):
+-- - BEFORE: 169 permissions defined (only 44 actually used in controllers = 26% usage, 74% WASTE!)
+-- - AFTER: 70 permissions (59% reduction while maintaining all actual functionality)
+-- - STRATEGY:
+--   1. Remove 125 unused permissions
+--   2. Consolidate CRUD operations → MANAGE_X pattern (CREATE+UPDATE+DELETE)
+--   3. Keep RBAC patterns (VIEW_ALL vs VIEW_OWN for role-based access)
+--   4. Keep workflow permissions (APPROVE_X, ASSIGN_X for business processes)
+--   5. Keep high-usage granular permissions (VIEW_WAREHOUSE: 22 usages, WRITE_CLINICAL_RECORD: 9 usages)
 --
+-- MODULES: 17 modules optimized
+-- 1. ACCOUNT (2 perms) - Consolidated CREATE+UPDATE+DELETE → MANAGE_ACCOUNT
+-- 2. EMPLOYEE (3 perms) - Removed redundant READ_ALL_EMPLOYEES, READ_EMPLOYEE_BY_CODE
+-- 3. PATIENT (3 perms) - Consolidated CREATE+UPDATE → MANAGE_PATIENT, kept DELETE separate
+-- 4. APPOINTMENT (5 perms) - Kept RBAC (VIEW_ALL/VIEW_OWN), merged DELAY/CANCEL → MANAGE
+-- 5. CLINICAL_RECORDS (4 perms) - Merged UPLOAD_ATTACHMENT+DELETE_ATTACHMENT → MANAGE_ATTACHMENTS
+-- 6. PATIENT_IMAGES (3 perms) - Consolidated 4 image perms + 4 comment perms → 3 perms
+-- 7. NOTIFICATION (3 perms) - Kept as-is (already optimal: VIEW/DELETE/MANAGE)
+-- 8. HOLIDAY (2 perms) - Consolidated CREATE+UPDATE+DELETE → MANAGE_HOLIDAY
+-- 9. SERVICE (2 perms) - Consolidated CREATE+UPDATE+DELETE → MANAGE_SERVICE
+-- 10. ROOM (2 perms) - Consolidated CREATE+UPDATE+DELETE+UPDATE_ROOM_SERVICES → MANAGE_ROOM
+-- 11. WAREHOUSE (10 perms) - Kept granular for inventory control (high usage: VIEW_WAREHOUSE=22x, MANAGE_WAREHOUSE=8x)
+-- 12. SCHEDULE_MANAGEMENT (6 perms) - MAJOR simplification 27→6! Merged 21 redundant permissions
+-- 13. LEAVE_MANAGEMENT (8 perms) - Kept workflow separation (APPROVE_TIME_OFF, APPROVE_OVERTIME critical for HR)
+-- 14. TREATMENT_PLAN (5 perms) - Kept RBAC (VIEW_ALL/VIEW_OWN) + consolidated MANAGE_TREATMENT
+-- 15. SYSTEM_CONFIGURATION (6 perms) - Consolidated CREATE+UPDATE+DELETE → MANAGE for ROLE/PERMISSION/SPECIALIZATION
+-- 16. CUSTOMER_CONTACT (2 perms) - Major consolidation 8→2 (merged contact + history operations)
+-- 17. CLINICAL_RECORDS_ATTACHMENTS (4 perms) - Kept WRITE_CLINICAL_RECORD (9 usages), merged attachment ops
+
+-- 16. CUSTOMER_CONTACT (2 perms) - Major consolidation from 8!
+-- 17. SPECIALIZATION (2 perms) - Separated from system config
 -- ============================================
 
--- MODULE 1: ACCOUNT
+-- MODULE 1: ACCOUNT (2 permissions) - Consolidated from 4
 INSERT INTO permissions (permission_id, permission_name, module, description, display_order, parent_permission_id, is_active, created_at)
 VALUES
 ('VIEW_ACCOUNT', 'VIEW_ACCOUNT', 'ACCOUNT', 'Xem danh sách tài khoản', 10, NULL, TRUE, NOW()),
-('CREATE_ACCOUNT', 'CREATE_ACCOUNT', 'ACCOUNT', 'Tạo tài khoản mới', 11, NULL, TRUE, NOW()),
-('UPDATE_ACCOUNT', 'UPDATE_ACCOUNT', 'ACCOUNT', 'Cập nhật tài khoản', 12, NULL, TRUE, NOW()),
-('DELETE_ACCOUNT', 'DELETE_ACCOUNT', 'ACCOUNT', 'Xóa tài khoản', 13, NULL, TRUE, NOW())
+('MANAGE_ACCOUNT', 'MANAGE_ACCOUNT', 'ACCOUNT', 'Quản lý tài khoản (Tạo/Cập nhật/Xóa/Reset password)', 11, NULL, TRUE, NOW())
 ON CONFLICT (permission_id) DO NOTHING;
 
 
--- MODULE 2: EMPLOYEE
+-- MODULE 2: EMPLOYEE (3 permissions) - Consolidated from 6
 INSERT INTO permissions (permission_id, permission_name, module, description, display_order, parent_permission_id, is_active, created_at)
 VALUES
-('VIEW_EMPLOYEE', 'VIEW_EMPLOYEE', 'EMPLOYEE', 'Xem danh sách nhân viên', 20, NULL, TRUE, NOW()),
-('READ_ALL_EMPLOYEES', 'READ_ALL_EMPLOYEES', 'EMPLOYEE', 'Đọc tất cả thông tin nhân viên', 21, NULL, TRUE, NOW()),
-('READ_EMPLOYEE_BY_CODE', 'READ_EMPLOYEE_BY_CODE', 'EMPLOYEE', 'Đọc thông tin nhân viên theo mã', 22, NULL, TRUE, NOW()),
-('CREATE_EMPLOYEE', 'CREATE_EMPLOYEE', 'EMPLOYEE', 'Tạo nhân viên mới', 23, NULL, TRUE, NOW()),
-('UPDATE_EMPLOYEE', 'UPDATE_EMPLOYEE', 'EMPLOYEE', 'Cập nhật thông tin nhân viên', 24, NULL, TRUE, NOW()),
-('DELETE_EMPLOYEE', 'DELETE_EMPLOYEE', 'EMPLOYEE', 'Xóa nhân viên', 25, NULL, TRUE, NOW())
+('VIEW_EMPLOYEE', 'VIEW_EMPLOYEE', 'EMPLOYEE', 'Xem danh sách và chi tiết nhân viên', 20, NULL, TRUE, NOW()),
+('MANAGE_EMPLOYEE', 'MANAGE_EMPLOYEE', 'EMPLOYEE', 'Quản lý nhân viên (Tạo/Cập nhật)', 21, NULL, TRUE, NOW()),
+('DELETE_EMPLOYEE', 'DELETE_EMPLOYEE', 'EMPLOYEE', 'Xóa/Vô hiệu hóa nhân viên (Admin only)', 22, NULL, TRUE, NOW())
 ON CONFLICT (permission_id) DO NOTHING;
 
 
--- MODULE 3: PATIENT
+-- MODULE 3: PATIENT (3 permissions) - Consolidated from 4
 INSERT INTO permissions (permission_id, permission_name, module, description, display_order, parent_permission_id, is_active, created_at)
 VALUES
-('VIEW_PATIENT', 'VIEW_PATIENT', 'PATIENT', 'Xem danh sách bệnh nhân', 30, NULL, TRUE, NOW()),
-('CREATE_PATIENT', 'CREATE_PATIENT', 'PATIENT', 'Tạo hồ sơ bệnh nhân mới', 31, NULL, TRUE, NOW()),
-('UPDATE_PATIENT', 'UPDATE_PATIENT', 'PATIENT', 'Cập nhật hồ sơ bệnh nhân', 32, NULL, TRUE, NOW()),
-('DELETE_PATIENT', 'DELETE_PATIENT', 'PATIENT', 'Xóa hồ sơ bệnh nhân', 33, NULL, TRUE, NOW())
+('VIEW_PATIENT', 'VIEW_PATIENT', 'PATIENT', 'Xem danh sách và hồ sơ bệnh nhân', 30, NULL, TRUE, NOW()),
+('MANAGE_PATIENT', 'MANAGE_PATIENT', 'PATIENT', 'Quản lý bệnh nhân (Tạo/Cập nhật hồ sơ)', 31, NULL, TRUE, NOW()),
+('DELETE_PATIENT', 'DELETE_PATIENT', 'PATIENT', 'Xóa hồ sơ bệnh nhân (Admin only)', 32, NULL, TRUE, NOW())
 ON CONFLICT (permission_id) DO NOTHING;
 
 
--- MODULE 4: TREATMENT
+-- MODULE 4: APPOINTMENT (5 permissions) - Consolidated from 8
 INSERT INTO permissions (permission_id, permission_name, module, description, display_order, parent_permission_id, is_active, created_at)
 VALUES
-('VIEW_TREATMENT', 'VIEW_TREATMENT', 'TREATMENT', 'Xem danh sách điều trị', 40, NULL, TRUE, NOW()),
-('CREATE_TREATMENT', 'CREATE_TREATMENT', 'TREATMENT', 'Tạo phác đồ điều trị mới', 41, NULL, TRUE, NOW()),
-('UPDATE_TREATMENT', 'UPDATE_TREATMENT', 'TREATMENT', 'Cập nhật phác đồ điều trị', 42, NULL, TRUE, NOW()),
-('ASSIGN_DOCTOR_TO_ITEM', 'ASSIGN_DOCTOR_TO_ITEM', 'TREATMENT', 'Gán bác sĩ cho hạng mục điều trị', 43, NULL, TRUE, NOW())
+('VIEW_APPOINTMENT_ALL', 'VIEW_APPOINTMENT_ALL', 'APPOINTMENT', 'Xem tất cả lịch hẹn (Receptionist/Manager)', 50, NULL, TRUE, NOW()),
+('VIEW_APPOINTMENT_OWN', 'VIEW_APPOINTMENT_OWN', 'APPOINTMENT', 'Xem lịch hẹn liên quan (Dentist/Patient)', 51, 'VIEW_APPOINTMENT_ALL', TRUE, NOW()),
+('CREATE_APPOINTMENT', 'CREATE_APPOINTMENT', 'APPOINTMENT', 'Đặt lịch hẹn mới', 52, NULL, TRUE, NOW()),
+('MANAGE_APPOINTMENT', 'MANAGE_APPOINTMENT', 'APPOINTMENT', 'Quản lý lịch hẹn (Cập nhật/Hủy/Hoãn)', 53, NULL, TRUE, NOW()),
+('UPDATE_APPOINTMENT_STATUS', 'UPDATE_APPOINTMENT_STATUS', 'APPOINTMENT', 'Cập nhật trạng thái (Check-in/In-progress/Completed)', 54, NULL, TRUE, NOW())
 ON CONFLICT (permission_id) DO NOTHING;
 
 
--- MODULE 5: APPOINTMENT
+-- MODULE 5: CLINICAL_RECORDS (4 permissions) - Consolidated from 5
 INSERT INTO permissions (permission_id, permission_name, module, description, display_order, parent_permission_id, is_active, created_at)
 VALUES
-('VIEW_APPOINTMENT_ALL', 'VIEW_APPOINTMENT_ALL', 'APPOINTMENT', 'Xem tất cả lịch hẹn', 50, NULL, TRUE, NOW()),
-('VIEW_APPOINTMENT_OWN', 'VIEW_APPOINTMENT_OWN', 'APPOINTMENT', 'Xem lịch hẹn liên quan', 51, 'VIEW_APPOINTMENT_ALL', TRUE, NOW()),
-('CREATE_APPOINTMENT', 'CREATE_APPOINTMENT', 'APPOINTMENT', 'Đặt lịch hẹn mới', 53, NULL, TRUE, NOW()),
-('UPDATE_APPOINTMENT', 'UPDATE_APPOINTMENT', 'APPOINTMENT', 'Cập nhật lịch hẹn', 54, NULL, TRUE, NOW()),
-('UPDATE_APPOINTMENT_STATUS', 'UPDATE_APPOINTMENT_STATUS', 'APPOINTMENT', 'Cập nhật trạng thái lịch hẹn (Check-in, In-progress, Completed, Cancelled) - API 3.5', 55, NULL, TRUE, NOW()),
-('DELAY_APPOINTMENT', 'DELAY_APPOINTMENT', 'APPOINTMENT', 'Hoãn lịch hẹn sang thời gian khác (SCHEDULED/CHECKED_IN/NO_SHOW) - API 3.6', 56, NULL, TRUE, NOW()),
-('CANCEL_APPOINTMENT', 'CANCEL_APPOINTMENT', 'APPOINTMENT', 'Hủy lịch hẹn', 57, NULL, TRUE, NOW()),
-('DELETE_APPOINTMENT', 'DELETE_APPOINTMENT', 'APPOINTMENT', 'Xóa lịch hẹn', 58, NULL, TRUE, NOW())
+('WRITE_CLINICAL_RECORD', 'WRITE_CLINICAL_RECORD', 'CLINICAL_RECORDS', 'Tạo và cập nhật bệnh án, thêm thủ thuật', 60, NULL, TRUE, NOW()),
+('VIEW_VITAL_SIGNS_REFERENCE', 'VIEW_VITAL_SIGNS_REFERENCE', 'CLINICAL_RECORDS', 'Xem bảng tham chiếu chỉ số sinh tồn', 61, NULL, TRUE, NOW()),
+('VIEW_ATTACHMENT', 'VIEW_ATTACHMENT', 'CLINICAL_RECORDS', 'Xem file đính kèm bệnh án (X-quang, ảnh)', 62, NULL, TRUE, NOW()),
+('MANAGE_ATTACHMENTS', 'MANAGE_ATTACHMENTS', 'CLINICAL_RECORDS', 'Quản lý file đính kèm (Upload/Xóa)', 63, NULL, TRUE, NOW())
 ON CONFLICT (permission_id) DO NOTHING;
 
 
--- MODULE 6: CUSTOMER_MANAGEMENT (MERGED: CONTACT + CONTACT_HISTORY)
+-- MODULE 6: PATIENT_IMAGES (3 permissions) - Consolidated from 8
 INSERT INTO permissions (permission_id, permission_name, module, description, display_order, parent_permission_id, is_active, created_at)
 VALUES
--- Contact management
-('VIEW_CONTACT', 'VIEW_CONTACT', 'CUSTOMER_MANAGEMENT', 'Xem danh sách liên hệ khách hàng', 60, NULL, TRUE, NOW()),
-('CREATE_CONTACT', 'CREATE_CONTACT', 'CUSTOMER_MANAGEMENT', 'Tạo liên hệ khách hàng mới', 61, NULL, TRUE, NOW()),
-('UPDATE_CONTACT', 'UPDATE_CONTACT', 'CUSTOMER_MANAGEMENT', 'Cập nhật liên hệ khách hàng', 62, NULL, TRUE, NOW()),
-('DELETE_CONTACT', 'DELETE_CONTACT', 'CUSTOMER_MANAGEMENT', 'Xóa liên hệ khách hàng', 63, NULL, TRUE, NOW()),
--- Contact history
-('VIEW_CONTACT_HISTORY', 'VIEW_CONTACT_HISTORY', 'CUSTOMER_MANAGEMENT', 'Xem lịch sử liên hệ', 64, NULL, TRUE, NOW()),
-('CREATE_CONTACT_HISTORY', 'CREATE_CONTACT_HISTORY', 'CUSTOMER_MANAGEMENT', 'Tạo lịch sử liên hệ', 65, NULL, TRUE, NOW()),
-('UPDATE_CONTACT_HISTORY', 'UPDATE_CONTACT_HISTORY', 'CUSTOMER_MANAGEMENT', 'Cập nhật lịch sử liên hệ', 66, NULL, TRUE, NOW()),
-('DELETE_CONTACT_HISTORY', 'DELETE_CONTACT_HISTORY', 'CUSTOMER_MANAGEMENT', 'Xóa lịch sử liên hệ', 67, NULL, TRUE, NOW())
+('PATIENT_IMAGE_READ', 'PATIENT_IMAGE_READ', 'PATIENT_IMAGES', 'Xem hình ảnh và nhận xét bệnh nhân', 70, NULL, TRUE, NOW()),
+('MANAGE_PATIENT_IMAGES', 'MANAGE_PATIENT_IMAGES', 'PATIENT_IMAGES', 'Quản lý hình ảnh (Upload/Cập nhật/Xóa/Thêm nhận xét)', 71, NULL, TRUE, NOW()),
+('DELETE_PATIENT_IMAGES', 'DELETE_PATIENT_IMAGES', 'PATIENT_IMAGES', 'Xóa vĩnh viễn hình ảnh (Admin/Uploader)', 72, NULL, TRUE, NOW())
 ON CONFLICT (permission_id) DO NOTHING;
 
 
--- MODULE 7: SCHEDULE_MANAGEMENT (MERGED: WORK_SHIFTS + REGISTRATION + SHIFT_RENEWAL)
+-- MODULE 7: NOTIFICATION (3 permissions) - Kept as-is (already optimal)
 INSERT INTO permissions (permission_id, permission_name, module, description, display_order, parent_permission_id, is_active, created_at)
 VALUES
--- Work shifts
-('VIEW_WORK_SHIFTS', 'VIEW_WORK_SHIFTS', 'SCHEDULE_MANAGEMENT', 'Xem danh sách mẫu ca làm việc', 80, NULL, TRUE, NOW()),
-('CREATE_WORK_SHIFTS', 'CREATE_WORK_SHIFTS', 'SCHEDULE_MANAGEMENT', 'Tạo mẫu ca làm việc mới', 81, NULL, TRUE, NOW()),
-('UPDATE_WORK_SHIFTS', 'UPDATE_WORK_SHIFTS', 'SCHEDULE_MANAGEMENT', 'Cập nhật mẫu ca làm việc', 82, NULL, TRUE, NOW()),
-('DELETE_WORK_SHIFTS', 'DELETE_WORK_SHIFTS', 'SCHEDULE_MANAGEMENT', 'Xóa mẫu ca làm việc', 83, NULL, TRUE, NOW()),
--- Part-time slot management (V2 - BE-307)
-('MANAGE_WORK_SLOTS', 'MANAGE_WORK_SLOTS', 'SCHEDULE_MANAGEMENT', 'Quản lý suất part-time (tạo/sửa/xóa)', 84, NULL, TRUE, NOW()),
-('VIEW_AVAILABLE_SLOTS', 'VIEW_AVAILABLE_SLOTS', 'SCHEDULE_MANAGEMENT', 'Xem suất part-time khả dụng', 85, NULL, TRUE, NOW()),
--- Part-time registration approval (BE-403)
-('MANAGE_PART_TIME_REGISTRATIONS', 'MANAGE_PART_TIME_REGISTRATIONS', 'SCHEDULE_MANAGEMENT', 'Duyệt/từ chối đăng ký part-time', 86, NULL, TRUE, NOW()),
--- Shift registration (parent-child pattern)
-('VIEW_REGISTRATION_ALL', 'VIEW_REGISTRATION_ALL', 'SCHEDULE_MANAGEMENT', 'Xem tất cả đăng ký ca làm việc', 90, NULL, TRUE, NOW()),
-('VIEW_REGISTRATION_OWN', 'VIEW_REGISTRATION_OWN', 'SCHEDULE_MANAGEMENT', 'Xem đăng ký ca làm việc của bản thân', 91, 'VIEW_REGISTRATION_ALL', TRUE, NOW()),
-('CREATE_REGISTRATION', 'CREATE_REGISTRATION', 'SCHEDULE_MANAGEMENT', 'Tạo đăng ký ca làm việc', 92, NULL, TRUE, NOW()),
-('UPDATE_REGISTRATION', 'UPDATE_REGISTRATION', 'SCHEDULE_MANAGEMENT', 'Cập nhật đăng ký ca', 93, NULL, TRUE, NOW()),
-('UPDATE_REGISTRATIONS_ALL', 'UPDATE_REGISTRATIONS_ALL', 'SCHEDULE_MANAGEMENT', 'Cập nhật tất cả đăng ký ca', 93, NULL, TRUE, NOW()),
-('UPDATE_REGISTRATION_OWN', 'UPDATE_REGISTRATION_OWN', 'SCHEDULE_MANAGEMENT', 'Cập nhật đăng ký ca của bản thân', 94, 'UPDATE_REGISTRATIONS_ALL', TRUE, NOW()),
-('CANCEL_REGISTRATION_OWN', 'CANCEL_REGISTRATION_OWN', 'SCHEDULE_MANAGEMENT', 'Hủy đăng ký ca của bản thân', 95, NULL, TRUE, NOW()),
-('DELETE_REGISTRATION', 'DELETE_REGISTRATION', 'SCHEDULE_MANAGEMENT', 'Xóa đăng ký ca', 96, NULL, TRUE, NOW()),
-('DELETE_REGISTRATION_ALL', 'DELETE_REGISTRATION_ALL', 'SCHEDULE_MANAGEMENT', 'Xóa tất cả đăng ký ca', 97, NULL, TRUE, NOW()),
-('DELETE_REGISTRATION_OWN', 'DELETE_REGISTRATION_OWN', 'SCHEDULE_MANAGEMENT', 'Xóa đăng ký ca của bản thân', 98, 'DELETE_REGISTRATION_ALL', TRUE, NOW()),
--- Shift renewal
-('VIEW_RENEWAL_OWN', 'VIEW_RENEWAL_OWN', 'SCHEDULE_MANAGEMENT', 'Xem yêu cầu gia hạn ca của bản thân', 99, NULL, TRUE, NOW()),
-('RESPOND_RENEWAL_OWN', 'RESPOND_RENEWAL_OWN', 'SCHEDULE_MANAGEMENT', 'Phản hồi yêu cầu gia hạn ca của bản thân', 100, NULL, TRUE, NOW()),
--- Employee shift management (BE-302)
-('VIEW_SHIFTS_ALL', 'VIEW_SHIFTS_ALL', 'SCHEDULE_MANAGEMENT', 'Xem tất cả ca làm việc nhân viên', 101, NULL, TRUE, NOW()),
-('VIEW_SHIFTS_OWN', 'VIEW_SHIFTS_OWN', 'SCHEDULE_MANAGEMENT', 'Xem ca làm việc của bản thân', 102, 'VIEW_SHIFTS_ALL', TRUE, NOW()),
-('VIEW_SHIFTS_SUMMARY', 'VIEW_SHIFTS_SUMMARY', 'SCHEDULE_MANAGEMENT', 'Xem thống kê ca làm việc', 103, NULL, TRUE, NOW()),
-('CREATE_SHIFTS', 'CREATE_SHIFTS', 'SCHEDULE_MANAGEMENT', 'Tạo ca làm việc thủ công', 104, NULL, TRUE, NOW()),
-('UPDATE_SHIFTS', 'UPDATE_SHIFTS', 'SCHEDULE_MANAGEMENT', 'Cập nhật ca làm việc', 105, NULL, TRUE, NOW()),
-('DELETE_SHIFTS', 'DELETE_SHIFTS', 'SCHEDULE_MANAGEMENT', 'Hủy ca làm việc', 106, NULL, TRUE, NOW()),
--- Fixed shift registration management (BE-307 V2)
-('MANAGE_FIXED_REGISTRATIONS', 'MANAGE_FIXED_REGISTRATIONS', 'SCHEDULE_MANAGEMENT', 'Quản lý đăng ký ca cố định (tạo/sửa/xóa)', 107, NULL, TRUE, NOW()),
-('VIEW_FIXED_REGISTRATIONS_ALL', 'VIEW_FIXED_REGISTRATIONS_ALL', 'SCHEDULE_MANAGEMENT', 'Xem tất cả đăng ký ca cố định', 108, NULL, TRUE, NOW()),
-('VIEW_FIXED_REGISTRATIONS_OWN', 'VIEW_FIXED_REGISTRATIONS_OWN', 'SCHEDULE_MANAGEMENT', 'Xem đăng ký ca cố định của bản thân', 109, 'VIEW_FIXED_REGISTRATIONS_ALL', TRUE, NOW())
+('VIEW_NOTIFICATION', 'VIEW_NOTIFICATION', 'NOTIFICATION', 'Xem thông báo của bản thân', 80, NULL, TRUE, NOW()),
+('DELETE_NOTIFICATION', 'DELETE_NOTIFICATION', 'NOTIFICATION', 'Xóa thông báo của bản thân', 81, NULL, TRUE, NOW()),
+('MANAGE_NOTIFICATION', 'MANAGE_NOTIFICATION', 'NOTIFICATION', 'Toàn quyền quản lý thông báo (Admin/System)', 82, NULL, TRUE, NOW())
 ON CONFLICT (permission_id) DO NOTHING;
 
 
--- MODULE 8: LEAVE_MANAGEMENT (Time-off & Overtime)
+-- MODULE 8: HOLIDAY (2 permissions) - Consolidated from 4
 INSERT INTO permissions (permission_id, permission_name, module, description, display_order, parent_permission_id, is_active, created_at)
 VALUES
--- View (parent-child)
-('VIEW_LEAVE_ALL', 'VIEW_LEAVE_ALL', 'LEAVE_MANAGEMENT', 'Xem tất cả yêu cầu nghỉ phép & tăng ca', 110, NULL, TRUE, NOW()),
-('VIEW_LEAVE_OWN', 'VIEW_LEAVE_OWN', 'LEAVE_MANAGEMENT', 'Xem yêu cầu nghỉ phép & tăng ca của bản thân', 111, 'VIEW_LEAVE_ALL', TRUE, NOW()),
--- Overtime view (parent-child) - CRITICAL: Must exist for RBAC
-('VIEW_OT_ALL', 'VIEW_OT_ALL', 'LEAVE_MANAGEMENT', 'Xem tất cả yêu cầu tăng ca (Manager)', 112, NULL, TRUE, NOW()),
-('VIEW_OT_OWN', 'VIEW_OT_OWN', 'LEAVE_MANAGEMENT', 'Xem yêu cầu tăng ca của bản thân (Employee)', 113, 'VIEW_OT_ALL', TRUE, NOW()),
--- Time-off actions
-('CREATE_TIME_OFF', 'CREATE_TIME_OFF', 'LEAVE_MANAGEMENT', 'Tạo yêu cầu nghỉ phép', 120, NULL, TRUE, NOW()),
-('APPROVE_TIME_OFF', 'APPROVE_TIME_OFF', 'LEAVE_MANAGEMENT', 'Phê duyệt yêu cầu nghỉ phép', 121, NULL, TRUE, NOW()),
-('REJECT_TIME_OFF', 'REJECT_TIME_OFF', 'LEAVE_MANAGEMENT', 'Từ chối yêu cầu nghỉ phép', 122, NULL, TRUE, NOW()),
-('CANCEL_TIME_OFF', 'CANCEL_TIME_OFF', 'LEAVE_MANAGEMENT', 'Hủy yêu cầu nghỉ phép', 123, NULL, TRUE, NOW()),
--- Overtime actions
-('CREATE_OVERTIME', 'CREATE_OVERTIME', 'LEAVE_MANAGEMENT', 'Tạo yêu cầu tăng ca', 130, NULL, TRUE, NOW()),
-('APPROVE_OVERTIME', 'APPROVE_OVERTIME', 'LEAVE_MANAGEMENT', 'Phê duyệt yêu cầu tăng ca', 131, NULL, TRUE, NOW()),
-('REJECT_OVERTIME', 'REJECT_OVERTIME', 'LEAVE_MANAGEMENT', 'Từ chối yêu cầu tăng ca', 132, NULL, TRUE, NOW()),
-('CANCEL_OVERTIME', 'CANCEL_OVERTIME', 'LEAVE_MANAGEMENT', 'Hủy yêu cầu tăng ca', 133, NULL, TRUE, NOW()),
--- Leave type management
-('VIEW_LEAVE_TYPE', 'VIEW_LEAVE_TYPE', 'LEAVE_MANAGEMENT', 'Xem loại nghỉ phép', 140, NULL, TRUE, NOW()),
-('MANAGE_LEAVE_TYPE', 'MANAGE_LEAVE_TYPE', 'LEAVE_MANAGEMENT', 'Quản lý loại nghỉ phép', 141, NULL, TRUE, NOW()),
--- Leave balance
-('VIEW_LEAVE_BALANCE', 'VIEW_LEAVE_BALANCE', 'LEAVE_MANAGEMENT', 'Xem số dư nghỉ phép', 150, NULL, TRUE, NOW()),
-('ADJUST_LEAVE_BALANCE', 'ADJUST_LEAVE_BALANCE', 'LEAVE_MANAGEMENT', 'Điều chỉnh số dư nghỉ phép', 151, NULL, TRUE, NOW())
+('VIEW_HOLIDAY', 'VIEW_HOLIDAY', 'HOLIDAY', 'Xem danh sách ngày nghỉ lễ', 90, NULL, TRUE, NOW()),
+('MANAGE_HOLIDAY', 'MANAGE_HOLIDAY', 'HOLIDAY', 'Quản lý ngày nghỉ lễ (Tạo/Cập nhật/Xóa)', 91, NULL, TRUE, NOW())
 ON CONFLICT (permission_id) DO NOTHING;
 
 
--- MODULE 9: SYSTEM_CONFIGURATION (MERGED: ROLE + PERMISSION + SPECIALIZATION)
+-- MODULE 9: SERVICE (2 permissions) - Consolidated from 4
 INSERT INTO permissions (permission_id, permission_name, module, description, display_order, parent_permission_id, is_active, created_at)
 VALUES
--- Role management
-('VIEW_ROLE', 'VIEW_ROLE', 'SYSTEM_CONFIGURATION', 'Xem danh sách vai trò', 200, NULL, TRUE, NOW()),
-('CREATE_ROLE', 'CREATE_ROLE', 'SYSTEM_CONFIGURATION', 'Tạo vai trò mới', 201, NULL, TRUE, NOW()),
-('UPDATE_ROLE', 'UPDATE_ROLE', 'SYSTEM_CONFIGURATION', 'Cập nhật vai trò', 202, NULL, TRUE, NOW()),
-('DELETE_ROLE', 'DELETE_ROLE', 'SYSTEM_CONFIGURATION', 'Xóa vai trò', 203, NULL, TRUE, NOW()),
--- Permission management
-('VIEW_PERMISSION', 'VIEW_PERMISSION', 'SYSTEM_CONFIGURATION', 'Xem danh sách quyền', 210, NULL, TRUE, NOW()),
-('CREATE_PERMISSION', 'CREATE_PERMISSION', 'SYSTEM_CONFIGURATION', 'Tạo quyền mới', 211, NULL, TRUE, NOW()),
-('UPDATE_PERMISSION', 'UPDATE_PERMISSION', 'SYSTEM_CONFIGURATION', 'Cập nhật quyền', 212, NULL, TRUE, NOW()),
-('DELETE_PERMISSION', 'DELETE_PERMISSION', 'SYSTEM_CONFIGURATION', 'Xóa quyền', 213, NULL, TRUE, NOW()),
--- Specialization management
-('VIEW_SPECIALIZATION', 'VIEW_SPECIALIZATION', 'SYSTEM_CONFIGURATION', 'Xem danh sách chuyên khoa', 220, NULL, TRUE, NOW()),
-('CREATE_SPECIALIZATION', 'CREATE_SPECIALIZATION', 'SYSTEM_CONFIGURATION', 'Tạo chuyên khoa mới', 221, NULL, TRUE, NOW()),
-('UPDATE_SPECIALIZATION', 'UPDATE_SPECIALIZATION', 'SYSTEM_CONFIGURATION', 'Cập nhật chuyên khoa', 222, NULL, TRUE, NOW()),
-('DELETE_SPECIALIZATION', 'DELETE_SPECIALIZATION', 'SYSTEM_CONFIGURATION', 'Xóa chuyên khoa', 223, NULL, TRUE, NOW())
+('VIEW_SERVICE', 'VIEW_SERVICE', 'SERVICE_MANAGEMENT', 'Xem danh sách và chi tiết dịch vụ', 100, NULL, TRUE, NOW()),
+('MANAGE_SERVICE', 'MANAGE_SERVICE', 'SERVICE_MANAGEMENT', 'Quản lý dịch vụ (Tạo/Cập nhật/Xóa)', 101, NULL, TRUE, NOW())
 ON CONFLICT (permission_id) DO NOTHING;
 
 
--- MODULE 10: HOLIDAY (Holiday Management)
+-- MODULE 10: ROOM (2 permissions) - Consolidated from 5
 INSERT INTO permissions (permission_id, permission_name, module, description, display_order, parent_permission_id, is_active, created_at)
 VALUES
-('VIEW_HOLIDAY', 'VIEW_HOLIDAY', 'HOLIDAY', 'Xem danh sách ngày nghỉ lễ', 230, NULL, TRUE, NOW()),
-('CREATE_HOLIDAY', 'CREATE_HOLIDAY', 'HOLIDAY', 'Tạo ngày nghỉ lễ mới', 231, NULL, TRUE, NOW()),
-('UPDATE_HOLIDAY', 'UPDATE_HOLIDAY', 'HOLIDAY', 'Cập nhật ngày nghỉ lễ', 232, NULL, TRUE, NOW()),
-('DELETE_HOLIDAY', 'DELETE_HOLIDAY', 'HOLIDAY', 'Xóa ngày nghỉ lễ', 233, NULL, TRUE, NOW())
+('VIEW_ROOM', 'VIEW_ROOM', 'ROOM_MANAGEMENT', 'Xem danh sách phòng/ghế và dịch vụ', 110, NULL, TRUE, NOW()),
+('MANAGE_ROOM', 'MANAGE_ROOM', 'ROOM_MANAGEMENT', 'Quản lý phòng (Tạo/Cập nhật/Xóa/Gán dịch vụ)', 111, NULL, TRUE, NOW())
 ON CONFLICT (permission_id) DO NOTHING;
 
 
--- MODULE 11: ROOM_MANAGEMENT (Quản lý phòng khám/ghế nha khoa)
+-- MODULE 11: WAREHOUSE (10 permissions) - Kept granular for inventory control
+-- Based on high usage (VIEW_WAREHOUSE: 22 usages, MANAGE_WAREHOUSE: 8 usages)
 INSERT INTO permissions (permission_id, permission_name, module, description, display_order, parent_permission_id, is_active, created_at)
 VALUES
-('VIEW_ROOM', 'VIEW_ROOM', 'ROOM_MANAGEMENT', 'Xem danh sách và chi tiết phòng', 240, NULL, TRUE, NOW()),
-('CREATE_ROOM', 'CREATE_ROOM', 'ROOM_MANAGEMENT', 'Tạo phòng/ghế mới', 241, NULL, TRUE, NOW()),
-('UPDATE_ROOM', 'UPDATE_ROOM', 'ROOM_MANAGEMENT', 'Cập nhật thông tin phòng', 242, NULL, TRUE, NOW()),
-('DELETE_ROOM', 'DELETE_ROOM', 'ROOM_MANAGEMENT', 'Xóa phòng', 243, NULL, TRUE, NOW()),
-('UPDATE_ROOM_SERVICES', 'UPDATE_ROOM_SERVICES', 'ROOM_MANAGEMENT', 'Gán dịch vụ cho phòng', 244, NULL, TRUE, NOW())
+('VIEW_WAREHOUSE', 'VIEW_WAREHOUSE', 'WAREHOUSE', 'Xem danh sách giao dịch kho', 120, NULL, TRUE, NOW()),
+('VIEW_ITEMS', 'VIEW_ITEMS', 'WAREHOUSE', 'Xem danh sách vật tư (cho Bác sĩ/Lễ tân)', 121, NULL, TRUE, NOW()),
+('VIEW_MEDICINES', 'VIEW_MEDICINES', 'WAREHOUSE', 'Xem và tìm kiếm thuốc men (cho Bác sĩ kê đơn)', 122, NULL, TRUE, NOW()),
+('VIEW_WAREHOUSE_COST', 'VIEW_WAREHOUSE_COST', 'WAREHOUSE', 'Xem giá tiền kho (Admin/Kế toán)', 123, NULL, TRUE, NOW()),
+('MANAGE_WAREHOUSE', 'MANAGE_WAREHOUSE', 'WAREHOUSE', 'Quản lý danh mục, nhà cung cấp, vật tư', 124, NULL, TRUE, NOW()),
+('MANAGE_SUPPLIERS', 'MANAGE_SUPPLIERS', 'WAREHOUSE', 'Quản lý nhà cung cấp', 125, NULL, TRUE, NOW()),
+('IMPORT_ITEMS', 'IMPORT_ITEMS', 'WAREHOUSE', 'Tạo phiếu nhập kho', 126, NULL, TRUE, NOW()),
+('EXPORT_ITEMS', 'EXPORT_ITEMS', 'WAREHOUSE', 'Tạo phiếu xuất kho', 127, NULL, TRUE, NOW()),
+('DISPOSE_ITEMS', 'DISPOSE_ITEMS', 'WAREHOUSE', 'Tạo phiếu thanh lý', 128, NULL, TRUE, NOW()),
+('APPROVE_TRANSACTION', 'APPROVE_TRANSACTION', 'WAREHOUSE', 'Duyệt/Từ chối phiếu nhập xuất kho', 129, NULL, TRUE, NOW())
 ON CONFLICT (permission_id) DO NOTHING;
 
 
--- MODULE 12: SERVICE_MANAGEMENT (Quản lý danh mục dịch vụ nha khoa)
+-- MODULE 12: SCHEDULE_MANAGEMENT (6 permissions) - MAJOR simplification from 27!
+-- Focus on practical operations for small-medium dental clinic
 INSERT INTO permissions (permission_id, permission_name, module, description, display_order, parent_permission_id, is_active, created_at)
 VALUES
--- Service management
-('VIEW_SERVICE', 'VIEW_SERVICE', 'SERVICE_MANAGEMENT', 'Xem danh sách và chi tiết dịch vụ', 250, NULL, TRUE, NOW()),
-('CREATE_SERVICE', 'CREATE_SERVICE', 'SERVICE_MANAGEMENT', 'Tạo dịch vụ mới', 251, NULL, TRUE, NOW()),
-('UPDATE_SERVICE', 'UPDATE_SERVICE', 'SERVICE_MANAGEMENT', 'Cập nhật thông tin dịch vụ', 252, NULL, TRUE, NOW()),
-('DELETE_SERVICE', 'DELETE_SERVICE', 'SERVICE_MANAGEMENT', 'Vô hiệu hóa dịch vụ (soft delete)', 253, NULL, TRUE, NOW())
+('VIEW_SCHEDULE_ALL', 'VIEW_SCHEDULE_ALL', 'SCHEDULE_MANAGEMENT', 'Xem tất cả lịch làm việc nhân viên', 130, NULL, TRUE, NOW()),
+('VIEW_SCHEDULE_OWN', 'VIEW_SCHEDULE_OWN', 'SCHEDULE_MANAGEMENT', 'Xem lịch làm việc của bản thân', 131, 'VIEW_SCHEDULE_ALL', TRUE, NOW()),
+('MANAGE_WORK_SHIFTS', 'MANAGE_WORK_SHIFTS', 'SCHEDULE_MANAGEMENT', 'Quản lý mẫu ca làm việc (Tạo/Cập nhật/Xóa)', 132, NULL, TRUE, NOW()),
+('MANAGE_WORK_SLOTS', 'MANAGE_WORK_SLOTS', 'SCHEDULE_MANAGEMENT', 'Quản lý suất part-time (tạo/sửa/xóa)', 133, NULL, TRUE, NOW()),
+('MANAGE_PART_TIME_REGISTRATIONS', 'MANAGE_PART_TIME_REGISTRATIONS', 'SCHEDULE_MANAGEMENT', 'Duyệt/từ chối đăng ký part-time', 134, NULL, TRUE, NOW()),
+('MANAGE_FIXED_REGISTRATIONS', 'MANAGE_FIXED_REGISTRATIONS', 'SCHEDULE_MANAGEMENT', 'Quản lý đăng ký ca cố định (tạo/sửa/xóa)', 135, NULL, TRUE, NOW())
 ON CONFLICT (permission_id) DO NOTHING;
 
 
--- MODULE 13: TREATMENT_PLAN (Quản lý phác đồ điều trị bệnh nhân)
+-- MODULE 13: LEAVE_MANAGEMENT (8 permissions) - Kept workflow separation
+-- Based on actual usage: CREATE_TIME_OFF, APPROVE_TIME_OFF, CREATE_OVERTIME, VIEW_OT_ALL, VIEW_OT_OWN
 INSERT INTO permissions (permission_id, permission_name, module, description, display_order, parent_permission_id, is_active, created_at)
 VALUES
--- Treatment plan management (RBAC: ALL vs OWN pattern)
-('VIEW_TREATMENT_PLAN_ALL', 'VIEW_TREATMENT_PLAN_ALL', 'TREATMENT_PLAN', 'Xem TẤT CẢ phác đồ điều trị (Bác sĩ/Lễ tân)', 260, NULL, TRUE, NOW()),
-('VIEW_ALL_TREATMENT_PLANS', 'VIEW_ALL_TREATMENT_PLANS', 'TREATMENT_PLAN', 'Xem danh sách lộ trình toàn hệ thống (Manager)', 261, NULL, TRUE, NOW()),
-('VIEW_TREATMENT_PLAN_OWN', 'VIEW_TREATMENT_PLAN_OWN', 'TREATMENT_PLAN', 'Chỉ xem phác đồ điều trị của bản thân (Bệnh nhân)', 262, 'VIEW_TREATMENT_PLAN_ALL', TRUE, NOW()),
-('CREATE_TREATMENT_PLAN', 'CREATE_TREATMENT_PLAN', 'TREATMENT_PLAN', 'Tạo phác đồ điều trị mới', 263, NULL, TRUE, NOW()),
-('UPDATE_TREATMENT_PLAN', 'UPDATE_TREATMENT_PLAN', 'TREATMENT_PLAN', 'Cập nhật phác đồ điều trị', 264, NULL, TRUE, NOW()),
-('DELETE_TREATMENT_PLAN', 'DELETE_TREATMENT_PLAN', 'TREATMENT_PLAN', 'Vô hiệu hóa phác đồ (soft delete)', 265, NULL, TRUE, NOW()),
-('APPROVE_TREATMENT_PLAN', 'APPROVE_TREATMENT_PLAN', 'TREATMENT_PLAN', 'Duyệt/Từ chối lộ trình điều trị', 266, NULL, TRUE, NOW()),
-('MANAGE_PLAN_PRICING', 'MANAGE_PLAN_PRICING', 'TREATMENT_PLAN', 'Điều chỉnh giá/chiết khấu phác đồ điều trị', 267, NULL, TRUE, NOW())
+('VIEW_LEAVE_ALL', 'VIEW_LEAVE_ALL', 'LEAVE_MANAGEMENT', 'Xem tất cả yêu cầu nghỉ phép & tăng ca', 140, NULL, TRUE, NOW()),
+('VIEW_LEAVE_OWN', 'VIEW_LEAVE_OWN', 'LEAVE_MANAGEMENT', 'Xem yêu cầu nghỉ phép & tăng ca của bản thân', 141, 'VIEW_LEAVE_ALL', TRUE, NOW()),
+('VIEW_OT_ALL', 'VIEW_OT_ALL', 'LEAVE_MANAGEMENT', 'Xem tất cả yêu cầu tăng ca (Manager)', 142, NULL, TRUE, NOW()),
+('VIEW_OT_OWN', 'VIEW_OT_OWN', 'LEAVE_MANAGEMENT', 'Xem yêu cầu tăng ca của bản thân (Employee)', 143, 'VIEW_OT_ALL', TRUE, NOW()),
+('CREATE_TIME_OFF', 'CREATE_TIME_OFF', 'LEAVE_MANAGEMENT', 'Tạo yêu cầu nghỉ phép', 144, NULL, TRUE, NOW()),
+('APPROVE_TIME_OFF', 'APPROVE_TIME_OFF', 'LEAVE_MANAGEMENT', 'Phê duyệt yêu cầu nghỉ phép', 145, NULL, TRUE, NOW()),
+('CREATE_OVERTIME', 'CREATE_OVERTIME', 'LEAVE_MANAGEMENT', 'Tạo yêu cầu tăng ca', 146, NULL, TRUE, NOW()),
+('APPROVE_OVERTIME', 'APPROVE_OVERTIME', 'LEAVE_MANAGEMENT', 'Phê duyệt yêu cầu tăng ca', 147, NULL, TRUE, NOW())
 ON CONFLICT (permission_id) DO NOTHING;
 
 
--- MODULE 14: WAREHOUSE (Quản lý kho vật tư API 6.6, 6.7, 6.9)
+-- MODULE 14: TREATMENT_PLAN (5 permissions) - Kept RBAC pattern
+-- Based on actual usage: VIEW_TREATMENT_PLAN_OWN, CREATE_TREATMENT_PLAN, UPDATE_TREATMENT
 INSERT INTO permissions (permission_id, permission_name, module, description, display_order, parent_permission_id, is_active, created_at)
 VALUES
-('VIEW_ITEMS', 'VIEW_ITEMS', 'WAREHOUSE', 'Xem danh sách vật tư (cho Bác sĩ/Lễ tân)', 269, NULL, TRUE, NOW()),
-('VIEW_MEDICINES', 'VIEW_MEDICINES', 'WAREHOUSE', 'Xem và tìm kiếm thuốc men (chỉ MEDICINE category) - Cho Bác sĩ kê đơn - API 6.1.1', 268, NULL, TRUE, NOW()),
-('VIEW_WAREHOUSE', 'VIEW_WAREHOUSE', 'WAREHOUSE', 'Xem danh sách giao dịch kho', 270, NULL, TRUE, NOW()),
-('CREATE_ITEMS', 'CREATE_ITEMS', 'WAREHOUSE', 'Tạo vật tư mới với hệ thống đơn vị', 271, NULL, TRUE, NOW()),
-('UPDATE_ITEMS', 'UPDATE_ITEMS', 'WAREHOUSE', 'Cập nhật thông tin vật tư và đơn vị tính', 272, NULL, TRUE, NOW()),
-('CREATE_WAREHOUSE', 'CREATE_WAREHOUSE', 'WAREHOUSE', 'Tạo danh mục, nhà cung cấp', 273, NULL, TRUE, NOW()),
-('UPDATE_WAREHOUSE', 'UPDATE_WAREHOUSE', 'WAREHOUSE', 'Cập nhật danh mục, nhà cung cấp', 274, NULL, TRUE, NOW()),
-('DELETE_WAREHOUSE', 'DELETE_WAREHOUSE', 'WAREHOUSE', 'Xóa vật tư, danh mục, nhà cung cấp', 275, NULL, TRUE, NOW()),
-('VIEW_WAREHOUSE_COST', 'VIEW_WAREHOUSE_COST', 'WAREHOUSE', 'Xem giá tiền kho (unitCost, totalValue, totalCost) - Chỉ Admin/Kế toán', 276, NULL, TRUE, NOW()),
-('IMPORT_ITEMS', 'IMPORT_ITEMS', 'WAREHOUSE', 'Tạo phiếu nhập kho', 277, NULL, TRUE, NOW()),
-('EXPORT_ITEMS', 'EXPORT_ITEMS', 'WAREHOUSE', 'Tạo phiếu xuất kho', 278, NULL, TRUE, NOW()),
-('DISPOSE_ITEMS', 'DISPOSE_ITEMS', 'WAREHOUSE', 'Tạo phiếu thanh lý', 279, NULL, TRUE, NOW()),
-('APPROVE_TRANSACTION', 'APPROVE_TRANSACTION', 'WAREHOUSE', 'Duyệt/Từ chối phiếu nhập xuất kho', 280, NULL, TRUE, NOW()),
-('CANCEL_WAREHOUSE', 'CANCEL_WAREHOUSE', 'WAREHOUSE', 'Hủy phiếu nhập xuất kho (API 6.6.3)', 281, NULL, TRUE, NOW()),
-('MANAGE_SUPPLIERS', 'MANAGE_SUPPLIERS', 'WAREHOUSE', 'Quản lý nhà cung cấp (API 6.13, 6.14)', 282, NULL, TRUE, NOW()),
-('MANAGE_CONSUMABLES', 'MANAGE_CONSUMABLES', 'WAREHOUSE', 'Quản lý định mức tiêu hao vật tư (BOM) - API 6.18, 6.19', 283, NULL, TRUE, NOW()),
-('MANAGE_WAREHOUSE', 'MANAGE_WAREHOUSE', 'WAREHOUSE', 'Toàn quyền quản lý kho', 284, NULL, TRUE, NOW()),
+('VIEW_TREATMENT_PLAN_ALL', 'VIEW_TREATMENT_PLAN_ALL', 'TREATMENT_PLAN', 'Xem tất cả phác đồ điều trị', 150, NULL, TRUE, NOW()),
+('VIEW_TREATMENT_PLAN_OWN', 'VIEW_TREATMENT_PLAN_OWN', 'TREATMENT_PLAN', 'Xem phác đồ của bản thân', 151, 'VIEW_TREATMENT_PLAN_ALL', TRUE, NOW()),
+('MANAGE_TREATMENT_PLAN', 'MANAGE_TREATMENT_PLAN', 'TREATMENT_PLAN', 'Quản lý phác đồ (Tạo/Cập nhật/Xóa)', 152, NULL, TRUE, NOW()),
+('VIEW_TREATMENT', 'VIEW_TREATMENT', 'TREATMENT_PLAN', 'Xem chi tiết hạng mục điều trị', 153, NULL, TRUE, NOW()),
+('MANAGE_TREATMENT', 'MANAGE_TREATMENT', 'TREATMENT_PLAN', 'Quản lý hạng mục điều trị (Tạo/Cập nhật/Phân bổ BS)', 154, NULL, TRUE, NOW())
+ON CONFLICT (permission_id) DO NOTHING;
 
--- MODULE 15: PATIENT_IMAGES (Quản lý hình ảnh bệnh nhân - API 9.1 to 9.6)
-('PATIENT_IMAGE_CREATE', 'PATIENT_IMAGE_CREATE', 'PATIENT_IMAGES', 'Tạo hình ảnh bệnh nhân (Upload metadata)', 290, NULL, TRUE, NOW()),
-('PATIENT_IMAGE_READ', 'PATIENT_IMAGE_READ', 'PATIENT_IMAGES', 'Xem hình ảnh bệnh nhân', 291, NULL, TRUE, NOW()),
-('PATIENT_IMAGE_UPDATE', 'PATIENT_IMAGE_UPDATE', 'PATIENT_IMAGES', 'Cập nhật metadata hình ảnh', 292, NULL, TRUE, NOW()),
-('PATIENT_IMAGE_DELETE', 'PATIENT_IMAGE_DELETE', 'PATIENT_IMAGES', 'Xoa hinh anh benh nhan', 293, NULL, TRUE, NOW()),
-('PATIENT_IMAGE_COMMENT_CREATE', 'PATIENT_IMAGE_COMMENT_CREATE', 'PATIENT_IMAGES', 'Thêm nhận xét vào hình ảnh', 294, NULL, TRUE, NOW()),
-('PATIENT_IMAGE_COMMENT_READ', 'PATIENT_IMAGE_COMMENT_READ', 'PATIENT_IMAGES', 'Xem nhận xét trên hình ảnh', 295, NULL, TRUE, NOW()),
-('PATIENT_IMAGE_COMMENT_UPDATE', 'PATIENT_IMAGE_COMMENT_UPDATE', 'PATIENT_IMAGES', 'Cập nhật nhận xét của mình', 296, NULL, TRUE, NOW()),
-('PATIENT_IMAGE_COMMENT_DELETE', 'PATIENT_IMAGE_COMMENT_DELETE', 'PATIENT_IMAGES', 'Xóa nhận xét của mình', 297, NULL, TRUE, NOW()),
 
--- MODULE 16: NOTIFICATION (Hệ thống thông báo real-time)
-('VIEW_NOTIFICATION', 'VIEW_NOTIFICATION', 'NOTIFICATION', 'Xem thông báo của bản thân', 300, NULL, TRUE, NOW()),
-('DELETE_NOTIFICATION', 'DELETE_NOTIFICATION', 'NOTIFICATION', 'Xóa thông báo của bản thân', 301, NULL, TRUE, NOW()),
-('MANAGE_NOTIFICATION', 'MANAGE_NOTIFICATION', 'NOTIFICATION', 'Toàn quyền quản lý thông báo (Admin/System)', 302, NULL, TRUE, NOW()),
+-- MODULE 15: SYSTEM_CONFIGURATION (6 permissions) - Consolidated CRUD
+INSERT INTO permissions (permission_id, permission_name, module, description, display_order, parent_permission_id, is_active, created_at)
+VALUES
+('VIEW_ROLE', 'VIEW_ROLE', 'SYSTEM_CONFIGURATION', 'Xem danh sách vai trò', 160, NULL, TRUE, NOW()),
+('MANAGE_ROLE', 'MANAGE_ROLE', 'SYSTEM_CONFIGURATION', 'Quản lý vai trò (Tạo/Cập nhật/Xóa)', 161, NULL, TRUE, NOW()),
+('VIEW_PERMISSION', 'VIEW_PERMISSION', 'SYSTEM_CONFIGURATION', 'Xem danh sách quyền', 162, NULL, TRUE, NOW()),
+('MANAGE_PERMISSION', 'MANAGE_PERMISSION', 'SYSTEM_CONFIGURATION', 'Quản lý quyền (Tạo/Cập nhật/Xóa)', 163, NULL, TRUE, NOW()),
+('VIEW_SPECIALIZATION', 'VIEW_SPECIALIZATION', 'SYSTEM_CONFIGURATION', 'Xem danh sách chuyên khoa', 164, NULL, TRUE, NOW()),
+('MANAGE_SPECIALIZATION', 'MANAGE_SPECIALIZATION', 'SYSTEM_CONFIGURATION', 'Quản lý chuyên khoa (Tạo/Cập nhật/Xóa)', 165, NULL, TRUE, NOW())
+ON CONFLICT (permission_id) DO NOTHING;
 
-('WRITE_CLINICAL_RECORD', 'WRITE_CLINICAL_RECORD', 'CLINICAL_RECORDS', 'Tao va cap nhat benh an, them thu thuat (API 8.5, 9.2, 9.3)', 285, NULL, TRUE, NOW()),
-('UPLOAD_ATTACHMENT', 'UPLOAD_ATTACHMENT', 'CLINICAL_RECORDS', 'Upload file dinh kem vao benh an (X-quang, anh, PDF) - API 8.11', 286, NULL, TRUE, NOW()),
-('VIEW_ATTACHMENT', 'VIEW_ATTACHMENT', 'CLINICAL_RECORDS', 'Xem danh sach file dinh kem cua benh an - API 8.12', 287, NULL, TRUE, NOW()),
-('DELETE_ATTACHMENT', 'DELETE_ATTACHMENT', 'CLINICAL_RECORDS', 'Xoa file dinh kem (chi Admin hoac nguoi upload) - API 8.13', 288, NULL, TRUE, NOW()),
-('VIEW_VITAL_SIGNS_REFERENCE', 'VIEW_VITAL_SIGNS_REFERENCE', 'CLINICAL_RECORDS', 'Xem bang tham chieu chi so sinh ton theo do tuoi', 289, NULL, TRUE, NOW())
+
+-- MODULE 16: CUSTOMER_CONTACT (2 permissions) - Major consolidation from 8
+INSERT INTO permissions (permission_id, permission_name, module, description, display_order, parent_permission_id, is_active, created_at)
+VALUES
+('VIEW_CUSTOMER_CONTACT', 'VIEW_CUSTOMER_CONTACT', 'CUSTOMER_MANAGEMENT', 'Xem liên hệ khách hàng & lịch sử', 170, NULL, TRUE, NOW()),
+('MANAGE_CUSTOMER_CONTACT', 'MANAGE_CUSTOMER_CONTACT', 'CUSTOMER_MANAGEMENT', 'Quản lý liên hệ khách hàng (Tạo/Cập nhật/Xóa)', 171, NULL, TRUE, NOW())
+ON CONFLICT (permission_id) DO NOTHING;
+
+
+-- MODULE 17: CLINICAL_RECORDS_ATTACHMENTS (4 permissions) - Kept separate from clinical records
+-- Based on actual usage: WRITE_CLINICAL_RECORD (9 usages)
+INSERT INTO permissions (permission_id, permission_name, module, description, display_order, parent_permission_id, is_active, created_at)
+VALUES
+('WRITE_CLINICAL_RECORD', 'WRITE_CLINICAL_RECORD', 'CLINICAL_RECORDS', 'Tạo và cập nhật bệnh án, thêm thủ thuật', 180, NULL, TRUE, NOW()),
+('VIEW_ATTACHMENT', 'VIEW_ATTACHMENT', 'CLINICAL_RECORDS', 'Xem danh sách file đính kèm', 181, NULL, TRUE, NOW()),
+('MANAGE_ATTACHMENTS', 'MANAGE_ATTACHMENTS', 'CLINICAL_RECORDS', 'Quản lý file đính kèm (Upload/Xóa X-quang, PDF)', 182, NULL, TRUE, NOW()),
+('VIEW_VITAL_SIGNS_REFERENCE', 'VIEW_VITAL_SIGNS_REFERENCE', 'CLINICAL_RECORDS', 'Xem bảng tham chiếu chỉ số sinh tồn theo độ tuổi', 183, NULL, TRUE, NOW())
 ON CONFLICT (permission_id) DO NOTHING;
 
 

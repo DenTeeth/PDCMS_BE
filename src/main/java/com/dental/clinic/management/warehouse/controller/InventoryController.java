@@ -109,7 +109,7 @@ public class InventoryController {
         @Operation(summary = "Tạo vật tư mới", description = "Validate: item_code unique, min_stock <= max_stock")
         @ApiMessage("Tạo vật tư thành công")
         @PostMapping("/item-master")
-        @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('CREATE_WAREHOUSE')")
+        @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('MANAGE_WAREHOUSE')")
         public ResponseEntity<ItemMasterSummaryResponse> createItemMaster(
                         @Valid @RequestBody CreateItemMasterRequest request) {
                 log.info("POST /api/v1/inventory/item-master - itemCode: {}", request.getItemCode());
@@ -123,7 +123,7 @@ public class InventoryController {
         @Operation(summary = "Cập nhật vật tư", description = "Update item master by ID")
         @ApiMessage("Cập nhật vật tư thành công")
         @PutMapping("/item-master/{id}")
-        @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('UPDATE_WAREHOUSE')")
+        @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('MANAGE_WAREHOUSE')")
         public ResponseEntity<ItemMasterSummaryResponse> updateItemMaster(
                         @PathVariable Long id,
                         @Valid @RequestBody UpdateItemMasterRequest request) {
@@ -138,7 +138,7 @@ public class InventoryController {
         @Operation(summary = "Xóa vật tư", description = "Không thể xóa nếu đã có lô hàng")
         @ApiMessage("Xóa vật tư thành công")
         @DeleteMapping("/item-master/{id}")
-        @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('DELETE_WAREHOUSE')")
+        @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('MANAGE_WAREHOUSE')")
         public ResponseEntity<Void> deleteItemMaster(@PathVariable Long id) {
                 log.info("DELETE /api/v1/inventory/item-master/{}", id);
                 inventoryService.deleteItemMaster(id);
@@ -193,7 +193,7 @@ public class InventoryController {
         @Operation(summary = "Tạo danh mục vật tư mới", description = "Validate: category_code unique")
         @ApiMessage("Tạo danh mục thành công")
         @PostMapping("/categories")
-        @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('CREATE_WAREHOUSE')")
+        @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('MANAGE_WAREHOUSE')")
         public ResponseEntity<ItemCategoryResponse> createCategory(
                         @Valid @RequestBody CreateCategoryRequest request) {
                 log.info("POST /api/v1/inventory/categories - code: {}, name: {}",
@@ -208,7 +208,7 @@ public class InventoryController {
         @Operation(summary = "Cập nhật danh mục vật tư", description = "Update category by ID")
         @ApiMessage("Cập nhật danh mục thành công")
         @PutMapping("/categories/{id}")
-        @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('UPDATE_WAREHOUSE')")
+        @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('MANAGE_WAREHOUSE')")
         public ResponseEntity<ItemCategoryResponse> updateCategory(
                         @PathVariable Long id,
                         @Valid @RequestBody UpdateCategoryRequest request) {
@@ -223,7 +223,7 @@ public class InventoryController {
         @Operation(summary = "Xóa danh mục vật tư", description = "Không thể xóa nếu đã có items")
         @ApiMessage("Xóa danh mục thành công")
         @DeleteMapping("/categories/{id}")
-        @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('DELETE_WAREHOUSE')")
+        @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('MANAGE_WAREHOUSE')")
         public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {
                 log.info("DELETE /api/v1/inventory/categories/{}", id);
                 inventoryService.deleteCategory(id);
