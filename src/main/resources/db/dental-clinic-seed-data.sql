@@ -958,9 +958,9 @@ VALUES
 ('PATERNITY_LEAVE', 'PATERNITY_LEAVE', 'Nghỉ chăm vợ sinh con', TRUE, TRUE, FALSE, 5.0, TRUE), -- FE Feedback: Thêm số ngày cụ thể (theo luật lao động VN: 5-7 ngày)
 ('MARRIAGE_LEAVE', 'MARRIAGE_LEAVE', 'Nghỉ kết hôn', TRUE, TRUE, FALSE, 3.0, TRUE),
 ('BEREAVEMENT_LEAVE', 'BEREAVEMENT_LEAVE', 'Nghỉ tang lễ', TRUE, TRUE, FALSE, 3.0, TRUE),
-('EMERGENCY_LEAVE', 'EMERGENCY_LEAVE', 'Nghỉ khẩn cấp', FALSE, TRUE, FALSE, NULL, TRUE),
-('STUDY_LEAVE', 'STUDY_LEAVE', 'Nghỉ học tập/đào tạo', TRUE, TRUE, FALSE, NULL, TRUE),
-('COMPENSATORY_LEAVE', 'COMPENSATORY_LEAVE', 'Nghỉ bù (sau làm thêm giờ)', TRUE, TRUE, TRUE, NULL, TRUE),
+('EMERGENCY_LEAVE', 'EMERGENCY_LEAVE', 'Nghỉ khẩn cấp', FALSE, TRUE, FALSE, 3.0, TRUE), -- FE Request: Added default 3 days for emergency leave
+('STUDY_LEAVE', 'STUDY_LEAVE', 'Nghỉ học tập/đào tạo', TRUE, TRUE, FALSE, 10.0, TRUE), -- FE Request: Added default 10 days for study/training leave
+('COMPENSATORY_LEAVE', 'COMPENSATORY_LEAVE', 'Nghỉ bù (sau làm thêm giờ)', TRUE, TRUE, TRUE, 15.0, TRUE), -- FE Request: Added default 15 days for compensatory leave after overtime
 ('RECOVERY_LEAVE', 'RECOVERY_LEAVE', 'Nghỉ dưỡng sức phục hồi sau ốm', TRUE, TRUE, FALSE, 10.0, TRUE),
 ('CONTRACEPTION_LEAVE', 'CONTRACEPTION_LEAVE', 'Nghỉ thực hiện biện pháp tránh thai', TRUE, TRUE, FALSE, 15.0, TRUE)
 -- FE Feedback: REMOVED MILITARY_EXAM_LEAVE - Không cần loại nghỉ khám nghĩa vụ quân sự
@@ -1718,10 +1718,79 @@ INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at,
 VALUES ('2025-12-31', 'MAINTENANCE_WEEK', 'New Year Eve - System maintenance', NOW(), NOW())
 ON CONFLICT (holiday_date, definition_id) DO NOTHING;
 
---  NEW DATA (January 2026) - Add New Year and Tet preparation maintenance days
+-- ============================================
+-- 2026 HOLIDAYS - National Holidays for Vietnam
+-- ============================================
+
+-- New Year 2026 (January 1, 2026)
 INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
 VALUES ('2026-01-01', 'NEW_YEAR', 'Tết Dương lịch 2026', NOW(), NOW())
 ON CONFLICT (holiday_date, definition_id) DO NOTHING;
+
+-- Tết Nguyên Đán 2026 (Lunar New Year - February 17-23, 2026)
+INSERT INTO holiday_definitions (definition_id, holiday_name, holiday_type, description, created_at, updated_at)
+VALUES ('TET_2026', 'Tết Nguyên Đán 2026', 'NATIONAL', 'Lunar New Year 2026 - Vietnamese traditional holiday', NOW(), NOW())
+ON CONFLICT (definition_id) DO NOTHING;
+
+INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
+VALUES ('2026-02-16', 'TET_2026', 'Ngày 29 Tết (Thứ Hai)', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
+
+INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
+VALUES ('2026-02-17', 'TET_2026', 'Ngày 30 Tết (Thứ Ba)', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
+
+INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
+VALUES ('2026-02-18', 'TET_2026', 'Mùng 1 Tết (Thứ Tư)', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
+
+INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
+VALUES ('2026-02-19', 'TET_2026', 'Mùng 2 Tết (Thứ Năm)', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
+
+INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
+VALUES ('2026-02-20', 'TET_2026', 'Mùng 3 Tết (Thứ Sáu)', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
+
+INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
+VALUES ('2026-02-21', 'TET_2026', 'Mùng 4 Tết (Thứ Bảy)', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
+
+INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
+VALUES ('2026-02-22', 'TET_2026', 'Mùng 5 Tết (Chủ Nhật)', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
+
+INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
+VALUES ('2026-02-23', 'TET_2026', 'Mùng 6 Tết (Thứ Hai)', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
+
+-- Hung Kings Commemoration Day 2026 (April 7, 2026 - Lunar March 10th)
+INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
+VALUES ('2026-04-07', 'HUNG_KINGS', 'Giỗ Tổ Hùng Vương 2026', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
+
+-- Liberation Day & Labor Day 2026 (April 30 - May 1, 2026)
+INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
+VALUES ('2026-04-30', 'LIBERATION_DAY', 'Ngày Giải phóng miền Nam 2026', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
+
+INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
+VALUES ('2026-05-01', 'LABOR_DAY', 'Ngày Quốc tế Lao động 2026', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
+
+-- Compensatory days for Liberation Day + Labor Day (May 2-3, 2026 if needed)
+INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
+VALUES ('2026-05-04', 'LABOR_DAY', 'Ngày nghỉ bù (30/4 và 1/5 trùng cuối tuần)', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
+
+-- National Day 2026 (September 2, 2026)
+INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
+VALUES ('2026-09-02', 'NATIONAL_DAY', 'Quốc khánh Việt Nam 2026', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
+
+-- ============================================
+-- TEST/MAINTENANCE HOLIDAYS FOR 2026
+-- ============================================
 
 INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
 VALUES ('2026-01-26', 'MAINTENANCE_WEEK', 'Pre-Tet system maintenance', NOW(), NOW())
@@ -1729,6 +1798,26 @@ ON CONFLICT (holiday_date, definition_id) DO NOTHING;
 
 INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
 VALUES ('2026-01-27', 'MAINTENANCE_WEEK', 'Pre-Tet system maintenance', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
+
+INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
+VALUES ('2026-03-15', 'MAINTENANCE_WEEK', 'Mid-March system maintenance', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
+
+INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
+VALUES ('2026-06-20', 'MAINTENANCE_WEEK', 'Mid-year system maintenance', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
+
+INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
+VALUES ('2026-09-15', 'MAINTENANCE_WEEK', 'Post-National Day maintenance', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
+
+INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
+VALUES ('2026-12-25', 'MAINTENANCE_WEEK', 'Christmas Day - System maintenance', NOW(), NOW())
+ON CONFLICT (holiday_date, definition_id) DO NOTHING;
+
+INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
+VALUES ('2026-12-31', 'MAINTENANCE_WEEK', 'New Year Eve - System maintenance', NOW(), NOW())
 ON CONFLICT (holiday_date, definition_id) DO NOTHING;
 
 
