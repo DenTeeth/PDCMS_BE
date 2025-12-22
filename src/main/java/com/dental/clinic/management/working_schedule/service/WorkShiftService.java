@@ -69,7 +69,7 @@ public class WorkShiftService {
      * @return WorkShiftResponse
      */
     @Transactional
-    @PreAuthorize("hasAuthority('CREATE_WORK_SHIFTS')")
+    @PreAuthorize("hasAuthority('MANAGE_WORK_SHIFTS')")
     public WorkShiftResponse createWorkShift(CreateWorkShiftRequest request) {
         log.info("Creating work shift...");
 
@@ -122,7 +122,7 @@ public class WorkShiftService {
      * @return WorkShiftResponse
      */
     @Transactional
-    @PreAuthorize("hasAuthority('UPDATE_WORK_SHIFTS')")
+    @PreAuthorize("hasAuthority('MANAGE_WORK_SHIFTS')")
     public WorkShiftResponse updateWorkShift(String workShiftId, UpdateWorkShiftRequest request) {
         log.info("Updating work shift: {}", workShiftId);
 
@@ -204,7 +204,7 @@ public class WorkShiftService {
      * @param workShiftId Work shift ID
      */
     @Transactional
-    @PreAuthorize("hasAuthority('DELETE_WORK_SHIFTS')")
+    @PreAuthorize("hasAuthority('MANAGE_WORK_SHIFTS')")
     public void deleteWorkShift(String workShiftId) {
         log.info("Deleting work shift: {}", workShiftId);
 
@@ -231,7 +231,7 @@ public class WorkShiftService {
      * @return WorkShiftResponse
      */
     @Transactional
-    @PreAuthorize("hasAuthority('UPDATE_WORK_SHIFTS')")
+    @PreAuthorize("hasAuthority('MANAGE_WORK_SHIFTS')")
     public WorkShiftResponse reactivateWorkShift(String workShiftId) {
         log.info("Reactivating work shift: {}", workShiftId);
 

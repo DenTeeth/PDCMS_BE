@@ -58,8 +58,8 @@ public class CustomerContactService {
         this.patientService = patientService;
     }
 
-    // List: VIEW_CONTACT permission or ROLE_ADMIN
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_CONTACT + "')")
+    // List: VIEW_CUSTOMER_CONTACT permission or ROLE_ADMIN
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_CUSTOMER_CONTACT + "')")
     @Transactional(readOnly = true)
     public Page<ContactInfoResponse> listContacts(int page, int size, String sortBy, String sortDirection) {
         page = Math.max(0, page);
@@ -70,8 +70,8 @@ public class CustomerContactService {
         return repository.findAll(pageable).map(mapper::toContactInfoResponse);
     }
 
-    // Get by id: VIEW_CONTACT permission or ROLE_ADMIN
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_CONTACT + "')")
+    // Get by id: VIEW_CUSTOMER_CONTACT permission or ROLE_ADMIN
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_CUSTOMER_CONTACT + "')")
     @Transactional(readOnly = true)
     public ContactInfoResponse getContact(String contactId) {
         CustomerContact contact = repository.findOneByContactId(contactId)
@@ -88,8 +88,8 @@ public class CustomerContactService {
         return resp;
     }
 
-    // Create: CREATE_CONTACT permission or ROLE_ADMIN
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + CREATE_CONTACT + "')")
+    // Create: MANAGE_CUSTOMER_CONTACT permission or ROLE_ADMIN
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + MANAGE_CUSTOMER_CONTACT + "')")
     @Transactional
     public ContactInfoResponse createContact(CreateContactRequest request) {
         if (request == null) {
@@ -141,8 +141,8 @@ public class CustomerContactService {
         return mapper.toContactInfoResponse(saved);
     }
 
-    // Update: UPDATE_CONTACT permission or ROLE_ADMIN
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + UPDATE_CONTACT + "')")
+    // Update: MANAGE_CUSTOMER_CONTACT permission or ROLE_ADMIN
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + MANAGE_CUSTOMER_CONTACT + "')")
     @Transactional
     public ContactInfoResponse updateContact(String contactId, UpdateContactRequest request) {
         CustomerContact contact = repository.findOneByContactId(contactId)
@@ -164,8 +164,8 @@ public class CustomerContactService {
         return mapper.toContactInfoResponse(saved);
     }
 
-    // Delete (soft): DELETE_CONTACT permission or ROLE_ADMIN
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + DELETE_CONTACT + "')")
+    // Delete (soft): MANAGE_CUSTOMER_CONTACT permission or ROLE_ADMIN
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + MANAGE_CUSTOMER_CONTACT + "')")
     @Transactional
     public void deleteContact(String contactId) {
         CustomerContact contact = repository.findOneByContactId(contactId)
@@ -182,7 +182,7 @@ public class CustomerContactService {
      * Manual mode: validate employee exists and has role "Receptionist"
      * Auto mode: assign to receptionist with least NEW contacts
      */
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + UPDATE_CONTACT + "')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + MANAGE_CUSTOMER_CONTACT + "')")
     @Transactional
     public ContactInfoResponse assignContact(String contactId, Integer employeeId /* nullable -> auto */) {
         CustomerContact contact = repository.findOneByContactId(contactId)
@@ -251,7 +251,7 @@ public class CustomerContactService {
      * Validations: contact.status != CONVERTED && != NOT_INTERESTED
      * Creates a new Patient and links it via convertedPatientId.
      */
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + UPDATE_CONTACT + "')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + MANAGE_CUSTOMER_CONTACT + "')")
     @Transactional
     public ContactInfoResponse convertContact(String contactId) {
         CustomerContact contact = repository.findOneByContactId(contactId)
@@ -292,7 +292,7 @@ public class CustomerContactService {
     /**
      * Stats: counts by status, by source, by assignedTo (simple aggregated maps)
      */
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_CONTACT + "')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_CUSTOMER_CONTACT + "')")
     @Transactional(readOnly = true)
     public Map<String, Object> getStats() {
         List<CustomerContact> all = repository.findAll();
@@ -318,7 +318,7 @@ public class CustomerContactService {
     /**
      * Conversion rate = converted / total (safe divide)
      */
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_CONTACT + "')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_CUSTOMER_CONTACT + "')")
     @Transactional(readOnly = true)
     public Map<String, Object> getConversionRate() {
         List<CustomerContact> all = repository.findAll();

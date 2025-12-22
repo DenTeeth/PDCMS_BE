@@ -84,8 +84,8 @@ public class TimeOffRequestService {
          * Lấy danh sách yêu cầu nghỉ phép với phân trang và bộ lọc
          */
         @PreAuthorize("hasRole('" + AuthoritiesConstants.ADMIN + "') or " +
-                        "hasAuthority('" + AuthoritiesConstants.VIEW_TIMEOFF_ALL + "') or " +
-                        "hasAuthority('" + AuthoritiesConstants.VIEW_TIMEOFF_OWN + "')")
+                        "hasAuthority('" + AuthoritiesConstants.VIEW_LEAVE_ALL + "') or " +
+                        "hasAuthority('" + AuthoritiesConstants.VIEW_LEAVE_OWN + "')")
         public Page<TimeOffRequestResponse> getAllRequests(
                         Integer employeeId,
                         TimeOffStatus status,
@@ -97,9 +97,9 @@ public class TimeOffRequestService {
 
                 // LUỒNG 1: Admin hoặc người dùng có quyền xem tất cả
                 if (SecurityUtil.hasCurrentUserRole(AuthoritiesConstants.ADMIN) ||
-                                SecurityUtil.hasCurrentUserPermission(AuthoritiesConstants.VIEW_TIMEOFF_ALL)) {
+                                SecurityUtil.hasCurrentUserPermission(AuthoritiesConstants.VIEW_LEAVE_ALL)) {
 
-                        log.info("User has VIEW_TIMEOFF_ALL permission, fetching with filters");
+                        log.info("User has VIEW_LEAVE_ALL permission, fetching with filters");
                         return requestRepository.findWithFilters(employeeId, status, startDate, endDate, pageable)
                                         .map(requestMapper::toResponse);
                 }
@@ -134,16 +134,16 @@ public class TimeOffRequestService {
          * Xem chi tiết một yêu cầu nghỉ phép
          */
         @PreAuthorize("hasRole('" + AuthoritiesConstants.ADMIN + "') or " +
-                        "hasAuthority('" + AuthoritiesConstants.VIEW_TIMEOFF_ALL + "') or " +
-                        "hasAuthority('" + AuthoritiesConstants.VIEW_TIMEOFF_OWN + "')")
+                        "hasAuthority('" + AuthoritiesConstants.VIEW_LEAVE_ALL + "') or " +
+                        "hasAuthority('" + AuthoritiesConstants.VIEW_LEAVE_OWN + "')")
         public TimeOffRequestResponse getRequestById(String requestId) {
                 log.debug("Request to get time-off request: {}", requestId);
 
                 // LUỒNG 1: Admin hoặc người dùng có quyền xem tất cả
                 if (SecurityUtil.hasCurrentUserRole(AuthoritiesConstants.ADMIN) ||
-                                SecurityUtil.hasCurrentUserPermission(AuthoritiesConstants.VIEW_TIMEOFF_ALL)) {
+                                SecurityUtil.hasCurrentUserPermission(AuthoritiesConstants.VIEW_LEAVE_ALL)) {
 
-                        log.info("User has VIEW_TIMEOFF_ALL permission, fetching request: {}", requestId);
+                        log.info("User has VIEW_LEAVE_ALL permission, fetching request: {}", requestId);
                         return requestRepository.findByRequestId(requestId)
                                         .map(requestMapper::toResponse)
                                         .orElseThrow(() -> new TimeOffRequestNotFoundException(requestId));
@@ -178,7 +178,7 @@ public class TimeOffRequestService {
          * POST /api/v1/time-off-requests
          * Tạo yêu cầu nghỉ phép mới
          */
-        @PreAuthorize("hasAuthority('" + AuthoritiesConstants.CREATE_TIMEOFF + "')")
+        @PreAuthorize("hasAuthority('" + AuthoritiesConstants.CREATE_TIME_OFF + "')")
         @Transactional
         public TimeOffRequestResponse createRequest(CreateTimeOffRequest request) {
                 log.debug("Request to create time-off request: {}", request);
@@ -382,7 +382,7 @@ public class TimeOffRequestService {
         private void handleApproval(TimeOffRequest timeOffRequest) {
                 // Check permission
                 if (!SecurityUtil.hasCurrentUserRole(AuthoritiesConstants.ADMIN) &&
-                                !SecurityUtil.hasCurrentUserPermission(AuthoritiesConstants.APPROVE_TIMEOFF)) {
+                                !SecurityUtil.hasCurrentUserPermission(AuthoritiesConstants.APPROVE_TIME_OFF)) {
                         throw new org.springframework.security.access.AccessDeniedException(
                                         "Bạn không có quyền thực hiện hành động này.");
                 }
@@ -419,7 +419,7 @@ public class TimeOffRequestService {
         private void handleRejection(TimeOffRequest timeOffRequest, String reason) {
                 // Check permission
                 if (!SecurityUtil.hasCurrentUserRole(AuthoritiesConstants.ADMIN) &&
-                                !SecurityUtil.hasCurrentUserPermission(AuthoritiesConstants.REJECT_TIMEOFF)) {
+                                !SecurityUtil.hasCurrentUserPermission(AuthoritiesConstants.APPROVE_TIME_OFF)) {
                         throw new org.springframework.security.access.AccessDeniedException(
                                         "Bạn không có quyền thực hiện hành động này.");
                 }
@@ -476,9 +476,9 @@ public class TimeOffRequestService {
                 // Check permission
                 boolean isOwner = timeOffRequest.getEmployeeId().equals(currentEmployeeId);
                 boolean hasOwnPermission = SecurityUtil
-                                .hasCurrentUserPermission(AuthoritiesConstants.CANCEL_TIMEOFF_OWN);
+                                .hasCurrentUserPermission(AuthoritiesConstants.CREATE_TIME_OFF);
                 boolean hasPendingPermission = SecurityUtil
-                                .hasCurrentUserPermission(AuthoritiesConstants.CANCEL_TIMEOFF_PENDING);
+                                .hasCurrentUserPermission(AuthoritiesConstants.APPROVE_TIME_OFF);
                 boolean isAdmin = SecurityUtil.hasCurrentUserRole(AuthoritiesConstants.ADMIN);
 
                 if (!isAdmin && !hasPendingPermission && !(isOwner && hasOwnPermission)) {

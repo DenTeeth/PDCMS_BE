@@ -209,7 +209,7 @@ public class PatientService {
      * @param request patient information (email required if creating account)
      * @return PatientInfoResponse
      */
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + CREATE_PATIENT + "')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + MANAGE_PATIENT + "')")
     @Transactional
     public PatientInfoResponse createPatient(CreatePatientRequest request) {
         log.debug("Request to create patient: {}", request);
@@ -377,7 +377,7 @@ public class PatientService {
      * @param request     the update information
      * @return PatientInfoResponse
      */
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + UPDATE_PATIENT + "')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + MANAGE_PATIENT + "')")
     @Transactional
     public PatientInfoResponse updatePatient(String patientCode, UpdatePatientRequest request) {
         Patient patient = patientRepository.findOneByPatientCode(patientCode)
@@ -422,7 +422,7 @@ public class PatientService {
      * @param request     the replacement information
      * @return PatientInfoResponse
      */
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + UPDATE_PATIENT + "')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + MANAGE_PATIENT + "')")
     @Transactional
     public PatientInfoResponse replacePatient(String patientCode, ReplacePatientRequest request) {
         Patient patient = patientRepository.findOneByPatientCode(patientCode)
@@ -500,7 +500,7 @@ public class PatientService {
      * @param changedBy   the employee making the change
      * @return updated tooth status response
      */
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_PATIENT + "') or hasAuthority('" + UPDATE_PATIENT
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_PATIENT + "') or hasAuthority('" + MANAGE_PATIENT
             + "')")
     @Transactional
     public UpdateToothStatusResponse updateToothStatus(

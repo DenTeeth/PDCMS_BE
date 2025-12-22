@@ -238,7 +238,7 @@ public class EmployeeService {
      * @return Employee entity
      * @throws EmployeeNotFoundException if employee not found or deleted
      */
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + READ_EMPLOYEE_BY_CODE + "')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_EMPLOYEE + "')")
     @Transactional(readOnly = true)
     public Employee findActiveEmployeeByCode(String employeeCode) {
         if (employeeCode == null || employeeCode.trim().isEmpty()) {
@@ -267,7 +267,7 @@ public class EmployeeService {
      * @param request employee information including username/password
      * @return EmployeeInfoResponse
      */
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + CREATE_EMPLOYEE + "')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + MANAGE_EMPLOYEE + "')")
     @Transactional
     public EmployeeInfoResponse createEmployee(CreateEmployeeRequest request) {
         log.debug("Request to create employee: {}", request);
@@ -406,7 +406,7 @@ public class EmployeeService {
      * @param request      the update data
      * @return the updated employee as DTO
      */
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + UPDATE_EMPLOYEE + "')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + MANAGE_EMPLOYEE + "')")
     @Transactional
     public EmployeeInfoResponse updateEmployee(String employeeCode, UpdateEmployeeRequest request) {
         // Find existing employee
@@ -516,7 +516,7 @@ public class EmployeeService {
      * @param request      the replacement data (all fields required)
      * @return the replaced employee as DTO
      */
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + UPDATE_EMPLOYEE + "')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + MANAGE_EMPLOYEE + "')")
     @Transactional
     public EmployeeInfoResponse replaceEmployee(String employeeCode,
             ReplaceEmployeeRequest request) {
@@ -600,7 +600,7 @@ public class EmployeeService {
      *
      * @return List of medical staff employees
      */
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + READ_ALL_EMPLOYEES + "')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_EMPLOYEE + "')")
     @Transactional(readOnly = true)
     public java.util.List<EmployeeInfoResponse> getActiveMedicalStaff() {
         java.util.List<Employee> employees = employeeRepository.findActiveEmployeesWithSpecializations();

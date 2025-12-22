@@ -43,7 +43,7 @@ public class RoleController {
     @PostMapping("")
     @Operation(summary = "Create new role", description = "Create a new role with specified details")
     @ApiMessage("Create role successfully")
-    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('CREATE_ROLE')")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('MANAGE_ROLE')")
     public ResponseEntity<RoleInfoResponse> createRole(
             @Valid @RequestBody CreateRoleRequest request)
             throws URISyntaxException {
@@ -82,7 +82,7 @@ public class RoleController {
     @PutMapping("/{roleId}")
     @Operation(summary = "Update role", description = "Update role data by role ID")
     @ApiMessage("Update role successfully")
-    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('UPDATE_ROLE')")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('MANAGE_ROLE')")
     public ResponseEntity<RoleInfoResponse> updateRole(
             @PathVariable String roleId,
             @Valid @RequestBody UpdateRoleRequest request) {
@@ -93,7 +93,7 @@ public class RoleController {
     @DeleteMapping("/{roleId}")
     @Operation(summary = "Delete role (soft)", description = "Soft delete role by setting isActive to false")
     @ApiMessage("Delete role successfully")
-    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('DELETE_ROLE')")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('MANAGE_ROLE')")
     public ResponseEntity<RoleInfoResponse> deleteRole(
             @PathVariable String roleId) {
         RoleInfoResponse response = roleService.deleteRole(roleId);
@@ -103,7 +103,7 @@ public class RoleController {
     @PostMapping("/{roleId}/permissions")
     @Operation(summary = "Assign permissions to role", description = "Dynamically assign multiple permissions to a specific role")
     @ApiMessage("Assign permissions to role successfully")
-    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('UPDATE_ROLE')")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('MANAGE_ROLE')")
     public ResponseEntity<Void> assignPermissionsToRole(
             @Parameter(description = "Role ID (e.g., ROLE_ADMIN)", required = true) @PathVariable String roleId,
             @Parameter(description = "List of permission IDs to assign", required = true) @RequestBody List<String> permissionIds) {

@@ -69,7 +69,7 @@ public class CustomTreatmentPlanService {
          * @throws BadRequestAlertException if validation fails
          * @throws AccessDeniedException    if user doesn't have permission
          */
-        @PreAuthorize("hasAuthority('CREATE_TREATMENT_PLAN')")
+        @PreAuthorize("hasAuthority('MANAGE_TREATMENT_PLAN')")
         @Transactional
         public TreatmentPlanDetailResponse createCustomPlan(String patientCode, CreateCustomPlanRequest request) {
                 log.info("Creating custom treatment plan. Patient: {}, Doctor: {}, Phases: {}",

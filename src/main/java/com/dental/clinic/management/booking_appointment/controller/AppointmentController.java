@@ -368,7 +368,7 @@ public class AppointmentController {
             description = "Delay appointment start time within same day with conflict validation and audit logging"
         )
         @PatchMapping("/{appointmentCode}/delay")
-        @PreAuthorize("hasAuthority('DELAY_APPOINTMENT')")
+        @PreAuthorize("hasAuthority('MANAGE_APPOINTMENT')")
         public ResponseEntity<AppointmentDetailDTO> delayAppointment(
                         @PathVariable String appointmentCode,
                         @Valid @RequestBody DelayAppointmentRequest request) {
