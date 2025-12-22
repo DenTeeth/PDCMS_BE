@@ -276,13 +276,35 @@ public class TreatmentPlanAutoScheduleService {
                 service,
                 doctorId);
 
+        // CRITICAL FIX: Validate that we have available slots
+        // If no slots are available, this means either:
+        // 1. Doctor has no shifts on this date (despite previous checks)
+        // 2. All slots are occupied by other appointments
+        // 3. No compatible rooms available
+        if (availableSlots == null || availableSlots.isEmpty()) {
+            log.warn("No available slots found for item {} on {} (doctor: {})",
+                    item.getItemId(), proposedDate, doctorId);
+            
+            return AutoScheduleResponse.AppointmentSuggestion.builder()
+                    .itemId(item.getItemId())
+                    .serviceCode(service.getServiceCode())
+                    .serviceName(service.getServiceName())
+                    .originalEstimatedDate(originalDate)
+                    .suggestedDate(proposedDate)
+                    .success(false)
+                    .errorMessage("Không có slot trống khả dụng vào ngày " + proposedDate + 
+                                  ". Vui lòng kiểm tra lịch làm việc của bác sĩ hoặc chọn ngày khác.")
+                    .adjustmentReason(adjustmentReason)
+                    .build();
+        }
+
         // Calculate total days shifted
         int daysShifted = (int) java.time.temporal.ChronoUnit.DAYS.between(originalDate, proposedDate);
         if (daysShifted > 0) {
             summary.setTotalDaysShifted(summary.getTotalDaysShifted() + daysShifted);
         }
 
-        // Build suggestion
+        // Build successful suggestion
         return AutoScheduleResponse.AppointmentSuggestion.builder()
                 .itemId(item.getItemId())
                 .serviceCode(service.getServiceCode())

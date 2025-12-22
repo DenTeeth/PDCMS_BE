@@ -14,7 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import com.dental.clinic.management.utils.security.AuthoritiesConstants;
 /**
  * REST Controller for Treatment Plan Management.
  * Handles endpoints for viewing and managing patient treatment plans.
@@ -70,7 +70,7 @@ public class TreatmentPlanController {
                         "Returns lightweight summaries without phase/item details for better performance. " +
                         "Requires VIEW_ALL_TREATMENT_PLANS permission.")
         @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('"
-                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.VIEW_ALL_TREATMENT_PLANS
+                        + AuthoritiesConstants.VIEW_ALL_TREATMENT_PLANS
                         + "')")
         @GetMapping("/treatment-plans")
         public ResponseEntity<Page<com.dental.clinic.management.treatment_plans.dto.response.TreatmentPlanSummaryDTO>> listAllTreatmentPlans(
@@ -122,12 +122,12 @@ public class TreatmentPlanController {
                         "Supports pagination via page (0-indexed) and size query parameters. " +
                         "Response includes totalElements, totalPages, and current page info.")
         @org.springframework.security.access.prepost.PreAuthorize("hasRole('"
-                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.ADMIN + "') or " +
+                        + AuthoritiesConstants.ADMIN + "') or " +
                         "hasAuthority('"
-                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.VIEW_TREATMENT_PLAN_ALL
+                        + AuthoritiesConstants.VIEW_TREATMENT_PLAN_ALL
                         + "') or " +
                         "hasAuthority('"
-                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.VIEW_TREATMENT_PLAN_OWN
+                        + AuthoritiesConstants.VIEW_TREATMENT_PLAN_OWN
                         + "')")
         @GetMapping("/patients/{patientCode}/treatment-plans")
         public ResponseEntity<org.springframework.data.domain.Page<TreatmentPlanSummaryDTO>> getTreatmentPlans(
@@ -170,12 +170,12 @@ public class TreatmentPlanController {
                         "Staff with VIEW_TREATMENT_PLAN_ALL can view any patient's plans. " +
                         "Patients with VIEW_TREATMENT_PLAN_OWN can only view their own plans.")
         @org.springframework.security.access.prepost.PreAuthorize("hasRole('"
-                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.ADMIN + "') or " +
+                        + AuthoritiesConstants.ADMIN + "') or " +
                         "hasAuthority('"
-                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.VIEW_TREATMENT_PLAN_ALL
+                        + AuthoritiesConstants.VIEW_TREATMENT_PLAN_ALL
                         + "') or " +
                         "hasAuthority('"
-                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.VIEW_TREATMENT_PLAN_OWN
+                        + AuthoritiesConstants.VIEW_TREATMENT_PLAN_OWN
                         + "')")
         @GetMapping("/patients/{patientCode}/treatment-plans/{planCode}")
         public ResponseEntity<com.dental.clinic.management.treatment_plans.dto.TreatmentPlanDetailResponse> getTreatmentPlanDetail(
@@ -222,9 +222,9 @@ public class TreatmentPlanController {
                         +
                         "Returns the complete plan structure (same as API 5.2) with status=PENDING.")
         @org.springframework.security.access.prepost.PreAuthorize("hasRole('"
-                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.ADMIN + "') or " +
+                        + AuthoritiesConstants.ADMIN + "') or " +
                         "hasAuthority('"
-                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.CREATE_TREATMENT_PLAN + "')")
+                        + AuthoritiesConstants.CREATE_TREATMENT_PLAN + "')")
         @PostMapping("/patients/{patientCode}/treatment-plans")
         public ResponseEntity<com.dental.clinic.management.treatment_plans.dto.TreatmentPlanDetailResponse> createTreatmentPlan(
                         @Parameter(description = "Patient code (e.g., BN-1001)", required = true) @PathVariable String patientCode,
@@ -296,9 +296,9 @@ public class TreatmentPlanController {
                         "(4) Phase Duration: Set estimated_duration_days for timeline calculation. " +
                         "Example: Create a custom orthodontics plan with 3 phases, 10 adjustment items (quantity=10), custom consultation price.")
         @org.springframework.security.access.prepost.PreAuthorize("hasRole('"
-                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.ADMIN + "') or " +
+                        + AuthoritiesConstants.ADMIN + "') or " +
                         "hasAuthority('"
-                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.CREATE_TREATMENT_PLAN + "')")
+                        + AuthoritiesConstants.CREATE_TREATMENT_PLAN + "')")
         @PostMapping("/patients/{patientCode}/treatment-plans/custom")
         public ResponseEntity<com.dental.clinic.management.treatment_plans.dto.TreatmentPlanDetailResponse> createCustomTreatmentPlan(
                         @Parameter(description = "Patient code (e.g., BN-1001)", required = true) @PathVariable String patientCode,
@@ -403,12 +403,12 @@ public class TreatmentPlanController {
                         - `?doctorEmployeeCode=EMP001&page=0&size=20` (Admin only)
                         """)
         @org.springframework.security.access.prepost.PreAuthorize("hasRole('"
-                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.ADMIN + "') or " +
+                        + AuthoritiesConstants.ADMIN + "') or " +
                         "hasAuthority('"
-                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.VIEW_TREATMENT_PLAN_ALL
+                        + AuthoritiesConstants.VIEW_TREATMENT_PLAN_ALL
                         + "') or " +
                         "hasAuthority('"
-                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.VIEW_TREATMENT_PLAN_OWN
+                        + AuthoritiesConstants.VIEW_TREATMENT_PLAN_OWN
                         + "')")
         @GetMapping("/patient-treatment-plans")
         public ResponseEntity<Page<TreatmentPlanSummaryDTO>> getAllTreatmentPlans(
@@ -522,9 +522,9 @@ public class TreatmentPlanController {
                         3. Undo skip: `{"status": "READY_FOR_BOOKING"}` (costs restored)
                         """)
         @org.springframework.security.access.prepost.PreAuthorize("hasRole('"
-                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.ADMIN + "') or " +
+                        + AuthoritiesConstants.ADMIN + "') or " +
                         "hasAuthority('"
-                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.UPDATE_TREATMENT_PLAN + "')")
+                        + AuthoritiesConstants.UPDATE_TREATMENT_PLAN + "')")
         @PatchMapping("/patient-plan-items/{itemId}/status")
         public ResponseEntity<com.dental.clinic.management.treatment_plans.dto.response.PatientPlanItemResponse> updateItemStatus(
                         @Parameter(description = "ID of the treatment plan item to update", required = true, example = "1001") @PathVariable Long itemId,
@@ -623,9 +623,9 @@ public class TreatmentPlanController {
                         ```
                         """)
         @org.springframework.security.access.prepost.PreAuthorize("hasRole('"
-                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.ADMIN + "') or " +
+                        + AuthoritiesConstants.ADMIN + "') or " +
                         "hasAuthority('"
-                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.UPDATE_TREATMENT_PLAN + "')")
+                        + AuthoritiesConstants.UPDATE_TREATMENT_PLAN + "')")
         @PostMapping("/patient-plan-phases/{phaseId}/items")
         public ResponseEntity<com.dental.clinic.management.treatment_plans.dto.response.AddItemsToPhaseResponse> addItemsToPhase(
                         @Parameter(description = "ID of the phase to add items to", required = true, example = "201") @PathVariable Long phaseId,
@@ -758,9 +758,9 @@ public class TreatmentPlanController {
                         ```
                         """)
         @org.springframework.security.access.prepost.PreAuthorize("hasRole('"
-                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.ADMIN + "') or " +
+                        + AuthoritiesConstants.ADMIN + "') or " +
                         "hasAuthority('"
-                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.CREATE_TREATMENT_PLAN + "')")
+                        + AuthoritiesConstants.CREATE_TREATMENT_PLAN + "')")
         @GetMapping("/treatment-plan-templates/{templateCode}")
         public ResponseEntity<com.dental.clinic.management.treatment_plans.dto.response.GetTemplateDetailResponse> getTemplateDetail(
                         @Parameter(description = "Template code (e.g., TPL_ORTHO_METAL, TPL_IMPLANT_OSSTEM)", required = true, example = "TPL_ORTHO_METAL") @PathVariable String templateCode) {
@@ -825,9 +825,9 @@ public class TreatmentPlanController {
                         **Response:** Lightweight summary (no phases/services). Use API 5.8 for full detail.
                         """)
         @org.springframework.security.access.prepost.PreAuthorize("hasRole('"
-                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.ADMIN + "') or " +
+                        + AuthoritiesConstants.ADMIN + "') or " +
                         "hasAuthority('"
-                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.CREATE_TREATMENT_PLAN + "')")
+                        + AuthoritiesConstants.CREATE_TREATMENT_PLAN + "')")
         @GetMapping("/treatment-plan-templates")
         public ResponseEntity<org.springframework.data.domain.Page<com.dental.clinic.management.treatment_plans.dto.response.TemplateSummaryDTO>> listTemplates(
                         @Parameter(description = "Filter by active status (true/false/null for all)", required = false, example = "true") @org.springframework.web.bind.annotation.RequestParam(required = false) Boolean isActive,
@@ -877,9 +877,9 @@ public class TreatmentPlanController {
                         "REJECTED: Plan returns to DRAFT for revision. " +
                         "Audit trail is automatically logged.")
         @org.springframework.security.access.prepost.PreAuthorize("hasRole('"
-                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.ADMIN + "') or " +
+                        + AuthoritiesConstants.ADMIN + "') or " +
                         "hasAuthority('"
-                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.APPROVE_TREATMENT_PLAN
+                        + AuthoritiesConstants.APPROVE_TREATMENT_PLAN
                         + "')")
         @PatchMapping("/patient-treatment-plans/{planCode}/approval")
         public ResponseEntity<com.dental.clinic.management.treatment_plans.dto.TreatmentPlanDetailResponse> approveTreatmentPlan(
@@ -905,9 +905,9 @@ public class TreatmentPlanController {
          */
         @Operation(summary = "Approve/Reject Treatment Plan (FE Alias)", description = "Alias endpoint for FE compatibility. Use PATCH /patient-treatment-plans/{planCode}/approval instead.")
         @org.springframework.security.access.prepost.PreAuthorize("hasRole('"
-                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.ADMIN + "') or " +
+                        + AuthoritiesConstants.ADMIN + "') or " +
                         "hasAuthority('"
-                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.APPROVE_TREATMENT_PLAN
+                        + AuthoritiesConstants.APPROVE_TREATMENT_PLAN
                         + "')")
         @PostMapping("/treatment-plans/{planCode}/approve")
         public ResponseEntity<com.dental.clinic.management.treatment_plans.dto.TreatmentPlanDetailResponse> approveTreatmentPlanAlias(
@@ -952,9 +952,9 @@ public class TreatmentPlanController {
                         "Financial impact is auto-calculated. " +
                         "Approval status stays DRAFT (doctor must explicitly re-submit).")
         @org.springframework.security.access.prepost.PreAuthorize("hasRole('"
-                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.ADMIN + "') or " +
+                        + AuthoritiesConstants.ADMIN + "') or " +
                         "hasAuthority('"
-                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.UPDATE_TREATMENT_PLAN
+                        + AuthoritiesConstants.UPDATE_TREATMENT_PLAN
                         + "')")
         @PatchMapping("/patient-plan-items/{itemId}")
         public ResponseEntity<com.dental.clinic.management.treatment_plans.dto.response.UpdatePlanItemResponse> updatePlanItem(
@@ -994,9 +994,9 @@ public class TreatmentPlanController {
                         "Plan finances are automatically recalculated. Audit log created. " +
                         "Returns deleted item details and new plan totals for FE toast notification.")
         @org.springframework.security.access.prepost.PreAuthorize("hasRole('"
-                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.ADMIN + "') or " +
+                        + AuthoritiesConstants.ADMIN + "') or " +
                         "hasAuthority('"
-                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.UPDATE_TREATMENT_PLAN
+                        + AuthoritiesConstants.UPDATE_TREATMENT_PLAN
                         + "')")
         @DeleteMapping("/patient-plan-items/{itemId}")
         public ResponseEntity<com.dental.clinic.management.treatment_plans.dto.response.DeletePlanItemResponse> deleteItem(
@@ -1039,11 +1039,11 @@ public class TreatmentPlanController {
                         "Plan must have at least 1 phase and 1 item. " +
                         "Audit trail is automatically logged.")
         @org.springframework.security.access.prepost.PreAuthorize("hasRole('"
-                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.ADMIN + "') or " +
+                        + AuthoritiesConstants.ADMIN + "') or " +
                         "hasAuthority('"
-                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.CREATE_TREATMENT_PLAN
+                        + AuthoritiesConstants.CREATE_TREATMENT_PLAN
                         + "') or hasAuthority('"
-                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.UPDATE_TREATMENT_PLAN
+                        + AuthoritiesConstants.UPDATE_TREATMENT_PLAN
                         + "')")
         @PatchMapping("/patient-treatment-plans/{planCode}/submit-for-review")
         public ResponseEntity<com.dental.clinic.management.treatment_plans.dto.TreatmentPlanDetailResponse> submitForReview(
@@ -1093,9 +1093,9 @@ public class TreatmentPlanController {
                         "Automatically recalculates costs and creates audit trail. " +
                         "Typically used between doctor submission (API 5.12) and manager approval (API 5.9).")
         @org.springframework.security.access.prepost.PreAuthorize("hasRole('"
-                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.ADMIN + "') or " +
+                        + AuthoritiesConstants.ADMIN + "') or " +
                         "hasAuthority('"
-                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.MANAGE_PLAN_PRICING + "')")
+                        + AuthoritiesConstants.MANAGE_PLAN_PRICING + "')")
         @PatchMapping("/patient-treatment-plans/{planCode}/prices")
         public ResponseEntity<com.dental.clinic.management.treatment_plans.dto.response.UpdatePricesResponse> updatePlanPrices(
                         @Parameter(description = "Treatment plan code (e.g., PLAN-20251119-001)", required = true, example = "PLAN-20251119-001") @PathVariable String planCode,
@@ -1145,9 +1145,9 @@ public class TreatmentPlanController {
                         "Item at index 0 becomes sequence 1, index 1 becomes sequence 2, etc. " +
                         "Uses SERIALIZABLE isolation to prevent concurrent modification issues.")
         @org.springframework.security.access.prepost.PreAuthorize("hasRole('"
-                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.ADMIN + "') or " +
+                        + AuthoritiesConstants.ADMIN + "') or " +
                         "hasAuthority('"
-                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.UPDATE_TREATMENT_PLAN + "')")
+                        + AuthoritiesConstants.UPDATE_TREATMENT_PLAN + "')")
         @PatchMapping("/patient-plan-phases/{phaseId}/items/reorder")
         public ResponseEntity<com.dental.clinic.management.treatment_plans.dto.response.ReorderItemsResponse> reorderPhaseItems(
                         @Parameter(description = "Phase ID", required = true, example = "123") @PathVariable Long phaseId,
@@ -1187,9 +1187,9 @@ public class TreatmentPlanController {
                               "Doctor must have required specialization for the service. " +
                               "Useful for organizing phases or preparing appointment scheduling.")
         @org.springframework.security.access.prepost.PreAuthorize("hasRole('"
-                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.ADMIN + "') or " +
+                        + AuthoritiesConstants.ADMIN + "') or " +
                         "hasAuthority('"
-                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.ASSIGN_DOCTOR_TO_ITEM + "')")
+                        + AuthoritiesConstants.ASSIGN_DOCTOR_TO_ITEM + "')")
         @PutMapping("/patient-plan-items/{itemId}/assign-doctor")
         public ResponseEntity<com.dental.clinic.management.treatment_plans.dto.response.PatientPlanItemResponse> assignDoctorToItem(
                         @Parameter(description = "Plan item ID", required = true, example = "101") @PathVariable Long itemId,
@@ -1234,9 +1234,9 @@ public class TreatmentPlanController {
                               "Returns suggestions only - does NOT create actual appointments. " +
                               "Frontend can review suggestions and proceed with booking.")
         @org.springframework.security.access.prepost.PreAuthorize("hasRole('"
-                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.ADMIN + "') or " +
+                        + AuthoritiesConstants.ADMIN + "') or " +
                         "hasAuthority('"
-                        + com.dental.clinic.management.utils.security.AuthoritiesConstants.CREATE_APPOINTMENT + "')")
+                        + AuthoritiesConstants.CREATE_APPOINTMENT + "')")
         @PostMapping("/treatment-plans/{planId}/auto-schedule")
         public ResponseEntity<com.dental.clinic.management.treatment_plans.dto.response.AutoScheduleResponse> generateAutoSchedule(
                         @Parameter(description = "Treatment plan ID", required = true, example = "123") 
