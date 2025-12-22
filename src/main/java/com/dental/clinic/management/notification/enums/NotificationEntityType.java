@@ -4,5 +4,8 @@ public enum NotificationEntityType {
     APPOINTMENT,
     TREATMENT_PLAN,
     PAYMENT,
-    SYSTEM
+    SYSTEM,
+    TIME_OFF_REQUEST,
+    OVERTIME_REQUEST,
+    PART_TIME_REGISTRATION
 }
