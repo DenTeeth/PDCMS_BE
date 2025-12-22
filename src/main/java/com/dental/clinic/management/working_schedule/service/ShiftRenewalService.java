@@ -67,7 +67,7 @@ public class ShiftRenewalService {
      * @param username the username from JWT token (sub field)
      * @return list of pending renewals
      */
-    @PreAuthorize("hasAuthority('" + AuthoritiesConstants.VIEW_RENEWAL_OWN + "')")
+    @PreAuthorize("hasAuthority('" + AuthoritiesConstants.VIEW_SCHEDULE_OWN + "')")
     public List<ShiftRenewalResponse> getPendingRenewals(String username) {
         log.info("Getting pending renewals for username: {}", username);
 
@@ -118,7 +118,7 @@ public class ShiftRenewalService {
      *                                        declineReason=NULL
      * @throws RegistrationInactiveException  if fixed registration is_active=FALSE
      */
-    @PreAuthorize("hasAuthority('" + AuthoritiesConstants.RESPOND_RENEWAL_OWN + "')")
+    @PreAuthorize("hasAuthority('" + AuthoritiesConstants.MANAGE_FIXED_REGISTRATIONS + "')")
     @Transactional
     public ShiftRenewalResponse respondToRenewal(
             String renewalId,

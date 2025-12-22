@@ -3,16 +3,17 @@ package com.dental.clinic.management.utils.security;
 /**
  * Permission Constants - Optimized for Small-Medium Dental Clinic
  *
- * OPTIMIZATION RESULTS (2025-12-19):
+ * OPTIMIZATION RESULTS (2025-12-22):
  * - BEFORE: 169 permissions (74% unused in controllers!)
- * - AFTER: 70 permissions (based on actual usage analysis)
- * - STRATEGY: CRUD → MANAGE_X consolidation + Keep RBAC patterns + Workflow
- * separation
+ * - AFTER: 66 permissions (synchronized with database)
+ * - STRATEGY: CRUD → MANAGE_X consolidation + Keep RBAC patterns + Workflow separation
  *
  * CONSOLIDATION PATTERN:
  * - CREATE_X + UPDATE_X + DELETE_X → MANAGE_X
  * - RBAC: VIEW_ALL (Manager/Admin) vs VIEW_OWN (Employee/Patient)
- * - WORKFLOW: Keep APPROVE_X, ASSIGN_X for business logic
+ * - WORKFLOW: Keep APPROVE_X for business logic
+ *
+ * NOTE: All constants match the permissions table in database (66 total)
  */
 public final class AuthoritiesConstants {
 
@@ -42,18 +43,19 @@ public final class AuthoritiesConstants {
     public static final String MANAGE_EMPLOYEE = "MANAGE_EMPLOYEE"; // Create + Update
     public static final String DELETE_EMPLOYEE = "DELETE_EMPLOYEE"; // Separate (soft delete - critical operation)
 
-    /** @deprecated Use VIEW_EMPLOYEE - Redundant read operation */
-    @Deprecated
-    public static final String READ_ALL_EMPLOYEES = "READ_ALL_EMPLOYEES";
-    /** @deprecated Use VIEW_EMPLOYEE - Redundant read operation */
-    @Deprecated
-    public static final String READ_EMPLOYEE_BY_CODE = "READ_EMPLOYEE_BY_CODE";
-    /** @deprecated Use MANAGE_EMPLOYEE */
-    @Deprecated
-    public static final String CREATE_EMPLOYEE = "CREATE_EMPLOYEE";
-    /** @deprecated Use MANAGE_EMPLOYEE */
-    @Deprecated
-    public static final String UPDATE_EMPLOYEE = "UPDATE_EMPLOYEE";
+    // ===== NOT IN DATABASE - Commented out for reference =====
+    // /** @deprecated Use VIEW_EMPLOYEE - Redundant read operation */
+    // @Deprecated
+    // public static final String READ_ALL_EMPLOYEES = "READ_ALL_EMPLOYEES";
+    // /** @deprecated Use VIEW_EMPLOYEE - Redundant read operation */
+    // @Deprecated
+    // public static final String READ_EMPLOYEE_BY_CODE = "READ_EMPLOYEE_BY_CODE";
+    // /** @deprecated Use MANAGE_EMPLOYEE */
+    // @Deprecated
+    // public static final String CREATE_EMPLOYEE = "CREATE_EMPLOYEE";
+    // /** @deprecated Use MANAGE_EMPLOYEE */
+    // @Deprecated
+    // public static final String UPDATE_EMPLOYEE = "UPDATE_EMPLOYEE";
 
     // ============================================
     // MODULE 3: PATIENT (3 permissions)
@@ -62,12 +64,13 @@ public final class AuthoritiesConstants {
     public static final String MANAGE_PATIENT = "MANAGE_PATIENT"; // Create + Update
     public static final String DELETE_PATIENT = "DELETE_PATIENT"; // Separate (soft delete - critical)
 
-    /** @deprecated Use MANAGE_PATIENT */
-    @Deprecated
-    public static final String CREATE_PATIENT = "CREATE_PATIENT";
-    /** @deprecated Use MANAGE_PATIENT */
-    @Deprecated
-    public static final String UPDATE_PATIENT = "UPDATE_PATIENT";
+    // ===== NOT IN DATABASE - Commented out for reference =====
+    // /** @deprecated Use MANAGE_PATIENT */
+    // @Deprecated
+    // public static final String CREATE_PATIENT = "CREATE_PATIENT";
+    // /** @deprecated Use MANAGE_PATIENT */
+    // @Deprecated
+    // public static final String UPDATE_PATIENT = "UPDATE_PATIENT";
 
     // ============================================
     // MODULE 4: APPOINTMENT (5 permissions) - Kept RBAC + Consolidated actions
@@ -78,21 +81,22 @@ public final class AuthoritiesConstants {
     public static final String UPDATE_APPOINTMENT_STATUS = "UPDATE_APPOINTMENT_STATUS"; // Status transitions
     public static final String MANAGE_APPOINTMENT = "MANAGE_APPOINTMENT"; // Update + Delay + Cancel + Delete
 
-    /** @deprecated Use MANAGE_APPOINTMENT */
-    @Deprecated
-    public static final String UPDATE_APPOINTMENT = "UPDATE_APPOINTMENT";
-    /** @deprecated Use MANAGE_APPOINTMENT */
-    @Deprecated
-    public static final String DELAY_APPOINTMENT = "DELAY_APPOINTMENT";
-    /** @deprecated Use MANAGE_APPOINTMENT */
-    @Deprecated
-    public static final String RESCHEDULE_APPOINTMENT = "RESCHEDULE_APPOINTMENT";
-    /** @deprecated Use MANAGE_APPOINTMENT */
-    @Deprecated
-    public static final String CANCEL_APPOINTMENT = "CANCEL_APPOINTMENT";
-    /** @deprecated Use MANAGE_APPOINTMENT */
-    @Deprecated
-    public static final String DELETE_APPOINTMENT = "DELETE_APPOINTMENT";
+    // ===== NOT IN DATABASE - Commented out for reference =====
+    // /** @deprecated Use MANAGE_APPOINTMENT */
+    // @Deprecated
+    // public static final String UPDATE_APPOINTMENT = "UPDATE_APPOINTMENT";
+    // /** @deprecated Use MANAGE_APPOINTMENT */
+    // @Deprecated
+    // public static final String DELAY_APPOINTMENT = "DELAY_APPOINTMENT";
+    // /** @deprecated Use MANAGE_APPOINTMENT */
+    // @Deprecated
+    // public static final String RESCHEDULE_APPOINTMENT = "RESCHEDULE_APPOINTMENT";
+    // /** @deprecated Use MANAGE_APPOINTMENT */
+    // @Deprecated
+    // public static final String CANCEL_APPOINTMENT = "CANCEL_APPOINTMENT";
+    // /** @deprecated Use MANAGE_APPOINTMENT */
+    // @Deprecated
+    // public static final String DELETE_APPOINTMENT = "DELETE_APPOINTMENT";
 
     // ============================================
     // MODULE 5: CLINICAL_RECORDS (4 permissions)
@@ -102,19 +106,20 @@ public final class AuthoritiesConstants {
     public static final String MANAGE_ATTACHMENTS = "MANAGE_ATTACHMENTS"; // Upload + Delete
     public static final String VIEW_VITAL_SIGNS_REFERENCE = "VIEW_VITAL_SIGNS_REFERENCE";
 
-    /** @deprecated Use MANAGE_ATTACHMENTS */
-    @Deprecated
-    public static final String UPLOAD_ATTACHMENT = "UPLOAD_ATTACHMENT";
-    /** @deprecated Use MANAGE_ATTACHMENTS */
-    @Deprecated
-    public static final String DELETE_ATTACHMENT = "DELETE_ATTACHMENT";
+    // ===== NOT IN DATABASE - Commented out for reference =====
+    // /** @deprecated Use MANAGE_ATTACHMENTS */
+    // @Deprecated
+    // public static final String UPLOAD_ATTACHMENT = "UPLOAD_ATTACHMENT";
+    // /** @deprecated Use MANAGE_ATTACHMENTS */
+    // @Deprecated
+    // public static final String DELETE_ATTACHMENT = "DELETE_ATTACHMENT";
 
     // ============================================
     // MODULE 6: PATIENT_IMAGES (3 permissions)
     // ============================================
-    public static final String VIEW_PATIENT_IMAGES = "VIEW_PATIENT_IMAGES";
+    public static final String PATIENT_IMAGE_READ = "PATIENT_IMAGE_READ"; // View patient images
     public static final String MANAGE_PATIENT_IMAGES = "MANAGE_PATIENT_IMAGES"; // Create + Update + Delete
-    public static final String MANAGE_IMAGE_COMMENTS = "MANAGE_IMAGE_COMMENTS"; // Create + Update + Delete comments
+    public static final String DELETE_PATIENT_IMAGES = "DELETE_PATIENT_IMAGES"; // Permanent delete (Admin/Uploader)
 
     // ============================================
     // MODULE 7: NOTIFICATION (3 permissions) - Already optimal
@@ -129,15 +134,16 @@ public final class AuthoritiesConstants {
     public static final String VIEW_HOLIDAY = "VIEW_HOLIDAY";
     public static final String MANAGE_HOLIDAY = "MANAGE_HOLIDAY"; // Create + Update + Delete
 
-    /** @deprecated Use MANAGE_HOLIDAY */
-    @Deprecated
-    public static final String CREATE_HOLIDAY = "CREATE_HOLIDAY";
-    /** @deprecated Use MANAGE_HOLIDAY */
-    @Deprecated
-    public static final String UPDATE_HOLIDAY = "UPDATE_HOLIDAY";
-    /** @deprecated Use MANAGE_HOLIDAY */
-    @Deprecated
-    public static final String DELETE_HOLIDAY = "DELETE_HOLIDAY";
+    // ===== NOT IN DATABASE - Commented out for reference =====
+    // /** @deprecated Use MANAGE_HOLIDAY */
+    // @Deprecated
+    // public static final String CREATE_HOLIDAY = "CREATE_HOLIDAY";
+    // /** @deprecated Use MANAGE_HOLIDAY */
+    // @Deprecated
+    // public static final String UPDATE_HOLIDAY = "UPDATE_HOLIDAY";
+    // /** @deprecated Use MANAGE_HOLIDAY */
+    // @Deprecated
+    // public static final String DELETE_HOLIDAY = "DELETE_HOLIDAY";
 
     // ============================================
     // MODULE 9: SERVICE (2 permissions)
@@ -145,15 +151,16 @@ public final class AuthoritiesConstants {
     public static final String VIEW_SERVICE = "VIEW_SERVICE";
     public static final String MANAGE_SERVICE = "MANAGE_SERVICE"; // Create + Update + Delete
 
-    /** @deprecated Use MANAGE_SERVICE */
-    @Deprecated
-    public static final String CREATE_SERVICE = "CREATE_SERVICE";
-    /** @deprecated Use MANAGE_SERVICE */
-    @Deprecated
-    public static final String UPDATE_SERVICE = "UPDATE_SERVICE";
-    /** @deprecated Use MANAGE_SERVICE */
-    @Deprecated
-    public static final String DELETE_SERVICE = "DELETE_SERVICE";
+    // ===== NOT IN DATABASE - Commented out for reference =====
+    // /** @deprecated Use MANAGE_SERVICE */
+    // @Deprecated
+    // public static final String CREATE_SERVICE = "CREATE_SERVICE";
+    // /** @deprecated Use MANAGE_SERVICE */
+    // @Deprecated
+    // public static final String UPDATE_SERVICE = "UPDATE_SERVICE";
+    // /** @deprecated Use MANAGE_SERVICE */
+    // @Deprecated
+    // public static final String DELETE_SERVICE = "DELETE_SERVICE";
 
     // ============================================
     // MODULE 10: ROOM (2 permissions)
@@ -161,18 +168,19 @@ public final class AuthoritiesConstants {
     public static final String VIEW_ROOM = "VIEW_ROOM";
     public static final String MANAGE_ROOM = "MANAGE_ROOM"; // Create + Update + Delete + Assign services
 
-    /** @deprecated Use MANAGE_ROOM */
-    @Deprecated
-    public static final String CREATE_ROOM = "CREATE_ROOM";
-    /** @deprecated Use MANAGE_ROOM */
-    @Deprecated
-    public static final String UPDATE_ROOM = "UPDATE_ROOM";
-    /** @deprecated Use MANAGE_ROOM */
-    @Deprecated
-    public static final String UPDATE_ROOM_SERVICES = "UPDATE_ROOM_SERVICES";
-    /** @deprecated Use MANAGE_ROOM */
-    @Deprecated
-    public static final String DELETE_ROOM = "DELETE_ROOM";
+    // ===== NOT IN DATABASE - Commented out for reference =====
+    // /** @deprecated Use MANAGE_ROOM */
+    // @Deprecated
+    // public static final String CREATE_ROOM = "CREATE_ROOM";
+    // /** @deprecated Use MANAGE_ROOM */
+    // @Deprecated
+    // public static final String UPDATE_ROOM = "UPDATE_ROOM";
+    // /** @deprecated Use MANAGE_ROOM */
+    // @Deprecated
+    // public static final String UPDATE_ROOM_SERVICES = "UPDATE_ROOM_SERVICES";
+    // /** @deprecated Use MANAGE_ROOM */
+    // @Deprecated
+    // public static final String DELETE_ROOM = "DELETE_ROOM";
 
     // ============================================
     // MODULE 11: WAREHOUSE (10 permissions) - Kept granular (high usage)
@@ -187,54 +195,41 @@ public final class AuthoritiesConstants {
     public static final String EXPORT_ITEMS = "EXPORT_ITEMS"; // Export transactions
     public static final String DISPOSE_ITEMS = "DISPOSE_ITEMS"; // Disposal transactions
     public static final String APPROVE_TRANSACTION = "APPROVE_TRANSACTION"; // Approve/reject workflow
-    public static final String MANAGE_CONSUMABLES = "MANAGE_CONSUMABLES"; // Service BOM
 
-    /** @deprecated Use MANAGE_WAREHOUSE */
-    @Deprecated
-    public static final String CREATE_WAREHOUSE = "CREATE_WAREHOUSE";
-    /** @deprecated Use MANAGE_WAREHOUSE */
-    @Deprecated
-    public static final String UPDATE_WAREHOUSE = "UPDATE_WAREHOUSE";
-    /** @deprecated Use MANAGE_WAREHOUSE */
-    @Deprecated
-    public static final String DELETE_WAREHOUSE = "DELETE_WAREHOUSE";
+    // ===== NOT IN DATABASE - Commented out for reference =====
+    // /** @deprecated Use MANAGE_WAREHOUSE */
+    // @Deprecated
+    // public static final String CREATE_WAREHOUSE = "CREATE_WAREHOUSE";
+    // /** @deprecated Use MANAGE_WAREHOUSE */
+    // @Deprecated
+    // public static final String UPDATE_WAREHOUSE = "UPDATE_WAREHOUSE";
+    // /** @deprecated Use MANAGE_WAREHOUSE */
+    // @Deprecated
+    // public static final String DELETE_WAREHOUSE = "DELETE_WAREHOUSE";
 
     // ============================================
-    // MODULE 12: SCHEDULE_MANAGEMENT (6 permissions) - Major simplification from
-    // 27!
+    // MODULE 12: SCHEDULE_MANAGEMENT (6 permissions) - Optimized
     // ============================================
     public static final String VIEW_SCHEDULE_ALL = "VIEW_SCHEDULE_ALL"; // Manager view all
     public static final String VIEW_SCHEDULE_OWN = "VIEW_SCHEDULE_OWN"; // Employee view own (RBAC)
     public static final String MANAGE_WORK_SHIFTS = "MANAGE_WORK_SHIFTS"; // Shift templates
     public static final String MANAGE_WORK_SLOTS = "MANAGE_WORK_SLOTS"; // Part-time slots
-    public static final String MANAGE_PART_TIME_REGISTRATIONS = "MANAGE_PART_TIME_REGISTRATIONS"; // 9 usages!
-    public static final String MANAGE_FIXED_REGISTRATIONS = "MANAGE_FIXED_REGISTRATIONS"; // Fixed shifts
+    public static final String MANAGE_PART_TIME_REGISTRATIONS = "MANAGE_PART_TIME_REGISTRATIONS"; // Part-time shift registrations
+    public static final String MANAGE_FIXED_REGISTRATIONS = "MANAGE_FIXED_REGISTRATIONS"; // Fixed shift registrations
 
-    /** @deprecated Use MANAGE_WORK_SHIFTS */
-    @Deprecated
-    public static final String VIEW_WORK_SHIFTS = "VIEW_WORK_SHIFTS";
-    /** @deprecated Use MANAGE_WORK_SHIFTS */
-    @Deprecated
-    public static final String CREATE_WORK_SHIFTS = "CREATE_WORK_SHIFTS";
-    /** @deprecated Use MANAGE_WORK_SHIFTS */
-    @Deprecated
-    public static final String UPDATE_WORK_SHIFTS = "UPDATE_WORK_SHIFTS";
-    /** @deprecated Use MANAGE_WORK_SHIFTS */
-    @Deprecated
-    public static final String DELETE_WORK_SHIFTS = "DELETE_WORK_SHIFTS";
-
-    // Employee Shift Registration (kept for backward compatibility)
-    public static final String VIEW_REGISTRATION_ALL = "VIEW_REGISTRATION_ALL";
-    public static final String VIEW_REGISTRATION_OWN = "VIEW_REGISTRATION_OWN";
-    public static final String CREATE_REGISTRATION = "CREATE_REGISTRATION";
-    public static final String UPDATE_REGISTRATION_ALL = "UPDATE_REGISTRATION_ALL";
-    public static final String UPDATE_REGISTRATION_OWN = "UPDATE_REGISTRATION_OWN";
-    public static final String DELETE_REGISTRATION_ALL = "DELETE_REGISTRATION_ALL";
-    public static final String DELETE_REGISTRATION_OWN = "DELETE_REGISTRATION_OWN";
-
-    // Shift Renewal (kept for backward compatibility)
-    public static final String VIEW_RENEWAL_OWN = "VIEW_RENEWAL_OWN";
-    public static final String RESPOND_RENEWAL_OWN = "RESPOND_RENEWAL_OWN";
+    // ===== NOT IN DATABASE - Commented out for reference =====
+    // /** @deprecated Use MANAGE_WORK_SHIFTS */
+    // @Deprecated
+    // public static final String VIEW_WORK_SHIFTS = "VIEW_WORK_SHIFTS";
+    // /** @deprecated Use MANAGE_WORK_SHIFTS */
+    // @Deprecated
+    // public static final String CREATE_WORK_SHIFTS = "CREATE_WORK_SHIFTS";
+    // /** @deprecated Use MANAGE_WORK_SHIFTS */
+    // @Deprecated
+    // public static final String UPDATE_WORK_SHIFTS = "UPDATE_WORK_SHIFTS";
+    // /** @deprecated Use MANAGE_WORK_SHIFTS */
+    // @Deprecated
+    // public static final String DELETE_WORK_SHIFTS = "DELETE_WORK_SHIFTS";
 
     // ============================================
     // MODULE 13: LEAVE_MANAGEMENT (8 permissions) - Kept workflow separation
@@ -248,70 +243,48 @@ public final class AuthoritiesConstants {
     public static final String CREATE_OVERTIME = "CREATE_OVERTIME";
     public static final String APPROVE_OVERTIME = "APPROVE_OVERTIME"; // Workflow
 
-    /** @deprecated Use APPROVE_TIME_OFF */
-    @Deprecated
-    public static final String REJECT_TIME_OFF = "REJECT_TIME_OFF";
-    /**
-     * @deprecated Use CREATE_TIME_OFF (employee cancels own) or APPROVE_TIME_OFF
-     *             (manager cancels)
-     */
-    @Deprecated
-    public static final String CANCEL_TIME_OFF = "CANCEL_TIME_OFF";
-    /** @deprecated Use APPROVE_OVERTIME */
-    @Deprecated
-    public static final String REJECT_OVERTIME = "REJECT_OVERTIME";
-    /**
-     * @deprecated Use CREATE_OVERTIME (employee cancels own) or APPROVE_OVERTIME
-     *             (manager cancels)
-     */
-    @Deprecated
-    public static final String CANCEL_OVERTIME = "CANCEL_OVERTIME";
-
-    // Backwards compatibility aliases for old code
-    /** @deprecated Use VIEW_LEAVE_ALL */
-    @Deprecated
-    public static final String VIEW_TIMEOFF_ALL = VIEW_LEAVE_ALL;
-    /** @deprecated Use VIEW_LEAVE_OWN */
-    @Deprecated
-    public static final String VIEW_TIMEOFF_OWN = VIEW_LEAVE_OWN;
-    /** @deprecated Use CREATE_TIME_OFF */
-    @Deprecated
-    public static final String CREATE_TIMEOFF = CREATE_TIME_OFF;
-    /** @deprecated Use APPROVE_TIME_OFF */
-    @Deprecated
-    public static final String APPROVE_TIMEOFF = APPROVE_TIME_OFF;
-    /** @deprecated Use APPROVE_TIME_OFF */
-    @Deprecated
-    public static final String REJECT_TIMEOFF = REJECT_TIME_OFF;
-    /** @deprecated Use CREATE_TIME_OFF */
-    @Deprecated
-    public static final String CANCEL_TIMEOFF_OWN = CANCEL_TIME_OFF;
-    /** @deprecated Use APPROVE_TIME_OFF */
-    @Deprecated
-    public static final String CANCEL_TIMEOFF_PENDING = CANCEL_TIME_OFF;
-
-    // Leave Type Management
-    public static final String VIEW_LEAVE_TYPE = "VIEW_LEAVE_TYPE";
-    public static final String MANAGE_LEAVE_TYPE = "MANAGE_LEAVE_TYPE";
-    /** @deprecated Use VIEW_LEAVE_TYPE */
-    @Deprecated
-    public static final String VIEW_TIMEOFF_TYPE_ALL = VIEW_LEAVE_TYPE;
-    /** @deprecated Use MANAGE_LEAVE_TYPE */
-    @Deprecated
-    public static final String CREATE_TIMEOFF_TYPE = MANAGE_LEAVE_TYPE;
-    /** @deprecated Use MANAGE_LEAVE_TYPE */
-    @Deprecated
-    public static final String UPDATE_TIMEOFF_TYPE = MANAGE_LEAVE_TYPE;
-    /** @deprecated Use MANAGE_LEAVE_TYPE */
-    @Deprecated
-    public static final String DELETE_TIMEOFF_TYPE = MANAGE_LEAVE_TYPE;
-
-    // Leave Balance Management
-    public static final String VIEW_LEAVE_BALANCE = "VIEW_LEAVE_BALANCE";
-    public static final String ADJUST_LEAVE_BALANCE = "ADJUST_LEAVE_BALANCE";
-    /** @deprecated Use VIEW_LEAVE_BALANCE */
-    @Deprecated
-    public static final String VIEW_LEAVE_BALANCE_ALL = VIEW_LEAVE_BALANCE;
+    // ===== NOT IN DATABASE - Commented out for reference =====
+    // /** @deprecated Use APPROVE_TIME_OFF */
+    // @Deprecated
+    // public static final String REJECT_TIME_OFF = "REJECT_TIME_OFF";
+    // /**
+    //  * @deprecated Use CREATE_TIME_OFF (employee cancels own) or APPROVE_TIME_OFF
+    //  *             (manager cancels)
+    //  */
+    // @Deprecated
+    // public static final String CANCEL_TIME_OFF = "CANCEL_TIME_OFF";
+    // /** @deprecated Use APPROVE_OVERTIME */
+    // @Deprecated
+    // public static final String REJECT_OVERTIME = "REJECT_OVERTIME";
+    // /**
+    //  * @deprecated Use CREATE_OVERTIME (employee cancels own) or APPROVE_OVERTIME
+    //  *             (manager cancels)
+    //  */
+    // @Deprecated
+    // public static final String CANCEL_OVERTIME = "CANCEL_OVERTIME";
+    //
+    // // Backwards compatibility aliases for old code
+    // /** @deprecated Use VIEW_LEAVE_ALL */
+    // @Deprecated
+    // public static final String VIEW_TIMEOFF_ALL = VIEW_LEAVE_ALL;
+    // /** @deprecated Use VIEW_LEAVE_OWN */
+    // @Deprecated
+    // public static final String VIEW_TIMEOFF_OWN = VIEW_LEAVE_OWN;
+    // /** @deprecated Use CREATE_TIME_OFF */
+    // @Deprecated
+    // public static final String CREATE_TIMEOFF = CREATE_TIME_OFF;
+    // /** @deprecated Use APPROVE_TIME_OFF */
+    // @Deprecated
+    // public static final String APPROVE_TIMEOFF = APPROVE_TIME_OFF;
+    // /** @deprecated Use APPROVE_TIME_OFF */
+    // @Deprecated
+    // public static final String REJECT_TIMEOFF = REJECT_TIME_OFF;
+    // /** @deprecated Use CREATE_TIME_OFF */
+    // @Deprecated
+    // public static final String CANCEL_TIMEOFF_OWN = CANCEL_TIME_OFF;
+    // /** @deprecated Use APPROVE_TIME_OFF */
+    // @Deprecated
+    // public static final String CANCEL_TIMEOFF_PENDING = CANCEL_TIME_OFF;
 
     // ============================================
     // MODULE 14: TREATMENT_PLAN (5 permissions) - Kept RBAC
@@ -322,37 +295,38 @@ public final class AuthoritiesConstants {
     public static final String VIEW_TREATMENT = "VIEW_TREATMENT"; // View treatment items
     public static final String MANAGE_TREATMENT = "MANAGE_TREATMENT"; // Create + Update + Assign doctor
 
-    /** @deprecated Use MANAGE_TREATMENT_PLAN */
-    @Deprecated
-    public static final String CREATE_TREATMENT_PLAN = "CREATE_TREATMENT_PLAN";
-    /** @deprecated Use MANAGE_TREATMENT_PLAN */
-    @Deprecated
-    public static final String UPDATE_TREATMENT_PLAN = "UPDATE_TREATMENT_PLAN";
-    /** @deprecated Use MANAGE_TREATMENT_PLAN */
-    @Deprecated
-    public static final String DELETE_TREATMENT_PLAN = "DELETE_TREATMENT_PLAN";
-    /** @deprecated Use MANAGE_TREATMENT_PLAN */
-    @Deprecated
-    public static final String APPROVE_TREATMENT_PLAN = "APPROVE_TREATMENT_PLAN";
-    /** @deprecated Use VIEW_TREATMENT_PLAN_ALL */
-    @Deprecated
-    public static final String VIEW_ALL_TREATMENT_PLANS = VIEW_TREATMENT_PLAN_ALL;
-    /** @deprecated Use MANAGE_TREATMENT_PLAN */
-    @Deprecated
-    public static final String MANAGE_PLAN_PRICING = "MANAGE_PLAN_PRICING";
-
-    /** @deprecated Use MANAGE_TREATMENT */
-    @Deprecated
-    public static final String CREATE_TREATMENT = "CREATE_TREATMENT";
-    /** @deprecated Use MANAGE_TREATMENT */
-    @Deprecated
-    public static final String UPDATE_TREATMENT = "UPDATE_TREATMENT";
-    /** @deprecated Use MANAGE_TREATMENT */
-    @Deprecated
-    public static final String DELETE_TREATMENT = "DELETE_TREATMENT";
-    /** @deprecated Use MANAGE_TREATMENT */
-    @Deprecated
-    public static final String ASSIGN_DOCTOR_TO_ITEM = "ASSIGN_DOCTOR_TO_ITEM";
+    // ===== NOT IN DATABASE - Commented out for reference =====
+    // /** @deprecated Use MANAGE_TREATMENT_PLAN */
+    // @Deprecated
+    // public static final String CREATE_TREATMENT_PLAN = "CREATE_TREATMENT_PLAN";
+    // /** @deprecated Use MANAGE_TREATMENT_PLAN */
+    // @Deprecated
+    // public static final String UPDATE_TREATMENT_PLAN = "UPDATE_TREATMENT_PLAN";
+    // /** @deprecated Use MANAGE_TREATMENT_PLAN */
+    // @Deprecated
+    // public static final String DELETE_TREATMENT_PLAN = "DELETE_TREATMENT_PLAN";
+    // /** @deprecated Use MANAGE_TREATMENT_PLAN */
+    // @Deprecated
+    // public static final String APPROVE_TREATMENT_PLAN = "APPROVE_TREATMENT_PLAN";
+    // /** @deprecated Use VIEW_TREATMENT_PLAN_ALL */
+    // @Deprecated
+    // public static final String VIEW_ALL_TREATMENT_PLANS = VIEW_TREATMENT_PLAN_ALL;
+    // /** @deprecated Use MANAGE_TREATMENT_PLAN */
+    // @Deprecated
+    // public static final String MANAGE_PLAN_PRICING = "MANAGE_PLAN_PRICING";
+    //
+    // /** @deprecated Use MANAGE_TREATMENT */
+    // @Deprecated
+    // public static final String CREATE_TREATMENT = "CREATE_TREATMENT";
+    // /** @deprecated Use MANAGE_TREATMENT */
+    // @Deprecated
+    // public static final String UPDATE_TREATMENT = "UPDATE_TREATMENT";
+    // /** @deprecated Use MANAGE_TREATMENT */
+    // @Deprecated
+    // public static final String DELETE_TREATMENT = "DELETE_TREATMENT";
+    // /** @deprecated Use MANAGE_TREATMENT */
+    // @Deprecated
+    // public static final String ASSIGN_DOCTOR_TO_ITEM = "ASSIGN_DOCTOR_TO_ITEM";
 
     // ============================================
     // MODULE 15: SYSTEM_CONFIGURATION (6 permissions)
@@ -364,9 +338,10 @@ public final class AuthoritiesConstants {
     public static final String VIEW_SPECIALIZATION = "VIEW_SPECIALIZATION";
     public static final String MANAGE_SPECIALIZATION = "MANAGE_SPECIALIZATION"; // Create + Update + Delete
 
-    /** @deprecated Use MANAGE_SPECIALIZATION */
-    @Deprecated
-    public static final String CREATE_SPECIALIZATION = "CREATE_SPECIALIZATION";
+    // ===== NOT IN DATABASE - Commented out for reference =====
+    // /** @deprecated Use MANAGE_SPECIALIZATION */
+    // @Deprecated
+    // public static final String CREATE_SPECIALIZATION = "CREATE_SPECIALIZATION";
 
     // ============================================
     // MODULE 16: CUSTOMER_CONTACT (2 permissions)
@@ -374,28 +349,29 @@ public final class AuthoritiesConstants {
     public static final String VIEW_CUSTOMER_CONTACT = "VIEW_CUSTOMER_CONTACT";
     public static final String MANAGE_CUSTOMER_CONTACT = "MANAGE_CUSTOMER_CONTACT"; // Contact + History CRUD
 
-    /** @deprecated Use VIEW_CUSTOMER_CONTACT */
-    @Deprecated
-    public static final String VIEW_CONTACT = "VIEW_CONTACT";
-    /** @deprecated Use MANAGE_CUSTOMER_CONTACT */
-    @Deprecated
-    public static final String CREATE_CONTACT = "CREATE_CONTACT";
-    /** @deprecated Use MANAGE_CUSTOMER_CONTACT */
-    @Deprecated
-    public static final String UPDATE_CONTACT = "UPDATE_CONTACT";
-    /** @deprecated Use MANAGE_CUSTOMER_CONTACT */
-    @Deprecated
-    public static final String DELETE_CONTACT = "DELETE_CONTACT";
-    /** @deprecated Use VIEW_CUSTOMER_CONTACT */
-    @Deprecated
-    public static final String VIEW_CONTACT_HISTORY = "VIEW_CONTACT_HISTORY";
-    /** @deprecated Use MANAGE_CUSTOMER_CONTACT */
-    @Deprecated
-    public static final String CREATE_CONTACT_HISTORY = "CREATE_CONTACT_HISTORY";
-    /** @deprecated Use MANAGE_CUSTOMER_CONTACT */
-    @Deprecated
-    public static final String UPDATE_CONTACT_HISTORY = "UPDATE_CONTACT_HISTORY";
-    /** @deprecated Use MANAGE_CUSTOMER_CONTACT */
-    @Deprecated
-    public static final String DELETE_CONTACT_HISTORY = "DELETE_CONTACT_HISTORY";
+    // ===== NOT IN DATABASE - Commented out for reference =====
+    // /** @deprecated Use VIEW_CUSTOMER_CONTACT */
+    // @Deprecated
+    // public static final String VIEW_CONTACT = "VIEW_CONTACT";
+    // /** @deprecated Use MANAGE_CUSTOMER_CONTACT */
+    // @Deprecated
+    // public static final String CREATE_CONTACT = "CREATE_CONTACT";
+    // /** @deprecated Use MANAGE_CUSTOMER_CONTACT */
+    // @Deprecated
+    // public static final String UPDATE_CONTACT = "UPDATE_CONTACT";
+    // /** @deprecated Use MANAGE_CUSTOMER_CONTACT */
+    // @Deprecated
+    // public static final String DELETE_CONTACT = "DELETE_CONTACT";
+    // /** @deprecated Use VIEW_CUSTOMER_CONTACT */
+    // @Deprecated
+    // public static final String VIEW_CONTACT_HISTORY = "VIEW_CONTACT_HISTORY";
+    // /** @deprecated Use MANAGE_CUSTOMER_CONTACT */
+    // @Deprecated
+    // public static final String CREATE_CONTACT_HISTORY = "CREATE_CONTACT_HISTORY";
+    // /** @deprecated Use MANAGE_CUSTOMER_CONTACT */
+    // @Deprecated
+    // public static final String UPDATE_CONTACT_HISTORY = "UPDATE_CONTACT_HISTORY";
+    // /** @deprecated Use MANAGE_CUSTOMER_CONTACT */
+    // @Deprecated
+    // public static final String DELETE_CONTACT_HISTORY = "DELETE_CONTACT_HISTORY";
 }

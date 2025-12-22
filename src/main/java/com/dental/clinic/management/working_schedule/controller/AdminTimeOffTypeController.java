@@ -50,7 +50,7 @@ public class AdminTimeOffTypeController {
     @Operation(summary = "Get all time-off types", description = "Retrieve all time-off types including inactive ones with optional filters for active status and paid status")
     @GetMapping
     @PreAuthorize("hasRole('" + AuthoritiesConstants.ADMIN + "') or " +
-            "hasAuthority('" + AuthoritiesConstants.VIEW_LEAVE_TYPE + "')")
+            "hasAuthority('" + AuthoritiesConstants.VIEW_LEAVE_ALL + "')")
     public ResponseEntity<List<TimeOffTypeResponse>> getAllTimeOffTypes(
             @RequestParam(required = false, name = "is_active") Boolean isActive,
             @RequestParam(required = false, name = "is_paid") Boolean isPaid) {
@@ -75,7 +75,7 @@ public class AdminTimeOffTypeController {
     @Operation(summary = "Get time-off type by ID", description = "Retrieve detailed information about a specific time-off type")
     @GetMapping("/{type_id}")
     @PreAuthorize("hasRole('" + AuthoritiesConstants.ADMIN + "') or " +
-            "hasAuthority('" + AuthoritiesConstants.VIEW_LEAVE_TYPE + "')")
+            "hasAuthority('" + AuthoritiesConstants.VIEW_LEAVE_ALL + "')")
     public ResponseEntity<TimeOffTypeResponse> getTimeOffTypeById(@PathVariable("type_id") String typeId) {
         log.info("Admin REST request to get time-off type: {}", typeId);
         TimeOffTypeResponse response = typeService.getTimeOffTypeById(typeId);
@@ -111,7 +111,7 @@ public class AdminTimeOffTypeController {
     @Operation(summary = "Create time-off type", description = "Create a new time-off type with unique type code, name, and paid status")
     @PostMapping
     @PreAuthorize("hasRole('" + AuthoritiesConstants.ADMIN + "') or " +
-            "hasAuthority('" + AuthoritiesConstants.MANAGE_LEAVE_TYPE + "')")
+            "hasAuthority('" + AuthoritiesConstants.APPROVE_TIME_OFF + "')")
     public ResponseEntity<TimeOffTypeResponse> createTimeOffType(@Valid @RequestBody CreateTimeOffTypeRequest request) {
         log.info("Admin REST request to create time-off type: {}", request.getTypeCode());
         TimeOffTypeResponse response = typeService.createTimeOffType(request);
@@ -144,7 +144,7 @@ public class AdminTimeOffTypeController {
     @Operation(summary = "Update time-off type", description = "Update an existing time-off type's properties (partial update supported)")
     @PatchMapping("/{type_id}")
     @PreAuthorize("hasRole('" + AuthoritiesConstants.ADMIN + "') or " +
-            "hasAuthority('" + AuthoritiesConstants.MANAGE_LEAVE_TYPE + "')")
+            "hasAuthority('" + AuthoritiesConstants.APPROVE_TIME_OFF + "')")
     public ResponseEntity<TimeOffTypeResponse> updateTimeOffType(
             @PathVariable("type_id") String typeId,
             @Valid @RequestBody UpdateTimeOffTypeRequest request) {
@@ -176,7 +176,7 @@ public class AdminTimeOffTypeController {
     @Operation(summary = "Toggle time-off type active status", description = "Soft delete or reactivate a time-off type by toggling its is_active status. Prevents deactivation if type is in use.")
     @DeleteMapping("/{type_id}")
     @PreAuthorize("hasRole('" + AuthoritiesConstants.ADMIN + "') or " +
-            "hasAuthority('" + AuthoritiesConstants.MANAGE_LEAVE_TYPE + "')")
+            "hasAuthority('" + AuthoritiesConstants.APPROVE_TIME_OFF + "')")
     public ResponseEntity<TimeOffTypeResponse> toggleTimeOffTypeActive(@PathVariable("type_id") String typeId) {
         log.info("Admin REST request to toggle time-off type active status: {}", typeId);
         TimeOffTypeResponse response = typeService.toggleTimeOffTypeActive(typeId);

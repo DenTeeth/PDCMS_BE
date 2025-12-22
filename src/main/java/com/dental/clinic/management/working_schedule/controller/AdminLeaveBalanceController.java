@@ -74,7 +74,7 @@ public class AdminLeaveBalanceController {
     @Operation(summary = "Get all employees leave balances", description = "Retrieve leave balance information for all employees with optional filters for year and time-off type")
     @GetMapping("/leave-balances")
     @PreAuthorize("hasRole('" + AuthoritiesConstants.ADMIN + "') or " +
-            "hasAuthority('" + AuthoritiesConstants.VIEW_LEAVE_BALANCE + "')")
+            "hasAuthority('" + AuthoritiesConstants.VIEW_LEAVE_ALL + "')")
     public ResponseEntity<AllEmployeesLeaveBalanceResponse> getAllEmployeesLeaveBalances(
             @RequestParam(required = false, name = "cycle_year") Integer cycleYear,
             @RequestParam(required = false, name = "time_off_type_id") String timeOffTypeId) {
@@ -132,7 +132,7 @@ public class AdminLeaveBalanceController {
     @Operation(summary = "Get employee leave balances", description = "Retrieve leave balance details for a specific employee with optional year filter")
     @GetMapping("/employees/{employee_id}/leave-balances")
     @PreAuthorize("hasRole('" + AuthoritiesConstants.ADMIN + "') or " +
-            "hasAuthority('" + AuthoritiesConstants.VIEW_LEAVE_BALANCE + "')")
+            "hasAuthority('" + AuthoritiesConstants.VIEW_LEAVE_ALL + "')")
     public ResponseEntity<EmployeeLeaveBalanceResponse> getEmployeeLeaveBalances(
             @PathVariable("employee_id") Integer employeeId,
             @RequestParam(required = false, name = "cycle_year") Integer cycleYear) {
@@ -184,7 +184,7 @@ public class AdminLeaveBalanceController {
     @Operation(summary = "Adjust leave balance", description = "Manually adjust an employee's leave balance by adding or subtracting days with audit trail")
     @PostMapping("/leave-balances/adjust")
     @PreAuthorize("hasRole('" + AuthoritiesConstants.ADMIN + "') or " +
-            "hasAuthority('" + AuthoritiesConstants.ADJUST_LEAVE_BALANCE + "')")
+            "hasAuthority('" + AuthoritiesConstants.APPROVE_TIME_OFF + "')")
     public ResponseEntity<Map<String, Object>> adjustLeaveBalance(
             @Valid @RequestBody AdjustLeaveBalanceRequest request) {
         log.info("Admin REST request to adjust leave balance for employee {} type {} year {}: {} days",

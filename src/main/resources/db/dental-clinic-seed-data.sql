@@ -353,9 +353,8 @@ VALUES
 ('ROLE_DENTIST', 'VIEW_VITAL_SIGNS_REFERENCE'), -- View vital signs reference
 
 -- PATIENT_IMAGES (full access)
-('ROLE_DENTIST', 'VIEW_PATIENT_IMAGES'), -- View patient images
-('ROLE_DENTIST', 'MANAGE_PATIENT_IMAGES'), -- Upload/Edit/Delete images
-('ROLE_DENTIST', 'MANAGE_IMAGE_COMMENTS'), -- Add/Edit/Delete comments on images
+('ROLE_DENTIST', 'PATIENT_IMAGE_READ'), -- View patient images
+('ROLE_DENTIST', 'MANAGE_PATIENT_IMAGES'), -- Upload/Edit/Delete images and comments
 
 -- SERVICE & WAREHOUSE (read-only for prescription)
 ('ROLE_DENTIST', 'VIEW_SERVICE'), -- View services for treatment planning
@@ -364,7 +363,6 @@ VALUES
 
 -- SCHEDULE_MANAGEMENT (employee self-service)
 ('ROLE_DENTIST', 'VIEW_SCHEDULE_OWN'), -- RBAC: View own schedule
-('ROLE_DENTIST', 'CREATE_REGISTRATION'), -- Register for shifts
 
 -- LEAVE_MANAGEMENT (employee self-service)
 ('ROLE_DENTIST', 'VIEW_LEAVE_OWN'), -- RBAC: View own leave requests
@@ -400,7 +398,6 @@ VALUES
 
 -- SCHEDULE_MANAGEMENT (employee self-service)
 ('ROLE_NURSE', 'VIEW_SCHEDULE_OWN'), -- RBAC: View own schedule
-('ROLE_NURSE', 'CREATE_REGISTRATION'), -- Register for shifts
 
 -- LEAVE_MANAGEMENT (employee self-service)
 ('ROLE_NURSE', 'VIEW_LEAVE_OWN'), -- RBAC: View own leave requests
@@ -429,7 +426,6 @@ VALUES
 
 -- SCHEDULE_MANAGEMENT (employee self-service)
 ('ROLE_DENTIST_INTERN', 'VIEW_SCHEDULE_OWN'), -- RBAC: View own schedule
-('ROLE_DENTIST_INTERN', 'CREATE_REGISTRATION'), -- Register for shifts
 
 -- LEAVE_MANAGEMENT (employee self-service)
 ('ROLE_DENTIST_INTERN', 'VIEW_LEAVE_OWN'), -- RBAC: View own leave requests
@@ -467,7 +463,7 @@ VALUES
 ('ROLE_RECEPTIONIST', 'VIEW_TREATMENT_PLAN_ALL'), -- RBAC: View all treatment plans
 
 -- PATIENT_IMAGES (read-only)
-('ROLE_RECEPTIONIST', 'VIEW_PATIENT_IMAGES'),
+('ROLE_RECEPTIONIST', 'PATIENT_IMAGE_READ'),
 
 -- WAREHOUSE (read-only for inventory check)
 ('ROLE_RECEPTIONIST', 'VIEW_WAREHOUSE'),
@@ -475,7 +471,6 @@ VALUES
 
 -- SCHEDULE_MANAGEMENT (employee self-service)
 ('ROLE_RECEPTIONIST', 'VIEW_SCHEDULE_OWN'), -- RBAC: View own schedule
-('ROLE_RECEPTIONIST', 'CREATE_REGISTRATION'), -- Register for shifts
 
 -- LEAVE_MANAGEMENT (employee self-service)
 ('ROLE_RECEPTIONIST', 'VIEW_LEAVE_OWN'), -- RBAC: View own leave requests
@@ -552,7 +547,6 @@ VALUES
 ('ROLE_MANAGER', 'IMPORT_ITEMS'), -- Create import transactions
 ('ROLE_MANAGER', 'EXPORT_ITEMS'), -- Create export transactions
 ('ROLE_MANAGER', 'APPROVE_TRANSACTION'), -- Approve/Reject warehouse transactions (workflow)
-('ROLE_MANAGER', 'MANAGE_CONSUMABLES'), -- Manage service BOM
 
 -- SYSTEM_CONFIGURATION (limited - view only)
 ('ROLE_MANAGER', 'VIEW_ROLE'),
@@ -572,7 +566,6 @@ INSERT INTO role_permissions (role_id, permission_id)
 VALUES
 -- SCHEDULE_MANAGEMENT (employee self-service)
 ('ROLE_ACCOUNTANT', 'VIEW_SCHEDULE_OWN'), -- RBAC: View own schedule
-('ROLE_ACCOUNTANT', 'CREATE_REGISTRATION'), -- Register for shifts
 
 -- LEAVE_MANAGEMENT (employee self-service)
 ('ROLE_ACCOUNTANT', 'VIEW_LEAVE_OWN'), -- RBAC: View own leave requests
@@ -602,7 +595,6 @@ INSERT INTO role_permissions (role_id, permission_id)
 VALUES
 -- SCHEDULE_MANAGEMENT (employee self-service)
 ('ROLE_INVENTORY_MANAGER', 'VIEW_SCHEDULE_OWN'), -- RBAC: View own schedule
-('ROLE_INVENTORY_MANAGER', 'CREATE_REGISTRATION'), -- Register for shifts
 
 -- LEAVE_MANAGEMENT (employee self-service)
 ('ROLE_INVENTORY_MANAGER', 'VIEW_LEAVE_OWN'), -- RBAC: View own leave requests
@@ -655,50 +647,24 @@ ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
 -- ============================================
--- GRANT LEGACY OVERTIME PERMISSIONS (deprecated - kept for backward compatibility)
+-- LEGACY PERMISSIONS REMOVED
 -- ============================================
--- NOTE: These old VIEW_OT_OWN/CREATE_OT/CANCEL_OT_OWN permissions are DEPRECATED
--- New system uses VIEW_OT_OWN/CREATE_OVERTIME/CANCEL_OVERTIME_OWN (from LEAVE_MANAGEMENT module)
-INSERT INTO role_permissions (role_id, permission_id)
-VALUES
-('ROLE_DENTIST', 'VIEW_OT_OWN'), ('ROLE_DENTIST', 'CREATE_OT'), ('ROLE_DENTIST', 'CANCEL_OT_OWN'),
-('ROLE_NURSE', 'VIEW_OT_OWN'), ('ROLE_NURSE', 'CREATE_OT'), ('ROLE_NURSE', 'CANCEL_OT_OWN'),
-('ROLE_RECEPTIONIST', 'VIEW_OT_OWN'), ('ROLE_RECEPTIONIST', 'CREATE_OT'), ('ROLE_RECEPTIONIST', 'CANCEL_OT_OWN'),
-('ROLE_ACCOUNTANT', 'VIEW_OT_OWN'), ('ROLE_ACCOUNTANT', 'CREATE_OT'), ('ROLE_ACCOUNTANT', 'CANCEL_OT_OWN'),
-('ROLE_INVENTORY_MANAGER', 'VIEW_OT_OWN'), ('ROLE_INVENTORY_MANAGER', 'CREATE_OT'), ('ROLE_INVENTORY_MANAGER', 'CANCEL_OT_OWN'),
-('ROLE_MANAGER', 'VIEW_OT_OWN'), ('ROLE_MANAGER', 'CREATE_OT'), ('ROLE_MANAGER', 'CANCEL_OT_OWN')
-ON CONFLICT (role_id, permission_id) DO NOTHING;
+-- NOTE: CREATE_OT and CANCEL_OT_OWN permissions were removed during optimization
+-- Only VIEW_OT_OWN and VIEW_OT_ALL exist in the optimized permission set
 
 
 -- ============================================
--- GRANT LEGACY WORK_SHIFTS PERMISSIONS (deprecated - kept for backward compatibility)
+-- LEGACY WORK_SHIFTS PERMISSIONS REMOVED
 -- ============================================
--- NOTE: These old VIEW_WORK_SHIFTS permissions are DEPRECATED
--- New system uses VIEW_SCHEDULE_OWN/VIEW_SCHEDULE_ALL (from SCHEDULE_MANAGEMENT module)
-INSERT INTO role_permissions (role_id, permission_id)
-VALUES
-('ROLE_DENTIST', 'VIEW_WORK_SHIFTS'),
-('ROLE_NURSE', 'VIEW_WORK_SHIFTS'),
-('ROLE_RECEPTIONIST', 'VIEW_WORK_SHIFTS'),
-('ROLE_ACCOUNTANT', 'VIEW_WORK_SHIFTS'),
-('ROLE_INVENTORY_MANAGER', 'VIEW_WORK_SHIFTS')
-ON CONFLICT (role_id, permission_id) DO NOTHING;
+-- NOTE: VIEW_WORK_SHIFTS was removed during optimization
+-- Use VIEW_SCHEDULE_OWN/VIEW_SCHEDULE_ALL instead
 
 
 -- ============================================
--- GRANT LEGACY SHIFTS PERMISSIONS (deprecated - kept for backward compatibility)
+-- LEGACY SHIFTS PERMISSIONS REMOVED  
 -- ============================================
--- NOTE: These VIEW_SHIFTS_OWN permissions may be DEPRECATED
--- New system uses VIEW_SCHEDULE_OWN (from SCHEDULE_MANAGEMENT module)
-INSERT INTO role_permissions (role_id, permission_id)
-VALUES
-('ROLE_DENTIST', 'VIEW_SHIFTS_OWN'),
-('ROLE_NURSE', 'VIEW_SHIFTS_OWN'),
-('ROLE_RECEPTIONIST', 'VIEW_SHIFTS_OWN'),
-('ROLE_ACCOUNTANT', 'VIEW_SHIFTS_OWN'),
-('ROLE_INVENTORY_MANAGER', 'VIEW_SHIFTS_OWN'),
-('ROLE_MANAGER', 'VIEW_SHIFTS_OWN')
-ON CONFLICT (role_id, permission_id) DO NOTHING;
+-- NOTE: VIEW_SHIFTS_OWN was removed during optimization
+-- Use VIEW_SCHEDULE_OWN instead
 
 
 -- ============================================
