@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import com.dental.clinic.management.working_schedule.dto.request.CreateWorkShiftRequest;
@@ -39,6 +40,7 @@ public class WorkShiftController {
      *         auto-generated ID
      */
     @PostMapping
+    @PreAuthorize("hasAuthority('MANAGE_WORK_SHIFTS')")
     @Operation(summary = "Create a new work shift", description = "Create a new work shift with the provided details.")
     public ResponseEntity<WorkShiftResponse> createWorkShift(
             @Valid @RequestBody CreateWorkShiftRequest request) {
@@ -55,6 +57,7 @@ public class WorkShiftController {
      * @return WorkShiftResponse with updated shift information
      */
     @PatchMapping("/{workShiftId}")
+    @PreAuthorize("hasAuthority('MANAGE_WORK_SHIFTS')")
     @Operation(summary = "Update an existing work shift", description = "Update fields of an existing work shift by ID.")
     public ResponseEntity<WorkShiftResponse> updateWorkShift(
             @PathVariable String workShiftId,
@@ -72,6 +75,7 @@ public class WorkShiftController {
      * @return ResponseEntity with no content
      */
     @DeleteMapping("/{workShiftId}")
+    @PreAuthorize("hasAuthority('MANAGE_WORK_SHIFTS')")
     @Operation(summary = "Delete a work shift", description = "Soft delete a work shift by ID.")
     public ResponseEntity<Void> deleteWorkShift(@PathVariable String workShiftId) {
         log.info("Deleting work shift with ID: {}", workShiftId);
@@ -87,6 +91,7 @@ public class WorkShiftController {
      * @return WorkShiftResponse with reactivated shift information
      */
     @PutMapping("/{workShiftId}/reactivate")
+    @PreAuthorize("hasAuthority('MANAGE_WORK_SHIFTS')")
     @Operation(summary = "Reactivate a work shift", description = "Reactivate a soft-deleted work shift by ID.")
     public ResponseEntity<WorkShiftResponse> reactivateWorkShift(@PathVariable String workShiftId) {
         log.info("Reactivating work shift with ID: {}", workShiftId);
@@ -110,6 +115,7 @@ public class WorkShiftController {
      * @return List of WorkShiftResponse
      */
     @GetMapping
+    @PreAuthorize("hasAnyAuthority('VIEW_SCHEDULE_ALL', 'MANAGE_WORK_SHIFTS')")
     @Operation(summary = "Get all work shifts", description = "Retrieve all work shifts with optional filtering, searching, and sorting.")
     public ResponseEntity<List<WorkShiftResponse>> getAllWorkShifts(
             @RequestParam(required = false) Boolean isActive,
@@ -132,6 +138,7 @@ public class WorkShiftController {
      * @return WorkShiftResponse with shift details
      */
     @GetMapping("/{workShiftId}")
+    @PreAuthorize("hasAnyAuthority('VIEW_SCHEDULE_ALL', 'MANAGE_WORK_SHIFTS')")
     @Operation(summary = "Get work shift by ID", description = "Retrieve a specific work shift by its ID.")
     public ResponseEntity<WorkShiftResponse> getWorkShiftById(@PathVariable String workShiftId) {
         log.info("Fetching work shift with ID: {}", workShiftId);

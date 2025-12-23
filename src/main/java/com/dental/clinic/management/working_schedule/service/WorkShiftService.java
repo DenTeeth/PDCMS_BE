@@ -270,7 +270,7 @@ public class WorkShiftService {
      * @return List of WorkShiftResponse
      */
     @Transactional(readOnly = true)
-    @PreAuthorize("hasAuthority('VIEW_WORK_SHIFTS')")
+    @PreAuthorize("hasAnyAuthority('VIEW_SCHEDULE_ALL', 'MANAGE_WORK_SHIFTS')")
     public List<WorkShiftResponse> getAllWorkShifts(
             Boolean isActive, 
             WorkShiftCategory category,
@@ -377,7 +377,7 @@ public class WorkShiftService {
      * @return WorkShiftResponse
      */
     @Transactional(readOnly = true)
-    @PreAuthorize("hasAuthority('VIEW_WORK_SHIFTS')")
+    @PreAuthorize("hasAnyAuthority('VIEW_SCHEDULE_ALL', 'MANAGE_WORK_SHIFTS')")
     public WorkShiftResponse getWorkShiftById(String workShiftId) {
         log.info("Fetching work shift: {}", workShiftId);
 
