@@ -500,7 +500,8 @@ VALUES
 ('ROLE_RECEPTIONIST', 'VIEW_WAREHOUSE'),
 ('ROLE_RECEPTIONIST', 'VIEW_ITEMS'),
 
--- SCHEDULE_MANAGEMENT (employee self-service)
+-- SCHEDULE_MANAGEMENT (view all schedules + employee self-service)
+('ROLE_RECEPTIONIST', 'VIEW_SCHEDULE_ALL'), -- RBAC: View all schedules (for scheduling coordination)
 ('ROLE_RECEPTIONIST', 'VIEW_SCHEDULE_OWN'), -- RBAC: View own schedule
 ('ROLE_RECEPTIONIST', 'VIEW_AVAILABLE_SLOTS'), -- Xem suất part-time có sẵn (cho part-time/flex)
 ('ROLE_RECEPTIONIST', 'VIEW_REGISTRATION_OWN'), -- Xem đăng ký ca của bản thân (cho part-time/flex)
