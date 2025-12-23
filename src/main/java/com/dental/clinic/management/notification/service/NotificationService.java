@@ -54,4 +54,35 @@ public interface NotificationService {
      * @param userId         ID người dùng
      */
     void deleteNotification(Long notificationId, Integer userId);
+
+    /**
+     * Tạo thông báo cho yêu cầu nghỉ phép mới
+     *
+     * @param employeeName Tên nhân viên gửi yêu cầu
+     * @param requestId    ID của time-off request
+     * @param startDate    Ngày bắt đầu nghỉ
+     * @param endDate      Ngày kết thúc nghỉ
+     */
+    void createTimeOffRequestNotification(String employeeName, String requestId, String startDate, String endDate);
+
+    /**
+     * Tạo thông báo cho yêu cầu tăng ca mới
+     *
+     * @param employeeName Tên nhân viên gửi yêu cầu
+     * @param requestId    ID của overtime request
+     * @param workDate     Ngày tăng ca
+     * @param shiftName    Tên ca làm việc
+     */
+    void createOvertimeRequestNotification(String employeeName, String requestId, String workDate, String shiftName);
+
+    /**
+     * Tạo thông báo cho đăng ký part-time mới
+     *
+     * @param employeeName   Tên nhân viên gửi yêu cầu
+     * @param registrationId ID của part-time registration
+     * @param effectiveFrom  Ngày bắt đầu hiệu lực
+     * @param effectiveTo    Ngày kết thúc hiệu lực
+     */
+    void createPartTimeRequestNotification(String employeeName, Integer registrationId, String effectiveFrom,
+            String effectiveTo);
 }

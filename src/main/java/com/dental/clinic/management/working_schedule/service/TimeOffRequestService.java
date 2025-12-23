@@ -1,6 +1,7 @@
 package com.dental.clinic.management.working_schedule.service;
 
 import com.dental.clinic.management.account.repository.AccountRepository;
+import com.dental.clinic.management.employee.domain.Employee;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.exception.employee.EmployeeNotFoundException;
 import com.dental.clinic.management.exception.time_off.DuplicateTimeOffRequestException;
@@ -11,6 +12,7 @@ import com.dental.clinic.management.exception.time_off.TimeOffTypeNotFoundExcept
 import com.dental.clinic.management.exception.validation.InvalidRequestException;
 import com.dental.clinic.management.exception.validation.InvalidStateTransitionException;
 import com.dental.clinic.management.exception.validation.InvalidDateRangeException;
+import com.dental.clinic.management.notification.service.NotificationService;
 import com.dental.clinic.management.utils.IdGenerator;
 import com.dental.clinic.management.utils.security.AuthoritiesConstants;
 import com.dental.clinic.management.utils.security.SecurityUtil;
@@ -72,6 +74,7 @@ public class TimeOffRequestService {
         private final FixedShiftRegistrationRepository fixedShiftRegistrationRepository;
         private final PartTimeSlotRepository partTimeSlotRepository;
         private final WorkShiftRepository workShiftRepository;
+        private final NotificationService notificationService;
 
         // ISSUE #53: Holiday Validation
         private final com.dental.clinic.management.utils.validation.HolidayValidator holidayValidator;
@@ -201,10 +204,9 @@ public class TimeOffRequestService {
 
                 // 3.1: ISSUE #53 - Validate date range does NOT include holidays
                 holidayValidator.validateRangeNotIncludeHolidays(
-                        request.getStartDate(), 
-                        request.getEndDate(), 
-                        "nghỉ phép"
-                );
+                                request.getStartDate(),
+                                request.getEndDate(),
+                                "nghỉ phép");
 
                 // 3.5. Check leave balance CHỈ cho ANNUAL_LEAVE
                 // Các loại khác (SICK_LEAVE, UNPAID_PERSONAL) không cần check balance
@@ -332,6 +334,24 @@ public class TimeOffRequestService {
                 // Reload to fetch relationships (employee, requestedBy, approvedBy)
                 TimeOffRequest reloadedRequest = requestRepository.findByRequestId(savedRequest.getRequestId())
                                 .orElseThrow(() -> new TimeOffRequestNotFoundException(savedRequest.getRequestId()));
+
+                // Send notification to all ADMIN users
+                try {
+                        Employee employee = employeeRepository.findById(request.getEmployeeId())
+                                        .orElseThrow(() -> new EmployeeNotFoundException(request.getEmployeeId()));
+
+                        String employeeName = employee.getFirstName() + " " + employee.getLastName();
+                        notificationService.createTimeOffRequestNotification(
+                                        employeeName,
+                                        savedRequest.getRequestId(),
+                                        request.getStartDate().toString(),
+                                        request.getEndDate().toString());
+                        log.info("Time-off request notifications sent to all ADMIN users");
+                } catch (Exception e) {
+                        log.error("Failed to send notification for time-off request: {}", savedRequest.getRequestId(),
+                                        e);
+                        // Don't fail the request creation if notification fails
+                }
 
                 return requestMapper.toResponse(reloadedRequest);
         }
@@ -544,8 +564,9 @@ public class TimeOffRequestService {
 
         /**
          * Deduct leave balance when request is approved
+         * 
          * @param timeOffRequest the approved time-off request
-         * @param approvedBy the employee ID of the approver
+         * @param approvedBy     the employee ID of the approver
          */
         private void deductLeaveBalance(TimeOffRequest timeOffRequest, Integer approvedBy) {
                 // Get time-off type to check type code
@@ -574,12 +595,14 @@ public class TimeOffRequestService {
                                                         "BALANCE_NOT_FOUND",
                                                         String.format("Không tìm thấy số dư nghỉ phép cho nhân viên %d và loại nghỉ %s trong năm %d",
                                                                         timeOffRequest.getEmployeeId(),
-                                                                        timeOffRequest.getTimeOffTypeId(), currentYear)));
+                                                                        timeOffRequest.getTimeOffTypeId(),
+                                                                        currentYear)));
                 } catch (org.springframework.dao.IncorrectResultSizeDataAccessException e) {
                         throw new InvalidRequestException(
                                         "DUPLICATE_BALANCE_RECORDS",
                                         String.format("Phát hiện dữ liệu bị trùng lặp cho nhân viên %d và loại nghỉ %s trong năm %d. Vui lòng liên hệ quản trị viên để xử lý.",
-                                                        timeOffRequest.getEmployeeId(), timeOffRequest.getTimeOffTypeId(), currentYear));
+                                                        timeOffRequest.getEmployeeId(),
+                                                        timeOffRequest.getTimeOffTypeId(), currentYear));
                 }
 
                 // Calculate days to deduct

@@ -1,9 +1,12 @@
 package com.dental.clinic.management.notification.service.impl;
 
+import com.dental.clinic.management.account.domain.Account;
+import com.dental.clinic.management.account.repository.AccountRepository;
 import com.dental.clinic.management.exception.ResourceNotFoundException;
 import com.dental.clinic.management.notification.domain.Notification;
 import com.dental.clinic.management.notification.dto.CreateNotificationRequest;
 import com.dental.clinic.management.notification.dto.NotificationDTO;
+import com.dental.clinic.management.notification.enums.NotificationType;
 import com.dental.clinic.management.notification.repository.NotificationRepository;
 import com.dental.clinic.management.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +16,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 // import java.time.LocalDateTime;
 
@@ -24,10 +29,12 @@ public class NotificationServiceImpl implements NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final SimpMessagingTemplate messagingTemplate;
+    private final AccountRepository accountRepository;
 
     @Override
     public NotificationDTO createNotification(CreateNotificationRequest request) {
-        log.info("NotificationService.createNotification() CALLED for user: {}, type: {}", request.getUserId(), request.getType());
+        log.info("NotificationService.createNotification() CALLED for user: {}, type: {}", request.getUserId(),
+                request.getType());
 
         Notification notification = Notification.builder()
                 .userId(request.getUserId())
@@ -128,5 +135,86 @@ public class NotificationServiceImpl implements NotificationService {
                 .createdAt(notification.getCreatedAt())
                 .readAt(notification.getReadAt())
                 .build();
+    }
+
+    @Override
+    public void createTimeOffRequestNotification(String employeeName, String requestId, String startDate,
+            String endDate) {
+        log.info("Creating TIME_OFF_REQUEST notifications for all ADMIN users, employee: {}", employeeName);
+
+        String title = "Yeu cau nghi phep tu " + employeeName;
+        String message = employeeName + " da gui yeu cau nghi phep tu " + startDate + " den " + endDate;
+
+        // Find all ADMIN accounts
+        List<Account> adminAccounts = accountRepository.findByRole_RoleName("ADMIN");
+        for (Account admin : adminAccounts) {
+            if (admin.getEmployee() != null) {
+                CreateNotificationRequest request = CreateNotificationRequest.builder()
+                        .userId(admin.getEmployee().getEmployeeId())
+                        .type(NotificationType.REQUEST_TIME_OFF_PENDING)
+                        .title(title)
+                        .message(message)
+                        .relatedEntityType(
+                                com.dental.clinic.management.notification.enums.NotificationEntityType.TIME_OFF_REQUEST)
+                        .relatedEntityId(requestId)
+                        .build();
+
+                createNotification(request);
+            }
+        }
+    }
+
+    @Override
+    public void createOvertimeRequestNotification(String employeeName, String requestId, String workDate,
+            String shiftName) {
+        log.info("Creating OVERTIME_REQUEST notifications for all ADMIN users, employee: {}", employeeName);
+
+        String title = "Yeu cau tang ca tu " + employeeName;
+        String message = employeeName + " da gui yeu cau tang ca ngay " + workDate + " ca " + shiftName;
+
+        // Find all ADMIN accounts
+        List<Account> adminAccounts = accountRepository.findByRole_RoleName("ADMIN");
+        for (Account admin : adminAccounts) {
+            if (admin.getEmployee() != null) {
+                CreateNotificationRequest request = CreateNotificationRequest.builder()
+                        .userId(admin.getEmployee().getEmployeeId())
+                        .type(NotificationType.REQUEST_OVERTIME_PENDING)
+                        .title(title)
+                        .message(message)
+                        .relatedEntityType(
+                                com.dental.clinic.management.notification.enums.NotificationEntityType.OVERTIME_REQUEST)
+                        .relatedEntityId(requestId)
+                        .build();
+
+                createNotification(request);
+            }
+        }
+    }
+
+    @Override
+    public void createPartTimeRequestNotification(String employeeName, Integer registrationId, String effectiveFrom,
+            String effectiveTo) {
+        log.info("Creating PART_TIME_REGISTRATION notifications for all ADMIN users, employee: {}", employeeName);
+
+        String title = "Yeu cau dang ky part-time tu " + employeeName;
+        String message = employeeName + " da gui yeu cau dang ky part-time tu " + effectiveFrom + " den " + effectiveTo;
+
+        // Find all ADMIN accounts
+        List<Account> adminAccounts = accountRepository.findByRole_RoleName("ADMIN");
+        for (Account admin : adminAccounts) {
+            if (admin.getEmployee() != null) {
+                CreateNotificationRequest request = CreateNotificationRequest.builder()
+                        .userId(admin.getEmployee().getEmployeeId())
+                        .type(NotificationType.REQUEST_PART_TIME_PENDING)
+                        .title(title)
+                        .message(message)
+                        .relatedEntityType(
+                                com.dental.clinic.management.notification.enums.NotificationEntityType.PART_TIME_REGISTRATION)
+                        .relatedEntityId(String.valueOf(registrationId))
+                        .build();
+
+                createNotification(request);
+            }
+        }
     }
 }
