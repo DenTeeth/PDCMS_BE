@@ -40,7 +40,7 @@ public class EmployeeShiftRegistrationController {
      * GET /api/v1/registrations/part-time-flex/available-slots
      * Get available slots for part-time flex employees to register (NEW: dynamic quota).
      *
-     * Permission: VIEW_AVAILABLE_SLOTS (for part-time flex employees)
+     * Permission: VIEW_SCHEDULE_OWN (for part-time flex employees)
      * 
      * NEW SPECIFICATION:
      * - Only count APPROVED registrations from part-time flex employees
@@ -63,7 +63,7 @@ public class EmployeeShiftRegistrationController {
      * Get detailed availability information for a specific slot.
      * Shows month-by-month breakdown to help employees make informed decisions.
      *
-     * Permission: VIEW_AVAILABLE_SLOTS
+     * Permission: VIEW_SCHEDULE_OWN
      * 
      * @param slotId The slot ID to get details for
      * @return Detailed slot information with monthly availability breakdown
@@ -84,7 +84,7 @@ public class EmployeeShiftRegistrationController {
      * Get daily availability breakdown for a specific part-time flex slot in a given month.
      * Shows quota, registered count from part-time flex employees, and remaining slots for each working day.
      *
-     * Permission: VIEW_AVAILABLE_SLOTS (part-time flex employees), MANAGE_PART_TIME_REGISTRATIONS (managers), MANAGE_WORK_SLOTS (admins)
+     * Permission: VIEW_SCHEDULE_OWN (part-time flex employees), MANAGE_PART_TIME_REGISTRATIONS (managers), MANAGE_WORK_SLOTS (admins)
      * 
      * Business Logic:
      * - Only includes days matching slot's dayOfWeek
@@ -152,7 +152,7 @@ public class EmployeeShiftRegistrationController {
      * POST /api/v1/registrations/part-time
      * Submit registration request for part-time flex employees (NEW: goes to PENDING status).
      *
-     * Permission: CREATE_REGISTRATION (for part-time flex employees)
+     * Permission: VIEW_SCHEDULE_OWN (for part-time flex employees)
      * 
      * NEW SPECIFICATION:
      * - Part-time flex employee provides flexible effectiveFrom and effectiveTo dates
@@ -239,8 +239,8 @@ public class EmployeeShiftRegistrationController {
      * Cancel part-time flex registration (soft delete - set isActive = false).
      *
      * Permission:
-     * - MANAGE_REGISTRATIONS_ALL: Can cancel any part-time flex registration
-     * - CANCEL_REGISTRATION_OWN: Part-time flex employees can cancel only their own registrations
+     * - MANAGE_PART_TIME_REGISTRATIONS: Can cancel any part-time flex registration
+     * - VIEW_SCHEDULE_OWN: Part-time flex employees can cancel only their own registrations
      * 
      * NEW: Part-time flex employees can only cancel PENDING registrations
      *

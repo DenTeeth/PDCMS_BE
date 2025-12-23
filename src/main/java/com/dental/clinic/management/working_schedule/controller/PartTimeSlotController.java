@@ -105,7 +105,7 @@ public class PartTimeSlotController {
      */
     @Operation(summary = "Get slot availability", description = "Returns per-day registered counts and availability flags for the slot's working days within date range")
     @GetMapping("/{slotId}/availability")
-    @PreAuthorize("hasAnyAuthority('VIEW_AVAILABLE_SLOTS','MANAGE_PART_TIME_REGISTRATIONS','MANAGE_WORK_SLOTS')")
+    @PreAuthorize("hasAnyAuthority('VIEW_SCHEDULE_OWN','MANAGE_PART_TIME_REGISTRATIONS','MANAGE_WORK_SLOTS')")
     public ResponseEntity<?> getAvailability(
             @PathVariable Long slotId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
