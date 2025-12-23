@@ -38,7 +38,6 @@ public class VitalSignsReferenceService {
                 .collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
     public VitalSignAssessment assessVitalSign(String vitalType, BigDecimal value, Integer patientAge) {
         var reference = vitalSignsReferenceRepository.findByVitalTypeAndAge(vitalType, patientAge);
 
