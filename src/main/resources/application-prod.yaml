@@ -162,3 +162,11 @@ management:
   endpoint:
     health:
       show-details: when-authorized
+
+# ==============================
+# Chatbot Configuration (Gemini AI)
+# ==============================
+chatbot:
+  gemini:
+    api-key: AIzaSyBXeRwRSqnyyIxpo22Lx0j7Yhdga0ePrSY
+    model-name: gemini-2.5-flash-latest

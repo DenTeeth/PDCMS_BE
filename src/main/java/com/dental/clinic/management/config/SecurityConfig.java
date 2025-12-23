@@ -116,6 +116,9 @@ public class SecurityConfig {
                                                 .requestMatchers(mvc.pattern("/api/v1/setup/**")).permitAll()
                                                 .requestMatchers(mvc.pattern("/error")).permitAll()
 
+                                                // Public endpoints - Chatbot
+                                                .requestMatchers(mvc.pattern("/api/v1/chatbot/**")).permitAll()
+
                                                 // Authenticated endpoints - Account management
                                                 .requestMatchers(mvc.pattern("/api/v1/account/**")).authenticated()
 
