@@ -36,7 +36,7 @@ public class PatientImageController {
     }
 
     @GetMapping("/patient/{patientId}")
-    @PreAuthorize("hasAuthority('VIEW_PATIENT_IMAGES')")
+    @PreAuthorize("hasAuthority('PATIENT_IMAGE_READ')")
     public ResponseEntity<PatientImageListResponse> getPatientImages(
             @PathVariable Long patientId,
             @RequestParam(required = false) ImageType imageType,
@@ -52,7 +52,7 @@ public class PatientImageController {
     }
 
     @GetMapping("/{imageId}")
-    @PreAuthorize("hasAuthority('VIEW_PATIENT_IMAGES')")
+    @PreAuthorize("hasAuthority('PATIENT_IMAGE_READ')")
     public ResponseEntity<PatientImageResponse> getPatientImageById(@PathVariable Long imageId) {
         log.info("REST request to get patient image by ID: {}", imageId);
         PatientImageResponse response = patientImageService.getPatientImageById(imageId);
@@ -78,7 +78,7 @@ public class PatientImageController {
     }
 
     @GetMapping("/clinical-record/{clinicalRecordId}")
-    @PreAuthorize("hasAuthority('VIEW_PATIENT_IMAGES')")
+    @PreAuthorize("hasAuthority('PATIENT_IMAGE_READ')")
     public ResponseEntity<List<PatientImageResponse>> getImagesByClinicalRecord(
             @PathVariable Long clinicalRecordId) {
         log.info("REST request to get images for clinical record ID: {}", clinicalRecordId);
@@ -87,7 +87,7 @@ public class PatientImageController {
     }
 
     @GetMapping("/appointment/{appointmentId}")
-    @PreAuthorize("hasAuthority('VIEW_PATIENT_IMAGES')")
+    @PreAuthorize("hasAuthority('PATIENT_IMAGE_READ')")
     public ResponseEntity<List<PatientImageResponse>> getImagesByAppointment(
             @PathVariable Long appointmentId) {
         log.info("REST request to get images for appointment ID: {}", appointmentId);

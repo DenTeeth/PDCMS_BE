@@ -421,6 +421,9 @@ VALUES
 -- CLINICAL_RECORDS (read attachments)
 ('ROLE_NURSE', 'VIEW_ATTACHMENT'),
 
+-- PATIENT_IMAGES (view access)
+('ROLE_NURSE', 'PATIENT_IMAGE_READ'), -- View patient images
+
 -- SCHEDULE_MANAGEMENT (employee self-service)
 ('ROLE_NURSE', 'VIEW_SCHEDULE_OWN'), -- RBAC: View own schedule
 ('ROLE_NURSE', 'VIEW_AVAILABLE_SLOTS'), -- Xem suất part-time có sẵn (cho part-time/flex)
@@ -682,6 +685,9 @@ VALUES
 
 -- CLINICAL_RECORDS (read-only own records)
 ('ROLE_PATIENT', 'VIEW_ATTACHMENT'), -- View attachments of own clinical records
+
+-- PATIENT_IMAGES (view own images)
+('ROLE_PATIENT', 'PATIENT_IMAGE_READ'), -- View own patient images
 
 -- NOTIFICATION
 ('ROLE_PATIENT', 'VIEW_NOTIFICATION'), -- View own notifications

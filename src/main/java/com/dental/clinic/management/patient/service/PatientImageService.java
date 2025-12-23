@@ -22,7 +22,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -105,6 +107,9 @@ public class PatientImageService {
         if (!patientRepository.existsById(patientIdInt)) {
             throw new NotFoundException("Patient not found with ID: " + patientId);
         }
+
+        // Authorization check: Patients can only view their own images
+        verifyPatientAccess(patientIdInt);
 
         Specification<PatientImage> spec = PatientImageSpecification.filterImages(
                 patientId, imageType, clinicalRecordId, fromDate, toDate);
@@ -212,6 +217,38 @@ public class PatientImageService {
         return images.stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
+    }
+
+    private void verifyPatientAccess(Integer patientId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new AccessDeniedException("User not authenticated");
+        }
+
+        // Check if user has staff role (can view any patient's images)
+        boolean isStaff = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(role -> role.equals("ROLE_ADMIN") 
+                        || role.equals("ROLE_DENTIST") 
+                        || role.equals("ROLE_NURSE")
+                        || role.equals("ROLE_RECEPTIONIST"));
+
+        if (isStaff) {
+            log.debug("Staff user authorized to view patient {} images", patientId);
+            return; // Staff can view any patient's images
+        }
+
+        // For patients, verify they can only access their own images
+        String username = authentication.getName();
+        Patient patient = patientRepository.findByAccount_Username(username)
+                .orElseThrow(() -> new AccessDeniedException("Patient record not found for current user"));
+
+        if (!patient.getPatientId().equals(patientId)) {
+            log.warn("Patient {} attempted to access images for patient {}", patient.getPatientId(), patientId);
+            throw new AccessDeniedException("You can only view your own images");
+        }
+
+        log.debug("Patient {} authorized to view own images", patientId);
     }
 
     private Integer getCurrentEmployeeId() {
