@@ -41,7 +41,7 @@ public class EmployeeShiftRegistrationController {
      * GET /api/v1/registrations/part-time-flex/available-slots
      * Get available slots for part-time flex employees to register (NEW: dynamic quota).
      *
-     * Permission: VIEW_SCHEDULE_OWN (for part-time flex employees)
+     * Permission: VIEW_AVAILABLE_SLOTS (for part-time flex employees)
      * 
      * NEW SPECIFICATION:
      * - Only count APPROVED registrations from part-time flex employees
@@ -52,7 +52,7 @@ public class EmployeeShiftRegistrationController {
      * @return List of available slots with quota info for part-time flex employees
      */
     @GetMapping("/available-slots")
-    @PreAuthorize("hasAuthority('VIEW_SCHEDULE_OWN')")
+    @PreAuthorize("hasAuthority('VIEW_AVAILABLE_SLOTS')")
     public ResponseEntity<List<AvailableSlotResponse>> getAvailableSlots(
             @RequestParam(required = false) String month) {
         log.info("REST request to get available slots (month filter: {})", month);
@@ -65,7 +65,7 @@ public class EmployeeShiftRegistrationController {
      * Get detailed availability information for a specific slot.
      * Shows month-by-month breakdown to help employees make informed decisions.
      *
-     * Permission: VIEW_SCHEDULE_OWN
+     * Permission: VIEW_AVAILABLE_SLOTS
      * 
      * @param slotId The slot ID to get details for
      * @return Detailed slot information with monthly availability breakdown
@@ -75,7 +75,7 @@ public class EmployeeShiftRegistrationController {
         description = "Retrieve detailed availability information for a specific part-time flex slot with monthly breakdown to help part-time flex employees make informed registration decisions"
     )
     @GetMapping("/slots/{slotId}/details")
-    @PreAuthorize("hasAuthority('VIEW_SCHEDULE_OWN')")
+    @PreAuthorize("hasAuthority('VIEW_AVAILABLE_SLOTS')")
     public ResponseEntity<SlotDetailResponse> getSlotDetail(@PathVariable Long slotId) {
         log.info("REST request to get slot detail for slot {}", slotId);
         SlotDetailResponse detail = registrationService.getSlotDetail(slotId);
@@ -87,7 +87,7 @@ public class EmployeeShiftRegistrationController {
      * Get daily availability breakdown for a specific part-time flex slot in a given month.
      * Shows quota, registered count from part-time flex employees, and remaining slots for each working day.
      *
-     * Permission: VIEW_SCHEDULE_OWN (part-time flex employees), MANAGE_PART_TIME_REGISTRATIONS (managers), MANAGE_WORK_SLOTS (admins)
+     * Permission: VIEW_AVAILABLE_SLOTS (part-time flex employees), MANAGE_PART_TIME_REGISTRATIONS (managers), MANAGE_WORK_SLOTS (admins)
      * 
      * Business Logic:
      * - Only includes days matching slot's dayOfWeek
@@ -142,7 +142,7 @@ public class EmployeeShiftRegistrationController {
         description = "Retrieve day-by-day availability breakdown for a specific part-time flex slot in a given month showing quota and registered counts from part-time flex employees"
     )
     @GetMapping("/slots/{slotId}/daily-availability")
-    @PreAuthorize("hasAuthority('VIEW_SCHEDULE_OWN') or hasAuthority('MANAGE_PART_TIME_REGISTRATIONS') or hasAuthority('MANAGE_WORK_SLOTS')")
+    @PreAuthorize("hasAuthority('VIEW_AVAILABLE_SLOTS') or hasAuthority('MANAGE_PART_TIME_REGISTRATIONS') or hasAuthority('MANAGE_WORK_SLOTS')")
     public ResponseEntity<com.dental.clinic.management.working_schedule.dto.response.DailyAvailabilityResponse> getDailyAvailability(
             @PathVariable Long slotId,
             @RequestParam String month) {
@@ -156,7 +156,7 @@ public class EmployeeShiftRegistrationController {
      * POST /api/v1/registrations/part-time
      * Submit registration request for part-time flex employees (NEW: goes to PENDING status).
      *
-     * Permission: VIEW_SCHEDULE_OWN (for part-time flex employees)
+     * Permission: CREATE_REGISTRATION (for part-time flex employees)
      * 
      * NEW SPECIFICATION:
      * - Part-time flex employee provides flexible effectiveFrom and effectiveTo dates
@@ -179,7 +179,7 @@ public class EmployeeShiftRegistrationController {
         description = "Create a new part-time flex slot registration with flexible date range (status: PENDING awaiting manager approval). Allows part-time flex employees to request shifts."
     )
     @PostMapping
-    @PreAuthorize("hasAuthority('VIEW_SCHEDULE_OWN')")
+    @PreAuthorize("hasAuthority('CREATE_REGISTRATION')")
     public ResponseEntity<RegistrationResponse> claimSlot(
             @Valid @RequestBody CreateRegistrationRequest request) {
         log.info("REST request to submit registration for slot {}", request.getPartTimeSlotId());
@@ -192,8 +192,8 @@ public class EmployeeShiftRegistrationController {
      * Get registrations for part-time flex employees (employee sees own, admin sees all or filtered).
      *
      * Permission:
-     * - MANAGE_REGISTRATIONS_ALL: View all part-time flex registrations or filter by employeeId
-     * - VIEW_REGISTRATIONS_OWN: Part-time flex employees view only their own registrations
+     * - MANAGE_PART_TIME_REGISTRATIONS: View all part-time flex registrations or filter by employeeId
+     * - VIEW_REGISTRATION_OWN: Part-time flex employees view only their own registrations
      * 
      * NEW: Shows status (PENDING, APPROVED, REJECTED)
      * NEW: Supports pagination and sorting
@@ -207,7 +207,7 @@ public class EmployeeShiftRegistrationController {
         description = "Retrieve paginated list of part-time flex registrations. Part-time flex employees see only their own registrations, admins can view all or filter by specific part-time flex employee"
     )
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('MANAGE_PART_TIME_REGISTRATIONS', 'VIEW_SCHEDULE_OWN')")
+    @PreAuthorize("hasAnyAuthority('MANAGE_PART_TIME_REGISTRATIONS', 'VIEW_REGISTRATION_OWN')")
     public ResponseEntity<org.springframework.data.domain.Page<RegistrationResponse>> getRegistrations(
             @RequestParam(required = false) Integer employeeId,
             org.springframework.data.domain.Pageable pageable) {
@@ -234,7 +234,7 @@ public class EmployeeShiftRegistrationController {
         description = "Retrieve detailed information about a specific part-time flex registration for a part-time flex employee"
     )
     @GetMapping("/{registrationId}")
-    @PreAuthorize("hasAnyAuthority('MANAGE_PART_TIME_REGISTRATIONS', 'VIEW_SCHEDULE_OWN')")
+    @PreAuthorize("hasAnyAuthority('MANAGE_PART_TIME_REGISTRATIONS', 'VIEW_REGISTRATION_OWN')")
     public ResponseEntity<RegistrationResponse> getRegistrationById(@PathVariable Integer registrationId) {
         log.info("REST request to get registration details: {}", registrationId);
         RegistrationResponse registration = registrationService.getRegistrationById(registrationId);
@@ -247,7 +247,7 @@ public class EmployeeShiftRegistrationController {
      *
      * Permission:
      * - MANAGE_PART_TIME_REGISTRATIONS: Can cancel any part-time flex registration
-     * - VIEW_SCHEDULE_OWN: Part-time flex employees can cancel only their own registrations
+     * - VIEW_REGISTRATION_OWN: Part-time flex employees can cancel only their own registrations
      * 
      * NEW: Part-time flex employees can only cancel PENDING registrations
      *
@@ -259,7 +259,7 @@ public class EmployeeShiftRegistrationController {
         description = "Cancel a part-time flex registration by soft deletion. Part-time flex employees can only cancel their own PENDING registrations."
     )
     @DeleteMapping("/{registrationId}")
-    @PreAuthorize("hasAnyAuthority('MANAGE_PART_TIME_REGISTRATIONS', 'VIEW_SCHEDULE_OWN')")
+    @PreAuthorize("hasAnyAuthority('MANAGE_PART_TIME_REGISTRATIONS', 'VIEW_REGISTRATION_OWN')")
     public ResponseEntity<Void> cancelRegistration(@PathVariable Integer registrationId) {
         log.info("REST request to cancel registration {}", registrationId);
         registrationService.cancelRegistration(registrationId);

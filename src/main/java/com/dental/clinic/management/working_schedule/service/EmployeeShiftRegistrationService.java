@@ -64,7 +64,7 @@ public class EmployeeShiftRegistrationService {
      * - Result: Slot is AVAILABLE because days 21/11+ have space
      */
     @Transactional(readOnly = true)
-    @PreAuthorize("hasAuthority('VIEW_SCHEDULE_OWN')")
+    @PreAuthorize("hasAuthority('VIEW_AVAILABLE_SLOTS')")
     public List<AvailableSlotResponse> getAvailableSlots(String monthFilter) {
         Integer employeeId = getCurrentEmployeeId();
         log.info("Fetching available slots for employee {} (month filter: {})", employeeId, monthFilter);
@@ -238,7 +238,7 @@ public class EmployeeShiftRegistrationService {
      * Get detailed availability information for a specific slot.
      * Shows month-by-month breakdown to help employees make informed decisions.
      *
-     * Permission: VIEW_SCHEDULE_OWN
+     * Permission: VIEW_AVAILABLE_SLOTS
      *
      * FIX ISSUE #2: Removed @Transactional to ensure we always read latest
      * committed data
@@ -246,7 +246,7 @@ public class EmployeeShiftRegistrationService {
      * @param slotId The slot ID to get details for
      * @return Detailed slot information with monthly availability breakdown
      */
-    @PreAuthorize("hasAuthority('VIEW_SCHEDULE_OWN')")
+    @PreAuthorize("hasAuthority('VIEW_AVAILABLE_SLOTS')")
     public SlotDetailResponse getSlotDetail(Long slotId) {
         log.info("Fetching slot detail for slot {}", slotId);
 
@@ -299,7 +299,7 @@ public class EmployeeShiftRegistrationService {
      * - Quota checks done during approval (not during submission)
      */
     @Transactional
-    @PreAuthorize("hasAuthority('VIEW_SCHEDULE_OWN')")
+    @PreAuthorize("hasAuthority('CREATE_REGISTRATION')")
     public RegistrationResponse claimSlot(CreateRegistrationRequest request) {
         Integer employeeId = getCurrentEmployeeId();
         log.info("Employee {} submitting registration request for slot {}", employeeId, request.getPartTimeSlotId());
@@ -542,7 +542,7 @@ public class EmployeeShiftRegistrationService {
      * NEW: Supports pagination and sorting.
      */
     @Transactional(readOnly = true)
-    @PreAuthorize("hasAnyAuthority('MANAGE_PART_TIME_REGISTRATIONS', 'VIEW_SCHEDULE_OWN')")
+    @PreAuthorize("hasAnyAuthority('MANAGE_PART_TIME_REGISTRATIONS', 'VIEW_REGISTRATION_OWN')")
     public org.springframework.data.domain.Page<RegistrationResponse> getRegistrations(
             Integer filterEmployeeId,
             org.springframework.data.domain.Pageable pageable) {
@@ -577,7 +577,7 @@ public class EmployeeShiftRegistrationService {
      * Kept for backward compatibility.
      */
     @Transactional(readOnly = true)
-    @PreAuthorize("hasAnyAuthority('MANAGE_PART_TIME_REGISTRATIONS', 'VIEW_SCHEDULE_OWN')")
+    @PreAuthorize("hasAnyAuthority('MANAGE_PART_TIME_REGISTRATIONS', 'VIEW_REGISTRATION_OWN')")
     public List<RegistrationResponse> getRegistrations(Integer filterEmployeeId) {
         boolean isAdmin = SecurityUtil.hasCurrentUserRole("ADMIN") ||
                 SecurityUtil.hasCurrentUserPermission("MANAGE_PART_TIME_REGISTRATIONS");
@@ -610,7 +610,7 @@ public class EmployeeShiftRegistrationService {
      * missing or not visible to caller.
      */
     @Transactional(readOnly = true)
-    @PreAuthorize("hasAnyAuthority('MANAGE_PART_TIME_REGISTRATIONS', 'VIEW_SCHEDULE_OWN')")
+    @PreAuthorize("hasAnyAuthority('MANAGE_PART_TIME_REGISTRATIONS', 'VIEW_REGISTRATION_OWN')")
     public RegistrationResponse getRegistrationById(Integer registrationId) {
         boolean isAdmin = SecurityUtil.hasCurrentUserRole("ADMIN") ||
                 SecurityUtil.hasCurrentUserPermission("MANAGE_PART_TIME_REGISTRATIONS");
@@ -648,7 +648,7 @@ public class EmployeeShiftRegistrationService {
      *                                               cancelled
      */
     @Transactional
-    @PreAuthorize("hasAnyAuthority('MANAGE_PART_TIME_REGISTRATIONS', 'VIEW_SCHEDULE_OWN')")
+    @PreAuthorize("hasAnyAuthority('MANAGE_PART_TIME_REGISTRATIONS', 'VIEW_REGISTRATION_OWN')")
     public void cancelRegistration(Integer registrationId) {
         boolean isAdmin = SecurityUtil.hasCurrentUserRole("ADMIN") ||
                 SecurityUtil.hasCurrentUserPermission("MANAGE_PART_TIME_REGISTRATIONS");
@@ -850,7 +850,7 @@ public class EmployeeShiftRegistrationService {
      * @return Daily availability response with per-day breakdown
      */
     @Transactional(readOnly = true)
-    @PreAuthorize("hasAuthority('VIEW_SCHEDULE_OWN') or hasAuthority('MANAGE_PART_TIME_REGISTRATIONS') or hasAuthority('MANAGE_WORK_SLOTS')")
+    @PreAuthorize("hasAuthority('VIEW_AVAILABLE_SLOTS') or hasAuthority('MANAGE_PART_TIME_REGISTRATIONS') or hasAuthority('MANAGE_WORK_SLOTS')")
     public com.dental.clinic.management.working_schedule.dto.response.DailyAvailabilityResponse getDailyAvailability(
             Long slotId, String month) {
         log.info("Getting daily availability for slot {} in month {}", slotId, month);

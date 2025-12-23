@@ -241,16 +241,19 @@ VALUES
 ON CONFLICT (permission_id) DO NOTHING;
 
 
--- MODULE 12: SCHEDULE_MANAGEMENT (6 permissions) - MAJOR simplification from 27!
+-- MODULE 12: SCHEDULE_MANAGEMENT (9 permissions) - MAJOR simplification from 27!
 -- Focus on practical operations for small-medium dental clinic
 INSERT INTO permissions (permission_id, permission_name, module, description, display_order, parent_permission_id, is_active, created_at)
 VALUES
 ('VIEW_SCHEDULE_ALL', 'VIEW_SCHEDULE_ALL', 'SCHEDULE_MANAGEMENT', 'Xem tất cả lịch làm việc nhân viên', 130, NULL, TRUE, NOW()),
 ('VIEW_SCHEDULE_OWN', 'VIEW_SCHEDULE_OWN', 'SCHEDULE_MANAGEMENT', 'Xem lịch làm việc của bản thân', 131, 'VIEW_SCHEDULE_ALL', TRUE, NOW()),
-('MANAGE_WORK_SHIFTS', 'MANAGE_WORK_SHIFTS', 'SCHEDULE_MANAGEMENT', 'Quản lý mẫu ca làm việc (Tạo/Cập nhật/Xóa)', 132, NULL, TRUE, NOW()),
-('MANAGE_WORK_SLOTS', 'MANAGE_WORK_SLOTS', 'SCHEDULE_MANAGEMENT', 'Quản lý suất part-time (tạo/sửa/xóa)', 133, NULL, TRUE, NOW()),
-('MANAGE_PART_TIME_REGISTRATIONS', 'MANAGE_PART_TIME_REGISTRATIONS', 'SCHEDULE_MANAGEMENT', 'Duyệt/từ chối đăng ký part-time', 134, NULL, TRUE, NOW()),
-('MANAGE_FIXED_REGISTRATIONS', 'MANAGE_FIXED_REGISTRATIONS', 'SCHEDULE_MANAGEMENT', 'Quản lý đăng ký ca cố định (tạo/sửa/xóa)', 135, NULL, TRUE, NOW())
+('VIEW_AVAILABLE_SLOTS', 'VIEW_AVAILABLE_SLOTS', 'SCHEDULE_MANAGEMENT', 'Xem các suất part-time có sẵn để đăng ký', 132, NULL, TRUE, NOW()),
+('VIEW_REGISTRATION_OWN', 'VIEW_REGISTRATION_OWN', 'SCHEDULE_MANAGEMENT', 'Xem đăng ký ca làm việc của bản thân', 133, NULL, TRUE, NOW()),
+('CREATE_REGISTRATION', 'CREATE_REGISTRATION', 'SCHEDULE_MANAGEMENT', 'Tạo đăng ký ca làm việc part-time/flex', 134, NULL, TRUE, NOW()),
+('MANAGE_WORK_SHIFTS', 'MANAGE_WORK_SHIFTS', 'SCHEDULE_MANAGEMENT', 'Quản lý mẫu ca làm việc (Tạo/Cập nhật/Xóa)', 135, NULL, TRUE, NOW()),
+('MANAGE_WORK_SLOTS', 'MANAGE_WORK_SLOTS', 'SCHEDULE_MANAGEMENT', 'Quản lý suất part-time (tạo/sửa/xóa)', 136, NULL, TRUE, NOW()),
+('MANAGE_PART_TIME_REGISTRATIONS', 'MANAGE_PART_TIME_REGISTRATIONS', 'SCHEDULE_MANAGEMENT', 'Duyệt/từ chối đăng ký part-time', 137, NULL, TRUE, NOW()),
+('MANAGE_FIXED_REGISTRATIONS', 'MANAGE_FIXED_REGISTRATIONS', 'SCHEDULE_MANAGEMENT', 'Quản lý đăng ký ca cố định (tạo/sửa/xóa)', 138, NULL, TRUE, NOW())
 ON CONFLICT (permission_id) DO NOTHING;
 
 
@@ -363,6 +366,9 @@ VALUES
 
 -- SCHEDULE_MANAGEMENT (employee self-service)
 ('ROLE_DENTIST', 'VIEW_SCHEDULE_OWN'), -- RBAC: View own schedule
+('ROLE_DENTIST', 'VIEW_AVAILABLE_SLOTS'), -- Xem suất part-time có sẵn (cho part-time/flex)
+('ROLE_DENTIST', 'VIEW_REGISTRATION_OWN'), -- Xem đăng ký ca của bản thân (cho part-time/flex)
+('ROLE_DENTIST', 'CREATE_REGISTRATION'), -- Tạo đăng ký ca part-time/flex
 
 -- LEAVE_MANAGEMENT (employee self-service)
 ('ROLE_DENTIST', 'VIEW_LEAVE_OWN'), -- RBAC: View own leave requests
@@ -398,6 +404,9 @@ VALUES
 
 -- SCHEDULE_MANAGEMENT (employee self-service)
 ('ROLE_NURSE', 'VIEW_SCHEDULE_OWN'), -- RBAC: View own schedule
+('ROLE_NURSE', 'VIEW_AVAILABLE_SLOTS'), -- Xem suất part-time có sẵn (cho part-time/flex)
+('ROLE_NURSE', 'VIEW_REGISTRATION_OWN'), -- Xem đăng ký ca của bản thân (cho part-time/flex)
+('ROLE_NURSE', 'CREATE_REGISTRATION'), -- Tạo đăng ký ca part-time/flex
 
 -- LEAVE_MANAGEMENT (employee self-service)
 ('ROLE_NURSE', 'VIEW_LEAVE_OWN'), -- RBAC: View own leave requests
@@ -426,6 +435,9 @@ VALUES
 
 -- SCHEDULE_MANAGEMENT (employee self-service)
 ('ROLE_DENTIST_INTERN', 'VIEW_SCHEDULE_OWN'), -- RBAC: View own schedule
+('ROLE_DENTIST_INTERN', 'VIEW_AVAILABLE_SLOTS'), -- Xem suất part-time có sẵn (cho part-time/flex)
+('ROLE_DENTIST_INTERN', 'VIEW_REGISTRATION_OWN'), -- Xem đăng ký ca của bản thân (cho part-time/flex)
+('ROLE_DENTIST_INTERN', 'CREATE_REGISTRATION'), -- Tạo đăng ký ca part-time/flex
 
 -- LEAVE_MANAGEMENT (employee self-service)
 ('ROLE_DENTIST_INTERN', 'VIEW_LEAVE_OWN'), -- RBAC: View own leave requests
@@ -471,6 +483,9 @@ VALUES
 
 -- SCHEDULE_MANAGEMENT (employee self-service)
 ('ROLE_RECEPTIONIST', 'VIEW_SCHEDULE_OWN'), -- RBAC: View own schedule
+('ROLE_RECEPTIONIST', 'VIEW_AVAILABLE_SLOTS'), -- Xem suất part-time có sẵn (cho part-time/flex)
+('ROLE_RECEPTIONIST', 'VIEW_REGISTRATION_OWN'), -- Xem đăng ký ca của bản thân (cho part-time/flex)
+('ROLE_RECEPTIONIST', 'CREATE_REGISTRATION'), -- Tạo đăng ký ca part-time/flex
 
 -- LEAVE_MANAGEMENT (employee self-service)
 ('ROLE_RECEPTIONIST', 'VIEW_LEAVE_OWN'), -- RBAC: View own leave requests
@@ -566,6 +581,9 @@ INSERT INTO role_permissions (role_id, permission_id)
 VALUES
 -- SCHEDULE_MANAGEMENT (employee self-service)
 ('ROLE_ACCOUNTANT', 'VIEW_SCHEDULE_OWN'), -- RBAC: View own schedule
+('ROLE_ACCOUNTANT', 'VIEW_AVAILABLE_SLOTS'), -- Xem suất part-time có sẵn (cho part-time/flex)
+('ROLE_ACCOUNTANT', 'VIEW_REGISTRATION_OWN'), -- Xem đăng ký ca của bản thân (cho part-time/flex)
+('ROLE_ACCOUNTANT', 'CREATE_REGISTRATION'), -- Tạo đăng ký ca part-time/flex
 
 -- LEAVE_MANAGEMENT (employee self-service)
 ('ROLE_ACCOUNTANT', 'VIEW_LEAVE_OWN'), -- RBAC: View own leave requests
@@ -595,6 +613,9 @@ INSERT INTO role_permissions (role_id, permission_id)
 VALUES
 -- SCHEDULE_MANAGEMENT (employee self-service)
 ('ROLE_INVENTORY_MANAGER', 'VIEW_SCHEDULE_OWN'), -- RBAC: View own schedule
+('ROLE_INVENTORY_MANAGER', 'VIEW_AVAILABLE_SLOTS'), -- Xem suất part-time có sẵn (cho part-time/flex)
+('ROLE_INVENTORY_MANAGER', 'VIEW_REGISTRATION_OWN'), -- Xem đăng ký ca của bản thân (cho part-time/flex)
+('ROLE_INVENTORY_MANAGER', 'CREATE_REGISTRATION'), -- Tạo đăng ký ca part-time/flex
 
 -- LEAVE_MANAGEMENT (employee self-service)
 ('ROLE_INVENTORY_MANAGER', 'VIEW_LEAVE_OWN'), -- RBAC: View own leave requests
