@@ -68,11 +68,11 @@ public class EmployeeShiftService {
      * @param endDate              end date filter
      * @param status               optional status filter
      * @param currentEmployeeId    ID of the authenticated user
-     * @param hasViewAllPermission whether user has VIEW_SHIFTS_ALL permission
+     * @param hasViewAllPermission whether user has VIEW_SCHEDULE_ALL permission
      * @param pageable             pagination parameters
      * @return paginated list of shifts
      */
-    @PreAuthorize("hasAnyAuthority('VIEW_SHIFTS_ALL', 'VIEW_SHIFTS_OWN')")
+    @PreAuthorize("hasAnyAuthority('VIEW_SCHEDULE_ALL', 'VIEW_SCHEDULE_OWN')")
     public Page<EmployeeShiftResponseDto> getShiftCalendar(
             Integer employeeId,
             LocalDate startDate,
@@ -83,7 +83,7 @@ public class EmployeeShiftService {
             Pageable pageable) {
 
         // Check permission: user can only view their own shifts unless they have
-        // VIEW_SHIFTS_ALL
+        // VIEW_SCHEDULE_ALL
         if (!hasViewAllPermission && !employeeId.equals(currentEmployeeId)) {
             throw new RelatedResourceNotFoundException("Bạn chỉ có thể xem lịch làm việc của chính mình");
         }
@@ -95,7 +95,7 @@ public class EmployeeShiftService {
             allShifts = employeeShiftRepository.findByEmployeeAndDateRange(
                     employeeId, startDate, endDate);
         } else {
-            // Get all shifts in date range (only allowed with VIEW_SHIFTS_ALL)
+            // Get all shifts in date range (only allowed with VIEW_SCHEDULE_ALL)
             if (!hasViewAllPermission) {
                 throw new RelatedResourceNotFoundException("Bạn chỉ có thể xem lịch làm việc của chính mình");
             }
@@ -130,7 +130,7 @@ public class EmployeeShiftService {
      * @param endDate    end date
      * @return list of daily shift summaries
      */
-    @PreAuthorize("hasAuthority('VIEW_SHIFTS_SUMMARY')")
+    @PreAuthorize("hasAuthority('VIEW_SCHEDULE_ALL')")
     public List<ShiftSummaryResponseDto> getShiftSummary(
             Integer employeeId,
             LocalDate startDate,
@@ -180,10 +180,10 @@ public class EmployeeShiftService {
      *
      * @param employeeShiftId      shift ID
      * @param currentEmployeeId    ID of the authenticated user
-     * @param hasViewAllPermission whether user has VIEW_SHIFTS_ALL permission
+     * @param hasViewAllPermission whether user has VIEW_SCHEDULE_ALL permission
      * @return shift details
      */
-    @PreAuthorize("hasAnyAuthority('VIEW_SHIFTS_ALL', 'VIEW_SHIFTS_OWN')")
+    @PreAuthorize("hasAnyAuthority('VIEW_SCHEDULE_ALL', 'VIEW_SCHEDULE_OWN')")
     public EmployeeShiftResponseDto getShiftDetail(
             String employeeShiftId,
             Integer currentEmployeeId,
@@ -195,7 +195,7 @@ public class EmployeeShiftService {
                         () -> new ShiftNotFoundException("Không tìm thấy ca làm việc, hoặc bạn không có quyền xem."));
 
         // Check permission: user can only view their own shifts unless they have
-        // VIEW_SHIFTS_ALL
+        // VIEW_SCHEDULE_ALL
         if (!hasViewAllPermission && !shift.getEmployee().getEmployeeId().equals(currentEmployeeId)) {
             throw new ShiftNotFoundException("Không tìm thấy ca làm việc, hoặc bạn không có quyền xem.");
         }
@@ -210,7 +210,7 @@ public class EmployeeShiftService {
      * @param createdBy ID of the user creating the shift
      * @return created shift details
      */
-    @PreAuthorize("hasAuthority('CREATE_SHIFTS')")
+    @PreAuthorize("hasAuthority('MANAGE_FIXED_REGISTRATIONS')")
     @Transactional
     public EmployeeShiftResponseDto createManualShift(CreateShiftRequestDto request, Integer createdBy) {
 
@@ -254,7 +254,7 @@ public class EmployeeShiftService {
      * @param request         update request
      * @return updated shift details
      */
-    @PreAuthorize("hasAuthority('UPDATE_SHIFTS')")
+    @PreAuthorize("hasAuthority('MANAGE_FIXED_REGISTRATIONS')")
     @Transactional
     public EmployeeShiftResponseDto updateShift(String employeeShiftId, UpdateShiftRequestDto request) {
 
@@ -295,7 +295,7 @@ public class EmployeeShiftService {
      *
      * @param employeeShiftId shift ID to cancel
      */
-    @PreAuthorize("hasAuthority('DELETE_SHIFTS')")
+    @PreAuthorize("hasAuthority('MANAGE_FIXED_REGISTRATIONS')")
     @Transactional
     public void cancelShift(String employeeShiftId) {
 

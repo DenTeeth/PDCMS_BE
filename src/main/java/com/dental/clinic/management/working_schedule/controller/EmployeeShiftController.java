@@ -88,18 +88,18 @@ public class EmployeeShiftController {
                                 .map(employee -> employee.getEmployeeId())
                                 .orElseThrow(() -> new RuntimeException("Employee not found for user: " + username));
                 boolean hasViewAllPermission = authentication.getAuthorities()
-                                .contains(new SimpleGrantedAuthority("VIEW_SHIFTS_ALL"));
+                                .contains(new SimpleGrantedAuthority("VIEW_SCHEDULE_ALL"));
 
                 // Check permission for employee_id parameter
                 Integer effectiveEmployeeId = employeeId;
                 if (!hasViewAllPermission) {
-                        // If user only has VIEW_SHIFTS_OWN and tries to view another employee's shifts,
+                        // If user only has VIEW_SCHEDULE_OWN and tries to view another employee's shifts,
                         // return 403
                         if (employeeId != null && !employeeId.equals(currentEmployeeId)) {
                                 throw new org.springframework.security.access.AccessDeniedException(
                                                 "Không tìm thấy tài nguyên hoặc bạn không có quyền truy cập.");
                         }
-                        // Auto-set to current employee for VIEW_SHIFTS_OWN users
+                        // Auto-set to current employee for VIEW_SCHEDULE_OWN users
                         effectiveEmployeeId = currentEmployeeId;
                 }
 
@@ -166,7 +166,7 @@ public class EmployeeShiftController {
                                 .map(employee -> employee.getEmployeeId())
                                 .orElseThrow(() -> new RuntimeException("Employee not found for user: " + username));
                 boolean hasViewAllPermission = authentication.getAuthorities()
-                                .contains(new SimpleGrantedAuthority("VIEW_SHIFTS_ALL"));
+                                .contains(new SimpleGrantedAuthority("VIEW_SCHEDULE_ALL"));
 
                 // Get shift details
                 EmployeeShiftResponseDto shift = employeeShiftService.getShiftDetail(
