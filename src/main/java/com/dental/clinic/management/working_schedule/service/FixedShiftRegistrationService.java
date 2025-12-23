@@ -152,7 +152,7 @@ public class FixedShiftRegistrationService {
      * @param hasViewAllPermission whether user has VIEW_ALL permission
      * @return list of registrations
      */
-    @PreAuthorize("hasAnyAuthority('VIEW_FIXED_REGISTRATIONS_ALL', 'VIEW_FIXED_REGISTRATIONS_OWN')")
+    @PreAuthorize("hasAnyAuthority('VIEW_SCHEDULE_ALL', 'VIEW_SCHEDULE_OWN')")
     public List<FixedRegistrationResponse> getFixedRegistrations(
             Integer employeeId,
             Integer currentEmployeeId,

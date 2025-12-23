@@ -15,6 +15,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
@@ -59,6 +60,7 @@ public class OvertimeRequestController {
         description = "Retrieve paginated list of overtime requests with optional status filtering. Access control based on user permissions."
     )
     @GetMapping
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('VIEW_OT_ALL') or hasAuthority('VIEW_OT_OWN')")
     public ResponseEntity<Page<OvertimeRequestListResponse>> getAllOvertimeRequests(
             @RequestParam(required = false) RequestStatus status,
             @PageableDefault(size = 20, sort = "workDate", direction = Sort.Direction.DESC) Pageable pageable) {
@@ -93,6 +95,7 @@ public class OvertimeRequestController {
         description = "Retrieve detailed information about a specific overtime request. Access control based on user permissions."
     )
     @GetMapping("/{requestId}")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('VIEW_OT_ALL') or hasAuthority('VIEW_OT_OWN')")
     public ResponseEntity<OvertimeRequestDetailResponse> getOvertimeRequestById(
             @PathVariable String requestId) {
         log.info("REST request to get overtime request: {}", requestId);
@@ -112,7 +115,7 @@ public class OvertimeRequestController {
      * 1. Employee creates for themselves: omit employeeId in request body (auto-filled from JWT)
      * 2. Admin creates for any employee: include employeeId in request body
      * 
-     * Required Permission: CREATE_OT
+     * Required Permission: CREATE_OVERTIME
      * 
      * @param dto Create overtime request DTO
      * @return Created overtime request details with generated ID
@@ -147,6 +150,7 @@ public class OvertimeRequestController {
         description = "Create a new overtime request with PENDING status. Employees can create for themselves or admins can create for any employee."
     )
     @PostMapping
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('CREATE_OVERTIME')")
     public ResponseEntity<OvertimeRequestDetailResponse> createOvertimeRequest(
             @Valid @RequestBody CreateOvertimeRequestDTO dto) {
         log.info("REST request to create overtime request - employeeId: {}, workDate: {}, workShiftId: {}", 
@@ -166,9 +170,9 @@ public class OvertimeRequestController {
      * Only PENDING requests can be updated.
      * 
      * Permissions based on action:
-     * - APPROVED: Requires APPROVE_OT
-     * - REJECTED: Requires REJECT_OT (reason required)
-     * - CANCELLED: Requires CANCEL_OT_OWN (own requests) or CANCEL_OT_PENDING (any) (reason required)
+     * - APPROVED: Requires APPROVE_OVERTIME
+     * - REJECTED: Requires APPROVE_OVERTIME (reason required)
+     * - CANCELLED: Requires CREATE_OVERTIME (own requests) or APPROVE_OVERTIME (any) (reason required)
      * 
      * @param requestId The overtime request ID to update
      * @param dto Update status DTO with new status and optional reason
@@ -209,6 +213,7 @@ public class OvertimeRequestController {
         description = "Approve, reject, or cancel an overtime request. Only PENDING requests can be updated. Requires appropriate permissions."
     )
     @PatchMapping("/{requestId}")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('APPROVE_OVERTIME') or hasAuthority('CREATE_OVERTIME')")
     public ResponseEntity<OvertimeRequestDetailResponse> updateOvertimeStatus(
             @PathVariable String requestId,
             @Valid @RequestBody UpdateOvertimeStatusDTO dto) {

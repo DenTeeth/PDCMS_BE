@@ -65,29 +65,29 @@ public class OvertimeRequestService {
         /**
          * Get all overtime requests with pagination and optional filtering.
          * Access control:
-         * - VIEW_LEAVE_ALL: Can see all requests
-         * - VIEW_LEAVE_OWN: Can only see own requests
+         * - VIEW_OT_ALL: Can see all requests
+         * - VIEW_OT_OWN: Can only see own requests
          *
          * @param status   optional status filter
          * @param pageable pagination information
          * @return page of overtime requests
          */
         @Transactional(readOnly = true)
-        @PreAuthorize("hasAnyAuthority('VIEW_LEAVE_ALL', 'VIEW_LEAVE_OWN')")
+        @PreAuthorize("hasAnyAuthority('VIEW_OT_ALL', 'VIEW_OT_OWN')")
         public Page<OvertimeRequestListResponse> getAllOvertimeRequests(RequestStatus status, Pageable pageable) {
                 log.info("Fetching overtime requests with status: {}", status);
 
-                boolean hasViewAll = SecurityUtil.hasCurrentUserPermission("VIEW_LEAVE_ALL");
+                boolean hasViewAll = SecurityUtil.hasCurrentUserPermission("VIEW_OT_ALL");
 
                 if (hasViewAll) {
                         // User can see all requests
-                        log.debug("User has VIEW_LEAVE_ALL permission");
+                        log.debug("User has VIEW_OT_ALL permission");
                         Page<OvertimeRequest> requests = overtimeRequestRepository.findAllWithOptionalStatus(status,
                                         pageable);
                         return requests.map(overtimeRequestMapper::toListResponse);
                 } else {
                         // User can only see their own requests
-                        log.debug("User has VIEW_LEAVE_OWN permission");
+                        log.debug("User has VIEW_OT_OWN permission");
                         Employee currentEmployee = getCurrentEmployee();
                         Page<OvertimeRequest> requests = overtimeRequestRepository.findByEmployeeIdAndStatus(
                                         currentEmployee.getEmployeeId(), status, pageable);
@@ -98,8 +98,8 @@ public class OvertimeRequestService {
         /**
          * Get detailed information about a specific overtime request.
          * Access control:
-         * - VIEW_LEAVE_ALL: Can see any request
-         * - VIEW_LEAVE_OWN: Can only see own requests
+         * - VIEW_OT_ALL: Can see any request
+         * - VIEW_OT_OWN: Can only see own requests
          *
          * @param requestId the overtime request ID
          * @return overtime request details
@@ -107,15 +107,15 @@ public class OvertimeRequestService {
          * @throws AccessDeniedException            if user doesn't have permission
          */
         @Transactional(readOnly = true)
-        @PreAuthorize("hasAnyAuthority('VIEW_LEAVE_ALL', 'VIEW_LEAVE_OWN')")
+        @PreAuthorize("hasAnyAuthority('VIEW_OT_ALL', 'VIEW_OT_OWN')")
         public OvertimeRequestDetailResponse getOvertimeRequestById(String requestId) {
                 log.info("Fetching overtime request: {}", requestId);
 
                 OvertimeRequest request = overtimeRequestRepository.findById(requestId)
                                 .orElseThrow(() -> new OvertimeRequestNotFoundException(requestId));
 
-                // Permission check for VIEW_LEAVE_OWN users
-                if (!SecurityUtil.hasCurrentUserPermission("VIEW_LEAVE_ALL")) {
+                // Permission check for VIEW_OT_OWN users
+                if (!SecurityUtil.hasCurrentUserPermission("VIEW_OT_ALL")) {
                         Employee currentEmployee = getCurrentEmployee();
                         if (!request.isOwnedBy(currentEmployee.getEmployeeId()) &&
                                         !request.isRequestedBy(currentEmployee.getEmployeeId())) {
@@ -332,10 +332,9 @@ public class OvertimeRequestService {
          * Update overtime request status (Approve, Reject, or Cancel).
          * Business rules:
          * - Can only update PENDING requests
-         * - APPROVED: Requires APPROVE_OT permission
-         * - REJECTED: Requires REJECT_OT permission, reason is required
-         * - CANCELLED: Requires CANCEL_OT_OWN (for own requests) or CANCEL_OT_PENDING
-         * (for managing), reason is required
+         * - APPROVED: Requires APPROVE_OVERTIME permission
+         * - REJECTED: Requires APPROVE_OVERTIME permission, reason is required
+         * - CANCELLED: Requires CREATE_OVERTIME (for own requests) or APPROVE_OVERTIME (for managing), reason is required
          * - Auto-creates EmployeeShift when APPROVED IMPLEMENTED
          *
          * @param requestId the overtime request ID
@@ -348,6 +347,7 @@ public class OvertimeRequestService {
          * @throws IllegalArgumentException         if validation fails
          */
         @Transactional
+        @PreAuthorize("hasAuthority('APPROVE_OVERTIME') or hasAuthority('CREATE_OVERTIME')")
         public OvertimeRequestDetailResponse updateOvertimeStatus(String requestId, UpdateOvertimeStatusDTO dto) {
                 log.info("Updating overtime request {} to status {}", requestId, dto.getStatus());
 
@@ -405,8 +405,8 @@ public class OvertimeRequestService {
          */
         private void handleRejection(OvertimeRequest request, UpdateOvertimeStatusDTO dto, Employee rejectedBy) {
                 // Check permission
-                if (!SecurityUtil.hasCurrentUserPermission("REJECT_OVERTIME")) {
-                        log.warn("User {} does not have REJECT_OVERTIME permission", rejectedBy.getEmployeeId());
+                if (!SecurityUtil.hasCurrentUserPermission("APPROVE_OVERTIME")) {
+                        log.warn("User {} does not have APPROVE_OVERTIME permission", rejectedBy.getEmployeeId());
                         throw new AccessDeniedException("Bạn không có quyền từ chối yêu cầu OT.");
                 }
 
@@ -434,13 +434,14 @@ public class OvertimeRequestService {
                 }
 
                 // Permission check:
-                // - CANCEL_OVERTIME: Can cancel if they are the employee (assigned to the OT)
-                // OR the creator (requestedBy)
+                // - CREATE_OVERTIME: Employee can cancel their own PENDING overtime requests
+                // - APPROVE_OVERTIME: Manager can cancel any PENDING overtime request
                 boolean isOwnerOrCreator = request.isOwnedBy(cancelledBy.getEmployeeId()) ||
                                 request.isRequestedBy(cancelledBy.getEmployeeId());
-                boolean canCancelOwn = SecurityUtil.hasCurrentUserPermission("CANCEL_OVERTIME") && isOwnerOrCreator;
+                boolean canCancelOwn = SecurityUtil.hasCurrentUserPermission("CREATE_OVERTIME") && isOwnerOrCreator;
+                boolean canCancelAny = SecurityUtil.hasCurrentUserPermission("APPROVE_OVERTIME");
 
-                if (!canCancelOwn) {
+                if (!canCancelOwn && !canCancelAny) {
                         log.warn("User {} does not have permission to cancel overtime request {}",
                                         cancelledBy.getEmployeeId(), request.getRequestId());
                         throw new AccessDeniedException("Bạn không có quyền hủy yêu cầu OT này.");

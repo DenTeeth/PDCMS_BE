@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
@@ -48,6 +49,7 @@ public class TimeOffRequestController {
      * @return Page of TimeOffRequestResponse
      */
     @GetMapping
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasAuthority('VIEW_LEAVE_ALL') or hasAuthority('VIEW_LEAVE_OWN')")
     @Operation(summary = "Get all time-off requests", description = "Retrieve paginated list of time-off requests with optional filters")
     public ResponseEntity<Page<TimeOffRequestResponse>> getAllRequests(
             @RequestParam(required = false) Integer employeeId,
@@ -82,6 +84,7 @@ public class TimeOffRequestController {
      * @return TimeOffRequestResponse with request details
      */
     @GetMapping("/{requestId}")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasAuthority('VIEW_LEAVE_ALL') or hasAuthority('VIEW_LEAVE_OWN')")
     @Operation(summary = "Get time-off request by ID", description = "Retrieve details of a specific time-off request")
     public ResponseEntity<TimeOffRequestResponse> getRequestById(@PathVariable String requestId) {
         log.info("REST request to get time-off request: {}", requestId);
@@ -114,6 +117,7 @@ public class TimeOffRequestController {
      * @return Created TimeOffRequestResponse
      */
     @PostMapping
+    @PreAuthorize("hasAuthority('CREATE_TIME_OFF')")
     @Operation(summary = "Create time-off request", description = "Create a new time-off request for an employee")
     public ResponseEntity<TimeOffRequestResponse> createRequest(
             @Valid @RequestBody CreateTimeOffRequest request) {
@@ -150,6 +154,7 @@ public class TimeOffRequestController {
      * @return Updated TimeOffRequestResponse
      */
     @PatchMapping("/{requestId}")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasAuthority('APPROVE_TIME_OFF') or hasAuthority('CREATE_TIME_OFF')")
     @Operation(summary = "Update time-off request status", description = "Approve, reject, or cancel a time-off request")
     public ResponseEntity<TimeOffRequestResponse> updateRequestStatus(
             @PathVariable String requestId,
