@@ -4307,7 +4307,7 @@ FROM item_categories cat
 CROSS JOIN (VALUES
     ('MAT-COMP-01', 'Trám Composite', 'g', 'Vật liệu trám thẩm mỹ (Quy cách đóng gói: Tuýp)'),
     ('MAT-ETCH-01', 'Etching Gel (Axit)', 'ml', 'Gel axit xói mòn men răng 37%'),
-    ('MAT-BOND-01', 'Bonding Agent (Keo)', 'Giọt', 'Keo dán nha khoa (Quy cách: Lọ/ml)'),
+    ('MAT-BOND-01', 'Bonding Agent (Keo)', 'ml', 'Keo dán nha khoa (Quy cách: Lọ/ml)'),
     ('MAT-RESIN-01', 'Composite Resin 3M', 'g', 'Composite đặc 3M cao cấp'),
     ('MAT-NAOCL-01', 'NaOCl (Bơm rửa)', 'ml', 'Dung dịch bơm rửa ống tủy Sodium Hypochlorite'),
     ('MAT-EDTA-01', 'Dung dịch EDTA', 'g', 'Gel bôi trơn và làm sạch ống tủy'),
@@ -4447,9 +4447,9 @@ END $$;
 -- =============================================
 -- STEP 1: ITEM_UNITS (Don vi do luong - Unit hierarchy)
 -- =============================================
--- Consumables: Gang tay y te
+-- Consumables: Gang tay y te (Base unit = Đôi/pair)
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'Chiec', 1, TRUE, TRUE, FALSE, TRUE, 3, NOW()
+SELECT im.item_master_id, 'Đôi', 1, TRUE, TRUE, FALSE, TRUE, 3, NOW()
 FROM item_masters im WHERE im.item_code = 'CON-GLOVE-01'
 ON CONFLICT (item_master_id, unit_name) DO NOTHING;
 
@@ -4508,12 +4508,7 @@ FROM item_masters im WHERE im.item_code = 'MAT-COMP-01'
 ON CONFLICT (item_master_id, unit_name) DO NOTHING;
 
 -- Missing units for API 6.17 service_consumables
--- Fix: Add Doi, Goi, ml, Giot units for consumable items
-INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'Đôi', 1, TRUE, TRUE, FALSE, TRUE, 1, NOW()
-FROM item_masters im WHERE im.item_code = 'CON-GLOVE-01'
-ON CONFLICT DO NOTHING;
-
+-- Define base units for items that don't have them yet
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
 SELECT im.item_master_id, 'Gói', 1, TRUE, TRUE, FALSE, TRUE, 1, NOW()
 FROM item_masters im WHERE im.item_code = 'CON-GAUZE-01'
@@ -4525,7 +4520,12 @@ FROM item_masters im WHERE im.item_code = 'MAT-ETCH-01'
 ON CONFLICT DO NOTHING;
 
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
-SELECT im.item_master_id, 'drop', 1, TRUE, TRUE, FALSE, TRUE, 1, NOW()
+SELECT im.item_master_id, 'ml', 1, TRUE, TRUE, TRUE, FALSE, 1, NOW()
+FROM item_masters im WHERE im.item_code = 'MAT-BOND-01'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
+SELECT im.item_master_id, 'drop', 0.05, FALSE, TRUE, FALSE, TRUE, 2, NOW()
 FROM item_masters im WHERE im.item_code = 'MAT-BOND-01'
 ON CONFLICT DO NOTHING;
 
