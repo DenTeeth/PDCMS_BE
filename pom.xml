@@ -125,6 +125,13 @@
             <version>5.4.0</version>
         </dependency>
 
+        <!-- LangChain4J - Gemini AI Integration -->
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-google-ai-gemini</artifactId>
+            <version>0.35.0</version>
+        </dependency>
+
         <!-- Test Dependencies -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

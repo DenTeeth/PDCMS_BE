@@ -61,6 +61,25 @@ COMMENT ON COLUMN patient_image_comments.updated_at IS 'Thời gian cập nhật
 COMMENT ON COLUMN patient_image_comments.is_deleted IS 'Soft delete flag - TRUE nếu nhận xét đã bị xóa';
 
 -- ============================================
+-- BẢNG BỔ SUNG: CHATBOT_KNOWLEDGE
+-- ============================================
+-- Lưu trữ kiến thức cơ bản cho chatbot FAQ
+-- Gemini AI sẽ phân loại câu hỏi vào knowledge_id phù hợp
+
+CREATE TABLE IF NOT EXISTS chatbot_knowledge (
+    knowledge_id VARCHAR(50) PRIMARY KEY,
+    keywords TEXT NOT NULL,
+    response TEXT NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE
+);
+
+COMMENT ON TABLE chatbot_knowledge IS 'Kiến thức cơ bản cho chatbot FAQ - Gemini AI phân loại câu hỏi';
+COMMENT ON COLUMN chatbot_knowledge.knowledge_id IS 'ID kiến thức (GREETING, PRICE_LIST, etc.)';
+COMMENT ON COLUMN chatbot_knowledge.keywords IS 'Từ khóa liên quan (TEXT)';
+COMMENT ON COLUMN chatbot_knowledge.response IS 'Câu trả lời chuẩn';
+COMMENT ON COLUMN chatbot_knowledge.is_active IS 'Trạng thái hoạt động';
+
+-- ============================================
 -- BƯỚC 1: TẠO BASE ROLES (3 loại cố định)
 -- ============================================
 -- Base roles xác định LAYOUT FE (AdminLayout/EmployeeLayout/PatientLayout)
@@ -682,7 +701,7 @@ ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
 -- ============================================
--- LEGACY SHIFTS PERMISSIONS REMOVED  
+-- LEGACY SHIFTS PERMISSIONS REMOVED
 -- ============================================
 -- NOTE: VIEW_SHIFTS_OWN was removed during optimization
 -- Use VIEW_SCHEDULE_OWN instead
@@ -5045,6 +5064,39 @@ ON CONFLICT DO NOTHING;
 SELECT setval('clinical_records_clinical_record_id_seq', (SELECT COALESCE(MAX(clinical_record_id), 0) FROM clinical_records));
 SELECT setval('clinical_record_procedures_procedure_id_seq', (SELECT COALESCE(MAX(procedure_id), 0) FROM clinical_record_procedures));
 SELECT setval('clinical_prescriptions_prescription_id_seq', (SELECT COALESCE(MAX(prescription_id), 0) FROM clinical_prescriptions));
+
+-- ============================================
+-- CHATBOT KNOWLEDGE BASE (FAQ)
+-- ============================================
+-- Dữ liệu kiến thức cơ bản cho chatbot
+-- Gemini AI sẽ phân loại câu hỏi của người dùng vào các ID này
+
+INSERT INTO chatbot_knowledge (knowledge_id, keywords, response, is_active) VALUES
+('GREETING',
+ 'xin chào, hi, hello, bạn ơi, alo, chào bạn, hey',
+ 'Chào bạn! Mình là trợ lý ảo nha khoa. Mình có thể giúp bạn tra cứu bảng giá hoặc hướng dẫn khi bị đau răng.',
+ TRUE),
+
+('PRICE_LIST',
+ 'bảng giá, giá bao nhiêu, bao nhiêu tiền, chi phí, giá cả, price, cost',
+ 'Dạ bảng giá tham khảo bên mình:
+- Cạo vôi: 200k
+- Trám răng: 300k
+- Nhổ răng: 500k-2tr.
+Bạn muốn làm dịch vụ nào ạ?',
+ TRUE),
+
+('TOOTHACHE',
+ 'đau răng, nhức răng, sâu răng, ê buốt, toothache, đau nhức, răng đau',
+ 'Nếu đau răng, bạn nên hạn chế đồ lạnh/nóng. Hãy ghé phòng khám để bác sĩ kiểm tra xem có bị sâu vào tủy không nhé. Phí khám là 100k ạ.',
+ TRUE),
+
+('ADDRESS',
+ 'địa chỉ, ở đâu, phòng khám chỗ nào, address, location, vị trí',
+ 'ô E2a-7, Đường D1, Khu Công nghệ cao, Phường Tăng Nhơn Phú, TPHCM.',
+ TRUE)
+
+ON CONFLICT (knowledge_id) DO NOTHING;
 SELECT setval('clinical_prescription_items_prescription_item_id_seq', (SELECT COALESCE(MAX(prescription_item_id), 0) FROM clinical_prescription_items));
 SELECT setval('patient_tooth_status_tooth_status_id_seq', (SELECT COALESCE(MAX(tooth_status_id), 0) FROM patient_tooth_status));
 SELECT setval('patient_tooth_status_history_history_id_seq', (SELECT COALESCE(MAX(history_id), 0) FROM patient_tooth_status_history));
