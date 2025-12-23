@@ -542,8 +542,10 @@ VALUES
 ('ROLE_MANAGER', 'VIEW_CUSTOMER_CONTACT'),
 ('ROLE_MANAGER', 'MANAGE_CUSTOMER_CONTACT'),
 
--- SCHEDULE_MANAGEMENT (full management - 6 consolidated permissions)
+-- SCHEDULE_MANAGEMENT (full management - 8 consolidated permissions)
 ('ROLE_MANAGER', 'VIEW_SCHEDULE_ALL'), -- RBAC: View all schedules
+('ROLE_MANAGER', 'VIEW_SCHEDULE_OWN'), -- RBAC: View own schedule (for part-time managers)
+('ROLE_MANAGER', 'VIEW_REGISTRATION_OWN'), -- RBAC: View own shift registrations (for part-time managers)
 ('ROLE_MANAGER', 'MANAGE_WORK_SHIFTS'), -- Manage shift templates
 ('ROLE_MANAGER', 'MANAGE_WORK_SLOTS'), -- Manage part-time slots
 ('ROLE_MANAGER', 'MANAGE_PART_TIME_REGISTRATIONS'), -- Approve part-time registrations (9 usages!)
