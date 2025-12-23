@@ -650,9 +650,9 @@ VALUES
 -- PATIENT (own data only)
 ('ROLE_PATIENT', 'VIEW_PATIENT'), -- RBAC: View own patient record
 
--- APPOINTMENT (own appointments only)
+-- APPOINTMENT (own appointments only - VIEW ONLY, cannot create)
 ('ROLE_PATIENT', 'VIEW_APPOINTMENT_OWN'), -- RBAC: View own appointments
-('ROLE_PATIENT', 'CREATE_APPOINTMENT'), -- Can book appointments online
+-- NOTE: Patients CANNOT create appointments - must go through receptionist
 
 -- TREATMENT_PLAN (view own only)
 ('ROLE_PATIENT', 'VIEW_TREATMENT_PLAN_OWN'), -- RBAC: View own treatment plans
