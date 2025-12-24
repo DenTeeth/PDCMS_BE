@@ -64,24 +64,33 @@ public class AvailabilityService {
                                         "SERVICES_NOT_FOUND");
                 }
 
-                // 2. Get required specialization IDs
+                // 2. Get required specialization IDs (filter out services without specialization requirement)
                 Set<Integer> requiredSpecIds = services.stream()
+                                .filter(s -> s.getSpecialization() != null) // Some services don't require specialization
                                 .map(s -> s.getSpecialization().getSpecializationId())
                                 .collect(Collectors.toSet());
 
                 log.debug("Required specialization IDs: {}", requiredSpecIds);
 
-                // 3. Get all active employees with STANDARD specialization (ID 8) - medical
-                // staff only
+                // 3. Get all active medical staff (dentists, nurses, interns) only
                 List<Employee> allMedicalStaff = employeeRepository.findByIsActiveTrue().stream()
-                                .filter(e -> e.getSpecializations() != null &&
-                                                e.getSpecializations().stream()
-                                                                .anyMatch(spec -> spec.getSpecializationId() == 8))
+                                .filter(Employee::isMedicalStaff)
                                 .collect(Collectors.toList());
 
                 // 4. Filter doctors who have ALL required specializations
+                // If no specialization required, all medical staff qualify
                 List<Employee> qualifiedDoctors = allMedicalStaff.stream()
                                 .filter(doctor -> {
+                                        // If no specialization required, any medical staff can do it
+                                        if (requiredSpecIds.isEmpty()) {
+                                                return true;
+                                        }
+                                        
+                                        // If doctor has no specializations (nurse), can't do specialized services
+                                        if (doctor.getSpecializations() == null || doctor.getSpecializations().isEmpty()) {
+                                                return false;
+                                        }
+                                        
                                         Set<Integer> doctorSpecIds = doctor.getSpecializations().stream()
                                                         .map(Specialization::getSpecializationId)
                                                         .collect(Collectors.toSet());
@@ -295,14 +304,11 @@ public class AvailabilityService {
                         }
                 }
 
-                // 4. Find assistants (medical staff with STANDARD spec) who have shifts and are
-                // free
+                // 4. Find assistants (medical staff: dentists, nurses, interns) who have shifts and are free
                 LocalDate date = startTime.toLocalDate();
 
                 List<Employee> allMedicalStaff = employeeRepository.findByIsActiveTrue().stream()
-                                .filter(e -> e.getSpecializations() != null &&
-                                                e.getSpecializations().stream()
-                                                                .anyMatch(spec -> spec.getSpecializationId() == 8))
+                                .filter(Employee::isMedicalStaff)
                                 .collect(Collectors.toList());
 
                 List<AvailableResourcesDTO.AssistantBrief> availableAssistants = new ArrayList<>();

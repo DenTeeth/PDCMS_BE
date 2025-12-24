@@ -38,7 +38,6 @@ public class VitalSignsReferenceService {
                 .collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
     public VitalSignAssessment assessVitalSign(String vitalType, BigDecimal value, Integer patientAge) {
         var reference = vitalSignsReferenceRepository.findByVitalTypeAndAge(vitalType, patientAge);
 
@@ -55,13 +54,8 @@ public class VitalSignsReferenceService {
         String status;
         String message;
 
-        if (ref.getLowThreshold() != null && value.compareTo(ref.getLowThreshold()) < 0) {
-            status = "ABNORMALLY_LOW";
-            message = String.format("Thap bat thuong (<%s %s)", ref.getLowThreshold(), ref.getUnit());
-        } else if (ref.getHighThreshold() != null && value.compareTo(ref.getHighThreshold()) > 0) {
-            status = "ABNORMALLY_HIGH";
-            message = String.format("Cao bat thuong (>%s %s)", ref.getHighThreshold(), ref.getUnit());
-        } else if (value.compareTo(ref.getNormalMin()) < 0) {
+        // Only use normalMin/normalMax for assessment (lowThreshold/highThreshold are deprecated)
+        if (value.compareTo(ref.getNormalMin()) < 0) {
             status = "BELOW_NORMAL";
             message = String.format("Duoi muc binh thuong (binh thuong: %s-%s %s)",
                     ref.getNormalMin(), ref.getNormalMax(), ref.getUnit());
@@ -94,8 +88,7 @@ public class VitalSignsReferenceService {
                 .ageMax(entity.getAgeMax())
                 .normalMin(entity.getNormalMin())
                 .normalMax(entity.getNormalMax())
-                .lowThreshold(entity.getLowThreshold())
-                .highThreshold(entity.getHighThreshold())
+                // lowThreshold and highThreshold are deprecated - not included in response
                 .unit(entity.getUnit())
                 .description(entity.getDescription())
                 .effectiveDate(entity.getEffectiveDate().format(DATE_FORMATTER))

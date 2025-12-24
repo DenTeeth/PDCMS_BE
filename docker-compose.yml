@@ -1,18 +1,132 @@
 version: "3.9"
 
 services:
+  # 1. Database (Giữ nguyên)
   postgres:
-    image: postgres:13-buster
-    container_name: postgres-dental
-    restart: always
+    image: postgres:13-alpine
+    container_name: dentalclinic-postgres
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: 123456
-      POSTGRES_DB: dental_clinic_db
+      POSTGRES_USER: ${DB_USERNAME:-root}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-123456}
+      POSTGRES_DB: ${DB_DATABASE:-dental_clinic_db}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --lc-collate=en_US.UTF-8 --lc-ctype=en_US.UTF-8"
     ports:
-      - "5432:5432"
+      - "${DB_PORT:-5432}:5432"
     volumes:
-      - ./pgdata_dental:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
+      # Only mount enums.sql for first-time DB initialization
+      # Seed data is automatically loaded by SeedDataInitializer.java on app startup
+      - ./src/main/resources/db/enums.sql:/docker-entrypoint-initdb.d/01-enums.sql:ro
+    networks:
+      - dental-network
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${DB_USERNAME:-root} -d ${DB_DATABASE:-dental_clinic_db}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 2. Redis (Giữ nguyên)
+  redis:
+    image: redis:7-alpine
+    container_name: dentalclinic-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis123}
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - dental-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "redis-cli",
+          "-a",
+          "${REDIS_PASSWORD:-redis123}",
+          "--raw",
+          "incr",
+          "ping",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 3. Backend App (Giữ nguyên)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dentalclinic-app
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DB_DATABASE:-dental_clinic_db}
+      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME:-root}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-123456}
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD:-redis123}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
+      JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION:-2592000000}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      APP_FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      PORT: 8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - dental-network
+    healthcheck:
+      # Đã sửa lại lỗi cú pháp healthcheck gây spam log
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:8080/actuator/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # 4. Nginx Proxy Manager (MỚI THÊM - ĐỂ LẤY SSL MIỄN PHÍ)
+  nginx-proxy-manager:
+    image: "jc21/nginx-proxy-manager:latest"
+    container_name: nginx-proxy-manager
+    restart: unless-stopped
+    ports:
+      - "80:80" # Hứng web thường
+      - "81:81" # Trang quản trị Admin (vào đây để cài SSL)
+      - "443:443" # Hứng web bảo mật (HTTPS)
+    volumes:
+      - ./npm-data:/data
+      - ./npm-letsencrypt:/etc/letsencrypt
+    networks:
+      - dental-network
 
 volumes:
-  pgdata_dental:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  dental-network:
+    driver: bridge

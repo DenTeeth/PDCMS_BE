@@ -200,6 +200,41 @@ public class EmailService {
     }
 
     /**
+     * Send warehouse expiry alert email
+     * Daily digest format with color-coded urgency sections
+     */
+    @Async
+    public void sendExpiryAlertEmail(
+            String toEmail,
+            String username,
+            String htmlContent,
+            int criticalCount,
+            int warningCount,
+            int infoCount) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setFrom(fromEmail);
+            helper.setTo(toEmail);
+
+            // Subject line with counts for quick overview
+            String subject = String.format("Bao cao vat tu het han - KHAN: %d | CANH BAO: %d | THONG BAO: %d",
+                    criticalCount, warningCount, infoCount);
+            helper.setSubject(subject);
+
+            helper.setText(htmlContent, true);
+
+            mailSender.send(message);
+            logger.info("Expiry alert email sent to: {} (CRITICAL: {}, WARNING: {}, INFO: {})",
+                    toEmail, criticalCount, warningCount, infoCount);
+
+        } catch (MessagingException e) {
+            logger.error("Failed to send expiry alert email to {}: {}", toEmail, e.getMessage());
+        }
+    }
+
+    /**
      * Send simple text email (fallback method)
      */
     @Async

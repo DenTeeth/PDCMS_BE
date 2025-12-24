@@ -1,6 +1,7 @@
 package com.dental.clinic.management.working_schedule.service;
 
 import com.dental.clinic.management.account.repository.AccountRepository;
+import com.dental.clinic.management.employee.domain.Employee;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.exception.employee.EmployeeNotFoundException;
 import com.dental.clinic.management.exception.time_off.DuplicateTimeOffRequestException;
@@ -11,6 +12,7 @@ import com.dental.clinic.management.exception.time_off.TimeOffTypeNotFoundExcept
 import com.dental.clinic.management.exception.validation.InvalidRequestException;
 import com.dental.clinic.management.exception.validation.InvalidStateTransitionException;
 import com.dental.clinic.management.exception.validation.InvalidDateRangeException;
+import com.dental.clinic.management.notification.service.NotificationService;
 import com.dental.clinic.management.utils.IdGenerator;
 import com.dental.clinic.management.utils.security.AuthoritiesConstants;
 import com.dental.clinic.management.utils.security.SecurityUtil;
@@ -72,6 +74,10 @@ public class TimeOffRequestService {
         private final FixedShiftRegistrationRepository fixedShiftRegistrationRepository;
         private final PartTimeSlotRepository partTimeSlotRepository;
         private final WorkShiftRepository workShiftRepository;
+        private final NotificationService notificationService;
+
+        // ISSUE #53: Holiday Validation
+        private final com.dental.clinic.management.utils.validation.HolidayValidator holidayValidator;
 
         @PersistenceContext
         private EntityManager entityManager;
@@ -81,8 +87,8 @@ public class TimeOffRequestService {
          * Lấy danh sách yêu cầu nghỉ phép với phân trang và bộ lọc
          */
         @PreAuthorize("hasRole('" + AuthoritiesConstants.ADMIN + "') or " +
-                        "hasAuthority('" + AuthoritiesConstants.VIEW_TIMEOFF_ALL + "') or " +
-                        "hasAuthority('" + AuthoritiesConstants.VIEW_TIMEOFF_OWN + "')")
+                        "hasAuthority('" + AuthoritiesConstants.VIEW_LEAVE_ALL + "') or " +
+                        "hasAuthority('" + AuthoritiesConstants.VIEW_LEAVE_OWN + "')")
         public Page<TimeOffRequestResponse> getAllRequests(
                         Integer employeeId,
                         TimeOffStatus status,
@@ -94,9 +100,9 @@ public class TimeOffRequestService {
 
                 // LUỒNG 1: Admin hoặc người dùng có quyền xem tất cả
                 if (SecurityUtil.hasCurrentUserRole(AuthoritiesConstants.ADMIN) ||
-                                SecurityUtil.hasCurrentUserPermission(AuthoritiesConstants.VIEW_TIMEOFF_ALL)) {
+                                SecurityUtil.hasCurrentUserPermission(AuthoritiesConstants.VIEW_LEAVE_ALL)) {
 
-                        log.info("User has VIEW_TIMEOFF_ALL permission, fetching with filters");
+                        log.info("User has VIEW_LEAVE_ALL permission, fetching with filters");
                         return requestRepository.findWithFilters(employeeId, status, startDate, endDate, pageable)
                                         .map(requestMapper::toResponse);
                 }
@@ -131,16 +137,16 @@ public class TimeOffRequestService {
          * Xem chi tiết một yêu cầu nghỉ phép
          */
         @PreAuthorize("hasRole('" + AuthoritiesConstants.ADMIN + "') or " +
-                        "hasAuthority('" + AuthoritiesConstants.VIEW_TIMEOFF_ALL + "') or " +
-                        "hasAuthority('" + AuthoritiesConstants.VIEW_TIMEOFF_OWN + "')")
+                        "hasAuthority('" + AuthoritiesConstants.VIEW_LEAVE_ALL + "') or " +
+                        "hasAuthority('" + AuthoritiesConstants.VIEW_LEAVE_OWN + "')")
         public TimeOffRequestResponse getRequestById(String requestId) {
                 log.debug("Request to get time-off request: {}", requestId);
 
                 // LUỒNG 1: Admin hoặc người dùng có quyền xem tất cả
                 if (SecurityUtil.hasCurrentUserRole(AuthoritiesConstants.ADMIN) ||
-                                SecurityUtil.hasCurrentUserPermission(AuthoritiesConstants.VIEW_TIMEOFF_ALL)) {
+                                SecurityUtil.hasCurrentUserPermission(AuthoritiesConstants.VIEW_LEAVE_ALL)) {
 
-                        log.info("User has VIEW_TIMEOFF_ALL permission, fetching request: {}", requestId);
+                        log.info("User has VIEW_LEAVE_ALL permission, fetching request: {}", requestId);
                         return requestRepository.findByRequestId(requestId)
                                         .map(requestMapper::toResponse)
                                         .orElseThrow(() -> new TimeOffRequestNotFoundException(requestId));
@@ -175,7 +181,7 @@ public class TimeOffRequestService {
          * POST /api/v1/time-off-requests
          * Tạo yêu cầu nghỉ phép mới
          */
-        @PreAuthorize("hasAuthority('" + AuthoritiesConstants.CREATE_TIMEOFF + "')")
+        @PreAuthorize("hasAuthority('" + AuthoritiesConstants.CREATE_TIME_OFF + "')")
         @Transactional
         public TimeOffRequestResponse createRequest(CreateTimeOffRequest request) {
                 log.debug("Request to create time-off request: {}", request);
@@ -195,6 +201,12 @@ public class TimeOffRequestService {
                                                         "Ngày bắt đầu: " + request.getStartDate() + ", Ngày kết thúc: "
                                                         + request.getEndDate());
                 }
+
+                // 3.1: ISSUE #53 - Validate date range does NOT include holidays
+                holidayValidator.validateRangeNotIncludeHolidays(
+                                request.getStartDate(),
+                                request.getEndDate(),
+                                "nghỉ phép");
 
                 // 3.5. Check leave balance CHỈ cho ANNUAL_LEAVE
                 // Các loại khác (SICK_LEAVE, UNPAID_PERSONAL) không cần check balance
@@ -323,6 +335,24 @@ public class TimeOffRequestService {
                 TimeOffRequest reloadedRequest = requestRepository.findByRequestId(savedRequest.getRequestId())
                                 .orElseThrow(() -> new TimeOffRequestNotFoundException(savedRequest.getRequestId()));
 
+                // Send notification to all ADMIN users
+                try {
+                        Employee employee = employeeRepository.findById(request.getEmployeeId())
+                                        .orElseThrow(() -> new EmployeeNotFoundException(request.getEmployeeId()));
+
+                        String employeeName = employee.getFirstName() + " " + employee.getLastName();
+                        notificationService.createTimeOffRequestNotification(
+                                        employeeName,
+                                        savedRequest.getRequestId(),
+                                        request.getStartDate().toString(),
+                                        request.getEndDate().toString());
+                        log.info("Time-off request notifications sent to all ADMIN users");
+                } catch (Exception e) {
+                        log.error("Failed to send notification for time-off request: {}", savedRequest.getRequestId(),
+                                        e);
+                        // Don't fail the request creation if notification fails
+                }
+
                 return requestMapper.toResponse(reloadedRequest);
         }
 
@@ -372,7 +402,7 @@ public class TimeOffRequestService {
         private void handleApproval(TimeOffRequest timeOffRequest) {
                 // Check permission
                 if (!SecurityUtil.hasCurrentUserRole(AuthoritiesConstants.ADMIN) &&
-                                !SecurityUtil.hasCurrentUserPermission(AuthoritiesConstants.APPROVE_TIMEOFF)) {
+                                !SecurityUtil.hasCurrentUserPermission(AuthoritiesConstants.APPROVE_TIME_OFF)) {
                         throw new org.springframework.security.access.AccessDeniedException(
                                         "Bạn không có quyền thực hiện hành động này.");
                 }
@@ -409,7 +439,7 @@ public class TimeOffRequestService {
         private void handleRejection(TimeOffRequest timeOffRequest, String reason) {
                 // Check permission
                 if (!SecurityUtil.hasCurrentUserRole(AuthoritiesConstants.ADMIN) &&
-                                !SecurityUtil.hasCurrentUserPermission(AuthoritiesConstants.REJECT_TIMEOFF)) {
+                                !SecurityUtil.hasCurrentUserPermission(AuthoritiesConstants.APPROVE_TIME_OFF)) {
                         throw new org.springframework.security.access.AccessDeniedException(
                                         "Bạn không có quyền thực hiện hành động này.");
                 }
@@ -466,9 +496,9 @@ public class TimeOffRequestService {
                 // Check permission
                 boolean isOwner = timeOffRequest.getEmployeeId().equals(currentEmployeeId);
                 boolean hasOwnPermission = SecurityUtil
-                                .hasCurrentUserPermission(AuthoritiesConstants.CANCEL_TIMEOFF_OWN);
+                                .hasCurrentUserPermission(AuthoritiesConstants.CREATE_TIME_OFF);
                 boolean hasPendingPermission = SecurityUtil
-                                .hasCurrentUserPermission(AuthoritiesConstants.CANCEL_TIMEOFF_PENDING);
+                                .hasCurrentUserPermission(AuthoritiesConstants.APPROVE_TIME_OFF);
                 boolean isAdmin = SecurityUtil.hasCurrentUserRole(AuthoritiesConstants.ADMIN);
 
                 if (!isAdmin && !hasPendingPermission && !(isOwner && hasOwnPermission)) {
@@ -534,8 +564,9 @@ public class TimeOffRequestService {
 
         /**
          * Deduct leave balance when request is approved
+         * 
          * @param timeOffRequest the approved time-off request
-         * @param approvedBy the employee ID of the approver
+         * @param approvedBy     the employee ID of the approver
          */
         private void deductLeaveBalance(TimeOffRequest timeOffRequest, Integer approvedBy) {
                 // Get time-off type to check type code
@@ -564,12 +595,14 @@ public class TimeOffRequestService {
                                                         "BALANCE_NOT_FOUND",
                                                         String.format("Không tìm thấy số dư nghỉ phép cho nhân viên %d và loại nghỉ %s trong năm %d",
                                                                         timeOffRequest.getEmployeeId(),
-                                                                        timeOffRequest.getTimeOffTypeId(), currentYear)));
+                                                                        timeOffRequest.getTimeOffTypeId(),
+                                                                        currentYear)));
                 } catch (org.springframework.dao.IncorrectResultSizeDataAccessException e) {
                         throw new InvalidRequestException(
                                         "DUPLICATE_BALANCE_RECORDS",
                                         String.format("Phát hiện dữ liệu bị trùng lặp cho nhân viên %d và loại nghỉ %s trong năm %d. Vui lòng liên hệ quản trị viên để xử lý.",
-                                                        timeOffRequest.getEmployeeId(), timeOffRequest.getTimeOffTypeId(), currentYear));
+                                                        timeOffRequest.getEmployeeId(),
+                                                        timeOffRequest.getTimeOffTypeId(), currentYear));
                 }
 
                 // Calculate days to deduct

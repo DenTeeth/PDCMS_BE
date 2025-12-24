@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.web.bind.annotation.*;
@@ -49,6 +50,7 @@ public class FixedShiftRegistrationController {
         description = "Create a new fixed shift registration for an employee with specified work shifts and date range"
     )
     @PostMapping
+    @PreAuthorize("hasAuthority('MANAGE_FIXED_REGISTRATIONS')")
     public ResponseEntity<FixedRegistrationResponse> createFixedRegistration(
             @Valid @RequestBody CreateFixedRegistrationRequest request) {
 
@@ -62,8 +64,7 @@ public class FixedShiftRegistrationController {
      *
      * GET /api/v1/fixed-registrations?employeeId=123&isActive=true
      *
-     * Authorization: Requires VIEW_FIXED_REGISTRATIONS_ALL or
-     * VIEW_FIXED_REGISTRATIONS_OWN
+     * Authorization: Requires VIEW_SCHEDULE_ALL (view all) or VIEW_SCHEDULE_OWN (view own only)
      *
      * @param employeeId     employee ID (optional for VIEW_ALL)
      * @param isActive       filter by active status (null = all, true = active only, false = inactive only)
@@ -75,6 +76,7 @@ public class FixedShiftRegistrationController {
         description = "Retrieve list of fixed shift registrations with optional filters for employee and active status"
     )
     @GetMapping
+    @PreAuthorize("hasAnyAuthority('VIEW_SCHEDULE_ALL', 'VIEW_SCHEDULE_OWN')")
     public ResponseEntity<List<FixedRegistrationResponse>> getFixedRegistrations(
             @RequestParam(name = "employeeId", required = false) Integer employeeId,
             @RequestParam(name = "isActive", required = false) Boolean isActive,
@@ -88,7 +90,7 @@ public class FixedShiftRegistrationController {
                 .orElseThrow(() -> new RuntimeException("Employee not found for user: " + username));
 
         boolean hasViewAllPermission = authentication.getAuthorities()
-                .contains(new SimpleGrantedAuthority("VIEW_FIXED_REGISTRATIONS_ALL"));
+                .contains(new SimpleGrantedAuthority("VIEW_SCHEDULE_ALL"));
 
         List<FixedRegistrationResponse> registrations = fixedRegistrationService.getFixedRegistrations(
                 employeeId, currentEmployeeId, hasViewAllPermission, isActive);
@@ -112,6 +114,7 @@ public class FixedShiftRegistrationController {
         description = "Partially update a fixed shift registration's configuration (all fields optional)"
     )
     @PatchMapping("/{registrationId}")
+    @PreAuthorize("hasAuthority('MANAGE_FIXED_REGISTRATIONS')")
     public ResponseEntity<FixedRegistrationResponse> updateFixedRegistration(
             @PathVariable("registrationId") Integer registrationId,
             @Valid @RequestBody UpdateFixedRegistrationRequest request) {
@@ -136,6 +139,7 @@ public class FixedShiftRegistrationController {
         description = "Soft delete a fixed shift registration by setting it inactive"
     )
     @DeleteMapping("/{registrationId}")
+    @PreAuthorize("hasAuthority('MANAGE_FIXED_REGISTRATIONS')")
     public ResponseEntity<Void> deleteFixedRegistration(
             @PathVariable("registrationId") Integer registrationId) {
 
@@ -159,6 +163,7 @@ public class FixedShiftRegistrationController {
         description = "Generate shifts for all fixed registrations created before auto-generation was implemented"
     )
     @PostMapping("/backfill-shifts")
+    @PreAuthorize("hasAuthority('MANAGE_FIXED_REGISTRATIONS')")
     public ResponseEntity<String> backfillShifts() {
         String summary = fixedRegistrationService.backfillShiftsForExistingRegistrations();
         return ResponseEntity.ok(summary);
@@ -180,6 +185,7 @@ public class FixedShiftRegistrationController {
         description = "Delete and regenerate all shifts for a specific fixed registration to fix incorrect data"
     )
     @PostMapping("/{registrationId}/regenerate-shifts")
+    @PreAuthorize("hasAuthority('MANAGE_FIXED_REGISTRATIONS')")
     public ResponseEntity<String> regenerateShifts(
             @PathVariable("registrationId") Integer registrationId) {
         

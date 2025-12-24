@@ -119,7 +119,7 @@ public class RoomController {
      * @return created room
      */
     @PostMapping
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + CREATE_ROOM + "')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('MANAGE_ROOM')")
     @Operation(summary = "Create new room", description = "Create a new room/chair in the clinic")
     @ApiMessage("Tạo phòng mới thành công")
     public ResponseEntity<RoomResponse> createRoom(@Valid @RequestBody CreateRoomRequest request) {
@@ -135,7 +135,7 @@ public class RoomController {
      * @return updated room
      */
     @PutMapping("/{roomId}")
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + UPDATE_ROOM + "')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('MANAGE_ROOM')")
     @Operation(summary = "Update room", description = "Update room information")
     @ApiMessage("Cập nhật thông tin phòng thành công")
     public ResponseEntity<RoomResponse> updateRoom(
@@ -171,7 +171,7 @@ public class RoomController {
      * @return no content
      */
     @DeleteMapping("/{roomId}")
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + DELETE_ROOM + "')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('MANAGE_ROOM')")
     @Operation(summary = "Delete room (soft delete)", description = "Deactivate a room by setting isActive to false")
     @ApiMessage("Xóa phòng thành công")
     public ResponseEntity<Void> deleteRoom(
@@ -209,7 +209,7 @@ public class RoomController {
      * @return updated room details with new list of compatible services
      */
     @PutMapping("/{roomCode}/services")
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + UPDATE_ROOM_SERVICES + "')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('MANAGE_ROOM')")
     @Operation(summary = "Update room services (P1.6)", description = "Replace all services for a room. Validates that all services exist and are active.")
     @ApiMessage("Cập nhật danh sách dịch vụ của phòng thành công")
     public ResponseEntity<RoomServicesResponse> updateRoomServices(

@@ -122,6 +122,12 @@ public class EmployeeService {
             // Always filter by isActive = true
             predicates.add(criteriaBuilder.equal(root.get("isActive"), true));
             
+            // DATA INTEGRITY: Always exclude ROLE_PATIENT from employee queries
+            // ROLE_PATIENT must only exist in Patient table, NOT in Employee table
+            var accountJoin = root.join("account");
+            var roleJoin = accountJoin.join("role");
+            predicates.add(criteriaBuilder.notEqual(roleJoin.get("roleId"), "ROLE_PATIENT"));
+            
             // Add search filter (employee code, first name, or last name)
             if (search != null && !search.trim().isEmpty()) {
                 String searchPattern = "%" + search.toLowerCase() + "%";
@@ -132,10 +138,8 @@ public class EmployeeService {
                 ));
             }
             
-            // Add roleId filter (role is in Account entity, roleId is in Role entity)
+            // Add roleId filter (reuse the same roleJoin from above)
             if (roleId != null && !roleId.trim().isEmpty()) {
-                var accountJoin = root.join("account");
-                var roleJoin = accountJoin.join("role");
                 predicates.add(criteriaBuilder.equal(roleJoin.get("roleId"), roleId));
             }
             
@@ -234,7 +238,7 @@ public class EmployeeService {
      * @return Employee entity
      * @throws EmployeeNotFoundException if employee not found or deleted
      */
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + READ_EMPLOYEE_BY_CODE + "')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_EMPLOYEE + "')")
     @Transactional(readOnly = true)
     public Employee findActiveEmployeeByCode(String employeeCode) {
         if (employeeCode == null || employeeCode.trim().isEmpty()) {
@@ -263,7 +267,7 @@ public class EmployeeService {
      * @param request employee information including username/password
      * @return EmployeeInfoResponse
      */
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + CREATE_EMPLOYEE + "')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + MANAGE_EMPLOYEE + "')")
     @Transactional
     public EmployeeInfoResponse createEmployee(CreateEmployeeRequest request) {
         log.debug("Request to create employee: {}", request);
@@ -296,6 +300,15 @@ public class EmployeeService {
                         "Role not found with ID: " + request.getRoleId(),
                         "role",
                         "rolenotfound"));
+
+        // DATA INTEGRITY CHECK: Prevent ROLE_PATIENT in Employee table
+        // ROLE_PATIENT must only exist in Patient table, NOT in Employee table
+        if ("ROLE_PATIENT".equals(role.getRoleId())) {
+            throw new BadRequestAlertException(
+                    "Cannot create employee with ROLE_PATIENT. Patients must be created in the Patient table.",
+                    "employee",
+                    "invalidroleforemployee");
+        }
 
         // Check if role requires specialization
         boolean hasSpecializations = request.getSpecializationIds() != null
@@ -393,7 +406,7 @@ public class EmployeeService {
      * @param request      the update data
      * @return the updated employee as DTO
      */
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + UPDATE_EMPLOYEE + "')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + MANAGE_EMPLOYEE + "')")
     @Transactional
     public EmployeeInfoResponse updateEmployee(String employeeCode, UpdateEmployeeRequest request) {
         // Find existing employee
@@ -408,6 +421,16 @@ public class EmployeeService {
                             "Role not found with ID: " + request.getRoleId(),
                             "role",
                             "rolenotfound"));
+            
+            // DATA INTEGRITY CHECK: Prevent ROLE_PATIENT in Employee table
+            // ROLE_PATIENT must only exist in Patient table, NOT in Employee table
+            if ("ROLE_PATIENT".equals(role.getRoleId())) {
+                throw new BadRequestAlertException(
+                        "Cannot assign ROLE_PATIENT to employee. Patients must be created in the Patient table.",
+                        "employee",
+                        "invalidroleforemployee");
+            }
+            
             employee.getAccount().setRole(role);
         }
 
@@ -493,7 +516,7 @@ public class EmployeeService {
      * @param request      the replacement data (all fields required)
      * @return the replaced employee as DTO
      */
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + UPDATE_EMPLOYEE + "')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + MANAGE_EMPLOYEE + "')")
     @Transactional
     public EmployeeInfoResponse replaceEmployee(String employeeCode,
             ReplaceEmployeeRequest request) {
@@ -571,13 +594,13 @@ public class EmployeeService {
     }
 
     /**
-     * Get active medical staff only (employees with STANDARD specialization ID 8)
+     * Get active medical staff only (dentists, nurses, interns)
      * Used for appointment doctor/participant selection
-     * Excludes Admin/Receptionist who don't have STANDARD specialization
+     * Excludes Admin/Receptionist/Accountant/Manager who are non-medical
      *
-     * @return List of employees with STANDARD specialization (ID 8)
+     * @return List of medical staff employees
      */
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + READ_ALL_EMPLOYEES + "')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_EMPLOYEE + "')")
     @Transactional(readOnly = true)
     public java.util.List<EmployeeInfoResponse> getActiveMedicalStaff() {
         java.util.List<Employee> employees = employeeRepository.findActiveEmployeesWithSpecializations();

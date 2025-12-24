@@ -209,37 +209,34 @@ public class PatientService {
      * @param request patient information (email required if creating account)
      * @return PatientInfoResponse
      */
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + CREATE_PATIENT + "')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + MANAGE_PATIENT + "')")
     @Transactional
     public PatientInfoResponse createPatient(CreatePatientRequest request) {
         log.debug("Request to create patient: {}", request);
 
         // BR-043: Check for duplicate patients (by Name + DOB or Phone)
-        com.dental.clinic.management.patient.dto.DuplicatePatientCheckResult duplicateCheck = 
-                duplicateDetectionService.checkForDuplicates(
+        com.dental.clinic.management.patient.dto.DuplicatePatientCheckResult duplicateCheck = duplicateDetectionService
+                .checkForDuplicates(
                         request.getFirstName(),
                         request.getLastName(),
                         request.getDateOfBirth(),
-                        request.getPhone()
-                );
+                        request.getPhone());
 
         if (duplicateCheck.isHasDuplicates()) {
             log.warn("Duplicate patients found: {} matches", duplicateCheck.getMatches().size());
-            
+
             // Check if it's an exact match (should be blocked)
             boolean hasExactMatch = duplicateDetectionService.hasExactMatch(
                     request.getFirstName(),
                     request.getLastName(),
                     request.getDateOfBirth(),
-                    request.getPhone()
-            );
+                    request.getPhone());
 
             if (hasExactMatch) {
                 throw new BadRequestAlertException(
                         "Bệnh nhân với thông tin này đã tồn tại trong hệ thống. Vui lòng kiểm tra lại.",
                         "patient",
-                        "duplicatepatient"
-                );
+                        "duplicatepatient");
             }
 
             // If not exact match, log warning but allow creation
@@ -380,7 +377,7 @@ public class PatientService {
      * @param request     the update information
      * @return PatientInfoResponse
      */
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + UPDATE_PATIENT + "')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + MANAGE_PATIENT + "')")
     @Transactional
     public PatientInfoResponse updatePatient(String patientCode, UpdatePatientRequest request) {
         Patient patient = patientRepository.findOneByPatientCode(patientCode)
@@ -389,8 +386,29 @@ public class PatientService {
                         "Patient",
                         "patientnotfound"));
 
+        // Track if booking block status is being changed
+        boolean blockingStatusChanged = request.getIsBookingBlocked() != null &&
+                !request.getIsBookingBlocked().equals(patient.getIsBookingBlocked());
+
         // Update only non-null fields
         patientMapper.updatePatientFromRequest(request, patient);
+
+        // If admin is blocking/unblocking patient, track who and when
+        if (blockingStatusChanged) {
+            if (Boolean.TRUE.equals(request.getIsBookingBlocked())) {
+                // Blocking patient - set blocked_by and blocked_at
+                org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder
+                        .getContext().getAuthentication();
+                patient.setBlockedBy(auth.getName());
+                patient.setBlockedAt(java.time.LocalDateTime.now());
+            } else {
+                // Unblocking patient - clear blocking fields
+                patient.setBlockedBy(null);
+                patient.setBlockedAt(null);
+                patient.setBookingBlockReason(null);
+                patient.setBookingBlockNotes(null);
+            }
+        }
 
         Patient updatedPatient = patientRepository.save(patient);
 
@@ -404,7 +422,7 @@ public class PatientService {
      * @param request     the replacement information
      * @return PatientInfoResponse
      */
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + UPDATE_PATIENT + "')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + MANAGE_PATIENT + "')")
     @Transactional
     public PatientInfoResponse replacePatient(String patientCode, ReplacePatientRequest request) {
         Patient patient = patientRepository.findOneByPatientCode(patientCode)
@@ -482,7 +500,7 @@ public class PatientService {
      * @param changedBy   the employee making the change
      * @return updated tooth status response
      */
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_PATIENT + "') or hasAuthority('" + UPDATE_PATIENT
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_PATIENT + "') or hasAuthority('" + MANAGE_PATIENT
             + "')")
     @Transactional
     public UpdateToothStatusResponse updateToothStatus(
@@ -604,6 +622,7 @@ public class PatientService {
                 .allergies(patient.getAllergies())
                 .emergencyContactName(patient.getEmergencyContactName())
                 .emergencyContactPhone(patient.getEmergencyContactPhone())
+                .emergencyContactRelationship(patient.getEmergencyContactRelationship())
                 .guardianName(patient.getGuardianName())
                 .guardianPhone(patient.getGuardianPhone())
                 .guardianRelationship(patient.getGuardianRelationship())
@@ -611,7 +630,11 @@ public class PatientService {
                 .isActive(patient.getIsActive())
                 .consecutiveNoShows(patient.getConsecutiveNoShows())
                 .isBookingBlocked(patient.getIsBookingBlocked())
-                .bookingBlockReason(patient.getBookingBlockReason())
+                .bookingBlockReason(patient.getBookingBlockReason() != null
+                        ? patient.getBookingBlockReason().name()
+                        : null)
+                .bookingBlockNotes(patient.getBookingBlockNotes())
+                .blockedBy(patient.getBlockedBy())
                 .blockedAt(patient.getBlockedAt())
                 .accountId(account != null ? account.getAccountId() : null)
                 .username(account != null ? account.getUsername() : null)

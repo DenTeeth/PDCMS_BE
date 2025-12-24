@@ -22,10 +22,14 @@ public interface ItemUnitRepository extends JpaRepository<ItemUnit, Long> {
 
         /**
          * Lấy đơn vị cơ bản (base unit) của item
+         * Note: In case of data integrity issues with multiple base units,
+         * this returns the first one ordered by unitId
          */
-        @Query("SELECT iu FROM ItemUnit iu " +
-                        "WHERE iu.itemMaster.itemMasterId = :itemMasterId " +
-                        "AND iu.isBaseUnit = true")
+        @Query(value = "SELECT * FROM item_units iu " +
+                        "WHERE iu.item_master_id = :itemMasterId " +
+                        "AND iu.is_base_unit = true " +
+                        "ORDER BY iu.unit_id ASC " +
+                        "LIMIT 1", nativeQuery = true)
         Optional<ItemUnit> findBaseUnitByItemMasterId(@Param("itemMasterId") Long itemMasterId);
 
         /**

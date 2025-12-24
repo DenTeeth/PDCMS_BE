@@ -69,7 +69,7 @@ public class CustomTreatmentPlanService {
          * @throws BadRequestAlertException if validation fails
          * @throws AccessDeniedException    if user doesn't have permission
          */
-        @PreAuthorize("hasAuthority('CREATE_TREATMENT_PLAN')")
+        @PreAuthorize("hasAuthority('MANAGE_TREATMENT_PLAN')")
         @Transactional
         public TreatmentPlanDetailResponse createCustomPlan(String patientCode, CreateCustomPlanRequest request) {
                 log.info("Creating custom treatment plan. Patient: {}, Doctor: {}, Phases: {}",
@@ -324,9 +324,8 @@ public class CustomTreatmentPlanService {
          * 4. Collect ALL mismatches and report them in one error message
          *
          * Example Error Scenario:
-         * - Doctor has: [Chỉnh nha, STANDARD]
-         * - Plan includes: Service A (Nội nha), Service B (Chỉnh nha), Service C (Phẫu
-         * thuật)
+         * - Doctor has: [Chỉnh nha, Răng thẩm mỹ]
+         * - Plan includes: Service A (Nội nha), Service B (Chỉnh nha), Service C (Phẫu thuật)
          * - Result: REJECT with error listing Service A and Service C as mismatches
          *
          * @param doctor The doctor creating the treatment plan

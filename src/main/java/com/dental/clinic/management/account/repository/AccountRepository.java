@@ -64,4 +64,10 @@ public interface AccountRepository extends JpaRepository<Account, Integer> {
          * reset)
          */
         Optional<Account> findByEmail(String email);
+
+        /**
+         * Find all accounts by role name
+         */
+        @Query("SELECT a FROM Account a JOIN FETCH a.role r LEFT JOIN FETCH a.employee WHERE r.roleName = :roleName")
+        List<Account> findByRole_RoleName(@Param("roleName") String roleName);
 }

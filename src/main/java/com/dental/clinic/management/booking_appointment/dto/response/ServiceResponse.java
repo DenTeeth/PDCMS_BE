@@ -53,6 +53,18 @@ public class ServiceResponse {
     @Schema(description = "Service category name", example = "Nha khoa tổng quát")
     private String categoryName;
 
+    @Schema(description = "BE_4: Minimum preparation days before this service", example = "0")
+    private Integer minimumPreparationDays;
+
+    @Schema(description = "BE_4: Recovery days needed after this service", example = "0")
+    private Integer recoveryDays;
+
+    @Schema(description = "BE_4: Spacing days between consecutive appointments", example = "0")
+    private Integer spacingDays;
+
+    @Schema(description = "BE_4: Max appointments allowed per day (null = no limit)", example = "5")
+    private Integer maxAppointmentsPerDay;
+
     @Schema(description = "Active status", example = "true")
     private Boolean isActive;
 

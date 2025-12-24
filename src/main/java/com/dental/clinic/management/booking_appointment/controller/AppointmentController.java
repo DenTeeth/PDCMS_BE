@@ -19,6 +19,7 @@ import com.dental.clinic.management.booking_appointment.service.AppointmentDetai
 import com.dental.clinic.management.booking_appointment.service.AppointmentListService;
 import com.dental.clinic.management.booking_appointment.service.AppointmentRescheduleService;
 import com.dental.clinic.management.booking_appointment.service.AppointmentStatusService;
+import com.dental.clinic.management.utils.security.AuthoritiesConstants;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -77,7 +78,7 @@ public class AppointmentController {
             description = "Find available appointment time slots based on date, doctor, services, and assistants considering shifts and conflicts"
         )
         @GetMapping("/available-times")
-        @PreAuthorize("hasAuthority('CREATE_APPOINTMENT')")
+        @PreAuthorize("hasAuthority('" + AuthoritiesConstants.CREATE_APPOINTMENT + "')")
         public ResponseEntity<AvailableTimesResponse> findAvailableTimes(
                         @Valid @ModelAttribute AvailableTimesRequest request) {
 
@@ -113,7 +114,7 @@ public class AppointmentController {
             description = "Create a new dental appointment with full validation of resources, conflicts, and room compatibility"
         )
         @PostMapping
-        @PreAuthorize("hasAuthority('CREATE_APPOINTMENT')")
+        @PreAuthorize("hasAuthority('" + AuthoritiesConstants.CREATE_APPOINTMENT + "')")
         public ResponseEntity<CreateAppointmentResponse> createAppointment(
                         @Valid @RequestBody CreateAppointmentRequest request) {
 
@@ -368,7 +369,7 @@ public class AppointmentController {
             description = "Delay appointment start time within same day with conflict validation and audit logging"
         )
         @PatchMapping("/{appointmentCode}/delay")
-        @PreAuthorize("hasAuthority('DELAY_APPOINTMENT')")
+        @PreAuthorize("hasAuthority('MANAGE_APPOINTMENT')")
         public ResponseEntity<AppointmentDetailDTO> delayAppointment(
                         @PathVariable String appointmentCode,
                         @Valid @RequestBody DelayAppointmentRequest request) {

@@ -48,7 +48,7 @@ public class PartTimeSlotAvailabilityService {
      * 
      * FIX ISSUE #2: Removed @Transactional to always read latest committed data
      */
-    @PreAuthorize("hasAuthority('VIEW_AVAILABLE_SLOTS') or hasAuthority('VIEW_REGISTRATION_OWN') or hasAuthority('MANAGE_PART_TIME_REGISTRATIONS') or hasAuthority('MANAGE_WORK_SLOTS')")
+    @PreAuthorize("hasAuthority('VIEW_AVAILABLE_SLOTS') or hasAuthority('MANAGE_PART_TIME_REGISTRATIONS') or hasAuthority('MANAGE_WORK_SLOTS')")
     public long getRegisteredCountForDate(Long slotId, LocalDate date) {
     long count = registrationRepository.countBySlotAndDate(
         slotId,

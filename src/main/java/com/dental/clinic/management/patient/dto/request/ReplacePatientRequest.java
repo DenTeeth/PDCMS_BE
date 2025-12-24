@@ -52,6 +52,9 @@ public class ReplacePatientRequest {
     @Pattern(regexp = "^[0-9]{10,15}$")
     private String emergencyContactPhone;
 
+    @Size(max = 100)
+    private String emergencyContactRelationship;
+
     @NotNull
     private Boolean isActive;
 
@@ -146,6 +149,14 @@ public class ReplacePatientRequest {
 
     public void setEmergencyContactPhone(String emergencyContactPhone) {
         this.emergencyContactPhone = emergencyContactPhone;
+    }
+
+    public String getEmergencyContactRelationship() {
+        return emergencyContactRelationship;
+    }
+
+    public void setEmergencyContactRelationship(String emergencyContactRelationship) {
+        this.emergencyContactRelationship = emergencyContactRelationship;
     }
 
     public Boolean getIsActive() {

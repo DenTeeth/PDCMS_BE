@@ -17,6 +17,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -64,6 +65,7 @@ public class EmployeeShiftController {
          * @return paginated list of shifts
          */
         @GetMapping
+        @PreAuthorize("hasAnyAuthority('VIEW_SCHEDULE_ALL', 'VIEW_SCHEDULE_OWN')")
         public ResponseEntity<Page<EmployeeShiftResponseDto>> getShiftCalendar(
                         @RequestParam(name = "employee_id", required = false) Integer employeeId,
                         @RequestParam(name = "start_date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
@@ -88,18 +90,18 @@ public class EmployeeShiftController {
                                 .map(employee -> employee.getEmployeeId())
                                 .orElseThrow(() -> new RuntimeException("Employee not found for user: " + username));
                 boolean hasViewAllPermission = authentication.getAuthorities()
-                                .contains(new SimpleGrantedAuthority("VIEW_SHIFTS_ALL"));
+                                .contains(new SimpleGrantedAuthority("VIEW_SCHEDULE_ALL"));
 
                 // Check permission for employee_id parameter
                 Integer effectiveEmployeeId = employeeId;
                 if (!hasViewAllPermission) {
-                        // If user only has VIEW_SHIFTS_OWN and tries to view another employee's shifts,
+                        // If user only has VIEW_SCHEDULE_OWN and tries to view another employee's shifts,
                         // return 403
                         if (employeeId != null && !employeeId.equals(currentEmployeeId)) {
                                 throw new org.springframework.security.access.AccessDeniedException(
                                                 "Không tìm thấy tài nguyên hoặc bạn không có quyền truy cập.");
                         }
-                        // Auto-set to current employee for VIEW_SHIFTS_OWN users
+                        // Auto-set to current employee for VIEW_SCHEDULE_OWN users
                         effectiveEmployeeId = currentEmployeeId;
                 }
 
@@ -130,6 +132,7 @@ public class EmployeeShiftController {
             description = "Retrieve daily shift summaries grouped by date for a specific employee or all employees within date range"
         )
         @GetMapping("/summary")
+        @PreAuthorize("hasAuthority('VIEW_SCHEDULE_ALL')")
         public ResponseEntity<List<ShiftSummaryResponseDto>> getShiftSummary(
                         @RequestParam(name = "employee_id", required = false) Integer employeeId,
                         @RequestParam(name = "start_date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
@@ -155,6 +158,7 @@ public class EmployeeShiftController {
             description = "Retrieve detailed information about a specific employee shift by ID"
         )
         @GetMapping("/{id}")
+        @PreAuthorize("hasAnyAuthority('VIEW_SCHEDULE_ALL', 'VIEW_SCHEDULE_OWN')")
         public ResponseEntity<EmployeeShiftResponseDto> getShiftDetail(
                         @PathVariable("id") String employeeShiftId,
                         Authentication authentication) {
@@ -166,7 +170,7 @@ public class EmployeeShiftController {
                                 .map(employee -> employee.getEmployeeId())
                                 .orElseThrow(() -> new RuntimeException("Employee not found for user: " + username));
                 boolean hasViewAllPermission = authentication.getAuthorities()
-                                .contains(new SimpleGrantedAuthority("VIEW_SHIFTS_ALL"));
+                                .contains(new SimpleGrantedAuthority("VIEW_SCHEDULE_ALL"));
 
                 // Get shift details
                 EmployeeShiftResponseDto shift = employeeShiftService.getShiftDetail(
@@ -189,6 +193,7 @@ public class EmployeeShiftController {
             description = "Create a manual employee shift entry with specified date, time, and work shift details"
         )
         @PostMapping
+        @PreAuthorize("hasAuthority('MANAGE_FIXED_REGISTRATIONS')")
         public ResponseEntity<EmployeeShiftResponseDto> createManualShift(
                         @Valid @RequestBody CreateShiftRequestDto request,
                         Authentication authentication) {
@@ -221,6 +226,7 @@ public class EmployeeShiftController {
             description = "Update an existing employee shift's details including date, time, or work shift assignment"
         )
         @PatchMapping("/{id}")
+        @PreAuthorize("hasAuthority('MANAGE_FIXED_REGISTRATIONS')")
         public ResponseEntity<EmployeeShiftResponseDto> updateShift(
                         @PathVariable("id") String employeeShiftId,
                         @Valid @RequestBody UpdateShiftRequestDto request) {
@@ -243,6 +249,7 @@ public class EmployeeShiftController {
             description = "Cancel an employee shift by marking it as cancelled"
         )
         @DeleteMapping("/{id}")
+        @PreAuthorize("hasAuthority('MANAGE_FIXED_REGISTRATIONS')")
         public ResponseEntity<Void> cancelShift(@PathVariable("id") String employeeShiftId) {
 
                 employeeShiftService.cancelShift(employeeShiftId);

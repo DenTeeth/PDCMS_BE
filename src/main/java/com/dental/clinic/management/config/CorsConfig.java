@@ -16,9 +16,10 @@ public class CorsConfig {
 
                 // Production và Development origins
                 configuration.setAllowedOrigins(Arrays.asList(
-                                "http://localhost:3000" // Development
-                // "https://yourdomain.com", // Production
-                // "https://www.yourdomain.com" // Production www
+                                "http://localhost:3000", // Development HTTP
+                                "https://localhost:3000", // Development HTTPS
+                                "https://pdcms.vercel.app", // Production - Vercel
+                                "https://pdcms.duckdns.org" // Production - Backend domain
                 ));
 
                 configuration.setAllowedMethods(Arrays.asList(

@@ -9,6 +9,7 @@ import java.time.LocalTime;
  */
 public class WorkShiftIdGenerator {
 
+    
     private static final String PREFIX = "WKS_";
     
     // Time ranges for categorization (Clinic hours: 8:00 AM - 9:00 PM)

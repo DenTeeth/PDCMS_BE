@@ -1,0 +1,84 @@
+# ============================================
+# LOCAL DEVELOPMENT CONFIGURATION
+# ============================================
+# This file is activated when SPRING_PROFILES_ACTIVE=dev
+# Use this profile when running application LOCALLY (not in Docker)
+# ============================================
+
+spring:
+  # ==============================
+  # Database Configuration (Local)
+  # ==============================
+  datasource:
+    url: jdbc:postgresql://localhost:5432/${DB_DATABASE:dental_clinic_db}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:123456}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 2
+      connection-timeout: 30000
+      idle-timeout: 300000
+
+  # ==============================
+  # Redis Configuration (Local)
+  # ==============================
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: ${REDIS_PASSWORD:redis123}
+
+  # ==============================
+  # JPA Configuration (Development)
+  # ==============================
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: true
+
+  # ==============================
+  # SQL Init Configuration (Development)
+  # ==============================
+  # EXECUTION ORDER:
+  #   1. schema-locations (enums.sql) runs BEFORE Hibernate - creates ENUMs
+  #   2. Hibernate creates tables using existing ENUMs (ddl-auto: update)
+  #   3. DataInitializer bean loads INSERT statements from seed-data.sql AFTER tables exist
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:db/enums.sql
+      encoding: UTF-8
+      continue-on-error: false
+      separator: ";"
+
+  # ==============================
+  # Logging (Development)
+  # ==============================
+logging:
+  level:
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    com.example.dentalclinic: DEBUG
+
+# ==============================
+# Application Configuration (Development)
+# ==============================
+app:
+  frontend-url: ${FRONTEND_URL:http://localhost:3000}
+  cors:
+    # Allow localhost for development
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173,http://localhost:8080}
+
+# ==============================
+# Chatbot Configuration (Gemini AI)
+# ==============================
+chatbot:
+  gemini:
+    api-key: ${GEMINI_API_KEY:AIzaSyDdxkbfIBv0QNIeDvW3C6M0eQX_NiWNQNI}
+    model-name: gemini-2.5-flash

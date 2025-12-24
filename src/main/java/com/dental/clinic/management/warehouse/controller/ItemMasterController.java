@@ -317,4 +317,53 @@ public class ItemMasterController {
 
                 return ResponseEntity.ok(response);
         }
+
+        @DeleteMapping("/{id}")
+        @ApiMessage("Item master deleted successfully")
+        @PreAuthorize("hasRole('" + ADMIN + "') or hasAnyAuthority('DELETE_ITEMS', 'MANAGE_WAREHOUSE')")
+        @Operation(summary = "Delete Item Master", description = """
+                        API 6.13 - Delete item master
+
+                        **Main Features:**
+                        - Hard delete item master if no inventory exists
+                        - Prevents deletion if batches exist (data integrity)
+                        - Suggests soft delete (isActive=false) as alternative
+
+                        **Business Logic:**
+                        - Checks if item has any batches
+                        - If batches exist: Returns 400 BAD_REQUEST with suggestion
+                        - If no batches: Deletes item master and all units
+                        - Cascades delete to item units
+
+                        **Use Cases:**
+                        1. Remove incorrectly created items (before any inventory)
+                        2. Clean up test/demo data
+                        3. Archive old items (use soft delete instead)
+
+                        **Error Responses:**
+                        - 400 BAD_REQUEST: Item has batches, cannot delete
+                        - 404 NOT_FOUND: Item master not found
+                        - 403 FORBIDDEN: Missing DELETE_ITEMS permission
+
+                        **Permissions:**
+                        - ADMIN: Full access
+                        - DELETE_ITEMS: Delete item masters
+                        - MANAGE_WAREHOUSE: Warehouse management
+
+                        **Important:**
+                        - This is a hard delete operation
+                        - Consider using soft delete (isActive=false) for items with history
+                        - Cannot be undone
+                        """)
+        public ResponseEntity<Void> deleteItemMaster(
+                        @Parameter(description = "Item Master ID to delete", required = true, example = "4") @PathVariable @Min(1) Long id) {
+
+                log.info("DELETE /api/v1/warehouse/items/{}", id);
+
+                itemMasterService.deleteItemMaster(id);
+
+                log.info("Item master deleted successfully - ID: {}", id);
+
+                return ResponseEntity.noContent().build();
+        }
 }

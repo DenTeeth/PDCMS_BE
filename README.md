@@ -2,10 +2,45 @@
 
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.10-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![Java](https://img.shields.io/badge/Java-17-orange.svg)](https://www.oracle.com/java/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-blue.svg)](https://www.postgresql.org/)
-[![License](https://img.shields.io/badge/License-Private-red.svg)](LICENSE)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-13+-blue.svg)](https://www.postgresql.org/)
+[![Redis](https://img.shields.io/badge/Redis-7-red.svg)](https://redis.io/)
 
-REST API backend for dental clinic management, built with Spring Boot 3.2 and PostgreSQL. Provides comprehensive modules for appointments, treatment plans, clinical records, inventory management, and employee scheduling.
+REST API backend for dental clinic management system. Built with Spring Boot 3.2, PostgreSQL, and Redis.
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- JDK 17+
+- Docker & Docker Compose
+- Git
+
+### Run Application
+
+```bash
+# Clone repository
+git clone <your-repo-url>
+cd PDCMS_BE
+
+# Copy environment file
+cp .env.example .env
+# Edit .env with your configuration
+
+# Start database services
+docker-compose up postgres redis -d
+
+# Run application (auto-detects environment)
+./mvnw spring-boot:run
+```
+
+The application will:
+
+- ✅ Auto-detect if running locally or in Docker
+- ✅ Select correct profile (`dev` for local, `prod` for Docker)
+- ✅ Create database ENUMs automatically
+- ✅ Initialize seed data on first run
+
+Access API: http://localhost:8080
 
 ## Table of Contents
 
@@ -202,6 +237,42 @@ REST API backend for dental clinic management, built with Spring Boot 3.2 and Po
    # Or using system Maven
    mvn clean install -DskipTests
    ```
+
+### Quick Start with Docker (Recommended)
+
+The easiest way to run the application locally is using Docker Compose:
+
+```bash
+# 1. Copy environment template
+cp .env.example .env
+
+# 2. Edit .env with your values (see .env.example for details)
+
+# 3. Start all services (PostgreSQL + Redis + Spring Boot)
+docker-compose up -d
+
+# 4. Check application health
+curl http://localhost:8080/actuator/health
+
+# 5. Access Swagger UI
+# Open browser: http://localhost:8080/swagger-ui.html
+
+# 6. View logs
+docker-compose logs -f app
+
+# 7. Stop services
+docker-compose down
+```
+
+**Quick Start Scripts:**
+
+- **Windows:** `.\start.ps1`
+- **Linux/Mac:** `./start.sh` (make executable with `chmod +x start.sh`)
+
+For detailed Docker setup and deployment guides, see:
+
+- **[Docker Quick Reference](DOCKER_QUICK_REFERENCE.md)** - Commands and troubleshooting
+- **[Deployment Guide](DEPLOYMENT_GUIDE.md)** - DigitalOcean deployment instructions
 
 ### Configuration
 

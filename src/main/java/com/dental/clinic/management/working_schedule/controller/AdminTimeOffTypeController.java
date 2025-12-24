@@ -34,7 +34,7 @@ public class AdminTimeOffTypeController {
      * GET /api/v1/admin/time-off-types
      * Lấy danh sách Loại nghỉ phép (Admin View)
      *
-     * Authorization: VIEW_TIMEOFF_TYPE_ALL
+     * Authorization: VIEW_LEAVE_TYPE
      *
      * Query Params:
      * - is_active (boolean, optional): Lọc theo trạng thái
@@ -44,16 +44,13 @@ public class AdminTimeOffTypeController {
      * - 200 OK: Trả về danh sách tất cả loại nghỉ phép (kể cả inactive)
      *
      * @param isActive filter by active status (optional)
-     * @param isPaid filter by paid status (optional)
+     * @param isPaid   filter by paid status (optional)
      * @return List of TimeOffTypeResponse
      */
-    @Operation(
-        summary = "Get all time-off types",
-        description = "Retrieve all time-off types including inactive ones with optional filters for active status and paid status"
-    )
+    @Operation(summary = "Get all time-off types", description = "Retrieve all time-off types including inactive ones with optional filters for active status and paid status")
     @GetMapping
     @PreAuthorize("hasRole('" + AuthoritiesConstants.ADMIN + "') or " +
-            "hasAuthority('" + AuthoritiesConstants.VIEW_TIMEOFF_TYPE_ALL + "')")
+            "hasAuthority('" + AuthoritiesConstants.VIEW_LEAVE_ALL + "')")
     public ResponseEntity<List<TimeOffTypeResponse>> getAllTimeOffTypes(
             @RequestParam(required = false, name = "is_active") Boolean isActive,
             @RequestParam(required = false, name = "is_paid") Boolean isPaid) {
@@ -66,7 +63,7 @@ public class AdminTimeOffTypeController {
      * GET /api/v1/admin/time-off-types/{type_id}
      * Lấy chi tiết một loại nghỉ phép
      *
-     * Authorization: VIEW_TIMEOFF_TYPE_ALL
+     * Authorization: VIEW_LEAVE_TYPE
      *
      * Response:
      * - 200 OK: Trả về chi tiết loại nghỉ phép
@@ -75,13 +72,10 @@ public class AdminTimeOffTypeController {
      * @param typeId the time-off type ID
      * @return TimeOffTypeResponse
      */
-    @Operation(
-        summary = "Get time-off type by ID",
-        description = "Retrieve detailed information about a specific time-off type"
-    )
+    @Operation(summary = "Get time-off type by ID", description = "Retrieve detailed information about a specific time-off type")
     @GetMapping("/{type_id}")
     @PreAuthorize("hasRole('" + AuthoritiesConstants.ADMIN + "') or " +
-            "hasAuthority('" + AuthoritiesConstants.VIEW_TIMEOFF_TYPE_ALL + "')")
+            "hasAuthority('" + AuthoritiesConstants.VIEW_LEAVE_ALL + "')")
     public ResponseEntity<TimeOffTypeResponse> getTimeOffTypeById(@PathVariable("type_id") String typeId) {
         log.info("Admin REST request to get time-off type: {}", typeId);
         TimeOffTypeResponse response = typeService.getTimeOffTypeById(typeId);
@@ -92,13 +86,13 @@ public class AdminTimeOffTypeController {
      * POST /api/v1/admin/time-off-types
      * Tạo Loại nghỉ phép mới
      *
-     * Authorization: CREATE_TIMEOFF_TYPE
+     * Authorization: MANAGE_LEAVE_TYPE
      *
      * Request Body:
      * {
-     *   "type_code": "UNPAID_LEAVE",
-     *   "type_name": "Nghỉ không lương",
-     *   "is_paid": false
+     * "type_code": "UNPAID_LEAVE",
+     * "type_name": "Nghỉ không lương",
+     * "is_paid": false
      * }
      *
      * Business Logic:
@@ -114,13 +108,10 @@ public class AdminTimeOffTypeController {
      * @param request the creation request
      * @return TimeOffTypeResponse
      */
-    @Operation(
-        summary = "Create time-off type",
-        description = "Create a new time-off type with unique type code, name, and paid status"
-    )
+    @Operation(summary = "Create time-off type", description = "Create a new time-off type with unique type code, name, and paid status")
     @PostMapping
     @PreAuthorize("hasRole('" + AuthoritiesConstants.ADMIN + "') or " +
-            "hasAuthority('" + AuthoritiesConstants.CREATE_TIMEOFF_TYPE + "')")
+            "hasAuthority('" + AuthoritiesConstants.APPROVE_TIME_OFF + "')")
     public ResponseEntity<TimeOffTypeResponse> createTimeOffType(@Valid @RequestBody CreateTimeOffTypeRequest request) {
         log.info("Admin REST request to create time-off type: {}", request.getTypeCode());
         TimeOffTypeResponse response = typeService.createTimeOffType(request);
@@ -131,11 +122,11 @@ public class AdminTimeOffTypeController {
      * PATCH /api/v1/admin/time-off-types/{type_id}
      * Cập nhật Loại nghỉ phép
      *
-     * Authorization: UPDATE_TIMEOFF_TYPE
+     * Authorization: MANAGE_LEAVE_TYPE
      *
      * Request Body (chỉ gửi các trường cần cập nhật):
      * {
-     *   "type_name": "Nghỉ không lương (Việc riêng)"
+     * "type_name": "Nghỉ không lương (Việc riêng)"
      * }
      *
      * Business Logic:
@@ -146,17 +137,14 @@ public class AdminTimeOffTypeController {
      * - 404 NOT_FOUND: TIMEOFF_TYPE_NOT_FOUND
      * - 409 CONFLICT: DUPLICATE_TYPE_CODE
      *
-     * @param typeId the time-off type ID
+     * @param typeId  the time-off type ID
      * @param request the update request
      * @return TimeOffTypeResponse
      */
-    @Operation(
-        summary = "Update time-off type",
-        description = "Update an existing time-off type's properties (partial update supported)"
-    )
+    @Operation(summary = "Update time-off type", description = "Update an existing time-off type's properties (partial update supported)")
     @PatchMapping("/{type_id}")
     @PreAuthorize("hasRole('" + AuthoritiesConstants.ADMIN + "') or " +
-            "hasAuthority('" + AuthoritiesConstants.UPDATE_TIMEOFF_TYPE + "')")
+            "hasAuthority('" + AuthoritiesConstants.APPROVE_TIME_OFF + "')")
     public ResponseEntity<TimeOffTypeResponse> updateTimeOffType(
             @PathVariable("type_id") String typeId,
             @Valid @RequestBody UpdateTimeOffTypeRequest request) {
@@ -169,12 +157,12 @@ public class AdminTimeOffTypeController {
      * DELETE /api/v1/admin/time-off-types/{type_id}
      * Vô hiệu hóa / Kích hoạt lại Loại nghỉ phép (Toggle is_active)
      *
-     * Authorization: DELETE_TIMEOFF_TYPE
+     * Authorization: MANAGE_LEAVE_TYPE
      *
      * Business Logic:
      * - Soft delete: Đảo ngược is_active (true <-> false)
      * - Nếu đang vô hiệu hóa (true -> false), kiểm tra xem có request PENDING nào
-     *   đang dùng type_id này không
+     * đang dùng type_id này không
      * - Nếu có, trả về lỗi 409 CONFLICT
      *
      * Response:
@@ -185,13 +173,10 @@ public class AdminTimeOffTypeController {
      * @param typeId the time-off type ID
      * @return TimeOffTypeResponse with updated is_active status
      */
-    @Operation(
-        summary = "Toggle time-off type active status",
-        description = "Soft delete or reactivate a time-off type by toggling its is_active status. Prevents deactivation if type is in use."
-    )
+    @Operation(summary = "Toggle time-off type active status", description = "Soft delete or reactivate a time-off type by toggling its is_active status. Prevents deactivation if type is in use.")
     @DeleteMapping("/{type_id}")
     @PreAuthorize("hasRole('" + AuthoritiesConstants.ADMIN + "') or " +
-            "hasAuthority('" + AuthoritiesConstants.DELETE_TIMEOFF_TYPE + "')")
+            "hasAuthority('" + AuthoritiesConstants.APPROVE_TIME_OFF + "')")
     public ResponseEntity<TimeOffTypeResponse> toggleTimeOffTypeActive(@PathVariable("type_id") String typeId) {
         log.info("Admin REST request to toggle time-off type active status: {}", typeId);
         TimeOffTypeResponse response = typeService.toggleTimeOffTypeActive(typeId);

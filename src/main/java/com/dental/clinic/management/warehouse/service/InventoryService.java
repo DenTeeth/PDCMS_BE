@@ -758,6 +758,10 @@ private ItemMasterSummaryResponse mapToSummaryDto(ItemMaster item) {
             BatchStatus statusFilter,
             Pageable pageable) {
 
+        // TODO: Implement automated email notifications to warehouse manager at 30, 15, and 5 days before expiry
+        // TODO: Send notification with expiring items list, quantities, and warehouse locations
+        // TODO: Schedule daily check at 8 AM to scan and send alerts automatically
+
         log.info(" API 6.3 - Getting expiring alerts: days={}, categoryId={}, warehouseType={}, statusFilter={}",
                 days, categoryId, warehouseType, statusFilter);
 

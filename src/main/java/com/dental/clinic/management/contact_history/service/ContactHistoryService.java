@@ -41,9 +41,9 @@ public class ContactHistoryService {
 
     /**
      * List history records for a contact (ordered desc).
-     * Permissions: VIEW_CONTACT_HISTORY or ROLE_ADMIN
+     * Permissions: VIEW_CUSTOMER_CONTACT or ROLE_ADMIN
      */
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_CONTACT_HISTORY + "')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_CUSTOMER_CONTACT + "')")
     @Transactional(readOnly = true)
     public List<ContactHistoryResponse> listHistoryForContact(String contactId) {
         if (contactId == null || contactId.trim().isEmpty()) {
@@ -55,9 +55,9 @@ public class ContactHistoryService {
 
     /**
      * Add a history record. employeeId is taken from current authentication.
-     * Permissions: CREATE_CONTACT_HISTORY or ROLE_ADMIN
+     * Permissions: MANAGE_CUSTOMER_CONTACT or ROLE_ADMIN
      */
-    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + CREATE_CONTACT_HISTORY + "')")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + MANAGE_CUSTOMER_CONTACT + "')")
     @Transactional
     public ContactHistoryResponse addHistory(CreateContactHistoryRequest req) {
         if (req == null) {

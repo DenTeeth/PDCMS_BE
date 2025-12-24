@@ -27,7 +27,7 @@ public class PatientImageController {
     private final PatientImageService patientImageService;
 
     @PostMapping
-    @PreAuthorize("hasAuthority('PATIENT_IMAGE_CREATE')")
+    @PreAuthorize("hasAuthority('MANAGE_PATIENT_IMAGES')")
     public ResponseEntity<PatientImageResponse> createPatientImage(
             @Valid @RequestBody CreatePatientImageRequest request) {
         log.info("REST request to create patient image for patient ID: {}", request.getPatientId());
@@ -60,7 +60,7 @@ public class PatientImageController {
     }
 
     @PutMapping("/{imageId}")
-    @PreAuthorize("hasAuthority('PATIENT_IMAGE_UPDATE')")
+    @PreAuthorize("hasAuthority('MANAGE_PATIENT_IMAGES')")
     public ResponseEntity<PatientImageResponse> updatePatientImage(
             @PathVariable Long imageId,
             @Valid @RequestBody UpdatePatientImageRequest request) {
@@ -70,7 +70,7 @@ public class PatientImageController {
     }
 
     @DeleteMapping("/{imageId}")
-    @PreAuthorize("hasAuthority('PATIENT_IMAGE_DELETE')")
+    @PreAuthorize("hasAuthority('MANAGE_PATIENT_IMAGES')")
     public ResponseEntity<Void> deletePatientImage(@PathVariable Long imageId) {
         log.info("REST request to delete patient image ID: {}", imageId);
         patientImageService.deletePatientImage(imageId);

@@ -37,6 +37,7 @@ public class PatientDetailResponse {
     // Emergency Contact
     private String emergencyContactName;
     private String emergencyContactPhone;
+    private String emergencyContactRelationship;
 
     // Guardian Information (for minors <16 years old)
     private String guardianName;
@@ -49,6 +50,8 @@ public class PatientDetailResponse {
     private Integer consecutiveNoShows;
     private Boolean isBookingBlocked;
     private String bookingBlockReason;
+    private String bookingBlockNotes;
+    private String blockedBy;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime blockedAt;

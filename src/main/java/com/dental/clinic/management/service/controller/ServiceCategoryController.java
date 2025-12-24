@@ -30,15 +30,14 @@ public class ServiceCategoryController {
     /**
      * Get all service categories (admin)
      */
-        @GetMapping
-        @PreAuthorize("hasAuthority('VIEW_SERVICE')")
-        @Operation(summary = "Get all service categories",
-                           description = "Returns all categories including inactive ones, ordered by display order")
-        public ResponseEntity<List<ServiceCategoryDTO>> getAllCategories() {
-                log.info("GET /api/v1/service-categories - Get all categories");
-                List<ServiceCategoryDTO> categories = serviceCategoryService.getAllCategories();
-                return ResponseEntity.ok(categories);
-        }
+    @GetMapping
+    @PreAuthorize("hasAuthority('VIEW_SERVICE')")
+    @Operation(summary = "Get all service categories", description = "Returns all categories including inactive ones, ordered by display order")
+    public ResponseEntity<List<ServiceCategoryDTO>> getAllCategories() {
+        log.info("GET /api/v1/service-categories - Get all categories");
+        List<ServiceCategoryDTO> categories = serviceCategoryService.getAllCategories();
+        return ResponseEntity.ok(categories);
+    }
 
     /**
      * Get category by ID
@@ -56,9 +55,8 @@ public class ServiceCategoryController {
      * Create new service category
      */
     @PostMapping
-    @PreAuthorize("hasAuthority('CREATE_SERVICE')")
-    @Operation(summary = "Create new service category",
-               description = "Creates a new service category with unique code")
+    @PreAuthorize("hasAuthority('MANAGE_SERVICE')")
+    @Operation(summary = "Create new service category", description = "Creates a new service category with unique code")
     public ResponseEntity<ServiceCategoryDTO> createCategory(
             @Valid @RequestBody CreateServiceCategoryRequest request) {
         log.info("POST /api/v1/service-categories - Create category: {}", request.getCategoryCode());
@@ -70,9 +68,8 @@ public class ServiceCategoryController {
      * Update existing service category
      */
     @PatchMapping("/{categoryId}")
-    @PreAuthorize("hasAuthority('UPDATE_SERVICE')")
-    @Operation(summary = "Update service category",
-               description = "Updates category fields (partial update supported)")
+    @PreAuthorize("hasAuthority('MANAGE_SERVICE')")
+    @Operation(summary = "Update service category", description = "Updates category fields (partial update supported)")
     public ResponseEntity<ServiceCategoryDTO> updateCategory(
             @PathVariable Long categoryId,
             @Valid @RequestBody UpdateServiceCategoryRequest request) {
@@ -85,9 +82,8 @@ public class ServiceCategoryController {
      * Delete service category (soft delete)
      */
     @DeleteMapping("/{categoryId}")
-    @PreAuthorize("hasAuthority('DELETE_SERVICE')")
-    @Operation(summary = "Delete service category",
-               description = "Soft deletes category by setting isActive=false. Fails if active services are linked.")
+    @PreAuthorize("hasAuthority('MANAGE_SERVICE')")
+    @Operation(summary = "Delete service category", description = "Soft deletes category by setting isActive=false. Fails if active services are linked.")
     public ResponseEntity<Void> deleteCategory(@PathVariable Long categoryId) {
         log.info("DELETE /api/v1/service-categories/{} - Soft delete category", categoryId);
         serviceCategoryService.deleteCategory(categoryId);
@@ -98,13 +94,12 @@ public class ServiceCategoryController {
      * Reorder service categories (bulk operation)
      */
     @PostMapping("/reorder")
-    @PreAuthorize("hasAuthority('UPDATE_SERVICE')")
-    @Operation(summary = "Reorder service categories",
-               description = "Updates display order for multiple categories at once (for drag-drop UX)")
+    @PreAuthorize("hasAuthority('MANAGE_SERVICE')")
+    @Operation(summary = "Reorder service categories", description = "Updates display order for multiple categories at once (for drag-drop UX)")
     public ResponseEntity<Void> reorderCategories(
             @Valid @RequestBody ReorderServiceCategoriesRequest request) {
         log.info("POST /api/v1/service-categories/reorder - Reorder {} categories",
-                 request.getOrders().size());
+                request.getOrders().size());
         serviceCategoryService.reorderCategories(request);
         return ResponseEntity.noContent().build();
     }

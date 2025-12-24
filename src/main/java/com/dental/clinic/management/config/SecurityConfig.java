@@ -85,10 +85,19 @@ public class SecurityConfig {
 
                                 // Authorization Rules - Using MvcRequestMatcher for better security
                                 .authorizeHttpRequests(authz -> authz
+                                                // Public endpoints - Health Check & Monitoring
+                                                .requestMatchers(mvc.pattern("/actuator/health/**")).permitAll()
+
                                                 // Public endpoints - API Documentation
                                                 .requestMatchers(mvc.pattern("/v3/api-docs/**")).permitAll()
                                                 .requestMatchers(mvc.pattern("/swagger-ui/**")).permitAll()
                                                 .requestMatchers(mvc.pattern("/swagger-ui.html")).permitAll()
+
+                                                // Public endpoints - WebSocket SockJS handshake
+                                                // SockJS info endpoint does not support Authorization header
+                                                // Authentication handled at STOMP CONNECT frame level
+                                                .requestMatchers(mvc.pattern("/ws/info/**")).permitAll()
+                                                .requestMatchers(mvc.pattern("/ws/**")).permitAll()
 
                                                 // Public endpoints - Authentication
                                                 .requestMatchers(mvc.pattern("/api/v1/auth/login")).permitAll()
@@ -106,6 +115,9 @@ public class SecurityConfig {
                                                 // Public endpoints - Setup & Error
                                                 .requestMatchers(mvc.pattern("/api/v1/setup/**")).permitAll()
                                                 .requestMatchers(mvc.pattern("/error")).permitAll()
+
+                                                // Public endpoints - Chatbot
+                                                .requestMatchers(mvc.pattern("/api/v1/chatbot/**")).permitAll()
 
                                                 // Authenticated endpoints - Account management
                                                 .requestMatchers(mvc.pattern("/api/v1/account/**")).authenticated()

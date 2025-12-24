@@ -171,4 +171,92 @@ public class HolidayDateService {
     public boolean isHoliday(LocalDate date) {
         return holidayDateRepository.isHoliday(date);
     }
+
+    /**
+     * BE_4: Get all holidays within a date range (for scheduling)
+     */
+    @Transactional(readOnly = true)
+    public List<LocalDate> getHolidaysInRange(LocalDate startDate, LocalDate endDate) {
+        log.debug("Fetching holidays between {} and {}", startDate, endDate);
+        
+        return holidayDateRepository.findByDateRange(startDate, endDate)
+            .stream()
+            .map(HolidayDate::getHolidayDate)
+            .collect(Collectors.toList());
+    }
+
+    /**
+     * BE_4: Get the next working day (skip holidays)
+     * If the given date is a working day, returns it
+     * Otherwise finds the next working day
+     */
+    @Transactional(readOnly = true)
+    public LocalDate getNextWorkingDay(LocalDate date) {
+        LocalDate current = date;
+        int maxIterations = 30; // Prevent infinite loop
+        int iterations = 0;
+        
+        while (isHoliday(current) && iterations < maxIterations) {
+            current = current.plusDays(1);
+            iterations++;
+        }
+        
+        if (iterations >= maxIterations) {
+            log.warn("Could not find working day within 30 days from {}", date);
+        }
+        
+        return current;
+    }
+
+    /**
+     * BE_4: Count working days between two dates (excluding holidays)
+     * Includes startDate, excludes endDate
+     */
+    @Transactional(readOnly = true)
+    public long countWorkingDaysBetween(LocalDate startDate, LocalDate endDate) {
+        if (startDate.isAfter(endDate) || startDate.equals(endDate)) {
+            return 0;
+        }
+        
+        List<LocalDate> holidays = getHolidaysInRange(startDate, endDate);
+        
+        long totalDays = java.time.temporal.ChronoUnit.DAYS.between(startDate, endDate);
+        long holidayCount = holidays.size();
+        
+        return totalDays - holidayCount;
+    }
+
+    /**
+     * BE_4: Add working days to a start date (skipping holidays)
+     * Example: addWorkingDays(Monday, 5) = next Monday (skipping weekend if holidays)
+     */
+    @Transactional(readOnly = true)
+    public LocalDate addWorkingDays(LocalDate startDate, int workingDays) {
+        if (workingDays < 0) {
+            throw new IllegalArgumentException("Working days must be non-negative");
+        }
+        
+        if (workingDays == 0) {
+            return getNextWorkingDay(startDate);
+        }
+        
+        LocalDate current = getNextWorkingDay(startDate);
+        int daysAdded = 0;
+        int maxIterations = workingDays * 3; // Safety limit (assuming max 66% holidays)
+        int iterations = 0;
+        
+        while (daysAdded < workingDays && iterations < maxIterations) {
+            current = current.plusDays(1);
+            if (!isHoliday(current)) {
+                daysAdded++;
+            }
+            iterations++;
+        }
+        
+        if (iterations >= maxIterations) {
+            log.warn("Could not add {} working days from {} within reasonable limit", workingDays, startDate);
+        }
+        
+        return current;
+    }
 }

@@ -1,14 +1,14 @@
 spring:
   application:
     name: Dental Clinic Management - Test
-  
+
   # Test Database Configuration (H2 in-memory)
   datasource:
     url: jdbc:h2:mem:testdb
     username: sa
-    password: 
+    password:
     driver-class-name: org.h2.Driver
-  
+
   # JPA Configuration for Testing
   jpa:
     hibernate:
@@ -25,6 +25,12 @@ dentalclinic:
     base64-secret: dGVzdC1zZWNyZXQtZm9yLXRlc3Rpbmctb25seQ==
     access-token-validity-in-seconds: 60
     refresh-token-validity-in-seconds: 120
+
+# Chatbot Configuration for Testing (mock API key)
+chatbot:
+  gemini:
+    api-key: ${GEMINI_API_KEY:test-api-key-for-testing}
+    model-name: gemini-2.5-flash
 
 # Disable unnecessary features for testing
 logging:

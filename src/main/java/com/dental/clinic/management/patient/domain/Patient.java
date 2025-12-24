@@ -84,6 +84,9 @@ public class Patient {
   @Column(name = "emergency_contact_phone", length = 15)
   private String emergencyContactPhone;
 
+  @Column(name = "emergency_contact_relationship", length = 100)
+  private String emergencyContactRelationship;
+
   @Column(name = "is_active")
   private Boolean isActive = true;
 
@@ -102,13 +105,15 @@ public class Patient {
   private Boolean isBookingBlocked = false;
 
   /**
-   * Rule #5: Reason for booking block
+   * Rule #5 + BR-043 + BR-044: Reason for booking block
+   * Unified enum for temporary blocks and permanent blacklist
    */
-  @Column(name = "booking_block_reason", length = 500)
-  private String bookingBlockReason;
+  @Enumerated(EnumType.STRING)
+  @Column(name = "booking_block_reason", length = 50)
+  private com.dental.clinic.management.patient.enums.BookingBlockReason bookingBlockReason;
 
   /**
-   * Rule #5: When booking was blocked
+   * Rule #5 + BR-044: When booking was blocked
    */
   @Column(name = "blocked_at")
   private LocalDateTime blockedAt;
@@ -130,38 +135,17 @@ public class Patient {
   private String guardianCitizenId;
 
   /**
-   * BR-044: Blacklist flag
-   * Set to true when patient is added to blacklist
-   */
-  @Column(name = "is_blacklisted", nullable = false)
-  private Boolean isBlacklisted = false;
-
-  /**
-   * BR-044: Predefined blacklist reason
-   * Required when isBlacklisted = true
-   */
-  @Enumerated(EnumType.STRING)
-  @Column(name = "blacklist_reason", length = 50)
-  private com.dental.clinic.management.patient.enums.PatientBlacklistReason blacklistReason;
-
-  /**
-   * BR-044: Additional notes for blacklist
+   * BR-044: Additional notes for booking block/blacklist
    * Optional explanation or details
    */
-  @Column(name = "blacklist_notes", columnDefinition = "TEXT")
-  private String blacklistNotes;
+  @Column(name = "booking_block_notes", columnDefinition = "TEXT")
+  private String bookingBlockNotes;
 
   /**
-   * BR-044: Who blacklisted the patient
+   * BR-044: Who blocked/blacklisted the patient
    */
-  @Column(name = "blacklisted_by", length = 100)
-  private String blacklistedBy;
-
-  /**
-   * BR-044: When patient was blacklisted
-   */
-  @Column(name = "blacklisted_at")
-  private LocalDateTime blacklistedAt;
+  @Column(name = "blocked_by", length = 100)
+  private String blockedBy;
 
   @Column(name = "created_at")
   private LocalDateTime createdAt;
@@ -303,6 +287,14 @@ public class Patient {
     this.emergencyContactPhone = emergencyContactPhone;
   }
 
+  public String getEmergencyContactRelationship() {
+    return emergencyContactRelationship;
+  }
+
+  public void setEmergencyContactRelationship(String emergencyContactRelationship) {
+    this.emergencyContactRelationship = emergencyContactRelationship;
+  }
+
   public Boolean getIsActive() {
     return isActive;
   }
@@ -341,14 +333,6 @@ public class Patient {
 
   public void setIsBookingBlocked(Boolean isBookingBlocked) {
     this.isBookingBlocked = isBookingBlocked;
-  }
-
-  public String getBookingBlockReason() {
-    return bookingBlockReason;
-  }
-
-  public void setBookingBlockReason(String bookingBlockReason) {
-    this.bookingBlockReason = bookingBlockReason;
   }
 
   public LocalDateTime getBlockedAt() {
@@ -391,44 +375,42 @@ public class Patient {
     this.guardianCitizenId = guardianCitizenId;
   }
 
-  public Boolean getIsBlacklisted() {
-    return isBlacklisted;
+  public com.dental.clinic.management.patient.enums.BookingBlockReason getBookingBlockReason() {
+    return bookingBlockReason;
   }
 
-  public void setIsBlacklisted(Boolean isBlacklisted) {
-    this.isBlacklisted = isBlacklisted;
+  public void setBookingBlockReason(com.dental.clinic.management.patient.enums.BookingBlockReason bookingBlockReason) {
+    this.bookingBlockReason = bookingBlockReason;
   }
 
-  public com.dental.clinic.management.patient.enums.PatientBlacklistReason getBlacklistReason() {
-    return blacklistReason;
+  public String getBookingBlockNotes() {
+    return bookingBlockNotes;
   }
 
-  public void setBlacklistReason(com.dental.clinic.management.patient.enums.PatientBlacklistReason blacklistReason) {
-    this.blacklistReason = blacklistReason;
+  public void setBookingBlockNotes(String bookingBlockNotes) {
+    this.bookingBlockNotes = bookingBlockNotes;
   }
 
-  public String getBlacklistNotes() {
-    return blacklistNotes;
+  public String getBlockedBy() {
+    return blockedBy;
   }
 
-  public void setBlacklistNotes(String blacklistNotes) {
-    this.blacklistNotes = blacklistNotes;
+  public void setBlockedBy(String blockedBy) {
+    this.blockedBy = blockedBy;
   }
 
-  public String getBlacklistedBy() {
-    return blacklistedBy;
+  /**
+   * Helper: Check if patient is blacklisted (permanent ban)
+   */
+  public boolean isBlacklisted() {
+    return isBookingBlocked && bookingBlockReason != null && bookingBlockReason.isBlacklisted();
   }
 
-  public void setBlacklistedBy(String blacklistedBy) {
-    this.blacklistedBy = blacklistedBy;
-  }
-
-  public LocalDateTime getBlacklistedAt() {
-    return blacklistedAt;
-  }
-
-  public void setBlacklistedAt(LocalDateTime blacklistedAt) {
-    this.blacklistedAt = blacklistedAt;
+  /**
+   * Helper: Check if patient has temporary block (can be auto-unblocked)
+   */
+  public boolean hasTemporaryBlock() {
+    return isBookingBlocked && bookingBlockReason != null && bookingBlockReason.isTemporary();
   }
 
   // Helper methods

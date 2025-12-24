@@ -74,7 +74,7 @@ public class ServiceConsumableController {
          * - Warehouse manager: Update material quantities for existing services
          */
         @PostMapping
-        @PreAuthorize("hasAuthority('" + MANAGE_CONSUMABLES + "')")
+        @PreAuthorize("hasAuthority('" + MANAGE_WAREHOUSE + "')")
         @Operation(summary = "Set service consumables (BOM) - Bulk", description = "Define or update material consumption standards for one or more services. "
                         +
                         "Supports bulk operations for efficient BOM configuration. Uses upsert strategy.")
@@ -82,7 +82,7 @@ public class ServiceConsumableController {
                         @ApiResponse(responseCode = "200", description = "Consumables set successfully"),
                         @ApiResponse(responseCode = "400", description = "Invalid request data OR Item/unit not found"),
                         @ApiResponse(responseCode = "404", description = "Service not found"),
-                        @ApiResponse(responseCode = "403", description = "Insufficient permissions - requires MANAGE_CONSUMABLES")
+                        @ApiResponse(responseCode = "403", description = "Insufficient permissions - requires MANAGE_WAREHOUSE")
         })
         @ApiMessage("Service consumables set successfully")
         public ResponseEntity<String> setServiceConsumables(
@@ -104,7 +104,7 @@ public class ServiceConsumableController {
          * - Warehouse manager: Remove old materials and add new materials
          */
         @PutMapping("/services/{serviceId}")
-        @PreAuthorize("hasAuthority('" + MANAGE_CONSUMABLES + "')")
+        @PreAuthorize("hasAuthority('" + MANAGE_WAREHOUSE + "')")
         @Operation(summary = "Update service consumables (BOM) - Replace", description = "Replace all material consumption standards for a specific service. "
                         +
                         "Deletes existing BOM and creates new configuration. Use for complete BOM updates.")
@@ -112,7 +112,7 @@ public class ServiceConsumableController {
                         @ApiResponse(responseCode = "200", description = "Consumables updated successfully"),
                         @ApiResponse(responseCode = "400", description = "Invalid request data OR Item/unit not found"),
                         @ApiResponse(responseCode = "404", description = "Service not found"),
-                        @ApiResponse(responseCode = "403", description = "Insufficient permissions - requires MANAGE_CONSUMABLES")
+                        @ApiResponse(responseCode = "403", description = "Insufficient permissions - requires MANAGE_WAREHOUSE")
         })
         @ApiMessage("Service consumables updated successfully")
         public ResponseEntity<String> updateServiceConsumables(

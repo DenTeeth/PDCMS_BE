@@ -156,18 +156,13 @@ public class AppointmentAvailabilityService {
                         "appointment",
                         "EMPLOYEE_NOT_FOUND"));
 
-        // CRITICAL: Validate employee has STANDARD specialization (ID 8) - is medical
-        // staff
-        // Admin/Receptionist without STANDARD (ID 8) cannot be assigned to appointments
-        boolean hasStandardSpecialization = employee.getSpecializations() != null &&
-                employee.getSpecializations().stream()
-                        .anyMatch(spec -> spec.getSpecializationId() == 8);
-
-        if (!hasStandardSpecialization) {
+        // CRITICAL: Validate employee is medical staff (dentist, nurse, or intern)
+        // Admin/Receptionist/Accountant cannot be assigned to appointments
+        if (!employee.isMedicalStaff()) {
             throw new BadRequestAlertException(
-                    "Employee must have STANDARD specialization (ID 8) to be assigned to appointments. " +
+                    "Employee must be medical staff (DENTIST/NURSE/INTERN role) to be assigned to appointments. " +
                             "Employee " + employeeCode
-                            + " does not have STANDARD specialization (Admin/Receptionist cannot be assigned)",
+                            + " is not medical staff (Admin/Receptionist/Accountant cannot be assigned)",
                     "appointment",
                     "EMPLOYEE_NOT_MEDICAL_STAFF");
         }
@@ -230,13 +225,8 @@ public class AppointmentAvailabilityService {
                             "appointment",
                             "PARTICIPANT_NOT_FOUND"));
 
-            // CRITICAL: Validate participant has STANDARD specialization (ID 8) - is
-            // medical staff
-            boolean hasStandardSpecialization = emp.getSpecializations() != null &&
-                    emp.getSpecializations().stream()
-                            .anyMatch(spec -> spec.getSpecializationId() == 8);
-
-            if (!hasStandardSpecialization) {
+            // CRITICAL: Validate participant is medical staff (dentist, nurse, or intern)
+            if (!emp.isMedicalStaff()) {
                 nonMedicalStaff.add(code);
             } else {
                 participants.add(emp);
@@ -245,8 +235,8 @@ public class AppointmentAvailabilityService {
 
         if (!nonMedicalStaff.isEmpty()) {
             throw new BadRequestAlertException(
-                    "Participants must have STANDARD specialization (ID 8). " +
-                            "The following employees do not have STANDARD specialization (Admin/Receptionist cannot be participants): "
+                    "Participants must be medical staff (DENTIST/NURSE/INTERN role). " +
+                            "The following employees are not medical staff (Admin/Receptionist/Accountant cannot be participants): "
                             +
                             String.join(", ", nonMedicalStaff),
                     "appointment",

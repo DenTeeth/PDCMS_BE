@@ -6,33 +6,40 @@ spring:
   # Database Configuration
   # ==============================
   datasource:
-    url: jdbc:postgresql://localhost:5432/dental_clinic_db
-    username: root
-    password: 123456
+    url: jdbc:postgresql://localhost:5432/${DB_DATABASE:dental_clinic_db}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:changeme}
     driver-class-name: org.postgresql.Driver
 
   # JPA Configuration
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         "[format_sql]": true
-    show-sql: false
-    defer-datasource-initialization: false # SQL runs BEFORE Hibernate to create ENUMs
+        # Force Hibernate to always use explicit column names in SQL statements
+        # This prevents column ordering issues when schema changes
+        use_sql_comments: false
+        order_inserts: true
+        order_updates: true
+        jdbc:
+          batch_size: 20
+    show-sql: true # Temporarily enable to verify SQL statements
 
-  # SQL Init Configuration - DISABLED (ENUMs already exist, DataInitializer handles seed data)
-  # This is the ONLY SQL file used in the project (dental-clinic-seed-data.sql)
+  # SQL Init Configuration - THREE-PHASE INITIALIZATION
   # EXECUTION ORDER:
-  #   1. Hibernate auto-generates tables from @Entity classes
-  #   2. DataInitializer bean loads seed data from dental-clinic-seed-data.sql
+  #   1. schema-locations (enums.sql) runs BEFORE Hibernate - creates ENUMs
+  #   2. Hibernate creates tables using existing ENUMs (ddl-auto: update)
+  #   3. DataInitializer bean loads INSERT statements from seed-data.sql AFTER tables exist
   sql:
     init:
-      mode: never
-      data-locations: classpath:db/dental-clinic-seed-data.sql
+      mode: always
+      schema-locations: classpath:db/enums.sql
       encoding: UTF-8
       continue-on-error: false
+      separator: ";"
 
   # ==============================
   # Mail Configuration (Email Verification & Password Reset)
@@ -53,11 +60,35 @@ spring:
           timeout: 5000
           writetimeout: 5000
 
+  # ==============================
+  # Redis Configuration
+  # ==============================
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:redis123}
+      timeout: 2000ms
+      jedis:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+
+  # Cache Configuration
+  cache:
+    type: redis
+    redis:
+      time-to-live: 1800000
+
 # ==============================
 # Application Configuration
 # ==============================
 app:
   frontend-url: ${FRONTEND_URL:http://localhost:3000}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,https://pdcms.vercel.app}
 
 # ==============================
 # Custom JWT Configuration
@@ -83,6 +114,9 @@ logging:
   level:
     "[com.dental.clinic.management]": DEBUG
     "[org.springdoc]": DEBUG
+    "[org.hibernate.SQL]": DEBUG
+    "[org.hibernate.type.descriptor.sql.BasicBinder]": TRACE
+    "[org.hibernate.orm.jdbc.bind]": TRACE
 
 # ==============================
 # Swagger/OpenAPI Configuration
@@ -94,3 +128,11 @@ springdoc:
     operations-sorter: method
     tags-sorter: alpha
     filter: true
+
+# ==============================
+# Chatbot Configuration (Gemini AI)
+# ==============================
+chatbot:
+  gemini:
+    api-key: ${GEMINI_API_KEY:AIzaSyDdxkbfIBv0QNIeDvW3C6M0eQX_NiWNQNI}
+    model-name: gemini-2.5-flash

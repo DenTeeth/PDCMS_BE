@@ -51,7 +51,7 @@ public class ClinicalRecordAttachmentController {
      * - 403 FORBIDDEN: No permission to access this record
      */
     @PostMapping(value = "/api/v1/clinical-records/{recordId}/attachments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('ROLE_ADMIN') or hasAuthority('UPLOAD_ATTACHMENT')")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasAuthority('MANAGE_ATTACHMENTS')")
     @ApiMessage("File uploaded successfully")
     public ResponseEntity<UploadAttachmentResponse> uploadAttachment(
             @PathVariable Integer recordId,
@@ -103,7 +103,7 @@ public class ClinicalRecordAttachmentController {
      * Business Rule: Only Admin or uploader can delete.
      *
      * Authorization:
-     * - DELETE_ATTACHMENT: Doctor, Assistant, Admin
+     * - MANAGE_ATTACHMENTS: Doctor, Assistant, Admin
      * - Business Rule: Can only delete own uploads (except Admin)
      *
      * Returns:
@@ -112,7 +112,7 @@ public class ClinicalRecordAttachmentController {
      * - 403 DELETE_DENIED: Not the uploader (non-admin)
      */
     @DeleteMapping("/api/v1/attachments/{attachmentId}")
-    @PreAuthorize("hasRole('ROLE_ADMIN') or hasAuthority('DELETE_ATTACHMENT')")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasAuthority('MANAGE_ATTACHMENTS')")
     @ApiMessage("Attachment deleted successfully")
     public ResponseEntity<Void> deleteAttachment(@PathVariable Integer attachmentId) {
 

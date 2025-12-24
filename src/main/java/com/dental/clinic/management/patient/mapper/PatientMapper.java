@@ -38,6 +38,7 @@ public class PatientMapper {
         response.setMedicalHistory(patient.getMedicalHistory());
         response.setAllergies(patient.getAllergies());
         response.setEmergencyContactName(patient.getEmergencyContactName());
+        response.setEmergencyContactRelationship(patient.getEmergencyContactRelationship());
         response.setEmergencyContactPhone(patient.getEmergencyContactPhone());
         response.setGuardianName(patient.getGuardianName());
         response.setGuardianPhone(patient.getGuardianPhone());
@@ -46,6 +47,15 @@ public class PatientMapper {
         response.setIsActive(patient.getIsActive());
         response.setCreatedAt(patient.getCreatedAt());
         response.setUpdatedAt(patient.getUpdatedAt());
+
+        // Map booking block fields (BR-043, BR-044, BR-005)
+        response.setIsBookingBlocked(patient.getIsBookingBlocked());
+        response.setBookingBlockReason(
+                patient.getBookingBlockReason() != null ? patient.getBookingBlockReason().name() : null);
+        response.setBookingBlockNotes(patient.getBookingBlockNotes());
+        response.setBlockedBy(patient.getBlockedBy());
+        response.setBlockedAt(patient.getBlockedAt());
+        response.setConsecutiveNoShows(patient.getConsecutiveNoShows());
 
         // Map account-related fields
         if (patient.getAccount() != null) {
@@ -81,6 +91,7 @@ public class PatientMapper {
         patient.setMedicalHistory(request.getMedicalHistory());
         patient.setAllergies(request.getAllergies());
         patient.setEmergencyContactName(request.getEmergencyContactName());
+        patient.setEmergencyContactRelationship(request.getEmergencyContactRelationship());
         patient.setEmergencyContactPhone(request.getEmergencyContactPhone());
         patient.setGuardianName(request.getGuardianName());
         patient.setGuardianPhone(request.getGuardianPhone());
@@ -132,6 +143,9 @@ public class PatientMapper {
         if (request.getEmergencyContactPhone() != null) {
             patient.setEmergencyContactPhone(request.getEmergencyContactPhone());
         }
+        if (request.getEmergencyContactRelationship() != null) {
+            patient.setEmergencyContactRelationship(request.getEmergencyContactRelationship());
+        }
         if (request.getGuardianName() != null) {
             patient.setGuardianName(request.getGuardianName());
         }
@@ -146,6 +160,23 @@ public class PatientMapper {
         }
         if (request.getIsActive() != null) {
             patient.setIsActive(request.getIsActive());
+        }
+
+        // Admin-only: Update booking block fields
+        if (request.getIsBookingBlocked() != null) {
+            patient.setIsBookingBlocked(request.getIsBookingBlocked());
+        }
+        if (request.getBookingBlockReason() != null) {
+            try {
+                com.dental.clinic.management.patient.enums.BookingBlockReason reason = com.dental.clinic.management.patient.enums.BookingBlockReason
+                        .valueOf(request.getBookingBlockReason());
+                patient.setBookingBlockReason(reason);
+            } catch (IllegalArgumentException e) {
+                // Invalid enum value - ignore or could throw validation error
+            }
+        }
+        if (request.getBookingBlockNotes() != null) {
+            patient.setBookingBlockNotes(request.getBookingBlockNotes());
         }
     }
 
@@ -168,6 +199,7 @@ public class PatientMapper {
         patient.setMedicalHistory(request.getMedicalHistory());
         patient.setAllergies(request.getAllergies());
         patient.setEmergencyContactName(request.getEmergencyContactName());
+        patient.setEmergencyContactRelationship(request.getEmergencyContactRelationship());
         patient.setEmergencyContactPhone(request.getEmergencyContactPhone());
         patient.setIsActive(request.getIsActive());
     }

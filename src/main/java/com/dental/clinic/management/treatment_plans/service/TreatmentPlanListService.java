@@ -59,7 +59,7 @@ public class TreatmentPlanListService {
          * @return Page of TreatmentPlanSummaryDTO
          */
         @Transactional(readOnly = true)
-        @PreAuthorize("hasAuthority('VIEW_ALL_TREATMENT_PLANS')")
+        @PreAuthorize("hasAuthority('VIEW_TREATMENT_PLAN_ALL')")
         public Page<TreatmentPlanSummaryDTO> listAllPlans(
                         ApprovalStatus approvalStatus,
                         TreatmentPlanStatus status,
@@ -130,7 +130,9 @@ public class TreatmentPlanListService {
                                         .isActive(patient.getIsActive())
                                         .consecutiveNoShows(patient.getConsecutiveNoShows())
                                         .isBookingBlocked(patient.getIsBookingBlocked())
-                                        .bookingBlockReason(patient.getBookingBlockReason())
+                                        .bookingBlockReason(patient.getBookingBlockReason() != null 
+                                                        ? patient.getBookingBlockReason().name() 
+                                                        : null)
                                         .build();
                 }
 

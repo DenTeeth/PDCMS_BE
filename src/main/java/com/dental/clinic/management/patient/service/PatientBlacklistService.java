@@ -76,7 +76,7 @@ public class PatientBlacklistService {
                 });
 
         // 3. Check if already blacklisted
-        if (patient.getIsBlacklisted()) {
+        if (patient.isBlacklisted()) {
             log.warn("Patient {} is already blacklisted", patientId);
             ProblemDetail pd = ProblemDetail.forStatusAndDetail(
                     HttpStatus.BAD_REQUEST,
@@ -90,21 +90,19 @@ public class PatientBlacklistService {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String username = auth.getName();
 
-        // 5. Perform blacklist
-        patient.setIsBlacklisted(true);
-        patient.setBlacklistReason(reason);
-        patient.setBlacklistNotes(notes != null ? notes.trim() : null);
-        patient.setBlacklistedBy(username);
-        patient.setBlacklistedAt(LocalDateTime.now());
-
-        // Also block booking if not already blocked
-        if (!patient.getIsBookingBlocked()) {
-            patient.setIsBookingBlocked(true);
-            patient.setBookingBlockReason("Bệnh nhân bị blacklist: " + reason.getDisplayName());
-            patient.setBlockedAt(LocalDateTime.now());
-        }
+        // 5. Perform blacklist - map old PatientBlacklistReason to new BookingBlockReason
+        com.dental.clinic.management.patient.enums.BookingBlockReason blockReason = mapToBookingBlockReason(reason);
+        
+        patient.setIsBookingBlocked(true);
+        patient.setBookingBlockReason(blockReason);
+        patient.setBookingBlockNotes(notes != null ? notes.trim() : null);
+        patient.setBlockedBy(username);
+        patient.setBlockedAt(LocalDateTime.now());
 
         patientRepository.save(patient);
+
+        // TODO: Send email notification to the staff member (username) who performed the blacklist action
+        // TODO: Email should include: patient name, blacklist reason, timestamp, and notes
 
         log.warn("Patient {} BLACKLISTED by {} for reason: {}", 
                  patientId, username, reason.getDisplayName());
@@ -148,7 +146,7 @@ public class PatientBlacklistService {
                 });
 
         // 2. Check if actually blacklisted
-        if (!patient.getIsBlacklisted()) {
+        if (!patient.isBlacklisted()) {
             ProblemDetail pd = ProblemDetail.forStatusAndDetail(
                     HttpStatus.BAD_REQUEST,
                     "Bệnh nhân này không có trong blacklist."
@@ -162,13 +160,14 @@ public class PatientBlacklistService {
         String username = auth.getName();
 
         // 4. Remove from blacklist (keep history in logs)
-        PatientBlacklistReason previousReason = patient.getBlacklistReason();
+        com.dental.clinic.management.patient.enums.BookingBlockReason previousBlockReason = patient.getBookingBlockReason();
+        PatientBlacklistReason previousReason = mapFromBookingBlockReason(previousBlockReason);
         
-        patient.setIsBlacklisted(false);
-        patient.setBlacklistReason(null);
-        patient.setBlacklistNotes(null);
-        patient.setBlacklistedBy(null);
-        patient.setBlacklistedAt(null);
+        patient.setIsBookingBlocked(false);
+        patient.setBookingBlockReason(null);
+        patient.setBookingBlockNotes(null);
+        patient.setBlockedBy(null);
+        patient.setBlockedAt(null);
 
         patientRepository.save(patient);
 
@@ -197,7 +196,33 @@ public class PatientBlacklistService {
     @Transactional(readOnly = true)
     public boolean isPatientBlacklisted(Integer patientId) {
         return patientRepository.findById(patientId)
-                .map(Patient::getIsBlacklisted)
+                .map(Patient::isBlacklisted)
                 .orElse(false);
+    }
+
+    /**
+     * Map old PatientBlacklistReason to new BookingBlockReason (CONSOLIDATED)
+     */
+    private com.dental.clinic.management.patient.enums.BookingBlockReason mapToBookingBlockReason(PatientBlacklistReason reason) {
+        return switch (reason) {
+            case PAYMENT_ISSUES -> com.dental.clinic.management.patient.enums.BookingBlockReason.PAYMENT_ISSUES;
+            case STAFF_ABUSE -> com.dental.clinic.management.patient.enums.BookingBlockReason.STAFF_ABUSE;
+            case POLICY_VIOLATION -> com.dental.clinic.management.patient.enums.BookingBlockReason.POLICY_VIOLATION;
+            case OTHER_SERIOUS -> com.dental.clinic.management.patient.enums.BookingBlockReason.OTHER_SERIOUS;
+        };
+    }
+
+    /**
+     * Map new BookingBlockReason back to old PatientBlacklistReason for response (CONSOLIDATED)
+     */
+    private PatientBlacklistReason mapFromBookingBlockReason(com.dental.clinic.management.patient.enums.BookingBlockReason blockReason) {
+        if (blockReason == null) return null;
+        return switch (blockReason) {
+            case PAYMENT_ISSUES -> PatientBlacklistReason.PAYMENT_ISSUES;
+            case STAFF_ABUSE -> PatientBlacklistReason.STAFF_ABUSE;
+            case POLICY_VIOLATION -> PatientBlacklistReason.POLICY_VIOLATION;
+            case OTHER_SERIOUS -> PatientBlacklistReason.OTHER_SERIOUS;
+            default -> null; // EXCESSIVE_NO_SHOWS is temporary, not in blacklist enum
+        };
     }
 }

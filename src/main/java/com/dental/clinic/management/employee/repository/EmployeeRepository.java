@@ -79,30 +79,34 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer>, Jp
     List<Integer> findAllActiveEmployeeIds();
 
     /**
-     * Find ACTIVE employees who have STANDARD specialization (medical staff only)
-     * STANDARD (ID 8) = General healthcare workers baseline
-     * This excludes Admin/Receptionist who don't have STANDARD specialization
+     * Find ACTIVE medical staff (dentists, nurses, interns)
      * Used for appointment doctor/participant selection
+     * Excludes Admin/Receptionist/Accountant/Manager who are non-medical
      *
-     * @return List of employees with STANDARD specialization
+     * @return List of medical staff employees
      */
     @Query("SELECT DISTINCT e FROM Employee e " +
             "LEFT JOIN FETCH e.specializations s " +
+            "LEFT JOIN FETCH e.account a " +
+            "LEFT JOIN FETCH a.role r " +
             "WHERE e.isActive = true " +
-            "AND EXISTS (SELECT 1 FROM e.specializations es WHERE es.specializationId = 8) " +
+            "AND r.roleId IN ('ROLE_DENTIST', 'ROLE_NURSE', 'ROLE_DENTIST_INTERN') " +
             "ORDER BY e.employeeCode ASC")
     List<Employee> findActiveEmployeesWithSpecializations();
 
     /**
-     * Check if employee has STANDARD specialization (ID 8) - is medical staff
-     * Medical staff MUST have STANDARD (ID 8) as baseline qualification
+     * Check if employee is medical staff (dentist, nurse, or intern)
+     * Medical staff can be assigned to appointments
+     * Non-medical staff (admin, receptionist, accountant) cannot
      *
      * @param employeeId Employee ID
-     * @return True if employee has STANDARD specialization (ID 8)
+     * @return True if employee has a medical role
      */
-    @Query("SELECT CASE WHEN COUNT(es) > 0 THEN true ELSE false END " +
-            "FROM Employee e JOIN e.specializations es " +
+    @Query("SELECT CASE WHEN COUNT(e) > 0 THEN true ELSE false END " +
+            "FROM Employee e " +
+            "JOIN e.account a " +
+            "JOIN a.role r " +
             "WHERE e.employeeId = :employeeId " +
-            "AND es.specializationId = 8")
+            "AND r.roleId IN ('ROLE_DENTIST', 'ROLE_NURSE', 'ROLE_DENTIST_INTERN')")
     boolean hasSpecializations(@org.springframework.data.repository.query.Param("employeeId") Integer employeeId);
 }

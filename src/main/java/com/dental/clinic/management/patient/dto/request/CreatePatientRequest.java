@@ -33,7 +33,7 @@ import java.time.LocalDate;
  *
  * Security: Staff NEVER sees or knows patient's password
  *
- *  BREAKING CHANGE (V23/V24):
+ * BREAKING CHANGE (V23/V24):
  * - Removed `password` field from request (patient sets via email)
  * - Kept `username` field (staff must provide username)
  * - Username is REQUIRED if creating account
@@ -87,6 +87,9 @@ public class CreatePatientRequest {
 
     @Pattern(regexp = "^[0-9]{10,15}$")
     private String emergencyContactPhone;
+
+    @Size(max = 100)
+    private String emergencyContactRelationship;
 
     // ===== GUARDIAN FIELDS (Rule #14: Required for minors <16 years) =====
 
@@ -218,6 +221,14 @@ public class CreatePatientRequest {
 
     public void setEmergencyContactPhone(String emergencyContactPhone) {
         this.emergencyContactPhone = emergencyContactPhone;
+    }
+
+    public String getEmergencyContactRelationship() {
+        return emergencyContactRelationship;
+    }
+
+    public void setEmergencyContactRelationship(String emergencyContactRelationship) {
+        this.emergencyContactRelationship = emergencyContactRelationship;
     }
 
     public String getGuardianName() {

@@ -94,12 +94,14 @@ public class AppointmentDelayService {
          * Validate delay request against business rules.
          */
         private void validateDelayRequest(Appointment appointment, DelayAppointmentRequest request) {
-                // Rule 1: Only SCHEDULED or CHECKED_IN can be delayed
+                // Rule 1: Only SCHEDULED, CHECKED_IN, or NO_SHOW can be delayed
                 AppointmentStatus status = appointment.getStatus();
-                if (status != AppointmentStatus.SCHEDULED && status != AppointmentStatus.CHECKED_IN) {
+                if (status != AppointmentStatus.SCHEDULED
+                                && status != AppointmentStatus.CHECKED_IN
+                                && status != AppointmentStatus.NO_SHOW) {
                         throw new IllegalStateException(
                                         String.format(
-                                                        "Cannot delay appointment in status %s. Only SCHEDULED or CHECKED_IN appointments can be delayed.",
+                                                        "Cannot delay appointment in status %s. Only SCHEDULED, CHECKED_IN, or NO_SHOW appointments can be delayed.",
                                                         status));
                 }
 
@@ -135,11 +137,12 @@ public class AppointmentDelayService {
 
         /**
          * Check if status is terminal (no further transitions allowed).
+         * NO_SHOW is now allowed to be rescheduled (patient can return).
          */
         private boolean isTerminalState(AppointmentStatus status) {
                 return status == AppointmentStatus.COMPLETED
-                                || status == AppointmentStatus.CANCELLED
-                                || status == AppointmentStatus.NO_SHOW;
+                                || status == AppointmentStatus.CANCELLED;
+                // NO_SHOW removed: Allow rescheduling NO_SHOW appointments
         }
 
         /**

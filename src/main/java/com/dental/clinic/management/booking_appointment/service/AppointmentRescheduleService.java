@@ -60,6 +60,9 @@ public class AppointmentRescheduleService {
         private final PatientPlanItemRepository itemRepository;
         private final EntityManager entityManager;
 
+        // ISSUE #53: Holiday Validation
+        private final com.dental.clinic.management.utils.validation.HolidayValidator holidayValidator;
+
         /**
          * Reschedule appointment: Cancel old and create new in one transaction.
          *
@@ -75,6 +78,10 @@ public class AppointmentRescheduleService {
                 log.info("Rescheduling appointment {} to new time {}",
                                 oldAppointmentCode, request.getNewStartTime());
 
+                // STEP 0: ISSUE #53 - Validate new date is NOT a holiday (early check)
+                java.time.LocalDate newDate = request.getNewStartTime().toLocalDate();
+                holidayValidator.validateNotHoliday(newDate, "lịch hẹn (reschedule)");
+
                 // STEP 1: Lock old appointment
                 Appointment oldAppointment = appointmentRepository.findByCodeForUpdate(oldAppointmentCode)
                                 .orElseThrow(() -> new IllegalArgumentException(
@@ -89,8 +96,10 @@ public class AppointmentRescheduleService {
                 // STEP 3.5: FIX Issue #39 - Get plan item IDs from old appointment
                 List<Long> planItemIds = getPlanItemIdsFromOldAppointment(oldAppointment);
 
-                // STEP 3.6: FIX Issue #42 - Reset plan items status from SCHEDULED to READY_FOR_BOOKING
-                // This is necessary because old appointment will be cancelled, allowing re-booking
+                // STEP 3.6: FIX Issue #42 - Reset plan items status from SCHEDULED to
+                // READY_FOR_BOOKING
+                // This is necessary because old appointment will be cancelled, allowing
+                // re-booking
                 if (planItemIds != null && !planItemIds.isEmpty()) {
                         resetPlanItemsStatusForReschedule(planItemIds);
                         log.info("Reset {} plan items from SCHEDULED to READY_FOR_BOOKING for reschedule",
@@ -150,15 +159,16 @@ public class AppointmentRescheduleService {
                                         "Cannot reschedule cancelled appointment. Code: APPOINTMENT_NOT_RESCHEDULABLE");
                 }
 
-                if (status == AppointmentStatus.NO_SHOW) {
-                        throw new IllegalStateException(
-                                        "Cannot reschedule no-show appointment. Code: APPOINTMENT_NOT_RESCHEDULABLE");
-                }
+                // ALLOW NO_SHOW appointments to be rescheduled (patient can return)
+                // Removed restriction: NO_SHOW appointments can now be rescheduled
 
-                // Only allow SCHEDULED or CHECKED_IN
-                if (status != AppointmentStatus.SCHEDULED && status != AppointmentStatus.CHECKED_IN) {
+                // Allow SCHEDULED, CHECKED_IN, and NO_SHOW
+                if (status != AppointmentStatus.SCHEDULED
+                                && status != AppointmentStatus.CHECKED_IN
+                                && status != AppointmentStatus.NO_SHOW) {
                         throw new IllegalStateException(
-                                        String.format("Cannot reschedule appointment in status %s", status));
+                                        String.format("Cannot reschedule appointment in status %s. Only SCHEDULED, CHECKED_IN, or NO_SHOW can be rescheduled.",
+                                                        status));
                 }
 
                 // Rule #9: Check reschedule limit (max 2 reschedules)
@@ -174,7 +184,7 @@ public class AppointmentRescheduleService {
                                                         rescheduleCount));
                 }
 
-                log.debug("Old appointment {} validated for reschedule (reschedule count: {})", 
+                log.debug("Old appointment {} validated for reschedule (reschedule count: {})",
                                 oldAppointment.getAppointmentCode(), rescheduleCount);
         }
 
@@ -356,15 +366,20 @@ public class AppointmentRescheduleService {
         }
 
         /**
-         * FIX Issue #42: Reset plan items status from SCHEDULED to READY_FOR_BOOKING for reschedule.
+         * FIX Issue #42: Reset plan items status from SCHEDULED to READY_FOR_BOOKING
+         * for reschedule.
          * Only resets items that are currently SCHEDULED (from old appointment).
          *
          * Why this is needed:
-         * - When rescheduling, we need to create a new appointment with the same plan items
-         * - AppointmentCreationService.validatePlanItems() requires all items to be READY_FOR_BOOKING
+         * - When rescheduling, we need to create a new appointment with the same plan
+         * items
+         * - AppointmentCreationService.validatePlanItems() requires all items to be
+         * READY_FOR_BOOKING
          * - But items from old appointment are still in SCHEDULED status
-         * - We reset them here before validation to allow the new appointment to be created
-         * - The old appointment will be cancelled afterwards, which would normally trigger this reset
+         * - We reset them here before validation to allow the new appointment to be
+         * created
+         * - The old appointment will be cancelled afterwards, which would normally
+         * trigger this reset
          *
          * @param planItemIds List of plan item IDs to reset
          */
