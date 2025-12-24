@@ -186,51 +186,74 @@ public class TimeOffRequestService {
         public TimeOffRequestResponse createRequest(CreateTimeOffRequest request) {
                 log.debug("Request to create time-off request: {}", request);
 
-                // 1. Validate employee exists
-                employeeRepository.findById(request.getEmployeeId())
-                                .orElseThrow(() -> new EmployeeNotFoundException(request.getEmployeeId()));
+        // 1. Auto-fill employeeId from JWT if not provided (for employee self-requests)
+        final Integer employeeId;
+        if (request.getEmployeeId() != null) {
+            // Admin provided employeeId for another employee
+            employeeId = request.getEmployeeId();
+        } else {
+            // Get current user's employeeId from JWT token
+            String username = SecurityUtil.getCurrentUserLogin()
+                    .orElseThrow(() -> new RuntimeException("User not authenticated"));
 
-                // 2. Validate time-off type exists and is active
+            employeeId = accountRepository.findOneByUsername(username)
+                    .map(account -> {
+                        if (account.getEmployee() == null) {
+                            throw new RuntimeException(
+                                    "Account " + username + " không có Employee liên kết.");
+                        }
+                        return account.getEmployee().getEmployeeId();
+                    })
+                    .orElseThrow(() -> new RuntimeException("Employee not found for user: " + username));
+
+            log.info("Auto-filled employeeId from JWT: {}", employeeId);
+        }
+
+        // 2. Validate employee exists
+        employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new EmployeeNotFoundException(employeeId));
+
+                // 3. Validate time-off type exists and is active
                 TimeOffType timeOffType = typeRepository.findByTypeIdAndIsActive(request.getTimeOffTypeId(), true)
                                 .orElseThrow(() -> new TimeOffTypeNotFoundException(request.getTimeOffTypeId()));
 
-                // 3. Validate date range
-                if (request.getStartDate().isAfter(request.getEndDate())) {
-                        throw new InvalidDateRangeException(
-                                        "Ngày bắt đầu không được lớn hơn ngày kết thúc. " +
-                                                        "Ngày bắt đầu: " + request.getStartDate() + ", Ngày kết thúc: "
-                                                        + request.getEndDate());
-                }
+        // 4. Validate date range
+        if (request.getStartDate().isAfter(request.getEndDate())) {
+            throw new InvalidDateRangeException(
+                    "Ngày bắt đầu không được lớn hơn ngày kết thúc. " +
+                            "Ngày bắt đầu: " + request.getStartDate() + ", Ngày kết thúc: "
+                            + request.getEndDate());
+        }
 
-                // 3.1: ISSUE #53 - Validate date range does NOT include holidays
-                holidayValidator.validateRangeNotIncludeHolidays(
-                                request.getStartDate(),
-                                request.getEndDate(),
-                                "nghỉ phép");
+        // 5. ISSUE #53 - Validate date range does NOT include holidays
+        holidayValidator.validateRangeNotIncludeHolidays(
+                request.getStartDate(),
+                request.getEndDate(),
+                "nghỉ phép");
 
-                // 3.5. Check leave balance CHỈ cho ANNUAL_LEAVE
-                // Các loại khác (SICK_LEAVE, UNPAID_PERSONAL) không cần check balance
-                if ("ANNUAL_LEAVE".equals(timeOffType.getTypeCode())) {
-                        checkLeaveBalance(request.getEmployeeId(), request.getTimeOffTypeId(),
-                                        request.getStartDate(), request.getEndDate(), request.getWorkShiftId());
-                }
+        // 6. Check leave balance CHỈ cho ANNUAL_LEAVE
+        // Các loại khác (SICK_LEAVE, UNPAID_PERSONAL) không cần check balance
+        if ("ANNUAL_LEAVE".equals(timeOffType.getTypeCode())) {
+            checkLeaveBalance(employeeId, request.getTimeOffTypeId(),
+                    request.getStartDate(), request.getEndDate(), request.getWorkShiftId());
+        }
 
-                // 4. Business Rule: If half-day off (work_shift_id provided), start_date must
-                // equal
-                // end_date
-                if (request.getWorkShiftId() != null && !request.getStartDate().equals(request.getEndDate())) {
-                        throw new InvalidDateRangeException(
-                                        "Khi nghỉ theo ca, ngày bắt đầu và kết thúc phải giống nhau. " +
-                                                        "Ngày bắt đầu: " + request.getStartDate() + ", Ngày kết thúc: "
-                                                        + request.getEndDate());
-                }
+        // 7. Business Rule: If half-day off (work_shift_id provided), start_date must
+        // equal
+        // end_date
+        if (request.getWorkShiftId() != null && !request.getStartDate().equals(request.getEndDate())) {
+            throw new InvalidDateRangeException(
+                    "Khi nghỉ theo ca, ngày bắt đầu và kết thúc phải giống nhau. " +
+                            "Ngày bắt đầu: " + request.getStartDate() + ", Ngày kết thúc: "
+                            + request.getEndDate());
+        }
 
-                // 4.5. [V14 Hybrid] Kiểm tra nhân viên có lịch làm việc không
-                // Query từ fixed_shift_registrations VÀ part_time_registrations
-                if (request.getWorkShiftId() != null) {
-                        // Nghỉ theo ca (half-day)
-                        boolean hasShift = checkEmployeeHasShift(
-                                        request.getEmployeeId(),
+        // 8. [V14 Hybrid] Kiểm tra nhân viên có lịch làm việc không
+        // Query từ fixed_shift_registrations VÀ part_time_registrations
+        if (request.getWorkShiftId() != null) {
+            // Nghỉ theo ca (half-day)
+            boolean hasShift = checkEmployeeHasShift(
+                    employeeId,
                                         request.getStartDate(),
                                         request.getWorkShiftId());
 
@@ -241,7 +264,7 @@ public class TimeOffRequestService {
                                                 .orElse(request.getWorkShiftId());
 
                                 throw new ShiftNotFoundForLeaveException(
-                                                request.getEmployeeId(),
+                                                employeeId,
                                                 request.getStartDate().toString(),
                                                 request.getWorkShiftId(),
                                                 shiftName);
@@ -252,7 +275,7 @@ public class TimeOffRequestService {
                         boolean hasAnyShift = false;
 
                         while (!currentDate.isAfter(request.getEndDate())) {
-                                if (checkEmployeeHasShift(request.getEmployeeId(), currentDate, null)) {
+                                if (checkEmployeeHasShift(employeeId, currentDate, null)) {
                                         hasAnyShift = true;
                                         break;
                                 }
@@ -267,16 +290,16 @@ public class TimeOffRequestService {
                         }
                 }
 
-                // 5. Check for conflicting requests
+                // 9. Check for conflicting requests
                 boolean hasConflict = requestRepository.existsConflictingRequest(
-                                request.getEmployeeId(),
+                                employeeId,
                                 request.getStartDate(),
                                 request.getEndDate(),
                                 request.getWorkShiftId());
 
                 if (hasConflict) {
                         List<TimeOffRequest> conflicts = requestRepository.findConflictingRequests(
-                                        request.getEmployeeId(),
+                                        employeeId,
                                         request.getStartDate(),
                                         request.getEndDate(),
                                         request.getWorkShiftId());
@@ -315,7 +338,7 @@ public class TimeOffRequestService {
                 // 8. Create and save time-off request
                 TimeOffRequest timeOffRequest = TimeOffRequest.builder()
                                 .requestId(requestId)
-                                .employeeId(request.getEmployeeId())
+                                .employeeId(employeeId)
                                 .timeOffTypeId(request.getTimeOffTypeId())
                                 .startDate(request.getStartDate())
                                 .endDate(request.getEndDate())
@@ -337,8 +360,8 @@ public class TimeOffRequestService {
 
                 // Send notification to all ADMIN users
                 try {
-                        Employee employee = employeeRepository.findById(request.getEmployeeId())
-                                        .orElseThrow(() -> new EmployeeNotFoundException(request.getEmployeeId()));
+                        Employee employee = employeeRepository.findById(employeeId)
+                                        .orElseThrow(() -> new EmployeeNotFoundException(employeeId));
 
                         String employeeName = employee.getFirstName() + " " + employee.getLastName();
                         notificationService.createTimeOffRequestNotification(
