@@ -1,5 +1,6 @@
 package com.dental.clinic.management.warehouse.service;
 
+import com.dental.clinic.management.warehouse.domain.ItemBatch;
 import com.dental.clinic.management.warehouse.domain.ItemMaster;
 import com.dental.clinic.management.warehouse.domain.ItemUnit;
 import com.dental.clinic.management.warehouse.dto.request.CreateItemMasterRequest;
@@ -11,6 +12,7 @@ import com.dental.clinic.management.warehouse.dto.response.ItemMasterListDto;
 import com.dental.clinic.management.warehouse.dto.response.ItemMasterPageResponse;
 import com.dental.clinic.management.warehouse.dto.response.UpdateItemMasterResponse;
 import com.dental.clinic.management.warehouse.domain.ItemCategory;
+import com.dental.clinic.management.warehouse.repository.ItemBatchRepository;
 import com.dental.clinic.management.warehouse.repository.ItemCategoryRepository;
 import com.dental.clinic.management.warehouse.repository.ItemMasterRepository;
 import com.dental.clinic.management.warehouse.repository.ItemUnitRepository;
@@ -42,6 +44,7 @@ public class ItemMasterService {
         private final ItemMasterRepository itemMasterRepository;
         private final ItemUnitRepository itemUnitRepository;
         private final ItemCategoryRepository itemCategoryRepository;
+        private final ItemBatchRepository itemBatchRepository;
 
         @Transactional
         public CreateItemMasterResponse createItemMaster(CreateItemMasterRequest request) {
@@ -782,5 +785,39 @@ public class ItemMasterService {
                         return String.valueOf(number.longValue());
                 }
                 return String.valueOf(number);
+        }
+
+        /**
+         * Delete Item Master
+         *
+         * @param id Item master ID to delete
+         * @throws ResponseStatusException 404 if item not found, 400 if item has batches
+         */
+        @Transactional
+        public void deleteItemMaster(Long id) {
+                log.info("Deleting item master: {}", id);
+
+                // 1. Find item master
+                ItemMaster itemMaster = itemMasterRepository.findById(id)
+                                .orElseThrow(() -> new ResponseStatusException(
+                                                HttpStatus.NOT_FOUND,
+                                                "Item master not found with ID: " + id));
+
+                // 2. Check if has batches (prevent deletion if inventory exists)
+                List<ItemBatch> batches = itemBatchRepository.findByItemMaster_ItemMasterId(id);
+                if (!batches.isEmpty()) {
+                        log.warn("Cannot delete item master {} - has {} batches", id, batches.size());
+                        throw new ResponseStatusException(
+                                        HttpStatus.BAD_REQUEST,
+                                        String.format(
+                                                        "Cannot delete item master '%s' - it has %d batch(es) in inventory. "
+                                                                        +
+                                                                        "Please use soft delete (set isActive=false) instead to preserve transaction history.",
+                                                        itemMaster.getItemName(), batches.size()));
+                }
+
+                // 3. Delete item master (cascades to units)
+                itemMasterRepository.delete(itemMaster);
+                log.info("Deleted item master successfully: {} ({})", id, itemMaster.getItemCode());
         }
 }
