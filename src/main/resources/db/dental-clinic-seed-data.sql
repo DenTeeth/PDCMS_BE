@@ -393,6 +393,7 @@ VALUES
 ('ROLE_DENTIST', 'VIEW_LEAVE_OWN'), -- RBAC: View own leave requests
 ('ROLE_DENTIST', 'CREATE_TIME_OFF'), -- Request time-off
 ('ROLE_DENTIST', 'CREATE_OVERTIME'), -- Request overtime
+('ROLE_DENTIST', 'VIEW_OT_OWN'), -- RBAC: View own overtime requests
 
 -- HOLIDAY (read-only)
 ('ROLE_DENTIST', 'VIEW_HOLIDAY'), -- View clinic holiday schedule
@@ -434,6 +435,7 @@ VALUES
 ('ROLE_NURSE', 'VIEW_LEAVE_OWN'), -- RBAC: View own leave requests
 ('ROLE_NURSE', 'CREATE_TIME_OFF'), -- Request time-off
 ('ROLE_NURSE', 'CREATE_OVERTIME'), -- Request overtime
+('ROLE_NURSE', 'VIEW_OT_OWN'), -- RBAC: View own overtime requests
 
 -- HOLIDAY (read-only)
 ('ROLE_NURSE', 'VIEW_HOLIDAY'),
@@ -514,6 +516,7 @@ VALUES
 ('ROLE_RECEPTIONIST', 'VIEW_LEAVE_OWN'), -- RBAC: View own leave requests
 ('ROLE_RECEPTIONIST', 'CREATE_TIME_OFF'), -- Request time-off
 ('ROLE_RECEPTIONIST', 'CREATE_OVERTIME'), -- Request overtime
+('ROLE_RECEPTIONIST', 'VIEW_OT_OWN'), -- RBAC: View own overtime requests
 
 -- HOLIDAY (read-only)
 ('ROLE_RECEPTIONIST', 'VIEW_HOLIDAY'),
@@ -614,6 +617,7 @@ VALUES
 ('ROLE_ACCOUNTANT', 'VIEW_LEAVE_OWN'), -- RBAC: View own leave requests
 ('ROLE_ACCOUNTANT', 'CREATE_TIME_OFF'), -- Request time-off
 ('ROLE_ACCOUNTANT', 'CREATE_OVERTIME'), -- Request overtime
+('ROLE_ACCOUNTANT', 'VIEW_OT_OWN'), -- RBAC: View own overtime requests
 
 -- HOLIDAY (read-only)
 ('ROLE_ACCOUNTANT', 'VIEW_HOLIDAY'),
@@ -646,6 +650,7 @@ VALUES
 ('ROLE_INVENTORY_MANAGER', 'VIEW_LEAVE_OWN'), -- RBAC: View own leave requests
 ('ROLE_INVENTORY_MANAGER', 'CREATE_TIME_OFF'), -- Request time-off
 ('ROLE_INVENTORY_MANAGER', 'CREATE_OVERTIME'), -- Request overtime
+('ROLE_INVENTORY_MANAGER', 'VIEW_OT_OWN'), -- RBAC: View own overtime requests
 
 -- HOLIDAY (read-only)
 ('ROLE_INVENTORY_MANAGER', 'VIEW_HOLIDAY'),
@@ -3721,19 +3726,14 @@ ON CONFLICT (appointment_id, employee_id) DO NOTHING;
 -- ============================================
 
 -- Fix appointment_audit_logs table if missing columns (with correct ENUM types)
--- NOTE: Uncomment ONLY if you have an old database with missing/wrong columns
--- For new databases, schema.sql creates this table correctly
--- Better solution: Drop the table and let Hibernate recreate it correctly
---
--- If you must migrate existing data, run these commands separately:
--- ALTER TABLE appointment_audit_logs ADD COLUMN IF NOT EXISTS action_type appointment_action_type;
--- ALTER TABLE appointment_audit_logs ADD COLUMN IF NOT EXISTS reason_code appointment_reason_code;
--- ALTER TABLE appointment_audit_logs ADD COLUMN IF NOT EXISTS old_value TEXT;
--- ALTER TABLE appointment_audit_logs ADD COLUMN IF NOT EXISTS new_value TEXT;
--- ALTER TABLE appointment_audit_logs ADD COLUMN IF NOT EXISTS old_start_time TIMESTAMP;
--- ALTER TABLE appointment_audit_logs ADD COLUMN IF NOT EXISTS new_start_time TIMESTAMP;
--- ALTER TABLE appointment_audit_logs ADD COLUMN IF NOT EXISTS old_status appointment_status_enum;
--- ALTER TABLE appointment_audit_logs ADD COLUMN IF NOT EXISTS new_status appointment_status_enum;
+ALTER TABLE appointment_audit_logs ADD COLUMN IF NOT EXISTS action_type appointment_action_type;
+ALTER TABLE appointment_audit_logs ADD COLUMN IF NOT EXISTS reason_code appointment_reason_code;
+ALTER TABLE appointment_audit_logs ADD COLUMN IF NOT EXISTS old_value TEXT;
+ALTER TABLE appointment_audit_logs ADD COLUMN IF NOT EXISTS new_value TEXT;
+ALTER TABLE appointment_audit_logs ADD COLUMN IF NOT EXISTS old_start_time TIMESTAMP;
+ALTER TABLE appointment_audit_logs ADD COLUMN IF NOT EXISTS new_start_time TIMESTAMP;
+ALTER TABLE appointment_audit_logs ADD COLUMN IF NOT EXISTS old_status appointment_status_enum;
+ALTER TABLE appointment_audit_logs ADD COLUMN IF NOT EXISTS new_status appointment_status_enum;
 
 -- ============================================
 -- TREATMENT PLANS SEED DATA
