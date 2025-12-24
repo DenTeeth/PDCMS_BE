@@ -4,8 +4,11 @@ import java.time.Duration;
 
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -18,6 +21,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Configuration
 @EnableCaching
 public class RedisConfig {
@@ -53,22 +59,44 @@ public class RedisConfig {
         }
 
         @Bean
+        @Primary
         public CacheManager cacheManager(RedisConnectionFactory connectionFactory) {
-                GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(
-                                createObjectMapper());
+                try {
+                        // Test Redis connection
+                        connectionFactory.getConnection().ping();
+                        
+                        log.info("✅ Redis connected successfully - using Redis cache");
+                        
+                        GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(
+                                        createObjectMapper());
 
-                RedisCacheConfiguration cacheConfig = RedisCacheConfiguration.defaultCacheConfig()
-                                .entryTtl(Duration.ofMinutes(30))
-                                .serializeKeysWith(
-                                                RedisSerializationContext.SerializationPair
-                                                                .fromSerializer(new StringRedisSerializer()))
-                                .serializeValuesWith(
-                                                RedisSerializationContext.SerializationPair
-                                                                .fromSerializer(serializer));
+                        RedisCacheConfiguration cacheConfig = RedisCacheConfiguration.defaultCacheConfig()
+                                        .entryTtl(Duration.ofMinutes(30))
+                                        .serializeKeysWith(
+                                                        RedisSerializationContext.SerializationPair
+                                                                        .fromSerializer(new StringRedisSerializer()))
+                                        .serializeValuesWith(
+                                                        RedisSerializationContext.SerializationPair
+                                                                        .fromSerializer(serializer));
 
-                return RedisCacheManager.builder(connectionFactory)
-                                .cacheDefaults(cacheConfig)
-                                .transactionAware()
-                                .build();
+                        return RedisCacheManager.builder(connectionFactory)
+                                        .cacheDefaults(cacheConfig)
+                                        .transactionAware()
+                                        .build();
+                } catch (RedisConnectionFailureException e) {
+                        log.warn("⚠️ Redis unavailable - falling back to in-memory cache: {}", e.getMessage());
+                        return fallbackCacheManager();
+                } catch (Exception e) {
+                        log.warn("⚠️ Redis connection error - falling back to in-memory cache: {}", e.getMessage());
+                        return fallbackCacheManager();
+                }
+        }
+
+        /**
+         * Fallback to in-memory cache when Redis is unavailable
+         */
+        private CacheManager fallbackCacheManager() {
+                log.info("📦 Using ConcurrentMapCacheManager (in-memory) as fallback");
+                return new ConcurrentMapCacheManager("roles", "permissions");
         }
 }
