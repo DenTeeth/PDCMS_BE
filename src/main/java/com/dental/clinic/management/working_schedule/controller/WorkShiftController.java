@@ -115,7 +115,7 @@ public class WorkShiftController {
      * @return List of WorkShiftResponse
      */
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('VIEW_SCHEDULE_ALL', 'MANAGE_WORK_SHIFTS')")
+    @PreAuthorize("hasAnyAuthority('VIEW_SCHEDULE_ALL', 'VIEW_SCHEDULE_OWN', 'MANAGE_WORK_SHIFTS')")
     @Operation(summary = "Get all work shifts", description = "Retrieve all work shifts with optional filtering, searching, and sorting.")
     public ResponseEntity<List<WorkShiftResponse>> getAllWorkShifts(
             @RequestParam(required = false) Boolean isActive,
@@ -138,7 +138,7 @@ public class WorkShiftController {
      * @return WorkShiftResponse with shift details
      */
     @GetMapping("/{workShiftId}")
-    @PreAuthorize("hasAnyAuthority('VIEW_SCHEDULE_ALL', 'MANAGE_WORK_SHIFTS')")
+    @PreAuthorize("hasAnyAuthority('VIEW_SCHEDULE_ALL', 'VIEW_SCHEDULE_OWN', 'MANAGE_WORK_SHIFTS')")
     @Operation(summary = "Get work shift by ID", description = "Retrieve a specific work shift by its ID.")
     public ResponseEntity<WorkShiftResponse> getWorkShiftById(@PathVariable String workShiftId) {
         log.info("Fetching work shift with ID: {}", workShiftId);
