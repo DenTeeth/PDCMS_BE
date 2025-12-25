@@ -36,6 +36,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -56,9 +57,59 @@ public class ClinicalRecordService {
         private final ItemMasterRepository itemMasterRepository;
         private final PatientToothStatusRepository toothStatusRepository;
         private final VitalSignsReferenceService vitalSignsReferenceService;
+        private final ProcedureMaterialService procedureMaterialService;
 
         private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+        /**
+         * Deduct materials for all procedures in an appointment when it's completed
+         * This is called by AppointmentStatusService when status changes to COMPLETED
+         * 
+         * @param appointmentId The appointment ID
+         */
+        @Transactional
+        public void deductMaterialsForAppointment(Integer appointmentId) {
+                log.info("Deducting materials for completed appointment: {}", appointmentId);
+                
+                // Get clinical record for this appointment
+                ClinicalRecord record = clinicalRecordRepository.findByAppointment_AppointmentId(appointmentId)
+                        .orElse(null);
+                
+                if (record == null) {
+                        log.info("No clinical record found for appointment {}, skipping material deduction", appointmentId);
+                        return;
+                }
+                
+                // Get all procedures that haven't had materials deducted yet
+                List<ClinicalRecordProcedure> procedures = procedureRepository
+                        .findByClinicalRecord_ClinicalRecordId(record.getClinicalRecordId());
+                
+                int deductedCount = 0;
+                int skippedCount = 0;
+                
+                for (ClinicalRecordProcedure procedure : procedures) {
+                        // Skip if materials already deducted
+                        if (procedure.getMaterialsDeductedAt() != null) {
+                                log.info("Materials already deducted for procedure {}, skipping", procedure.getProcedureId());
+                                skippedCount++;
+                                continue;
+                        }
+                        
+                        try {
+                                procedureMaterialService.deductMaterialsForProcedure(procedure.getProcedureId());
+                                log.info("Materials deducted successfully for procedure {}", procedure.getProcedureId());
+                                deductedCount++;
+                        } catch (Exception e) {
+                                log.error("Failed to deduct materials for procedure {}: {}", 
+                                        procedure.getProcedureId(), e.getMessage());
+                                // Continue with next procedure - don't fail the whole operation
+                        }
+                }
+                
+                log.info("Material deduction complete for appointment {}: {} deducted, {} skipped", 
+                        appointmentId, deductedCount, skippedCount);
+        }
 
         /**
          * Get clinical record for an appointment
@@ -696,6 +747,9 @@ public class ClinicalRecordService {
                 ClinicalRecordProcedure savedProcedure = procedureRepository.save(procedure);
                 log.info("Procedure saved with ID: {}", savedProcedure.getProcedureId());
 
+                // Note: Materials will be auto-deducted when appointment status changes to COMPLETED
+                // This ensures materials are only deducted for completed procedures
+
                 // Step 6: Build response
                 return AddProcedureResponse.builder()
                                 .procedureId(savedProcedure.getProcedureId())
@@ -1073,10 +1127,9 @@ public class ClinicalRecordService {
 
                 log.info("Prescription deleted successfully for clinical record ID: {}", recordId);
 
-                // TODO: If inventory integration exists, restore stock levels here
-                // For each item in prescription.getItems():
-                // - If item.getItemMaster() != null
-                // - Call inventoryService.restoreStock(itemMasterId, quantity)
+                // Note: Prescription inventory tracking is out of scope
+                // Prescriptions are for patient take-home medications, not clinic consumption
+                // Only procedure materials (used during treatment) are tracked via procedure_material_usage
         }
 
         /**

@@ -80,6 +80,94 @@ COMMENT ON COLUMN chatbot_knowledge.response IS 'Câu trả lời chuẩn';
 COMMENT ON COLUMN chatbot_knowledge.is_active IS 'Trạng thái hoạt động';
 
 -- ============================================
+-- MATERIAL CONSUMPTION TRACKING (V35)
+-- ============================================
+-- Feature: Track actual material usage vs planned (BOM)
+-- Date: 2025-12-25
+-- Purpose: Link procedures to warehouse deductions, enable variance analysis
+
+-- Step 1: Add material tracking columns to clinical_record_procedures
+ALTER TABLE clinical_record_procedures 
+ADD COLUMN IF NOT EXISTS quantity_multiplier INTEGER DEFAULT 1,
+ADD COLUMN IF NOT EXISTS storage_transaction_id INTEGER,
+ADD COLUMN IF NOT EXISTS materials_deducted_at TIMESTAMP,
+ADD COLUMN IF NOT EXISTS materials_deducted_by VARCHAR(100);
+
+-- Add foreign key constraint (will be skipped if already exists)
+ALTER TABLE clinical_record_procedures
+DROP CONSTRAINT IF EXISTS fk_procedure_storage_tx;
+
+ALTER TABLE clinical_record_procedures
+ADD CONSTRAINT fk_procedure_storage_tx 
+    FOREIGN KEY (storage_transaction_id) 
+    REFERENCES storage_transactions(transaction_id) 
+    ON DELETE SET NULL;
+
+-- Add index if not exists
+CREATE INDEX IF NOT EXISTS idx_procedures_storage_tx ON clinical_record_procedures(storage_transaction_id);
+
+-- Add comments
+COMMENT ON COLUMN clinical_record_procedures.quantity_multiplier IS 'Number of times procedure was performed (for scaling BOM quantities). Default: 1';
+COMMENT ON COLUMN clinical_record_procedures.storage_transaction_id IS 'Links to warehouse export transaction for material consumption audit trail';
+COMMENT ON COLUMN clinical_record_procedures.materials_deducted_at IS 'Timestamp when materials were deducted from warehouse';
+COMMENT ON COLUMN clinical_record_procedures.materials_deducted_by IS 'Employee username who triggered material deduction';
+
+-- Step 2: Create procedure_material_usage table
+CREATE TABLE IF NOT EXISTS procedure_material_usage (
+    usage_id SERIAL PRIMARY KEY,
+    procedure_id INTEGER NOT NULL,
+    item_master_id INTEGER NOT NULL,
+    
+    -- Planned vs Actual quantities
+    planned_quantity NUMERIC(10,2) NOT NULL,
+    actual_quantity NUMERIC(10,2) NOT NULL,
+    unit_id INTEGER NOT NULL,
+    
+    -- Variance tracking (computed column)
+    variance_quantity NUMERIC(10,2) GENERATED ALWAYS AS (actual_quantity - planned_quantity) STORED,
+    variance_reason VARCHAR(500),
+    
+    -- Audit trail
+    recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    recorded_by VARCHAR(100),
+    
+    -- Notes
+    notes TEXT,
+    
+    -- Foreign keys
+    CONSTRAINT fk_usage_procedure 
+        FOREIGN KEY (procedure_id) 
+        REFERENCES clinical_record_procedures(procedure_id) 
+        ON DELETE CASCADE,
+    
+    CONSTRAINT fk_usage_item 
+        FOREIGN KEY (item_master_id) 
+        REFERENCES item_masters(item_master_id) 
+        ON DELETE RESTRICT,
+    
+    CONSTRAINT fk_usage_unit 
+        FOREIGN KEY (unit_id) 
+        REFERENCES item_units(unit_id) 
+        ON DELETE RESTRICT,
+    
+    -- Ensure one record per procedure-item combination
+    CONSTRAINT uk_procedure_item UNIQUE (procedure_id, item_master_id)
+);
+
+-- Indexes for performance
+CREATE INDEX IF NOT EXISTS idx_material_usage_procedure ON procedure_material_usage(procedure_id);
+CREATE INDEX IF NOT EXISTS idx_material_usage_item ON procedure_material_usage(item_master_id);
+CREATE INDEX IF NOT EXISTS idx_material_usage_recorded_at ON procedure_material_usage(recorded_at DESC);
+
+-- Table and column comments
+COMMENT ON TABLE procedure_material_usage IS 'Tracks actual material quantities used per procedure for variance analysis and reporting';
+COMMENT ON COLUMN procedure_material_usage.planned_quantity IS 'Expected quantity from service BOM (service_consumables)';
+COMMENT ON COLUMN procedure_material_usage.actual_quantity IS 'Actual quantity used during procedure (can be adjusted by assistant)';
+COMMENT ON COLUMN procedure_material_usage.variance_quantity IS 'Difference between actual and planned (positive = overuse, negative = underuse)';
+COMMENT ON COLUMN procedure_material_usage.variance_reason IS 'Explanation for variance if actual differs from planned';
+COMMENT ON COLUMN procedure_material_usage.recorded_by IS 'Employee username who recorded/updated the usage';
+
+-- ============================================
 -- BƯỚC 1: TẠO BASE ROLES (3 loại cố định)
 -- ============================================
 -- Base roles xác định LAYOUT FE (AdminLayout/EmployeeLayout/PatientLayout)
