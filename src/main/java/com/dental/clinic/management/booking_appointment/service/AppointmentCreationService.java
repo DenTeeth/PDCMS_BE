@@ -1429,6 +1429,14 @@ public class AppointmentCreationService {
 
                         if (existingAppointmentCount == 0) { // This will be the FIRST appointment
                                 LocalDate planStartDate = plan.getStartDate();
+                                
+                                // Skip validation if plan start date is not set yet
+                                if (planStartDate == null) {
+                                        log.debug("Plan start date not set yet - skipping proximity validation. " +
+                                                "Start date will be set when first appointment is booked.");
+                                        return;
+                                }
+                                
                                 LocalDate appointmentDate = appointmentStartTime.toLocalDate();
 
                                 // Calculate days between plan start and appointment
