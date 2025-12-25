@@ -6,7 +6,6 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -76,7 +75,6 @@ public class ChatbotService {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private String callGeminiApi(String prompt) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -91,11 +89,11 @@ public class ChatbotService {
 
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
 
-        ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+        ResponseEntity<Map> response = restTemplate.exchange(
                 geminiApiUrl,
                 HttpMethod.POST,
                 request,
-                new ParameterizedTypeReference<Map<String, Object>>() {});
+                Map.class);
 
         if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
             Map<String, Object> body = response.getBody();

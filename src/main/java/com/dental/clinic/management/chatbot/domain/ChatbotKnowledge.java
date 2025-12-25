@@ -27,6 +27,5 @@ public class ChatbotKnowledge {
     private String response;
 
     @Column(name = "is_active")
-    @Builder.Default
     private Boolean isActive = true;
 }
