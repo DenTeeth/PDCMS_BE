@@ -1,5 +1,7 @@
 package com.dental.clinic.management.warehouse.service;
 
+import com.dental.clinic.management.booking_appointment.domain.Appointment;
+import com.dental.clinic.management.booking_appointment.repository.AppointmentRepository;
 import com.dental.clinic.management.employee.domain.Employee;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.exception.BadRequestException;
@@ -48,6 +50,7 @@ public class ExportTransactionService {
     private final ItemBatchRepository batchRepository;
     private final ItemUnitRepository unitRepository;
     private final EmployeeRepository employeeRepository;
+    private final AppointmentRepository appointmentRepository;
 
     /**
      * Create Export Transaction
@@ -153,7 +156,7 @@ public class ExportTransactionService {
 
         String transactionCode = generateTransactionCode();
 
-        return StorageTransaction.builder()
+        StorageTransaction transaction = StorageTransaction.builder()
                 .transactionCode(transactionCode)
                 .transactionType(TransactionType.EXPORT)
                 .transactionDate(request.getTransactionDate().atStartOfDay())
@@ -168,6 +171,54 @@ public class ExportTransactionService {
                 .createdAt(LocalDateTime.now())
                 .items(new ArrayList<>())
                 .build();
+
+        // Auto-link appointment by appointmentId or referenceCode
+        linkAppointmentByReference(request, transaction);
+
+        return transaction;
+    }
+
+    /**
+     * Link appointment to transaction based on appointmentId or referenceCode
+     * Priority: appointmentId > referenceCode pattern matching
+     */
+    private void linkAppointmentByReference(ExportTransactionRequest request, StorageTransaction transaction) {
+        // Priority 1: If appointmentId is provided, use it and auto-set referenceCode
+        if (request.getAppointmentId() != null) {
+            log.info("Linking transaction to appointment ID: {}", request.getAppointmentId());
+            
+            appointmentRepository.findById(request.getAppointmentId().intValue())
+                    .ifPresentOrElse(
+                            apt -> {
+                                transaction.setRelatedAppointment(apt);
+                                transaction.setReferenceCode(apt.getAppointmentCode()); // Auto-set reference code
+                                log.info("✓ Linked to appointment: {} (auto-set referenceCode)", apt.getAppointmentCode());
+                            },
+                            () -> {
+                                log.warn("⚠ Appointment ID {} not found, proceeding without link", request.getAppointmentId());
+                            }
+                    );
+            return;
+        }
+
+        // Priority 2: If referenceCode looks like appointment code (APT-xxx), try to find it
+        if (request.getReferenceCode() != null && 
+            request.getReferenceCode().trim().toUpperCase().startsWith("APT-")) {
+            
+            String appointmentCode = request.getReferenceCode().trim();
+            log.info("Reference code looks like appointment code, attempting to link: {}", appointmentCode);
+            
+            appointmentRepository.findByAppointmentCode(appointmentCode)
+                    .ifPresentOrElse(
+                            apt -> {
+                                transaction.setRelatedAppointment(apt);
+                                log.info("✓ Auto-linked to appointment by referenceCode: {}", appointmentCode);
+                            },
+                            () -> {
+                                log.info("ℹ Appointment code {} not found, treating as custom reference", appointmentCode);
+                            }
+                    );
+        }
     }
 
     /**

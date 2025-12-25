@@ -111,4 +111,14 @@ public interface StorageTransactionRepository extends JpaRepository<StorageTrans
          "LEFT JOIN FETCH st.createdBy e " +
          "WHERE st.transactionId = :id")
   Optional<StorageTransaction> findByIdWithDetails(@Param("id") Long id);
+
+  /**
+   * Get recent reference codes for auto-complete suggestions
+   * Returns transactions with non-null reference codes, ordered by date DESC
+   */
+  @Query(value = "SELECT * FROM storage_transactions " +
+         "WHERE reference_code IS NOT NULL " +
+         "ORDER BY transaction_date DESC " +
+         "LIMIT :limit", nativeQuery = true)
+  List<StorageTransaction> findRecentReferenceCodesWithLimit(@Param("limit") int limit);
 }

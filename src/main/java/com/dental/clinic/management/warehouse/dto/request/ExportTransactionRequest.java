@@ -1,6 +1,7 @@
 package com.dental.clinic.management.warehouse.dto.request;
 
 import com.dental.clinic.management.warehouse.enums.ExportType;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
@@ -33,6 +34,9 @@ public class ExportTransactionRequest {
 
     @Size(max = 100, message = "Reference code must not exceed 100 characters")
     private String referenceCode; // Mã phiếu yêu cầu hoặc mã ca điều trị
+
+    @Schema(description = "Link to appointment (auto-fills referenceCode and relatedAppointment)")
+    private Long appointmentId; // When provided, auto-set referenceCode from appointment.appointmentCode
 
     // Audit Fields (Enhanced from review)
     @Size(max = 200, message = "Department name must not exceed 200 characters")
