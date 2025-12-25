@@ -378,15 +378,17 @@ public class ImportTransactionService {
                         }
 
                         // Update existing batch
-                        batch.setQuantityOnHand(batch.getQuantityOnHand() + quantityToAdd);
+                        // ⚠️ IMPORTANT: Quantity update moved to approval process
+                        // batch.setQuantityOnHand(batch.getQuantityOnHand() + quantityToAdd);
                         if (binLocation != null && !binLocation.isBlank()) {
                                 batch.setBinLocation(binLocation);
                         }
                         batchRepository.save(batch);
 
-                        itemMaster.updateCachedQuantity(quantityToAdd);
-                        itemMaster.setCachedLastImportDate(LocalDateTime.now());
-                        itemMasterRepository.save(itemMaster);
+                        // ⚠️ IMPORTANT: Cached quantity update moved to approval process
+                        // itemMaster.updateCachedQuantity(quantityToAdd);
+                        // itemMaster.setCachedLastImportDate(LocalDateTime.now());
+                        // itemMasterRepository.save(itemMaster);
 
                         log.debug(" Updated existing batch ID {} - Added {} units, New total: {}",
                                         batch.getBatchId(), quantityToAdd, batch.getQuantityOnHand());
@@ -394,20 +396,22 @@ public class ImportTransactionService {
                         return new BatchResult(batch, false);
                 } else {
                         // Create new batch
+                        // ⚠️ IMPORTANT: quantityOnHand starts at 0, will be updated on approval
                         ItemBatch newBatch = ItemBatch.builder()
                                         .itemMaster(itemMaster)
                                         .lotNumber(lotNumber)
                                         .expiryDate(expiryDate)
-                                        .quantityOnHand(quantityToAdd)
+                                        .quantityOnHand(0) // Will be updated when transaction is approved
                                         .binLocation(binLocation)
                                         .createdAt(LocalDateTime.now())
                                         .build();
 
                         newBatch = batchRepository.save(newBatch);
 
-                        itemMaster.updateCachedQuantity(quantityToAdd);
-                        itemMaster.setCachedLastImportDate(LocalDateTime.now());
-                        itemMasterRepository.save(itemMaster);
+                        // ⚠️ IMPORTANT: Cached quantity update moved to approval process
+                        // itemMaster.updateCachedQuantity(quantityToAdd);
+                        // itemMaster.setCachedLastImportDate(LocalDateTime.now());
+                        // itemMasterRepository.save(itemMaster);
 
                         log.debug(" Created new batch ID {} - Lot: {}, Quantity: {}",
                                         newBatch.getBatchId(), lotNumber, quantityToAdd);

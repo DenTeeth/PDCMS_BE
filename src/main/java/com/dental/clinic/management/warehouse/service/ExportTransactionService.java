@@ -354,12 +354,13 @@ public class ExportTransactionService {
                 log.debug("📦 Taking {} units from batch {} (available: {})",
                         quantityToTake, batch.getBatchId(), batch.getQuantityOnHand());
 
+                // ⚠️ IMPORTANT: Quantity update moved to approval process
                 // Update batch quantity
-                batch.setQuantityOnHand(batch.getQuantityOnHand() - quantityToTake);
-                batchRepository.save(batch);
+                // batch.setQuantityOnHand(batch.getQuantityOnHand() - quantityToTake);
+                // batchRepository.save(batch);
 
-                itemMaster.updateCachedQuantity(-quantityToTake);
-                itemMasterRepository.save(itemMaster);
+                // itemMaster.updateCachedQuantity(-quantityToTake);
+                // itemMasterRepository.save(itemMaster);
 
                 // Calculate financial value
                 BigDecimal unitPrice = getUnitPrice(batch);
@@ -481,7 +482,8 @@ public class ExportTransactionService {
                 parentUnit.getUnitName(), unpackedQuantity, requestedUnit.getUnitName());
 
         // Step 1: Reduce parent batch by 1
-        parentBatch.setQuantityOnHand(parentBatch.getQuantityOnHand() - 1);
+        // ⚠️ IMPORTANT: Quantity update moved to approval process
+        // parentBatch.setQuantityOnHand(parentBatch.getQuantityOnHand() - 1);
         parentBatch.setIsUnpacked(true);
         parentBatch.setUnpackedAt(LocalDateTime.now());
         parentBatch.setUnpackedByTransactionId(transaction.getTransactionId());
@@ -502,8 +504,9 @@ public class ExportTransactionService {
         // Step 3: Take what we need from child batch
         int quantityToTake = Math.min(remainingQuantity, childBatch.getQuantityOnHand());
 
-        childBatch.setQuantityOnHand(childBatch.getQuantityOnHand() - quantityToTake);
-        batchRepository.save(childBatch);
+        // ⚠️ IMPORTANT: Quantity update moved to approval process
+        // childBatch.setQuantityOnHand(childBatch.getQuantityOnHand() - quantityToTake);
+        // batchRepository.save(childBatch);
 
         // Calculate financial value
         BigDecimal unitPrice = getUnitPrice(parentBatch); // Inherit price from parent
@@ -552,17 +555,19 @@ public class ExportTransactionService {
         if (existingChild.isPresent()) {
             // Update existing
             ItemBatch child = existingChild.get();
-            child.setQuantityOnHand(child.getQuantityOnHand() + quantityToAdd);
-            log.debug("📦 Updated existing child batch {} (+{})", child.getBatchId(), quantityToAdd);
+            // ⚠️ IMPORTANT: Quantity update moved to approval process
+            // child.setQuantityOnHand(child.getQuantityOnHand() + quantityToAdd);
+            log.debug("📦 Child batch {} will be updated on approval", child.getBatchId());
             return batchRepository.save(child);
         } else {
             // Create new child batch
+            // ⚠️ IMPORTANT: quantityOnHand starts at 0, will be updated on approval
             ItemBatch newChild = ItemBatch.builder()
                     .itemMaster(parentBatch.getItemMaster())
                     .parentBatch(parentBatch)
                     .lotNumber(childLotNumber)
                     .expiryDate(parentBatch.getExpiryDate()) // Inherit from parent
-                    .quantityOnHand(quantityToAdd)
+                    .quantityOnHand(0) // Will be updated when transaction is approved
                     .supplier(parentBatch.getSupplier()) // Inherit from parent
                     .binLocation(parentBatch.getBinLocation())
                     .isUnpacked(true)
@@ -572,7 +577,7 @@ public class ExportTransactionService {
                     .build();
 
             newChild = batchRepository.save(newChild);
-            log.debug("🆕 Created new child batch {} with {} units", newChild.getBatchId(), quantityToAdd);
+            log.debug("🆕 Created new child batch {} (pending approval)", newChild.getBatchId());
             return newChild;
         }
     }
