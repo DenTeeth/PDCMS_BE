@@ -15,7 +15,8 @@ import java.time.LocalDate;
 @Builder
 public class CreateTimeOffRequest {
 
-    @NotNull(message = "Employee ID is required")
+    // Optional for employee self-requests (will be auto-filled from JWT)
+    // Required for admin creating request for another employee
     private Integer employeeId;
 
     @NotNull(message = "Time-off type ID is required")

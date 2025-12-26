@@ -99,8 +99,12 @@ public class TimeOffRequestController {
      * Phân quyền:
      * - CREATE_TIMEOFF: quyền tạo yêu cầu nghỉ phép
      *
+     * Employee ID Handling:
+     * - Optional for employee self-requests (auto-filled from JWT token)
+     * - Required for admin creating request for another employee
+     *
      * Validation:
-     * - employee_id và time_off_type_id phải tồn tại
+     * - employee_id (if provided) và time_off_type_id phải tồn tại
      * - time_off_type_id phải is_active = true
      * - start_date không được lớn hơn end_date
      * - Nếu slot_id có giá trị (nghỉ nửa ngày), start_date phải bằng end_date
@@ -118,7 +122,7 @@ public class TimeOffRequestController {
      */
     @PostMapping
     @PreAuthorize("hasAuthority('CREATE_TIME_OFF')")
-    @Operation(summary = "Create time-off request", description = "Create a new time-off request for an employee")
+    @Operation(summary = "Create time-off request", description = "Create a new time-off request. Employee ID is optional - will be auto-filled from JWT token for self-requests.")
     public ResponseEntity<TimeOffRequestResponse> createRequest(
             @Valid @RequestBody CreateTimeOffRequest request) {
         log.info("REST request to create time-off request: {}", request);

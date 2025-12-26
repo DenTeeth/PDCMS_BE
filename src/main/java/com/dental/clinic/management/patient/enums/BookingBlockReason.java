@@ -5,7 +5,7 @@ package com.dental.clinic.management.patient.enums;
  * 
  * Business Rules:
  * - BR-005: Automatic temporary block after 3 consecutive no-shows
- * - BR-043: Automatic blacklist after 3 appointment cancellations within 30 days
+ * - BR-043: Duplicate patient detection (unrelated to booking blocks)
  * - BR-044: Manual blacklist by staff for serious violations
  * 
  * Purpose: Consolidate is_booking_blocked and is_blacklisted into single flag
@@ -35,8 +35,8 @@ public enum BookingBlockReason {
     STAFF_ABUSE("Bạo lực/quấy rối nhân viên", false, true),
     
     /**
-     * 🔴 Policy violations: excessive cancellations, repeated rule violations
-     * Consolidates: POLICY_VIOLATION + EXCESSIVE_CANCELLATIONS (BR-043)
+     * 🔴 Policy violations: excessive no-shows, repeated rule violations
+     * Used for manual blacklist due to policy violations (not automatic)
      */
     POLICY_VIOLATION("Vi phạm quy định", false, true),
     

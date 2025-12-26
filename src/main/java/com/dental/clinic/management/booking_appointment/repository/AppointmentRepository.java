@@ -584,4 +584,41 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
                 @Param("startTime") LocalDateTime startTime,
                 @Param("endTime") LocalDateTime endTime,
                 @Param("statuses") List<AppointmentStatus> statuses);
+
+        /**
+         * WAREHOUSE_REFERENCE_CODE: Search appointments for reference code selection
+         * Supports search by appointment code or patient name
+         * 
+         * @param search Search term (appointment code or patient name)
+         * @param status Filter by appointment status
+         * @param limit Maximum results
+         * @return List of matching appointments
+         */
+        @Query(value = "SELECT DISTINCT a.* FROM appointments a " +
+                "LEFT JOIN patients p ON a.patient_id = p.patient_id " +
+                "WHERE (:status IS NULL OR a.status = CAST(:status AS VARCHAR)) " +
+                "AND (COALESCE(:search, '') = '' " +
+                "     OR LOWER(a.appointment_code) LIKE LOWER('%' || :search || '%') " +
+                "     OR LOWER(CONCAT(p.first_name, ' ', p.last_name)) LIKE LOWER('%' || :search || '%')) " +
+                "ORDER BY a.appointment_start_time DESC " +
+                "LIMIT :limit", nativeQuery = true)
+        List<Appointment> findByAppointmentCodeContainingIgnoreCaseOrPatientNameContaining(
+                @Param("search") String search,
+                @Param("status") String status,
+                @Param("limit") int limit);
+
+        /**
+         * WAREHOUSE_REFERENCE_CODE: Get recent appointments by status
+         * 
+         * @param status Filter by appointment status  
+         * @param limit Maximum results
+         * @return List of recent appointments
+         */
+        @Query(value = "SELECT a.* FROM appointments a " +
+                "WHERE (:status IS NULL OR a.status = CAST(:status AS VARCHAR)) " +
+                "ORDER BY a.appointment_start_time DESC " +
+                "LIMIT :limit", nativeQuery = true)
+        List<Appointment> findRecentByStatus(
+                @Param("status") String status,
+                @Param("limit") int limit);
 }

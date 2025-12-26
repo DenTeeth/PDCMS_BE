@@ -20,4 +20,10 @@ public interface ClinicalRecordProcedureRepository extends JpaRepository<Clinica
             "WHERE p.clinicalRecord.clinicalRecordId = :recordId " +
             "ORDER BY p.createdAt DESC")
     List<ClinicalRecordProcedure> findByClinicalRecordIdWithService(@Param("recordId") Integer recordId);
+
+    /**
+     * Find all procedures for a clinical record (simple query without JOIN FETCH)
+     * Used for material deduction processing
+     */
+    List<ClinicalRecordProcedure> findByClinicalRecord_ClinicalRecordId(Integer clinicalRecordId);
 }

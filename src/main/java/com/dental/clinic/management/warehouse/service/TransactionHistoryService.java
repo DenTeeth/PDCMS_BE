@@ -7,6 +7,9 @@ import com.dental.clinic.management.patient.repository.PatientRepository;
 import com.dental.clinic.management.utils.security.AuthoritiesConstants;
 import com.dental.clinic.management.utils.security.SecurityUtil;
 import com.dental.clinic.management.warehouse.domain.StorageTransaction;
+import com.dental.clinic.management.warehouse.domain.ItemBatch;
+import com.dental.clinic.management.warehouse.domain.ItemMaster;
+import com.dental.clinic.management.warehouse.domain.StorageTransactionItem;
 import com.dental.clinic.management.warehouse.dto.request.TransactionHistoryRequest;
 import com.dental.clinic.management.warehouse.dto.response.TransactionHistoryItemDto;
 import com.dental.clinic.management.warehouse.dto.response.TransactionHistoryResponse;
@@ -14,6 +17,8 @@ import com.dental.clinic.management.warehouse.dto.response.TransactionSummarySta
 import com.dental.clinic.management.warehouse.enums.TransactionStatus;
 import com.dental.clinic.management.warehouse.enums.TransactionType;
 import com.dental.clinic.management.warehouse.repository.StorageTransactionRepository;
+import com.dental.clinic.management.warehouse.repository.ItemBatchRepository;
+import com.dental.clinic.management.warehouse.repository.ItemMasterRepository;
 import com.dental.clinic.management.warehouse.specification.TransactionHistorySpecification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -48,6 +53,8 @@ public class TransactionHistoryService {
 
     private final StorageTransactionRepository transactionRepository;
     private final PatientRepository patientRepository;
+    private final ItemBatchRepository batchRepository;
+    private final ItemMasterRepository itemMasterRepository;
 
     /**
      * Get transaction history with advanced filtering
@@ -479,9 +486,13 @@ public class TransactionHistoryService {
             transaction.setNotes(existingNotes + "\nApproval notes: " + notes);
         }
 
+        // ⚠️ CRITICAL FIX: Update inventory quantities NOW (not at creation time)
+        updateInventoryQuantities(transaction);
+
         transactionRepository.save(transaction);
 
-        log.info("Transaction approved - ID: {}, Code: {}", id, transaction.getTransactionCode());
+        log.info("✅ Transaction approved - ID: {}, Code: {}, Inventory updated", 
+                id, transaction.getTransactionCode());
 
         boolean hasViewCostPermission = hasPermission(AuthoritiesConstants.VIEW_WAREHOUSE_COST);
         return mapToDetailResponse(transaction, hasViewCostPermission);
@@ -573,5 +584,55 @@ public class TransactionHistoryService {
      */
     private boolean hasPermission(String permission) {
         return SecurityUtil.hasCurrentUserPermission(permission);
+    }
+
+    /**
+     * Update inventory quantities when transaction is approved
+     * 
+     * @param transaction The approved transaction
+     */
+    private void updateInventoryQuantities(StorageTransaction transaction) {
+        log.info("📦 Updating inventory quantities for transaction: {}", transaction.getTransactionCode());
+
+        for (StorageTransactionItem item : transaction.getItems()) {
+            ItemBatch batch = item.getBatch();
+            Integer quantityChange = item.getQuantityChange();
+            
+            // Get itemMaster for cached quantity update
+            ItemMaster itemMaster = batch.getItemMaster();
+
+            // Update batch quantity
+            int oldQuantity = batch.getQuantityOnHand();
+            int newQuantity = oldQuantity + quantityChange;
+            
+            if (newQuantity < 0) {
+                log.error("❌ Invalid quantity update: Batch {} would have negative quantity ({} + {} = {})",
+                        batch.getBatchId(), oldQuantity, quantityChange, newQuantity);
+                throw new BadRequestException(
+                        "INVALID_QUANTITY",
+                        "Cannot approve transaction: Would result in negative inventory for batch " + 
+                        batch.getBatchId());
+            }
+
+            batch.setQuantityOnHand(newQuantity);
+            batchRepository.save(batch);
+
+            // Update cached quantity in ItemMaster
+            itemMaster.updateCachedQuantity(quantityChange);
+            
+            // Update last import date for IMPORT transactions
+            if (transaction.getTransactionType() == TransactionType.IMPORT) {
+                itemMaster.setCachedLastImportDate(LocalDateTime.now());
+            }
+            
+            itemMasterRepository.save(itemMaster);
+
+            log.debug("✅ Updated batch {}: {} → {} (Δ{}), Item {}: cachedQuantity updated",
+                    batch.getBatchId(), oldQuantity, newQuantity, quantityChange,
+                    itemMaster.getItemCode());
+        }
+
+        log.info("✅ Inventory quantities updated successfully for {} items", 
+                transaction.getItems().size());
     }
 }

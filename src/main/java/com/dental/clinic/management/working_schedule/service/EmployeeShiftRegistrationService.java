@@ -147,10 +147,11 @@ public class EmployeeShiftRegistrationService {
                     long totalWeeks = (daysBetween / 7) + (daysBetween % 7 > 0 ? 1 : 0);
 
                     // FIX: Count weeks correctly
-                    // - availableWeeks = weeks with at least 1 slot available
-                    // - fullWeeks = weeks where ALL slots are full (registered >= quota)
-                    int weeksWithAvailability = 0;
-                    int weeksCompletelyFull = 0;
+                    // - availableWeeks = number of weeks with at least 1 date available
+                    // - fullWeeks = number of weeks where ALL dates are full
+                    // Group dates by week number and count
+                    Set<Integer> weeksWithAvailabilitySet = new java.util.HashSet<>();
+                    Set<Integer> weeksWithFullDatesSet = new java.util.HashSet<>();
                     int datesWithAvailability = 0; // Track for month filter
 
                     // Track months that have at least one available date
@@ -158,18 +159,24 @@ public class EmployeeShiftRegistrationService {
 
                     for (LocalDate date : workingDays) {
                         long registered = availabilityService.getRegisteredCountForDate(slot.getSlotId(), date);
+                        int weekOfYear = date.get(java.time.temporal.IsoFields.WEEK_OF_WEEK_BASED_YEAR);
 
                         if (registered < slot.getQuota()) {
-                            weeksWithAvailability++;
+                            weeksWithAvailabilitySet.add(weekOfYear);
                             datesWithAvailability++;
                             // Add month to available months (format: YYYY-MM)
                             String yearMonth = date.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM"));
                             availableMonthsSet.add(yearMonth);
                         } else {
                             // registered >= quota, this date is full
-                            weeksCompletelyFull++;
+                            weeksWithFullDatesSet.add(weekOfYear);
                         }
                     }
+
+                    // Calculate week counts
+                    int weeksWithAvailability = weeksWithAvailabilitySet.size();
+                    // Full weeks are weeks that have dates but NONE are available
+                    int weeksCompletelyFull = weeksWithFullDatesSet.size() - weeksWithAvailabilitySet.size();
 
                     // Generate availability summary
                     String summary = String.format("%d/%d weeks available",

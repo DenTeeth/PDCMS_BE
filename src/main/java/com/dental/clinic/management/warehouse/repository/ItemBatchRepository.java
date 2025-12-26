@@ -40,6 +40,14 @@ public interface ItemBatchRepository extends JpaRepository<ItemBatch, Long> {
         List<ItemBatch> findByItemMaster_ItemMasterId(Long itemMasterId);
 
         /**
+         * Tính tổng số lượng tồn kho theo ItemMaster (tất cả batches)
+         * SUM(quantity_on_hand) từ tất cả batches của item này
+         */
+        @Query("SELECT COALESCE(SUM(ib.quantityOnHand), 0) FROM ItemBatch ib " +
+                        "WHERE ib.itemMaster.itemMasterId = :itemMasterId")
+        Integer sumQuantityByItemMasterId(@Param("itemMasterId") Long itemMasterId);
+
+        /**
          * Tính tổng số lượng tồn kho theo ItemMaster và Supplier
          * SUM(quantity_on_hand) từ tất cả batches của supplier cho item này
          */

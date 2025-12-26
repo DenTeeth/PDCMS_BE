@@ -9,6 +9,7 @@ import com.dental.clinic.management.booking_appointment.enums.AppointmentStatus;
 import com.dental.clinic.management.booking_appointment.repository.AppointmentAuditLogRepository;
 import com.dental.clinic.management.booking_appointment.repository.AppointmentRepository;
 import com.dental.clinic.management.booking_appointment.repository.PatientPlanItemRepository;
+import com.dental.clinic.management.clinical_records.service.ClinicalRecordService;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.exception.ResourceNotFoundException;
 import com.dental.clinic.management.treatment_plans.domain.PatientPlanItem;
@@ -49,6 +50,8 @@ import java.util.*;
 @RequiredArgsConstructor
 @Slf4j
 public class AppointmentStatusService {
+
+    private final ClinicalRecordService clinicalRecordService;
 
     private final AppointmentRepository appointmentRepository;
     private final AppointmentAuditLogRepository auditLogRepository;
@@ -310,6 +313,16 @@ public class AppointmentStatusService {
         if (currentStatus == AppointmentStatus.IN_PROGRESS && newStatus == AppointmentStatus.COMPLETED) {
             appointment.setActualEndTime(now);
             log.info("Set actualEndTime={} for appointment {}", now, appointment.getAppointmentCode());
+            
+            // Deduct materials from warehouse for all procedures in this appointment
+            try {
+                clinicalRecordService.deductMaterialsForAppointment(appointment.getAppointmentId());
+                log.info("Materials deducted for completed appointment {}", appointment.getAppointmentCode());
+            } catch (Exception e) {
+                log.error("Failed to deduct materials for appointment {}: {}", 
+                    appointment.getAppointmentCode(), e.getMessage());
+                // Don't fail the status update - staff can manually adjust materials later
+            }
         }
     }
 
