@@ -46,12 +46,12 @@ public class ProcedureMaterialController {
      * Returns all materials used/planned for a procedure
      * Shows planned vs actual quantities, variance, and cost
      * 
-     * Authorization: VIEW_CLINICAL_RECORD or WRITE_CLINICAL_RECORD
+     * Authorization: VIEW_APPOINTMENT_ALL, VIEW_APPOINTMENT_OWN, or WRITE_CLINICAL_RECORD
      */
     @Operation(summary = "API 8.7 - Get Procedure Materials",
                description = "Get all materials used for a procedure with planned vs actual quantities")
     @GetMapping("/{procedureId}/materials")
-    @PreAuthorize("hasRole('ROLE_ADMIN') or hasAuthority('VIEW_CLINICAL_RECORD') or hasAuthority('WRITE_CLINICAL_RECORD')")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasAuthority('VIEW_APPOINTMENT_ALL') or hasAuthority('VIEW_APPOINTMENT_OWN') or hasAuthority('WRITE_CLINICAL_RECORD')")
     public ResponseEntity<ProcedureMaterialsResponse> getProcedureMaterials(
             @PathVariable Integer procedureId) {
         
