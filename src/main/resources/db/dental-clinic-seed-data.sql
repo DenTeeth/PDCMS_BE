@@ -80,15 +80,19 @@ COMMENT ON COLUMN chatbot_knowledge.response IS 'Câu trả lời chuẩn';
 COMMENT ON COLUMN chatbot_knowledge.is_active IS 'Trạng thái hoạt động';
 
 -- ============================================
--- MATERIAL CONSUMPTION TRACKING (V35)
+-- MATERIAL CONSUMPTION TRACKING (V36 - Updated Dec 27, 2025)
 -- ============================================
 -- Feature: Track actual material usage vs planned (BOM)
--- Date: 2025-12-25
+-- Date: 2025-12-27
 -- Purpose: Link procedures to warehouse deductions, enable variance analysis
+-- 
+-- Changes from V35:
+--   - Removed quantity_multiplier from clinical_record_procedures
+--   - Added quantity column to procedure_material_usage (per-material editing)
+--   - Updated variance calculation: actual_quantity - quantity (was: actual - planned)
 
 -- Step 1: Add material tracking columns to clinical_record_procedures
 ALTER TABLE clinical_record_procedures 
-ADD COLUMN IF NOT EXISTS quantity_multiplier INTEGER DEFAULT 1,
 ADD COLUMN IF NOT EXISTS storage_transaction_id INTEGER,
 ADD COLUMN IF NOT EXISTS materials_deducted_at TIMESTAMP,
 ADD COLUMN IF NOT EXISTS materials_deducted_by VARCHAR(100);
@@ -107,7 +111,6 @@ ADD CONSTRAINT fk_procedure_storage_tx
 CREATE INDEX IF NOT EXISTS idx_procedures_storage_tx ON clinical_record_procedures(storage_transaction_id);
 
 -- Add comments
-COMMENT ON COLUMN clinical_record_procedures.quantity_multiplier IS 'Number of times procedure was performed (for scaling BOM quantities). Default: 1';
 COMMENT ON COLUMN clinical_record_procedures.storage_transaction_id IS 'Links to warehouse export transaction for material consumption audit trail';
 COMMENT ON COLUMN clinical_record_procedures.materials_deducted_at IS 'Timestamp when materials were deducted from warehouse';
 COMMENT ON COLUMN clinical_record_procedures.materials_deducted_by IS 'Employee username who triggered material deduction';
@@ -119,12 +122,13 @@ CREATE TABLE IF NOT EXISTS procedure_material_usage (
     item_master_id INTEGER NOT NULL,
     
     -- Planned vs Actual quantities
-    planned_quantity NUMERIC(10,2) NOT NULL,
-    actual_quantity NUMERIC(10,2) NOT NULL,
+    planned_quantity NUMERIC(10,2) NOT NULL,  -- Base quantity from BOM (read-only)
+    quantity NUMERIC(10,2) NOT NULL,          -- User-editable quantity to deduct (NEW)
+    actual_quantity NUMERIC(10,2) NOT NULL,   -- What was actually used
     unit_id INTEGER NOT NULL,
     
     -- Variance tracking (computed column)
-    variance_quantity NUMERIC(10,2) GENERATED ALWAYS AS (actual_quantity - planned_quantity) STORED,
+    variance_quantity NUMERIC(10,2) GENERATED ALWAYS AS (actual_quantity - quantity) STORED,
     variance_reason VARCHAR(500),
     
     -- Audit trail
@@ -161,10 +165,11 @@ CREATE INDEX IF NOT EXISTS idx_material_usage_recorded_at ON procedure_material_
 
 -- Table and column comments
 COMMENT ON TABLE procedure_material_usage IS 'Tracks actual material quantities used per procedure for variance analysis and reporting';
-COMMENT ON COLUMN procedure_material_usage.planned_quantity IS 'Expected quantity from service BOM (service_consumables)';
-COMMENT ON COLUMN procedure_material_usage.actual_quantity IS 'Actual quantity used during procedure (can be adjusted by assistant)';
-COMMENT ON COLUMN procedure_material_usage.variance_quantity IS 'Difference between actual and planned (positive = overuse, negative = underuse)';
-COMMENT ON COLUMN procedure_material_usage.variance_reason IS 'Explanation for variance if actual differs from planned';
+COMMENT ON COLUMN procedure_material_usage.planned_quantity IS 'Base quantity from service BOM - read-only reference';
+COMMENT ON COLUMN procedure_material_usage.quantity IS 'User-editable quantity to be deducted from warehouse (replaces quantity_multiplier)';
+COMMENT ON COLUMN procedure_material_usage.actual_quantity IS 'Actual quantity used during procedure (updated by assistant after completion)';
+COMMENT ON COLUMN procedure_material_usage.variance_quantity IS 'Difference between actual and quantity (positive = used more than planned, negative = used less)';
+COMMENT ON COLUMN procedure_material_usage.variance_reason IS 'Explanation for variance if actual differs from quantity';
 COMMENT ON COLUMN procedure_material_usage.recorded_by IS 'Employee username who recorded/updated the usage';
 
 -- ============================================

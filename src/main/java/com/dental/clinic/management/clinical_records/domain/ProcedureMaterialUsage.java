@@ -40,12 +40,21 @@ public class ProcedureMaterialUsage {
 
     /**
      * Expected quantity from service BOM (service_consumables)
+     * This is the base/recommended quantity, read-only
      */
     @Column(name = "planned_quantity", nullable = false, precision = 10, scale = 2)
     private BigDecimal plannedQuantity;
 
     /**
-     * Actual quantity used during procedure (can be adjusted by assistant)
+     * User-editable quantity to be deducted from warehouse
+     * Allows users to customize quantity per procedure step
+     * Replaces the old quantity_multiplier approach
+     */
+    @Column(name = "quantity", nullable = false, precision = 10, scale = 2)
+    private BigDecimal quantity;
+
+    /**
+     * Actual quantity used during procedure (can be adjusted by assistant after completion)
      */
     @Column(name = "actual_quantity", nullable = false, precision = 10, scale = 2)
     private BigDecimal actualQuantity;

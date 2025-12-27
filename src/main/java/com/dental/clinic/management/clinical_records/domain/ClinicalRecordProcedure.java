@@ -47,10 +47,6 @@ public class ClinicalRecordProcedure {
     private String notes;
 
     // Material consumption tracking fields
-    @Column(name = "quantity_multiplier")
-    @Builder.Default
-    private Integer quantityMultiplier = 1;
-
     @Column(name = "storage_transaction_id")
     private Integer storageTransactionId;
 
@@ -69,9 +65,6 @@ public class ClinicalRecordProcedure {
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
-        if (quantityMultiplier == null) {
-            quantityMultiplier = 1;
-        }
     }
 
     @PreUpdate
