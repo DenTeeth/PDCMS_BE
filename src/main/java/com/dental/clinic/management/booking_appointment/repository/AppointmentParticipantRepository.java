@@ -24,6 +24,16 @@ public interface AppointmentParticipantRepository
     List<AppointmentParticipant> findByIdAppointmentId(Integer appointmentId);
 
     /**
+     * Find all participants for a specific appointment with employee and account eagerly loaded
+     * This is used for sending notifications to participants
+     */
+    @Query("SELECT ap FROM AppointmentParticipant ap " +
+            "JOIN FETCH ap.employee e " +
+            "LEFT JOIN FETCH e.account " +
+            "WHERE ap.id.appointmentId = :appointmentId")
+    List<AppointmentParticipant> findByAppointmentIdWithEmployeeAndAccount(@Param("appointmentId") Integer appointmentId);
+
+    /**
      * Find all appointments where an employee is a participant (not primary doctor)
      * Used for: Checking assistant's busy time slots
      */

@@ -267,7 +267,16 @@ public class FixedShiftRegistrationService {
         FixedShiftRegistration registration = registrationRepository.findById(registrationId)
                 .orElseThrow(() -> new FixedRegistrationNotFoundException(registrationId));
 
-        // 2. Soft delete: set is_active = false, effective_to = now
+        // 2. Delete all associated shifts (both past and future) to prevent them from appearing on calendar
+        try {
+            int deletedShiftsCount = employeeShiftService.deleteShiftsForSource("FIXED", Long.valueOf(registrationId));
+            log.info("Deleted {} shifts associated with fixed registration {}", deletedShiftsCount, registrationId);
+        } catch (Exception e) {
+            log.error("Error deleting shifts for fixed registration {}: {}", registrationId, e.getMessage());
+            throw new RuntimeException("Không thể xóa các ca làm việc liên quan đến đăng ký này", e);
+        }
+
+        // 3. Soft delete: set is_active = false, effective_to = now
         registration.setIsActive(false);
         registration.setEffectiveTo(LocalDate.now());
         registration.setUpdatedAt(LocalDateTime.now());

@@ -1059,10 +1059,9 @@ public class AppointmentCreationService {
                         }
 
                         // 3. Send notifications to ALL PARTICIPANTS (assistants, observers, additional dentists)
-                        // Query participants from repository since they're not loaded in appointment
-                        // entity
+                        // Query participants from repository with EAGER loading to avoid LazyInitializationException
                         List<AppointmentParticipant> participants = appointmentParticipantRepository
-                                        .findByIdAppointmentId(appointment.getAppointmentId());
+                                        .findByAppointmentIdWithEmployeeAndAccount(appointment.getAppointmentId());
 
                         if (participants != null && !participants.isEmpty()) {
                                 log.info("Processing {} participants for appointment {}",
