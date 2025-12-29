@@ -61,7 +61,7 @@ public class OvertimeRequestController {
     )
     @GetMapping
     // ✅ PERMISSIONS: VIEW_OT_ALL (Manager/Admin see all) OR VIEW_OT_OWN (Employee see own)
-    // ROLE_ADMIN has VIEW_OT_ALL permission
+    // ROLE_ADMIN & ROLE_MANAGER have VIEW_OT_ALL permission
     @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('VIEW_OT_ALL') or hasAuthority('VIEW_OT_OWN')")
     public ResponseEntity<Page<OvertimeRequestListResponse>> getAllOvertimeRequests(
             @RequestParam(required = false) RequestStatus status,
@@ -98,7 +98,7 @@ public class OvertimeRequestController {
     )
     @GetMapping("/{requestId}")
     // ✅ PERMISSIONS: VIEW_OT_ALL (Manager/Admin see any) OR VIEW_OT_OWN (Employee see own)
-    // ROLE_ADMIN has VIEW_OT_ALL permission
+    // ROLE_ADMIN & ROLE_MANAGER have VIEW_OT_ALL permission
     @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('VIEW_OT_ALL') or hasAuthority('VIEW_OT_OWN')")
     public ResponseEntity<OvertimeRequestDetailResponse> getOvertimeRequestById(
             @PathVariable String requestId) {
@@ -155,7 +155,7 @@ public class OvertimeRequestController {
     )
     @PostMapping
     // ✅ PERMISSION: CREATE_OVERTIME (Employee creates overtime request)
-    // ROLE_ADMIN has CREATE_OVERTIME permission
+    // ROLE_ADMIN & ROLE_MANAGER have CREATE_OVERTIME permission
     @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('CREATE_OVERTIME')")
     public ResponseEntity<OvertimeRequestDetailResponse> createOvertimeRequest(
             @Valid @RequestBody CreateOvertimeRequestDTO dto) {
@@ -220,7 +220,7 @@ public class OvertimeRequestController {
     )
     @PatchMapping("/{requestId}")
     // ✅ PERMISSIONS: APPROVE_OVERTIME (Manager/Admin approve/reject) OR CREATE_OVERTIME (Employee cancel own)
-    // ROLE_ADMIN has APPROVE_OVERTIME permission for approving/rejecting overtime requests
+    // ROLE_ADMIN & ROLE_MANAGER have APPROVE_OVERTIME permission for approving/rejecting overtime requests
     @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('APPROVE_OVERTIME') or hasAuthority('CREATE_OVERTIME')")
     public ResponseEntity<OvertimeRequestDetailResponse> updateOvertimeStatus(
             @PathVariable String requestId,

@@ -87,7 +87,7 @@ public class TimeOffRequestService {
          * Lấy danh sách yêu cầu nghỉ phép với phân trang và bộ lọc
          */
         // ✅ PERMISSIONS: VIEW_LEAVE_ALL (Manager/Admin see all) OR VIEW_LEAVE_OWN (Employee see own)
-        // ROLE_ADMIN has VIEW_LEAVE_ALL permission
+        // ROLE_ADMIN & ROLE_MANAGER have VIEW_LEAVE_ALL permission
         @PreAuthorize("hasRole('" + AuthoritiesConstants.ADMIN + "') or " +
                         "hasAuthority('" + AuthoritiesConstants.VIEW_LEAVE_ALL + "') or " +
                         "hasAuthority('" + AuthoritiesConstants.VIEW_LEAVE_OWN + "')")
@@ -139,7 +139,7 @@ public class TimeOffRequestService {
          * Xem chi tiết một yêu cầu nghỉ phép
          */
         // ✅ PERMISSIONS: VIEW_LEAVE_ALL (Manager/Admin see any) OR VIEW_LEAVE_OWN (Employee see own)
-        // ROLE_ADMIN has VIEW_LEAVE_ALL permission
+        // ROLE_ADMIN & ROLE_MANAGER have VIEW_LEAVE_ALL permission
         @PreAuthorize("hasRole('" + AuthoritiesConstants.ADMIN + "') or " +
                         "hasAuthority('" + AuthoritiesConstants.VIEW_LEAVE_ALL + "') or " +
                         "hasAuthority('" + AuthoritiesConstants.VIEW_LEAVE_OWN + "')")
@@ -186,7 +186,7 @@ public class TimeOffRequestService {
          * Tạo yêu cầu nghỉ phép mới
          */
         // ✅ PERMISSION: CREATE_TIME_OFF (Employee creates time-off request)
-        // ROLE_ADMIN has CREATE_TIME_OFF permission
+        // ROLE_ADMIN & ROLE_MANAGER have CREATE_TIME_OFF permission
         @PreAuthorize("hasAuthority('" + AuthoritiesConstants.CREATE_TIME_OFF + "')")
         @Transactional
         public TimeOffRequestResponse createRequest(CreateTimeOffRequest request) {

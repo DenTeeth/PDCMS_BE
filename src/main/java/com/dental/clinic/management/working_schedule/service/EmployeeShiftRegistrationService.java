@@ -616,7 +616,7 @@ public class EmployeeShiftRegistrationService {
      * missing or not visible to caller.
      */
     @Transactional(readOnly = true)
-    // ✅ PERMISSION: MANAGE_PART_TIME_REGISTRATIONS (Admin/Manager) OR VIEW_REGISTRATION_OWN (Employee)
+    // ✅ PERMISSION: MANAGE_PART_TIME_REGISTRATIONS (ROLE_ADMIN & ROLE_MANAGER) OR VIEW_REGISTRATION_OWN (Employee)
     @PreAuthorize("hasAnyAuthority('MANAGE_PART_TIME_REGISTRATIONS', 'VIEW_REGISTRATION_OWN')")
     public RegistrationResponse getRegistrationById(Integer registrationId) {
         boolean isAdmin = SecurityUtil.hasCurrentUserRole("ADMIN") ||
