@@ -28,7 +28,7 @@ import java.util.List;
  * - Only delete requests in final states: APPROVED, REJECTED, CANCELLED
  * - Keep PENDING requests (they will be auto-cancelled by RequestAutoCancellationJob)
  * 
- * Runs daily at 2:00 AM Vietnam time
+ * Runs weekly on Sunday at 11:00 PM Vietnam time (before Monday starts)
  */
 @Component
 @RequiredArgsConstructor
@@ -44,9 +44,9 @@ public class RequestAutoCleanupJob {
 
     /**
      * Auto-delete old completed/cancelled/rejected requests
-     * Runs at 2:00 AM every day (Vietnam time)
+     * Runs at 11:00 PM every Sunday (Vietnam time)
      */
-    @Scheduled(cron = "0 0 2 * * ?", zone = "Asia/Ho_Chi_Minh")
+    @Scheduled(cron = "0 0 23 * * SUN", zone = "Asia/Ho_Chi_Minh")
     @Transactional
     public void cleanupOldRequests() {
         log.info("==== Starting auto-cleanup of old requests (older than {} days) ====", CLEANUP_DAYS_THRESHOLD);

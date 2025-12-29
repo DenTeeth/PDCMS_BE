@@ -40,9 +40,9 @@ public class RequestAutoCancellationJob {
 
     /**
      * Auto-cancel overdue pending requests
-     * Runs at 1:00 AM every day (Vietnam time)
+     * Runs at 6:00 AM every day (Vietnam time)
      */
-    @Scheduled(cron = "0 0 1 * * ?", zone = "Asia/Ho_Chi_Minh")
+    @Scheduled(cron = "0 0 6 * * ?", zone = "Asia/Ho_Chi_Minh")
     @Transactional
     public void cancelOverdueRequests() {
         log.info("==== Starting auto-cancellation of overdue pending requests ====");

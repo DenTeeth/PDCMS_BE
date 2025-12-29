@@ -190,9 +190,9 @@ List<PartTimeRegistration> findByStatusAndProcessedAtBefore(RegistrationStatus s
 
 | Job | Cron Expression | Time (Vietnam) | Frequency |
 |-----|----------------|----------------|-----------|
-| RequestAutoCancellationJob | `0 0 1 * * ?` | 1:00 AM | Daily |
+| RequestAutoCancellationJob | `0 0 6 * * ?` | 6:00 AM | Daily |
 | RequestReminderNotificationJob | `0 0 9 * * ?` | 9:00 AM | Daily |
-| RequestAutoCleanupJob | `0 0 2 * * ?` | 2:00 AM | Daily |
+| RequestAutoCleanupJob | `0 0 23 * * SUN` | 11:00 PM Sunday | Weekly |
 
 **Note**: All jobs use timezone `Asia/Ho_Chi_Minh`
 
