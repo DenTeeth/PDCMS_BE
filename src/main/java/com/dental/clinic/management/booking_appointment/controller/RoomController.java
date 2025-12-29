@@ -79,6 +79,32 @@ public class RoomController {
     }
 
     /**
+     * NEW: Get rooms compatible with specific services (Room Filtering)
+     * Use case: When creating appointment for implant service, only show implant rooms
+     * 
+     * Date: 2024-12-29
+     * Feedback: Mentor suggested filtering rooms by service type when creating appointments
+     * 
+     * @param serviceCodes Comma-separated list of service codes (e.g., "IMPLANT_L1,IMPLANT_L2")
+     * @return list of rooms that support ALL specified services
+     */
+    @GetMapping("/by-services")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_ROOM + "')")
+    @Operation(summary = "Get rooms by service compatibility", 
+               description = "Get rooms that support specific services. " +
+                             "Returns only rooms that can perform ALL specified services. " +
+                             "Example: For implant services, returns only implant rooms, not general consultation rooms.")
+    @ApiMessage("Lấy danh sách phòng tương thích với dịch vụ thành công")
+    public ResponseEntity<List<RoomResponse>> getRoomsByServices(
+            @Parameter(description = "Comma-separated service codes", example = "IMPLANT_L1,IMPLANT_L2") 
+            @RequestParam String serviceCodes) {
+        
+        List<String> serviceCodeList = java.util.Arrays.asList(serviceCodes.split(","));
+        List<RoomResponse> rooms = roomService.getRoomsByServices(serviceCodeList);
+        return ResponseEntity.ok(rooms);
+    }
+
+    /**
      * Get room by ID
      *
      * @param roomId room ID

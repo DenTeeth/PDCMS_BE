@@ -11,6 +11,7 @@ import com.dental.clinic.management.booking_appointment.mapper.RoomMapper;
 import com.dental.clinic.management.booking_appointment.repository.BookingDentalServiceRepository;
 import com.dental.clinic.management.booking_appointment.repository.RoomRepository;
 import com.dental.clinic.management.booking_appointment.repository.RoomServiceRepository;
+import com.dental.clinic.management.exception.BadRequestException;
 import com.dental.clinic.management.exception.DuplicateResourceException;
 import com.dental.clinic.management.exception.ResourceNotFoundException;
 import com.dental.clinic.management.exception.validation.BadRequestAlertException;
@@ -26,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.annotation.PostConstruct;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -442,4 +444,65 @@ public class RoomService {
         // 6. Return updated response
         return getRoomServices(roomCode);
     }
+
+    /**
+     * NEW: Get rooms compatible with specific services (Room Filtering)
+     * Use case: When creating appointment for implant service, only show implant rooms
+     * 
+     * Date: 2024-12-29
+     * Feedback: Mentor suggested filtering rooms by service type when creating appointments
+     * 
+     * @param serviceCodes List of service codes to check compatibility
+     * @return List of rooms that support ALL specified services
+     */
+    @Transactional(readOnly = true)
+    public List<RoomResponse> getRoomsByServices(List<String> serviceCodes) {
+        log.debug("Request to get rooms compatible with services: {}", serviceCodes);
+
+        // 1. Validate all service codes exist
+        List<com.dental.clinic.management.booking_appointment.domain.DentalService> services = 
+                dentalServiceRepository.findByServiceCodeIn(serviceCodes);
+
+        if (services.size() != serviceCodes.size()) {
+            // Find missing codes
+            List<String> foundCodes = services.stream()
+                    .map(com.dental.clinic.management.booking_appointment.domain.DentalService::getServiceCode)
+                    .collect(Collectors.toList());
+            List<String> missingCodes = serviceCodes.stream()
+                    .filter(code -> !foundCodes.contains(code))
+                    .collect(Collectors.toList());
+
+            throw new BadRequestException(
+                    "SERVICE_NOT_FOUND",
+                    "Services not found: " + String.join(", ", missingCodes));
+        }
+
+        // 2. Get service IDs
+        List<Integer> serviceIds = services.stream()
+                .map(com.dental.clinic.management.booking_appointment.domain.DentalService::getServiceId)
+                .collect(Collectors.toList());
+
+        // 3. Find rooms that support ALL services
+        List<String> compatibleRoomIds = roomServiceRepository.findRoomsSupportingAllServices(
+                serviceIds, 
+                serviceIds.size());
+
+        if (compatibleRoomIds.isEmpty()) {
+            log.warn("No rooms found compatible with services: {}", serviceCodes);
+            return Collections.emptyList();
+        }
+
+        // 4. Get only active rooms
+        List<Room> compatibleRooms = roomRepository.findByRoomIdInAndIsActiveTrue(compatibleRoomIds);
+
+        // 5. Map to response DTOs
+        List<RoomResponse> response = compatibleRooms.stream()
+                .map(roomMapper::toResponse)
+                .collect(Collectors.toList());
+
+        log.info("Found {} compatible rooms for services: {}", response.size(), serviceCodes);
+
+        return response;
+    }
 }
+

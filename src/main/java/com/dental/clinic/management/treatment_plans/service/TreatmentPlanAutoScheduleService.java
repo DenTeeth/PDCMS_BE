@@ -75,6 +75,7 @@ public class TreatmentPlanAutoScheduleService {
     private final RoomRepository roomRepository;
     private final RoomServiceRepository roomServiceRepository;
     private final com.dental.clinic.management.employee.repository.EmployeeRepository employeeRepository;
+    private final com.dental.clinic.management.treatment_plans.repository.PatientPlanPhaseRepository phaseRepository;
 
     private static final String ENTITY_NAME = "treatment_plan_auto_schedule";
     private static final List<AppointmentStatus> BUSY_STATUSES = Arrays.asList(
@@ -619,5 +620,96 @@ public class TreatmentPlanAutoScheduleService {
                 .failedItems(0)
                 .summary(initializeSummary())
                 .build();
+    }
+
+    /**
+     * NEW: Generate automatic appointment suggestions for a specific phase only.
+     * More realistic approach - schedule one phase at a time instead of entire plan.
+     * 
+     * Date: 2024-12-29
+     * Feedback: Mentor suggested phase-level scheduling is more practical
+     * 
+     * @param phaseId Phase ID to schedule
+     * @param request Auto-schedule request with preferences
+     * @return Response with appointment suggestions for this phase only
+     */
+    @Transactional(readOnly = true)
+    public AutoScheduleResponse generateAutomaticAppointmentsForPhase(
+            Long phaseId, 
+            com.dental.clinic.management.treatment_plans.dto.request.AutoSchedulePhaseRequest request) {
+        
+        log.info("Starting auto-schedule for treatment plan phase: {}", phaseId);
+
+        // Step 1: Validate phase exists
+        com.dental.clinic.management.treatment_plans.domain.PatientPlanPhase phase = 
+                phaseRepository.findById(phaseId)
+                .orElseThrow(() -> new BadRequestAlertException(
+                        "Giai đoạn không tồn tại: " + phaseId,
+                        ENTITY_NAME,
+                        "PHASE_NOT_FOUND"));
+
+        // Step 2: Validate parent plan is approved
+        PatientTreatmentPlan plan = phase.getTreatmentPlan();
+        if (plan.getApprovalStatus() != com.dental.clinic.management.treatment_plans.domain.ApprovalStatus.APPROVED) {
+            throw new BadRequestAlertException(
+                    "Lộ trình điều trị chưa được phê duyệt. Chỉ có thể đặt lịch cho lộ trình đã phê duyệt.",
+                    ENTITY_NAME,
+                    "PLAN_NOT_APPROVED");
+        }
+
+        // Step 3: Get items ready for booking in this phase only
+        List<PatientPlanItem> readyItems = planItemRepository.findByPhaseIdAndStatus(
+                phaseId,
+                PlanItemStatus.READY_FOR_BOOKING);
+
+        if (readyItems.isEmpty()) {
+            log.warn("No items ready for booking in phase: {}", phaseId);
+            return buildEmptyResponse(plan.getPlanId(), 
+                    "Không có dịch vụ nào sẵn sàng để đặt lịch trong giai đoạn này");
+        }
+
+        log.info("Found {} items ready for booking in phase {}", readyItems.size(), phaseId);
+
+        // Step 4: Convert phase request to plan request for reuse
+        com.dental.clinic.management.treatment_plans.dto.request.AutoScheduleRequest planRequest = 
+                com.dental.clinic.management.treatment_plans.dto.request.AutoScheduleRequest.builder()
+                        .employeeCode(request.getEmployeeCode())
+                        .roomCode(request.getRoomCode())
+                        .preferredTimeSlots(request.getPreferredTimeSlots())
+                        .lookAheadDays(request.getLookAheadDays())
+                        .forceSchedule(request.getForceSchedule())
+                        .build();
+
+        // Step 5: Generate suggestions for each item
+        List<AutoScheduleResponse.AppointmentSuggestion> suggestions = new ArrayList<>();
+        AutoScheduleResponse.SchedulingSummary summary = initializeSummary();
+
+        for (PatientPlanItem item : readyItems) {
+            try {
+                AutoScheduleResponse.AppointmentSuggestion suggestion = generateSuggestionForItem(
+                        item,
+                        plan,
+                        planRequest,
+                        summary);
+                suggestions.add(suggestion);
+            } catch (Exception e) {
+                log.error("Failed to generate suggestion for item {}: {}",
+                        item.getItemId(), e.getMessage(), e);
+
+                // Add failed suggestion
+                DentalService errorService = dentalServiceRepository.findById(Long.valueOf(item.getServiceId()))
+                        .orElse(null);
+                suggestions.add(AutoScheduleResponse.AppointmentSuggestion.builder()
+                        .itemId(item.getItemId())
+                        .serviceCode(errorService != null ? errorService.getServiceCode() : "UNKNOWN")
+                        .serviceName(errorService != null ? errorService.getServiceName() : "Unknown Service")
+                        .success(false)
+                        .errorMessage(e.getMessage())
+                        .build());
+            }
+        }
+
+        // Step 6: Build and return response
+        return buildResponse(plan.getPlanId(), suggestions, readyItems.size(), summary);
     }
 }
