@@ -118,4 +118,31 @@ public interface TimeOffRequestRepository extends JpaRepository<TimeOffRequest, 
          * Check if there are pending requests using a specific time-off type
          */
         boolean existsByTimeOffTypeIdAndStatus(String timeOffTypeId, TimeOffStatus status);
+
+        /**
+         * Find time-off requests by status and start date before a certain date.
+         * Used for auto-cancellation and cleanup jobs.
+         */
+        List<TimeOffRequest> findByStatusAndStartDateBefore(TimeOffStatus status, LocalDate date);
+
+        /**
+         * Find time-off requests by status and start date equals a certain date.
+         * Used for reminder notification job.
+         */
+        List<TimeOffRequest> findByStatusAndStartDate(TimeOffStatus status, LocalDate date);
+
+        /**
+         * Find time-off requests by status and end date before a certain date.
+         * Used for cleanup job to delete old completed requests.
+         */
+        List<TimeOffRequest> findByStatusAndEndDateBefore(TimeOffStatus status, LocalDate date);
+
+        /**
+         * Find time-off requests by status and approved_at before a certain datetime.
+         * Used for cleanup job to delete old processed requests.
+         */
+        @Query("SELECT t FROM TimeOffRequest t WHERE t.status = :status AND t.approvedAt < :dateTime")
+        List<TimeOffRequest> findByStatusAndApprovedAtBefore(
+                        @Param("status") TimeOffStatus status,
+                        @Param("dateTime") java.time.LocalDateTime dateTime);
 }

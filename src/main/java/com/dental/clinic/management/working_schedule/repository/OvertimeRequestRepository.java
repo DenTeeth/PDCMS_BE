@@ -189,4 +189,26 @@ public interface OvertimeRequestRepository extends JpaRepository<OvertimeRequest
            "WHERE ot.requestId LIKE :datePrefix% " +
            "ORDER BY ot.requestId DESC")
     Optional<OvertimeRequest> findLatestByDatePrefix(@Param("datePrefix") String datePrefix);
+
+    /**
+     * Find overtime requests by status and work date before a certain date.
+     * Used for auto-cancellation and cleanup jobs.
+     */
+    List<OvertimeRequest> findByStatusAndWorkDateBefore(RequestStatus status, LocalDate date);
+
+    /**
+     * Find overtime requests by status and work date equals a certain date.
+     * Used for reminder notification job.
+     */
+    List<OvertimeRequest> findByStatusAndWorkDate(RequestStatus status, LocalDate date);
+
+    /**
+     * Find overtime requests by status and approved_at before a certain datetime.
+     * Used for cleanup job to delete old processed requests.
+     */
+    @Query("SELECT ot FROM OvertimeRequest ot WHERE ot.status = :status AND ot.approvedAt < :dateTime")
+    List<OvertimeRequest> findByStatusAndApprovedAtBefore(
+        @Param("status") RequestStatus status,
+        @Param("dateTime") java.time.LocalDateTime dateTime
+    );
 }

@@ -196,4 +196,32 @@ public interface PartTimeRegistrationRepository extends JpaRepository<PartTimeRe
            "WHERE ptr.employeeId = :employeeId " +
            "AND ptr.isActive = true")
     int deactivateByEmployeeId(@Param("employeeId") Integer employeeId);
+
+    /**
+     * Find registrations by status and effective_from before a certain date.
+     * Used for auto-cancellation job.
+     */
+    List<PartTimeRegistration> findByStatusAndEffectiveFromBefore(RegistrationStatus status, LocalDate date);
+
+    /**
+     * Find registrations by status and effective_from equals a certain date.
+     * Used for reminder notification job.
+     */
+    List<PartTimeRegistration> findByStatusAndEffectiveFrom(RegistrationStatus status, LocalDate date);
+
+    /**
+     * Find registrations by status, effective_to before date, and is_active status.
+     * Used for cleanup job to delete old completed registrations.
+     */
+    List<PartTimeRegistration> findByStatusAndEffectiveToBeforeAndIsActive(
+        RegistrationStatus status, LocalDate date, Boolean isActive);
+
+    /**
+     * Find registrations by status and processed_at before a certain datetime.
+     * Used for cleanup job to delete old processed requests.
+     */
+    @Query("SELECT r FROM PartTimeRegistration r WHERE r.status = :status AND r.processedAt < :dateTime")
+    List<PartTimeRegistration> findByStatusAndProcessedAtBefore(
+        @Param("status") RegistrationStatus status,
+        @Param("dateTime") java.time.LocalDateTime dateTime);
 }
