@@ -19,11 +19,11 @@ import java.time.LocalDate;
  * 
  * Example:
  * {
- *   "workShiftId": "WKS_MORNING_01",
- *   "dayOfWeek": "FRIDAY,SATURDAY",
- *   "effectiveFrom": "2025-11-09",
- *   "effectiveTo": "2025-11-30",
- *   "quota": 2
+ * "workShiftId": "WKS_MORNING_01",
+ * "dayOfWeek": "FRIDAY,SATURDAY",
+ * "effectiveFrom": "2025-11-09",
+ * "effectiveTo": "2025-11-30",
+ * "quota": 2
  * }
  */
 @Data
@@ -63,6 +63,6 @@ public class CreatePartTimeSlotRequest {
      * Example: quota=2 means 2 people needed on EACH working day.
      */
     @NotNull(message = "Quota is required")
-    @Min(value = 1, message = "Quota must be at least 1")
+    @Min(value = 1, message = "Hạn mức phải ít nhất là 1")
     private Integer quota;
 }

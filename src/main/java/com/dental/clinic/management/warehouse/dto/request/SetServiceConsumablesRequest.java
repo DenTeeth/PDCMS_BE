@@ -16,10 +16,10 @@ import java.util.List;
 @AllArgsConstructor
 public class SetServiceConsumablesRequest {
 
-    @NotNull(message = "Service ID is required")
+    @NotNull(message = "Mã dịch vụ là bắt buộc")
     private Long serviceId;
 
-    @NotEmpty(message = "Consumables list cannot be empty")
+    @NotEmpty(message = "Danh sách vật tư tiêu hao không được để trống")
     @Valid
     private List<ConsumableItemRequest> consumables;
 }

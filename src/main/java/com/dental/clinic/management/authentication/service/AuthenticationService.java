@@ -504,7 +504,7 @@ public class AuthenticationService {
 
                 } catch (Exception e) {
                         log.error("Logout failed", e);
-                        throw new RuntimeException("Logout failed", e);
+                        throw new RuntimeException("Đăng xuất thất bại", e);
                 }
         }
 

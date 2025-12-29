@@ -21,7 +21,7 @@ public class BusinessException extends ErrorResponseException {
 
     private static ProblemDetail asProblemDetail(String errorCode, String message) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, message);
-        problemDetail.setTitle("Business Rule Violation");
+        problemDetail.setTitle("Vi Phạm Quy Tắc Nghiệp Vụ");
         problemDetail.setType(URI.create(ErrorConstants.PROBLEM_BASE_URL + "/business-error"));
         problemDetail.setProperty("errorCode", errorCode);
         return problemDetail;

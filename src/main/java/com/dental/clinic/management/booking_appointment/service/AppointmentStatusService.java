@@ -123,7 +123,7 @@ public class AppointmentStatusService {
         try {
             newStatus = AppointmentStatus.valueOf(request.getStatus().toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid status value: " + request.getStatus());
+            throw new IllegalArgumentException("Giá trị trạng thái không hợp lệ: " + request.getStatus());
         }
 
         // Step 2: Validate state transition
@@ -167,13 +167,13 @@ public class AppointmentStatusService {
     private void validateStateTransition(AppointmentStatus currentStatus, AppointmentStatus newStatus) {
         if (currentStatus == newStatus) {
             throw new IllegalStateException(
-                    String.format("Appointment is already in %s status", currentStatus));
+                    String.format("Lịch hẹn đã ở trạng thái %s rồi", currentStatus));
         }
 
         Set<AppointmentStatus> allowedTransitions = VALID_TRANSITIONS.get(currentStatus);
         if (allowedTransitions == null || !allowedTransitions.contains(newStatus)) {
             throw new IllegalStateException(
-                    String.format("Cannot transition from %s to %s. Allowed transitions: %s",
+                    String.format("Không thể chuyển từ %s sang %s. Các trạng thái được phép: %s",
                             currentStatus, newStatus, allowedTransitions));
         }
     }
@@ -212,7 +212,7 @@ public class AppointmentStatusService {
             // Check reason code is provided
             if (request.getReasonCode() == null || request.getReasonCode().trim().isEmpty()) {
                 throw new IllegalArgumentException(
-                        "Reason code is required when cancelling an appointment");
+                        "Mã lý do bắt buộc khi hủy lịch hẹn");
             }
 
             // Rule #4: Check 24-hour cancellation deadline
@@ -221,9 +221,9 @@ public class AppointmentStatusService {
             if (now.isAfter(cancellationDeadline)) {
                 // Late cancellation - within 24 hours of appointment
                 throw new IllegalStateException(
-                        String.format("Cannot cancel appointment within 24 hours of scheduled time. " +
-                                "Appointment start: %s, Cancellation deadline: %s. " +
-                                "Please contact clinic staff for assistance.",
+                        String.format("Không thể hủy lịch hẹn trong vòng 24 giờ trước giờ hẹn. " +
+                                "Giờ bắt đầu: %s, Hạn hủy: %s. " +
+                                "Vui lòng liên hệ nhân viên phòng khám.",
                                 appointmentStartTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
                                 cancellationDeadline.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))));
             }
@@ -492,7 +492,7 @@ public class AppointmentStatusService {
             entityManager.flush();
         } catch (Exception e) {
             log.error(" Failed to update plan items for appointment {}: {}", appointmentId, e.getMessage(), e);
-            throw new RuntimeException("Failed to update linked plan items", e);
+            throw new RuntimeException("Không thể cập nhật các mục kế hoạch liên kết", e);
         }
 
         // Step 8: Check and complete phases if all items in phase are done

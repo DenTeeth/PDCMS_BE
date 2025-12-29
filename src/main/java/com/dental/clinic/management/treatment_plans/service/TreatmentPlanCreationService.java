@@ -97,7 +97,7 @@ public class TreatmentPlanCreationService {
 
                 // Validate template is active
                 if (!template.getIsActive()) {
-                        throw new BadRequestAlertException("Template is not active",
+                        throw new BadRequestAlertException("Mẫu kế hoạch không hoạt động",
                                         "TreatmentPlanTemplate", "templateInactive");
                 }
 

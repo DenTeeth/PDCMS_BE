@@ -97,7 +97,7 @@ public class AppointmentDetailService {
         Appointment appointment = appointmentRepository.findDetailByCode(appointmentCode)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "APPOINTMENT_NOT_FOUND",
-                        "Appointment not found with code: " + appointmentCode));
+                        "Không tìm thấy lịch hẹn với mã: " + appointmentCode));
 
         // Step 2: RBAC Check
         checkPermission(appointment);
@@ -136,7 +136,7 @@ public class AppointmentDetailService {
 
         if (!canViewOwn) {
             log.warn("User doesn't have VIEW_APPOINTMENT_OWN permission - access denied");
-            throw new AccessDeniedException("You don't have permission to view appointments");
+            throw new AccessDeniedException("Bạn không có quyền xem lịch hẹn");
         }
 
         // Extract username from JWT token
@@ -149,7 +149,7 @@ public class AppointmentDetailService {
 
         if (username == null) {
             log.warn("Could not extract username from authentication");
-            throw new AccessDeniedException("Invalid authentication token");
+            throw new AccessDeniedException("Token xác thực không hợp lệ");
         }
 
         log.debug("RBAC check for user: {}", username);
@@ -172,7 +172,7 @@ public class AppointmentDetailService {
 
             if (myEmployeeId.isEmpty()) {
                 log.warn("Employee account {} not found in employee table", username);
-                throw new AccessDeniedException("Employee profile not found");
+                throw new AccessDeniedException("Không tìm thấy hồ sơ nhân viên");
             }
 
             boolean isDoctor = appointment.getEmployeeId().equals(myEmployeeId.get());
@@ -184,7 +184,7 @@ public class AppointmentDetailService {
             if (!isDoctor && !isParticipant) {
                 log.warn("Employee {} tried to access unrelated appointment {}",
                         myEmployeeId.get(), appointment.getAppointmentCode());
-                throw new AccessDeniedException("You can only view appointments where you are involved");
+                throw new AccessDeniedException("Bạn chỉ có thể xem lịch hẹn mà bạn tham gia");
             }
         } else {
             // Patient role - check if they own this appointment
@@ -200,12 +200,12 @@ public class AppointmentDetailService {
 
                 log.warn("Patient {} attempted to access different patient's appointment {}",
                         patientId, appointment.getAppointmentCode());
-                throw new AccessDeniedException("You can only view your own appointments");
+                throw new AccessDeniedException("Bạn chỉ có thể xem lịch hẹn của chính mình");
             }
 
             // User not found as employee or patient
             log.warn("User {} not found as employee or patient", username);
-            throw new AccessDeniedException("Access Denied");
+            throw new AccessDeniedException("Truy cập bị từ chối");
         }
 
         log.debug("RBAC check passed - access granted");
@@ -247,8 +247,8 @@ public class AppointmentDetailService {
                         .isActive(patient.getIsActive())
                         .consecutiveNoShows(patient.getConsecutiveNoShows())
                         .isBookingBlocked(patient.getIsBookingBlocked())
-                        .bookingBlockReason(patient.getBookingBlockReason() != null 
-                                ? patient.getBookingBlockReason().name() 
+                        .bookingBlockReason(patient.getBookingBlockReason() != null
+                                ? patient.getBookingBlockReason().name()
                                 : null)
                         .build();
             }

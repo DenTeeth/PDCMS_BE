@@ -33,7 +33,7 @@ public class ContactHistoryService {
     private final EmployeeRepository employeeRepository;
 
     public ContactHistoryService(ContactHistoryRepository repository, ContactHistoryMapper mapper,
-                                 EmployeeRepository employeeRepository) {
+            EmployeeRepository employeeRepository) {
         this.repository = repository;
         this.mapper = mapper;
         this.employeeRepository = employeeRepository;
@@ -47,7 +47,7 @@ public class ContactHistoryService {
     @Transactional(readOnly = true)
     public List<ContactHistoryResponse> listHistoryForContact(String contactId) {
         if (contactId == null || contactId.trim().isEmpty()) {
-            throw new BadRequestAlertException("contactId is required", "contact_history", "contactid.required");
+            throw new BadRequestAlertException("contactId là bắt buộc", "contact_history", "contactid.required");
         }
         var list = repository.findByContactIdOrderByCreatedAtDesc(contactId);
         return mapper.toResponseList(list);
@@ -61,16 +61,16 @@ public class ContactHistoryService {
     @Transactional
     public ContactHistoryResponse addHistory(CreateContactHistoryRequest req) {
         if (req == null) {
-            throw new BadRequestAlertException("Request required", "contact_history", "request.required");
+            throw new BadRequestAlertException("Yêu cầu bắt buộc", "contact_history", "request.required");
         }
         if (req.getContactId() == null || req.getContactId().trim().isEmpty()) {
-            throw new BadRequestAlertException("contactId is required", "contact_history", "contactid.required");
+            throw new BadRequestAlertException("contactId là bắt buộc", "contact_history", "contactid.required");
         }
         if (req.getAction() == null) {
-            throw new BadRequestAlertException("action is required", "contact_history", "action.required");
+            throw new BadRequestAlertException("action là bắt buộc", "contact_history", "action.required");
         }
         if (req.getContent() == null || req.getContent().trim().isEmpty()) {
-            throw new BadRequestAlertException("content is required", "contact_history", "content.required");
+            throw new BadRequestAlertException("content là bắt buộc", "contact_history", "content.required");
         }
 
         ContactHistory h = new ContactHistory();

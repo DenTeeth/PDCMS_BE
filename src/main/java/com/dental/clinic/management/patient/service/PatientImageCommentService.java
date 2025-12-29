@@ -192,7 +192,7 @@ public class PatientImageCommentService {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {
             throw new BadRequestAlertException(
-                    "User not authenticated",
+                    "Người dùng chưa được xác thực",
                     ENTITY_NAME,
                     "UNAUTHORIZED");
         }
@@ -211,7 +211,7 @@ public class PatientImageCommentService {
 
         return employeeRepository.findByAccount_Username(username)
                 .orElseThrow(() -> new BadRequestAlertException(
-                        "Employee not found for user: " + username,
+                        "Không tìm thấy nhân viên cho người dùng: " + username,
                         ENTITY_NAME,
                         "EMPLOYEE_NOT_FOUND"));
     }

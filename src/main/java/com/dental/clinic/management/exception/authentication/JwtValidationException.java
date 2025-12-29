@@ -28,7 +28,7 @@ public class JwtValidationException extends ErrorResponseException {
     private static ProblemDetail createProblemDetail(String message) {
         ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED);
         problemDetail.setType(ErrorConstants.JWT_VALIDATION_FAILED_TYPE);
-        problemDetail.setTitle("JWT validation failed");
+        problemDetail.setTitle("Xác thực JWT thất bại");
         problemDetail.setProperty("message", "error.jwt.validation.failed");
         problemDetail.setProperty("details", message);
         return problemDetail;

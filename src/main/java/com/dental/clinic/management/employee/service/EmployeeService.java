@@ -52,7 +52,7 @@ public class EmployeeService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final SequentialCodeGenerator codeGenerator;
-    
+
     // Job P3 related repositories for cleanup when employee deactivated
     private final FixedShiftRegistrationRepository fixedRegistrationRepository;
     private final PartTimeRegistrationRepository partTimeRegistrationRepository;
@@ -118,31 +118,30 @@ public class EmployeeService {
         // Create specification to filter only active employees
         Specification<Employee> spec = (root, query, criteriaBuilder) -> {
             var predicates = new java.util.ArrayList<jakarta.persistence.criteria.Predicate>();
-            
+
             // Always filter by isActive = true
             predicates.add(criteriaBuilder.equal(root.get("isActive"), true));
-            
+
             // DATA INTEGRITY: Always exclude ROLE_PATIENT from employee queries
             // ROLE_PATIENT must only exist in Patient table, NOT in Employee table
             var accountJoin = root.join("account");
             var roleJoin = accountJoin.join("role");
             predicates.add(criteriaBuilder.notEqual(roleJoin.get("roleId"), "ROLE_PATIENT"));
-            
+
             // Add search filter (employee code, first name, or last name)
             if (search != null && !search.trim().isEmpty()) {
                 String searchPattern = "%" + search.toLowerCase() + "%";
                 predicates.add(criteriaBuilder.or(
-                    criteriaBuilder.like(criteriaBuilder.lower(root.get("employeeCode")), searchPattern),
-                    criteriaBuilder.like(criteriaBuilder.lower(root.get("firstName")), searchPattern),
-                    criteriaBuilder.like(criteriaBuilder.lower(root.get("lastName")), searchPattern)
-                ));
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("employeeCode")), searchPattern),
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("firstName")), searchPattern),
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("lastName")), searchPattern)));
             }
-            
+
             // Add roleId filter (reuse the same roleJoin from above)
             if (roleId != null && !roleId.trim().isEmpty()) {
                 predicates.add(criteriaBuilder.equal(roleJoin.get("roleId"), roleId));
             }
-            
+
             // Add employmentType filter (EmploymentType enum)
             if (employmentType != null && !employmentType.trim().isEmpty()) {
                 try {
@@ -152,7 +151,7 @@ public class EmployeeService {
                     log.warn("Invalid employment type: {}", employmentType);
                 }
             }
-            
+
             return criteriaBuilder.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
         };
 
@@ -222,11 +221,11 @@ public class EmployeeService {
     @Transactional(readOnly = true)
     public EmployeeInfoResponse getEmployeeByCodeIncludingDeleted(String employeeCode) {
         if (employeeCode == null || employeeCode.trim().isEmpty()) {
-            throw new IllegalArgumentException("Employee code cannot be null or empty");
+            throw new IllegalArgumentException("Mã nhân viên không được để trống");
         }
 
         Employee employee = employeeRepository.findOneByEmployeeCode(employeeCode)
-                .orElseThrow(() -> new EmployeeNotFoundException("Employee not found with code: " + employeeCode));
+                .orElseThrow(() -> new EmployeeNotFoundException("Không tìm thấy nhân viên với mã: " + employeeCode));
 
         return employeeMapper.toEmployeeInfoResponse(employee);
     }
@@ -242,7 +241,7 @@ public class EmployeeService {
     @Transactional(readOnly = true)
     public Employee findActiveEmployeeByCode(String employeeCode) {
         if (employeeCode == null || employeeCode.trim().isEmpty()) {
-            throw new IllegalArgumentException("Employee code cannot be null or empty");
+            throw new IllegalArgumentException("Mã nhân viên không được để trống");
         }
 
         Employee employee = employeeRepository.findOneByEmployeeCode(employeeCode)
@@ -297,7 +296,7 @@ public class EmployeeService {
         // Validate role and specialization requirements
         Role role = roleRepository.findById(request.getRoleId())
                 .orElseThrow(() -> new BadRequestAlertException(
-                        "Role not found with ID: " + request.getRoleId(),
+                        "Không tìm thấy vai trò với ID: " + request.getRoleId(),
                         "role",
                         "rolenotfound"));
 
@@ -411,17 +410,17 @@ public class EmployeeService {
     public EmployeeInfoResponse updateEmployee(String employeeCode, UpdateEmployeeRequest request) {
         // Find existing employee
         Employee employee = employeeRepository.findOneByEmployeeCode(employeeCode)
-                .orElseThrow(() -> new EmployeeNotFoundException("Employee not found with code: " + employeeCode));
+                .orElseThrow(() -> new EmployeeNotFoundException("Không tìm thấy nhân viên với mã: " + employeeCode));
 
         // Update only non-null fields
         if (request.getRoleId() != null) {
             // Update role in account, not in employee
             Role role = roleRepository.findById(request.getRoleId())
                     .orElseThrow(() -> new BadRequestAlertException(
-                            "Role not found with ID: " + request.getRoleId(),
+                            "Không tìm thấy vai trò với ID: " + request.getRoleId(),
                             "role",
                             "rolenotfound"));
-            
+
             // DATA INTEGRITY CHECK: Prevent ROLE_PATIENT in Employee table
             // ROLE_PATIENT must only exist in Patient table, NOT in Employee table
             if ("ROLE_PATIENT".equals(role.getRoleId())) {
@@ -430,7 +429,7 @@ public class EmployeeService {
                         "employee",
                         "invalidroleforemployee");
             }
-            
+
             employee.getAccount().setRole(role);
         }
 
@@ -461,28 +460,29 @@ public class EmployeeService {
         if (request.getIsActive() != null) {
             boolean wasActive = employee.getIsActive();
             boolean newActiveStatus = request.getIsActive();
-            
+
             employee.setIsActive(newActiveStatus);
-            
-            // Job P3 INLINE CLEANUP: When employee is deactivated, cleanup their registrations
+
+            // Job P3 INLINE CLEANUP: When employee is deactivated, cleanup their
+            // registrations
             if (wasActive && !newActiveStatus) {
                 log.info("Employee {} ({}) is being deactivated. Cleaning up registrations and future shifts...",
-                    employee.getEmployeeCode(), employee.getFullName());
-                
+                        employee.getEmployeeCode(), employee.getFullName());
+
                 // Deactivate Fixed registrations
                 int fixedCount = fixedRegistrationRepository.deactivateByEmployeeId(employee.getEmployeeId());
                 log.info("  - Deactivated {} Fixed registration(s)", fixedCount);
-                
+
                 // Deactivate Flex registrations
                 int flexCount = partTimeRegistrationRepository.deactivateByEmployeeId(employee.getEmployeeId());
                 log.info("  - Deactivated {} Flex registration(s)", flexCount);
-                
+
                 // Delete future SCHEDULED shifts (work_date >= TODAY)
                 java.time.LocalDate today = java.time.LocalDate.now();
                 int shiftsCount = employeeShiftRepository.deleteFutureScheduledShiftsByEmployeeId(
-                    employee.getEmployeeId(), today);
+                        employee.getEmployeeId(), today);
                 log.info("  - Deleted {} future SCHEDULED shift(s)", shiftsCount);
-                
+
                 log.info(" Cleanup completed for deactivated employee {}", employee.getEmployeeCode());
             }
         }
@@ -522,12 +522,12 @@ public class EmployeeService {
             ReplaceEmployeeRequest request) {
         // Find existing employee
         Employee employee = employeeRepository.findOneByEmployeeCode(employeeCode)
-                .orElseThrow(() -> new EmployeeNotFoundException("Employee not found with code: " + employeeCode));
+                .orElseThrow(() -> new EmployeeNotFoundException("Không tìm thấy nhân viên với mã: " + employeeCode));
 
         // Verify role exists
         Role role = roleRepository.findById(request.getRoleId())
                 .orElseThrow(() -> new BadRequestAlertException(
-                        "Role not found with ID: " + request.getRoleId(),
+                        "Không tìm thấy vai trò với ID: " + request.getRoleId(),
                         "role",
                         "rolenotfound"));
 
@@ -576,7 +576,7 @@ public class EmployeeService {
     public void deleteEmployee(String employeeCode) {
         // Find existing employee
         Employee employee = employeeRepository.findOneByEmployeeCode(employeeCode)
-                .orElseThrow(() -> new EmployeeNotFoundException("Employee not found with code: " + employeeCode));
+                .orElseThrow(() -> new EmployeeNotFoundException("Không tìm thấy nhân viên với mã: " + employeeCode));
 
         // Soft delete - set isActive to false
         employee.setIsActive(false);

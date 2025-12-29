@@ -75,7 +75,7 @@ public class PatientUnbanService {
                             HttpStatus.NOT_FOUND,
                             "Không tìm thấy bệnh nhân với ID: " + patientId
                     );
-                    pd.setTitle("Patient Not Found");
+                    pd.setTitle("Không Tìm Thấy Bệnh Nhân");
                     return new ErrorResponseException(HttpStatus.NOT_FOUND, pd, null);
                 });
 
@@ -86,7 +86,7 @@ public class PatientUnbanService {
                     HttpStatus.BAD_REQUEST,
                     "Bệnh nhân này chưa bị chặn đặt lịch. Không cần mở khóa."
             );
-            pd.setTitle("Patient Not Blocked");
+            pd.setTitle("Bệnh Nhân Chưa Bị Chặn");
             throw new ErrorResponseException(HttpStatus.BAD_REQUEST, pd, null);
         }
 

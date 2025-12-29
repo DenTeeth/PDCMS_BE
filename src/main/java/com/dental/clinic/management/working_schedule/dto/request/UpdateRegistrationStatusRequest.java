@@ -9,17 +9,18 @@ import lombok.NoArgsConstructor;
 /**
  * Request DTO for approving or rejecting a part-time registration.
  * 
- * Used by managers in: PATCH /api/v1/admin/registrations/part-time-flex/{id}/status
+ * Used by managers in: PATCH
+ * /api/v1/admin/registrations/part-time-flex/{id}/status
  * 
  * Example (Approve):
  * {
- *   "status": "APPROVED"
+ * "status": "APPROVED"
  * }
  * 
  * Example (Reject):
  * {
- *   "status": "REJECTED",
- *   "reason": "Không đủ nhân sự trong thời gian này"
+ * "status": "REJECTED",
+ * "reason": "Không đủ nhân sự trong thời gian này"
  * }
  */
 @Data
@@ -32,7 +33,7 @@ public class UpdateRegistrationStatusRequest {
      * PENDING is not allowed (can't revert to pending).
      */
     @NotBlank(message = "Status is required")
-    @Pattern(regexp = "APPROVED|REJECTED", message = "Status must be either APPROVED or REJECTED")
+    @Pattern(regexp = "APPROVED|REJECTED", message = "Trạng thái phải là APPROVED hoặc REJECTED")
     private String status;
 
     /**

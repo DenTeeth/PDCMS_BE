@@ -23,7 +23,7 @@ public class InvalidRegistrationDateException extends ErrorResponseException {
 
     private static ProblemDetail asProblemDetailWithMessage(String message) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, message);
-        problemDetail.setTitle("Invalid Registration Date");
+        problemDetail.setTitle("Ngày Đăng Ký Không Hợp Lệ");
         problemDetail.setProperty("message", "INVALID_REGISTRATION_DATE");
         return problemDetail;
     }
@@ -34,9 +34,8 @@ public class InvalidRegistrationDateException extends ErrorResponseException {
                 "Ngày đăng ký không hợp lệ: %s (còn %d ngày).",
                 workDate, daysDiff);
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, message);
-        problemDetail.setTitle("Invalid Registration Date");
+        problemDetail.setTitle("Ngày Đăng Ký Không Hợp Lệ");
         problemDetail.setProperty("message", "INVALID_REGISTRATION_DATE");
         return problemDetail;
     }
 }
-

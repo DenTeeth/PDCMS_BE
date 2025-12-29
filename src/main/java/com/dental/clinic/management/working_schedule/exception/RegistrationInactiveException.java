@@ -21,7 +21,7 @@ public class RegistrationInactiveException extends ErrorResponseException {
                 registrationId);
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, message);
-        problemDetail.setTitle("Registration Inactive");
+        problemDetail.setTitle("Đăng Ký Không Hoạt Động");
         problemDetail.setProperty("errorCode", ERROR_CODE);
         problemDetail.setProperty("message", message);
         problemDetail.setProperty("registrationId", registrationId);

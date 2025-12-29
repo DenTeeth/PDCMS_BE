@@ -20,7 +20,7 @@ public class RegistrationNotFoundException extends ErrorResponseException {
     private static ProblemDetail asProblemDetail(String registrationId) {
         String message = String.format("Employee Shift Registration not found with id: %s", registrationId);
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, message);
-        problemDetail.setTitle("Registration Not Found");
+        problemDetail.setTitle("Không Tìm Thấy Đăng Ký");
         problemDetail.setProperty("message", "error.registration.not.found");
         return problemDetail;
     }
@@ -29,7 +29,7 @@ public class RegistrationNotFoundException extends ErrorResponseException {
         String message = String.format("Employee Shift Registration not found with id: %s. %s", registrationId,
                 additionalMessage);
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, message);
-        problemDetail.setTitle("Registration Not Found");
+        problemDetail.setTitle("Không Tìm Thấy Đăng Ký");
         problemDetail.setProperty("message", "error.registration.not.found");
         return problemDetail;
     }

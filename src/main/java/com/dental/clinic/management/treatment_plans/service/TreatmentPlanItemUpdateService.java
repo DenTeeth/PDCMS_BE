@@ -270,10 +270,10 @@ public class TreatmentPlanItemUpdateService {
      */
     private Integer getCurrentEmployeeId() {
         String username = SecurityUtil.getCurrentUserLogin()
-                .orElseThrow(() -> new RuntimeException("User not authenticated"));
+                .orElseThrow(() -> new RuntimeException("Người dùng chưa được xác thực"));
 
         return accountRepository.findOneByUsername(username)
                 .map(account -> account.getEmployee().getEmployeeId())
-                .orElseThrow(() -> new RuntimeException("Employee not found for user: " + username));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên cho người dùng: " + username));
     }
 }

@@ -107,6 +107,6 @@ public class ChatbotService {
             }
         }
 
-        throw new RuntimeException("Invalid Gemini API response");
+        throw new RuntimeException("Phản hồi Gemini API không hợp lệ");
     }
 }

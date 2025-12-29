@@ -191,7 +191,7 @@ public class TreatmentPlanItemDeletionService {
                 String notes = String.format("Item %d (%s): -%.0f VND", itemId, itemName, price);
 
                 Employee performer = employeeRepository.findById(performedBy)
-                                .orElseThrow(() -> new NotFoundException("Employee not found"));
+                                .orElseThrow(() -> new NotFoundException("Không tìm thấy nhân viên"));
 
                 PlanAuditLog auditLog = PlanAuditLog.builder()
                                 .treatmentPlan(plan)
@@ -218,7 +218,7 @@ public class TreatmentPlanItemDeletionService {
                 }
 
                 Account account = accountRepository.findByUsernameWithRoleAndPermissions(currentLogin.get())
-                                .orElseThrow(() -> new NotFoundException("Account not found"));
+                                .orElseThrow(() -> new NotFoundException("Không tìm thấy tài khoản"));
 
                 if (account.getEmployee() == null || account.getEmployee().getEmployeeId() == null) {
                         log.error("Account {} has no linked employee", currentLogin.get());

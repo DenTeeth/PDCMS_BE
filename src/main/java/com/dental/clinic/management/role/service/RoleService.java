@@ -58,7 +58,7 @@ public class RoleService {
     public void assignPermissionsToRole(String roleId, List<String> permissionIds) {
         Role role = roleRepository.findByIdWithPermissions(roleId)
                 .orElseThrow(() -> new BadRequestAlertException(
-                        "Role not found with ID: " + roleId,
+                        "Không tìm thấy vai trò với ID: " + roleId,
                         "role",
                         "rolenotfound"));
 
@@ -66,7 +66,7 @@ public class RoleService {
         for (String permissionId : permissionIds) {
             Permission permission = permissionRepository.findById(permissionId)
                     .orElseThrow(() -> new BadRequestAlertException(
-                            "Permission not found with ID: " + permissionId,
+                            "Không tìm thấy quyền với ID: " + permissionId,
                             "permission",
                             "permissionnotfound"));
             permissions.add(permission);
@@ -82,7 +82,7 @@ public class RoleService {
     public List<PermissionInfoResponse> getRolePermissions(String roleId) {
         Role role = roleRepository.findByIdWithPermissions(roleId)
                 .orElseThrow(() -> new BadRequestAlertException(
-                        "Role not found with ID: " + roleId,
+                        "Không tìm thấy vai trò với ID: " + roleId,
                         "role",
                         "rolenotfound"));
 
@@ -96,7 +96,7 @@ public class RoleService {
     public RoleInfoResponse createRole(
             CreateRoleRequest request) {
         if (roleRepository.existsById(request.getRoleId()) || roleRepository.existsByRoleName(request.getRoleName())) {
-            throw new BadRequestAlertException("Role already exists", "role", "roleexists");
+            throw new BadRequestAlertException("Đã tồn tại vai trò này", "role", "roleexists");
         }
         Role role = roleMapper.toRole(request);
         roleRepository.save(role);
@@ -128,7 +128,7 @@ public class RoleService {
     @Cacheable(value = "roleById", key = "#roleId")
     public RoleInfoResponse getRoleById(String roleId) {
         Role role = roleRepository.findByIdWithPermissions(roleId)
-                .orElseThrow(() -> new BadRequestAlertException("Role not found with ID: " + roleId, "role",
+                .orElseThrow(() -> new BadRequestAlertException("Không tìm thấy vai trò với ID: " + roleId, "role",
                         "rolenotfound"));
         return roleMapper.toRoleInfoResponse(role);
     }
@@ -142,7 +142,7 @@ public class RoleService {
     public RoleInfoResponse updateRole(String roleId,
             UpdateRoleRequest request) {
         Role role = roleRepository.findByIdWithPermissions(roleId)
-                .orElseThrow(() -> new BadRequestAlertException("Role not found with ID: " + roleId, "role",
+                .orElseThrow(() -> new BadRequestAlertException("Không tìm thấy vai trò với ID: " + roleId, "role",
                         "rolenotfound"));
         role.setRoleName(request.getRoleName());
         role.setDescription(request.getDescription());
@@ -161,11 +161,11 @@ public class RoleService {
     })
     public RoleInfoResponse deleteRole(String roleId) {
         Role role = roleRepository.findById(roleId)
-                .orElseThrow(() -> new BadRequestAlertException("Role not found with ID: " + roleId, "role",
+                .orElseThrow(() -> new BadRequestAlertException("Không tìm thấy vai trò với ID: " + roleId, "role",
                         "rolenotfound"));
         // If already soft-deleted, treat as not found
         if (role.getIsActive() != null && !role.getIsActive()) {
-            throw new BadRequestAlertException("Role not found with ID: " + roleId, "role", "rolenotfound");
+            throw new BadRequestAlertException("Không tìm thấy vai trò với ID: " + roleId, "role", "rolenotfound");
         }
 
         // Soft delete: set isActive = false

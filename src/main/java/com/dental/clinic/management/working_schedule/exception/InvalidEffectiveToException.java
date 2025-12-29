@@ -26,7 +26,7 @@ public class InvalidEffectiveToException extends ErrorResponseException {
                 oldEffectiveTo);
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, message);
-        problemDetail.setTitle("Invalid Effective To Date");
+        problemDetail.setTitle("Ngày Kết Thúc Không Hợp Lệ");
         problemDetail.setProperty("errorCode", ERROR_CODE);
         problemDetail.setProperty("message", message);
         problemDetail.setProperty("oldEffectiveTo", oldEffectiveTo.toString());

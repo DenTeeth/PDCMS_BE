@@ -18,7 +18,7 @@ public class RegistrationInvalidStateException extends ErrorResponseException {
                 registrationId, currentStatus);
 
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, message);
-        pd.setTitle("Registration Invalid State");
+        pd.setTitle("Trạng Thái Đăng Ký Không Hợp Lệ");
         pd.setProperty("errorCode", ERROR_CODE);
         pd.setProperty("message", message);
         pd.setProperty("registrationId", registrationId);

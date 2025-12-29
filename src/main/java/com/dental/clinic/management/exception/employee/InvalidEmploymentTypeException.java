@@ -21,7 +21,7 @@ public class InvalidEmploymentTypeException extends ErrorResponseException {
     private static ProblemDetail asProblemDetail(Integer employeeId) {
         String message = "Only part-time employees can create shift registrations. Employee ID: " + employeeId;
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, message);
-        problemDetail.setTitle("Invalid Employment Type");
+        problemDetail.setTitle("Loại Hợp Đồng Không Hợp Lệ");
         problemDetail.setProperty("errorCode", "INVALID_EMPLOYMENT_TYPE");
         problemDetail.setProperty("message", "Only part-time employees can create shift registrations.");
         return problemDetail;
@@ -29,7 +29,7 @@ public class InvalidEmploymentTypeException extends ErrorResponseException {
 
     private static ProblemDetail asProblemDetailWithMessage(String message) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, message);
-        problemDetail.setTitle("Invalid Employment Type");
+        problemDetail.setTitle("Loại Hợp Đồng Không Hợp Lệ");
         problemDetail.setProperty("errorCode", "INVALID_EMPLOYMENT_TYPE");
         problemDetail.setProperty("message", message);
         return problemDetail;

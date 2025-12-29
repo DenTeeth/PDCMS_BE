@@ -93,7 +93,7 @@ public class PastShiftProtectionService {
         log.warn("Past shift modification blocked: shift date={}, current date={}", shiftDate, currentDate);
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, message);
-        problemDetail.setTitle("Past Shift Modification Blocked");
+        problemDetail.setTitle("Không Thể Sửa Ca Quá Khứ");
         problemDetail.setProperty("shiftDate", shiftDate.toString());
         problemDetail.setProperty("currentDate", currentDate.toString());
         throw new ErrorResponseException(HttpStatus.FORBIDDEN, problemDetail, null);
@@ -125,7 +125,7 @@ public class PastShiftProtectionService {
                     startDate, endDate, today);
 
             ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, message);
-            problemDetail.setTitle("Past Date Range Modification Blocked");
+            problemDetail.setTitle("Không Thể Sửa Khoảng Ngày Quá Khứ");
             problemDetail.setProperty("startDate", startDate.toString());
             problemDetail.setProperty("endDate", endDate.toString());
             problemDetail.setProperty("currentDate", today.toString());

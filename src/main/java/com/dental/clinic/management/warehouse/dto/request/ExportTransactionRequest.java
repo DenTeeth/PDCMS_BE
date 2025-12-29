@@ -26,23 +26,23 @@ import java.util.List;
 @AllArgsConstructor
 public class ExportTransactionRequest {
 
-    @NotNull(message = "Transaction date is required")
+    @NotNull(message = "Ngày giao dịch là bắt buộc")
     private LocalDate transactionDate;
 
-    @NotNull(message = "Export type is required")
+    @NotNull(message = "Loại xuất kho là bắt buộc")
     private ExportType exportType; // USAGE, DISPOSAL, RETURN
 
-    @Size(max = 100, message = "Reference code must not exceed 100 characters")
+    @Size(max = 100, message = "Mã tham chiếu không được vượt quá 100 ký tự")
     private String referenceCode; // Mã phiếu yêu cầu hoặc mã ca điều trị
 
     @Schema(description = "Link to appointment (auto-fills referenceCode and relatedAppointment)")
     private Long appointmentId; // When provided, auto-set referenceCode from appointment.appointmentCode
 
     // Audit Fields (Enhanced from review)
-    @Size(max = 200, message = "Department name must not exceed 200 characters")
+    @Size(max = 200, message = "Tên bộ phận không được vượt quá 200 ký tự")
     private String departmentName;
 
-    @Size(max = 200, message = "Requested by must not exceed 200 characters")
+    @Size(max = 200, message = "Người yêu cầu không được vượt quá 200 ký tự")
     private String requestedBy;
 
     @Size(max = 500, message = "Notes must not exceed 500 characters")
@@ -52,7 +52,7 @@ public class ExportTransactionRequest {
     @Builder.Default
     private Boolean allowExpired = false; // Cho phép xuất hàng hết hạn (true nếu DISPOSAL)
 
-    @NotEmpty(message = "Items list cannot be empty")
+    @NotEmpty(message = "Danh sách vật tư không được để trống")
     @Valid
     private List<ExportItemRequest> items;
 
@@ -65,13 +65,13 @@ public class ExportTransactionRequest {
     @AllArgsConstructor
     public static class ExportItemRequest {
 
-        @NotNull(message = "Item master ID is required")
-        @Positive(message = "Item master ID must be positive")
+        @NotNull(message = "Mã vật tư chính là bắt buộc")
+        @Positive(message = "Mã vật tư chính phải là số dương")
         private Long itemMasterId;
 
-        @NotNull(message = "Quantity is required")
-        @Min(value = 1, message = "Quantity must be at least 1")
-        @Max(value = 1000000, message = "Quantity must not exceed 1,000,000")
+        @NotNull(message = "Số lượng là bắt buộc")
+        @Min(value = 1, message = "Số lượng phải ít nhất là 1")
+        @Max(value = 1000000, message = "Số lượng không được vượt quá 1.000.000")
         private Integer quantity;
 
         @NotNull(message = "Unit ID is required")

@@ -195,7 +195,7 @@ public class AppointmentRescheduleService {
                 return patientRepository.findById(oldAppointment.getPatientId())
                                 .map(patient -> patient.getPatientCode())
                                 .orElseThrow(
-                                                () -> new IllegalStateException("Patient not found for ID: "
+                                                () -> new IllegalStateException("Không tìm thấy bệnh nhân cho ID: "
                                                                 + oldAppointment.getPatientId()));
         }
 
@@ -352,7 +352,7 @@ public class AppointmentRescheduleService {
         private Integer getCurrentEmployeeId() {
                 Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
                 if (authentication == null || !(authentication.getPrincipal() instanceof Jwt)) {
-                        throw new IllegalStateException("No valid JWT authentication found");
+                        throw new IllegalStateException("Không tìm thấy xác thực JWT hợp lệ");
                 }
 
                 Jwt jwt = (Jwt) authentication.getPrincipal();

@@ -21,7 +21,7 @@ public class InvalidPasswordException extends ErrorResponseException {
     private static ProblemDetail createProblemDetail() {
         ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
         problemDetail.setType(ErrorConstants.INVALID_PASSWORD_TYPE);
-        problemDetail.setTitle("Incorrect password");
+        problemDetail.setTitle("Mật khẩu không đúng");
         return problemDetail;
     }
 }

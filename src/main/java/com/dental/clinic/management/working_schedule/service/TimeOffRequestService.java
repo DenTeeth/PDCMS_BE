@@ -109,18 +109,18 @@ public class TimeOffRequestService {
                 // LUỒNG 2: Nhân viên chỉ có quyền VIEW_TIMEOFF_OWN
                 else {
                         String username = SecurityUtil.getCurrentUserLogin()
-                                        .orElseThrow(() -> new RuntimeException("User not authenticated"));
+                                        .orElseThrow(() -> new RuntimeException("Người dùng chưa được xác thực"));
 
                         Integer currentEmployeeId = accountRepository.findOneByUsername(username)
                                         .map(account -> {
                                                 if (account.getEmployee() == null) {
-                                                        throw new RuntimeException("Account " + username
-                                                                        + " không có Employee liên kết.");
+                                                        throw new RuntimeException("Tài khoản " + username
+                                                                        + " không có nhân viên liên kết.");
                                                 }
                                                 return account.getEmployee().getEmployeeId();
                                         })
                                         .orElseThrow(() -> new RuntimeException(
-                                                        "Employee not found for user: " + username));
+                                                        "Không tìm thấy nhân viên cho người dùng: " + username));
 
                         log.info("User has VIEW_TIMEOFF_OWN permission, fetching for employee_id: {}",
                                         currentEmployeeId);
@@ -154,18 +154,18 @@ public class TimeOffRequestService {
                 // LUỒNG 2: Nhân viên chỉ có quyền VIEW_TIMEOFF_OWN (phải là chủ sở hữu)
                 else {
                         String username = SecurityUtil.getCurrentUserLogin()
-                                        .orElseThrow(() -> new RuntimeException("User not authenticated"));
+                                        .orElseThrow(() -> new RuntimeException("Người dùng chưa được xác thực"));
 
                         Integer employeeId = accountRepository.findOneByUsername(username)
                                         .map(account -> {
                                                 if (account.getEmployee() == null) {
-                                                        throw new RuntimeException("Account " + username
-                                                                        + " không có Employee liên kết.");
+                                                        throw new RuntimeException("Tài khoản " + username
+                                                                        + " không có nhân viên liên kết.");
                                                 }
                                                 return account.getEmployee().getEmployeeId();
                                         })
                                         .orElseThrow(() -> new RuntimeException(
-                                                        "Employee not found for user: " + username));
+                                                        "Không tìm thấy nhân viên cho người dùng: " + username));
 
                         log.info("User has VIEW_TIMEOFF_OWN permission, fetching request: {} for employee_id: {}",
                                         requestId, employeeId);
@@ -186,74 +186,76 @@ public class TimeOffRequestService {
         public TimeOffRequestResponse createRequest(CreateTimeOffRequest request) {
                 log.debug("Request to create time-off request: {}", request);
 
-        // 1. Auto-fill employeeId from JWT if not provided (for employee self-requests)
-        final Integer employeeId;
-        if (request.getEmployeeId() != null) {
-            // Admin provided employeeId for another employee
-            employeeId = request.getEmployeeId();
-        } else {
-            // Get current user's employeeId from JWT token
-            String username = SecurityUtil.getCurrentUserLogin()
-                    .orElseThrow(() -> new RuntimeException("User not authenticated"));
+                // 1. Auto-fill employeeId from JWT if not provided (for employee self-requests)
+                final Integer employeeId;
+                if (request.getEmployeeId() != null) {
+                        // Admin provided employeeId for another employee
+                        employeeId = request.getEmployeeId();
+                } else {
+                        // Get current user's employeeId from JWT token
+                        String username = SecurityUtil.getCurrentUserLogin()
+                                        .orElseThrow(() -> new RuntimeException("Người dùng chưa được xác thực"));
 
-            employeeId = accountRepository.findOneByUsername(username)
-                    .map(account -> {
-                        if (account.getEmployee() == null) {
-                            throw new RuntimeException(
-                                    "Account " + username + " không có Employee liên kết.");
-                        }
-                        return account.getEmployee().getEmployeeId();
-                    })
-                    .orElseThrow(() -> new RuntimeException("Employee not found for user: " + username));
+                        employeeId = accountRepository.findOneByUsername(username)
+                                        .map(account -> {
+                                                if (account.getEmployee() == null) {
+                                                        throw new RuntimeException(
+                                                                        "Account " + username
+                                                                                        + " không có Employee liên kết.");
+                                                }
+                                                return account.getEmployee().getEmployeeId();
+                                        })
+                                        .orElseThrow(() -> new RuntimeException(
+                                                        "Không tìm thấy nhân viên cho người dùng: " + username));
 
-            log.info("Auto-filled employeeId from JWT: {}", employeeId);
-        }
+                        log.info("Auto-filled employeeId from JWT: {}", employeeId);
+                }
 
-        // 2. Validate employee exists
-        employeeRepository.findById(employeeId)
-                .orElseThrow(() -> new EmployeeNotFoundException(employeeId));
+                // 2. Validate employee exists
+                employeeRepository.findById(employeeId)
+                                .orElseThrow(() -> new EmployeeNotFoundException(employeeId));
 
                 // 3. Validate time-off type exists and is active
                 TimeOffType timeOffType = typeRepository.findByTypeIdAndIsActive(request.getTimeOffTypeId(), true)
                                 .orElseThrow(() -> new TimeOffTypeNotFoundException(request.getTimeOffTypeId()));
 
-        // 4. Validate date range
-        if (request.getStartDate().isAfter(request.getEndDate())) {
-            throw new InvalidDateRangeException(
-                    "Ngày bắt đầu không được lớn hơn ngày kết thúc. " +
-                            "Ngày bắt đầu: " + request.getStartDate() + ", Ngày kết thúc: "
-                            + request.getEndDate());
-        }
+                // 4. Validate date range
+                if (request.getStartDate().isAfter(request.getEndDate())) {
+                        throw new InvalidDateRangeException(
+                                        "Ngày bắt đầu không được lớn hơn ngày kết thúc. " +
+                                                        "Ngày bắt đầu: " + request.getStartDate() + ", Ngày kết thúc: "
+                                                        + request.getEndDate());
+                }
 
-        // 5. ISSUE #53 - Validate date range does NOT include holidays
-        holidayValidator.validateRangeNotIncludeHolidays(
-                request.getStartDate(),
-                request.getEndDate(),
-                "nghỉ phép");
+                // 5. ISSUE #53 - Validate date range does NOT include holidays
+                holidayValidator.validateRangeNotIncludeHolidays(
+                                request.getStartDate(),
+                                request.getEndDate(),
+                                "nghỉ phép");
 
-        // 6. Check leave balance CHỈ cho ANNUAL_LEAVE
-        // Các loại khác (SICK_LEAVE, UNPAID_PERSONAL) không cần check balance
-        if ("ANNUAL_LEAVE".equals(timeOffType.getTypeCode())) {
-            checkLeaveBalance(employeeId, request.getTimeOffTypeId(),
-                    request.getStartDate(), request.getEndDate(), request.getWorkShiftId());
-        }
+                // 6. Check leave balance CHỈ cho ANNUAL_LEAVE
+                // Các loại khác (SICK_LEAVE, UNPAID_PERSONAL) không cần check balance
+                if ("ANNUAL_LEAVE".equals(timeOffType.getTypeCode())) {
+                        checkLeaveBalance(employeeId, request.getTimeOffTypeId(),
+                                        request.getStartDate(), request.getEndDate(), request.getWorkShiftId());
+                }
 
-        // 7. Business Rule: If half-day off (work_shift_id provided), start_date must
-        // equal
-        // end_date
-        if (request.getWorkShiftId() != null && !request.getStartDate().equals(request.getEndDate())) {
-            throw new InvalidDateRangeException(
-                    "Khi nghỉ theo ca, ngày bắt đầu và kết thúc phải giống nhau. " +
-                            "Ngày bắt đầu: " + request.getStartDate() + ", Ngày kết thúc: "
-                            + request.getEndDate());
-        }
+                // 7. Business Rule: If half-day off (work_shift_id provided), start_date must
+                // equal
+                // end_date
+                if (request.getWorkShiftId() != null && !request.getStartDate().equals(request.getEndDate())) {
+                        throw new InvalidDateRangeException(
+                                        "Khi nghỉ theo ca, ngày bắt đầu và kết thúc phải giống nhau. " +
+                                                        "Ngày bắt đầu: " + request.getStartDate() + ", Ngày kết thúc: "
+                                                        + request.getEndDate());
+                }
 
-        // 8. [V14 Hybrid] Kiểm tra nhân viên có lịch làm việc không
-        // Query từ fixed_shift_registrations VÀ part_time_registrations
-        if (request.getWorkShiftId() != null) {
-            // Nghỉ theo ca (half-day)
-            boolean hasShift = checkEmployeeHasShift(
-                    employeeId,
+                // 8. [V14 Hybrid] Kiểm tra nhân viên có lịch làm việc không
+                // Query từ fixed_shift_registrations VÀ part_time_registrations
+                if (request.getWorkShiftId() != null) {
+                        // Nghỉ theo ca (half-day)
+                        boolean hasShift = checkEmployeeHasShift(
+                                        employeeId,
                                         request.getStartDate(),
                                         request.getWorkShiftId());
 
@@ -319,7 +321,7 @@ public class TimeOffRequestService {
 
                 // 6. Get current user ID from token for requested_by
                 String username = SecurityUtil.getCurrentUserLogin()
-                                .orElseThrow(() -> new RuntimeException("User not authenticated"));
+                                .orElseThrow(() -> new RuntimeException("Người dùng chưa được xác thực"));
 
                 Integer requestedBy = accountRepository.findOneByUsername(username)
                                 .map(account -> {
@@ -329,7 +331,7 @@ public class TimeOffRequestService {
                                         }
                                         return account.getEmployee().getEmployeeId();
                                 })
-                                .orElseThrow(() -> new RuntimeException("Employee not found for user: " + username));
+                                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên cho người dùng: " + username));
 
                 // 7. Generate request ID
                 String requestId = idGenerator.generateId("TOR");
@@ -403,7 +405,8 @@ public class TimeOffRequestService {
                         case APPROVED -> handleApproval(timeOffRequest);
                         case REJECTED -> handleRejection(timeOffRequest, request.getReason());
                         case CANCELLED -> handleCancellation(timeOffRequest, request.getReason());
-                        default -> throw new IllegalArgumentException("Invalid status: " + request.getStatus());
+                        default ->
+                                throw new IllegalArgumentException("Trạng thái không hợp lệ: " + request.getStatus());
                 }
 
                 // 4. Save and return
@@ -432,7 +435,7 @@ public class TimeOffRequestService {
 
                 // Get approver ID
                 String username = SecurityUtil.getCurrentUserLogin()
-                                .orElseThrow(() -> new RuntimeException("User not authenticated"));
+                                .orElseThrow(() -> new RuntimeException("Người dùng chưa được xác thực"));
 
                 Integer approvedBy = accountRepository.findOneByUsername(username)
                                 .map(account -> {
@@ -442,7 +445,7 @@ public class TimeOffRequestService {
                                         }
                                         return account.getEmployee().getEmployeeId();
                                 })
-                                .orElseThrow(() -> new RuntimeException("Employee not found for user: " + username));
+                                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên cho người dùng: " + username));
 
                 // Update request
                 timeOffRequest.setStatus(TimeOffStatus.APPROVED);
@@ -474,7 +477,7 @@ public class TimeOffRequestService {
 
                 // Get approver ID (person who rejected)
                 String username = SecurityUtil.getCurrentUserLogin()
-                                .orElseThrow(() -> new RuntimeException("User not authenticated"));
+                                .orElseThrow(() -> new RuntimeException("Người dùng chưa được xác thực"));
 
                 Integer approvedBy = accountRepository.findOneByUsername(username)
                                 .map(account -> {
@@ -484,7 +487,7 @@ public class TimeOffRequestService {
                                         }
                                         return account.getEmployee().getEmployeeId();
                                 })
-                                .orElseThrow(() -> new RuntimeException("Employee not found for user: " + username));
+                                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên cho người dùng: " + username));
 
                 // Update request
                 timeOffRequest.setStatus(TimeOffStatus.REJECTED);
@@ -504,7 +507,7 @@ public class TimeOffRequestService {
 
                 // Get current user
                 String username = SecurityUtil.getCurrentUserLogin()
-                                .orElseThrow(() -> new RuntimeException("User not authenticated"));
+                                .orElseThrow(() -> new RuntimeException("Người dùng chưa được xác thực"));
 
                 Integer currentEmployeeId = accountRepository.findOneByUsername(username)
                                 .map(account -> {
@@ -514,7 +517,7 @@ public class TimeOffRequestService {
                                         }
                                         return account.getEmployee().getEmployeeId();
                                 })
-                                .orElseThrow(() -> new RuntimeException("Employee not found for user: " + username));
+                                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên cho người dùng: " + username));
 
                 // Check permission
                 boolean isOwner = timeOffRequest.getEmployeeId().equals(currentEmployeeId);

@@ -25,6 +25,6 @@ public class HolidayDateRequest {
     @NotBlank(message = "Definition ID is required")
     private String definitionId;
 
-    @Size(max = 500, message = "Description must not exceed 500 characters")
+    @Size(max = 500, message = "Mô tả không được vượt quá 500 ký tự")
     private String description;
 }

@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 public class UpdatePartTimeSlotRequest {
 
     @NotNull(message = "Quota is required")
-    @Min(value = 1, message = "Quota must be at least 1")
+    @Min(value = 1, message = "Hạn mức phải ít nhất là 1")
     private Integer quota;
 
     @NotNull(message = "isActive is required")

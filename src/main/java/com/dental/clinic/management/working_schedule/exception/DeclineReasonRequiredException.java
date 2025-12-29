@@ -19,7 +19,7 @@ public class DeclineReasonRequiredException extends ErrorResponseException {
         String message = "Vui lòng cung cấp lý do từ chối gia hạn (declineReason).";
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, message);
-        problemDetail.setTitle("Decline Reason Required");
+        problemDetail.setTitle("Yêu Cầu Lý Do Từ Chối");
         problemDetail.setProperty("errorCode", ERROR_CODE);
         problemDetail.setProperty("message", message);
 

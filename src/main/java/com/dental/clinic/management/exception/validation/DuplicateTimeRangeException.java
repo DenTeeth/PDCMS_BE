@@ -5,7 +5,8 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.web.ErrorResponseException;
 
 /**
- * Exception thrown when trying to create a work shift with overlapping or duplicate time range.
+ * Exception thrown when trying to create a work shift with overlapping or
+ * duplicate time range.
  * Lỗi 1: Duplicate time range validation
  */
 public class DuplicateTimeRangeException extends ErrorResponseException {
@@ -16,7 +17,7 @@ public class DuplicateTimeRangeException extends ErrorResponseException {
 
     private static ProblemDetail asProblemDetail(String message) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, message);
-        problemDetail.setTitle("Duplicate Time Range");
+        problemDetail.setTitle("Khoảng Thời Gian Trùng Lặp");
         problemDetail.setProperty("errorCode", "DUPLICATE_TIME_RANGE");
         problemDetail.setProperty("message", message);
         return problemDetail;

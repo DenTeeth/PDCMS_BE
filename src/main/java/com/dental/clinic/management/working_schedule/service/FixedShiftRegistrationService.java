@@ -120,21 +120,21 @@ public class FixedShiftRegistrationService {
         // 10. Auto-generate shifts for fixed registration
         try {
             String sourceType = empType == EmploymentType.FULL_TIME ? "FULL_TIME" : "PART_TIME_FIXED";
-            
+
             employeeShiftService.createShiftsForRegistration(
-                employee.getEmployeeId(),
-                workShift.getWorkShiftId(),
-                saved.getEffectiveFrom(),
-                saved.getEffectiveTo(),
-                request.getDaysOfWeek(),
-                sourceType,
-                saved.getRegistrationId().longValue(),
-                null // createdBy can be null for system-generated
+                    employee.getEmployeeId(),
+                    workShift.getWorkShiftId(),
+                    saved.getEffectiveFrom(),
+                    saved.getEffectiveTo(),
+                    request.getDaysOfWeek(),
+                    sourceType,
+                    saved.getRegistrationId().longValue(),
+                    null // createdBy can be null for system-generated
             );
-            
+
             log.info(" Successfully auto-generated shifts for fixed registration: {}", saved.getRegistrationId());
         } catch (Exception e) {
-            log.error(" Failed to generate shifts for fixed registration {}: {}", 
+            log.error(" Failed to generate shifts for fixed registration {}: {}",
                     saved.getRegistrationId(), e.getMessage(), e);
             // Don't fail the whole transaction - registration is still valid
             // Shifts can be regenerated later via backfill endpoint
@@ -176,7 +176,8 @@ public class FixedShiftRegistrationService {
         } else {
             // Regular employee: cannot provide employeeId, use JWT token's employeeId
             if (employeeId != null) {
-                throw new AccessDeniedException("Bạn không thể chỉ định employeeId. Hệ thống sẽ tự động lấy từ tài khoản của bạn.");
+                throw new AccessDeniedException(
+                        "Bạn không thể chỉ định employeeId. Hệ thống sẽ tự động lấy từ tài khoản của bạn.");
             }
             // Regular employees can only see their own active registrations
             registrations = registrationRepository.findActiveByEmployeeId(currentEmployeeId);
@@ -302,7 +303,8 @@ public class FixedShiftRegistrationService {
 
     /**
      * Backfill shifts for existing fixed registrations that don't have shifts yet.
-     * This should be called once to fix existing registrations created before shift auto-generation was implemented.
+     * This should be called once to fix existing registrations created before shift
+     * auto-generation was implemented.
      * 
      * @return Summary of backfill operation
      */
@@ -313,7 +315,7 @@ public class FixedShiftRegistrationService {
 
         // Find all active fixed registrations
         List<FixedShiftRegistration> activeRegistrations = registrationRepository.findAllByActiveStatus(true);
-        
+
         log.info(" Found {} active registrations to process", activeRegistrations.size());
 
         int successCount = 0;
@@ -325,7 +327,7 @@ public class FixedShiftRegistrationService {
             try {
                 Employee employee = registration.getEmployee();
                 EmploymentType empType = employee.getEmploymentType();
-                
+
                 // Extract days of week as numbers
                 List<Integer> daysOfWeek = registration.getRegistrationDays().stream()
                         .map(day -> convertDayStringToNumber(day.getDayOfWeek()))
@@ -338,48 +340,47 @@ public class FixedShiftRegistrationService {
                 }
 
                 String sourceType = empType == EmploymentType.FULL_TIME ? "FULL_TIME" : "PART_TIME_FIXED";
-                
-                List<com.dental.clinic.management.working_schedule.domain.EmployeeShift> createdShifts = 
-                    employeeShiftService.createShiftsForRegistration(
-                        employee.getEmployeeId(),
-                        registration.getWorkShift().getWorkShiftId(),
-                        registration.getEffectiveFrom(),
-                        registration.getEffectiveTo(),
-                        daysOfWeek,
-                        sourceType,
-                        registration.getRegistrationId().longValue(),
-                        null
-                    );
+
+                List<com.dental.clinic.management.working_schedule.domain.EmployeeShift> createdShifts = employeeShiftService
+                        .createShiftsForRegistration(
+                                employee.getEmployeeId(),
+                                registration.getWorkShift().getWorkShiftId(),
+                                registration.getEffectiveFrom(),
+                                registration.getEffectiveTo(),
+                                daysOfWeek,
+                                sourceType,
+                                registration.getRegistrationId().longValue(),
+                                null);
 
                 if (createdShifts.isEmpty()) {
                     log.info("⏭ Registration {} already has all shifts, skipping", registration.getRegistrationId());
                     skipCount++;
                 } else {
-                    log.info(" Generated {} shifts for registration {}", createdShifts.size(), registration.getRegistrationId());
+                    log.info(" Generated {} shifts for registration {}", createdShifts.size(),
+                            registration.getRegistrationId());
                     successCount++;
                 }
 
             } catch (Exception e) {
-                log.error(" Failed to generate shifts for registration {}: {}", 
+                log.error(" Failed to generate shifts for registration {}: {}",
                         registration.getRegistrationId(), e.getMessage());
                 errorCount++;
-                errorDetails.append(String.format("Registration %d: %s\n", 
+                errorDetails.append(String.format("Registration %d: %s\n",
                         registration.getRegistrationId(), e.getMessage()));
             }
         }
 
         String summary = String.format(
                 " Backfill complete: %d succeeded, %d skipped (already have shifts), %d failed out of %d total",
-                successCount, skipCount, errorCount, activeRegistrations.size()
-        );
-        
+                successCount, skipCount, errorCount, activeRegistrations.size());
+
         log.info(summary);
-        
+
         if (errorCount > 0) {
             log.error("Error details:\n{}", errorDetails);
             return summary + "\n\nErrors:\n" + errorDetails;
         }
-        
+
         return summary;
     }
 
@@ -399,7 +400,7 @@ public class FixedShiftRegistrationService {
                 .orElseThrow(() -> new FixedRegistrationNotFoundException(registrationId));
 
         if (!registration.getIsActive()) {
-            throw new IllegalStateException("Cannot regenerate shifts for inactive registration");
+            throw new IllegalStateException("Không thể tạo lại ca cho đăng ký không hoạt động");
         }
 
         Employee employee = registration.getEmployee();
@@ -412,17 +413,16 @@ public class FixedShiftRegistrationService {
 
         String sourceType = empType == EmploymentType.FULL_TIME ? "FULL_TIME" : "PART_TIME_FIXED";
 
-        List<com.dental.clinic.management.working_schedule.domain.EmployeeShift> createdShifts = 
-            employeeShiftService.createShiftsForRegistration(
-                employee.getEmployeeId(),
-                registration.getWorkShift().getWorkShiftId(),
-                registration.getEffectiveFrom(),
-                registration.getEffectiveTo(),
-                daysOfWeek,
-                sourceType,
-                registration.getRegistrationId().longValue(),
-                null
-            );
+        List<com.dental.clinic.management.working_schedule.domain.EmployeeShift> createdShifts = employeeShiftService
+                .createShiftsForRegistration(
+                        employee.getEmployeeId(),
+                        registration.getWorkShift().getWorkShiftId(),
+                        registration.getEffectiveFrom(),
+                        registration.getEffectiveTo(),
+                        daysOfWeek,
+                        sourceType,
+                        registration.getRegistrationId().longValue(),
+                        null);
 
         log.info(" Regenerated {} shifts for registration {}", createdShifts.size(), registrationId);
         return createdShifts.size();
@@ -440,7 +440,7 @@ public class FixedShiftRegistrationService {
             case 5 -> "FRIDAY";
             case 6 -> "SATURDAY";
             case 7 -> "SUNDAY";
-            default -> throw new IllegalArgumentException("Invalid day number: " + dayNumber);
+            default -> throw new IllegalArgumentException("Số ngày không hợp lệ: " + dayNumber);
         };
     }
 
@@ -456,7 +456,7 @@ public class FixedShiftRegistrationService {
             case "FRIDAY" -> 5;
             case "SATURDAY" -> 6;
             case "SUNDAY" -> 7;
-            default -> throw new IllegalArgumentException("Invalid day string: " + dayString);
+            default -> throw new IllegalArgumentException("Chuỗi ngày không hợp lệ: " + dayString);
         };
     }
 }

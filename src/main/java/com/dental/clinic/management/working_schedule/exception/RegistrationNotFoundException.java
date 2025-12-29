@@ -30,7 +30,7 @@ public class RegistrationNotFoundException extends ErrorResponseException {
                 registrationId);
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, message);
-        problemDetail.setTitle("Registration Not Found");
+        problemDetail.setTitle("Không Tìm Thấy Đăng Ký");
         problemDetail.setProperty("errorCode", ERROR_CODE);
         problemDetail.setProperty("message", message);
         problemDetail.setProperty("registrationId", registrationId);

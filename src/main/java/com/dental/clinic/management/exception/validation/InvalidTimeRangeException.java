@@ -19,7 +19,7 @@ public class InvalidTimeRangeException extends ErrorResponseException {
 
     private static ProblemDetail asProblemDetail(String message) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, message);
-        problemDetail.setTitle("Invalid Time Range");
+        problemDetail.setTitle("Khoảng Thời Gian Không Hợp Lệ");
         problemDetail.setProperty("errorCode", "INVALID_TIME_RANGE");
         problemDetail.setProperty("message", message);
         return problemDetail;

@@ -23,7 +23,7 @@ public class RegistrationConflictException extends ErrorResponseException {
                 "This shift registration conflicts with an existing active registration for shift %s on %s",
                 workShiftId, dayOfWeek);
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, message);
-        problemDetail.setTitle("Registration Conflict");
+        problemDetail.setTitle("Xung Đột Đăng Ký");
         problemDetail.setProperty("errorCode", "REGISTRATION_CONFLICT");
         problemDetail.setProperty("message", "This shift registration conflicts with an existing active registration.");
         return problemDetail;
@@ -31,7 +31,7 @@ public class RegistrationConflictException extends ErrorResponseException {
 
     private static ProblemDetail asProblemDetailWithMessage(String message) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, message);
-        problemDetail.setTitle("Registration Conflict");
+        problemDetail.setTitle("Xung Đột Đăng Ký");
         problemDetail.setProperty("errorCode", "REGISTRATION_CONFLICT");
         problemDetail.setProperty("message", message);
         return problemDetail;

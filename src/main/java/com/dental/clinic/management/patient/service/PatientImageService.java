@@ -60,7 +60,7 @@ public class PatientImageService {
 
             // Verify clinical record belongs to the patient via appointment
             if (!clinicalRecord.getAppointment().getPatientId().equals(patientIdInt)) {
-                throw new BadRequestException("Clinical record does not belong to the specified patient");
+                throw new BadRequestException("Hồ sơ lâm sàng không thuộc về bệnh nhân đã chỉ định");
             }
         }
 
@@ -100,12 +100,12 @@ public class PatientImageService {
                 patientId, imageType, page, size);
 
         if (patientId == null) {
-            throw new BadRequestException("Patient ID is required");
+            throw new BadRequestException("Mã bệnh nhân là bắt buộc");
         }
 
         Integer patientIdInt = patientId.intValue();
         if (!patientRepository.existsById(patientIdInt)) {
-            throw new NotFoundException("Patient not found with ID: " + patientId);
+            throw new NotFoundException("Không tìm thấy bệnh nhân với ID: " + patientId);
         }
 
         // Authorization check: Patients can only view their own images
@@ -127,7 +127,7 @@ public class PatientImageService {
         log.info("Fetching patient image by ID: {}", imageId);
 
         PatientImage patientImage = patientImageRepository.findById(imageId)
-                .orElseThrow(() -> new NotFoundException("Patient image not found with ID: " + imageId));
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy hình ảnh bệnh nhân với ID: " + imageId));
 
         return mapToResponse(patientImage);
     }
@@ -137,7 +137,7 @@ public class PatientImageService {
         log.info("Updating patient image ID: {}", imageId);
 
         PatientImage patientImage = patientImageRepository.findById(imageId)
-                .orElseThrow(() -> new NotFoundException("Patient image not found with ID: " + imageId));
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy hình ảnh bệnh nhân với ID: " + imageId));
 
         if (request.getImageType() != null) {
             patientImage.setImageType(request.getImageType());
@@ -159,7 +159,7 @@ public class PatientImageService {
 
             // Verify clinical record belongs to the patient via appointment
             if (!clinicalRecord.getAppointment().getPatientId().equals(patientImage.getPatient().getPatientId())) {
-                throw new BadRequestException("Clinical record does not belong to the image's patient");
+                throw new BadRequestException("Hồ sơ lâm sàng không thuộc về bệnh nhân của hình ảnh");
             }
 
             patientImage.setClinicalRecord(clinicalRecord);
@@ -176,7 +176,7 @@ public class PatientImageService {
         log.info("Deleting patient image ID: {}", imageId);
 
         PatientImage patientImage = patientImageRepository.findById(imageId)
-                .orElseThrow(() -> new NotFoundException("Patient image not found with ID: " + imageId));
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy hình ảnh bệnh nhân với ID: " + imageId));
 
         patientImageRepository.delete(patientImage);
         log.info("Patient image deleted successfully: {}", imageId);
@@ -188,7 +188,7 @@ public class PatientImageService {
 
         Integer clinicalRecordIdInt = clinicalRecordId.intValue();
         if (!clinicalRecordRepository.existsById(clinicalRecordIdInt)) {
-            throw new NotFoundException("Clinical record not found with ID: " + clinicalRecordId);
+            throw new NotFoundException("Không tìm thấy hồ sơ lâm sàng với ID: " + clinicalRecordId);
         }
 
         List<PatientImage> images = patientImageRepository
@@ -208,7 +208,7 @@ public class PatientImageService {
         // Find clinical record for this appointment
         ClinicalRecord clinicalRecord = clinicalRecordRepository.findByAppointment_AppointmentId(appointmentIdInt)
                 .orElseThrow(
-                        () -> new NotFoundException("Clinical record not found for appointment ID: " + appointmentId));
+                        () -> new NotFoundException("Không tìm thấy hồ sơ lâm sàng cho lịch hẹn ID: " + appointmentId));
 
         // Get all images for this clinical record
         List<PatientImage> images = patientImageRepository
@@ -222,14 +222,14 @@ public class PatientImageService {
     private void verifyPatientAccess(Integer patientId) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
-            throw new AccessDeniedException("User not authenticated");
+            throw new AccessDeniedException("Người dùng chưa được xác thực");
         }
 
         // Check if user has staff role (can view any patient's images)
         boolean isStaff = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
-                .anyMatch(role -> role.equals("ROLE_ADMIN") 
-                        || role.equals("ROLE_DENTIST") 
+                .anyMatch(role -> role.equals("ROLE_ADMIN")
+                        || role.equals("ROLE_DENTIST")
                         || role.equals("ROLE_NURSE")
                         || role.equals("ROLE_RECEPTIONIST"));
 

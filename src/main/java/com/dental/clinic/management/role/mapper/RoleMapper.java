@@ -51,7 +51,7 @@ public class RoleMapper {
         // Fetch and validate base role
         BaseRole baseRole = baseRoleRepository.findById(request.getBaseRoleId())
                 .orElseThrow(() -> new BadRequestAlertException(
-                        "Base role not found with ID: " + request.getBaseRoleId(),
+                        "Không tìm thấy vai trò cơ bản với ID: " + request.getBaseRoleId(),
                         "baseRole",
                         "baserolenotfound"));
         

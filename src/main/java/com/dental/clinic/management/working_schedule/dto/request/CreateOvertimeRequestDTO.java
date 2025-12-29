@@ -11,27 +11,29 @@ import java.time.LocalDate;
 
 /**
  * DTO for creating a new overtime request.
- * The request_id and requested_by are auto-generated from the authenticated user.
+ * The request_id and requested_by are auto-generated from the authenticated
+ * user.
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreateOvertimeRequestDTO {
 
-    // Optional for employee creating their own request (will be auto-filled from JWT)
+    // Optional for employee creating their own request (will be auto-filled from
+    // JWT)
     // Required for admin creating request for another employee
     private Integer employeeId;
 
-    @NotNull(message = "Work date is required")
+    @NotNull(message = "Ngày làm việc là bắt buộc")
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate workDate;
 
-    @NotBlank(message = "Work shift ID is required")
+    @NotBlank(message = "Mã ca làm việc là bắt buộc")
     private String workShiftId;
 
-    @NotBlank(message = "Reason is required")
+    @NotBlank(message = "Lý do là bắt buộc")
     private String reason;
-    
+
     /**
      * Constructor for employee self-request (no employeeId needed)
      */

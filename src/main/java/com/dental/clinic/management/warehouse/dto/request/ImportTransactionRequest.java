@@ -27,15 +27,15 @@ import java.util.List;
 @Builder
 public class ImportTransactionRequest {
 
-    @NotNull(message = "Supplier ID is required")
-    @Positive(message = "Supplier ID must be positive")
+    @NotNull(message = "Mã nhà cung cấp là bắt buộc")
+    @Positive(message = "Mã nhà cung cấp phải là số dương")
     private Long supplierId;
 
-    @NotNull(message = "Transaction date is required")
+    @NotNull(message = "Ngày giao dịch là bắt buộc")
     private LocalDate transactionDate;
 
-    @NotBlank(message = "Invoice number is required")
-    @Size(max = 100, message = "Invoice number must not exceed 100 characters")
+    @NotBlank(message = "Số hóa đơn là bắt buộc")
+    @Size(max = 100, message = "Số hóa đơn không được vượt quá 100 ký tự")
     private String invoiceNumber;
 
     private LocalDate expectedDeliveryDate;
@@ -43,7 +43,7 @@ public class ImportTransactionRequest {
     @Size(max = 500, message = "Notes must not exceed 500 characters")
     private String notes;
 
-    @NotEmpty(message = "Items list cannot be empty")
+    @NotEmpty(message = "Danh sách vật tư không được để trống")
     @Valid
     private List<ImportItemRequest> items;
 
@@ -53,32 +53,32 @@ public class ImportTransactionRequest {
     @Builder
     public static class ImportItemRequest {
 
-        @NotNull(message = "Item Master ID is required")
-        @Positive(message = "Item Master ID must be positive")
+        @NotNull(message = "Mã vật tư chính là bắt buộc")
+        @Positive(message = "Mã vật tư chính phải là số dương")
         private Long itemMasterId;
 
-        @NotBlank(message = "Lot number is required")
-        @Size(max = 100, message = "Lot number must not exceed 100 characters")
+        @NotBlank(message = "Số lô là bắt buộc")
+        @Size(max = 100, message = "Số lô không được vượt quá 100 ký tự")
         private String lotNumber;
 
-        @NotNull(message = "Expiry date is required")
+        @NotNull(message = "Ngày hết hạn là bắt buộc")
         private LocalDate expiryDate;
 
-        @NotNull(message = "Quantity is required")
-        @Positive(message = "Quantity must be greater than 0")
-        @Max(value = 1000000, message = "Quantity cannot exceed 1,000,000 units")
+        @NotNull(message = "Số lượng là bắt buộc")
+        @Positive(message = "Số lượng phải lớn hơn 0")
+        @Max(value = 1000000, message = "Số lượng không được vượt quá 1.000.000 đơn vị")
         private Integer quantity;
 
-        @NotNull(message = "Unit ID is required")
-        @Positive(message = "Unit ID must be positive")
+        @NotNull(message = "Mã đơn vị là bắt buộc")
+        @Positive(message = "Mã đơn vị phải là số dương")
         private Long unitId;
 
-        @NotNull(message = "Purchase price is required")
-        @DecimalMin(value = "0.01", message = "Purchase price must be greater than 0")
-        @DecimalMax(value = "100000000.00", message = "Purchase price cannot exceed 100,000,000 VNĐ")
+        @NotNull(message = "Giá mua là bắt buộc")
+        @DecimalMin(value = "0.01", message = "Giá mua phải lớn hơn 0")
+        @DecimalMax(value = "100000000.00", message = "Giá mua không được vượt quá 100.000.000 VNĐ")
         private BigDecimal purchasePrice;
 
-        @Size(max = 200, message = "Bin location must not exceed 200 characters")
+        @Size(max = 200, message = "Vị trí kho không được vượt quá 200 ký tự")
         private String binLocation;
 
         @Size(max = 500, message = "Notes must not exceed 500 characters")

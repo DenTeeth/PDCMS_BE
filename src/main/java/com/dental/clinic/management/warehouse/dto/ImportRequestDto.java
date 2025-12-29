@@ -19,37 +19,37 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ImportRequestDto {
-    
+
     @NotNull(message = "Supplier ID is required")
     private Long supplierId;
-    
+
     private String notes;
-    
+
     @NotNull(message = "Items list is required")
     private List<ImportItemDto> items;
-    
+
     @Data
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
     public static class ImportItemDto {
-        
+
         @NotNull(message = "Item Master ID is required")
         private Long itemMasterId;
-        
+
         @NotNull(message = "Lot number is required")
         private String lotNumber;
-        
+
         @NotNull(message = "Quantity is required")
-        @Min(value = 1, message = "Quantity must be at least 1")
+        @Min(value = 1, message = "Số lượng phải ít nhất là 1")
         private Integer quantity;
-        
+
         private LocalDate expiryDate; // Bắt buộc nếu warehouseType=COLD && isTool=false
-        
+
         @NotNull(message = "Import price is required")
-        @Min(value = 0, message = "Price cannot be negative")
+        @Min(value = 0, message = "Giá không được âm")
         private BigDecimal importPrice;
-        
+
         private String notes;
     }
 }

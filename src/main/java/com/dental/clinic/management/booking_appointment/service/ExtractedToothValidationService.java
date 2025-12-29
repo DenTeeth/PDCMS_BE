@@ -103,7 +103,7 @@ public class ExtractedToothValidationService {
             log.warn("Extracted tooth conflict for patient {}: teeth {}", patientId, teethList);
 
             ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, message);
-            problemDetail.setTitle("Extracted Tooth Conflict");
+            problemDetail.setTitle("Xung Đột Răng Đã Nhổ");
             problemDetail.setProperty("patientId", patientId);
             problemDetail.setProperty("extractedTeeth", conflictingTeeth);
             throw new ErrorResponseException(HttpStatus.BAD_REQUEST, problemDetail, null);

@@ -64,7 +64,7 @@ public class PermissionService {
     @Cacheable(value = "permissionById", key = "#permissionId")
     public PermissionInfoResponse getPermissionById(String permissionId) {
         Permission permission = permissionRepository.findById(permissionId)
-                .orElseThrow(() -> new PermissionNotFoundException("Permission not found with ID: " + permissionId));
+                .orElseThrow(() -> new PermissionNotFoundException("Không tìm thấy quyền với ID: " + permissionId));
 
         return permissionMapper.toPermissionInfoResponse(permission);
     }
@@ -109,7 +109,7 @@ public class PermissionService {
             "permissionsGrouped" }, allEntries = true)
     public PermissionInfoResponse updatePermission(String permissionId, UpdatePermissionRequest request) {
         Permission existingPermission = permissionRepository.findById(permissionId)
-                .orElseThrow(() -> new PermissionNotFoundException("Permission not found with ID: " + permissionId));
+                .orElseThrow(() -> new PermissionNotFoundException("Không tìm thấy quyền với ID: " + permissionId));
 
         // Check if new permission name already exists (if being changed)
         if (request.getPermissionName() != null &&
@@ -145,7 +145,7 @@ public class PermissionService {
             "permissionsGrouped" }, allEntries = true)
     public void deletePermission(String permissionId) {
         Permission permission = permissionRepository.findById(permissionId)
-                .orElseThrow(() -> new PermissionNotFoundException("Permission not found with ID: " + permissionId));
+                .orElseThrow(() -> new PermissionNotFoundException("Không tìm thấy quyền với ID: " + permissionId));
 
         // Soft delete by setting isActive to false
         permission.setIsActive(false);
@@ -158,7 +158,7 @@ public class PermissionService {
             "permissionsGrouped" }, allEntries = true)
     public void hardDeletePermission(String permissionId) {
         Permission permission = permissionRepository.findById(permissionId)
-                .orElseThrow(() -> new PermissionNotFoundException("Permission not found with ID: " + permissionId));
+                .orElseThrow(() -> new PermissionNotFoundException("Không tìm thấy quyền với ID: " + permissionId));
 
         permissionRepository.delete(permission);
     }

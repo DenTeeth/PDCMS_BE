@@ -18,7 +18,7 @@ public class InvalidRequestException extends ErrorResponseException {
 
     private static ProblemDetail asProblemDetail(String errorCode, String message) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, message);
-        problemDetail.setTitle("Invalid Request");
+        problemDetail.setTitle("Yêu Cầu Không Hợp Lệ");
         problemDetail.setType(URI.create(ErrorConstants.PROBLEM_BASE_URL + "/invalid-request"));
         problemDetail.setProperty("errorCode", errorCode);
         return problemDetail;

@@ -14,12 +14,11 @@ public class SlotNotFoundException extends ErrorResponseException {
 
     private static ProblemDetail createProblemDetail(Long slotId) {
         String message = String.format(
-            "Không tìm thấy suất làm việc với ID: %d.",
-            slotId
-        );
+                "Không tìm thấy suất làm việc với ID: %d.",
+                slotId);
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, message);
-        problemDetail.setTitle("Slot Not Found");
+        problemDetail.setTitle("Không Tìm Thấy Suất Làm Việc");
         problemDetail.setProperty("errorCode", ERROR_CODE);
         problemDetail.setProperty("message", message);
         problemDetail.setProperty("slotId", slotId);

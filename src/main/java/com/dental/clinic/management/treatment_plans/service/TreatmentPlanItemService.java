@@ -107,7 +107,7 @@ public class TreatmentPlanItemService {
         PatientPlanItem item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "TREATMENT_PLAN_ITEM_NOT_FOUND",
-                        "Treatment plan item not found with ID: " + itemId));
+                        "Không tìm thấy mục kế hoạch điều trị với ID: " + itemId));
 
         PatientPlanPhase phase = item.getPhase();
         PatientTreatmentPlan plan = phase.getTreatmentPlan();
@@ -620,7 +620,7 @@ public class TreatmentPlanItemService {
         // STEP 1: Find item with phase and plan data
         PatientPlanItem item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new ResourceNotFoundException("ITEM_NOT_FOUND",
-                    "Plan item not found with id: " + itemId));
+                    "Không tìm thấy mục kế hoạch với ID: " + itemId));
 
         PatientPlanPhase phase = item.getPhase();
         if (phase == null) {

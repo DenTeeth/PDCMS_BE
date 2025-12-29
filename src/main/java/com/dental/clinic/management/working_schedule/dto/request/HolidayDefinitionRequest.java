@@ -20,17 +20,16 @@ import lombok.Setter;
 public class HolidayDefinitionRequest {
 
     @NotBlank(message = "Definition ID is required")
-    @Pattern(regexp = "^[A-Z0-9_]{1,20}$", 
-             message = "Definition ID must contain only uppercase letters, numbers, and underscores (max 20 chars)")
+    @Pattern(regexp = "^[A-Z0-9_]{1,20}$", message = "Definition ID must contain only uppercase letters, numbers, and underscores (max 20 chars)")
     private String definitionId;
 
     @NotBlank(message = "Holiday name is required")
-    @Size(max = 100, message = "Holiday name must not exceed 100 characters")
+    @Size(max = 100, message = "Tên ngày lễ không được vượt quá 100 ký tự")
     private String holidayName;
 
     @NotNull(message = "Holiday type is required")
     private HolidayType holidayType;
 
-    @Size(max = 500, message = "Description must not exceed 500 characters")
+    @Size(max = 500, message = "Mô tả không được vượt quá 500 ký tự")
     private String description;
 }

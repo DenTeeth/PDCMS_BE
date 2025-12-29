@@ -47,7 +47,7 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
                         // Extract account_id from JWT claims - handle Long/Integer/String
                         Object accountIdClaim = jwt.getClaim("account_id");
                         if (accountIdClaim == null) {
-                            throw new IllegalArgumentException("JWT token missing account_id claim");
+                            throw new IllegalArgumentException("JWT token thiếu claim account_id");
                         }
 
                         Integer accountId;
@@ -95,7 +95,7 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
 
                     } catch (Exception e) {
                         log.error("WebSocket authentication failed: {}", e.getMessage());
-                        throw new IllegalArgumentException("Invalid JWT token for WebSocket connection");
+                        throw new IllegalArgumentException("Token JWT không hợp lệ cho kết nối WebSocket");
                     }
                 } else {
                     log.warn("WebSocket connection without Bearer token");

@@ -9,9 +9,11 @@ import java.time.LocalDate;
 import java.util.Set;
 
 /**
- * Exception thrown when registration period does not cover all required days of the week.
+ * Exception thrown when registration period does not cover all required days of
+ * the week.
  * 
- * For example, if a slot requires MON,WED,FRI, the registration period must include
+ * For example, if a slot requires MON,WED,FRI, the registration period must
+ * include
  * at least one Monday, one Wednesday, and one Friday.
  */
 public class IncompleteDayCoverageException extends ErrorResponseException {
@@ -39,9 +41,8 @@ public class IncompleteDayCoverageException extends ErrorResponseException {
             LocalDate effectiveTo) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
                 HttpStatus.BAD_REQUEST,
-                "Date range must include at least one occurrence of each working day defined in the slot."
-        );
-        problemDetail.setTitle("Insufficient Date Range");
+                "Date range must include at least one occurrence of each working day defined in the slot.");
+        problemDetail.setTitle("Khoảng Thời Gian Không Đủ");
         problemDetail.setType(URI.create("https://api.dentalclinic.com/errors/insufficient-date-range"));
         return problemDetail;
     }

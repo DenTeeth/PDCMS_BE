@@ -328,7 +328,7 @@ public class TreatmentPlanAutoScheduleService {
         if (request.getEmployeeCode() != null && !request.getEmployeeCode().isEmpty()) {
             var employee = employeeRepository.findByEmployeeCodeAndIsActiveTrue(request.getEmployeeCode())
                     .orElseThrow(() -> new BadRequestAlertException(
-                            "Employee not found or inactive: " + request.getEmployeeCode(),
+                            "Không tìm thấy nhân viên hoặc nhân viên không hoạt động: " + request.getEmployeeCode(),
                             ENTITY_NAME,
                             "EMPLOYEE_NOT_FOUND"));
             return employee.getEmployeeId();

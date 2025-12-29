@@ -106,13 +106,13 @@ public class ShiftRenewalController {
     private String getAuthenticatedUsername() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || authentication.getPrincipal() == null) {
-            throw new RuntimeException("Authentication context not found");
+            throw new RuntimeException("Không tìm thấy ngữ cảnh xác thực");
         }
 
         // authentication.getName() returns the username from JWT's "sub" field
         String username = authentication.getName();
         if (username == null || username.trim().isEmpty()) {
-            throw new RuntimeException("Username not found in authentication context");
+            throw new RuntimeException("Không tìm thấy tên đăng nhập trong ngữ cảnh xác thực");
         }
 
         log.debug("Extracted username from token: {}", username);

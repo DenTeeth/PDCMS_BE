@@ -17,7 +17,8 @@ import java.util.List;
  * Business Rules Service for Consumable Auto-Deduction
  * 
  * Implements:
- * - Rule #21: Completed services automatically deduct corresponding consumable material quantities
+ * - Rule #21: Completed services automatically deduct corresponding consumable
+ * material quantities
  */
 @Service
 public class ConsumableDeductionService {
@@ -44,7 +45,7 @@ public class ConsumableDeductionService {
     @Transactional
     public DeductionReport deductConsumablesForService(Long serviceId) {
         if (serviceId == null) {
-            throw new IllegalArgumentException("Service ID cannot be null");
+            throw new IllegalArgumentException("Mã dịch vụ không được để trống");
         }
 
         log.info("Starting consumable deduction for serviceId={}", serviceId);
@@ -63,29 +64,28 @@ public class ConsumableDeductionService {
         for (ServiceConsumable consumable : consumables) {
             try {
                 ConsumableDeductionService.DeductionDetail detail = deductItemUsingFEFO(
-                    consumable.getItemMaster().getItemMasterId(),
-                    consumable.getItemMaster().getItemName(),
-                    consumable.getQuantityPerService()
-                );
+                        consumable.getItemMaster().getItemMasterId(),
+                        consumable.getItemMaster().getItemName(),
+                        consumable.getQuantityPerService());
                 report.addDetail(detail);
             } catch (Exception e) {
-                log.error("Failed to deduct consumable: {} ({}) - {}", 
-                    consumable.getItemMaster().getItemName(), 
-                    consumable.getItemMaster().getItemCode(), 
-                    e.getMessage());
-                
-                ConsumableDeductionService.DeductionDetail failedDetail = ConsumableDeductionService.DeductionDetail.failed(
-                    consumable.getItemMaster().getItemMasterId(),
-                    consumable.getItemMaster().getItemName(),
-                    consumable.getQuantityPerService().intValue(),
-                    e.getMessage()
-                );
+                log.error("Failed to deduct consumable: {} ({}) - {}",
+                        consumable.getItemMaster().getItemName(),
+                        consumable.getItemMaster().getItemCode(),
+                        e.getMessage());
+
+                ConsumableDeductionService.DeductionDetail failedDetail = ConsumableDeductionService.DeductionDetail
+                        .failed(
+                                consumable.getItemMaster().getItemMasterId(),
+                                consumable.getItemMaster().getItemName(),
+                                consumable.getQuantityPerService().intValue(),
+                                e.getMessage());
                 report.addDetail(failedDetail);
             }
         }
 
-        log.info("Consumable deduction completed for serviceId={}. Success: {}, Failed: {}", 
-            serviceId, report.getSuccessCount(), report.getFailureCount());
+        log.info("Consumable deduction completed for serviceId={}. Success: {}, Failed: {}",
+                serviceId, report.getSuccessCount(), report.getFailureCount());
 
         return report;
     }
@@ -93,15 +93,17 @@ public class ConsumableDeductionService {
     /**
      * Deduct item quantity using FEFO (First Expired First Out) logic
      * 
-     * @param itemMasterId ID of the item to deduct
-     * @param itemName Name of the item (for logging)
-     * @param requestedQuantity Quantity to deduct (BigDecimal will be converted to int)
+     * @param itemMasterId      ID of the item to deduct
+     * @param itemName          Name of the item (for logging)
+     * @param requestedQuantity Quantity to deduct (BigDecimal will be converted to
+     *                          int)
      * @return Deduction detail with batch information
      */
     @Transactional
-    public ConsumableDeductionService.DeductionDetail deductItemUsingFEFO(Long itemMasterId, String itemName, java.math.BigDecimal requestedQuantity) {
+    public ConsumableDeductionService.DeductionDetail deductItemUsingFEFO(Long itemMasterId, String itemName,
+            java.math.BigDecimal requestedQuantity) {
         if (requestedQuantity == null || requestedQuantity.compareTo(java.math.BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Requested quantity must be > 0");
+            throw new IllegalArgumentException("Số lượng yêu cầu phải lớn hơn 0");
         }
 
         // Convert BigDecimal to int for processing
@@ -111,7 +113,7 @@ public class ConsumableDeductionService {
         List<ItemBatch> batches = itemBatchRepository.findByItemMasterIdFEFO(itemMasterId);
 
         if (batches.isEmpty()) {
-            throw new IllegalStateException("No batches available for item: " + itemName);
+            throw new IllegalStateException("Không có lô hàng khả dụng cho vật tư: " + itemName);
         }
 
         int remainingToDeduct = requestedQtyInt;
@@ -129,32 +131,30 @@ public class ConsumableDeductionService {
             }
 
             int deductFromThisBatch = Math.min(remainingToDeduct, availableInBatch);
-            
+
             // Update batch quantity
             batch.setQuantityOnHand(availableInBatch - deductFromThisBatch);
             itemBatchRepository.save(batch);
 
             // Record deduction
             batchDeductions.add(new BatchDeduction(
-                batch.getBatchId(),
-                batch.getLotNumber(),
-                deductFromThisBatch,
-                availableInBatch - deductFromThisBatch
-            ));
+                    batch.getBatchId(),
+                    batch.getLotNumber(),
+                    deductFromThisBatch,
+                    availableInBatch - deductFromThisBatch));
 
             remainingToDeduct -= deductFromThisBatch;
 
-            log.debug("Deducted {} from batch {} (Lot: {}). Remaining in batch: {}", 
-                deductFromThisBatch, batch.getBatchId(), batch.getLotNumber(), 
-                batch.getQuantityOnHand());
+            log.debug("Deducted {} from batch {} (Lot: {}). Remaining in batch: {}",
+                    deductFromThisBatch, batch.getBatchId(), batch.getLotNumber(),
+                    batch.getQuantityOnHand());
         }
 
         // Check if full quantity was deducted
         if (remainingToDeduct > 0) {
             throw new IllegalStateException(
-                String.format("Insufficient stock for %s. Requested: %d, Available: %d", 
-                    itemName, requestedQtyInt, requestedQtyInt - remainingToDeduct)
-            );
+                    String.format("Insufficient stock for %s. Requested: %d, Available: %d",
+                            itemName, requestedQtyInt, requestedQtyInt - remainingToDeduct));
         }
 
         return DeductionDetail.success(itemMasterId, itemName, requestedQtyInt, batchDeductions);
@@ -187,8 +187,13 @@ public class ConsumableDeductionService {
             return (int) details.stream().filter(d -> !d.isSuccess).count();
         }
 
-        public Long getServiceId() { return serviceId; }
-        public List<DeductionDetail> getDetails() { return details; }
+        public Long getServiceId() {
+            return serviceId;
+        }
+
+        public List<DeductionDetail> getDetails() {
+            return details;
+        }
     }
 
     /**
@@ -202,8 +207,8 @@ public class ConsumableDeductionService {
         private String errorMessage;
         private List<BatchDeduction> batchDeductions;
 
-        public static DeductionDetail success(Long itemMasterId, String itemName, 
-                                              Integer quantity, List<BatchDeduction> batches) {
+        public static DeductionDetail success(Long itemMasterId, String itemName,
+                Integer quantity, List<BatchDeduction> batches) {
             DeductionDetail detail = new DeductionDetail();
             detail.itemMasterId = itemMasterId;
             detail.itemName = itemName;
@@ -213,8 +218,8 @@ public class ConsumableDeductionService {
             return detail;
         }
 
-        public static DeductionDetail failed(Long itemMasterId, String itemName, 
-                                             Integer quantity, String error) {
+        public static DeductionDetail failed(Long itemMasterId, String itemName,
+                Integer quantity, String error) {
             DeductionDetail detail = new DeductionDetail();
             detail.itemMasterId = itemMasterId;
             detail.itemName = itemName;
@@ -226,12 +231,29 @@ public class ConsumableDeductionService {
         }
 
         // Getters
-        public Long getItemMasterId() { return itemMasterId; }
-        public String getItemName() { return itemName; }
-        public Integer getQuantityDeducted() { return quantityDeducted; }
-        public boolean isSuccess() { return isSuccess; }
-        public String getErrorMessage() { return errorMessage; }
-        public List<BatchDeduction> getBatchDeductions() { return batchDeductions; }
+        public Long getItemMasterId() {
+            return itemMasterId;
+        }
+
+        public String getItemName() {
+            return itemName;
+        }
+
+        public Integer getQuantityDeducted() {
+            return quantityDeducted;
+        }
+
+        public boolean isSuccess() {
+            return isSuccess;
+        }
+
+        public String getErrorMessage() {
+            return errorMessage;
+        }
+
+        public List<BatchDeduction> getBatchDeductions() {
+            return batchDeductions;
+        }
     }
 
     /**
@@ -251,9 +273,20 @@ public class ConsumableDeductionService {
         }
 
         // Getters
-        public Long getBatchId() { return batchId; }
-        public String getLotNumber() { return lotNumber; }
-        public Integer getQuantityDeducted() { return quantityDeducted; }
-        public Integer getRemainingQuantity() { return remainingQuantity; }
+        public Long getBatchId() {
+            return batchId;
+        }
+
+        public String getLotNumber() {
+            return lotNumber;
+        }
+
+        public Integer getQuantityDeducted() {
+            return quantityDeducted;
+        }
+
+        public Integer getRemainingQuantity() {
+            return remainingQuantity;
+        }
     }
 }

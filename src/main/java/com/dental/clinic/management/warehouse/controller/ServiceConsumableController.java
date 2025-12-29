@@ -120,7 +120,7 @@ public class ServiceConsumableController {
                         @Valid @RequestBody List<ConsumableItemRequest> consumables) {
 
                 if (consumables == null || consumables.isEmpty()) {
-                        throw new IllegalArgumentException("Consumables list cannot be empty");
+                        throw new IllegalArgumentException("Danh sách vật tư tiêu hao không được để trống");
                 }
 
                 log.info("API 6.19 - PUT /api/v1/warehouse/consumables/services/{} - Updating consumables", serviceId);

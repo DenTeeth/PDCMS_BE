@@ -352,7 +352,7 @@ public class AppointmentCreationService {
                 Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
                 if (authentication == null || !authentication.isAuthenticated()) {
-                        throw new BadRequestAlertException("User not authenticated", ENTITY_NAME, "NOT_AUTHENTICATED");
+                        throw new BadRequestAlertException("Người dùng chưa được xác thực", ENTITY_NAME, "NOT_AUTHENTICATED");
                 }
 
                 Object principal = authentication.getPrincipal();

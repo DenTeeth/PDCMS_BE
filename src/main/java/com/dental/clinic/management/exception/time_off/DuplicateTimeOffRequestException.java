@@ -15,7 +15,7 @@ public class DuplicateTimeOffRequestException extends ErrorResponseException {
 
     private static ProblemDetail asProblemDetail(String message) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, message);
-        problemDetail.setTitle("Duplicate Time-Off Request");
+        problemDetail.setTitle("Yêu Cầu Nghỉ Phép Trùng Lặp");
         problemDetail.setProperty("errorCode", "DUPLICATE_TIMEOFF_REQUEST");
         problemDetail.setProperty("message", message);
         return problemDetail;

@@ -163,13 +163,13 @@ public class PartTimeRegistrationAdminController {
             }
         } else if ("REJECTED".equalsIgnoreCase(request.getStatus())) {
             if (request.getReason() == null || request.getReason().trim().isEmpty()) {
-                throw new IllegalArgumentException("Rejection reason is required");
+                throw new IllegalArgumentException("Lý do từ chối là bắt buộc");
             }
             approvalService.rejectRegistration(registrationId, managerId, request.getReason());
             log.info("Registration {} rejected by manager {}: {}",
                     registrationId, managerId, request.getReason());
         } else {
-            throw new IllegalArgumentException("Invalid status: " + request.getStatus());
+            throw new IllegalArgumentException("Địệu chỉnh trạng thái không hợp lệ: " + request.getStatus());
         }
 
         // Return updated registration (fetch single entity from service)
@@ -274,10 +274,10 @@ public class PartTimeRegistrationAdminController {
 
         // Get current manager ID from employee table
         String username = SecurityUtil.getCurrentUserLogin()
-                .orElseThrow(() -> new RuntimeException("User not authenticated"));
+                .orElseThrow(() -> new RuntimeException("Người dùng chưa được xác thực"));
         Integer managerId = employeeRepository.findByAccount_Username(username)
                 .map(employee -> employee.getEmployeeId())
-                .orElseThrow(() -> new RuntimeException("Employee not found for user: " + username));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên cho người dùng: " + username));
 
         var result = approvalService.bulkApprove(request.getRegistrationIds(), managerId);
 
@@ -340,7 +340,7 @@ public class PartTimeRegistrationAdminController {
             return ResponseEntity.ok(message);
         } catch (com.dental.clinic.management.working_schedule.exception.RegistrationNotFoundException e) {
             log.warn("Registration {} not found", registrationId);
-            return ResponseEntity.status(404).body("Registration not found: " + registrationId);
+            return ResponseEntity.status(404).body("Không tìm thấy đăng ký: " + registrationId);
         } catch (IllegalStateException e) {
             log.warn("Cannot regenerate shifts for registration {}: {}", registrationId, e.getMessage());
             return ResponseEntity.status(400).body(e.getMessage());

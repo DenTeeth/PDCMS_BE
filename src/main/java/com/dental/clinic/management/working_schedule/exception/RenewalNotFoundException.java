@@ -21,7 +21,7 @@ public class RenewalNotFoundException extends ErrorResponseException {
                 renewalId);
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, message);
-        problemDetail.setTitle("Renewal Request Not Found");
+        problemDetail.setTitle("Không Tìm Thấy Yêu Cầu Gia Hạn");
         problemDetail.setProperty("errorCode", ERROR_CODE);
         problemDetail.setProperty("message", message);
         problemDetail.setProperty("renewalId", renewalId);

@@ -100,7 +100,7 @@ public class ScheduleFinalizationService {
                     targetDate, deadline, currentDateTime);
 
             ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, message);
-            problemDetail.setTitle("Schedule Finalization Deadline Passed");
+            problemDetail.setTitle("Đã Quá Hạn Chốt Lịch");
             problemDetail.setProperty("targetDate", targetDate.toString());
             problemDetail.setProperty("deadline", deadline.toString());
             problemDetail.setProperty("currentDateTime", currentDateTime.toString());

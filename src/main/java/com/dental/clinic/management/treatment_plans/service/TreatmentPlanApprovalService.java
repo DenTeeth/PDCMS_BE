@@ -89,10 +89,11 @@ public class TreatmentPlanApprovalService {
         }
 
         // 5. GUARD (P1): Check for zero-price items if APPROVED
-        // FE Issue #3 Fix: Removed zero-price validation to allow approval of plans with free services
+        // FE Issue #3 Fix: Removed zero-price validation to allow approval of plans
+        // with free services
         // Finance can adjust prices later via API 5.13 (Update Prices)
         // if (request.isApproval()) {
-        //     validateNoPriceItemsForApproval(plan);
+        // validateNoPriceItemsForApproval(plan);
         // }
 
         // 6. Store old status for audit log
@@ -194,7 +195,7 @@ public class TreatmentPlanApprovalService {
      */
     private String getSubmitNotesFromAuditLog(Long planId) {
         List<PlanAuditLog> logs = auditLogRepository.findByPlanIdOrderByCreatedAtDesc(planId);
-        
+
         return logs.stream()
                 .filter(log -> "SUBMITTED_FOR_REVIEW".equals(log.getActionType()))
                 .findFirst()
@@ -226,11 +227,11 @@ public class TreatmentPlanApprovalService {
      */
     private Integer getCurrentEmployeeId() {
         String username = SecurityUtil.getCurrentUserLogin()
-                .orElseThrow(() -> new RuntimeException("User not authenticated"));
+                .orElseThrow(() -> new RuntimeException("Người dùng chưa được xác thực"));
 
         return accountRepository.findOneByUsername(username)
                 .map(account -> account.getEmployee().getEmployeeId())
-                .orElseThrow(() -> new RuntimeException("Employee not found for user: " + username));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên cho người dùng: " + username));
     }
 
     /**
@@ -244,7 +245,7 @@ public class TreatmentPlanApprovalService {
         } else if (request.isRejection()) {
             return ApprovalStatus.DRAFT; // Return to DRAFT for revision
         }
-        throw new IllegalStateException("Invalid approval status: " + request.getApprovalStatus());
+        throw new IllegalStateException("Trạng thái duyệt không hợp lệ: " + request.getApprovalStatus());
     }
 
     /**

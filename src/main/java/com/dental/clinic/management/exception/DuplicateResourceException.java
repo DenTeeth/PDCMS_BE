@@ -24,7 +24,7 @@ public class DuplicateResourceException extends ErrorResponseException {
 
     private static ProblemDetail asProblemDetail(String errorCode, String message) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, message);
-        problemDetail.setTitle("Resource Already Exists");
+        problemDetail.setTitle("Tài Nguyên Đã Tồn Tại");
         problemDetail.setType(URI.create(ErrorConstants.PROBLEM_BASE_URL + "/conflict"));
         problemDetail.setProperty("errorCode", errorCode);
         return problemDetail;

@@ -91,7 +91,7 @@ public class ImportTransactionService {
                         Employee employee = employeeRepository.findByAccount_Username(employeeCode)
                                         .orElseThrow(() -> new NotFoundException(
                                                         "EMPLOYEE_NOT_FOUND",
-                                                        "Employee not found for account: " + employeeCode));
+                                                        "Không tìm thấy nhân viên cho tài khoản: " + employeeCode));
 
                         if (!employee.getIsActive()) {
                                 throw new BadRequestException(

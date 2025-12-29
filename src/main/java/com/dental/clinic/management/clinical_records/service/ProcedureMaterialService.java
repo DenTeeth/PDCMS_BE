@@ -59,7 +59,7 @@ public class ProcedureMaterialService {
 
         // Step 1: Get procedure
         ClinicalRecordProcedure procedure = procedureRepository.findById(procedureId)
-                .orElseThrow(() -> new IllegalArgumentException("Procedure not found: " + procedureId));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy thủ thuật: " + procedureId));
 
         // Check if already deducted
         if (procedure.getMaterialsDeductedAt() != null) {

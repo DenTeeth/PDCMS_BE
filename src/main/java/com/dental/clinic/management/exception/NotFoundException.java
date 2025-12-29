@@ -21,7 +21,7 @@ public class NotFoundException extends ErrorResponseException {
 
     private static ProblemDetail asProblemDetail(String errorCode, String message) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, message);
-        problemDetail.setTitle("Not Found");
+        problemDetail.setTitle("Không Tìm Thấy");
         problemDetail.setType(URI.create(ErrorConstants.PROBLEM_BASE_URL + "/not-found"));
         problemDetail.setProperty("errorCode", errorCode);
         return problemDetail;

@@ -261,7 +261,7 @@ public class EmployeeShiftRegistrationService {
                 .orElseThrow(() -> new IllegalArgumentException("Slot not found: " + slotId));
 
         if (!slot.getIsActive()) {
-            throw new IllegalArgumentException("Slot is not active");
+            throw new IllegalArgumentException("Suất không hoạt động");
         }
 
         LocalDate today = LocalDate.now();
@@ -331,7 +331,7 @@ public class EmployeeShiftRegistrationService {
         }
 
         if (request.getEffectiveTo() == null) {
-            throw new IllegalArgumentException("Effective to date is required");
+            throw new IllegalArgumentException("Ngày kết thúc là bắt buộc");
         }
 
         if (request.getEffectiveTo().isBefore(request.getEffectiveFrom())) {
@@ -707,7 +707,7 @@ public class EmployeeShiftRegistrationService {
                     registrationId, LocalDate.now());
         } catch (Exception e) {
             log.error("Failed to cancel registration {}: {}", registrationId, e.getMessage(), e);
-            throw new RuntimeException("Failed to cancel registration: " + e.getMessage(), e);
+            throw new RuntimeException("Không thể hủy đăng ký: " + e.getMessage(), e);
         }
     }
 
@@ -771,7 +771,7 @@ public class EmployeeShiftRegistrationService {
         } catch (Exception e) {
             log.error("Failed to update effectiveTo for registration {}: {}",
                     registrationId, e.getMessage(), e);
-            throw new RuntimeException("Failed to update registration: " + e.getMessage(), e);
+            throw new RuntimeException("Không thể cập nhật đăng ký: " + e.getMessage(), e);
         }
     }
 
@@ -780,11 +780,11 @@ public class EmployeeShiftRegistrationService {
      */
     private Integer getCurrentEmployeeId() {
         String username = SecurityUtil.getCurrentUserLogin()
-                .orElseThrow(() -> new RuntimeException("User not authenticated"));
+                .orElseThrow(() -> new RuntimeException("Người dùng chưa được xác thực"));
 
         return accountRepository.findOneByUsername(username)
                 .map(account -> account.getEmployee().getEmployeeId())
-                .orElseThrow(() -> new RuntimeException("Employee not found for user: " + username));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên cho người dùng: " + username));
     }
 
     private RegistrationResponse buildResponse(PartTimeRegistration registration, PartTimeSlot slot) {

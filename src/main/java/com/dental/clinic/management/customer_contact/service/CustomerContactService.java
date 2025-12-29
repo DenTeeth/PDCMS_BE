@@ -75,7 +75,7 @@ public class CustomerContactService {
     @Transactional(readOnly = true)
     public ContactInfoResponse getContact(String contactId) {
         CustomerContact contact = repository.findOneByContactId(contactId)
-                .orElseThrow(() -> new BadRequestAlertException("Contact not found: " + contactId, "customer_contact",
+                .orElseThrow(() -> new BadRequestAlertException("Không tìm thấy liên hệ: " + contactId, "customer_contact",
                         "contactnotfound"));
 
         ContactInfoResponse resp = mapper.toContactInfoResponse(contact);
@@ -93,7 +93,7 @@ public class CustomerContactService {
     @Transactional
     public ContactInfoResponse createContact(CreateContactRequest request) {
         if (request == null) {
-            throw new BadRequestAlertException("Request required", "customer_contact", "request.required");
+            throw new BadRequestAlertException("Yêu cầu bắt buộc", "customer_contact", "request.required");
         }
 
         if (request.getPhone() != null && repository.existsByPhone(request.getPhone())) {
@@ -146,7 +146,7 @@ public class CustomerContactService {
     @Transactional
     public ContactInfoResponse updateContact(String contactId, UpdateContactRequest request) {
         CustomerContact contact = repository.findOneByContactId(contactId)
-                .orElseThrow(() -> new BadRequestAlertException("Contact not found: " + contactId, "customer_contact",
+                .orElseThrow(() -> new BadRequestAlertException("Không tìm thấy liên hệ: " + contactId, "customer_contact",
                         "contactnotfound"));
 
         // validate assignedTo if provided in update -> do NOT throw, ignore if employee
@@ -169,7 +169,7 @@ public class CustomerContactService {
     @Transactional
     public void deleteContact(String contactId) {
         CustomerContact contact = repository.findOneByContactId(contactId)
-                .orElseThrow(() -> new BadRequestAlertException("Contact not found: " + contactId, "customer_contact",
+                .orElseThrow(() -> new BadRequestAlertException("Không tìm thấy liên hệ: " + contactId, "customer_contact",
                         "contactnotfound"));
         contact.setStatus(CustomerContactStatus.NOT_INTERESTED);
         repository.save(contact);
@@ -186,13 +186,13 @@ public class CustomerContactService {
     @Transactional
     public ContactInfoResponse assignContact(String contactId, Integer employeeId /* nullable -> auto */) {
         CustomerContact contact = repository.findOneByContactId(contactId)
-                .orElseThrow(() -> new BadRequestAlertException("Contact not found: " + contactId, "customer_contact",
+                .orElseThrow(() -> new BadRequestAlertException("Không tìm thấy liên hệ: " + contactId, "customer_contact",
                         "contactnotfound"));
 
         if (employeeId != null) {
             // Manual mode: validate employee exists and has Receptionist role
             Employee employee = employeeRepository.findById(employeeId)
-                    .orElseThrow(() -> new BadRequestAlertException("Assigned employee not found: " + employeeId,
+                    .orElseThrow(() -> new BadRequestAlertException("Không tìm thấy nhân viên được chỉ định: " + employeeId,
                             "customer_contact", "employee_not_found"));
 
             // Validate employee has Receptionist role (check from Account)
@@ -202,7 +202,7 @@ public class CustomerContactService {
                         ? employee.getAccount().getRole().getRoleId()
                         : "NONE";
                 throw new BadRequestAlertException(
-                        "Employee must have Receptionist role. Current roleId: " + currentRole,
+                        "Nhân viên phải có vai trò Lễ tân. Vai trò hiện tại: " + currentRole,
                         "customer_contact", "invalid_role");
             }
 
@@ -255,19 +255,19 @@ public class CustomerContactService {
     @Transactional
     public ContactInfoResponse convertContact(String contactId) {
         CustomerContact contact = repository.findOneByContactId(contactId)
-                .orElseThrow(() -> new BadRequestAlertException("Contact not found: " + contactId, "customer_contact",
+                .orElseThrow(() -> new BadRequestAlertException("Không tìm thấy liên hệ: " + contactId, "customer_contact",
                         "contactnotfound"));
 
         if (contact.getStatus() == CustomerContactStatus.CONVERTED) {
-            throw new BadRequestAlertException("Contact already converted: " + contactId, "customer_contact",
+            throw new BadRequestAlertException("Đã chuyển đổi liên hệ: " + contactId, "customer_contact",
                     "already_converted");
         }
         if (contact.getStatus() == CustomerContactStatus.NOT_INTERESTED) {
-            throw new BadRequestAlertException("Contact not eligible to convert: " + contactId, "customer_contact",
+            throw new BadRequestAlertException("Liên hệ không đủ điều kiện chuyển đổi: " + contactId, "customer_contact",
                     "not_interested");
         }
 
-        //  Tạo Patient thực sự
+        // Tạo Patient thực sự
         CreatePatientRequest patientRequest = new CreatePatientRequest();
 
         // Map từ contact sang patient

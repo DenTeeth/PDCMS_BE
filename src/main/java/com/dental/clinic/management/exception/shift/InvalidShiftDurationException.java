@@ -26,7 +26,7 @@ public class InvalidShiftDurationException extends ErrorResponseException {
 
     private static ProblemDetail asProblemDetail(String message) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, message);
-        problemDetail.setTitle("Invalid Shift Duration");
+        problemDetail.setTitle("Thời Lượng Ca Làm Việc Không Hợp Lệ");
         problemDetail.setProperty("errorCode", "INVALID_DURATION");
         problemDetail.setProperty("message", message);
         return problemDetail;

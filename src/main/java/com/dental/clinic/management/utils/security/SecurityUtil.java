@@ -110,7 +110,7 @@ public class SecurityUtil {
             // Additionally check if it's a refresh token
             Object typeClaim = jwt.getClaims().get("type");
             if (typeClaim == null || !"refresh".equals(typeClaim.toString())) {
-                throw new JwtValidationException("Token is not a refresh token");
+                throw new JwtValidationException("Token không phải là refresh token");
             }
             return jwt;
         } catch (JwtException e) {

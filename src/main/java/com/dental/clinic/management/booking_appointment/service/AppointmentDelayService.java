@@ -247,7 +247,7 @@ public class AppointmentDelayService {
         private Integer getCurrentEmployeeId() {
                 Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
                 if (authentication == null || !(authentication.getPrincipal() instanceof Jwt)) {
-                        throw new IllegalStateException("No valid JWT authentication found");
+                        throw new IllegalStateException("Không tìm thấy xác thực JWT hợp lệ");
                 }
 
                 Jwt jwt = (Jwt) authentication.getPrincipal();
