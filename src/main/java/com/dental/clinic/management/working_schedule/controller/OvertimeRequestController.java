@@ -60,6 +60,8 @@ public class OvertimeRequestController {
         description = "Retrieve paginated list of overtime requests with optional status filtering. Access control based on user permissions."
     )
     @GetMapping
+    // ✅ PERMISSIONS: VIEW_OT_ALL (Manager/Admin see all) OR VIEW_OT_OWN (Employee see own)
+    // ROLE_ADMIN has VIEW_OT_ALL permission
     @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('VIEW_OT_ALL') or hasAuthority('VIEW_OT_OWN')")
     public ResponseEntity<Page<OvertimeRequestListResponse>> getAllOvertimeRequests(
             @RequestParam(required = false) RequestStatus status,
@@ -95,6 +97,8 @@ public class OvertimeRequestController {
         description = "Retrieve detailed information about a specific overtime request. Access control based on user permissions."
     )
     @GetMapping("/{requestId}")
+    // ✅ PERMISSIONS: VIEW_OT_ALL (Manager/Admin see any) OR VIEW_OT_OWN (Employee see own)
+    // ROLE_ADMIN has VIEW_OT_ALL permission
     @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('VIEW_OT_ALL') or hasAuthority('VIEW_OT_OWN')")
     public ResponseEntity<OvertimeRequestDetailResponse> getOvertimeRequestById(
             @PathVariable String requestId) {
@@ -150,6 +154,8 @@ public class OvertimeRequestController {
         description = "Create a new overtime request with PENDING status. Employees can create for themselves or admins can create for any employee."
     )
     @PostMapping
+    // ✅ PERMISSION: CREATE_OVERTIME (Employee creates overtime request)
+    // ROLE_ADMIN has CREATE_OVERTIME permission
     @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('CREATE_OVERTIME')")
     public ResponseEntity<OvertimeRequestDetailResponse> createOvertimeRequest(
             @Valid @RequestBody CreateOvertimeRequestDTO dto) {
@@ -213,6 +219,8 @@ public class OvertimeRequestController {
         description = "Approve, reject, or cancel an overtime request. Only PENDING requests can be updated. Requires appropriate permissions."
     )
     @PatchMapping("/{requestId}")
+    // ✅ PERMISSIONS: APPROVE_OVERTIME (Manager/Admin approve/reject) OR CREATE_OVERTIME (Employee cancel own)
+    // ROLE_ADMIN has APPROVE_OVERTIME permission for approving/rejecting overtime requests
     @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('APPROVE_OVERTIME') or hasAuthority('CREATE_OVERTIME')")
     public ResponseEntity<OvertimeRequestDetailResponse> updateOvertimeStatus(
             @PathVariable String requestId,

@@ -158,6 +158,8 @@ public class TimeOffRequestController {
      * @return Updated TimeOffRequestResponse
      */
     @PatchMapping("/{requestId}")
+    // ✅ PERMISSIONS: APPROVE_TIME_OFF (Manager/Admin approve/reject) OR CREATE_TIME_OFF (Employee cancel own)
+    // ROLE_ADMIN has APPROVE_TIME_OFF permission for approving/rejecting time-off requests
     @PreAuthorize("hasRole('ROLE_ADMIN') or hasAuthority('APPROVE_TIME_OFF') or hasAuthority('CREATE_TIME_OFF')")
     @Operation(summary = "Update time-off request status", description = "Approve, reject, or cancel a time-off request")
     public ResponseEntity<TimeOffRequestResponse> updateRequestStatus(

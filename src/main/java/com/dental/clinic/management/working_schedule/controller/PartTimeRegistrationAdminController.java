@@ -61,6 +61,7 @@ public class PartTimeRegistrationAdminController {
      */
     @Operation(summary = "Get all registrations", description = "Retrieve all part-time registration requests with optional status and employee filters")
     @GetMapping
+    // ✅ PERMISSION: MANAGE_PART_TIME_REGISTRATIONS (ROLE_ADMIN has this)
     @PreAuthorize("hasAuthority('MANAGE_PART_TIME_REGISTRATIONS')")
     public ResponseEntity<List<RegistrationResponse>> getRegistrations(
             @RequestParam(required = false, defaultValue = "PENDING") String status,
@@ -115,6 +116,7 @@ public class PartTimeRegistrationAdminController {
      */
     @Operation(summary = "Update registration status", description = "Approve or reject a pending part-time registration request. Validates quota for approvals.")
     @PatchMapping("/{registrationId}/status")
+    // ✅ PERMISSION: MANAGE_PART_TIME_REGISTRATIONS (ROLE_ADMIN has this - CRITICAL FOR APPROVAL/REJECTION)
     @PreAuthorize("hasAuthority('MANAGE_PART_TIME_REGISTRATIONS')")
     public ResponseEntity<RegistrationResponse> updateStatus(
             @PathVariable Integer registrationId,
@@ -183,6 +185,7 @@ public class PartTimeRegistrationAdminController {
      */
     @Operation(summary = "Get registration by ID", description = "Retrieve details of a specific part-time registration request")
     @GetMapping("/{registrationId}")
+    // ✅ PERMISSION: MANAGE_PART_TIME_REGISTRATIONS (ROLE_ADMIN has this)
     @PreAuthorize("hasAuthority('MANAGE_PART_TIME_REGISTRATIONS')")
     public ResponseEntity<RegistrationResponse> getRegistration(@PathVariable Integer registrationId) {
         RegistrationResponse response = registrationService.getRegistrationById(registrationId);
@@ -206,6 +209,7 @@ public class PartTimeRegistrationAdminController {
      */
     @Operation(summary = "Check if can approve", description = "Validate if a registration can be approved without exceeding quota limits")
     @GetMapping("/{registrationId}/can-approve")
+    // ✅ PERMISSION: MANAGE_PART_TIME_REGISTRATIONS (ROLE_ADMIN has this)
     @PreAuthorize("hasAuthority('MANAGE_PART_TIME_REGISTRATIONS')")
     public ResponseEntity<CanApproveResponse> canApprove(@PathVariable Integer registrationId) {
         boolean canApprove = approvalService.canApprove(registrationId);

@@ -583,8 +583,7 @@ public class EmployeeShiftRegistrationService {
      * without pagination.
      * Kept for backward compatibility.
      */
-    @Transactional(readOnly = true)
-    @PreAuthorize("hasAnyAuthority('MANAGE_PART_TIME_REGISTRATIONS', 'VIEW_REGISTRATION_OWN')")
+    @Transactional(readOnly = true)    // ✅ PERMISSION: MANAGE_PART_TIME_REGISTRATIONS (Admin/Manager) OR VIEW_REGISTRATION_OWN (Employee)    @PreAuthorize("hasAnyAuthority('MANAGE_PART_TIME_REGISTRATIONS', 'VIEW_REGISTRATION_OWN')")
     public List<RegistrationResponse> getRegistrations(Integer filterEmployeeId) {
         boolean isAdmin = SecurityUtil.hasCurrentUserRole("ADMIN") ||
                 SecurityUtil.hasCurrentUserPermission("MANAGE_PART_TIME_REGISTRATIONS");
@@ -617,6 +616,7 @@ public class EmployeeShiftRegistrationService {
      * missing or not visible to caller.
      */
     @Transactional(readOnly = true)
+    // ✅ PERMISSION: MANAGE_PART_TIME_REGISTRATIONS (Admin/Manager) OR VIEW_REGISTRATION_OWN (Employee)
     @PreAuthorize("hasAnyAuthority('MANAGE_PART_TIME_REGISTRATIONS', 'VIEW_REGISTRATION_OWN')")
     public RegistrationResponse getRegistrationById(Integer registrationId) {
         boolean isAdmin = SecurityUtil.hasCurrentUserRole("ADMIN") ||

@@ -73,6 +73,8 @@ public class OvertimeRequestService {
          * @return page of overtime requests
          */
         @Transactional(readOnly = true)
+        // ✅ PERMISSIONS: VIEW_OT_ALL (Manager/Admin see all) OR VIEW_OT_OWN (Employee see own)
+        // ROLE_ADMIN has VIEW_OT_ALL permission
         @PreAuthorize("hasAnyAuthority('VIEW_OT_ALL', 'VIEW_OT_OWN')")
         public Page<OvertimeRequestListResponse> getAllOvertimeRequests(RequestStatus status, Pageable pageable) {
                 log.info("Fetching overtime requests with status: {}", status);
@@ -107,6 +109,8 @@ public class OvertimeRequestService {
          * @throws AccessDeniedException            if user doesn't have permission
          */
         @Transactional(readOnly = true)
+        // ✅ PERMISSIONS: VIEW_OT_ALL (Manager/Admin see any) OR VIEW_OT_OWN (Employee see own)
+        // ROLE_ADMIN has VIEW_OT_ALL permission
         @PreAuthorize("hasAnyAuthority('VIEW_OT_ALL', 'VIEW_OT_OWN')")
         public OvertimeRequestDetailResponse getOvertimeRequestById(String requestId) {
                 log.info("Fetching overtime request: {}", requestId);
@@ -149,6 +153,8 @@ public class OvertimeRequestService {
          * @throws IllegalArgumentException          if work date is in the past
          */
         @Transactional
+        // ✅ PERMISSION: CREATE_OVERTIME (Employee creates overtime request)
+        // ROLE_ADMIN has CREATE_OVERTIME permission
         @PreAuthorize("hasAuthority('CREATE_OVERTIME')")
         public OvertimeRequestDetailResponse createOvertimeRequest(CreateOvertimeRequestDTO dto) {
                 // Determine target employee: use provided employeeId or current user's
@@ -347,6 +353,8 @@ public class OvertimeRequestService {
          * @throws IllegalArgumentException         if validation fails
          */
         @Transactional
+        // ✅ PERMISSIONS: APPROVE_OVERTIME (Manager/Admin approve/reject) OR CREATE_OVERTIME (Employee cancel own)
+        // ROLE_ADMIN has APPROVE_OVERTIME permission for approving/rejecting overtime requests
         @PreAuthorize("hasAuthority('APPROVE_OVERTIME') or hasAuthority('CREATE_OVERTIME')")
         public OvertimeRequestDetailResponse updateOvertimeStatus(String requestId, UpdateOvertimeStatusDTO dto) {
                 log.info("Updating overtime request {} to status {}", requestId, dto.getStatus());
