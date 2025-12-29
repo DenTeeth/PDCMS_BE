@@ -31,13 +31,7 @@ public class HolidayDefinitionService {
      * Create a new holiday definition.
      */
     public HolidayDefinitionResponse createHolidayDefinition(HolidayDefinitionRequest request) {
-        log.info("Creating holiday definition: {}", request.getDefinitionId());
-
-        // Check if definition ID already exists
-        if (holidayDefinitionRepository.existsById(request.getDefinitionId())) {
-            throw new com.dental.clinic.management.exception.holiday.DuplicateHolidayDefinitionException(
-                request.getDefinitionId());
-        }
+        log.info("Creating holiday definition: {}", request.getHolidayName());
 
         // Check if holiday name already exists
         if (holidayDefinitionRepository.existsByHolidayName(request.getHolidayName())) {
@@ -45,7 +39,12 @@ public class HolidayDefinitionService {
                 request.getHolidayName());
         }
 
+        // Generate unique definition ID: HDF_001, HDF_002, etc.
+        String definitionId = generateDefinitionId();
+        log.info("Generated definition ID: {}", definitionId);
+
         HolidayDefinition definition = holidayDefinitionMapper.toEntity(request);
+        definition.setDefinitionId(definitionId);
         HolidayDefinition savedDefinition = holidayDefinitionRepository.save(definition);
 
         log.info("Holiday definition created successfully: {}", savedDefinition.getDefinitionId());
@@ -139,5 +138,34 @@ public class HolidayDefinitionService {
 
         log.info("Holiday definition deleted: {} (with {} associated dates)", 
                  definitionId, datesCount);
+    }
+
+    /**
+     * Generate unique holiday definition ID.
+     * Format: HDF_001, HDF_002, etc.
+     */
+    private String generateDefinitionId() {
+        String prefix = "HDF_";
+        
+        // Find all existing definitions with this prefix
+        List<HolidayDefinition> existing = holidayDefinitionRepository
+            .findByDefinitionIdStartingWithOrderByDefinitionIdDesc(prefix);
+        
+        if (existing.isEmpty()) {
+            return prefix + "001";
+        }
+        
+        // Extract sequence number from last ID (e.g., HDF_001 -> 001)
+        String lastId = existing.get(0).getDefinitionId();
+        String sequencePart = lastId.substring(prefix.length());
+        
+        try {
+            int nextSequence = Integer.parseInt(sequencePart) + 1;
+            return prefix + String.format("%03d", nextSequence);
+        } catch (NumberFormatException e) {
+            log.error("Failed to parse sequence from holiday definition ID: {}", lastId, e);
+            // Fallback: count existing + 1
+            return prefix + String.format("%03d", existing.size() + 1);
+        }
     }
 }
