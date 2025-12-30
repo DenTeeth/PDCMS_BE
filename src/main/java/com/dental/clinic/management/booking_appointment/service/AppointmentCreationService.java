@@ -1041,7 +1041,8 @@ public class AppointmentCreationService {
                         // 2. Send notification to MAIN DOCTOR (dentist assigned to appointment)
                         Employee mainDoctor = employeeRepository.findById(appointment.getEmployeeId()).orElse(null);
                         if (mainDoctor != null && mainDoctor.getAccount() != null) {
-                                Integer doctorUserId = mainDoctor.getAccount().getAccountId();
+                                // CRITICAL FIX: Use employeeId for staff notifications, not accountId
+                                Integer doctorUserId = mainDoctor.getEmployeeId();
                                 log.info("Sending notification to MAIN DOCTOR userId={} (employeeCode={}) for appointment {}",
                                                 doctorUserId, mainDoctor.getEmployeeCode(), appointment.getAppointmentCode());
 
@@ -1089,7 +1090,8 @@ public class AppointmentCreationService {
                                                         continue;
                                                 }
 
-                                                Integer staffUserId = participantEmployee.getAccount().getAccountId();
+                                                // CRITICAL FIX: Use employeeId for staff notifications, not accountId
+                                                Integer staffUserId = participantEmployee.getEmployeeId();
                                                 AppointmentParticipantRole role = participant.getRole(); // ASSISTANT
 
                                                 log.info("Sending notification to {} userId={} for appointment {}",
