@@ -34,18 +34,24 @@ jobs:
             echo "🛑 Stopping containers and removing volumes..."
             docker-compose down -v
 
-            # Remove old images to force rebuild
-            echo "🗑️  Removing old images..."
+            # Remove ALL old images and build cache to force complete rebuild
+            echo "🗑️  Removing old images and build cache..."
             docker rmi pdcms_be-app || true
             docker rmi dentalclinic-app:latest || true
+            docker builder prune -af || true
+
+            # Clean Maven target folder to ensure fresh compile
+            echo "🧹 Cleaning Maven build artifacts..."
+            rm -rf target/
 
             # Clean up dangling volumes
             echo "🧹 Cleaning up dangling volumes..."
             docker volume prune -f
 
-            # Build and start containers (DB sẽ được tạo mới với seed data)
-            echo "🏗️  Building and starting containers..."
-            docker-compose up --build -d
+            # Build and start containers with NO CACHE (force fresh build)
+            echo "🏗️  Building and starting containers (no cache)..."
+            docker-compose build --no-cache
+            docker-compose up -d
 
             # Show logs to verify seed data loading
             echo "📋 Checking seed data initialization..."
