@@ -3,7 +3,7 @@ name: Deploy to DigitalOcean & Notify Discord
 on:
   push:
     branches:
-      - "feat/BE-904-push-notification" # Deploy when push to this branch
+      - "feat/BE-905-payment-implement" # Deploy when push to this branch
 
 jobs:
   deploy:

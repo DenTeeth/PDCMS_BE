@@ -85,14 +85,14 @@ COMMENT ON COLUMN chatbot_knowledge.is_active IS 'Trạng thái hoạt động';
 -- Feature: Track actual material usage vs planned (BOM)
 -- Date: 2025-12-27
 -- Purpose: Link procedures to warehouse deductions, enable variance analysis
--- 
+--
 -- Changes from V35:
 --   - Removed quantity_multiplier from clinical_record_procedures
 --   - Added quantity column to procedure_material_usage (per-material editing)
 --   - Updated variance calculation: actual_quantity - quantity (was: actual - planned)
 
 -- Step 1: Add material tracking columns to clinical_record_procedures
-ALTER TABLE clinical_record_procedures 
+ALTER TABLE clinical_record_procedures
 ADD COLUMN IF NOT EXISTS storage_transaction_id INTEGER,
 ADD COLUMN IF NOT EXISTS materials_deducted_at TIMESTAMP,
 ADD COLUMN IF NOT EXISTS materials_deducted_by VARCHAR(100);
@@ -102,9 +102,9 @@ ALTER TABLE clinical_record_procedures
 DROP CONSTRAINT IF EXISTS fk_procedure_storage_tx;
 
 ALTER TABLE clinical_record_procedures
-ADD CONSTRAINT fk_procedure_storage_tx 
-    FOREIGN KEY (storage_transaction_id) 
-    REFERENCES storage_transactions(transaction_id) 
+ADD CONSTRAINT fk_procedure_storage_tx
+    FOREIGN KEY (storage_transaction_id)
+    REFERENCES storage_transactions(transaction_id)
     ON DELETE SET NULL;
 
 -- Add index if not exists
@@ -120,40 +120,40 @@ CREATE TABLE IF NOT EXISTS procedure_material_usage (
     usage_id SERIAL PRIMARY KEY,
     procedure_id INTEGER NOT NULL,
     item_master_id INTEGER NOT NULL,
-    
+
     -- Planned vs Actual quantities
     planned_quantity NUMERIC(10,2) NOT NULL,  -- Base quantity from BOM (read-only)
     quantity NUMERIC(10,2) NOT NULL,          -- User-editable quantity to deduct (NEW)
     actual_quantity NUMERIC(10,2) NOT NULL,   -- What was actually used
     unit_id INTEGER NOT NULL,
-    
+
     -- Variance tracking (computed column)
     variance_quantity NUMERIC(10,2) GENERATED ALWAYS AS (actual_quantity - quantity) STORED,
     variance_reason VARCHAR(500),
-    
+
     -- Audit trail
     recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     recorded_by VARCHAR(100),
-    
+
     -- Notes
     notes TEXT,
-    
+
     -- Foreign keys
-    CONSTRAINT fk_usage_procedure 
-        FOREIGN KEY (procedure_id) 
-        REFERENCES clinical_record_procedures(procedure_id) 
+    CONSTRAINT fk_usage_procedure
+        FOREIGN KEY (procedure_id)
+        REFERENCES clinical_record_procedures(procedure_id)
         ON DELETE CASCADE,
-    
-    CONSTRAINT fk_usage_item 
-        FOREIGN KEY (item_master_id) 
-        REFERENCES item_masters(item_master_id) 
+
+    CONSTRAINT fk_usage_item
+        FOREIGN KEY (item_master_id)
+        REFERENCES item_masters(item_master_id)
         ON DELETE RESTRICT,
-    
-    CONSTRAINT fk_usage_unit 
-        FOREIGN KEY (unit_id) 
-        REFERENCES item_units(unit_id) 
+
+    CONSTRAINT fk_usage_unit
+        FOREIGN KEY (unit_id)
+        REFERENCES item_units(unit_id)
         ON DELETE RESTRICT,
-    
+
     -- Ensure one record per procedure-item combination
     CONSTRAINT uk_procedure_item UNIQUE (procedure_id, item_master_id)
 );
@@ -171,6 +171,142 @@ COMMENT ON COLUMN procedure_material_usage.actual_quantity IS 'Actual quantity u
 COMMENT ON COLUMN procedure_material_usage.variance_quantity IS 'Difference between actual and quantity (positive = used more than planned, negative = used less)';
 COMMENT ON COLUMN procedure_material_usage.variance_reason IS 'Explanation for variance if actual differs from quantity';
 COMMENT ON COLUMN procedure_material_usage.recorded_by IS 'Employee username who recorded/updated the usage';
+
+-- ============================================
+-- PAYMENT SYSTEM TABLES (Invoices & Payments)
+-- ============================================
+-- Tao cac bang cho he thong thanh toan
+
+CREATE TABLE IF NOT EXISTS invoices (
+    invoice_id SERIAL PRIMARY KEY,
+    invoice_code VARCHAR(30) UNIQUE NOT NULL,
+    invoice_type invoice_type NOT NULL,
+    patient_id INTEGER NOT NULL,
+    appointment_id INTEGER,
+    treatment_plan_id INTEGER,
+    phase_number INTEGER,
+    installment_number INTEGER,
+    total_amount DECIMAL(15,2) NOT NULL DEFAULT 0,
+    paid_amount DECIMAL(15,2) NOT NULL DEFAULT 0,
+    remaining_debt DECIMAL(15,2) NOT NULL DEFAULT 0,
+    payment_status invoice_payment_status NOT NULL DEFAULT 'PENDING_PAYMENT',
+    due_date TIMESTAMP,
+    notes TEXT,
+    created_by INTEGER NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_invoice_patient
+        FOREIGN KEY (patient_id)
+        REFERENCES patients(patient_id)
+        ON DELETE RESTRICT,
+
+    CONSTRAINT fk_invoice_appointment
+        FOREIGN KEY (appointment_id)
+        REFERENCES appointments(appointment_id)
+        ON DELETE SET NULL,
+
+    CONSTRAINT fk_invoice_treatment_plan
+        FOREIGN KEY (treatment_plan_id)
+        REFERENCES patient_treatment_plans(plan_id)
+        ON DELETE SET NULL,
+
+    CONSTRAINT fk_invoice_creator
+        FOREIGN KEY (created_by)
+        REFERENCES employees(employee_id)
+        ON DELETE RESTRICT
+);
+
+CREATE INDEX IF NOT EXISTS idx_invoices_patient ON invoices(patient_id);
+CREATE INDEX IF NOT EXISTS idx_invoices_appointment ON invoices(appointment_id);
+CREATE INDEX IF NOT EXISTS idx_invoices_treatment_plan ON invoices(treatment_plan_id);
+CREATE INDEX IF NOT EXISTS idx_invoices_payment_status ON invoices(payment_status);
+CREATE INDEX IF NOT EXISTS idx_invoices_created_at ON invoices(created_at DESC);
+
+COMMENT ON TABLE invoices IS 'Hoa don thanh toan cho appointment hoac treatment plan';
+COMMENT ON COLUMN invoices.invoice_type IS 'APPOINTMENT (hoa don dat le), TREATMENT_PLAN (hoa don ke hoach dieu tri), SUPPLEMENTAL (hoa don phat sinh)';
+COMMENT ON COLUMN invoices.payment_status IS 'PENDING_PAYMENT (chua thanh toan), PARTIAL_PAID (da thanh toan mot phan), PAID (da thanh toan du), CANCELLED (da huy)';
+
+CREATE TABLE IF NOT EXISTS invoice_items (
+    item_id SERIAL PRIMARY KEY,
+    invoice_id INTEGER NOT NULL,
+    service_id INTEGER NOT NULL,
+    service_code VARCHAR(50),
+    service_name VARCHAR(255) NOT NULL,
+    quantity INTEGER NOT NULL DEFAULT 1,
+    unit_price DECIMAL(15,2) NOT NULL,
+    subtotal DECIMAL(15,2) NOT NULL,
+    notes TEXT,
+
+    CONSTRAINT fk_invoice_item_invoice
+        FOREIGN KEY (invoice_id)
+        REFERENCES invoices(invoice_id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_invoice_item_service
+        FOREIGN KEY (service_id)
+        REFERENCES services(service_id)
+        ON DELETE RESTRICT
+);
+
+CREATE INDEX IF NOT EXISTS idx_invoice_items_invoice ON invoice_items(invoice_id);
+CREATE INDEX IF NOT EXISTS idx_invoice_items_service ON invoice_items(service_id);
+
+COMMENT ON TABLE invoice_items IS 'Chi tiet dong trong hoa don';
+
+CREATE TABLE IF NOT EXISTS payments (
+    payment_id SERIAL PRIMARY KEY,
+    payment_code VARCHAR(30) UNIQUE NOT NULL,
+    invoice_id INTEGER NOT NULL,
+    amount DECIMAL(15,2) NOT NULL,
+    payment_method payment_method NOT NULL,
+    payment_date TIMESTAMP NOT NULL,
+    reference_number VARCHAR(100),
+    notes TEXT,
+    created_by INTEGER NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_payment_invoice
+        FOREIGN KEY (invoice_id)
+        REFERENCES invoices(invoice_id)
+        ON DELETE RESTRICT,
+
+    CONSTRAINT fk_payment_creator
+        FOREIGN KEY (created_by)
+        REFERENCES employees(employee_id)
+        ON DELETE RESTRICT
+);
+
+CREATE INDEX IF NOT EXISTS idx_payments_invoice ON payments(invoice_id);
+CREATE INDEX IF NOT EXISTS idx_payments_date ON payments(payment_date DESC);
+
+COMMENT ON TABLE payments IS 'Giao dich thanh toan';
+COMMENT ON COLUMN payments.payment_method IS 'SEPAY (thanh toan qua SePay webhook)';
+
+CREATE TABLE IF NOT EXISTS payment_transactions (
+    transaction_id SERIAL PRIMARY KEY,
+    payment_id INTEGER NOT NULL,
+    amount DECIMAL(15,2) NOT NULL,
+    status payment_transaction_status NOT NULL DEFAULT 'PENDING',
+    payment_link_id VARCHAR(100),
+    callback_data TEXT,
+    error_message TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_payment_transaction_payment
+        FOREIGN KEY (payment_id)
+        REFERENCES payments(payment_id)
+        ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_payment_transactions_payment ON payment_transactions(payment_id);
+CREATE INDEX IF NOT EXISTS idx_payment_transactions_webhook_id ON payment_transactions(payment_link_id);
+CREATE INDEX IF NOT EXISTS idx_payment_transactions_status ON payment_transactions(status);
+
+COMMENT ON TABLE payment_transactions IS 'Giao dich thanh toan qua SePay Webhook';
+COMMENT ON COLUMN payment_transactions.payment_link_id IS 'SePay webhook ID for duplicate detection';
+COMMENT ON COLUMN payment_transactions.status IS 'PENDING (dang cho), SUCCESS (thanh cong), FAILED (that bai), CANCELLED (da huy)';
 
 -- ============================================
 -- BƯỚC 1: TẠO BASE ROLES (3 loại cố định)
@@ -427,10 +563,21 @@ VALUES
 ON CONFLICT (permission_id) DO NOTHING;
 
 
+-- MODULE 18: PAYMENT (4 permissions) - Invoice and Payment management
+INSERT INTO permissions (permission_id, permission_name, module, description, display_order, parent_permission_id, is_active, created_at)
+VALUES
+('VIEW_INVOICE_ALL', 'VIEW_INVOICE_ALL', 'PAYMENT', 'Xem tất cả hóa đơn (Receptionist/Accountant)', 190, NULL, TRUE, NOW()),
+('VIEW_INVOICE_OWN', 'VIEW_INVOICE_OWN', 'PAYMENT', 'Xem hóa đơn của bản thân (Patient)', 191, 'VIEW_INVOICE_ALL', TRUE, NOW()),
+('CREATE_INVOICE', 'CREATE_INVOICE', 'PAYMENT', 'Tạo hóa đơn mới', 192, NULL, TRUE, NOW()),
+('CREATE_PAYMENT', 'CREATE_PAYMENT', 'PAYMENT', 'Tạo thanh toán (xác nhận đã thu tiền)', 193, NULL, TRUE, NOW()),
+('VIEW_PAYMENT_ALL', 'VIEW_PAYMENT_ALL', 'PAYMENT', 'Xem tất cả giao dịch thanh toán', 194, NULL, TRUE, NOW())
+ON CONFLICT (permission_id) DO NOTHING;
+
+
 -- ============================================
 -- BƯỚC 4: PHÂN QUYỀN CHO CÁC VAI TRÒ
 -- ============================================
--- NOTE: Using OPTIMIZED permissions (70 permissions instead of 169)
+-- NOTE: Using OPTIMIZED permissions (75 permissions instead of 169)
 -- - CRUD operations consolidated to MANAGE_X
 -- - RBAC patterns preserved (VIEW_ALL vs VIEW_OWN)
 -- - Workflow permissions kept (APPROVE_X, ASSIGN_X)
@@ -5217,3 +5364,68 @@ SELECT setval('patient_tooth_status_history_history_id_seq', (SELECT COALESCE(MA
 -- - Doctor token (employee_id=2): Can access appointment 2 (own appointment)
 -- - Patient token (patient_id=1): Can access appointment 1 (own appointment)
 -- - Patient token (patient_id=2): Can access appointment 2 (own appointment)
+
+
+-- ============================================
+-- PAYMENT SYSTEM SEED DATA
+-- ============================================
+-- Sample invoices and payments for testing
+
+-- Invoice 1: Appointment dat le (BN-1001, APT-20251104-001) - Đã thanh toán
+-- Payment code format: PDCMSyymmddxy (yy=year, mm=month, dd=day, xy=sequence)
+INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at)
+VALUES
+('INV-20251104-001', 'APPOINTMENT', 1, 1, 600000, 600000, 0, 'PAID', NOW() + INTERVAL '7 days', 'Payment Code: PDCMS25110401', 3, NOW() - INTERVAL '2 days')
+ON CONFLICT (invoice_code) DO NOTHING;
+
+INSERT INTO invoice_items (invoice_id, service_id, service_code, service_name, quantity, unit_price, subtotal)
+SELECT (SELECT invoice_id FROM invoices WHERE invoice_code = 'INV-20251104-001'), 1, 'GEN_EXAM', 'Kham tong quat', 1, 300000, 300000
+WHERE EXISTS (SELECT 1 FROM invoices WHERE invoice_code = 'INV-20251104-001')
+UNION ALL
+SELECT (SELECT invoice_id FROM invoices WHERE invoice_code = 'INV-20251104-001'), 3, 'SCALING_L1', 'Lay cao rang Level 1', 1, 300000, 300000
+WHERE EXISTS (SELECT 1 FROM invoices WHERE invoice_code = 'INV-20251104-001');
+
+INSERT INTO payments (payment_code, invoice_id, amount, payment_method, payment_date, reference_number, created_by, created_at)
+SELECT 'PAY-20251104-001', (SELECT invoice_id FROM invoices WHERE invoice_code = 'INV-20251104-001'), 600000, 'SEPAY', NOW() - INTERVAL '2 days', 'SEPAY-WEBHOOK-123456', 3, NOW() - INTERVAL '2 days'
+WHERE EXISTS (SELECT 1 FROM invoices WHERE invoice_code = 'INV-20251104-001');
+
+-- Invoice 2: Appointment chua thanh toan (BN-1002, APT-20251105-001)
+-- Payment code: PDCMS25110501 (2025-11-05, sequence 01)
+INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at)
+VALUES
+('INV-20251105-001', 'APPOINTMENT', 2, 2, 500000, 0, 500000, 'PENDING_PAYMENT', NOW() + INTERVAL '3 days', 'Payment Code: PDCMS25110501', 3, NOW() - INTERVAL '1 day')
+ON CONFLICT (invoice_code) DO NOTHING;
+
+INSERT INTO invoice_items (invoice_id, service_id, service_code, service_name, quantity, unit_price, subtotal)
+SELECT (SELECT invoice_id FROM invoices WHERE invoice_code = 'INV-20251105-001'), 4, 'SCALING_L2', 'Lay cao rang Level 2', 1, 500000, 500000
+WHERE EXISTS (SELECT 1 FROM invoices WHERE invoice_code = 'INV-20251105-001');
+
+-- Invoice 3: Treatment Plan - Payment FULL (BN-1001, PLAN-20251107-001) - Đã thanh toán
+-- Payment code: PDCMS25110701 (2025-11-07, sequence 01)
+INSERT INTO invoices (invoice_code, invoice_type, patient_id, treatment_plan_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at)
+VALUES
+('INV-20251107-001', 'TREATMENT_PLAN', 1, 101, 48000000, 48000000, 0, 'PAID', NOW() + INTERVAL '7 days', 'Payment Code: PDCMS25110701', 1, NOW() - INTERVAL '5 days')
+ON CONFLICT (invoice_code) DO NOTHING;
+
+INSERT INTO invoice_items (invoice_id, service_id, service_code, service_name, quantity, unit_price, subtotal)
+SELECT (SELECT invoice_id FROM invoices WHERE invoice_code = 'INV-20251107-001'), 7, 'ORTHO_BRACES', 'Nieng rang kim loai', 1, 48000000, 48000000
+WHERE EXISTS (SELECT 1 FROM invoices WHERE invoice_code = 'INV-20251107-001');
+
+INSERT INTO payments (payment_code, invoice_id, amount, payment_method, payment_date, reference_number, created_by, created_at)
+SELECT 'PAY-20251107-001', (SELECT invoice_id FROM invoices WHERE invoice_code = 'INV-20251107-001'), 48000000, 'SEPAY', NOW() - INTERVAL '5 days', 'SEPAY-WEBHOOK-789012', 1, NOW() - INTERVAL '5 days'
+WHERE EXISTS (SELECT 1 FROM invoices WHERE invoice_code = 'INV-20251107-001');
+
+-- Invoice 4: Supplemental (Phat sinh them dich vu)
+INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, created_by, created_at)
+VALUES
+('INV-20251105-002', 'SUPPLEMENTAL', 2, 2, 800000, 0, 800000, 'PENDING_PAYMENT', NOW() + INTERVAL '3 days', 1, NOW())
+ON CONFLICT (invoice_code) DO NOTHING;
+
+INSERT INTO invoice_items (invoice_id, service_id, service_code, service_name, quantity, unit_price, subtotal)
+SELECT (SELECT invoice_id FROM invoices WHERE invoice_code = 'INV-20251105-002'), 5, 'FILLING_L1', 'Tram rang Level 1', 2, 400000, 800000
+WHERE EXISTS (SELECT 1 FROM invoices WHERE invoice_code = 'INV-20251105-002');
+
+-- ============================================
+-- END: PAYMENT SYSTEM SEED DATA
+-- ============================================
+

@@ -56,11 +56,6 @@ temp/
 # Node modules (if any)
 node_modules/
 
-# Railway/Nixpacks
-.nixpacks/
-railway.toml
-nixpacks.toml
-
 # Docker
 docker-compose.yml
 docker-compose.*.yml

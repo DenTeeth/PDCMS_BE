@@ -602,8 +602,8 @@ The application is cloud-ready and can be deployed on:
 - **AWS**: Elastic Beanstalk, ECS, EKS
 - **Azure**: App Service, Container Instances, AKS
 - **GCP**: App Engine, Cloud Run, GKE
+- **DigitalOcean**: Droplet with Docker Compose
 - **Heroku**: With Heroku Postgres addon
-- **Railway**: Native PostgreSQL support
 
 ## Troubleshooting
 
