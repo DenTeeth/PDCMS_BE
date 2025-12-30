@@ -23,6 +23,7 @@ Backend trả về JWT token với các claims sau đây. Frontend cần decode 
 | `account_id`    | number   | **Account ID** - Dùng cho Notification system | `123`                   | ✅ Yes      |
 | `roles`         | string[] | User roles (với prefix `ROLE_`)               | `["ROLE_ADMIN"]`        | ✅ Yes      |
 | `permissions`   | string[] | User permissions                              | `["VIEW_PATIENT", ...]` | ✅ Yes      |
+| `full_name`     | string   | Full name of the user (họ tên)                | `"Nguyễn Văn A"`        | ❌ Optional |
 | `patient_code`  | string   | Patient code (nếu user là bệnh nhân)          | `"BN001"`               | ❌ Optional |
 | `employee_code` | string   | Employee code (nếu user là nhân viên)         | `"EMP001"`              | ❌ Optional |
 
@@ -55,6 +56,7 @@ interface JwtPayload {
   account_id: number; // ⭐ USER ID for Notification system
   roles: string[];
   permissions: string[];
+  full_name?: string; // họ tên (optional)
   patient_code?: string;
   employee_code?: string;
   iat: number;
@@ -65,6 +67,7 @@ const token = localStorage.getItem("access_token");
 const decoded = jwtDecode<JwtPayload>(token);
 
 const userId = decoded.account_id; // ⭐ Dùng cho WebSocket subscription
+const fullName = decoded.full_name; // ⭐ Họ tên của user
 ```
 
 #### 2️⃣ Subscribe WebSocket với `userId`
@@ -129,6 +132,7 @@ console.log(JSON.parse(jsonPayload));
   "account_id": 123,
   "roles": ["ROLE_ADMIN"],
   "permissions": ["VIEW_NOTIFICATION", "DELETE_NOTIFICATION", ...],
+  "full_name": "Nguyễn Văn A",
   "employee_code": "EMP001",
   "iat": 1702819200,
   "exp": 1702822800

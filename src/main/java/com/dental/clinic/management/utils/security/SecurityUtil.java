@@ -48,7 +48,7 @@ public class SecurityUtil {
     }
 
     public String createAccessToken(String username, List<String> roles, List<String> permissions,
-            Integer accountId, String patientCode, String employeeCode) {
+            Integer accountId, String patientCode, String employeeCode, String fullName) {
         Instant now = Instant.now();
         Instant validity = now.plus(jwtExpiration, ChronoUnit.SECONDS);
 
@@ -64,6 +64,11 @@ public class SecurityUtil {
                 .claim(ROLES_CLAIM, formattedRoles)
                 .claim(PERMISSIONS_CLAIM, permissions)
                 .claim("account_id", accountId);
+
+        // Add fullName if present (FE requirement: BE-905)
+        if (fullName != null && !fullName.isBlank()) {
+            claimsBuilder.claim("full_name", fullName);
+        }
 
         // Add patientCode if present (FE Issue 3.3 fix)
         if (patientCode != null) {

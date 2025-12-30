@@ -133,17 +133,21 @@ public class AuthenticationService {
                 // Collect patientCode and employeeCode for FE navigation (Issue 3.3)
                 String patientCode = null;
                 String employeeCode = null;
+                String fullName = null;
+                
                 if (account.getPatient() != null) {
                         patientCode = account.getPatient().getPatientCode();
+                        fullName = account.getPatient().getFullName();
                 }
                 if (account.getEmployee() != null) {
                         employeeCode = account.getEmployee().getEmployeeCode();
+                        fullName = account.getEmployee().getFullName();
                 }
 
                 // Tạo JWT token chứa thông tin user (including account_id, patientCode,
-                // employeeCode)
+                // employeeCode, fullName)
                 String accessToken = securityUtil.createAccessToken(account.getUsername(),
-                                List.of(roleName), permissionIds, account.getAccountId(), patientCode, employeeCode);
+                                List.of(roleName), permissionIds, account.getAccountId(), patientCode, employeeCode, fullName);
                 String refreshToken = securityUtil.createRefreshToken(account.getUsername());
 
                 long now = Instant.now().getEpochSecond();
@@ -258,16 +262,20 @@ public class AuthenticationService {
                 // Collect patientCode and employeeCode for token refresh (Issue 3.3)
                 String patientCode = null;
                 String employeeCode = null;
+                String fullName = null;
+                
                 if (account.getPatient() != null) {
                         patientCode = account.getPatient().getPatientCode();
+                        fullName = account.getPatient().getFullName();
                 }
                 if (account.getEmployee() != null) {
                         employeeCode = account.getEmployee().getEmployeeCode();
+                        fullName = account.getEmployee().getFullName();
                 }
 
-                // Tạo access token mới (including account_id, patientCode, employeeCode)
+                // Tạo access token mới (including account_id, patientCode, employeeCode, fullName)
                 String newAccess = securityUtil.createAccessToken(username, roles, permissions,
-                                account.getAccountId(), patientCode, employeeCode);
+                                account.getAccountId(), patientCode, employeeCode, fullName);
                 long now = Instant.now().getEpochSecond();
                 long accessExp = now + securityUtil.getAccessTokenValiditySeconds();
 
