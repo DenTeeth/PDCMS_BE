@@ -10,8 +10,9 @@ import java.time.LocalDateTime;
 
 /**
  * Entity for storing comments on patient images.
- * Allows multiple users (employees) to add annotations, observations, or notes on images.
- * 
+ * Allows multiple users (employees) to add annotations, observations, or notes
+ * on images.
+ *
  * Use cases:
  * - Doctors annotating X-rays or clinical photos
  * - Collaborative review and discussion of images
