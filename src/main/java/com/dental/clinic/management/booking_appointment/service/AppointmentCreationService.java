@@ -229,6 +229,11 @@ public class AppointmentCreationService {
 
                 insertAuditLog(appointment, createdById);
 
+                // CRITICAL FIX: Flush to ensure participants are persisted before querying for notifications
+                // Without this, the query in sendAppointmentCreatedNotification might not find the participants
+                appointmentParticipantRepository.flush();
+                log.debug("Flushed participants to database before sending notifications");
+
                 // Send notification to patient, doctor, and participants
                 log.info("CALLING sendAppointmentCreatedNotification for appointment: {}", appointment.getAppointmentCode());
                 sendAppointmentCreatedNotification(appointment, patient);
