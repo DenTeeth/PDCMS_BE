@@ -1041,8 +1041,9 @@ public class AppointmentCreationService {
                         // 2. Send notification to MAIN DOCTOR (dentist assigned to appointment)
                         Employee mainDoctor = employeeRepository.findById(appointment.getEmployeeId()).orElse(null);
                         if (mainDoctor != null && mainDoctor.getAccount() != null) {
-                                // CRITICAL FIX: Use employeeId for staff notifications, not accountId
-                                Integer doctorUserId = mainDoctor.getEmployeeId();
+                                // CRITICAL: Use accountId consistently for all users (patients AND staff)
+                                // This matches JWT token claim, WebSocket topic path, and FE queries
+                                Integer doctorUserId = mainDoctor.getAccount().getAccountId();
                                 log.info("Sending notification to MAIN DOCTOR userId={} (employeeCode={}) for appointment {}",
                                                 doctorUserId, mainDoctor.getEmployeeCode(), appointment.getAppointmentCode());
 
@@ -1090,8 +1091,9 @@ public class AppointmentCreationService {
                                                         continue;
                                                 }
 
-                                                // CRITICAL FIX: Use employeeId for staff notifications, not accountId
-                                                Integer staffUserId = participantEmployee.getEmployeeId();
+                                                // CRITICAL: Use accountId consistently for all users (patients AND staff)
+                                                // This matches JWT token claim, WebSocket topic path, and FE queries
+                                                Integer staffUserId = participantEmployee.getAccount().getAccountId();
                                                 AppointmentParticipantRole role = participant.getRole(); // ASSISTANT
 
                                                 log.info("Sending notification to {} userId={} for appointment {}",
