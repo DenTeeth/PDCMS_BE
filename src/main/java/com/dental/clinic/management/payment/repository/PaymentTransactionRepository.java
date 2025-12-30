@@ -10,9 +10,9 @@ import java.util.Optional;
 @Repository
 public interface PaymentTransactionRepository extends JpaRepository<PaymentTransaction, Integer> {
 
-    Optional<PaymentTransaction> findByPayosOrderCode(String payosOrderCode);
-
+    // Find payment transaction by SePay webhook ID (for duplicate detection)
     Optional<PaymentTransaction> findByPaymentLinkId(String paymentLinkId);
 
+    // Find all transactions for a specific payment, ordered by creation date
     List<PaymentTransaction> findByPayment_PaymentIdOrderByCreatedAtDesc(Integer paymentId);
 }
