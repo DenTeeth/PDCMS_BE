@@ -191,16 +191,20 @@ public class TreatmentPlanAutoScheduleService {
                         ENTITY_NAME,
                         "SERVICE_NOT_FOUND"));
 
-        // Note: PatientPlanItem doesn't have estimatedDate field in current schema
-        // Using a fallback approach: today + 7 days * sequence number
-        LocalDate originalDate = LocalDate.now().plusDays(7L * item.getSequenceNumber());
-
-        if (originalDate == null) {
-            // No estimated date → use today + 7 days as fallback
-            originalDate = LocalDate.now().plusDays(7);
-            log.debug("No estimated date for item {}, using fallback: {}",
-                    item.getItemId(), originalDate);
-        }
+        // FIX: Calculate original date based on BOTH phase number AND sequence number
+        // Each phase should start AFTER previous phases to respect sequential treatment
+        // Formula: today + (phaseNumber - 1) * 14 days + sequenceNumber * 7 days
+        // Example: Phase 1, item 1 → 0*14 + 1*7 = 7 days = 6/1
+        //          Phase 1, item 2 → 0*14 + 2*7 = 14 days = 13/1
+        //          Phase 2, item 1 → 1*14 + 1*7 = 21 days = 20/1
+        //          Phase 2, item 2 → 1*14 + 2*7 = 28 days = 27/1
+        Integer phaseNumber = item.getPhase().getPhaseNumber();
+        long phaseOffset = (phaseNumber - 1) * 14L;  // 2 weeks per phase
+        long itemOffset = item.getSequenceNumber() * 7L;  // 1 week per item
+        LocalDate originalDate = LocalDate.now().plusDays(phaseOffset + itemOffset);
+        
+        log.debug("Calculated original date for item {} (phase {}, sequence {}): {}",
+                item.getItemId(), phaseNumber, item.getSequenceNumber(), originalDate);
 
         LocalDate proposedDate = originalDate;
         boolean holidayAdjusted = false;
