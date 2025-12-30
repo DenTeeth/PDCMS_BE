@@ -28,7 +28,7 @@ jobs:
 
             # Pull latest code
             echo "📥 Pulling latest code..."
-            git pull origin feat/BE-904-push-notification
+            git pull origin feat/BE-905-payment-implement
 
             # Stop containers and REMOVE VOLUMES (xóa DB để tạo mới)
             echo "🛑 Stopping containers and removing volumes..."
@@ -108,7 +108,7 @@ jobs:
               "fields": [
                 {
                   "name": "🌿 Branch",
-                  "value": "\`feat/BE-903-deploy-digital-ocean\`",
+                  "value": "\`feat/BE-905-payment-implement\`",
                   "inline": true
                 },
                 {
@@ -179,7 +179,7 @@ jobs:
               "fields": [
                 {
                   "name": "Branch",
-                  "value": "\`feat/BE-903-deploy-digital-ocean\`",
+                  "value": "\`feat/BE-905-payment-implement\`",
                   "inline": true
                 },
                 {
