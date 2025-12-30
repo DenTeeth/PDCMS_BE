@@ -34,7 +34,11 @@ spring:
   # ==============================
   jpa:
     hibernate:
-      ddl-auto: update
+      # DEV: Use 'create-drop' for clean DB on every restart
+      # - Drops ALL tables on shutdown, recreates on startup
+      # - Perfect for development with frequent schema changes
+      # - Seed data is automatically loaded by SeedDataInitializer.java
+      ddl-auto: create-drop
     show-sql: true
     properties:
       hibernate:

@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
         @Index(name = "idx_patient_id", columnList = "patient_id"),
         @Index(name = "idx_clinical_record_id", columnList = "clinical_record_id"),
         @Index(name = "idx_image_type", columnList = "image_type"),
-        @Index(name = "idx_created_at", columnList = "created_at")
+        @Index(name = "idx_patient_image_created_at", columnList = "created_at")
 })
 @Getter
 @Setter

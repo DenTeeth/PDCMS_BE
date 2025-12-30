@@ -22,7 +22,7 @@ import java.time.LocalDateTime;
 @Table(name = "patient_image_comments", indexes = {
         @Index(name = "idx_image_id", columnList = "image_id"),
         @Index(name = "idx_created_by", columnList = "created_by"),
-        @Index(name = "idx_created_at", columnList = "created_at")
+        @Index(name = "idx_patient_image_comment_created_at", columnList = "created_at")
 })
 @Getter
 @Setter

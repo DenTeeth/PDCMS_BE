@@ -26,11 +26,12 @@ spring:
   # ==============================
   jpa:
     hibernate:
-      # CRITICAL: Use 'update' instead of 'create-drop' in production
-      # - 'create-drop' drops ALL database objects (including ENUMs) on startup
-      # - 'update' only adds new columns/tables, never drops existing ones
-      # - This ensures PostgreSQL ENUMs survive application restarts
-      ddl-auto: update
+      # PRODUCTION: Use 'create-drop' for clean DB on every restart
+      # - Drops ALL tables on shutdown, recreates on startup
+      # - Perfect for development/testing with Docker volumes
+      # - Seed data is automatically loaded by SeedDataInitializer.java
+      # WARNING: All data will be lost on restart! Use Flyway/Liquibase for production with persistent data
+      ddl-auto: create-drop
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
