@@ -278,21 +278,21 @@ public class EmployeeService {
         // Validate required fields
         if (request.getUsername() == null || request.getUsername().trim().isEmpty()) {
             throw new BadRequestAlertException(
-                    "Username is required",
+                    "Tên đăng nhập là bắt buộc",
                     "employee",
                     "usernamerequired");
         }
 
         if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
             throw new BadRequestAlertException(
-                    "Email is required",
+                    "Email là bắt buộc",
                     "employee",
                     "emailrequired");
         }
 
         if (request.getPassword() == null || request.getPassword().trim().isEmpty()) {
             throw new BadRequestAlertException(
-                    "Password is required",
+                    "Mật khẩu là bắt buộc",
                     "employee",
                     "passwordrequired");
         }
@@ -308,7 +308,7 @@ public class EmployeeService {
         // ROLE_PATIENT must only exist in Patient table, NOT in Employee table
         if ("ROLE_PATIENT".equals(role.getRoleId())) {
             throw new BadRequestAlertException(
-                    "Cannot create employee with ROLE_PATIENT. Patients must be created in the Patient table.",
+                    "Không thể tạo nhân viên với vai trò ROLE_PATIENT. Bệnh nhân phải được tạo trong bảng Patient.",
                     "employee",
                     "invalidroleforemployee");
         }
@@ -319,14 +319,14 @@ public class EmployeeService {
 
         if (Boolean.TRUE.equals(role.getRequiresSpecialization()) && !hasSpecializations) {
             throw new BadRequestAlertException(
-                    "Specialization is required for role: " + role.getRoleName(),
+                    "Chuyên khoa là bắt buộc cho vai trò: " + role.getRoleName(),
                     "employee",
                     "specializationrequired");
         }
 
         if (Boolean.FALSE.equals(role.getRequiresSpecialization()) && hasSpecializations) {
             throw new BadRequestAlertException(
-                    "Specialization is not allowed for role: " + role.getRoleName(),
+                    "Chuyên khoa không được phép cho vai trò: " + role.getRoleName(),
                     "employee",
                     "specializationnotallowed");
         }
@@ -334,14 +334,14 @@ public class EmployeeService {
         // Check uniqueness
         if (accountRepository.existsByUsername(request.getUsername())) {
             throw new BadRequestAlertException(
-                    "Username already exists",
+                    "Tên đăng nhập đã tồn tại",
                     "account",
                     "usernameexists");
         }
 
         if (accountRepository.existsByEmail(request.getEmail())) {
             throw new BadRequestAlertException(
-                    "Email already exists",
+                    "Email đã tồn tại",
                     "account",
                     "emailexists");
         }
@@ -352,14 +352,14 @@ public class EmployeeService {
             
             if (employeeRepository.existsByPhone(request.getPhone())) {
                 throw new BadRequestAlertException(
-                        "Phone number already exists",
+                        "Số điện thoại đã tồn tại",
                         "employee",
                         "phoneexists");
             }
 
             if (patientRepository.existsByPhone(request.getPhone())) {
                 throw new BadRequestAlertException(
-                        "Phone number already exists",
+                        "Số điện thoại đã tồn tại",
                         "patient",
                         "phoneexists");
             }
@@ -401,7 +401,7 @@ public class EmployeeService {
             for (Integer specializationId : request.getSpecializationIds()) {
                 Specialization specialization = specializationRepository.findById(specializationId)
                         .orElseThrow(() -> new BadRequestAlertException(
-                                "Specialization not found with ID: " + specializationId,
+                                "Không tìm thấy chuyên khoa với ID: " + specializationId,
                                 "specialization",
                                 "specializationnotfound"));
                 specializations.add(specialization);
@@ -448,7 +448,7 @@ public class EmployeeService {
             // ROLE_PATIENT must only exist in Patient table, NOT in Employee table
             if ("ROLE_PATIENT".equals(role.getRoleId())) {
                 throw new BadRequestAlertException(
-                        "Cannot assign ROLE_PATIENT to employee. Patients must be created in the Patient table.",
+                        "Không thể gán vai trò ROLE_PATIENT cho nhân viên. Bệnh nhân phải được tạo trong bảng Patient.",
                         "employee",
                         "invalidroleforemployee");
             }
@@ -472,14 +472,14 @@ public class EmployeeService {
                 
                 if (employeeRepository.existsByPhone(request.getPhone())) {
                     throw new BadRequestAlertException(
-                            "Phone number already exists",
+                            "Số điện thoại đã tồn tại",
                             "employee",
                             "phoneexists");
                 }
 
                 if (patientRepository.existsByPhone(request.getPhone())) {
                     throw new BadRequestAlertException(
-                            "Phone number already exists",
+                            "Số điện thoại đã tồn tại",
                             "patient",
                             "phoneexists");
                 }
@@ -538,7 +538,7 @@ public class EmployeeService {
             for (Integer specializationId : request.getSpecializationIds()) {
                 Specialization specialization = specializationRepository.findById(specializationId)
                         .orElseThrow(() -> new BadRequestAlertException(
-                                "Specialization not found with ID: " + specializationId,
+                                "Không tìm thấy chuyên khoa với ID: " + specializationId,
                                 "specialization",
                                 "specializationnotfound"));
                 specializations.add(specialization);
@@ -593,7 +593,7 @@ public class EmployeeService {
             for (Integer specializationId : request.getSpecializationIds()) {
                 Specialization specialization = specializationRepository.findById(specializationId)
                         .orElseThrow(() -> new BadRequestAlertException(
-                                "Specialization not found with ID: " + specializationId,
+                                "Không tìm thấy chuyên khoa với ID: " + specializationId,
                                 "specialization",
                                 "specializationnotfound"));
                 specializations.add(specialization);
