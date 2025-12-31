@@ -10,16 +10,16 @@ import jakarta.validation.constraints.NotNull;
 
 public class CreateShiftRegistrationRequest {
 
-    @NotNull(message = "Employee ID is required")
+    @NotNull(message = "Mã nhân viên là bắt buộc")
     private Integer employeeId;
 
-    @NotNull(message = "Work shift ID is required")
+    @NotNull(message = "Mã ca làm việc là bắt buộc")
     private String workShiftId;
 
-    @NotEmpty(message = "Days of week cannot be empty")
+    @NotEmpty(message = "Các ngày trong tuần không được để trống")
     private List<DayOfWeek> daysOfWeek;
 
-    @NotNull(message = "Effective from date is required")
+    @NotNull(message = "Ngày hiệu lực từ là bắt buộc")
     private LocalDate effectiveFrom;
 
     private LocalDate effectiveTo;

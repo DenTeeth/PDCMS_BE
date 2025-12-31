@@ -640,7 +640,7 @@ public class GlobalExceptionHandler {
                 (ex.getParameterName().equals("start_date") || ex.getParameterName().equals("end_date"))) {
             message = "Vui lòng cung cấp ngày bắt đầu và ngày kết thúc hợp lệ.";
         } else {
-            message = "Missing required parameter: " + ex.getParameterName();
+            message = "Thiếu tham số bắt buộc: " + ex.getParameterName();
         }
 
         FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();

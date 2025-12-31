@@ -36,7 +36,7 @@ public class CustomerContactController {
 
     @GetMapping
     @Operation(summary = "List customer contacts")
-    @ApiMessage("List customer contacts successfully")
+    @ApiMessage("Lấy danh sách liên hệ khách hàng thành công")
 
     public ResponseEntity<Page<ContactInfoResponse>> listContacts(
             @RequestParam(defaultValue = "0") int page,
@@ -55,7 +55,7 @@ public class CustomerContactController {
 
     @PostMapping
     @Operation(summary = "Create new customer contact")
-    @ApiMessage("Create customer contact successfully")
+    @ApiMessage("Tạo liên hệ khách hàng thành công")
     // create allowed from website (public) and by authenticated users (service
     // enforces rules)
     public ResponseEntity<ContactInfoResponse> createContact(
@@ -68,7 +68,7 @@ public class CustomerContactController {
     // PUT for full/controlled update per spec (not PATCH)
     @PutMapping("/{contactId}")
     @Operation(summary = "Update contact (full/controlled)")
-    @ApiMessage("Update customer contact successfully")
+    @ApiMessage("Cập nhật liên hệ khách hàng thành công")
 
     public ResponseEntity<ContactInfoResponse> updateContact(
             @PathVariable String contactId,
@@ -81,7 +81,7 @@ public class CustomerContactController {
 
     @DeleteMapping("/{contactId}")
     @Operation(summary = "Delete contact (soft)")
-    @ApiMessage("Delete customer contact successfully")
+    @ApiMessage("Xóa liên hệ khách hàng thành công")
 
     public ResponseEntity<Void> deleteContact(@PathVariable String contactId) {
         contactService.deleteContact(contactId);
@@ -90,7 +90,7 @@ public class CustomerContactController {
 
     @PostMapping("/{contactId}/assign")
     @Operation(summary = "Assign contact to receptionist", description = "Manual mode: provide employeeId (must be Receptionist role). Auto mode: leave employeeId empty to auto-assign to receptionist with least NEW contacts")
-    @ApiMessage("Assign contact successfully")
+    @ApiMessage("Phân công liên hệ thành công")
 
     public ResponseEntity<ContactInfoResponse> assignContact(
             @PathVariable String contactId,
@@ -101,7 +101,7 @@ public class CustomerContactController {
 
     @PostMapping("/{contactId}/convert")
     @Operation(summary = "Convert contact to patient", description = "Creates new patient and sets contact status to CONVERTED. Returns 400 if already converted or not interested")
-    @ApiMessage("Convert contact to patient successfully")
+    @ApiMessage("Chuyển đổi liên hệ thành bệnh nhân thành công")
 
     public ResponseEntity<ContactInfoResponse> convertContact(@PathVariable String contactId) {
         ContactInfoResponse resp = contactService.convertContact(contactId);

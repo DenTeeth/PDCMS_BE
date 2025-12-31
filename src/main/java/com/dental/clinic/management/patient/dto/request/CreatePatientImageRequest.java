@@ -14,18 +14,18 @@ import java.time.LocalDate;
 @Builder
 public class CreatePatientImageRequest {
 
-    @NotNull(message = "Patient ID is required")
+    @NotNull(message = "Mã bệnh nhân là bắt buộc")
     private Long patientId;
 
     private Long clinicalRecordId;
 
-    @NotBlank(message = "Image URL is required")
+    @NotBlank(message = "Đường dẫn hình ảnh là bắt buộc")
     private String imageUrl;
 
-    @NotBlank(message = "Cloudinary Public ID is required")
+    @NotBlank(message = "Mã Cloudinary là bắt buộc")
     private String cloudinaryPublicId;
 
-    @NotNull(message = "Image type is required")
+    @NotNull(message = "Loại hình ảnh là bắt buộc")
     private ImageType imageType;
 
     private String description;

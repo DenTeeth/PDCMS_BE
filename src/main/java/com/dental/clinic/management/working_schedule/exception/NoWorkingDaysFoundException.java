@@ -12,7 +12,7 @@ public class NoWorkingDaysFoundException extends RuntimeException {
     private final LocalDate effectiveTo;
 
     public NoWorkingDaysFoundException(List<String> requestedDays, LocalDate effectiveFrom, LocalDate effectiveTo) {
-        super("Date range is insufficient. Please extend your registration period.");
+        super("Khoảng thời gian không đủ. Vui lòng mở rộng kỳ đăng ký của bạn.");
         this.requestedDays = requestedDays;
         this.effectiveFrom = effectiveFrom;
         this.effectiveTo = effectiveTo;

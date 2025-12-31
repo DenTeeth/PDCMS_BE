@@ -41,7 +41,7 @@ public class AnnualLeaveBalanceResetJob {
 
         } catch (Exception e) {
             log.error("Error in Annual Leave Balance Reset Job", e);
-            throw new RuntimeException("Failed to reset annual leave balances", e);
+            throw new RuntimeException("Đã xảy ra lỗi khi đặt lại số dư nghỉ phép năm", e);
         }
     }
 }

@@ -41,7 +41,7 @@ public class IncompleteDayCoverageException extends ErrorResponseException {
             LocalDate effectiveTo) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
                 HttpStatus.BAD_REQUEST,
-                "Date range must include at least one occurrence of each working day defined in the slot.");
+                "Khoảng ngày phải bao gồm ít nhất một lần xuất hiện của mỗi ngày làm việc được định nghĩa trong slot.");
         problemDetail.setTitle("Khoảng Thời Gian Không Đủ");
         problemDetail.setType(URI.create("https://api.dentalclinic.com/errors/insufficient-date-range"));
         return problemDetail;

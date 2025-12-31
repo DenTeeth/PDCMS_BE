@@ -15,14 +15,14 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 public class ConsumableItemRequest {
 
-    @NotNull(message = "Item Master ID is required")
+    @NotNull(message = "Mã vật tư chính là bắt buộc")
     private Long itemMasterId;
 
-    @NotNull(message = "Quantity per service is required")
-    @DecimalMin(value = "0.01", message = "Quantity must be greater than 0")
+    @NotNull(message = "Số lượng mỗi dịch vụ là bắt buộc")
+    @DecimalMin(value = "0.01", message = "Số lượng phải lớn hơn 0")
     private BigDecimal quantityPerService;
 
-    @NotNull(message = "Unit ID is required")
+    @NotNull(message = "Mã đơn vị là bắt buộc")
     private Long unitId;
 
     private String notes;

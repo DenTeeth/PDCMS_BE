@@ -82,7 +82,7 @@ public class ClinicalRecordAttachmentService {
             filePath = fileStorageService.storeFile(file, recordId);
         } catch (IOException e) {
             log.error("Failed to store file", e);
-            throw new RuntimeException("Failed to store file: " + e.getMessage());
+            throw new RuntimeException("Đã xảy ra lỗi khi lưu tệp: " + e.getMessage());
         }
 
         // Step 5: Get current employee (uploader)
@@ -236,7 +236,7 @@ public class ClinicalRecordAttachmentService {
             }
         }
 
-        throw new AccessDeniedException("You do not have permission to access this clinical record");
+        throw new AccessDeniedException("Bạn không có quyền truy cập hồ sơ lâm sàng này");
     }
 
     /**
@@ -259,7 +259,7 @@ public class ClinicalRecordAttachmentService {
             return; // Uploader can delete own attachment
         }
 
-        throw new AccessDeniedException("You can only delete attachments that you uploaded");
+        throw new AccessDeniedException("Bạn chỉ có thể xóa tệp đính kèm mà bạn đã tải lên");
     }
 
     /**

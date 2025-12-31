@@ -258,7 +258,7 @@ public class EmployeeShiftRegistrationService {
         log.info("Fetching slot detail for slot {}", slotId);
 
         PartTimeSlot slot = slotRepository.findById(slotId)
-                .orElseThrow(() -> new IllegalArgumentException("Slot not found: " + slotId));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy suất: " + slotId));
 
         if (!slot.getIsActive()) {
             throw new IllegalArgumentException("Suất không hoạt động");

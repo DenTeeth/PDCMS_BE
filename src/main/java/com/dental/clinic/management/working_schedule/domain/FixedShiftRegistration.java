@@ -45,7 +45,7 @@ public class FixedShiftRegistration {
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "employee_id", nullable = false)
-    @NotNull(message = "Employee is required")
+    @NotNull(message = "Nhân viên là bắt buộc")
     private Employee employee;
 
     /**
@@ -53,14 +53,14 @@ public class FixedShiftRegistration {
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "work_shift_id", nullable = false)
-    @NotNull(message = "Work shift is required")
+    @NotNull(message = "Ca làm việc là bắt buộc")
     private WorkShift workShift;
 
     /**
      * Start date when this registration becomes effective.
      */
     @Column(name = "effective_from", nullable = false)
-    @NotNull(message = "Effective from date is required")
+    @NotNull(message = "Ngày hiệu lực từ là bắt buộc")
     private LocalDate effectiveFrom;
 
     /**
@@ -75,7 +75,7 @@ public class FixedShiftRegistration {
      * Used for soft delete.
      */
     @Column(name = "is_active", nullable = false)
-    @NotNull(message = "Active status is required")
+    @NotNull(message = "Trạng thái hoạt động là bắt buộc")
     private Boolean isActive = true;
 
     /**

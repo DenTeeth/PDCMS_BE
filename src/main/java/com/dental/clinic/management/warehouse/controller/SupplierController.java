@@ -191,7 +191,7 @@ public class SupplierController {
             Auto-generates supplier code (SUP-XXX format).
             Validates name and email uniqueness.
             """)
-    @ApiMessage("Supplier created successfully")
+    @ApiMessage("Tạo nhà cung cấp thành công")
     @PostMapping
     @PreAuthorize("hasRole('" + ADMIN + "') or hasAnyAuthority('MANAGE_SUPPLIERS', 'MANAGE_WAREHOUSE')")
     public ResponseEntity<SupplierSummaryResponse> createSupplier(
@@ -207,7 +207,7 @@ public class SupplierController {
      * Authorization: MANAGE_SUPPLIERS or MANAGE_WAREHOUSE
      */
     @Operation(summary = "Update supplier", description = "Update supplier profile including risk management flags")
-    @ApiMessage("Supplier updated successfully")
+    @ApiMessage("Cập nhật nhà cung cấp thành công")
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('" + ADMIN + "') or hasAnyAuthority('MANAGE_SUPPLIERS', 'MANAGE_WAREHOUSE')")
     public ResponseEntity<SupplierSummaryResponse> updateSupplier(
@@ -224,7 +224,7 @@ public class SupplierController {
      * Authorization: MANAGE_SUPPLIERS or MANAGE_WAREHOUSE
      */
     @Operation(summary = "Soft delete supplier", description = "Set isActive = false. Cannot delete if supplier has transaction history.")
-    @ApiMessage("Supplier deleted successfully")
+    @ApiMessage("Xóa nhà cung cấp thành công")
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('" + ADMIN + "') or hasAnyAuthority('MANAGE_SUPPLIERS', 'MANAGE_WAREHOUSE')")
     public ResponseEntity<Void> deleteSupplier(@PathVariable Long id) {

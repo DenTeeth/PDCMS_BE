@@ -52,8 +52,8 @@ public class OvertimeRequest {
 
     @Id
     @Column(name = "request_id", length = 12)
-    @NotBlank(message = "Request ID is required")
-    @Size(max = 12, message = "Request ID must not exceed 12 characters")
+    @NotBlank(message = "Mã yêu cầu là bắt buộc")
+    @Size(max = 12, message = "Mã yêu cầu không được vượt quá 12 ký tự")
     private String requestId; // Format: OTRYYMMDDSSS (e.g., OTR251022001)
 
     /**
@@ -61,7 +61,7 @@ public class OvertimeRequest {
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "employee_id", nullable = false)
-    @NotNull(message = "Employee is required")
+    @NotNull(message = "Nhân viên là bắt buộc")
     private Employee employee;
 
     /**
@@ -70,14 +70,14 @@ public class OvertimeRequest {
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "requested_by", nullable = false)
-    @NotNull(message = "Requested by is required")
+    @NotNull(message = "Người yêu cầu là bắt buộc")
     private Employee requestedBy;
 
     /**
      * The date when the overtime work will be performed.
      */
     @Column(name = "work_date", nullable = false)
-    @NotNull(message = "Work date is required")
+    @NotNull(message = "Ngày làm việc là bắt buộc")
     private LocalDate workDate;
 
     /**
@@ -85,14 +85,14 @@ public class OvertimeRequest {
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "work_shift_id", nullable = false)
-    @NotNull(message = "Work shift is required")
+    @NotNull(message = "Ca làm việc là bắt buộc")
     private WorkShift workShift;
 
     /**
      * Reason for the overtime request.
      */
     @Column(name = "reason", nullable = false, columnDefinition = "TEXT")
-    @NotBlank(message = "Reason is required")
+    @NotBlank(message = "Lý do là bắt buộc")
     private String reason;
 
     /**
@@ -100,7 +100,7 @@ public class OvertimeRequest {
      */
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
-    @NotNull(message = "Status is required")
+    @NotNull(message = "Trạng thái là bắt buộc")
     private RequestStatus status = RequestStatus.PENDING;
 
     /**

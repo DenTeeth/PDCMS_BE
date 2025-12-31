@@ -34,7 +34,7 @@ public class SePayWebhookController {
      * Must return {"success": true} with status 200 or 201
      */
     @PostMapping
-    @ApiMessage("Webhook processed successfully")
+    @ApiMessage("Xử lý webhook thành công")
     public ResponseEntity<Map<String, Object>> handleWebhook(
             @RequestBody SePayWebhookData webhookData,
             @RequestHeader(value = "Authorization", required = false) String authorization) {

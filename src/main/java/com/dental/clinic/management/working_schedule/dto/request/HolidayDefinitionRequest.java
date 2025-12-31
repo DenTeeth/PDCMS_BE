@@ -19,11 +19,11 @@ import lombok.Setter;
 @AllArgsConstructor
 public class HolidayDefinitionRequest {
 
-    @NotBlank(message = "Holiday name is required")
+    @NotBlank(message = "Tên ngày lễ là bắt buộc")
     @Size(max = 100, message = "Tên ngày lễ không được vượt quá 100 ký tự")
     private String holidayName;
 
-    @NotNull(message = "Holiday type is required")
+    @NotNull(message = "Loại ngày lễ là bắt buộc")
     private HolidayType holidayType;
 
     @Size(max = 500, message = "Mô tả không được vượt quá 500 ký tự")

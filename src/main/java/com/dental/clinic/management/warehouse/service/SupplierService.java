@@ -181,8 +181,8 @@ public class SupplierService {
                                         supplier.getSupplierCode(), supplier.getSupplierName());
                         throw new com.dental.clinic.management.exception.BusinessException(
                                         "SUPPLIER_HAS_TRANSACTIONS",
-                                        "Cannot delete supplier '" + supplier.getSupplierName()
-                                                        + "' because it has transaction history. You can only set it to INACTIVE status.");
+                                        "Không thể xóa nhà cung cấp '" + supplier.getSupplierName()
+                                                        + "' vì có lịch sử giao dịch. Bạn chỉ có thể đặt trạng thái KHÔNG HOẠT ĐỘNG.");
                 }
 
                 // 3. Soft Delete: Set isActive = false

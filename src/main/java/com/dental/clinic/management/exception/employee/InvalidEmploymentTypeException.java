@@ -19,11 +19,11 @@ public class InvalidEmploymentTypeException extends ErrorResponseException {
     }
 
     private static ProblemDetail asProblemDetail(Integer employeeId) {
-        String message = "Only part-time employees can create shift registrations. Employee ID: " + employeeId;
+        String message = "Chỉ nhân viên bán thời gian mới có thể tạo đăng ký ca làm việc. Mã nhân viên: " + employeeId;
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, message);
         problemDetail.setTitle("Loại Hợp Đồng Không Hợp Lệ");
         problemDetail.setProperty("errorCode", "INVALID_EMPLOYMENT_TYPE");
-        problemDetail.setProperty("message", "Only part-time employees can create shift registrations.");
+        problemDetail.setProperty("message", "Chỉ nhân viên bán thời gian mới có thể tạo đăng ký ca làm việc.");
         return problemDetail;
     }
 

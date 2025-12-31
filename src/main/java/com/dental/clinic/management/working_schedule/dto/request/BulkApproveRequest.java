@@ -21,6 +21,6 @@ public class BulkApproveRequest {
      * List of registration IDs to approve.
      * Each will be validated individually before approval.
      */
-    @NotEmpty(message = "Registration IDs list cannot be empty")
+    @NotEmpty(message = "Danh sách mã đăng ký không được để trống")
     private List<Integer> registrationIds;
 }

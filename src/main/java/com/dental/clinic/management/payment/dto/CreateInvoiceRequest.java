@@ -17,10 +17,10 @@ import java.util.List;
 @AllArgsConstructor
 public class CreateInvoiceRequest {
 
-    @NotNull(message = "Invoice type is required")
+    @NotNull(message = "Loại hóa đơn là bắt buộc")
     private InvoiceType invoiceType;
 
-    @NotNull(message = "Patient ID is required")
+    @NotNull(message = "Mã bệnh nhân là bắt buộc")
     private Integer patientId;
 
     private Integer appointmentId;
@@ -31,7 +31,7 @@ public class CreateInvoiceRequest {
 
     private Integer installmentNumber;
 
-    @NotNull(message = "Items are required")
+    @NotNull(message = "Danh sách mục hàng là bắt buộc")
     private List<InvoiceItemDto> items;
 
     private LocalDateTime dueDate;
@@ -43,14 +43,14 @@ public class CreateInvoiceRequest {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class InvoiceItemDto {
-        @NotNull(message = "Service ID is required")
+        @NotNull(message = "Mã dịch vụ là bắt buộc")
         private Integer serviceId;
         private String serviceCode;
-        @NotNull(message = "Service name is required")
+        @NotNull(message = "Tên dịch vụ là bắt buộc")
         private String serviceName;
-        @NotNull(message = "Quantity is required")
+        @NotNull(message = "Số lượng là bắt buộc")
         private Integer quantity;
-        @NotNull(message = "Unit price is required")
+        @NotNull(message = "Đơn giá là bắt buộc")
         private BigDecimal unitPrice;
         private String notes;
     }

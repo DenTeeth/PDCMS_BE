@@ -138,7 +138,7 @@ public class DailyRenewalDetectionJob {
 
         } catch (Exception e) {
             log.error("Error in Daily Renewal Detection Job", e);
-            throw new RuntimeException("Failed to detect expiring registrations", e);
+            throw new RuntimeException("Đã xảy ra lỗi khi phát hiện đăng ký sắp hết hạn", e);
         }
     }
 }

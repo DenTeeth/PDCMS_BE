@@ -1275,7 +1275,7 @@ public class AppointmentCreationService {
                 } catch (Exception e) {
                         log.error("Failed to update plan items status. Transaction will rollback. ItemIds: {}, TargetStatus: {}",
                                         itemIds, newStatus, e);
-                        throw new RuntimeException("Failed to update plan items status", e);
+                        throw new RuntimeException("Đã xảy ra lỗi khi cập nhật trạng thái mục kế hoạch", e);
                 }
         }
 

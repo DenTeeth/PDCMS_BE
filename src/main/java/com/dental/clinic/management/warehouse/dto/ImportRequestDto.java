@@ -20,12 +20,12 @@ import java.util.List;
 @AllArgsConstructor
 public class ImportRequestDto {
 
-    @NotNull(message = "Supplier ID is required")
+    @NotNull(message = "Mã nhà cung cấp là bắt buộc")
     private Long supplierId;
 
     private String notes;
 
-    @NotNull(message = "Items list is required")
+    @NotNull(message = "Danh sách vật tư là bắt buộc")
     private List<ImportItemDto> items;
 
     @Data
@@ -34,19 +34,19 @@ public class ImportRequestDto {
     @AllArgsConstructor
     public static class ImportItemDto {
 
-        @NotNull(message = "Item Master ID is required")
+        @NotNull(message = "Mã vật tư chính là bắt buộc")
         private Long itemMasterId;
 
-        @NotNull(message = "Lot number is required")
+        @NotNull(message = "Số lô là bắt buộc")
         private String lotNumber;
 
-        @NotNull(message = "Quantity is required")
+        @NotNull(message = "Số lượng là bắt buộc")
         @Min(value = 1, message = "Số lượng phải ít nhất là 1")
         private Integer quantity;
 
         private LocalDate expiryDate; // Bắt buộc nếu warehouseType=COLD && isTool=false
 
-        @NotNull(message = "Import price is required")
+        @NotNull(message = "Giá nhập là bắt buộc")
         @Min(value = 0, message = "Giá không được âm")
         private BigDecimal importPrice;
 

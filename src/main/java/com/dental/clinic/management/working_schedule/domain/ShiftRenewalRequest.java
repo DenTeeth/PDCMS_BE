@@ -56,8 +56,8 @@ public class ShiftRenewalRequest {
 
     @Id
     @Column(name = "renewal_id", length = 20)
-    @NotBlank(message = "Renewal ID is required")
-    @Size(max = 20, message = "Renewal ID must not exceed 20 characters")
+    @NotBlank(message = "Mã yêu cầu gia hạn là bắt buộc")
+    @Size(max = 20, message = "Mã yêu cầu gia hạn không được vượt quá 20 ký tự")
     private String renewalId; // Format: SRR_YYYYMMDD_XXXXX (e.g., SRR_20251022_00001)
 
     /**
@@ -65,7 +65,7 @@ public class ShiftRenewalRequest {
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "expiring_registration_id", nullable = false)
-    @NotNull(message = "Expiring registration is required")
+    @NotNull(message = "Đăng ký sắp hết hạn là bắt buộc")
     private FixedShiftRegistration expiringRegistration;
 
     /**
@@ -74,7 +74,7 @@ public class ShiftRenewalRequest {
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "employee_id", nullable = false)
-    @NotNull(message = "Employee is required")
+    @NotNull(message = "Nhân viên là bắt buộc")
     private Employee employee;
 
     /**
@@ -82,7 +82,7 @@ public class ShiftRenewalRequest {
      */
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
-    @NotNull(message = "Status is required")
+    @NotNull(message = "Trạng thái là bắt buộc")
     private RenewalStatus status = RenewalStatus.PENDING_ACTION;
 
     /**
@@ -91,7 +91,7 @@ public class ShiftRenewalRequest {
      * Usually set to 14 days before effective_to.
      */
     @Column(name = "expires_at", nullable = false)
-    @NotNull(message = "Expiry time is required")
+    @NotNull(message = "Thời gian hết hạn là bắt buộc")
     private LocalDateTime expiresAt;
 
     /**

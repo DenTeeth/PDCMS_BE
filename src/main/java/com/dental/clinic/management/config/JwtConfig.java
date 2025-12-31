@@ -76,7 +76,7 @@ public class JwtConfig {
                     // Track expired tokens for monitoring (learned from JHipster)
                     meterRegistry.counter("jwt.validation.expired").increment();
 
-                    throw new JwtException("Token has expired at " + expiresAt);
+                    throw new JwtException("Token đã hết hạn vào lúc " + expiresAt);
                 }
 
                 // Track successful validations

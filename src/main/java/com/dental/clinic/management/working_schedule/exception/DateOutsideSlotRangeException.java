@@ -13,7 +13,7 @@ public class DateOutsideSlotRangeException extends RuntimeException {
 
     public DateOutsideSlotRangeException(LocalDate slotEffectiveFrom, LocalDate slotEffectiveTo,
                                           LocalDate requestedFrom, LocalDate requestedTo) {
-        super(String.format("Registration dates must be within slot's effective range (%s to %s). Requested: %s to %s",
+        super(String.format("Ngày đăng ký phải nằm trong khoảng hiệu lực của ca (%s đến %s). Ngày yêu cầu: %s đến %s",
                 slotEffectiveFrom, slotEffectiveTo, requestedFrom, requestedTo));
         this.slotEffectiveFrom = slotEffectiveFrom;
         this.slotEffectiveTo = slotEffectiveTo;

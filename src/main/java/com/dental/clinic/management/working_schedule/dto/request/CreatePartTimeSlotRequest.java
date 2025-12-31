@@ -31,7 +31,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class CreatePartTimeSlotRequest {
 
-    @NotBlank(message = "Work shift ID is required")
+    @NotBlank(message = "Mã ca làm việc là bắt buộc")
     private String workShiftId;
 
     /**
@@ -41,28 +41,28 @@ public class CreatePartTimeSlotRequest {
      * Valid values: MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY
      * (SUNDAY is typically not allowed)
      */
-    @NotBlank(message = "Day of week is required")
+    @NotBlank(message = "Ngày trong tuần là bắt buộc")
     private String dayOfWeek;
 
     /**
      * Start date of slot availability.
      * Example: 2025-11-09
      */
-    @NotNull(message = "Effective from date is required")
+    @NotNull(message = "Ngày hiệu lực từ là bắt buộc")
     private LocalDate effectiveFrom;
 
     /**
      * End date of slot availability.
      * Example: 2025-11-30
      */
-    @NotNull(message = "Effective to date is required")
+    @NotNull(message = "Ngày hiệu lực đến là bắt buộc")
     private LocalDate effectiveTo;
 
     /**
      * Number of people needed PER DAY for this slot.
      * Example: quota=2 means 2 people needed on EACH working day.
      */
-    @NotNull(message = "Quota is required")
+    @NotNull(message = "Hạn mức là bắt buộc")
     @Min(value = 1, message = "Hạn mức phải ít nhất là 1")
     private Integer quota;
 }

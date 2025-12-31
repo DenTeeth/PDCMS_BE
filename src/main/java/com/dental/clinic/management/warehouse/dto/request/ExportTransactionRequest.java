@@ -45,7 +45,7 @@ public class ExportTransactionRequest {
     @Size(max = 200, message = "Người yêu cầu không được vượt quá 200 ký tự")
     private String requestedBy;
 
-    @Size(max = 500, message = "Notes must not exceed 500 characters")
+    @Size(max = 500, message = "Ghi chú không được vượt quá 500 ký tự")
     private String notes;
 
     // Force Flags
@@ -74,11 +74,11 @@ public class ExportTransactionRequest {
         @Max(value = 1000000, message = "Số lượng không được vượt quá 1.000.000")
         private Integer quantity;
 
-        @NotNull(message = "Unit ID is required")
-        @Positive(message = "Unit ID must be positive")
+        @NotNull(message = "Mã đơn vị là bắt buộc")
+        @Positive(message = "Mã đơn vị phải là số dương")
         private Long unitId;
 
-        @Size(max = 500, message = "Notes must not exceed 500 characters")
+        @Size(max = 500, message = "Ghi chú không được vượt quá 500 ký tự")
         private String notes;
     }
 }

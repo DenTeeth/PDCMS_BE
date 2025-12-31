@@ -52,7 +52,7 @@ public class ClinicalRecordAttachmentController {
      */
     @PostMapping(value = "/api/v1/clinical-records/{recordId}/attachments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('ROLE_ADMIN') or hasAuthority('MANAGE_ATTACHMENTS')")
-    @ApiMessage("File uploaded successfully")
+    @ApiMessage("Tải tệp lên thành công")
     public ResponseEntity<UploadAttachmentResponse> uploadAttachment(
             @PathVariable Integer recordId,
             @RequestParam("file") MultipartFile file,
@@ -85,7 +85,7 @@ public class ClinicalRecordAttachmentController {
      */
     @GetMapping("/api/v1/clinical-records/{recordId}/attachments")
     @PreAuthorize("hasRole('ROLE_ADMIN') or hasAuthority('VIEW_ATTACHMENT')")
-    @ApiMessage("Attachments retrieved successfully")
+    @ApiMessage("Lấy danh sách tệp đính kèm thành công")
     public ResponseEntity<List<AttachmentResponse>> getAttachments(
             @PathVariable Integer recordId) {
 
@@ -113,7 +113,7 @@ public class ClinicalRecordAttachmentController {
      */
     @DeleteMapping("/api/v1/attachments/{attachmentId}")
     @PreAuthorize("hasRole('ROLE_ADMIN') or hasAuthority('MANAGE_ATTACHMENTS')")
-    @ApiMessage("Attachment deleted successfully")
+    @ApiMessage("Xóa tệp đính kèm thành công")
     public ResponseEntity<Void> deleteAttachment(@PathVariable Integer attachmentId) {
 
         log.info("API 8.13: DELETE /api/v1/attachments/{}", attachmentId);

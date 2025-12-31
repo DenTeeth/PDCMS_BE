@@ -55,7 +55,7 @@ public class ServiceConsumableController {
                         @ApiResponse(responseCode = "404", description = "Service not found OR No consumables defined for service"),
                         @ApiResponse(responseCode = "403", description = "Insufficient permissions")
         })
-        @ApiMessage("Consumables retrieved successfully")
+        @ApiMessage("Lấy danh sách vật tư tiêu hao thành công")
         public ResponseEntity<ServiceConsumablesResponse> getServiceConsumables(
                         @Parameter(description = "Service ID", required = true, example = "1") @PathVariable Long serviceId) {
 
@@ -84,7 +84,7 @@ public class ServiceConsumableController {
                         @ApiResponse(responseCode = "404", description = "Service not found"),
                         @ApiResponse(responseCode = "403", description = "Insufficient permissions - requires MANAGE_WAREHOUSE")
         })
-        @ApiMessage("Service consumables set successfully")
+        @ApiMessage("Thiết lập vật tư tiêu hao cho dịch vụ thành công")
         public ResponseEntity<String> setServiceConsumables(
                         @Valid @RequestBody List<SetServiceConsumablesRequest> requests) {
 
@@ -114,7 +114,7 @@ public class ServiceConsumableController {
                         @ApiResponse(responseCode = "404", description = "Service not found"),
                         @ApiResponse(responseCode = "403", description = "Insufficient permissions - requires MANAGE_WAREHOUSE")
         })
-        @ApiMessage("Service consumables updated successfully")
+        @ApiMessage("Cập nhật vật tư tiêu hao cho dịch vụ thành công")
         public ResponseEntity<String> updateServiceConsumables(
                         @Parameter(description = "Service ID", required = true, example = "1") @PathVariable Long serviceId,
                         @Valid @RequestBody List<ConsumableItemRequest> consumables) {

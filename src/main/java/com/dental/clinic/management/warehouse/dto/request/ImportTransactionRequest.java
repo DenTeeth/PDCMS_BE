@@ -40,7 +40,7 @@ public class ImportTransactionRequest {
 
     private LocalDate expectedDeliveryDate;
 
-    @Size(max = 500, message = "Notes must not exceed 500 characters")
+    @Size(max = 500, message = "Ghi chú không được vượt quá 500 ký tự")
     private String notes;
 
     @NotEmpty(message = "Danh sách vật tư không được để trống")
@@ -81,7 +81,7 @@ public class ImportTransactionRequest {
         @Size(max = 200, message = "Vị trí kho không được vượt quá 200 ký tự")
         private String binLocation;
 
-        @Size(max = 500, message = "Notes must not exceed 500 characters")
+        @Size(max = 500, message = "Ghi chú không được vượt quá 500 ký tự")
         private String notes;
     }
 }

@@ -296,7 +296,7 @@ public class TreatmentPlanDetailService {
                         log.warn("Access denied: Employee {} (code={}) attempting to view plan created by employee {} (not primary doctor of linked appointment)",
                                         employee.getEmployeeId(), employee.getEmployeeCode(), planCreatorEmployeeCode);
                         throw new AccessDeniedException(
-                                        "You can only view treatment plans that you created or that are linked to your appointments");
+                                        "Bạn chỉ có thể xem kế hoạch điều trị do bạn tạo hoặc liên kết với lịch hẹn của bạn");
                 }
 
                 log.info("EMPLOYEE createdBy verification passed: Employee {} viewing plan created by {}",

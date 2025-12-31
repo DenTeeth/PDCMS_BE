@@ -50,14 +50,14 @@ public class EmployeeShift {
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "employee_id", nullable = false)
-    @NotNull(message = "Employee is required")
+    @NotNull(message = "Nhân viên là bắt buộc")
     private Employee employee;
 
     /**
      * The work date for this shift.
      */
     @Column(name = "work_date", nullable = false)
-    @NotNull(message = "Work date is required")
+    @NotNull(message = "Ngày làm việc là bắt buộc")
     private LocalDate workDate;
 
     /**
@@ -65,7 +65,7 @@ public class EmployeeShift {
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "work_shift_id", nullable = false)
-    @NotNull(message = "Work shift is required")
+    @NotNull(message = "Ca làm việc là bắt buộc")
     private WorkShift workShift;
 
     /**
@@ -73,7 +73,7 @@ public class EmployeeShift {
      * Affects salary calculation.
      */
     @Column(name = "is_overtime", nullable = false)
-    @NotNull(message = "Overtime flag is required")
+    @NotNull(message = "Cờ tăng ca là bắt buộc")
     private Boolean isOvertime = false;
 
     /**
@@ -81,7 +81,7 @@ public class EmployeeShift {
      */
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
-    @NotNull(message = "Status is required")
+    @NotNull(message = "Trạng thái là bắt buộc")
     private ShiftStatus status = ShiftStatus.SCHEDULED;
 
     /**
@@ -89,7 +89,7 @@ public class EmployeeShift {
      */
     @Enumerated(EnumType.STRING)
     @Column(name = "source", nullable = false, length = 20)
-    @NotNull(message = "Source is required")
+    @NotNull(message = "Nguồn là bắt buộc")
     private ShiftSource source;
 
     /**

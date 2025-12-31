@@ -19,10 +19,10 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class HolidayDateRequest {
 
-    @NotNull(message = "Holiday date is required")
+    @NotNull(message = "Ngày lễ là bắt buộc")
     private LocalDate holidayDate;
 
-    @NotBlank(message = "Definition ID is required")
+    @NotBlank(message = "Mã định nghĩa là bắt buộc")
     private String definitionId;
 
     @Size(max = 500, message = "Mô tả không được vượt quá 500 ký tự")

@@ -32,28 +32,28 @@ public class DentalService {
     @Column(name = "service_id")
     private Integer serviceId;
 
-    @NotBlank(message = "Service code cannot be blank")
+    @NotBlank(message = "Mã dịch vụ không được để trống")
     @Column(name = "service_code", unique = true, nullable = false, length = 50)
     private String serviceCode;
 
-    @NotBlank(message = "Service name cannot be blank")
+    @NotBlank(message = "Tên dịch vụ không được để trống")
     @Column(name = "service_name", nullable = false, length = 255)
     private String serviceName;
 
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
-    @NotNull(message = "Default duration is required")
-    @Min(value = 1, message = "Duration must be at least 1 minute")
+    @NotNull(message = "Thời lượng mặc định là bắt buộc")
+    @Min(value = 1, message = "Thời lượng phải ít nhất là 1 phút")
     @Column(name = "default_duration_minutes", nullable = false)
     private Integer defaultDurationMinutes;
 
-    @Min(value = 0, message = "Buffer time cannot be negative")
+    @Min(value = 0, message = "Thời gian đệm không được âm")
     @Column(name = "default_buffer_minutes", nullable = false)
     private Integer defaultBufferMinutes = 0;
 
-    @NotNull(message = "Price is required")
-    @Min(value = 0, message = "Price cannot be negative")
+    @NotNull(message = "Giá là bắt buộc")
+    @Min(value = 0, message = "Giá không được âm")
     @Column(name = "price", nullable = false, precision = 15, scale = 2)
     private BigDecimal price;
 

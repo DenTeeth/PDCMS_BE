@@ -26,7 +26,7 @@ public class BadCredentialsException extends ErrorResponseException {
     }
 
     private static ProblemDetail createProblemDetail() {
-        return createProblemDetail("Invalid username or password");
+        return createProblemDetail("Tên đăng nhập hoặc mật khẩu không hợp lệ");
     }
 
     private static ProblemDetail createProblemDetail(String message) {

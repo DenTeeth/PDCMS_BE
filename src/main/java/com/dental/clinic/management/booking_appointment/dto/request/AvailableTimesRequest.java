@@ -31,15 +31,15 @@ public class AvailableTimesRequest {
      * Format: YYYY-MM-DD
      * Validation: Must not be in the past
      */
-    @NotBlank(message = "Date is required")
-    @Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2}$", message = "Date must be in format YYYY-MM-DD")
+    @NotBlank(message = "Ngày là bắt buộc")
+    @Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2}$", message = "Ngày phải theo định dạng YYYY-MM-DD")
     private String date;
 
     /**
      * Employee code of primary doctor
      * Example: "EMP001", "BS-NGUYEN-VAN-A"
      */
-    @NotBlank(message = "Employee code is required")
+    @NotBlank(message = "Mã nhân viên là bắt buộc")
     private String employeeCode;
 
     /**
@@ -50,7 +50,7 @@ public class AvailableTimesRequest {
      * - Filter compatible rooms (room_services)
      * - Check doctor specialization
      */
-    @NotEmpty(message = "At least one service code is required")
+    @NotEmpty(message = "Ít nhất một mã dịch vụ là bắt buộc")
     private List<String> serviceCodes;
 
     /**

@@ -19,18 +19,18 @@ public class CreateTimeOffRequest {
     // Required for admin creating request for another employee
     private Integer employeeId;
 
-    @NotNull(message = "Time-off type ID is required")
+    @NotNull(message = "Mã loại nghỉ phép là bắt buộc")
     private String timeOffTypeId;
 
-    @NotNull(message = "Start date is required")
+    @NotNull(message = "Ngày bắt đầu là bắt buộc")
     private LocalDate startDate;
 
-    @NotNull(message = "End date is required")
+    @NotNull(message = "Ngày kết thúc là bắt buộc")
     private LocalDate endDate;
 
     private String workShiftId; // NULL for full-day off, value for half-day off
 
-    @NotNull(message = "Reason is required")
+    @NotNull(message = "Lý do là bắt buộc")
     private String reason;
 
     @Override

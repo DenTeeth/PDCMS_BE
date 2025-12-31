@@ -195,7 +195,7 @@ public class EmailService {
 
         } catch (MessagingException e) {
             logger.error(" Failed to send welcome email to {}: {}", toEmail, e.getMessage());
-            throw new RuntimeException("Failed to send welcome email", e);
+            throw new RuntimeException("Đã xảy ra lỗi khi gửi email chào mừng", e);
         }
     }
 

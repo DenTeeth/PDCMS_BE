@@ -172,8 +172,8 @@ public class TreatmentPlanRBACService {
                 log.warn(" Access DENIED: Employee {} tried to modify plan created by {}",
                         currentEmployeeCode, planCreatorEmployeeCode);
                 throw new AccessDeniedException(
-                        String.format("You can only modify treatment plans that you created. " +
-                                "This plan was created by %s", planCreatorEmployeeCode));
+                        String.format("Bạn chỉ có thể chỉnh sửa kế hoạch điều trị do bạn tạo. " +
+                                "Kế hoạch này được tạo bởi %s", planCreatorEmployeeCode));
             }
 
             log.info(" EMPLOYEE createdBy verification passed");

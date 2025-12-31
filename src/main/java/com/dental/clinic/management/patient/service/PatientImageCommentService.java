@@ -122,7 +122,7 @@ public class PatientImageCommentService {
         Employee currentEmployee = getCurrentEmployee();
         if (!comment.getCreatedBy().getEmployeeId().equals(currentEmployee.getEmployeeId())) {
             throw new BadRequestAlertException(
-                        "You can only update your own comments",
+                        "Bạn chỉ có thể cập nhật bình luận của chính mình",
                         ENTITY_NAME,
                         "UNAUTHORIZED_UPDATE");
         }
@@ -161,7 +161,7 @@ public class PatientImageCommentService {
         Employee currentEmployee = getCurrentEmployee();
         if (!comment.getCreatedBy().getEmployeeId().equals(currentEmployee.getEmployeeId())) {
             throw new BadRequestAlertException(
-                        "You can only delete your own comments",
+                        "Bạn chỉ có thể xóa bình luận của chính mình",
                         ENTITY_NAME,
                         "UNAUTHORIZED_DELETE");
         }

@@ -33,8 +33,8 @@ public class AddItemToPhaseRequest {
      * Service code to add (from services table)
      * Example: "FILLING_COMP", "SCALING_L1"
      */
-    @NotBlank(message = "Service code is required")
-    @Size(max = 50, message = "Service code must not exceed 50 characters")
+    @NotBlank(message = "Mã dịch vụ là bắt buộc")
+    @Size(max = 50, message = "Mã dịch vụ không được vượt quá 50 ký tự")
     @Schema(description = "Code of the service to add (will snapshot service details)", example = "FILLING_COMP", requiredMode = Schema.RequiredMode.REQUIRED)
     private String serviceCode;
 
@@ -44,8 +44,8 @@ public class AddItemToPhaseRequest {
      * Doctors typically omit this field (pricing managed by Finance team).
      * Price override validation removed in V21.4.
      */
-    @DecimalMin(value = "0.0", message = "Price must be >= 0")
-    @Digits(integer = 10, fraction = 2, message = "Price must have at most 10 integer digits and 2 decimal places")
+    @DecimalMin(value = "0.0", message = "Giá phải >= 0")
+    @Digits(integer = 10, fraction = 2, message = "Giá phải có tối đa 10 chữ số nguyên và 2 chữ số thập phân")
     @Schema(description = "Price for this item (optional, auto-fills from service default)", example = "400000", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private BigDecimal price;
 
@@ -57,9 +57,9 @@ public class AddItemToPhaseRequest {
      * - "Trám răng Composite (Phát sinh - Lần 1)"
      * - "Trám răng Composite (Phát sinh - Lần 2)"
      */
-    @NotNull(message = "Quantity is required")
-    @Min(value = 1, message = "Quantity must be at least 1")
-    @Max(value = 10, message = "Quantity must not exceed 10")
+    @NotNull(message = "Số lượng là bắt buộc")
+    @Min(value = 1, message = "Số lượng phải ít nhất là 1")
+    @Max(value = 10, message = "Số lượng không được vượt quá 10")
     @Schema(description = "Number of times to add this service (will create separate items)", example = "2", requiredMode = Schema.RequiredMode.REQUIRED)
     private Integer quantity;
 
@@ -68,7 +68,7 @@ public class AddItemToPhaseRequest {
      * Important for approval workflow: Manager needs to know reason for cost change
      * Example: "Phát hiện 2 răng sâu mặt nhai 46, 47 tại tái khám"
      */
-    @Size(max = 500, message = "Notes must not exceed 500 characters")
+    @Size(max = 500, message = "Ghi chú không được vượt quá 500 ký tự")
     @Schema(description = "Notes explaining reason for adding this item (important for approval workflow)", example = "Phát hiện 2 răng sâu mặt nhai 46, 47 tại tái khám ngày 15/01/2024", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private String notes;
 }

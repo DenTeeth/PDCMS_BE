@@ -32,7 +32,7 @@ public class UpdateRegistrationStatusRequest {
      * New status: "APPROVED" or "REJECTED"
      * PENDING is not allowed (can't revert to pending).
      */
-    @NotBlank(message = "Status is required")
+    @NotBlank(message = "Trạng thái là bắt buộc")
     @Pattern(regexp = "APPROVED|REJECTED", message = "Trạng thái phải là APPROVED hoặc REJECTED")
     private String status;
 

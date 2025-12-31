@@ -83,9 +83,9 @@ public class PastShiftProtectionService {
 
         // Block modifications to past dates
         String message = String.format(
-                "Cannot modify past shifts. Shift date %s has already passed (current date: %s). " +
-                "Past shifts are read-only to maintain historical accuracy. " +
-                "Contact administrator if corrections are needed.",
+                "Không thể sửa đổi ca làm việc đã qua. Ngày ca %s đã qua (ngày hiện tại: %s). " +
+                "Ca làm việc đã qua chỉ được đọc để duy trì tính chính xác lịch sử. " +
+                "Liên hệ quản trị viên nếu cần chỉnh sửa.",
                 shiftDate,
                 currentDate
         );
@@ -113,9 +113,9 @@ public class PastShiftProtectionService {
         
         if (startDate.isBefore(today)) {
             String message = String.format(
-                    "Cannot modify shifts in date range %s to %s. " +
-                    "Start date is in the past (current date: %s). " +
-                    "Past shifts are read-only.",
+                    "Không thể sửa đổi ca làm việc trong khoảng ngày %s đến %s. " +
+                    "Ngày bắt đầu đã qua (ngày hiện tại: %s). " +
+                    "Ca làm việc đã qua chỉ được đọc.",
                     startDate,
                     endDate,
                     today
@@ -177,11 +177,11 @@ public class PastShiftProtectionService {
 
         String message;
         if (isPast) {
-            message = "Shift is in the past - read-only";
+            message = "Ca làm việc đã qua - chỉ đọc";
         } else if (isToday) {
-            message = "Shift is today - modifications allowed";
+            message = "Ca làm việc hôm nay - cho phép chỉnh sửa";
         } else {
-            message = "Shift is in the future - modifications allowed";
+            message = "Ca làm việc tương lai - cho phép chỉnh sửa";
         }
 
         return ShiftModificationStatus.builder()

@@ -35,7 +35,7 @@ public class FinalizeRenewalRequest {
      * <p>
      * VALIDATION: Must exist and have status = CONFIRMED (employee already agreed)
      */
-    @NotBlank(message = "Renewal request ID is required")
+    @NotBlank(message = "Mã yêu cầu gia hạn là bắt buộc")
     private String renewalRequestId;
 
     /**
@@ -51,6 +51,6 @@ public class FinalizeRenewalRequest {
      * - New effective_to: 2026-03-31 (3 months)
      * - New effective_to: 2026-12-31 (1 year)
      */
-    @NotNull(message = "New effective_to date is required")
+    @NotNull(message = "Ngày effective_to mới là bắt buộc")
     private LocalDate newEffectiveTo;
 }

@@ -523,7 +523,7 @@ public class InventoryService {
         return itemCategoryRepository.findByCategoryCode("MEDICINE")
                 .map(ItemCategory::getCategoryId)
                 .orElseThrow(
-                        () -> new RuntimeException("MEDICINE category not found in database. Please check seed data."));
+                        () -> new RuntimeException("Không tìm thấy danh mục MEDICINE trong cơ sở dữ liệu. Vui lòng kiểm tra dữ liệu seed."));
     }
 
     /**

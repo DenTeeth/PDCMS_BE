@@ -19,6 +19,7 @@ import com.dental.clinic.management.booking_appointment.service.AppointmentDetai
 import com.dental.clinic.management.booking_appointment.service.AppointmentListService;
 import com.dental.clinic.management.booking_appointment.service.AppointmentRescheduleService;
 import com.dental.clinic.management.booking_appointment.service.AppointmentStatusService;
+import com.dental.clinic.management.utils.annotation.ApiMessage;
 import com.dental.clinic.management.utils.security.AuthoritiesConstants;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -322,6 +323,7 @@ public class AppointmentController {
             summary = "Update appointment status",
             description = "Update appointment status with state machine validation (e.g., SCHEDULED to CHECKED_IN, COMPLETED, CANCELLED)"
         )
+        @ApiMessage("Cập nhật trạng thái lịch hẹn thành công")
         @PatchMapping("/{appointmentCode}/status")
         @PreAuthorize("hasAuthority('UPDATE_APPOINTMENT_STATUS')")
         public ResponseEntity<AppointmentDetailDTO> updateAppointmentStatus(

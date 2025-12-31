@@ -89,7 +89,7 @@ public class VietQRService {
 
         } catch (UnsupportedEncodingException e) {
             log.error("Error encoding VietQR URL parameters", e);
-            throw new RuntimeException("Failed to generate QR code URL", e);
+            throw new RuntimeException("Đã xảy ra lỗi khi tạo URL mã QR", e);
         }
     }
 }

@@ -537,7 +537,7 @@ public class AuthenticationService {
                         }
                         return hexString.toString();
                 } catch (Exception e) {
-                        throw new RuntimeException("Failed to hash token", e);
+                        throw new RuntimeException("Đã xảy ra lỗi khi mã hóa token", e);
                 }
         }
 

@@ -134,7 +134,7 @@ public class ProcedureMaterialService {
 
         // Can only update if materials not yet deducted
         if (usage.getProcedure().getMaterialsDeductedAt() != null) {
-            throw new IllegalStateException("Cannot update quantity after materials have been deducted");
+            throw new IllegalStateException("Không thể cập nhật số lượng sau khi vật tư đã được trừ khỏi kho");
         }
 
         usage.setQuantity(newQuantity);
@@ -209,7 +209,7 @@ public class ProcedureMaterialService {
             String varianceReason) {
         
         ProcedureMaterialUsage usage = materialUsageRepository.findById(usageId)
-                .orElseThrow(() -> new IllegalArgumentException("Usage record not found: " + usageId));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy bản ghi sử dụng: " + usageId));
 
         BigDecimal oldActual = usage.getActualQuantity();
         BigDecimal difference = actualQuantity.subtract(oldActual);

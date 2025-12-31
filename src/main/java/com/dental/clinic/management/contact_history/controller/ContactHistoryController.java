@@ -39,7 +39,7 @@ public class ContactHistoryController {
 
     @PostMapping("/{contactId}/history")
     @Operation(summary = "Add contact history")
-    @ApiMessage("Add contact history successfully")
+    @ApiMessage("Thêm lịch sử liên hệ thành công")
     // accept ADMIN and RECEPTIONIST for testing; change later if want only
     // receptionists
 

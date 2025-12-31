@@ -14,7 +14,7 @@ public class TimeOffTypeNotFoundException extends ErrorResponseException {
     }
 
     private static ProblemDetail asProblemDetail(String typeId) {
-        String message = "Time-off type with ID '" + typeId + "' not found or inactive";
+        String message = "Không tìm thấy loại nghỉ phép với ID '" + typeId + "' hoặc đã bị vô hiệu hóa";
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, message);
         problemDetail.setTitle("Không Tìm Thấy Loại Nghỉ Phép");
         problemDetail.setProperty("errorCode", "TIMEOFF_TYPE_NOT_FOUND");

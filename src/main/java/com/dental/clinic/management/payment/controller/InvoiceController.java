@@ -27,7 +27,7 @@ public class InvoiceController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('CREATE_INVOICE')")
-    @ApiMessage("Invoice created successfully")
+    @ApiMessage("Tạo hóa đơn thành công")
     @Operation(summary = "Create new invoice", description = "Create a new invoice for appointment or treatment plan")
     public ResponseEntity<InvoiceResponse> createInvoice(@Valid @RequestBody CreateInvoiceRequest request) {
         log.info("REST request to create invoice for patient: {}", request.getPatientId());
@@ -37,7 +37,7 @@ public class InvoiceController {
 
     @GetMapping("/patient/{patientId}")
     @PreAuthorize("hasAnyAuthority('VIEW_INVOICE_ALL', 'VIEW_INVOICE_OWN')")
-    @ApiMessage("Invoices retrieved successfully")
+    @ApiMessage("Lấy danh sách hóa đơn thành công")
     @Operation(summary = "Get invoices by patient", description = "Get all invoices for a specific patient")
     public ResponseEntity<List<InvoiceResponse>> getInvoicesByPatient(@PathVariable Integer patientId) {
         log.info("REST request to get invoices for patient: {}", patientId);
@@ -47,7 +47,7 @@ public class InvoiceController {
 
     @GetMapping("/appointment/{appointmentId}")
     @PreAuthorize("hasAnyAuthority('VIEW_INVOICE_ALL', 'VIEW_APPOINTMENT_ALL')")
-    @ApiMessage("Invoices retrieved successfully")
+    @ApiMessage("Lấy danh sách hóa đơn thành công")
     @Operation(summary = "Get invoices by appointment", description = "Get all invoices for a specific appointment")
     public ResponseEntity<List<InvoiceResponse>> getInvoicesByAppointment(@PathVariable Integer appointmentId) {
         log.info("REST request to get invoices for appointment: {}", appointmentId);
@@ -57,7 +57,7 @@ public class InvoiceController {
 
     @GetMapping("/{invoiceCode}")
     @PreAuthorize("hasAnyAuthority('VIEW_INVOICE_ALL', 'VIEW_INVOICE_OWN')")
-    @ApiMessage("Invoice retrieved successfully")
+    @ApiMessage("Lấy thông tin hóa đơn thành công")
     @Operation(summary = "Get invoice by code", description = "Get invoice details by invoice code")
     public ResponseEntity<InvoiceResponse> getInvoiceByCode(@PathVariable String invoiceCode) {
         log.info("REST request to get invoice: {}", invoiceCode);
@@ -67,7 +67,7 @@ public class InvoiceController {
 
     @GetMapping("/patient/{patientId}/unpaid")
     @PreAuthorize("hasAnyAuthority('VIEW_INVOICE_ALL', 'VIEW_INVOICE_OWN')")
-    @ApiMessage("Unpaid invoices retrieved successfully")
+    @ApiMessage("Lấy danh sách hóa đơn chưa thanh toán thành công")
     @Operation(summary = "Get unpaid invoices by patient", description = "Get all unpaid invoices for a specific patient")
     public ResponseEntity<List<InvoiceResponse>> getUnpaidInvoicesByPatient(@PathVariable Integer patientId) {
         log.info("REST request to get unpaid invoices for patient: {}", patientId);
@@ -77,7 +77,7 @@ public class InvoiceController {
 
     @GetMapping("/{invoiceCode}/payment-status")
     @PreAuthorize("hasAnyAuthority('VIEW_INVOICE_ALL', 'VIEW_INVOICE_OWN', 'VIEW_PAYMENT_ALL')")
-    @ApiMessage("Payment status retrieved successfully")
+    @ApiMessage("Lấy trạng thái thanh toán thành công")
     @Operation(summary = "Check payment status", description = "Check payment status of invoice by invoice code")
     public ResponseEntity<InvoiceResponse> checkPaymentStatus(@PathVariable String invoiceCode) {
         log.info("REST request to check payment status for invoice: {}", invoiceCode);

@@ -18,16 +18,16 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class UpdateServiceCategoryRequest {
 
-    @Size(max = 50, message = "Category code must not exceed 50 characters")
+    @Size(max = 50, message = "Mã danh mục không được vượt quá 50 ký tự")
     private String categoryCode;
 
-    @Size(max = 255, message = "Category name must not exceed 255 characters")
+    @Size(max = 255, message = "Tên danh mục không được vượt quá 255 ký tự")
     private String categoryName;
 
-    @Min(value = 0, message = "Display order must be >= 0")
+    @Min(value = 0, message = "Thứ tự hiển thị phải >= 0")
     private Integer displayOrder;
 
-    @Size(max = 1000, message = "Description must not exceed 1000 characters")
+    @Size(max = 1000, message = "Mô tả không được vượt quá 1000 ký tự")
     private String description;
 
     private Boolean isActive;

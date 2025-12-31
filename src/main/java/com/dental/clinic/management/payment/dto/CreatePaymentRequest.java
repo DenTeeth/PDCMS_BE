@@ -16,13 +16,13 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class CreatePaymentRequest {
 
-    @NotNull(message = "Invoice ID is required")
+    @NotNull(message = "Mã hóa đơn là bắt buộc")
     private Integer invoiceId;
 
-    @NotNull(message = "Amount is required")
+    @NotNull(message = "Số tiền là bắt buộc")
     private BigDecimal amount;
 
-    @NotNull(message = "Payment method is required")
+    @NotNull(message = "Phương thức thanh toán là bắt buộc")
     private PaymentMethod paymentMethod;
 
     private LocalDateTime paymentDate;

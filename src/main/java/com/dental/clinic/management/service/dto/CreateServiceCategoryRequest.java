@@ -19,18 +19,18 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CreateServiceCategoryRequest {
 
-    @NotBlank(message = "Category code is required")
-    @Size(max = 50, message = "Category code must not exceed 50 characters")
+    @NotBlank(message = "Mã danh mục là bắt buộc")
+    @Size(max = 50, message = "Mã danh mục không được vượt quá 50 ký tự")
     private String categoryCode;
 
-    @NotBlank(message = "Category name is required")
-    @Size(max = 255, message = "Category name must not exceed 255 characters")
+    @NotBlank(message = "Tên danh mục là bắt buộc")
+    @Size(max = 255, message = "Tên danh mục không được vượt quá 255 ký tự")
     private String categoryName;
 
-    @NotNull(message = "Display order is required")
-    @Min(value = 0, message = "Display order must be >= 0")
+    @NotNull(message = "Thứ tự hiển thị là bắt buộc")
+    @Min(value = 0, message = "Thứ tự hiển thị phải >= 0")
     private Integer displayOrder;
 
-    @Size(max = 1000, message = "Description must not exceed 1000 characters")
+    @Size(max = 1000, message = "Mô tả không được vượt quá 1000 ký tự")
     private String description;
 }

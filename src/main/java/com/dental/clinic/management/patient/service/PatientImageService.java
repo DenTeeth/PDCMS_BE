@@ -49,7 +49,7 @@ public class PatientImageService {
 
         Integer patientIdInt = request.getPatientId().intValue();
         Patient patient = patientRepository.findById(patientIdInt)
-                .orElseThrow(() -> new NotFoundException("Patient not found with ID: " + request.getPatientId()));
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy bệnh nhân với ID: " + request.getPatientId()));
 
         ClinicalRecord clinicalRecord = null;
         if (request.getClinicalRecordId() != null) {
@@ -241,11 +241,11 @@ public class PatientImageService {
         // For patients, verify they can only access their own images
         String username = authentication.getName();
         Patient patient = patientRepository.findByAccount_Username(username)
-                .orElseThrow(() -> new AccessDeniedException("Patient record not found for current user"));
+                .orElseThrow(() -> new AccessDeniedException("Không tìm thấy hồ sơ bệnh nhân cho người dùng hiện tại"));
 
         if (!patient.getPatientId().equals(patientId)) {
             log.warn("Patient {} attempted to access images for patient {}", patient.getPatientId(), patientId);
-            throw new AccessDeniedException("You can only view your own images");
+            throw new AccessDeniedException("Bạn chỉ có thể xem hình ảnh của chính mình");
         }
 
         log.debug("Patient {} authorized to view own images", patientId);

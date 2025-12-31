@@ -124,10 +124,10 @@ public class PartTimeRegistrationAdminController {
 
         // Get current manager ID from employee table
         String username = SecurityUtil.getCurrentUserLogin()
-                .orElseThrow(() -> new RuntimeException("User not authenticated"));
+                .orElseThrow(() -> new RuntimeException("Người dùng chưa xác thực"));
         Integer managerId = employeeRepository.findByAccount_Username(username)
                 .map(employee -> employee.getEmployeeId())
-                .orElseThrow(() -> new RuntimeException("Employee not found for user: " + username));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên cho người dùng: " + username));
 
         log.info("Manager {} updating registration {} to status: {}",
                 managerId, registrationId, request.getStatus());
