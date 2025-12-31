@@ -643,6 +643,7 @@ public class EmployeeService {
 
     /**
      * Delete an employee (soft delete - set isActive to false)
+     * Also deactivates the associated account and cleans up work schedules/shifts
      *
      * @param employeeCode the code of the employee to delete
      */
@@ -653,9 +654,42 @@ public class EmployeeService {
         Employee employee = employeeRepository.findOneByEmployeeCode(employeeCode)
                 .orElseThrow(() -> new EmployeeNotFoundException("Không tìm thấy nhân viên với mã: " + employeeCode));
 
-        // Soft delete - set isActive to false
+        log.info("Deleting employee {} ({}). Starting cleanup process...",
+                employee.getEmployeeCode(), employee.getFullName());
+
+        // 1. Soft delete employee - set isActive to false
         employee.setIsActive(false);
         employeeRepository.save(employee);
+        log.info(" - Employee isActive set to false");
+
+        // 2. Deactivate associated account to prevent login
+        if (employee.getAccount() != null) {
+            Account account = employee.getAccount();
+            account.setStatus(com.dental.clinic.management.account.enums.AccountStatus.INACTIVE);
+            accountRepository.save(account);
+            log.info(" - Account {} deactivated (status=INACTIVE)", account.getUsername());
+        } else {
+            log.warn(" - No account associated with employee {}", employeeCode);
+        }
+
+        // 3. Cleanup work schedules and shifts (Job P3 logic)
+        log.info(" - Cleaning up work schedules and shifts...");
+        
+        // Deactivate Fixed registrations
+        int fixedCount = fixedRegistrationRepository.deactivateByEmployeeId(employee.getEmployeeId());
+        log.info("   - Deactivated {} Fixed registration(s)", fixedCount);
+        
+        // Deactivate Flex/Part-time registrations
+        int flexCount = partTimeRegistrationRepository.deactivateByEmployeeId(employee.getEmployeeId());
+        log.info("   - Deactivated {} Flex registration(s)", flexCount);
+        
+        // Delete future SCHEDULED shifts (work_date >= TODAY)
+        java.time.LocalDate today = java.time.LocalDate.now();
+        int shiftsCount = employeeShiftRepository.deleteFutureScheduledShiftsByEmployeeId(
+                employee.getEmployeeId(), today);
+        log.info("   - Deleted {} future SCHEDULED shift(s)", shiftsCount);
+
+        log.info("Successfully deleted employee {} with full cleanup", employee.getEmployeeCode());
     }
 
     /**

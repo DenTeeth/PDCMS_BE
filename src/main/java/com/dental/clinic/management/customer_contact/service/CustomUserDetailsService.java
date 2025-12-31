@@ -47,6 +47,13 @@ public class CustomUserDetailsService implements UserDetailsService {
             throw new UsernameNotFoundException("Tài khoản không hoạt động: " + username);
         }
 
+        // Check if employee is active (for employee accounts)
+        if (account.getEmployee() != null) {
+            if (account.getEmployee().getIsActive() == null || !account.getEmployee().getIsActive()) {
+                throw new UsernameNotFoundException("Nhân viên đã bị vô hiệu hóa: " + username);
+            }
+        }
+
         return new CustomUserPrincipal(account);
     }
 
@@ -63,6 +70,13 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         if (!account.isActive()) {
             throw new UsernameNotFoundException("Tài khoản không hoạt động: " + email);
+        }
+
+        // Check if employee is active (for employee accounts)
+        if (account.getEmployee() != null) {
+            if (account.getEmployee().getIsActive() == null || !account.getEmployee().getIsActive()) {
+                throw new UsernameNotFoundException("Nhân viên đã bị vô hiệu hóa: " + email);
+            }
         }
 
         return new CustomUserPrincipal(account);
