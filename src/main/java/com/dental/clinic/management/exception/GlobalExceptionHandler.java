@@ -13,10 +13,13 @@ import com.dental.clinic.management.utils.FormatRestResponse;
 
 import jakarta.servlet.http.HttpServletRequest;
 
+import org.apache.tomcat.util.http.fileupload.impl.SizeLimitExceededException;
+import org.apache.tomcat.util.http.fileupload.impl.FileSizeLimitExceededException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -1239,5 +1242,85 @@ public class GlobalExceptionHandler {
         res.setData(data);
 
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(res);
+    }
+
+    /**
+     * Handle file upload errors (MaxUploadSizeExceededException)
+     * Returns 400 Bad Request with Vietnamese message
+     */
+    @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleMaxUploadSizeExceeded(
+            org.springframework.web.multipart.MaxUploadSizeExceededException ex,
+            HttpServletRequest request) {
+
+        log.warn("File too large at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.BAD_REQUEST.value());
+        res.setError("FILE_TOO_LARGE");
+        res.setMessage("Kích thước file vượt quá giới hạn cho phép (tối đa 10MB). Vui lòng chọn file nhỏ hơn.");
+        res.setData(null);
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+    }
+
+    /**
+     * Handle multipart file errors
+     * Returns 400 Bad Request with Vietnamese message
+     */
+    @ExceptionHandler(org.springframework.web.multipart.MultipartException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleMultipartException(
+            org.springframework.web.multipart.MultipartException ex,
+            HttpServletRequest request) {
+
+        log.warn("Multipart error at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.BAD_REQUEST.value());
+        res.setError("INVALID_FILE");
+        res.setMessage("Lỗi khi tải file lên. Vui lòng kiểm tra định dạng và kích thước file (tối đa 10MB, chỉ chấp nhận PNG, JPG, PDF).");
+        res.setData(null);
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+    }
+
+    /**
+     * Handle Tomcat file size limit errors (catches before Spring)
+     * Returns 400 Bad Request with Vietnamese message
+     */
+    @ExceptionHandler({SizeLimitExceededException.class, FileSizeLimitExceededException.class})
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleTomcatSizeLimitExceeded(
+            Exception ex,
+            HttpServletRequest request) {
+
+        log.warn("Tomcat file size limit exceeded at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.BAD_REQUEST.value());
+        res.setError("FILE_TOO_LARGE");
+        res.setMessage("Kích thước file vượt quá giới hạn cho phép (tối đa 10MB). Vui lòng chọn file nhỏ hơn.");
+        res.setData(null);
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+    }
+
+    /**
+     * Handle malformed JSON/request body errors
+     * Returns 400 Bad Request with Vietnamese message
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleHttpMessageNotReadable(
+            HttpMessageNotReadableException ex,
+            HttpServletRequest request) {
+
+        log.warn("Message not readable at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.BAD_REQUEST.value());
+        res.setError("INVALID_REQUEST");
+        res.setMessage("Dữ liệu gửi lên không hợp lệ. Vui lòng kiểm tra lại.");
+        res.setData(null);
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
     }
 }
