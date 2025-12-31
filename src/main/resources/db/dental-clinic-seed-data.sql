@@ -12,11 +12,16 @@
 -- ============================================
 
 -- ============================================
--- FIX: Drop outdated CHECK constraint on patient_plan_items
+-- FIX: Drop outdated CHECK constraints
 -- ============================================
--- This constraint was created by Hibernate with old enum values
--- Must be dropped before inserting data with PENDING, WAITING_FOR_PREREQUISITE, SKIPPED statuses
+-- These constraints were created by Hibernate with old enum values
+-- Must be dropped before inserting data with new enum values
+
+-- Drop constraint for patient_plan_items (PENDING, WAITING_FOR_PREREQUISITE, SKIPPED)
 ALTER TABLE IF EXISTS patient_plan_items DROP CONSTRAINT IF EXISTS patient_plan_items_status_check;
+
+-- Drop constraint for appointments (CANCELLED_LATE added)
+ALTER TABLE IF EXISTS appointments DROP CONSTRAINT IF EXISTS appointments_status_check;
 
 -- ============================================
 -- BẢNG BỔ SUNG: PATIENT_IMAGE_COMMENTS
