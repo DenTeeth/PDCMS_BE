@@ -1,5 +1,6 @@
 package com.dental.clinic.management.working_schedule.controller;
 
+import com.dental.clinic.management.utils.security.AuthoritiesConstants;
 import com.dental.clinic.management.working_schedule.dto.request.RenewalResponseRequest;
 import com.dental.clinic.management.working_schedule.dto.response.ShiftRenewalResponse;
 import com.dental.clinic.management.working_schedule.service.ShiftRenewalService;
@@ -11,6 +12,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -49,8 +51,9 @@ public class ShiftRenewalController {
      *
      * @return list of pending renewal requests
      */
-    @Operation(summary = "Get pending renewal requests", description = "Retrieve all pending shift renewal invitations for the current employee", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Get pending renewal requests", description = "Retrieve all pending shift renewal invitations for the current employee. Requires VIEW_RENEWAL_OWN permission.", security = @SecurityRequirement(name = "bearerAuth"))
     @GetMapping("/pending")
+    @PreAuthorize("hasAuthority('" + AuthoritiesConstants.VIEW_RENEWAL_OWN + "')")
     public ResponseEntity<List<ShiftRenewalResponse>> getPendingRenewals() {
         String username = getAuthenticatedUsername();
         log.info("GET /api/v1/registrations/renewals/pending - Username: {}", username);
@@ -78,8 +81,9 @@ public class ShiftRenewalController {
      */
     @Operation(summary = "Respond to renewal request", description = "Confirm or decline a shift renewal invitation. " +
             "CONFIRMED: Update status, await Admin finalization. " +
-            "DECLINED: Requires decline_reason.", security = @SecurityRequirement(name = "bearerAuth"))
+            "DECLINED: Requires decline_reason. Requires RESPOND_RENEWAL_OWN permission.", security = @SecurityRequirement(name = "bearerAuth"))
     @PatchMapping("/{renewal_id}/respond")
+    @PreAuthorize("hasAuthority('" + AuthoritiesConstants.RESPOND_RENEWAL_OWN + "')")
     public ResponseEntity<ShiftRenewalResponse> respondToRenewal(
             @Parameter(description = "Renewal request ID", required = true) @PathVariable("renewal_id") String renewalId,
 

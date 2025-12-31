@@ -67,7 +67,7 @@ public class ShiftRenewalService {
      * @param username the username from JWT token (sub field)
      * @return list of pending renewals
      */
-    @PreAuthorize("hasAuthority('" + AuthoritiesConstants.VIEW_SCHEDULE_OWN + "')")
+    @PreAuthorize("hasAuthority('" + AuthoritiesConstants.VIEW_RENEWAL_OWN + "')")
     public List<ShiftRenewalResponse> getPendingRenewals(String username) {
         log.info("Getting pending renewals for username: {}", username);
 
@@ -79,6 +79,46 @@ public class ShiftRenewalService {
                 LocalDateTime.now());
 
         log.info("Found {} pending renewals for employee ID: {}", renewals.size(), employeeId);
+
+        return renewals.stream()
+                .map(mapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * ADMIN/MANAGER API: Get all renewal requests across all employees.
+     * <p>
+     * Supports optional filtering by:
+     * - status (PENDING_ACTION, CONFIRMED, DECLINED, FINALIZED, EXPIRED)
+     * - employeeId
+     * <p>
+     * PERMISSION: VIEW_RENEWAL_ALL (Admin/Manager only)
+     *
+     * @param status     optional status filter
+     * @param employeeId optional employee ID filter
+     * @return list of renewal requests matching filters
+     */
+    @PreAuthorize("hasAuthority('" + AuthoritiesConstants.VIEW_RENEWAL_ALL + "')")
+    public List<ShiftRenewalResponse> getAllRenewals(RenewalStatus status, Integer employeeId) {
+        log.info("Admin getting all renewals - status: {}, employeeId: {}", status, employeeId);
+
+        List<ShiftRenewalRequest> renewals;
+
+        if (status != null && employeeId != null) {
+            // Filter by both status and employeeId
+            renewals = renewalRepository.findAllByEmployeeIdAndStatus(employeeId, status);
+        } else if (status != null) {
+            // Filter by status only
+            renewals = renewalRepository.findAllByStatus(status);
+        } else if (employeeId != null) {
+            // Filter by employeeId only
+            renewals = renewalRepository.findByEmployeeEmployeeIdOrderByCreatedAtDesc(employeeId);
+        } else {
+            // No filters - get all
+            renewals = renewalRepository.findAllRenewals();
+        }
+
+        log.info("Found {} renewal requests", renewals.size());
 
         return renewals.stream()
                 .map(mapper::toResponse)
@@ -118,7 +158,7 @@ public class ShiftRenewalService {
      *                                        declineReason=NULL
      * @throws RegistrationInactiveException  if fixed registration is_active=FALSE
      */
-    @PreAuthorize("hasAuthority('" + AuthoritiesConstants.MANAGE_FIXED_REGISTRATIONS + "')")
+    @PreAuthorize("hasAuthority('" + AuthoritiesConstants.RESPOND_RENEWAL_OWN + "')")
     @Transactional
     public ShiftRenewalResponse respondToRenewal(
             String renewalId,

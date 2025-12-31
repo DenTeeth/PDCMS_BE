@@ -530,6 +530,16 @@ VALUES
 ON CONFLICT (permission_id) DO NOTHING;
 
 
+-- MODULE 12A: SHIFT_RENEWAL (3 permissions) - Fixed Schedule Renewal (Luồng 1 only)
+-- Only applies to FULL_TIME and PART_TIME_FIXED employees
+INSERT INTO permissions (permission_id, permission_name, module, description, display_order, parent_permission_id, is_active, created_at)
+VALUES
+('VIEW_RENEWAL_OWN', 'VIEW_RENEWAL_OWN', 'SHIFT_RENEWAL', 'Xem yêu cầu gia hạn lịch cố định của bản thân', 139, NULL, TRUE, NOW()),
+('RESPOND_RENEWAL_OWN', 'RESPOND_RENEWAL_OWN', 'SHIFT_RENEWAL', 'Phản hồi (đồng ý/từ chối) yêu cầu gia hạn của bản thân', 140, NULL, TRUE, NOW()),
+('VIEW_RENEWAL_ALL', 'VIEW_RENEWAL_ALL', 'SHIFT_RENEWAL', 'Xem tất cả yêu cầu gia hạn (Admin/Manager)', 141, NULL, TRUE, NOW())
+ON CONFLICT (permission_id) DO NOTHING;
+
+
 -- MODULE 13: LEAVE_MANAGEMENT (8 permissions) - Kept workflow separation
 -- Based on actual usage: CREATE_TIME_OFF, APPROVE_TIME_OFF, CREATE_OVERTIME, VIEW_OT_ALL, VIEW_OT_OWN
 INSERT INTO permissions (permission_id, permission_name, module, description, display_order, parent_permission_id, is_active, created_at)
@@ -654,6 +664,10 @@ VALUES
 ('ROLE_DENTIST', 'VIEW_REGISTRATION_OWN'), -- Xem đăng ký ca của bản thân (cho part-time/flex)
 ('ROLE_DENTIST', 'CREATE_REGISTRATION'), -- Tạo đăng ký ca part-time/flex
 
+-- SHIFT_RENEWAL (fixed schedule renewal - Luồng 1 only)
+('ROLE_DENTIST', 'VIEW_RENEWAL_OWN'), -- Xem yêu cầu gia hạn của bản thân
+('ROLE_DENTIST', 'RESPOND_RENEWAL_OWN'), -- Phản hồi yêu cầu gia hạn
+
 -- LEAVE_MANAGEMENT (employee self-service)
 ('ROLE_DENTIST', 'VIEW_LEAVE_OWN'), -- RBAC: View own leave requests
 ('ROLE_DENTIST', 'CREATE_TIME_OFF'), -- Request time-off
@@ -696,6 +710,10 @@ VALUES
 ('ROLE_NURSE', 'VIEW_REGISTRATION_OWN'), -- Xem đăng ký ca của bản thân (cho part-time/flex)
 ('ROLE_NURSE', 'CREATE_REGISTRATION'), -- Tạo đăng ký ca part-time/flex
 
+-- SHIFT_RENEWAL (fixed schedule renewal - Luồng 1 only)
+('ROLE_NURSE', 'VIEW_RENEWAL_OWN'), -- Xem yêu cầu gia hạn của bản thân
+('ROLE_NURSE', 'RESPOND_RENEWAL_OWN'), -- Phản hồi yêu cầu gia hạn
+
 -- LEAVE_MANAGEMENT (employee self-service)
 ('ROLE_NURSE', 'VIEW_LEAVE_OWN'), -- RBAC: View own leave requests
 ('ROLE_NURSE', 'CREATE_TIME_OFF'), -- Request time-off
@@ -727,6 +745,10 @@ VALUES
 ('ROLE_DENTIST_INTERN', 'VIEW_AVAILABLE_SLOTS'), -- Xem suất part-time có sẵn (cho part-time/flex)
 ('ROLE_DENTIST_INTERN', 'VIEW_REGISTRATION_OWN'), -- Xem đăng ký ca của bản thân (cho part-time/flex)
 ('ROLE_DENTIST_INTERN', 'CREATE_REGISTRATION'), -- Tạo đăng ký ca part-time/flex
+
+-- SHIFT_RENEWAL (fixed schedule renewal - Luồng 1 only)
+('ROLE_DENTIST_INTERN', 'VIEW_RENEWAL_OWN'), -- Xem yêu cầu gia hạn của bản thân
+('ROLE_DENTIST_INTERN', 'RESPOND_RENEWAL_OWN'), -- Phản hồi yêu cầu gia hạn
 
 -- LEAVE_MANAGEMENT (employee self-service)
 ('ROLE_DENTIST_INTERN', 'VIEW_LEAVE_OWN'), -- RBAC: View own leave requests
@@ -777,6 +799,10 @@ VALUES
 ('ROLE_RECEPTIONIST', 'VIEW_REGISTRATION_OWN'), -- Xem đăng ký ca của bản thân (cho part-time/flex)
 ('ROLE_RECEPTIONIST', 'CREATE_REGISTRATION'), -- Tạo đăng ký ca part-time/flex
 
+-- SHIFT_RENEWAL (fixed schedule renewal - Luồng 1 only)
+('ROLE_RECEPTIONIST', 'VIEW_RENEWAL_OWN'), -- Xem yêu cầu gia hạn của bản thân
+('ROLE_RECEPTIONIST', 'RESPOND_RENEWAL_OWN'), -- Phản hồi yêu cầu gia hạn
+
 -- LEAVE_MANAGEMENT (employee self-service)
 ('ROLE_RECEPTIONIST', 'VIEW_LEAVE_OWN'), -- RBAC: View own leave requests
 ('ROLE_RECEPTIONIST', 'CREATE_TIME_OFF'), -- Request time-off
@@ -822,6 +848,11 @@ VALUES
 ('ROLE_MANAGER', 'MANAGE_WORK_SLOTS'), -- Manage part-time slots
 ('ROLE_MANAGER', 'MANAGE_PART_TIME_REGISTRATIONS'), -- Approve part-time registrations (9 usages!)
 ('ROLE_MANAGER', 'MANAGE_FIXED_REGISTRATIONS'), -- Manage fixed shift registrations
+
+-- SHIFT_RENEWAL (admin access for finalization)
+('ROLE_MANAGER', 'VIEW_RENEWAL_ALL'), -- Xem tất cả yêu cầu gia hạn
+('ROLE_MANAGER', 'VIEW_RENEWAL_OWN'), -- Xem yêu cầu gia hạn của bản thân (nếu là part-time manager)
+('ROLE_MANAGER', 'RESPOND_RENEWAL_OWN'), -- Phản hồi yêu cầu gia hạn của bản thân
 
 -- LEAVE_MANAGEMENT (full management with workflows)
 ('ROLE_MANAGER', 'VIEW_LEAVE_ALL'), -- RBAC: View all leave requests
@@ -878,6 +909,10 @@ VALUES
 ('ROLE_ACCOUNTANT', 'VIEW_REGISTRATION_OWN'), -- Xem đăng ký ca của bản thân (cho part-time/flex)
 ('ROLE_ACCOUNTANT', 'CREATE_REGISTRATION'), -- Tạo đăng ký ca part-time/flex
 
+-- SHIFT_RENEWAL (fixed schedule renewal - Luồng 1 only)
+('ROLE_ACCOUNTANT', 'VIEW_RENEWAL_OWN'), -- Xem yêu cầu gia hạn của bản thân
+('ROLE_ACCOUNTANT', 'RESPOND_RENEWAL_OWN'), -- Phản hồi yêu cầu gia hạn
+
 -- LEAVE_MANAGEMENT (employee self-service)
 ('ROLE_ACCOUNTANT', 'VIEW_LEAVE_OWN'), -- RBAC: View own leave requests
 ('ROLE_ACCOUNTANT', 'CREATE_TIME_OFF'), -- Request time-off
@@ -910,6 +945,10 @@ VALUES
 ('ROLE_INVENTORY_MANAGER', 'VIEW_AVAILABLE_SLOTS'), -- Xem suất part-time có sẵn (cho part-time/flex)
 ('ROLE_INVENTORY_MANAGER', 'VIEW_REGISTRATION_OWN'), -- Xem đăng ký ca của bản thân (cho part-time/flex)
 ('ROLE_INVENTORY_MANAGER', 'CREATE_REGISTRATION'), -- Tạo đăng ký ca part-time/flex
+
+-- SHIFT_RENEWAL (fixed schedule renewal - Luồng 1 only)
+('ROLE_INVENTORY_MANAGER', 'VIEW_RENEWAL_OWN'), -- Xem yêu cầu gia hạn của bản thân
+('ROLE_INVENTORY_MANAGER', 'RESPOND_RENEWAL_OWN'), -- Phản hồi yêu cầu gia hạn
 
 -- LEAVE_MANAGEMENT (employee self-service)
 ('ROLE_INVENTORY_MANAGER', 'VIEW_LEAVE_OWN'), -- RBAC: View own leave requests
