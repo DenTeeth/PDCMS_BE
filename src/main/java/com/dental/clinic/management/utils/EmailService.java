@@ -26,6 +26,9 @@ public class EmailService {
 
     @Value("${spring.mail.username}")
     private String fromEmail;
+    
+    // Sender name for better email appearance (works with SendGrid, Gmail, etc.)
+    private static final String FROM_NAME = "Phòng khám nha khoa DenTeeth";
 
     /**
      * Send email verification link to new user
@@ -38,7 +41,7 @@ public class EmailService {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-            helper.setFrom(fromEmail);
+            helper.setFrom(fromEmail, FROM_NAME);  // Add sender name
             helper.setTo(toEmail);
             helper.setSubject("Xác thực tài khoản - Phòng khám nha khoa");
 
@@ -67,7 +70,7 @@ public class EmailService {
             mailSender.send(message);
             logger.info(" Verification email sent to: {}", toEmail);
 
-        } catch (MessagingException e) {
+        } catch (MessagingException | java.io.UnsupportedEncodingException e) {
             logger.error(" Failed to send verification email to {}: {}", toEmail, e.getMessage());
         }
     }
@@ -83,7 +86,7 @@ public class EmailService {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-            helper.setFrom(fromEmail);
+            helper.setFrom(fromEmail, FROM_NAME);  // Add sender name
             helper.setTo(toEmail);
             helper.setSubject("Đặt lại mật khẩu - Phòng khám nha khoa");
 
@@ -112,7 +115,7 @@ public class EmailService {
             mailSender.send(message);
             logger.info(" Password reset email sent to: {}", toEmail);
 
-        } catch (MessagingException e) {
+        } catch (MessagingException | java.io.UnsupportedEncodingException e) {
             logger.error(" Failed to send password reset email to {}: {}", toEmail, e.getMessage());
         }
     }
@@ -131,7 +134,7 @@ public class EmailService {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-            helper.setFrom(fromEmail);
+            helper.setFrom(fromEmail, FROM_NAME);  // Add sender name
             helper.setTo(toEmail);
             helper.setSubject("Chào mừng đến với Phòng khám nha khoa - Thiết lập mật khẩu");
 
@@ -193,7 +196,7 @@ public class EmailService {
             mailSender.send(message);
             logger.info(" Welcome email with password setup sent to: {}", toEmail);
 
-        } catch (MessagingException e) {
+        } catch (MessagingException | java.io.UnsupportedEncodingException e) {
             logger.error(" Failed to send welcome email to {}: {}", toEmail, e.getMessage());
             throw new RuntimeException("Đã xảy ra lỗi khi gửi email chào mừng", e);
         }
@@ -215,7 +218,7 @@ public class EmailService {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-            helper.setFrom(fromEmail);
+            helper.setFrom(fromEmail, FROM_NAME);  // Add sender name
             helper.setTo(toEmail);
 
             // Subject line with counts for quick overview
@@ -229,7 +232,7 @@ public class EmailService {
             logger.info("Expiry alert email sent to: {} (CRITICAL: {}, WARNING: {}, INFO: {})",
                     toEmail, criticalCount, warningCount, infoCount);
 
-        } catch (MessagingException e) {
+        } catch (MessagingException | java.io.UnsupportedEncodingException e) {
             logger.error("Failed to send expiry alert email to {}: {}", toEmail, e.getMessage());
         }
     }
