@@ -18,14 +18,23 @@ Backend trả về JWT token với các claims sau đây. Frontend cần decode 
 
 ### Custom Claims (Application-Specific)
 
-| Claim           | Type     | Description                                   | Example                 | Required    |
-| --------------- | -------- | --------------------------------------------- | ----------------------- | ----------- |
-| `account_id`    | number   | **Account ID** - Dùng cho Notification system | `123`                   | ✅ Yes      |
-| `roles`         | string[] | User roles (với prefix `ROLE_`)               | `["ROLE_ADMIN"]`        | ✅ Yes      |
-| `permissions`   | string[] | User permissions                              | `["VIEW_PATIENT", ...]` | ✅ Yes      |
-| `full_name`     | string   | Full name of the user (họ tên)                | `"Nguyễn Văn A"`        | ❌ Optional |
-| `patient_code`  | string   | Patient code (nếu user là bệnh nhân)          | `"BN001"`               | ❌ Optional |
-| `employee_code` | string   | Employee code (nếu user là nhân viên)         | `"EMP001"`              | ❌ Optional |
+| Claim           | Type     | Description                     | Example                 | Required    |
+| --------------- | -------- | ------------------------------- | ----------------------- | ----------- |
+| `account_id`    | number   | Account ID (for notifications)  | `123`                   | ✅ Yes      |
+| `roles`         | string[] | User roles (with `ROLE_` prefix)| `["ROLE_ADMIN"]`        | ✅ Yes      |
+| `permissions`   | string[] | User permissions                | `["VIEW_PATIENT", ...]` | ✅ Yes      |
+| `full_name`     | string   | Full name (see note ⬇️)         | `"Nguyễn Văn A"`        | ❌ Optional |
+| `patient_code`  | string   | Patient code (if patient)       | `"BN001"`               | ❌ Optional |
+| `employee_code` | string   | Employee code (if employee)     | `"EMP001"`              | ❌ Optional |
+
+> **⚠️ Important Note về `full_name`:**
+>
+> - **Database structure**: Tables `employees` và `patients` lưu **hai fields riêng biệt**: `first_name` và `last_name`
+> - **JWT token**: Backend tự động **concatenate** `first_name + " " + last_name` thành `full_name` khi tạo JWT
+> - **FE không cần**: FE chỉ cần decode JWT và lấy `full_name` - không cần lo về việc nối chuỗi
+> - **Ví dụ**:
+>   - DB: `first_name = "Nguyễn Văn"`, `last_name = "A"`
+>   - JWT: `full_name = "Nguyễn Văn A"` (already concatenated)
 
 ---
 

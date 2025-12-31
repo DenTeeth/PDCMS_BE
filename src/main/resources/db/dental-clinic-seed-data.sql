@@ -91,6 +91,31 @@ COMMENT ON COLUMN chatbot_knowledge.is_active IS 'Trạng thái hoạt động';
 --   - Added quantity column to procedure_material_usage (per-material editing)
 --   - Updated variance calculation: actual_quantity - quantity (was: actual - planned)
 
+-- Step 0: Migration for existing tables - Add missing quantity column
+-- This handles the case where table was created before V36 migration
+
+-- Add quantity column if it doesn't exist
+ALTER TABLE procedure_material_usage 
+ADD COLUMN IF NOT EXISTS quantity NUMERIC(10,2);
+
+-- Set default value to planned_quantity for existing records
+UPDATE procedure_material_usage 
+SET quantity = planned_quantity 
+WHERE quantity IS NULL;
+
+-- Make it NOT NULL
+ALTER TABLE procedure_material_usage 
+ALTER COLUMN quantity SET NOT NULL;
+
+-- Drop old variance_quantity if it exists (may have wrong formula)
+ALTER TABLE procedure_material_usage 
+DROP COLUMN IF EXISTS variance_quantity CASCADE;
+
+-- Recreate variance_quantity with correct formula: actual - quantity
+ALTER TABLE procedure_material_usage 
+ADD COLUMN variance_quantity NUMERIC(10,2) 
+GENERATED ALWAYS AS (actual_quantity - quantity) STORED;
+
 -- Step 1: Add material tracking columns to clinical_record_procedures
 ALTER TABLE clinical_record_procedures
 ADD COLUMN IF NOT EXISTS storage_transaction_id INTEGER,
