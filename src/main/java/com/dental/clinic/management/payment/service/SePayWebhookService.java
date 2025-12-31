@@ -1,6 +1,6 @@
 package com.dental.clinic.management.payment.service;
 
-import com.dental.clinic.management.exception.ResourceNotFoundException;
+// import com.dental.clinic.management.exception.ResourceNotFoundException;
 import com.dental.clinic.management.payment.domain.Invoice;
 import com.dental.clinic.management.payment.domain.Payment;
 import com.dental.clinic.management.payment.domain.PaymentTransaction;

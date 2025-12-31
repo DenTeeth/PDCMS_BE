@@ -5,10 +5,10 @@ import com.dental.clinic.management.payment.domain.Invoice;
 import com.dental.clinic.management.payment.domain.Payment;
 import com.dental.clinic.management.payment.dto.CreatePaymentRequest;
 import com.dental.clinic.management.payment.dto.PaymentResponse;
-import com.dental.clinic.management.payment.enums.PaymentMethod;
+// import com.dental.clinic.management.payment.enums.PaymentMethod;
 import com.dental.clinic.management.payment.repository.InvoiceRepository;
 import com.dental.clinic.management.payment.repository.PaymentRepository;
-import com.dental.clinic.management.utils.security.SecurityUtil;
+// import com.dental.clinic.management.utils.security.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -85,7 +85,7 @@ public class PaymentService {
     }
 
     /**
-     * Generate payment code: PAY-YYYYMMDD-XXX
+     * Generate payment code: PAY-YYYYMMDD-SEQ
      */
     private String generatePaymentCode() {
         String datePart = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));

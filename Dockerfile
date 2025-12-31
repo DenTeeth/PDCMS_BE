@@ -31,8 +31,12 @@ FROM eclipse-temurin:17-jre-alpine
 # Set working directory
 WORKDIR /app
 
-# Install dumb-init for proper signal handling
-RUN apk add --no-cache dumb-init
+# Install dumb-init and timezone data for proper signal handling and timezone support
+RUN apk add --no-cache dumb-init tzdata
+
+# Set timezone to Asia/Ho_Chi_Minh (Vietnam)
+ENV TZ=Asia/Ho_Chi_Minh
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # Create a non-root user for security
 RUN addgroup -g 1001 -S spring && \
@@ -49,7 +53,8 @@ USER spring
 EXPOSE 8080
 
 # JVM options (production-ready)
-ENV JAVA_OPTS="-Xms512m -Xmx1024m -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
+# Added user.timezone to ensure JVM uses correct timezone for scheduled tasks
+ENV JAVA_OPTS="-Xms512m -Xmx1024m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -Duser.timezone=Asia/Ho_Chi_Minh"
 
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]

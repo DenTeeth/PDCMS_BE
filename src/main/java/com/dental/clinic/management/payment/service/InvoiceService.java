@@ -6,10 +6,10 @@ import com.dental.clinic.management.payment.domain.InvoiceItem;
 import com.dental.clinic.management.payment.dto.CreateInvoiceRequest;
 import com.dental.clinic.management.payment.dto.InvoiceResponse;
 import com.dental.clinic.management.payment.enums.InvoicePaymentStatus;
-import com.dental.clinic.management.payment.enums.InvoiceType;
+// import com.dental.clinic.management.payment.enums.InvoiceType;
 import com.dental.clinic.management.payment.repository.InvoiceItemRepository;
 import com.dental.clinic.management.payment.repository.InvoiceRepository;
-import com.dental.clinic.management.utils.security.SecurityUtil;
+// import com.dental.clinic.management.utils.security.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -162,7 +162,7 @@ public class InvoiceService {
     }
 
     /**
-     * Generate invoice code: INV-YYYYMMDD-XXX
+     * Generate invoice code: INV-YYYYMMDD-SEQ
      */
     private String generateInvoiceCode() {
         String datePart = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
