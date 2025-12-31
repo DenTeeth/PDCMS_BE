@@ -75,11 +75,23 @@ spring:
   # ==============================
   # Mail Configuration (Production)
   # ==============================
+  # IMPORTANT: DigitalOcean blocks Gmail SMTP ports (25, 465, 587)
+  # Solution: Use SendGrid free tier (100 emails/day forever)
+  # Setup: https://sendgrid.com/pricing/ → Free Plan → Get API Key
   mail:
-    host: smtp.gmail.com
+    # Option 1: SendGrid (RECOMMENDED for DigitalOcean) - 100 emails/day FREE
+    host: smtp.sendgrid.net
     port: 587
-    username: ${MAIL_USERNAME:hellodenteeth@gmail.com}
-    password: ${MAIL_PASSWORD:micnxeutitfjrmxk}
+    username: apikey  # This is literal "apikey", not your actual key
+    password: ${SENDGRID_API_KEY:}
+    
+    # Option 2: Gmail SMTP (may not work on DigitalOcean due to port blocking)
+    # Uncomment these and comment out SendGrid if you want to try Gmail
+    # host: smtp.gmail.com
+    # port: 587
+    # username: ${MAIL_USERNAME:hellodenteeth@gmail.com}
+    # password: ${MAIL_PASSWORD:micnxeutitfjrmxk}
+    
     properties:
       mail:
         smtp:
@@ -163,6 +175,9 @@ management:
   endpoint:
     health:
       show-details: when-authorized
+  health:
+    mail:
+      enabled: false  # Disable mail health check to prevent health endpoint from failing if SMTP is down
 
 # ==============================
 # Chatbot Configuration (Gemini AI)
@@ -173,11 +188,8 @@ chatbot:
     model-name: gemini-2.5-flash
 
 # ==============================
-# Payment Configuration (SePay + VietQR)
+# Payment Configuration (VietQR for QR code generation)
 # ==============================
-sepay:
-  api-key: ${SEPAY_API_KEY:}
-
 vietqr:
   bank-id: ${VIETQR_BANK_ID:ACB}
   account-no: ${VIETQR_ACCOUNT_NO:24131687}
