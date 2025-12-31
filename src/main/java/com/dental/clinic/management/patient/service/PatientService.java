@@ -26,6 +26,7 @@ import com.dental.clinic.management.patient.repository.PatientRepository;
 import com.dental.clinic.management.clinical_records.repository.PatientToothStatusRepository;
 import com.dental.clinic.management.clinical_records.repository.PatientToothStatusHistoryRepository;
 import com.dental.clinic.management.employee.domain.Employee;
+import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.utils.EmailService;
 import com.dental.clinic.management.utils.SequentialCodeGenerator;
 
@@ -68,6 +69,7 @@ public class PatientService {
     private final PatientToothStatusRepository patientToothStatusRepository;
     private final PatientToothStatusHistoryRepository patientToothStatusHistoryRepository;
     private final DuplicatePatientDetectionService duplicateDetectionService;
+    private final EmployeeRepository employeeRepository;
 
     public PatientService(
             PatientRepository patientRepository,
@@ -81,7 +83,8 @@ public class PatientService {
             RoleRepository roleRepository,
             PatientToothStatusRepository patientToothStatusRepository,
             PatientToothStatusHistoryRepository patientToothStatusHistoryRepository,
-            DuplicatePatientDetectionService duplicateDetectionService) {
+            DuplicatePatientDetectionService duplicateDetectionService,
+            EmployeeRepository employeeRepository) {
         this.patientRepository = patientRepository;
         this.patientMapper = patientMapper;
         this.accountRepository = accountRepository;
@@ -92,6 +95,7 @@ public class PatientService {
         this.emailService = emailService;
         this.duplicateDetectionService = duplicateDetectionService;
         this.roleRepository = roleRepository;
+        this.employeeRepository = employeeRepository;
         this.patientToothStatusRepository = patientToothStatusRepository;
         this.patientToothStatusHistoryRepository = patientToothStatusHistoryRepository;
     }
@@ -253,13 +257,36 @@ public class PatientService {
 
             log.debug("Creating account for patient with email: {}", request.getEmail());
 
-            // Check uniqueness
+            // Check email uniqueness
             if (accountRepository.existsByEmail(request.getEmail())) {
                 throw new BadRequestAlertException(
                         "Email already exists",
                         "account",
                         "emailexists");
             }
+        }
+
+        // Check phone uniqueness across both Patient and Employee tables
+        if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
+            log.debug("Checking phone uniqueness: {}", request.getPhone());
+            
+            if (patientRepository.existsByPhone(request.getPhone())) {
+                throw new BadRequestAlertException(
+                        "Phone number already exists",
+                        "patient",
+                        "phoneexists");
+            }
+
+            if (employeeRepository.existsByPhone(request.getPhone())) {
+                throw new BadRequestAlertException(
+                        "Phone number already exists",
+                        "employee",
+                        "phoneexists");
+            }
+        }
+
+        // Continue with account creation if email provided
+        if (request.getEmail() != null && !request.getEmail().trim().isEmpty()) {
 
             // V23/V24: Get username from request or auto-generate from email
             String username = request.getUsername();
@@ -385,6 +412,28 @@ public class PatientService {
                         "Patient not found with code: " + patientCode,
                         "Patient",
                         "patientnotfound"));
+
+        // Check phone uniqueness if phone is being updated
+        if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
+            // Only check if phone is actually changing
+            if (!request.getPhone().equals(patient.getPhone())) {
+                log.debug("Checking phone uniqueness for update: {}", request.getPhone());
+                
+                if (patientRepository.existsByPhone(request.getPhone())) {
+                    throw new BadRequestAlertException(
+                            "Phone number already exists",
+                            "patient",
+                            "phoneexists");
+                }
+
+                if (employeeRepository.existsByPhone(request.getPhone())) {
+                    throw new BadRequestAlertException(
+                            "Phone number already exists",
+                            "employee",
+                            "phoneexists");
+                }
+            }
+        }
 
         // Track if booking block status is being changed
         boolean blockingStatusChanged = request.getIsBookingBlocked() != null &&

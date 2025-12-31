@@ -14,6 +14,7 @@ import com.dental.clinic.management.exception.employee.EmployeeNotFoundException
 import com.dental.clinic.management.working_schedule.repository.EmployeeShiftRepository;
 import com.dental.clinic.management.working_schedule.repository.FixedShiftRegistrationRepository;
 import com.dental.clinic.management.working_schedule.repository.PartTimeRegistrationRepository;
+import com.dental.clinic.management.patient.repository.PatientRepository;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,6 +58,7 @@ public class EmployeeService {
     private final FixedShiftRegistrationRepository fixedRegistrationRepository;
     private final PartTimeRegistrationRepository partTimeRegistrationRepository;
     private final EmployeeShiftRepository employeeShiftRepository;
+    private final PatientRepository patientRepository;
 
     public EmployeeService(
             EmployeeRepository employeeRepository,
@@ -68,7 +70,8 @@ public class EmployeeService {
             SequentialCodeGenerator codeGenerator,
             FixedShiftRegistrationRepository fixedRegistrationRepository,
             PartTimeRegistrationRepository partTimeRegistrationRepository,
-            EmployeeShiftRepository employeeShiftRepository) {
+            EmployeeShiftRepository employeeShiftRepository,
+            PatientRepository patientRepository) {
         this.employeeRepository = employeeRepository;
         this.employeeMapper = employeeMapper;
         this.accountRepository = accountRepository;
@@ -79,6 +82,7 @@ public class EmployeeService {
         this.fixedRegistrationRepository = fixedRegistrationRepository;
         this.partTimeRegistrationRepository = partTimeRegistrationRepository;
         this.employeeShiftRepository = employeeShiftRepository;
+        this.patientRepository = patientRepository;
     }
 
     /**
@@ -342,6 +346,25 @@ public class EmployeeService {
                     "emailexists");
         }
 
+        // Check phone uniqueness across both Patient and Employee tables
+        if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
+            log.debug("Checking phone uniqueness: {}", request.getPhone());
+            
+            if (employeeRepository.existsByPhone(request.getPhone())) {
+                throw new BadRequestAlertException(
+                        "Phone number already exists",
+                        "employee",
+                        "phoneexists");
+            }
+
+            if (patientRepository.existsByPhone(request.getPhone())) {
+                throw new BadRequestAlertException(
+                        "Phone number already exists",
+                        "patient",
+                        "phoneexists");
+            }
+        }
+
         // Create new account for employee
         Account account = new Account();
         account.setUsername(request.getUsername());
@@ -439,6 +462,28 @@ public class EmployeeService {
 
         if (request.getLastName() != null) {
             employee.setLastName(request.getLastName());
+        }
+
+        // Check phone uniqueness if phone is being updated
+        if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
+            // Only check if phone is actually changing
+            if (!request.getPhone().equals(employee.getPhone())) {
+                log.debug("Checking phone uniqueness for update: {}", request.getPhone());
+                
+                if (employeeRepository.existsByPhone(request.getPhone())) {
+                    throw new BadRequestAlertException(
+                            "Phone number already exists",
+                            "employee",
+                            "phoneexists");
+                }
+
+                if (patientRepository.existsByPhone(request.getPhone())) {
+                    throw new BadRequestAlertException(
+                            "Phone number already exists",
+                            "patient",
+                            "phoneexists");
+                }
+            }
         }
 
         if (request.getPhone() != null) {

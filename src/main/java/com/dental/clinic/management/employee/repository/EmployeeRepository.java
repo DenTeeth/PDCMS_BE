@@ -42,6 +42,15 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer>, Jp
     boolean existsByAccount_Username(String username);
 
     /**
+     * Check if employee exists by phone number.
+     * Used for phone uniqueness validation.
+     *
+     * @param phone Phone number
+     * @return True if exists
+     */
+    Boolean existsByPhone(String phone);
+
+    /**
      * Find all active employees.
      * Used for annual leave balance reset.
      *
