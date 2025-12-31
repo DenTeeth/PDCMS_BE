@@ -83,7 +83,7 @@ public class AppointmentDetailDTO {
 
     /**
      * Cancellation reason (from appointment_audit_logs)
-     * Only populated when status = CANCELLED
+     * Only populated when status = CANCELLED or CANCELLED_LATE
      * Example: "Bệnh nhân hủy do bận đột xuất"
      */
     private String cancellationReason;

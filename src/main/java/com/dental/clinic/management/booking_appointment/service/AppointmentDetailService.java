@@ -336,9 +336,10 @@ public class AppointmentDetailService {
             log.warn("Failed to load createdBy info: {}", e.getMessage());
         }
 
-        // Load cancellation reason from audit log (if status = CANCELLED)
+        // Load cancellation reason from audit log (if status = CANCELLED or CANCELLED_LATE)
         String cancellationReason = null;
-        if (appointment.getStatus() == AppointmentStatus.CANCELLED) {
+        if (appointment.getStatus() == AppointmentStatus.CANCELLED || 
+            appointment.getStatus() == AppointmentStatus.CANCELLED_LATE) {
             try {
                 List<AppointmentAuditLog> auditLogs = appointmentAuditLogRepository
                         .findByAppointment_AppointmentIdOrderByCreatedAtDesc(appointment.getAppointmentId());
@@ -428,6 +429,7 @@ public class AppointmentDetailService {
 
         return switch (status) {
             case CANCELLED -> "CANCELLED";
+            case CANCELLED_LATE -> "CANCELLED_LATE";
             case COMPLETED -> "COMPLETED";
             case NO_SHOW -> "NO_SHOW";
             case CHECKED_IN -> "CHECKED_IN";

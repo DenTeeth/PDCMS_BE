@@ -154,7 +154,7 @@ public class AppointmentRescheduleService {
                                         "Cannot reschedule completed appointment. Code: APPOINTMENT_NOT_RESCHEDULABLE");
                 }
 
-                if (status == AppointmentStatus.CANCELLED) {
+                if (status == AppointmentStatus.CANCELLED || status == AppointmentStatus.CANCELLED_LATE) {
                         throw new IllegalStateException(
                                         "Cannot reschedule cancelled appointment. Code: APPOINTMENT_NOT_RESCHEDULABLE");
                 }

@@ -141,7 +141,8 @@ public class AppointmentDelayService {
          */
         private boolean isTerminalState(AppointmentStatus status) {
                 return status == AppointmentStatus.COMPLETED
-                                || status == AppointmentStatus.CANCELLED;
+                                || status == AppointmentStatus.CANCELLED
+                                || status == AppointmentStatus.CANCELLED_LATE;
                 // NO_SHOW removed: Allow rescheduling NO_SHOW appointments
         }
 

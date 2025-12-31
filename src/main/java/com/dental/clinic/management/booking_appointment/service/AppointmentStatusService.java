@@ -78,15 +78,19 @@ public class AppointmentStatusService {
             AppointmentStatus.SCHEDULED, Set.of(
                     AppointmentStatus.CHECKED_IN,
                     AppointmentStatus.CANCELLED,
+                    AppointmentStatus.CANCELLED_LATE,
                     AppointmentStatus.NO_SHOW),
             AppointmentStatus.CHECKED_IN, Set.of(
                     AppointmentStatus.IN_PROGRESS,
-                    AppointmentStatus.CANCELLED),
+                    AppointmentStatus.CANCELLED,
+                    AppointmentStatus.CANCELLED_LATE),
             AppointmentStatus.IN_PROGRESS, Set.of(
                     AppointmentStatus.COMPLETED,
-                    AppointmentStatus.CANCELLED),
+                    AppointmentStatus.CANCELLED,
+                    AppointmentStatus.CANCELLED_LATE),
             AppointmentStatus.COMPLETED, Collections.emptySet(),
             AppointmentStatus.CANCELLED, Collections.emptySet(),
+            AppointmentStatus.CANCELLED_LATE, Collections.emptySet(),
             AppointmentStatus.NO_SHOW, Collections.emptySet());
 
     /**
@@ -208,24 +212,28 @@ public class AppointmentStatusService {
             }
         }
 
-        if (newStatus == AppointmentStatus.CANCELLED) {
+        if (newStatus == AppointmentStatus.CANCELLED || newStatus == AppointmentStatus.CANCELLED_LATE) {
             // Check reason code is provided
             if (request.getReasonCode() == null || request.getReasonCode().trim().isEmpty()) {
                 throw new IllegalArgumentException(
                         "Mã lý do bắt buộc khi hủy lịch hẹn");
             }
 
-            // Rule #4: Check 24-hour cancellation deadline
+            // Rule #4: Auto-detect late cancellation (within 24 hours)
             LocalDateTime cancellationDeadline = appointmentStartTime.minusHours(24);
 
             if (now.isAfter(cancellationDeadline)) {
                 // Late cancellation - within 24 hours of appointment
-                throw new IllegalStateException(
-                        String.format("Không thể hủy lịch hẹn trong vòng 24 giờ trước giờ hẹn. " +
-                                "Giờ bắt đầu: %s, Hạn hủy: %s. " +
-                                "Vui lòng liên hệ nhân viên phòng khám.",
-                                appointmentStartTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
-                                cancellationDeadline.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))));
+                // Override to CANCELLED_LATE status
+                newStatus = AppointmentStatus.CANCELLED_LATE;
+                log.warn("⚠️ Hủy muộn: lịch hẹn {} bị hủy lúc {}, hạn hủy là {}", 
+                    appointment.getAppointmentCode(),
+                    now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
+                    cancellationDeadline.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
+            } else if (newStatus == AppointmentStatus.CANCELLED_LATE) {
+                // User requested CANCELLED_LATE but it's before deadline
+                // Change to regular CANCELLED
+                newStatus = AppointmentStatus.CANCELLED;
             }
         }
 
@@ -424,6 +432,7 @@ public class AppointmentStatusService {
         if (appointmentStatus != AppointmentStatus.IN_PROGRESS
                 && appointmentStatus != AppointmentStatus.COMPLETED
                 && appointmentStatus != AppointmentStatus.CANCELLED
+                && appointmentStatus != AppointmentStatus.CANCELLED_LATE
                 && appointmentStatus != AppointmentStatus.NO_SHOW) {
             log.debug("No plan item update needed for appointment status: {}", appointmentStatus);
             return;
@@ -451,6 +460,7 @@ public class AppointmentStatusService {
                 targetStatus = PlanItemStatus.COMPLETED;
                 break;
             case CANCELLED:
+            case CANCELLED_LATE:
                 targetStatus = PlanItemStatus.READY_FOR_BOOKING; // Allow re-booking
                 break;
             case NO_SHOW:

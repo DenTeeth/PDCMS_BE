@@ -689,6 +689,7 @@ public class AppointmentListService {
 
         return switch (status) {
             case CANCELLED -> "CANCELLED";
+            case CANCELLED_LATE -> "CANCELLED_LATE";
             case COMPLETED -> "COMPLETED";
             case NO_SHOW -> "NO_SHOW";
             case CHECKED_IN -> "CHECKED_IN";
