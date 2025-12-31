@@ -297,6 +297,17 @@ public class EmployeeService {
                     "passwordrequired");
         }
 
+        // BR: Validate employee age - must be at least 18 years old
+        if (request.getDateOfBirth() != null) {
+            int age = java.time.Period.between(request.getDateOfBirth(), java.time.LocalDate.now()).getYears();
+            if (age < 18) {
+                throw new BadRequestAlertException(
+                        "Nhân viên phải từ 18 tuổi trở lên. Tuổi hiện tại: " + age,
+                        "employee",
+                        "agebelow18");
+            }
+        }
+
         // Validate role and specialization requirements
         Role role = roleRepository.findById(request.getRoleId())
                 .orElseThrow(() -> new BadRequestAlertException(
@@ -491,6 +502,14 @@ public class EmployeeService {
         }
 
         if (request.getDateOfBirth() != null) {
+            // BR: Validate employee age - must be at least 18 years old
+            int age = java.time.Period.between(request.getDateOfBirth(), java.time.LocalDate.now()).getYears();
+            if (age < 18) {
+                throw new BadRequestAlertException(
+                        "Nhân viên phải từ 18 tuổi trở lên. Tuổi hiện tại: " + age,
+                        "employee",
+                        "agebelow18");
+            }
             employee.setDateOfBirth(request.getDateOfBirth());
         }
 
@@ -582,6 +601,17 @@ public class EmployeeService {
         employee.setFirstName(request.getFirstName());
         employee.setLastName(request.getLastName());
         employee.setPhone(request.getPhone());
+        
+        // BR: Validate employee age - must be at least 18 years old
+        if (request.getDateOfBirth() != null) {
+            int age = java.time.Period.between(request.getDateOfBirth(), java.time.LocalDate.now()).getYears();
+            if (age < 18) {
+                throw new BadRequestAlertException(
+                        "Nhân viên phải từ 18 tuổi trở lên. Tuổi hiện tại: " + age,
+                        "employee",
+                        "agebelow18");
+            }
+        }
         employee.setDateOfBirth(request.getDateOfBirth());
         employee.setAddress(request.getAddress());
         employee.setEmploymentType(request.getEmploymentType()); // Set employment type
