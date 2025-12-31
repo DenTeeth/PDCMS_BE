@@ -54,6 +54,7 @@ spring:
   # ==============================
   # Mail Configuration (Email Verification & Password Reset)
   # ==============================
+  mail:
     host: smtp.gmail.com
     port: 587
     username: ${MAIL_USERNAME:dentalclinicPDCMS@gmail.com}
