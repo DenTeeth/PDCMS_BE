@@ -54,19 +54,25 @@ public class DataInitializer {
             Integer consumablesCount = jdbcTemplate.queryForObject(
                     "SELECT COUNT(*) FROM service_consumables",
                     Integer.class);
+            
+            // FIX: Check invoice_items to prevent duplicate invoice items bug
+            Integer invoiceItemsCount = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM invoice_items",
+                    Integer.class);
 
             // Log counts for debugging
-            log.info("Data counts: roles={}, items={}, services={}, consumables={}",
-                    roleCount, itemCount, serviceCount, consumablesCount);
+            log.info("Data counts: roles={}, items={}, services={}, consumables={}, invoiceItems={}",
+                    roleCount, itemCount, serviceCount, consumablesCount, invoiceItemsCount);
 
             // If ALL tables have data, skip initialization
             if (roleCount != null && roleCount > 0 &&
                     itemCount != null && itemCount > 0 &&
                     serviceCount != null && serviceCount > 0 &&
-                    consumablesCount != null && consumablesCount > 0) {
+                    consumablesCount != null && consumablesCount > 0 &&
+                    invoiceItemsCount != null && invoiceItemsCount > 0) {
                 log.info(
-                        "Seed data already exists (roles: {}, items: {}, services: {}, consumables: {}), skipping initialization",
-                        roleCount, itemCount, serviceCount, consumablesCount);
+                        "Seed data already exists (roles: {}, items: {}, services: {}, consumables: {}, invoiceItems: {}), skipping initialization",
+                        roleCount, itemCount, serviceCount, consumablesCount, invoiceItemsCount);
                 return;
             }
 
