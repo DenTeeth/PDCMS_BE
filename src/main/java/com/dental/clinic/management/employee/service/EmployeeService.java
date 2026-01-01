@@ -86,9 +86,9 @@ public class EmployeeService {
     }
 
     /**
-     * Get all ACTIVE employees only (isActive = true) with pagination, sorting,
-     * search and filters
-     * This is the default method for normal operations
+     * Get all employees with pagination, sorting, search and filters
+     * By default returns ALL employees (both active and inactive)
+     * Use isActive parameter to filter by status
      *
      * @param page           page number (zero-based)
      * @param size           number of items per page
@@ -97,12 +97,13 @@ public class EmployeeService {
      * @param search         search by employee code, first name, or last name
      * @param roleId         filter by role ID
      * @param employmentType filter by employment type
+     * @param isActive       filter by active status (true=active only, false=inactive only, null=all)
      * @return Page of EmployeeInfoResponse
      */
     @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('VIEW_EMPLOYEE')")
-    public Page<EmployeeInfoResponse> getAllActiveEmployees(
+    public Page<EmployeeInfoResponse> getAllEmployees(
             int page, int size, String sortBy, String sortDirection,
-            String search, String roleId, String employmentType) {
+            String search, String roleId, String employmentType, Boolean isActive) {
 
         // Validate and sanitize inputs
         page = Math.max(0, page); // Ensure page is not negative
@@ -119,12 +120,14 @@ public class EmployeeService {
         // Create pageable
         Pageable pageable = PageRequest.of(page, size, sort);
 
-        // Create specification to filter only active employees
+        // Create specification with optional isActive filter
         Specification<Employee> spec = (root, query, criteriaBuilder) -> {
             var predicates = new java.util.ArrayList<jakarta.persistence.criteria.Predicate>();
 
-            // Always filter by isActive = true
-            predicates.add(criteriaBuilder.equal(root.get("isActive"), true));
+            // Filter by isActive if specified (null = show all)
+            if (isActive != null) {
+                predicates.add(criteriaBuilder.equal(root.get("isActive"), isActive));
+            }
 
             // DATA INTEGRITY: Always exclude ROLE_PATIENT from employee queries
             // ROLE_PATIENT must only exist in Patient table, NOT in Employee table

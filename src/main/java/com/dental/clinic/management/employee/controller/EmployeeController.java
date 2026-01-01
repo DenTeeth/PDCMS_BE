@@ -42,18 +42,19 @@ public class EmployeeController {
   }
 
   @GetMapping("")
-  @Operation(summary = "Get all active employees", description = "Retrieve a paginated list of active employees with optional search and filters")
-  @ApiMessage("Lấy danh sách nhân viên đang hoạt động thành công")
-  public ResponseEntity<Page<EmployeeInfoResponse>> getAllActiveEmployees(
+  @Operation(summary = "Get all employees", description = "Retrieve a paginated list of employees with optional search and filters. By default shows all employees including inactive ones.")
+  @ApiMessage("Lấy danh sách nhân viên thành công")
+  public ResponseEntity<Page<EmployeeInfoResponse>> getAllEmployees(
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "10") int size,
       @RequestParam(defaultValue = "employeeCode") String sortBy,
       @RequestParam(defaultValue = "ASC") String sortDirection,
       @Parameter(description = "Search by employee code, first name, or last name") @RequestParam(required = false) String search,
       @Parameter(description = "Filter by role ID (e.g., ROLE_DENTIST)") @RequestParam(required = false) String roleId,
-      @Parameter(description = "Filter by employment type (FULL_TIME, PART_TIME_FIXED, PART_TIME_FLEX)") @RequestParam(required = false) String employmentType) {
+      @Parameter(description = "Filter by employment type (FULL_TIME, PART_TIME_FIXED, PART_TIME_FLEX)") @RequestParam(required = false) String employmentType,
+      @Parameter(description = "Filter by active status (true=active only, false=inactive only, null=all)") @RequestParam(required = false) Boolean isActive) {
 
-    Page<EmployeeInfoResponse> response = employeeService.getAllActiveEmployees(page, size, sortBy, sortDirection, search, roleId, employmentType);
+    Page<EmployeeInfoResponse> response = employeeService.getAllEmployees(page, size, sortBy, sortDirection, search, roleId, employmentType, isActive);
     return ResponseEntity.ok().body(response);
   }
 
