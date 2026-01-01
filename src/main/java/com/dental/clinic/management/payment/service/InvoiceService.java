@@ -51,6 +51,26 @@ public class InvoiceService {
     public InvoiceResponse createInvoice(CreateInvoiceRequest request) {
         log.info("Creating new invoice for patient: {}", request.getPatientId());
 
+        // ✅ DATA INTEGRITY VALIDATION: If appointmentId is provided, validate patientId matches
+        if (request.getAppointmentId() != null) {
+            Appointment appointment = appointmentRepository.findById(request.getAppointmentId())
+                    .orElseThrow(() -> new ResourceNotFoundException("APPOINTMENT_NOT_FOUND",
+                            "Appointment not found: " + request.getAppointmentId()));
+
+            // Validate patient matches
+            if (!appointment.getPatientId().equals(request.getPatientId())) {
+                String errorMsg = String.format(
+                        "Invoice patientId (%d) does not match appointment patientId (%d) for appointment %d",
+                        request.getPatientId(),
+                        appointment.getPatientId(),
+                        request.getAppointmentId());
+                log.error("Data integrity violation: {}", errorMsg);
+                throw new IllegalArgumentException(errorMsg);
+            }
+
+            log.debug("✅ Validated: Invoice patientId matches appointment patientId");
+        }
+
         // Generate payment code for SePay webhook matching
         String paymentCode = generatePaymentCode();
 
