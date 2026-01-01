@@ -51,7 +51,8 @@ public class InvoiceService {
     public InvoiceResponse createInvoice(CreateInvoiceRequest request) {
         log.info("Creating new invoice for patient: {}", request.getPatientId());
 
-        // ✅ DATA INTEGRITY VALIDATION: If appointmentId is provided, validate patientId matches
+        // ✅ DATA INTEGRITY VALIDATION: If appointmentId is provided, validate patientId
+        // matches
         if (request.getAppointmentId() != null) {
             Appointment appointment = appointmentRepository.findById(request.getAppointmentId())
                     .orElseThrow(() -> new ResourceNotFoundException("APPOINTMENT_NOT_FOUND",
