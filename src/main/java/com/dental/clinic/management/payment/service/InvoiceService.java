@@ -1,6 +1,12 @@
 package com.dental.clinic.management.payment.service;
 
+import com.dental.clinic.management.booking_appointment.domain.Appointment;
+import com.dental.clinic.management.booking_appointment.repository.AppointmentRepository;
+import com.dental.clinic.management.employee.domain.Employee;
+import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.exception.ResourceNotFoundException;
+import com.dental.clinic.management.patient.domain.Patient;
+import com.dental.clinic.management.patient.repository.PatientRepository;
 import com.dental.clinic.management.payment.domain.Invoice;
 import com.dental.clinic.management.payment.domain.InvoiceItem;
 import com.dental.clinic.management.payment.dto.CreateInvoiceRequest;
@@ -9,6 +15,8 @@ import com.dental.clinic.management.payment.enums.InvoicePaymentStatus;
 // import com.dental.clinic.management.payment.enums.InvoiceType;
 import com.dental.clinic.management.payment.repository.InvoiceItemRepository;
 import com.dental.clinic.management.payment.repository.InvoiceRepository;
+import com.dental.clinic.management.treatment_plans.domain.PatientTreatmentPlan;
+import com.dental.clinic.management.treatment_plans.repository.PatientTreatmentPlanRepository;
 // import com.dental.clinic.management.utils.security.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +37,12 @@ public class InvoiceService {
     private final InvoiceRepository invoiceRepository;
     private final InvoiceItemRepository invoiceItemRepository;
     private final VietQRService vietQRService;
+
+    // Repositories for populating response fields (Fix FE Issues #1, #2, #3)
+    private final AppointmentRepository appointmentRepository;
+    private final PatientRepository patientRepository;
+    private final PatientTreatmentPlanRepository treatmentPlanRepository;
+    private final EmployeeRepository employeeRepository;
 
     /**
      * Tao invoice moi
@@ -180,6 +194,9 @@ public class InvoiceService {
 
     /**
      * Map entity to response DTO
+     *
+     * FIX: Populate appointmentCode, patientName, treatmentPlanCode, createdByName
+     * Reference: INVOICE_MODULE_ISSUES_AND_CONFIRMATIONS.md (Issues #1, #2, #3)
      */
     private InvoiceResponse mapToResponse(Invoice invoice) {
         List<InvoiceResponse.InvoiceItemResponse> itemResponses = invoiceItemRepository
@@ -207,13 +224,48 @@ public class InvoiceService {
             qrCodeUrl = vietQRService.generateQRUrl(invoice.getRemainingDebt().longValue(), paymentCode);
         }
 
+        // FIX Issue #1 (HIGH): Populate appointmentCode from Appointment table
+        String appointmentCode = null;
+        if (invoice.getAppointmentId() != null) {
+            appointmentCode = appointmentRepository.findById(invoice.getAppointmentId())
+                    .map(Appointment::getAppointmentCode)
+                    .orElse(null);
+        }
+
+        // FIX Issue #2 (MEDIUM): Populate patientName from Patient table
+        String patientName = null;
+        if (invoice.getPatientId() != null) {
+            patientName = patientRepository.findById(invoice.getPatientId())
+                    .map(Patient::getFullName)
+                    .orElse(null);
+        }
+
+        // BONUS: Populate treatmentPlanCode from PatientTreatmentPlan table
+        String treatmentPlanCode = null;
+        if (invoice.getTreatmentPlanId() != null) {
+            treatmentPlanCode = treatmentPlanRepository.findById(invoice.getTreatmentPlanId().longValue())
+                    .map(PatientTreatmentPlan::getPlanCode) // ✅ Fixed: Use planCode, not treatmentPlanCode
+                    .orElse(null);
+        }
+
+        // FIX Issue #3 (LOW): Populate createdByName from Employee table
+        String createdByName = null;
+        if (invoice.getCreatedBy() != null) {
+            createdByName = employeeRepository.findById(invoice.getCreatedBy())
+                    .map(Employee::getFullName)
+                    .orElse(null);
+        }
+
         return InvoiceResponse.builder()
                 .invoiceId(invoice.getInvoiceId())
                 .invoiceCode(invoice.getInvoiceCode())
                 .invoiceType(invoice.getInvoiceType())
                 .patientId(invoice.getPatientId())
+                .patientName(patientName) // ✅ Fixed - FE Issue #2
                 .appointmentId(invoice.getAppointmentId())
+                .appointmentCode(appointmentCode) // ✅ Fixed - FE Issue #1
                 .treatmentPlanId(invoice.getTreatmentPlanId())
+                .treatmentPlanCode(treatmentPlanCode) // ✅ Bonus
                 .phaseNumber(invoice.getPhaseNumber())
                 .installmentNumber(invoice.getInstallmentNumber())
                 .totalAmount(invoice.getTotalAmount())
@@ -225,6 +277,7 @@ public class InvoiceService {
                 .paymentCode(paymentCode)
                 .qrCodeUrl(qrCodeUrl)
                 .createdBy(invoice.getCreatedBy())
+                .createdByName(createdByName) // ✅ Fixed - FE Issue #3
                 .createdAt(invoice.getCreatedAt())
                 .updatedAt(invoice.getUpdatedAt())
                 .items(itemResponses)
