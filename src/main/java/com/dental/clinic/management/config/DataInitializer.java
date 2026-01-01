@@ -54,7 +54,7 @@ public class DataInitializer {
             Integer consumablesCount = jdbcTemplate.queryForObject(
                     "SELECT COUNT(*) FROM service_consumables",
                     Integer.class);
-            
+
             // FIX: Check invoice_items to prevent duplicate invoice items bug
             Integer invoiceItemsCount = jdbcTemplate.queryForObject(
                     "SELECT COUNT(*) FROM invoice_items",
@@ -122,7 +122,8 @@ public class DataInitializer {
                         continue;
                     }
 
-                    // Execute DML statements (INSERT, UPDATE, DELETE, SELECT) and constraint fixes (ALTER TABLE)
+                    // Execute DML statements (INSERT, UPDATE, DELETE, SELECT) and constraint fixes
+                    // (ALTER TABLE)
                     String upperStatement = trimmed.toUpperCase();
                     if (upperStatement.startsWith("INSERT") ||
                             upperStatement.startsWith("UPDATE") ||
