@@ -2,6 +2,7 @@ package com.dental.clinic.management.payment.repository;
 
 import com.dental.clinic.management.payment.domain.Invoice;
 import com.dental.clinic.management.payment.enums.InvoicePaymentStatus;
+import com.dental.clinic.management.payment.enums.InvoiceType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,6 +20,8 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
     List<Invoice> findByPatientIdOrderByCreatedAtDesc(Integer patientId);
 
     List<Invoice> findByAppointmentIdOrderByCreatedAtDesc(Integer appointmentId);
+
+    List<Invoice> findByAppointmentIdAndInvoiceTypeOrderByCreatedAtDesc(Integer appointmentId, InvoiceType invoiceType);
 
     List<Invoice> findByTreatmentPlanIdOrderByCreatedAtDesc(Integer treatmentPlanId);
 

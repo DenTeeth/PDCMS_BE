@@ -14,7 +14,7 @@ import com.dental.clinic.management.payment.domain.InvoiceItem;
 import com.dental.clinic.management.payment.dto.CreateInvoiceRequest;
 import com.dental.clinic.management.payment.dto.InvoiceResponse;
 import com.dental.clinic.management.payment.enums.InvoicePaymentStatus;
-// import com.dental.clinic.management.payment.enums.InvoiceType;
+import com.dental.clinic.management.payment.enums.InvoiceType;
 import com.dental.clinic.management.payment.repository.InvoiceItemRepository;
 import com.dental.clinic.management.payment.repository.InvoiceRepository;
 import com.dental.clinic.management.treatment_plans.domain.PatientTreatmentPlan;
@@ -158,7 +158,8 @@ public class InvoiceService {
     @Transactional(readOnly = true)
     public List<InvoiceResponse> getInvoicesByAppointment(Integer appointmentId) {
         log.info("Getting invoices for appointment: {}", appointmentId);
-        List<Invoice> invoices = invoiceRepository.findByAppointmentIdOrderByCreatedAtDesc(appointmentId);
+        List<Invoice> invoices = invoiceRepository
+            .findByAppointmentIdAndInvoiceTypeOrderByCreatedAtDesc(appointmentId, InvoiceType.APPOINTMENT);
         return invoices.stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
