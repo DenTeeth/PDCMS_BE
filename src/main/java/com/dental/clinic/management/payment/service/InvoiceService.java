@@ -1,5 +1,7 @@
 package com.dental.clinic.management.payment.service;
 
+import com.dental.clinic.management.account.domain.Account;
+import com.dental.clinic.management.account.repository.AccountRepository;
 import com.dental.clinic.management.booking_appointment.domain.Appointment;
 import com.dental.clinic.management.booking_appointment.repository.AppointmentRepository;
 import com.dental.clinic.management.employee.domain.Employee;
@@ -17,9 +19,10 @@ import com.dental.clinic.management.payment.repository.InvoiceItemRepository;
 import com.dental.clinic.management.payment.repository.InvoiceRepository;
 import com.dental.clinic.management.treatment_plans.domain.PatientTreatmentPlan;
 import com.dental.clinic.management.treatment_plans.repository.PatientTreatmentPlanRepository;
-// import com.dental.clinic.management.utils.security.SecurityUtil;
+import com.dental.clinic.management.utils.security.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,6 +46,7 @@ public class InvoiceService {
     private final PatientRepository patientRepository;
     private final PatientTreatmentPlanRepository treatmentPlanRepository;
     private final EmployeeRepository employeeRepository;
+    private final AccountRepository accountRepository;
 
     /**
      * Tao invoice moi
@@ -52,7 +56,8 @@ public class InvoiceService {
         log.info("Creating new invoice for patient: {}", request.getPatientId());
 
         // ✅ DATA INTEGRITY VALIDATION: If appointmentId is provided, validate patientId
-        // matches
+        // matches and get the appointment doctor for created_by
+        Integer invoiceCreatedBy = 1; // Default system user
         if (request.getAppointmentId() != null) {
             Appointment appointment = appointmentRepository.findById(request.getAppointmentId())
                     .orElseThrow(() -> new ResourceNotFoundException("APPOINTMENT_NOT_FOUND",
@@ -69,7 +74,21 @@ public class InvoiceService {
                 throw new IllegalArgumentException(errorMsg);
             }
 
+            // ✅ SECURITY CHECK: If user is a doctor (not admin), verify they own this appointment
+            if (!SecurityUtil.hasCurrentUserRole("ADMIN")) {
+                Integer currentEmployeeId = getCurrentEmployeeId();
+                if (!appointment.getEmployeeId().equals(currentEmployeeId)) {
+                    log.error("Access denied: Doctor {} attempted to create invoice for appointment {} owned by doctor {}", 
+                             currentEmployeeId, appointment.getAppointmentId(), appointment.getEmployeeId());
+                    throw new AccessDeniedException("Bạn chỉ có thể tạo hóa đơn cho lịch hẹn của chính mình");
+                }
+            }
+
+            // ✅ FIX BUG: Set invoice created_by to match appointment's doctor
+            // This ensures invoice creator is the same as the appointment's responsible doctor
+            invoiceCreatedBy = appointment.getEmployeeId();
             log.debug("✅ Validated: Invoice patientId matches appointment patientId");
+            log.debug("✅ Setting invoice created_by to appointment doctor: {}", invoiceCreatedBy);
         }
 
         // Generate payment code for SePay webhook matching
@@ -89,7 +108,7 @@ public class InvoiceService {
                 .paymentStatus(InvoicePaymentStatus.PENDING_PAYMENT)
                 .dueDate(request.getDueDate())
                 .notes("Payment Code: " + paymentCode + (request.getNotes() != null ? " | " + request.getNotes() : ""))
-                .createdBy(1) // Default system user
+                .createdBy(invoiceCreatedBy) // Set to appointment doctor if appointment exists
                 .build();
 
         invoice = invoiceRepository.save(invoice);
@@ -360,5 +379,19 @@ public class InvoiceService {
         String sequenceStr = String.format("%02d", sequence);
 
         return prefix + dateStr + sequenceStr;
+    }
+
+    /**
+     * Get current employee ID from security context.
+     * Used for permission checks - doctors can only create invoices for their own appointments.
+     */
+    private Integer getCurrentEmployeeId() {
+        String username = SecurityUtil.getCurrentUserLogin()
+                .orElseThrow(() -> new AccessDeniedException("Người dùng chưa được xác thực"));
+
+        return accountRepository.findOneByUsername(username)
+                .map(Account::getEmployee)
+                .map(Employee::getEmployeeId)
+                .orElseThrow(() -> new AccessDeniedException("Không tìm thấy nhân viên cho người dùng: " + username));
     }
 }

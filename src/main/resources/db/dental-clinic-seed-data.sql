@@ -682,6 +682,10 @@ VALUES
 -- HOLIDAY (read-only)
 ('ROLE_DENTIST', 'VIEW_HOLIDAY'), -- View clinic holiday schedule
 
+-- PAYMENT & INVOICE (for own appointments only)
+('ROLE_DENTIST', 'CREATE_INVOICE'), -- Create invoices for own appointments
+('ROLE_DENTIST', 'VIEW_INVOICE_OWN'), -- View invoices for own appointments
+
 -- NOTIFICATION
 ('ROLE_DENTIST', 'VIEW_NOTIFICATION'),
 ('ROLE_DENTIST', 'DELETE_NOTIFICATION')
@@ -4032,6 +4036,32 @@ INSERT INTO appointment_participants (appointment_id, employee_id, participant_r
 VALUES (208, 7, 'ASSISTANT')  -- EMP007 - Y tá Nguyên
 ON CONFLICT (appointment_id, employee_id) DO NOTHING;
 
+
+-- ============================================
+-- TEST APPOINTMENT FOR BUG REPORT SCENARIO (Production reproduction)
+-- APT-TEST-001: Patient BN-1001 + Doctor Trịnh Công Thái + Service OTHER_DIAMOND
+-- This matches the production bug report scenario
+-- ============================================
+INSERT INTO appointments (
+    appointment_id, appointment_code, patient_id, employee_id, room_id,
+    appointment_start_time, appointment_end_time, expected_duration_minutes,
+    status, notes, created_by, created_at, updated_at
+) VALUES (
+    999, 'APT-TEST-20260102-001', 1, 2, 'GHE251103002',
+    '2026-01-02 14:00:00', '2026-01-02 14:30:00', 30,
+    'COMPLETED', 'TEST: BN-1001 + BS Trịnh Công Thái + OTHER_DIAMOND - For bug report verification', 5, NOW() - INTERVAL '1 day', NOW() - INTERVAL '1 day'
+)
+ON CONFLICT (appointment_id) DO NOTHING;
+
+-- Service for TEST appointment - OTHER_DIAMOND
+INSERT INTO appointment_services (appointment_id, service_id)
+SELECT 999, service_id FROM services WHERE service_code = 'OTHER_DIAMOND'
+ON CONFLICT (appointment_id, service_id) DO NOTHING;
+
+INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
+VALUES (999, 7, 'ASSISTANT')  -- Y tá Nguyên
+ON CONFLICT (appointment_id, employee_id) DO NOTHING;
+
 -- ============================================
 
 -- Fix appointment_audit_logs table if missing columns (with correct ENUM types)
@@ -5442,9 +5472,10 @@ SELECT setval('patient_tooth_status_history_history_id_seq', (SELECT COALESCE(MA
 
 -- Invoice 1: Appointment dat le (BN-1001, APT-20251104-001) - Đã thanh toán
 -- Payment code format: PDCMSyymmddxy (yy=year, mm=month, dd=day, xy=sequence)
+-- FIX: created_by must match appointment doctor (EMP001, not EMP003)
 INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at)
 VALUES
-('INV-20251104-001', 'APPOINTMENT', 1, 1, 600000, 600000, 0, 'PAID', NOW() + INTERVAL '7 days', 'Payment Code: PDCMS25110401', 3, NOW() - INTERVAL '2 days')
+('INV-20251104-001', 'APPOINTMENT', 1, 1, 600000, 600000, 0, 'PAID', NOW() + INTERVAL '7 days', 'Payment Code: PDCMS25110401', 1, NOW() - INTERVAL '2 days')
 ON CONFLICT (invoice_code) DO NOTHING;
 
 INSERT INTO invoice_items (invoice_id, service_id, service_code, service_name, quantity, unit_price, subtotal)
@@ -5454,8 +5485,9 @@ UNION ALL
 SELECT (SELECT invoice_id FROM invoices WHERE invoice_code = 'INV-20251104-001'), 3, 'SCALING_L1', 'Lay cao rang Level 1', 1, 300000, 300000
 WHERE EXISTS (SELECT 1 FROM invoices WHERE invoice_code = 'INV-20251104-001');
 
+-- FIX: Payment created_by should also match appointment doctor (EMP001)
 INSERT INTO payments (payment_code, invoice_id, amount, payment_method, payment_date, reference_number, created_by, created_at)
-SELECT 'PAY-20251104-001', (SELECT invoice_id FROM invoices WHERE invoice_code = 'INV-20251104-001'), 600000, 'SEPAY', NOW() - INTERVAL '2 days', 'SEPAY-WEBHOOK-123456', 3, NOW() - INTERVAL '2 days'
+SELECT 'PAY-20251104-001', (SELECT invoice_id FROM invoices WHERE invoice_code = 'INV-20251104-001'), 600000, 'SEPAY', NOW() - INTERVAL '2 days', 'SEPAY-WEBHOOK-123456', 1, NOW() - INTERVAL '2 days'
 WHERE EXISTS (SELECT 1 FROM invoices WHERE invoice_code = 'INV-20251104-001');
 
 -- Invoice 2: Appointment chua thanh toan (BN-1002, APT-20251105-001)
