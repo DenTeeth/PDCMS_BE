@@ -8,6 +8,7 @@ import com.dental.clinic.management.exception.ConflictException;
 import com.dental.clinic.management.exception.NotFoundException;
 import com.dental.clinic.management.treatment_plans.domain.ApprovalStatus;
 import com.dental.clinic.management.treatment_plans.domain.PatientPlanItem;
+import com.dental.clinic.management.treatment_plans.domain.PatientPlanPhase;
 import com.dental.clinic.management.treatment_plans.domain.PatientTreatmentPlan;
 import com.dental.clinic.management.treatment_plans.domain.PlanAuditLog;
 import com.dental.clinic.management.treatment_plans.dto.TreatmentPlanDetailResponse;
@@ -17,6 +18,9 @@ import com.dental.clinic.management.treatment_plans.dto.response.ApprovalMetadat
 import com.dental.clinic.management.treatment_plans.repository.PatientTreatmentPlanRepository;
 import com.dental.clinic.management.treatment_plans.repository.PlanAuditLogRepository;
 import com.dental.clinic.management.utils.security.SecurityUtil;
+import com.dental.clinic.management.payment.dto.CreateInvoiceRequest;
+import com.dental.clinic.management.payment.enums.InvoiceType;
+import com.dental.clinic.management.service.domain.DentalService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -44,6 +48,11 @@ public class TreatmentPlanApprovalService {
     // V21: Clinical Rules Validation
     private final com.dental.clinic.management.service.service.ClinicalRulesValidationService clinicalRulesValidationService;
     private final com.dental.clinic.management.booking_appointment.repository.PatientPlanItemRepository itemRepository;
+
+    // FE Issue: Auto-create invoices on approval
+    // (ISSUE_BE_TREATMENT_PLAN_PHASED_INVOICE_CREATION.md)
+    private final com.dental.clinic.management.payment.service.InvoiceService invoiceService;
+    private final com.dental.clinic.management.service.repository.DentalServiceRepository dentalServiceRepository;
 
     /**
      * API 5.9: Approve or Reject a treatment plan.
@@ -117,6 +126,17 @@ public class TreatmentPlanApprovalService {
         // 8B. V21: If APPROVED, activate items with clinical rules check
         if (newStatus == ApprovalStatus.APPROVED) {
             activateItemsWithClinicalRulesCheck(plan);
+
+            // FE Issue: Auto-create invoices based on paymentType
+            // (ISSUE_BE_TREATMENT_PLAN_PHASED_INVOICE_CREATION.md)
+            try {
+                createInvoicesForApprovedPlan(plan);
+                log.info("✅ Successfully auto-created invoices for approved plan: {}", planCode);
+            } catch (Exception e) {
+                // Don't rollback approval if invoice creation fails
+                // Invoices can be created manually later
+                log.error("❌ Failed to auto-create invoices for plan {}: {}", planCode, e.getMessage(), e);
+            }
         }
 
         // 9. Create audit log (P0 requirement)
@@ -421,5 +441,148 @@ public class TreatmentPlanApprovalService {
         log.info("API 5.12: Successfully submitted plan {} for review", planCode);
 
         return response;
+    }
+
+    // ========================================
+    // AUTO-CREATE INVOICES ON APPROVAL
+    // FE Issue: ISSUE_BE_TREATMENT_PLAN_PHASED_INVOICE_CREATION.md
+    // ========================================
+
+    /**
+     * Auto-create invoices when treatment plan is approved.
+     * Logic based on paymentType:
+     * - FULL: Create 1 invoice for entire plan
+     * - PHASED: Create separate invoice for each phase
+     * - INSTALLMENT: Create invoices by installment (TODO: needs logic)
+     *
+     * @param plan The approved treatment plan
+     */
+    private void createInvoicesForApprovedPlan(PatientTreatmentPlan plan) {
+        log.info("Creating invoices for approved plan: {} (paymentType: {})",
+                plan.getPlanCode(), plan.getPaymentType());
+
+        switch (plan.getPaymentType()) {
+            case FULL:
+                createFullPaymentInvoice(plan);
+                break;
+            case PHASED:
+                createPhasedInvoices(plan);
+                break;
+            case INSTALLMENT:
+                // TODO: Implement installment logic
+                log.warn("⚠️ INSTALLMENT payment type not yet implemented for plan: {}", plan.getPlanCode());
+                break;
+            default:
+                log.warn("Unknown payment type {} for plan: {}", plan.getPaymentType(), plan.getPlanCode());
+        }
+    }
+
+    /**
+     * Create ONE invoice for entire plan (paymentType = FULL).
+     * - phaseNumber = null
+     * - installmentNumber = null
+     * - Includes all items from all phases
+     */
+    private void createFullPaymentInvoice(PatientTreatmentPlan plan) {
+        log.info("Creating FULL payment invoice for plan: {}", plan.getPlanCode());
+
+        List<CreateInvoiceRequest.InvoiceItemDto> allItems = new java.util.ArrayList<>();
+
+        // Collect all items from all phases
+        for (PatientPlanPhase phase : plan.getPhases()) {
+            for (PatientPlanItem item : phase.getItems()) {
+                // Fetch service to get serviceCode
+                DentalService service = dentalServiceRepository.findById(item.getServiceId().longValue())
+                        .orElseThrow(() -> new NotFoundException("Service not found: " + item.getServiceId()));
+
+                allItems.add(CreateInvoiceRequest.InvoiceItemDto.builder()
+                        .serviceId(item.getServiceId())
+                        .serviceCode(service.getServiceCode())
+                        .serviceName(item.getItemName())
+                        .quantity(1)
+                        .unitPrice(item.getPrice())
+                        .notes("Phase " + phase.getPhaseNumber() + ": " + phase.getPhaseName())
+                        .build());
+            }
+        }
+
+        if (allItems.isEmpty()) {
+            log.warn("⚠️ No items found for plan: {}. Skipping invoice creation.", plan.getPlanCode());
+            return;
+        }
+
+        // Create single invoice
+        CreateInvoiceRequest request = CreateInvoiceRequest.builder()
+                .invoiceType(InvoiceType.TREATMENT_PLAN)
+                .patientId(plan.getPatient().getPatientId())
+                .treatmentPlanId(plan.getPlanId().intValue())
+                .phaseNumber(null) // FULL payment: no specific phase
+                .installmentNumber(null)
+                .items(allItems)
+                .notes("Tự động tạo khi duyệt lộ trình - Thanh toán toàn bộ (FULL)")
+                .dueDate(LocalDateTime.now().plusDays(7)) // Due in 7 days
+                .build();
+
+        invoiceService.createInvoice(request);
+        log.info("✅ Created FULL payment invoice for plan: {}", plan.getPlanCode());
+    }
+
+    /**
+     * Create separate invoices for EACH PHASE (paymentType = PHASED).
+     * Each invoice has:
+     * - phaseNumber = phase.phaseNumber (1, 2, 3, ...)
+     * - installmentNumber = null
+     * - Items only from that phase
+     */
+    private void createPhasedInvoices(PatientTreatmentPlan plan) {
+        log.info("Creating PHASED invoices for plan: {} ({} phases)",
+                plan.getPlanCode(), plan.getPhases().size());
+
+        int createdCount = 0;
+
+        for (PatientPlanPhase phase : plan.getPhases()) {
+            List<CreateInvoiceRequest.InvoiceItemDto> phaseItems = new java.util.ArrayList<>();
+
+            // Collect items from this phase only
+            for (PatientPlanItem item : phase.getItems()) {
+                // Fetch service to get serviceCode
+                DentalService service = dentalServiceRepository.findById(item.getServiceId().longValue())
+                        .orElseThrow(() -> new NotFoundException("Service not found: " + item.getServiceId()));
+
+                phaseItems.add(CreateInvoiceRequest.InvoiceItemDto.builder()
+                        .serviceId(item.getServiceId())
+                        .serviceCode(service.getServiceCode())
+                        .serviceName(item.getItemName())
+                        .quantity(1)
+                        .unitPrice(item.getPrice())
+                        .notes(null)
+                        .build());
+            }
+
+            if (phaseItems.isEmpty()) {
+                log.warn("⚠️ No items in phase {} of plan: {}. Skipping invoice for this phase.",
+                        phase.getPhaseNumber(), plan.getPlanCode());
+                continue;
+            }
+
+            // Create invoice for this phase
+            CreateInvoiceRequest request = CreateInvoiceRequest.builder()
+                    .invoiceType(InvoiceType.TREATMENT_PLAN)
+                    .patientId(plan.getPatient().getPatientId())
+                    .treatmentPlanId(plan.getPlanId().intValue())
+                    .phaseNumber(phase.getPhaseNumber()) // PHASED: specific phase number
+                    .installmentNumber(null)
+                    .items(phaseItems)
+                    .notes(String.format("Tự động tạo khi duyệt lộ trình - Giai đoạn %d: %s",
+                            phase.getPhaseNumber(), phase.getPhaseName()))
+                    .dueDate(LocalDateTime.now().plusDays(7)) // Due in 7 days
+                    .build();
+
+            invoiceService.createInvoice(request);
+            createdCount++;
+            log.info("✅ Created invoice for phase {} of plan: {}", phase.getPhaseNumber(), plan.getPlanCode());
+        }
+
+        log.info("✅ Successfully created {} phased invoices for plan: {}", createdCount, plan.getPlanCode());
     }
 }
