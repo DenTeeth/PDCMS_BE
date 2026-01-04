@@ -236,6 +236,25 @@ public class TimeOffRequestService {
                                         "Không thể xin nghỉ trong chính ngày tạo yêu cầu. Vui lòng chọn ngày khác.");
                 }
 
+                // 3.2 Yêu cầu báo trước 24h, trừ khi loại nghỉ là Nghỉ khẩn cấp (EMERGENCY_LEAVE)
+                boolean isEmergency = "EMERGENCY_LEAVE".equalsIgnoreCase(timeOffType.getTypeCode());
+                LocalDate noticeCutoffDate = today.plusDays(1); // xấp xỉ 24h kể từ hôm nay
+                if (!isEmergency && request.getStartDate().isBefore(noticeCutoffDate)) {
+                        throw new InvalidRequestException(
+                                        "TIME_OFF_NOTICE_24H_REQUIRED",
+                                        "Yêu cầu nghỉ phép cần báo trước tối thiểu 24 giờ. Vui lòng chọn ngày khác hoặc dùng loại Nghỉ khẩn cấp.");
+                }
+
+                // 3.3 Nghỉ khẩn cấp yêu cầu lý do giải trình
+                if (isEmergency) {
+                        String reason = request.getReason();
+                        if (reason == null || reason.trim().isEmpty()) {
+                                throw new InvalidRequestException(
+                                                "TIME_OFF_EMERGENCY_REASON_REQUIRED",
+                                                "Nghỉ khẩn cấp cần nhập lý do/giải trình.");
+                        }
+                }
+
                 // 4. Validate date range
                 if (request.getStartDate().isAfter(request.getEndDate())) {
                         throw new InvalidDateRangeException(
@@ -324,7 +343,7 @@ public class TimeOffRequestService {
                 if (hasAppointments) {
                         throw new InvalidRequestException(
                                         "TIME_OFF_OVERLAP_APPOINTMENT",
-                                        "Ngày nghỉ trùng với lịch hẹn hiện có. Vui lòng dời hoặc hủy các lịch hẹn trước khi xin nghỉ.");
+                                        "Ngày nghỉ trùng với lịch hẹn hiện có. Vui lòng dời các lịch hẹn trước khi xin nghỉ.");
                 }
 
                 // 10. Check for conflicting requests
