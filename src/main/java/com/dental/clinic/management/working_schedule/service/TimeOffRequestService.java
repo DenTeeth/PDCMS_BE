@@ -44,6 +44,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -101,13 +102,13 @@ public class TimeOffRequestService {
                         LocalDate endDate,
                         Pageable pageable) {
 
-                log.debug("Request to get all time-off requests with filters");
+                log.debug("Yêu cầu lấy danh sách nghỉ phép với bộ lọc");
 
                 // LUỒNG 1: Admin hoặc người dùng có quyền xem tất cả
                 if (SecurityUtil.hasCurrentUserRole(AuthoritiesConstants.ADMIN) ||
                                 SecurityUtil.hasCurrentUserPermission(AuthoritiesConstants.VIEW_LEAVE_ALL)) {
 
-                        log.info("User has VIEW_LEAVE_ALL permission, fetching with filters");
+                        log.info("Người dùng có quyền VIEW_LEAVE_ALL, bắt đầu truy vấn kèm bộ lọc");
                         return requestRepository.findWithFilters(employeeId, status, startDate, endDate, pageable)
                                         .map(requestMapper::toResponse);
                 }
@@ -127,7 +128,7 @@ public class TimeOffRequestService {
                                         .orElseThrow(() -> new RuntimeException(
                                                         "Không tìm thấy nhân viên cho người dùng: " + username));
 
-                        log.info("User has VIEW_TIMEOFF_OWN permission, fetching for employee_id: {}",
+                        log.info("Người dùng có quyền VIEW_TIMEOFF_OWN, truy vấn cho employee_id: {}",
                                         currentEmployeeId);
 
                         // Force filter by current employee, ignore employeeId parameter
@@ -147,13 +148,13 @@ public class TimeOffRequestService {
                         "hasAuthority('" + AuthoritiesConstants.VIEW_LEAVE_ALL + "') or " +
                         "hasAuthority('" + AuthoritiesConstants.VIEW_LEAVE_OWN + "')")
         public TimeOffRequestResponse getRequestById(String requestId) {
-                log.debug("Request to get time-off request: {}", requestId);
+                log.debug("Yêu cầu lấy chi tiết nghỉ phép: {}", requestId);
 
                 // LUỒNG 1: Admin hoặc người dùng có quyền xem tất cả
                 if (SecurityUtil.hasCurrentUserRole(AuthoritiesConstants.ADMIN) ||
                                 SecurityUtil.hasCurrentUserPermission(AuthoritiesConstants.VIEW_LEAVE_ALL)) {
 
-                        log.info("User has VIEW_LEAVE_ALL permission, fetching request: {}", requestId);
+                        log.info("Người dùng có quyền VIEW_LEAVE_ALL, lấy yêu cầu: {}", requestId);
                         return requestRepository.findByRequestId(requestId)
                                         .map(requestMapper::toResponse)
                                         .orElseThrow(() -> new TimeOffRequestNotFoundException(requestId));
@@ -174,13 +175,13 @@ public class TimeOffRequestService {
                                         .orElseThrow(() -> new RuntimeException(
                                                         "Không tìm thấy nhân viên cho người dùng: " + username));
 
-                        log.info("User has VIEW_TIMEOFF_OWN permission, fetching request: {} for employee_id: {}",
+                        log.info("Người dùng có quyền VIEW_TIMEOFF_OWN, lấy yêu cầu: {} cho employee_id: {}",
                                         requestId, employeeId);
 
                         return requestRepository.findByRequestIdAndEmployeeId(requestId, employeeId)
                                         .map(requestMapper::toResponse)
                                         .orElseThrow(() -> new TimeOffRequestNotFoundException(requestId,
-                                                        "or you don't have permission to view it"));
+                                                        "hoặc bạn không có quyền xem yêu cầu này"));
                 }
         }
 
@@ -193,7 +194,7 @@ public class TimeOffRequestService {
         @PreAuthorize("hasAuthority('" + AuthoritiesConstants.CREATE_TIME_OFF + "')")
         @Transactional
         public TimeOffRequestResponse createRequest(CreateTimeOffRequest request) {
-                log.debug("Request to create time-off request: {}", request);
+                log.debug("Yêu cầu tạo nghỉ phép: {}", request);
 
                 // 1. Auto-fill employeeId from JWT if not provided (for employee self-requests)
                 final Integer employeeId;
@@ -209,15 +210,15 @@ public class TimeOffRequestService {
                                         .map(account -> {
                                                 if (account.getEmployee() == null) {
                                                         throw new RuntimeException(
-                                                                        "Account " + username
-                                                                                        + " không có Employee liên kết.");
+                                                                        "Tài khoản " + username
+                                                                                        + " không có nhân viên liên kết.");
                                                 }
                                                 return account.getEmployee().getEmployeeId();
                                         })
                                         .orElseThrow(() -> new RuntimeException(
                                                         "Không tìm thấy nhân viên cho người dùng: " + username));
 
-                        log.info("Auto-filled employeeId from JWT: {}", employeeId);
+                        log.info("Tự động điền employeeId từ JWT: {}", employeeId);
                 }
 
                 // 2. Validate employee exists
@@ -381,7 +382,7 @@ public class TimeOffRequestService {
                                 .map(account -> {
                                         if (account.getEmployee() == null) {
                                                 throw new RuntimeException(
-                                                                "Account " + username + " không có Employee liên kết.");
+                                                                "Tài khoản " + username + " không có nhân viên liên kết.");
                                         }
                                         return account.getEmployee().getEmployeeId();
                                 })
@@ -389,7 +390,7 @@ public class TimeOffRequestService {
 
                 // 7. Generate request ID
                 String requestId = idGenerator.generateId("TOR");
-                log.info("Generated time-off request ID: {}", requestId);
+                log.info("Sinh mã yêu cầu nghỉ phép: {}", requestId);
 
                 // 8. Create and save time-off request
                 TimeOffRequest timeOffRequest = TimeOffRequest.builder()
@@ -408,7 +409,7 @@ public class TimeOffRequestService {
                 TimeOffRequest savedRequest = requestRepository.save(timeOffRequest);
                 requestRepository.flush(); // Force flush to DB
                 entityManager.clear(); // Clear persistence context to force fresh fetch
-                log.info("Created time-off request: {}", savedRequest.getRequestId());
+                log.info("Tạo yêu cầu nghỉ phép thành công: {}", savedRequest.getRequestId());
 
                 // Reload to fetch relationships (employee, requestedBy, approvedBy)
                 TimeOffRequest reloadedRequest = requestRepository.findByRequestId(savedRequest.getRequestId())
@@ -425,9 +426,9 @@ public class TimeOffRequestService {
                                         savedRequest.getRequestId(),
                                         request.getStartDate().toString(),
                                         request.getEndDate().toString());
-                        log.info("Time-off request notifications sent to all ADMIN users");
+                        log.info("Đã gửi thông báo nghỉ phép đến tất cả ADMIN");
                 } catch (Exception e) {
-                        log.error("Failed to send notification for time-off request: {}", savedRequest.getRequestId(),
+                        log.error("Gửi thông báo nghỉ phép thất bại: {}", savedRequest.getRequestId(),
                                         e);
                         // Don't fail the request creation if notification fails
                 }
@@ -441,7 +442,7 @@ public class TimeOffRequestService {
          */
         @Transactional
         public TimeOffRequestResponse updateRequestStatus(String requestId, UpdateTimeOffStatusRequest request) {
-                log.debug("Request to update time-off request status: {} to {}", requestId, request.getStatus());
+                log.debug("Yêu cầu cập nhật trạng thái nghỉ phép: {} sang {}", requestId, request.getStatus());
 
                 // 1. Find request
                 TimeOffRequest timeOffRequest = requestRepository.findByRequestId(requestId)
@@ -467,7 +468,7 @@ public class TimeOffRequestService {
                 TimeOffRequest updatedRequest = requestRepository.save(timeOffRequest);
                 requestRepository.flush(); // Force flush to DB
                 entityManager.clear(); // Clear persistence context to force fresh fetch
-                log.info("Updated time-off request {} to status: {}", requestId, request.getStatus());
+                log.info("Đã cập nhật yêu cầu nghỉ phép {} sang trạng thái: {}", requestId, request.getStatus());
 
                 // Reload to fetch relationships (employee, requestedBy, approvedBy)
                 TimeOffRequest reloadedRequest = requestRepository.findByRequestId(updatedRequest.getRequestId())
@@ -495,7 +496,7 @@ public class TimeOffRequestService {
                                 .map(account -> {
                                         if (account.getEmployee() == null) {
                                                 throw new RuntimeException(
-                                                                "Account " + username + " không có Employee liên kết.");
+                                                                "Tài khoản " + username + " không có nhân viên liên kết.");
                                         }
                                         return account.getEmployee().getEmployeeId();
                                 })
@@ -537,7 +538,7 @@ public class TimeOffRequestService {
                                 .map(account -> {
                                         if (account.getEmployee() == null) {
                                                 throw new RuntimeException(
-                                                                "Account " + username + " không có Employee liên kết.");
+                                                                "Tài khoản " + username + " không có nhân viên liên kết.");
                                         }
                                         return account.getEmployee().getEmployeeId();
                                 })
@@ -567,7 +568,7 @@ public class TimeOffRequestService {
                                 .map(account -> {
                                         if (account.getEmployee() == null) {
                                                 throw new RuntimeException(
-                                                                "Account " + username + " không có Employee liên kết.");
+                                                                "Tài khoản " + username + " không có nhân viên liên kết.");
                                         }
                                         return account.getEmployee().getEmployeeId();
                                 })
@@ -624,7 +625,7 @@ public class TimeOffRequestService {
                         throw new InsufficientLeaveBalanceException(daysRemaining, daysRequested.doubleValue());
                 }
 
-                log.info("Balance check passed for employee {} - Requested: {} days, Remaining: {} days",
+                log.info("Đủ số dư phép cho nhân viên {} - Yêu cầu: {} ngày, Còn lại: {} ngày",
                                 employeeId, daysRequested, daysRemaining);
         }
 
@@ -656,7 +657,7 @@ public class TimeOffRequestService {
                 // CHỈ trừ số dư cho ANNUAL_LEAVE
                 // Các loại khác (SICK_LEAVE, UNPAID_PERSONAL) không trừ số dư
                 if (!"ANNUAL_LEAVE".equals(timeOffType.getTypeCode())) {
-                        log.info("Skipping balance deduction for type: {} ({})",
+                        log.info("Không trừ phép cho loại: {} ({})",
                                         timeOffType.getTypeCode(), timeOffType.getTypeName());
                         return;
                 }
@@ -707,8 +708,69 @@ public class TimeOffRequestService {
 
                 historyRepository.save(history);
 
-                log.info("Deducted {} days from balance {} for request {} by approver {}",
+                log.info("Đã trừ {} ngày khỏi số dư {} cho yêu cầu {} bởi người duyệt {}",
                                 daysToDeduct, balance.getBalanceId(), timeOffRequest.getRequestId(), approvedBy);
+        }
+
+        /**
+         * Scheduled: Gửi nhắc nhở cho các yêu cầu PENDING sắp đến hạn (<24h).
+         * Chạy mỗi giờ để đảm bảo manager/admin được nhắc.
+         */
+        @Scheduled(cron = "0 5 * * * *")
+        @Transactional
+        public void notifyPendingTimeOffWithin24h() {
+                LocalDate today = LocalDate.now();
+                LocalDate tomorrow = today.plusDays(1);
+
+                List<TimeOffRequest> dueToday = requestRepository.findByStatusAndStartDate(TimeOffStatus.PENDING, today);
+                List<TimeOffRequest> dueTomorrow = requestRepository.findByStatusAndStartDate(TimeOffStatus.PENDING, tomorrow);
+
+                dueToday.forEach(this::notifyReminderPendingSoon);
+                dueTomorrow.forEach(this::notifyReminderPendingSoon);
+        }
+
+        /**
+         * Scheduled: Tự động hủy các yêu cầu PENDING tới ngày bắt đầu mà chưa được duyệt.
+         * Chạy lúc 6h sáng mỗi ngày.
+         */
+        @Scheduled(cron = "0 0 6 * * *")
+        @Transactional
+        public void autoCancelPendingOnStartDate() {
+                LocalDate today = LocalDate.now();
+                List<TimeOffRequest> pendingToday = requestRepository.findByStatusAndStartDate(TimeOffStatus.PENDING, today);
+
+                for (TimeOffRequest req : pendingToday) {
+                        req.setStatus(TimeOffStatus.CANCELLED);
+                        req.setCancellationReason("Tự động hủy vì quá hạn duyệt (đến ngày bắt đầu)");
+                        log.warn("Tự động hủy nghỉ phép {} cho nhân viên {} (bắt đầu: {})", req.getRequestId(),
+                                        req.getEmployeeId(), req.getStartDate());
+                }
+
+                if (!pendingToday.isEmpty()) {
+                        requestRepository.saveAll(pendingToday);
+                }
+        }
+
+        // Helper to send reminder notification for pending requests
+        private void notifyReminderPendingSoon(TimeOffRequest req) {
+                try {
+                        Employee employee = employeeRepository.findById(req.getEmployeeId())
+                                        .orElse(null);
+                        String employeeName = employee != null ? employee.getFirstName() + " " + employee.getLastName()
+                                        : "Nhân viên";
+
+                        // Tái sử dụng thông báo hiện có cho admin, dùng nội dung sắp đến hạn
+                        notificationService.createTimeOffRequestNotification(
+                                        employeeName,
+                                        req.getRequestId(),
+                                        req.getStartDate().toString(),
+                                        req.getEndDate().toString());
+
+                        log.info("Đã gửi nhắc nhở PENDING sắp tới hạn cho nghỉ phép {} (bắt đầu: {})", req.getRequestId(),
+                                        req.getStartDate());
+                } catch (Exception ex) {
+                        log.error("Gửi nhắc nhở PENDING thất bại cho nghỉ phép {}", req.getRequestId(), ex);
+                }
         }
 
         /**
@@ -730,14 +792,14 @@ public class TimeOffRequestService {
                                         shiftId, // null means all shifts
                                         ShiftStatus.ON_LEAVE);
 
-                        log.info("Updated {} employee shifts to ON_LEAVE for employee {} from {} to {} (work_shift: {})",
+                        log.info("Đã cập nhật {} ca làm sang ON_LEAVE cho nhân viên {} từ {} đến {} (work_shift: {})",
                                         updatedCount,
                                         timeOffRequest.getEmployeeId(),
                                         timeOffRequest.getStartDate(),
                                         timeOffRequest.getEndDate(),
                                         shiftId != null ? shiftId : "ALL");
                 } catch (Exception e) {
-                        log.error("Failed to update employee shifts to ON_LEAVE for request {}: {}",
+                        log.error("Cập nhật ca làm sang ON_LEAVE thất bại cho yêu cầu {}: {}",
                                         timeOffRequest.getRequestId(), e.getMessage(), e);
                         // Don't fail the entire transaction, just log the error
                 }
@@ -755,7 +817,7 @@ public class TimeOffRequestService {
          * @return true if employee has a shift, false otherwise
          */
         private boolean checkEmployeeHasShift(Integer employeeId, LocalDate date, String workShiftId) {
-                log.debug("Checking if employee {} has shift on {} for work_shift_id: {}",
+                log.debug("Kiểm tra nhân viên {} có ca làm ngày {} work_shift_id: {}",
                                 employeeId, date, workShiftId);
 
                 // Get day of week (MONDAY, TUESDAY, etc.)
@@ -792,7 +854,7 @@ public class TimeOffRequestService {
                                 });
 
                 if (hasFixedShift) {
-                        log.debug("Employee {} has FIXED shift on {} for work_shift_id: {}",
+                        log.debug("Nhân viên {} có ca cố định ngày {} work_shift_id: {}",
                                         employeeId, date, workShiftId);
                         return true;
                 }
@@ -833,12 +895,12 @@ public class TimeOffRequestService {
                                 });
 
                 if (hasPartTimeShift) {
-                        log.debug("Employee {} has PART_TIME_FLEX shift on {} for work_shift_id: {}",
+                        log.debug("Nhân viên {} có ca PART_TIME_FLEX ngày {} work_shift_id: {}",
                                         employeeId, date, workShiftId);
                         return true;
                 }
 
-                log.debug("Employee {} has NO shift on {} for work_shift_id: {}",
+                log.debug("Nhân viên {} không có ca làm ngày {} work_shift_id: {}",
                                 employeeId, date, workShiftId);
                 return false;
         }

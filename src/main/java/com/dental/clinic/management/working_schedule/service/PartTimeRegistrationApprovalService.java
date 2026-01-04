@@ -2,6 +2,7 @@ package com.dental.clinic.management.working_schedule.service;
 
 import com.dental.clinic.management.employee.domain.Employee;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
+import com.dental.clinic.management.notification.service.NotificationService;
 import com.dental.clinic.management.working_schedule.domain.PartTimeRegistration;
 import com.dental.clinic.management.working_schedule.domain.PartTimeSlot;
 import com.dental.clinic.management.working_schedule.enums.RegistrationStatus;
@@ -17,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.dao.OptimisticLockingFailureException;
 
 import java.time.LocalDate;
@@ -42,9 +44,10 @@ public class PartTimeRegistrationApprovalService {
     private final PartTimeSlotAvailabilityService availabilityService;
     private final EmployeeRepository employeeRepository;
     private final EmployeeShiftService employeeShiftService;
+    private final NotificationService notificationService;
 
     // Weekly hours limit for PART_TIME_FLEX employees
-    private static final double FULL_TIME_HOURS_PER_WEEK = 42.0; // 8h × 6 days
+    private static final double FULL_TIME_HOURS_PER_WEEK = 42.0; // 8h × 6 ngày
     private static final double PART_TIME_FLEX_LIMIT_PERCENTAGE = 0.5; // 50%
     private static final double WEEKLY_HOURS_LIMIT = FULL_TIME_HOURS_PER_WEEK * PART_TIME_FLEX_LIMIT_PERCENTAGE; // 21h
 
@@ -62,7 +65,7 @@ public class PartTimeRegistrationApprovalService {
      * @throws IllegalStateException         if quota would be exceeded
      */
     public void approveRegistration(Integer registrationId, Integer managerId) {
-        log.info("Manager {} approving registration {}", managerId, registrationId);
+        log.info("Quản lý {} duyệt đăng ký {}", managerId, registrationId);
 
         // Retry loop for optimistic locking races. We'll attempt the transactional
         // approve up to 3 times.
@@ -75,8 +78,8 @@ public class PartTimeRegistrationApprovalService {
                 // success
                 return;
             } catch (OptimisticLockingFailureException e) {
-                log.warn("Optimistic locking failure on approve attempt {}/{} for registration {}: {}", attempt,
-                        maxAttempts, registrationId, e.getMessage());
+                log.warn("Lỗi khóa lạc quan khi duyệt lần {}/{} cho đăng ký {}: {}", attempt,
+                    maxAttempts, registrationId, e.getMessage());
                 if (attempt >= maxAttempts) {
                     // rethrow as runtime so caller sees failure
                     throw e;
@@ -139,13 +142,13 @@ public class PartTimeRegistrationApprovalService {
         // INTEGRATION POINT: Create employee shifts for all working days
         // Using NEW generic shift generation method (replaces deprecated
         // createShiftsForApprovedRegistration)
-        log.info(" Starting shift generation for PART_TIME_FLEX registration {}", registrationId);
+        log.info(" Bắt đầu tạo ca cho đăng ký PART_TIME_FLEX {}", registrationId);
 
         try {
             // Extract days of week from slot (e.g., "MONDAY,WEDNESDAY,FRIDAY" → [1,3,5])
             List<Integer> daysOfWeek = extractDaysOfWeekFromSlot(slot);
 
-            log.debug("Registration {} details: slot={}, shift={}, days={}, period={} to {}",
+                log.debug("Thông tin đăng ký {}: slot={}, shift={}, days={}, giai đoạn {} đến {}",
                     registrationId, slot.getSlotId(), slot.getWorkShift().getWorkShiftId(),
                     daysOfWeek, registration.getEffectiveFrom(), registration.getEffectiveTo());
 
@@ -161,13 +164,13 @@ public class PartTimeRegistrationApprovalService {
                             registration.getRegistrationId().longValue(), // Link to registration
                             managerId);
 
-            log.info(
-                    " Registration {} approved by manager {} with {} shifts created (source: PART_TIME_FLEX, sourceId: {})",
+                log.info(
+                    " Đăng ký {} được quản lý {} duyệt, tạo {} ca (nguồn: PART_TIME_FLEX, sourceId: {})",
                     registrationId, managerId, createdShifts.size(), registration.getRegistrationId());
 
         } catch (Exception e) {
-            log.error(
-                    " Failed to generate shifts for registration {}: {}. Registration is APPROVED but shifts not created.",
+                log.error(
+                    " Tạo ca thất bại cho đăng ký {}: {}. Đăng ký đã APPROVED nhưng chưa tạo ca.",
                     registrationId, e.getMessage(), e);
             // Don't rollback approval - shifts can be regenerated via backfill endpoint
             // Just log the error for admin to investigate
@@ -185,7 +188,7 @@ public class PartTimeRegistrationApprovalService {
      */
     @Transactional
     public void rejectRegistration(Integer registrationId, Integer managerId, String reason) {
-        log.info("Manager {} rejecting registration {} with reason: {}", managerId, registrationId, reason);
+        log.info("Quản lý {} từ chối đăng ký {} với lý do: {}", managerId, registrationId, reason);
 
         if (reason == null || reason.trim().isEmpty()) {
             throw new IllegalArgumentException("Lý do từ chối là bắt buộc");
@@ -207,7 +210,7 @@ public class PartTimeRegistrationApprovalService {
         registrationRepository.save(registration);
         registrationRepository.flush(); // FIX ISSUE #2: Ensure rejection is visible immediately
 
-        log.info("Registration {} rejected by manager {}", registrationId, managerId);
+        log.info("Đăng ký {} bị quản lý {} từ chối", registrationId, managerId);
     }
 
     /**
@@ -250,7 +253,7 @@ public class PartTimeRegistrationApprovalService {
             }
         }
 
-        log.debug("Quota validation passed for registration {}", registration.getRegistrationId());
+        log.debug("Kiểm tra quota hợp lệ cho đăng ký {}", registration.getRegistrationId());
     }
 
     /**
@@ -282,13 +285,13 @@ public class PartTimeRegistrationApprovalService {
         Integer employeeId = registration.getEmployeeId();
 
         if (employeeId == null) {
-            log.error("Cannot validate weekly hours: employee ID is null for registration {}",
+                log.error("Không thể kiểm tra giờ/tuần: employee ID trống cho đăng ký {}",
                     registration.getRegistrationId());
             throw new IllegalArgumentException("Mã nhân viên không được để trống");
         }
 
         if (slot == null || slot.getWorkShift() == null) {
-            log.error("Cannot validate weekly hours: slot or work shift is null for registration {}",
+                log.error("Không thể kiểm tra giờ/tuần: slot hoặc work shift trống cho đăng ký {}",
                     registration.getRegistrationId());
             throw new IllegalArgumentException("Thông tin suất và ca làm việc là bắt buộc");
         }
@@ -305,15 +308,15 @@ public class PartTimeRegistrationApprovalService {
                 String[] daysArray = dayOfWeek.split(",");
                 int daysPerWeek = daysArray.length;
                 thisRegistrationHours = shiftDuration * daysPerWeek;
-                log.debug("Registration {} hours calculated: {}h/week ({}h/day × {} days)",
-                        registration.getRegistrationId(), thisRegistrationHours,
-                        shiftDuration, daysPerWeek);
+                log.debug("Đăng ký {} tính giờ: {}h/tuần ({}h/ca × {} ngày)",
+                    registration.getRegistrationId(), thisRegistrationHours,
+                    shiftDuration, daysPerWeek);
             }
         }
 
         // Validate hours calculation
         if (thisRegistrationHours <= 0) {
-            log.warn("Calculated hours per week is zero or negative for registration {}: {}h. Skipping validation.",
+                log.warn("Giờ/tuần tính được bằng 0 hoặc âm cho đăng ký {}: {}h. Bỏ qua kiểm tra.",
                     registration.getRegistrationId(), thisRegistrationHours);
             return;
         }
@@ -323,8 +326,8 @@ public class PartTimeRegistrationApprovalService {
 
         // Check if total would exceed limit
         if (finalTotalWeeklyHours > WEEKLY_HOURS_LIMIT) {
-            log.warn(
-                    "Weekly hours limit exceeded for employee {}: currentApproved={}h, newReg={}h, total={}h, limit={}h",
+                log.warn(
+                    "Vượt giới hạn giờ/tuần cho nhân viên {}: đã duyệt={}h, đăng ký mới={}h, tổng={}h, giới hạn={}h",
                     employeeId, currentApprovedHours, thisRegistrationHours,
                     finalTotalWeeklyHours, WEEKLY_HOURS_LIMIT);
             throw new WeeklyHoursExceededException(employeeId, finalTotalWeeklyHours, WEEKLY_HOURS_LIMIT,
@@ -332,8 +335,8 @@ public class PartTimeRegistrationApprovalService {
         }
 
         log.info(
-                "Weekly hours validation passed for employee {}: currentApproved={}h, newReg={}h, finalTotal={}h (limit: {}h)",
-                employeeId, currentApprovedHours, thisRegistrationHours, finalTotalWeeklyHours, WEEKLY_HOURS_LIMIT);
+            "Hợp lệ giờ/tuần cho nhân viên {}: đã duyệt={}h, đăng ký mới={}h, tổng={}h (giới hạn: {}h)",
+            employeeId, currentApprovedHours, thisRegistrationHours, finalTotalWeeklyHours, WEEKLY_HOURS_LIMIT);
     }
 
     /**
@@ -383,7 +386,7 @@ public class PartTimeRegistrationApprovalService {
             throw new IllegalArgumentException("Mã nhân viên không được để trống");
         }
 
-        log.debug("Calculating weekly hours for employee {}", employeeId);
+        log.debug("Đang tính giờ/tuần cho nhân viên {}", employeeId);
 
         try {
             // Get ONLY APPROVED registrations (PENDING should not be counted)
@@ -392,11 +395,11 @@ public class PartTimeRegistrationApprovalService {
                             List.of(RegistrationStatus.APPROVED));
 
             if (activeRegistrations == null || activeRegistrations.isEmpty()) {
-                log.debug("No active registrations found for employee {}", employeeId);
+                log.debug("Không có đăng ký hoạt động cho nhân viên {}", employeeId);
                 return 0.0;
             }
 
-            log.debug("Found {} APPROVED registrations for employee {}",
+                log.debug("Tìm thấy {} đăng ký APPROVED cho nhân viên {}",
                     activeRegistrations.size(), employeeId);
 
             double totalWeeklyHours = 0.0;
@@ -406,7 +409,7 @@ public class PartTimeRegistrationApprovalService {
             for (PartTimeRegistration registration : activeRegistrations) {
                 try {
                     if (registration == null) {
-                        log.warn("Null registration found in list for employee {}", employeeId);
+                        log.warn("Phát hiện đăng ký null trong danh sách của nhân viên {}", employeeId);
                         skippedRegistrations++;
                         continue;
                     }
@@ -416,22 +419,22 @@ public class PartTimeRegistrationApprovalService {
                             .orElse(null);
 
                     if (slot == null) {
-                        log.warn("Slot not found for registration {}, slotId: {}",
-                                registration.getRegistrationId(), registration.getPartTimeSlotId());
+                        log.warn("Không tìm thấy slot cho đăng ký {}, slotId: {}",
+                            registration.getRegistrationId(), registration.getPartTimeSlotId());
                         skippedRegistrations++;
                         continue;
                     }
 
                     if (!slot.getIsActive()) {
-                        log.debug("Skipping registration {} - slot {} is inactive",
-                                registration.getRegistrationId(), slot.getSlotId());
+                        log.debug("Bỏ qua đăng ký {} - slot {} đang inactive",
+                            registration.getRegistrationId(), slot.getSlotId());
                         skippedRegistrations++;
                         continue;
                     }
 
                     if (slot.getWorkShift() == null) {
-                        log.warn("Work shift not found for registration {}, slot {}",
-                                registration.getRegistrationId(), slot.getSlotId());
+                        log.warn("Không tìm thấy work shift cho đăng ký {}, slot {}",
+                            registration.getRegistrationId(), slot.getSlotId());
                         skippedRegistrations++;
                         continue;
                     }
@@ -439,8 +442,8 @@ public class PartTimeRegistrationApprovalService {
                     // Get shift duration (already excludes lunch break)
                     Double shiftDuration = slot.getWorkShift().getDurationHours();
                     if (shiftDuration == null || shiftDuration <= 0) {
-                        log.warn("Invalid shift duration for registration {}: {}",
-                                registration.getRegistrationId(), shiftDuration);
+                        log.warn("Thời lượng ca không hợp lệ cho đăng ký {}: {}",
+                            registration.getRegistrationId(), shiftDuration);
                         skippedRegistrations++;
                         continue;
                     }
@@ -448,8 +451,8 @@ public class PartTimeRegistrationApprovalService {
                     // Count working days per week for this slot
                     String dayOfWeek = slot.getDayOfWeek();
                     if (dayOfWeek == null || dayOfWeek.trim().isEmpty()) {
-                        log.warn("Invalid day of week for registration {}: '{}'",
-                                registration.getRegistrationId(), dayOfWeek);
+                        log.warn("Giá trị day_of_week không hợp lệ cho đăng ký {}: '{}'",
+                            registration.getRegistrationId(), dayOfWeek);
                         skippedRegistrations++;
                         continue;
                     }
@@ -459,7 +462,7 @@ public class PartTimeRegistrationApprovalService {
                     int daysPerWeek = daysArray.length;
 
                     if (daysPerWeek <= 0) {
-                        log.warn("No valid days found for registration {}", registration.getRegistrationId());
+                        log.warn("Không tìm thấy ngày hợp lệ cho đăng ký {}", registration.getRegistrationId());
                         skippedRegistrations++;
                         continue;
                     }
@@ -469,12 +472,12 @@ public class PartTimeRegistrationApprovalService {
                     totalWeeklyHours += hoursPerWeek;
                     validRegistrations++;
 
-                    log.debug("Registration {}: slot={}, shift={}h, days={}, hours/week={}h (status: {})",
+                        log.debug("Đăng ký {}: slot={}, shift={}h, days={}, hours/week={}h (status: {})",
                             registration.getRegistrationId(), slot.getSlotId(),
                             shiftDuration, daysPerWeek, hoursPerWeek, registration.getStatus());
 
                 } catch (Exception e) {
-                    log.error("Error calculating hours for registration {}: {}",
+                        log.error("Lỗi khi tính giờ cho đăng ký {}: {}",
                             (registration != null ? registration.getRegistrationId() : "unknown"),
                             e.getMessage(), e);
                     skippedRegistrations++;
@@ -482,13 +485,13 @@ public class PartTimeRegistrationApprovalService {
                 }
             }
 
-            log.info("Employee {} total weekly hours: {}h (limit: {}h), valid: {}, skipped: {}",
+                log.info("Nhân viên {} tổng số giờ/tuần: {}h (giới hạn: {}h), hợp lệ: {}, bỏ qua: {}",
                     employeeId, totalWeeklyHours, WEEKLY_HOURS_LIMIT, validRegistrations, skippedRegistrations);
 
             return totalWeeklyHours;
 
         } catch (Exception e) {
-            log.error("Error calculating weekly hours for employee {}: {}", employeeId, e.getMessage(), e);
+            log.error("Lỗi khi tính giờ/tuần cho nhân viên {}: {}", employeeId, e.getMessage(), e);
             throw new RuntimeException("Không thể tính số giờ hàng tuần cho nhân viên " + employeeId, e);
         }
     }
@@ -520,7 +523,7 @@ public class PartTimeRegistrationApprovalService {
             validateQuotaBeforeApproval(registration, slot);
             return true;
         } catch (Exception e) {
-            log.debug("Cannot approve registration {}: {}", registrationId, e.getMessage());
+            log.debug("Không thể duyệt đăng ký {}: {}", registrationId, e.getMessage());
             return false;
         }
     }
@@ -537,7 +540,7 @@ public class PartTimeRegistrationApprovalService {
     @Transactional
     public com.dental.clinic.management.working_schedule.dto.response.BulkApproveResponse bulkApprove(
             List<Integer> registrationIds, Integer managerId) {
-        log.info("Bulk approving {} registrations by manager {}", registrationIds.size(), managerId);
+        log.info("Duyệt hàng loạt {} đăng ký bởi quản lý {}", registrationIds.size(), managerId);
 
         java.util.List<Integer> successfulIds = new java.util.ArrayList<>();
         java.util.List<com.dental.clinic.management.working_schedule.dto.response.BulkApproveResponse.FailureDetail> failures = new java.util.ArrayList<>();
@@ -547,10 +550,10 @@ public class PartTimeRegistrationApprovalService {
                 // Attempt to approve each registration
                 approveRegistration(registrationId, managerId);
                 successfulIds.add(registrationId);
-                log.info("Successfully approved registration {}", registrationId);
+                log.info("Duyệt thành công đăng ký {}", registrationId);
             } catch (Exception e) {
                 // Capture failure with reason
-                log.warn("Failed to approve registration {}: {}", registrationId, e.getMessage());
+                log.warn("Không thể duyệt đăng ký {}: {}", registrationId, e.getMessage());
                 failures.add(
                         com.dental.clinic.management.working_schedule.dto.response.BulkApproveResponse.FailureDetail
                                 .builder()
@@ -579,7 +582,7 @@ public class PartTimeRegistrationApprovalService {
     @Transactional(readOnly = true)
     public com.dental.clinic.management.working_schedule.dto.response.RegistrationHistoryResponse getRegistrationHistory(
             Integer registrationId) {
-        log.info("Fetching history for registration {}", registrationId);
+        log.info("Lấy lịch sử cho đăng ký {}", registrationId);
 
         PartTimeRegistration registration = registrationRepository.findById(registrationId)
                 .orElseThrow(() -> new RegistrationNotFoundException(registrationId));
@@ -624,7 +627,7 @@ public class PartTimeRegistrationApprovalService {
                             .processedByCode(processor.getEmployeeCode());
                 }
             } catch (Exception e) {
-                log.warn("Could not fetch processor info for registration {}", registrationId);
+                log.warn("Không thể lấy thông tin người xử lý cho đăng ký {}", registrationId);
             }
         }
 
@@ -710,9 +713,9 @@ public class PartTimeRegistrationApprovalService {
             if (!overlappingDates.isEmpty()) {
                 // FIX BUG #1 & #2: Throw exception with clear, detailed message
                 log.warn(
-                        "Registration conflict detected: {} overlapping dates between registration {} (PENDING) and {} ({})",
-                        overlappingDates.size(), registration.getRegistrationId(),
-                        existing.getRegistrationId(), existing.getStatus());
+                    "Phát hiện xung đột đăng ký: {} ngày trùng giữa đăng ký {} (PENDING) và {} ({})",
+                    overlappingDates.size(), registration.getRegistrationId(),
+                    existing.getRegistrationId(), existing.getStatus());
 
                 throw new RegistrationConflictException(overlappingDates, existing.getRegistrationId());
             }
@@ -766,7 +769,7 @@ public class PartTimeRegistrationApprovalService {
                     conflictingDates.size(),
                     formatDateList(conflictingDates));
 
-            log.warn("Existing shifts conflict detected for employee {} on {} dates",
+                log.warn("Phát hiện xung đột ca làm cho nhân viên {} ở {} ngày",
                     registration.getEmployeeId(), conflictingDates.size());
 
             throw new IllegalStateException(errorMessage);
@@ -808,12 +811,12 @@ public class PartTimeRegistrationApprovalService {
      */
     private List<Integer> extractDaysOfWeekFromSlot(PartTimeSlot slot) {
         if (slot == null || slot.getDayOfWeek() == null || slot.getDayOfWeek().trim().isEmpty()) {
-            log.warn("Slot has no day of week specified, returning empty list");
+            log.warn("Slot không có ngày trong tuần, trả về danh sách rỗng");
             return java.util.Collections.emptyList();
         }
 
         String dayOfWeek = slot.getDayOfWeek().trim();
-        log.debug("Extracting days from slot dayOfWeek: '{}'", dayOfWeek);
+        log.debug("Trích xuất ngày từ slot dayOfWeek: '{}'", dayOfWeek);
 
         List<Integer> dayNumbers = new java.util.ArrayList<>();
         String[] days = dayOfWeek.split(",");
@@ -824,13 +827,13 @@ public class PartTimeRegistrationApprovalService {
             if (dayNumber != null) {
                 dayNumbers.add(dayNumber);
             } else {
-                log.warn("Unknown day name: '{}', skipping", trimmedDay);
+                log.warn("Không nhận diện được tên ngày: '{}', bỏ qua", trimmedDay);
             }
         }
 
         // Sort for consistency
         java.util.Collections.sort(dayNumbers);
-        log.debug("Extracted day numbers: {}", dayNumbers);
+        log.debug("Danh sách ngày sau khi chuyển đổi: {}", dayNumbers);
 
         return dayNumbers;
     }
@@ -871,13 +874,13 @@ public class PartTimeRegistrationApprovalService {
      * @return Summary string with success/skip/error counts
      */
     public String backfillShiftsForExistingRegistrations() {
-        log.info("=== Starting backfill process for PART_TIME_FLEX registrations ===");
+        log.info("=== Bắt đầu backfill cho đăng ký PART_TIME_FLEX ===");
 
         // Find all APPROVED and active registrations
         List<PartTimeRegistration> approvedRegistrations = registrationRepository
                 .findByStatusIn(java.util.Arrays.asList(RegistrationStatus.APPROVED));
 
-        log.info("Found {} APPROVED registrations to process", approvedRegistrations.size());
+        log.info("Tìm thấy {} đăng ký APPROVED cần xử lý", approvedRegistrations.size());
 
         int totalProcessed = 0;
         int successCount = 0;
@@ -889,7 +892,7 @@ public class PartTimeRegistrationApprovalService {
             totalProcessed++;
 
             try {
-                log.debug("Processing registration {}/{}: ID={}, employee={}, slot={}",
+                log.debug("Xử lý đăng ký {}/{}: ID={}, employee={}, slot={}",
                         totalProcessed, approvedRegistrations.size(),
                         registration.getRegistrationId(),
                         registration.getEmployeeId(),
@@ -903,20 +906,20 @@ public class PartTimeRegistrationApprovalService {
                 } else if (shiftsCreated >= 0) {
                     totalShiftsCreated += shiftsCreated;
                     successCount++;
-                    log.info(" Registration {}: Generated {} shifts",
+                        log.info(" Đăng ký {}: Đã tạo {} ca",
                             registration.getRegistrationId(), shiftsCreated);
                 }
 
             } catch (Exception e) {
-                log.error(" Registration {}: Failed to generate shifts: {}",
+                log.error(" Đăng ký {}: Tạo ca thất bại: {}",
                         registration.getRegistrationId(), e.getMessage(), e);
                 errorCount++;
             }
         }
 
         String summary = String.format(
-                "Backfill complete: %d registrations processed, %d succeeded (%d shifts created), %d skipped, %d errors",
-                totalProcessed, successCount, totalShiftsCreated, skipCount, errorCount);
+            "Hoàn tất backfill: xử lý %d đăng ký, thành công %d (tạo %d ca), bỏ qua %d, lỗi %d",
+            totalProcessed, successCount, totalShiftsCreated, skipCount, errorCount);
 
         log.info("=== {} ===", summary);
         return summary;
@@ -940,7 +943,7 @@ public class PartTimeRegistrationApprovalService {
      */
     @Transactional
     public int regenerateShiftsForRegistration(Integer registrationId) {
-        log.info(" Regenerating shifts for registration {}", registrationId);
+        log.info(" Tạo lại ca cho đăng ký {}", registrationId);
 
         // Find registration
         PartTimeRegistration registration = registrationRepository.findById(registrationId)
@@ -948,11 +951,11 @@ public class PartTimeRegistrationApprovalService {
 
         // Only regenerate for APPROVED registrations
         if (registration.getStatus() != RegistrationStatus.APPROVED) {
-            log.warn("Cannot regenerate shifts for registration {} with status {}",
+                log.warn("Không thể tái sinh ca cho đăng ký {} với trạng thái {}",
                     registrationId, registration.getStatus());
             throw new IllegalStateException(
-                    String.format("Cannot regenerate shifts for registration %d: status is %s (must be APPROVED)",
-                            registrationId, registration.getStatus()));
+                String.format("Không thể tái sinh ca cho đăng ký %d: trạng thái %s (cần ở APPROVED)",
+                    registrationId, registration.getStatus()));
         }
 
         // Get slot details
@@ -961,7 +964,7 @@ public class PartTimeRegistrationApprovalService {
 
         if (slot.getWorkShift() == null) {
             throw new IllegalStateException(
-                    String.format("Slot %d has no work shift assigned", slot.getSlotId()));
+                    String.format("Suất %d chưa được gán ca làm", slot.getSlotId()));
         }
 
         // Delete existing shifts for this registration
@@ -969,9 +972,9 @@ public class PartTimeRegistrationApprovalService {
             int deletedCount = employeeShiftService.deleteShiftsForSource(
                     "PART_TIME_FLEX",
                     registration.getRegistrationId().longValue());
-            log.info("Deleted {} existing shifts for registration {}", deletedCount, registrationId);
+            log.info("Đã xóa {} ca hiện có cho đăng ký {}", deletedCount, registrationId);
         } catch (Exception e) {
-            log.warn("Failed to delete existing shifts for registration {}: {}. Continuing with regeneration.",
+            log.warn("Xóa ca cũ thất bại cho đăng ký {}: {}. Vẫn tiếp tục tái sinh.",
                     registrationId, e.getMessage());
         }
 
@@ -979,7 +982,7 @@ public class PartTimeRegistrationApprovalService {
         List<Integer> daysOfWeek = extractDaysOfWeekFromSlot(slot);
         if (daysOfWeek.isEmpty()) {
             throw new IllegalStateException(
-                    String.format("Slot %d has no valid days of week specified", slot.getSlotId()));
+                    String.format("Suất %d không có ngày trong tuần hợp lệ", slot.getSlotId()));
         }
 
         // Generate new shifts
@@ -995,7 +998,7 @@ public class PartTimeRegistrationApprovalService {
                         null // createdBy = null for regeneration (system generated)
                 );
 
-        log.info(" Regenerated {} shifts for registration {}", createdShifts.size(), registrationId);
+        log.info(" Đã tái sinh {} ca cho đăng ký {}", createdShifts.size(), registrationId);
         return createdShifts.size();
     }
 
@@ -1011,13 +1014,13 @@ public class PartTimeRegistrationApprovalService {
                 .orElse(null);
 
         if (slot == null) {
-            log.warn(" Registration {}: Slot {} not found, skipping",
-                    registration.getRegistrationId(), registration.getPartTimeSlotId());
+            log.warn(" Đăng ký {}: Không tìm thấy slot {}, bỏ qua",
+                registration.getRegistrationId(), registration.getPartTimeSlotId());
             return -1;
         }
 
         if (slot.getWorkShift() == null) {
-            log.warn(" Registration {}: Slot {} has no work shift, skipping",
+                log.warn(" Đăng ký {}: Slot {} không có ca làm, bỏ qua",
                     registration.getRegistrationId(), slot.getSlotId());
             return -1;
         }
@@ -1028,7 +1031,7 @@ public class PartTimeRegistrationApprovalService {
                 registration.getRegistrationId().longValue());
 
         if (hasShifts) {
-            log.debug("⏭ Registration {}: Shifts already exist, skipping",
+                log.debug("⏭ Đăng ký {}: Đã có ca, bỏ qua",
                     registration.getRegistrationId());
             return -1;
         }
@@ -1036,7 +1039,7 @@ public class PartTimeRegistrationApprovalService {
         // Extract days of week
         List<Integer> daysOfWeek = extractDaysOfWeekFromSlot(slot);
         if (daysOfWeek.isEmpty()) {
-            log.warn(" Registration {}: No valid days of week found, skipping",
+                log.warn(" Đăng ký {}: Không có ngày hợp lệ, bỏ qua",
                     registration.getRegistrationId());
             return -1;
         }
@@ -1055,5 +1058,63 @@ public class PartTimeRegistrationApprovalService {
                 );
 
         return createdShifts.size();
+    }
+
+    /**
+     * Scheduled: Nhắc PENDING đăng ký Part-time sắp hiệu lực (<24h).
+     * Chạy mỗi giờ.
+     */
+    @Scheduled(cron = "0 20 * * * *")
+    @Transactional
+    public void remindPendingPartTimeWithin24h() {
+        LocalDate today = LocalDate.now();
+        LocalDate tomorrow = today.plusDays(1);
+
+        List<PartTimeRegistration> dueToday = registrationRepository.findByStatusAndEffectiveFrom(RegistrationStatus.PENDING, today);
+        List<PartTimeRegistration> dueTomorrow = registrationRepository.findByStatusAndEffectiveFrom(RegistrationStatus.PENDING, tomorrow);
+
+        dueToday.forEach(this::notifyPendingPartTime);
+        dueTomorrow.forEach(this::notifyPendingPartTime);
+    }
+
+    /**
+     * Scheduled: Auto-cancel PENDING khi tới ngày hiệu lực mà chưa duyệt.
+     * Chạy 6h sáng hàng ngày.
+     */
+    @Scheduled(cron = "0 5 6 * * *")
+    @Transactional
+    public void autoCancelPendingPartTimeOnStartDate() {
+        LocalDate today = LocalDate.now();
+        List<PartTimeRegistration> pendingToday = registrationRepository.findByStatusAndEffectiveFrom(RegistrationStatus.PENDING, today);
+
+        for (PartTimeRegistration reg : pendingToday) {
+            reg.setStatus(RegistrationStatus.CANCELLED);
+            reg.setReason("Tự động hủy vì quá hạn duyệt (đến ngày hiệu lực)");
+            reg.setProcessedAt(LocalDateTime.now());
+            reg.setIsActive(false);
+                log.warn("Tự động hủy đăng ký part-time {} cho nhân viên {} (hiệu lực từ {})",
+                    reg.getRegistrationId(), reg.getEmployeeId(), reg.getEffectiveFrom());
+        }
+
+        if (!pendingToday.isEmpty()) {
+            registrationRepository.saveAll(pendingToday);
+        }
+    }
+
+    private void notifyPendingPartTime(PartTimeRegistration reg) {
+        try {
+            Employee employee = employeeRepository.findById(reg.getEmployeeId()).orElse(null);
+            String employeeName = employee != null ? employee.getFirstName() + " " + employee.getLastName() : "Nhân viên";
+
+            notificationService.createPartTimeRequestNotification(
+                    employeeName,
+                    reg.getRegistrationId(),
+                    reg.getEffectiveFrom().toString(),
+                    reg.getEffectiveTo().toString());
+
+            log.info("Đã gửi nhắc nhở đăng ký part-time PENDING {} (hiệu lực từ {})", reg.getRegistrationId(), reg.getEffectiveFrom());
+        } catch (Exception ex) {
+            log.error("Gửi nhắc nhở part-time thất bại cho đăng ký {}", reg.getRegistrationId(), ex);
+        }
     }
 }

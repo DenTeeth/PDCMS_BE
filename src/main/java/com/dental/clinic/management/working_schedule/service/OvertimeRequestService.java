@@ -30,6 +30,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -77,19 +78,19 @@ public class OvertimeRequestService {
         // ROLE_ADMIN & ROLE_MANAGER have VIEW_OT_ALL permission
         @PreAuthorize("hasAnyAuthority('VIEW_OT_ALL', 'VIEW_OT_OWN')")
         public Page<OvertimeRequestListResponse> getAllOvertimeRequests(RequestStatus status, Pageable pageable) {
-                log.info("Fetching overtime requests with status: {}", status);
+                log.info("Đang lấy danh sách yêu cầu OT với trạng thái: {}", status);
 
                 boolean hasViewAll = SecurityUtil.hasCurrentUserPermission("VIEW_OT_ALL");
 
                 if (hasViewAll) {
                         // User can see all requests
-                        log.debug("User has VIEW_OT_ALL permission");
+                        log.debug("Người dùng có quyền VIEW_OT_ALL");
                         Page<OvertimeRequest> requests = overtimeRequestRepository.findAllWithOptionalStatus(status,
                                         pageable);
                         return requests.map(overtimeRequestMapper::toListResponse);
                 } else {
                         // User can only see their own requests
-                        log.debug("User has VIEW_OT_OWN permission");
+                        log.debug("Người dùng có quyền VIEW_OT_OWN");
                         Employee currentEmployee = getCurrentEmployee();
                         Page<OvertimeRequest> requests = overtimeRequestRepository.findByEmployeeIdAndStatus(
                                         currentEmployee.getEmployeeId(), status, pageable);
@@ -113,7 +114,7 @@ public class OvertimeRequestService {
         // ROLE_ADMIN & ROLE_MANAGER have VIEW_OT_ALL permission
         @PreAuthorize("hasAnyAuthority('VIEW_OT_ALL', 'VIEW_OT_OWN')")
         public OvertimeRequestDetailResponse getOvertimeRequestById(String requestId) {
-                log.info("Fetching overtime request: {}", requestId);
+                log.info("Đang lấy chi tiết yêu cầu OT: {}", requestId);
 
                 OvertimeRequest request = overtimeRequestRepository.findById(requestId)
                                 .orElseThrow(() -> new OvertimeRequestNotFoundException(requestId));
@@ -123,7 +124,7 @@ public class OvertimeRequestService {
                         Employee currentEmployee = getCurrentEmployee();
                         if (!request.isOwnedBy(currentEmployee.getEmployeeId()) &&
                                         !request.isRequestedBy(currentEmployee.getEmployeeId())) {
-                                log.warn("User {} attempted to access overtime request {} without permission",
+                                log.warn("Người dùng {} cố truy cập yêu cầu OT {} mà không có quyền",
                                                 currentEmployee.getEmployeeId(), requestId);
                                 // Return 404 instead of 403 for security (don't reveal existence)
                                 throw new OvertimeRequestNotFoundException(requestId);
@@ -163,15 +164,15 @@ public class OvertimeRequestService {
                 if (dto.getEmployeeId() != null) {
                         // Admin mode: creating for specified employee
                         targetEmployeeId = dto.getEmployeeId();
-                        log.info("Creating overtime request for employee {} (admin mode)", targetEmployeeId);
+                        log.info("Tạo yêu cầu OT cho nhân viên {} (chế độ admin)", targetEmployeeId);
                 } else {
                         // Employee mode: creating for themselves
                         Employee currentEmployee = getCurrentEmployee();
                         targetEmployeeId = currentEmployee.getEmployeeId();
-                        log.info("Creating overtime request for employee {} (self-request mode)", targetEmployeeId);
+                        log.info("Tạo yêu cầu OT cho nhân viên {} (tự gửi)", targetEmployeeId);
                 }
 
-                log.info("Creating overtime request for employee {} on {} shift {}",
+                log.info("Tạo yêu cầu OT cho nhân viên {} vào ngày {} ca {}",
                                 targetEmployeeId, dto.getWorkDate(), dto.getWorkShiftId());
 
                 // Validation 1: Verify employee exists
@@ -192,7 +193,7 @@ public class OvertimeRequestService {
                                 targetEmployeeId, dto.getWorkDate(), activeStatuses);
 
                 if (alreadyHasRequestOnDate) {
-                        log.warn(" Anti-spam: Employee {} already has overtime request on date {}",
+                        log.warn("Chặn spam: Nhân viên {} đã có yêu cầu OT vào ngày {}",
                                         targetEmployeeId, dto.getWorkDate());
                         throw new DuplicateOvertimeRequestException(
                                         String.format("Bạn đã có đơn overtime cho ngày %s rồi! Chỉ được gửi 1 đơn overtime cho mỗi ngày.",
@@ -218,8 +219,8 @@ public class OvertimeRequestService {
                         LocalTime now = java.time.LocalTime.now();
                         if (workShift.getEndTime().isBefore(now) || workShift.getEndTime().equals(now)) {
                                 log.warn(
-                                                "Cannot create overtime request for shift that has already ended today. Shift ends at {}, current time: {}",
-                                                workShift.getEndTime(), now);
+                                                        "Không thể tạo yêu cầu OT cho ca đã kết thúc hôm nay. Ca kết thúc lúc {}, thời gian hiện tại: {}",
+                                                        workShift.getEndTime(), now);
                                 throw new IllegalArgumentException(
                                                 String.format("Ca làm việc đã kết thúc (kết thúc lúc %s). Không thể tạo yêu cầu OT.",
                                                                 workShift.getEndTime()));
@@ -233,7 +234,7 @@ public class OvertimeRequestService {
                 // Admin mode is when employeeId is explicitly provided in request
                 Employee requestedBy = getCurrentEmployee();
                 if (dto.getEmployeeId() != null && targetEmployeeId.equals(requestedBy.getEmployeeId())) {
-                        log.warn("Admin {} attempted to use admin privilege to create overtime for themselves (security violation)",
+                        log.warn("Admin {} cố dùng quyền admin để tự tạo OT (vi phạm bảo mật)",
                                         requestedBy.getEmployeeId());
                         throw new IllegalArgumentException("Không thể tự phân công OT cho bản thân.");
                 }
@@ -250,7 +251,7 @@ public class OvertimeRequestService {
                         // If employee was REJECTED for this exact shift, don't allow re-request
                         if (existingRequest.getStatus() == RequestStatus.REJECTED &&
                                         existingShift.getWorkShiftId().equals(dto.getWorkShiftId())) {
-                                log.warn("Employee {} attempted to re-request overtime for REJECTED shift {} on {}",
+                                log.warn("Nhân viên {} cố gửi lại OT cho ca đã bị từ chối {} vào {}",
                                                 targetEmployeeId, dto.getWorkShiftId(), dto.getWorkDate());
                                 throw new IllegalArgumentException(
                                                 String.format(
@@ -264,7 +265,7 @@ public class OvertimeRequestService {
                         // If employee CANCELLED this exact shift, don't allow immediate re-request
                         if (existingRequest.getStatus() == RequestStatus.CANCELLED &&
                                         existingShift.getWorkShiftId().equals(dto.getWorkShiftId())) {
-                                log.warn("Employee {} attempted to re-request overtime for CANCELLED shift {} on {}",
+                                log.warn("Nhân viên {} cố gửi lại OT cho ca đã bị hủy {} vào {}",
                                                 targetEmployeeId, dto.getWorkShiftId(), dto.getWorkDate());
                                 throw new IllegalArgumentException(
                                                 String.format(
@@ -286,7 +287,7 @@ public class OvertimeRequestService {
 
                         if (timeOverlap) {
                                 log.warn(
-                                                "Time-overlapping overtime request exists for employee {} on {}. Existing shift: {} ({}-{}), New shift: {} ({}-{})",
+                                                "Phát hiện ca OT trùng giờ cho nhân viên {} ngày {}. Ca cũ: {} ({}-{}), ca mới: {} ({}-{})",
                                                 targetEmployeeId, dto.getWorkDate(),
                                                 existingShift.getWorkShiftId(), existingShift.getStartTime(),
                                                 existingShift.getEndTime(),
@@ -314,7 +315,7 @@ public class OvertimeRequestService {
                 overtimeRequest.setStatus(RequestStatus.PENDING);
 
                 OvertimeRequest savedRequest = overtimeRequestRepository.save(overtimeRequest);
-                log.info("Successfully created overtime request: {}", savedRequest.getRequestId());
+                log.info("Tạo yêu cầu OT thành công: {}", savedRequest.getRequestId());
 
                 // Send notification to all ADMIN users
                 try {
@@ -324,9 +325,9 @@ public class OvertimeRequestService {
                                         savedRequest.getRequestId(),
                                         dto.getWorkDate().toString(),
                                         workShift.getShiftName());
-                        log.info("Overtime request notifications sent to all ADMIN users");
+                        log.info("Đã gửi thông báo yêu cầu OT tới tất cả ADMIN");
                 } catch (Exception e) {
-                        log.error("Failed to send notification for overtime request: {}", savedRequest.getRequestId(),
+                        log.error("Gửi thông báo yêu cầu OT thất bại: {}", savedRequest.getRequestId(),
                                         e);
                         // Don't fail the request creation if notification fails
                 }
@@ -357,7 +358,7 @@ public class OvertimeRequestService {
         // ROLE_ADMIN & ROLE_MANAGER have APPROVE_OVERTIME permission for approving/rejecting overtime requests
         @PreAuthorize("hasAuthority('APPROVE_OVERTIME') or hasAuthority('CREATE_OVERTIME')")
         public OvertimeRequestDetailResponse updateOvertimeStatus(String requestId, UpdateOvertimeStatusDTO dto) {
-                log.info("Updating overtime request {} to status {}", requestId, dto.getStatus());
+                log.info("Cập nhật yêu cầu OT {} sang trạng thái {}", requestId, dto.getStatus());
 
                 // Find the request
                 OvertimeRequest request = overtimeRequestRepository.findById(requestId)
@@ -365,7 +366,7 @@ public class OvertimeRequestService {
 
                 // Validation 1: Request must be PENDING
                 if (!request.isPending()) {
-                        log.warn("Cannot update overtime request {} - current status is {}", requestId,
+                        log.warn("Không thể cập nhật yêu cầu OT {} - trạng thái hiện tại {}", requestId,
                                         request.getStatus());
                         throw new InvalidStateTransitionException(requestId, request.getStatus(), dto.getStatus());
                 }
@@ -382,7 +383,7 @@ public class OvertimeRequestService {
                 }
 
                 OvertimeRequest updatedRequest = overtimeRequestRepository.save(request);
-                log.info("Successfully updated overtime request {} to status {}", requestId, dto.getStatus());
+                log.info("Cập nhật yêu cầu OT {} sang trạng thái {} thành công", requestId, dto.getStatus());
 
                 return overtimeRequestMapper.toDetailResponse(updatedRequest);
         }
@@ -393,7 +394,7 @@ public class OvertimeRequestService {
         private void handleApproval(OvertimeRequest request, Employee approvedBy) {
                 // Check permission
                 if (!SecurityUtil.hasCurrentUserPermission("APPROVE_OVERTIME")) {
-                        log.warn("User {} does not have APPROVE_OVERTIME permission", approvedBy.getEmployeeId());
+                        log.warn("Người dùng {} không có quyền APPROVE_OVERTIME", approvedBy.getEmployeeId());
                         throw new AccessDeniedException("Bạn không có quyền duyệt yêu cầu OT.");
                 }
 
@@ -401,7 +402,7 @@ public class OvertimeRequestService {
                 request.setApprovedBy(approvedBy);
                 request.setApprovedAt(LocalDateTime.now());
 
-                log.info("Overtime request {} approved by employee {}", request.getRequestId(),
+                log.info("Yêu cầu OT {} được duyệt bởi nhân viên {}", request.getRequestId(),
                                 approvedBy.getEmployeeId());
 
                 // Auto-create EmployeeShift record for overtime
@@ -414,7 +415,7 @@ public class OvertimeRequestService {
         private void handleRejection(OvertimeRequest request, UpdateOvertimeStatusDTO dto, Employee rejectedBy) {
                 // Check permission
                 if (!SecurityUtil.hasCurrentUserPermission("APPROVE_OVERTIME")) {
-                        log.warn("User {} does not have APPROVE_OVERTIME permission", rejectedBy.getEmployeeId());
+                        log.warn("Người dùng {} không có quyền APPROVE_OVERTIME", rejectedBy.getEmployeeId());
                         throw new AccessDeniedException("Bạn không có quyền từ chối yêu cầu OT.");
                 }
 
@@ -428,7 +429,7 @@ public class OvertimeRequestService {
                 request.setApprovedBy(rejectedBy); // Track who rejected it
                 request.setApprovedAt(LocalDateTime.now());
 
-                log.info("Overtime request {} rejected by employee {}", request.getRequestId(),
+                log.info("Yêu cầu OT {} bị từ chối bởi nhân viên {}", request.getRequestId(),
                                 rejectedBy.getEmployeeId());
         }
 
@@ -450,7 +451,7 @@ public class OvertimeRequestService {
                 boolean canCancelAny = SecurityUtil.hasCurrentUserPermission("APPROVE_OVERTIME");
 
                 if (!canCancelOwn && !canCancelAny) {
-                        log.warn("User {} does not have permission to cancel overtime request {}",
+                        log.warn("Người dùng {} không có quyền hủy yêu cầu OT {}",
                                         cancelledBy.getEmployeeId(), request.getRequestId());
                         throw new AccessDeniedException("Bạn không có quyền hủy yêu cầu OT này.");
                 }
@@ -458,7 +459,7 @@ public class OvertimeRequestService {
                 request.setStatus(RequestStatus.CANCELLED);
                 request.setCancellationReason(dto.getReason());
 
-                log.info("Overtime request {} cancelled by employee {}", request.getRequestId(),
+                log.info("Yêu cầu OT {} được hủy bởi nhân viên {}", request.getRequestId(),
                                 cancelledBy.getEmployeeId());
         }
 
@@ -559,7 +560,7 @@ public class OvertimeRequestService {
                                 employeeId, workDate, workShiftId);
 
                 if (hasFixedSchedule) {
-                        log.warn("Employee {} has fixed schedule on {} shift {} - cannot create OT request",
+                        log.warn("Nhân viên {} đã có lịch cố định vào ngày {} ca {} - không thể tạo OT",
                                         employeeId, workDate, workShiftId);
                         throw new SlotConflictException("Nhân viên đã có lịch làm việc bình thường vào ca này.");
                 }
@@ -569,12 +570,77 @@ public class OvertimeRequestService {
                                 employeeId, workDate, workShiftId);
 
                 if (hasPartTimeSchedule) {
-                        log.warn("Employee {} has part-time schedule on {} shift {} - cannot create OT request",
+                        log.warn("Nhân viên {} đã có lịch part-time vào ngày {} ca {} - không thể tạo OT",
                                         employeeId, workDate, workShiftId);
                         throw new SlotConflictException("Nhân viên đã có lịch làm việc bình thường vào ca này.");
                 }
 
                 log.debug("No schedule conflicts found for employee {} on {} shift {}",
                                 employeeId, workDate, workShiftId);
+        }
+
+        /**
+         * Scheduled: Nhắc OT PENDING còn <24h (hôm nay hoặc ngày mai).
+         * Chạy mỗi giờ.
+         */
+        @Scheduled(cron = "0 15 * * * *")
+        @Transactional
+        public void remindPendingOvertimeWithin24h() {
+                LocalDate today = LocalDate.now();
+                LocalDate tomorrow = today.plusDays(1);
+
+                List<OvertimeRequest> dueToday = overtimeRequestRepository.findByStatusAndWorkDate(RequestStatus.PENDING,
+                                today);
+                List<OvertimeRequest> dueTomorrow = overtimeRequestRepository
+                                .findByStatusAndWorkDate(RequestStatus.PENDING, tomorrow);
+
+                dueToday.forEach(this::notifyPendingOvertime);
+                dueTomorrow.forEach(this::notifyPendingOvertime);
+        }
+
+        /**
+         * Scheduled: Auto-cancel OT PENDING khi tới ngày làm mà chưa duyệt.
+         * Chạy 6h sáng hàng ngày.
+         */
+        @Scheduled(cron = "0 0 6 * * *")
+        @Transactional
+        public void autoCancelPendingOvertimeOnWorkDate() {
+                LocalDate today = LocalDate.now();
+                List<OvertimeRequest> pendingToday = overtimeRequestRepository.findByStatusAndWorkDate(
+                                RequestStatus.PENDING, today);
+
+                for (OvertimeRequest req : pendingToday) {
+                        req.setStatus(RequestStatus.CANCELLED);
+                        req.setCancellationReason("Tự động hủy vì quá hạn duyệt (đến ngày làm)");
+                        log.warn("Tự động hủy OT {} cho nhân viên {} (ngày làm: {}, ca: {})",
+                                        req.getRequestId(),
+                                        req.getEmployee().getEmployeeId(),
+                                        req.getWorkDate(),
+                                        req.getWorkShift().getShiftName());
+                }
+
+                if (!pendingToday.isEmpty()) {
+                        overtimeRequestRepository.saveAll(pendingToday);
+                }
+        }
+
+        private void notifyPendingOvertime(OvertimeRequest req) {
+                try {
+                        Employee employee = req.getEmployee();
+                        String employeeName = employee != null
+                                        ? employee.getFirstName() + " " + employee.getLastName()
+                                        : "Nhân viên";
+
+                        notificationService.createOvertimeRequestNotification(
+                                        employeeName,
+                                        req.getRequestId(),
+                                        req.getWorkDate().toString(),
+                                        req.getWorkShift().getShiftName());
+
+                        log.info("Đã gửi nhắc nhở OT PENDING cho {} (ngày làm: {})", req.getRequestId(),
+                                        req.getWorkDate());
+                } catch (Exception ex) {
+                        log.error("Gửi nhắc nhở OT thất bại cho {}", req.getRequestId(), ex);
+                }
         }
 }
