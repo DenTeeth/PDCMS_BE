@@ -373,6 +373,20 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
                         Pageable pageable);
 
         /**
+         * Check if a doctor has any appointments within a date range (by date only).
+         * Used to prevent time-off requests that overlap existing bookings.
+         */
+        @Query("SELECT COUNT(a) > 0 FROM Appointment a " +
+                        "WHERE a.employeeId = :employeeId " +
+                        "AND a.status IN :statuses " +
+                        "AND FUNCTION('DATE', a.appointmentStartTime) BETWEEN :startDate AND :endDate")
+        boolean existsByEmployeeIdAndDateRangeAndStatuses(
+                        @Param("employeeId") Integer employeeId,
+                        @Param("startDate") java.time.LocalDate startDate,
+                        @Param("endDate") java.time.LocalDate endDate,
+                        @Param("statuses") List<AppointmentStatus> statuses);
+
+        /**
          * Combined search by code OR name: patient, doctor, employee (participant),
          * room, or service
          *

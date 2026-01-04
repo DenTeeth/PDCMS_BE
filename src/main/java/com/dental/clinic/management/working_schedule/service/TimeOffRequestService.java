@@ -12,6 +12,8 @@ import com.dental.clinic.management.exception.time_off.TimeOffTypeNotFoundExcept
 import com.dental.clinic.management.exception.validation.InvalidRequestException;
 import com.dental.clinic.management.exception.validation.InvalidStateTransitionException;
 import com.dental.clinic.management.exception.validation.InvalidDateRangeException;
+import com.dental.clinic.management.booking_appointment.enums.AppointmentStatus;
+import com.dental.clinic.management.booking_appointment.repository.AppointmentRepository;
 import com.dental.clinic.management.notification.service.NotificationService;
 import com.dental.clinic.management.utils.IdGenerator;
 import com.dental.clinic.management.utils.security.AuthoritiesConstants;
@@ -75,6 +77,7 @@ public class TimeOffRequestService {
         private final PartTimeSlotRepository partTimeSlotRepository;
         private final WorkShiftRepository workShiftRepository;
         private final NotificationService notificationService;
+        private final AppointmentRepository appointmentRepository;
 
         // ISSUE #53: Holiday Validation
         private final com.dental.clinic.management.utils.validation.HolidayValidator holidayValidator;
@@ -225,6 +228,14 @@ public class TimeOffRequestService {
                 TimeOffType timeOffType = typeRepository.findByTypeIdAndIsActive(request.getTimeOffTypeId(), true)
                                 .orElseThrow(() -> new TimeOffTypeNotFoundException(request.getTimeOffTypeId()));
 
+                // 3.1 Không cho phép xin nghỉ trong chính ngày tạo yêu cầu để tránh bỏ trống lịch đột ngột
+                LocalDate today = LocalDate.now();
+                if (request.getStartDate().isEqual(today)) {
+                        throw new InvalidRequestException(
+                                        "TIME_OFF_SAME_DAY_NOT_ALLOWED",
+                                        "Không thể xin nghỉ trong chính ngày tạo yêu cầu. Vui lòng chọn ngày khác.");
+                }
+
                 // 4. Validate date range
                 if (request.getStartDate().isAfter(request.getEndDate())) {
                         throw new InvalidDateRangeException(
@@ -298,7 +309,25 @@ public class TimeOffRequestService {
                         }
                 }
 
-                // 9. Check for conflicting requests
+                // 9. Chặn xin nghỉ nếu bác sĩ đã có lịch hẹn trong khoảng ngày này (chỉ xét trạng thái đang hoạt động)
+                List<AppointmentStatus> blockingStatuses = List.of(
+                                AppointmentStatus.SCHEDULED,
+                                AppointmentStatus.CHECKED_IN,
+                                AppointmentStatus.IN_PROGRESS);
+
+                boolean hasAppointments = appointmentRepository.existsByEmployeeIdAndDateRangeAndStatuses(
+                                employeeId,
+                                request.getStartDate(),
+                                request.getEndDate(),
+                                blockingStatuses);
+
+                if (hasAppointments) {
+                        throw new InvalidRequestException(
+                                        "TIME_OFF_OVERLAP_APPOINTMENT",
+                                        "Ngày nghỉ trùng với lịch hẹn hiện có. Vui lòng dời hoặc hủy các lịch hẹn trước khi xin nghỉ.");
+                }
+
+                // 10. Check for conflicting requests
                 boolean hasConflict = requestRepository.existsConflictingRequest(
                                 employeeId,
                                 request.getStartDate(),
@@ -325,7 +354,7 @@ public class TimeOffRequestService {
                         }
                 }
 
-                // 6. Get current user ID from token for requested_by
+                // 11. Get current user ID from token for requested_by
                 String username = SecurityUtil.getCurrentUserLogin()
                                 .orElseThrow(() -> new RuntimeException("Người dùng chưa được xác thực"));
 
