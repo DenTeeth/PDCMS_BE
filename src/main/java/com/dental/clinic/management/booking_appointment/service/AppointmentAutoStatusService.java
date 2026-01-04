@@ -16,11 +16,11 @@ import java.util.List;
 /**
  * Scheduled service for automatic appointment status transitions.
  *
- * Rule #6: Auto-cancel appointments if patient arrives >15 minutes late
+ * Rule #6: Auto-cancel appointments if patient arrives >30 minutes late
  *
  * Business Logic:
  * - Runs every 5 minutes
- * - Finds SCHEDULED appointments where: startTime + 15 minutes < now
+ * - Finds SCHEDULED appointments where: startTime + 30 minutes < now
  * - Auto-updates status to NO_SHOW with system notes
  * - Triggers Rule #5 (no-show counter) via AppointmentStatusService
  */
@@ -34,16 +34,16 @@ public class AppointmentAutoStatusService {
 
     /**
      * Cron: Every 5 minutes
-     * Check for appointments that are >15 minutes past start time and still
+     * Check for appointments that are >30 minutes past start time and still
      * SCHEDULED
      *
-     * Rule #6: Late arrivals (>15 min) are automatically marked as NO_SHOW
+     * Rule #6: Late arrivals (>30 min) are automatically marked as NO_SHOW
      */
     @Scheduled(cron = "0 */5 * * * *") // Every 5 minutes
     @Transactional
     public void autoMarkLateAppointmentsAsNoShow() {
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime cutoffTime = now.minusMinutes(15);
+        LocalDateTime cutoffTime = now.minusMinutes(30);
 
         log.info("Running scheduled job: Auto-mark late appointments as NO_SHOW (cutoff: {})", cutoffTime);
 
@@ -58,7 +58,7 @@ public class AppointmentAutoStatusService {
             return;
         }
 
-        log.info("Found {} late appointments (>15 min past start time)", lateAppointments.size());
+        log.info("Found {} late appointments (>30 min past start time)", lateAppointments.size());
 
         int successCount = 0;
         int failCount = 0;
@@ -83,7 +83,7 @@ public class AppointmentAutoStatusService {
                 String systemTime = now.format(vietnameseFormatter);
 
                 request.setNotes(String.format(
-                        "Hệ thống tự động đánh dấu KHÔNG ĐẾN: Bệnh nhân đến trễ hơn 15 phút (trễ %d phút). " +
+                        "Hệ thống tự động đánh dấu KHÔNG ĐẾN: Bệnh nhân đến trễ hơn 30 phút (trễ %d phút). " +
                                 "Thời gian lịch hẹn gốc: %s. Thời gian hệ thống: %s.",
                         minutesLate,
                         originalTime,
