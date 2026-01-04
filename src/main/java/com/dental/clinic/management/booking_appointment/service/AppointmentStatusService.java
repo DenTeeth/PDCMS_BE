@@ -133,15 +133,15 @@ public class AppointmentStatusService {
         // Step 2: Validate state transition
         validateStateTransition(currentStatus, newStatus);
 
-        // Step 3: Validate business rules
-        validateBusinessRules(appointment, newStatus, request);
+        // Step 3: Validate business rules and get final status (may change to CANCELLED_LATE)
+        AppointmentStatus finalStatus = validateBusinessRules(appointment, newStatus, request);
 
         // Step 4: Update side-effects (actualStartTime/actualEndTime)
         LocalDateTime now = LocalDateTime.now();
-        updateTimestamps(appointment, currentStatus, newStatus, now);
+        updateTimestamps(appointment, currentStatus, finalStatus, now);
 
         // Step 5: Update status and notes
-        appointment.setStatus(newStatus);
+        appointment.setStatus(finalStatus);
         if (request.getNotes() != null) {
             appointment.setNotes(request.getNotes());
         }
@@ -151,16 +151,16 @@ public class AppointmentStatusService {
         entityManager.flush();
 
         // Step 6: Create audit log
-        createAuditLog(appointment, currentStatus, newStatus, request, now);
+        createAuditLog(appointment, currentStatus, finalStatus, request, now);
 
         // Step 7: Auto-update linked plan item statuses (V21.5)
-        updateLinkedPlanItemsStatus(appointment.getAppointmentId(), newStatus, now);
+        updateLinkedPlanItemsStatus(appointment.getAppointmentId(), finalStatus, now);
 
         // Step 8: Rule #5 - Track no-shows and update patient blocking status
-        updatePatientNoShowTracking(appointment, newStatus, currentStatus);
+        updatePatientNoShowTracking(appointment, finalStatus, currentStatus);
 
         log.info(" Successfully updated appointment status: code={}, {} -> {}",
-                appointmentCode, currentStatus, newStatus);
+                appointmentCode, currentStatus, finalStatus);
     }
 
     /**
@@ -188,8 +188,10 @@ public class AppointmentStatusService {
      * Rules:
      * - CANCELLED: Must provide reasonCode
      * - Rule #4: 24h cancellation deadline - late cancellation causes penalty
+     * 
+     * @return Final status (may be changed to CANCELLED_LATE if cancelling within 24h)
      */
-    private void validateBusinessRules(Appointment appointment, AppointmentStatus newStatus,
+    private AppointmentStatus validateBusinessRules(Appointment appointment, AppointmentStatus newStatus,
             UpdateAppointmentStatusRequest request) {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime appointmentStartTime = appointment.getAppointmentStartTime();
@@ -198,10 +200,9 @@ public class AppointmentStatusService {
         LocalDate today = now.toLocalDate();
 
         // RULE: Date-based status restrictions
-        // CANCELLED can happen anytime
-        // CHECKED_IN, IN_PROGRESS, COMPLETED, NO_SHOW can only happen on appointment
-        // date
-        if (newStatus != AppointmentStatus.CANCELLED) {
+        // CANCELLED and CANCELLED_LATE can happen anytime
+        // CHECKED_IN, IN_PROGRESS, COMPLETED, NO_SHOW can only happen on appointment date
+        if (newStatus != AppointmentStatus.CANCELLED && newStatus != AppointmentStatus.CANCELLED_LATE) {
             if (!today.equals(appointmentDate)) {
                 throw new IllegalStateException(
                         String.format("Không thể đổi trạng thái '%s' khi chưa tới ngày hẹn. " +
@@ -294,6 +295,8 @@ public class AppointmentStatusService {
                                 now.format(DateTimeFormatter.ofPattern("HH:mm"))));
             }
         }
+        
+        return newStatus; // Return final status (may have been changed to CANCELLED_LATE)
     }
 
     /**
