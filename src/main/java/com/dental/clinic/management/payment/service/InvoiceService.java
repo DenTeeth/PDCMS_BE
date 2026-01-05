@@ -134,6 +134,34 @@ public class InvoiceService {
                         invoiceItems.size());
             }
         }
+        // ✅ NEW: Handle TREATMENT_PLAN invoices - set created_by to plan creator
+        else if (request.getTreatmentPlanId() != null) {
+            PatientTreatmentPlan plan = treatmentPlanRepository.findById(request.getTreatmentPlanId().longValue())
+                    .orElseThrow(() -> new ResourceNotFoundException("TREATMENT_PLAN_NOT_FOUND",
+                            "Treatment plan not found: " + request.getTreatmentPlanId()));
+            
+            // Validate patient matches
+            if (!plan.getPatient().getPatientId().equals(request.getPatientId())) {
+                String errorMsg = String.format(
+                        "Invoice patientId (%d) does not match treatment plan patientId (%d) for plan %d",
+                        request.getPatientId(),
+                        plan.getPatient().getPatientId(),
+                        request.getTreatmentPlanId());
+                log.error("Data integrity violation: {}", errorMsg);
+                throw new IllegalArgumentException(errorMsg);
+            }
+            
+            // ✅ FIX: Set invoice created_by to match plan's creator (doctor)
+            if (plan.getCreatedBy() != null && plan.getCreatedBy().getEmployeeId() != null) {
+                invoiceCreatedBy = plan.getCreatedBy().getEmployeeId();
+                log.debug("✅ Setting invoice created_by to treatment plan creator: {}", invoiceCreatedBy);
+            } else {
+                log.warn("⚠️ Treatment plan {} has no creator (createdBy is null). Using default system user (1).", 
+                        plan.getPlanCode());
+            }
+        }
+        // If neither appointmentId nor treatmentPlanId, created_by = 1 (system user)
+        // This is OK for SUPPLEMENTAL invoices created manually
 
         // Generate payment code for SePay webhook matching
         String paymentCode = generatePaymentCode();
