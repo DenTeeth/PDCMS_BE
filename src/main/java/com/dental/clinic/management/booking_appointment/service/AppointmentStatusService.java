@@ -199,6 +199,9 @@ public class AppointmentStatusService {
         LocalDate appointmentDate = appointmentStartTime.toLocalDate();
         LocalDate today = now.toLocalDate();
 
+        // TODO: Tạm thời disabled - Cho phép update status linh hoạt theo yêu cầu FE (2026-01-05)
+        // Sẽ bật lại khi có yêu cầu với logic mới
+        /*
         // RULE: Date-based status restrictions
         // CANCELLED and CANCELLED_LATE can happen anytime
         // CHECKED_IN, IN_PROGRESS, COMPLETED, NO_SHOW can only happen on appointment date
@@ -212,6 +215,7 @@ public class AppointmentStatusService {
                                 today.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))));
             }
         }
+        */
 
         if (newStatus == AppointmentStatus.CANCELLED || newStatus == AppointmentStatus.CANCELLED_LATE) {
             // Check reason code is provided
@@ -238,6 +242,9 @@ public class AppointmentStatusService {
             }
         }
 
+        // TODO: Tạm thời disabled - Cho phép check-in linh hoạt theo yêu cầu FE (2026-01-05)
+        // Sẽ bật lại khi có yêu cầu với logic mới
+        /*
         // RULE: CHECKED_IN time window
         // Can check-in: 30 minutes before start → 45 minutes after start
         if (newStatus == AppointmentStatus.CHECKED_IN) {
@@ -258,6 +265,7 @@ public class AppointmentStatusService {
                                 minutesLate));
             }
         }
+        */
 
         // RULE: IN_PROGRESS time restriction
         // Can only start treatment on or after scheduled start time

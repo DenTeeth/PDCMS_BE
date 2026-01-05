@@ -500,7 +500,12 @@ public class TreatmentPlanApprovalService {
             // CASE: Update existing PENDING_PAYMENT invoice instead of creating new one
             log.info("Found existing PENDING_PAYMENT invoice {}. Updating with new items instead of creating new invoice.",
                     pendingInvoice.get().getInvoiceCode());
-            updateInvoiceWithNewPlanItems(pendingInvoice.get(), plan);
+            
+            // Refresh invoice from database to get latest notes (avoid stale data from cache)
+            Invoice freshInvoice = invoiceRepository.findById(pendingInvoice.get().getInvoiceId())
+                    .orElseThrow(() -> new RuntimeException("Invoice not found: " + pendingInvoice.get().getInvoiceId()));
+            
+            updateInvoiceWithNewPlanItems(freshInvoice, plan);
             return; // Don't create new invoice
         }
 
