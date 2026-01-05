@@ -237,7 +237,8 @@ public class TimeOffRequestService {
                 if (!isEmergency && request.getStartDate().isEqual(today)) {
                         throw new InvalidRequestException(
                                         "TIME_OFF_SAME_DAY_NOT_ALLOWED",
-                                        "Không thể xin nghỉ trong chính ngày tạo yêu cầu. Vui lòng chọn ngày khác hoặc dùng loại Nghỉ khẩn cấp.");
+                                        "Không thể xin nghỉ trong chính ngày hôm nay (" + today.toString() + "). " +
+                                        "Vui lòng chọn từ ngày mai trở đi, hoặc chọn loại 'Nghỉ khẩn cấp' nếu thực sự cần nghỉ hôm nay.");
                 }
 
                 // 3.2 Yêu cầu báo trước 24h (TRỪ Nghỉ khẩn cấp)
