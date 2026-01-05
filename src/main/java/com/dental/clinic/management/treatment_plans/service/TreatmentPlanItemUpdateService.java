@@ -7,6 +7,9 @@ import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.exception.BadRequestException;
 import com.dental.clinic.management.exception.ConflictException;
 import com.dental.clinic.management.exception.NotFoundException;
+import com.dental.clinic.management.payment.domain.Invoice;
+import com.dental.clinic.management.payment.enums.InvoicePaymentStatus;
+import com.dental.clinic.management.payment.repository.InvoiceRepository;
 import com.dental.clinic.management.treatment_plans.domain.ApprovalStatus;
 import com.dental.clinic.management.treatment_plans.domain.PatientPlanItem;
 import com.dental.clinic.management.treatment_plans.domain.PatientTreatmentPlan;
@@ -25,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * Service for API 5.10: Update Treatment Plan Item.
@@ -42,6 +46,9 @@ public class TreatmentPlanItemUpdateService {
     private final EmployeeRepository employeeRepository;
     private final AccountRepository accountRepository;
     private final TreatmentPlanRBACService rbacService;
+    private final InvoiceRepository invoiceRepository;
+    private final TreatmentPlanApprovalService approvalService;
+    private final com.dental.clinic.management.payment.service.InvoiceService invoiceService;
 
     /**
      * API 5.10: Update a treatment plan item.
@@ -49,11 +56,12 @@ public class TreatmentPlanItemUpdateService {
      * Business Rules:
      * 1. Item must exist
      * 2. Item must NOT be SCHEDULED, IN_PROGRESS, or COMPLETED
-     * 3. Plan must NOT be APPROVED or PENDING_REVIEW
+     * 3. Plan must NOT be APPROVED or PENDING_REVIEW (unless invoice allows it)
      * 4. Update item fields (only non-null values)
      * 5. Recalculate plan finances if price changed
      * 6. Create audit log (action: ITEM_UPDATED)
      * 7. Keep approval status as DRAFT (no auto-trigger to PENDING_REVIEW)
+     * 8. (Issue 3) Handle invoice sync: cancel/recreate or create supplemental
      *
      * @param itemId  The item ID to update
      * @param request The update request with optional fields
@@ -86,6 +94,9 @@ public class TreatmentPlanItemUpdateService {
         // 4. GUARD 2: Approval status check
         validatePlanNotApprovedOrPendingReview(plan);
 
+        // 4.5. GUARD 3: Check if item is in a PAID invoice (Issue 3 - Case 3)
+        validateItemNotInPaidInvoice(plan, itemId);
+
         // 5. Store old price for financial calculation
         BigDecimal oldPrice = item.getPrice();
 
@@ -110,10 +121,16 @@ public class TreatmentPlanItemUpdateService {
             log.info("Updated plan finances. Price change: {}", priceChange);
         }
 
-        // 9. Create audit log
+        // 9. Handle invoice sync if plan is APPROVED (Issue 3)
+        handleInvoiceSyncOnPlanUpdate(plan, priceChange);
+
+        // 10. Recreate invoices if needed (for PENDING_PAYMENT invoices that were cancelled)
+        recreateInvoicesForUpdatedPlan(plan);
+
+        // 11. Create audit log
         createAuditLog(plan, item, oldPrice, newPrice);
 
-        // 10. Build response
+        // 12. Build response
         return buildResponse(item, plan, priceChange);
     }
 
@@ -135,19 +152,70 @@ public class TreatmentPlanItemUpdateService {
 
     /**
      * GUARD 2: Validate plan is not approved or pending review
+     * Updated to allow editing APPROVED plans based on invoice status:
+     * - PENDING_PAYMENT: Allow editing (will cancel invoice and create new)
+     * - PARTIAL_PAID: Allow editing (will create supplemental invoice)
+     * - PAID: Allow ONLY adding new items (will create supplemental invoice)
      */
     private void validatePlanNotApprovedOrPendingReview(PatientTreatmentPlan plan) {
         ApprovalStatus approvalStatus = plan.getApprovalStatus();
 
-        if (approvalStatus == ApprovalStatus.APPROVED ||
-                approvalStatus == ApprovalStatus.PENDING_REVIEW) {
+        // PENDING_REVIEW: Not allowed to edit
+        if (approvalStatus == ApprovalStatus.PENDING_REVIEW) {
+            throw new ConflictException(
+                    String.format("Không thể sửa lộ trình đang chờ duyệt (Trạng thái: %s). " +
+                            "Yêu cầu Quản lý 'Từ chối' (Reject) về DRAFT trước khi sửa.", approvalStatus));
+        }
 
-            String errorMsg = String
-                    .format("Không thể sửa lộ trình đã được duyệt hoặc đang chờ duyệt (Trạng thái: %s). " +
-                            "Yêu cầu Quản lý 'Từ chối' (Reject) về DRAFT trước khi sửa.", approvalStatus);
+        // APPROVED: Check invoice status before allowing edit
+        if (approvalStatus == ApprovalStatus.APPROVED) {
+            List<Invoice> invoices = invoiceRepository.findByTreatmentPlanIdOrderByCreatedAtDesc(plan.getPlanId().intValue());
+            
+            if (invoices.isEmpty()) {
+                // No invoices yet - allow edit (shouldn't happen, but handle gracefully)
+                log.warn("⚠️ Plan {} is APPROVED but has no invoices. Allowing edit.", plan.getPlanCode());
+                return;
+            }
 
-            // Use specific error code for better frontend handling
-            throw new ConflictException("PLAN_APPROVED_CANNOT_UPDATE", errorMsg);
+            // Check if any invoice is PAID
+            boolean hasFullyPaidInvoice = invoices.stream()
+                    .anyMatch(inv -> inv.getPaymentStatus() == InvoicePaymentStatus.PAID);
+
+            if (hasFullyPaidInvoice) {
+                // PAID invoices exist - editing is restricted (only adding new items allowed)
+                // This validation will be enforced at item level, not at plan level
+                log.info("Plan {} has PAID invoices. Only adding new items is allowed.", plan.getPlanCode());
+                // Note: We allow the flow to continue, but specific validations will be applied
+                // when trying to modify/delete existing items
+            } else {
+                // All invoices are PENDING_PAYMENT or PARTIAL_PAID - allow edit
+                log.info("Plan {} has unpaid/partially-paid invoices. Edit allowed with invoice sync.", plan.getPlanCode());
+            }
+        }
+    }
+
+    /**
+     * GUARD 3: Validate item is not in a PAID invoice (Issue 3 - Case 3)
+     * Items that have been fully paid cannot be modified
+     */
+    private void validateItemNotInPaidInvoice(PatientTreatmentPlan plan, Long itemId) {
+        if (plan.getApprovalStatus() != ApprovalStatus.APPROVED) {
+            return; // Only check for APPROVED plans
+        }
+
+        List<Invoice> paidInvoices = invoiceRepository.findByTreatmentPlanIdOrderByCreatedAtDesc(plan.getPlanId().intValue())
+                .stream()
+                .filter(inv -> inv.getPaymentStatus() == InvoicePaymentStatus.PAID)
+                .collect(java.util.stream.Collectors.toList());
+
+        if (!paidInvoices.isEmpty()) {
+            // Plan has PAID invoices - item modifications are not allowed
+            // Note: Adding new items is allowed (handled in TreatmentPlanItemAdditionService)
+            throw new ConflictException(
+                    "ITEM_IN_PAID_INVOICE",
+                    String.format("Không thể sửa hạng mục này vì đã được thanh toán trong hóa đơn. " +
+                            "Chỉ có thể thêm hạng mục mới vào lộ trình đã thanh toán. " +
+                            "Nếu cần thay đổi, vui lòng tạo hóa đơn bổ sung (SUPPLEMENTAL)."));
         }
     }
 
@@ -192,6 +260,153 @@ public class TreatmentPlanItemUpdateService {
         plan.setFinalCost(newFinalCost);
 
         planRepository.save(plan);
+    }
+
+    /**
+     * Handle invoice synchronization when plan is updated.
+     * Implements Issue 3: Plan update sync with invoices
+     * 
+     * Case 1: PENDING_PAYMENT - Cancel old invoice, create new one
+     * Case 2: PARTIAL_PAID - Keep old invoice, create supplemental invoice for changes
+     * Case 3: PAID - Keep old invoice, create supplemental invoice for changes
+     */
+    private void handleInvoiceSyncOnPlanUpdate(PatientTreatmentPlan plan, BigDecimal priceChange) {
+        if (plan.getApprovalStatus() != ApprovalStatus.APPROVED) {
+            // Only sync invoices for APPROVED plans
+            return;
+        }
+
+        if (priceChange.compareTo(BigDecimal.ZERO) == 0) {
+            log.info("No price change detected. Skipping invoice sync.");
+            return; // No price change, no invoice update needed
+        }
+
+        List<Invoice> invoices = invoiceRepository.findByTreatmentPlanIdOrderByCreatedAtDesc(plan.getPlanId().intValue());
+        
+        if (invoices.isEmpty()) {
+            log.warn("⚠️ Plan {} is APPROVED but has no invoices. No sync needed.", plan.getPlanCode());
+            return;
+        }
+
+        for (Invoice invoice : invoices) {
+            InvoicePaymentStatus status = invoice.getPaymentStatus();
+            
+            if (status == InvoicePaymentStatus.PENDING_PAYMENT) {
+                // Case 1: Cancel old invoice and create new one
+                handlePendingPaymentInvoice(invoice, plan);
+                
+            } else if (status == InvoicePaymentStatus.PARTIAL_PAID) {
+                // Case 2: Keep old invoice, create supplemental invoice for price difference
+                handlePartialPaidInvoice(plan, priceChange);
+                
+            } else if (status == InvoicePaymentStatus.PAID) {
+                // Case 3: Keep old invoice, create supplemental invoice for price difference
+                handlePaidInvoice(plan, priceChange);
+            }
+        }
+    }
+
+    /**
+     * Case 1: Handle PENDING_PAYMENT invoice - cancel and recreate
+     */
+    private void handlePendingPaymentInvoice(Invoice invoice, PatientTreatmentPlan plan) {
+        log.info("Cancelling PENDING_PAYMENT invoice {} due to plan update", invoice.getInvoiceCode());
+        
+        // Cancel old invoice
+        invoice.setPaymentStatus(InvoicePaymentStatus.CANCELLED);
+        String currentNotes = invoice.getNotes() != null ? invoice.getNotes() : "";
+        invoice.setNotes(currentNotes + " | Cancelled due to plan update at " + 
+                java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+        invoiceRepository.save(invoice);
+        
+        log.info("✅ Cancelled invoice {}. New invoice will be created after plan update completes.", 
+                invoice.getInvoiceCode());
+        
+        // Note: New invoice creation is delegated to approvalService.createInvoicesForApprovedPlan()
+        // This will be called after the update completes
+    }
+
+    /**
+     * Case 2: Handle PARTIAL_PAID invoice - create supplemental invoice for price difference
+     */
+    private void handlePartialPaidInvoice(PatientTreatmentPlan plan, BigDecimal priceChange) {
+        log.info("Creating SUPPLEMENTAL invoice for PARTIAL_PAID plan {} with price change: {}", 
+                plan.getPlanCode(), priceChange);
+        
+        createSupplementalInvoice(plan, priceChange, "Bổ sung do chỉnh sửa lộ trình điều trị (thanh toán một phần)");
+    }
+
+    /**
+     * Case 3: Handle PAID invoice - create supplemental invoice for price difference
+     */
+    private void handlePaidInvoice(PatientTreatmentPlan plan, BigDecimal priceChange) {
+        log.info("Creating SUPPLEMENTAL invoice for PAID plan {} with price change: {}", 
+                plan.getPlanCode(), priceChange);
+        
+        createSupplementalInvoice(plan, priceChange, "Bổ sung do chỉnh sửa lộ trình điều trị (đã thanh toán)");
+    }
+
+    /**
+     * Create supplemental invoice for plan changes
+     */
+    private void createSupplementalInvoice(PatientTreatmentPlan plan, BigDecimal priceChange, String notes) {
+        if (priceChange.compareTo(BigDecimal.ZERO) == 0) {
+            log.info("No price change, skipping supplemental invoice creation");
+            return;
+        }
+
+        String changeDescription = priceChange.compareTo(BigDecimal.ZERO) > 0 
+                ? "Tăng giá" 
+                : "Giảm giá";
+
+        List<com.dental.clinic.management.payment.dto.CreateInvoiceRequest.InvoiceItemDto> items = new java.util.ArrayList<>();
+        
+        // Create a single invoice item for the price difference
+        items.add(com.dental.clinic.management.payment.dto.CreateInvoiceRequest.InvoiceItemDto.builder()
+                .serviceId(null) // No specific service for price adjustment
+                .serviceCode("PLAN_ADJUSTMENT")
+                .serviceName(changeDescription + " lộ trình điều trị")
+                .quantity(1)
+                .unitPrice(priceChange.abs()) // Use absolute value
+                .notes("Điều chỉnh giá do chỉnh sửa lộ trình: " + plan.getPlanCode())
+                .build());
+
+        com.dental.clinic.management.payment.dto.CreateInvoiceRequest request = 
+                com.dental.clinic.management.payment.dto.CreateInvoiceRequest.builder()
+                .invoiceType(com.dental.clinic.management.payment.enums.InvoiceType.TREATMENT_PLAN)
+                .patientId(plan.getPatient().getPatientId())
+                .treatmentPlanId(plan.getPlanId().intValue())
+                .phaseNumber(null)
+                .installmentNumber(null)
+                .items(items)
+                .notes("[SUPPLEMENTAL] " + notes + " | " + changeDescription + ": " + priceChange)
+                .dueDate(java.time.LocalDateTime.now().plusDays(7))
+                .build();
+
+        invoiceService.createInvoice(request);
+        log.info("✅ Created SUPPLEMENTAL invoice for plan {} with amount: {}", plan.getPlanCode(), priceChange);
+    }
+
+    /**
+     * Recreate invoices for an updated plan.
+     * Called after plan update when PENDING_PAYMENT invoices were cancelled.
+     */
+    private void recreateInvoicesForUpdatedPlan(PatientTreatmentPlan plan) {
+        log.info("Recreating invoices for updated plan: {}", plan.getPlanCode());
+        
+        // Check if we need to recreate invoices (i.e., if any were cancelled)
+        List<Invoice> invoices = invoiceRepository.findByTreatmentPlanIdOrderByCreatedAtDesc(plan.getPlanId().intValue());
+        boolean hasCancelledInvoices = invoices.stream()
+                .anyMatch(inv -> inv.getPaymentStatus() == InvoicePaymentStatus.CANCELLED);
+        
+        boolean hasActiveInvoices = invoices.stream()
+                .anyMatch(inv -> inv.getPaymentStatus() != InvoicePaymentStatus.CANCELLED);
+        
+        if (hasCancelledInvoices && !hasActiveInvoices) {
+            // All invoices were cancelled - recreate them
+            log.info("All invoices were cancelled. Recreating invoices for plan: {}", plan.getPlanCode());
+            approvalService.createInvoicesForApprovedPlan(plan);
+        }
     }
 
     /**

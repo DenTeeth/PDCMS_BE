@@ -22,12 +22,16 @@ import com.dental.clinic.management.treatment_plans.repository.PatientTreatmentP
 import com.dental.clinic.management.utils.security.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -187,6 +191,40 @@ public class InvoiceService {
         return invoices.stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Get all invoices with pagination and filtering.
+     * Supports filtering by payment status, invoice type, patient ID, and date range.
+     * Only accessible by admin/manager with VIEW_INVOICE_ALL permission.
+     * 
+     * @param status Optional filter by payment status
+     * @param type Optional filter by invoice type
+     * @param patientId Optional filter by patient ID
+     * @param startDate Optional start date (inclusive)
+     * @param endDate Optional end date (inclusive)
+     * @param pageable Pagination and sorting parameters
+     * @return Page of invoice responses
+     */
+    @Transactional(readOnly = true)
+    public Page<InvoiceResponse> getAllInvoices(
+            InvoicePaymentStatus status,
+            InvoiceType type,
+            Integer patientId,
+            LocalDate startDate,
+            LocalDate endDate,
+            Pageable pageable) {
+        log.info("Getting all invoices with filters - status: {}, type: {}, patientId: {}, startDate: {}, endDate: {}", 
+                 status, type, patientId, startDate, endDate);
+        
+        // Convert LocalDate to LocalDateTime for database queries
+        LocalDateTime startDateTime = (startDate != null) ? startDate.atStartOfDay() : null;
+        LocalDateTime endDateTime = (endDate != null) ? endDate.atTime(LocalTime.MAX) : null;
+        
+        Page<Invoice> invoices = invoiceRepository.findAllWithFilters(
+                status, type, patientId, startDateTime, endDateTime, pageable);
+        
+        return invoices.map(this::mapToResponse);
     }
 
     /**

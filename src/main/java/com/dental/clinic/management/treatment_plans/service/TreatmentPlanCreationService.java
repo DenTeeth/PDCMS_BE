@@ -185,6 +185,10 @@ public class TreatmentPlanCreationService {
                                 .discountAmount(request.getDiscountAmount())
                                 .finalCost(BigDecimal.ZERO) // Will update in Step 4
                                 .paymentType(request.getPaymentType())
+                                .installmentCount(request.getInstallmentCount() != null && request.getInstallmentCount() > 0 
+                                                  ? request.getInstallmentCount() : 3) // Default to 3 installments
+                                .installmentIntervalDays(request.getInstallmentIntervalDays() != null && request.getInstallmentIntervalDays() > 0 
+                                                        ? request.getInstallmentIntervalDays() : 30) // Default to 30 days (monthly)
                                 .build();
 
                 // Save plan first to get ID (for foreign keys)

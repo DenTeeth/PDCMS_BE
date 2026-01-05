@@ -70,4 +70,24 @@ public class CreateTreatmentPlanRequest {
     @Schema(description = "Payment method for this treatment plan", example = "INSTALLMENT", requiredMode = Schema.RequiredMode.REQUIRED, allowableValues = {
             "FULL", "PHASED", "INSTALLMENT" })
     private PaymentType paymentType;
+
+    /**
+     * Number of installments (only for INSTALLMENT payment type).
+     * If not provided or 0, defaults to 3 installments.
+     * Example: 3 (pay in 3 installments over 3 months)
+     */
+    @Min(value = 1, message = "Số đợt trả góp phải >= 1")
+    @Max(value = 12, message = "Số đợt trả góp phải <= 12")
+    @Schema(description = "Number of installments for INSTALLMENT payment type (1-12). Defaults to 3 if not provided.", example = "3", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+    private Integer installmentCount;
+
+    /**
+     * Number of days between each installment payment.
+     * If not provided or 0, defaults to 30 days (monthly).
+     * Example: 30 (monthly payments)
+     */
+    @Min(value = 1, message = "Khoảng cách giữa các đợt trả góp phải >= 1 ngày")
+    @Max(value = 90, message = "Khoảng cách giữa các đợt trả góp phải <= 90 ngày")
+    @Schema(description = "Days between each installment payment. Defaults to 30 (monthly) if not provided.", example = "30", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+    private Integer installmentIntervalDays;
 }

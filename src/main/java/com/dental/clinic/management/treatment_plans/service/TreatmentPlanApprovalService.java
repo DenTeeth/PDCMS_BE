@@ -455,9 +455,11 @@ public class TreatmentPlanApprovalService {
      * - PHASED: Create separate invoice for each phase
      * - INSTALLMENT: Create invoices by installment (TODO: needs logic)
      *
+     * Made public to allow recreation of invoices when plan is updated (Issue 3)
+     *
      * @param plan The approved treatment plan
      */
-    private void createInvoicesForApprovedPlan(PatientTreatmentPlan plan) {
+    public void createInvoicesForApprovedPlan(PatientTreatmentPlan plan) {
         log.info("Creating invoices for approved plan: {} (paymentType: {})",
                 plan.getPlanCode(), plan.getPaymentType());
 
@@ -471,6 +473,7 @@ public class TreatmentPlanApprovalService {
             case INSTALLMENT:
                 // TODO: Implement installment logic
                 log.warn("⚠️ INSTALLMENT payment type not yet implemented for plan: {}", plan.getPlanCode());
+                createInstallmentInvoices(plan);
                 break;
             default:
                 log.warn("Unknown payment type {} for plan: {}", plan.getPaymentType(), plan.getPlanCode());
@@ -584,5 +587,116 @@ public class TreatmentPlanApprovalService {
         }
 
         log.info("✅ Successfully created {} phased invoices for plan: {}", createdCount, plan.getPlanCode());
+    }
+
+    /**
+     * Create multiple invoices for INSTALLMENT payment type.
+     * - Divides total cost evenly across installments
+     * - phaseNumber = null (not phase-based)
+     * - installmentNumber = 1, 2, 3, ...
+     * - Each installment has proportional share of items
+     * 
+     * Business Rules:
+     * - Number of installments from plan.installmentCount (default: 3)
+     * - Interval between installments from plan.installmentIntervalDays (default: 30 days)
+     * - Items distributed evenly across installments
+     * - If items can't be divided evenly, first installments get extra items
+     * - Due dates staggered based on interval
+     * 
+     * Example: 3 installments, 5 items total
+     * - Installment 1: 2 items (due in 7 days)
+     * - Installment 2: 2 items (due in 37 days)
+     * - Installment 3: 1 item (due in 67 days)
+     */
+    private void createInstallmentInvoices(PatientTreatmentPlan plan) {
+        log.info("Creating INSTALLMENT invoices for plan: {}", plan.getPlanCode());
+
+        // Get installment configuration (with defaults)
+        int installmentCount = (plan.getInstallmentCount() != null && plan.getInstallmentCount() > 0) 
+                               ? plan.getInstallmentCount() : 3;
+        int intervalDays = (plan.getInstallmentIntervalDays() != null && plan.getInstallmentIntervalDays() > 0) 
+                           ? plan.getInstallmentIntervalDays() : 30;
+
+        log.info("Installment configuration - count: {}, interval: {} days", installmentCount, intervalDays);
+
+        // Collect all items from all phases
+        List<CreateInvoiceRequest.InvoiceItemDto> allItems = new java.util.ArrayList<>();
+        
+        for (PatientPlanPhase phase : plan.getPhases()) {
+            for (PatientPlanItem item : phase.getItems()) {
+                DentalService service = dentalServiceRepository.findById(item.getServiceId().longValue())
+                        .orElseThrow(() -> new NotFoundException("Service not found: " + item.getServiceId()));
+
+                allItems.add(CreateInvoiceRequest.InvoiceItemDto.builder()
+                        .serviceId(item.getServiceId())
+                        .serviceCode(service.getServiceCode())
+                        .serviceName(item.getItemName())
+                        .quantity(1)
+                        .unitPrice(item.getPrice())
+                        .notes(String.format("Giai đoạn %d - %s", phase.getPhaseNumber(), phase.getPhaseName()))
+                        .build());
+            }
+        }
+
+        if (allItems.isEmpty()) {
+            log.warn("No items found in plan: {}. Skipping installment invoice creation.", plan.getPlanCode());
+            return;
+        }
+
+        // Distribute items across installments
+        int totalItems = allItems.size();
+        int itemsPerInstallment = totalItems / installmentCount;
+        int remainderItems = totalItems % installmentCount;
+
+        log.info("Distributing {} items across {} installments ({} items per installment, {} remainder)", 
+                 totalItems, installmentCount, itemsPerInstallment, remainderItems);
+
+        int currentIndex = 0;
+        int createdCount = 0;
+
+        for (int installmentNum = 1; installmentNum <= installmentCount; installmentNum++) {
+            // Calculate how many items for this installment
+            // First 'remainderItems' installments get one extra item
+            int itemsForThisInstallment = itemsPerInstallment + (installmentNum <= remainderItems ? 1 : 0);
+            
+            // Extract items for this installment
+            List<CreateInvoiceRequest.InvoiceItemDto> installmentItems = new java.util.ArrayList<>();
+            for (int i = 0; i < itemsForThisInstallment && currentIndex < totalItems; i++) {
+                installmentItems.add(allItems.get(currentIndex));
+                currentIndex++;
+            }
+
+            if (installmentItems.isEmpty()) {
+                log.warn("No items for installment {}. Skipping.", installmentNum);
+                continue;
+            }
+
+            // Calculate due date for this installment
+            // First installment due in 7 days, subsequent ones based on interval
+            int daysUntilDue = 7 + ((installmentNum - 1) * intervalDays);
+            LocalDateTime dueDate = LocalDateTime.now().plusDays(daysUntilDue);
+
+            // Create invoice for this installment
+            CreateInvoiceRequest request = CreateInvoiceRequest.builder()
+                    .invoiceType(InvoiceType.TREATMENT_PLAN)
+                    .patientId(plan.getPatient().getPatientId())
+                    .treatmentPlanId(plan.getPlanId().intValue())
+                    .phaseNumber(null) // INSTALLMENT: no specific phase
+                    .installmentNumber(installmentNum)
+                    .items(installmentItems)
+                    .notes(String.format("Tự động tạo khi duyệt lộ trình - Đợt trả góp %d/%d", 
+                            installmentNum, installmentCount))
+                    .dueDate(dueDate)
+                    .build();
+
+            invoiceService.createInvoice(request);
+            createdCount++;
+            
+            log.info("✅ Created invoice for installment {}/{} (due: {}, items: {}) of plan: {}", 
+                     installmentNum, installmentCount, dueDate.toLocalDate(), 
+                     installmentItems.size(), plan.getPlanCode());
+        }
+
+        log.info("✅ Successfully created {} installment invoices for plan: {}", createdCount, plan.getPlanCode());
     }
 }
