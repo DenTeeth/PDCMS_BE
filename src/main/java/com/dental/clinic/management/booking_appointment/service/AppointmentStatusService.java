@@ -196,15 +196,17 @@ public class AppointmentStatusService {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime appointmentStartTime = appointment.getAppointmentStartTime();
         LocalDateTime appointmentEndTime = appointment.getAppointmentEndTime();
+        @SuppressWarnings("unused")
         LocalDate appointmentDate = appointmentStartTime.toLocalDate();
+        @SuppressWarnings("unused")
         LocalDate today = now.toLocalDate();
 
         // TODO: Tạm thời disabled - Cho phép update status linh hoạt theo yêu cầu FE (2026-01-05)
         // Sẽ bật lại khi có yêu cầu với logic mới
         /*
-        // RULE: Date-based status restrictions
-        // CANCELLED and CANCELLED_LATE can happen anytime
-        // CHECKED_IN, IN_PROGRESS, COMPLETED, NO_SHOW can only happen on appointment date
+        // QUY TẮC: Giới hạn trạng thái dựa trên ngày
+        // CANCELLED và CANCELLED_LATE có thể xảy ra bất cứ lúc nào
+        // CHECKED_IN, IN_PROGRESS, COMPLETED, NO_SHOW chỉ có thể xảy ra vào ngày hẹn
         if (newStatus != AppointmentStatus.CANCELLED && newStatus != AppointmentStatus.CANCELLED_LATE) {
             if (!today.equals(appointmentDate)) {
                 throw new IllegalStateException(
@@ -218,26 +220,26 @@ public class AppointmentStatusService {
         */
 
         if (newStatus == AppointmentStatus.CANCELLED || newStatus == AppointmentStatus.CANCELLED_LATE) {
-            // Check reason code is provided
+            // Kiểm tra mã lý do được cung cấp
             if (request.getReasonCode() == null || request.getReasonCode().trim().isEmpty()) {
                 throw new IllegalArgumentException(
                         "Mã lý do bắt buộc khi hủy lịch hẹn");
             }
 
-            // Rule #4: Auto-detect late cancellation (within 24 hours)
+            // Quy tắc #4: Tự động phát hiện hủy muộn (trong vòng 24 giờ)
             LocalDateTime cancellationDeadline = appointmentStartTime.minusHours(24);
 
             if (now.isAfter(cancellationDeadline)) {
-                // Late cancellation - within 24 hours of appointment
-                // Override to CANCELLED_LATE status
+                // Hủy muộn - trong vòng 24 giờ trước lịch hẹn
+                // Tự động chuyển sang trạng thái CANCELLED_LATE
                 newStatus = AppointmentStatus.CANCELLED_LATE;
                 log.warn("⚠️ Hủy muộn: lịch hẹn {} bị hủy lúc {}, hạn hủy là {}", 
                     appointment.getAppointmentCode(),
                     now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
                     cancellationDeadline.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
             } else if (newStatus == AppointmentStatus.CANCELLED_LATE) {
-                // User requested CANCELLED_LATE but it's before deadline
-                // Change to regular CANCELLED
+                // User yêu cầu CANCELLED_LATE nhưng chưa tới hạn
+                // Chuyển về CANCELLED thường
                 newStatus = AppointmentStatus.CANCELLED;
             }
         }
@@ -245,8 +247,8 @@ public class AppointmentStatusService {
         // TODO: Tạm thời disabled - Cho phép check-in linh hoạt theo yêu cầu FE (2026-01-05)
         // Sẽ bật lại khi có yêu cầu với logic mới
         /*
-        // RULE: CHECKED_IN time window
-        // Can check-in: 30 minutes before start → 45 minutes after start
+        // QUY TẮC: Khung thời gian check-in
+        // Có thể check-in: 30 phút trước giờ hẹn → 45 phút sau giờ hẹn
         if (newStatus == AppointmentStatus.CHECKED_IN) {
             LocalDateTime earliestCheckIn = appointmentStartTime.minusMinutes(30);
             LocalDateTime latestCheckIn = appointmentStartTime.plusMinutes(45);
@@ -267,8 +269,8 @@ public class AppointmentStatusService {
         }
         */
 
-        // RULE: IN_PROGRESS time restriction
-        // Can only start treatment on or after scheduled start time
+        // QUY TẮC: Giới hạn thời gian cho trạng thái IN_PROGRESS
+        // Chỉ có thể bắt đầu điều trị từ giờ hẹn trở đi
         if (newStatus == AppointmentStatus.IN_PROGRESS) {
             if (now.isBefore(appointmentStartTime)) {
                 throw new IllegalStateException(
@@ -278,8 +280,8 @@ public class AppointmentStatusService {
             }
         }
 
-        // RULE: COMPLETED time restriction
-        // Can complete early or up to 2 hours after scheduled end time
+        // QUY TẮC: Giới hạn thời gian cho trạng thái COMPLETED
+        // Có thể hoàn thành sớm hoặc tối đa 2 giờ sau giờ kết thúc dự kiến
         if (newStatus == AppointmentStatus.COMPLETED) {
             LocalDateTime maxCompletionTime = appointmentEndTime.plusHours(2);
 
@@ -293,8 +295,8 @@ public class AppointmentStatusService {
             }
         }
 
-        // RULE: NO_SHOW time restriction
-        // Can only mark NO_SHOW after appointment start time
+        // QUY TẮC: Giới hạn thời gian cho trạng thái NO_SHOW
+        // Chỉ có thể đánh dấu NO_SHOW sau giờ hẹn
         if (newStatus == AppointmentStatus.NO_SHOW) {
             if (now.isBefore(appointmentStartTime)) {
                 throw new IllegalStateException(
@@ -304,7 +306,7 @@ public class AppointmentStatusService {
             }
         }
         
-        return newStatus; // Return final status (may have been changed to CANCELLED_LATE)
+        return newStatus; // Trả về trạng thái cuối cùng (có thể đã được đổi thành CANCELLED_LATE)
     }
 
     /**
