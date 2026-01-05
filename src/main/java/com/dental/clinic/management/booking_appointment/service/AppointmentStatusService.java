@@ -195,6 +195,7 @@ public class AppointmentStatusService {
             UpdateAppointmentStatusRequest request) {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime appointmentStartTime = appointment.getAppointmentStartTime();
+        @SuppressWarnings("unused")
         LocalDateTime appointmentEndTime = appointment.getAppointmentEndTime();
         @SuppressWarnings("unused")
         LocalDate appointmentDate = appointmentStartTime.toLocalDate();
@@ -269,6 +270,9 @@ public class AppointmentStatusService {
         }
         */
 
+        // TODO: Tạm thời disabled - Cho phép bắt đầu điều trị linh hoạt theo yêu cầu FE (2026-01-05)
+        // Sẽ bật lại khi có yêu cầu với logic mới
+        /*
         // QUY TẮC: Giới hạn thời gian cho trạng thái IN_PROGRESS
         // Chỉ có thể bắt đầu điều trị từ giờ hẹn trở đi
         if (newStatus == AppointmentStatus.IN_PROGRESS) {
@@ -279,7 +283,11 @@ public class AppointmentStatusService {
                                 now.format(DateTimeFormatter.ofPattern("HH:mm"))));
             }
         }
+        */
 
+        // TODO: Tạm thời disabled - Cho phép hoàn thành cuộc hẹn linh hoạt theo yêu cầu FE (2026-01-05)
+        // Sẽ bật lại khi có yêu cầu với logic mới
+        /*
         // QUY TẮC: Giới hạn thời gian cho trạng thái COMPLETED
         // Có thể hoàn thành sớm hoặc tối đa 2 giờ sau giờ kết thúc dự kiến
         if (newStatus == AppointmentStatus.COMPLETED) {
@@ -294,7 +302,11 @@ public class AppointmentStatusService {
                                 appointmentEndTime.format(DateTimeFormatter.ofPattern("HH:mm"))));
             }
         }
+        */
 
+        // TODO: Tạm thời disabled - Cho phép đánh dấu NO_SHOW linh hoạt theo yêu cầu FE (2026-01-05)
+        // Sẽ bật lại khi có yêu cầu với logic mới
+        /*
         // QUY TẮC: Giới hạn thời gian cho trạng thái NO_SHOW
         // Chỉ có thể đánh dấu NO_SHOW sau giờ hẹn
         if (newStatus == AppointmentStatus.NO_SHOW) {
@@ -305,6 +317,7 @@ public class AppointmentStatusService {
                                 now.format(DateTimeFormatter.ofPattern("HH:mm"))));
             }
         }
+        */
         
         return newStatus; // Trả về trạng thái cuối cùng (có thể đã được đổi thành CANCELLED_LATE)
     }
