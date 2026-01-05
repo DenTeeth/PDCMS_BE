@@ -229,16 +229,18 @@ public class TimeOffRequestService {
                 TimeOffType timeOffType = typeRepository.findByTypeIdAndIsActive(request.getTimeOffTypeId(), true)
                                 .orElseThrow(() -> new TimeOffTypeNotFoundException(request.getTimeOffTypeId()));
 
-                // 3.1 Không cho phép xin nghỉ trong chính ngày tạo yêu cầu để tránh bỏ trống lịch đột ngột
+                // Check if this is emergency leave (bypasses same-day and 24h notice rules)
+                boolean isEmergency = "EMERGENCY_LEAVE".equalsIgnoreCase(timeOffType.getTypeCode());
                 LocalDate today = LocalDate.now();
-                if (request.getStartDate().isEqual(today)) {
+
+                // 3.1 Không cho phép xin nghỉ trong chính ngày (TRỪ Nghỉ khẩn cấp)
+                if (!isEmergency && request.getStartDate().isEqual(today)) {
                         throw new InvalidRequestException(
                                         "TIME_OFF_SAME_DAY_NOT_ALLOWED",
-                                        "Không thể xin nghỉ trong chính ngày tạo yêu cầu. Vui lòng chọn ngày khác.");
+                                        "Không thể xin nghỉ trong chính ngày tạo yêu cầu. Vui lòng chọn ngày khác hoặc dùng loại Nghỉ khẩn cấp.");
                 }
 
-                // 3.2 Yêu cầu báo trước 24h, trừ khi loại nghỉ là Nghỉ khẩn cấp (EMERGENCY_LEAVE)
-                boolean isEmergency = "EMERGENCY_LEAVE".equalsIgnoreCase(timeOffType.getTypeCode());
+                // 3.2 Yêu cầu báo trước 24h (TRỪ Nghỉ khẩn cấp)
                 LocalDate noticeCutoffDate = today.plusDays(1); // xấp xỉ 24h kể từ hôm nay
                 if (!isEmergency && request.getStartDate().isBefore(noticeCutoffDate)) {
                         throw new InvalidRequestException(
@@ -246,7 +248,7 @@ public class TimeOffRequestService {
                                         "Yêu cầu nghỉ phép cần báo trước tối thiểu 24 giờ. Vui lòng chọn ngày khác hoặc dùng loại Nghỉ khẩn cấp.");
                 }
 
-                // 3.3 Nghỉ khẩn cấp yêu cầu lý do giải trình
+                // 3.3 Nghỉ khẩn cấp BẮT BUỘC phải có lý do
                 if (isEmergency) {
                         String reason = request.getReason();
                         if (reason == null || reason.trim().isEmpty()) {
