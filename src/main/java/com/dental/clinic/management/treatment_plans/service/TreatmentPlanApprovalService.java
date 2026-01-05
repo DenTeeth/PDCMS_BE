@@ -837,6 +837,9 @@ public class TreatmentPlanApprovalService {
      * Create SUPPLEMENTAL invoice for new items when plan has PAID/PARTIAL_PAID invoices.
      * This handles the case where items are added after some payment has been made.
      * 
+     * Uses InvoiceType.SUPPLEMENTAL to clearly indicate this is an additional invoice
+     * for items added after the original treatment plan was approved and paid.
+     * 
      * @param plan The treatment plan
      * @param existingInvoices List of existing invoices for this plan
      */

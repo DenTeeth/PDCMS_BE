@@ -45,13 +45,14 @@ public enum InvoiceType {
     TREATMENT_PLAN,
 
     /**
-     * SUPPLEMENTAL: Hóa đơn phát sinh (deprecated - replaced by DIRECT)
+     * SUPPLEMENTAL: Hóa đơn bổ sung/phát sinh
      *
-     * Tạo khi bác sĩ thêm dịch vụ ngoài kế hoạch ban đầu
+     * Sử dụng cho:
+     * 1. Hóa đơn bổ sung khi thêm dịch vụ mới vào lộ trình đã thanh toán
+     * 2. Các dịch vụ phát sinh ngoài kế hoạch điều trị ban đầu
+     * 3. Hạng mục được thêm sau khi invoice đã PAID/PARTIAL_PAID
      *
-     * @deprecated Use DIRECT instead for direct sales (medicine, services without
-     *             appointment)
+     * NOTE: Dùng cho treatment plan additions và supplemental services
      */
-    @Deprecated
     SUPPLEMENTAL
 }
