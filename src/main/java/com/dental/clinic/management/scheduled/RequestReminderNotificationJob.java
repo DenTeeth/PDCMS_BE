@@ -21,6 +21,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -29,12 +30,13 @@ import java.util.List;
  * Scheduled job to send reminder notifications to managers for pending requests.
  * 
  * Business rules:
- * - Send reminder 1 day before the request deadline
+ * - Send reminder at 16:00 (4 PM) the day before the request deadline
+ * - For Monday deadlines: Remind at 16:00 Saturday
  * - Overtime requests: Remind 1 day before work_date
  * - Time-off requests: Remind 1 day before start_date
  * - Registration requests: Remind 1 day before effective_from
  * 
- * Runs daily at 9:00 AM Vietnam time
+ * Runs daily at 16:00 (4 PM) Vietnam time
  */
 @Component
 @RequiredArgsConstructor
@@ -50,29 +52,42 @@ public class RequestReminderNotificationJob {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     /**
-     * Send reminder notifications for pending requests due tomorrow
-     * Runs at 9:00 AM every day (Vietnam time)
+     * Send reminder notifications for pending requests
+     * Runs at 16:00 (4 PM) every day (Vietnam time)
+     * - For normal days: Remind about tomorrow's deadlines
+     * - For Saturdays: Remind about Monday's deadlines
      */
-    @Scheduled(cron = "0 0 9 * * ?", zone = "Asia/Ho_Chi_Minh")
+    @Scheduled(cron = "0 0 16 * * ?", zone = "Asia/Ho_Chi_Minh")
     @Transactional
     public void sendReminderNotifications() {
-        log.info("==== Starting reminder notification job for pending requests ====");
+        log.info("==== Starting reminder notification job for pending requests at 16:00 ====");
         
         try {
-            LocalDate tomorrow = LocalDate.now().plusDays(1);
+            LocalDate today = LocalDate.now();
+            LocalDate targetDate;
+            
+            // If today is Saturday, remind about Monday deadlines
+            // Otherwise, remind about tomorrow's deadlines
+            if (today.getDayOfWeek() == DayOfWeek.SATURDAY) {
+                targetDate = today.plusDays(2); // Monday
+                log.info("Saturday reminder: Checking for Monday ({}) deadlines", targetDate);
+            } else {
+                targetDate = today.plusDays(1); // Tomorrow
+                log.info("Regular reminder: Checking for tomorrow ({}) deadlines", targetDate);
+            }
 
             // 1. Send reminders for overtime requests
-            int overtimeReminders = sendOvertimeReminders(tomorrow);
+            int overtimeReminders = sendOvertimeReminders(targetDate);
 
             // 2. Send reminders for time-off requests
-            int timeOffReminders = sendTimeOffReminders(tomorrow);
+            int timeOffReminders = sendTimeOffReminders(targetDate);
 
             // 3. Send reminders for registration requests
-            int registrationReminders = sendRegistrationReminders(tomorrow);
+            int registrationReminders = sendRegistrationReminders(targetDate);
 
-            log.info("==== Reminder notifications completed ====");
-            log.info("Summary: {} overtime, {} time-off, {} registration reminders sent",
-                    overtimeReminders, timeOffReminders, registrationReminders);
+            log.info("==== Reminder notifications completed at 16:00 ====");
+            log.info("Summary: {} overtime, {} time-off, {} registration reminders sent for date: {}",
+                    overtimeReminders, timeOffReminders, registrationReminders, targetDate);
 
         } catch (Exception e) {
             log.error("Error during reminder notification job: {}", e.getMessage(), e);

@@ -580,27 +580,20 @@ public class OvertimeRequestService {
         }
 
         /**
-         * Scheduled: Nhắc OT PENDING còn <24h (hôm nay hoặc ngày mai).
-         * Chạy mỗi giờ.
+         * [DEPRECATED] Old hourly reminder job - now handled by RequestReminderNotificationJob at 16:00
+         * Kept for reference only. This method is no longer scheduled.
          */
-        @Scheduled(cron = "0 15 * * * *")
-        @Transactional
-        public void remindPendingOvertimeWithin24h() {
-                LocalDate today = LocalDate.now();
-                LocalDate tomorrow = today.plusDays(1);
-
-                List<OvertimeRequest> dueToday = overtimeRequestRepository.findByStatusAndWorkDate(RequestStatus.PENDING,
-                                today);
-                List<OvertimeRequest> dueTomorrow = overtimeRequestRepository
-                                .findByStatusAndWorkDate(RequestStatus.PENDING, tomorrow);
-
-                dueToday.forEach(this::notifyPendingOvertime);
-                dueTomorrow.forEach(this::notifyPendingOvertime);
-        }
+        // @Scheduled(cron = "0 15 * * * *")
+        // public void remindPendingOvertimeWithin24h() {
+        //     // This job has been replaced by RequestReminderNotificationJob
+        //     // which runs at 16:00 daily and handles weekend logic
+        // }
 
         /**
          * Scheduled: Auto-cancel OT PENDING khi tới ngày làm mà chưa duyệt.
          * Chạy 6h sáng hàng ngày.
+         * NOTE: RequestAutoCancellationJob also handles this centrally at 6:00 AM.
+         * This method is kept as a backup.
          */
         @Scheduled(cron = "0 0 6 * * *")
         @Transactional
@@ -621,26 +614,6 @@ public class OvertimeRequestService {
 
                 if (!pendingToday.isEmpty()) {
                         overtimeRequestRepository.saveAll(pendingToday);
-                }
-        }
-
-        private void notifyPendingOvertime(OvertimeRequest req) {
-                try {
-                        Employee employee = req.getEmployee();
-                        String employeeName = employee != null
-                                        ? employee.getFirstName() + " " + employee.getLastName()
-                                        : "Nhân viên";
-
-                        notificationService.createOvertimeRequestNotification(
-                                        employeeName,
-                                        req.getRequestId(),
-                                        req.getWorkDate().toString(),
-                                        req.getWorkShift().getShiftName());
-
-                        log.info("Đã gửi nhắc nhở OT PENDING cho {} (ngày làm: {})", req.getRequestId(),
-                                        req.getWorkDate());
-                } catch (Exception ex) {
-                        log.error("Gửi nhắc nhở OT thất bại cho {}", req.getRequestId(), ex);
                 }
         }
 }

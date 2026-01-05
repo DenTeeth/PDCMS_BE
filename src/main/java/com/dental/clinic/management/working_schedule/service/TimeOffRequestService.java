@@ -713,25 +713,20 @@ public class TimeOffRequestService {
         }
 
         /**
-         * Scheduled: Gửi nhắc nhở cho các yêu cầu PENDING sắp đến hạn (<24h).
-         * Chạy mỗi giờ để đảm bảo manager/admin được nhắc.
+         * [DEPRECATED] Old hourly reminder job - now handled by RequestReminderNotificationJob at 16:00
+         * Kept for reference only. This method is no longer scheduled.
          */
-        @Scheduled(cron = "0 5 * * * *")
-        @Transactional
-        public void notifyPendingTimeOffWithin24h() {
-                LocalDate today = LocalDate.now();
-                LocalDate tomorrow = today.plusDays(1);
-
-                List<TimeOffRequest> dueToday = requestRepository.findByStatusAndStartDate(TimeOffStatus.PENDING, today);
-                List<TimeOffRequest> dueTomorrow = requestRepository.findByStatusAndStartDate(TimeOffStatus.PENDING, tomorrow);
-
-                dueToday.forEach(this::notifyReminderPendingSoon);
-                dueTomorrow.forEach(this::notifyReminderPendingSoon);
-        }
+        // @Scheduled(cron = "0 5 * * * *")
+        // public void notifyPendingTimeOffWithin24h() {
+        //     // This job has been replaced by RequestReminderNotificationJob
+        //     // which runs at 16:00 daily and handles weekend logic
+        // }
 
         /**
          * Scheduled: Tự động hủy các yêu cầu PENDING tới ngày bắt đầu mà chưa được duyệt.
          * Chạy lúc 6h sáng mỗi ngày.
+         * NOTE: RequestAutoCancellationJob also handles this centrally at 6:00 AM.
+         * This method is kept as a backup.
          */
         @Scheduled(cron = "0 0 6 * * *")
         @Transactional
@@ -748,28 +743,6 @@ public class TimeOffRequestService {
 
                 if (!pendingToday.isEmpty()) {
                         requestRepository.saveAll(pendingToday);
-                }
-        }
-
-        // Helper to send reminder notification for pending requests
-        private void notifyReminderPendingSoon(TimeOffRequest req) {
-                try {
-                        Employee employee = employeeRepository.findById(req.getEmployeeId())
-                                        .orElse(null);
-                        String employeeName = employee != null ? employee.getFirstName() + " " + employee.getLastName()
-                                        : "Nhân viên";
-
-                        // Tái sử dụng thông báo hiện có cho admin, dùng nội dung sắp đến hạn
-                        notificationService.createTimeOffRequestNotification(
-                                        employeeName,
-                                        req.getRequestId(),
-                                        req.getStartDate().toString(),
-                                        req.getEndDate().toString());
-
-                        log.info("Đã gửi nhắc nhở PENDING sắp tới hạn cho nghỉ phép {} (bắt đầu: {})", req.getRequestId(),
-                                        req.getStartDate());
-                } catch (Exception ex) {
-                        log.error("Gửi nhắc nhở PENDING thất bại cho nghỉ phép {}", req.getRequestId(), ex);
                 }
         }
 

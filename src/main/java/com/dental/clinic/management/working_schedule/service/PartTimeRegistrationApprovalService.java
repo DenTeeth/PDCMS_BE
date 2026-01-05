@@ -2,7 +2,6 @@ package com.dental.clinic.management.working_schedule.service;
 
 import com.dental.clinic.management.employee.domain.Employee;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
-import com.dental.clinic.management.notification.service.NotificationService;
 import com.dental.clinic.management.working_schedule.domain.PartTimeRegistration;
 import com.dental.clinic.management.working_schedule.domain.PartTimeSlot;
 import com.dental.clinic.management.working_schedule.enums.RegistrationStatus;
@@ -44,7 +43,6 @@ public class PartTimeRegistrationApprovalService {
     private final PartTimeSlotAvailabilityService availabilityService;
     private final EmployeeRepository employeeRepository;
     private final EmployeeShiftService employeeShiftService;
-    private final NotificationService notificationService;
 
     // Weekly hours limit for PART_TIME_FLEX employees
     private static final double FULL_TIME_HOURS_PER_WEEK = 42.0; // 8h × 6 ngày
@@ -1061,25 +1059,20 @@ public class PartTimeRegistrationApprovalService {
     }
 
     /**
-     * Scheduled: Nhắc PENDING đăng ký Part-time sắp hiệu lực (<24h).
-     * Chạy mỗi giờ.
+     * [DEPRECATED] Old hourly reminder job - now handled by RequestReminderNotificationJob at 16:00
+     * Kept for reference only. This method is no longer scheduled.
      */
-    @Scheduled(cron = "0 20 * * * *")
-    @Transactional
-    public void remindPendingPartTimeWithin24h() {
-        LocalDate today = LocalDate.now();
-        LocalDate tomorrow = today.plusDays(1);
-
-        List<PartTimeRegistration> dueToday = registrationRepository.findByStatusAndEffectiveFrom(RegistrationStatus.PENDING, today);
-        List<PartTimeRegistration> dueTomorrow = registrationRepository.findByStatusAndEffectiveFrom(RegistrationStatus.PENDING, tomorrow);
-
-        dueToday.forEach(this::notifyPendingPartTime);
-        dueTomorrow.forEach(this::notifyPendingPartTime);
-    }
+    // @Scheduled(cron = "0 20 * * * *")
+    // public void remindPendingPartTimeWithin24h() {
+    //     // This job has been replaced by RequestReminderNotificationJob
+    //     // which runs at 16:00 daily and handles weekend logic
+    // }
 
     /**
      * Scheduled: Auto-cancel PENDING khi tới ngày hiệu lực mà chưa duyệt.
      * Chạy 6h sáng hàng ngày.
+     * NOTE: RequestAutoCancellationJob also handles this centrally at 6:00 AM.
+     * This method is kept as a backup.
      */
     @Scheduled(cron = "0 5 6 * * *")
     @Transactional
@@ -1098,23 +1091,6 @@ public class PartTimeRegistrationApprovalService {
 
         if (!pendingToday.isEmpty()) {
             registrationRepository.saveAll(pendingToday);
-        }
-    }
-
-    private void notifyPendingPartTime(PartTimeRegistration reg) {
-        try {
-            Employee employee = employeeRepository.findById(reg.getEmployeeId()).orElse(null);
-            String employeeName = employee != null ? employee.getFirstName() + " " + employee.getLastName() : "Nhân viên";
-
-            notificationService.createPartTimeRequestNotification(
-                    employeeName,
-                    reg.getRegistrationId(),
-                    reg.getEffectiveFrom().toString(),
-                    reg.getEffectiveTo().toString());
-
-            log.info("Đã gửi nhắc nhở đăng ký part-time PENDING {} (hiệu lực từ {})", reg.getRegistrationId(), reg.getEffectiveFrom());
-        } catch (Exception ex) {
-            log.error("Gửi nhắc nhở part-time thất bại cho đăng ký {}", reg.getRegistrationId(), ex);
         }
     }
 }
