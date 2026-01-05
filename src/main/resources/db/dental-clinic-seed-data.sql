@@ -5470,19 +5470,20 @@ SELECT setval('patient_tooth_status_history_history_id_seq', (SELECT COALESCE(MA
 -- ============================================
 -- Sample invoices and payments for testing
 
--- Invoice 1: Appointment dat le (BN-1001, APT-20251104-001) - Đã thanh toán
+-- Invoice 1: Appointment (BN-1001, APT-20251104-001) - Đã thanh toán
 -- Payment code format: PDCMSyymmddxy (yy=year, mm=month, dd=day, xy=sequence)
--- FIX: created_by must match appointment doctor (EMP001, not EMP003)
+-- ✅ FIX: created_by must match appointment doctor (EMP001)
+-- ✅ Services match appointment_services: GEN_EXAM (service_id=1) + SCALING_L1 (service_id=3)
 INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at)
 VALUES
-('INV-20251104-001', 'APPOINTMENT', 1, 1, 600000, 600000, 0, 'PAID', NOW() + INTERVAL '7 days', 'Payment Code: PDCMS25110401', 1, NOW() - INTERVAL '2 days')
+('INV-20251104-001', 'APPOINTMENT', 1, 1, 600000, 600000, 0, 'PAID', NOW() + INTERVAL '7 days', 'Payment Code: PDCMS25110401 | Dịch vụ từ lịch hẹn APT-20251104-001', 1, NOW() - INTERVAL '2 days')
 ON CONFLICT (invoice_code) DO NOTHING;
 
 INSERT INTO invoice_items (invoice_id, service_id, service_code, service_name, quantity, unit_price, subtotal)
-SELECT (SELECT invoice_id FROM invoices WHERE invoice_code = 'INV-20251104-001'), 1, 'GEN_EXAM', 'Kham tong quat', 1, 300000, 300000
+SELECT (SELECT invoice_id FROM invoices WHERE invoice_code = 'INV-20251104-001'), 1, 'GEN_EXAM', 'Khám tổng quát', 1, 300000, 300000
 WHERE EXISTS (SELECT 1 FROM invoices WHERE invoice_code = 'INV-20251104-001')
 UNION ALL
-SELECT (SELECT invoice_id FROM invoices WHERE invoice_code = 'INV-20251104-001'), 3, 'SCALING_L1', 'Lay cao rang Level 1', 1, 300000, 300000
+SELECT (SELECT invoice_id FROM invoices WHERE invoice_code = 'INV-20251104-001'), 3, 'SCALING_L1', 'Lấy cao răng Level 1', 1, 300000, 300000
 WHERE EXISTS (SELECT 1 FROM invoices WHERE invoice_code = 'INV-20251104-001');
 
 -- FIX: Payment created_by should also match appointment doctor (EMP001)
@@ -5490,15 +5491,17 @@ INSERT INTO payments (payment_code, invoice_id, amount, payment_method, payment_
 SELECT 'PAY-20251104-001', (SELECT invoice_id FROM invoices WHERE invoice_code = 'INV-20251104-001'), 600000, 'SEPAY', NOW() - INTERVAL '2 days', 'SEPAY-WEBHOOK-123456', 1, NOW() - INTERVAL '2 days'
 WHERE EXISTS (SELECT 1 FROM invoices WHERE invoice_code = 'INV-20251104-001');
 
--- Invoice 2: Appointment chua thanh toan (BN-1002, APT-20251105-001)
--- Payment code: PDCMS25110501 (2025-11-05, sequence 01)
+-- Invoice 2: Appointment chua thanh toan (BN-1002, APT-20251104-002)
+-- Payment code: PDCMS25110401 (2025-11-04, sequence 02)
+-- ✅ FIX: created_by must match appointment doctor (EMP002 = employee_id 2, not 3)
+-- ✅ FIX: Service must match appointment_services (GEN_EXAM, not SCALING_L2)
 INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at)
 VALUES
-('INV-20251105-001', 'APPOINTMENT', 2, 2, 500000, 0, 500000, 'PENDING_PAYMENT', NOW() + INTERVAL '3 days', 'Payment Code: PDCMS25110501', 3, NOW() - INTERVAL '1 day')
+('INV-20251105-001', 'APPOINTMENT', 2, 2, 300000, 0, 300000, 'PENDING_PAYMENT', NOW() + INTERVAL '3 days', 'Payment Code: PDCMS25110402 | Dịch vụ từ lịch hẹn APT-20251104-002', 2, NOW() - INTERVAL '1 day')
 ON CONFLICT (invoice_code) DO NOTHING;
 
 INSERT INTO invoice_items (invoice_id, service_id, service_code, service_name, quantity, unit_price, subtotal)
-SELECT (SELECT invoice_id FROM invoices WHERE invoice_code = 'INV-20251105-001'), 4, 'SCALING_L2', 'Lay cao rang Level 2', 1, 500000, 500000
+SELECT (SELECT invoice_id FROM invoices WHERE invoice_code = 'INV-20251105-001'), 1, 'GEN_EXAM', 'Khám tổng quát', 1, 300000, 300000
 WHERE EXISTS (SELECT 1 FROM invoices WHERE invoice_code = 'INV-20251105-001');
 
 -- Invoice 3: Treatment Plan - Payment FULL (BN-1001, PLAN-20251107-001) - Đã thanh toán

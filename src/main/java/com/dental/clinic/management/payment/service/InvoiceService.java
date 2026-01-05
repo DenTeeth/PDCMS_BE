@@ -3,7 +3,9 @@ package com.dental.clinic.management.payment.service;
 import com.dental.clinic.management.account.domain.Account;
 import com.dental.clinic.management.account.repository.AccountRepository;
 import com.dental.clinic.management.booking_appointment.domain.Appointment;
+import com.dental.clinic.management.booking_appointment.domain.AppointmentService;
 import com.dental.clinic.management.booking_appointment.repository.AppointmentRepository;
+import com.dental.clinic.management.booking_appointment.repository.AppointmentServiceRepository;
 import com.dental.clinic.management.employee.domain.Employee;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.exception.ResourceNotFoundException;
@@ -33,6 +35,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -47,6 +50,7 @@ public class InvoiceService {
 
     // Repositories for populating response fields (Fix FE Issues #1, #2, #3)
     private final AppointmentRepository appointmentRepository;
+    private final AppointmentServiceRepository appointmentServiceRepository; // ✅ NEW: For fetching appointment services
     private final PatientRepository patientRepository;
     private final PatientTreatmentPlanRepository treatmentPlanRepository;
     private final EmployeeRepository employeeRepository;
@@ -62,6 +66,8 @@ public class InvoiceService {
         // ✅ DATA INTEGRITY VALIDATION: If appointmentId is provided, validate patientId
         // matches and get the appointment doctor for created_by
         Integer invoiceCreatedBy = 1; // Default system user
+        List<CreateInvoiceRequest.InvoiceItemDto> invoiceItems = request.getItems();
+        
         if (request.getAppointmentId() != null) {
             Appointment appointment = appointmentRepository.findById(request.getAppointmentId())
                     .orElseThrow(() -> new ResourceNotFoundException("APPOINTMENT_NOT_FOUND",
@@ -93,6 +99,40 @@ public class InvoiceService {
             invoiceCreatedBy = appointment.getEmployeeId();
             log.debug("✅ Validated: Invoice patientId matches appointment patientId");
             log.debug("✅ Setting invoice created_by to appointment doctor: {}", invoiceCreatedBy);
+            
+            // 🔥 CRITICAL FIX: Fetch services from appointment_services table
+            // This is the SOURCE OF TRUTH for appointment services
+            // DO NOT trust FE data as it may be stale/cached/wrong
+            List<AppointmentService> appointmentServices = appointmentServiceRepository
+                    .findByIdAppointmentId(request.getAppointmentId());
+            
+            if (appointmentServices.isEmpty()) {
+                log.warn("⚠️ No services found in appointment_services for appointment {}, using FE data as fallback",
+                        request.getAppointmentId());
+                // Fallback to FE data if no services in DB (shouldn't happen normally)
+            } else {
+                log.info("✅ Fetched {} services from appointment_services table for appointment {}", 
+                        appointmentServices.size(), request.getAppointmentId());
+                
+                // Map appointment services to invoice items
+                List<CreateInvoiceRequest.InvoiceItemDto> mappedItems = new ArrayList<>();
+                for (AppointmentService aptService : appointmentServices) {
+                    com.dental.clinic.management.service.domain.DentalService service = aptService.getService();
+                    CreateInvoiceRequest.InvoiceItemDto itemDto = CreateInvoiceRequest.InvoiceItemDto.builder()
+                            .serviceId(aptService.getId().getServiceId()) // ✅ Use Integer from AppointmentService
+                            .serviceCode(service.getServiceCode())
+                            .serviceName(service.getServiceName()) // ✅ From DB, not FE
+                            .quantity(1) // Default quantity
+                            .unitPrice(service.getPrice()) // ✅ From DB, not FE
+                            .notes("Dịch vụ từ lịch hẹn " + appointment.getAppointmentCode())
+                            .build();
+                    mappedItems.add(itemDto);
+                }
+                invoiceItems = mappedItems;
+                
+                log.info("✅ Mapped {} appointment services to invoice items with correct data from DB", 
+                        invoiceItems.size());
+            }
         }
 
         // Generate payment code for SePay webhook matching
@@ -118,7 +158,7 @@ public class InvoiceService {
         invoice = invoiceRepository.save(invoice);
 
         BigDecimal totalAmount = BigDecimal.ZERO;
-        for (CreateInvoiceRequest.InvoiceItemDto itemDto : request.getItems()) {
+        for (CreateInvoiceRequest.InvoiceItemDto itemDto : invoiceItems) {
             InvoiceItem item = InvoiceItem.builder()
                     .invoice(invoice)
                     .serviceId(itemDto.getServiceId())
