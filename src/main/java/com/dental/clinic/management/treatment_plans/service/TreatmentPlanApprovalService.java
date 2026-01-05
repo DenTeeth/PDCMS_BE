@@ -20,6 +20,9 @@ import com.dental.clinic.management.treatment_plans.repository.PlanAuditLogRepos
 import com.dental.clinic.management.utils.security.SecurityUtil;
 import com.dental.clinic.management.payment.dto.CreateInvoiceRequest;
 import com.dental.clinic.management.payment.enums.InvoiceType;
+import com.dental.clinic.management.payment.enums.InvoicePaymentStatus;
+import com.dental.clinic.management.payment.domain.Invoice;
+import com.dental.clinic.management.payment.domain.InvoiceItem;
 import com.dental.clinic.management.service.domain.DentalService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +32,9 @@ import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Service for Treatment Plan Approval Workflow (API 5.9 - V20).
@@ -53,6 +58,11 @@ public class TreatmentPlanApprovalService {
     // (ISSUE_BE_TREATMENT_PLAN_PHASED_INVOICE_CREATION.md)
     private final com.dental.clinic.management.payment.service.InvoiceService invoiceService;
     private final com.dental.clinic.management.service.repository.DentalServiceRepository dentalServiceRepository;
+    
+    // Fix: Check existing invoices to prevent duplicates when adding items
+    // (ISSUE_BE_TREATMENT_PLAN_ADD_ITEMS_INVOICE_DUPLICATE.md)
+    private final com.dental.clinic.management.payment.repository.InvoiceRepository invoiceRepository;
+    private final com.dental.clinic.management.payment.repository.InvoiceItemRepository invoiceItemRepository;
 
     /**
      * API 5.9: Approve or Reject a treatment plan.
@@ -450,10 +460,20 @@ public class TreatmentPlanApprovalService {
 
     /**
      * Auto-create invoices when treatment plan is approved.
-     * Logic based on paymentType:
+     * 
+     * FIX: Check for existing invoices before creating new ones to prevent duplicates
+     * when items are added to approved plans.
+     * 
+     * Logic:
+     * 1. Check if plan has existing invoices
+     * 2. If PENDING_PAYMENT invoice exists → Update it with new items
+     * 3. If PAID/PARTIAL_PAID invoices exist → Create SUPPLEMENTAL invoice for new items
+     * 4. If no invoices exist → Create new invoices based on paymentType
+     * 
+     * Payment Types:
      * - FULL: Create 1 invoice for entire plan
      * - PHASED: Create separate invoice for each phase
-     * - INSTALLMENT: Create invoices by installment (TODO: needs logic)
+     * - INSTALLMENT: Create invoices by installment
      *
      * Made public to allow recreation of invoices when plan is updated (Issue 3)
      *
@@ -463,6 +483,41 @@ public class TreatmentPlanApprovalService {
         log.info("Creating invoices for approved plan: {} (paymentType: {})",
                 plan.getPlanCode(), plan.getPaymentType());
 
+        // STEP 1: Check for existing invoices
+        List<Invoice> existingInvoices = invoiceRepository.findByTreatmentPlanIdOrderByCreatedAtDesc(
+                plan.getPlanId().intValue());
+        
+        if (!existingInvoices.isEmpty()) {
+            log.info("Found {} existing invoice(s) for plan {}", existingInvoices.size(), plan.getPlanCode());
+        }
+
+        // STEP 2: Check if there's a PENDING_PAYMENT invoice
+        Optional<Invoice> pendingInvoice = existingInvoices.stream()
+                .filter(inv -> inv.getPaymentStatus() == InvoicePaymentStatus.PENDING_PAYMENT)
+                .findFirst();
+
+        if (pendingInvoice.isPresent()) {
+            // CASE: Update existing PENDING_PAYMENT invoice instead of creating new one
+            log.info("Found existing PENDING_PAYMENT invoice {}. Updating with new items instead of creating new invoice.",
+                    pendingInvoice.get().getInvoiceCode());
+            updateInvoiceWithNewPlanItems(pendingInvoice.get(), plan);
+            return; // Don't create new invoice
+        }
+
+        // STEP 3: Check if there are PAID or PARTIAL_PAID invoices
+        boolean hasPaidInvoices = existingInvoices.stream()
+                .anyMatch(inv -> inv.getPaymentStatus() == InvoicePaymentStatus.PAID
+                        || inv.getPaymentStatus() == InvoicePaymentStatus.PARTIAL_PAID);
+
+        if (hasPaidInvoices) {
+            // CASE: Create SUPPLEMENTAL invoice for new items
+            log.info("Found PAID/PARTIAL_PAID invoices. Creating SUPPLEMENTAL invoice for new items.");
+            createSupplementalInvoiceForNewItems(plan, existingInvoices);
+            return;
+        }
+
+        // STEP 4: No existing invoices - create new invoices as normal
+        log.info("No existing invoices found. Creating new invoices for plan.");
         switch (plan.getPaymentType()) {
             case FULL:
                 createFullPaymentInvoice(plan);
@@ -471,8 +526,6 @@ public class TreatmentPlanApprovalService {
                 createPhasedInvoices(plan);
                 break;
             case INSTALLMENT:
-                // TODO: Implement installment logic
-                log.warn("⚠️ INSTALLMENT payment type not yet implemented for plan: {}", plan.getPlanCode());
                 createInstallmentInvoices(plan);
                 break;
             default:
@@ -698,5 +751,196 @@ public class TreatmentPlanApprovalService {
         }
 
         log.info("✅ Successfully created {} installment invoices for plan: {}", createdCount, plan.getPlanCode());
+    }
+
+    /**
+     * Update existing PENDING_PAYMENT invoice with new plan items.
+     * This prevents duplicate invoices when items are added to approved plans.
+     * 
+     * @param existingInvoice The PENDING_PAYMENT invoice to update
+     * @param plan The treatment plan with all items (including newly added ones)
+     */
+    private void updateInvoiceWithNewPlanItems(Invoice existingInvoice, PatientTreatmentPlan plan) {
+        log.info("Updating invoice {} with new items from plan {}",
+                existingInvoice.getInvoiceCode(), plan.getPlanCode());
+
+        // Get all plan items (including newly added ones)
+        List<PatientPlanItem> allPlanItems = getAllPlanItems(plan);
+
+        // Get existing invoice items
+        List<InvoiceItem> existingItems = invoiceItemRepository.findByInvoice_InvoiceId(
+                existingInvoice.getInvoiceId());
+
+        // Find new items that are not in existing invoice
+        List<PatientPlanItem> newItems = findNewItemsNotInInvoice(allPlanItems, existingItems);
+
+        if (newItems.isEmpty()) {
+            log.info("No new items to add to invoice {}. Invoice remains unchanged.",
+                    existingInvoice.getInvoiceCode());
+            return;
+        }
+
+        log.info("Found {} new items to add to invoice {}", newItems.size(), existingInvoice.getInvoiceCode());
+
+        // Add new items to invoice
+        BigDecimal additionalAmount = BigDecimal.ZERO;
+        for (PatientPlanItem planItem : newItems) {
+            DentalService service = dentalServiceRepository.findById(planItem.getServiceId().longValue())
+                    .orElse(null);
+            String serviceCode = service != null ? service.getServiceCode() : "N/A";
+
+            InvoiceItem newInvoiceItem = InvoiceItem.builder()
+                    .invoice(existingInvoice)
+                    .serviceId(planItem.getServiceId())
+                    .serviceCode(serviceCode)
+                    .serviceName(planItem.getItemName())
+                    .quantity(1)
+                    .unitPrice(planItem.getPrice())
+                    .subtotal(planItem.getPrice())
+                    .notes("Hạng mục mới được thêm vào lộ trình")
+                    .build();
+
+            invoiceItemRepository.save(newInvoiceItem);
+            additionalAmount = additionalAmount.add(planItem.getPrice());
+            
+            log.debug("Added item: {} - {} VND", planItem.getItemName(), planItem.getPrice());
+        }
+
+        // Update invoice total
+        BigDecimal oldTotalAmount = existingInvoice.getTotalAmount();
+        BigDecimal newTotalAmount = oldTotalAmount.add(additionalAmount);
+        existingInvoice.setTotalAmount(newTotalAmount);
+        existingInvoice.setRemainingDebt(newTotalAmount.subtract(existingInvoice.getPaidAmount()));
+        existingInvoice.setUpdatedAt(LocalDateTime.now());
+
+        // Update notes
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+        String updateNote = String.format(" | Đã cập nhật: Thêm %d hạng mục mới (+%s VND) vào %s",
+                newItems.size(),
+                formatCurrency(additionalAmount),
+                timestamp);
+        
+        String currentNotes = existingInvoice.getNotes() != null ? existingInvoice.getNotes() : "";
+        existingInvoice.setNotes(currentNotes + updateNote);
+
+        // Save updated invoice
+        invoiceRepository.save(existingInvoice);
+
+        log.info("✅ Updated invoice {} with {} new items. Total amount: {} → {} VND",
+                existingInvoice.getInvoiceCode(),
+                newItems.size(),
+                oldTotalAmount,
+                newTotalAmount);
+    }
+
+    /**
+     * Create SUPPLEMENTAL invoice for new items when plan has PAID/PARTIAL_PAID invoices.
+     * This handles the case where items are added after some payment has been made.
+     * 
+     * @param plan The treatment plan
+     * @param existingInvoices List of existing invoices for this plan
+     */
+    private void createSupplementalInvoiceForNewItems(PatientTreatmentPlan plan, List<Invoice> existingInvoices) {
+        log.info("Creating SUPPLEMENTAL invoice for new items in plan {}", plan.getPlanCode());
+
+        // Get all plan items
+        List<PatientPlanItem> allPlanItems = getAllPlanItems(plan);
+
+        // Get all items already in existing invoices
+        Set<Integer> serviceIdsInInvoices = existingInvoices.stream()
+                .flatMap(inv -> invoiceItemRepository.findByInvoice_InvoiceId(inv.getInvoiceId()).stream())
+                .map(InvoiceItem::getServiceId)
+                .collect(Collectors.toSet());
+
+        // Find new items not in any invoice
+        List<PatientPlanItem> newItems = allPlanItems.stream()
+                .filter(item -> !serviceIdsInInvoices.contains(item.getServiceId()))
+                .collect(Collectors.toList());
+
+        if (newItems.isEmpty()) {
+            log.info("No new items to create supplemental invoice for plan {}.", plan.getPlanCode());
+            return;
+        }
+
+        log.info("Found {} new items for supplemental invoice", newItems.size());
+
+        // Create invoice items for new items
+        List<CreateInvoiceRequest.InvoiceItemDto> supplementalItems = new ArrayList<>();
+        for (PatientPlanItem planItem : newItems) {
+            DentalService service = dentalServiceRepository.findById(planItem.getServiceId().longValue())
+                    .orElse(null);
+            String serviceCode = service != null ? service.getServiceCode() : "N/A";
+
+            supplementalItems.add(CreateInvoiceRequest.InvoiceItemDto.builder()
+                    .serviceId(planItem.getServiceId())
+                    .serviceCode(serviceCode)
+                    .serviceName(planItem.getItemName())
+                    .quantity(1)
+                    .unitPrice(planItem.getPrice())
+                    .notes("Hạng mục bổ sung sau khi lộ trình đã được thanh toán")
+                    .build());
+        }
+
+        // Create SUPPLEMENTAL invoice
+        CreateInvoiceRequest request = CreateInvoiceRequest.builder()
+                .invoiceType(InvoiceType.SUPPLEMENTAL)
+                .patientId(plan.getPatient().getPatientId())
+                .treatmentPlanId(plan.getPlanId().intValue())
+                .phaseNumber(null)
+                .installmentNumber(null)
+                .items(supplementalItems)
+                .notes(String.format("Hóa đơn bổ sung cho các hạng mục mới được thêm vào lộ trình %s",
+                        plan.getPlanCode()))
+                .dueDate(LocalDateTime.now().plusDays(7))
+                .build();
+
+        invoiceService.createInvoice(request);
+        log.info("✅ Created SUPPLEMENTAL invoice with {} items for plan {}",
+                supplementalItems.size(), plan.getPlanCode());
+    }
+
+    /**
+     * Get all plan items from all phases.
+     * 
+     * @param plan The treatment plan
+     * @return List of all items across all phases
+     */
+    private List<PatientPlanItem> getAllPlanItems(PatientTreatmentPlan plan) {
+        List<PatientPlanItem> allItems = new ArrayList<>();
+        for (PatientPlanPhase phase : plan.getPhases()) {
+            allItems.addAll(phase.getItems());
+        }
+        return allItems;
+    }
+
+    /**
+     * Find plan items that are not yet in the invoice.
+     * Compares by serviceId to identify new items.
+     * 
+     * @param allPlanItems All items from the plan
+     * @param existingInvoiceItems Existing items in the invoice
+     * @return List of new items not in the invoice
+     */
+    private List<PatientPlanItem> findNewItemsNotInInvoice(
+            List<PatientPlanItem> allPlanItems,
+            List<InvoiceItem> existingInvoiceItems) {
+
+        Set<Integer> existingServiceIds = existingInvoiceItems.stream()
+                .map(InvoiceItem::getServiceId)
+                .collect(Collectors.toSet());
+
+        return allPlanItems.stream()
+                .filter(planItem -> !existingServiceIds.contains(planItem.getServiceId()))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Format currency amount for display in notes.
+     * 
+     * @param amount The amount to format
+     * @return Formatted string (e.g., "1,000,000")
+     */
+    private String formatCurrency(BigDecimal amount) {
+        return String.format("%,d", amount.longValue());
     }
 }
