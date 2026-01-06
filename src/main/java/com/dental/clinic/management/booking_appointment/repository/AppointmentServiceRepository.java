@@ -40,7 +40,7 @@ public interface AppointmentServiceRepository extends JpaRepository<AppointmentS
            "FROM invoice_items ii " +
            "JOIN invoices i ON ii.invoice_id = i.invoice_id " +
            "JOIN appointments a ON i.appointment_id = a.appointment_id " +
-           "WHERE a.appointment_date BETWEEN :startDate AND :endDate " +
+           "WHERE a.appointment_start_time BETWEEN :startDate AND :endDate " +
            "AND a.status = 'COMPLETED' " +
            "AND i.payment_status IN ('PAID', 'PARTIAL_PAID') " +
            "GROUP BY ii.service_id, ii.service_name " +

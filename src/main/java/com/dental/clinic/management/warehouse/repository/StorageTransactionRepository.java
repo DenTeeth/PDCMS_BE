@@ -201,7 +201,7 @@ public interface StorageTransactionRepository extends JpaRepository<StorageTrans
       SELECT DISTINCT ON (im.item_master_id)
           im.item_code AS itemCode,
           im.item_name AS itemName,
-          sti.unit_price AS lastImportPrice,
+          sti.price AS lastImportPrice,
           st.transaction_date AS lastImportDate
       FROM storage_transactions st
       JOIN storage_transaction_items sti ON st.transaction_id = sti.transaction_id
