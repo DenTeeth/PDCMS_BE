@@ -23,7 +23,7 @@ public class DashboardController {
     private final DashboardExportService dashboardExportService;
 
     @GetMapping("/overview")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     @Operation(summary = "Get dashboard overview statistics", 
                description = "Get all overview statistics including revenue, expenses, invoices, and appointments")
     public ResponseEntity<DashboardOverviewResponse> getOverview(
@@ -34,7 +34,7 @@ public class DashboardController {
     }
 
     @GetMapping("/revenue-expenses")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     @Operation(summary = "Get revenue and expenses statistics",
                description = "Get detailed revenue and expenses statistics with daily breakdown and top services/items")
     public ResponseEntity<RevenueExpensesResponse> getRevenueExpenses(
@@ -45,7 +45,7 @@ public class DashboardController {
     }
 
     @GetMapping("/employees")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     @Operation(summary = "Get employee statistics",
                description = "Get employee statistics including top doctors performance and time-off data")
     public ResponseEntity<EmployeeStatisticsResponse> getEmployeeStatistics(
@@ -56,7 +56,7 @@ public class DashboardController {
     }
 
     @GetMapping("/warehouse")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     @Operation(summary = "Get warehouse statistics",
                description = "Get warehouse statistics including transactions, inventory, and top items")
     public ResponseEntity<WarehouseStatisticsResponse> getWarehouseStatistics(
@@ -66,7 +66,7 @@ public class DashboardController {
     }
 
     @GetMapping("/transactions")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     @Operation(summary = "Get transaction statistics",
                description = "Get transaction statistics including invoices and payments")
     public ResponseEntity<TransactionStatisticsResponse> getTransactionStatistics(
@@ -76,7 +76,7 @@ public class DashboardController {
     }
 
     @GetMapping("/export/{tab}")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     @Operation(summary = "Export dashboard statistics to Excel",
                description = "Export specific tab statistics to Excel file. Available tabs: overview, revenue-expenses, employees, warehouse, transactions")
     public ResponseEntity<byte[]> exportToExcel(
