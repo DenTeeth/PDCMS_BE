@@ -212,6 +212,8 @@ curl -X GET "http://localhost:8080/api/v1/dashboard/overview" \
 ```
 
 ### Test Authorization
+**Note**: All dashboard endpoints require `ROLE_ADMIN` or `ROLE_MANAGER` in JWT token.
+
 ```bash
 # No token (should return 401)
 curl -X GET "http://localhost:8080/api/v1/dashboard/overview?month=2026-01"
@@ -220,7 +222,7 @@ curl -X GET "http://localhost:8080/api/v1/dashboard/overview?month=2026-01"
 curl -X GET "http://localhost:8080/api/v1/dashboard/overview?month=2026-01" \
   -H "Authorization: Bearer invalid_token"
 
-# Non-admin/manager role (should return 403 if implemented)
+# Non-admin/manager role (should return 403)
 curl -X GET "http://localhost:8080/api/v1/dashboard/overview?month=2026-01" \
   -H "Authorization: Bearer $EMPLOYEE_TOKEN"
 ```
@@ -454,7 +456,7 @@ try {
 - **Solution:** Ensure `DashboardController` injects `DashboardExportService` directly, not through `DashboardService`
 
 **Issue:** "Access Denied" / 403 error
-- **Solution:** Verify user has ADMIN or MANAGER authority in JWT claims
+- **Solution:** ✅ FIXED - Controller now uses `hasAnyRole()` instead of `hasAnyAuthority()` to properly handle `ROLE_` prefix in JWT tokens. Verify user has `ROLE_ADMIN` or `ROLE_MANAGER` in JWT claims.
 
 **Issue:** Empty data returned
 - **Solution:** Normal if no data exists for the month, verify database has seed data

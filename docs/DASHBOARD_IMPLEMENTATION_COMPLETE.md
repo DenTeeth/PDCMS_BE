@@ -336,10 +336,12 @@ When a month has no data:
 
 ## 🔒 Security
 
-All endpoints require ADMIN or MANAGER authority:
+All endpoints require ADMIN or MANAGER role:
 ```java
-@PreAuthorize("hasAnyAuthority('ADMIN', 'MANAGER')")
+@PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
 ```
+
+**Note**: Uses `hasAnyRole()` instead of `hasAnyAuthority()` to properly handle the `ROLE_` prefix in JWT tokens.
 
 ---
 
