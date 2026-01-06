@@ -456,7 +456,8 @@ try {
 - **Solution:** Ensure `DashboardController` injects `DashboardExportService` directly, not through `DashboardService`
 
 **Issue:** "Access Denied" / 403 error
-- **Solution:** ✅ FIXED - Controller now uses `hasAnyRole()` instead of `hasAnyAuthority()` to properly handle `ROLE_` prefix in JWT tokens. Verify user has `ROLE_ADMIN` or `ROLE_MANAGER` in JWT claims.
+- **Cause:** JWT token contains `ROLE_ADMIN` but controller used `hasAnyAuthority('ADMIN')` which expects exact match without prefix
+- **Solution:** ✅ FIXED - Controller now uses `hasAnyRole('ADMIN', 'MANAGER')` instead of `hasAnyAuthority()` to properly handle `ROLE_` prefix in JWT tokens. Verify user has `ROLE_ADMIN` or `ROLE_MANAGER` in JWT claims.
 
 **Issue:** Empty data returned
 - **Solution:** Normal if no data exists for the month, verify database has seed data
@@ -474,10 +475,20 @@ try {
 - **Solution:** Verify Apache POI dependency (poi-ooxml) is included in pom.xml
 
 **Issue:** 500 error with "relation 'service_masters' does not exist"
+- **Cause:** Native SQL query referenced wrong table name (leftover from old schema)
 - **Solution:** ✅ FIXED - SQL query updated to use correct table name `services` instead of `service_masters` in AppointmentServiceRepository.getTopServicesByRevenue()
 
+**Issue:** 500 error with "column sti.unit_price does not exist"
+- **Cause:** Inventory value calculation query used wrong column name for price in storage_transaction_items table
+- **Solution:** ✅ FIXED - Updated ItemBatchRepository.calculateTotalInventoryValue() to use `sti.price` instead of `sti.unit_price` (verified against database schema: `docker exec postgres-dental psql -U root -d dental_clinic_db -c "\d storage_transaction_items"`)
+
+**Issue:** 500 error with "column aps.price does not exist" or "column aps.quantity does not exist"
+- **Cause:** Revenue calculation query tried to get price/quantity from `appointment_services` table, but this table is a pure junction table with only `appointment_id` and `service_id` columns (no price data)
+- **Solution:** ✅ FIXED - Completely rewrote AppointmentServiceRepository.getTopServicesByRevenue() to query `invoice_items` table instead, which contains actual revenue data with `unit_price` and `quantity` columns. Revenue is calculated from invoices, not from appointment-service associations.
+
 **Issue:** NullPointerException on empty data
-- **Solution:** ✅ FIXED - All BigDecimal and Long values now have null safety checks with default values (0 or BigDecimal.ZERO)
+- **Cause:** Repository aggregate queries (SUM, COUNT) return null when no matching records exist
+- **Solution:** ✅ FIXED - All BigDecimal and Long values now have null safety checks with default values (0 or BigDecimal.ZERO) in DashboardRevenueService and DashboardWarehouseService
 
 ---
 

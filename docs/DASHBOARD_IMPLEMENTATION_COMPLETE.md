@@ -193,6 +193,8 @@ List<Object[]> getTopDoctorsByPerformance(LocalDateTime start, LocalDateTime end
 
 ### AppointmentServiceRepository (1 method)
 ```java
+// NOTE: Query uses invoice_items table (not appointment_services) because revenue data 
+// with unit_price and quantity exists in invoices, not in the junction table
 List<Object[]> getTopServicesByRevenue(LocalDateTime start, LocalDateTime end, Integer limit)
 ```
 
@@ -277,11 +279,13 @@ private TransactionStatisticsResponse.StatusCount buildStatusCount(Long count, B
 }
 ```
 
-### SQL Table Names
-- All queries use correct PostgreSQL table names
+### SQL Table Names & Schema Verification
+- All queries use correct PostgreSQL table names verified against actual database
 - `services` (NOT `service_masters`) for dental service data
-- `appointment_services` for appointment-service junction table
-- Native queries verified with actual database schema
+- `storage_transaction_items` uses column `price` (NOT `unit_price`)
+- `appointment_services` is junction table with only `appointment_id` and `service_id` (NO price/quantity)
+- Revenue queries use `invoice_items` table which contains `unit_price` and `quantity`
+- All native SQL queries tested and verified with PostgreSQL schema
 
 ---
 
@@ -486,13 +490,25 @@ All endpoints return data wrapped in `FormatRestResponse`:
 **Cause**: System currently only supports SEPAY payment method  
 **Solution**: This is expected behavior, not a bug
 
+### Issue: 403 Forbidden - Authorization Error
+**Cause**: JWT token has `ROLE_ADMIN` but controller used `hasAnyAuthority('ADMIN', 'MANAGER')` which doesn't match the `ROLE_` prefix  
+**Solution**: ✅ FIXED - Updated all 6 dashboard endpoints from `hasAnyAuthority()` to `hasAnyRole('ADMIN', 'MANAGER')` which auto-handles the `ROLE_` prefix
+
 ### Issue: 500 Error - "relation 'service_masters' does not exist"
 **Cause**: Native SQL query in `AppointmentServiceRepository.getTopServicesByRevenue()` used wrong table name  
 **Solution**: ✅ FIXED - Updated query to use `services` table instead of `service_masters`
 
+### Issue: 500 Error - "column sti.unit_price does not exist"
+**Cause**: Native SQL query in `ItemBatchRepository.calculateTotalInventoryValue()` referenced non-existent column `sti.unit_price` in `storage_transaction_items` table  
+**Solution**: ✅ FIXED - Updated query to use correct column name `sti.price` (verified against actual database schema)
+
+### Issue: 500 Error - "column aps.price does not exist" / "column aps.quantity does not exist"
+**Cause**: `AppointmentServiceRepository.getTopServicesByRevenue()` query tried to SELECT `aps.price` and `aps.quantity` from `appointment_services` table, but this table only has `appointment_id` and `service_id` columns (it's a pure junction table)  
+**Solution**: ✅ FIXED - Completely rewrote query to use `invoice_items` table instead of `appointment_services` because actual revenue data (with `unit_price` and `quantity`) exists in `invoice_items`, not `appointment_services`
+
 ### Issue: NullPointerException on Empty Data
 **Cause**: Repository queries returned null values for counts and sums when no data exists  
-**Solution**: ✅ FIXED - Added null safety checks in `DashboardRevenueService` and `DashboardWarehouseService`:
+**Solution**: ✅ FIXED - Added comprehensive null safety checks in `DashboardRevenueService` and `DashboardWarehouseService`:
 - All `BigDecimal` values: `value = value != null ? value : BigDecimal.ZERO`
 - All `Long` counts: `count = count != null ? count : 0L`
 
