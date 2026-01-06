@@ -33,18 +33,18 @@ public interface AppointmentServiceRepository extends JpaRepository<AppointmentS
      * Joins appointments with COMPLETED status and PAID/PARTIAL_PAID invoices
      */
     @Query(value = "SELECT " +
-           "sm.service_id, " +
-           "sm.service_name, " +
+           "s.service_id, " +
+           "s.service_name, " +
            "COUNT(DISTINCT aps.appointment_id) as usage_count, " +
            "SUM(aps.price * aps.quantity) as total_revenue " +
            "FROM appointment_services aps " +
            "JOIN appointments a ON aps.appointment_id = a.appointment_id " +
-           "JOIN service_masters sm ON aps.service_id = sm.service_id " +
+           "JOIN services s ON aps.service_id = s.service_id " +
            "JOIN invoices i ON a.appointment_id = i.appointment_id " +
            "WHERE a.appointment_date BETWEEN :startDate AND :endDate " +
            "AND a.status = 'COMPLETED' " +
            "AND i.payment_status IN ('PAID', 'PARTIAL_PAID') " +
-           "GROUP BY sm.service_id, sm.service_name " +
+           "GROUP BY s.service_id, s.service_name " +
            "ORDER BY total_revenue DESC " +
            "LIMIT :limit", nativeQuery = true)
     List<Object[]> getTopServicesByRevenue(
