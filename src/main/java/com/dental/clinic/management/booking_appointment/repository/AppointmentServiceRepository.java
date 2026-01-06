@@ -30,21 +30,20 @@ public interface AppointmentServiceRepository extends JpaRepository<AppointmentS
 
     /**
      * Get top services by revenue for dashboard statistics
-     * Joins appointments with COMPLETED status and PAID/PARTIAL_PAID invoices
+     * Uses invoice_items to get actual revenue with price and quantity
      */
     @Query(value = "SELECT " +
-           "s.service_id, " +
-           "s.service_name, " +
-           "COUNT(DISTINCT aps.appointment_id) as usage_count, " +
-           "SUM(aps.price * aps.quantity) as total_revenue " +
-           "FROM appointment_services aps " +
-           "JOIN appointments a ON aps.appointment_id = a.appointment_id " +
-           "JOIN services s ON aps.service_id = s.service_id " +
-           "JOIN invoices i ON a.appointment_id = i.appointment_id " +
+           "ii.service_id, " +
+           "ii.service_name, " +
+           "COUNT(DISTINCT a.appointment_id) as usage_count, " +
+           "SUM(ii.unit_price * ii.quantity) as total_revenue " +
+           "FROM invoice_items ii " +
+           "JOIN invoices i ON ii.invoice_id = i.invoice_id " +
+           "JOIN appointments a ON i.appointment_id = a.appointment_id " +
            "WHERE a.appointment_date BETWEEN :startDate AND :endDate " +
            "AND a.status = 'COMPLETED' " +
            "AND i.payment_status IN ('PAID', 'PARTIAL_PAID') " +
-           "GROUP BY s.service_id, s.service_name " +
+           "GROUP BY ii.service_id, ii.service_name " +
            "ORDER BY total_revenue DESC " +
            "LIMIT :limit", nativeQuery = true)
     List<Object[]> getTopServicesByRevenue(

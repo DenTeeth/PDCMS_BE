@@ -81,9 +81,9 @@ public interface ItemBatchRepository extends JpaRepository<ItemBatch, Long> {
 
         /**
          * Calculate total current inventory value
-         * Sum of (quantityOnHand * unit_price) from all batches
+         * Sum of (quantityOnHand * price) from all batches
          */
-        @Query(value = "SELECT COALESCE(SUM(ib.quantity_on_hand * sti.unit_price), 0) " +
+        @Query(value = "SELECT COALESCE(SUM(ib.quantity_on_hand * sti.price), 0) " +
                        "FROM item_batches ib " +
                        "JOIN storage_transaction_items sti ON ib.batch_id = sti.batch_id " +
                        "WHERE ib.quantity_on_hand > 0", nativeQuery = true)
