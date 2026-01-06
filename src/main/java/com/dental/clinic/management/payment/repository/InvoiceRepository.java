@@ -71,4 +71,122 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate,
             Pageable pageable);
+
+    // ==================== Dashboard Statistics Queries ====================
+
+    /**
+     * Calculate total revenue for a date range (PAID + PARTIAL_PAID invoices only)
+     */
+    @Query("SELECT COALESCE(SUM(i.totalAmount), 0) FROM Invoice i " +
+           "WHERE i.createdAt BETWEEN :startDate AND :endDate " +
+           "AND i.paymentStatus IN ('PAID', 'PARTIAL_PAID')")
+    java.math.BigDecimal calculateTotalRevenue(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate);
+
+    /**
+     * Calculate revenue by invoice type
+     */
+    @Query("SELECT COALESCE(SUM(i.totalAmount), 0) FROM Invoice i " +
+           "WHERE i.createdAt BETWEEN :startDate AND :endDate " +
+           "AND i.paymentStatus IN ('PAID', 'PARTIAL_PAID') " +
+           "AND i.invoiceType = :type")
+    java.math.BigDecimal calculateRevenueByType(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("type") InvoiceType type);
+
+    /**
+     * Get revenue by day for chart
+     */
+    @Query("SELECT DATE(i.createdAt) as date, COALESCE(SUM(i.totalAmount), 0) as amount " +
+           "FROM Invoice i " +
+           "WHERE i.createdAt BETWEEN :startDate AND :endDate " +
+           "AND i.paymentStatus IN ('PAID', 'PARTIAL_PAID') " +
+           "GROUP BY DATE(i.createdAt) " +
+           "ORDER BY DATE(i.createdAt)")
+    List<Object[]> getRevenueByDay(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate);
+
+    /**
+     * Count invoices in date range
+     */
+    @Query("SELECT COUNT(i) FROM Invoice i " +
+           "WHERE i.createdAt BETWEEN :startDate AND :endDate")
+    Long countInvoicesInRange(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate);
+
+    /**
+     * Count invoices by status
+     */
+    @Query("SELECT COUNT(i) FROM Invoice i " +
+           "WHERE i.createdAt BETWEEN :startDate AND :endDate " +
+           "AND i.paymentStatus = :status")
+    Long countByStatusInRange(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("status") InvoicePaymentStatus status);
+
+    /**
+     * Calculate total invoice value by status
+     */
+    @Query("SELECT COALESCE(SUM(i.totalAmount), 0) FROM Invoice i " +
+           "WHERE i.createdAt BETWEEN :startDate AND :endDate " +
+           "AND i.paymentStatus = :status")
+    java.math.BigDecimal calculateTotalByStatusInRange(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("status") InvoicePaymentStatus status);
+
+    /**
+     * Count invoices by type
+     */
+    @Query("SELECT COUNT(i) FROM Invoice i " +
+           "WHERE i.createdAt BETWEEN :startDate AND :endDate " +
+           "AND i.invoiceType = :type")
+    Long countByTypeInRange(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("type") InvoiceType type);
+
+    /**
+     * Calculate total invoice value by type
+     */
+    @Query("SELECT COALESCE(SUM(i.totalAmount), 0) FROM Invoice i " +
+           "WHERE i.createdAt BETWEEN :startDate AND :endDate " +
+           "AND i.invoiceType = :type")
+    java.math.BigDecimal calculateTotalByTypeInRange(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("type") InvoiceType type);
+
+    /**
+     * Calculate total invoice value in date range
+     */
+    @Query("SELECT COALESCE(SUM(i.totalAmount), 0) FROM Invoice i " +
+           "WHERE i.createdAt BETWEEN :startDate AND :endDate")
+    java.math.BigDecimal calculateTotalInvoiceValue(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate);
+
+    /**
+     * Calculate total debt in date range (PENDING_PAYMENT and PARTIAL_PAID invoices)
+     */
+    @Query("SELECT COALESCE(SUM(i.remainingDebt), 0) FROM Invoice i " +
+           "WHERE i.createdAt BETWEEN :startDate AND :endDate " +
+           "AND i.paymentStatus IN ('PENDING_PAYMENT', 'PARTIAL_PAID')")
+    java.math.BigDecimal calculateTotalDebt(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate);
+
+    /**
+     * Count unique patients in date range
+     */
+    @Query("SELECT COUNT(DISTINCT i.patientId) FROM Invoice i " +
+           "WHERE i.createdAt BETWEEN :startDate AND :endDate")
+    Long countUniquePatients(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate);
 }

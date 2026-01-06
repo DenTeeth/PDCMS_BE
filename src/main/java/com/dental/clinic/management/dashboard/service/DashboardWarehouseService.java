@@ -1,0 +1,151 @@
+package com.dental.clinic.management.dashboard.service;
+
+import com.dental.clinic.management.dashboard.dto.WarehouseStatisticsResponse;
+import com.dental.clinic.management.warehouse.repository.StorageTransactionRepository;
+import com.dental.clinic.management.warehouse.repository.ItemBatchRepository;
+import com.dental.clinic.management.warehouse.enums.TransactionType;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+// import java.math.RoundingMode;
+import java.sql.Date;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.YearMonth;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class DashboardWarehouseService {
+
+    private final StorageTransactionRepository storageTransactionRepository;
+    private final ItemBatchRepository itemBatchRepository;
+
+    public WarehouseStatisticsResponse getWarehouseStatistics(String month) {
+        YearMonth currentMonth = YearMonth.parse(month);
+        LocalDateTime startDate = currentMonth.atDay(1).atStartOfDay();
+        LocalDateTime endDate = currentMonth.atEndOfMonth().atTime(23, 59, 59);
+
+        return WarehouseStatisticsResponse.builder()
+                .month(month)
+                .transactions(getTransactionStats(startDate, endDate))
+                .inventory(getInventoryStats())
+                .topImports(getTopImports(startDate, endDate))
+                .topExports(getTopExports(startDate, endDate))
+                .build();
+    }
+
+    private WarehouseStatisticsResponse.TransactionStats getTransactionStats(
+            LocalDateTime startDate, LocalDateTime endDate) {
+        
+        // Count total transactions
+        Long importCount = storageTransactionRepository.countByTypeInRange(
+                startDate, endDate, TransactionType.IMPORT);
+        Long exportCount = storageTransactionRepository.countByTypeInRange(
+                startDate, endDate, TransactionType.EXPORT);
+        Long total = importCount + exportCount;
+        
+        // Calculate values
+        BigDecimal importValue = storageTransactionRepository.calculateTotalValueByType(
+                startDate, endDate, TransactionType.IMPORT);
+        BigDecimal exportValue = storageTransactionRepository.calculateTotalValueByType(
+                startDate, endDate, TransactionType.EXPORT);
+        
+        // By status (using string for compatibility with TransactionStatus enum)
+        Long pending = storageTransactionRepository.countByStatusInRange(startDate, endDate, "PENDING_APPROVAL");
+        Long approved = storageTransactionRepository.countByStatusInRange(startDate, endDate, "APPROVED");
+        Long rejected = storageTransactionRepository.countByStatusInRange(startDate, endDate, "REJECTED");
+        Long cancelled = storageTransactionRepository.countByStatusInRange(startDate, endDate, "CANCELLED");
+        
+        // By day
+        List<Object[]> transactionsByDayRaw = storageTransactionRepository.getTransactionsByDay(startDate, endDate);
+        List<WarehouseStatisticsResponse.DailyTransaction> transactionsByDay = transactionsByDayRaw.stream()
+                .map(row -> WarehouseStatisticsResponse.DailyTransaction.builder()
+                        .date(row[0] instanceof Date ? ((Date) row[0]).toLocalDate() : (LocalDate) row[0])
+                        .count(((Number) row[1]).longValue())
+                        .importValue((BigDecimal) row[2])
+                        .exportValue((BigDecimal) row[3])
+                        .build())
+                .collect(Collectors.toList());
+        
+        return WarehouseStatisticsResponse.TransactionStats.builder()
+                .total(total)
+                .importData(WarehouseStatisticsResponse.TransactionByType.builder()
+                        .count(importCount)
+                        .totalValue(importValue)
+                        .build())
+                .exportData(WarehouseStatisticsResponse.TransactionByType.builder()
+                        .count(exportCount)
+                        .totalValue(exportValue)
+                        .build())
+                .byStatus(WarehouseStatisticsResponse.TransactionByStatus.builder()
+                        .pending(pending)
+                        .approved(approved)
+                        .rejected(rejected)
+                        .cancelled(cancelled)
+                        .build())
+                .byDay(transactionsByDay)
+                .build();
+    }
+
+    private WarehouseStatisticsResponse.InventoryStats getInventoryStats() {
+        // Current total inventory value
+        BigDecimal currentTotalValue = itemBatchRepository.calculateTotalInventoryValue();
+        
+        // Low stock items count
+        Long lowStockItems = itemBatchRepository.countLowStockItems();
+        
+        // Expiring items (within 30 days)
+        LocalDate today = LocalDate.now();
+        LocalDate thirtyDaysLater = today.plusDays(30);
+        Long expiringItems = itemBatchRepository.countExpiringItems(today, thirtyDaysLater);
+        
+        // Usage rate calculation - simplified version
+        // We can calculate this as: export value / import value over a period
+        // For now, returning a placeholder
+        Double usageRate = 0.0;
+        
+        return WarehouseStatisticsResponse.InventoryStats.builder()
+                .currentTotalValue(currentTotalValue)
+                .lowStockItems(lowStockItems)
+                .expiringItems(expiringItems)
+                .usageRate(usageRate)
+                .build();
+    }
+
+    private List<WarehouseStatisticsResponse.TopItem> getTopImports(
+            LocalDateTime startDate, LocalDateTime endDate) {
+        
+        List<Object[]> topImportsRaw = storageTransactionRepository.getTopImportedItems(
+                startDate, endDate, 10);
+        
+        return topImportsRaw.stream()
+                .map(row -> WarehouseStatisticsResponse.TopItem.builder()
+                        .itemId(((Number) row[0]).longValue())
+                        .itemName((String) row[2])  // item_name is at index 2
+                        .quantity(((Number) row[3]).longValue())
+                        .value((BigDecimal) row[4])
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    private List<WarehouseStatisticsResponse.TopItem> getTopExports(
+            LocalDateTime startDate, LocalDateTime endDate) {
+        
+        List<Object[]> topExportsRaw = storageTransactionRepository.getTopExportedItems(
+                startDate, endDate, 10);
+        
+        return topExportsRaw.stream()
+                .map(row -> WarehouseStatisticsResponse.TopItem.builder()
+                        .itemId(((Number) row[0]).longValue())
+                        .itemName((String) row[2])  // item_name is at index 2
+                        .quantity(((Number) row[3]).longValue())
+                        .value((BigDecimal) row[4])
+                        .build())
+                .collect(Collectors.toList());
+    }
+}

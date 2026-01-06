@@ -58,6 +58,28 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
                         "WHERE a.appointmentCode = :appointmentCode")
         Optional<Appointment> findDetailByCode(@Param("appointmentCode") String appointmentCode);
 
+        // ==================== Dashboard Statistics Queries ====================
+
+        /**
+         * Count appointments in date range
+         */
+        @Query("SELECT COUNT(a) FROM Appointment a " +
+                        "WHERE a.appointmentStartTime BETWEEN :startDate AND :endDate")
+        Long countAppointmentsInRange(
+                        @Param("startDate") LocalDateTime startDate,
+                        @Param("endDate") LocalDateTime endDate);
+
+        /**
+         * Count appointments by status in date range
+         */
+        @Query("SELECT COUNT(a) FROM Appointment a " +
+                        "WHERE a.appointmentStartTime BETWEEN :startDate AND :endDate " +
+                        "AND a.status = :status")
+        Long countByStatusInRange(
+                        @Param("startDate") LocalDateTime startDate,
+                        @Param("endDate") LocalDateTime endDate,
+                        @Param("status") AppointmentStatus status);
+
         /**
          * Find all services for an appointment with a direct SQL-like join
          * Returns: [service_code, service_name]

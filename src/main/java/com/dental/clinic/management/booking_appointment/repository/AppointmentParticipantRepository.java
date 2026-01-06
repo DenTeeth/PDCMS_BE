@@ -66,4 +66,31 @@ public interface AppointmentParticipantRepository
      * Delete all participants for an appointment
      */
     void deleteByIdAppointmentId(Integer appointmentId);
+
+    // ==================== Dashboard Statistics Queries ====================
+
+    /**
+     * Get top doctors by performance (appointments count and revenue)
+     * Only counts COMPLETED appointments with PAID or PARTIAL_PAID invoices
+     */
+    @Query("SELECT e.employeeId, e.employeeCode, e.firstName, e.lastName, " +
+           "COUNT(DISTINCT ap.id.appointmentId) as appointmentCount, " +
+           "COALESCE(SUM(i.totalAmount), 0) as totalRevenue, " +
+           "COALESCE(AVG(i.totalAmount), 0) as avgRevenue, " +
+           "COUNT(DISTINCT aps.id.serviceId) as serviceCount " +
+           "FROM AppointmentParticipant ap " +
+           "JOIN ap.employee e " +
+           "JOIN ap.appointment a " +
+           "LEFT JOIN com.dental.clinic.management.payment.domain.Invoice i ON a.appointmentId = i.appointmentId " +
+           "LEFT JOIN com.dental.clinic.management.booking_appointment.domain.AppointmentService aps ON a.appointmentId = aps.id.appointmentId " +
+           "WHERE ap.role = 'DOCTOR' " +
+           "AND a.appointmentStartTime BETWEEN :startDate AND :endDate " +
+           "AND a.status = 'COMPLETED' " +
+           "AND (i.paymentStatus IN ('PAID', 'PARTIAL_PAID') OR i.paymentStatus IS NULL) " +
+           "GROUP BY e.employeeId, e.employeeCode, e.firstName, e.lastName " +
+           "ORDER BY totalRevenue DESC")
+    java.util.List<Object[]> getTopDoctorsByPerformance(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            org.springframework.data.domain.Pageable pageable);
 }

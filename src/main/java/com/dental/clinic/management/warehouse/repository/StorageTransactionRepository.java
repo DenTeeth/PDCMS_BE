@@ -60,6 +60,137 @@ public interface StorageTransactionRepository extends JpaRepository<StorageTrans
       "AND DATE(transaction_date) = CURRENT_DATE", nativeQuery = true)
   Integer getNextSequenceNumber(@Param("prefix") String prefix);
 
+  // ==================== Dashboard Statistics Queries ====================
+
+  /**
+   * Calculate total export value for expenses (EXPORT transactions that are APPROVED)
+   */
+  @Query("SELECT COALESCE(SUM(st.totalValue), 0) FROM StorageTransaction st " +
+         "WHERE st.transactionDate BETWEEN :startDate AND :endDate " +
+         "AND st.transactionType = 'EXPORT' " +
+         "AND st.status = 'APPROVED'")
+  java.math.BigDecimal calculateTotalExportValue(
+          @Param("startDate") LocalDateTime startDate,
+          @Param("endDate") LocalDateTime endDate);
+
+  /**
+   * Calculate export value by export type
+   */
+  @Query("SELECT COALESCE(SUM(st.totalValue), 0) FROM StorageTransaction st " +
+         "WHERE st.transactionDate BETWEEN :startDate AND :endDate " +
+         "AND st.transactionType = 'EXPORT' " +
+         "AND st.status = 'APPROVED' " +
+         "AND st.exportType = :exportType")
+  java.math.BigDecimal calculateExportValueByType(
+          @Param("startDate") LocalDateTime startDate,
+          @Param("endDate") LocalDateTime endDate,
+          @Param("exportType") String exportType);
+
+  /**
+   * Get export value by day
+   */
+  @Query("SELECT DATE(st.transactionDate) as date, COALESCE(SUM(st.totalValue), 0) as amount " +
+         "FROM StorageTransaction st " +
+         "WHERE st.transactionDate BETWEEN :startDate AND :endDate " +
+         "AND st.transactionType = 'EXPORT' " +
+         "AND st.status = 'APPROVED' " +
+         "GROUP BY DATE(st.transactionDate) " +
+         "ORDER BY DATE(st.transactionDate)")
+  List<Object[]> getExportValueByDay(
+          @Param("startDate") LocalDateTime startDate,
+          @Param("endDate") LocalDateTime endDate);
+
+  /**
+   * Count transactions by type in date range
+   */
+  @Query("SELECT COUNT(st) FROM StorageTransaction st " +
+         "WHERE st.transactionDate BETWEEN :startDate AND :endDate " +
+         "AND st.transactionType = :type")
+  Long countByTypeInRange(
+          @Param("startDate") LocalDateTime startDate,
+          @Param("endDate") LocalDateTime endDate,
+          @Param("type") com.dental.clinic.management.warehouse.enums.TransactionType type);
+
+  /**
+   * Calculate total value by transaction type
+   */
+  @Query("SELECT COALESCE(SUM(st.totalValue), 0) FROM StorageTransaction st " +
+         "WHERE st.transactionDate BETWEEN :startDate AND :endDate " +
+         "AND st.transactionType = :type " +
+         "AND st.status = 'APPROVED'")
+  java.math.BigDecimal calculateTotalValueByType(
+          @Param("startDate") LocalDateTime startDate,
+          @Param("endDate") LocalDateTime endDate,
+          @Param("type") com.dental.clinic.management.warehouse.enums.TransactionType type);
+
+  /**
+   * Count transactions by status
+   */
+  @Query("SELECT COUNT(st) FROM StorageTransaction st " +
+         "WHERE st.transactionDate BETWEEN :startDate AND :endDate " +
+         "AND st.status = :status")
+  Long countByStatusInRange(
+          @Param("startDate") LocalDateTime startDate,
+          @Param("endDate") LocalDateTime endDate,
+          @Param("status") String status);
+
+  /**
+   * Get transaction counts by day (for charts)
+   */
+  @Query("SELECT DATE(st.transactionDate) as date, COUNT(st) as count, " +
+         "COALESCE(SUM(CASE WHEN st.transactionType = 'IMPORT' THEN st.totalValue ELSE 0 END), 0) as importValue, " +
+         "COALESCE(SUM(CASE WHEN st.transactionType = 'EXPORT' THEN st.totalValue ELSE 0 END), 0) as exportValue " +
+         "FROM StorageTransaction st " +
+         "WHERE st.transactionDate BETWEEN :startDate AND :endDate " +
+         "AND st.status = 'APPROVED' " +
+         "GROUP BY DATE(st.transactionDate) " +
+         "ORDER BY DATE(st.transactionDate)")
+  List<Object[]> getTransactionsByDay(
+          @Param("startDate") LocalDateTime startDate,
+          @Param("endDate") LocalDateTime endDate);
+
+  /**
+   * Get top imported items by quantity and value
+   */
+  @Query(value = "SELECT im.item_master_id, im.item_code, im.item_name, " +
+         "SUM(sti.quantity_change) as total_quantity, " +
+         "COALESCE(SUM(sti.total_line_value), 0) as total_value " +
+         "FROM storage_transactions st " +
+         "JOIN storage_transaction_items sti ON st.transaction_id = sti.transaction_id " +
+         "JOIN item_batches ib ON sti.batch_id = ib.batch_id " +
+         "JOIN item_masters im ON ib.item_master_id = im.item_master_id " +
+         "WHERE st.transaction_date BETWEEN :startDate AND :endDate " +
+         "AND st.transaction_type = 'IMPORT' " +
+         "AND st.status = 'APPROVED' " +
+         "GROUP BY im.item_master_id, im.item_code, im.item_name " +
+         "ORDER BY total_value DESC " +
+         "LIMIT :limit", nativeQuery = true)
+  List<Object[]> getTopImportedItems(
+          @Param("startDate") LocalDateTime startDate,
+          @Param("endDate") LocalDateTime endDate,
+          @Param("limit") int limit);
+
+  /**
+   * Get top exported items by quantity and value
+   */
+  @Query(value = "SELECT im.item_master_id, im.item_code, im.item_name, " +
+         "SUM(ABS(sti.quantity_change)) as total_quantity, " +
+         "COALESCE(SUM(ABS(sti.total_line_value)), 0) as total_value " +
+         "FROM storage_transactions st " +
+         "JOIN storage_transaction_items sti ON st.transaction_id = sti.transaction_id " +
+         "JOIN item_batches ib ON sti.batch_id = ib.batch_id " +
+         "JOIN item_masters im ON ib.item_master_id = im.item_master_id " +
+         "WHERE st.transaction_date BETWEEN :startDate AND :endDate " +
+         "AND st.transaction_type = 'EXPORT' " +
+         "AND st.status = 'APPROVED' " +
+         "GROUP BY im.item_master_id, im.item_code, im.item_name " +
+         "ORDER BY total_value DESC " +
+         "LIMIT :limit", nativeQuery = true)
+  List<Object[]> getTopExportedItems(
+          @Param("startDate") LocalDateTime startDate,
+          @Param("endDate") LocalDateTime endDate,
+          @Param("limit") int limit);
+
   /**
    * WORLD-CLASS QUERY: Lấy lịch sử vật tư cung cấp từ NCC
    * - Chỉ lấy giao dịch IMPORT
@@ -121,4 +252,21 @@ public interface StorageTransactionRepository extends JpaRepository<StorageTrans
          "ORDER BY transaction_date DESC " +
          "LIMIT :limit", nativeQuery = true)
   List<StorageTransaction> findRecentReferenceCodesWithLimit(@Param("limit") int limit);
+
+  /**
+   * Calculate total export value for expired items (DISPOSAL type with expired batches)
+   */
+  @Query(value = "SELECT COALESCE(SUM(ABS(sti.quantity_change * sti.price)), 0) " +
+         "FROM storage_transactions st " +
+         "JOIN storage_transaction_items sti ON st.transaction_id = sti.transaction_id " +
+         "JOIN item_batches ib ON sti.batch_id = ib.batch_id " +
+         "WHERE st.transaction_type = 'EXPORT' " +
+         "AND st.export_type = 'DISPOSAL' " +
+         "AND st.status = 'APPROVED' " +
+         "AND st.transaction_date BETWEEN :startDate AND :endDate " +
+         "AND ib.expiry_date IS NOT NULL " +
+         "AND ib.expiry_date <= CAST(st.transaction_date AS DATE)", nativeQuery = true)
+  java.math.BigDecimal calculateExpiredItemsValue(
+          @Param("startDate") LocalDateTime startDate,
+          @Param("endDate") LocalDateTime endDate);
 }
