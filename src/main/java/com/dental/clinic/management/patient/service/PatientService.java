@@ -18,6 +18,7 @@ import com.dental.clinic.management.patient.dto.request.CreatePatientRequest;
 import com.dental.clinic.management.patient.dto.request.ReplacePatientRequest;
 import com.dental.clinic.management.patient.dto.request.UpdatePatientRequest;
 import com.dental.clinic.management.patient.dto.response.PatientInfoResponse;
+import com.dental.clinic.management.patient.dto.response.PatientStatsResponse;
 import com.dental.clinic.management.patient.dto.ToothStatusResponse;
 import com.dental.clinic.management.patient.dto.UpdateToothStatusRequest;
 import com.dental.clinic.management.patient.dto.UpdateToothStatusResponse;
@@ -157,6 +158,25 @@ public class PatientService {
         Page<Patient> patientPage = patientRepository.findAll(pageable);
 
         return patientPage.map(patientMapper::toPatientInfoResponse);
+    }
+
+    /**
+     * Get patient statistics (total, active, inactive counts)
+     *
+     * @return PatientStatsResponse with counts
+     */
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_PATIENT + "')")
+    @Transactional(readOnly = true)
+    public PatientStatsResponse getPatientStats() {
+        long totalPatients = patientRepository.count();
+        long activePatients = patientRepository.countByIsActive(true);
+        long inactivePatients = patientRepository.countByIsActive(false);
+
+        return PatientStatsResponse.builder()
+                .totalPatients(totalPatients)
+                .activePatients(activePatients)
+                .inactivePatients(inactivePatients)
+                .build();
     }
 
     /**

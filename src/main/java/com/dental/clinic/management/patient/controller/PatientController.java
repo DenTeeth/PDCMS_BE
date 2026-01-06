@@ -5,6 +5,7 @@ import com.dental.clinic.management.patient.dto.request.CreatePatientRequest;
 import com.dental.clinic.management.patient.dto.request.ReplacePatientRequest;
 import com.dental.clinic.management.patient.dto.request.UpdatePatientRequest;
 import com.dental.clinic.management.patient.dto.response.PatientInfoResponse;
+import com.dental.clinic.management.patient.dto.response.PatientStatsResponse;
 import com.dental.clinic.management.patient.dto.ToothStatusResponse;
 import com.dental.clinic.management.patient.dto.UpdateToothStatusRequest;
 import com.dental.clinic.management.patient.dto.UpdateToothStatusResponse;
@@ -111,6 +112,20 @@ public class PatientController {
         Page<PatientInfoResponse> response = patientService.getAllPatientsIncludingDeleted(page, size, sortBy,
                 sortDirection);
         return ResponseEntity.ok().body(response);
+    }
+
+    /**
+     * {@code GET  /patients/stats} : get patient statistics
+     * Get total, active, and inactive patient counts
+     *
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and stats in body
+     */
+    @GetMapping("/stats")
+    @Operation(summary = "Get patient statistics", description = "Get total, active, and inactive patient counts")
+    @ApiMessage("Lấy thống kê bệnh nhân thành công")
+    public ResponseEntity<PatientStatsResponse> getPatientStats() {
+        PatientStatsResponse stats = patientService.getPatientStats();
+        return ResponseEntity.ok(stats);
     }
 
     /**

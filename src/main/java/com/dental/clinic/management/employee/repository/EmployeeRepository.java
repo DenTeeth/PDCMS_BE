@@ -118,4 +118,28 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer>, Jp
             "WHERE e.employeeId = :employeeId " +
             "AND r.roleId IN ('ROLE_DENTIST', 'ROLE_NURSE', 'ROLE_DENTIST_INTERN')")
     boolean hasSpecializations(@org.springframework.data.repository.query.Param("employeeId") Integer employeeId);
+
+    /**
+     * Count employees by active status, excluding ROLE_PATIENT.
+     * 
+     * @param isActive Active status filter
+     * @return Count of employees
+     */
+    @Query("SELECT COUNT(e) FROM Employee e " +
+            "JOIN e.account a " +
+            "JOIN a.role r " +
+            "WHERE e.isActive = :isActive " +
+            "AND r.roleId <> 'ROLE_PATIENT'")
+    long countByIsActiveAndNotPatient(@org.springframework.data.repository.query.Param("isActive") boolean isActive);
+
+    /**
+     * Count all employees excluding ROLE_PATIENT.
+     * 
+     * @return Total count of employees
+     */
+    @Query("SELECT COUNT(e) FROM Employee e " +
+            "JOIN e.account a " +
+            "JOIN a.role r " +
+            "WHERE r.roleId <> 'ROLE_PATIENT'")
+    long countAllExcludingPatient();
 }

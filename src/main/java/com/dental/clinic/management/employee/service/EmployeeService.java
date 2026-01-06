@@ -6,6 +6,7 @@ import com.dental.clinic.management.employee.dto.request.CreateEmployeeRequest;
 import com.dental.clinic.management.employee.dto.request.UpdateEmployeeRequest;
 import com.dental.clinic.management.employee.dto.request.ReplaceEmployeeRequest;
 import com.dental.clinic.management.employee.dto.response.EmployeeInfoResponse;
+import com.dental.clinic.management.employee.dto.response.EmployeeStatsResponse;
 import com.dental.clinic.management.employee.enums.EmploymentType;
 import com.dental.clinic.management.employee.mapper.EmployeeMapper;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
@@ -199,6 +200,26 @@ public class EmployeeService {
         // Fetch ALL employees (no filter) and map to DTO
         Page<Employee> employeePage = employeeRepository.findAll(pageable);
         return employeePage.map(employeeMapper::toEmployeeInfoResponse);
+    }
+
+    /**
+     * Get employee statistics (total, active, inactive counts)
+     * Excludes ROLE_PATIENT from counts
+     *
+     * @return EmployeeStatsResponse with counts
+     */
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('VIEW_EMPLOYEE')")
+    @Transactional(readOnly = true)
+    public EmployeeStatsResponse getEmployeeStats() {
+        long totalEmployees = employeeRepository.countAllExcludingPatient();
+        long activeEmployees = employeeRepository.countByIsActiveAndNotPatient(true);
+        long inactiveEmployees = employeeRepository.countByIsActiveAndNotPatient(false);
+
+        return EmployeeStatsResponse.builder()
+                .totalEmployees(totalEmployees)
+                .activeEmployees(activeEmployees)
+                .inactiveEmployees(inactiveEmployees)
+                .build();
     }
 
     /**

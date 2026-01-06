@@ -15,6 +15,7 @@ import com.dental.clinic.management.employee.dto.request.CreateEmployeeRequest;
 import com.dental.clinic.management.employee.dto.request.ReplaceEmployeeRequest;
 import com.dental.clinic.management.employee.dto.request.UpdateEmployeeRequest;
 import com.dental.clinic.management.employee.dto.response.EmployeeInfoResponse;
+import com.dental.clinic.management.employee.dto.response.EmployeeStatsResponse;
 import com.dental.clinic.management.employee.service.EmployeeService;
 import com.dental.clinic.management.specialization.domain.Specialization;
 import com.dental.clinic.management.utils.annotation.ApiMessage;
@@ -74,6 +75,18 @@ public class EmployeeController {
     Page<EmployeeInfoResponse> response = employeeService.getAllEmployeesIncludingDeleted(page, size, sortBy,
         sortDirection);
     return ResponseEntity.ok().body(response);
+  }
+
+  /**
+   * Get employee statistics (total, active, inactive counts)
+   * Provides summary stats for dashboard/UI without needing to fetch all pages
+   */
+  @GetMapping("/stats")
+  @Operation(summary = "Get employee statistics", description = "Get total, active, and inactive employee counts")
+  @ApiMessage("Lấy thống kê nhân viên thành công")
+  public ResponseEntity<EmployeeStatsResponse> getEmployeeStats() {
+    EmployeeStatsResponse stats = employeeService.getEmployeeStats();
+    return ResponseEntity.ok(stats);
   }
 
   /**
