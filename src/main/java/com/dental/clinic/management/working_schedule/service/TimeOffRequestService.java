@@ -458,6 +458,19 @@ public class TimeOffRequestService {
                                                         "Trạng thái hiện tại: " + timeOffRequest.getStatus());
                 }
 
+                // 2.5. CONSTRAINT: Overdue requests can ONLY be cancelled, not approved/rejected
+                LocalDate today = LocalDate.now();
+                boolean isOverdue = timeOffRequest.getStartDate().isBefore(today);
+                if (isOverdue && request.getStatus() != TimeOffStatus.CANCELLED) {
+                        throw new IllegalStateException(
+                                String.format(
+                                        "Không thể %s yêu cầu đã quá hạn. " +
+                                        "Ngày bắt đầu: %s, Ngày hiện tại: %s. " +
+                                        "Yêu cầu quá hạn chỉ có thể HỦY với lý do 'quá hạn duyệt'.",
+                                        request.getStatus() == TimeOffStatus.APPROVED ? "DUYỆT" : "TỪ CHỐI",
+                                        timeOffRequest.getStartDate(), today));
+                }
+
                 // 3. Handle different status updates
                 switch (request.getStatus()) {
                         case APPROVED -> handleApproval(timeOffRequest);
@@ -489,6 +502,18 @@ public class TimeOffRequestService {
                                 !SecurityUtil.hasCurrentUserPermission(AuthoritiesConstants.APPROVE_TIME_OFF)) {
                         throw new org.springframework.security.access.AccessDeniedException(
                                         "Bạn không có quyền thực hiện hành động này.");
+                }
+
+                // CONSTRAINT: Cannot approve if start_date has already passed
+                // This prevents approving requests that should have been auto-cancelled
+                LocalDate today = LocalDate.now();
+                if (timeOffRequest.getStartDate().isBefore(today)) {
+                        throw new IllegalStateException(
+                                String.format(
+                                        "Không thể duyệt yêu cầu nghỉ phép đã quá hạn. " +
+                                        "Ngày bắt đầu: %s, Ngày hiện tại: %s. " +
+                                        "Yêu cầu này nên được hủy tự động.",
+                                        timeOffRequest.getStartDate(), today));
                 }
 
                 // Get approver ID

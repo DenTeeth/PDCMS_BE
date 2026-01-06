@@ -371,6 +371,21 @@ public class OvertimeRequestService {
                         throw new InvalidStateTransitionException(requestId, request.getStatus(), dto.getStatus());
                 }
 
+                // Validation 2: CONSTRAINT - Overdue requests can ONLY be cancelled, not approved/rejected
+                LocalDate today = LocalDate.now();
+                boolean isOverdue = request.getWorkDate().isBefore(today);
+                if (isOverdue && dto.getStatus() != RequestStatus.CANCELLED) {
+                        log.warn("Attempting to {} overdue overtime request {} (work_date: {}, today: {})",
+                                dto.getStatus(), requestId, request.getWorkDate(), today);
+                        throw new IllegalStateException(
+                                String.format(
+                                        "Không thể %s yêu cầu OT đã quá hạn. " +
+                                        "Ngày làm việc: %s, Ngày hiện tại: %s. " +
+                                        "Yêu cầu quá hạn chỉ có thể HỦY với lý do 'quá hạn duyệt'.",
+                                        dto.getStatus() == RequestStatus.APPROVED ? "DUYỆT" : "TỪ CHỐI",
+                                        request.getWorkDate(), today));
+                }
+
                 // Get current user
                 Employee currentEmployee = getCurrentEmployee();
 
@@ -396,6 +411,20 @@ public class OvertimeRequestService {
                 if (!SecurityUtil.hasCurrentUserPermission("APPROVE_OVERTIME")) {
                         log.warn("Người dùng {} không có quyền APPROVE_OVERTIME", approvedBy.getEmployeeId());
                         throw new AccessDeniedException("Bạn không có quyền duyệt yêu cầu OT.");
+                }
+
+                // CONSTRAINT: Cannot approve if work_date has already passed
+                // This prevents approving requests that should have been auto-cancelled
+                LocalDate today = LocalDate.now();
+                if (request.getWorkDate().isBefore(today)) {
+                        log.warn("Attempting to approve overdue overtime request {} (work_date: {}, today: {})",
+                                request.getRequestId(), request.getWorkDate(), today);
+                        throw new IllegalStateException(
+                                String.format(
+                                        "Không thể duyệt yêu cầu OT đã quá hạn. " +
+                                        "Ngày làm việc: %s, Ngày hiện tại: %s. " +
+                                        "Yêu cầu này nên được hủy tự động.",
+                                        request.getWorkDate(), today));
                 }
 
                 request.setStatus(RequestStatus.APPROVED);

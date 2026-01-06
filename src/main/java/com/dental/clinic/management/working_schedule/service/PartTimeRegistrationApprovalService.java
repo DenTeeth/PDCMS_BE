@@ -110,6 +110,20 @@ public class PartTimeRegistrationApprovalService {
             throw new RegistrationInvalidStateException(registrationId, registration.getStatus().name());
         }
 
+        // CONSTRAINT: Cannot approve if effective_from has already passed
+        // This prevents approving requests that should have been auto-cancelled
+        LocalDate today = LocalDate.now();
+        if (registration.getEffectiveFrom().isBefore(today)) {
+            log.warn("Attempting to approve overdue registration {} (effective_from: {}, today: {})",
+                    registrationId, registration.getEffectiveFrom(), today);
+            throw new IllegalStateException(
+                    String.format(
+                            "Không thể duyệt đăng ký đã quá hạn. " +
+                            "Ngày bắt đầu hiệu lực: %s, Ngày hiện tại: %s. " +
+                            "Yêu cầu này nên được hủy tự động.",
+                            registration.getEffectiveFrom(), today));
+        }
+
         // Validate slot exists and is active
         PartTimeSlot slot = slotRepository.findById(registration.getPartTimeSlotId())
                 .orElseThrow(() -> new SlotNotFoundException(registration.getPartTimeSlotId()));
@@ -198,6 +212,19 @@ public class PartTimeRegistrationApprovalService {
         // Validate status
         if (registration.getStatus() != RegistrationStatus.PENDING) {
             throw new RegistrationInvalidStateException(registrationId, registration.getStatus().name());
+        }
+
+        // CONSTRAINT: Overdue registrations can ONLY be cancelled, not rejected
+        LocalDate today = LocalDate.now();
+        if (registration.getEffectiveFrom().isBefore(today)) {
+            log.warn("Attempting to reject overdue registration {} (effective_from: {}, today: {})",
+                    registrationId, registration.getEffectiveFrom(), today);
+            throw new IllegalStateException(
+                    String.format(
+                            "Không thể TỪ CHỐI đăng ký đã quá hạn. " +
+                            "Ngày bắt đầu hiệu lực: %s, Ngày hiện tại: %s. " +
+                            "Yêu cầu quá hạn chỉ có thể HỦY với lý do 'quá hạn duyệt'.",
+                            registration.getEffectiveFrom(), today));
         }
 
         // Reject
