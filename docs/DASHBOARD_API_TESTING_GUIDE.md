@@ -473,6 +473,12 @@ try {
 **Issue:** Excel export returns 500 error
 - **Solution:** Verify Apache POI dependency (poi-ooxml) is included in pom.xml
 
+**Issue:** 500 error with "relation 'service_masters' does not exist"
+- **Solution:** ✅ FIXED - SQL query updated to use correct table name `services` instead of `service_masters` in AppointmentServiceRepository.getTopServicesByRevenue()
+
+**Issue:** NullPointerException on empty data
+- **Solution:** ✅ FIXED - All BigDecimal and Long values now have null safety checks with default values (0 or BigDecimal.ZERO)
+
 ---
 
 ## Technical Implementation Notes
@@ -491,3 +497,9 @@ try {
 - Uses `FUNCTION('TIMESTAMPDIFF', DAY, ...)` instead of `DATEDIFF`
 - All native queries tested with PostgreSQL dialect
 - Date range queries use inclusive start and end (00:00:00 to 23:59:59)
+
+### Null Safety & Error Handling
+- All BigDecimal values from repository queries are null-checked with default `BigDecimal.ZERO`
+- All Long count values are null-checked with default `0L`
+- SQL queries use correct table names (`services`, not `service_masters`)
+- Empty data returns valid response with zeros, not 500 errors

@@ -258,9 +258,17 @@ ORDER BY total_value DESC
 LIMIT :limit
 ```
 
-### Error Handling
-All services use proper null-safe handling:
+### Error Handling & Null Safety
+All services use comprehensive null-safe handling to prevent NullPointerExceptions:
 ```java
+// Example from DashboardRevenueService
+BigDecimal totalRevenue = invoiceRepository.calculateTotalRevenue(startDate, endDate);
+totalRevenue = totalRevenue != null ? totalRevenue : BigDecimal.ZERO;
+
+Long importCount = repository.countByTypeInRange(startDate, endDate, TransactionType.IMPORT);
+importCount = importCount != null ? importCount : 0L;
+
+// Helper method for consistent null handling
 private TransactionStatisticsResponse.StatusCount buildStatusCount(Long count, BigDecimal value) {
     return TransactionStatisticsResponse.StatusCount.builder()
             .count(count != null ? count : 0L)
@@ -268,6 +276,12 @@ private TransactionStatisticsResponse.StatusCount buildStatusCount(Long count, B
             .build();
 }
 ```
+
+### SQL Table Names
+- All queries use correct PostgreSQL table names
+- `services` (NOT `service_masters`) for dental service data
+- `appointment_services` for appointment-service junction table
+- Native queries verified with actual database schema
 
 ---
 
@@ -471,6 +485,16 @@ All endpoints return data wrapped in `FormatRestResponse`:
 ### Issue: Payment Method Always Shows SEPAY Only
 **Cause**: System currently only supports SEPAY payment method  
 **Solution**: This is expected behavior, not a bug
+
+### Issue: 500 Error - "relation 'service_masters' does not exist"
+**Cause**: Native SQL query in `AppointmentServiceRepository.getTopServicesByRevenue()` used wrong table name  
+**Solution**: ✅ FIXED - Updated query to use `services` table instead of `service_masters`
+
+### Issue: NullPointerException on Empty Data
+**Cause**: Repository queries returned null values for counts and sums when no data exists  
+**Solution**: ✅ FIXED - Added null safety checks in `DashboardRevenueService` and `DashboardWarehouseService`:
+- All `BigDecimal` values: `value = value != null ? value : BigDecimal.ZERO`
+- All `Long` counts: `count = count != null ? count : 0L`
 
 ---
 
