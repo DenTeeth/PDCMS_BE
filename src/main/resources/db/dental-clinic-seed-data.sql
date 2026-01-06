@@ -5469,7 +5469,11 @@ SELECT setval('patient_tooth_status_history_history_id_seq', (SELECT COALESCE(MA
 -- PAYMENT SYSTEM SEED DATA
 -- ============================================
 -- Sample invoices and payments for testing
+-- ⚠️ TEMPORARILY COMMENTED OUT - Removed invoice seed data for testing (2026-01-06)
+-- Reason: Faulty sample data causing issues during testing/development
+-- Can be uncommented later if needed
 
+/*
 -- Invoice 1: Appointment (BN-1001, APT-20251104-001) - Đã thanh toán
 -- Payment code format: PDCMSyymmddxy (yy=year, mm=month, dd=day, xy=sequence)
 -- ✅ FIX: created_by must match appointment doctor (EMP001)
@@ -5528,6 +5532,7 @@ ON CONFLICT (invoice_code) DO NOTHING;
 INSERT INTO invoice_items (invoice_id, service_id, service_code, service_name, quantity, unit_price, subtotal)
 SELECT (SELECT invoice_id FROM invoices WHERE invoice_code = 'INV-20251105-002'), 5, 'FILLING_L1', 'Tram rang Level 1', 2, 400000, 800000
 WHERE EXISTS (SELECT 1 FROM invoices WHERE invoice_code = 'INV-20251105-002');
+*/
 
 -- ============================================
 -- END: PAYMENT SYSTEM SEED DATA
