@@ -42,24 +42,38 @@ public class DashboardWarehouseService {
     private WarehouseStatisticsResponse.TransactionStats getTransactionStats(
             LocalDateTime startDate, LocalDateTime endDate) {
         
-        // Count total transactions
+        // Count total transactions with null safety
         Long importCount = storageTransactionRepository.countByTypeInRange(
                 startDate, endDate, TransactionType.IMPORT);
+        importCount = importCount != null ? importCount : 0L;
+        
         Long exportCount = storageTransactionRepository.countByTypeInRange(
                 startDate, endDate, TransactionType.EXPORT);
+        exportCount = exportCount != null ? exportCount : 0L;
+        
         Long total = importCount + exportCount;
         
-        // Calculate values
+        // Calculate values with null safety
         BigDecimal importValue = storageTransactionRepository.calculateTotalValueByType(
                 startDate, endDate, TransactionType.IMPORT);
+        importValue = importValue != null ? importValue : BigDecimal.ZERO;
+        
         BigDecimal exportValue = storageTransactionRepository.calculateTotalValueByType(
                 startDate, endDate, TransactionType.EXPORT);
+        exportValue = exportValue != null ? exportValue : BigDecimal.ZERO;
         
-        // By status (using string for compatibility with TransactionStatus enum)
+        // By status with null safety
         Long pending = storageTransactionRepository.countByStatusInRange(startDate, endDate, "PENDING_APPROVAL");
+        pending = pending != null ? pending : 0L;
+        
         Long approved = storageTransactionRepository.countByStatusInRange(startDate, endDate, "APPROVED");
+        approved = approved != null ? approved : 0L;
+        
         Long rejected = storageTransactionRepository.countByStatusInRange(startDate, endDate, "REJECTED");
+        rejected = rejected != null ? rejected : 0L;
+        
         Long cancelled = storageTransactionRepository.countByStatusInRange(startDate, endDate, "CANCELLED");
+        cancelled = cancelled != null ? cancelled : 0L;
         
         // By day
         List<Object[]> transactionsByDayRaw = storageTransactionRepository.getTransactionsByDay(startDate, endDate);
@@ -93,16 +107,19 @@ public class DashboardWarehouseService {
     }
 
     private WarehouseStatisticsResponse.InventoryStats getInventoryStats() {
-        // Current total inventory value
+        // Current total inventory value with null safety
         BigDecimal currentTotalValue = itemBatchRepository.calculateTotalInventoryValue();
+        currentTotalValue = currentTotalValue != null ? currentTotalValue : BigDecimal.ZERO;
         
-        // Low stock items count
+        // Low stock items count with null safety
         Long lowStockItems = itemBatchRepository.countLowStockItems();
+        lowStockItems = lowStockItems != null ? lowStockItems : 0L;
         
-        // Expiring items (within 30 days)
+        // Expiring items (within 30 days) with null safety
         LocalDate today = LocalDate.now();
         LocalDate thirtyDaysLater = today.plusDays(30);
         Long expiringItems = itemBatchRepository.countExpiringItems(today, thirtyDaysLater);
+        expiringItems = expiringItems != null ? expiringItems : 0L;
         
         // Usage rate calculation - simplified version
         // We can calculate this as: export value / import value over a period

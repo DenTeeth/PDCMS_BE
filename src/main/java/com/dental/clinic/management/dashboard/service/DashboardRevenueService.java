@@ -57,13 +57,19 @@ public class DashboardRevenueService {
     }
 
     private RevenueExpensesResponse.RevenueStats buildRevenueStats(LocalDateTime startDate, LocalDateTime endDate) {
-        // Calculate total revenue
+        // Calculate total revenue with null safety
         BigDecimal totalRevenue = invoiceRepository.calculateTotalRevenue(startDate, endDate);
+        totalRevenue = totalRevenue != null ? totalRevenue : BigDecimal.ZERO;
         
-        // Calculate revenue by type
+        // Calculate revenue by type with null safety
         BigDecimal appointmentRevenue = invoiceRepository.calculateRevenueByType(startDate, endDate, InvoiceType.APPOINTMENT);
+        appointmentRevenue = appointmentRevenue != null ? appointmentRevenue : BigDecimal.ZERO;
+        
         BigDecimal treatmentPlanRevenue = invoiceRepository.calculateRevenueByType(startDate, endDate, InvoiceType.TREATMENT_PLAN);
+        treatmentPlanRevenue = treatmentPlanRevenue != null ? treatmentPlanRevenue : BigDecimal.ZERO;
+        
         BigDecimal supplementalRevenue = invoiceRepository.calculateRevenueByType(startDate, endDate, InvoiceType.SUPPLEMENTAL);
+        supplementalRevenue = supplementalRevenue != null ? supplementalRevenue : BigDecimal.ZERO;
         
         // Get revenue by day
         List<Object[]> revenueByDayRaw = invoiceRepository.getRevenueByDay(startDate, endDate);
@@ -98,16 +104,23 @@ public class DashboardRevenueService {
     }
 
     private RevenueExpensesResponse.ExpenseStats buildExpenseStats(LocalDateTime startDate, LocalDateTime endDate) {
-        // Calculate total expenses
+        // Calculate total expenses with null safety
         BigDecimal totalExpenses = storageTransactionRepository.calculateTotalExportValue(startDate, endDate);
+        totalExpenses = totalExpenses != null ? totalExpenses : BigDecimal.ZERO;
         
-        // Calculate expenses by type (using exportType: USAGE, DISPOSAL, etc.)
+        // Calculate expenses by type with null safety
         BigDecimal usageExpenses = storageTransactionRepository.calculateExportValueByType(startDate, endDate, "USAGE");
-        BigDecimal disposalExpenses = storageTransactionRepository.calculateExportValueByType(startDate, endDate, "DISPOSAL");
-        BigDecimal returnExpenses = storageTransactionRepository.calculateExportValueByType(startDate, endDate, "RETURN");
+        usageExpenses = usageExpenses != null ? usageExpenses : BigDecimal.ZERO;
         
-        // Separate expired items from damaged items in DISPOSAL category
+        BigDecimal disposalExpenses = storageTransactionRepository.calculateExportValueByType(startDate, endDate, "DISPOSAL");
+        disposalExpenses = disposalExpenses != null ? disposalExpenses : BigDecimal.ZERO;
+        
+        BigDecimal returnExpenses = storageTransactionRepository.calculateExportValueByType(startDate, endDate, "RETURN");
+        returnExpenses = returnExpenses != null ? returnExpenses : BigDecimal.ZERO;
+        
+        // Separate expired items from damaged items in DISPOSAL category with null safety
         BigDecimal expiredExpenses = storageTransactionRepository.calculateExpiredItemsValue(startDate, endDate);
+        expiredExpenses = expiredExpenses != null ? expiredExpenses : BigDecimal.ZERO;
         BigDecimal damagedExpenses = disposalExpenses.subtract(expiredExpenses);
         
         BigDecimal otherExpenses = totalExpenses.subtract(usageExpenses).subtract(disposalExpenses).subtract(returnExpenses);
@@ -151,9 +164,12 @@ public class DashboardRevenueService {
             LocalDateTime prevStartDate,
             LocalDateTime prevEndDate) {
         
-        // Calculate previous month revenue and expenses
+        // Calculate previous month revenue and expenses with null safety
         BigDecimal prevRevenue = invoiceRepository.calculateTotalRevenue(prevStartDate, prevEndDate);
+        prevRevenue = prevRevenue != null ? prevRevenue : BigDecimal.ZERO;
+        
         BigDecimal prevExpenses = storageTransactionRepository.calculateTotalExportValue(prevStartDate, prevEndDate);
+        prevExpenses = prevExpenses != null ? prevExpenses : BigDecimal.ZERO;
         
         // Calculate changes
         BigDecimal revenueChange = currentRevenue.getTotal().subtract(prevRevenue);
