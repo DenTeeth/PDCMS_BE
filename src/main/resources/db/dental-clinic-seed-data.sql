@@ -1485,6 +1485,143 @@ ON CONFLICT (employee_shift_id) DO NOTHING;
 
 
 -- ============================================
+-- 🧪 TEST DATA - AUTO-CANCELLATION & AUTO NO_SHOW
+-- ============================================
+-- Purpose: Test automated scheduled jobs
+-- 
+-- JOB 1: RequestAutoCancellationJob (6 AM daily + on startup)
+-- - Auto-cancel PENDING overtime/time-off/registration requests past their deadline
+-- - Cancellation reason: "Tự động hủy: Đã quá thời hạn xử lý (quá ngày ...)"
+--
+-- JOB 2: AppointmentAutoStatusService (Every 5 minutes)
+-- - Auto-mark SCHEDULED appointments as NO_SHOW if patient is >15 minutes late
+-- - System notes: "Tự động chuyển sang NO_SHOW: Bệnh nhân đến trễ >15 phút..."
+--
+-- These test data will be automatically cleaned up on startup!
+-- ============================================
+
+-- ----------------------------------------------------------------------------
+-- TEST DATA 1: Overdue PENDING Requests (for Auto-Cancellation Job)
+-- ----------------------------------------------------------------------------
+-- These should be auto-cancelled on startup and at 6 AM daily
+
+-- Test Overtime Requests (work_date in the past)
+INSERT INTO overtime_requests (
+    request_id, employee_id, requested_by, work_date, work_shift_id,
+    reason, status, approved_by, approved_at, rejected_reason, cancellation_reason, created_at
+)
+VALUES
+-- Should be auto-cancelled: 3 days ago
+('OTR_TEST_AUTO_001', 2, 2, CURRENT_DATE - INTERVAL '3 days', 'WKS_MORNING_01',
+ '🧪 TEST: Yêu cầu OT 3 ngày trước - should be auto-cancelled', 'PENDING', NULL, NULL, NULL, NULL, NOW()),
+
+-- Should be auto-cancelled: 1 week ago
+('OTR_TEST_AUTO_002', 3, 3, CURRENT_DATE - INTERVAL '7 days', 'WKS_AFTERNOON_02',
+ '🧪 TEST: Yêu cầu OT 1 tuần trước - should be auto-cancelled', 'PENDING', NULL, NULL, NULL, NULL, NOW()),
+
+-- Should be auto-cancelled: yesterday
+('OTR_TEST_AUTO_003', 4, 4, CURRENT_DATE - INTERVAL '1 day', 'WKS_EVENING_01',
+ '🧪 TEST: Yêu cầu OT hôm qua - should be auto-cancelled', 'PENDING', NULL, NULL, NULL, NULL, NOW()),
+
+-- Should NOT be auto-cancelled: tomorrow (future date)
+('OTR_TEST_AUTO_004', 2, 2, CURRENT_DATE + INTERVAL '1 day', 'WKS_MORNING_01',
+ '🧪 TEST: Yêu cầu OT ngày mai - should NOT be cancelled', 'PENDING', NULL, NULL, NULL, NULL, NOW())
+ON CONFLICT (request_id) DO NOTHING;
+
+-- Test Time-Off Requests (start_date in the past)
+INSERT INTO time_off_requests (
+    request_id, employee_id, time_off_type_id, work_shift_id, 
+    start_date, end_date, status, approved_by, approved_at, 
+    requested_at, requested_by, reason
+)
+VALUES
+-- Should be auto-cancelled: 5 days ago
+('TOR_TEST_AUTO_001', 2, 'ANNUAL_LEAVE', NULL,
+ CURRENT_DATE - INTERVAL '5 days', CURRENT_DATE - INTERVAL '5 days',
+ 'PENDING', NULL, NULL, NOW(), 2,
+ '🧪 TEST: Nghỉ phép 5 ngày trước - should be auto-cancelled'),
+
+-- Should be auto-cancelled: 2 weeks ago
+('TOR_TEST_AUTO_002', 3, 'SICK_LEAVE', 'WKS_MORNING_01',
+ CURRENT_DATE - INTERVAL '14 days', CURRENT_DATE - INTERVAL '14 days',
+ 'PENDING', NULL, NULL, NOW(), 3,
+ '🧪 TEST: Nghỉ ốm 2 tuần trước - should be auto-cancelled'),
+
+-- Should NOT be auto-cancelled: next week (future date)
+('TOR_TEST_AUTO_003', 4, 'ANNUAL_LEAVE', NULL,
+ CURRENT_DATE + INTERVAL '7 days', CURRENT_DATE + INTERVAL '7 days',
+ 'PENDING', NULL, NULL, NOW(), 4,
+ '🧪 TEST: Nghỉ phép tuần sau - should NOT be cancelled')
+ON CONFLICT (request_id) DO NOTHING;
+
+
+-- ----------------------------------------------------------------------------
+-- TEST DATA 2: Late Appointments (for Auto NO_SHOW Job)
+-- ----------------------------------------------------------------------------
+-- These appointments are SCHEDULED but start time has passed by >15 minutes
+-- Should be auto-marked as NO_SHOW every 5 minutes
+
+-- NOTE: Using CURRENT_TIMESTAMP to create appointments relative to NOW
+-- This ensures they are always in the past when the job runs
+
+INSERT INTO appointments (
+    appointment_id, appointment_code, patient_id, employee_id, room_id,
+    appointment_start_time, appointment_end_time, expected_duration_minutes,
+    status, notes, created_by, created_at, updated_at
+)
+VALUES
+-- Test 1: 30 minutes ago - SHOULD be auto NO_SHOW
+(9001, 'APT_TEST_AUTO_001', 1, 1, 'GHE251103001',
+ CURRENT_TIMESTAMP - INTERVAL '30 minutes', CURRENT_TIMESTAMP,
+ 30, 'SCHEDULED',
+ '🧪 TEST: Lịch hẹn 30 phút trước - should auto NO_SHOW (>15min late)', 5, NOW(), NOW()),
+
+-- Test 2: 20 minutes ago - SHOULD be auto NO_SHOW
+(9002, 'APT_TEST_AUTO_002', 2, 2, 'GHE251103002',
+ CURRENT_TIMESTAMP - INTERVAL '20 minutes', CURRENT_TIMESTAMP + INTERVAL '10 minutes',
+ 30, 'SCHEDULED',
+ '🧪 TEST: Lịch hẹn 20 phút trước - should auto NO_SHOW (>15min late)', 5, NOW(), NOW()),
+
+-- Test 3: 16 minutes ago - SHOULD be auto NO_SHOW (just past 15 min threshold)
+(9003, 'APT_TEST_AUTO_003', 3, 1, 'GHE251103001',
+ CURRENT_TIMESTAMP - INTERVAL '16 minutes', CURRENT_TIMESTAMP + INTERVAL '14 minutes',
+ 30, 'SCHEDULED',
+ '🧪 TEST: Lịch hẹn 16 phút trước - should auto NO_SHOW (just passed 15min)', 5, NOW(), NOW()),
+
+-- Test 4: 1 hour ago - SHOULD be auto NO_SHOW
+(9004, 'APT_TEST_AUTO_004', 4, 2, 'GHE251103002',
+ CURRENT_TIMESTAMP - INTERVAL '60 minutes', CURRENT_TIMESTAMP - INTERVAL '30 minutes',
+ 30, 'SCHEDULED',
+ '🧪 TEST: Lịch hẹn 1 giờ trước - should auto NO_SHOW (very late)', 5, NOW(), NOW()),
+
+-- Test 5: 10 minutes ago - should NOT auto NO_SHOW (still within 15 min grace period)
+(9005, 'APT_TEST_AUTO_005', 5, 1, 'GHE251103001',
+ CURRENT_TIMESTAMP - INTERVAL '10 minutes', CURRENT_TIMESTAMP + INTERVAL '20 minutes',
+ 30, 'SCHEDULED',
+ '🧪 TEST: Lịch hẹn 10 phút trước - should NOT auto NO_SHOW (within 15min grace)', 5, NOW(), NOW()),
+
+-- Test 6: 5 minutes ago - should NOT auto NO_SHOW (too early)
+(9006, 'APT_TEST_AUTO_006', 6, 2, 'GHE251103002',
+ CURRENT_TIMESTAMP - INTERVAL '5 minutes', CURRENT_TIMESTAMP + INTERVAL '25 minutes',
+ 30, 'SCHEDULED',
+ '🧪 TEST: Lịch hẹn 5 phút trước - should NOT auto NO_SHOW (too early)', 5, NOW(), NOW()),
+
+-- Test 7: Future appointment (30 minutes from now) - should NOT auto NO_SHOW
+(9007, 'APT_TEST_AUTO_007', 1, 1, 'GHE251103001',
+ CURRENT_TIMESTAMP + INTERVAL '30 minutes', CURRENT_TIMESTAMP + INTERVAL '60 minutes',
+ 30, 'SCHEDULED',
+ '🧪 TEST: Lịch hẹn 30 phút nữa - should NOT auto NO_SHOW (future)', 5, NOW(), NOW())
+ON CONFLICT (appointment_id) DO NOTHING;
+
+-- Add services for test appointments
+INSERT INTO appointment_services (appointment_id, service_id)
+VALUES
+    (9001, 1), (9002, 1), (9003, 1), (9004, 1),
+    (9005, 1), (9006, 1), (9007, 1)  -- All use GEN_EXAM (service_id=1)
+ON CONFLICT (appointment_id, service_id) DO NOTHING;
+
+
+-- ============================================
 --  OLD DATA (November 2025) - EMPLOYEE SHIFT SAMPLE DATA (BE-302)
 -- ============================================
 -- Sample employee shifts for testing Employee Shift Management API

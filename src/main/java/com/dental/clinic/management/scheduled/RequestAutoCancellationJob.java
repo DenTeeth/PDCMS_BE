@@ -11,6 +11,8 @@ import com.dental.clinic.management.working_schedule.repository.PartTimeRegistra
 import com.dental.clinic.management.working_schedule.repository.TimeOffRequestRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,13 +41,34 @@ public class RequestAutoCancellationJob {
     private final PartTimeRegistrationRepository partTimeRegistrationRepository;
 
     /**
+     * Run auto-cancellation on application startup.
+     * This ensures that any overdue requests in seed data are cancelled immediately after deployment.
+     * 
+     * Triggered by: ApplicationReadyEvent (after all beans are initialized)
+     */
+    @EventListener(ApplicationReadyEvent.class)
+    @Transactional
+    public void cancelOverdueRequestsOnStartup() {
+        log.info("🚀 Application started - Running auto-cancellation for seed data cleanup...");
+        cancelOverdueRequests();
+    }
+
+    /**
      * Auto-cancel overdue pending requests
      * Runs at 6:00 AM every day (Vietnam time)
      */
     @Scheduled(cron = "0 0 6 * * ?", zone = "Asia/Ho_Chi_Minh")
     @Transactional
-    public void cancelOverdueRequests() {
-        log.info("==== Starting auto-cancellation of overdue pending requests ====");
+    public void cancelOverdueRequestsScheduled() {
+        log.info("==== Scheduled job: Starting auto-cancellation of overdue pending requests ====");
+        cancelOverdueRequests();
+    }
+
+    /**
+     * Core logic to cancel overdue requests.
+     * Can be called by scheduled job or on startup.
+     */
+    private void cancelOverdueRequests() {
         
         try {
             LocalDate today = LocalDate.now();
@@ -60,12 +83,12 @@ public class RequestAutoCancellationJob {
             // 3. Cancel overdue registration requests
             int registrationCancelled = cancelOverdueRegistrationRequests(today, now);
 
-            log.info("==== Auto-cancellation completed ====");
-            log.info("Summary: {} overtime, {} time-off, {} registration requests cancelled",
+            log.info("✅ Auto-cancellation completed: {} overtime, {} time-off, {} registration requests cancelled",
                     overtimeCancelled, timeOffCancelled, registrationCancelled);
 
         } catch (Exception e) {
-            log.error("Error during auto-cancellation job: {}", e.getMessage(), e);
+            log.error("❌ Error during auto-cancellation: {}", e.getMessage(), e);
+            throw e; // Re-throw to ensure transaction rollback
         }
     }
 
