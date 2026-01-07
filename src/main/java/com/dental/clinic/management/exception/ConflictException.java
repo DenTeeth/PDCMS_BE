@@ -22,7 +22,7 @@ public class ConflictException extends ErrorResponseException {
 
     private static ProblemDetail asProblemDetail(String errorCode, String message) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, message);
-        problemDetail.setTitle("Conflict");
+        problemDetail.setTitle("Xung Đột");
         problemDetail.setType(URI.create(ErrorConstants.PROBLEM_BASE_URL + "/conflict"));
         problemDetail.setProperty("errorCode", errorCode);
         return problemDetail;

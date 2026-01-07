@@ -13,20 +13,20 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CreateTimeOffTypeRequest {
 
-    @NotBlank(message = "typeName is required")
+    @NotBlank(message = "Tên loại nghỉ phép là bắt buộc")
     private String typeName;
 
-    @NotBlank(message = "typeCode is required")
+    @NotBlank(message = "Mã loại nghỉ phép là bắt buộc")
     private String typeCode;
 
     private String description;
 
-    @NotNull(message = "requiresBalance is required")
+    @NotNull(message = "Yêu cầu số dư là bắt buộc")
     private Boolean requiresBalance;
 
     private Double defaultDaysPerYear;
 
-    @NotNull(message = "isPaid is required")
+    @NotNull(message = "Có lương là bắt buộc")
     private Boolean isPaid;
 
     @Builder.Default

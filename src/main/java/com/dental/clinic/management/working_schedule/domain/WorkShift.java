@@ -32,26 +32,26 @@ public class WorkShift {
 
     @Id
     @Column(name = "work_shift_id", length = 30)
-    @NotBlank(message = "Work shift ID is required")
-    @Size(max = 30, message = "Work shift ID must not exceed 30 characters")
+    @NotBlank(message = "Mã ca làm việc là bắt buộc")
+    @Size(max = 30, message = "Mã ca làm việc không được vượt quá 30 ký tự")
     private String workShiftId;
 
     @Column(name = "shift_name", nullable = false, length = 100)
-    @NotBlank(message = "Shift name is required")
-    @Size(max = 100, message = "Shift name must not exceed 100 characters")
+    @NotBlank(message = "Tên ca làm việc là bắt buộc")
+    @Size(max = 100, message = "Tên ca làm việc không được vượt quá 100 ký tự")
     private String shiftName;
 
     @Column(name = "start_time", nullable = false)
-    @NotNull(message = "Start time is required")
+    @NotNull(message = "Giờ bắt đầu là bắt buộc")
     private LocalTime startTime;
 
     @Column(name = "end_time", nullable = false)
-    @NotNull(message = "End time is required")
+    @NotNull(message = "Giờ kết thúc là bắt buộc")
     private LocalTime endTime;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "category", nullable = false, length = 20)
-    @NotNull(message = "Category is required")
+    @NotNull(message = "Danh mục là bắt buộc")
     private WorkShiftCategory category = WorkShiftCategory.NORMAL;
 
     @Column(name = "is_active", nullable = false)

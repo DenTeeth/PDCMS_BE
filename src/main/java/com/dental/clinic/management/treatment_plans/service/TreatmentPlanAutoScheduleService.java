@@ -75,6 +75,7 @@ public class TreatmentPlanAutoScheduleService {
     private final RoomRepository roomRepository;
     private final RoomServiceRepository roomServiceRepository;
     private final com.dental.clinic.management.employee.repository.EmployeeRepository employeeRepository;
+    private final com.dental.clinic.management.treatment_plans.repository.PatientPlanPhaseRepository phaseRepository;
 
     private static final String ENTITY_NAME = "treatment_plan_auto_schedule";
     private static final List<AppointmentStatus> BUSY_STATUSES = Arrays.asList(
@@ -190,16 +191,20 @@ public class TreatmentPlanAutoScheduleService {
                         ENTITY_NAME,
                         "SERVICE_NOT_FOUND"));
 
-        // Note: PatientPlanItem doesn't have estimatedDate field in current schema
-        // Using a fallback approach: today + 7 days * sequence number
-        LocalDate originalDate = LocalDate.now().plusDays(7L * item.getSequenceNumber());
-
-        if (originalDate == null) {
-            // No estimated date → use today + 7 days as fallback
-            originalDate = LocalDate.now().plusDays(7);
-            log.debug("No estimated date for item {}, using fallback: {}",
-                    item.getItemId(), originalDate);
-        }
+        // FIX: Calculate original date based on BOTH phase number AND sequence number
+        // Each phase should start AFTER previous phases to respect sequential treatment
+        // Formula: today + (phaseNumber - 1) * 14 days + sequenceNumber * 7 days
+        // Example: Phase 1, item 1 → 0*14 + 1*7 = 7 days = 6/1
+        //          Phase 1, item 2 → 0*14 + 2*7 = 14 days = 13/1
+        //          Phase 2, item 1 → 1*14 + 1*7 = 21 days = 20/1
+        //          Phase 2, item 2 → 1*14 + 2*7 = 28 days = 27/1
+        Integer phaseNumber = item.getPhase().getPhaseNumber();
+        long phaseOffset = (phaseNumber - 1) * 14L;  // 2 weeks per phase
+        long itemOffset = item.getSequenceNumber() * 7L;  // 1 week per item
+        LocalDate originalDate = LocalDate.now().plusDays(phaseOffset + itemOffset);
+        
+        log.debug("Calculated original date for item {} (phase {}, sequence {}): {}",
+                item.getItemId(), phaseNumber, item.getSequenceNumber(), originalDate);
 
         LocalDate proposedDate = originalDate;
         boolean holidayAdjusted = false;
@@ -328,7 +333,7 @@ public class TreatmentPlanAutoScheduleService {
         if (request.getEmployeeCode() != null && !request.getEmployeeCode().isEmpty()) {
             var employee = employeeRepository.findByEmployeeCodeAndIsActiveTrue(request.getEmployeeCode())
                     .orElseThrow(() -> new BadRequestAlertException(
-                            "Employee not found or inactive: " + request.getEmployeeCode(),
+                            "Không tìm thấy nhân viên hoặc nhân viên không hoạt động: " + request.getEmployeeCode(),
                             ENTITY_NAME,
                             "EMPLOYEE_NOT_FOUND"));
             return employee.getEmployeeId();
@@ -619,5 +624,326 @@ public class TreatmentPlanAutoScheduleService {
                 .failedItems(0)
                 .summary(initializeSummary())
                 .build();
+    }
+
+    /**
+     * CRITICAL FIX: Find the minimum start date for current phase based on previous phases.
+     * This ensures that all appointments in later phases are scheduled AFTER all appointments in previous phases.
+     * 
+     * Logic:
+     * 1. Find all phases with phase_number < current phase number
+     * 2. Get all items from those phases (regardless of status)
+     * 3. Calculate the suggested date for each item (using sequence number heuristic)
+     * 4. Return the latest date + 1 day as minimum start date for current phase
+     * 
+     * @param planId Treatment plan ID
+     * @param currentPhaseNumber Current phase number
+     * @return Minimum start date (latest date from previous phases + 1), or null if no previous phases
+     */
+    private LocalDate findMinimumStartDateFromPreviousPhases(Long planId, Integer currentPhaseNumber) {
+        if (currentPhaseNumber == null || currentPhaseNumber <= 1) {
+            // First phase - no constraint
+            return null;
+        }
+
+        log.debug("Finding minimum start date from phases before phase {}", currentPhaseNumber);
+
+        // Get all phases before the current one
+        List<com.dental.clinic.management.treatment_plans.domain.PatientPlanPhase> previousPhases = 
+                phaseRepository.findByTreatmentPlanIdAndPhaseNumberLessThan(planId, currentPhaseNumber);
+
+        if (previousPhases.isEmpty()) {
+            log.debug("No previous phases found for plan {}", planId);
+            return null;
+        }
+
+        LocalDate latestDate = null;
+
+        // For each previous phase, find the latest suggested date
+        for (com.dental.clinic.management.treatment_plans.domain.PatientPlanPhase prevPhase : previousPhases) {
+            // Get all items from this phase (any status)
+            List<PatientPlanItem> items = planItemRepository.findByPhase_PatientPhaseId(prevPhase.getPatientPhaseId());
+            
+            for (PatientPlanItem item : items) {
+                // Calculate suggested date using same heuristic as in generateSuggestionForItem
+                // today + 7 days * sequence number
+                LocalDate itemDate = LocalDate.now().plusDays(7L * item.getSequenceNumber());
+                
+                if (latestDate == null || itemDate.isAfter(latestDate)) {
+                    latestDate = itemDate;
+                }
+            }
+        }
+
+        if (latestDate == null) {
+            log.debug("No items found in previous phases");
+            return null;
+        }
+
+        // Add 1 day buffer to ensure clear separation between phases
+        LocalDate minimumDate = latestDate.plusDays(1);
+        log.info("Minimum start date for phase {}: {} (latest from previous: {})", 
+                currentPhaseNumber, minimumDate, latestDate);
+        
+        return minimumDate;
+    }
+
+    /**
+     * Generate appointment suggestion for a single plan item WITH minimum start date constraint.
+     * This is used for phase-level scheduling to ensure phase sequencing.
+     * 
+     * @param item Plan item to schedule
+     * @param plan Parent treatment plan
+     * @param request Auto-schedule request
+     * @param summary Scheduling summary (updated in-place)
+     * @param minimumStartDate Minimum allowed start date (from previous phases), can be null
+     * @return Appointment suggestion
+     */
+    private AutoScheduleResponse.AppointmentSuggestion generateSuggestionForItemWithMinDate(
+            PatientPlanItem item,
+            PatientTreatmentPlan plan,
+            AutoScheduleRequest request,
+            AutoScheduleResponse.SchedulingSummary summary,
+            LocalDate minimumStartDate) {
+
+        log.debug("Generating suggestion for item {} (serviceId: {}) with minDate: {}",
+                item.getItemId(), item.getServiceId(), minimumStartDate);
+
+        // Get service details from repository
+        DentalService service = dentalServiceRepository.findById(Long.valueOf(item.getServiceId()))
+                .orElseThrow(() -> new BadRequestAlertException(
+                        "Dịch vụ không tồn tại: " + item.getServiceId(),
+                        ENTITY_NAME,
+                        "SERVICE_NOT_FOUND"));
+
+        // Calculate original date: today + 7 days * sequence number
+        LocalDate originalDate = LocalDate.now().plusDays(7L * item.getSequenceNumber());
+
+        if (originalDate == null) {
+            // No estimated date → use today + 7 days as fallback
+            originalDate = LocalDate.now().plusDays(7);
+            log.debug("No estimated date for item {}, using fallback: {}",
+                    item.getItemId(), originalDate);
+        }
+
+        // CRITICAL: Enforce minimum start date from previous phases
+        if (minimumStartDate != null && originalDate.isBefore(minimumStartDate)) {
+            log.info("Item {} original date {} is before phase minimum {}, adjusting to {}",
+                    item.getItemId(), originalDate, minimumStartDate, minimumStartDate);
+            originalDate = minimumStartDate;
+        }
+
+        LocalDate proposedDate = originalDate;
+        boolean holidayAdjusted = false;
+        boolean spacingAdjusted = false;
+        String adjustmentReason = null;
+
+        // Get doctor ID from request or use plan creator
+        Integer doctorId = getDoctorIdForScheduling(request, plan);
+
+        // STEP 1: Adjust for holidays/weekends AND doctor shifts
+        // Find next working day WITH doctor shift
+        LocalDate workingDate = findNextWorkingDayWithDoctorShift(proposedDate, doctorId);
+
+        if (workingDate == null) {
+            // No doctor shifts found in next 30 days - return failed suggestion
+            log.warn("No doctor shifts found in next 30 days from {} for doctor {}",
+                    proposedDate, doctorId);
+            return AutoScheduleResponse.AppointmentSuggestion.builder()
+                    .itemId(item.getItemId())
+                    .serviceCode(service.getServiceCode())
+                    .serviceName(service.getServiceName())
+                    .originalEstimatedDate(originalDate)
+                    .success(false)
+                    .adjustmentReason("Không tìm thấy ca làm việc của bác sĩ trong 30 ngày tới")
+                    .build();
+        }
+
+        if (!workingDate.equals(proposedDate)) {
+            holidayAdjusted = true;
+            summary.setHolidayAdjustments(summary.getHolidayAdjustments() + 1);
+            adjustmentReason = buildDateAdjustmentReason(proposedDate, workingDate);
+            log.debug("Item {} date adjusted from {} to {} (holiday/weekend/no-doctor-shift)",
+                    item.getItemId(), proposedDate, workingDate);
+        }
+        proposedDate = workingDate;
+
+        // STEP 2: Apply spacing rules (if not forced)
+        if (!Boolean.TRUE.equals(request.getForceSchedule())) {
+            try {
+                // Validate spacing rules
+                serviceSpacingValidator.validateServiceSpacing(
+                        plan.getPatient().getPatientId(),
+                        service,
+                        proposedDate);
+
+                // Validate daily limit
+                serviceSpacingValidator.validateDailyLimit(
+                        plan.getPatient().getPatientId(),
+                        proposedDate,
+                        service);
+
+            } catch (BadRequestAlertException e) {
+                // Spacing rule violation → calculate minimum date and shift
+                spacingAdjusted = true;
+                summary.setSpacingAdjustments(summary.getSpacingAdjustments() + 1);
+
+                LocalDate minDate = serviceSpacingValidator.calculateMinimumAllowedDate(
+                        plan.getPatient().getPatientId(),
+                        service);
+
+                // Ensure minimum date is also a working day
+                proposedDate = holidayValidator.adjustToWorkingDay(minDate);
+                adjustmentReason = (adjustmentReason != null ? adjustmentReason + "; " : "") +
+                        e.getErrorKey().replace("_", " ");
+
+                log.debug("Item {} date adjusted from {} to {} (spacing rules)",
+                        item.getItemId(), workingDate, proposedDate);
+            }
+        }
+
+        // STEP 3: Find available slots (simplified - you can expand this later)
+        List<AutoScheduleResponse.TimeSlot> availableSlots = findAvailableSlots(
+                proposedDate,
+                service,
+                doctorId);
+
+        // CRITICAL FIX: Validate that we have available slots
+        if (availableSlots == null || availableSlots.isEmpty()) {
+            log.warn("No available slots found for item {} on {} (doctor: {})",
+                    item.getItemId(), proposedDate, doctorId);
+            
+            return AutoScheduleResponse.AppointmentSuggestion.builder()
+                    .itemId(item.getItemId())
+                    .serviceCode(service.getServiceCode())
+                    .serviceName(service.getServiceName())
+                    .originalEstimatedDate(originalDate)
+                    .suggestedDate(proposedDate)
+                    .success(false)
+                    .errorMessage("Không có slot trống khả dụng vào ngày " + proposedDate + 
+                                  ". Vui lòng kiểm tra lịch làm việc của bác sĩ hoặc chọn ngày khác.")
+                    .adjustmentReason(adjustmentReason)
+                    .build();
+        }
+
+        // Calculate total days shifted
+        int daysShifted = (int) java.time.temporal.ChronoUnit.DAYS.between(originalDate, proposedDate);
+        if (daysShifted > 0) {
+            summary.setTotalDaysShifted(summary.getTotalDaysShifted() + daysShifted);
+        }
+
+        // Build successful suggestion
+        return AutoScheduleResponse.AppointmentSuggestion.builder()
+                .itemId(item.getItemId())
+                .serviceCode(service.getServiceCode())
+                .serviceName(service.getServiceName())
+                .suggestedDate(proposedDate)
+                .originalEstimatedDate(originalDate)
+                .holidayAdjusted(holidayAdjusted)
+                .spacingAdjusted(spacingAdjusted)
+                .adjustmentReason(adjustmentReason)
+                .availableSlots(availableSlots)
+                .success(true)
+                .build();
+    }
+
+    /**
+     * NEW: Generate automatic appointment suggestions for a specific phase only.
+     * More realistic approach - schedule one phase at a time instead of entire plan.
+     * 
+     * Date: 2024-12-29
+     * Feedback: Mentor suggested phase-level scheduling is more practical
+     * 
+     * @param phaseId Phase ID to schedule
+     * @param request Auto-schedule request with preferences
+     * @return Response with appointment suggestions for this phase only
+     */
+    @Transactional(readOnly = true)
+    public AutoScheduleResponse generateAutomaticAppointmentsForPhase(
+            Long phaseId, 
+            com.dental.clinic.management.treatment_plans.dto.request.AutoSchedulePhaseRequest request) {
+        
+        log.info("Starting auto-schedule for treatment plan phase: {}", phaseId);
+
+        // Step 1: Validate phase exists
+        com.dental.clinic.management.treatment_plans.domain.PatientPlanPhase phase = 
+                phaseRepository.findById(phaseId)
+                .orElseThrow(() -> new BadRequestAlertException(
+                        "Giai đoạn không tồn tại: " + phaseId,
+                        ENTITY_NAME,
+                        "PHASE_NOT_FOUND"));
+
+        // Step 2: Validate parent plan is approved
+        PatientTreatmentPlan plan = phase.getTreatmentPlan();
+        if (plan.getApprovalStatus() != com.dental.clinic.management.treatment_plans.domain.ApprovalStatus.APPROVED) {
+            throw new BadRequestAlertException(
+                    "Lộ trình điều trị chưa được phê duyệt. Chỉ có thể đặt lịch cho lộ trình đã phê duyệt.",
+                    ENTITY_NAME,
+                    "PLAN_NOT_APPROVED");
+        }
+
+        // Step 3: Get items ready for booking in this phase only
+        List<PatientPlanItem> readyItems = planItemRepository.findByPhaseIdAndStatus(
+                phaseId,
+                PlanItemStatus.READY_FOR_BOOKING);
+
+        if (readyItems.isEmpty()) {
+            log.warn("No items ready for booking in phase: {}", phaseId);
+            return buildEmptyResponse(plan.getPlanId(), 
+                    "Không có dịch vụ nào sẵn sàng để đặt lịch trong giai đoạn này");
+        }
+
+        log.info("Found {} items ready for booking in phase {}", readyItems.size(), phaseId);
+
+        // Step 3.5: CRITICAL FIX - Find minimum start date from previous phases
+        // All appointments in current phase MUST be scheduled AFTER all appointments in previous phases
+        LocalDate minimumStartDate = findMinimumStartDateFromPreviousPhases(plan.getPlanId(), phase.getPhaseNumber());
+        if (minimumStartDate != null) {
+            log.info("Phase {} must start after {} (latest date from previous phases)", 
+                    phase.getPhaseNumber(), minimumStartDate);
+        }
+
+        // Step 4: Convert phase request to plan request for reuse
+        com.dental.clinic.management.treatment_plans.dto.request.AutoScheduleRequest planRequest = 
+                com.dental.clinic.management.treatment_plans.dto.request.AutoScheduleRequest.builder()
+                        .employeeCode(request.getEmployeeCode())
+                        .roomCode(request.getRoomCode())
+                        .preferredTimeSlots(request.getPreferredTimeSlots())
+                        .lookAheadDays(request.getLookAheadDays())
+                        .forceSchedule(request.getForceSchedule())
+                        .build();
+
+        // Step 5: Generate suggestions for each item
+        List<AutoScheduleResponse.AppointmentSuggestion> suggestions = new ArrayList<>();
+        AutoScheduleResponse.SchedulingSummary summary = initializeSummary();
+
+        for (PatientPlanItem item : readyItems) {
+            try {
+                AutoScheduleResponse.AppointmentSuggestion suggestion = generateSuggestionForItemWithMinDate(
+                        item,
+                        plan,
+                        planRequest,
+                        summary,
+                        minimumStartDate);
+                suggestions.add(suggestion);
+            } catch (Exception e) {
+                log.error("Failed to generate suggestion for item {}: {}",
+                        item.getItemId(), e.getMessage(), e);
+
+                // Add failed suggestion
+                DentalService errorService = dentalServiceRepository.findById(Long.valueOf(item.getServiceId()))
+                        .orElse(null);
+                suggestions.add(AutoScheduleResponse.AppointmentSuggestion.builder()
+                        .itemId(item.getItemId())
+                        .serviceCode(errorService != null ? errorService.getServiceCode() : "UNKNOWN")
+                        .serviceName(errorService != null ? errorService.getServiceName() : "Unknown Service")
+                        .success(false)
+                        .errorMessage(e.getMessage())
+                        .build());
+            }
+        }
+
+        // Step 6: Build and return response
+        return buildResponse(plan.getPlanId(), suggestions, readyItems.size(), summary);
     }
 }

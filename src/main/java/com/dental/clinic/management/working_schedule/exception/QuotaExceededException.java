@@ -20,7 +20,7 @@ public class QuotaExceededException extends ErrorResponseException {
                 slotId, date, registered, quota);
 
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, message);
-        pd.setTitle("Quota Exceeded");
+        pd.setTitle("Vượt Quá Hạn Mức");
         pd.setProperty("errorCode", ERROR_CODE);
         pd.setProperty("message", message);
         pd.setProperty("slotId", slotId);

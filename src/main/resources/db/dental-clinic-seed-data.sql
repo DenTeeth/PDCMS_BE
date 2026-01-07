@@ -12,11 +12,16 @@
 -- ============================================
 
 -- ============================================
--- FIX: Drop outdated CHECK constraint on patient_plan_items
+-- FIX: Drop outdated CHECK constraints
 -- ============================================
--- This constraint was created by Hibernate with old enum values
--- Must be dropped before inserting data with PENDING, WAITING_FOR_PREREQUISITE, SKIPPED statuses
+-- These constraints were created by Hibernate with old enum values
+-- Must be dropped before inserting data with new enum values
+
+-- Drop constraint for patient_plan_items (PENDING, WAITING_FOR_PREREQUISITE, SKIPPED)
 ALTER TABLE IF EXISTS patient_plan_items DROP CONSTRAINT IF EXISTS patient_plan_items_status_check;
+
+-- Drop constraint for appointments (CANCELLED_LATE added)
+ALTER TABLE IF EXISTS appointments DROP CONSTRAINT IF EXISTS appointments_status_check;
 
 -- ============================================
 -- BẢNG BỔ SUNG: PATIENT_IMAGE_COMMENTS
@@ -80,15 +85,44 @@ COMMENT ON COLUMN chatbot_knowledge.response IS 'Câu trả lời chuẩn';
 COMMENT ON COLUMN chatbot_knowledge.is_active IS 'Trạng thái hoạt động';
 
 -- ============================================
--- MATERIAL CONSUMPTION TRACKING (V35)
+-- MATERIAL CONSUMPTION TRACKING (V36 - Updated Dec 27, 2025)
 -- ============================================
 -- Feature: Track actual material usage vs planned (BOM)
--- Date: 2025-12-25
+-- Date: 2025-12-27
 -- Purpose: Link procedures to warehouse deductions, enable variance analysis
+--
+-- Changes from V35:
+--   - Removed quantity_multiplier from clinical_record_procedures
+--   - Added quantity column to procedure_material_usage (per-material editing)
+--   - Updated variance calculation: actual_quantity - quantity (was: actual - planned)
+
+-- Step 0: Migration for existing tables - Add missing quantity column
+-- This handles the case where table was created before V36 migration
+
+-- Add quantity column if it doesn't exist
+ALTER TABLE procedure_material_usage 
+ADD COLUMN IF NOT EXISTS quantity NUMERIC(10,2);
+
+-- Set default value to planned_quantity for existing records
+UPDATE procedure_material_usage 
+SET quantity = planned_quantity 
+WHERE quantity IS NULL;
+
+-- Make it NOT NULL
+ALTER TABLE procedure_material_usage 
+ALTER COLUMN quantity SET NOT NULL;
+
+-- Drop old variance_quantity if it exists (may have wrong formula)
+ALTER TABLE procedure_material_usage 
+DROP COLUMN IF EXISTS variance_quantity CASCADE;
+
+-- Recreate variance_quantity with correct formula: actual - quantity
+ALTER TABLE procedure_material_usage 
+ADD COLUMN variance_quantity NUMERIC(10,2) 
+GENERATED ALWAYS AS (actual_quantity - quantity) STORED;
 
 -- Step 1: Add material tracking columns to clinical_record_procedures
-ALTER TABLE clinical_record_procedures 
-ADD COLUMN IF NOT EXISTS quantity_multiplier INTEGER DEFAULT 1,
+ALTER TABLE clinical_record_procedures
 ADD COLUMN IF NOT EXISTS storage_transaction_id INTEGER,
 ADD COLUMN IF NOT EXISTS materials_deducted_at TIMESTAMP,
 ADD COLUMN IF NOT EXISTS materials_deducted_by VARCHAR(100);
@@ -98,16 +132,15 @@ ALTER TABLE clinical_record_procedures
 DROP CONSTRAINT IF EXISTS fk_procedure_storage_tx;
 
 ALTER TABLE clinical_record_procedures
-ADD CONSTRAINT fk_procedure_storage_tx 
-    FOREIGN KEY (storage_transaction_id) 
-    REFERENCES storage_transactions(transaction_id) 
+ADD CONSTRAINT fk_procedure_storage_tx
+    FOREIGN KEY (storage_transaction_id)
+    REFERENCES storage_transactions(transaction_id)
     ON DELETE SET NULL;
 
 -- Add index if not exists
 CREATE INDEX IF NOT EXISTS idx_procedures_storage_tx ON clinical_record_procedures(storage_transaction_id);
 
 -- Add comments
-COMMENT ON COLUMN clinical_record_procedures.quantity_multiplier IS 'Number of times procedure was performed (for scaling BOM quantities). Default: 1';
 COMMENT ON COLUMN clinical_record_procedures.storage_transaction_id IS 'Links to warehouse export transaction for material consumption audit trail';
 COMMENT ON COLUMN clinical_record_procedures.materials_deducted_at IS 'Timestamp when materials were deducted from warehouse';
 COMMENT ON COLUMN clinical_record_procedures.materials_deducted_by IS 'Employee username who triggered material deduction';
@@ -117,39 +150,40 @@ CREATE TABLE IF NOT EXISTS procedure_material_usage (
     usage_id SERIAL PRIMARY KEY,
     procedure_id INTEGER NOT NULL,
     item_master_id INTEGER NOT NULL,
-    
+
     -- Planned vs Actual quantities
-    planned_quantity NUMERIC(10,2) NOT NULL,
-    actual_quantity NUMERIC(10,2) NOT NULL,
+    planned_quantity NUMERIC(10,2) NOT NULL,  -- Base quantity from BOM (read-only)
+    quantity NUMERIC(10,2) NOT NULL,          -- User-editable quantity to deduct (NEW)
+    actual_quantity NUMERIC(10,2) NOT NULL,   -- What was actually used
     unit_id INTEGER NOT NULL,
-    
+
     -- Variance tracking (computed column)
-    variance_quantity NUMERIC(10,2) GENERATED ALWAYS AS (actual_quantity - planned_quantity) STORED,
+    variance_quantity NUMERIC(10,2) GENERATED ALWAYS AS (actual_quantity - quantity) STORED,
     variance_reason VARCHAR(500),
-    
+
     -- Audit trail
     recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     recorded_by VARCHAR(100),
-    
+
     -- Notes
     notes TEXT,
-    
+
     -- Foreign keys
-    CONSTRAINT fk_usage_procedure 
-        FOREIGN KEY (procedure_id) 
-        REFERENCES clinical_record_procedures(procedure_id) 
+    CONSTRAINT fk_usage_procedure
+        FOREIGN KEY (procedure_id)
+        REFERENCES clinical_record_procedures(procedure_id)
         ON DELETE CASCADE,
-    
-    CONSTRAINT fk_usage_item 
-        FOREIGN KEY (item_master_id) 
-        REFERENCES item_masters(item_master_id) 
+
+    CONSTRAINT fk_usage_item
+        FOREIGN KEY (item_master_id)
+        REFERENCES item_masters(item_master_id)
         ON DELETE RESTRICT,
-    
-    CONSTRAINT fk_usage_unit 
-        FOREIGN KEY (unit_id) 
-        REFERENCES item_units(unit_id) 
+
+    CONSTRAINT fk_usage_unit
+        FOREIGN KEY (unit_id)
+        REFERENCES item_units(unit_id)
         ON DELETE RESTRICT,
-    
+
     -- Ensure one record per procedure-item combination
     CONSTRAINT uk_procedure_item UNIQUE (procedure_id, item_master_id)
 );
@@ -161,11 +195,148 @@ CREATE INDEX IF NOT EXISTS idx_material_usage_recorded_at ON procedure_material_
 
 -- Table and column comments
 COMMENT ON TABLE procedure_material_usage IS 'Tracks actual material quantities used per procedure for variance analysis and reporting';
-COMMENT ON COLUMN procedure_material_usage.planned_quantity IS 'Expected quantity from service BOM (service_consumables)';
-COMMENT ON COLUMN procedure_material_usage.actual_quantity IS 'Actual quantity used during procedure (can be adjusted by assistant)';
-COMMENT ON COLUMN procedure_material_usage.variance_quantity IS 'Difference between actual and planned (positive = overuse, negative = underuse)';
-COMMENT ON COLUMN procedure_material_usage.variance_reason IS 'Explanation for variance if actual differs from planned';
+COMMENT ON COLUMN procedure_material_usage.planned_quantity IS 'Base quantity from service BOM - read-only reference';
+COMMENT ON COLUMN procedure_material_usage.quantity IS 'User-editable quantity to be deducted from warehouse (replaces quantity_multiplier)';
+COMMENT ON COLUMN procedure_material_usage.actual_quantity IS 'Actual quantity used during procedure (updated by assistant after completion)';
+COMMENT ON COLUMN procedure_material_usage.variance_quantity IS 'Difference between actual and quantity (positive = used more than planned, negative = used less)';
+COMMENT ON COLUMN procedure_material_usage.variance_reason IS 'Explanation for variance if actual differs from quantity';
 COMMENT ON COLUMN procedure_material_usage.recorded_by IS 'Employee username who recorded/updated the usage';
+
+-- ============================================
+-- PAYMENT SYSTEM TABLES (Invoices & Payments)
+-- ============================================
+-- Tao cac bang cho he thong thanh toan
+
+CREATE TABLE IF NOT EXISTS invoices (
+    invoice_id SERIAL PRIMARY KEY,
+    invoice_code VARCHAR(30) UNIQUE NOT NULL,
+    invoice_type invoice_type NOT NULL,
+    patient_id INTEGER NOT NULL,
+    appointment_id INTEGER,
+    treatment_plan_id INTEGER,
+    phase_number INTEGER,
+    installment_number INTEGER,
+    total_amount DECIMAL(15,2) NOT NULL DEFAULT 0,
+    paid_amount DECIMAL(15,2) NOT NULL DEFAULT 0,
+    remaining_debt DECIMAL(15,2) NOT NULL DEFAULT 0,
+    payment_status invoice_payment_status NOT NULL DEFAULT 'PENDING_PAYMENT',
+    due_date TIMESTAMP,
+    notes TEXT,
+    created_by INTEGER NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_invoice_patient
+        FOREIGN KEY (patient_id)
+        REFERENCES patients(patient_id)
+        ON DELETE RESTRICT,
+
+    CONSTRAINT fk_invoice_appointment
+        FOREIGN KEY (appointment_id)
+        REFERENCES appointments(appointment_id)
+        ON DELETE SET NULL,
+
+    CONSTRAINT fk_invoice_treatment_plan
+        FOREIGN KEY (treatment_plan_id)
+        REFERENCES patient_treatment_plans(plan_id)
+        ON DELETE SET NULL,
+
+    CONSTRAINT fk_invoice_creator
+        FOREIGN KEY (created_by)
+        REFERENCES employees(employee_id)
+        ON DELETE RESTRICT
+);
+
+CREATE INDEX IF NOT EXISTS idx_invoices_patient ON invoices(patient_id);
+CREATE INDEX IF NOT EXISTS idx_invoices_appointment ON invoices(appointment_id);
+CREATE INDEX IF NOT EXISTS idx_invoices_treatment_plan ON invoices(treatment_plan_id);
+CREATE INDEX IF NOT EXISTS idx_invoices_payment_status ON invoices(payment_status);
+CREATE INDEX IF NOT EXISTS idx_invoices_created_at ON invoices(created_at DESC);
+
+COMMENT ON TABLE invoices IS 'Hoa don thanh toan cho appointment hoac treatment plan';
+COMMENT ON COLUMN invoices.invoice_type IS 'APPOINTMENT (hoa don dat le), TREATMENT_PLAN (hoa don ke hoach dieu tri), SUPPLEMENTAL (hoa don phat sinh)';
+COMMENT ON COLUMN invoices.payment_status IS 'PENDING_PAYMENT (chua thanh toan), PARTIAL_PAID (da thanh toan mot phan), PAID (da thanh toan du), CANCELLED (da huy)';
+
+CREATE TABLE IF NOT EXISTS invoice_items (
+    item_id SERIAL PRIMARY KEY,
+    invoice_id INTEGER NOT NULL,
+    service_id INTEGER NOT NULL,
+    service_code VARCHAR(50),
+    service_name VARCHAR(255) NOT NULL,
+    quantity INTEGER NOT NULL DEFAULT 1,
+    unit_price DECIMAL(15,2) NOT NULL,
+    subtotal DECIMAL(15,2) NOT NULL,
+    notes TEXT,
+
+    CONSTRAINT fk_invoice_item_invoice
+        FOREIGN KEY (invoice_id)
+        REFERENCES invoices(invoice_id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_invoice_item_service
+        FOREIGN KEY (service_id)
+        REFERENCES services(service_id)
+        ON DELETE RESTRICT
+);
+
+CREATE INDEX IF NOT EXISTS idx_invoice_items_invoice ON invoice_items(invoice_id);
+CREATE INDEX IF NOT EXISTS idx_invoice_items_service ON invoice_items(service_id);
+
+COMMENT ON TABLE invoice_items IS 'Chi tiet dong trong hoa don';
+
+CREATE TABLE IF NOT EXISTS payments (
+    payment_id SERIAL PRIMARY KEY,
+    payment_code VARCHAR(30) UNIQUE NOT NULL,
+    invoice_id INTEGER NOT NULL,
+    amount DECIMAL(15,2) NOT NULL,
+    payment_method payment_method NOT NULL,
+    payment_date TIMESTAMP NOT NULL,
+    reference_number VARCHAR(100),
+    notes TEXT,
+    created_by INTEGER NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_payment_invoice
+        FOREIGN KEY (invoice_id)
+        REFERENCES invoices(invoice_id)
+        ON DELETE RESTRICT,
+
+    CONSTRAINT fk_payment_creator
+        FOREIGN KEY (created_by)
+        REFERENCES employees(employee_id)
+        ON DELETE RESTRICT
+);
+
+CREATE INDEX IF NOT EXISTS idx_payments_invoice ON payments(invoice_id);
+CREATE INDEX IF NOT EXISTS idx_payments_date ON payments(payment_date DESC);
+
+COMMENT ON TABLE payments IS 'Giao dich thanh toan';
+COMMENT ON COLUMN payments.payment_method IS 'SEPAY (thanh toan qua SePay webhook)';
+
+CREATE TABLE IF NOT EXISTS payment_transactions (
+    transaction_id SERIAL PRIMARY KEY,
+    payment_id INTEGER NOT NULL,
+    amount DECIMAL(15,2) NOT NULL,
+    status payment_transaction_status NOT NULL DEFAULT 'PENDING',
+    payment_link_id VARCHAR(100),
+    callback_data TEXT,
+    error_message TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_payment_transaction_payment
+        FOREIGN KEY (payment_id)
+        REFERENCES payments(payment_id)
+        ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_payment_transactions_payment ON payment_transactions(payment_id);
+CREATE INDEX IF NOT EXISTS idx_payment_transactions_webhook_id ON payment_transactions(payment_link_id);
+CREATE INDEX IF NOT EXISTS idx_payment_transactions_status ON payment_transactions(status);
+
+COMMENT ON TABLE payment_transactions IS 'Giao dich thanh toan qua SePay Webhook';
+COMMENT ON COLUMN payment_transactions.payment_link_id IS 'SePay webhook ID for duplicate detection';
+COMMENT ON COLUMN payment_transactions.status IS 'PENDING (dang cho), SUCCESS (thanh cong), FAILED (that bai), CANCELLED (da huy)';
 
 -- ============================================
 -- BƯỚC 1: TẠO BASE ROLES (3 loại cố định)
@@ -364,6 +535,16 @@ VALUES
 ON CONFLICT (permission_id) DO NOTHING;
 
 
+-- MODULE 12A: SHIFT_RENEWAL (3 permissions) - Fixed Schedule Renewal (Luồng 1 only)
+-- Only applies to FULL_TIME and PART_TIME_FIXED employees
+INSERT INTO permissions (permission_id, permission_name, module, description, display_order, parent_permission_id, is_active, created_at)
+VALUES
+('VIEW_RENEWAL_OWN', 'VIEW_RENEWAL_OWN', 'SHIFT_RENEWAL', 'Xem yêu cầu gia hạn lịch cố định của bản thân', 139, NULL, TRUE, NOW()),
+('RESPOND_RENEWAL_OWN', 'RESPOND_RENEWAL_OWN', 'SHIFT_RENEWAL', 'Phản hồi (đồng ý/từ chối) yêu cầu gia hạn của bản thân', 140, NULL, TRUE, NOW()),
+('VIEW_RENEWAL_ALL', 'VIEW_RENEWAL_ALL', 'SHIFT_RENEWAL', 'Xem tất cả yêu cầu gia hạn (Admin/Manager)', 141, NULL, TRUE, NOW())
+ON CONFLICT (permission_id) DO NOTHING;
+
+
 -- MODULE 13: LEAVE_MANAGEMENT (8 permissions) - Kept workflow separation
 -- Based on actual usage: CREATE_TIME_OFF, APPROVE_TIME_OFF, CREATE_OVERTIME, VIEW_OT_ALL, VIEW_OT_OWN
 INSERT INTO permissions (permission_id, permission_name, module, description, display_order, parent_permission_id, is_active, created_at)
@@ -422,10 +603,21 @@ VALUES
 ON CONFLICT (permission_id) DO NOTHING;
 
 
+-- MODULE 18: PAYMENT (4 permissions) - Invoice and Payment management
+INSERT INTO permissions (permission_id, permission_name, module, description, display_order, parent_permission_id, is_active, created_at)
+VALUES
+('VIEW_INVOICE_ALL', 'VIEW_INVOICE_ALL', 'PAYMENT', 'Xem tất cả hóa đơn (Receptionist/Accountant)', 190, NULL, TRUE, NOW()),
+('VIEW_INVOICE_OWN', 'VIEW_INVOICE_OWN', 'PAYMENT', 'Xem hóa đơn của bản thân (Patient)', 191, 'VIEW_INVOICE_ALL', TRUE, NOW()),
+('CREATE_INVOICE', 'CREATE_INVOICE', 'PAYMENT', 'Tạo hóa đơn mới', 192, NULL, TRUE, NOW()),
+('CREATE_PAYMENT', 'CREATE_PAYMENT', 'PAYMENT', 'Tạo thanh toán (xác nhận đã thu tiền)', 193, NULL, TRUE, NOW()),
+('VIEW_PAYMENT_ALL', 'VIEW_PAYMENT_ALL', 'PAYMENT', 'Xem tất cả giao dịch thanh toán', 194, NULL, TRUE, NOW())
+ON CONFLICT (permission_id) DO NOTHING;
+
+
 -- ============================================
 -- BƯỚC 4: PHÂN QUYỀN CHO CÁC VAI TRÒ
 -- ============================================
--- NOTE: Using OPTIMIZED permissions (70 permissions instead of 169)
+-- NOTE: Using OPTIMIZED permissions (75 permissions instead of 169)
 -- - CRUD operations consolidated to MANAGE_X
 -- - RBAC patterns preserved (VIEW_ALL vs VIEW_OWN)
 -- - Workflow permissions kept (APPROVE_X, ASSIGN_X)
@@ -477,6 +669,10 @@ VALUES
 ('ROLE_DENTIST', 'VIEW_REGISTRATION_OWN'), -- Xem đăng ký ca của bản thân (cho part-time/flex)
 ('ROLE_DENTIST', 'CREATE_REGISTRATION'), -- Tạo đăng ký ca part-time/flex
 
+-- SHIFT_RENEWAL (fixed schedule renewal - Luồng 1 only)
+('ROLE_DENTIST', 'VIEW_RENEWAL_OWN'), -- Xem yêu cầu gia hạn của bản thân
+('ROLE_DENTIST', 'RESPOND_RENEWAL_OWN'), -- Phản hồi yêu cầu gia hạn
+
 -- LEAVE_MANAGEMENT (employee self-service)
 ('ROLE_DENTIST', 'VIEW_LEAVE_OWN'), -- RBAC: View own leave requests
 ('ROLE_DENTIST', 'CREATE_TIME_OFF'), -- Request time-off
@@ -485,6 +681,10 @@ VALUES
 
 -- HOLIDAY (read-only)
 ('ROLE_DENTIST', 'VIEW_HOLIDAY'), -- View clinic holiday schedule
+
+-- PAYMENT & INVOICE (for own appointments only)
+('ROLE_DENTIST', 'CREATE_INVOICE'), -- Create invoices for own appointments
+('ROLE_DENTIST', 'VIEW_INVOICE_OWN'), -- View invoices for own appointments
 
 -- NOTIFICATION
 ('ROLE_DENTIST', 'VIEW_NOTIFICATION'),
@@ -519,6 +719,10 @@ VALUES
 ('ROLE_NURSE', 'VIEW_REGISTRATION_OWN'), -- Xem đăng ký ca của bản thân (cho part-time/flex)
 ('ROLE_NURSE', 'CREATE_REGISTRATION'), -- Tạo đăng ký ca part-time/flex
 
+-- SHIFT_RENEWAL (fixed schedule renewal - Luồng 1 only)
+('ROLE_NURSE', 'VIEW_RENEWAL_OWN'), -- Xem yêu cầu gia hạn của bản thân
+('ROLE_NURSE', 'RESPOND_RENEWAL_OWN'), -- Phản hồi yêu cầu gia hạn
+
 -- LEAVE_MANAGEMENT (employee self-service)
 ('ROLE_NURSE', 'VIEW_LEAVE_OWN'), -- RBAC: View own leave requests
 ('ROLE_NURSE', 'CREATE_TIME_OFF'), -- Request time-off
@@ -550,6 +754,10 @@ VALUES
 ('ROLE_DENTIST_INTERN', 'VIEW_AVAILABLE_SLOTS'), -- Xem suất part-time có sẵn (cho part-time/flex)
 ('ROLE_DENTIST_INTERN', 'VIEW_REGISTRATION_OWN'), -- Xem đăng ký ca của bản thân (cho part-time/flex)
 ('ROLE_DENTIST_INTERN', 'CREATE_REGISTRATION'), -- Tạo đăng ký ca part-time/flex
+
+-- SHIFT_RENEWAL (fixed schedule renewal - Luồng 1 only)
+('ROLE_DENTIST_INTERN', 'VIEW_RENEWAL_OWN'), -- Xem yêu cầu gia hạn của bản thân
+('ROLE_DENTIST_INTERN', 'RESPOND_RENEWAL_OWN'), -- Phản hồi yêu cầu gia hạn
 
 -- LEAVE_MANAGEMENT (employee self-service)
 ('ROLE_DENTIST_INTERN', 'VIEW_LEAVE_OWN'), -- RBAC: View own leave requests
@@ -600,6 +808,10 @@ VALUES
 ('ROLE_RECEPTIONIST', 'VIEW_REGISTRATION_OWN'), -- Xem đăng ký ca của bản thân (cho part-time/flex)
 ('ROLE_RECEPTIONIST', 'CREATE_REGISTRATION'), -- Tạo đăng ký ca part-time/flex
 
+-- SHIFT_RENEWAL (fixed schedule renewal - Luồng 1 only)
+('ROLE_RECEPTIONIST', 'VIEW_RENEWAL_OWN'), -- Xem yêu cầu gia hạn của bản thân
+('ROLE_RECEPTIONIST', 'RESPOND_RENEWAL_OWN'), -- Phản hồi yêu cầu gia hạn
+
 -- LEAVE_MANAGEMENT (employee self-service)
 ('ROLE_RECEPTIONIST', 'VIEW_LEAVE_OWN'), -- RBAC: View own leave requests
 ('ROLE_RECEPTIONIST', 'CREATE_TIME_OFF'), -- Request time-off
@@ -645,6 +857,11 @@ VALUES
 ('ROLE_MANAGER', 'MANAGE_WORK_SLOTS'), -- Manage part-time slots
 ('ROLE_MANAGER', 'MANAGE_PART_TIME_REGISTRATIONS'), -- Approve part-time registrations (9 usages!)
 ('ROLE_MANAGER', 'MANAGE_FIXED_REGISTRATIONS'), -- Manage fixed shift registrations
+
+-- SHIFT_RENEWAL (admin access for finalization)
+('ROLE_MANAGER', 'VIEW_RENEWAL_ALL'), -- Xem tất cả yêu cầu gia hạn
+('ROLE_MANAGER', 'VIEW_RENEWAL_OWN'), -- Xem yêu cầu gia hạn của bản thân (nếu là part-time manager)
+('ROLE_MANAGER', 'RESPOND_RENEWAL_OWN'), -- Phản hồi yêu cầu gia hạn của bản thân
 
 -- LEAVE_MANAGEMENT (full management with workflows)
 ('ROLE_MANAGER', 'VIEW_LEAVE_ALL'), -- RBAC: View all leave requests
@@ -701,6 +918,10 @@ VALUES
 ('ROLE_ACCOUNTANT', 'VIEW_REGISTRATION_OWN'), -- Xem đăng ký ca của bản thân (cho part-time/flex)
 ('ROLE_ACCOUNTANT', 'CREATE_REGISTRATION'), -- Tạo đăng ký ca part-time/flex
 
+-- SHIFT_RENEWAL (fixed schedule renewal - Luồng 1 only)
+('ROLE_ACCOUNTANT', 'VIEW_RENEWAL_OWN'), -- Xem yêu cầu gia hạn của bản thân
+('ROLE_ACCOUNTANT', 'RESPOND_RENEWAL_OWN'), -- Phản hồi yêu cầu gia hạn
+
 -- LEAVE_MANAGEMENT (employee self-service)
 ('ROLE_ACCOUNTANT', 'VIEW_LEAVE_OWN'), -- RBAC: View own leave requests
 ('ROLE_ACCOUNTANT', 'CREATE_TIME_OFF'), -- Request time-off
@@ -733,6 +954,10 @@ VALUES
 ('ROLE_INVENTORY_MANAGER', 'VIEW_AVAILABLE_SLOTS'), -- Xem suất part-time có sẵn (cho part-time/flex)
 ('ROLE_INVENTORY_MANAGER', 'VIEW_REGISTRATION_OWN'), -- Xem đăng ký ca của bản thân (cho part-time/flex)
 ('ROLE_INVENTORY_MANAGER', 'CREATE_REGISTRATION'), -- Tạo đăng ký ca part-time/flex
+
+-- SHIFT_RENEWAL (fixed schedule renewal - Luồng 1 only)
+('ROLE_INVENTORY_MANAGER', 'VIEW_RENEWAL_OWN'), -- Xem yêu cầu gia hạn của bản thân
+('ROLE_INVENTORY_MANAGER', 'RESPOND_RENEWAL_OWN'), -- Phản hồi yêu cầu gia hạn
 
 -- LEAVE_MANAGEMENT (employee self-service)
 ('ROLE_INVENTORY_MANAGER', 'VIEW_LEAVE_OWN'), -- RBAC: View own leave requests
@@ -1257,6 +1482,143 @@ VALUES
  'OT_APPROVAL', NULL, 'OTR260101004', 'SCHEDULED', NULL,
  '2026-01-27', 6, 'WKS_AFTERNOON_02')
 ON CONFLICT (employee_shift_id) DO NOTHING;
+
+
+-- ============================================
+-- 🧪 TEST DATA - AUTO-CANCELLATION & AUTO NO_SHOW
+-- ============================================
+-- Purpose: Test automated scheduled jobs
+-- 
+-- JOB 1: RequestAutoCancellationJob (6 AM daily + on startup)
+-- - Auto-cancel PENDING overtime/time-off/registration requests past their deadline
+-- - Cancellation reason: "Tự động hủy: Đã quá thời hạn xử lý (quá ngày ...)"
+--
+-- JOB 2: AppointmentAutoStatusService (Every 5 minutes)
+-- - Auto-mark SCHEDULED appointments as NO_SHOW if patient is >15 minutes late
+-- - System notes: "Tự động chuyển sang NO_SHOW: Bệnh nhân đến trễ >15 phút..."
+--
+-- These test data will be automatically cleaned up on startup!
+-- ============================================
+
+-- ----------------------------------------------------------------------------
+-- TEST DATA 1: Overdue PENDING Requests (for Auto-Cancellation Job)
+-- ----------------------------------------------------------------------------
+-- These should be auto-cancelled on startup and at 6 AM daily
+
+-- Test Overtime Requests (work_date in the past)
+INSERT INTO overtime_requests (
+    request_id, employee_id, requested_by, work_date, work_shift_id,
+    reason, status, approved_by, approved_at, rejected_reason, cancellation_reason, created_at
+)
+VALUES
+-- Should be auto-cancelled: 3 days ago
+('OTR_TEST_AUTO_001', 2, 2, CURRENT_DATE - INTERVAL '3 days', 'WKS_MORNING_01',
+ '🧪 TEST: Yêu cầu OT 3 ngày trước - should be auto-cancelled', 'PENDING', NULL, NULL, NULL, NULL, NOW()),
+
+-- Should be auto-cancelled: 1 week ago
+('OTR_TEST_AUTO_002', 3, 3, CURRENT_DATE - INTERVAL '7 days', 'WKS_AFTERNOON_02',
+ '🧪 TEST: Yêu cầu OT 1 tuần trước - should be auto-cancelled', 'PENDING', NULL, NULL, NULL, NULL, NOW()),
+
+-- Should be auto-cancelled: yesterday
+('OTR_TEST_AUTO_003', 4, 4, CURRENT_DATE - INTERVAL '1 day', 'WKS_EVENING_01',
+ '🧪 TEST: Yêu cầu OT hôm qua - should be auto-cancelled', 'PENDING', NULL, NULL, NULL, NULL, NOW()),
+
+-- Should NOT be auto-cancelled: tomorrow (future date)
+('OTR_TEST_AUTO_004', 2, 2, CURRENT_DATE + INTERVAL '1 day', 'WKS_MORNING_01',
+ '🧪 TEST: Yêu cầu OT ngày mai - should NOT be cancelled', 'PENDING', NULL, NULL, NULL, NULL, NOW())
+ON CONFLICT (request_id) DO NOTHING;
+
+-- Test Time-Off Requests (start_date in the past)
+INSERT INTO time_off_requests (
+    request_id, employee_id, time_off_type_id, work_shift_id, 
+    start_date, end_date, status, approved_by, approved_at, 
+    requested_at, requested_by, reason
+)
+VALUES
+-- Should be auto-cancelled: 5 days ago
+('TOR_TEST_AUTO_001', 2, 'ANNUAL_LEAVE', NULL,
+ CURRENT_DATE - INTERVAL '5 days', CURRENT_DATE - INTERVAL '5 days',
+ 'PENDING', NULL, NULL, NOW(), 2,
+ '🧪 TEST: Nghỉ phép 5 ngày trước - should be auto-cancelled'),
+
+-- Should be auto-cancelled: 2 weeks ago
+('TOR_TEST_AUTO_002', 3, 'SICK_LEAVE', 'WKS_MORNING_01',
+ CURRENT_DATE - INTERVAL '14 days', CURRENT_DATE - INTERVAL '14 days',
+ 'PENDING', NULL, NULL, NOW(), 3,
+ '🧪 TEST: Nghỉ ốm 2 tuần trước - should be auto-cancelled'),
+
+-- Should NOT be auto-cancelled: next week (future date)
+('TOR_TEST_AUTO_003', 4, 'ANNUAL_LEAVE', NULL,
+ CURRENT_DATE + INTERVAL '7 days', CURRENT_DATE + INTERVAL '7 days',
+ 'PENDING', NULL, NULL, NOW(), 4,
+ '🧪 TEST: Nghỉ phép tuần sau - should NOT be cancelled')
+ON CONFLICT (request_id) DO NOTHING;
+
+
+-- ----------------------------------------------------------------------------
+-- TEST DATA 2: Late Appointments (for Auto NO_SHOW Job)
+-- ----------------------------------------------------------------------------
+-- These appointments are SCHEDULED but start time has passed by >15 minutes
+-- Should be auto-marked as NO_SHOW every 5 minutes
+
+-- NOTE: Using CURRENT_TIMESTAMP to create appointments relative to NOW
+-- This ensures they are always in the past when the job runs
+
+INSERT INTO appointments (
+    appointment_id, appointment_code, patient_id, employee_id, room_id,
+    appointment_start_time, appointment_end_time, expected_duration_minutes,
+    status, notes, created_by, created_at, updated_at
+)
+VALUES
+-- Test 1: 30 minutes ago - SHOULD be auto NO_SHOW
+(9001, 'APT_TEST_AUTO_001', 1, 1, 'GHE251103001',
+ CURRENT_TIMESTAMP - INTERVAL '30 minutes', CURRENT_TIMESTAMP,
+ 30, 'SCHEDULED',
+ '🧪 TEST: Lịch hẹn 30 phút trước - should auto NO_SHOW (>15min late)', 5, NOW(), NOW()),
+
+-- Test 2: 20 minutes ago - SHOULD be auto NO_SHOW
+(9002, 'APT_TEST_AUTO_002', 2, 2, 'GHE251103002',
+ CURRENT_TIMESTAMP - INTERVAL '20 minutes', CURRENT_TIMESTAMP + INTERVAL '10 minutes',
+ 30, 'SCHEDULED',
+ '🧪 TEST: Lịch hẹn 20 phút trước - should auto NO_SHOW (>15min late)', 5, NOW(), NOW()),
+
+-- Test 3: 16 minutes ago - SHOULD be auto NO_SHOW (just past 15 min threshold)
+(9003, 'APT_TEST_AUTO_003', 3, 1, 'GHE251103001',
+ CURRENT_TIMESTAMP - INTERVAL '16 minutes', CURRENT_TIMESTAMP + INTERVAL '14 minutes',
+ 30, 'SCHEDULED',
+ '🧪 TEST: Lịch hẹn 16 phút trước - should auto NO_SHOW (just passed 15min)', 5, NOW(), NOW()),
+
+-- Test 4: 1 hour ago - SHOULD be auto NO_SHOW
+(9004, 'APT_TEST_AUTO_004', 4, 2, 'GHE251103002',
+ CURRENT_TIMESTAMP - INTERVAL '60 minutes', CURRENT_TIMESTAMP - INTERVAL '30 minutes',
+ 30, 'SCHEDULED',
+ '🧪 TEST: Lịch hẹn 1 giờ trước - should auto NO_SHOW (very late)', 5, NOW(), NOW()),
+
+-- Test 5: 10 minutes ago - should NOT auto NO_SHOW (still within 15 min grace period)
+(9005, 'APT_TEST_AUTO_005', 5, 1, 'GHE251103001',
+ CURRENT_TIMESTAMP - INTERVAL '10 minutes', CURRENT_TIMESTAMP + INTERVAL '20 minutes',
+ 30, 'SCHEDULED',
+ '🧪 TEST: Lịch hẹn 10 phút trước - should NOT auto NO_SHOW (within 15min grace)', 5, NOW(), NOW()),
+
+-- Test 6: 5 minutes ago - should NOT auto NO_SHOW (too early)
+(9006, 'APT_TEST_AUTO_006', 6, 2, 'GHE251103002',
+ CURRENT_TIMESTAMP - INTERVAL '5 minutes', CURRENT_TIMESTAMP + INTERVAL '25 minutes',
+ 30, 'SCHEDULED',
+ '🧪 TEST: Lịch hẹn 5 phút trước - should NOT auto NO_SHOW (too early)', 5, NOW(), NOW()),
+
+-- Test 7: Future appointment (30 minutes from now) - should NOT auto NO_SHOW
+(9007, 'APT_TEST_AUTO_007', 1, 1, 'GHE251103001',
+ CURRENT_TIMESTAMP + INTERVAL '30 minutes', CURRENT_TIMESTAMP + INTERVAL '60 minutes',
+ 30, 'SCHEDULED',
+ '🧪 TEST: Lịch hẹn 30 phút nữa - should NOT auto NO_SHOW (future)', 5, NOW(), NOW())
+ON CONFLICT (appointment_id) DO NOTHING;
+
+-- Add services for test appointments
+INSERT INTO appointment_services (appointment_id, service_id)
+VALUES
+    (9001, 1), (9002, 1), (9003, 1), (9004, 1),
+    (9005, 1), (9006, 1), (9007, 1)  -- All use GEN_EXAM (service_id=1)
+ON CONFLICT (appointment_id, service_id) DO NOTHING;
 
 
 -- ============================================
@@ -3811,6 +4173,32 @@ INSERT INTO appointment_participants (appointment_id, employee_id, participant_r
 VALUES (208, 7, 'ASSISTANT')  -- EMP007 - Y tá Nguyên
 ON CONFLICT (appointment_id, employee_id) DO NOTHING;
 
+
+-- ============================================
+-- TEST APPOINTMENT FOR BUG REPORT SCENARIO (Production reproduction)
+-- APT-TEST-001: Patient BN-1001 + Doctor Trịnh Công Thái + Service OTHER_DIAMOND
+-- This matches the production bug report scenario
+-- ============================================
+INSERT INTO appointments (
+    appointment_id, appointment_code, patient_id, employee_id, room_id,
+    appointment_start_time, appointment_end_time, expected_duration_minutes,
+    status, notes, created_by, created_at, updated_at
+) VALUES (
+    999, 'APT-TEST-20260102-001', 1, 2, 'GHE251103002',
+    '2026-01-02 14:00:00', '2026-01-02 14:30:00', 30,
+    'COMPLETED', 'TEST: BN-1001 + BS Trịnh Công Thái + OTHER_DIAMOND - For bug report verification', 5, NOW() - INTERVAL '1 day', NOW() - INTERVAL '1 day'
+)
+ON CONFLICT (appointment_id) DO NOTHING;
+
+-- Service for TEST appointment - OTHER_DIAMOND
+INSERT INTO appointment_services (appointment_id, service_id)
+SELECT 999, service_id FROM services WHERE service_code = 'OTHER_DIAMOND'
+ON CONFLICT (appointment_id, service_id) DO NOTHING;
+
+INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
+VALUES (999, 7, 'ASSISTANT')  -- Y tá Nguyên
+ON CONFLICT (appointment_id, employee_id) DO NOTHING;
+
 -- ============================================
 
 -- Fix appointment_audit_logs table if missing columns (with correct ENUM types)
@@ -5212,3 +5600,187 @@ SELECT setval('patient_tooth_status_history_history_id_seq', (SELECT COALESCE(MA
 -- - Doctor token (employee_id=2): Can access appointment 2 (own appointment)
 -- - Patient token (patient_id=1): Can access appointment 1 (own appointment)
 -- - Patient token (patient_id=2): Can access appointment 2 (own appointment)
+
+
+-- ============================================
+-- PAYMENT SYSTEM SEED DATA
+-- ============================================
+-- Sample invoices and payments for testing
+-- ⚠️ TEMPORARILY COMMENTED OUT - Removed invoice seed data for testing (2026-01-06)
+-- Reason: Faulty sample data causing issues during testing/development
+-- Can be uncommented later if needed
+
+/*
+-- Invoice 1: Appointment (BN-1001, APT-20251104-001) - Đã thanh toán
+-- Payment code format: PDCMSyymmddxy (yy=year, mm=month, dd=day, xy=sequence)
+-- ✅ FIX: created_by must match appointment doctor (EMP001)
+-- ✅ Services match appointment_services: GEN_EXAM (service_id=1) + SCALING_L1 (service_id=3)
+INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at)
+VALUES
+('INV-20251104-001', 'APPOINTMENT', 1, 1, 600000, 600000, 0, 'PAID', NOW() + INTERVAL '7 days', 'Payment Code: PDCMS25110401 | Dịch vụ từ lịch hẹn APT-20251104-001', 1, NOW() - INTERVAL '2 days')
+ON CONFLICT (invoice_code) DO NOTHING;
+
+INSERT INTO invoice_items (invoice_id, service_id, service_code, service_name, quantity, unit_price, subtotal)
+SELECT (SELECT invoice_id FROM invoices WHERE invoice_code = 'INV-20251104-001'), 1, 'GEN_EXAM', 'Khám tổng quát', 1, 300000, 300000
+WHERE EXISTS (SELECT 1 FROM invoices WHERE invoice_code = 'INV-20251104-001')
+UNION ALL
+SELECT (SELECT invoice_id FROM invoices WHERE invoice_code = 'INV-20251104-001'), 3, 'SCALING_L1', 'Lấy cao răng Level 1', 1, 300000, 300000
+WHERE EXISTS (SELECT 1 FROM invoices WHERE invoice_code = 'INV-20251104-001');
+
+-- FIX: Payment created_by should also match appointment doctor (EMP001)
+INSERT INTO payments (payment_code, invoice_id, amount, payment_method, payment_date, reference_number, created_by, created_at)
+SELECT 'PAY-20251104-001', (SELECT invoice_id FROM invoices WHERE invoice_code = 'INV-20251104-001'), 600000, 'SEPAY', NOW() - INTERVAL '2 days', 'SEPAY-WEBHOOK-123456', 1, NOW() - INTERVAL '2 days'
+WHERE EXISTS (SELECT 1 FROM invoices WHERE invoice_code = 'INV-20251104-001');
+
+-- Invoice 2: Appointment chua thanh toan (BN-1002, APT-20251104-002)
+-- Payment code: PDCMS25110401 (2025-11-04, sequence 02)
+-- ✅ FIX: created_by must match appointment doctor (EMP002 = employee_id 2, not 3)
+-- ✅ FIX: Service must match appointment_services (GEN_EXAM, not SCALING_L2)
+INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at)
+VALUES
+('INV-20251105-001', 'APPOINTMENT', 2, 2, 300000, 0, 300000, 'PENDING_PAYMENT', NOW() + INTERVAL '3 days', 'Payment Code: PDCMS25110402 | Dịch vụ từ lịch hẹn APT-20251104-002', 2, NOW() - INTERVAL '1 day')
+ON CONFLICT (invoice_code) DO NOTHING;
+
+INSERT INTO invoice_items (invoice_id, service_id, service_code, service_name, quantity, unit_price, subtotal)
+SELECT (SELECT invoice_id FROM invoices WHERE invoice_code = 'INV-20251105-001'), 1, 'GEN_EXAM', 'Khám tổng quát', 1, 300000, 300000
+WHERE EXISTS (SELECT 1 FROM invoices WHERE invoice_code = 'INV-20251105-001');
+
+-- Invoice 3: Treatment Plan - Payment FULL (BN-1001, PLAN-20251107-001) - Đã thanh toán
+-- Payment code: PDCMS25110701 (2025-11-07, sequence 01)
+INSERT INTO invoices (invoice_code, invoice_type, patient_id, treatment_plan_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at)
+VALUES
+('INV-20251107-001', 'TREATMENT_PLAN', 1, 101, 48000000, 48000000, 0, 'PAID', NOW() + INTERVAL '7 days', 'Payment Code: PDCMS25110701', 1, NOW() - INTERVAL '5 days')
+ON CONFLICT (invoice_code) DO NOTHING;
+
+INSERT INTO invoice_items (invoice_id, service_id, service_code, service_name, quantity, unit_price, subtotal)
+SELECT (SELECT invoice_id FROM invoices WHERE invoice_code = 'INV-20251107-001'), 7, 'ORTHO_BRACES', 'Nieng rang kim loai', 1, 48000000, 48000000
+WHERE EXISTS (SELECT 1 FROM invoices WHERE invoice_code = 'INV-20251107-001');
+
+INSERT INTO payments (payment_code, invoice_id, amount, payment_method, payment_date, reference_number, created_by, created_at)
+SELECT 'PAY-20251107-001', (SELECT invoice_id FROM invoices WHERE invoice_code = 'INV-20251107-001'), 48000000, 'SEPAY', NOW() - INTERVAL '5 days', 'SEPAY-WEBHOOK-789012', 1, NOW() - INTERVAL '5 days'
+WHERE EXISTS (SELECT 1 FROM invoices WHERE invoice_code = 'INV-20251107-001');
+
+-- Invoice 4: Supplemental (Phat sinh them dich vu)
+INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, created_by, created_at)
+VALUES
+('INV-20251105-002', 'SUPPLEMENTAL', 2, 2, 800000, 0, 800000, 'PENDING_PAYMENT', NOW() + INTERVAL '3 days', 1, NOW())
+ON CONFLICT (invoice_code) DO NOTHING;
+
+INSERT INTO invoice_items (invoice_id, service_id, service_code, service_name, quantity, unit_price, subtotal)
+SELECT (SELECT invoice_id FROM invoices WHERE invoice_code = 'INV-20251105-002'), 5, 'FILLING_L1', 'Tram rang Level 1', 2, 400000, 800000
+WHERE EXISTS (SELECT 1 FROM invoices WHERE invoice_code = 'INV-20251105-002');
+*/
+
+-- ============================================
+-- END: PAYMENT SYSTEM SEED DATA
+-- ============================================
+
+-- ============================================
+-- DASHBOARD TEST DATA - JANUARY 2026
+-- ============================================
+-- Purpose: Test data for dashboard statistics module
+-- Month: 2026-01 (January 2026)
+-- Total Revenue: 4,600,000 VND | Total Expenses: 530,000 VND | Net Profit: 4,070,000 VND
+
+-- Workaround: SELECT 1 absorbs any SQL parser issues from previous section
+SELECT 1;
+
+INSERT INTO appointments (appointment_code, patient_id, employee_id, room_id, appointment_start_time, appointment_end_time, expected_duration_minutes, status, actual_start_time, actual_end_time, notes, created_by, created_at, updated_at, reschedule_count) VALUES ('APT-20260102-TEST02', 2, 2, 'GHE251103002', '2026-01-02 14:00:00', '2026-01-02 14:45:00', 45, 'COMPLETED', '2026-01-02 14:00:00', '2026-01-02 14:40:00', 'Dashboard test - Jan Week 1', 2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0) ON CONFLICT (appointment_code) DO NOTHING;
+INSERT INTO appointments (appointment_code, patient_id, employee_id, room_id, appointment_start_time, appointment_end_time, expected_duration_minutes, status, actual_start_time, actual_end_time, notes, created_by, created_at, updated_at, reschedule_count) VALUES ('APT-20260102-TEST01', 1, 1, 'GHE251103001', '2026-01-02 09:00:00', '2026-01-02 09:45:00', 45, 'COMPLETED', '2026-01-02 09:00:00', '2026-01-02 09:40:00', 'Dashboard test - Jan Week 1', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0) ON CONFLICT (appointment_code) DO NOTHING;
+INSERT INTO appointments (appointment_code, patient_id, employee_id, room_id, appointment_start_time, appointment_end_time, expected_duration_minutes, status, actual_start_time, actual_end_time, notes, created_by, created_at, updated_at, reschedule_count) VALUES ('APT-20260103-TEST01', 3, 1, 'GHE251103001', '2026-01-03 10:00:00', '2026-01-03 10:30:00', 30, 'COMPLETED', '2026-01-03 10:00:00', '2026-01-03 10:30:00', 'Dashboard test - Jan Week 1', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0) ON CONFLICT (appointment_code) DO NOTHING;
+INSERT INTO appointments (appointment_code, patient_id, employee_id, room_id, appointment_start_time, appointment_end_time, expected_duration_minutes, status, actual_start_time, actual_end_time, notes, created_by, created_at, updated_at, reschedule_count) VALUES ('APT-20260105-TEST01', 1, 2, 'GHE251103002', '2026-01-05 15:00:00', '2026-01-05 16:00:00', 60, 'COMPLETED', '2026-01-05 15:00:00', '2026-01-05 16:00:00', 'Dashboard test - Jan Week 1', 2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0) ON CONFLICT (appointment_code) DO NOTHING;
+INSERT INTO appointments (appointment_code, patient_id, employee_id, room_id, appointment_start_time, appointment_end_time, expected_duration_minutes, status, actual_start_time, actual_end_time, notes, created_by, created_at, updated_at, reschedule_count) VALUES ('APT-20260108-TEST01', 2, 1, 'GHE251103001', '2026-01-08 09:00:00', '2026-01-08 09:45:00', 45, 'COMPLETED', '2026-01-08 09:00:00', '2026-01-08 09:45:00', 'Dashboard test - Jan Week 2', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0) ON CONFLICT (appointment_code) DO NOTHING;
+INSERT INTO appointments (appointment_code, patient_id, employee_id, room_id, appointment_start_time, appointment_end_time, expected_duration_minutes, status, actual_start_time, actual_end_time, notes, created_by, created_at, updated_at, reschedule_count) VALUES ('APT-20260110-TEST01', 3, 2, 'GHE251103002', '2026-01-10 14:00:00', '2026-01-10 15:00:00', 60, 'COMPLETED', '2026-01-10 14:00:00', '2026-01-10 15:00:00', 'Dashboard test - Jan Week 2', 2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0) ON CONFLICT (appointment_code) DO NOTHING;
+
+-- Link services to appointments (3 services per appointment = 18 total)
+INSERT INTO appointment_services (appointment_id, service_id) SELECT a.appointment_id, s.service_id FROM appointments a CROSS JOIN (VALUES (1), (3), (5)) AS s(service_id) WHERE a.appointment_code LIKE 'APT-202601%TEST%' ON CONFLICT DO NOTHING;
+
+-- Invoices for January 2026 (6 invoices, all PAID)
+INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at) SELECT 'INV-20260102-TEST01', 'APPOINTMENT', 1, a.appointment_id, 900000, 900000, 0, 'PAID', '2026-01-09', 'Dashboard test - Jan', 1, CURRENT_TIMESTAMP FROM appointments a WHERE a.appointment_code = 'APT-20260102-TEST01' ON CONFLICT (invoice_code) DO NOTHING;
+INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at) SELECT 'INV-20260102-TEST02', 'APPOINTMENT', 2, a.appointment_id, 900000, 900000, 0, 'PAID', '2026-01-09', 'Dashboard test - Jan', 2, CURRENT_TIMESTAMP FROM appointments a WHERE a.appointment_code = 'APT-20260102-TEST02' ON CONFLICT (invoice_code) DO NOTHING;
+INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at) SELECT 'INV-20260103-TEST01', 'APPOINTMENT', 3, a.appointment_id, 300000, 300000, 0, 'PAID', '2026-01-10', 'Dashboard test - Jan', 1, CURRENT_TIMESTAMP FROM appointments a WHERE a.appointment_code = 'APT-20260103-TEST01' ON CONFLICT (invoice_code) DO NOTHING;
+INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at) SELECT 'INV-20260105-TEST01', 'APPOINTMENT', 1, a.appointment_id, 800000, 800000, 0, 'PAID', '2026-01-12', 'Dashboard test - Jan', 2, CURRENT_TIMESTAMP FROM appointments a WHERE a.appointment_code = 'APT-20260105-TEST01' ON CONFLICT (invoice_code) DO NOTHING;
+INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at) SELECT 'INV-20260108-TEST01', 'APPOINTMENT', 2, a.appointment_id, 900000, 900000, 0, 'PAID', '2026-01-15', 'Dashboard test - Jan', 1, CURRENT_TIMESTAMP FROM appointments a WHERE a.appointment_code = 'APT-20260108-TEST01' ON CONFLICT (invoice_code) DO NOTHING;
+INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at) SELECT 'INV-20260110-TEST01', 'APPOINTMENT', 3, a.appointment_id, 800000, 800000, 0, 'PAID', '2026-01-17', 'Dashboard test - Jan', 2, CURRENT_TIMESTAMP FROM appointments a WHERE a.appointment_code = 'APT-20260110-TEST01' ON CONFLICT (invoice_code) DO NOTHING;
+
+-- Invoice Items for January 2026 (required for Top Services dashboard query)
+-- Schema: invoice_id, service_id, service_name, service_code, quantity, unit_price, subtotal, notes
+INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
+SELECT i.invoice_id, 1, 'General Examination', 1, 300000, 300000, 'Khám tổng quát'
+FROM invoices i WHERE i.invoice_code = 'INV-20260102-TEST01';
+
+INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
+SELECT i.invoice_id, 3, 'Scaling Level 1', 1, 300000, 300000, 'Cạo vôi răng cơ bản'
+FROM invoices i WHERE i.invoice_code = 'INV-20260102-TEST01';
+
+INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
+SELECT i.invoice_id, 5, 'Filling Level 1', 1, 300000, 300000, 'Trám răng sâu - Răng 11'
+FROM invoices i WHERE i.invoice_code = 'INV-20260102-TEST01';
+
+INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
+SELECT i.invoice_id, 1, 'General Examination', 1, 300000, 300000, 'Khám tổng quát'
+FROM invoices i WHERE i.invoice_code = 'INV-20260102-TEST02';
+
+INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
+SELECT i.invoice_id, 3, 'Scaling Level 1', 1, 300000, 300000, 'Cạo vôi răng cơ bản'
+FROM invoices i WHERE i.invoice_code = 'INV-20260102-TEST02';
+
+INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
+SELECT i.invoice_id, 5, 'Filling Level 1', 1, 300000, 300000, 'Trám răng sâu - Răng 12'
+FROM invoices i WHERE i.invoice_code = 'INV-20260102-TEST02';
+
+INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
+SELECT i.invoice_id, 1, 'General Examination', 1, 100000, 100000, 'Khám tổng quát'
+FROM invoices i WHERE i.invoice_code = 'INV-20260103-TEST01';
+
+INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
+SELECT i.invoice_id, 3, 'Scaling Level 1', 1, 100000, 100000, 'Cạo vôi răng cơ bản'
+FROM invoices i WHERE i.invoice_code = 'INV-20260103-TEST01';
+
+INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
+SELECT i.invoice_id, 5, 'Filling Level 1', 1, 100000, 100000, 'Trám răng sâu - Răng 21'
+FROM invoices i WHERE i.invoice_code = 'INV-20260103-TEST01';
+
+INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
+SELECT i.invoice_id, 1, 'General Examination', 1, 300000, 300000, 'Khám tổng quát'
+FROM invoices i WHERE i.invoice_code = 'INV-20260105-TEST01';
+
+INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
+SELECT i.invoice_id, 3, 'Scaling Level 1', 1, 250000, 250000, 'Cạo vôi răng cơ bản'
+FROM invoices i WHERE i.invoice_code = 'INV-20260105-TEST01';
+
+INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
+SELECT i.invoice_id, 5, 'Filling Level 1', 1, 250000, 250000, 'Trám răng sâu - Răng 22'
+FROM invoices i WHERE i.invoice_code = 'INV-20260105-TEST01';
+
+INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
+SELECT i.invoice_id, 1, 'General Examination', 1, 300000, 300000, 'Khám tổng quát'
+FROM invoices i WHERE i.invoice_code = 'INV-20260108-TEST01';
+
+INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
+SELECT i.invoice_id, 3, 'Scaling Level 1', 1, 300000, 300000, 'Cạo vôi răng cơ bản'
+FROM invoices i WHERE i.invoice_code = 'INV-20260108-TEST01';
+
+INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
+SELECT i.invoice_id, 5, 'Filling Level 1', 1, 300000, 300000, 'Trám răng sâu - Răng 31'
+FROM invoices i WHERE i.invoice_code = 'INV-20260108-TEST01';
+
+INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
+SELECT i.invoice_id, 1, 'General Examination', 1, 300000, 300000, 'Khám tổng quát'
+FROM invoices i WHERE i.invoice_code = 'INV-20260110-TEST01';
+
+INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
+SELECT i.invoice_id, 3, 'Scaling Level 1', 1, 250000, 250000, 'Cạo vôi răng cơ bản'
+FROM invoices i WHERE i.invoice_code = 'INV-20260110-TEST01';
+
+INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
+SELECT i.invoice_id, 5, 'Filling Level 1', 1, 250000, 250000, 'Trám răng sâu - Răng 32'
+FROM invoices i WHERE i.invoice_code = 'INV-20260110-TEST01';
+
+-- Storage Transactions for January 2026 (EXPORT for expenses calculation)
+INSERT INTO storage_transactions (transaction_code, transaction_type, transaction_date, total_value, status, created_by, created_at, notes) VALUES ('EXP-20260102-001', 'EXPORT', '2026-01-02 10:00:00', 150000, 'APPROVED', 1, CURRENT_TIMESTAMP, 'Dashboard test - Material consumption Jan'), ('EXP-20260105-001', 'EXPORT', '2026-01-05 14:00:00', 200000, 'APPROVED', 2, CURRENT_TIMESTAMP, 'Dashboard test - Material consumption Jan'), ('EXP-20260108-001', 'EXPORT', '2026-01-08 09:00:00', 180000, 'APPROVED', 1, CURRENT_TIMESTAMP, 'Dashboard test - Material consumption Jan') ON CONFLICT (transaction_code) DO NOTHING;
+
+-- ============================================
+-- END: DASHBOARD TEST DATA
+-- ============================================
+

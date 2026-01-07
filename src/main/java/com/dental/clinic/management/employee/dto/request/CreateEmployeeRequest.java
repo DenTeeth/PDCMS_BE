@@ -23,42 +23,42 @@ import com.dental.clinic.management.employee.enums.EmploymentType;
 public class CreateEmployeeRequest {
 
     // Account information (REQUIRED - sẽ tạo account mới)
-    @NotBlank(message = "Username is required")
-    @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
+    @NotBlank(message = "Tên đăng nhập là bắt buộc")
+    @Size(min = 3, max = 50, message = "Tên đăng nhập phải từ 3-50 ký tự")
     private String username;
 
-    @NotBlank(message = "Email is required")
-    @Email(message = "Email must be valid")
-    @Size(max = 100, message = "Email must not exceed 100 characters")
+    @NotBlank(message = "Email là bắt buộc")
+    @Email(message = "Email phải hợp lệ")
+    @Size(max = 100, message = "Email không được vượt quá 100 ký tự")
     private String email;
 
-    @NotBlank(message = "Password is required")
-    @Size(min = 6, max = 100, message = "Password must be between 6 and 100 characters")
+    @NotBlank(message = "Mật khẩu là bắt buộc")
+    @Size(min = 6, max = 100, message = "Mật khẩu phải từ 6-100 ký tự")
     private String password;
 
     // Employee information (REQUIRED)
-    @NotBlank(message = "Role ID is required")
-    @Size(max = 50, message = "Role ID must not exceed 50 characters")
+    @NotBlank(message = "Mã vai trò là bắt buộc")
+    @Size(max = 50, message = "Mã vai trò không được vượt quá 50 ký tự")
     private String roleId;
 
-    @NotBlank(message = "First name is required")
-    @Size(max = 50, message = "First name must not exceed 50 characters")
+    @NotBlank(message = "Tên là bắt buộc")
+    @Size(max = 50, message = "Tên không được vượt quá 50 ký tự")
     private String firstName;
 
-    @NotBlank(message = "Last name is required")
-    @Size(max = 50, message = "Last name must not exceed 50 characters")
+    @NotBlank(message = "Họ là bắt buộc")
+    @Size(max = 50, message = "Họ không được vượt quá 50 ký tự")
     private String lastName;
 
-    @Pattern(regexp = "^[0-9]{10,15}$", message = "Phone number must be 10-15 digits")
+    @Pattern(regexp = "^[0-9]{10,15}$", message = "Số điện thoại phải từ 10-15 chữ số")
     private String phone;
 
-    @Past(message = "Date of birth must be in the past")
+    @Past(message = "Ngày sinh phải trong quá khứ")
     private LocalDate dateOfBirth;
 
-    @Size(max = 500, message = "Address must not exceed 500 characters")
+    @Size(max = 500, message = "Địa chỉ không được vượt quá 500 ký tự")
     private String address;
 
-    @NotNull(message = "Employment type is required")
+    @NotNull(message = "Loại hợp đồng là bắt buộc")
     private EmploymentType employmentType;
 
     private Set<Integer> specializationIds;

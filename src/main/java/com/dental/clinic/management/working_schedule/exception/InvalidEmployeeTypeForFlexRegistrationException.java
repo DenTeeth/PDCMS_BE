@@ -12,7 +12,7 @@ public class InvalidEmployeeTypeForFlexRegistrationException extends RuntimeExce
     private final EmploymentType requiredType;
 
     public InvalidEmployeeTypeForFlexRegistrationException(EmploymentType employeeType, EmploymentType requiredType) {
-        super(String.format("Employee type %s is not allowed to register for Part-Time Flex work slots. Required type: %s", 
+        super(String.format("Loại nhân viên %s không được phép đăng ký ca làm việc Linh hoạt Bán Thời gian. Loại yêu cầu: %s", 
                 employeeType, requiredType));
         this.employeeType = employeeType;
         this.requiredType = requiredType;

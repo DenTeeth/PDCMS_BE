@@ -24,14 +24,14 @@ public class DelayAppointmentRequest {
      * Must be after the original start time.
      * Preferably on the same day as original appointment.
      */
-    @NotNull(message = "New start time is required")
+    @NotNull(message = "Thời gian bắt đầu mới là bắt buộc")
     private LocalDateTime newStartTime;
 
     /**
      * Reason code for delaying the appointment.
      * Examples: PATIENT_REQUEST, DOCTOR_EMERGENCY, EQUIPMENT_FAILURE
      */
-    @NotNull(message = "Reason code is required")
+    @NotNull(message = "Mã lý do là bắt buộc")
     private AppointmentReasonCode reasonCode;
 
     /**

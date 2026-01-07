@@ -38,7 +38,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class CreateRegistrationRequest {
 
-    @NotNull(message = "Part-time slot ID is required")
+    @NotNull(message = "Mã khe thời gian bán thời gian là bắt buộc")
     private Long partTimeSlotId;
 
     /**
@@ -46,7 +46,7 @@ public class CreateRegistrationRequest {
      * Must be within the slot's effectiveFrom/effectiveTo range.
      * Must be at least 7 days before effectiveTo (minimum 1 week).
      */
-    @NotNull(message = "Effective from date is required")
+    @NotNull(message = "Ngày hiệu lực từ là bắt buộc")
     private LocalDate effectiveFrom;
     
     /**
@@ -54,6 +54,6 @@ public class CreateRegistrationRequest {
      * Must be within the slot's effectiveFrom/effectiveTo range.
      * Must be at least 7 days after effectiveFrom (minimum 1 week).
      */
-    @NotNull(message = "Effective to date is required")
+    @NotNull(message = "Ngày hiệu lực đến là bắt buộc")
     private LocalDate effectiveTo;
 }

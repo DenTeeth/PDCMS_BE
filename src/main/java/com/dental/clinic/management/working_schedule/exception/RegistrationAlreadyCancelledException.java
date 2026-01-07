@@ -5,12 +5,13 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.web.ErrorResponseException;
 
 /**
- * Exception thrown when trying to cancel a registration that is already cancelled.
+ * Exception thrown when trying to cancel a registration that is already
+ * cancelled.
  */
 public class RegistrationAlreadyCancelledException extends ErrorResponseException {
-    
+
     private static final String ERROR_CODE = "REGISTRATION_ALREADY_CANCELLED";
-    
+
     public RegistrationAlreadyCancelledException(Integer registrationId) {
         super(HttpStatus.CONFLICT, createProblemDetail(registrationId), null);
     }
@@ -21,7 +22,7 @@ public class RegistrationAlreadyCancelledException extends ErrorResponseExceptio
                 registrationId);
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, message);
-        problemDetail.setTitle("Registration Already Cancelled");
+        problemDetail.setTitle("Đăng Ký Đã Bị Hủy");
         problemDetail.setProperty("errorCode", ERROR_CODE);
         problemDetail.setProperty("message", message);
         problemDetail.setProperty("registrationId", registrationId);

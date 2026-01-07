@@ -183,7 +183,7 @@ public class ClinicalRecordService {
 
                 if (!hasViewOwnPermission) {
                         log.warn("User {} has no appointment view permissions", username);
-                        throw new AccessDeniedException("You do not have permission to view clinical records");
+                        throw new AccessDeniedException("Bạn không có quyền xem hồ sơ lâm sàng");
                 }
 
                 // Validate ownership for VIEW_APPOINTMENT_OWN
@@ -215,7 +215,7 @@ public class ClinicalRecordService {
                         log.warn("Employee {} is neither primary doctor nor participant for appointment {}", employeeId,
                                         appointment.getAppointmentId());
                         throw new AccessDeniedException(
-                                        "You can only view clinical records for appointments where you are the primary doctor or a participant");
+                                        "Bạn chỉ có thể xem hồ sơ lâm sàng của các lịch hẹn mà bạn là bác sĩ chính hoặc người tham gia");
                 }
 
                 // Try patient (check if appointment belongs to this patient)
@@ -232,12 +232,12 @@ public class ClinicalRecordService {
 
                         log.warn("Patient {} attempted to access clinical record for different patient's appointment {}",
                                         patientId, appointment.getAppointmentId());
-                        throw new AccessDeniedException("You can only view your own clinical records");
+                        throw new AccessDeniedException("Bạn chỉ có thể xem hồ sơ lâm sàng của chính mình");
                 }
 
                 // User not found as employee or patient
                 log.warn("User {} not found as employee or patient", username);
-                throw new AccessDeniedException("Access Denied");
+                throw new AccessDeniedException("Không có quyền truy cập");
         }
 
         /**

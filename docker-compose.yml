@@ -1,5 +1,5 @@
-version: "3.9"
-
+# Docker Compose Configuration for PDCMS Backend
+# No version needed - Docker Compose v2+ automatically uses latest format
 services:
   # 1. Database (Giữ nguyên)
   postgres:

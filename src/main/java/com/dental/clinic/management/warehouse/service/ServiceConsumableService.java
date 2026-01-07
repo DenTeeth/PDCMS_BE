@@ -205,7 +205,7 @@ public class ServiceConsumableService {
                                 // Load item_master and unit entities
                                 ItemMaster itemMaster = itemMasterRepository.findById(item.getItemMasterId())
                                                 .orElseThrow(() -> new IllegalArgumentException(
-                                                                "Item not found with ID: " + item.getItemMasterId()));
+                                                                "Không tìm thấy vật tư với ID: " + item.getItemMasterId()));
 
                                 ItemUnit unit = itemUnitRepository.findById(item.getUnitId())
                                                 .orElseThrow(() -> new IllegalArgumentException(
@@ -259,7 +259,7 @@ public class ServiceConsumableService {
                         // Load item_master and unit entities
                         ItemMaster itemMaster = itemMasterRepository.findById(item.getItemMasterId())
                                         .orElseThrow(() -> new IllegalArgumentException(
-                                                        "Item not found with ID: " + item.getItemMasterId()));
+                                                        "Không tìm thấy vật tư với ID: " + item.getItemMasterId()));
 
                         ItemUnit unit = itemUnitRepository.findById(item.getUnitId())
                                         .orElseThrow(() -> new IllegalArgumentException(

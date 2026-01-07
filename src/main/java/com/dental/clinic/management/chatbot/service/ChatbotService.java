@@ -89,6 +89,7 @@ public class ChatbotService {
 
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
 
+        @SuppressWarnings("rawtypes")
         ResponseEntity<Map> response = restTemplate.exchange(
                 geminiApiUrl,
                 HttpMethod.POST,
@@ -96,10 +97,14 @@ public class ChatbotService {
                 Map.class);
 
         if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+            @SuppressWarnings("unchecked")
             Map<String, Object> body = response.getBody();
+            @SuppressWarnings("unchecked")
             List<Map<String, Object>> candidates = (List<Map<String, Object>>) body.get("candidates");
             if (candidates != null && !candidates.isEmpty()) {
+                @SuppressWarnings("unchecked")
                 Map<String, Object> content = (Map<String, Object>) candidates.get(0).get("content");
+                @SuppressWarnings("unchecked")
                 List<Map<String, Object>> parts = (List<Map<String, Object>>) content.get("parts");
                 if (parts != null && !parts.isEmpty()) {
                     return (String) parts.get(0).get("text");
@@ -107,6 +112,6 @@ public class ChatbotService {
             }
         }
 
-        throw new RuntimeException("Invalid Gemini API response");
+        throw new RuntimeException("Phản hồi Gemini API không hợp lệ");
     }
 }

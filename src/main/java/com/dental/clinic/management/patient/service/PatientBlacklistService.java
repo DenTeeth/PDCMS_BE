@@ -60,7 +60,7 @@ public class PatientBlacklistService {
                     HttpStatus.BAD_REQUEST,
                     "Lý do blacklist bắt buộc phải chọn từ danh sách định sẵn."
             );
-            pd.setTitle("Blacklist Reason Required");
+            pd.setTitle("Yêu Cầu Lý Do Blacklist");
             throw new ErrorResponseException(HttpStatus.BAD_REQUEST, pd, null);
         }
 
@@ -71,7 +71,7 @@ public class PatientBlacklistService {
                             HttpStatus.NOT_FOUND,
                             "Không tìm thấy bệnh nhân với ID: " + patientId
                     );
-                    pd.setTitle("Patient Not Found");
+                    pd.setTitle("Không Tìm Thấy Bệnh Nhân");
                     return new ErrorResponseException(HttpStatus.NOT_FOUND, pd, null);
                 });
 
@@ -82,7 +82,7 @@ public class PatientBlacklistService {
                     HttpStatus.BAD_REQUEST,
                     "Bệnh nhân này đã bị blacklist rồi."
             );
-            pd.setTitle("Patient Already Blacklisted");
+            pd.setTitle("Bệnh Nhân Đã Bị Blacklist");
             throw new ErrorResponseException(HttpStatus.BAD_REQUEST, pd, null);
         }
 
@@ -141,7 +141,7 @@ public class PatientBlacklistService {
                             HttpStatus.NOT_FOUND,
                             "Không tìm thấy bệnh nhân với ID: " + patientId
                     );
-                    pd.setTitle("Patient Not Found");
+                    pd.setTitle("Không Tìm Thấy Bệnh Nhân");
                     return new ErrorResponseException(HttpStatus.NOT_FOUND, pd, null);
                 });
 
@@ -151,7 +151,7 @@ public class PatientBlacklistService {
                     HttpStatus.BAD_REQUEST,
                     "Bệnh nhân này không có trong blacklist."
             );
-            pd.setTitle("Patient Not Blacklisted");
+            pd.setTitle("Bệnh Nhân Không Trong Blacklist");
             throw new ErrorResponseException(HttpStatus.BAD_REQUEST, pd, null);
         }
 

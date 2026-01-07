@@ -98,7 +98,7 @@ public class DentistLeaveConflictService {
                     conflict.getEndDate()
             );
             ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, message);
-            problemDetail.setTitle("Dentist Leave Conflict");
+            problemDetail.setTitle("Xung Đột Lịch Nghỉ Nha Sĩ");
             throw new ErrorResponseException(HttpStatus.CONFLICT, problemDetail, null);
         }
 

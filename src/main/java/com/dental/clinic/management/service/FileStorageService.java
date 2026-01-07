@@ -88,7 +88,7 @@ public class FileStorageService {
             log.info("File deleted successfully: {}", filePath);
         } catch (IOException e) {
             log.error("Failed to delete file: {}", filePath, e);
-            throw new RuntimeException("Failed to delete file: " + filePath, e);
+            throw new RuntimeException("Không thể xóa tệp: " + filePath, e);
         }
     }
 
@@ -97,20 +97,20 @@ public class FileStorageService {
      */
     public void validateFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
-            throw new BadRequestException("EMPTY_FILE", "File is empty or null");
+            throw new BadRequestException("EMPTY_FILE", "File trống hoặc không tồn tại");
         }
 
         // Validate file size
         if (file.getSize() > MAX_FILE_SIZE) {
             throw new BadRequestException("FILE_TOO_LARGE",
-                    String.format("File size exceeds maximum limit of %d MB", MAX_FILE_SIZE / (1024 * 1024)));
+                    String.format("Kích thước tệp vượt quá giới hạn tối đa %d MB", MAX_FILE_SIZE / (1024 * 1024)));
         }
 
         // Validate MIME type
         String mimeType = file.getContentType();
         if (mimeType == null || !ALLOWED_MIME_TYPES.contains(mimeType.toLowerCase())) {
             throw new BadRequestException("INVALID_FILE_TYPE",
-                    "Invalid file type. Allowed types: JPEG, PNG, GIF, PDF");
+                    "Loại tệp không hợp lệ. Chỉ chấp nhận: JPEG, PNG, GIF, PDF");
         }
 
         log.debug("File validation passed: {} ({} bytes, {})", file.getOriginalFilename(), file.getSize(), mimeType);

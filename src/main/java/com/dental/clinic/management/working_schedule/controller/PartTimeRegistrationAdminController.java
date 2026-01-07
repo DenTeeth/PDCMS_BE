@@ -61,6 +61,7 @@ public class PartTimeRegistrationAdminController {
      */
     @Operation(summary = "Get all registrations", description = "Retrieve all part-time registration requests with optional status and employee filters")
     @GetMapping
+    // ✅ PERMISSION: MANAGE_PART_TIME_REGISTRATIONS (ROLE_ADMIN & ROLE_MANAGER have this)
     @PreAuthorize("hasAuthority('MANAGE_PART_TIME_REGISTRATIONS')")
     public ResponseEntity<List<RegistrationResponse>> getRegistrations(
             @RequestParam(required = false, defaultValue = "PENDING") String status,
@@ -115,6 +116,7 @@ public class PartTimeRegistrationAdminController {
      */
     @Operation(summary = "Update registration status", description = "Approve or reject a pending part-time registration request. Validates quota for approvals.")
     @PatchMapping("/{registrationId}/status")
+    // ✅ PERMISSION: MANAGE_PART_TIME_REGISTRATIONS (ROLE_ADMIN & ROLE_MANAGER have this - CRITICAL FOR APPROVAL/REJECTION)
     @PreAuthorize("hasAuthority('MANAGE_PART_TIME_REGISTRATIONS')")
     public ResponseEntity<RegistrationResponse> updateStatus(
             @PathVariable Integer registrationId,
@@ -122,10 +124,10 @@ public class PartTimeRegistrationAdminController {
 
         // Get current manager ID from employee table
         String username = SecurityUtil.getCurrentUserLogin()
-                .orElseThrow(() -> new RuntimeException("User not authenticated"));
+                .orElseThrow(() -> new RuntimeException("Người dùng chưa xác thực"));
         Integer managerId = employeeRepository.findByAccount_Username(username)
                 .map(employee -> employee.getEmployeeId())
-                .orElseThrow(() -> new RuntimeException("Employee not found for user: " + username));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên cho người dùng: " + username));
 
         log.info("Manager {} updating registration {} to status: {}",
                 managerId, registrationId, request.getStatus());
@@ -163,13 +165,13 @@ public class PartTimeRegistrationAdminController {
             }
         } else if ("REJECTED".equalsIgnoreCase(request.getStatus())) {
             if (request.getReason() == null || request.getReason().trim().isEmpty()) {
-                throw new IllegalArgumentException("Rejection reason is required");
+                throw new IllegalArgumentException("Lý do từ chối là bắt buộc");
             }
             approvalService.rejectRegistration(registrationId, managerId, request.getReason());
             log.info("Registration {} rejected by manager {}: {}",
                     registrationId, managerId, request.getReason());
         } else {
-            throw new IllegalArgumentException("Invalid status: " + request.getStatus());
+            throw new IllegalArgumentException("Địệu chỉnh trạng thái không hợp lệ: " + request.getStatus());
         }
 
         // Return updated registration (fetch single entity from service)
@@ -183,6 +185,7 @@ public class PartTimeRegistrationAdminController {
      */
     @Operation(summary = "Get registration by ID", description = "Retrieve details of a specific part-time registration request")
     @GetMapping("/{registrationId}")
+    // ✅ PERMISSION: MANAGE_PART_TIME_REGISTRATIONS (ROLE_ADMIN & ROLE_MANAGER have this)
     @PreAuthorize("hasAuthority('MANAGE_PART_TIME_REGISTRATIONS')")
     public ResponseEntity<RegistrationResponse> getRegistration(@PathVariable Integer registrationId) {
         RegistrationResponse response = registrationService.getRegistrationById(registrationId);
@@ -206,6 +209,7 @@ public class PartTimeRegistrationAdminController {
      */
     @Operation(summary = "Check if can approve", description = "Validate if a registration can be approved without exceeding quota limits")
     @GetMapping("/{registrationId}/can-approve")
+    // ✅ PERMISSION: MANAGE_PART_TIME_REGISTRATIONS (ROLE_ADMIN & ROLE_MANAGER have this)
     @PreAuthorize("hasAuthority('MANAGE_PART_TIME_REGISTRATIONS')")
     public ResponseEntity<CanApproveResponse> canApprove(@PathVariable Integer registrationId) {
         boolean canApprove = approvalService.canApprove(registrationId);
@@ -274,10 +278,10 @@ public class PartTimeRegistrationAdminController {
 
         // Get current manager ID from employee table
         String username = SecurityUtil.getCurrentUserLogin()
-                .orElseThrow(() -> new RuntimeException("User not authenticated"));
+                .orElseThrow(() -> new RuntimeException("Người dùng chưa được xác thực"));
         Integer managerId = employeeRepository.findByAccount_Username(username)
                 .map(employee -> employee.getEmployeeId())
-                .orElseThrow(() -> new RuntimeException("Employee not found for user: " + username));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên cho người dùng: " + username));
 
         var result = approvalService.bulkApprove(request.getRegistrationIds(), managerId);
 
@@ -340,7 +344,7 @@ public class PartTimeRegistrationAdminController {
             return ResponseEntity.ok(message);
         } catch (com.dental.clinic.management.working_schedule.exception.RegistrationNotFoundException e) {
             log.warn("Registration {} not found", registrationId);
-            return ResponseEntity.status(404).body("Registration not found: " + registrationId);
+            return ResponseEntity.status(404).body("Không tìm thấy đăng ký: " + registrationId);
         } catch (IllegalStateException e) {
             log.warn("Cannot regenerate shifts for registration {}: {}", registrationId, e.getMessage());
             return ResponseEntity.status(400).body(e.getMessage());

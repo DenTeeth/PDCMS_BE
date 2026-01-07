@@ -17,16 +17,16 @@ import lombok.NoArgsConstructor;
 @Builder
 public class AnnualResetRequest {
 
-    @NotNull(message = "Cycle year is required")
+    @NotNull(message = "Năm chu kỳ là bắt buộc")
     @JsonProperty("cycle_year")
     private Integer cycleYear; // e.g., 2026
 
-    @NotNull(message = "Time-off type ID is required")
+    @NotNull(message = "Mã loại nghỉ phép là bắt buộc")
     @JsonProperty("apply_to_type_id")
     private String applyToTypeId; // e.g., "ANNUAL_LEAVE"
 
-    @NotNull(message = "Default allowance is required")
-    @Positive(message = "Default allowance must be positive")
+    @NotNull(message = "Số ngày mặc định là bắt buộc")
+    @Positive(message = "Số ngày mặc định phải là số dương")
     @JsonProperty("default_allowance")
     private Double defaultAllowance; // e.g., 12.0
 }

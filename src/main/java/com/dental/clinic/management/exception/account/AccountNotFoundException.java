@@ -22,7 +22,7 @@ public class AccountNotFoundException extends ErrorResponseException {
     private static ProblemDetail createProblemDetail(String username) {
         ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
         problemDetail.setType(ErrorConstants.ACCOUNT_NOT_FOUND_TYPE);
-        problemDetail.setTitle("Account not found");
+        problemDetail.setTitle("Không tìm thấy tài khoản");
         problemDetail.setProperty("message", "error.account.notfound");
         problemDetail.setProperty("params", username);
         return problemDetail;

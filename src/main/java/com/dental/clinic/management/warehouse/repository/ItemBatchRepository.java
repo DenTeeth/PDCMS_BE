@@ -77,6 +77,36 @@ public interface ItemBatchRepository extends JpaRepository<ItemBatch, Long> {
                         @Param("hideEmpty") Boolean hideEmpty,
                         Pageable pageable);
 
+        // ==================== Dashboard Statistics Queries ====================
+
+        /**
+         * Calculate total current inventory value
+         * Sum of (quantityOnHand * price) from all batches
+         */
+        @Query(value = "SELECT COALESCE(SUM(ib.quantity_on_hand * sti.price), 0) " +
+                       "FROM item_batches ib " +
+                       "JOIN storage_transaction_items sti ON ib.batch_id = sti.batch_id " +
+                       "WHERE ib.quantity_on_hand > 0", nativeQuery = true)
+        java.math.BigDecimal calculateTotalInventoryValue();
+
+        /**
+         * Count items with low stock (based on item_master stock thresholds)
+         */
+        @Query("SELECT COUNT(DISTINCT ib.itemMaster.itemMasterId) FROM ItemBatch ib " +
+               "WHERE ib.quantityOnHand > 0 " +
+               "AND ib.quantityOnHand <= ib.itemMaster.minStockLevel")
+        Long countLowStockItems();
+
+        /**
+         * Count items expiring within specified days
+         */
+        @Query("SELECT COUNT(DISTINCT ib.itemMaster.itemMasterId) FROM ItemBatch ib " +
+               "WHERE ib.quantityOnHand > 0 " +
+               "AND ib.expiryDate BETWEEN :startDate AND :endDate")
+        Long countExpiringItems(
+                        @Param("startDate") LocalDate startDate,
+                        @Param("endDate") LocalDate endDate);
+
         /**
          * API 6.2: Count batches by item (for stats)
          * Tổng số batches (không filter hideEmpty)

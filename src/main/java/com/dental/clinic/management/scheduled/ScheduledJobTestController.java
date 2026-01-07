@@ -39,6 +39,9 @@ public class ScheduledJobTestController {
     private final UnifiedScheduleSyncJob unifiedScheduleSyncJob;
     private final CleanupExpiredFlexRegistrationsJob cleanupExpiredFlexRegistrationsJob;
     private final CleanupInactiveEmployeeRegistrationsJob cleanupInactiveEmployeeRegistrationsJob;
+    private final DailyRenewalDetectionJob dailyRenewalDetectionJob;
+    private final RequestReminderNotificationJob requestReminderNotificationJob;
+    private final WarehouseExpiryEmailJob warehouseExpiryEmailJob;
 
     /**
      * Manually trigger Job P8: Unified Schedule Sync Job
@@ -298,5 +301,144 @@ public class ScheduledJobTestController {
         response.put("endpoints", endpoints);
         
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Manually trigger Job P9: Daily Renewal Detection
+     * 
+     * Detects expiring Fixed shift registrations (14-28 days from now) and creates renewal requests
+     * This is the CONTRACT RENEWAL REMINDER BOT
+     * 
+     * Normal schedule: Daily at 00:05 AM
+     * 
+     * GET /api/v1/admin/test/scheduled-jobs/trigger-renewal-detection
+     */
+    @Operation(
+        summary = "Trigger Job P9: Daily Renewal Detection (Contract Renewal Bot)",
+        description = "Manually execute the DailyRenewalDetectionJob that detects expiring registrations and sends contract renewal reminders. Normally runs daily at 00:05 AM."
+    )
+    @GetMapping("/trigger-renewal-detection")
+    @PreAuthorize("hasRole('" + ADMIN + "')")
+    public ResponseEntity<Map<String, Object>> triggerRenewalDetection() {
+        log.warn("⚠️ MANUAL TRIGGER: DailyRenewalDetectionJob (Contract Renewal Bot) triggered by admin");
+        
+        long startTime = System.currentTimeMillis();
+        try {
+            dailyRenewalDetectionJob.detectExpiringRegistrations();
+            long duration = System.currentTimeMillis() - startTime;
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Job P9 (DailyRenewalDetectionJob - Contract Renewal Bot) executed successfully");
+            response.put("jobName", "DailyRenewalDetectionJob");
+            response.put("normalSchedule", "Daily at 00:05 AM");
+            response.put("executionTimeMs", duration);
+            response.put("action", "Detected expiring registrations and created contract renewal requests");
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("❌ Error executing DailyRenewalDetectionJob manually", e);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "Job execution failed: " + e.getMessage());
+            response.put("jobName", "DailyRenewalDetectionJob");
+            response.put("error", e.getMessage());
+            
+            return ResponseEntity.status(500).body(response);
+        }
+    }
+
+    /**
+     * Manually trigger Request Reminder Notification Job
+     * 
+     * Sends reminder notifications to managers for pending requests (overtime, time-off, registrations)
+     * 
+     * Normal schedule: Daily at 09:00 AM
+     * 
+     * GET /api/v1/admin/test/scheduled-jobs/trigger-request-reminders
+     */
+    @Operation(
+        summary = "Trigger Request Reminder Notification Job",
+        description = "Manually execute the RequestReminderNotificationJob that sends reminders to managers for pending requests. Normally runs daily at 09:00 AM."
+    )
+    @GetMapping("/trigger-request-reminders")
+    @PreAuthorize("hasRole('" + ADMIN + "')")
+    public ResponseEntity<Map<String, Object>> triggerRequestReminders() {
+        log.warn("⚠️ MANUAL TRIGGER: RequestReminderNotificationJob triggered by admin");
+        
+        long startTime = System.currentTimeMillis();
+        try {
+            requestReminderNotificationJob.sendReminderNotifications();
+            long duration = System.currentTimeMillis() - startTime;
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "RequestReminderNotificationJob executed successfully");
+            response.put("jobName", "RequestReminderNotificationJob");
+            response.put("normalSchedule", "Daily at 09:00 AM");
+            response.put("executionTimeMs", duration);
+            response.put("action", "Sent reminder notifications for pending requests to managers");
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("❌ Error executing RequestReminderNotificationJob manually", e);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "Job execution failed: " + e.getMessage());
+            response.put("jobName", "RequestReminderNotificationJob");
+            response.put("error", e.getMessage());
+            
+            return ResponseEntity.status(500).body(response);
+        }
+    }
+
+    /**
+     * Manually trigger Warehouse Expiry Email Job
+     * 
+     * Sends daily digest email for items expiring in 5, 15, or 30 days
+     * 
+     * Normal schedule: Daily at 08:00 AM
+     * 
+     * GET /api/v1/admin/test/scheduled-jobs/trigger-warehouse-expiry
+     */
+    @Operation(
+        summary = "Trigger Warehouse Expiry Email Job",
+        description = "Manually execute the WarehouseExpiryEmailJob that sends expiry alerts for warehouse items. Normally runs daily at 08:00 AM."
+    )
+    @GetMapping("/trigger-warehouse-expiry")
+    @PreAuthorize("hasRole('" + ADMIN + "')")
+    public ResponseEntity<Map<String, Object>> triggerWarehouseExpiry() {
+        log.warn("⚠️ MANUAL TRIGGER: WarehouseExpiryEmailJob triggered by admin");
+        
+        long startTime = System.currentTimeMillis();
+        try {
+            warehouseExpiryEmailJob.sendDailyExpiryReport();
+            long duration = System.currentTimeMillis() - startTime;
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "WarehouseExpiryEmailJob executed successfully");
+            response.put("jobName", "WarehouseExpiryEmailJob");
+            response.put("normalSchedule", "Daily at 08:00 AM");
+            response.put("executionTimeMs", duration);
+            response.put("action", "Sent expiry alert emails for warehouse items");
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("❌ Error executing WarehouseExpiryEmailJob manually", e);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "Job execution failed: " + e.getMessage());
+            response.put("jobName", "WarehouseExpiryEmailJob");
+            response.put("error", e.getMessage());
+            
+            return ResponseEntity.status(500).body(response);
+        }
     }
 }

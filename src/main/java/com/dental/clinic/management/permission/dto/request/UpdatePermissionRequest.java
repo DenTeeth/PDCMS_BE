@@ -7,13 +7,13 @@ import jakarta.validation.constraints.Size;
  */
 public class UpdatePermissionRequest {
 
-    @Size(max = 100, message = "Permission name must not exceed 100 characters")
+    @Size(max = 100, message = "Tên quyền không được vượt quá 100 ký tự")
     private String permissionName;
 
-    @Size(max = 20, message = "Module must not exceed 20 characters")
+    @Size(max = 20, message = "Module không được vượt quá 20 ký tự")
     private String module;
 
-    @Size(max = 500, message = "Description must not exceed 500 characters")
+    @Size(max = 500, message = "Mô tả không được vượt quá 500 ký tự")
     private String description;
 
     private Boolean isActive;

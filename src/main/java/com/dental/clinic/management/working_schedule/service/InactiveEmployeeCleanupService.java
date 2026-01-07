@@ -19,7 +19,8 @@ import java.util.List;
  * Business Rules Service for Inactive Employee Management
  * 
  * Implements:
- * - Rule #25: Inactive employees automatically removed from future work schedules
+ * - Rule #25: Inactive employees automatically removed from future work
+ * schedules
  */
 @Service
 public class InactiveEmployeeCleanupService {
@@ -44,7 +45,7 @@ public class InactiveEmployeeCleanupService {
         log.info("Starting inactive employee cleanup job...");
 
         LocalDate today = LocalDate.now();
-        
+
         // Find all inactive employees
         List<Employee> inactiveEmployees = employeeRepository.findByIsActiveFalse();
 
@@ -61,53 +62,52 @@ public class InactiveEmployeeCleanupService {
         for (Employee employee : inactiveEmployees) {
             try {
                 int removedCount = removeFutureShifts(employee.getEmployeeId(), today);
-                
+
                 if (removedCount > 0) {
-                    log.info("Removed {} future shift(s) for inactive employee: {} ({} - {})", 
-                        removedCount,
-                        employee.getEmployeeId(),
-                        employee.getFirstName(),
-                        employee.getLastName());
-                    
+                    log.info("Removed {} future shift(s) for inactive employee: {} ({} - {})",
+                            removedCount,
+                            employee.getEmployeeId(),
+                            employee.getFirstName(),
+                            employee.getLastName());
+
                     report.addEmployeeCleanup(
-                        employee.getEmployeeId(),
-                        employee.getFirstName() + " " + employee.getLastName(),
-                        removedCount
-                    );
+                            employee.getEmployeeId(),
+                            employee.getFirstName() + " " + employee.getLastName(),
+                            removedCount);
                 }
             } catch (Exception e) {
-                log.error("Failed to remove shifts for employee {}: {}", 
-                    employee.getEmployeeId(), e.getMessage(), e);
+                log.error("Failed to remove shifts for employee {}: {}",
+                        employee.getEmployeeId(), e.getMessage(), e);
                 report.addFailure(employee.getEmployeeId(), e.getMessage());
             }
         }
 
-        log.info("Inactive employee cleanup completed. Total employees: {}, Total shifts removed: {}, Failures: {}", 
-            report.getCleanedEmployeeCount(), 
-            report.getTotalShiftsRemoved(),
-            report.getFailureCount());
+        log.info("Inactive employee cleanup completed. Total employees: {}, Total shifts removed: {}, Failures: {}",
+                report.getCleanedEmployeeCount(),
+                report.getTotalShiftsRemoved(),
+                report.getFailureCount());
     }
 
     /**
      * Remove all future shifts for an employee
      * 
      * @param employeeId ID of the employee
-     * @param fromDate Date from which to remove shifts (typically today)
+     * @param fromDate   Date from which to remove shifts (typically today)
      * @return Number of shifts removed
      */
     @Transactional
     public int removeFutureShifts(Integer employeeId, LocalDate fromDate) {
         if (employeeId == null || fromDate == null) {
-            throw new IllegalArgumentException("EmployeeId and fromDate cannot be null");
+            throw new IllegalArgumentException("Mã nhân viên và ngày bắt đầu không được để trống");
         }
 
         // Get all future shifts for the employee
         List<EmployeeShift> futureShifts = employeeShiftRepository
-            .findByEmployeeAndDateRange(
-                employeeId, 
-                fromDate, 
-                fromDate.plusYears(10) // Far future date
-            );
+                .findByEmployeeAndDateRange(
+                        employeeId,
+                        fromDate,
+                        fromDate.plusYears(10) // Far future date
+                );
 
         if (futureShifts.isEmpty()) {
             return 0;
@@ -116,8 +116,8 @@ public class InactiveEmployeeCleanupService {
         // Delete all future shifts
         employeeShiftRepository.deleteAll(futureShifts);
 
-        log.debug("Deleted {} future shift(s) for employee {} starting from {}", 
-            futureShifts.size(), employeeId, fromDate);
+        log.debug("Deleted {} future shift(s) for employee {} starting from {}",
+                futureShifts.size(), employeeId, fromDate);
 
         return futureShifts.size();
     }
@@ -132,11 +132,11 @@ public class InactiveEmployeeCleanupService {
     @Transactional
     public EmployeeCleanupResult removeShiftsForInactiveEmployee(Integer employeeId) {
         if (employeeId == null) {
-            throw new IllegalArgumentException("Employee ID cannot be null");
+            throw new IllegalArgumentException("Mã nhân viên không được để trống");
         }
 
         Employee employee = employeeRepository.findById(employeeId)
-            .orElseThrow(() -> new IllegalArgumentException("Employee not found: " + employeeId));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy nhân viên: " + employeeId));
 
         if (Boolean.TRUE.equals(employee.getIsActive())) {
             return new EmployeeCleanupResult(employeeId, 0, false, "Employee is still active");
@@ -146,13 +146,11 @@ public class InactiveEmployeeCleanupService {
         int removedCount = removeFutureShifts(employeeId, today);
 
         return new EmployeeCleanupResult(
-            employeeId, 
-            removedCount, 
-            true, 
-            removedCount > 0 ? 
-                String.format("Removed %d future shift(s)", removedCount) : 
-                "No future shifts found"
-        );
+                employeeId,
+                removedCount,
+                true,
+                removedCount > 0 ? String.format("Removed %d future shift(s)", removedCount)
+                        : "No future shifts found");
     }
 
     /**
@@ -168,11 +166,10 @@ public class InactiveEmployeeCleanupService {
 
         LocalDate today = LocalDate.now();
         List<EmployeeShift> futureShifts = employeeShiftRepository
-            .findByEmployeeAndDateRange(
-                employeeId,
-                today,
-                today.plusYears(1)
-            );
+                .findByEmployeeAndDateRange(
+                        employeeId,
+                        today,
+                        today.plusYears(1));
 
         return !futureShifts.isEmpty();
     }
@@ -204,8 +201,13 @@ public class InactiveEmployeeCleanupService {
             return failures.size();
         }
 
-        public List<EmployeeCleanup> getCleanups() { return cleanups; }
-        public List<EmployeeFailure> getFailures() { return failures; }
+        public List<EmployeeCleanup> getCleanups() {
+            return cleanups;
+        }
+
+        public List<EmployeeFailure> getFailures() {
+            return failures;
+        }
     }
 
     /**
@@ -222,9 +224,17 @@ public class InactiveEmployeeCleanupService {
             this.shiftsRemoved = shiftsRemoved;
         }
 
-        public Integer getEmployeeId() { return employeeId; }
-        public String getEmployeeName() { return employeeName; }
-        public int getShiftsRemoved() { return shiftsRemoved; }
+        public Integer getEmployeeId() {
+            return employeeId;
+        }
+
+        public String getEmployeeName() {
+            return employeeName;
+        }
+
+        public int getShiftsRemoved() {
+            return shiftsRemoved;
+        }
     }
 
     /**
@@ -239,8 +249,13 @@ public class InactiveEmployeeCleanupService {
             this.errorMessage = errorMessage;
         }
 
-        public Integer getEmployeeId() { return employeeId; }
-        public String getErrorMessage() { return errorMessage; }
+        public Integer getEmployeeId() {
+            return employeeId;
+        }
+
+        public String getErrorMessage() {
+            return errorMessage;
+        }
     }
 
     /**
@@ -259,9 +274,20 @@ public class InactiveEmployeeCleanupService {
             this.message = message;
         }
 
-        public Integer getEmployeeId() { return employeeId; }
-        public int getShiftsRemoved() { return shiftsRemoved; }
-        public boolean isSuccess() { return success; }
-        public String getMessage() { return message; }
+        public Integer getEmployeeId() {
+            return employeeId;
+        }
+
+        public int getShiftsRemoved() {
+            return shiftsRemoved;
+        }
+
+        public boolean isSuccess() {
+            return success;
+        }
+
+        public String getMessage() {
+            return message;
+        }
     }
 }

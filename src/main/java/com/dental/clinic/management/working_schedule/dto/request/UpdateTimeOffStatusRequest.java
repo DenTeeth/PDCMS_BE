@@ -15,7 +15,7 @@ import lombok.*;
 @Builder
 public class UpdateTimeOffStatusRequest {
 
-    @NotNull(message = "Status is required")
+    @NotNull(message = "Trạng thái là bắt buộc")
     private TimeOffStatus status;
 
     private String reason; // Required for REJECTED and CANCELLED

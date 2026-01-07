@@ -1,6 +1,6 @@
 package com.dental.clinic.management.warehouse.service;
 
-import com.dental.clinic.management.booking_appointment.domain.Appointment;
+// import com.dental.clinic.management.booking_appointment.domain.Appointment;
 import com.dental.clinic.management.booking_appointment.repository.AppointmentRepository;
 import com.dental.clinic.management.employee.domain.Employee;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
@@ -75,7 +75,7 @@ public class ExportTransactionService {
             Employee employee = employeeRepository.findByAccount_Username(employeeCode)
                     .orElseThrow(() -> new NotFoundException(
                             "EMPLOYEE_NOT_FOUND",
-                            "Employee not found for account: " + employeeCode));
+                            "Không tìm thấy nhân viên cho tài khoản: " + employeeCode));
 
             if (!employee.getIsActive()) {
                 throw new BadRequestException(

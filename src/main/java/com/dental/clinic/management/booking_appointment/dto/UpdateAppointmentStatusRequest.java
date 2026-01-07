@@ -21,7 +21,7 @@ public class UpdateAppointmentStatusRequest {
      * New status for the appointment.
      * Valid values: CHECKED_IN, IN_PROGRESS, COMPLETED, CANCELLED, NO_SHOW
      */
-    @NotNull(message = "Status is required")
+    @NotNull(message = "Trạng thái là bắt buộc")
     private String status;
 
     /**

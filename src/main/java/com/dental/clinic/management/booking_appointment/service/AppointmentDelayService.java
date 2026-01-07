@@ -141,7 +141,8 @@ public class AppointmentDelayService {
          */
         private boolean isTerminalState(AppointmentStatus status) {
                 return status == AppointmentStatus.COMPLETED
-                                || status == AppointmentStatus.CANCELLED;
+                                || status == AppointmentStatus.CANCELLED
+                                || status == AppointmentStatus.CANCELLED_LATE;
                 // NO_SHOW removed: Allow rescheduling NO_SHOW appointments
         }
 
@@ -247,7 +248,7 @@ public class AppointmentDelayService {
         private Integer getCurrentEmployeeId() {
                 Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
                 if (authentication == null || !(authentication.getPrincipal() instanceof Jwt)) {
-                        throw new IllegalStateException("No valid JWT authentication found");
+                        throw new IllegalStateException("Không tìm thấy xác thực JWT hợp lệ");
                 }
 
                 Jwt jwt = (Jwt) authentication.getPrincipal();

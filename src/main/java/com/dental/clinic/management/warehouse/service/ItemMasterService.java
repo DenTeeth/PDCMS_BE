@@ -55,7 +55,7 @@ public class ItemMasterService {
                         log.warn("Item code already exists: {}", request.getItemCode());
                         throw new ResponseStatusException(
                                         HttpStatus.CONFLICT,
-                                        "Item code '" + request.getItemCode() + "' already exists");
+                                        "Mã vật tư '" + request.getItemCode() + "' đã tồn tại");
                 }
 
                 // 2. Validate min < max stock level
@@ -64,7 +64,7 @@ public class ItemMasterService {
                                         request.getMinStockLevel(), request.getMaxStockLevel());
                         throw new ResponseStatusException(
                                         HttpStatus.BAD_REQUEST,
-                                        "Min stock level must be less than max stock level");
+                                        "Mức tồn kho tối thiểu phải nhỏ hơn mức tồn kho tối đa");
                 }
 
                 // 3. Validate exactly one base unit
@@ -76,7 +76,7 @@ public class ItemMasterService {
                         log.warn("Invalid base unit count: {}", baseUnitCount);
                         throw new ResponseStatusException(
                                         HttpStatus.BAD_REQUEST,
-                                        "Exactly one base unit is required");
+                                        "Yêu cầu phải có đúng một đơn vị cơ sở");
                 }
 
                 // 4. Validate base unit has conversion rate = 1
@@ -89,7 +89,7 @@ public class ItemMasterService {
                         log.warn("Base unit must have conversion rate = 1");
                         throw new ResponseStatusException(
                                         HttpStatus.BAD_REQUEST,
-                                        "Base unit must have conversion rate = 1");
+                                        "Đơn vị cơ sở phải có tỷ lệ quy đổi = 1");
                 }
 
                 // 5. Validate unit name uniqueness
@@ -99,7 +99,7 @@ public class ItemMasterService {
                                 log.warn("Duplicate unit name: {}", unit.getUnitName());
                                 throw new ResponseStatusException(
                                                 HttpStatus.BAD_REQUEST,
-                                                "Unit name '" + unit.getUnitName() + "' is duplicated");
+                                                "Tên đơn vị '" + unit.getUnitName() + "' bị trùng lặp");
                         }
                 }
 
@@ -251,7 +251,7 @@ public class ItemMasterService {
                                         request.getMinStockLevel(), request.getMaxStockLevel());
                         throw new ResponseStatusException(
                                         HttpStatus.BAD_REQUEST,
-                                        "Min stock level must be less than max stock level");
+                                        "Mức tồn kho tối thiểu phải nhỏ hơn mức tồn kho tối đa");
                 }
 
                 // 3. Check if Safety Lock applies (cachedTotalQuantity > 0)
@@ -274,19 +274,19 @@ public class ItemMasterService {
                                         log.warn("isBaseUnit is null in update request");
                                         throw new ResponseStatusException(
                                                         HttpStatus.BAD_REQUEST,
-                                                        "isBaseUnit flag is required for all units");
+                                                        "Cờ isBaseUnit là bắt buộc cho tất cả các đơn vị");
                                 }
                                 if (unit.getConversionRate() == null || unit.getConversionRate() < 1) {
                                         log.warn("Invalid conversion rate: {}", unit.getConversionRate());
                                         throw new ResponseStatusException(
                                                         HttpStatus.BAD_REQUEST,
-                                                        "Conversion rate must be >= 1 for all units");
+                                                        "Tỷ lệ quy đổi phải >= 1 cho tất cả các đơn vị");
                                 }
                                 if (unit.getIsActive() == null) {
                                         log.warn("isActive is null in update request");
                                         throw new ResponseStatusException(
                                                         HttpStatus.BAD_REQUEST,
-                                                        "isActive flag is required for all units");
+                                                        "Cờ isActive là bắt buộc cho tất cả các đơn vị");
                                 }
                         }
 
@@ -299,7 +299,7 @@ public class ItemMasterService {
                                 log.warn("Invalid base unit count: {}", baseUnitCount);
                                 throw new ResponseStatusException(
                                                 HttpStatus.BAD_REQUEST,
-                                                "Exactly one base unit is required");
+                                                "Yêu cầu phải có đúng một đơn vị cơ sở");
                         }
                 }
 
@@ -312,14 +312,14 @@ public class ItemMasterService {
                                         log.warn("Unit name is null or empty in update request");
                                         throw new ResponseStatusException(
                                                         HttpStatus.BAD_REQUEST,
-                                                        "Unit name cannot be null or empty");
+                                                        "Tên đơn vị không được để trống");
                                 }
                                 
                                 if (!unitNames.add(unit.getUnitName().toLowerCase())) {
                                         log.warn("Duplicate unit name: {}", unit.getUnitName());
                                         throw new ResponseStatusException(
                                                         HttpStatus.BAD_REQUEST,
-                                                        "Unit name '" + unit.getUnitName() + "' is duplicated");
+                                                        "Tên đơn vị '" + unit.getUnitName() + "' bị trùng lặp");
                                 }
                         }
                 }
@@ -335,14 +335,14 @@ public class ItemMasterService {
                                                 // Check conversion rate change
                                                 if (existingUnit.getConversionRate() != unitRequest
                                                                 .getConversionRate()) {
-                                                        blockedChanges.add("Cannot change conversion rate for unit '"
-                                                                        + existingUnit.getUnitName() + "' (current: "
-                                                                        + existingUnit.getConversionRate() + ", new: "
+                                                        blockedChanges.add("Không thể thay đổi tỷ lệ quy đổi cho đơn vị '"
+                                                                        + existingUnit.getUnitName() + "' (hiện tại: "
+                                                                        + existingUnit.getConversionRate() + ", mới: "
                                                                         + unitRequest.getConversionRate() + ")");
                                                 }
                                                 // Check isBaseUnit change
                                                 if (!existingUnit.getIsBaseUnit().equals(unitRequest.getIsBaseUnit())) {
-                                                        blockedChanges.add("Cannot change base unit status for unit '"
+                                                        blockedChanges.add("Không thể thay đổi trạng thái đơn vị cơ sở cho đơn vị '"
                                                                         + existingUnit.getUnitName() + "'");
                                                 }
                                         }
@@ -357,13 +357,13 @@ public class ItemMasterService {
 
                         for (ItemUnit existingUnit : existingUnits) {
                                 if (!requestedUnitIds.contains(existingUnit.getUnitId())) {
-                                        blockedChanges.add("Cannot delete unit '" + existingUnit.getUnitName()
-                                                        + "' (use soft delete by setting isActive=false)");
+                                        blockedChanges.add("Không thể xóa đơn vị '" + existingUnit.getUnitName()
+                                                        + "' (sử dụng xóa mềm bằng cách đặt isActive=false)");
                                 }
                         }
 
                         if (!blockedChanges.isEmpty()) {
-                                String errorMessage = "Safety Lock: Cannot modify units when stock exists. Blocked changes: "
+                                String errorMessage = "Khóa an toàn: Không thể sửa đổi đơn vị khi tồn kho còn hàng. Các thay đổi bị chặn: "
                                                 + String.join("; ", blockedChanges);
                                 log.warn(errorMessage);
                                 throw new ResponseStatusException(HttpStatus.CONFLICT, errorMessage);
@@ -525,7 +525,7 @@ public class ItemMasterService {
                         log.warn("Attempted to get units for inactive item: {}", itemMaster.getItemCode());
                         throw new ResponseStatusException(
                                         HttpStatus.GONE,
-                                        "Item '" + itemMaster.getItemCode() + "' is no longer active");
+                                        "Vật tư '" + itemMaster.getItemCode() + "' không còn hoạt động");
                 }
 
                 // 3. Get ALL units first (for finding base unit)
@@ -536,7 +536,7 @@ public class ItemMasterService {
                         log.warn("No units configured for item master ID: {}", itemMasterId);
                         throw new ResponseStatusException(
                                         HttpStatus.NOT_FOUND,
-                                        "No units configured for this item");
+                                        "Chưa cấu hình đơn vị cho vật tư này");
                 }
 
                 // 4. Find base unit from ALL units (base unit might be inactive)
@@ -555,7 +555,7 @@ public class ItemMasterService {
                                                                                 itemMasterId);
                                                                 return new ResponseStatusException(
                                                                                 HttpStatus.INTERNAL_SERVER_ERROR,
-                                                                                "Base unit not configured properly. Please ensure at least one unit has conversion_rate=1");
+                                                                                "Đơn vị cơ sở chưa được cấu hình đúng. Vui lòng đảm bảo ít nhất một đơn vị có tỷ lệ quy đổi = 1");
                                                         });
                                 });
 
@@ -581,7 +581,7 @@ public class ItemMasterService {
                         log.warn("No {} units found for item master ID: {}", status, itemMasterId);
                         throw new ResponseStatusException(
                                         HttpStatus.NOT_FOUND,
-                                        "No " + status + " units found for this item");
+                                        "Không tìm thấy đơn vị " + status + " cho vật tư này");
                 } // 5. Build response
                 GetItemUnitsResponse.ItemMasterInfo itemMasterInfo = GetItemUnitsResponse.ItemMasterInfo.builder()
                                 .itemMasterId(itemMaster.getItemMasterId())
@@ -621,7 +621,7 @@ public class ItemMasterService {
 
         private String generateUnitDescription(ItemUnit unit, String baseUnitName) {
                 if (unit.getIsBaseUnit()) {
-                        return "Don vi co so";
+                        return "Đơn vị cơ sở";
                 }
                 return String.format("1 %s = %d %s",
                                 unit.getUnitName(),
@@ -687,7 +687,7 @@ public class ItemMasterService {
                 if (!fromUnit.getItemMaster().getItemMasterId().equals(request.getItemMasterId())) {
                         throw new ResponseStatusException(
                                         HttpStatus.BAD_REQUEST,
-                                        String.format("Unit ID %d does not belong to Item ID %d",
+                                        String.format("Đơn vị ID %d không thuộc về vật tư ID %d",
                                                         request.getFromUnitId(), request.getItemMasterId()));
                 }
 
@@ -700,7 +700,7 @@ public class ItemMasterService {
                 if (!toUnit.getItemMaster().getItemMasterId().equals(request.getItemMasterId())) {
                         throw new ResponseStatusException(
                                         HttpStatus.BAD_REQUEST,
-                                        String.format("Unit ID %d does not belong to Item ID %d",
+                                        String.format("Đơn vị ID %d không thuộc về vật tư ID %d",
                                                         request.getToUnitId(), request.getItemMasterId()));
                 }
 
@@ -708,7 +708,7 @@ public class ItemMasterService {
                 if (fromUnit.getConversionRate() <= 0 || toUnit.getConversionRate() <= 0) {
                         throw new ResponseStatusException(
                                         HttpStatus.BAD_REQUEST,
-                                        "Conversion rate must be greater than 0");
+                                        "Tỷ lệ quy đổi phải lớn hơn 0");
                 }
 
                 // 5. Validate base unit exists (optional but good practice)
@@ -716,7 +716,7 @@ public class ItemMasterService {
                                 .findBaseUnitByItemMasterId(itemMaster.getItemMasterId())
                                 .orElseThrow(() -> new ResponseStatusException(
                                                 HttpStatus.INTERNAL_SERVER_ERROR,
-                                                String.format("Base unit not found for item %s. Data integrity issue.",
+                                                String.format("Không tìm thấy đơn vị cơ sở cho vật tư %s. Vấn đề toàn vẹn dữ liệu.",
                                                                 itemMaster.getItemName())));
 
                 // 6. Perform conversion using intermediate base unit
@@ -801,7 +801,7 @@ public class ItemMasterService {
                 ItemMaster itemMaster = itemMasterRepository.findById(id)
                                 .orElseThrow(() -> new ResponseStatusException(
                                                 HttpStatus.NOT_FOUND,
-                                                "Item master not found with ID: " + id));
+                                                "Không tìm thấy vật tư với ID: " + id));
 
                 // 2. Check if has batches (prevent deletion if inventory exists)
                 List<ItemBatch> batches = itemBatchRepository.findByItemMaster_ItemMasterId(id);
@@ -810,9 +810,9 @@ public class ItemMasterService {
                         throw new ResponseStatusException(
                                         HttpStatus.BAD_REQUEST,
                                         String.format(
-                                                        "Cannot delete item master '%s' - it has %d batch(es) in inventory. "
+                                                        "Không thể xóa vật tư '%s' - có %d lô hàng trong kho. "
                                                                         +
-                                                                        "Please use soft delete (set isActive=false) instead to preserve transaction history.",
+                                                                        "Vui lòng sử dụng xóa mềm (đặt isActive=false) để bảo toàn lịch sử giao dịch.",
                                                         itemMaster.getItemName(), batches.size()));
                 }
 

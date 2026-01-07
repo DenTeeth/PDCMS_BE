@@ -85,10 +85,10 @@ public class EmployeeShiftController {
 
                 // Get current user info
                 String username = SecurityUtil.getCurrentUserLogin()
-                                .orElseThrow(() -> new RuntimeException("User not authenticated"));
+                                .orElseThrow(() -> new RuntimeException("Người dùng chưa được xác thực"));
                 Integer currentEmployeeId = employeeRepository.findByAccount_Username(username)
                                 .map(employee -> employee.getEmployeeId())
-                                .orElseThrow(() -> new RuntimeException("Employee not found for user: " + username));
+                                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên cho người dùng: " + username));
                 boolean hasViewAllPermission = authentication.getAuthorities()
                                 .contains(new SimpleGrantedAuthority("VIEW_SCHEDULE_ALL"));
 
@@ -165,10 +165,10 @@ public class EmployeeShiftController {
 
                 // Get current user info
                 String username = SecurityUtil.getCurrentUserLogin()
-                                .orElseThrow(() -> new RuntimeException("User not authenticated"));
+                                .orElseThrow(() -> new RuntimeException("Người dùng chưa được xác thực"));
                 Integer currentEmployeeId = employeeRepository.findByAccount_Username(username)
                                 .map(employee -> employee.getEmployeeId())
-                                .orElseThrow(() -> new RuntimeException("Employee not found for user: " + username));
+                                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên cho người dùng: " + username));
                 boolean hasViewAllPermission = authentication.getAuthorities()
                                 .contains(new SimpleGrantedAuthority("VIEW_SCHEDULE_ALL"));
 
@@ -200,10 +200,10 @@ public class EmployeeShiftController {
 
                 // Get current user ID
                 String username = SecurityUtil.getCurrentUserLogin()
-                                .orElseThrow(() -> new RuntimeException("User not authenticated"));
+                                .orElseThrow(() -> new RuntimeException("Người dùng chưa được xác thực"));
                 Integer currentEmployeeId = employeeRepository.findByAccount_Username(username)
                                 .map(employee -> employee.getEmployeeId())
-                                .orElseThrow(() -> new RuntimeException("Employee not found for user: " + username));
+                                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên cho người dùng: " + username));
 
                 // Create shift
                 EmployeeShiftResponseDto createdShift = employeeShiftService.createManualShift(request,

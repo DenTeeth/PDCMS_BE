@@ -37,7 +37,7 @@ public class FixedRegistrationDay {
      */
     @Id
     @Column(name = "day_of_week", length = 10, nullable = false)
-    @NotBlank(message = "Day of week is required")
+    @NotBlank(message = "Ngày trong tuần là bắt buộc")
     private String dayOfWeek;
 
     /**

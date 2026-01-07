@@ -35,14 +35,14 @@ public class NotificationController {
         private Integer getUserIdFromToken(Authentication authentication) {
                 if (authentication == null || !(authentication.getPrincipal() instanceof Jwt)) {
                         throw new ResourceNotFoundException("AUTHENTICATION_REQUIRED",
-                                        "Valid JWT authentication required");
+                                        "Yêu cầu xác thực JWT hợp lệ");
                 }
 
                 Jwt jwt = (Jwt) authentication.getPrincipal();
                 Object claim = jwt.getClaim("account_id");
 
                 if (claim == null) {
-                        throw new ResourceNotFoundException("ACCOUNT_ID_MISSING", "JWT token missing account_id claim");
+                        throw new ResourceNotFoundException("ACCOUNT_ID_MISSING", "JWT token thiếu claim account_id");
                 }
 
                 if (claim instanceof Integer) {
@@ -55,11 +55,11 @@ public class NotificationController {
                         try {
                                 return Integer.parseInt((String) claim);
                         } catch (NumberFormatException e) {
-                                throw new IllegalArgumentException("Invalid account_id format in JWT: " + claim);
+                                throw new IllegalArgumentException("Định dạng account_id trong JWT không hợp lệ: " + claim);
                         }
                 }
 
-                throw new IllegalStateException("Unsupported account_id claim type: " + claim.getClass().getName());
+                throw new IllegalStateException("Kiểu dữ liệu account_id không được hỗ trợ: " + claim.getClass().getName());
         }
 
         /**

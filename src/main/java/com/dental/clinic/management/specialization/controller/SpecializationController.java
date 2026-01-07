@@ -31,7 +31,7 @@ public class SpecializationController {
      */
     @GetMapping("")
     @Operation(summary = "Get all active specializations", description = "Retrieve list of all active specializations for dropdown/selection")
-    @ApiMessage("Get all active specializations successfully")
+    @ApiMessage("Lấy danh sách chuyên môn thành công")
     public ResponseEntity<List<Specialization>> getAllActiveSpecializations() {
         List<Specialization> specializations = specializationService.getAllActiveSpecializations();
         return ResponseEntity.ok(specializations);

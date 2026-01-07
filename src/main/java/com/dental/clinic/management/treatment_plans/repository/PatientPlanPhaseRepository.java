@@ -47,4 +47,24 @@ public interface PatientPlanPhaseRepository extends JpaRepository<PatientPlanPha
      */
     @Query("SELECT p FROM PatientPlanPhase p WHERE p.treatmentPlan.planId = :planId ORDER BY p.phaseNumber")
     List<PatientPlanPhase> findByTreatmentPlan_PlanId(@Param("planId") Long planId);
+
+    /**
+     * Find all phases before a specific phase number in a treatment plan.
+     * Used for auto-scheduling to ensure phase sequencing - later phases must be scheduled
+     * after all appointments in previous phases.
+     * 
+     * Date: 2024-12-29
+     * Issue: Phase sequencing in auto-schedule
+     * 
+     * @param planId Treatment plan ID
+     * @param phaseNumber Current phase number (exclusive)
+     * @return List of phases with phase_number < phaseNumber, ordered by phase number
+     */
+    @Query("SELECT p FROM PatientPlanPhase p " +
+           "WHERE p.treatmentPlan.planId = :planId " +
+           "AND p.phaseNumber < :phaseNumber " +
+           "ORDER BY p.phaseNumber")
+    List<PatientPlanPhase> findByTreatmentPlanIdAndPhaseNumberLessThan(
+            @Param("planId") Long planId,
+            @Param("phaseNumber") Integer phaseNumber);
 }

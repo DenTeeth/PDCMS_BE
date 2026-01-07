@@ -41,10 +41,17 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         Account account = accountRepository.findByUsernameWithRoleAndPermissions(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Account not found with username: " + username));
+                .orElseThrow(() -> new UsernameNotFoundException("Tài khoản không tồn tại với tên đăng nhập: " + username));
 
         if (!account.isActive()) {
-            throw new UsernameNotFoundException("Account is not active: " + username);
+            throw new UsernameNotFoundException("Tài khoản không hoạt động: " + username);
+        }
+
+        // Check if employee is active (for employee accounts)
+        if (account.getEmployee() != null) {
+            if (account.getEmployee().getIsActive() == null || !account.getEmployee().getIsActive()) {
+                throw new UsernameNotFoundException("Nhân viên đã bị vô hiệu hóa: " + username);
+            }
         }
 
         return new CustomUserPrincipal(account);
@@ -59,10 +66,17 @@ public class CustomUserDetailsService implements UserDetailsService {
      */
     public UserDetails loadUserByEmail(String email) throws UsernameNotFoundException {
         Account account = accountRepository.findByEmailWithRoleAndPermissions(email)
-                .orElseThrow(() -> new UsernameNotFoundException("Account not found with email: " + email));
+                .orElseThrow(() -> new UsernameNotFoundException("Tài khoản không tồn tại với email: " + email));
 
         if (!account.isActive()) {
-            throw new UsernameNotFoundException("Account is not active: " + email);
+            throw new UsernameNotFoundException("Tài khoản không hoạt động: " + email);
+        }
+
+        // Check if employee is active (for employee accounts)
+        if (account.getEmployee() != null) {
+            if (account.getEmployee().getIsActive() == null || !account.getEmployee().getIsActive()) {
+                throw new UsernameNotFoundException("Nhân viên đã bị vô hiệu hóa: " + email);
+            }
         }
 
         return new CustomUserPrincipal(account);

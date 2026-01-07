@@ -11,7 +11,7 @@ public class PastDateNotAllowedException extends RuntimeException {
     private final LocalDate minimumDate;
 
     public PastDateNotAllowedException(LocalDate providedDate) {
-        super(String.format("Effective from date cannot be in the past. Provided: %s, Minimum date: %s",
+        super(String.format("Ngày hiệu lực không được là ngày trong quá khứ. Ngày đã nhập: %s, Ngày tối thiểu: %s",
                 providedDate, LocalDate.now()));
         this.providedDate = providedDate;
         this.minimumDate = LocalDate.now();

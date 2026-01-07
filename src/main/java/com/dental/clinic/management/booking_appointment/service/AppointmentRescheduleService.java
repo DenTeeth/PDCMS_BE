@@ -75,7 +75,7 @@ public class AppointmentRescheduleService {
                         String oldAppointmentCode,
                         RescheduleAppointmentRequest request) {
 
-                log.info("Rescheduling appointment {} to new time {}",
+                log.info("Đang dời lịch hẹn {} sang thời gian mới {}",
                                 oldAppointmentCode, request.getNewStartTime());
 
                 // STEP 0: ISSUE #53 - Validate new date is NOT a holiday (early check)
@@ -85,7 +85,7 @@ public class AppointmentRescheduleService {
                 // STEP 1: Lock old appointment
                 Appointment oldAppointment = appointmentRepository.findByCodeForUpdate(oldAppointmentCode)
                                 .orElseThrow(() -> new IllegalArgumentException(
-                                                "Appointment not found: " + oldAppointmentCode));
+                                                "Không tìm thấy lịch hẹn: " + oldAppointmentCode));
 
                 // STEP 2: Validate old appointment can be rescheduled
                 validateOldAppointment(oldAppointment);
@@ -102,7 +102,7 @@ public class AppointmentRescheduleService {
                 // re-booking
                 if (planItemIds != null && !planItemIds.isEmpty()) {
                         resetPlanItemsStatusForReschedule(planItemIds);
-                        log.info("Reset {} plan items from SCHEDULED to READY_FOR_BOOKING for reschedule",
+                        log.info("Đã đặt lại {} hạng mục điều trị từ trạng thái SCHEDULED sang READY_FOR_BOOKING để dời lịch",
                                         planItemIds.size());
                 }
 
@@ -121,7 +121,7 @@ public class AppointmentRescheduleService {
                 }
                 newAppointment.setRescheduleCount(oldRescheduleCount + 1);
                 appointmentRepository.save(newAppointment);
-                log.info("Incremented reschedule count: {} -> {} for new appointment {}",
+                log.info("Tăng số lần dời lịch: {} -> {} cho lịch hẹn mới {}",
                                 oldRescheduleCount, oldRescheduleCount + 1, newAppointment.getAppointmentCode());
 
                 // STEP 6: Cancel old appointment and link to new one
@@ -130,7 +130,7 @@ public class AppointmentRescheduleService {
                 // STEP 7: Create audit logs
                 createAuditLogs(oldAppointment, newAppointment, request);
 
-                log.info("Successfully rescheduled appointment {} -> {}",
+                log.info("Dời lịch thành công từ {} -> {}",
                                 oldAppointmentCode, newAppointment.getAppointmentCode());
 
                 // STEP 8: Return both appointments
@@ -151,12 +151,12 @@ public class AppointmentRescheduleService {
                 // Cannot reschedule terminal states
                 if (status == AppointmentStatus.COMPLETED) {
                         throw new IllegalStateException(
-                                        "Cannot reschedule completed appointment. Code: APPOINTMENT_NOT_RESCHEDULABLE");
+                                        "Không thể dời lịch hẹn đã hoàn thành. Mã lỗi: APPOINTMENT_NOT_RESCHEDULABLE");
                 }
 
-                if (status == AppointmentStatus.CANCELLED) {
+                if (status == AppointmentStatus.CANCELLED || status == AppointmentStatus.CANCELLED_LATE) {
                         throw new IllegalStateException(
-                                        "Cannot reschedule cancelled appointment. Code: APPOINTMENT_NOT_RESCHEDULABLE");
+                                        "Không thể dời lịch hẹn đã hủy. Mã lỗi: APPOINTMENT_NOT_RESCHEDULABLE");
                 }
 
                 // ALLOW NO_SHOW appointments to be rescheduled (patient can return)
@@ -167,7 +167,7 @@ public class AppointmentRescheduleService {
                                 && status != AppointmentStatus.CHECKED_IN
                                 && status != AppointmentStatus.NO_SHOW) {
                         throw new IllegalStateException(
-                                        String.format("Cannot reschedule appointment in status %s. Only SCHEDULED, CHECKED_IN, or NO_SHOW can be rescheduled.",
+                                        String.format("Không thể dời lịch hẹn ở trạng thái %s. Chỉ cho phép dời lịch với các trạng thái SCHEDULED, CHECKED_IN hoặc NO_SHOW.",
                                                         status));
                 }
 
@@ -178,13 +178,13 @@ public class AppointmentRescheduleService {
                 }
                 if (rescheduleCount >= 2) {
                         throw new IllegalStateException(
-                                        String.format("Appointment has reached maximum reschedule limit (2 times). " +
-                                                        "Current reschedule count: %d. " +
-                                                        "Please contact clinic staff for assistance.",
+                                        String.format("Lịch hẹn đã đạt giới hạn dời tối đa (2 lần). " +
+                                                        "Số lần dời hiện tại: %d. " +
+                                                        "Vui lòng liên hệ nhân viên phòng khám để được hỗ trợ.",
                                                         rescheduleCount));
                 }
 
-                log.debug("Old appointment {} validated for reschedule (reschedule count: {})",
+                log.debug("Lịch hẹn cũ {} hợp lệ để dời (số lần dời: {})",
                                 oldAppointment.getAppointmentCode(), rescheduleCount);
         }
 
@@ -195,7 +195,7 @@ public class AppointmentRescheduleService {
                 return patientRepository.findById(oldAppointment.getPatientId())
                                 .map(patient -> patient.getPatientCode())
                                 .orElseThrow(
-                                                () -> new IllegalStateException("Patient not found for ID: "
+                                                () -> new IllegalStateException("Không tìm thấy bệnh nhân cho ID: "
                                                                 + oldAppointment.getPatientId()));
         }
 
@@ -206,7 +206,7 @@ public class AppointmentRescheduleService {
          */
         private List<String> getServiceCodes(Appointment oldAppointment, RescheduleAppointmentRequest request) {
                 if (request.getNewServiceIds() != null && !request.getNewServiceIds().isEmpty()) {
-                        log.debug("Using new service IDs from request: {}", request.getNewServiceIds());
+                        log.debug("Sử dụng danh sách dịch vụ mới từ yêu cầu: {}", request.getNewServiceIds());
                         // Convert service IDs to codes
                         return dentalServiceRepository.findAllById(request.getNewServiceIds())
                                         .stream()
@@ -215,7 +215,7 @@ public class AppointmentRescheduleService {
                 }
 
                 // Reuse old services
-                log.debug("Reusing services from old appointment: {}", oldAppointment.getAppointmentCode());
+                log.debug("Tái sử dụng dịch vụ từ lịch hẹn cũ: {}", oldAppointment.getAppointmentCode());
                 List<com.dental.clinic.management.booking_appointment.domain.AppointmentService> oldServices = appointmentServiceRepository
                                 .findByIdAppointmentId(oldAppointment.getAppointmentId());
 
@@ -248,12 +248,12 @@ public class AppointmentRescheduleService {
                                 .appointmentStartTime(request.getNewStartTime().toString())
                                 .serviceCodes(serviceCodes)
                                 .participantCodes(request.getNewParticipantCodes())
-                                .notes("Rescheduled from previous appointment");
+                                .notes("Dời từ lịch hẹn trước");
 
                 // FIX Issue #39: Link plan items if old appointment was from treatment plan
                 if (planItemIds != null && !planItemIds.isEmpty()) {
                         builder.patientPlanItemIds(planItemIds);
-                        log.info("Rescheduling appointment from treatment plan: {} plan items will be linked",
+                        log.info("Dời lịch hẹn từ phác đồ điều trị: sẽ liên kết {} hạng mục điều trị",
                                         planItemIds.size());
                 }
 
@@ -272,7 +272,7 @@ public class AppointmentRescheduleService {
                                 .findById_AppointmentId(oldAppointment.getAppointmentId());
 
                 if (bridges.isEmpty()) {
-                        log.debug("Old appointment {} is standalone (not from treatment plan)",
+                        log.debug("Lịch hẹn cũ {} là lịch hẹn độc lập (không thuộc phác đồ điều trị)",
                                         oldAppointment.getAppointmentCode());
                         return List.of();
                 }
@@ -281,7 +281,7 @@ public class AppointmentRescheduleService {
                                 .map(bridge -> bridge.getId().getItemId())
                                 .collect(Collectors.toList());
 
-                log.info("Old appointment {} linked to {} plan items: {}",
+                log.info("Lịch hẹn cũ {} được liên kết với {} hạng mục điều trị: {}",
                                 oldAppointment.getAppointmentCode(), planItemIds.size(), planItemIds);
 
                 return planItemIds;
@@ -299,7 +299,7 @@ public class AppointmentRescheduleService {
                 oldAppointment.setRescheduledToAppointmentId(newAppointment.getAppointmentId());
                 appointmentRepository.save(oldAppointment);
 
-                log.info("Cancelled old appointment {} and linked to new appointment {}",
+                log.info("Đã hủy lịch hẹn cũ {} và liên kết với lịch hẹn mới {}",
                                 oldAppointment.getAppointmentCode(), newAppointment.getAppointmentCode());
         }
 
@@ -339,11 +339,11 @@ public class AppointmentRescheduleService {
                                 .oldStatus(null) // New appointment has no old status
                                 .newStatus(AppointmentStatus.SCHEDULED)
                                 .reasonCode(request.getReasonCode())
-                                .notes("Rescheduled from " + oldAppointment.getAppointmentCode())
+                                .notes("Dời từ " + oldAppointment.getAppointmentCode())
                                 .build();
                 auditLogRepository.save(newLog);
 
-                log.info("Created audit logs for reschedule operation");
+                log.info("Đã tạo log kiểm toán cho thao tác dời lịch");
         }
 
         /**
@@ -352,7 +352,7 @@ public class AppointmentRescheduleService {
         private Integer getCurrentEmployeeId() {
                 Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
                 if (authentication == null || !(authentication.getPrincipal() instanceof Jwt)) {
-                        throw new IllegalStateException("No valid JWT authentication found");
+                        throw new IllegalStateException("Không tìm thấy xác thực JWT hợp lệ");
                 }
 
                 Jwt jwt = (Jwt) authentication.getPrincipal();
@@ -360,7 +360,7 @@ public class AppointmentRescheduleService {
 
                 Employee employee = employeeRepository.findByAccount_Username(username)
                                 .orElseThrow(() -> new IllegalStateException(
-                                                "Current user is not an employee: " + username));
+                                                "Người dùng hiện tại không phải là nhân viên: " + username));
 
                 return employee.getEmployeeId();
         }
@@ -390,13 +390,13 @@ public class AppointmentRescheduleService {
                         if (item.getStatus() == PlanItemStatus.SCHEDULED) {
                                 item.setStatus(PlanItemStatus.READY_FOR_BOOKING);
                                 itemRepository.save(item);
-                                log.debug("Reset plan item {} from SCHEDULED to READY_FOR_BOOKING for reschedule",
+                                log.debug("Đặt lại hạng mục điều trị {} từ SCHEDULED về READY_FOR_BOOKING để dời lịch",
                                                 item.getItemId());
                         }
                 }
 
                 // Ensure changes are persisted before validation
                 entityManager.flush();
-                log.info("Successfully reset {} plan items for reschedule", items.size());
+                log.info("Đặt lại thành công {} hạng mục điều trị để dời lịch", items.size());
         }
 }

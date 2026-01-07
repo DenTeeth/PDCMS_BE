@@ -24,6 +24,9 @@ public class ProcedureMaterialsResponse {
     private String serviceCode;
     private String toothNumber;
     
+    // Material consumption flag
+    private Boolean hasConsumables; // True if procedure uses materials, false otherwise
+    
     // Material deduction status
     private Boolean materialsDeducted;
     private LocalDateTime deductedAt;
@@ -50,8 +53,9 @@ public class ProcedureMaterialsResponse {
         private String categoryName;
         
         // Quantities
-        private BigDecimal plannedQuantity;
-        private BigDecimal actualQuantity;
+        private BigDecimal plannedQuantity;  // From service BOM (read-only)
+        private BigDecimal quantity;         // User-editable quantity (replaces multiplier)
+        private BigDecimal actualQuantity;   // Actual quantity used (updated after procedure)
         private BigDecimal varianceQuantity;
         private String varianceReason;
         private String unitName;

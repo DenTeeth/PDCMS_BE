@@ -34,20 +34,20 @@ public class HolidayDateService {
      * Create a new holiday date.
      */
     public HolidayDateResponse createHolidayDate(HolidayDateRequest request) {
-        log.info("Creating holiday date: {} for definition: {}", 
-                 request.getHolidayDate(), request.getDefinitionId());
+        log.info("Creating holiday date: {} for definition: {}",
+                request.getHolidayDate(), request.getDefinitionId());
 
         // Validate that definition exists
         holidayDefinitionRepository.findById(request.getDefinitionId())
-            .orElseThrow(() -> new ResourceNotFoundException(
-                "HOLIDAY_DEFINITION_NOT_FOUND",
-                "Holiday definition not found with ID: " + request.getDefinitionId()));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "HOLIDAY_DEFINITION_NOT_FOUND",
+                        "Holiday definition not found with ID: " + request.getDefinitionId()));
 
         // Check if this date already exists for this definition
         HolidayDateId id = new HolidayDateId(request.getHolidayDate(), request.getDefinitionId());
         if (holidayDateRepository.existsById(id)) {
             throw new com.dental.clinic.management.exception.holiday.DuplicateHolidayDateException(
-                request.getHolidayDate(), request.getDefinitionId());
+                    request.getHolidayDate(), request.getDefinitionId());
         }
 
         HolidayDate holidayDate = holidayDateMapper.toEntity(request);
@@ -63,11 +63,11 @@ public class HolidayDateService {
     @Transactional(readOnly = true)
     public List<HolidayDateResponse> getAllHolidayDates() {
         log.info("Fetching all holiday dates");
-        
+
         return holidayDateRepository.findAll()
-            .stream()
-            .map(holidayDateMapper::toResponse)
-            .collect(Collectors.toList());
+                .stream()
+                .map(holidayDateMapper::toResponse)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -80,14 +80,14 @@ public class HolidayDateService {
         // Validate that definition exists
         if (!holidayDefinitionRepository.existsById(definitionId)) {
             throw new ResourceNotFoundException(
-                "HOLIDAY_DEFINITION_NOT_FOUND",
-                "Holiday definition not found with ID: " + definitionId);
+                    "HOLIDAY_DEFINITION_NOT_FOUND",
+                    "Holiday definition not found with ID: " + definitionId);
         }
 
         return holidayDateRepository.findByDefinitionId(definitionId)
-            .stream()
-            .map(holidayDateMapper::toResponse)
-            .collect(Collectors.toList());
+                .stream()
+                .map(holidayDateMapper::toResponse)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -100,13 +100,13 @@ public class HolidayDateService {
         // Validate date range
         if (startDate.isAfter(endDate)) {
             throw new com.dental.clinic.management.exception.holiday.InvalidDateRangeException(
-                startDate, endDate);
+                    startDate, endDate);
         }
 
         return holidayDateRepository.findByDateRange(startDate, endDate)
-            .stream()
-            .map(holidayDateMapper::toResponse)
-            .collect(Collectors.toList());
+                .stream()
+                .map(holidayDateMapper::toResponse)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -118,9 +118,9 @@ public class HolidayDateService {
 
         HolidayDateId id = new HolidayDateId(holidayDate, definitionId);
         HolidayDate date = holidayDateRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                "HOLIDAY_DATE_NOT_FOUND",
-                "Holiday date not found: " + holidayDate + " for definition: " + definitionId));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "HOLIDAY_DATE_NOT_FOUND",
+                        "Holiday date not found: " + holidayDate + " for definition: " + definitionId));
 
         return holidayDateMapper.toResponse(date);
     }
@@ -130,14 +130,14 @@ public class HolidayDateService {
      */
     public HolidayDateResponse updateHolidayDate(
             LocalDate holidayDate, String definitionId, HolidayDateRequest request) {
-        
+
         log.info("Updating holiday date: {} for definition: {}", holidayDate, definitionId);
 
         HolidayDateId id = new HolidayDateId(holidayDate, definitionId);
         HolidayDate date = holidayDateRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                "HOLIDAY_DATE_NOT_FOUND",
-                "Holiday date not found: " + holidayDate + " for definition: " + definitionId));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "HOLIDAY_DATE_NOT_FOUND",
+                        "Holiday date not found: " + holidayDate + " for definition: " + definitionId));
 
         holidayDateMapper.updateEntity(date, request);
         HolidayDate updatedDate = holidayDateRepository.save(date);
@@ -155,8 +155,8 @@ public class HolidayDateService {
         HolidayDateId id = new HolidayDateId(holidayDate, definitionId);
         if (!holidayDateRepository.existsById(id)) {
             throw new ResourceNotFoundException(
-                "HOLIDAY_DATE_NOT_FOUND",
-                "Holiday date not found: " + holidayDate + " for definition: " + definitionId);
+                    "HOLIDAY_DATE_NOT_FOUND",
+                    "Holiday date not found: " + holidayDate + " for definition: " + definitionId);
         }
 
         holidayDateRepository.deleteById(id);
@@ -178,11 +178,11 @@ public class HolidayDateService {
     @Transactional(readOnly = true)
     public List<LocalDate> getHolidaysInRange(LocalDate startDate, LocalDate endDate) {
         log.debug("Fetching holidays between {} and {}", startDate, endDate);
-        
+
         return holidayDateRepository.findByDateRange(startDate, endDate)
-            .stream()
-            .map(HolidayDate::getHolidayDate)
-            .collect(Collectors.toList());
+                .stream()
+                .map(HolidayDate::getHolidayDate)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -195,16 +195,16 @@ public class HolidayDateService {
         LocalDate current = date;
         int maxIterations = 30; // Prevent infinite loop
         int iterations = 0;
-        
+
         while (isHoliday(current) && iterations < maxIterations) {
             current = current.plusDays(1);
             iterations++;
         }
-        
+
         if (iterations >= maxIterations) {
             log.warn("Could not find working day within 30 days from {}", date);
         }
-        
+
         return current;
     }
 
@@ -217,34 +217,35 @@ public class HolidayDateService {
         if (startDate.isAfter(endDate) || startDate.equals(endDate)) {
             return 0;
         }
-        
+
         List<LocalDate> holidays = getHolidaysInRange(startDate, endDate);
-        
+
         long totalDays = java.time.temporal.ChronoUnit.DAYS.between(startDate, endDate);
         long holidayCount = holidays.size();
-        
+
         return totalDays - holidayCount;
     }
 
     /**
      * BE_4: Add working days to a start date (skipping holidays)
-     * Example: addWorkingDays(Monday, 5) = next Monday (skipping weekend if holidays)
+     * Example: addWorkingDays(Monday, 5) = next Monday (skipping weekend if
+     * holidays)
      */
     @Transactional(readOnly = true)
     public LocalDate addWorkingDays(LocalDate startDate, int workingDays) {
         if (workingDays < 0) {
-            throw new IllegalArgumentException("Working days must be non-negative");
+            throw new IllegalArgumentException("Số ngày làm việc không được âm");
         }
-        
+
         if (workingDays == 0) {
             return getNextWorkingDay(startDate);
         }
-        
+
         LocalDate current = getNextWorkingDay(startDate);
         int daysAdded = 0;
         int maxIterations = workingDays * 3; // Safety limit (assuming max 66% holidays)
         int iterations = 0;
-        
+
         while (daysAdded < workingDays && iterations < maxIterations) {
             current = current.plusDays(1);
             if (!isHoliday(current)) {
@@ -252,11 +253,11 @@ public class HolidayDateService {
             }
             iterations++;
         }
-        
+
         if (iterations >= maxIterations) {
             log.warn("Could not add {} working days from {} within reasonable limit", workingDays, startDate);
         }
-        
+
         return current;
     }
 }

@@ -12,6 +12,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class UpdateImageCommentRequest {
 
-    @NotBlank(message = "Comment text is required")
+    @NotBlank(message = "Nội dung bình luận là bắt buộc")
     private String commentText;
 }

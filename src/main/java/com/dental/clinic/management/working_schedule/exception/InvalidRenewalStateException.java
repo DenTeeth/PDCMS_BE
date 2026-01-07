@@ -22,7 +22,7 @@ public class InvalidRenewalStateException extends ErrorResponseException {
                 currentStatus);
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, message);
-        problemDetail.setTitle("Invalid Renewal State");
+        problemDetail.setTitle("Trạng Thái Gia Hạn Không Hợp Lệ");
         problemDetail.setProperty("errorCode", ERROR_CODE);
         problemDetail.setProperty("message", message);
         problemDetail.setProperty("renewalId", renewalId);

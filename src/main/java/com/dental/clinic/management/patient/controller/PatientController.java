@@ -5,6 +5,7 @@ import com.dental.clinic.management.patient.dto.request.CreatePatientRequest;
 import com.dental.clinic.management.patient.dto.request.ReplacePatientRequest;
 import com.dental.clinic.management.patient.dto.request.UpdatePatientRequest;
 import com.dental.clinic.management.patient.dto.response.PatientInfoResponse;
+import com.dental.clinic.management.patient.dto.response.PatientStatsResponse;
 import com.dental.clinic.management.patient.dto.ToothStatusResponse;
 import com.dental.clinic.management.patient.dto.UpdateToothStatusRequest;
 import com.dental.clinic.management.patient.dto.UpdateToothStatusResponse;
@@ -77,7 +78,7 @@ public class PatientController {
      */
     @GetMapping("")
     @Operation(summary = "Get all active patients", description = "Retrieve a paginated list of active patients only")
-    @ApiMessage("Get all active patients successfully")
+    @ApiMessage("Lấy danh sách bệnh nhân đang hoạt động thành công")
     public ResponseEntity<Page<PatientInfoResponse>> getAllActivePatients(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -101,7 +102,7 @@ public class PatientController {
      */
     @GetMapping("/admin/all")
     @Operation(summary = "Get all patients (Admin)", description = "Retrieve all patients including deleted ones (Admin only)")
-    @ApiMessage("Get all patients including deleted successfully")
+    @ApiMessage("Lấy tất cả bệnh nhân bao gồm đã xóa thành công")
     public ResponseEntity<Page<PatientInfoResponse>> getAllPatientsIncludingDeleted(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -114,6 +115,20 @@ public class PatientController {
     }
 
     /**
+     * {@code GET  /patients/stats} : get patient statistics
+     * Get total, active, and inactive patient counts
+     *
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and stats in body
+     */
+    @GetMapping("/stats")
+    @Operation(summary = "Get patient statistics", description = "Get total, active, and inactive patient counts")
+    @ApiMessage("Lấy thống kê bệnh nhân thành công")
+    public ResponseEntity<PatientStatsResponse> getPatientStats() {
+        PatientStatsResponse stats = patientService.getPatientStats();
+        return ResponseEntity.ok(stats);
+    }
+
+    /**
      * {@code GET  /patients/:patientCode} : get active patient by patient code
      *
      * @param patientCode the code of the patient to retrieve
@@ -122,7 +137,7 @@ public class PatientController {
      */
     @GetMapping("/{patientCode}")
     @Operation(summary = "Get patient by code", description = "Get active patient details by patient code")
-    @ApiMessage("Get active patient by code successfully")
+    @ApiMessage("Lấy thông tin bệnh nhân theo mã thành công")
     public ResponseEntity<PatientInfoResponse> getActivePatientByCode(
             @Parameter(description = "Patient code (e.g., PAT001)", required = true) @PathVariable("patientCode") String patientCode) {
         PatientInfoResponse response = patientService.getActivePatientByCode(patientCode);
@@ -140,7 +155,7 @@ public class PatientController {
      */
     @GetMapping("/admin/{patientCode}")
     @Operation(summary = "Get patient by code (Admin)", description = "Get patient details including deleted ones (Admin only)")
-    @ApiMessage("Get patient by code including deleted successfully")
+    @ApiMessage("Lấy thông tin bệnh nhân bao gồm đã xóa thành công")
     public ResponseEntity<PatientInfoResponse> getPatientByCodeIncludingDeleted(
             @Parameter(description = "Patient code (e.g., PAT001)", required = true) @PathVariable("patientCode") String patientCode) {
         PatientInfoResponse response = patientService.getPatientByCodeIncludingDeleted(patientCode);
@@ -157,7 +172,7 @@ public class PatientController {
      */
     @PostMapping("")
     @Operation(summary = "Create new patient", description = "Create a new patient record (Admin or authorized roles only)")
-    @ApiMessage("Create patient successfully")
+    @ApiMessage("Tạo bệnh nhân thành công")
     public ResponseEntity<PatientInfoResponse> createPatient(@Valid @RequestBody CreatePatientRequest request)
             throws URISyntaxException {
         PatientInfoResponse result = patientService.createPatient(request);
@@ -178,7 +193,7 @@ public class PatientController {
      */
     @PatchMapping("/{patientCode}")
     @Operation(summary = "Update patient (partial)", description = "Update specific fields of a patient (null fields are ignored)")
-    @ApiMessage("Update patient successfully")
+    @ApiMessage("Cập nhật bệnh nhân thành công")
     public ResponseEntity<PatientInfoResponse> updatePatient(
             @Parameter(description = "Patient code", required = true) @PathVariable("patientCode") String patientCode,
             @Valid @RequestBody UpdatePatientRequest request) {
@@ -198,7 +213,7 @@ public class PatientController {
      */
     @PutMapping("/{patientCode}")
     @Operation(summary = "Replace patient (full update)", description = "Replace entire patient data (all fields required)")
-    @ApiMessage("Replace patient successfully")
+    @ApiMessage("Thay thế thông tin bệnh nhân thành công")
     public ResponseEntity<PatientInfoResponse> replacePatient(
             @Parameter(description = "Patient code", required = true) @PathVariable("patientCode") String patientCode,
             @Valid @RequestBody ReplacePatientRequest request) {
@@ -215,7 +230,7 @@ public class PatientController {
      */
     @DeleteMapping("/{patientCode}")
     @Operation(summary = "Delete patient (soft delete)", description = "Soft delete patient by setting isActive to false")
-    @ApiMessage("Delete patient successfully")
+    @ApiMessage("Xóa bệnh nhân thành công")
     public ResponseEntity<Void> deletePatient(
             @Parameter(description = "Patient code", required = true) @PathVariable("patientCode") String patientCode) {
         patientService.deletePatient(patientCode);
@@ -234,7 +249,7 @@ public class PatientController {
      */
     @GetMapping("/{patientId}/tooth-status")
     @Operation(summary = "Get patient tooth status", description = "Get all abnormal tooth conditions for Odontogram visualization (API 8.9)")
-    @ApiMessage("Get tooth status successfully")
+    @ApiMessage("Lấy trạng thái răng thành công")
     public ResponseEntity<List<ToothStatusResponse>> getToothStatus(
             @Parameter(description = "Patient ID", required = true) @PathVariable("patientId") Integer patientId) {
         List<ToothStatusResponse> response = patientService.getToothStatus(patientId);
@@ -254,7 +269,7 @@ public class PatientController {
      */
     @PutMapping("/{patientId}/tooth-status/{toothNumber}")
     @Operation(summary = "Update tooth status (path param style)", description = "Update tooth status with automatic history tracking - OLD ENDPOINT (API 8.10)")
-    @ApiMessage("Update tooth status successfully")
+    @ApiMessage("Cập nhật trạng thái răng thành công")
     public ResponseEntity<UpdateToothStatusResponse> updateToothStatusWithPathParam(
             @Parameter(description = "Patient ID", required = true) @PathVariable("patientId") Integer patientId,
             @Parameter(description = "Tooth number", required = true) @PathVariable("toothNumber") String toothNumber,
@@ -287,7 +302,7 @@ public class PatientController {
      */
     @PutMapping("/{patientId}/tooth-status")
     @Operation(summary = "Update tooth status (body param style)", description = "Update tooth status with toothNumber in body - NEW STANDARD (API 8.10)")
-    @ApiMessage("Update tooth status successfully")
+    @ApiMessage("Cập nhật trạng thái răng thành công")
     public ResponseEntity<UpdateToothStatusResponse> updateToothStatus(
             @Parameter(description = "Patient ID", required = true) @PathVariable("patientId") Integer patientId,
             @Valid @RequestBody com.dental.clinic.management.clinical_records.dto.UpdateToothStatusRequest request) {
@@ -438,7 +453,7 @@ public class PatientController {
      */
     @GetMapping("/me/profile")
     @PreAuthorize("hasRole('PATIENT')")
-    @ApiMessage("Get patient profile for mobile app")
+    @ApiMessage("Lấy thông tin bệnh nhân cho ứng dụng di động thành công")
     @Operation(summary = "Get current patient profile", description = "Patient can view their own full profile details (for mobile app)")
     public ResponseEntity<com.dental.clinic.management.patient.dto.response.PatientDetailResponse> getCurrentPatientProfile(
             @Parameter(hidden = true) org.springframework.security.core.Authentication authentication) {

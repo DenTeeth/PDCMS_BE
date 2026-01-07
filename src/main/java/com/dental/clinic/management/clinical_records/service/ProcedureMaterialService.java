@@ -45,9 +45,9 @@ public class ProcedureMaterialService {
      * Process:
      * 1. Get BOM from service_consumables table
      * 2. For each material:
-     *    a) Calculate quantity needed (BOM qty × quantity_multiplier)
+     *    a) Use planned quantity from BOM as default editable quantity
      *    b) Deduct from warehouse using FEFO
-     *    c) Create procedure_material_usage record
+     *    c) Create procedure_material_usage record with editable quantity
      * 3. Update procedure.materials_deducted_at
      * 
      * @param procedureId The procedure to deduct materials for
@@ -59,7 +59,7 @@ public class ProcedureMaterialService {
 
         // Step 1: Get procedure
         ClinicalRecordProcedure procedure = procedureRepository.findById(procedureId)
-                .orElseThrow(() -> new IllegalArgumentException("Procedure not found: " + procedureId));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy thủ thuật: " + procedureId));
 
         // Check if already deducted
         if (procedure.getMaterialsDeductedAt() != null) {
@@ -82,23 +82,21 @@ public class ProcedureMaterialService {
 
         // Step 4: Deduct each material
         List<ProcedureMaterialUsage> usageRecords = new ArrayList<>();
-        Integer multiplier = procedure.getQuantityMultiplier() != null ? 
-            procedure.getQuantityMultiplier() : 1;
 
         for (ServiceConsumable bomItem : bom) {
-            // Calculate total quantity needed
-            BigDecimal plannedQty = bomItem.getQuantityPerService()
-                .multiply(BigDecimal.valueOf(multiplier));
+            // Use planned quantity from BOM as default editable quantity
+            BigDecimal plannedQty = bomItem.getQuantityPerService();
 
             // Deduct from warehouse using FEFO
             deductFromWarehouse(bomItem.getItemMaster().getItemMasterId(), plannedQty);
 
-            // Create usage record
+            // Create usage record with editable quantity field
             ProcedureMaterialUsage usage = ProcedureMaterialUsage.builder()
                 .procedure(procedure)
                 .itemMaster(bomItem.getItemMaster())
-                .plannedQuantity(plannedQty)
-                .actualQuantity(plannedQty) // Default: actual = planned
+                .plannedQuantity(plannedQty)      // Base quantity from BOM
+                .quantity(plannedQty)             // Editable quantity (defaults to planned)
+                .actualQuantity(plannedQty)       // Actual quantity (defaults to quantity)
                 .unit(bomItem.getUnit())
                 .recordedAt(LocalDateTime.now())
                 .recordedBy(username)
@@ -120,6 +118,31 @@ public class ProcedureMaterialService {
             procedureId, usageRecords.size());
 
         return usageRecords;
+    }
+
+    /**
+     * Update editable quantities before deduction
+     * Allows users to customize material quantities for this specific procedure
+     * 
+     * @param usageId Material usage record ID
+     * @param newQuantity New quantity to use for deduction
+     */
+    @Transactional
+    public ProcedureMaterialUsage updateEditableQuantity(Long usageId, BigDecimal newQuantity) {
+        ProcedureMaterialUsage usage = materialUsageRepository.findById(usageId)
+                .orElseThrow(() -> new IllegalArgumentException("Usage record not found: " + usageId));
+
+        // Can only update if materials not yet deducted
+        if (usage.getProcedure().getMaterialsDeductedAt() != null) {
+            throw new IllegalStateException("Không thể cập nhật số lượng sau khi vật tư đã được trừ khỏi kho");
+        }
+
+        usage.setQuantity(newQuantity);
+        usage.setActualQuantity(newQuantity); // Update actual to match
+        usage.setRecordedAt(LocalDateTime.now());
+        usage.setRecordedBy(getCurrentUsername());
+
+        return materialUsageRepository.save(usage);
     }
 
     /**
@@ -186,7 +209,7 @@ public class ProcedureMaterialService {
             String varianceReason) {
         
         ProcedureMaterialUsage usage = materialUsageRepository.findById(usageId)
-                .orElseThrow(() -> new IllegalArgumentException("Usage record not found: " + usageId));
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy bản ghi sử dụng: " + usageId));
 
         BigDecimal oldActual = usage.getActualQuantity();
         BigDecimal difference = actualQuantity.subtract(oldActual);

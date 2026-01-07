@@ -67,7 +67,7 @@ public class ShiftRenewalService {
      * @param username the username from JWT token (sub field)
      * @return list of pending renewals
      */
-    @PreAuthorize("hasAuthority('" + AuthoritiesConstants.VIEW_SCHEDULE_OWN + "')")
+    @PreAuthorize("hasAuthority('" + AuthoritiesConstants.VIEW_RENEWAL_OWN + "')")
     public List<ShiftRenewalResponse> getPendingRenewals(String username) {
         log.info("Getting pending renewals for username: {}", username);
 
@@ -79,6 +79,46 @@ public class ShiftRenewalService {
                 LocalDateTime.now());
 
         log.info("Found {} pending renewals for employee ID: {}", renewals.size(), employeeId);
+
+        return renewals.stream()
+                .map(mapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * ADMIN/MANAGER API: Get all renewal requests across all employees.
+     * <p>
+     * Supports optional filtering by:
+     * - status (PENDING_ACTION, CONFIRMED, DECLINED, FINALIZED, EXPIRED)
+     * - employeeId
+     * <p>
+     * PERMISSION: VIEW_RENEWAL_ALL (Admin/Manager only)
+     *
+     * @param status     optional status filter
+     * @param employeeId optional employee ID filter
+     * @return list of renewal requests matching filters
+     */
+    @PreAuthorize("hasAuthority('" + AuthoritiesConstants.VIEW_RENEWAL_ALL + "')")
+    public List<ShiftRenewalResponse> getAllRenewals(RenewalStatus status, Integer employeeId) {
+        log.info("Admin getting all renewals - status: {}, employeeId: {}", status, employeeId);
+
+        List<ShiftRenewalRequest> renewals;
+
+        if (status != null && employeeId != null) {
+            // Filter by both status and employeeId
+            renewals = renewalRepository.findAllByEmployeeIdAndStatus(employeeId, status);
+        } else if (status != null) {
+            // Filter by status only
+            renewals = renewalRepository.findAllByStatus(status);
+        } else if (employeeId != null) {
+            // Filter by employeeId only
+            renewals = renewalRepository.findByEmployeeEmployeeIdOrderByCreatedAtDesc(employeeId);
+        } else {
+            // No filters - get all
+            renewals = renewalRepository.findAllRenewals();
+        }
+
+        log.info("Found {} renewal requests", renewals.size());
 
         return renewals.stream()
                 .map(mapper::toResponse)
@@ -105,10 +145,10 @@ public class ShiftRenewalService {
      * 7. Update renewal: set status, confirmed_at, decline_reason (if DECLINED)
      * 8. Commit transaction
      *
-     * @param renewalId  the renewal ID (VARCHAR(20) format: SRR_YYYYMMDD_XXXXX)
-     * @param username   the username from JWT token (sub field)
-     * @param request    the response (action: CONFIRMED|DECLINED, declineReason:
-     *                   TEXT if DECLINED)
+     * @param renewalId the renewal ID (VARCHAR(20) format: SRR_YYYYMMDD_XXXXX)
+     * @param username  the username from JWT token (sub field)
+     * @param request   the response (action: CONFIRMED|DECLINED, declineReason:
+     *                  TEXT if DECLINED)
      * @return updated renewal response
      * @throws RenewalNotFoundException       if renewal not found
      * @throws NotRenewalOwnerException       if not owned by employee
@@ -118,7 +158,7 @@ public class ShiftRenewalService {
      *                                        declineReason=NULL
      * @throws RegistrationInactiveException  if fixed registration is_active=FALSE
      */
-    @PreAuthorize("hasAuthority('" + AuthoritiesConstants.MANAGE_FIXED_REGISTRATIONS + "')")
+    @PreAuthorize("hasAuthority('" + AuthoritiesConstants.RESPOND_RENEWAL_OWN + "')")
     @Transactional
     public ShiftRenewalResponse respondToRenewal(
             String renewalId,
@@ -394,7 +434,7 @@ public class ShiftRenewalService {
             log.warn("Renewal request already exists for registration {}", registrationId);
             throw new InvalidRenewalStateException(
                     "RENEWAL_EXISTS",
-                    String.format("Renewal request already exists for registration %d", registrationId));
+                    String.format("Yêu cầu gia hạn đã tồn tại cho đăng ký %d", registrationId));
         }
 
         // 4. Create renewal request
@@ -448,16 +488,16 @@ public class ShiftRenewalService {
      */
     private Integer getEmployeeIdFromUsername(String username) {
         if (username == null || username.trim().isEmpty()) {
-            throw new RuntimeException("Username cannot be null or empty");
+            throw new RuntimeException("Tên đăng nhập không được để trống");
         }
 
         return accountRepository.findOneByUsername(username)
                 .map(account -> {
                     if (account.getEmployee() == null) {
-                        throw new RuntimeException("No employee associated with user: " + username);
+                        throw new RuntimeException("Không có nhân viên liên kết với người dùng: " + username);
                     }
                     return account.getEmployee().getEmployeeId();
                 })
-                .orElseThrow(() -> new RuntimeException("Account not found for username: " + username));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản với tên đăng nhập: " + username));
     }
 }

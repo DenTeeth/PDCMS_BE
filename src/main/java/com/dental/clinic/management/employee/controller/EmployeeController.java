@@ -15,6 +15,7 @@ import com.dental.clinic.management.employee.dto.request.CreateEmployeeRequest;
 import com.dental.clinic.management.employee.dto.request.ReplaceEmployeeRequest;
 import com.dental.clinic.management.employee.dto.request.UpdateEmployeeRequest;
 import com.dental.clinic.management.employee.dto.response.EmployeeInfoResponse;
+import com.dental.clinic.management.employee.dto.response.EmployeeStatsResponse;
 import com.dental.clinic.management.employee.service.EmployeeService;
 import com.dental.clinic.management.specialization.domain.Specialization;
 import com.dental.clinic.management.utils.annotation.ApiMessage;
@@ -42,18 +43,19 @@ public class EmployeeController {
   }
 
   @GetMapping("")
-  @Operation(summary = "Get all active employees", description = "Retrieve a paginated list of active employees with optional search and filters")
-  @ApiMessage("Get all active employees successfully")
-  public ResponseEntity<Page<EmployeeInfoResponse>> getAllActiveEmployees(
+  @Operation(summary = "Get all employees", description = "Retrieve a paginated list of employees with optional search and filters. By default shows all employees including inactive ones.")
+  @ApiMessage("Lấy danh sách nhân viên thành công")
+  public ResponseEntity<Page<EmployeeInfoResponse>> getAllEmployees(
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "10") int size,
       @RequestParam(defaultValue = "employeeCode") String sortBy,
       @RequestParam(defaultValue = "ASC") String sortDirection,
       @Parameter(description = "Search by employee code, first name, or last name") @RequestParam(required = false) String search,
       @Parameter(description = "Filter by role ID (e.g., ROLE_DENTIST)") @RequestParam(required = false) String roleId,
-      @Parameter(description = "Filter by employment type (FULL_TIME, PART_TIME_FIXED, PART_TIME_FLEX)") @RequestParam(required = false) String employmentType) {
+      @Parameter(description = "Filter by employment type (FULL_TIME, PART_TIME_FIXED, PART_TIME_FLEX)") @RequestParam(required = false) String employmentType,
+      @Parameter(description = "Filter by active status (true=active only, false=inactive only, null=all)") @RequestParam(required = false) Boolean isActive) {
 
-    Page<EmployeeInfoResponse> response = employeeService.getAllActiveEmployees(page, size, sortBy, sortDirection, search, roleId, employmentType);
+    Page<EmployeeInfoResponse> response = employeeService.getAllEmployees(page, size, sortBy, sortDirection, search, roleId, employmentType, isActive);
     return ResponseEntity.ok().body(response);
   }
 
@@ -63,7 +65,7 @@ public class EmployeeController {
    */
   @GetMapping("/admin/all")
   @Operation(summary = "Get all employees (Admin)", description = "Retrieve all employees including deleted ones (Admin only)")
-  @ApiMessage("Get all employees including deleted successfully")
+  @ApiMessage("Lấy tất cả nhân viên bao gồm đã xóa thành công")
   public ResponseEntity<Page<EmployeeInfoResponse>> getAllEmployeesIncludingDeleted(
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "10") int size,
@@ -76,12 +78,24 @@ public class EmployeeController {
   }
 
   /**
+   * Get employee statistics (total, active, inactive counts)
+   * Provides summary stats for dashboard/UI without needing to fetch all pages
+   */
+  @GetMapping("/stats")
+  @Operation(summary = "Get employee statistics", description = "Get total, active, and inactive employee counts")
+  @ApiMessage("Lấy thống kê nhân viên thành công")
+  public ResponseEntity<EmployeeStatsResponse> getEmployeeStats() {
+    EmployeeStatsResponse stats = employeeService.getEmployeeStats();
+    return ResponseEntity.ok(stats);
+  }
+
+  /**
    * Get ACTIVE employee by code (isActive = true only)
    * This is the default endpoint for normal operations
    */
   @GetMapping("/{employeeCode}")
   @Operation(summary = "Get employee by code", description = "Get active employee details by employee code")
-  @ApiMessage("Get active employee by Employee Code successfully")
+  @ApiMessage("Lấy thông tin nhân viên theo mã thành công")
   public ResponseEntity<EmployeeInfoResponse> getActiveEmployeeByCode(
       @Parameter(description = "Employee code (e.g., EMP001)", required = true) @PathVariable("employeeCode") String employeeCode) {
     EmployeeInfoResponse response = employeeService.getActiveEmployeeByCode(employeeCode);
@@ -94,7 +108,7 @@ public class EmployeeController {
    */
   @GetMapping("/admin/{employeeCode}")
   @Operation(summary = "Get employee by code (Admin)", description = "Get employee details including deleted ones (Admin only)")
-  @ApiMessage("Get employee by code including deleted successfully")
+  @ApiMessage("Lấy thông tin nhân viên bao gồm đã xóa thành công")
   public ResponseEntity<EmployeeInfoResponse> getEmployeeByCodeIncludingDeleted(
       @PathVariable("employeeCode") String employeeCode) {
     EmployeeInfoResponse response = employeeService.getEmployeeByCodeIncludingDeleted(employeeCode);
@@ -116,7 +130,7 @@ public class EmployeeController {
    */
   @PostMapping("")
   @Operation(summary = "Create new employee", description = "Create employee with existing account OR create new account automatically")
-  @ApiMessage("Create employee successfully")
+  @ApiMessage("Tạo nhân viên thành công")
   public ResponseEntity<EmployeeInfoResponse> createEmployee(@Valid @RequestBody CreateEmployeeRequest request)
       throws URISyntaxException {
 
@@ -143,7 +157,7 @@ public class EmployeeController {
    */
   @PatchMapping("/{employeeCode}")
   @Operation(summary = "Update employee (partial)", description = "Update specific fields of an employee (null fields are ignored)")
-  @ApiMessage("Update employee successfully")
+  @ApiMessage("Cập nhật nhân viên thành công")
   public ResponseEntity<EmployeeInfoResponse> updateEmployee(
       @Parameter(description = "Employee code", required = true) @PathVariable("employeeCode") String employeeCode,
       @Valid @RequestBody UpdateEmployeeRequest request) {
@@ -167,7 +181,7 @@ public class EmployeeController {
    */
   @PutMapping("/{employeeCode}")
   @Operation(summary = "Replace employee (full update)", description = "Replace entire employee data (all fields required)")
-  @ApiMessage("Replace employee successfully")
+  @ApiMessage("Thay thế thông tin nhân viên thành công")
   public ResponseEntity<EmployeeInfoResponse> replaceEmployee(
       @Parameter(description = "Employee code", required = true) @PathVariable("employeeCode") String employeeCode,
       @Valid @RequestBody ReplaceEmployeeRequest request) {
@@ -185,7 +199,7 @@ public class EmployeeController {
    */
   @DeleteMapping("/{employeeCode}")
   @Operation(summary = "Delete employee (soft delete)", description = "Soft delete employee by setting isActive to false")
-  @ApiMessage("Delete employee successfully")
+  @ApiMessage("Xóa nhân viên thành công")
   public ResponseEntity<Void> deleteEmployee(
       @Parameter(description = "Employee code", required = true) @PathVariable("employeeCode") String employeeCode) {
     employeeService.deleteEmployee(employeeCode);
@@ -199,7 +213,7 @@ public class EmployeeController {
    */
   @GetMapping("/specializations")
   @Operation(summary = "Get all specializations", description = "Retrieve list of all active specializations")
-  @ApiMessage("Get all specializations successfully")
+  @ApiMessage("Lấy danh sách chuyên môn thành công")
   public ResponseEntity<java.util.List<Specialization>> getAllSpecializations() {
     java.util.List<Specialization> specializations = employeeService.getAllActiveSpecializations();
     return ResponseEntity.ok(specializations);
@@ -214,7 +228,7 @@ public class EmployeeController {
    */
   @GetMapping("/medical-staff")
   @Operation(summary = "Get medical staff for appointments", description = "Get active employees with specializations (excludes admin/receptionist)")
-  @ApiMessage("Get medical staff successfully")
+  @ApiMessage("Lấy danh sách nhân viên y tế thành công")
   public ResponseEntity<java.util.List<EmployeeInfoResponse>> getActiveMedicalStaff() {
     java.util.List<EmployeeInfoResponse> medicalStaff = employeeService.getActiveMedicalStaff();
     return ResponseEntity.ok(medicalStaff);

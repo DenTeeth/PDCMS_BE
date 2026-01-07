@@ -56,7 +56,7 @@ public class TreatmentPlanRBACService {
         if (authentication == null || !(authentication.getPrincipal() instanceof Jwt)) {
             throw new ResourceNotFoundException(
                     "AUTHENTICATION_REQUIRED",
-                    "Valid JWT authentication required");
+                    "Yêu cầu xác thực JWT hợp lệ");
         }
 
         Jwt jwt = (Jwt) authentication.getPrincipal();
@@ -86,7 +86,7 @@ public class TreatmentPlanRBACService {
                 return Integer.parseInt((String) claim);
             } catch (NumberFormatException e) {
                 throw new NumberFormatException(
-                        "Invalid account_id format in JWT: " + claim);
+                        "Định dạng account_id trong JWT không hợp lệ: " + claim);
             }
         }
 
@@ -136,23 +136,23 @@ public class TreatmentPlanRBACService {
         if (baseRoleId.equals(BaseRoleConstants.PATIENT)) {
             log.warn(" PATIENT user attempted to modify plan - REJECTED");
             throw new AccessDeniedException(
-                    "Patients cannot modify treatment plans. Please contact your dentist.");
+                    "Bệnh nhân không thể sửa đổi lộ trình điều trị. Vui lòng liên hệ nha sĩ của bạn.");
         }
 
         // EMPLOYEE: Verify createdBy (unless MANAGER role)
         if (baseRoleId.equals(BaseRoleConstants.EMPLOYEE)) {
             String roleName = account.getRole().getRoleName();
-            
+
             // MANAGER role can modify all plans (like ADMIN)
             if ("ROLE_MANAGER".equals(roleName)) {
                 log.info(" MANAGER role - Access granted to modify any plan");
                 return;
             }
-            
+
             Employee employee = employeeRepository.findOneByAccountAccountId(accountId)
                     .orElseThrow(() -> new ResourceNotFoundException(
                             "EMPLOYEE_NOT_FOUND",
-                            "Employee record not found for accountId: " + accountId));
+                            "Không tìm thấy hồ sơ nhân viên với accountId: " + accountId));
 
             String currentEmployeeCode = employee.getEmployeeCode();
 
@@ -160,7 +160,7 @@ public class TreatmentPlanRBACService {
             Employee planCreator = plan.getCreatedBy();
             if (planCreator == null) {
                 log.error(" Plan {} has no creator (createdBy is null)", plan.getPlanId());
-                throw new AccessDeniedException("Treatment plan has no creator information");
+                throw new AccessDeniedException("Lộ trình điều trị không có thông tin người tạo");
             }
 
             String planCreatorEmployeeCode = planCreator.getEmployeeCode();
@@ -172,8 +172,8 @@ public class TreatmentPlanRBACService {
                 log.warn(" Access DENIED: Employee {} tried to modify plan created by {}",
                         currentEmployeeCode, planCreatorEmployeeCode);
                 throw new AccessDeniedException(
-                        String.format("You can only modify treatment plans that you created. " +
-                                "This plan was created by %s", planCreatorEmployeeCode));
+                        String.format("Bạn chỉ có thể chỉnh sửa kế hoạch điều trị do bạn tạo. " +
+                                "Kế hoạch này được tạo bởi %s", planCreatorEmployeeCode));
             }
 
             log.info(" EMPLOYEE createdBy verification passed");
@@ -182,7 +182,7 @@ public class TreatmentPlanRBACService {
 
         // Unknown role
         log.error(" Unknown baseRoleId: {}", baseRoleId);
-        throw new AccessDeniedException("Unknown user role: " + baseRoleId);
+        throw new AccessDeniedException("Vai trò người dùng không xác định: " + baseRoleId);
     }
 
     /**

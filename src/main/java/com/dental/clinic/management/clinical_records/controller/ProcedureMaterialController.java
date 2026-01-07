@@ -3,6 +3,7 @@ package com.dental.clinic.management.clinical_records.controller;
 import com.dental.clinic.management.clinical_records.domain.ClinicalRecordProcedure;
 import com.dental.clinic.management.clinical_records.domain.ProcedureMaterialUsage;
 import com.dental.clinic.management.clinical_records.dto.ProcedureMaterialsResponse;
+import com.dental.clinic.management.clinical_records.dto.UpdateMaterialQuantityRequest;
 import com.dental.clinic.management.clinical_records.dto.UpdateProcedureMaterialsRequest;
 import com.dental.clinic.management.clinical_records.dto.UpdateProcedureMaterialsResponse;
 import com.dental.clinic.management.clinical_records.repository.ClinicalRecordProcedureRepository;
@@ -65,6 +66,9 @@ public class ProcedureMaterialController {
         // Get material usage
         List<ProcedureMaterialUsage> usages = procedureMaterialService.getMaterialUsage(procedureId);
 
+        // Determine if procedure has consumables
+        boolean hasConsumables = !usages.isEmpty();
+
         // Check permission for viewing cost data
         boolean hasViewCostPermission = SecurityUtil
                 .hasCurrentUserPermission(AuthoritiesConstants.VIEW_WAREHOUSE_COST);
@@ -78,6 +82,7 @@ public class ProcedureMaterialController {
                 .serviceCode(procedure.getService() != null ? 
                     procedure.getService().getServiceCode() : null)
                 .toothNumber(procedure.getToothNumber())
+                .hasConsumables(hasConsumables)  // Flag indicating if procedure uses materials
                 .materialsDeducted(procedure.getMaterialsDeductedAt() != null)
                 .deductedAt(procedure.getMaterialsDeductedAt())
                 .deductedBy(procedure.getMaterialsDeductedBy())
@@ -175,6 +180,85 @@ public class ProcedureMaterialController {
     }
 
     /**
+     * API 8.9: Update Editable Material Quantity
+     * 
+     * Update the editable quantity for a material BEFORE warehouse deduction
+     * This allows users to customize material quantity for specific procedure steps
+     * 
+     * Authorization: WRITE_CLINICAL_RECORD
+     */
+    @Operation(summary = "API 8.9 - Update Editable Material Quantity",
+               description = "Update material quantity before warehouse deduction (replaces multiplier)")
+    @PatchMapping("/{procedureId}/materials/{usageId}/quantity")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasAuthority('WRITE_CLINICAL_RECORD')")
+    public ResponseEntity<ProcedureMaterialsResponse.MaterialItemDTO> updateMaterialQuantity(
+            @PathVariable Integer procedureId,
+            @PathVariable Long usageId,
+            @Valid @RequestBody UpdateMaterialQuantityRequest request) {
+        
+        log.info("PATCH /api/v1/clinical-records/procedures/{}/materials/{}/quantity", 
+                procedureId, usageId);
+
+        // Update editable quantity
+        ProcedureMaterialUsage updated = 
+            procedureMaterialService.updateEditableQuantity(usageId, request.getQuantity());
+
+        // Check permission for cost data
+        boolean hasViewCostPermission = SecurityUtil
+                .hasCurrentUserPermission(AuthoritiesConstants.VIEW_WAREHOUSE_COST);
+
+        // Get current stock
+        Integer currentStock = itemBatchRepository
+                .sumQuantityByItemMasterId(updated.getItemMaster().getItemMasterId());
+
+        // Determine stock status
+        String stockStatus = "OK";
+        if (currentStock == null || currentStock == 0) {
+            stockStatus = "OUT_OF_STOCK";
+        } else if (updated.getItemMaster().getMinStockLevel() != null && 
+                   currentStock <= updated.getItemMaster().getMinStockLevel()) {
+            stockStatus = "LOW";
+        }
+
+        // Get price/cost data only if user has permission
+        BigDecimal unitPrice = hasViewCostPermission ? 
+            updated.getItemMaster().getCurrentMarketPrice() : null;
+        
+        BigDecimal totalPlannedCost = hasViewCostPermission && unitPrice != null ?
+            updated.getPlannedQuantity().multiply(unitPrice) : null;
+        
+        BigDecimal totalActualCost = hasViewCostPermission && unitPrice != null ?
+            updated.getActualQuantity().multiply(unitPrice) : null;
+
+        // Build response
+        ProcedureMaterialsResponse.MaterialItemDTO response = 
+            ProcedureMaterialsResponse.MaterialItemDTO.builder()
+                .usageId(updated.getUsageId())
+                .itemMasterId(updated.getItemMaster().getItemMasterId())
+                .itemCode(updated.getItemMaster().getItemCode())
+                .itemName(updated.getItemMaster().getItemName())
+                .categoryName(updated.getItemMaster().getCategory() != null ? 
+                    updated.getItemMaster().getCategory().getCategoryName() : null)
+                .plannedQuantity(updated.getPlannedQuantity())
+                .quantity(updated.getQuantity())
+                .actualQuantity(updated.getActualQuantity())
+                .varianceQuantity(updated.getVarianceQuantity())
+                .varianceReason(updated.getVarianceReason())
+                .unitName(updated.getUnit().getUnitName())
+                .unitPrice(unitPrice)
+                .totalPlannedCost(totalPlannedCost)
+                .totalActualCost(totalActualCost)
+                .stockStatus(stockStatus)
+                .currentStock(currentStock)
+                .recordedAt(updated.getRecordedAt())
+                .recordedBy(updated.getRecordedBy())
+                .notes(updated.getNotes())
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
      * Map ProcedureMaterialUsage entities to DTOs
      * 
      * @param usages List of material usage records
@@ -215,6 +299,7 @@ public class ProcedureMaterialController {
                     .categoryName(usage.getItemMaster().getCategory() != null ? 
                         usage.getItemMaster().getCategory().getCategoryName() : null)
                     .plannedQuantity(usage.getPlannedQuantity())
+                    .quantity(usage.getQuantity())           // Editable quantity
                     .actualQuantity(usage.getActualQuantity())
                     .varianceQuantity(usage.getVarianceQuantity())
                     .varianceReason(usage.getVarianceReason())

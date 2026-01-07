@@ -40,7 +40,7 @@ public class PermissionController {
 
     @GetMapping("")
     @Operation(summary = "Get all permissions", description = "Retrieve a complete list of all active permissions in the system")
-    @ApiMessage("Get all permissions successfully")
+    @ApiMessage("Lấy danh sách quyền hạn thành công")
     @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('VIEW_PERMISSION')")
     public ResponseEntity<List<PermissionInfoResponse>> getAllPermissions() {
         List<PermissionInfoResponse> response = permissionService.getAllActivePermissions();
@@ -49,7 +49,7 @@ public class PermissionController {
 
     @GetMapping("/by-module")
     @Operation(summary = "Get permissions by module", description = "Retrieve permissions grouped by their module (e.g., USER, ADMIN, EMPLOYEE)")
-    @ApiMessage("Get permissions grouped by module successfully")
+    @ApiMessage("Lấy quyền hạn nhóm theo module thành công")
     @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('VIEW_PERMISSION')")
     public ResponseEntity<Map<String, List<PermissionInfoResponse>>> getPermissionsByModule() {
         Map<String, List<PermissionInfoResponse>> response = permissionService.getPermissionsGroupedByModule();
@@ -58,7 +58,7 @@ public class PermissionController {
 
     @GetMapping("/grouped")
     @Operation(summary = "Get permissions with hierarchy", description = "Retrieve all permissions grouped by module with parent-child hierarchy information. Used for frontend permission management UI with three-level selection: NONE (no permission), OWN (child permission), ALL (parent permission)")
-    @ApiMessage("Get grouped permissions with hierarchy successfully")
+    @ApiMessage("Lấy quyền hạn phân cấp thành công")
     @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('VIEW_PERMISSION')")
     public ResponseEntity<Map<String, List<PermissionHierarchyDTO>>> getGroupedPermissions() {
         Map<String, List<PermissionHierarchyDTO>> response = permissionService.getGroupedPermissions();
@@ -67,7 +67,7 @@ public class PermissionController {
 
     @GetMapping("/grouped-simple")
     @Operation(summary = "Get permissions grouped by module ", description = "Retrieve permissions grouped by module in a simple, readable format. Returns Map<Module, List<PermissionId>> for easy frontend display")
-    @ApiMessage("Get permissions grouped by module successfully")
+    @ApiMessage("Lấy quyền hạn nhóm theo module thành công")
     @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('VIEW_PERMISSION')")
     public ResponseEntity<Map<String, List<String>>> getGroupedPermissionsSimple() {
         Map<String, List<String>> response = permissionService.getPermissionsGroupedByModuleSimple();
@@ -76,7 +76,7 @@ public class PermissionController {
 
     @Hidden
     @GetMapping("/active")
-    @ApiMessage("Get all active permissions successfully")
+    @ApiMessage("Lấy danh sách quyền hạn đang hoạt động thành công")
     public ResponseEntity<List<PermissionInfoResponse>> getAllActivePermissions() {
         List<PermissionInfoResponse> response = permissionService.getAllActivePermissions();
         return ResponseEntity.ok().body(response);
@@ -84,7 +84,7 @@ public class PermissionController {
 
     @Hidden
     @GetMapping("/{permissionId}")
-    @ApiMessage("Get permission by ID successfully")
+    @ApiMessage("Lấy quyền hạn theo ID thành công")
     public ResponseEntity<PermissionInfoResponse> getPermissionById(@PathVariable String permissionId) {
         PermissionInfoResponse response = permissionService.getPermissionById(permissionId);
         return ResponseEntity.ok().body(response);
@@ -92,7 +92,7 @@ public class PermissionController {
 
     @Hidden
     @GetMapping("/module/{module}")
-    @ApiMessage("Get permissions by module successfully")
+    @ApiMessage("Lấy quyền hạn theo module thành công")
     public ResponseEntity<List<PermissionInfoResponse>> getPermissionsByModule(@PathVariable String module) {
         List<PermissionInfoResponse> response = permissionService.getPermissionsByModule(module);
         return ResponseEntity.ok().body(response);
@@ -100,7 +100,7 @@ public class PermissionController {
 
     @Hidden
     @PostMapping("")
-    @ApiMessage("Create permission successfully")
+    @ApiMessage("Tạo quyền hạn thành công")
     public ResponseEntity<PermissionInfoResponse> createPermission(@Valid @RequestBody CreatePermissionRequest request)
             throws URISyntaxException {
         PermissionInfoResponse response = permissionService.createPermission(request);
@@ -109,7 +109,7 @@ public class PermissionController {
 
     @Hidden
     @PatchMapping("/{permissionId}")
-    @ApiMessage("Update permission successfully")
+    @ApiMessage("Cập nhật quyền hạn thành công")
     public ResponseEntity<PermissionInfoResponse> updatePermission(
             @PathVariable String permissionId,
             @Valid @RequestBody UpdatePermissionRequest request) {
@@ -119,7 +119,7 @@ public class PermissionController {
 
     @Hidden
     @DeleteMapping("/{permissionId}")
-    @ApiMessage("Delete permission successfully")
+    @ApiMessage("Xóa quyền hạn thành công")
     public ResponseEntity<Void> deletePermission(@PathVariable String permissionId) {
         permissionService.deletePermission(permissionId);
         return ResponseEntity.noContent().build();
@@ -127,7 +127,7 @@ public class PermissionController {
 
     @Hidden
     @DeleteMapping("/{permissionId}/hard")
-    @ApiMessage("Hard delete permission successfully")
+    @ApiMessage("Xóa vĩnh viễn quyền hạn thành công")
     public ResponseEntity<Void> hardDeletePermission(@PathVariable String permissionId) {
         permissionService.hardDeletePermission(permissionId);
         return ResponseEntity.noContent().build();
@@ -135,7 +135,7 @@ public class PermissionController {
 
     @Hidden
     @GetMapping("/exists/{permissionName}")
-    @ApiMessage("Check if permission name exists")
+    @ApiMessage("Kiểm tra tên quyền hạn đã tồn tại")
     public ResponseEntity<Boolean> existsByPermissionName(@PathVariable String permissionName) {
         boolean exists = permissionService.existsByPermissionName(permissionName);
         return ResponseEntity.ok().body(exists);

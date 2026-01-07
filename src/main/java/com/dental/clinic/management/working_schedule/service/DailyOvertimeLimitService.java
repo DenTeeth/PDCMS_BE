@@ -104,7 +104,7 @@ public class DailyOvertimeLimitService {
                     MAX_DAILY_OVERTIME_HOURS
             );
             ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, message);
-            problemDetail.setTitle("Daily Overtime Limit Exceeded");
+            problemDetail.setTitle("Vượt Giới Hạn Thêm Giờ Ngày");
             throw new ErrorResponseException(HttpStatus.BAD_REQUEST, problemDetail, null);
         }
 

@@ -35,4 +35,11 @@ public interface HolidayDefinitionRepository extends JpaRepository<HolidayDefini
      */
     @Query("SELECT hd FROM HolidayDefinition hd LEFT JOIN FETCH hd.holidayDates ORDER BY hd.holidayName ASC")
     List<HolidayDefinition> findAllWithDates();
+
+    /**
+     * Find holiday definition with ID starting with prefix, ordered by ID descending.
+     * Used for auto-generating sequential IDs.
+     */
+    @Query("SELECT h FROM HolidayDefinition h WHERE h.definitionId LIKE :prefix% ORDER BY h.definitionId DESC")
+    List<HolidayDefinition> findByDefinitionIdStartingWithOrderByDefinitionIdDesc(@org.springframework.data.repository.query.Param("prefix") String prefix);
 }

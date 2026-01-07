@@ -220,6 +220,13 @@ public final class AuthoritiesConstants {
     public static final String MANAGE_PART_TIME_REGISTRATIONS = "MANAGE_PART_TIME_REGISTRATIONS"; // Part-time shift registrations
     public static final String MANAGE_FIXED_REGISTRATIONS = "MANAGE_FIXED_REGISTRATIONS"; // Fixed shift registrations
 
+    // ============================================
+    // MODULE 12A: SHIFT_RENEWAL (3 permissions) - Fixed Schedule Renewal (Luồng 1 only)
+    // ============================================
+    public static final String VIEW_RENEWAL_OWN = "VIEW_RENEWAL_OWN"; // View own renewal requests
+    public static final String RESPOND_RENEWAL_OWN = "RESPOND_RENEWAL_OWN"; // Respond to own renewal requests
+    public static final String VIEW_RENEWAL_ALL = "VIEW_RENEWAL_ALL"; // View all renewal requests (Admin/Manager)
+
     // ===== NOT IN DATABASE - Commented out for reference =====
     // /** @deprecated Use MANAGE_WORK_SHIFTS */
     // @Deprecated

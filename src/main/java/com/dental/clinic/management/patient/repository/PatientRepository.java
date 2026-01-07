@@ -94,4 +94,12 @@ public interface PatientRepository extends JpaRepository<Patient, Integer>, JpaS
          "com.dental.clinic.management.patient.enums.BookingBlockReason.OTHER_SERIOUS) " +
          "ORDER BY p.blockedAt DESC")
   java.util.List<Patient> findAllBlacklisted();
+
+  /**
+   * Count patients by active status.
+   * 
+   * @param isActive Active status filter
+   * @return Count of patients
+   */
+  long countByIsActive(boolean isActive);
 }

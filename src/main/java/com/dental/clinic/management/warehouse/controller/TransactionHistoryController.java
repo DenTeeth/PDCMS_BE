@@ -367,7 +367,7 @@ public class TransactionHistoryController {
 
                 } catch (Exception e) {
                         log.error("Error exporting transaction history to Excel", e);
-                        throw new RuntimeException("Failed to export transaction history: " + e.getMessage());
+                        throw new RuntimeException("Đã xảy ra lỗi khi xuất lịch sử giao dịch: " + e.getMessage());
                 }
         }
 }

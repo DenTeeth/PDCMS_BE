@@ -27,11 +27,11 @@ public class Room {
     @Column(name = "room_id", length = 50)
     private String roomId;
 
-    @NotBlank(message = "Room code cannot be blank")
+    @NotBlank(message = "Mã phòng không được để trống")
     @Column(name = "room_code", unique = true, nullable = false, length = 20)
     private String roomCode;
 
-    @NotBlank(message = "Room name cannot be blank")
+    @NotBlank(message = "Tên phòng không được để trống")
     @Column(name = "room_name", nullable = false, length = 100)
     private String roomName;
 

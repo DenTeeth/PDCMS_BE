@@ -18,6 +18,7 @@ import com.dental.clinic.management.patient.dto.request.CreatePatientRequest;
 import com.dental.clinic.management.patient.dto.request.ReplacePatientRequest;
 import com.dental.clinic.management.patient.dto.request.UpdatePatientRequest;
 import com.dental.clinic.management.patient.dto.response.PatientInfoResponse;
+import com.dental.clinic.management.patient.dto.response.PatientStatsResponse;
 import com.dental.clinic.management.patient.dto.ToothStatusResponse;
 import com.dental.clinic.management.patient.dto.UpdateToothStatusRequest;
 import com.dental.clinic.management.patient.dto.UpdateToothStatusResponse;
@@ -26,6 +27,7 @@ import com.dental.clinic.management.patient.repository.PatientRepository;
 import com.dental.clinic.management.clinical_records.repository.PatientToothStatusRepository;
 import com.dental.clinic.management.clinical_records.repository.PatientToothStatusHistoryRepository;
 import com.dental.clinic.management.employee.domain.Employee;
+import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.utils.EmailService;
 import com.dental.clinic.management.utils.SequentialCodeGenerator;
 
@@ -68,6 +70,7 @@ public class PatientService {
     private final PatientToothStatusRepository patientToothStatusRepository;
     private final PatientToothStatusHistoryRepository patientToothStatusHistoryRepository;
     private final DuplicatePatientDetectionService duplicateDetectionService;
+    private final EmployeeRepository employeeRepository;
 
     public PatientService(
             PatientRepository patientRepository,
@@ -81,7 +84,8 @@ public class PatientService {
             RoleRepository roleRepository,
             PatientToothStatusRepository patientToothStatusRepository,
             PatientToothStatusHistoryRepository patientToothStatusHistoryRepository,
-            DuplicatePatientDetectionService duplicateDetectionService) {
+            DuplicatePatientDetectionService duplicateDetectionService,
+            EmployeeRepository employeeRepository) {
         this.patientRepository = patientRepository;
         this.patientMapper = patientMapper;
         this.accountRepository = accountRepository;
@@ -92,6 +96,7 @@ public class PatientService {
         this.emailService = emailService;
         this.duplicateDetectionService = duplicateDetectionService;
         this.roleRepository = roleRepository;
+        this.employeeRepository = employeeRepository;
         this.patientToothStatusRepository = patientToothStatusRepository;
         this.patientToothStatusHistoryRepository = patientToothStatusHistoryRepository;
     }
@@ -156,6 +161,25 @@ public class PatientService {
     }
 
     /**
+     * Get patient statistics (total, active, inactive counts)
+     *
+     * @return PatientStatsResponse with counts
+     */
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('" + VIEW_PATIENT + "')")
+    @Transactional(readOnly = true)
+    public PatientStatsResponse getPatientStats() {
+        long totalPatients = patientRepository.count();
+        long activePatients = patientRepository.countByIsActive(true);
+        long inactivePatients = patientRepository.countByIsActive(false);
+
+        return PatientStatsResponse.builder()
+                .totalPatients(totalPatients)
+                .activePatients(activePatients)
+                .inactivePatients(inactivePatients)
+                .build();
+    }
+
+    /**
      * Get active patient by patient code
      *
      * @param patientCode the patient code
@@ -165,13 +189,13 @@ public class PatientService {
     public PatientInfoResponse getActivePatientByCode(String patientCode) {
         Patient patient = patientRepository.findOneByPatientCode(patientCode)
                 .orElseThrow(() -> new BadRequestAlertException(
-                        "Patient not found with code: " + patientCode,
+                        "Không tìm thấy bệnh nhân với mã: " + patientCode,
                         "Patient",
                         "patientnotfound"));
 
         if (!patient.getIsActive()) {
             throw new BadRequestAlertException(
-                    "Patient is inactive",
+                    "Bệnh nhân không còn hoạt động",
                     "Patient",
                     "patientinactive");
         }
@@ -189,7 +213,7 @@ public class PatientService {
     public PatientInfoResponse getPatientByCodeIncludingDeleted(String patientCode) {
         Patient patient = patientRepository.findOneByPatientCode(patientCode)
                 .orElseThrow(() -> new BadRequestAlertException(
-                        "Patient not found with code: " + patientCode,
+                        "Không tìm thấy bệnh nhân với mã: " + patientCode,
                         "Patient",
                         "patientnotfound"));
 
@@ -253,13 +277,36 @@ public class PatientService {
 
             log.debug("Creating account for patient with email: {}", request.getEmail());
 
-            // Check uniqueness
+            // Check email uniqueness
             if (accountRepository.existsByEmail(request.getEmail())) {
                 throw new BadRequestAlertException(
-                        "Email already exists",
+                        "Email đã tồn tại",
                         "account",
                         "emailexists");
             }
+        }
+
+        // Check phone uniqueness across both Patient and Employee tables
+        if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
+            log.debug("Checking phone uniqueness: {}", request.getPhone());
+            
+            if (patientRepository.existsByPhone(request.getPhone())) {
+                throw new BadRequestAlertException(
+                        "Số điện thoại đã tồn tại",
+                        "patient",
+                        "phoneexists");
+            }
+
+            if (employeeRepository.existsByPhone(request.getPhone())) {
+                throw new BadRequestAlertException(
+                        "Số điện thoại đã tồn tại",
+                        "employee",
+                        "phoneexists");
+            }
+        }
+
+        // Continue with account creation if email provided
+        if (request.getEmail() != null && !request.getEmail().trim().isEmpty()) {
 
             // V23/V24: Get username from request or auto-generate from email
             String username = request.getUsername();
@@ -279,7 +326,7 @@ public class PatientService {
                 // Check username uniqueness if provided by staff
                 if (accountRepository.existsByUsername(username)) {
                     throw new BadRequestAlertException(
-                            "Username already exists",
+                            "Tên đăng nhập đã tồn tại",
                             "account",
                             "usernameexists");
                 }
@@ -295,7 +342,7 @@ public class PatientService {
             // Get ROLE_PATIENT from database
             Role patientRole = roleRepository.findById("ROLE_PATIENT")
                     .orElseThrow(() -> new BadRequestAlertException(
-                            "ROLE_PATIENT not found in database",
+                            "Không tìm thấy vai trò ROLE_PATIENT trong hệ thống",
                             "role",
                             "rolenotfound"));
 
@@ -382,9 +429,31 @@ public class PatientService {
     public PatientInfoResponse updatePatient(String patientCode, UpdatePatientRequest request) {
         Patient patient = patientRepository.findOneByPatientCode(patientCode)
                 .orElseThrow(() -> new BadRequestAlertException(
-                        "Patient not found with code: " + patientCode,
+                        "Không tìm thấy bệnh nhân với mã: " + patientCode,
                         "Patient",
                         "patientnotfound"));
+
+        // Check phone uniqueness if phone is being updated
+        if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
+            // Only check if phone is actually changing
+            if (!request.getPhone().equals(patient.getPhone())) {
+                log.debug("Checking phone uniqueness for update: {}", request.getPhone());
+                
+                if (patientRepository.existsByPhone(request.getPhone())) {
+                    throw new BadRequestAlertException(
+                            "Số điện thoại đã tồn tại",
+                            "patient",
+                            "phoneexists");
+                }
+
+                if (employeeRepository.existsByPhone(request.getPhone())) {
+                    throw new BadRequestAlertException(
+                            "Số điện thoại đã tồn tại",
+                            "employee",
+                            "phoneexists");
+                }
+            }
+        }
 
         // Track if booking block status is being changed
         boolean blockingStatusChanged = request.getIsBookingBlocked() != null &&
@@ -427,7 +496,7 @@ public class PatientService {
     public PatientInfoResponse replacePatient(String patientCode, ReplacePatientRequest request) {
         Patient patient = patientRepository.findOneByPatientCode(patientCode)
                 .orElseThrow(() -> new BadRequestAlertException(
-                        "Patient not found with code: " + patientCode,
+                        "Không tìm thấy bệnh nhân với mã: " + patientCode,
                         "Patient",
                         "patientnotfound"));
 
@@ -449,7 +518,7 @@ public class PatientService {
     public void deletePatient(String patientCode) {
         Patient patient = patientRepository.findOneByPatientCode(patientCode)
                 .orElseThrow(() -> new BadRequestAlertException(
-                        "Patient not found with code: " + patientCode,
+                        "Không tìm thấy bệnh nhân với mã: " + patientCode,
                         "Patient",
                         "patientnotfound"));
 
@@ -471,7 +540,7 @@ public class PatientService {
         // Verify patient exists
         patientRepository.findById(patientId)
                 .orElseThrow(() -> new BadRequestAlertException(
-                        "Patient not found with ID: " + patientId,
+                        "Không tìm thấy bệnh nhân với ID: " + patientId,
                         "Patient",
                         "patientnotfound"));
 
@@ -512,7 +581,7 @@ public class PatientService {
         // Verify patient exists
         Patient patient = patientRepository.findById(patientId)
                 .orElseThrow(() -> new BadRequestAlertException(
-                        "Patient not found with ID: " + patientId,
+                        "Không tìm thấy bệnh nhân với ID: " + patientId,
                         "Patient",
                         "patientnotfound"));
 
@@ -562,7 +631,7 @@ public class PatientService {
                 .notes(savedStatus.getNotes())
                 .recordedAt(savedStatus.getRecordedAt())
                 .updatedAt(savedStatus.getUpdatedAt())
-                .message("Tooth status updated successfully")
+                .message("Cập nhật tình trạng răng thành công")
                 .build();
     }
 
@@ -580,13 +649,13 @@ public class PatientService {
 
         Account account = accountRepository.findOneByUsername(username)
                 .orElseThrow(() -> new BadRequestAlertException(
-                        "Account not found",
+                        "Không tìm thấy tài khoản",
                         "Account",
                         "accountnotfound"));
 
         Patient patient = patientRepository.findOneByAccountAccountId(account.getAccountId())
                 .orElseThrow(() -> new BadRequestAlertException(
-                        "Patient not found for this account",
+                        "Không tìm thấy bệnh nhân cho tài khoản này",
                         "Patient",
                         "patientnotfound"));
 

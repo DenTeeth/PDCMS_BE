@@ -461,7 +461,7 @@ public class PartTimeSlotAvailabilityService {
             yearMonth = java.time.YearMonth.parse(month);
         } catch (Exception e) {
             throw new BadRequestAlertException(
-                "Invalid month format. Expected YYYY-MM",
+                "Định dạng tháng không hợp lệ. Mông đợi YYYY-MM",
                 "partTimeSlot",
                 "invalidmonthformat"
             );

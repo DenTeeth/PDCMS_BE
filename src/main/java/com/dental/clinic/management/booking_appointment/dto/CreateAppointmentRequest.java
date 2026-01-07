@@ -39,14 +39,14 @@ public class CreateAppointmentRequest {
      * Patient code (must exist and be active)
      * Example: "BN-1001"
      */
-    @NotBlank(message = "Patient code is required")
+    @NotBlank(message = "Mã bệnh nhân là bắt buộc")
     private String patientCode;
 
     /**
      * Employee code of primary doctor (must exist and be active)
      * Example: "DR_AN_KHOA", "BS-001"
      */
-    @NotBlank(message = "Employee code is required")
+    @NotBlank(message = "Mã nhân viên là bắt buộc")
     private String employeeCode;
 
     /**
@@ -54,7 +54,7 @@ public class CreateAppointmentRequest {
      * Must exist, be active, and support all services
      * Example: "P-IMPLANT-01"
      */
-    @NotBlank(message = "Room code is required")
+    @NotBlank(message = "Mã phòng là bắt buộc")
     private String roomCode;
 
     /**
@@ -77,7 +77,7 @@ public class CreateAppointmentRequest {
      * XOR Validation: Must provide EITHER serviceCodes OR patientPlanItemIds, not both and not neither
      * This ensures clear separation between standalone booking and treatment plan booking
      */
-    @AssertTrue(message = "Please provide either serviceCodes for standalone booking or patientPlanItemIds for treatment plan booking, but not both and not neither")
+    @AssertTrue(message = "Vui lòng cung cấp serviceCodes cho đặt lịch đơn lẻ hoặc patientPlanItemIds cho đặt lịch theo lộ trình, nhưng không được cả hai hoặc để trống")
     private boolean isValidBookingType() {
         boolean hasServiceCodes = serviceCodes != null && !serviceCodes.isEmpty();
         boolean hasPlanItems = patientPlanItemIds != null && !patientPlanItemIds.isEmpty();
@@ -90,8 +90,8 @@ public class CreateAppointmentRequest {
      * Server will calculate end time based on service durations
      * Example: "2025-10-30T09:30:00"
      */
-    @NotBlank(message = "Appointment start time is required")
-    @Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}$", message = "Start time must be in ISO 8601 format (YYYY-MM-DDTHH:mm:ss)")
+    @NotBlank(message = "Thời gian bắt đầu cuộc hẹn là bắt buộc")
+    @Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}$", message = "Thời gian bắt đầu phải theo định dạng ISO 8601 (YYYY-MM-DDTHH:mm:ss)")
     private String appointmentStartTime;
 
     /**

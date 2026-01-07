@@ -170,7 +170,7 @@ public class InventoryService {
      * Update Item Master
      */
     @SuppressWarnings("deprecation")
-@Transactional
+    @Transactional
     public ItemMasterSummaryResponse updateItemMaster(Long id, UpdateItemMasterRequest request) {
         log.info("Updating item master: {}", id);
 
@@ -242,7 +242,7 @@ public class InventoryService {
      * Map ItemMaster sang DTO với calculated fields
      */
     @SuppressWarnings("deprecation")
-private ItemMasterSummaryResponse mapToSummaryDto(ItemMaster item) {
+    private ItemMasterSummaryResponse mapToSummaryDto(ItemMaster item) {
         List<ItemBatch> batches = itemBatchRepository.findByItemMaster_ItemMasterId(item.getItemMasterId());
 
         Integer totalQty = batches.stream()
@@ -445,7 +445,7 @@ private ItemMasterSummaryResponse mapToSummaryDto(ItemMaster item) {
         // Validate item exists
         @SuppressWarnings("unused")
         ItemMaster item = itemMasterRepository.findById(itemMasterId)
-                .orElseThrow(() -> new ItemMasterNotFoundException("Item not found with ID: " + itemMasterId));
+                .orElseThrow(() -> new ItemMasterNotFoundException("Không tìm thấy vật tư với ID: " + itemMasterId));
 
         return supplierItemRepository.findByItemMaster_ItemMasterId(itemMasterId).stream()
                 .map(si -> ItemSupplierResponse.builder()
@@ -522,7 +522,8 @@ private ItemMasterSummaryResponse mapToSummaryDto(ItemMaster item) {
     public Long getMedicineCategoryId() {
         return itemCategoryRepository.findByCategoryCode("MEDICINE")
                 .map(ItemCategory::getCategoryId)
-                .orElseThrow(() -> new RuntimeException("MEDICINE category not found in database. Please check seed data."));
+                .orElseThrow(
+                        () -> new RuntimeException("Không tìm thấy danh mục MEDICINE trong cơ sở dữ liệu. Vui lòng kiểm tra dữ liệu seed."));
     }
 
     /**
@@ -758,8 +759,10 @@ private ItemMasterSummaryResponse mapToSummaryDto(ItemMaster item) {
             BatchStatus statusFilter,
             Pageable pageable) {
 
-        // TODO: Implement automated email notifications to warehouse manager at 30, 15, and 5 days before expiry
-        // TODO: Send notification with expiring items list, quantities, and warehouse locations
+        // TODO: Implement automated email notifications to warehouse manager at 30, 15,
+        // and 5 days before expiry
+        // TODO: Send notification with expiring items list, quantities, and warehouse
+        // locations
         // TODO: Schedule daily check at 8 AM to scan and send alerts automatically
 
         log.info(" API 6.3 - Getting expiring alerts: days={}, categoryId={}, warehouseType={}, statusFilter={}",
@@ -770,7 +773,7 @@ private ItemMasterSummaryResponse mapToSummaryDto(ItemMaster item) {
             days = 30; // Default
         }
         if (days < 1 || days > 1095) {
-            throw new IllegalArgumentException("Parameter 'days' must be between 1 and 1095 (3 years)");
+            throw new IllegalArgumentException("Tham số 'days' phải từ 1 đến 1095 (3 năm)");
         }
 
         // 2. Calculate target date

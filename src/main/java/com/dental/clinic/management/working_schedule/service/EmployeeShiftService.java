@@ -366,15 +366,15 @@ public class EmployeeShiftService {
             }
 
             // Calculate existing shift duration
-            long shiftMinutes = Duration.between(existingWorkShift.getStartTime(), 
-                                                 existingWorkShift.getEndTime()).toMinutes();
+            long shiftMinutes = Duration.between(existingWorkShift.getStartTime(),
+                    existingWorkShift.getEndTime()).toMinutes();
             existingTotalMinutes += shiftMinutes;
         }
 
         // Check if total hours would exceed 8-hour limit
         long totalMinutes = newShiftMinutes + existingTotalMinutes;
         long totalHours = totalMinutes / 60;
-        
+
         if (totalHours > 8) {
             throw new ExceedsMaxHoursException(workDate, (int) totalHours);
         }
@@ -417,17 +417,21 @@ public class EmployeeShiftService {
     }
 
     /**
-     * Create employee shifts automatically from a registration (supports both PART_TIME and FIXED types).
-     * This is the generic method that handles shift generation for all registration types.
+     * Create employee shifts automatically from a registration (supports both
+     * PART_TIME and FIXED types).
+     * This is the generic method that handles shift generation for all registration
+     * types.
      * 
-     * @param employeeId Employee ID
-     * @param workShiftId Work shift ID
-     * @param effectiveFrom Registration start date
-     * @param effectiveTo Registration end date (nullable for indefinite)
-     * @param daysOfWeek List of day numbers (1=Monday, 2=Tuesday, ..., 7=Sunday)
-     * @param source Registration source type (PART_TIME_FLEX, FULL_TIME, PART_TIME_FIXED)
+     * @param employeeId           Employee ID
+     * @param workShiftId          Work shift ID
+     * @param effectiveFrom        Registration start date
+     * @param effectiveTo          Registration end date (nullable for indefinite)
+     * @param daysOfWeek           List of day numbers (1=Monday, 2=Tuesday, ...,
+     *                             7=Sunday)
+     * @param source               Registration source type (PART_TIME_FLEX,
+     *                             FULL_TIME, PART_TIME_FIXED)
      * @param sourceRegistrationId Original registration ID for tracking
-     * @param createdBy User who created/approved the registration
+     * @param createdBy            User who created/approved the registration
      * @return List of created shifts
      */
     @Transactional
@@ -440,8 +444,8 @@ public class EmployeeShiftService {
             String source,
             Long sourceRegistrationId,
             Integer createdBy) {
-        
-        log.info(" Creating shifts for employee {} from {} to {} (source: {})", 
+
+        log.info(" Creating shifts for employee {} from {} to {} (source: {})",
                 employeeId, effectiveFrom, effectiveTo, source);
 
         // Validate employee exists
@@ -459,18 +463,18 @@ public class EmployeeShiftService {
 
         // Calculate working days based on effectiveFrom, effectiveTo, and daysOfWeek
         List<LocalDate> workingDays = calculateWorkingDays(effectiveFrom, effectiveTo, daysOfWeek);
-        
+
         // ISSUE #53: Filter out holidays
         List<LocalDate> nonHolidayWorkingDays = holidayValidator.filterOutHolidays(workingDays);
         int holidaysFiltered = workingDays.size() - nonHolidayWorkingDays.size();
-        
+
         if (holidaysFiltered > 0) {
-            log.info("🎊 Filtered out {} holidays from {} total working days", 
-                     holidaysFiltered, workingDays.size());
+            log.info("🎊 Filtered out {} holidays from {} total working days",
+                    holidaysFiltered, workingDays.size());
         }
-        
-        log.info("📅 Calculated {} working days from date range (after filtering holidays)", 
-                 nonHolidayWorkingDays.size());
+
+        log.info("📅 Calculated {} working days from date range (after filtering holidays)",
+                nonHolidayWorkingDays.size());
 
         List<EmployeeShift> createdShifts = new java.util.ArrayList<>();
         int skippedCount = 0;
@@ -479,7 +483,7 @@ public class EmployeeShiftService {
             // Check if shift already exists (avoid duplicates)
             boolean exists = employeeShiftRepository.existsByEmployeeAndDateAndShift(
                     employeeId, workDate, workShiftId);
-            
+
             if (exists) {
                 log.debug("⏭ Shift already exists for employee {} on {} - skipping", employeeId, workDate);
                 skippedCount++;
@@ -504,11 +508,11 @@ public class EmployeeShiftService {
 
             EmployeeShift savedShift = employeeShiftRepository.save(newShift);
             createdShifts.add(savedShift);
-            
+
             log.debug(" Created shift {} for date {}", employeeShiftId, workDate);
         }
 
-        log.info(" Shift generation complete: {} created, {} skipped for employee {}", 
+        log.info(" Shift generation complete: {} created, {} skipped for employee {}",
                 createdShifts.size(), skippedCount, employeeId);
         return createdShifts;
     }
@@ -517,26 +521,29 @@ public class EmployeeShiftService {
      * Calculate working days from date range and days of week.
      * 
      * @param effectiveFrom Start date
-     * @param effectiveTo End date (nullable for indefinite, will use 1 year default)
-     * @param daysOfWeek List of day numbers (1=Monday, 2=Tuesday, ..., 7=Sunday)
+     * @param effectiveTo   End date (nullable for indefinite, will use 1 year
+     *                      default)
+     * @param daysOfWeek    List of day numbers (1=Monday, 2=Tuesday, ..., 7=Sunday)
      * @return List of dates matching the criteria
      */
-    private List<LocalDate> calculateWorkingDays(LocalDate effectiveFrom, LocalDate effectiveTo, List<Integer> daysOfWeek) {
+    private List<LocalDate> calculateWorkingDays(LocalDate effectiveFrom, LocalDate effectiveTo,
+            List<Integer> daysOfWeek) {
         List<LocalDate> workingDays = new java.util.ArrayList<>();
-        
-        // If effectiveTo is null, default to 1 year from effectiveFrom (prevent infinite loop)
+
+        // If effectiveTo is null, default to 1 year from effectiveFrom (prevent
+        // infinite loop)
         LocalDate endDate = (effectiveTo != null) ? effectiveTo : effectiveFrom.plusYears(1);
-        
+
         // Validate date range
         if (endDate.isBefore(effectiveFrom)) {
             throw new IllegalArgumentException("Ngày kết thúc không được trước ngày bắt đầu");
         }
-        
+
         // Convert day numbers to java.time.DayOfWeek
         List<java.time.DayOfWeek> targetDays = daysOfWeek.stream()
                 .map(this::convertDayNumberToDayOfWeek)
                 .collect(Collectors.toList());
-        
+
         // Loop through date range and collect matching days
         LocalDate currentDate = effectiveFrom;
         while (!currentDate.isAfter(endDate)) {
@@ -545,7 +552,7 @@ public class EmployeeShiftService {
             }
             currentDate = currentDate.plusDays(1);
         }
-        
+
         return workingDays;
     }
 
@@ -564,7 +571,7 @@ public class EmployeeShiftService {
             case 5 -> java.time.DayOfWeek.FRIDAY;
             case 6 -> java.time.DayOfWeek.SATURDAY;
             case 7 -> java.time.DayOfWeek.SUNDAY;
-            default -> throw new IllegalArgumentException("Invalid day number: " + dayNumber + " (must be 1-7)");
+            default -> throw new IllegalArgumentException("Số ngày không hợp lệ: " + dayNumber + " (phải từ 1-7)");
         };
     }
 
@@ -572,13 +579,15 @@ public class EmployeeShiftService {
      * Create employee shifts for an approved part-time registration.
      * Generates individual shift records for each working day.
      * 
-     * This is called automatically when a manager approves a part-time registration.
+     * This is called automatically when a manager approves a part-time
+     * registration.
      * 
-     * @deprecated Use {@link #createShiftsForRegistration} instead for better flexibility
-     * @param employeeId Employee ID who registered
+     * @deprecated Use {@link #createShiftsForRegistration} instead for better
+     *             flexibility
+     * @param employeeId  Employee ID who registered
      * @param workShiftId Work shift ID from the slot
      * @param workingDays List of dates to create shifts for
-     * @param managerId Manager who approved (recorded as createdBy)
+     * @param managerId   Manager who approved (recorded as createdBy)
      * @return List of created shifts
      */
     @Deprecated
@@ -588,8 +597,8 @@ public class EmployeeShiftService {
             String workShiftId,
             List<LocalDate> workingDays,
             Integer managerId) {
-        
-        log.info("Creating {} shifts for employee {} after registration approval", 
+
+        log.info("Creating {} shifts for employee {} after registration approval",
                 workingDays.size(), employeeId);
 
         // Validate employee exists
@@ -606,7 +615,7 @@ public class EmployeeShiftService {
             // Check if shift already exists (avoid duplicates)
             boolean exists = employeeShiftRepository.existsByEmployeeAndDateAndShift(
                     employeeId, workDate, workShiftId);
-            
+
             if (exists) {
                 log.warn("Shift already exists for employee {} on {} - skipping", employeeId, workDate);
                 continue;
@@ -629,7 +638,7 @@ public class EmployeeShiftService {
 
             EmployeeShift savedShift = employeeShiftRepository.save(newShift);
             createdShifts.add(savedShift);
-            
+
             log.debug("Created shift {} for date {}", employeeShiftId, workDate);
         }
 
@@ -638,23 +647,25 @@ public class EmployeeShiftService {
     }
 
     /**
-     * Check if an employee shift exists for a specific employee, date, and work shift.
+     * Check if an employee shift exists for a specific employee, date, and work
+     * shift.
      * Used to prevent duplicate shift creation during registration approval.
      * 
-     * @param employeeId Employee ID
-     * @param workDate Work date
+     * @param employeeId  Employee ID
+     * @param workDate    Work date
      * @param workShiftId Work shift ID
      * @return true if shift exists, false otherwise
      */
     public boolean existsByEmployeeAndDateAndShift(Integer employeeId, LocalDate workDate, String workShiftId) {
         return employeeShiftRepository.existsByEmployeeAndDateAndShift(employeeId, workDate, workShiftId);
     }
-    
+
     /**
      * Check if any shifts exist for a specific registration.
      * Used to skip backfill for registrations that already have shifts.
      * 
-     * @param source Source type (e.g., "PART_TIME_FLEX", "FULL_TIME") - not used but kept for API compatibility
+     * @param source   Source type (e.g., "PART_TIME_FLEX", "FULL_TIME") - not used
+     *                 but kept for API compatibility
      * @param sourceId Source registration ID
      * @return true if at least one shift exists with this source registration ID
      */
@@ -663,12 +674,13 @@ public class EmployeeShiftService {
         List<EmployeeShift> shifts = employeeShiftRepository.findBySourceRegistrationId(sourceId);
         return shifts != null && !shifts.isEmpty();
     }
-    
+
     /**
      * Delete all shifts for a specific registration.
      * Used when regenerating shifts for a registration.
      * 
-     * @param source Source type (e.g., "PART_TIME_FLEX", "FULL_TIME") - not used but kept for API compatibility
+     * @param source   Source type (e.g., "PART_TIME_FLEX", "FULL_TIME") - not used
+     *                 but kept for API compatibility
      * @param sourceId Source registration ID
      * @return Number of shifts deleted
      */
@@ -676,16 +688,16 @@ public class EmployeeShiftService {
     public int deleteShiftsForSource(String source, Long sourceId) {
         log.info("Deleting shifts for sourceRegistrationId: {}", sourceId);
         List<EmployeeShift> shiftsToDelete = employeeShiftRepository.findBySourceRegistrationId(sourceId);
-        
+
         if (shiftsToDelete == null || shiftsToDelete.isEmpty()) {
             log.debug("No shifts found to delete for sourceRegistrationId: {}", sourceId);
             return 0;
         }
-        
+
         int count = shiftsToDelete.size();
         employeeShiftRepository.deleteAll(shiftsToDelete);
         log.info("Deleted {} shifts for sourceRegistrationId: {}", count, sourceId);
-        
+
         return count;
     }
 }

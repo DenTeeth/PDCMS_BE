@@ -55,19 +55,26 @@ public class DataInitializer {
                     "SELECT COUNT(*) FROM service_consumables",
                     Integer.class);
 
-            // Log counts for debugging
-            log.info("Data counts: roles={}, items={}, services={}, consumables={}",
-                    roleCount, itemCount, serviceCount, consumablesCount);
+            // FIX: Check invoice_items to prevent duplicate invoice items bug
+            Integer invoiceItemsCount = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM invoice_items",
+                    Integer.class);
 
-            // If ALL tables have data, skip initialization
+            // Log counts for debugging
+            log.info("Data counts: roles={}, items={}, services={}, consumables={}, invoiceItems={}",
+                    roleCount, itemCount, serviceCount, consumablesCount, invoiceItemsCount);
+
+            // If ALL tables have data, still run initialization (idempotent with ON CONFLICT DO NOTHING)
+            // This ensures dashboard test data and any new seed data always gets loaded
             if (roleCount != null && roleCount > 0 &&
                     itemCount != null && itemCount > 0 &&
                     serviceCount != null && serviceCount > 0 &&
-                    consumablesCount != null && consumablesCount > 0) {
+                    consumablesCount != null && consumablesCount > 0 &&
+                    invoiceItemsCount != null && invoiceItemsCount > 0) {
                 log.info(
-                        "Seed data already exists (roles: {}, items: {}, services: {}, consumables: {}), skipping initialization",
-                        roleCount, itemCount, serviceCount, consumablesCount);
-                return;
+                        "Seed data already exists (roles: {}, items: {}, services: {}, consumables: {}, invoiceItems: {}), running initialization to load any new test data",
+                        roleCount, itemCount, serviceCount, consumablesCount, invoiceItemsCount);
+                // Don't return - continue to load new data with ON CONFLICT DO NOTHING
             }
 
             // If ANY critical table is empty, reload ALL data
@@ -116,7 +123,8 @@ public class DataInitializer {
                         continue;
                     }
 
-                    // Execute DML statements (INSERT, UPDATE, DELETE, SELECT) and constraint fixes (ALTER TABLE)
+                    // Execute DML statements (INSERT, UPDATE, DELETE, SELECT) and constraint fixes
+                    // (ALTER TABLE)
                     String upperStatement = trimmed.toUpperCase();
                     if (upperStatement.startsWith("INSERT") ||
                             upperStatement.startsWith("UPDATE") ||

@@ -17,19 +17,19 @@ import jakarta.validation.constraints.Positive;
 @AllArgsConstructor
 public class ConversionItemRequest {
 
-    @NotNull(message = "Item master ID is required")
-    @Positive(message = "Item master ID must be positive")
+    @NotNull(message = "Mã vật tư chính là bắt buộc")
+    @Positive(message = "Mã vật tư chính phải là số dương")
     private Long itemMasterId;
 
-    @NotNull(message = "From unit ID is required")
-    @Positive(message = "From unit ID must be positive")
+    @NotNull(message = "Mã đơn vị nguồn là bắt buộc")
+    @Positive(message = "Mã đơn vị nguồn phải là số dương")
     private Long fromUnitId;
 
-    @NotNull(message = "To unit ID is required")
-    @Positive(message = "To unit ID must be positive")
+    @NotNull(message = "Mã đơn vị đích là bắt buộc")
+    @Positive(message = "Mã đơn vị đích phải là số dương")
     private Long toUnitId;
 
-    @NotNull(message = "Quantity is required")
-    @Positive(message = "Quantity must be positive")
+    @NotNull(message = "Số lượng là bắt buộc")
+    @Positive(message = "Số lượng phải là số dương")
     private Double quantity;
 }

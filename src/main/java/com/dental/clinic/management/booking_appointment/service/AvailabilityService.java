@@ -60,7 +60,7 @@ public class AvailabilityService {
                 // 1. Validate services exist
                 List<DentalService> services = dentalServiceRepository.findByServiceCodeIn(serviceCodes);
                 if (services.size() != serviceCodes.size()) {
-                        throw new BadRequestAlertException("One or more services not found", ENTITY_NAME,
+                        throw new BadRequestAlertException("Một hoặc nhiều dịch vụ không tìm thấy", ENTITY_NAME,
                                         "SERVICES_NOT_FOUND");
                 }
 
@@ -267,7 +267,7 @@ public class AvailabilityService {
                 // 1. Validate services
                 List<DentalService> services = dentalServiceRepository.findByServiceCodeIn(serviceCodes);
                 if (services.size() != serviceCodes.size()) {
-                        throw new BadRequestAlertException("One or more services not found", ENTITY_NAME,
+                        throw new BadRequestAlertException("Một hoặc nhiều dịch vụ không tìm thấy", ENTITY_NAME,
                                         "SERVICES_NOT_FOUND");
                 }
 

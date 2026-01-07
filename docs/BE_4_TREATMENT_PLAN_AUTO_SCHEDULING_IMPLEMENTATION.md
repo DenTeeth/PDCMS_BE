@@ -609,7 +609,7 @@ void testCreateTreatmentPlanFromTemplate_SkipsHolidays() {
 ```sql
 -- Already created in migration script
 CREATE INDEX idx_appointments_service_date 
-ON appointments(service_id, appointment_date_time) 
+ON appointments(service_id, appointment_start_time) 
 WHERE status NOT IN ('CANCELLED', 'NO_SHOW');
 ```
 

@@ -12,7 +12,7 @@ public class InvalidDayOfWeekException extends RuntimeException {
     private final List<String> validDays;
 
     public InvalidDayOfWeekException(List<String> invalidDays) {
-        super(String.format("Invalid day of week provided: %s. Valid values are: MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY",
+        super(String.format("Ngày trong tuần không hợp lệ: %s. Giá trị hợp lệ là: MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY",
                 String.join(", ", invalidDays)));
         this.invalidDays = invalidDays;
         this.validDays = Arrays.asList("MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY");

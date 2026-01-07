@@ -20,7 +20,7 @@ public class ExportRequestDto {
 
     private String notes;
 
-    @NotNull(message = "Items list is required")
+    @NotNull(message = "Danh sách vật tư là bắt buộc")
     private List<ExportItemDto> items;
 
     @Data
@@ -29,11 +29,11 @@ public class ExportRequestDto {
     @AllArgsConstructor
     public static class ExportItemDto {
 
-        @NotNull(message = "Batch ID is required")
+        @NotNull(message = "Mã lô hàng là bắt buộc")
         private Long batchId;
 
-        @NotNull(message = "Quantity is required")
-        @Min(value = 1, message = "Quantity must be at least 1")
+        @NotNull(message = "Số lượng là bắt buộc")
+        @Min(value = 1, message = "Số lượng phải ít nhất là 1")
         private Integer quantity;
 
         private String notes;

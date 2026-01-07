@@ -1257,4 +1257,58 @@ public class TreatmentPlanController {
 
                 return ResponseEntity.ok(response);
         }
+
+        /**
+         * NEW API: Generate automatic appointment suggestions for a specific PHASE.
+         * More realistic approach - schedule one phase at a time instead of entire plan.
+         * 
+         * Date: 2024-12-29
+         * Feedback: Mentor suggested phase-level scheduling is more practical than whole plan
+         * 
+         * Features:
+         * - Uses estimated dates from plan items IN THIS PHASE ONLY
+         * - Automatically skips holidays and weekends
+         * - Applies service spacing rules (preparation, recovery, intervals)
+         * - Enforces daily appointment limits
+         * - Returns suggestions (does NOT create actual appointments)
+         * 
+         * @param phaseId Phase ID to schedule
+         * @param request Auto-schedule request with preferences
+         * @return List of appointment suggestions for this phase only
+         */
+        @Operation(summary = "Generate automatic appointment suggestions for a treatment plan phase",
+                description = "Intelligently generates appointment suggestions for a SPECIFIC PHASE only. " +
+                              "More realistic than scheduling entire plan at once. " +
+                              "Uses estimated dates from phase items and automatically adjusts for: " +
+                              "1) Holidays and weekends (shifts to next working day) " +
+                              "2) Service spacing rules (preparation days, recovery periods, intervals) " +
+                              "3) Daily appointment limits (max 2 appointments/day/patient by default) " +
+                              "Returns suggestions only - does NOT create actual appointments. " +
+                              "Frontend can review suggestions and proceed with booking.")
+        @org.springframework.security.access.prepost.PreAuthorize("hasRole('"
+                        + AuthoritiesConstants.ADMIN + "') or " +
+                        "hasAuthority('"
+                        + AuthoritiesConstants.CREATE_APPOINTMENT + "')")
+        @PostMapping("/treatment-plan-phases/{phaseId}/auto-schedule")
+        public ResponseEntity<com.dental.clinic.management.treatment_plans.dto.response.AutoScheduleResponse> generateAutoScheduleForPhase(
+                        @Parameter(description = "Phase ID", required = true, example = "456") 
+                        @PathVariable Long phaseId,
+                        @Parameter(description = "Auto-schedule request with preferences", required = true)
+                        @org.springframework.web.bind.annotation.RequestBody
+                        @jakarta.validation.Valid
+                        com.dental.clinic.management.treatment_plans.dto.request.AutoSchedulePhaseRequest request) {
+
+                log.info("REST request to generate auto-schedule for treatment plan phase: {}", phaseId);
+
+                com.dental.clinic.management.treatment_plans.dto.response.AutoScheduleResponse response =
+                        treatmentPlanAutoScheduleService.generateAutomaticAppointmentsForPhase(phaseId, request);
+
+                log.info("Generated {} appointment suggestions for phase {} ({} successful, {} failed)",
+                        response.getSuggestions().size(),
+                        phaseId,
+                        response.getSuccessfulSuggestions(),
+                        response.getFailedItems());
+
+                return ResponseEntity.ok(response);
+        }
 }

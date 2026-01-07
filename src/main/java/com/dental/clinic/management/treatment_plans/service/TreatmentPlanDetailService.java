@@ -137,7 +137,7 @@ public class TreatmentPlanDetailService {
                 // Get authentication
                 Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
                 if (authentication == null || !authentication.isAuthenticated()) {
-                        throw new AccessDeniedException("User not authenticated");
+                        throw new AccessDeniedException("Người dùng chưa xác thực");
                 }
 
                 boolean hasViewAllPermission = authentication.getAuthorities().stream()
@@ -182,13 +182,13 @@ public class TreatmentPlanDetailService {
                                 if (patientAccountId == null) {
                                         log.error("Patient {} has null account! This is a data integrity issue.",
                                                         patientCode);
-                                        throw new AccessDeniedException("Patient account information not found");
+                                        throw new AccessDeniedException("Không tìm thấy thông tin tài khoản bệnh nhân");
                                 }
 
                                 if (!patientAccountId.equals(currentAccountId)) {
                                         log.warn("Access denied: User accountId={} attempting to access patient {} with accountId={}",
                                                         currentAccountId, patientCode, patientAccountId);
-                                        throw new AccessDeniedException("You can only view your own treatment plans");
+                                        throw new AccessDeniedException("Bạn chỉ có thể xem lộ trình điều trị của chính mình");
                                 }
 
                                 log.info("Patient verified as owner of patient record, access granted");
@@ -202,7 +202,7 @@ public class TreatmentPlanDetailService {
                                 com.dental.clinic.management.employee.domain.Employee employee = employeeRepository
                                                 .findOneByAccountAccountId(currentAccountId)
                                                 .orElseThrow(() -> new AccessDeniedException(
-                                                                "Employee not found for account: " + currentAccountId));
+                                                                "Không tìm thấy nhân viên cho tài khoản: " + currentAccountId));
 
                                 log.info("EMPLOYEE mode: Will verify plan was created by employeeId={}",
                                                 employee.getEmployeeId());
@@ -220,7 +220,7 @@ public class TreatmentPlanDetailService {
 
                 // No valid permission
                 log.warn("Access denied: User does not have required permissions");
-                throw new AccessDeniedException("You do not have permission to view treatment plans");
+                throw new AccessDeniedException("Bạn không có quyền xem lộ trình điều trị");
         }
 
         /**
@@ -258,7 +258,7 @@ public class TreatmentPlanDetailService {
                 // Get account to check base role
                 com.dental.clinic.management.account.domain.Account account = accountRepository
                                 .findById(currentAccountId)
-                                .orElseThrow(() -> new AccessDeniedException("Account not found: " + currentAccountId));
+                                .orElseThrow(() -> new AccessDeniedException("Không tìm thấy tài khoản: " + currentAccountId));
 
                 Integer baseRoleId = account.getRole().getBaseRole().getBaseRoleId();
 
@@ -271,14 +271,14 @@ public class TreatmentPlanDetailService {
                 com.dental.clinic.management.employee.domain.Employee employee = employeeRepository
                                 .findOneByAccountAccountId(currentAccountId)
                                 .orElseThrow(() -> new AccessDeniedException(
-                                                "Employee not found for account: " + currentAccountId));
+                                                "Không tìm thấy nhân viên cho tài khoản: " + currentAccountId));
 
                 // Get plan's creator from DTO
                 String planCreatorEmployeeCode = firstRow.getDoctorEmployeeCode();
 
                 if (planCreatorEmployeeCode == null) {
                         log.error("Plan has no creator (createdBy is null). PlanId={}", firstRow.getPlanId());
-                        throw new AccessDeniedException("Cannot verify plan creator");
+                        throw new AccessDeniedException("Không thể xác minh người tạo lộ trình");
                 }
 
                 // Compare employee codes
@@ -296,7 +296,7 @@ public class TreatmentPlanDetailService {
                         log.warn("Access denied: Employee {} (code={}) attempting to view plan created by employee {} (not primary doctor of linked appointment)",
                                         employee.getEmployeeId(), employee.getEmployeeCode(), planCreatorEmployeeCode);
                         throw new AccessDeniedException(
-                                        "You can only view treatment plans that you created or that are linked to your appointments");
+                                        "Bạn chỉ có thể xem kế hoạch điều trị do bạn tạo hoặc liên kết với lịch hẹn của bạn");
                 }
 
                 log.info("EMPLOYEE createdBy verification passed: Employee {} viewing plan created by {}",
@@ -380,7 +380,7 @@ public class TreatmentPlanDetailService {
                         throw new IllegalStateException(
                                         "Unsupported account_id claim type: " + claim.getClass().getName());
                 }
-                throw new IllegalStateException("Unable to extract account_id from token: principal is not Jwt");
+                throw new IllegalStateException("Không thể trích xuất account_id từ token: principal không phải JWT");
         }
 
         /**
@@ -540,7 +540,7 @@ public class TreatmentPlanDetailService {
                                 .status(planStatus != null ? planStatus.name() : null)
                                 .approvalStatus(firstRow.getApprovalStatus() != null
                                                 ? firstRow.getApprovalStatus().name()
-                                                : null) //  V21: Added for approval workflow
+                                                : null) // V21: Added for approval workflow
                                 .doctor(doctorInfo)
                                 .patient(patientInfo)
                                 .startDate(firstRow.getStartDate())
@@ -708,7 +708,8 @@ public class TreatmentPlanDetailService {
 
         /**
          * Auto-complete treatment plan if all phases are completed.
-         * Issue #51 Fix: Plans with all phases completed should auto-update status to COMPLETED on detail load.
+         * Issue #51 Fix: Plans with all phases completed should auto-update status to
+         * COMPLETED on detail load.
          *
          * Logic:
          * 1. Check if plan has phases (skip if empty)
@@ -732,12 +733,13 @@ public class TreatmentPlanDetailService {
                 }
 
                 // Query fresh phases from database to check current status
-                List<com.dental.clinic.management.treatment_plans.domain.PatientPlanPhase> phases = 
-                        phaseRepository.findByTreatmentPlan_PlanId(response.getPlanId());
+                List<com.dental.clinic.management.treatment_plans.domain.PatientPlanPhase> phases = phaseRepository
+                                .findByTreatmentPlan_PlanId(response.getPlanId());
 
                 // Check if all phases are completed
                 boolean allPhasesCompleted = !phases.isEmpty() && phases.stream()
-                        .allMatch(phase -> phase.getStatus() == com.dental.clinic.management.treatment_plans.enums.PhaseStatus.COMPLETED);
+                                .allMatch(phase -> phase
+                                                .getStatus() == com.dental.clinic.management.treatment_plans.enums.PhaseStatus.COMPLETED);
 
                 if (!allPhasesCompleted) {
                         return; // Not ready to complete yet
@@ -745,7 +747,7 @@ public class TreatmentPlanDetailService {
 
                 // Fetch plan entity and update status
                 PatientTreatmentPlan plan = treatmentPlanRepository.findById(response.getPlanId())
-                        .orElse(null);
+                                .orElse(null);
 
                 if (plan == null) {
                         log.warn("Plan {} not found when attempting auto-complete", response.getPlanId());
@@ -764,6 +766,6 @@ public class TreatmentPlanDetailService {
                 response.setStatus("COMPLETED");
 
                 log.info("Treatment plan {} auto-completed: {} -> COMPLETED - All {} phases done (Issue #51 fix)",
-                        response.getPlanCode(), oldStatus, phases.size());
+                                response.getPlanCode(), oldStatus, phases.size());
         }
 }

@@ -20,11 +20,11 @@ public class WorkShiftNotFoundException extends ErrorResponseException {
 
     private static ProblemDetail asProblemDetail(String workShiftId) {
         String message = String.format("Không tìm thấy ca làm việc với mã: '%s'. " +
-                                      "Vui lòng kiểm tra lại mã ca làm việc hoặc danh sách ca làm việc hiện có.",
-                                      workShiftId);
+                "Vui lòng kiểm tra lại mã ca làm việc hoặc danh sách ca làm việc hiện có.",
+                workShiftId);
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, message);
         problemDetail.setType(URI.create("https://api.dentalclinic.com/errors/work-shift-not-found"));
-        problemDetail.setTitle("Work Shift Not Found");
+        problemDetail.setTitle("Không Tìm Thấy Ca Làm Việc");
         problemDetail.setProperty("errorCode", ERROR_CODE);
         problemDetail.setProperty("message", message);
         problemDetail.setProperty("timestamp", Instant.now());

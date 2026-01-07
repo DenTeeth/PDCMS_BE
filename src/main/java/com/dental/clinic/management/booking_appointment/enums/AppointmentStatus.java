@@ -35,6 +35,11 @@ public enum AppointmentStatus {
     CANCELLED,
 
     /**
+     * Hủy muộn - Appointment bị hủy trong vòng 24h trước giờ hẹn
+     */
+    CANCELLED_LATE,
+
+    /**
      * Bệnh nhân không đến (no-show)
      */
     NO_SHOW

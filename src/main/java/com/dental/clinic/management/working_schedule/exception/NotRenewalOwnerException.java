@@ -22,7 +22,7 @@ public class NotRenewalOwnerException extends ErrorResponseException {
                 employeeId);
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, message);
-        problemDetail.setTitle("Not Renewal Owner");
+        problemDetail.setTitle("Không Phải Chủ Yêu Cầu Gia Hạn");
         problemDetail.setProperty("errorCode", ERROR_CODE);
         problemDetail.setProperty("message", message);
         problemDetail.setProperty("renewalId", renewalId);

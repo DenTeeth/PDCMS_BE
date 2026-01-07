@@ -64,9 +64,9 @@ public class RedisConfig {
                 try {
                         // Test Redis connection
                         connectionFactory.getConnection().ping();
-                        
+
                         log.info("✅ Redis connected successfully - using Redis cache");
-                        
+
                         GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(
                                         createObjectMapper());
 
@@ -97,6 +97,17 @@ public class RedisConfig {
          */
         private CacheManager fallbackCacheManager() {
                 log.info("📦 Using ConcurrentMapCacheManager (in-memory) as fallback");
-                return new ConcurrentMapCacheManager("roles", "permissions");
+                // Define ALL cache names used in @Cacheable annotations across the application
+                return new ConcurrentMapCacheManager(
+                                "roles", // RoleService.getAllRoles(), getEmployeeAssignableRoles()
+                                "roleById", // RoleService.getRoleById()
+                                "rolePermissions", // RoleService.getRolePermissions()
+                                "permissions", // PermissionService.getAllActivePermissions()
+                                "permissionById", // PermissionService.getPermissionById()
+                                "permissionsByModule", // PermissionService.getPermissionsByModule()
+                                "permissionsGrouped", // PermissionService.getPermissionsGroupedByModule(),
+                                                      // getPermissionHierarchy()
+                                "sidebar" // SidebarService.getSidebarData()
+                );
         }
 }

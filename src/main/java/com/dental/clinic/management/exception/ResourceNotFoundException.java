@@ -17,7 +17,7 @@ public class ResourceNotFoundException extends ErrorResponseException {
 
     private static ProblemDetail asProblemDetail(String errorCode, String message) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, message);
-        problemDetail.setTitle("Resource Not Found");
+        problemDetail.setTitle("Không Tìm Thấy Tài Nguyên");
         problemDetail.setType(URI.create(ErrorConstants.PROBLEM_BASE_URL + "/not-found"));
         problemDetail.setProperty("errorCode", errorCode);
         return problemDetail;

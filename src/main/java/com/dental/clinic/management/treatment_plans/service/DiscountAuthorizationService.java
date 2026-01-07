@@ -15,7 +15,8 @@ import java.math.RoundingMode;
  * Business Rules Service for Discount Authorization
  * 
  * Implements:
- * - Rule #28: Receptionist can discount max 5%. Discounts >5% require Manager approval
+ * - Rule #28: Receptionist can discount max 5%. Discounts >5% require Manager
+ * approval
  */
 @Service
 public class DiscountAuthorizationService {
@@ -29,7 +30,7 @@ public class DiscountAuthorizationService {
      * - Receptionist: Can discount up to 5%
      * - Manager/Admin: Can discount >5%
      * 
-     * @param totalCost Total cost before discount
+     * @param totalCost      Total cost before discount
      * @param discountAmount Discount amount being applied
      * @throws ForbiddenException if user lacks authority for the discount amount
      */
@@ -43,52 +44,49 @@ public class DiscountAuthorizationService {
         }
 
         if (totalCost.compareTo(BigDecimal.ZERO) == 0) {
-            throw new IllegalArgumentException("Total cost cannot be zero when applying discount");
+            throw new IllegalArgumentException("Tổng chi phí không được bằng 0 khi áp dụng giảm giá");
         }
 
         // Calculate discount percentage
         BigDecimal discountPercent = discountAmount
-            .divide(totalCost, 4, RoundingMode.HALF_UP)
-            .multiply(BigDecimal.valueOf(100));
+                .divide(totalCost, 4, RoundingMode.HALF_UP)
+                .multiply(BigDecimal.valueOf(100));
 
         // Get current user's role
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null) {
             ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
-                HttpStatus.FORBIDDEN, 
-                "Không thể xác định người dùng hiện tại"
-            );
-            problemDetail.setTitle("Unauthorized");
+                    HttpStatus.FORBIDDEN,
+                    "Không thể xác định người dùng hiện tại");
+            problemDetail.setTitle("Không Có Quyền");
             problemDetail.setProperty("errorCode", "UNAUTHORIZED");
             throw new ErrorResponseException(HttpStatus.FORBIDDEN, problemDetail, null);
         }
 
         boolean isManager = authentication.getAuthorities().stream()
-            .map(GrantedAuthority::getAuthority)
-            .anyMatch(auth -> auth.equals("ROLE_ADMIN") || 
-                             auth.equals("ROLE_MANAGER") ||
-                             auth.contains("MANAGE_"));
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(auth -> auth.equals("ROLE_ADMIN") ||
+                        auth.equals("ROLE_MANAGER") ||
+                        auth.contains("MANAGE_"));
 
         boolean isReceptionist = authentication.getAuthorities().stream()
-            .map(GrantedAuthority::getAuthority)
-            .anyMatch(auth -> auth.equals("ROLE_RECEPTIONIST"));
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(auth -> auth.equals("ROLE_RECEPTIONIST"));
 
         // Receptionist: Max 5% discount
         if (isReceptionist && !isManager) {
             if (discountPercent.compareTo(MAX_RECEPTIONIST_DISCOUNT_PERCENT) > 0) {
                 String message = String.format(
-                    "Giảm giá %.2f%% vượt quá quyền hạn Lễ tân (tối đa 5%%). " +
-                    "Vui lòng yêu cầu Quản lý xác nhận. " +
-                    "Giảm giá: %s VND / Tổng: %s VND",
-                    discountPercent,
-                    discountAmount,
-                    totalCost
-                );
+                        "Giảm giá %.2f%% vượt quá quyền hạn Lễ tân (tối đa 5%%). " +
+                                "Vui lòng yêu cầu Quản lý xác nhận. " +
+                                "Giảm giá: %s VND / Tổng: %s VND",
+                        discountPercent,
+                        discountAmount,
+                        totalCost);
                 ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
-                    HttpStatus.FORBIDDEN, 
-                    message
-                );
-                problemDetail.setTitle("Discount Requires Manager Approval");
+                        HttpStatus.FORBIDDEN,
+                        message);
+                problemDetail.setTitle("Giảm Giá Yêu Cầu Duyệt Của Quản Lý");
                 problemDetail.setProperty("errorCode", "DISCOUNT_REQUIRES_MANAGER_APPROVAL");
                 problemDetail.setProperty("discountPercent", discountPercent);
                 problemDetail.setProperty("maxAllowed", MAX_RECEPTIONIST_DISCOUNT_PERCENT);
@@ -103,7 +101,7 @@ public class DiscountAuthorizationService {
     /**
      * Calculate discount percentage from amounts
      * 
-     * @param totalCost Total cost before discount
+     * @param totalCost      Total cost before discount
      * @param discountAmount Discount amount
      * @return Discount percentage (e.g., 5.25 for 5.25%)
      */
@@ -113,7 +111,7 @@ public class DiscountAuthorizationService {
         }
 
         return discountAmount
-            .divide(totalCost, 4, RoundingMode.HALF_UP)
-            .multiply(BigDecimal.valueOf(100));
+                .divide(totalCost, 4, RoundingMode.HALF_UP)
+                .multiply(BigDecimal.valueOf(100));
     }
 }

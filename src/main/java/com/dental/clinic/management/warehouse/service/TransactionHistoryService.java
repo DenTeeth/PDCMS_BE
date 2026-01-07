@@ -113,21 +113,21 @@ public class TransactionHistoryService {
             if (request.getFromDate().isAfter(request.getToDate())) {
                 throw new BadRequestException(
                         "INVALID_DATE_RANGE",
-                        "fromDate cannot be after toDate");
+                        "Ngày bắt đầu không được sau ngày kết thúc");
             }
         }
 
         // Validate page & size
         if (request.getPage() < 0) {
-            throw new BadRequestException("INVALID_PAGE", "Page number cannot be negative");
+            throw new BadRequestException("INVALID_PAGE", "Số trang không được âm");
         }
         if (request.getSize() <= 0 || request.getSize() > 100) {
-            throw new BadRequestException("INVALID_SIZE", "Size must be between 1 and 100");
+            throw new BadRequestException("INVALID_SIZE", "Kích thước phải từ 1 đến 100");
         }
 
         // Validate sort direction
         if (!"asc".equalsIgnoreCase(request.getSortDir()) && !"desc".equalsIgnoreCase(request.getSortDir())) {
-            throw new BadRequestException("INVALID_SORT_DIR", "Sort direction must be 'asc' or 'desc'");
+            throw new BadRequestException("INVALID_SORT_DIR", "Hướng sắp xếp phải là 'asc' hoặc 'desc'");
         }
     }
 
@@ -491,7 +491,7 @@ public class TransactionHistoryService {
 
         transactionRepository.save(transaction);
 
-        log.info("✅ Transaction approved - ID: {}, Code: {}, Inventory updated", 
+        log.info("✅ Transaction approved - ID: {}, Code: {}, Inventory updated",
                 id, transaction.getTransactionCode());
 
         boolean hasViewCostPermission = hasPermission(AuthoritiesConstants.VIEW_WAREHOUSE_COST);
@@ -508,7 +508,7 @@ public class TransactionHistoryService {
         if (rejectionReason == null || rejectionReason.trim().isEmpty()) {
             throw new BadRequestException(
                     "REJECTION_REASON_REQUIRED",
-                    "Rejection reason is required");
+                    "Lý do từ chối là bắt buộc");
         }
 
         StorageTransaction transaction = transactionRepository.findById(id)
@@ -597,21 +597,21 @@ public class TransactionHistoryService {
         for (StorageTransactionItem item : transaction.getItems()) {
             ItemBatch batch = item.getBatch();
             Integer quantityChange = item.getQuantityChange();
-            
+
             // Get itemMaster for cached quantity update
             ItemMaster itemMaster = batch.getItemMaster();
 
             // Update batch quantity
             int oldQuantity = batch.getQuantityOnHand();
             int newQuantity = oldQuantity + quantityChange;
-            
+
             if (newQuantity < 0) {
                 log.error("❌ Invalid quantity update: Batch {} would have negative quantity ({} + {} = {})",
                         batch.getBatchId(), oldQuantity, quantityChange, newQuantity);
                 throw new BadRequestException(
                         "INVALID_QUANTITY",
-                        "Cannot approve transaction: Would result in negative inventory for batch " + 
-                        batch.getBatchId());
+                        "Cannot approve transaction: Would result in negative inventory for batch " +
+                                batch.getBatchId());
             }
 
             batch.setQuantityOnHand(newQuantity);
@@ -619,12 +619,12 @@ public class TransactionHistoryService {
 
             // Update cached quantity in ItemMaster
             itemMaster.updateCachedQuantity(quantityChange);
-            
+
             // Update last import date for IMPORT transactions
             if (transaction.getTransactionType() == TransactionType.IMPORT) {
                 itemMaster.setCachedLastImportDate(LocalDateTime.now());
             }
-            
+
             itemMasterRepository.save(itemMaster);
 
             log.debug("✅ Updated batch {}: {} → {} (Δ{}), Item {}: cachedQuantity updated",
@@ -632,7 +632,7 @@ public class TransactionHistoryService {
                     itemMaster.getItemCode());
         }
 
-        log.info("✅ Inventory quantities updated successfully for {} items", 
+        log.info("✅ Inventory quantities updated successfully for {} items",
                 transaction.getItems().size());
     }
 }

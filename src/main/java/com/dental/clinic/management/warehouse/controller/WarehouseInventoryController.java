@@ -385,7 +385,7 @@ public class WarehouseInventoryController {
 
                 } catch (Exception e) {
                         log.error("Error exporting inventory summary to Excel", e);
-                        throw new RuntimeException("Failed to export inventory summary: " + e.getMessage());
+                        throw new RuntimeException("Đã xảy ra lỗi khi xuất báo cáo tồn kho: " + e.getMessage());
                 }
         }
 
@@ -443,7 +443,7 @@ public class WarehouseInventoryController {
 
                 } catch (Exception e) {
                         log.error("Error exporting expiring alerts to Excel", e);
-                        throw new RuntimeException("Failed to export expiring alerts: " + e.getMessage());
+                        throw new RuntimeException("Đã xảy ra lỗi khi xuất cảnh báo hết hạn: " + e.getMessage());
                 }
         }
 }

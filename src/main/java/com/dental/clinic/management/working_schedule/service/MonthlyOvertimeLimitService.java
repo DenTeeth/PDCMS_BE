@@ -105,7 +105,7 @@ public class MonthlyOvertimeLimitService {
                     MAX_MONTHLY_OVERTIME_HOURS
             );
             ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, message);
-            problemDetail.setTitle("Monthly Overtime Limit Exceeded");
+            problemDetail.setTitle("Vượt Giới Hạn Thêm Giờ Tháng");
             throw new ErrorResponseException(HttpStatus.BAD_REQUEST, problemDetail, null);
         }
 

@@ -50,7 +50,7 @@ public class ClinicalRecordWriteController {
      */
     @PostMapping
     @PreAuthorize("hasRole('ROLE_ADMIN') or hasAuthority('WRITE_CLINICAL_RECORD')")
-    @ApiMessage("Clinical record created successfully")
+    @ApiMessage("Tạo hồ sơ lâm sàng thành công")
     public ResponseEntity<CreateClinicalRecordResponse> createClinicalRecord(
             @Valid @RequestBody CreateClinicalRecordRequest request) {
 
@@ -86,7 +86,7 @@ public class ClinicalRecordWriteController {
      */
     @PutMapping("/{recordId}")
     @PreAuthorize("hasRole('ROLE_ADMIN') or hasAuthority('WRITE_CLINICAL_RECORD')")
-    @ApiMessage("Clinical record updated successfully")
+    @ApiMessage("Cập nhật hồ sơ lâm sàng thành công")
     public ResponseEntity<UpdateClinicalRecordResponse> updateClinicalRecord(
             @PathVariable Integer recordId,
             @Valid @RequestBody UpdateClinicalRecordRequest request) {

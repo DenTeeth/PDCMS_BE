@@ -322,7 +322,7 @@ public class InventoryController {
                         @Valid @RequestBody ExportTransactionRequest request) {
 
                 String employeeCode = SecurityUtil.getCurrentUserLogin()
-                                .orElseThrow(() -> new RuntimeException("Cannot determine current user"));
+                                .orElseThrow(() -> new RuntimeException("Không thể xác định người dùng hiện tại"));
 
                 log.info("POST /api/v1/inventory/export - Type: {}, Items: {}",
                                 request.getExportType(), request.getItems().size());

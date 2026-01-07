@@ -27,7 +27,7 @@ public class RenewalExpiredException extends ErrorResponseException {
                 expiredDate);
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, message);
-        problemDetail.setTitle("Renewal Request Expired");
+        problemDetail.setTitle("Yêu Cầu Gia Hạn Đã Hết Hạn");
         problemDetail.setProperty("errorCode", ERROR_CODE);
         problemDetail.setProperty("message", message);
         problemDetail.setProperty("renewalId", renewalId);

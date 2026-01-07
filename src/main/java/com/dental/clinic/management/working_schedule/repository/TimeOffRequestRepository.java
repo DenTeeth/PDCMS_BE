@@ -96,6 +96,73 @@ public interface TimeOffRequestRepository extends JpaRepository<TimeOffRequest, 
                         @Param("endDate") LocalDate endDate,
                         @Param("workShiftId") String workShiftId);
 
+        // ==================== Dashboard Statistics Queries ====================
+
+        /**
+         * Calculate total days of approved time-off in date range
+         */
+        @Query("SELECT COALESCE(SUM(FUNCTION('TIMESTAMPDIFF', DAY, t.startDate, t.endDate) + 1), 0) " +
+               "FROM TimeOffRequest t " +
+               "WHERE t.status = 'APPROVED' " +
+               "AND (t.startDate BETWEEN :startDate AND :endDate " +
+               "OR t.endDate BETWEEN :startDate AND :endDate)")
+        Long calculateTotalApprovedDays(
+                        @Param("startDate") LocalDate startDate,
+                        @Param("endDate") LocalDate endDate);
+
+        /**
+         * Count total approved time-off requests in date range
+         */
+        @Query("SELECT COUNT(t) FROM TimeOffRequest t " +
+               "WHERE t.status = 'APPROVED' " +
+               "AND (t.startDate BETWEEN :startDate AND :endDate " +
+               "OR t.endDate BETWEEN :startDate AND :endDate)")
+        Long countApprovedRequests(
+                        @Param("startDate") LocalDate startDate,
+                        @Param("endDate") LocalDate endDate);
+
+        /**
+         * Count requests by time-off type and get total days
+         */
+        @Query("SELECT t.timeOffTypeId, COUNT(t), COALESCE(SUM(FUNCTION('TIMESTAMPDIFF', DAY, t.startDate, t.endDate) + 1), 0) " +
+               "FROM TimeOffRequest t " +
+               "WHERE t.status = 'APPROVED' " +
+               "AND (t.startDate BETWEEN :startDate AND :endDate " +
+               "OR t.endDate BETWEEN :startDate AND :endDate) " +
+               "GROUP BY t.timeOffTypeId")
+        java.util.List<Object[]> getApprovedByTypeId(
+                        @Param("startDate") LocalDate startDate,
+                        @Param("endDate") LocalDate endDate);
+
+        /**
+         * Count requests by status in date range
+         */
+        @Query("SELECT COUNT(t) FROM TimeOffRequest t " +
+               "WHERE (t.startDate BETWEEN :startDate AND :endDate " +
+               "OR t.endDate BETWEEN :startDate AND :endDate) " +
+               "AND t.status = :status")
+        Long countByStatusInRange(
+                        @Param("startDate") LocalDate startDate,
+                        @Param("endDate") LocalDate endDate,
+                        @Param("status") TimeOffStatus status);
+
+        /**
+         * Get top employees by time-off days
+         */
+        @Query("SELECT t.employeeId, e.employeeCode, e.firstName, e.lastName, " +
+               "COUNT(t), COALESCE(SUM(FUNCTION('TIMESTAMPDIFF', DAY, t.startDate, t.endDate) + 1), 0) " +
+               "FROM TimeOffRequest t " +
+               "JOIN t.employee e " +
+               "WHERE t.status = 'APPROVED' " +
+               "AND (t.startDate BETWEEN :startDate AND :endDate " +
+               "OR t.endDate BETWEEN :startDate AND :endDate) " +
+               "GROUP BY t.employeeId, e.employeeCode, e.firstName, e.lastName " +
+               "ORDER BY SUM(FUNCTION('TIMESTAMPDIFF', DAY, t.startDate, t.endDate) + 1) DESC")
+        java.util.List<Object[]> getTopEmployeesByTimeOff(
+                        @Param("startDate") LocalDate startDate,
+                        @Param("endDate") LocalDate endDate,
+                        org.springframework.data.domain.Pageable pageable);
+
         /**
          * Advanced search with filters
          */
@@ -118,4 +185,31 @@ public interface TimeOffRequestRepository extends JpaRepository<TimeOffRequest, 
          * Check if there are pending requests using a specific time-off type
          */
         boolean existsByTimeOffTypeIdAndStatus(String timeOffTypeId, TimeOffStatus status);
+
+        /**
+         * Find time-off requests by status and start date before a certain date.
+         * Used for auto-cancellation and cleanup jobs.
+         */
+        List<TimeOffRequest> findByStatusAndStartDateBefore(TimeOffStatus status, LocalDate date);
+
+        /**
+         * Find time-off requests by status and start date equals a certain date.
+         * Used for reminder notification job.
+         */
+        List<TimeOffRequest> findByStatusAndStartDate(TimeOffStatus status, LocalDate date);
+
+        /**
+         * Find time-off requests by status and end date before a certain date.
+         * Used for cleanup job to delete old completed requests.
+         */
+        List<TimeOffRequest> findByStatusAndEndDateBefore(TimeOffStatus status, LocalDate date);
+
+        /**
+         * Find time-off requests by status and approved_at before a certain datetime.
+         * Used for cleanup job to delete old processed requests.
+         */
+        @Query("SELECT t FROM TimeOffRequest t WHERE t.status = :status AND t.approvedAt < :dateTime")
+        List<TimeOffRequest> findByStatusAndApprovedAtBefore(
+                        @Param("status") TimeOffStatus status,
+                        @Param("dateTime") java.time.LocalDateTime dateTime);
 }

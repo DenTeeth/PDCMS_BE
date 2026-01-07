@@ -19,7 +19,7 @@ import java.util.List;
 @AllArgsConstructor
 public class ConversionRequest {
 
-    @NotEmpty(message = "Conversions list cannot be empty")
+    @NotEmpty(message = "Danh sách chuyển đổi không được để trống")
     @Valid
     private List<ConversionItemRequest> conversions;
 

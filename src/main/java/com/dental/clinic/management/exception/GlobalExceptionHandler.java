@@ -13,10 +13,13 @@ import com.dental.clinic.management.utils.FormatRestResponse;
 
 import jakarta.servlet.http.HttpServletRequest;
 
+import org.apache.tomcat.util.http.fileupload.impl.SizeLimitExceededException;
+import org.apache.tomcat.util.http.fileupload.impl.FileSizeLimitExceededException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -49,7 +52,7 @@ public class GlobalExceptionHandler {
 
         FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
         res.setStatusCode(HttpStatus.UNAUTHORIZED.value());
-        res.setMessage("Invalid username or password");
+        res.setMessage("Tên đăng nhập hoặc mật khẩu không hợp lệ");
         res.setError("error.authentication.failed");
         res.setData(null);
 
@@ -69,7 +72,7 @@ public class GlobalExceptionHandler {
 
         FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
         res.setStatusCode(HttpStatus.UNAUTHORIZED.value());
-        res.setMessage("Invalid username or password");
+        res.setMessage("Tên đăng nhập hoặc mật khẩu không hợp lệ");
         res.setError("error.authentication.failed");
         res.setData(null);
 
@@ -140,28 +143,29 @@ public class GlobalExceptionHandler {
             ErrorResponseException ex,
             HttpServletRequest request) {
 
-    HttpStatus status = HttpStatus.valueOf(ex.getStatusCode().value());
+        HttpStatus status = HttpStatus.valueOf(ex.getStatusCode().value());
 
-    // Defensive extraction of ProblemDetail body (may be null in some cases)
-    org.springframework.http.ProblemDetail body = ex.getBody();
-    String title = body != null ? body.getTitle() : null;
-    log.warn("{} exception at {}: {}", status, request.getRequestURI(), title != null ? title : ex.getMessage());
+        // Defensive extraction of ProblemDetail body (may be null in some cases)
+        org.springframework.http.ProblemDetail body = ex.getBody();
+        String title = body != null ? body.getTitle() : null;
+        log.warn("{} exception at {}: {}", status, request.getRequestURI(), title != null ? title : ex.getMessage());
 
-    FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
-    res.setStatusCode(status.value());
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(status.value());
 
-    // Extract error code and message from ProblemDetail properties if available
-    Object errorCodeProperty = null;
-    Object messageProperty = null;
-    if (body != null && body.getProperties() != null) {
-        errorCodeProperty = body.getProperties().get("errorCode");
-        messageProperty = body.getProperties().get("message");
-    }
+        // Extract error code and message from ProblemDetail properties if available
+        Object errorCodeProperty = null;
+        Object messageProperty = null;
+        if (body != null && body.getProperties() != null) {
+            errorCodeProperty = body.getProperties().get("errorCode");
+            messageProperty = body.getProperties().get("message");
+        }
 
-    // Set error code (use errorCode property if available, otherwise fallback to generic error)
-    res.setError(errorCodeProperty != null
-        ? errorCodeProperty.toString()
-        : "error." + status.name().toLowerCase());
+        // Set error code (use errorCode property if available, otherwise fallback to
+        // generic error)
+        res.setError(errorCodeProperty != null
+                ? errorCodeProperty.toString()
+                : "error." + status.name().toLowerCase());
 
         // CRITICAL FIX: Use title (detailed message) instead of messageProperty for
         // user-facing messages
@@ -172,9 +176,9 @@ public class GlobalExceptionHandler {
                 ? ex.getBody().getTitle()
                 : (messageProperty != null ? messageProperty.toString() : ex.getBody().getDetail()));
 
-    res.setData(null);
+        res.setData(null);
 
-    return ResponseEntity.status(status).body(res);
+        return ResponseEntity.status(status).body(res);
     }
 
     /**
@@ -639,7 +643,7 @@ public class GlobalExceptionHandler {
                 (ex.getParameterName().equals("start_date") || ex.getParameterName().equals("end_date"))) {
             message = "Vui lòng cung cấp ngày bắt đầu và ngày kết thúc hợp lệ.";
         } else {
-            message = "Missing required parameter: " + ex.getParameterName();
+            message = "Thiếu tham số bắt buộc: " + ex.getParameterName();
         }
 
         FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
@@ -706,7 +710,7 @@ public class GlobalExceptionHandler {
 
         FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
         res.setStatusCode(HttpStatus.BAD_REQUEST.value());
-        res.setMessage(ex.getMessage() != null ? ex.getMessage() : "Invalid argument");
+        res.setMessage(ex.getMessage() != null ? ex.getMessage() : "Tham số không hợp lệ");
         res.setError("error.bad.request");
         res.setData(null);
 
@@ -715,7 +719,8 @@ public class GlobalExceptionHandler {
 
     /**
      * Handle IllegalStateException (business logic violations).
-     * Returns 409 Conflict - used for validation failures like overlapping registrations or existing shifts.
+     * Returns 409 Conflict - used for validation failures like overlapping
+     * registrations or existing shifts.
      */
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleIllegalState(
@@ -726,7 +731,7 @@ public class GlobalExceptionHandler {
 
         FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
         res.setStatusCode(HttpStatus.CONFLICT.value());
-        res.setMessage(ex.getMessage() != null ? ex.getMessage() : "Business rule violation");
+        res.setMessage(ex.getMessage() != null ? ex.getMessage() : "Vi phạm quy tắc nghiệp vụ");
         res.setError("error.conflict");
         res.setData(null);
 
@@ -924,17 +929,17 @@ public class GlobalExceptionHandler {
 
         String constraintName = ex.getConstraintName();
         String sqlState = ex.getSQLState();
-        
-        log.error("Database constraint violation at {}: constraint={}, sqlState={}, message={}", 
-                  request.getRequestURI(), constraintName, sqlState, ex.getMessage());
+
+        log.error("Database constraint violation at {}: constraint={}, sqlState={}, message={}",
+                request.getRequestURI(), constraintName, sqlState, ex.getMessage());
 
         FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
         res.setStatusCode(HttpStatus.BAD_REQUEST.value());
-        
+
         // Provide user-friendly message based on constraint type
         String message = "Lỗi ràng buộc dữ liệu";
         String errorCode = "DATABASE_CONSTRAINT_VIOLATION";
-        
+
         if (ex.getMessage() != null) {
             if (ex.getMessage().contains("null value in column")) {
                 message = "Thiếu dữ liệu bắt buộc. Vui lòng liên hệ quản trị viên.";
@@ -947,7 +952,7 @@ public class GlobalExceptionHandler {
                 errorCode = "INVALID_REFERENCE";
             }
         }
-        
+
         res.setMessage(message);
         res.setError(errorCode);
         res.setData(null);
@@ -956,7 +961,8 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handle Spring DataIntegrityViolationException (duplicate keys, constraint violations at JPA level).
+     * Handle Spring DataIntegrityViolationException (duplicate keys, constraint
+     * violations at JPA level).
      * Returns 409 Conflict for duplicate entries, 400 for other violations.
      */
     @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
@@ -965,26 +971,26 @@ public class GlobalExceptionHandler {
             HttpServletRequest request) {
 
         String message = ex.getMessage() != null ? ex.getMessage() : "Lỗi toàn vẹn dữ liệu";
-        
+
         log.error("Data integrity violation at {}: {}", request.getRequestURI(), message);
 
         FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
         String errorCode = "DATA_INTEGRITY_VIOLATION";
-        
+
         // Check if it's a duplicate key error
-        if (message.contains("duplicate key") || message.contains("unique constraint") || 
-            message.contains("Unique index or primary key violation")) {
+        if (message.contains("duplicate key") || message.contains("unique constraint") ||
+                message.contains("Unique index or primary key violation")) {
             res.setStatusCode(HttpStatus.CONFLICT.value());
             res.setMessage("Dữ liệu đã tồn tại trong hệ thống. Vui lòng kiểm tra lại.");
             errorCode = "DUPLICATE_ENTRY";
             res.setError(errorCode);
             return ResponseEntity.status(HttpStatus.CONFLICT).body(res);
         }
-        
+
         // Other data integrity violations return 400 Bad Request
         res.setStatusCode(HttpStatus.BAD_REQUEST.value());
-        res.setMessage("Lỗi dữ liệu: " + (ex.getMostSpecificCause() != null ? 
-                       ex.getMostSpecificCause().getMessage() : "Vi phạm ràng buộc dữ liệu"));
+        res.setMessage("Lỗi dữ liệu: " + (ex.getMostSpecificCause() != null ? ex.getMostSpecificCause().getMessage()
+                : "Vi phạm ràng buộc dữ liệu"));
         res.setError(errorCode);
         res.setData(null);
 
@@ -995,15 +1001,19 @@ public class GlobalExceptionHandler {
      * Fallback handler for any other unexpected exceptions.
      * Returns 500 Internal Server Error.
      * 
-     * IMPORTANT: This handler checks for nested ErrorResponseException (like BadRequestAlertException)
-     * that may be wrapped by other exceptions, and unwraps them to preserve proper HTTP status codes.
+     * IMPORTANT: This handler checks for nested ErrorResponseException (like
+     * BadRequestAlertException)
+     * that may be wrapped by other exceptions, and unwraps them to preserve proper
+     * HTTP status codes.
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleGenericException(
             Exception ex, HttpServletRequest request) {
 
-        // CRITICAL FIX: Check if this is a wrapped ErrorResponseException (e.g., BadRequestAlertException)
-        // This can happen when exceptions are thrown inside @Transactional methods or async operations
+        // CRITICAL FIX: Check if this is a wrapped ErrorResponseException (e.g.,
+        // BadRequestAlertException)
+        // This can happen when exceptions are thrown inside @Transactional methods or
+        // async operations
         Throwable cause = ex;
         while (cause != null) {
             if (cause instanceof org.springframework.web.ErrorResponseException ere) {
@@ -1015,12 +1025,12 @@ public class GlobalExceptionHandler {
         }
 
         // Log full stack trace for true unexpected errors
-        log.error("Unexpected error at {}: {} (Class: {})", 
+        log.error("Unexpected error at {}: {} (Class: {})",
                 request.getRequestURI(), ex.getMessage(), ex.getClass().getName(), ex);
 
         FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
         res.setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
-        res.setMessage("Internal server error");
+        res.setMessage("Lỗi hệ thống nội bộ");
         res.setError("error.internal");
         res.setData(null);
 
@@ -1028,8 +1038,10 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handle TransactionSystemException which may wrap ErrorResponseException thrown inside
-     * transactional boundaries. Unwrap and delegate to the ErrorResponseException handler
+     * Handle TransactionSystemException which may wrap ErrorResponseException
+     * thrown inside
+     * transactional boundaries. Unwrap and delegate to the ErrorResponseException
+     * handler
      * when possible so the original 4xx response is preserved.
      */
     @ExceptionHandler(org.springframework.transaction.TransactionSystemException.class)
@@ -1045,7 +1057,8 @@ public class GlobalExceptionHandler {
             cause = cause.getCause();
         }
 
-        // If we couldn't unwrap to a known ErrorResponseException, fall back to generic handler
+        // If we couldn't unwrap to a known ErrorResponseException, fall back to generic
+        // handler
         return handleGenericException(ex, request);
     }
 
@@ -1229,5 +1242,85 @@ public class GlobalExceptionHandler {
         res.setData(data);
 
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(res);
+    }
+
+    /**
+     * Handle file upload errors (MaxUploadSizeExceededException)
+     * Returns 400 Bad Request with Vietnamese message
+     */
+    @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleMaxUploadSizeExceeded(
+            org.springframework.web.multipart.MaxUploadSizeExceededException ex,
+            HttpServletRequest request) {
+
+        log.warn("File too large at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.BAD_REQUEST.value());
+        res.setError("FILE_TOO_LARGE");
+        res.setMessage("Kích thước file vượt quá giới hạn cho phép (tối đa 10MB). Vui lòng chọn file nhỏ hơn.");
+        res.setData(null);
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+    }
+
+    /**
+     * Handle multipart file errors
+     * Returns 400 Bad Request with Vietnamese message
+     */
+    @ExceptionHandler(org.springframework.web.multipart.MultipartException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleMultipartException(
+            org.springframework.web.multipart.MultipartException ex,
+            HttpServletRequest request) {
+
+        log.warn("Multipart error at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.BAD_REQUEST.value());
+        res.setError("INVALID_FILE");
+        res.setMessage("Lỗi khi tải file lên. Vui lòng kiểm tra định dạng và kích thước file (tối đa 10MB, chỉ chấp nhận PNG, JPG, PDF).");
+        res.setData(null);
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+    }
+
+    /**
+     * Handle Tomcat file size limit errors (catches before Spring)
+     * Returns 400 Bad Request with Vietnamese message
+     */
+    @ExceptionHandler({SizeLimitExceededException.class, FileSizeLimitExceededException.class})
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleTomcatSizeLimitExceeded(
+            Exception ex,
+            HttpServletRequest request) {
+
+        log.warn("Tomcat file size limit exceeded at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.BAD_REQUEST.value());
+        res.setError("FILE_TOO_LARGE");
+        res.setMessage("Kích thước file vượt quá giới hạn cho phép (tối đa 10MB). Vui lòng chọn file nhỏ hơn.");
+        res.setData(null);
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+    }
+
+    /**
+     * Handle malformed JSON/request body errors
+     * Returns 400 Bad Request with Vietnamese message
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleHttpMessageNotReadable(
+            HttpMessageNotReadableException ex,
+            HttpServletRequest request) {
+
+        log.warn("Message not readable at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.BAD_REQUEST.value());
+        res.setError("INVALID_REQUEST");
+        res.setMessage("Dữ liệu gửi lên không hợp lệ. Vui lòng kiểm tra lại.");
+        res.setData(null);
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
     }
 }

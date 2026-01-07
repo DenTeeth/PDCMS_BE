@@ -22,7 +22,7 @@ public class ShiftInUseException extends ErrorResponseException {
 
     private static ProblemDetail asProblemDetail(String message) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, message);
-        problemDetail.setTitle("Work Shift In Use");
+        problemDetail.setTitle("Ca Làm Việc Đang Được Sử Dụng");
         problemDetail.setProperty("errorCode", "SHIFT_IN_USE");
         problemDetail.setProperty("message", message);
         return problemDetail;

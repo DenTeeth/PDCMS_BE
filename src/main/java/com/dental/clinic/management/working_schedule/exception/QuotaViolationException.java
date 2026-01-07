@@ -14,12 +14,11 @@ public class QuotaViolationException extends ErrorResponseException {
 
     private static ProblemDetail createProblemDetail(Long slotId, int newQuota, long currentRegistered) {
         String message = String.format(
-            "Không thể giảm quota xuống %d. Đã có %d nhân viên đăng ký suất này.",
-            newQuota, currentRegistered
-        );
+                "Không thể giảm quota xuống %d. Đã có %d nhân viên đăng ký suất này.",
+                newQuota, currentRegistered);
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, message);
-        problemDetail.setTitle("Quota Violation");
+        problemDetail.setTitle("Vi Phạm Hạn Mức");
         problemDetail.setProperty("errorCode", ERROR_CODE);
         problemDetail.setProperty("message", message);
         problemDetail.setProperty("slotId", slotId);

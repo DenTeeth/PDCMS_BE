@@ -10,8 +10,9 @@ import java.time.LocalDateTime;
 
 /**
  * Entity for storing comments on patient images.
- * Allows multiple users (employees) to add annotations, observations, or notes on images.
- * 
+ * Allows multiple users (employees) to add annotations, observations, or notes
+ * on images.
+ *
  * Use cases:
  * - Doctors annotating X-rays or clinical photos
  * - Collaborative review and discussion of images
@@ -22,7 +23,7 @@ import java.time.LocalDateTime;
 @Table(name = "patient_image_comments", indexes = {
         @Index(name = "idx_image_id", columnList = "image_id"),
         @Index(name = "idx_created_by", columnList = "created_by"),
-        @Index(name = "idx_created_at", columnList = "created_at")
+        @Index(name = "idx_patient_image_comment_created_at", columnList = "created_at")
 })
 @Getter
 @Setter

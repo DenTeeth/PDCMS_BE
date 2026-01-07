@@ -58,6 +58,28 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
                         "WHERE a.appointmentCode = :appointmentCode")
         Optional<Appointment> findDetailByCode(@Param("appointmentCode") String appointmentCode);
 
+        // ==================== Dashboard Statistics Queries ====================
+
+        /**
+         * Count appointments in date range
+         */
+        @Query("SELECT COUNT(a) FROM Appointment a " +
+                        "WHERE a.appointmentStartTime BETWEEN :startDate AND :endDate")
+        Long countAppointmentsInRange(
+                        @Param("startDate") LocalDateTime startDate,
+                        @Param("endDate") LocalDateTime endDate);
+
+        /**
+         * Count appointments by status in date range
+         */
+        @Query("SELECT COUNT(a) FROM Appointment a " +
+                        "WHERE a.appointmentStartTime BETWEEN :startDate AND :endDate " +
+                        "AND a.status = :status")
+        Long countByStatusInRange(
+                        @Param("startDate") LocalDateTime startDate,
+                        @Param("endDate") LocalDateTime endDate,
+                        @Param("status") AppointmentStatus status);
+
         /**
          * Find all services for an appointment with a direct SQL-like join
          * Returns: [service_code, service_name]
@@ -371,6 +393,20 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
                         @Param("endDate") LocalDateTime endDate,
                         @Param("statuses") List<AppointmentStatus> statuses,
                         Pageable pageable);
+
+        /**
+         * Check if a doctor has any appointments within a date range (by date only).
+         * Used to prevent time-off requests that overlap existing bookings.
+         */
+        @Query("SELECT COUNT(a) > 0 FROM Appointment a " +
+                        "WHERE a.employeeId = :employeeId " +
+                        "AND a.status IN :statuses " +
+                        "AND FUNCTION('DATE', a.appointmentStartTime) BETWEEN :startDate AND :endDate")
+        boolean existsByEmployeeIdAndDateRangeAndStatuses(
+                        @Param("employeeId") Integer employeeId,
+                        @Param("startDate") java.time.LocalDate startDate,
+                        @Param("endDate") java.time.LocalDate endDate,
+                        @Param("statuses") List<AppointmentStatus> statuses);
 
         /**
          * Combined search by code OR name: patient, doctor, employee (participant),

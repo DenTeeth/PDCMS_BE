@@ -126,4 +126,40 @@ public interface ShiftRenewalRequestRepository extends JpaRepository<ShiftRenewa
         boolean existsByExpiringRegistrationRegistrationIdAndStatus(
                         @Param("registrationId") Integer registrationId,
                         @Param("status") RenewalStatus status);
+
+        /**
+         * Find all renewal requests (Admin view).
+         * Used by Admin/Manager to view all renewal requests across all employees.
+         *
+         * @return list of all renewals ordered by created date descending
+         */
+        @Query("SELECT srr FROM ShiftRenewalRequest srr " +
+                        "ORDER BY srr.createdAt DESC")
+        List<ShiftRenewalRequest> findAllRenewals();
+
+        /**
+         * Find all renewal requests by status (Admin view).
+         *
+         * @param status the renewal status to filter by
+         * @return list of renewals with specified status
+         */
+        @Query("SELECT srr FROM ShiftRenewalRequest srr " +
+                        "WHERE srr.status = :status " +
+                        "ORDER BY srr.createdAt DESC")
+        List<ShiftRenewalRequest> findAllByStatus(@Param("status") RenewalStatus status);
+
+        /**
+         * Find all renewal requests by employee ID and status (Admin view).
+         *
+         * @param employeeId the employee ID to filter by
+         * @param status     the renewal status to filter by
+         * @return list of renewals matching both filters
+         */
+        @Query("SELECT srr FROM ShiftRenewalRequest srr " +
+                        "WHERE srr.employee.employeeId = :employeeId " +
+                        "AND srr.status = :status " +
+                        "ORDER BY srr.createdAt DESC")
+        List<ShiftRenewalRequest> findAllByEmployeeIdAndStatus(
+                        @Param("employeeId") Integer employeeId,
+                        @Param("status") RenewalStatus status);
 }

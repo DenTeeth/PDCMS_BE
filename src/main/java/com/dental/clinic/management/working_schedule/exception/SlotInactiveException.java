@@ -15,7 +15,7 @@ public class SlotInactiveException extends ErrorResponseException {
     private static ProblemDetail createProblemDetail(Long slotId) {
         String message = String.format("Suất làm việc %d hiện tại đã không còn hoạt động.", slotId);
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, message);
-        pd.setTitle("Slot Inactive");
+        pd.setTitle("Suất Không Hoạt Động");
         pd.setProperty("errorCode", ERROR_CODE);
         pd.setProperty("message", message);
         pd.setProperty("slotId", slotId);

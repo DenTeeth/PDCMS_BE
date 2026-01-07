@@ -9,7 +9,7 @@
 DROP TYPE IF EXISTS appointment_action_type CASCADE;
 CREATE TYPE appointment_action_type AS ENUM ('CREATE', 'DELAY', 'RESCHEDULE_SOURCE', 'RESCHEDULE_TARGET', 'CANCEL', 'STATUS_CHANGE');
 DROP TYPE IF EXISTS appointment_status_enum CASCADE;
-CREATE TYPE appointment_status_enum AS ENUM ('SCHEDULED', 'CHECKED_IN', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'NO_SHOW');
+CREATE TYPE appointment_status_enum AS ENUM ('SCHEDULED', 'CHECKED_IN', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'CANCELLED_LATE', 'NO_SHOW');
 DROP TYPE IF EXISTS appointment_participant_role_enum CASCADE;
 CREATE TYPE appointment_participant_role_enum AS ENUM ('ASSISTANT', 'SECONDARY_DOCTOR', 'OBSERVER');
 DROP TYPE IF EXISTS appointment_reason_code CASCADE;
@@ -133,7 +133,17 @@ CREATE TYPE notification_type AS ENUM (
 DROP TYPE IF EXISTS notification_entity_type CASCADE;
 CREATE TYPE notification_entity_type AS ENUM ('APPOINTMENT', 'TREATMENT_PLAN', 'PAYMENT', 'SYSTEM', 'TIME_OFF_REQUEST', 'OVERTIME_REQUEST', 'PART_TIME_REGISTRATION');
 
+-- Invoice & Payment ENUMs
+DROP TYPE IF EXISTS invoice_type CASCADE;
+CREATE TYPE invoice_type AS ENUM ('APPOINTMENT', 'TREATMENT_PLAN', 'SUPPLEMENTAL');
+DROP TYPE IF EXISTS invoice_payment_status CASCADE;
+CREATE TYPE invoice_payment_status AS ENUM ('PENDING_PAYMENT', 'PARTIAL_PAID', 'PAID', 'CANCELLED');
+DROP TYPE IF EXISTS payment_method CASCADE;
+CREATE TYPE payment_method AS ENUM ('SEPAY');
+DROP TYPE IF EXISTS payment_transaction_status CASCADE;
+CREATE TYPE payment_transaction_status AS ENUM ('PENDING', 'SUCCESS', 'FAILED', 'CANCELLED');
+
 
 -- ============================================
--- END: 41 ENUM TYPES CREATED
+-- END: 45 ENUM TYPES CREATED
 -- ============================================

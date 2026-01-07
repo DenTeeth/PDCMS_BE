@@ -60,8 +60,8 @@ public class ProbationLeaveValidationService {
         Employee employee = employeeRepository.findById(employeeId)
                 .orElseThrow(() -> {
                     ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, 
-                            "Employee not found with ID: " + employeeId);
-                    pd.setTitle("Employee Not Found");
+                            "Không tìm thấy nhân viên với ID: " + employeeId);
+                    pd.setTitle("Không Tìm Thấy Nhân Viên");
                     return new ErrorResponseException(HttpStatus.NOT_FOUND, pd, null);
                 });
 
@@ -78,14 +78,14 @@ public class ProbationLeaveValidationService {
         if (Boolean.TRUE.equals(isPaidLeave)) {
             log.warn("Probationary employee {} attempted to use paid leave", employeeId);
             String message = String.format(
-                    "Probationary employees cannot use paid leave. " +
-                    "Employee %s (ID: %d) is on probation and can only request unpaid leave. " +
-                    "Please select an unpaid leave type or wait until your probation period ends.",
+                    "Nhân viên thử việc không được sử dụng nghỉ phép có lương. " +
+                    "Nhân viên %s (ID: %d) đang trong thời gian thử việc và chỉ có thể xin nghỉ không lương. " +
+                    "Vui lòng chọn loại nghỉ không lương hoặc đợi cho đến khi kết thúc thời gian thử việc.",
                     employee.getFullName(),
                     employeeId
             );
             ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, message);
-            problemDetail.setTitle("Probation Leave Restriction");
+            problemDetail.setTitle("Hạn Chế Nghỉ Phép Thử Việc");
             throw new ErrorResponseException(HttpStatus.FORBIDDEN, problemDetail, null);
         }
 
@@ -119,8 +119,8 @@ public class ProbationLeaveValidationService {
         Employee employee = employeeRepository.findById(employeeId)
                 .orElseThrow(() -> {
                     ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, 
-                            "Employee not found with ID: " + employeeId);
-                    pd.setTitle("Employee Not Found");
+                            "Không tìm thấy nhân viên với ID: " + employeeId);
+                    pd.setTitle("Không Tìm Thấy Nhân Viên");
                     return new ErrorResponseException(HttpStatus.NOT_FOUND, pd, null);
                 });
 

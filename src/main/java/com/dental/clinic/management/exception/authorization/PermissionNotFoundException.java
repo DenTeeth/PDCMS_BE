@@ -21,7 +21,7 @@ public class PermissionNotFoundException extends ErrorResponseException {
     private static ProblemDetail createProblemDetail(String permissionId) {
         ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
         problemDetail.setType(ErrorConstants.PERMISSION_NOT_FOUND_TYPE);
-        problemDetail.setTitle("Permission not found");
+        problemDetail.setTitle("Không tìm thấy quyền");
         problemDetail.setProperty("message", "error.permission.notfound");
         problemDetail.setProperty("params", permissionId);
         return problemDetail;

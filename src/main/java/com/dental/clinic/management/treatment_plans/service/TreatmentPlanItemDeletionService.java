@@ -7,6 +7,9 @@ import com.dental.clinic.management.employee.domain.Employee;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.exception.ConflictException;
 import com.dental.clinic.management.exception.NotFoundException;
+import com.dental.clinic.management.payment.domain.Invoice;
+import com.dental.clinic.management.payment.enums.InvoicePaymentStatus;
+import com.dental.clinic.management.payment.repository.InvoiceRepository;
 import com.dental.clinic.management.treatment_plans.domain.*;
 import com.dental.clinic.management.treatment_plans.enums.PlanItemStatus;
 import com.dental.clinic.management.treatment_plans.dto.response.DeletePlanItemResponse;
@@ -21,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -43,6 +47,9 @@ public class TreatmentPlanItemDeletionService {
         private final EmployeeRepository employeeRepository;
         private final AccountRepository accountRepository;
         private final TreatmentPlanRBACService rbacService;
+        private final InvoiceRepository invoiceRepository;
+        private final TreatmentPlanApprovalService approvalService;
+        private final com.dental.clinic.management.payment.service.InvoiceService invoiceService;
 
         /**
          * Xóa một hạng mục khỏi lộ trình điều trị
@@ -91,6 +98,14 @@ public class TreatmentPlanItemDeletionService {
                 itemRepository.delete(item);
                 log.info("Item {} deleted from database", itemId);
 
+                // 6.5⃣ Handle invoice sync if plan is APPROVED (Issue 3)
+                // Price change is negative (item deleted)
+                BigDecimal priceChange = deletedPrice.negate();
+                handleInvoiceSyncOnPlanUpdate(plan, priceChange);
+
+                // 6.7⃣ Recreate invoices if needed
+                recreateInvoicesForUpdatedPlan(plan);
+
                 // 7⃣ Create Audit Log (AFTER delete - using saved data)
                 Integer performedBy = getCurrentEmployeeId();
                 createAuditLog(plan, performedBy, itemId, deletedItemName, deletedPrice);
@@ -136,24 +151,43 @@ public class TreatmentPlanItemDeletionService {
 
         /**
          * GUARD 2: Plan must be DRAFT (not APPROVED or PENDING_REVIEW)
+         * Updated to allow deleting items from APPROVED plans with PENDING_PAYMENT invoices
+         * Prevents deletion if invoices are PAID (items already paid cannot be deleted)
          *
-         * @throws ConflictException if plan is APPROVED or PENDING_REVIEW
+         * @throws ConflictException if plan is PENDING_REVIEW or has PAID invoices
          */
         private void validatePlanNotApprovedOrPendingReview(PatientTreatmentPlan plan) {
-                if (plan.getApprovalStatus() == ApprovalStatus.APPROVED
-                                || plan.getApprovalStatus() == ApprovalStatus.PENDING_REVIEW) {
+                ApprovalStatus approvalStatus = plan.getApprovalStatus();
 
-                        String errorMsg = String.format(
-                                        "Không thể xóa hạng mục khỏi lộ trình đã được duyệt hoặc đang chờ duyệt (Trạng thái: %s). "
-                                                        +
-                                                        "Yêu cầu Quản lý 'Từ chối' (Reject) về DRAFT trước khi sửa.",
-                                        plan.getApprovalStatus());
+                // PENDING_REVIEW: Not allowed to delete
+                if (approvalStatus == ApprovalStatus.PENDING_REVIEW) {
+                        throw new ConflictException(
+                                        String.format("Không thể xóa hạng mục khỏi lộ trình đang chờ duyệt (Trạng thái: %s). " +
+                                                        "Yêu cầu Quản lý 'Từ chối' (Reject) về DRAFT trước khi sửa.", approvalStatus));
+                }
 
-                        log.error("GUARD 2 FAILED: Plan {} has approval status {}",
-                                        plan.getPlanId(), plan.getApprovalStatus());
+                // APPROVED: Check invoice status
+                if (approvalStatus == ApprovalStatus.APPROVED) {
+                        List<Invoice> invoices = invoiceRepository.findByTreatmentPlanIdOrderByCreatedAtDesc(plan.getPlanId().intValue());
 
-                        // Use specific error code for better frontend handling
-                        throw new ConflictException("PLAN_APPROVED_CANNOT_DELETE", errorMsg);
+                        if (invoices.isEmpty()) {
+                                log.warn("⚠️ Plan {} is APPROVED but has no invoices. Allowing deletion.", plan.getPlanCode());
+                                return;
+                        }
+
+                        // Check if any invoice is PAID
+                        boolean hasFullyPaidInvoice = invoices.stream()
+                                        .anyMatch(inv -> inv.getPaymentStatus() == InvoicePaymentStatus.PAID);
+
+                        if (hasFullyPaidInvoice) {
+                                // PAID invoices exist - deletion is NOT allowed
+                                throw new ConflictException(
+                                                "PLAN_PAID_CANNOT_DELETE",
+                                                "Không thể xóa hạng mục khỏi lộ trình đã thanh toán. " +
+                                                                "Chỉ có thể xóa hạng mục khi hóa đơn chưa thanh toán hoặc thanh toán một phần.");
+                        } else {
+                                log.info("Plan {} has unpaid/partially-paid invoices. Deletion allowed with invoice sync.", plan.getPlanCode());
+                        }
                 }
 
                 log.debug("GUARD 2 PASSED: Plan {} is in approval status {}",
@@ -191,7 +225,7 @@ public class TreatmentPlanItemDeletionService {
                 String notes = String.format("Item %d (%s): -%.0f VND", itemId, itemName, price);
 
                 Employee performer = employeeRepository.findById(performedBy)
-                                .orElseThrow(() -> new NotFoundException("Employee not found"));
+                                .orElseThrow(() -> new NotFoundException("Không tìm thấy nhân viên"));
 
                 PlanAuditLog auditLog = PlanAuditLog.builder()
                                 .treatmentPlan(plan)
@@ -218,7 +252,7 @@ public class TreatmentPlanItemDeletionService {
                 }
 
                 Account account = accountRepository.findByUsernameWithRoleAndPermissions(currentLogin.get())
-                                .orElseThrow(() -> new NotFoundException("Account not found"));
+                                .orElseThrow(() -> new NotFoundException("Không tìm thấy tài khoản"));
 
                 if (account.getEmployee() == null || account.getEmployee().getEmployeeId() == null) {
                         log.error("Account {} has no linked employee", currentLogin.get());
@@ -226,5 +260,131 @@ public class TreatmentPlanItemDeletionService {
                 }
 
                 return account.getEmployee().getEmployeeId();
+        }
+
+        /**
+         * Handle invoice synchronization when plan is updated (item deleted).
+         * Implements Issue 3: Plan update sync with invoices
+         */
+        private void handleInvoiceSyncOnPlanUpdate(PatientTreatmentPlan plan, BigDecimal priceChange) {
+                if (plan.getApprovalStatus() != ApprovalStatus.APPROVED) {
+                        return;
+                }
+
+                if (priceChange.compareTo(BigDecimal.ZERO) == 0) {
+                        log.info("No price change detected. Skipping invoice sync.");
+                        return;
+                }
+
+                List<Invoice> invoices = invoiceRepository.findByTreatmentPlanIdOrderByCreatedAtDesc(plan.getPlanId().intValue());
+                
+                if (invoices.isEmpty()) {
+                        log.warn("⚠️ Plan {} is APPROVED but has no invoices. No sync needed.", plan.getPlanCode());
+                        return;
+                }
+
+                for (Invoice invoice : invoices) {
+                        InvoicePaymentStatus status = invoice.getPaymentStatus();
+                        
+                        if (status == InvoicePaymentStatus.PENDING_PAYMENT) {
+                                // Case 1: Cancel old invoice and create new one
+                                handlePendingPaymentInvoice(invoice, plan);
+                                
+                        } else if (status == InvoicePaymentStatus.PARTIAL_PAID) {
+                                // Case 2: Keep old invoice, create supplemental invoice for price difference
+                                handlePartialPaidInvoice(plan, priceChange);
+                                
+                        } else if (status == InvoicePaymentStatus.PAID) {
+                                // Case 3: This should not happen as deletion is blocked for PAID invoices
+                                log.warn("⚠️ Unexpected: Item deletion from PAID plan {}. This should have been blocked.", 
+                                        plan.getPlanCode());
+                        }
+                }
+        }
+
+        /**
+         * Handle PENDING_PAYMENT invoice - cancel and recreate
+         */
+        private void handlePendingPaymentInvoice(Invoice invoice, PatientTreatmentPlan plan) {
+                log.info("Cancelling PENDING_PAYMENT invoice {} due to plan item deletion", invoice.getInvoiceCode());
+                
+                invoice.setPaymentStatus(InvoicePaymentStatus.CANCELLED);
+                String currentNotes = invoice.getNotes() != null ? invoice.getNotes() : "";
+                invoice.setNotes(currentNotes + " | Cancelled due to item deletion at " + 
+                                java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+                invoiceRepository.save(invoice);
+                
+                log.info("✅ Cancelled invoice {}. New invoice will be created after plan update completes.", 
+                                invoice.getInvoiceCode());
+        }
+
+        /**
+         * Case 2: Handle PARTIAL_PAID invoice - create supplemental invoice for price reduction
+         */
+        private void handlePartialPaidInvoice(PatientTreatmentPlan plan, BigDecimal priceChange) {
+                log.info("Creating SUPPLEMENTAL invoice for PARTIAL_PAID plan {} with price change: {}", 
+                                plan.getPlanCode(), priceChange);
+                
+                createSupplementalInvoice(plan, priceChange, "Bổ sung do xóa hạng mục khỏi lộ trình (thanh toán một phần)");
+        }
+
+        /**
+         * Create supplemental invoice for item deletion (price reduction)
+         */
+        private void createSupplementalInvoice(PatientTreatmentPlan plan, BigDecimal priceChange, String notes) {
+                if (priceChange.compareTo(BigDecimal.ZERO) == 0) {
+                        log.info("No price change, skipping supplemental invoice creation");
+                        return;
+                }
+
+                String changeDescription = priceChange.compareTo(BigDecimal.ZERO) > 0 
+                                ? "Tăng giá" 
+                                : "Giảm giá";
+
+                List<com.dental.clinic.management.payment.dto.CreateInvoiceRequest.InvoiceItemDto> items = new java.util.ArrayList<>();
+                
+                // Create a single invoice item for the price difference
+                items.add(com.dental.clinic.management.payment.dto.CreateInvoiceRequest.InvoiceItemDto.builder()
+                                .serviceId(null)
+                                .serviceCode("PLAN_ADJUSTMENT")
+                                .serviceName(changeDescription + " lộ trình điều trị (xóa hạng mục)")
+                                .quantity(1)
+                                .unitPrice(priceChange.abs())
+                                .notes("Điều chỉnh giá do xóa hạng mục: " + plan.getPlanCode())
+                                .build());
+
+                com.dental.clinic.management.payment.dto.CreateInvoiceRequest request = 
+                                com.dental.clinic.management.payment.dto.CreateInvoiceRequest.builder()
+                                .invoiceType(com.dental.clinic.management.payment.enums.InvoiceType.TREATMENT_PLAN)
+                                .patientId(plan.getPatient().getPatientId())
+                                .treatmentPlanId(plan.getPlanId().intValue())
+                                .phaseNumber(null)
+                                .installmentNumber(null)
+                                .items(items)
+                                .notes("[SUPPLEMENTAL] " + notes + " | " + changeDescription + ": " + priceChange)
+                                .dueDate(java.time.LocalDateTime.now().plusDays(7))
+                                .build();
+
+                invoiceService.createInvoice(request);
+                log.info("✅ Created SUPPLEMENTAL invoice for plan {} with amount: {}", plan.getPlanCode(), priceChange);
+        }
+
+        /**
+         * Recreate invoices for an updated plan
+         */
+        private void recreateInvoicesForUpdatedPlan(PatientTreatmentPlan plan) {
+                log.info("Checking if invoices need recreation for plan: {}", plan.getPlanCode());
+                
+                List<Invoice> invoices = invoiceRepository.findByTreatmentPlanIdOrderByCreatedAtDesc(plan.getPlanId().intValue());
+                boolean hasCancelledInvoices = invoices.stream()
+                                .anyMatch(inv -> inv.getPaymentStatus() == InvoicePaymentStatus.CANCELLED);
+                
+                boolean hasActiveInvoices = invoices.stream()
+                                .anyMatch(inv -> inv.getPaymentStatus() != InvoicePaymentStatus.CANCELLED);
+                
+                if (hasCancelledInvoices && !hasActiveInvoices) {
+                        log.info("All invoices were cancelled. Recreating invoices for plan: {}", plan.getPlanCode());
+                        approvalService.createInvoicesForApprovedPlan(plan);
+                }
         }
 }

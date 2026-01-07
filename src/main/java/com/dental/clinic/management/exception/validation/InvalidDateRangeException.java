@@ -17,7 +17,7 @@ public class InvalidDateRangeException extends ErrorResponseException {
 
     private static ProblemDetail asProblemDetail(String message) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, message);
-        problemDetail.setTitle("Invalid Date Range");
+        problemDetail.setTitle("Khoảng Ngày Không Hợp Lệ");
         problemDetail.setProperty("errorCode", "INVALID_DATE_RANGE");
         problemDetail.setProperty("message", message);
         return problemDetail;

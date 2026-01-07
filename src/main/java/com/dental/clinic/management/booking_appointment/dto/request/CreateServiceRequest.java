@@ -20,12 +20,12 @@ import java.math.BigDecimal;
 public class CreateServiceRequest {
 
     @SuppressWarnings("deprecation")
-    @NotBlank(message = "Service code is required")
+    @NotBlank(message = "Mã dịch vụ là bắt buộc")
     @Schema(description = "Unique service code", example = "SV-CAOVOI", required = true)
     private String serviceCode;
 
     @SuppressWarnings("deprecation")
-    @NotBlank(message = "Service name is required")
+    @NotBlank(message = "Tên dịch vụ là bắt buộc")
     @Schema(description = "Service name", example = "Cạo vôi răng và Đánh bóng", required = true)
     private String serviceName;
 
@@ -33,43 +33,43 @@ public class CreateServiceRequest {
     private String description;
 
     @SuppressWarnings("deprecation")
-    @NotNull(message = "Default duration is required")
-    @Min(value = 1, message = "Duration must be at least 1 minute")
+    @NotNull(message = "Thời lượng mặc định là bắt buộc")
+    @Min(value = 1, message = "Thời lượng phải ít nhất là 1 phút")
     @Schema(description = "Default duration in minutes", example = "30", required = true)
     private Integer defaultDurationMinutes;
 
     @SuppressWarnings("deprecation")
-    @NotNull(message = "Default buffer time is required")
-    @Min(value = 0, message = "Buffer time cannot be negative")
+    @NotNull(message = "Thời gian đệm mặc định là bắt buộc")
+    @Min(value = 0, message = "Thời gian đệm không được âm")
     @Schema(description = "Default buffer time in minutes", example = "10", required = true)
     private Integer defaultBufferMinutes;
 
     @SuppressWarnings("deprecation")
-    @NotNull(message = "Price is required")
-    @Min(value = 0, message = "Price cannot be negative")
+    @NotNull(message = "Giá là bắt buộc")
+    @Min(value = 0, message = "Giá không được âm")
     @Schema(description = "Service price (VND)", example = "300000", required = true)
     private BigDecimal price;
 
     @Schema(description = "Specialization ID (nullable)", example = "1")
     private Integer specializationId;
 
-    @Min(value = 0, message = "Display order cannot be negative")
+    @Min(value = 0, message = "Thứ tự hiển thị không được âm")
     @Schema(description = "Display order for sorting services", example = "1")
     private Integer displayOrder;
 
-    @Min(value = 0, message = "Minimum preparation days cannot be negative")
+    @Min(value = 0, message = "Số ngày chuẩn bị tối thiểu không được âm")
     @Schema(description = "BE_4: Minimum preparation days before this service (days)", example = "0")
     private Integer minimumPreparationDays;
 
-    @Min(value = 0, message = "Recovery days cannot be negative")
+    @Min(value = 0, message = "Số ngày hồi phục không được âm")
     @Schema(description = "BE_4: Recovery days needed after this service (days)", example = "0")
     private Integer recoveryDays;
 
-    @Min(value = 0, message = "Spacing days cannot be negative")
+    @Min(value = 0, message = "Số ngày giãn cách không được âm")
     @Schema(description = "BE_4: Spacing days between consecutive appointments (days)", example = "0")
     private Integer spacingDays;
 
-    @Min(value = 1, message = "Max appointments per day must be at least 1")
+    @Min(value = 1, message = "Số cuộc hẹn tối đa mỗi ngày phải ít nhất là 1")
     @Schema(description = "BE_4: Maximum appointments allowed per day (null = no limit)", example = "5")
     private Integer maxAppointmentsPerDay;
 

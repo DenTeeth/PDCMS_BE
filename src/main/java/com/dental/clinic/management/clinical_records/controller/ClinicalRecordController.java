@@ -56,7 +56,7 @@ public class ClinicalRecordController {
      */
     @GetMapping("/{appointmentId}/clinical-record")
     @PreAuthorize("hasRole('ROLE_ADMIN') or hasAuthority('VIEW_APPOINTMENT_ALL') or hasAuthority('VIEW_APPOINTMENT_OWN')")
-    @ApiMessage("Get clinical record successfully")
+    @ApiMessage("Lấy hồ sơ lâm sàng thành công")
     public ResponseEntity<ClinicalRecordResponse> getClinicalRecord(
             @PathVariable Integer appointmentId) {
 
@@ -90,7 +90,7 @@ public class ClinicalRecordController {
      */
     @GetMapping("/clinical-records/{recordId}/procedures")
     @PreAuthorize("hasRole('ROLE_ADMIN') or hasAuthority('VIEW_APPOINTMENT_ALL') or hasAuthority('VIEW_APPOINTMENT_OWN')")
-    @ApiMessage("Procedures retrieved successfully")
+    @ApiMessage("Lấy danh sách thủ thuật thành công")
     public ResponseEntity<List<ProcedureResponse>> getProcedures(
             @PathVariable Integer recordId) {
 
@@ -130,7 +130,7 @@ public class ClinicalRecordController {
      */
     @PostMapping("/clinical-records/{recordId}/procedures")
     @PreAuthorize("hasRole('ROLE_ADMIN') or hasAuthority('WRITE_CLINICAL_RECORD')")
-    @ApiMessage("Procedure added successfully")
+    @ApiMessage("Thêm thủ thuật thành công")
     public ResponseEntity<AddProcedureResponse> addProcedure(
             @PathVariable Integer recordId,
             @Valid @RequestBody AddProcedureRequest request) {
@@ -172,7 +172,7 @@ public class ClinicalRecordController {
      */
     @PutMapping("/clinical-records/{recordId}/procedures/{procedureId}")
     @PreAuthorize("hasRole('ROLE_ADMIN') or hasAuthority('WRITE_CLINICAL_RECORD')")
-    @ApiMessage("Procedure updated successfully")
+    @ApiMessage("Cập nhật thủ thuật thành công")
     public ResponseEntity<UpdateProcedureResponse> updateProcedure(
             @PathVariable Integer recordId,
             @PathVariable Integer procedureId,
@@ -209,7 +209,7 @@ public class ClinicalRecordController {
      */
     @DeleteMapping("/clinical-records/{recordId}/procedures/{procedureId}")
     @PreAuthorize("hasRole('ROLE_ADMIN') or hasAuthority('WRITE_CLINICAL_RECORD')")
-    @ApiMessage("Procedure deleted successfully")
+    @ApiMessage("Xóa thủ thuật thành công")
     public ResponseEntity<Void> deleteProcedure(
             @PathVariable Integer recordId,
             @PathVariable Integer procedureId) {
@@ -247,7 +247,7 @@ public class ClinicalRecordController {
      */
     @GetMapping("/clinical-records/{recordId}/prescription")
     @PreAuthorize("hasRole('ROLE_ADMIN') or hasAuthority('VIEW_APPOINTMENT_ALL') or hasAuthority('VIEW_APPOINTMENT_OWN')")
-    @ApiMessage("Prescription retrieved successfully")
+    @ApiMessage("Lấy đơn thuốc thành công")
     public ResponseEntity<com.dental.clinic.management.clinical_records.dto.PrescriptionDTO> getPrescription(
             @PathVariable Integer recordId) {
 
@@ -294,7 +294,7 @@ public class ClinicalRecordController {
      */
     @PostMapping("/clinical-records/{recordId}/prescription")
     @PreAuthorize("hasRole('ROLE_ADMIN') or hasAuthority('WRITE_CLINICAL_RECORD')")
-    @ApiMessage("Prescription saved successfully")
+    @ApiMessage("Lưu đơn thuốc thành công")
     public ResponseEntity<com.dental.clinic.management.clinical_records.dto.PrescriptionDTO> savePrescription(
             @PathVariable Integer recordId,
             @Valid @RequestBody SavePrescriptionRequest request) {
@@ -320,7 +320,7 @@ public class ClinicalRecordController {
      */
     @DeleteMapping("/clinical-records/{recordId}/prescription")
     @PreAuthorize("hasRole('ROLE_ADMIN') or hasAuthority('WRITE_CLINICAL_RECORD')")
-    @ApiMessage("Prescription deleted successfully")
+    @ApiMessage("Xóa đơn thuốc thành công")
     public ResponseEntity<Void> deletePrescription(@PathVariable Integer recordId) {
 
         log.info("API 8.16: DELETE /api/v1/appointments/clinical-records/{}/prescription", recordId);

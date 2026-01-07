@@ -121,7 +121,7 @@ public class ExpirePendingRenewalsJob {
 
         } catch (Exception e) {
             log.error("Error in Expire Pending Renewals Job", e);
-            throw new RuntimeException("Failed to expire pending renewals", e);
+            throw new RuntimeException("Đã xảy ra lỗi khi hết hạn đăng ký gia hạn chờ duyệt", e);
         }
     }
 }

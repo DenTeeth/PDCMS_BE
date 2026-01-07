@@ -13,9 +13,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CreateImageCommentRequest {
 
-    @NotNull(message = "Image ID is required")
+    @NotNull(message = "Mã hình ảnh là bắt buộc")
     private Long imageId;
 
-    @NotBlank(message = "Comment text is required")
+    @NotBlank(message = "Nội dung bình luận là bắt buộc")
     private String commentText;
 }

@@ -42,7 +42,7 @@ public class RoleController {
 
     @PostMapping("")
     @Operation(summary = "Create new role", description = "Create a new role with specified details")
-    @ApiMessage("Create role successfully")
+    @ApiMessage("Tạo vai trò thành công")
     @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('MANAGE_ROLE')")
     public ResponseEntity<RoleInfoResponse> createRole(
             @Valid @RequestBody CreateRoleRequest request)
@@ -53,7 +53,7 @@ public class RoleController {
 
     @GetMapping("")
     @Operation(summary = "Get all roles", description = "Retrieve all active roles including ROLE_PATIENT")
-    @ApiMessage("Get roles successfully")
+    @ApiMessage("Lấy danh sách vai trò thành công")
     @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('VIEW_ROLE')")
     public ResponseEntity<List<RoleInfoResponse>> getAllRoles() {
         List<RoleInfoResponse> response = roleService.getAllRoles();
@@ -62,7 +62,7 @@ public class RoleController {
 
     @GetMapping("/employee-assignable")
     @Operation(summary = "Get roles for employee assignment", description = "Retrieve roles that can be assigned to employees (excludes ROLE_PATIENT)")
-    @ApiMessage("Get employee assignable roles successfully")
+    @ApiMessage("Lấy danh sách vai trò cho nhân viên thành công")
     @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('VIEW_ROLE')")
     public ResponseEntity<List<RoleInfoResponse>> getEmployeeAssignableRoles() {
         List<RoleInfoResponse> response = roleService.getEmployeeAssignableRoles();
@@ -71,7 +71,7 @@ public class RoleController {
 
     @GetMapping("/{roleId}")
     @Operation(summary = "Get role by ID", description = "Get role details by role ID")
-    @ApiMessage("Get role successfully")
+    @ApiMessage("Lấy thông tin vai trò thành công")
     @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('VIEW_ROLE')")
     public ResponseEntity<RoleInfoResponse> getRoleById(
             @PathVariable String roleId) {
@@ -81,7 +81,7 @@ public class RoleController {
 
     @PutMapping("/{roleId}")
     @Operation(summary = "Update role", description = "Update role data by role ID")
-    @ApiMessage("Update role successfully")
+    @ApiMessage("Cập nhật vai trò thành công")
     @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('MANAGE_ROLE')")
     public ResponseEntity<RoleInfoResponse> updateRole(
             @PathVariable String roleId,
@@ -92,7 +92,7 @@ public class RoleController {
 
     @DeleteMapping("/{roleId}")
     @Operation(summary = "Delete role (soft)", description = "Soft delete role by setting isActive to false")
-    @ApiMessage("Delete role successfully")
+    @ApiMessage("Xóa vai trò thành công")
     @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('MANAGE_ROLE')")
     public ResponseEntity<RoleInfoResponse> deleteRole(
             @PathVariable String roleId) {
@@ -102,7 +102,7 @@ public class RoleController {
 
     @PostMapping("/{roleId}/permissions")
     @Operation(summary = "Assign permissions to role", description = "Dynamically assign multiple permissions to a specific role")
-    @ApiMessage("Assign permissions to role successfully")
+    @ApiMessage("Gán quyền hạn cho vai trò thành công")
     @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('MANAGE_ROLE')")
     public ResponseEntity<Void> assignPermissionsToRole(
             @Parameter(description = "Role ID (e.g., ROLE_ADMIN)", required = true) @PathVariable String roleId,
@@ -113,7 +113,7 @@ public class RoleController {
 
     @GetMapping("/{roleId}/permissions")
     @Operation(summary = "Get role permissions", description = "Retrieve all permissions assigned to a specific role")
-    @ApiMessage("Get permissions of role successfully")
+    @ApiMessage("Lấy danh sách quyền hạn của vai trò thành công")
     @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('VIEW_ROLE')")
     public ResponseEntity<List<PermissionInfoResponse>> getRolePermissions(
             @Parameter(description = "Role ID (e.g., ROLE_ADMIN)", required = true) @PathVariable String roleId) {
@@ -123,7 +123,7 @@ public class RoleController {
 
     @PostMapping("/accounts/{accountId}")
     @Operation(summary = "Assign role to user", description = "Assign a role to a user account (single role per account)")
-    @ApiMessage("Assign role to user successfully")
+    @ApiMessage("Gán vai trò cho người dùng thành công")
     public ResponseEntity<Void> assignRoleToAccount(
             @Parameter(description = "Account ID (integer)", required = true) @PathVariable Integer accountId,
             @Parameter(description = "Role ID to assign", required = true) @RequestBody String roleId) {
@@ -133,7 +133,7 @@ public class RoleController {
 
     @GetMapping("/accounts/{accountId}")
     @Operation(summary = "Get user role", description = "Retrieve the role assigned to a specific user account")
-    @ApiMessage("Get role of user successfully")
+    @ApiMessage("Lấy vai trò của người dùng thành công")
     public ResponseEntity<String> getAccountRole(
             @Parameter(description = "Account ID (integer)", required = true) @PathVariable Integer accountId) {
         String role = accountService.getAccountRole(accountId);

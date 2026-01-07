@@ -26,11 +26,12 @@ spring:
   # ==============================
   jpa:
     hibernate:
-      # CRITICAL: Use 'update' instead of 'create-drop' in production
-      # - 'create-drop' drops ALL database objects (including ENUMs) on startup
-      # - 'update' only adds new columns/tables, never drops existing ones
-      # - This ensures PostgreSQL ENUMs survive application restarts
-      ddl-auto: update
+      # PRODUCTION: Use 'create-drop' for clean DB on every restart
+      # - Drops ALL tables on shutdown, recreates on startup
+      # - Perfect for development/testing with Docker volumes
+      # - Seed data is automatically loaded by SeedDataInitializer.java
+      # WARNING: All data will be lost on restart! Use Flyway/Liquibase for production with persistent data
+      ddl-auto: create-drop
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
@@ -74,11 +75,23 @@ spring:
   # ==============================
   # Mail Configuration (Production)
   # ==============================
+  # IMPORTANT: DigitalOcean blocks Gmail SMTP ports (25, 465, 587)
+  # Solution: Use SendGrid free tier (100 emails/day forever)
+  # Setup: https://sendgrid.com/pricing/ → Free Plan → Get API Key
   mail:
-    host: smtp.gmail.com
+    # Option 1: SendGrid (RECOMMENDED for DigitalOcean) - 100 emails/day FREE
+    host: smtp.sendgrid.net
     port: 587
-    username: ${MAIL_USERNAME:hellodenteeth@gmail.com}
-    password: ${MAIL_PASSWORD:micnxeutitfjrmxk}
+    username: apikey  # This is literal "apikey", not your actual key
+    password: ${SENDGRID_API_KEY:}
+    
+    # Option 2: Gmail SMTP (may not work on DigitalOcean due to port blocking)
+    # Uncomment these and comment out SendGrid if you want to try Gmail
+    # host: smtp.gmail.com
+    # port: 587
+    # username: ${MAIL_USERNAME:hellodenteeth@gmail.com}
+    # password: ${MAIL_PASSWORD:micnxeutitfjrmxk}
+    
     properties:
       mail:
         smtp:
@@ -162,6 +175,9 @@ management:
   endpoint:
     health:
       show-details: when-authorized
+  health:
+    mail:
+      enabled: false  # Disable mail health check to prevent health endpoint from failing if SMTP is down
 
 # ==============================
 # Chatbot Configuration (Gemini AI)
@@ -170,3 +186,12 @@ chatbot:
   gemini:
     api-key: ${GEMINI_API_KEY:AIzaSyDdxkbfIBv0QNIeDvW3C6M0eQX_NiWNQNI}
     model-name: gemini-2.5-flash
+
+# ==============================
+# Payment Configuration (VietQR for QR code generation)
+# ==============================
+vietqr:
+  bank-id: ${VIETQR_BANK_ID:ACB}
+  account-no: ${VIETQR_ACCOUNT_NO:24131687}
+  account-name: ${VIETQR_ACCOUNT_NAME:TRINH CONG THAI}
+  template: ${VIETQR_TEMPLATE:compact2}

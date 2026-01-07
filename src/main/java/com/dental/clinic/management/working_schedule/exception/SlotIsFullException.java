@@ -14,12 +14,11 @@ public class SlotIsFullException extends ErrorResponseException {
 
     private static ProblemDetail createProblemDetail(Long slotId, String shiftName, String dayOfWeek) {
         String message = String.format(
-            "Suất [%s - %s] đã đủ người đăng ký. Vui lòng chọn suất khác.",
-            shiftName, dayOfWeek
-        );
+                "Suất [%s - %s] đã đủ người đăng ký. Vui lòng chọn suất khác.",
+                shiftName, dayOfWeek);
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, message);
-        problemDetail.setTitle("Slot Is Full");
+        problemDetail.setTitle("Suất Làm Việc Đã Đầy");
         problemDetail.setProperty("errorCode", ERROR_CODE);
         problemDetail.setProperty("message", message);
         problemDetail.setProperty("slotId", slotId);

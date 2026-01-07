@@ -35,7 +35,7 @@ public class Appointment {
      * Foreign key to patients table
      * API nhận patientId (hoặc patientCode nếu cần)
      */
-    @NotNull(message = "Patient ID is required")
+    @NotNull(message = "Mã bệnh nhân là bắt buộc")
     @Column(name = "patient_id", nullable = false)
     private Integer patientId;
 
@@ -47,7 +47,7 @@ public class Appointment {
      * Foreign key to employees table - Bác sĩ CHÍNH
      * API nhận employeeCode (String), service layer resolve -> employeeId
      */
-    @NotNull(message = "Employee ID is required")
+    @NotNull(message = "Mã nhân viên là bắt buộc")
     @Column(name = "employee_id", nullable = false)
     private Integer employeeId;
 
@@ -60,7 +60,7 @@ public class Appointment {
      * Schema: room_id VARCHAR(50) matching rooms.room_id
      * API nhận roomCode (String), service layer resolve -> roomId (String)
      */
-    @NotNull(message = "Room ID is required")
+    @NotNull(message = "Mã phòng là bắt buộc")
     @Column(name = "room_id", nullable = false, length = 50)
     private String roomId;
 
@@ -68,15 +68,15 @@ public class Appointment {
     @JoinColumn(name = "room_id", nullable = false, insertable = false, updatable = false)
     private Room room;
 
-    @NotNull(message = "Appointment start time is required")
+    @NotNull(message = "Thời gian bắt đầu cuộc hẹn là bắt buộc")
     @Column(name = "appointment_start_time", nullable = false)
     private LocalDateTime appointmentStartTime;
 
-    @NotNull(message = "Appointment end time is required")
+    @NotNull(message = "Thời gian kết thúc cuộc hẹn là bắt buộc")
     @Column(name = "appointment_end_time", nullable = false)
     private LocalDateTime appointmentEndTime;
 
-    @NotNull(message = "Expected duration is required")
+    @NotNull(message = "Thời lượng dự kiến là bắt buộc")
     @Column(name = "expected_duration_minutes", nullable = false)
     private Integer expectedDurationMinutes;
 

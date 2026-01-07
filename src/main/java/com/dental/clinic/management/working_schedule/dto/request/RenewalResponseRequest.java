@@ -14,8 +14,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class RenewalResponseRequest {
 
-    @NotBlank(message = "Action is required")
-    @Pattern(regexp = "CONFIRMED|DECLINED", message = "Action must be either CONFIRMED or DECLINED")
+    @NotBlank(message = "Hành động là bắt buộc")
+    @Pattern(regexp = "CONFIRMED|DECLINED", message = "Hành động phải là CONFIRMED hoặc DECLINED")
     private String action; // "CONFIRMED" or "DECLINED"
 
     /**

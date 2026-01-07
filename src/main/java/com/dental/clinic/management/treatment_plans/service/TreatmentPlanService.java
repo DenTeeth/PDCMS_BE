@@ -56,13 +56,13 @@ public class TreatmentPlanService {
         Patient patient = patientRepository.findOneByPatientCode(patientCode)
                 .orElseThrow(() -> {
                     log.error("Patient not found with code: {}", patientCode);
-                    return new IllegalArgumentException("Patient not found with code: " + patientCode);
+                    return new IllegalArgumentException("Không tìm thấy bệnh nhân với mã: " + patientCode);
                 });
 
         // STEP 2: RBAC - Check permissions
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
-            throw new AccessDeniedException("User not authenticated");
+            throw new AccessDeniedException("Người dùng chưa xác thực");
         }
 
         boolean hasViewAllPermission = authentication.getAuthorities().stream()
@@ -90,14 +90,14 @@ public class TreatmentPlanService {
             if (patientAccountId == null || !patientAccountId.equals(currentAccountId)) {
                 log.warn("Access denied: User {} trying to view treatment plans of patient {} (different account)",
                         currentAccountId, patientCode);
-                throw new AccessDeniedException("You can only view your own treatment plans");
+                throw new AccessDeniedException("Bạn chỉ có thể xem lộ trình điều trị của chính mình");
             }
             log.info("User verified as owner of patient record, allowing access");
         }
         // No valid permission
         else {
             log.warn("Access denied: User does not have VIEW_TREATMENT_PLAN_ALL or VIEW_TREATMENT_PLAN_OWN permission");
-            throw new AccessDeniedException("You do not have permission to view treatment plans");
+            throw new AccessDeniedException("Bạn không có quyền xem lộ trình điều trị");
         }
 
         // STEP 3: Query treatment plans with JOIN FETCH (avoid N+1)
@@ -111,8 +111,8 @@ public class TreatmentPlanService {
 
         // STEP 5: Hide prices if user is a doctor (Task #3 - FE Issue)
         if (isCurrentUserDoctor()) {
-                hidePricesFromSummaries(dtos);
-                log.info("Prices hidden from {} treatment plan summaries (user is doctor)", dtos.size());
+            hidePricesFromSummaries(dtos);
+            log.info("Prices hidden from {} treatment plan summaries (user is doctor)", dtos.size());
         }
 
         return dtos;
@@ -139,13 +139,13 @@ public class TreatmentPlanService {
         Patient patient = patientRepository.findOneByPatientCode(patientCode)
                 .orElseThrow(() -> {
                     log.error("Patient not found with code: {}", patientCode);
-                    return new IllegalArgumentException("Patient not found with code: " + patientCode);
+                    return new IllegalArgumentException("Không tìm thấy bệnh nhân với mã: " + patientCode);
                 });
 
         // STEP 2: RBAC check (same as non-paginated version)
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
-            throw new AccessDeniedException("User not authenticated");
+            throw new AccessDeniedException("Người dùng chưa xác thực");
         }
 
         boolean hasViewAllPermission = authentication.getAuthorities().stream()
@@ -165,12 +165,12 @@ public class TreatmentPlanService {
             if (patientAccountId == null || !patientAccountId.equals(currentAccountId)) {
                 log.warn("Access denied: User {} trying to view treatment plans of patient {} (different account)",
                         currentAccountId, patientCode);
-                throw new AccessDeniedException("You can only view your own treatment plans");
+                throw new AccessDeniedException("Bạn chỉ có thể xem lộ trình điều trị của chính mình");
             }
             log.info("User verified as owner of patient record, allowing paginated access");
         } else {
             log.warn("Access denied: User does not have VIEW_TREATMENT_PLAN_ALL or VIEW_TREATMENT_PLAN_OWN permission");
-            throw new AccessDeniedException("You do not have permission to view treatment plans");
+            throw new AccessDeniedException("Bạn không có quyền xem lộ trình điều trị");
         }
 
         // STEP 3: Query with pagination
@@ -186,9 +186,9 @@ public class TreatmentPlanService {
 
         // STEP 5: Hide prices if user is a doctor (Task #3 - FE Issue)
         if (isCurrentUserDoctor()) {
-                dtoPage.getContent().forEach(this::hidePricesFromSummary);
-                log.info("Prices hidden from {} treatment plan summaries (user is doctor)",
-                                dtoPage.getNumberOfElements());
+            dtoPage.getContent().forEach(this::hidePricesFromSummary);
+            log.info("Prices hidden from {} treatment plan summaries (user is doctor)",
+                    dtoPage.getNumberOfElements());
         }
 
         return dtoPage;
@@ -202,13 +202,13 @@ public class TreatmentPlanService {
      */
     private Integer getCurrentAccountId(Authentication authentication) {
         if (authentication == null || authentication.getPrincipal() == null) {
-            throw new IllegalStateException("Unable to extract account_id from token: no authentication principal");
+            throw new IllegalStateException("Không thể trích xuất account_id từ token: không có principal xác thực");
         }
 
         if (authentication.getPrincipal() instanceof Jwt jwt) {
             Object claim = jwt.getClaim("account_id");
             if (claim == null) {
-                throw new IllegalStateException("Unable to extract account_id from token: claim is null");
+                throw new IllegalStateException("Không thể trích xuất account_id từ token: claim là null");
             }
 
             if (claim instanceof Integer) {
@@ -226,14 +226,14 @@ public class TreatmentPlanService {
                         long l = Long.parseLong(s);
                         return (int) l;
                     } catch (NumberFormatException ex) {
-                        throw new IllegalStateException("Unable to parse account_id from token string: " + s);
+                        throw new IllegalStateException("Không thể phân tích account_id từ chuỗi token: " + s);
                     }
                 }
             }
 
-            throw new IllegalStateException("Unsupported account_id claim type: " + claim.getClass().getName());
+            throw new IllegalStateException("Kiểu claim account_id không được hỗ trợ: " + claim.getClass().getName());
         }
-        throw new IllegalStateException("Unable to extract account_id from token: principal is not Jwt");
+        throw new IllegalStateException("Không thể trích xuất account_id từ token: principal không phải JWT");
     }
 
     /**
@@ -306,7 +306,7 @@ public class TreatmentPlanService {
         // ============================================
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
-            throw new AccessDeniedException("User not authenticated");
+            throw new AccessDeniedException("Người dùng chưa xác thực");
         }
 
         // Extract authorities
@@ -336,7 +336,7 @@ public class TreatmentPlanService {
 
         // Fetch account to get base role
         com.dental.clinic.management.account.domain.Account account = accountRepository.findById(accountId)
-                .orElseThrow(() -> new AccessDeniedException("Account not found: " + accountId));
+                .orElseThrow(() -> new AccessDeniedException("Không tìm thấy tài khoản: " + accountId));
 
         Integer baseRoleId = account.getRole().getBaseRole().getBaseRoleId();
         log.debug("User accountId={}, baseRoleId={}", accountId, baseRoleId);
@@ -344,7 +344,7 @@ public class TreatmentPlanService {
         if (baseRoleId.equals(com.dental.clinic.management.security.constants.BaseRoleConstants.EMPLOYEE)) {
             // ============================================
             // EMPLOYEE: Apply filters based on permissions
-            
+
             // FIX: Users with VIEW_ALL permission (ADMIN/MANAGER) should not be restricted
             if (hasViewAllPermission) {
                 // User has VIEW_ALL - no filtering needed, can see all plans
@@ -354,7 +354,7 @@ public class TreatmentPlanService {
                 // User has VIEW_OWN - filter by createdBy (Doctor can only see their own plans)
                 com.dental.clinic.management.employee.domain.Employee employee = employeeRepository
                         .findOneByAccountAccountId(accountId)
-                        .orElseThrow(() -> new AccessDeniedException("Employee not found for account: " + accountId));
+                        .orElseThrow(() -> new AccessDeniedException("Không tìm thấy nhân viên cho tài khoản: " + accountId));
 
                 log.info("EMPLOYEE mode: Filtering by createdBy employeeId={}", employee.getEmployeeId());
 
@@ -377,12 +377,12 @@ public class TreatmentPlanService {
             // PATIENT: Filter by patient
 
             if (!hasViewOwnPermission) {
-                throw new AccessDeniedException("Patient must have VIEW_TREATMENT_PLAN_OWN permission");
+                throw new AccessDeniedException("Bệnh nhân phải có quyền VIEW_TREATMENT_PLAN_OWN");
             }
 
             com.dental.clinic.management.patient.domain.Patient patient = patientRepository
                     .findOneByAccountAccountId(accountId)
-                    .orElseThrow(() -> new AccessDeniedException("Patient not found for account: " + accountId));
+                    .orElseThrow(() -> new AccessDeniedException("Không tìm thấy bệnh nhân cho tài khoản: " + accountId));
 
             log.info("PATIENT mode: Filtering by patientId={}", patient.getPatientId());
 
@@ -400,7 +400,7 @@ public class TreatmentPlanService {
             // ADMIN: Can view all plans with optional filters
 
             if (!hasViewAllPermission) {
-                throw new AccessDeniedException("Admin must have VIEW_TREATMENT_PLAN_ALL permission");
+                throw new AccessDeniedException("Quản trị viên phải có quyền VIEW_TREATMENT_PLAN_ALL");
             }
 
             log.info("ADMIN mode: Can view all plans. Applying optional filters (doctorCode={}, patientCode={})",

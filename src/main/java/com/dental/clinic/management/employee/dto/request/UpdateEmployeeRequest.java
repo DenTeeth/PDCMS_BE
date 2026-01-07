@@ -16,22 +16,22 @@ import com.dental.clinic.management.employee.enums.EmploymentType;
  */
 public class UpdateEmployeeRequest {
 
-    @Size(max = 20, message = "Role ID must not exceed 20 characters")
+    @Size(max = 20, message = "Mã vai trò không được vượt quá 20 ký tự")
     private String roleId;
 
-    @Size(max = 50, message = "First name must not exceed 50 characters")
+    @Size(max = 50, message = "Tên không được vượt quá 50 ký tự")
     private String firstName;
 
-    @Size(max = 50, message = "Last name must not exceed 50 characters")
+    @Size(max = 50, message = "Họ không được vượt quá 50 ký tự")
     private String lastName;
 
-    @Pattern(regexp = "^[0-9]{10,15}$", message = "Phone number must be 10-15 digits")
+    @Pattern(regexp = "^[0-9]{10,15}$", message = "Số điện thoại phải từ 10-15 chữ số")
     private String phone;
 
-    @Past(message = "Date of birth must be in the past")
+    @Past(message = "Ngày sinh phải trong quá khứ")
     private LocalDate dateOfBirth;
 
-    @Size(max = 500, message = "Address must not exceed 500 characters")
+    @Size(max = 500, message = "Địa chỉ không được vượt quá 500 ký tự")
     private String address;
 
     private EmploymentType employmentType;

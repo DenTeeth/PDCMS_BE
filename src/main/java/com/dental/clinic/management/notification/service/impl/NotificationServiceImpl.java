@@ -140,17 +140,23 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     public void createTimeOffRequestNotification(String employeeName, String requestId, String startDate,
             String endDate) {
-        log.info("Creating TIME_OFF_REQUEST notifications for all ADMIN users, employee: {}", employeeName);
+        log.info("Creating TIME_OFF_REQUEST notifications for ADMIN and MANAGER users, employee: {}", employeeName);
 
         String title = "Yeu cau nghi phep tu " + employeeName;
         String message = employeeName + " da gui yeu cau nghi phep tu " + startDate + " den " + endDate;
 
-        // Find all ADMIN accounts
+        // Find all ADMIN and MANAGER accounts (both can approve time-off requests)
         List<Account> adminAccounts = accountRepository.findByRole_RoleName("ADMIN");
-        for (Account admin : adminAccounts) {
-            if (admin.getEmployee() != null) {
+        List<Account> managerAccounts = accountRepository.findByRole_RoleName("MANAGER");
+        
+        // Combine both lists
+        List<Account> approverAccounts = new java.util.ArrayList<>(adminAccounts);
+        approverAccounts.addAll(managerAccounts);
+        
+        for (Account account : approverAccounts) {
+            if (account.getEmployee() != null) {
                 CreateNotificationRequest request = CreateNotificationRequest.builder()
-                        .userId(admin.getEmployee().getEmployeeId())
+                        .userId(account.getEmployee().getEmployeeId())
                         .type(NotificationType.REQUEST_TIME_OFF_PENDING)
                         .title(title)
                         .message(message)
@@ -160,24 +166,33 @@ public class NotificationServiceImpl implements NotificationService {
                         .build();
 
                 createNotification(request);
+                log.debug("Sent TIME_OFF notification to {} (role: {})", 
+                        account.getEmployee().getEmployeeCode(), account.getRole().getRoleName());
             }
         }
+        log.info("Sent {} TIME_OFF_REQUEST notifications to approvers", approverAccounts.size());
     }
 
     @Override
     public void createOvertimeRequestNotification(String employeeName, String requestId, String workDate,
             String shiftName) {
-        log.info("Creating OVERTIME_REQUEST notifications for all ADMIN users, employee: {}", employeeName);
+        log.info("Creating OVERTIME_REQUEST notifications for ADMIN and MANAGER users, employee: {}", employeeName);
 
         String title = "Yeu cau tang ca tu " + employeeName;
         String message = employeeName + " da gui yeu cau tang ca ngay " + workDate + " ca " + shiftName;
 
-        // Find all ADMIN accounts
+        // Find all ADMIN and MANAGER accounts (both can approve overtime requests)
         List<Account> adminAccounts = accountRepository.findByRole_RoleName("ADMIN");
-        for (Account admin : adminAccounts) {
-            if (admin.getEmployee() != null) {
+        List<Account> managerAccounts = accountRepository.findByRole_RoleName("MANAGER");
+        
+        // Combine both lists
+        List<Account> approverAccounts = new java.util.ArrayList<>(adminAccounts);
+        approverAccounts.addAll(managerAccounts);
+        
+        for (Account account : approverAccounts) {
+            if (account.getEmployee() != null) {
                 CreateNotificationRequest request = CreateNotificationRequest.builder()
-                        .userId(admin.getEmployee().getEmployeeId())
+                        .userId(account.getEmployee().getEmployeeId())
                         .type(NotificationType.REQUEST_OVERTIME_PENDING)
                         .title(title)
                         .message(message)
@@ -187,24 +202,33 @@ public class NotificationServiceImpl implements NotificationService {
                         .build();
 
                 createNotification(request);
+                log.debug("Sent OVERTIME notification to {} (role: {})", 
+                        account.getEmployee().getEmployeeCode(), account.getRole().getRoleName());
             }
         }
+        log.info("Sent {} OVERTIME_REQUEST notifications to approvers", approverAccounts.size());
     }
 
     @Override
     public void createPartTimeRequestNotification(String employeeName, Integer registrationId, String effectiveFrom,
             String effectiveTo) {
-        log.info("Creating PART_TIME_REGISTRATION notifications for all ADMIN users, employee: {}", employeeName);
+        log.info("Creating PART_TIME_REGISTRATION notifications for ADMIN and MANAGER users, employee: {}", employeeName);
 
         String title = "Yeu cau dang ky part-time tu " + employeeName;
         String message = employeeName + " da gui yeu cau dang ky part-time tu " + effectiveFrom + " den " + effectiveTo;
 
-        // Find all ADMIN accounts
+        // Find all ADMIN and MANAGER accounts (both can approve part-time registrations)
         List<Account> adminAccounts = accountRepository.findByRole_RoleName("ADMIN");
-        for (Account admin : adminAccounts) {
-            if (admin.getEmployee() != null) {
+        List<Account> managerAccounts = accountRepository.findByRole_RoleName("MANAGER");
+        
+        // Combine both lists
+        List<Account> approverAccounts = new java.util.ArrayList<>(adminAccounts);
+        approverAccounts.addAll(managerAccounts);
+        
+        for (Account account : approverAccounts) {
+            if (account.getEmployee() != null) {
                 CreateNotificationRequest request = CreateNotificationRequest.builder()
-                        .userId(admin.getEmployee().getEmployeeId())
+                        .userId(account.getEmployee().getEmployeeId())
                         .type(NotificationType.REQUEST_PART_TIME_PENDING)
                         .title(title)
                         .message(message)
@@ -214,7 +238,10 @@ public class NotificationServiceImpl implements NotificationService {
                         .build();
 
                 createNotification(request);
+                log.debug("Sent PART_TIME notification to {} (role: {})", 
+                        account.getEmployee().getEmployeeCode(), account.getRole().getRoleName());
             }
         }
+        log.info("Sent {} PART_TIME_REGISTRATION notifications to approvers", approverAccounts.size());
     }
 }

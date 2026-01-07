@@ -1,10 +1,18 @@
 package com.dental.clinic.management;
 
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+
+@Slf4j
 @SpringBootApplication
 @EnableConfigurationProperties
 @EnableScheduling
@@ -17,6 +25,34 @@ public class DentalClinicManagementApplication {
 		System.out.println("Auto-detected environment: " + profile);
 
 		SpringApplication.run(DentalClinicManagementApplication.class, args);
+	}
+
+	/**
+	 * Startup logging to verify scheduler configuration
+	 */
+	@Bean
+	public CommandLineRunner schedulerHealthCheck() {
+		return args -> {
+			ZoneId timezone = ZoneId.of("Asia/Ho_Chi_Minh");
+			ZonedDateTime now = ZonedDateTime.now(timezone);
+			DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z");
+			
+			log.info("========================================");
+			log.info("🚀 PDCMS Backend Application Started");
+			log.info("========================================");
+			log.info("⏰ Current time: {}", now.format(formatter));
+			log.info("🌏 Timezone: {}", timezone);
+			log.info("📅 Scheduled jobs are ENABLED");
+			log.info("========================================");
+			log.info("📋 Active Scheduled Jobs:");
+			log.info("  - P8: UnifiedScheduleSyncJob (00:01 AM daily)");
+			log.info("  - P9: DailyRenewalDetectionJob (00:05 AM daily)");
+			log.info("  - RequestReminderNotificationJob (09:00 AM daily)");
+			log.info("  - WarehouseExpiryEmailJob (08:00 AM daily)");
+			log.info("  - InactiveEmployeeCleanup (00:00 AM daily)");
+			log.info("  - And 6 more cleanup/maintenance jobs...");
+			log.info("========================================");
+		};
 	}
 
 	/**

@@ -229,6 +229,11 @@ public class AppointmentCreationService {
 
                 insertAuditLog(appointment, createdById);
 
+                // CRITICAL FIX: Flush to ensure participants are persisted before querying for notifications
+                // Without this, the query in sendAppointmentCreatedNotification might not find the participants
+                appointmentParticipantRepository.flush();
+                log.debug("Flushed participants to database before sending notifications");
+
                 // Send notification to patient, doctor, and participants
                 log.info("CALLING sendAppointmentCreatedNotification for appointment: {}", appointment.getAppointmentCode());
                 sendAppointmentCreatedNotification(appointment, patient);
@@ -352,7 +357,7 @@ public class AppointmentCreationService {
                 Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
                 if (authentication == null || !authentication.isAuthenticated()) {
-                        throw new BadRequestAlertException("User not authenticated", ENTITY_NAME, "NOT_AUTHENTICATED");
+                        throw new BadRequestAlertException("Người dùng chưa được xác thực", ENTITY_NAME, "NOT_AUTHENTICATED");
                 }
 
                 Object principal = authentication.getPrincipal();
@@ -1036,6 +1041,8 @@ public class AppointmentCreationService {
                         // 2. Send notification to MAIN DOCTOR (dentist assigned to appointment)
                         Employee mainDoctor = employeeRepository.findById(appointment.getEmployeeId()).orElse(null);
                         if (mainDoctor != null && mainDoctor.getAccount() != null) {
+                                // CRITICAL: Use accountId consistently for all users (patients AND staff)
+                                // This matches JWT token claim, WebSocket topic path, and FE queries
                                 Integer doctorUserId = mainDoctor.getAccount().getAccountId();
                                 log.info("Sending notification to MAIN DOCTOR userId={} (employeeCode={}) for appointment {}",
                                                 doctorUserId, mainDoctor.getEmployeeCode(), appointment.getAppointmentCode());
@@ -1059,10 +1066,9 @@ public class AppointmentCreationService {
                         }
 
                         // 3. Send notifications to ALL PARTICIPANTS (assistants, observers, additional dentists)
-                        // Query participants from repository since they're not loaded in appointment
-                        // entity
+                        // Query participants from repository with EAGER loading to avoid LazyInitializationException
                         List<AppointmentParticipant> participants = appointmentParticipantRepository
-                                        .findByIdAppointmentId(appointment.getAppointmentId());
+                                        .findByAppointmentIdWithEmployeeAndAccount(appointment.getAppointmentId());
 
                         if (participants != null && !participants.isEmpty()) {
                                 log.info("Processing {} participants for appointment {}",
@@ -1085,6 +1091,8 @@ public class AppointmentCreationService {
                                                         continue;
                                                 }
 
+                                                // CRITICAL: Use accountId consistently for all users (patients AND staff)
+                                                // This matches JWT token claim, WebSocket topic path, and FE queries
                                                 Integer staffUserId = participantEmployee.getAccount().getAccountId();
                                                 AppointmentParticipantRole role = participant.getRole(); // ASSISTANT
 
@@ -1267,7 +1275,7 @@ public class AppointmentCreationService {
                 } catch (Exception e) {
                         log.error("Failed to update plan items status. Transaction will rollback. ItemIds: {}, TargetStatus: {}",
                                         itemIds, newStatus, e);
-                        throw new RuntimeException("Failed to update plan items status", e);
+                        throw new RuntimeException("Đã xảy ra lỗi khi cập nhật trạng thái mục kế hoạch", e);
                 }
         }
 

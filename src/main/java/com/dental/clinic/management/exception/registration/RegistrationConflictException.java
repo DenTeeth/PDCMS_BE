@@ -20,18 +20,18 @@ public class RegistrationConflictException extends ErrorResponseException {
 
     private static ProblemDetail asProblemDetail(String workShiftId, String dayOfWeek) {
         String message = String.format(
-                "This shift registration conflicts with an existing active registration for shift %s on %s",
+                "Đăng ký ca này trùng với đăng ký đang hoạt động cho ca %s vào %s",
                 workShiftId, dayOfWeek);
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, message);
-        problemDetail.setTitle("Registration Conflict");
+        problemDetail.setTitle("Xung Đột Đăng Ký");
         problemDetail.setProperty("errorCode", "REGISTRATION_CONFLICT");
-        problemDetail.setProperty("message", "This shift registration conflicts with an existing active registration.");
+        problemDetail.setProperty("message", "Đăng ký ca này trùng với đăng ký đang hoạt động.");
         return problemDetail;
     }
 
     private static ProblemDetail asProblemDetailWithMessage(String message) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, message);
-        problemDetail.setTitle("Registration Conflict");
+        problemDetail.setTitle("Xung Đột Đăng Ký");
         problemDetail.setProperty("errorCode", "REGISTRATION_CONFLICT");
         problemDetail.setProperty("message", message);
         return problemDetail;

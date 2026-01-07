@@ -46,7 +46,7 @@ public class ItemMasterController {
         private final ItemMasterService itemMasterService;
 
         @GetMapping
-        @ApiMessage("Item masters retrieved successfully")
+        @ApiMessage("Lấy danh sách vật tư thành công")
         @PreAuthorize("hasRole('" + ADMIN + "') or hasAnyAuthority('VIEW_ITEMS', 'VIEW_WAREHOUSE', 'MANAGE_WAREHOUSE')")
         @Operation(summary = "Get Item Masters List", description = """
                         API 6.8 - Get list of all item masters with advanced filtering
@@ -88,7 +88,7 @@ public class ItemMasterController {
         }
 
         @PostMapping
-        @ApiMessage("Item master created successfully")
+        @ApiMessage("Tạo vật tư thành công")
         @PreAuthorize("hasRole('" + ADMIN + "') or hasAnyAuthority('CREATE_ITEMS', 'MANAGE_WAREHOUSE')")
         @Operation(summary = "Create New Item Master", description = """
                         API 6.9 - Create new item master with unit hierarchy
@@ -135,7 +135,7 @@ public class ItemMasterController {
         }
 
         @PutMapping("/{id}")
-        @ApiMessage("Item master updated successfully")
+        @ApiMessage("Cập nhật vật tư thành công")
         @PreAuthorize("hasRole('" + ADMIN + "') or hasAnyAuthority('UPDATE_ITEMS', 'MANAGE_WAREHOUSE')")
         @Operation(summary = "Update Item Master", description = """
                         API 6.10 - Update item master with Safety Lock mechanism
@@ -201,7 +201,7 @@ public class ItemMasterController {
         }
 
         @GetMapping("/{itemMasterId}/units")
-        @ApiMessage("Item units retrieved successfully")
+        @ApiMessage("Lấy danh sách đơn vị vật tư thành công")
         @PreAuthorize("hasRole('" + ADMIN + "') or hasAnyAuthority('VIEW_ITEMS', 'VIEW_WAREHOUSE', 'MANAGE_WAREHOUSE')")
         @Operation(summary = "Get Item Units", description = """
                         API 6.11 - Get list of units for an item master (for dropdown selection)
@@ -250,7 +250,7 @@ public class ItemMasterController {
         }
 
         @PostMapping("/units/convert")
-        @ApiMessage("Conversion processed successfully")
+        @ApiMessage("Chuyển đổi đơn vị thành công")
         @PreAuthorize("hasRole('" + ADMIN + "') or hasAnyAuthority('VIEW_ITEMS', 'VIEW_WAREHOUSE', 'MANAGE_WAREHOUSE')")
         @Operation(summary = "Convert Item Quantity Between Units (Batch)", description = """
                         API 6.12 - Convert item quantities between units with batch support
@@ -319,7 +319,7 @@ public class ItemMasterController {
         }
 
         @DeleteMapping("/{id}")
-        @ApiMessage("Item master deleted successfully")
+        @ApiMessage("Xóa vật tư thành công")
         @PreAuthorize("hasRole('" + ADMIN + "') or hasAnyAuthority('DELETE_ITEMS', 'MANAGE_WAREHOUSE')")
         @Operation(summary = "Delete Item Master", description = """
                         API 6.13 - Delete item master

@@ -119,6 +119,10 @@ public class SecurityConfig {
                                                 // Public endpoints - Chatbot
                                                 .requestMatchers(mvc.pattern("/api/v1/chatbot/**")).permitAll()
 
+                                                // Public endpoints - SePay Webhook
+                                                // SePay uses IP whitelist for security, no JWT needed
+                                                .requestMatchers(mvc.pattern("/api/v1/webhooks/sepay")).permitAll()
+
                                                 // Authenticated endpoints - Account management
                                                 .requestMatchers(mvc.pattern("/api/v1/account/**")).authenticated()
 

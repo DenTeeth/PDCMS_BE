@@ -5,11 +5,11 @@ import jakarta.validation.constraints.Size;
 
 public class UpdateRoleRequest {
 
-    @NotBlank(message = "Role name is required")
-    @Size(max = 50, message = "Role name must not exceed 50 characters")
+    @NotBlank(message = "Tên vai trò là bắt buộc")
+    @Size(max = 50, message = "Tên vai trò không được vượt quá 50 ký tự")
     private String roleName;
 
-    @Size(max = 500, message = "Description must not exceed 500 characters")
+    @Size(max = 500, message = "Mô tả không được vượt quá 500 ký tự")
     private String description;
 
     private Boolean requiresSpecialization;

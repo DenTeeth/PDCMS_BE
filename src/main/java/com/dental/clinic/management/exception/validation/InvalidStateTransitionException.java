@@ -17,7 +17,7 @@ public class InvalidStateTransitionException extends ErrorResponseException {
 
     private static ProblemDetail asProblemDetail(String message) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, message);
-        problemDetail.setTitle("Invalid State Transition");
+        problemDetail.setTitle("Chuyển Trạng Thái Không Hợp Lệ");
         problemDetail.setProperty("errorCode", "INVALID_STATE_TRANSITION");
         problemDetail.setProperty("message", message);
         return problemDetail;

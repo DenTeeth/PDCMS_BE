@@ -26,11 +26,11 @@ public class ReorderServiceCategoriesRequest {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class CategoryOrder {
-        @NotNull(message = "Category ID is required")
+        @NotNull(message = "Mã danh mục là bắt buộc")
         private Long categoryId;
 
-        @NotNull(message = "Display order is required")
-        @Min(value = 0, message = "Display order must be >= 0")
+        @NotNull(message = "Thứ tự hiển thị là bắt buộc")
+        @Min(value = 0, message = "Thứ tự hiển thị phải >= 0")
         private Integer displayOrder;
     }
 }

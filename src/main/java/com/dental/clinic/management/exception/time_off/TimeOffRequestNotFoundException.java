@@ -18,18 +18,18 @@ public class TimeOffRequestNotFoundException extends ErrorResponseException {
     }
 
     private static ProblemDetail asProblemDetail(String requestId) {
-        String message = "Time-off request with ID '" + requestId + "' not found";
+        String message = "Không tìm thấy yêu cầu nghỉ phép với ID '" + requestId + "'";
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, message);
-        problemDetail.setTitle("Time-Off Request Not Found");
+        problemDetail.setTitle("Không Tìm Thấy Yêu Cầu Nghỉ Phép");
         problemDetail.setProperty("errorCode", "TIMEOFF_REQUEST_NOT_FOUND");
         problemDetail.setProperty("message", message);
         return problemDetail;
     }
 
     private static ProblemDetail asProblemDetailWithMessage(String requestId, String additionalMessage) {
-        String message = "Time-off request with ID '" + requestId + "' not found " + additionalMessage;
+        String message = "Không tìm thấy yêu cầu nghỉ phép với ID '" + requestId + "' " + additionalMessage;
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, message);
-        problemDetail.setTitle("Time-Off Request Not Found");
+        problemDetail.setTitle("Không Tìm Thấy Yêu Cầu Nghỉ Phép");
         problemDetail.setProperty("errorCode", "TIMEOFF_REQUEST_NOT_FOUND");
         problemDetail.setProperty("message", message);
         return problemDetail;

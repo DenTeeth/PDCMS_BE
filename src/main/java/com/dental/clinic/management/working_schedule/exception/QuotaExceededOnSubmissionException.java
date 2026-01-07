@@ -15,9 +15,10 @@ public class QuotaExceededOnSubmissionException extends ErrorResponseException {
     }
 
     private static ProblemDetail createProblemDetail(Long slotId, LocalDate from, LocalDate to, String detail) {
-        String message = String.format("Không thể gửi yêu cầu: suất %d đã đầy cho thời gian %s -> %s.\n%s", slotId, from, to, detail);
+        String message = String.format("Không thể gửi yêu cầu: suất %d đã đầy cho thời gian %s -> %s.\n%s", slotId,
+                from, to, detail);
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, message);
-        pd.setTitle("Quota Exceeded On Submission");
+        pd.setTitle("Vượt Quá Hạn Mức Khi Gửi");
         pd.setProperty("errorCode", ERROR_CODE);
         pd.setProperty("message", message);
         pd.setProperty("slotId", slotId);

@@ -120,6 +120,22 @@ public class PatientTreatmentPlan {
     private PaymentType paymentType;
 
     /**
+     * Number of installments for INSTALLMENT payment type.
+     * If null or 0, defaults to 3 installments.
+     * Only used when paymentType = INSTALLMENT.
+     */
+    @Column(name = "installment_count")
+    private Integer installmentCount;
+
+    /**
+     * Number of days between each installment payment.
+     * If null or 0, defaults to 30 days (monthly).
+     * Only used when paymentType = INSTALLMENT.
+     */
+    @Column(name = "installment_interval_days")
+    private Integer installmentIntervalDays;
+
+    /**
      * Approval status (V19): DRAFT, PENDING_REVIEW, APPROVED, REJECTED.
      * Used for price override control workflow.
      */
