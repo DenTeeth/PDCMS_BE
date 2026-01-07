@@ -226,12 +226,24 @@ public class InvoiceService {
 
     /**
      * Lay danh sach invoices cua appointment
+     * If user has VIEW_INVOICE_OWN but not VIEW_INVOICE_ALL, only return invoices for their own patient account
      */
     @Transactional(readOnly = true)
     public List<InvoiceResponse> getInvoicesByAppointment(Integer appointmentId) {
         log.info("Getting invoices for appointment: {}", appointmentId);
         List<Invoice> invoices = invoiceRepository
             .findByAppointmentIdAndInvoiceTypeOrderByCreatedAtDesc(appointmentId, InvoiceType.APPOINTMENT);
+        
+        // ✅ RBAC: If user has VIEW_INVOICE_OWN but not VIEW_INVOICE_ALL, filter by their patientId
+        if (SecurityUtil.hasCurrentUserPermission("VIEW_INVOICE_OWN") && 
+            !SecurityUtil.hasCurrentUserPermission("VIEW_INVOICE_ALL")) {
+            Integer currentPatientId = getCurrentPatientId();
+            log.debug("Filtering invoices for patient: {}", currentPatientId);
+            invoices = invoices.stream()
+                    .filter(invoice -> invoice.getPatientId().equals(currentPatientId))
+                    .collect(Collectors.toList());
+        }
+        
         return invoices.stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
@@ -500,5 +512,19 @@ public class InvoiceService {
                 .map(Account::getEmployee)
                 .map(Employee::getEmployeeId)
                 .orElseThrow(() -> new AccessDeniedException("Không tìm thấy nhân viên cho người dùng: " + username));
+    }
+
+    /**
+     * Get current patient ID from security context.
+     * Used for permission checks - patients can only view their own invoices.
+     */
+    private Integer getCurrentPatientId() {
+        String username = SecurityUtil.getCurrentUserLogin()
+                .orElseThrow(() -> new AccessDeniedException("Người dùng chưa được xác thực"));
+
+        return accountRepository.findOneByUsername(username)
+                .map(Account::getPatient)
+                .map(Patient::getPatientId)
+                .orElseThrow(() -> new AccessDeniedException("Không tìm thấy bệnh nhân cho người dùng: " + username));
     }
 }

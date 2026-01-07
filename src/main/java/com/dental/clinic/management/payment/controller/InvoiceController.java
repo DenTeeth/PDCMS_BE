@@ -54,7 +54,7 @@ public class InvoiceController {
     }
 
     @GetMapping("/appointment/{appointmentId}")
-    @PreAuthorize("hasAnyAuthority('VIEW_INVOICE_ALL', 'VIEW_APPOINTMENT_ALL')") // RECEPTIONIST, ACCOUNTANT, MANAGER, ADMIN
+    @PreAuthorize("hasAnyAuthority('VIEW_INVOICE_ALL', 'VIEW_APPOINTMENT_ALL', 'VIEW_INVOICE_OWN')") // RECEPTIONIST, ACCOUNTANT, MANAGER, ADMIN, PATIENT
     @ApiMessage("Lấy danh sách hóa đơn thành công")
     @Operation(summary = "Get invoices by appointment", description = "Get all invoices for a specific appointment")
     public ResponseEntity<List<InvoiceResponse>> getInvoicesByAppointment(@PathVariable Integer appointmentId) {
