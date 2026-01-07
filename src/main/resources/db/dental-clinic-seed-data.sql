@@ -5675,3 +5675,112 @@ WHERE EXISTS (SELECT 1 FROM invoices WHERE invoice_code = 'INV-20251105-002');
 -- END: PAYMENT SYSTEM SEED DATA
 -- ============================================
 
+-- ============================================
+-- DASHBOARD TEST DATA - JANUARY 2026
+-- ============================================
+-- Purpose: Test data for dashboard statistics module
+-- Month: 2026-01 (January 2026)
+-- Total Revenue: 4,600,000 VND | Total Expenses: 530,000 VND | Net Profit: 4,070,000 VND
+
+-- Workaround: SELECT 1 absorbs any SQL parser issues from previous section
+SELECT 1;
+
+INSERT INTO appointments (appointment_code, patient_id, employee_id, room_id, appointment_start_time, appointment_end_time, expected_duration_minutes, status, actual_start_time, actual_end_time, notes, created_by, created_at, updated_at, reschedule_count) VALUES ('APT-20260102-TEST02', 2, 2, 'GHE251103002', '2026-01-02 14:00:00', '2026-01-02 14:45:00', 45, 'COMPLETED', '2026-01-02 14:00:00', '2026-01-02 14:40:00', 'Dashboard test - Jan Week 1', 2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0) ON CONFLICT (appointment_code) DO NOTHING;
+INSERT INTO appointments (appointment_code, patient_id, employee_id, room_id, appointment_start_time, appointment_end_time, expected_duration_minutes, status, actual_start_time, actual_end_time, notes, created_by, created_at, updated_at, reschedule_count) VALUES ('APT-20260102-TEST01', 1, 1, 'GHE251103001', '2026-01-02 09:00:00', '2026-01-02 09:45:00', 45, 'COMPLETED', '2026-01-02 09:00:00', '2026-01-02 09:40:00', 'Dashboard test - Jan Week 1', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0) ON CONFLICT (appointment_code) DO NOTHING;
+INSERT INTO appointments (appointment_code, patient_id, employee_id, room_id, appointment_start_time, appointment_end_time, expected_duration_minutes, status, actual_start_time, actual_end_time, notes, created_by, created_at, updated_at, reschedule_count) VALUES ('APT-20260103-TEST01', 3, 1, 'GHE251103001', '2026-01-03 10:00:00', '2026-01-03 10:30:00', 30, 'COMPLETED', '2026-01-03 10:00:00', '2026-01-03 10:30:00', 'Dashboard test - Jan Week 1', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0) ON CONFLICT (appointment_code) DO NOTHING;
+INSERT INTO appointments (appointment_code, patient_id, employee_id, room_id, appointment_start_time, appointment_end_time, expected_duration_minutes, status, actual_start_time, actual_end_time, notes, created_by, created_at, updated_at, reschedule_count) VALUES ('APT-20260105-TEST01', 1, 2, 'GHE251103002', '2026-01-05 15:00:00', '2026-01-05 16:00:00', 60, 'COMPLETED', '2026-01-05 15:00:00', '2026-01-05 16:00:00', 'Dashboard test - Jan Week 1', 2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0) ON CONFLICT (appointment_code) DO NOTHING;
+INSERT INTO appointments (appointment_code, patient_id, employee_id, room_id, appointment_start_time, appointment_end_time, expected_duration_minutes, status, actual_start_time, actual_end_time, notes, created_by, created_at, updated_at, reschedule_count) VALUES ('APT-20260108-TEST01', 2, 1, 'GHE251103001', '2026-01-08 09:00:00', '2026-01-08 09:45:00', 45, 'COMPLETED', '2026-01-08 09:00:00', '2026-01-08 09:45:00', 'Dashboard test - Jan Week 2', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0) ON CONFLICT (appointment_code) DO NOTHING;
+INSERT INTO appointments (appointment_code, patient_id, employee_id, room_id, appointment_start_time, appointment_end_time, expected_duration_minutes, status, actual_start_time, actual_end_time, notes, created_by, created_at, updated_at, reschedule_count) VALUES ('APT-20260110-TEST01', 3, 2, 'GHE251103002', '2026-01-10 14:00:00', '2026-01-10 15:00:00', 60, 'COMPLETED', '2026-01-10 14:00:00', '2026-01-10 15:00:00', 'Dashboard test - Jan Week 2', 2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0) ON CONFLICT (appointment_code) DO NOTHING;
+
+-- Link services to appointments (3 services per appointment = 18 total)
+INSERT INTO appointment_services (appointment_id, service_id) SELECT a.appointment_id, s.service_id FROM appointments a CROSS JOIN (VALUES (1), (3), (5)) AS s(service_id) WHERE a.appointment_code LIKE 'APT-202601%TEST%' ON CONFLICT DO NOTHING;
+
+-- Invoices for January 2026 (6 invoices, all PAID)
+INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at) SELECT 'INV-20260102-TEST01', 'APPOINTMENT', 1, a.appointment_id, 900000, 900000, 0, 'PAID', '2026-01-09', 'Dashboard test - Jan', 1, CURRENT_TIMESTAMP FROM appointments a WHERE a.appointment_code = 'APT-20260102-TEST01' ON CONFLICT (invoice_code) DO NOTHING;
+INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at) SELECT 'INV-20260102-TEST02', 'APPOINTMENT', 2, a.appointment_id, 900000, 900000, 0, 'PAID', '2026-01-09', 'Dashboard test - Jan', 2, CURRENT_TIMESTAMP FROM appointments a WHERE a.appointment_code = 'APT-20260102-TEST02' ON CONFLICT (invoice_code) DO NOTHING;
+INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at) SELECT 'INV-20260103-TEST01', 'APPOINTMENT', 3, a.appointment_id, 300000, 300000, 0, 'PAID', '2026-01-10', 'Dashboard test - Jan', 1, CURRENT_TIMESTAMP FROM appointments a WHERE a.appointment_code = 'APT-20260103-TEST01' ON CONFLICT (invoice_code) DO NOTHING;
+INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at) SELECT 'INV-20260105-TEST01', 'APPOINTMENT', 1, a.appointment_id, 800000, 800000, 0, 'PAID', '2026-01-12', 'Dashboard test - Jan', 2, CURRENT_TIMESTAMP FROM appointments a WHERE a.appointment_code = 'APT-20260105-TEST01' ON CONFLICT (invoice_code) DO NOTHING;
+INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at) SELECT 'INV-20260108-TEST01', 'APPOINTMENT', 2, a.appointment_id, 900000, 900000, 0, 'PAID', '2026-01-15', 'Dashboard test - Jan', 1, CURRENT_TIMESTAMP FROM appointments a WHERE a.appointment_code = 'APT-20260108-TEST01' ON CONFLICT (invoice_code) DO NOTHING;
+INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at) SELECT 'INV-20260110-TEST01', 'APPOINTMENT', 3, a.appointment_id, 800000, 800000, 0, 'PAID', '2026-01-17', 'Dashboard test - Jan', 2, CURRENT_TIMESTAMP FROM appointments a WHERE a.appointment_code = 'APT-20260110-TEST01' ON CONFLICT (invoice_code) DO NOTHING;
+
+-- Invoice Items for January 2026 (required for Top Services dashboard query)
+-- Schema: invoice_id, service_id, service_name, service_code, quantity, unit_price, subtotal, notes
+INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
+SELECT i.invoice_id, 1, 'General Examination', 1, 300000, 300000, 'Khám tổng quát'
+FROM invoices i WHERE i.invoice_code = 'INV-20260102-TEST01';
+
+INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
+SELECT i.invoice_id, 3, 'Scaling Level 1', 1, 300000, 300000, 'Cạo vôi răng cơ bản'
+FROM invoices i WHERE i.invoice_code = 'INV-20260102-TEST01';
+
+INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
+SELECT i.invoice_id, 5, 'Filling Level 1', 1, 300000, 300000, 'Trám răng sâu - Răng 11'
+FROM invoices i WHERE i.invoice_code = 'INV-20260102-TEST01';
+
+INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
+SELECT i.invoice_id, 1, 'General Examination', 1, 300000, 300000, 'Khám tổng quát'
+FROM invoices i WHERE i.invoice_code = 'INV-20260102-TEST02';
+
+INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
+SELECT i.invoice_id, 3, 'Scaling Level 1', 1, 300000, 300000, 'Cạo vôi răng cơ bản'
+FROM invoices i WHERE i.invoice_code = 'INV-20260102-TEST02';
+
+INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
+SELECT i.invoice_id, 5, 'Filling Level 1', 1, 300000, 300000, 'Trám răng sâu - Răng 12'
+FROM invoices i WHERE i.invoice_code = 'INV-20260102-TEST02';
+
+INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
+SELECT i.invoice_id, 1, 'General Examination', 1, 100000, 100000, 'Khám tổng quát'
+FROM invoices i WHERE i.invoice_code = 'INV-20260103-TEST01';
+
+INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
+SELECT i.invoice_id, 3, 'Scaling Level 1', 1, 100000, 100000, 'Cạo vôi răng cơ bản'
+FROM invoices i WHERE i.invoice_code = 'INV-20260103-TEST01';
+
+INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
+SELECT i.invoice_id, 5, 'Filling Level 1', 1, 100000, 100000, 'Trám răng sâu - Răng 21'
+FROM invoices i WHERE i.invoice_code = 'INV-20260103-TEST01';
+
+INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
+SELECT i.invoice_id, 1, 'General Examination', 1, 300000, 300000, 'Khám tổng quát'
+FROM invoices i WHERE i.invoice_code = 'INV-20260105-TEST01';
+
+INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
+SELECT i.invoice_id, 3, 'Scaling Level 1', 1, 250000, 250000, 'Cạo vôi răng cơ bản'
+FROM invoices i WHERE i.invoice_code = 'INV-20260105-TEST01';
+
+INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
+SELECT i.invoice_id, 5, 'Filling Level 1', 1, 250000, 250000, 'Trám răng sâu - Răng 22'
+FROM invoices i WHERE i.invoice_code = 'INV-20260105-TEST01';
+
+INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
+SELECT i.invoice_id, 1, 'General Examination', 1, 300000, 300000, 'Khám tổng quát'
+FROM invoices i WHERE i.invoice_code = 'INV-20260108-TEST01';
+
+INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
+SELECT i.invoice_id, 3, 'Scaling Level 1', 1, 300000, 300000, 'Cạo vôi răng cơ bản'
+FROM invoices i WHERE i.invoice_code = 'INV-20260108-TEST01';
+
+INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
+SELECT i.invoice_id, 5, 'Filling Level 1', 1, 300000, 300000, 'Trám răng sâu - Răng 31'
+FROM invoices i WHERE i.invoice_code = 'INV-20260108-TEST01';
+
+INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
+SELECT i.invoice_id, 1, 'General Examination', 1, 300000, 300000, 'Khám tổng quát'
+FROM invoices i WHERE i.invoice_code = 'INV-20260110-TEST01';
+
+INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
+SELECT i.invoice_id, 3, 'Scaling Level 1', 1, 250000, 250000, 'Cạo vôi răng cơ bản'
+FROM invoices i WHERE i.invoice_code = 'INV-20260110-TEST01';
+
+INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
+SELECT i.invoice_id, 5, 'Filling Level 1', 1, 250000, 250000, 'Trám răng sâu - Răng 32'
+FROM invoices i WHERE i.invoice_code = 'INV-20260110-TEST01';
+
+-- Storage Transactions for January 2026 (EXPORT for expenses calculation)
+INSERT INTO storage_transactions (transaction_code, transaction_type, transaction_date, total_value, status, created_by, created_at, notes) VALUES ('EXP-20260102-001', 'EXPORT', '2026-01-02 10:00:00', 150000, 'APPROVED', 1, CURRENT_TIMESTAMP, 'Dashboard test - Material consumption Jan'), ('EXP-20260105-001', 'EXPORT', '2026-01-05 14:00:00', 200000, 'APPROVED', 2, CURRENT_TIMESTAMP, 'Dashboard test - Material consumption Jan'), ('EXP-20260108-001', 'EXPORT', '2026-01-08 09:00:00', 180000, 'APPROVED', 1, CURRENT_TIMESTAMP, 'Dashboard test - Material consumption Jan') ON CONFLICT (transaction_code) DO NOTHING;
+
+-- ============================================
+-- END: DASHBOARD TEST DATA
+-- ============================================
+

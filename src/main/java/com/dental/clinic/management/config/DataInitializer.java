@@ -64,16 +64,17 @@ public class DataInitializer {
             log.info("Data counts: roles={}, items={}, services={}, consumables={}, invoiceItems={}",
                     roleCount, itemCount, serviceCount, consumablesCount, invoiceItemsCount);
 
-            // If ALL tables have data, skip initialization
+            // If ALL tables have data, still run initialization (idempotent with ON CONFLICT DO NOTHING)
+            // This ensures dashboard test data and any new seed data always gets loaded
             if (roleCount != null && roleCount > 0 &&
                     itemCount != null && itemCount > 0 &&
                     serviceCount != null && serviceCount > 0 &&
                     consumablesCount != null && consumablesCount > 0 &&
                     invoiceItemsCount != null && invoiceItemsCount > 0) {
                 log.info(
-                        "Seed data already exists (roles: {}, items: {}, services: {}, consumables: {}, invoiceItems: {}), skipping initialization",
+                        "Seed data already exists (roles: {}, items: {}, services: {}, consumables: {}, invoiceItems: {}), running initialization to load any new test data",
                         roleCount, itemCount, serviceCount, consumablesCount, invoiceItemsCount);
-                return;
+                // Don't return - continue to load new data with ON CONFLICT DO NOTHING
             }
 
             // If ANY critical table is empty, reload ALL data
