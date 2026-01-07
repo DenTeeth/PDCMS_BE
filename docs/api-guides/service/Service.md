@@ -431,7 +431,7 @@ SELECT a.appointment_id, s.service_name
 FROM appointments a
 JOIN appointment_services aps ON a.appointment_id = aps.appointment_id
 JOIN services s ON aps.service_id = s.service_id
-WHERE a.appointment_date = '2023-01-15';
+WHERE DATE(a.appointment_start_time) = '2023-01-15';
 
 -- Result: Works even if service.is_active = false
 -- Hard delete would break referential integrity!
