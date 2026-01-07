@@ -64,9 +64,13 @@ public class DashboardOverviewResponse {
     @AllArgsConstructor
     public static class AppointmentStats {
         private Long total;
-        private Long completed;
-        private Long cancelled;
-        private Long noShow;
+        private Long scheduled;        // SCHEDULED - Đã đặt lịch
+        private Long checkedIn;        // CHECKED_IN - Đã check-in
+        private Long inProgress;       // IN_PROGRESS - Đang điều trị
+        private Long completed;        // COMPLETED - Hoàn thành
+        private Long cancelled;        // CANCELLED - Đã hủy (>24h)
+        private Long cancelledLate;    // CANCELLED_LATE - Hủy muộn (≤24h)
+        private Long noShow;           // NO_SHOW - Không đến
         private Double completionRate;
     }
 }
