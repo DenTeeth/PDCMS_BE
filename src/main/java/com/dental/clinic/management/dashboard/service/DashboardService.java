@@ -190,10 +190,20 @@ public class DashboardService {
 
     private DashboardOverviewResponse.AppointmentStats buildAppointmentStats(LocalDateTime startDate, LocalDateTime endDate) {
         Long total = appointmentRepository.countAppointmentsInRange(startDate, endDate);
+        
+        // Count all 7 appointment statuses
+        Long scheduled = appointmentRepository.countByStatusInRange(startDate, endDate, 
+                com.dental.clinic.management.booking_appointment.enums.AppointmentStatus.SCHEDULED);
+        Long checkedIn = appointmentRepository.countByStatusInRange(startDate, endDate, 
+                com.dental.clinic.management.booking_appointment.enums.AppointmentStatus.CHECKED_IN);
+        Long inProgress = appointmentRepository.countByStatusInRange(startDate, endDate, 
+                com.dental.clinic.management.booking_appointment.enums.AppointmentStatus.IN_PROGRESS);
         Long completed = appointmentRepository.countByStatusInRange(startDate, endDate, 
                 com.dental.clinic.management.booking_appointment.enums.AppointmentStatus.COMPLETED);
         Long cancelled = appointmentRepository.countByStatusInRange(startDate, endDate, 
                 com.dental.clinic.management.booking_appointment.enums.AppointmentStatus.CANCELLED);
+        Long cancelledLate = appointmentRepository.countByStatusInRange(startDate, endDate, 
+                com.dental.clinic.management.booking_appointment.enums.AppointmentStatus.CANCELLED_LATE);
         Long noShow = appointmentRepository.countByStatusInRange(startDate, endDate, 
                 com.dental.clinic.management.booking_appointment.enums.AppointmentStatus.NO_SHOW);
         
@@ -201,8 +211,12 @@ public class DashboardService {
         
         return DashboardOverviewResponse.AppointmentStats.builder()
                 .total(total)
+                .scheduled(scheduled)
+                .checkedIn(checkedIn)
+                .inProgress(inProgress)
                 .completed(completed)
                 .cancelled(cancelled)
+                .cancelledLate(cancelledLate)
                 .noShow(noShow)
                 .completionRate(completionRate)
                 .build();
