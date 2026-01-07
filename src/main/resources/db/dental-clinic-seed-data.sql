@@ -821,6 +821,12 @@ VALUES
 -- HOLIDAY (read-only)
 ('ROLE_RECEPTIONIST', 'VIEW_HOLIDAY'),
 
+-- PAYMENT & INVOICE (full management - receptionist handles billing)
+('ROLE_RECEPTIONIST', 'VIEW_INVOICE_ALL'), -- View all invoices
+('ROLE_RECEPTIONIST', 'CREATE_INVOICE'), -- Create invoices
+('ROLE_RECEPTIONIST', 'CREATE_PAYMENT'), -- Record payments
+('ROLE_RECEPTIONIST', 'VIEW_PAYMENT_ALL'), -- View all payments
+
 -- NOTIFICATION
 ('ROLE_RECEPTIONIST', 'VIEW_NOTIFICATION'),
 ('ROLE_RECEPTIONIST', 'DELETE_NOTIFICATION')
@@ -900,6 +906,12 @@ VALUES
 ('ROLE_MANAGER', 'VIEW_ROLE'),
 ('ROLE_MANAGER', 'VIEW_SPECIALIZATION'),
 ('ROLE_MANAGER', 'MANAGE_SPECIALIZATION'), -- Can manage specializations
+
+-- PAYMENT & INVOICE (full access for financial oversight)
+('ROLE_MANAGER', 'VIEW_INVOICE_ALL'), -- View all invoices
+('ROLE_MANAGER', 'CREATE_INVOICE'), -- Create invoices
+('ROLE_MANAGER', 'CREATE_PAYMENT'), -- Record payments
+('ROLE_MANAGER', 'VIEW_PAYMENT_ALL'), -- View all payments
 
 -- NOTIFICATION
 ('ROLE_MANAGER', 'VIEW_NOTIFICATION'),
@@ -1006,6 +1018,10 @@ VALUES
 
 -- PATIENT_IMAGES (view own images)
 ('ROLE_PATIENT', 'PATIENT_IMAGE_READ'), -- View own patient images
+
+-- PAYMENT & INVOICE (view own invoices and payments)
+('ROLE_PATIENT', 'VIEW_INVOICE_OWN'), -- View own invoices
+-- NOTE: Patients use VIEW_INVOICE_OWN to see their billing
 
 -- NOTIFICATION
 ('ROLE_PATIENT', 'VIEW_NOTIFICATION'), -- View own notifications
