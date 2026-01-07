@@ -63,6 +63,23 @@ public class InvoiceService {
     public InvoiceResponse createInvoice(CreateInvoiceRequest request) {
         log.info("Creating new invoice for patient: {}", request.getPatientId());
 
+        // ✅ AUTO-DETERMINE INVOICE TYPE: If appointmentId is provided and already has APPOINTMENT invoice,
+        // automatically convert to SUPPLEMENTAL to ensure data integrity
+        InvoiceType invoiceType = request.getInvoiceType();
+        
+        if (request.getAppointmentId() != null && invoiceType == InvoiceType.APPOINTMENT) {
+            boolean hasAppointmentInvoice = invoiceRepository.existsByAppointmentIdAndInvoiceType(
+                    request.getAppointmentId(), 
+                    InvoiceType.APPOINTMENT
+            );
+            
+            if (hasAppointmentInvoice) {
+                log.info("✅ AUTO-CONVERT: Appointment {} already has APPOINTMENT invoice, converting type from APPOINTMENT to SUPPLEMENTAL", 
+                         request.getAppointmentId());
+                invoiceType = InvoiceType.SUPPLEMENTAL;
+            }
+        }
+
         // ✅ DATA INTEGRITY VALIDATION: If appointmentId is provided, validate patientId
         // matches and get the appointment doctor for created_by
         Integer invoiceCreatedBy = 1; // Default system user
@@ -168,7 +185,7 @@ public class InvoiceService {
 
         Invoice invoice = Invoice.builder()
                 .invoiceCode(generateInvoiceCode())
-                .invoiceType(request.getInvoiceType())
+                .invoiceType(invoiceType) // ✅ Use auto-determined type instead of request.getInvoiceType()
                 .patientId(request.getPatientId())
                 .appointmentId(request.getAppointmentId())
                 .treatmentPlanId(request.getTreatmentPlanId())
