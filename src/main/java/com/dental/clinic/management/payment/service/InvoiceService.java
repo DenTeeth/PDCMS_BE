@@ -58,10 +58,17 @@ public class InvoiceService {
 
     /**
      * Tao invoice moi
+     * 
+     * DUPLICATE PREVENTION:
+     * - Uses @Transactional to prevent concurrent creation
+     * - Generates unique invoice_code with do-while loop
+     * - invoice_code has UNIQUE constraint in database
+     * - If duplicate code somehow created, DB will reject with constraint violation
      */
     @Transactional
     public InvoiceResponse createInvoice(CreateInvoiceRequest request) {
-        log.info("Creating new invoice for patient: {}", request.getPatientId());
+        log.info("Creating new invoice for patient: {} (appointmentId: {}, type: {})", 
+                 request.getPatientId(), request.getAppointmentId(), request.getInvoiceType());
 
         // ✅ AUTO-DETERMINE INVOICE TYPE: If appointmentId is provided and already has APPOINTMENT invoice,
         // automatically convert to SUPPLEMENTAL to ensure data integrity
@@ -117,38 +124,43 @@ public class InvoiceService {
             log.debug("✅ Validated: Invoice patientId matches appointment patientId");
             log.debug("✅ Setting invoice created_by to appointment doctor: {}", invoiceCreatedBy);
             
-            // 🔥 CRITICAL FIX: Fetch services from appointment_services table
-            // This is the SOURCE OF TRUTH for appointment services
-            // DO NOT trust FE data as it may be stale/cached/wrong
-            List<AppointmentService> appointmentServices = appointmentServiceRepository
-                    .findByIdAppointmentId(request.getAppointmentId());
-            
-            if (appointmentServices.isEmpty()) {
-                log.warn("⚠️ No services found in appointment_services for appointment {}, using FE data as fallback",
-                        request.getAppointmentId());
-                // Fallback to FE data if no services in DB (shouldn't happen normally)
-            } else {
-                log.info("✅ Fetched {} services from appointment_services table for appointment {}", 
-                        appointmentServices.size(), request.getAppointmentId());
+            // 🔥 CRITICAL: Only fetch appointment services for APPOINTMENT type invoices
+            // For SUPPLEMENTAL invoices, use FE-provided services (they are additional/different services)
+            if (invoiceType == InvoiceType.APPOINTMENT) {
+                // Fetch services from appointment_services table - SOURCE OF TRUTH for APPOINTMENT invoices
+                List<AppointmentService> appointmentServices = appointmentServiceRepository
+                        .findByIdAppointmentId(request.getAppointmentId());
                 
-                // Map appointment services to invoice items
-                List<CreateInvoiceRequest.InvoiceItemDto> mappedItems = new ArrayList<>();
-                for (AppointmentService aptService : appointmentServices) {
-                    com.dental.clinic.management.service.domain.DentalService service = aptService.getService();
-                    CreateInvoiceRequest.InvoiceItemDto itemDto = CreateInvoiceRequest.InvoiceItemDto.builder()
-                            .serviceId(aptService.getId().getServiceId()) // ✅ Use Integer from AppointmentService
-                            .serviceCode(service.getServiceCode())
-                            .serviceName(service.getServiceName()) // ✅ From DB, not FE
-                            .quantity(1) // Default quantity
-                            .unitPrice(service.getPrice()) // ✅ From DB, not FE
-                            .notes("Dịch vụ từ lịch hẹn " + appointment.getAppointmentCode())
-                            .build();
-                    mappedItems.add(itemDto);
+                if (appointmentServices.isEmpty()) {
+                    log.warn("⚠️ No services found in appointment_services for appointment {}, using FE data as fallback",
+                            request.getAppointmentId());
+                    // Fallback to FE data if no services in DB (shouldn't happen normally)
+                } else {
+                    log.info("✅ APPOINTMENT invoice: Fetched {} services from appointment_services table for appointment {}", 
+                            appointmentServices.size(), request.getAppointmentId());
+                    
+                    // Map appointment services to invoice items
+                    List<CreateInvoiceRequest.InvoiceItemDto> mappedItems = new ArrayList<>();
+                    for (AppointmentService aptService : appointmentServices) {
+                        com.dental.clinic.management.service.domain.DentalService service = aptService.getService();
+                        CreateInvoiceRequest.InvoiceItemDto itemDto = CreateInvoiceRequest.InvoiceItemDto.builder()
+                                .serviceId(aptService.getId().getServiceId())
+                                .serviceCode(service.getServiceCode())
+                                .serviceName(service.getServiceName())
+                                .quantity(1)
+                                .unitPrice(service.getPrice())
+                                .notes("Dịch vụ từ lịch hẹn " + appointment.getAppointmentCode())
+                                .build();
+                        mappedItems.add(itemDto);
+                    }
+                    invoiceItems = mappedItems;
+                    
+                    log.info("✅ Mapped {} appointment services to APPOINTMENT invoice items", invoiceItems.size());
                 }
-                invoiceItems = mappedItems;
-                
-                log.info("✅ Mapped {} appointment services to invoice items with correct data from DB", 
-                        invoiceItems.size());
+            } else if (invoiceType == InvoiceType.SUPPLEMENTAL) {
+                // For SUPPLEMENTAL invoices, use FE-provided services (additional/different services)
+                log.info("✅ SUPPLEMENTAL invoice: Using {} FE-provided services (additional services, may have different prices)", 
+                         invoiceItems.size());
             }
         }
         // ✅ NEW: Handle TREATMENT_PLAN invoices - set created_by to plan creator
@@ -180,8 +192,26 @@ public class InvoiceService {
         // If neither appointmentId nor treatmentPlanId, created_by = 1 (system user)
         // This is OK for SUPPLEMENTAL invoices created manually
 
+        // ✅ NEW: Get invoice creator (person who clicked "Create Invoice" button)
+        Integer invoiceCreatorEmployeeId = null;
+        try {
+            invoiceCreatorEmployeeId = getCurrentEmployeeId();
+            log.debug("✅ Invoice creator (logged-in user): {}", invoiceCreatorEmployeeId);
+        } catch (Exception e) {
+            log.warn("⚠️ Could not get current employee ID for invoice creator, using null");
+        }
+
         // Generate payment code for SePay webhook matching
         String paymentCode = generatePaymentCode();
+
+        // ✅ Build notes with payment code and invoice creator ID
+        String notes = "Payment Code: " + paymentCode;
+        if (invoiceCreatorEmployeeId != null) {
+            notes += " | Creator: " + invoiceCreatorEmployeeId;
+        }
+        if (request.getNotes() != null) {
+            notes += " | " + request.getNotes();
+        }
 
         Invoice invoice = Invoice.builder()
                 .invoiceCode(generateInvoiceCode())
@@ -196,7 +226,7 @@ public class InvoiceService {
                 .remainingDebt(BigDecimal.ZERO)
                 .paymentStatus(InvoicePaymentStatus.PENDING_PAYMENT)
                 .dueDate(request.getDueDate())
-                .notes("Payment Code: " + paymentCode + (request.getNotes() != null ? " | " + request.getNotes() : ""))
+                .notes(notes)
                 .createdBy(invoiceCreatedBy) // Set to appointment doctor if appointment exists
                 .build();
 
@@ -224,7 +254,8 @@ public class InvoiceService {
         invoice.setRemainingDebt(totalAmount);
         invoice = invoiceRepository.save(invoice);
 
-        log.info("Created invoice: {} with total: {}", invoice.getInvoiceCode(), totalAmount);
+        log.info("✅ Successfully created invoice: {} (type: {}, total: {}, appointmentId: {})", 
+                 invoice.getInvoiceCode(), invoice.getInvoiceType(), totalAmount, invoice.getAppointmentId());
 
         return mapToResponse(invoice);
     }
@@ -243,13 +274,25 @@ public class InvoiceService {
 
     /**
      * Lay danh sach invoices cua appointment
+     * Returns both APPOINTMENT and SUPPLEMENTAL invoices for the appointment
      * If user has VIEW_INVOICE_OWN but not VIEW_INVOICE_ALL, only return invoices for their own patient account
      */
     @Transactional(readOnly = true)
     public List<InvoiceResponse> getInvoicesByAppointment(Integer appointmentId) {
         log.info("Getting invoices for appointment: {}", appointmentId);
+        
+        // ✅ FIX: Get all invoices for appointment (both APPOINTMENT and SUPPLEMENTAL)
         List<Invoice> invoices = invoiceRepository
-            .findByAppointmentIdAndInvoiceTypeOrderByCreatedAtDesc(appointmentId, InvoiceType.APPOINTMENT);
+            .findByAppointmentIdOrderByCreatedAtDesc(appointmentId);
+        
+        // ✅ Filter: Only include APPOINTMENT and SUPPLEMENTAL types (exclude TREATMENT_PLAN if any)
+        invoices = invoices.stream()
+            .filter(inv -> inv.getInvoiceType() == InvoiceType.APPOINTMENT 
+                       || inv.getInvoiceType() == InvoiceType.SUPPLEMENTAL)
+            .collect(Collectors.toList());
+        
+        log.debug("Found {} invoices for appointment {} (APPOINTMENT + SUPPLEMENTAL)", 
+                  invoices.size(), appointmentId);
         
         // ✅ RBAC: If user has VIEW_INVOICE_OWN but not VIEW_INVOICE_ALL, filter by their patientId
         if (SecurityUtil.hasCurrentUserPermission("VIEW_INVOICE_OWN") && 
@@ -424,10 +467,19 @@ public class InvoiceService {
                     .orElse(null);
         }
 
-        // FIX Issue #3 (LOW): Populate createdByName from Employee table
+        // FIX Issue #3 (LOW): Populate createdByName from Employee table (Bác sĩ phụ trách)
         String createdByName = null;
         if (invoice.getCreatedBy() != null) {
             createdByName = employeeRepository.findById(invoice.getCreatedBy())
+                    .map(Employee::getFullName)
+                    .orElse(null);
+        }
+
+        // ✅ NEW: Populate invoice creator info (Người tạo hóa đơn)
+        Integer invoiceCreatorId = extractInvoiceCreatorIdFromNotes(invoice.getNotes());
+        String invoiceCreatorName = null;
+        if (invoiceCreatorId != null) {
+            invoiceCreatorName = employeeRepository.findById(invoiceCreatorId)
                     .map(Employee::getFullName)
                     .orElse(null);
         }
@@ -452,8 +504,10 @@ public class InvoiceService {
                 .notes(invoice.getNotes())
                 .paymentCode(paymentCode)
                 .qrCodeUrl(qrCodeUrl)
-                .createdBy(invoice.getCreatedBy())
-                .createdByName(createdByName) // ✅ Fixed - FE Issue #3
+                .createdBy(invoice.getCreatedBy()) // Bác sĩ phụ trách
+                .createdByName(createdByName) // Tên bác sĩ phụ trách
+                .invoiceCreatorId(invoiceCreatorId) // ✅ NEW: Người tạo hóa đơn
+                .invoiceCreatorName(invoiceCreatorName) // ✅ NEW: Tên người tạo hóa đơn
                 .createdAt(invoice.getCreatedAt())
                 .updatedAt(invoice.getUpdatedAt())
                 .items(itemResponses)
@@ -482,6 +536,33 @@ public class InvoiceService {
             }
         } catch (Exception e) {
             log.warn("Failed to extract payment code from notes: {}", notes, e);
+        }
+
+        return null;
+    }
+
+    /**
+     * Extract invoice creator ID from notes field
+     * Format: "Payment Code: PDCMS25123001 | Creator: 5 | original notes"
+     * 
+     * @param notes Notes field containing creator ID
+     * @return Employee ID of invoice creator, or null if not found
+     */
+    private Integer extractInvoiceCreatorIdFromNotes(String notes) {
+        if (notes == null || !notes.contains("Creator: ")) {
+            return null;
+        }
+
+        try {
+            String[] parts = notes.split("Creator: ");
+            if (parts.length < 2) {
+                return null;
+            }
+
+            String creatorPart = parts[1].split(" \\| ")[0].trim();
+            return Integer.parseInt(creatorPart);
+        } catch (Exception e) {
+            log.warn("Failed to extract invoice creator ID from notes: {}", notes, e);
         }
 
         return null;
