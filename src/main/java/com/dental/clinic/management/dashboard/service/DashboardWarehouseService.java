@@ -1,6 +1,7 @@
 package com.dental.clinic.management.dashboard.service;
 
 import com.dental.clinic.management.dashboard.dto.WarehouseStatisticsResponse;
+import com.dental.clinic.management.dashboard.util.DateRangeUtil;
 import com.dental.clinic.management.warehouse.repository.StorageTransactionRepository;
 import com.dental.clinic.management.warehouse.repository.ItemBatchRepository;
 import com.dental.clinic.management.warehouse.enums.TransactionType;
@@ -9,11 +10,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-// import java.math.RoundingMode;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.YearMonth;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,13 +24,13 @@ public class DashboardWarehouseService {
     private final StorageTransactionRepository storageTransactionRepository;
     private final ItemBatchRepository itemBatchRepository;
 
-    public WarehouseStatisticsResponse getWarehouseStatistics(String month) {
-        YearMonth currentMonth = YearMonth.parse(month);
-        LocalDateTime startDate = currentMonth.atDay(1).atStartOfDay();
-        LocalDateTime endDate = currentMonth.atEndOfMonth().atTime(23, 59, 59);
+    public WarehouseStatisticsResponse getWarehouseStatistics(String month, LocalDate start, LocalDate end) {
+        DateRangeUtil.DateRange dateRange = DateRangeUtil.parseDateRange(month, start, end);
+        LocalDateTime startDate = dateRange.getStartDate();
+        LocalDateTime endDate = dateRange.getEndDate();
 
         return WarehouseStatisticsResponse.builder()
-                .month(month)
+                .month(dateRange.getLabel())
                 .transactions(getTransactionStats(startDate, endDate))
                 .inventory(getInventoryStats())
                 .topImports(getTopImports(startDate, endDate))

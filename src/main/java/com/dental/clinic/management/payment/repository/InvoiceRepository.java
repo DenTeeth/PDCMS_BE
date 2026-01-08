@@ -199,4 +199,15 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
     Long countUniquePatients(
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate);
+
+    /**
+     * Count total services across all invoices in date range
+     * Used for calculating average cost per service KPI
+     */
+    @Query("SELECT COALESCE(SUM(iis.quantity), 0) FROM Invoice i " +
+           "JOIN i.invoiceItems iis " +
+           "WHERE i.createdAt BETWEEN :startDate AND :endDate")
+    Long countTotalServicesInRange(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate);
 }

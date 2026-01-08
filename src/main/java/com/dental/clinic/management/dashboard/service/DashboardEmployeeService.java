@@ -1,10 +1,10 @@
 package com.dental.clinic.management.dashboard.service;
 
 import com.dental.clinic.management.dashboard.dto.EmployeeStatisticsResponse;
+import com.dental.clinic.management.dashboard.util.DateRangeUtil;
 import com.dental.clinic.management.booking_appointment.repository.AppointmentParticipantRepository;
 import com.dental.clinic.management.working_schedule.repository.TimeOffRequestRepository;
 import com.dental.clinic.management.working_schedule.repository.TimeOffTypeRepository;
-// import com.dental.clinic.management.working_schedule.domain.TimeOffType;
 import com.dental.clinic.management.working_schedule.enums.TimeOffStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,8 +14,6 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.YearMonth;
-// import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,15 +29,15 @@ public class DashboardEmployeeService {
     @SuppressWarnings("unused")
     private final TimeOffTypeRepository timeOffTypeRepository;
 
-    public EmployeeStatisticsResponse getEmployeeStatistics(String month, Integer topDoctors) {
-        YearMonth currentMonth = YearMonth.parse(month);
-        LocalDateTime startDate = currentMonth.atDay(1).atStartOfDay();
-        LocalDateTime endDate = currentMonth.atEndOfMonth().atTime(23, 59, 59);
-        LocalDate startLocalDate = currentMonth.atDay(1);
-        LocalDate endLocalDate = currentMonth.atEndOfMonth();
+    public EmployeeStatisticsResponse getEmployeeStatistics(String month, LocalDate start, LocalDate end, Integer topDoctors) {
+        DateRangeUtil.DateRange dateRange = DateRangeUtil.parseDateRange(month, start, end);
+        LocalDateTime startDate = dateRange.getStartDate();
+        LocalDateTime endDate = dateRange.getEndDate();
+        LocalDate startLocalDate = startDate.toLocalDate();
+        LocalDate endLocalDate = endDate.toLocalDate();
 
         return EmployeeStatisticsResponse.builder()
-                .month(month)
+                .month(dateRange.getLabel())
                 .topDoctors(getTopDoctorPerformance(startDate, endDate, topDoctors))
                 .timeOff(getTimeOffStatistics(startLocalDate, endLocalDate))
                 .build();

@@ -1,6 +1,7 @@
 package com.dental.clinic.management.dashboard.service;
 
 import com.dental.clinic.management.dashboard.dto.TransactionStatisticsResponse;
+import com.dental.clinic.management.dashboard.util.DateRangeUtil;
 import com.dental.clinic.management.payment.repository.InvoiceRepository;
 import com.dental.clinic.management.payment.repository.PaymentRepository;
 import com.dental.clinic.management.payment.enums.InvoicePaymentStatus;
@@ -11,11 +12,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-// import java.math.RoundingMode;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.YearMonth;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,13 +26,13 @@ public class DashboardTransactionService {
     private final InvoiceRepository invoiceRepository;
     private final PaymentRepository paymentRepository;
 
-    public TransactionStatisticsResponse getTransactionStatistics(String month) {
-        YearMonth currentMonth = YearMonth.parse(month);
-        LocalDateTime startDate = currentMonth.atDay(1).atStartOfDay();
-        LocalDateTime endDate = currentMonth.atEndOfMonth().atTime(23, 59, 59);
+    public TransactionStatisticsResponse getTransactionStatistics(String month, LocalDate start, LocalDate end) {
+        DateRangeUtil.DateRange dateRange = DateRangeUtil.parseDateRange(month, start, end);
+        LocalDateTime startDate = dateRange.getStartDate();
+        LocalDateTime endDate = dateRange.getEndDate();
 
         return TransactionStatisticsResponse.builder()
-                .month(month)
+                .month(dateRange.getLabel())
                 .invoices(getInvoiceStats(startDate, endDate))
                 .payments(getPaymentStats(startDate, endDate))
                 .build();

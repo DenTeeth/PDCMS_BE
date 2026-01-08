@@ -53,4 +53,13 @@ public interface ItemMasterRepository extends JpaRepository<ItemMaster, Long>, J
                         @Param("search") String search,
                         @Param("warehouseType") WarehouseType warehouseType,
                         @Param("categoryId") Long categoryId);
+
+        /**
+         * Count items with low inventory (below minimum stock level)
+         * Used for dashboard alerts
+         */
+        @Query("SELECT COUNT(im) FROM ItemMaster im " +
+                        "WHERE im.isActive = true " +
+                        "AND im.currentQuantity <= im.minStockLevel")
+        Long countLowInventoryItems();
 }
