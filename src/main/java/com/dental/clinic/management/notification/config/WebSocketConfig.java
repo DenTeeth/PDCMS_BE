@@ -22,8 +22,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        // Enable simple in-memory message broker with prefix "/topic"
-        config.enableSimpleBroker("/topic");
+        // Enable simple in-memory message broker with prefix "/topic" and "/queue"
+        config.enableSimpleBroker("/topic", "/queue");
 
         // Prefix for messages from client to server
         config.setApplicationDestinationPrefixes("/app");
@@ -39,14 +39,15 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
             allowedOrigins[i] = allowedOrigins[i].trim();
         }
 
-        // Endpoint for WebSocket connection with SockJS fallback
+        // Endpoint for notifications with SockJS fallback
         registry.addEndpoint("/ws")
-                .setAllowedOriginPatterns("*") // Allow all for SockJS compatibility
+                .setAllowedOriginPatterns("*")
                 .withSockJS();
 
-        // Endpoint for native WebSocket clients (no SockJS)
-        registry.addEndpoint("/ws")
-                .setAllowedOriginPatterns("*"); // Allow all for native WebSocket
+        // Endpoint for dashboard updates with SockJS fallback
+        registry.addEndpoint("/ws/dashboard")
+                .setAllowedOriginPatterns("*")
+                .withSockJS();
     }
 
     @Override

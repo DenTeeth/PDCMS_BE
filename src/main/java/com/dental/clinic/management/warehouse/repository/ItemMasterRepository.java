@@ -60,6 +60,6 @@ public interface ItemMasterRepository extends JpaRepository<ItemMaster, Long>, J
          */
         @Query("SELECT COUNT(im) FROM ItemMaster im " +
                         "WHERE im.isActive = true " +
-                        "AND im.currentQuantity <= im.minStockLevel")
+                        "AND im.cachedTotalQuantity <= im.minStockLevel")
         Long countLowInventoryItems();
 }

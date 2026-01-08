@@ -100,13 +100,14 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
      * Get appointment heatmap data - count by day of week and hour
      * Returns: [dayOfWeek (1-7, Mon=1), hour (0-23), count]
      */
-    @Query("SELECT EXTRACT(DOW FROM a.appointmentStartTime), " +
-                    "EXTRACT(HOUR FROM a.appointmentStartTime), " +
-                    "COUNT(a) " +
-                    "FROM Appointment a " +
-                    "WHERE a.appointmentStartTime BETWEEN :startDate AND :endDate " +
-                    "GROUP BY EXTRACT(DOW FROM a.appointmentStartTime), EXTRACT(HOUR FROM a.appointmentStartTime) " +
-                    "ORDER BY EXTRACT(DOW FROM a.appointmentStartTime), EXTRACT(HOUR FROM a.appointmentStartTime)")
+    @Query(value = "SELECT EXTRACT(DOW FROM appointment_start_time) as dayOfWeek, " +
+                    "EXTRACT(HOUR FROM appointment_start_time) as hour, " +
+                    "COUNT(*) as count " +
+                    "FROM appointments " +
+                    "WHERE appointment_start_time BETWEEN :startDate AND :endDate " +
+                    "GROUP BY EXTRACT(DOW FROM appointment_start_time), EXTRACT(HOUR FROM appointment_start_time) " +
+                    "ORDER BY EXTRACT(DOW FROM appointment_start_time), EXTRACT(HOUR FROM appointment_start_time)", 
+                    nativeQuery = true)
     List<Object[]> getAppointmentHeatmapData(
                     @Param("startDate") LocalDateTime startDate,
                     @Param("endDate") LocalDateTime endDate);
