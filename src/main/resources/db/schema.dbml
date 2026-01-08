@@ -1271,3 +1271,32 @@ Table vital_signs_reference {
   vital_type varchar(50) [not null]
   description text
 }
+
+// ========================================
+// DASHBOARD
+// ========================================
+
+Table dashboard_preferences {
+  id integer [pk, increment]
+  auto_refresh boolean
+  refresh_interval integer
+  user_id integer [not null, ref: > employees.employee_id]
+  created_at timestamp
+  updated_at timestamp
+  chart_type_preference varchar(255)
+  default_date_range varchar(255)
+  layout text
+  visible_widgets text
+}
+
+Table dashboard_saved_views {
+  id integer [pk, increment]
+  is_default boolean
+  is_public boolean
+  user_id integer [not null, ref: > employees.employee_id]
+  created_at timestamp
+  updated_at timestamp
+  description varchar(255)
+  filters text
+  view_name varchar(255) [not null]
+}
