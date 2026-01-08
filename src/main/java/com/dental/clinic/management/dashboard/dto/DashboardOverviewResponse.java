@@ -19,6 +19,8 @@ public class DashboardOverviewResponse {
     private ComparisonStats expenses;
     private InvoiceStats invoices;
     private AppointmentStats appointments;
+    private KPIStats kpis;
+    private AlertStats alerts;
 
     @Data
     @Builder
@@ -72,5 +74,62 @@ public class DashboardOverviewResponse {
         private Long cancelledLate;    // CANCELLED_LATE - Hủy muộn (≤24h)
         private Long noShow;           // NO_SHOW - Không đến
         private Double completionRate;
+    }
+
+    /**
+     * Key Performance Indicators (KPIs)
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class KPIStats {
+        // Average Revenue Per Appointment - Doanh thu trung bình mỗi cuộc hẹn
+        private BigDecimal arpa;
+        
+        // Patient Retention Rate - Tỷ lệ giữ chân bệnh nhân (%)
+        private Double patientRetentionRate;
+        
+        // Appointment Utilization Rate - Tỷ lệ sử dụng lịch hẹn (%)
+        // (Số ca hoàn thành / Tổng số ca) * 100
+        private Double appointmentUtilizationRate;
+        
+        // Revenue per Doctor - Doanh thu trung bình mỗi bác sĩ
+        private BigDecimal revenuePerDoctor;
+        
+        // Profit Margin - Tỷ lệ lợi nhuận (%)
+        // (Lợi nhuận / Doanh thu) * 100
+        private Double profitMarginPercent;
+        
+        // Average Cost per Service - Chi phí trung bình mỗi dịch vụ
+        private BigDecimal avgCostPerService;
+    }
+
+    /**
+     * Alert/Notification system for dashboard metrics
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AlertStats {
+        private Integer totalAlerts;
+        private java.util.List<Alert> alerts;
+    }
+
+    /**
+     * Individual alert details
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Alert {
+        private String type;           // REVENUE_DROP, HIGH_DEBT, HIGH_NO_SHOW, LOW_INVENTORY, EXPIRING_MATERIALS
+        private String severity;       // WARNING, CRITICAL
+        private String title;          // Short alert title
+        private String message;        // Detailed message
+        private String value;          // Current value causing alert
+        private String threshold;      // Threshold that was exceeded
     }
 }

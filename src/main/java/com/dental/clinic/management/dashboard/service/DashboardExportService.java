@@ -3,6 +3,8 @@ package com.dental.clinic.management.dashboard.service;
 import com.dental.clinic.management.dashboard.dto.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -10,9 +12,9 @@ import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.math.BigDecimal;
-// import java.time.LocalDate;
-// import java.time.format.DateTimeFormatter;
+import java.time.LocalDate;
 
 @Slf4j
 @Service
@@ -25,18 +27,18 @@ public class DashboardExportService {
     private final DashboardWarehouseService warehouseService;
     private final DashboardTransactionService transactionService;
 
-    public byte[] exportToExcel(String tab, String month) {
-        log.info("Exporting tab: {} for month: {}", tab, month);
+    public byte[] exportToExcel(String tab, String month, LocalDate startDate, LocalDate endDate) {
+        log.info("Exporting tab: {} - month: {}, startDate: {}, endDate: {}", tab, month, startDate, endDate);
         
         try (Workbook workbook = new XSSFWorkbook();
              ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             
             switch (tab.toLowerCase()) {
-                case "overview" -> exportOverview(workbook, month);
-                case "revenue-expenses" -> exportRevenueExpenses(workbook, month);
-                case "employees" -> exportEmployees(workbook, month);
-                case "warehouse" -> exportWarehouse(workbook, month);
-                case "transactions" -> exportTransactions(workbook, month);
+                case "overview" -> exportOverview(workbook, month, startDate, endDate);
+                case "revenue-expenses" -> exportRevenueExpenses(workbook, month, startDate, endDate);
+                case "employees" -> exportEmployees(workbook, month, startDate, endDate);
+                case "warehouse" -> exportWarehouse(workbook, month, startDate, endDate);
+                case "transactions" -> exportTransactions(workbook, month, startDate, endDate);
                 default -> throw new IllegalArgumentException("Invalid tab: " + tab);
             }
             
@@ -49,8 +51,8 @@ public class DashboardExportService {
         }
     }
 
-    private void exportOverview(Workbook workbook, String month) {
-        DashboardOverviewResponse data = dashboardService.getOverviewStatistics(month, false);
+    private void exportOverview(Workbook workbook, String month, LocalDate startDate, LocalDate endDate) {
+        DashboardOverviewResponse data = dashboardService.getOverviewStatistics(month, startDate, endDate, false, null, null, null, null);
         Sheet sheet = workbook.createSheet("Overview");
         
         CellStyle headerStyle = createHeaderStyle(workbook);
@@ -99,8 +101,8 @@ public class DashboardExportService {
         autoSizeColumns(sheet, 2);
     }
 
-    private void exportRevenueExpenses(Workbook workbook, String month) {
-        RevenueExpensesResponse data = revenueService.getRevenueExpensesStatistics(month, false);
+    private void exportRevenueExpenses(Workbook workbook, String month, LocalDate startDate, LocalDate endDate) {
+        RevenueExpensesResponse data = revenueService.getRevenueExpensesStatistics(month, startDate, endDate, false, null);
         Sheet sheet = workbook.createSheet("Revenue & Expenses");
         
         CellStyle headerStyle = createHeaderStyle(workbook);
@@ -179,8 +181,8 @@ public class DashboardExportService {
         autoSizeColumns(sheet, 3);
     }
 
-    private void exportEmployees(Workbook workbook, String month) {
-        EmployeeStatisticsResponse data = employeeService.getEmployeeStatistics(month, 10);
+    private void exportEmployees(Workbook workbook, String month, LocalDate startDate, LocalDate endDate) {
+        EmployeeStatisticsResponse data = employeeService.getEmployeeStatistics(month, startDate, endDate, 10);
         Sheet sheet = workbook.createSheet("Employees");
         
         CellStyle headerStyle = createHeaderStyle(workbook);
@@ -241,8 +243,8 @@ public class DashboardExportService {
         autoSizeColumns(sheet, 4);
     }
 
-    private void exportWarehouse(Workbook workbook, String month) {
-        WarehouseStatisticsResponse data = warehouseService.getWarehouseStatistics(month);
+    private void exportWarehouse(Workbook workbook, String month, LocalDate startDate, LocalDate endDate) {
+        WarehouseStatisticsResponse data = warehouseService.getWarehouseStatistics(month, startDate, endDate);
         Sheet sheet = workbook.createSheet("Warehouse");
         
         CellStyle headerStyle = createHeaderStyle(workbook);
@@ -320,8 +322,8 @@ public class DashboardExportService {
         autoSizeColumns(sheet, 3);
     }
 
-    private void exportTransactions(Workbook workbook, String month) {
-        TransactionStatisticsResponse data = transactionService.getTransactionStatistics(month);
+    private void exportTransactions(Workbook workbook, String month, LocalDate startDate, LocalDate endDate) {
+        TransactionStatisticsResponse data = transactionService.getTransactionStatistics(month, startDate, endDate);
         Sheet sheet = workbook.createSheet("Transactions");
         
         CellStyle headerStyle = createHeaderStyle(workbook);
@@ -458,5 +460,208 @@ public class DashboardExportService {
         for (int i = 0; i < numColumns; i++) {
             sheet.autoSizeColumn(i);
         }
+    }
+
+    /**
+     * Export all tabs to a single Excel file
+     */
+    public byte[] exportAllTabs(String month, LocalDate startDate, LocalDate endDate) {
+        log.info("Exporting all dashboard tabs - month: {}, startDate: {}, endDate: {}", month, startDate, endDate);
+        
+        try (Workbook workbook = new XSSFWorkbook();
+             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            
+            // Export all 5 tabs to one workbook
+            exportOverview(workbook, month, startDate, endDate);
+            exportRevenueExpenses(workbook, month, startDate, endDate);
+            exportEmployees(workbook, month, startDate, endDate);
+            exportWarehouse(workbook, month, startDate, endDate);
+            exportTransactions(workbook, month, startDate, endDate);
+            
+            workbook.write(out);
+            return out.toByteArray();
+            
+        } catch (IOException e) {
+            log.error("Error exporting all dashboard tabs to Excel", e);
+            throw new RuntimeException("Failed to export all dashboard tabs to Excel", e);
+        }
+    }
+
+    /**
+     * Export dashboard data to CSV format
+     */
+    public String exportToCSV(String tab, String month, LocalDate startDate, LocalDate endDate) {
+        log.info("Exporting tab: {} to CSV - month: {}, startDate: {}, endDate: {}", tab, month, startDate, endDate);
+        
+        try (StringWriter sw = new StringWriter();
+             CSVPrinter csvPrinter = new CSVPrinter(sw, CSVFormat.DEFAULT)) {
+            
+            switch (tab.toLowerCase()) {
+                case "overview" -> exportOverviewCSV(csvPrinter, month, startDate, endDate);
+                case "revenue-expenses" -> exportRevenueExpensesCSV(csvPrinter, month, startDate, endDate);
+                case "employees" -> exportEmployeesCSV(csvPrinter, month, startDate, endDate);
+                case "warehouse" -> exportWarehouseCSV(csvPrinter, month, startDate, endDate);
+                case "transactions" -> exportTransactionsCSV(csvPrinter, month, startDate, endDate);
+                default -> throw new IllegalArgumentException("Invalid tab: " + tab);
+            }
+            
+            csvPrinter.flush();
+            return sw.toString();
+            
+        } catch (IOException e) {
+            log.error("Error exporting dashboard to CSV", e);
+            throw new RuntimeException("Failed to export dashboard to CSV", e);
+        }
+    }
+
+    private void exportOverviewCSV(CSVPrinter csv, String month, LocalDate startDate, LocalDate endDate) throws IOException {
+        DashboardOverviewResponse data = dashboardService.getOverviewStatistics(month, startDate, endDate, false, null, null, null, null);
+        
+        csv.printRecord("Dashboard Overview", month);
+        csv.println();
+        
+        csv.printRecord("Summary Statistics");
+        csv.printRecord("Total Revenue", data.getSummary().getTotalRevenue());
+        csv.printRecord("Total Expenses", data.getSummary().getTotalExpenses());
+        csv.printRecord("Net Profit", data.getSummary().getNetProfit());
+        csv.printRecord("Total Invoices", data.getSummary().getTotalInvoices());
+        csv.printRecord("Total Appointments", data.getSummary().getTotalAppointments());
+        csv.printRecord("Total Patients", data.getSummary().getTotalPatients());
+        csv.println();
+        
+        csv.printRecord("Invoice Statistics");
+        csv.printRecord("Total", data.getInvoices().getTotal());
+        csv.printRecord("Paid", data.getInvoices().getPaid());
+        csv.printRecord("Pending", data.getInvoices().getPending());
+        csv.printRecord("Payment Rate %", data.getInvoices().getPaidPercent());
+        csv.printRecord("Total Debt", data.getInvoices().getDebt());
+    }
+
+    private void exportRevenueExpensesCSV(CSVPrinter csv, String month, LocalDate startDate, LocalDate endDate) throws IOException {
+        RevenueExpensesResponse data = revenueService.getRevenueExpensesStatistics(month, startDate, endDate, false, null);
+        
+        csv.printRecord("Revenue & Expenses", month);
+        csv.println();
+        
+        csv.printRecord("Revenue Statistics");
+        csv.printRecord("Total Revenue", data.getRevenue().getTotal());
+        csv.printRecord("Appointment Revenue", data.getRevenue().getByType().getAppointment());
+        csv.printRecord("Treatment Plan Revenue", data.getRevenue().getByType().getTreatmentPlan());
+        csv.println();
+        
+        csv.printRecord("Expense Statistics");
+        csv.printRecord("Total Expenses", data.getExpenses().getTotal());
+    }
+
+    private void exportEmployeesCSV(CSVPrinter csv, String month, LocalDate startDate, LocalDate endDate) throws IOException {
+        EmployeeStatisticsResponse data = employeeService.getEmployeeStatistics(month, startDate, endDate, 10);
+        
+        csv.printRecord("Employee Statistics", month);
+        csv.println();
+        
+        csv.printRecord("Top Doctors");
+        csv.printRecord("Employee Code", "Full Name", "Appointments", "Revenue", "Avg Revenue/Apt");
+        for (var doctor : data.getTopDoctors()) {
+            csv.printRecord(doctor.getEmployeeCode(), doctor.getFullName(), 
+                doctor.getAppointmentCount(), doctor.getTotalRevenue(), 
+                doctor.getAverageRevenuePerAppointment());
+        }
+    }
+
+    private void exportWarehouseCSV(CSVPrinter csv, String month, LocalDate startDate, LocalDate endDate) throws IOException {
+        WarehouseStatisticsResponse data = warehouseService.getWarehouseStatistics(month, startDate, endDate);
+        
+        csv.printRecord("Warehouse Statistics", month);
+        csv.println();
+        
+        csv.printRecord("Transaction Statistics");
+        csv.printRecord("Total Transactions", data.getTransactions().getTotal());
+        csv.println();
+        
+        csv.printRecord("Import Data");
+        csv.printRecord("Import Count", data.getTransactions().getImportData().getCount());
+        csv.printRecord("Import Value", data.getTransactions().getImportData().getTotalValue());
+        csv.println();
+        
+        csv.printRecord("Export Data");
+        csv.printRecord("Export Count", data.getTransactions().getExportData().getCount());
+        csv.printRecord("Export Value", data.getTransactions().getExportData().getTotalValue());
+        csv.println();
+        
+        csv.printRecord("Transactions by Status");
+        csv.printRecord("Pending", data.getTransactions().getByStatus().getPending());
+        csv.printRecord("Approved", data.getTransactions().getByStatus().getApproved());
+        csv.printRecord("Rejected", data.getTransactions().getByStatus().getRejected());
+        csv.printRecord("Cancelled", data.getTransactions().getByStatus().getCancelled());
+        csv.println();
+        
+        csv.printRecord("Inventory Statistics");
+        csv.printRecord("Current Total Value", data.getInventory().getCurrentTotalValue());
+        csv.printRecord("Low Stock Items", data.getInventory().getLowStockItems());
+        csv.printRecord("Expiring Items", data.getInventory().getExpiringItems());
+        csv.printRecord("Usage Rate (%)", data.getInventory().getUsageRate());
+        csv.println();
+        
+        csv.printRecord("Top Import Items");
+        csv.printRecord("Item ID", "Item Name", "Quantity", "Value");
+        for (var item : data.getTopImports()) {
+            csv.printRecord(item.getItemId(), item.getItemName(), item.getQuantity(), item.getValue());
+        }
+        csv.println();
+        
+        csv.printRecord("Top Export Items");
+        csv.printRecord("Item ID", "Item Name", "Quantity", "Value");
+        for (var item : data.getTopExports()) {
+            csv.printRecord(item.getItemId(), item.getItemName(), item.getQuantity(), item.getValue());
+        }
+    }
+
+    private void exportTransactionsCSV(CSVPrinter csv, String month, LocalDate startDate, LocalDate endDate) throws IOException {
+        TransactionStatisticsResponse data = transactionService.getTransactionStatistics(month, startDate, endDate);
+        
+        csv.printRecord("Transaction Statistics", month);
+        csv.println();
+        
+        csv.printRecord("Invoice Statistics");
+        csv.printRecord("Total Invoices", data.getInvoices().getTotal());
+        csv.printRecord("Total Value", data.getInvoices().getTotalValue());
+        csv.printRecord("Payment Rate (%)", data.getInvoices().getPaymentRate());
+        csv.printRecord("Total Debt", data.getInvoices().getDebt());
+        csv.println();
+        
+        csv.printRecord("Invoices by Status");
+        csv.printRecord("Pending Payment - Count", data.getInvoices().getByStatus().getPendingPayment().getCount());
+        csv.printRecord("Pending Payment - Value", data.getInvoices().getByStatus().getPendingPayment().getValue());
+        csv.printRecord("Partial Paid - Count", data.getInvoices().getByStatus().getPartialPaid().getCount());
+        csv.printRecord("Partial Paid - Value", data.getInvoices().getByStatus().getPartialPaid().getValue());
+        csv.printRecord("Paid - Count", data.getInvoices().getByStatus().getPaid().getCount());
+        csv.printRecord("Paid - Value", data.getInvoices().getByStatus().getPaid().getValue());
+        csv.printRecord("Cancelled - Count", data.getInvoices().getByStatus().getCancelled().getCount());
+        csv.printRecord("Cancelled - Value", data.getInvoices().getByStatus().getCancelled().getValue());
+        csv.println();
+        
+        csv.printRecord("Invoices by Type");
+        csv.printRecord("Appointment - Count", data.getInvoices().getByType().getAppointment().getCount());
+        csv.printRecord("Appointment - Value", data.getInvoices().getByType().getAppointment().getValue());
+        csv.printRecord("Treatment Plan - Count", data.getInvoices().getByType().getTreatmentPlan().getCount());
+        csv.printRecord("Treatment Plan - Value", data.getInvoices().getByType().getTreatmentPlan().getValue());
+        csv.printRecord("Supplemental - Count", data.getInvoices().getByType().getSupplemental().getCount());
+        csv.printRecord("Supplemental - Value", data.getInvoices().getByType().getSupplemental().getValue());
+        csv.println();
+        
+        csv.printRecord("Payment Statistics");
+        csv.printRecord("Total Payments", data.getPayments().getTotal());
+        csv.printRecord("Total Value", data.getPayments().getTotalValue());
+        csv.println();
+        
+        csv.printRecord("Payments by Method");
+        csv.printRecord("Bank Transfer - Count", data.getPayments().getByMethod().getBankTransfer().getCount());
+        csv.printRecord("Bank Transfer - Value", data.getPayments().getByMethod().getBankTransfer().getValue());
+        csv.printRecord("Cash - Count", data.getPayments().getByMethod().getCash().getCount());
+        csv.printRecord("Cash - Value", data.getPayments().getByMethod().getCash().getValue());
+        csv.printRecord("Card - Count", data.getPayments().getByMethod().getCard().getCount());
+        csv.printRecord("Card - Value", data.getPayments().getByMethod().getCard().getValue());
+        csv.printRecord("Other - Count", data.getPayments().getByMethod().getOther().getCount());
+        csv.printRecord("Other - Value", data.getPayments().getByMethod().getOther().getValue());
     }
 }

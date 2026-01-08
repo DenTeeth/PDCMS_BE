@@ -125,6 +125,13 @@
             <version>5.4.0</version>
         </dependency>
 
+        <!-- Apache Commons CSV for CSV Export -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-csv</artifactId>
+            <version>1.10.0</version>
+        </dependency>
+
         <!-- LangChain4J - Gemini AI Integration -->
         <dependency>
             <groupId>dev.langchain4j</groupId>

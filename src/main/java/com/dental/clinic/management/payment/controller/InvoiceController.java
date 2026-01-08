@@ -34,7 +34,7 @@ public class InvoiceController {
     private final InvoiceService invoiceService;
 
     @PostMapping
-    @PreAuthorize("hasAuthority('CREATE_INVOICE')")
+    @PreAuthorize("hasAuthority('CREATE_INVOICE')") // RECEPTIONIST, ADMIN
     @ApiMessage("Tạo hóa đơn thành công")
     @Operation(summary = "Create new invoice", description = "Create a new invoice for appointment or treatment plan")
     public ResponseEntity<InvoiceResponse> createInvoice(@Valid @RequestBody CreateInvoiceRequest request) {
@@ -44,7 +44,7 @@ public class InvoiceController {
     }
 
     @GetMapping("/patient/{patientId}")
-    @PreAuthorize("hasAnyAuthority('VIEW_INVOICE_ALL', 'VIEW_INVOICE_OWN')")
+    @PreAuthorize("hasAnyAuthority('VIEW_INVOICE_ALL', 'VIEW_INVOICE_OWN')") // RECEPTIONIST, ACCOUNTANT, PATIENT, ADMIN
     @ApiMessage("Lấy danh sách hóa đơn thành công")
     @Operation(summary = "Get invoices by patient", description = "Get all invoices for a specific patient")
     public ResponseEntity<List<InvoiceResponse>> getInvoicesByPatient(@PathVariable Integer patientId) {
@@ -54,7 +54,7 @@ public class InvoiceController {
     }
 
     @GetMapping("/appointment/{appointmentId}")
-    @PreAuthorize("hasAnyAuthority('VIEW_INVOICE_ALL', 'VIEW_APPOINTMENT_ALL')")
+    @PreAuthorize("hasAnyAuthority('VIEW_INVOICE_ALL', 'VIEW_APPOINTMENT_ALL', 'VIEW_INVOICE_OWN')") // RECEPTIONIST, ACCOUNTANT, MANAGER, ADMIN, PATIENT
     @ApiMessage("Lấy danh sách hóa đơn thành công")
     @Operation(summary = "Get invoices by appointment", description = "Get all invoices for a specific appointment")
     public ResponseEntity<List<InvoiceResponse>> getInvoicesByAppointment(@PathVariable Integer appointmentId) {
@@ -64,7 +64,7 @@ public class InvoiceController {
     }
 
     @GetMapping("/{invoiceCode}")
-    @PreAuthorize("hasAnyAuthority('VIEW_INVOICE_ALL', 'VIEW_INVOICE_OWN')")
+    @PreAuthorize("hasAnyAuthority('VIEW_INVOICE_ALL', 'VIEW_INVOICE_OWN')") // RECEPTIONIST, ACCOUNTANT, PATIENT, ADMIN
     @ApiMessage("Lấy thông tin hóa đơn thành công")
     @Operation(summary = "Get invoice by code", description = "Get invoice details by invoice code")
     public ResponseEntity<InvoiceResponse> getInvoiceByCode(@PathVariable String invoiceCode) {
@@ -74,7 +74,7 @@ public class InvoiceController {
     }
 
     @GetMapping("/patient/{patientId}/unpaid")
-    @PreAuthorize("hasAnyAuthority('VIEW_INVOICE_ALL', 'VIEW_INVOICE_OWN')")
+    @PreAuthorize("hasAnyAuthority('VIEW_INVOICE_ALL', 'VIEW_INVOICE_OWN')") // RECEPTIONIST, ACCOUNTANT, PATIENT, ADMIN
     @ApiMessage("Lấy danh sách hóa đơn chưa thanh toán thành công")
     @Operation(summary = "Get unpaid invoices by patient", description = "Get all unpaid invoices for a specific patient")
     public ResponseEntity<List<InvoiceResponse>> getUnpaidInvoicesByPatient(@PathVariable Integer patientId) {
@@ -84,7 +84,7 @@ public class InvoiceController {
     }
 
     @GetMapping("/{invoiceCode}/payment-status")
-    @PreAuthorize("hasAnyAuthority('VIEW_INVOICE_ALL', 'VIEW_INVOICE_OWN', 'VIEW_PAYMENT_ALL')")
+    @PreAuthorize("hasAnyAuthority('VIEW_INVOICE_ALL', 'VIEW_INVOICE_OWN', 'VIEW_PAYMENT_ALL')") // RECEPTIONIST, ACCOUNTANT, PATIENT, ADMIN
     @ApiMessage("Lấy trạng thái thanh toán thành công")
     @Operation(summary = "Check payment status", description = "Check payment status of invoice by invoice code")
     public ResponseEntity<InvoiceResponse> checkPaymentStatus(@PathVariable String invoiceCode) {
@@ -115,7 +115,7 @@ public class InvoiceController {
      * Example: GET /api/v1/invoices?status=PENDING_PAYMENT&page=0&size=20&sort=createdAt,desc
      */
     @GetMapping
-    @PreAuthorize("hasAuthority('VIEW_INVOICE_ALL')")
+    @PreAuthorize("hasAuthority('VIEW_INVOICE_ALL')") // RECEPTIONIST, ACCOUNTANT, MANAGER, ADMIN
     @ApiMessage("Lấy danh sách tất cả hóa đơn thành công")
     @Operation(summary = "Get all invoices with filters", 
                description = "Get paginated list of all invoices with optional filtering by status, type, patient, and date range. Admin/Manager only.")

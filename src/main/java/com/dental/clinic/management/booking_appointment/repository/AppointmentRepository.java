@@ -80,14 +80,46 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
                         @Param("endDate") LocalDateTime endDate,
                         @Param("status") AppointmentStatus status);
 
-        /**
-         * Find all services for an appointment with a direct SQL-like join
-         * Returns: [service_code, service_name]
-         *
-         * @param appointmentId The appointment ID
-         * @return List of Object arrays containing service details
-         */
-        @Query("SELECT s.serviceCode, s.serviceName " +
+    /**
+     * Count patients with multiple appointments (returning patients)
+     * Used for calculating patient retention rate KPI
+     */
+    @Query("SELECT COUNT(DISTINCT a.patientId) FROM Appointment a " +
+                    "WHERE a.appointmentStartTime BETWEEN :startDate AND :endDate " +
+                    "AND a.patientId IN (" +
+                    "  SELECT ap.patientId FROM Appointment ap " +
+                    "  WHERE ap.appointmentStartTime BETWEEN :startDate AND :endDate " +
+                    "  GROUP BY ap.patientId " +
+                    "  HAVING COUNT(ap) > 1" +
+                    ")")
+    Long countPatientsWithMultipleAppointments(
+                    @Param("startDate") LocalDateTime startDate,
+                    @Param("endDate") LocalDateTime endDate);
+
+    /**
+     * Get appointment heatmap data - count by day of week and hour
+     * Returns: [dayOfWeek (1-7, Mon=1), hour (0-23), count]
+     */
+    @Query(value = "SELECT EXTRACT(DOW FROM appointment_start_time) as dayOfWeek, " +
+                    "EXTRACT(HOUR FROM appointment_start_time) as hour, " +
+                    "COUNT(*) as count " +
+                    "FROM appointments " +
+                    "WHERE appointment_start_time BETWEEN :startDate AND :endDate " +
+                    "GROUP BY EXTRACT(DOW FROM appointment_start_time), EXTRACT(HOUR FROM appointment_start_time) " +
+                    "ORDER BY EXTRACT(DOW FROM appointment_start_time), EXTRACT(HOUR FROM appointment_start_time)", 
+                    nativeQuery = true)
+    List<Object[]> getAppointmentHeatmapData(
+                    @Param("startDate") LocalDateTime startDate,
+                    @Param("endDate") LocalDateTime endDate);
+
+    /**
+     * Find all services for an appointment with a direct SQL-like join
+     * Returns: [service_code, service_name]
+     *
+     * @param appointmentId The appointment ID
+     * @return List of Object arrays containing service details
+     */
+    @Query("SELECT s.serviceCode, s.serviceName " +
                         "FROM AppointmentService aps " +
                         "JOIN aps.service s " +
                         "WHERE aps.id.appointmentId = :appointmentId")

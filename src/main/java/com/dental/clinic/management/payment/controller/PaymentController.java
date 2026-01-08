@@ -26,7 +26,7 @@ public class PaymentController {
     private final PaymentService paymentService;
 
     @PostMapping
-    @PreAuthorize("hasAuthority('CREATE_PAYMENT')")
+    @PreAuthorize("hasAuthority('CREATE_PAYMENT')") // RECEPTIONIST, ADMIN
     @ApiMessage("Tạo thanh toán thành công")
     @Operation(summary = "Create payment", description = "Create a new payment for an invoice")
     public ResponseEntity<PaymentResponse> createPayment(@Valid @RequestBody CreatePaymentRequest request) {
@@ -36,7 +36,7 @@ public class PaymentController {
     }
 
     @GetMapping("/invoice/{invoiceId}")
-    @PreAuthorize("hasAnyAuthority('VIEW_PAYMENT_ALL', 'VIEW_INVOICE_ALL')")
+    @PreAuthorize("hasAnyAuthority('VIEW_PAYMENT_ALL', 'VIEW_INVOICE_ALL')") // RECEPTIONIST, ACCOUNTANT, ADMIN
     @ApiMessage("Lấy danh sách thanh toán thành công")
     @Operation(summary = "Get payments by invoice", description = "Get all payments for a specific invoice")
     public ResponseEntity<List<PaymentResponse>> getPaymentsByInvoice(@PathVariable Integer invoiceId) {
@@ -46,7 +46,7 @@ public class PaymentController {
     }
 
     @GetMapping("/{paymentCode}")
-    @PreAuthorize("hasAnyAuthority('VIEW_PAYMENT_ALL', 'VIEW_INVOICE_ALL')")
+    @PreAuthorize("hasAnyAuthority('VIEW_PAYMENT_ALL', 'VIEW_INVOICE_ALL')") // RECEPTIONIST, ACCOUNTANT, ADMIN
     @ApiMessage("Lấy thông tin thanh toán thành công")
     @Operation(summary = "Get payment by code", description = "Get payment details by payment code")
     public ResponseEntity<PaymentResponse> getPaymentByCode(@PathVariable String paymentCode) {

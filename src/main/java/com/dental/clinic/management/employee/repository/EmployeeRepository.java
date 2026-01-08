@@ -142,4 +142,18 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer>, Jp
             "JOIN a.role r " +
             "WHERE r.roleId <> 'ROLE_PATIENT'")
     long countAllExcludingPatient();
+
+    /**
+     * Count employees by role (e.g., DOCTOR).
+     * Used for dashboard KPI calculations.
+     *
+     * @param roleId Role ID (e.g., 'ROLE_DENTIST')
+     * @return Count of employees with that role
+     */
+    @Query("SELECT COUNT(e) FROM Employee e " +
+            "JOIN e.account a " +
+            "JOIN a.role r " +
+            "WHERE r.roleId = :roleId " +
+            "AND e.isActive = true")
+    Long countByRole(@org.springframework.data.repository.query.Param("roleId") String roleId);
 }

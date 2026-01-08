@@ -41,6 +41,16 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
     boolean existsByInvoiceCode(@Param("invoiceCode") String invoiceCode);
 
     /**
+     * Check if an appointment already has an invoice of a specific type
+     * Used to determine if a new invoice should be SUPPLEMENTAL
+     * 
+     * @param appointmentId The appointment ID to check
+     * @param invoiceType The invoice type to check for (typically APPOINTMENT)
+     * @return true if an invoice of the specified type exists for the appointment
+     */
+    boolean existsByAppointmentIdAndInvoiceType(Integer appointmentId, InvoiceType invoiceType);
+
+    /**
      * Count invoices created between start and end datetime
      * Used for generating daily payment code sequence
      */
@@ -187,6 +197,17 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
     @Query("SELECT COUNT(DISTINCT i.patientId) FROM Invoice i " +
            "WHERE i.createdAt BETWEEN :startDate AND :endDate")
     Long countUniquePatients(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate);
+
+    /**
+     * Count total services across all invoices in date range
+     * Used for calculating average cost per service KPI
+     */
+    @Query("SELECT COALESCE(SUM(ii.quantity), 0) FROM Invoice i " +
+           "JOIN i.items ii " +
+           "WHERE i.createdAt BETWEEN :startDate AND :endDate")
+    Long countTotalServicesInRange(
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate);
 }

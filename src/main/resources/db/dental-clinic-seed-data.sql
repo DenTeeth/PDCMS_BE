@@ -85,6 +85,65 @@ COMMENT ON COLUMN chatbot_knowledge.response IS 'Câu trả lời chuẩn';
 COMMENT ON COLUMN chatbot_knowledge.is_active IS 'Trạng thái hoạt động';
 
 -- ============================================
+-- DASHBOARD CUSTOMIZATION TABLES
+-- ============================================
+-- Feature: User-specific dashboard preferences and saved filter views
+-- Date: 2025-01-08
+-- Purpose: Enable users to customize dashboard layout, widgets, and save filter combinations
+
+-- Dashboard Preferences Table
+-- Stores user-specific dashboard customizations
+CREATE TABLE IF NOT EXISTS dashboard_preferences (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL UNIQUE,
+    layout TEXT,
+    visible_widgets TEXT,
+    default_date_range VARCHAR(50),
+    auto_refresh BOOLEAN DEFAULT FALSE,
+    refresh_interval INTEGER DEFAULT 300,
+    chart_type_preference VARCHAR(50) DEFAULT 'CHART',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP,
+    CONSTRAINT fk_dashboard_preferences_user FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_dashboard_preferences_user_id ON dashboard_preferences(user_id);
+
+COMMENT ON TABLE dashboard_preferences IS 'User-specific dashboard customization settings';
+COMMENT ON COLUMN dashboard_preferences.layout IS 'JSON string for widget layout configuration';
+COMMENT ON COLUMN dashboard_preferences.visible_widgets IS 'JSON array of visible widget IDs';
+COMMENT ON COLUMN dashboard_preferences.default_date_range IS 'Default date range filter (THIS_WEEK, THIS_MONTH, etc.)';
+COMMENT ON COLUMN dashboard_preferences.auto_refresh IS 'Enable automatic dashboard refresh';
+COMMENT ON COLUMN dashboard_preferences.refresh_interval IS 'Auto-refresh interval in seconds';
+COMMENT ON COLUMN dashboard_preferences.chart_type_preference IS 'Preferred display type: CHART, TABLE, or BOTH';
+
+-- Dashboard Saved Views Table
+-- Stores saved filter combinations for quick access
+CREATE TABLE IF NOT EXISTS dashboard_saved_views (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    view_name VARCHAR(255) NOT NULL,
+    description TEXT,
+    is_public BOOLEAN DEFAULT FALSE,
+    filters TEXT,
+    is_default BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP,
+    CONSTRAINT fk_dashboard_saved_views_user FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    CONSTRAINT unique_view_name_per_user UNIQUE (user_id, view_name)
+);
+
+CREATE INDEX IF NOT EXISTS idx_dashboard_saved_views_user_id ON dashboard_saved_views(user_id);
+CREATE INDEX IF NOT EXISTS idx_dashboard_saved_views_is_public ON dashboard_saved_views(is_public);
+CREATE INDEX IF NOT EXISTS idx_dashboard_saved_views_is_default ON dashboard_saved_views(user_id, is_default);
+
+COMMENT ON TABLE dashboard_saved_views IS 'Saved dashboard filter combinations and views';
+COMMENT ON COLUMN dashboard_saved_views.view_name IS 'User-defined name for the saved view';
+COMMENT ON COLUMN dashboard_saved_views.is_public IS 'Share this view with all users';
+COMMENT ON COLUMN dashboard_saved_views.filters IS 'JSON object containing filter criteria (date range, employee, patient, service)';
+COMMENT ON COLUMN dashboard_saved_views.is_default IS 'User default view (only one per user)';
+
+-- ============================================
 -- MATERIAL CONSUMPTION TRACKING (V36 - Updated Dec 27, 2025)
 -- ============================================
 -- Feature: Track actual material usage vs planned (BOM)
@@ -821,6 +880,12 @@ VALUES
 -- HOLIDAY (read-only)
 ('ROLE_RECEPTIONIST', 'VIEW_HOLIDAY'),
 
+-- PAYMENT & INVOICE (full management - receptionist handles billing)
+('ROLE_RECEPTIONIST', 'VIEW_INVOICE_ALL'), -- View all invoices
+('ROLE_RECEPTIONIST', 'CREATE_INVOICE'), -- Create invoices
+('ROLE_RECEPTIONIST', 'CREATE_PAYMENT'), -- Record payments
+('ROLE_RECEPTIONIST', 'VIEW_PAYMENT_ALL'), -- View all payments
+
 -- NOTIFICATION
 ('ROLE_RECEPTIONIST', 'VIEW_NOTIFICATION'),
 ('ROLE_RECEPTIONIST', 'DELETE_NOTIFICATION')
@@ -900,6 +965,12 @@ VALUES
 ('ROLE_MANAGER', 'VIEW_ROLE'),
 ('ROLE_MANAGER', 'VIEW_SPECIALIZATION'),
 ('ROLE_MANAGER', 'MANAGE_SPECIALIZATION'), -- Can manage specializations
+
+-- PAYMENT & INVOICE (full access for financial oversight)
+('ROLE_MANAGER', 'VIEW_INVOICE_ALL'), -- View all invoices
+('ROLE_MANAGER', 'CREATE_INVOICE'), -- Create invoices
+('ROLE_MANAGER', 'CREATE_PAYMENT'), -- Record payments
+('ROLE_MANAGER', 'VIEW_PAYMENT_ALL'), -- View all payments
 
 -- NOTIFICATION
 ('ROLE_MANAGER', 'VIEW_NOTIFICATION'),
@@ -1006,6 +1077,10 @@ VALUES
 
 -- PATIENT_IMAGES (view own images)
 ('ROLE_PATIENT', 'PATIENT_IMAGE_READ'), -- View own patient images
+
+-- PAYMENT & INVOICE (view own invoices and payments)
+('ROLE_PATIENT', 'VIEW_INVOICE_OWN'), -- View own invoices
+-- NOTE: Patients use VIEW_INVOICE_OWN to see their billing
 
 -- NOTIFICATION
 ('ROLE_PATIENT', 'VIEW_NOTIFICATION'), -- View own notifications

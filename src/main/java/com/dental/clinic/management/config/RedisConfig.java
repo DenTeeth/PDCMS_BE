@@ -70,17 +70,33 @@ public class RedisConfig {
                         GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(
                                         createObjectMapper());
 
-                        RedisCacheConfiguration cacheConfig = RedisCacheConfiguration.defaultCacheConfig()
+                        // Default cache configuration (30 minutes TTL)
+                        RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
                                         .entryTtl(Duration.ofMinutes(30))
                                         .serializeKeysWith(
                                                         RedisSerializationContext.SerializationPair
                                                                         .fromSerializer(new StringRedisSerializer()))
                                         .serializeValuesWith(
                                                         RedisSerializationContext.SerializationPair
-                                                                        .fromSerializer(serializer));
+                                                                        .fromSerializer(serializer))
+                                        .disableCachingNullValues();
+
+                        // Custom configurations for different cache types
+                        java.util.Map<String, RedisCacheConfiguration> cacheConfigurations = new java.util.HashMap<>();
+
+                        // Dashboard statistics - varying TTLs
+                        cacheConfigurations.put("dashboardOverview", defaultConfig.entryTtl(Duration.ofMinutes(5)));
+                        cacheConfigurations.put("dashboardRevenue", defaultConfig.entryTtl(Duration.ofMinutes(5)));
+                        cacheConfigurations.put("dashboardEmployees", defaultConfig.entryTtl(Duration.ofMinutes(10)));
+                        cacheConfigurations.put("dashboardWarehouse", defaultConfig.entryTtl(Duration.ofMinutes(15)));
+                        cacheConfigurations.put("dashboardTransactions", defaultConfig.entryTtl(Duration.ofMinutes(5)));
+                        cacheConfigurations.put("dashboardHeatmap", defaultConfig.entryTtl(Duration.ofMinutes(30)));
+                        cacheConfigurations.put("dashboardPreferences", defaultConfig.entryTtl(Duration.ofHours(1)));
+                        cacheConfigurations.put("dashboardSavedViews", defaultConfig.entryTtl(Duration.ofMinutes(30)));
 
                         return RedisCacheManager.builder(connectionFactory)
-                                        .cacheDefaults(cacheConfig)
+                                        .cacheDefaults(defaultConfig)
+                                        .withInitialCacheConfigurations(cacheConfigurations)
                                         .transactionAware()
                                         .build();
                 } catch (RedisConnectionFailureException e) {
@@ -107,7 +123,16 @@ public class RedisConfig {
                                 "permissionsByModule", // PermissionService.getPermissionsByModule()
                                 "permissionsGrouped", // PermissionService.getPermissionsGroupedByModule(),
                                                       // getPermissionHierarchy()
-                                "sidebar" // SidebarService.getSidebarData()
+                                "sidebar", // SidebarService.getSidebarData()
+                                // Dashboard caches
+                                "dashboardOverview",
+                                "dashboardRevenue",
+                                "dashboardEmployees",
+                                "dashboardWarehouse",
+                                "dashboardTransactions",
+                                "dashboardHeatmap",
+                                "dashboardPreferences",
+                                "dashboardSavedViews"
                 );
         }
 }

@@ -36,8 +36,15 @@ public class InvoiceResponse {
     private String notes;
     private String paymentCode; // Mã thanh toán PDCMS123456
     private String qrCodeUrl; // URL QR code VietQR để khách hàng quét thanh toán
+    
+    // Bác sĩ phụ trách (from appointment.employeeId)
     private Integer createdBy;
     private String createdByName;
+    
+    // ✅ NEW: Người thực sự tạo invoice (lễ tân/admin who clicked "Create")
+    private Integer invoiceCreatorId;
+    private String invoiceCreatorName;
+    
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private List<InvoiceItemResponse> items;

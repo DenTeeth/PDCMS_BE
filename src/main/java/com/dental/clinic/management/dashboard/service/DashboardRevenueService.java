@@ -1,6 +1,8 @@
 package com.dental.clinic.management.dashboard.service;
 
 import com.dental.clinic.management.dashboard.dto.RevenueExpensesResponse;
+import com.dental.clinic.management.dashboard.enums.ComparisonMode;
+import com.dental.clinic.management.dashboard.util.DateRangeUtil;
 import com.dental.clinic.management.payment.enums.InvoiceType;
 import com.dental.clinic.management.payment.repository.InvoiceRepository;
 import com.dental.clinic.management.warehouse.repository.StorageTransactionRepository;
@@ -14,8 +16,6 @@ import java.math.RoundingMode;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.YearMonth;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,10 +28,17 @@ public class DashboardRevenueService {
     private final StorageTransactionRepository storageTransactionRepository;
     private final AppointmentServiceRepository appointmentServiceRepository;
 
-    public RevenueExpensesResponse getRevenueExpensesStatistics(String month, Boolean compareWithPrevious) {
-        YearMonth currentMonth = YearMonth.parse(month);
-        LocalDateTime startDate = currentMonth.atDay(1).atStartOfDay();
-        LocalDateTime endDate = currentMonth.atEndOfMonth().atTime(23, 59, 59);
+    public RevenueExpensesResponse getRevenueExpensesStatistics(String month, LocalDate start, LocalDate end, Boolean compareWithPrevious, String comparisonModeStr) {
+        // Parse comparison mode
+        ComparisonMode comparisonMode = ComparisonMode.fromString(comparisonModeStr);
+        // Backward compatibility: if compareWithPrevious is true and no mode specified, use MONTH
+        if (Boolean.TRUE.equals(compareWithPrevious) && comparisonMode == ComparisonMode.NONE) {
+            comparisonMode = ComparisonMode.MONTH;
+        }
+        
+        DateRangeUtil.DateRange dateRange = DateRangeUtil.parseDateRange(month, start, end);
+        LocalDateTime startDate = dateRange.getStartDate();
+        LocalDateTime endDate = dateRange.getEndDate();
 
         // Get revenue stats
         RevenueExpensesResponse.RevenueStats revenueStats = buildRevenueStats(startDate, endDate);
@@ -40,17 +47,19 @@ public class DashboardRevenueService {
         RevenueExpensesResponse.ExpenseStats expenseStats = buildExpenseStats(startDate, endDate);
         
         RevenueExpensesResponse.RevenueExpensesResponseBuilder builder = RevenueExpensesResponse.builder()
-                .month(month)
+                .month(dateRange.getLabel())
                 .revenue(revenueStats)
                 .expenses(expenseStats);
         
         // Add comparison if requested
-        if (Boolean.TRUE.equals(compareWithPrevious)) {
-            YearMonth previousMonth = currentMonth.minusMonths(1);
-            LocalDateTime prevStartDate = previousMonth.atDay(1).atStartOfDay();
-            LocalDateTime prevEndDate = previousMonth.atEndOfMonth().atTime(23, 59, 59);
-            
-            builder.comparison(buildComparison(revenueStats, expenseStats, prevStartDate, prevEndDate));
+        if (comparisonMode != ComparisonMode.NONE) {
+            DateRangeUtil.DateRange comparisonPeriod = DateRangeUtil.calculateComparisonPeriod(dateRange, comparisonMode);
+            if (comparisonPeriod != null) {
+                LocalDateTime compStartDate = comparisonPeriod.getStartDate();
+                LocalDateTime compEndDate = comparisonPeriod.getEndDate();
+                
+                builder.comparison(buildComparison(revenueStats, expenseStats, compStartDate, compEndDate));
+            }
         }
         
         return builder.build();
