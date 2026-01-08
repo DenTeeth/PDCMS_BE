@@ -36,6 +36,7 @@ public class DashboardService {
     private final com.dental.clinic.management.employee.repository.EmployeeRepository employeeRepository;
     private final com.dental.clinic.management.warehouse.repository.ItemMasterRepository itemMasterRepository;
     private final com.dental.clinic.management.warehouse.repository.ItemBatchRepository itemBatchRepository;
+    private final com.dental.clinic.management.patient.repository.PatientRepository patientRepository;
 
     /**
      * Get dashboard overview statistics
@@ -262,7 +263,8 @@ public class DashboardService {
     }
 
     private Long countPatients(LocalDateTime startDate, LocalDateTime endDate) {
-        return invoiceRepository.countUniquePatients(startDate, endDate);
+        // Count all patients in the system (not filtered by date)
+        return patientRepository.count();
     }
 
     @SuppressWarnings("unused")
