@@ -31,7 +31,8 @@ public class DashboardOverviewResponse {
         private BigDecimal netProfit;
         private Long totalInvoices;
         private Long totalAppointments;
-        private Long totalPatients;
+        private Long totalPatients;          // Total patients in system
+        private Long newPatientsThisMonth;   // New patients created in selected period
     }
 
     @Data

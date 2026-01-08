@@ -75,6 +75,7 @@ public class DashboardService {
         Long totalInvoices = countInvoices(rangeStart, rangeEnd);
         Long totalAppointments = countAppointments(rangeStart, rangeEnd);
         Long totalPatients = countPatients(rangeStart, rangeEnd);
+        Long newPatientsThisMonth = countNewPatients(rangeStart, rangeEnd);
         
         // Summary stats
         DashboardOverviewResponse.SummaryStats summary = DashboardOverviewResponse.SummaryStats.builder()
@@ -84,6 +85,7 @@ public class DashboardService {
                 .totalInvoices(totalInvoices)
                 .totalAppointments(totalAppointments)
                 .totalPatients(totalPatients)
+                .newPatientsThisMonth(newPatientsThisMonth)
                 .build();
         
         // Build response
@@ -265,6 +267,11 @@ public class DashboardService {
     private Long countPatients(LocalDateTime startDate, LocalDateTime endDate) {
         // Count all patients in the system (not filtered by date)
         return patientRepository.count();
+    }
+
+    private Long countNewPatients(LocalDateTime startDate, LocalDateTime endDate) {
+        // Count patients created in the selected period
+        return patientRepository.countByCreatedAtBetween(startDate, endDate);
     }
 
     @SuppressWarnings("unused")
