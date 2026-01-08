@@ -108,15 +108,20 @@ public class InvoiceService {
                 throw new IllegalArgumentException(errorMsg);
             }
 
-            // ✅ SECURITY CHECK: If user is a doctor (not admin), verify they own this appointment
-            if (!SecurityUtil.hasCurrentUserRole("ADMIN")) {
+            // ✅ SECURITY CHECK: Users with CREATE_INVOICE permission (RECEPTIONIST, ADMIN) can create invoice for any appointment
+            // Users without CREATE_INVOICE permission can only create invoice for their own appointments
+            boolean hasCreateInvoicePermission = SecurityUtil.hasCurrentUserPermission("CREATE_INVOICE");
+            
+            if (!hasCreateInvoicePermission) {
+                // User doesn't have CREATE_INVOICE permission - check if they own the appointment
                 Integer currentEmployeeId = getCurrentEmployeeId();
                 if (!appointment.getEmployeeId().equals(currentEmployeeId)) {
-                    log.error("Access denied: Doctor {} attempted to create invoice for appointment {} owned by doctor {}", 
+                    log.error("Access denied: User {} attempted to create invoice for appointment {} owned by doctor {}", 
                              currentEmployeeId, appointment.getAppointmentId(), appointment.getEmployeeId());
                     throw new AccessDeniedException("Bạn chỉ có thể tạo hóa đơn cho lịch hẹn của chính mình");
                 }
             }
+            // If has CREATE_INVOICE permission, allow creating invoice for any appointment
 
             // ✅ FIX BUG: Set invoice created_by to match appointment's doctor
             // This ensures invoice creator is the same as the appointment's responsible doctor
