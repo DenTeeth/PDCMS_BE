@@ -210,4 +210,26 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
     Long countTotalServicesInRange(
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate);
+
+    /**
+     * Count overdue invoices in date range
+     * Invoices that are past their due date and still unpaid
+     */
+    @Query("SELECT COUNT(i) FROM Invoice i " +
+           "WHERE i.createdAt BETWEEN :startDate AND :endDate " +
+           "AND i.paymentStatus IN ('PENDING_PAYMENT', 'PARTIAL_PAID') " +
+           "AND i.dueDate < CURRENT_DATE")
+    Long countOverdueInvoices(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate);
+
+    /**
+     * Calculate total paid revenue (PAID invoices only)
+     */
+    @Query("SELECT COALESCE(SUM(i.paidAmount), 0) FROM Invoice i " +
+           "WHERE i.createdAt BETWEEN :startDate AND :endDate " +
+           "AND i.paymentStatus IN ('PAID', 'PARTIAL_PAID')")
+    java.math.BigDecimal calculatePaidRevenue(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate);
 }

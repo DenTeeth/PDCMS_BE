@@ -57,6 +57,7 @@ public class DashboardExportService {
         
         CellStyle headerStyle = createHeaderStyle(workbook);
         CellStyle currencyStyle = createCurrencyStyle(workbook);
+        @SuppressWarnings("unused")
         CellStyle percentStyle = createPercentStyle(workbook);
         
         int rowNum = 0;
@@ -77,7 +78,6 @@ public class DashboardExportService {
         rowNum = addDataRow(sheet, rowNum, "Total Invoices", data.getSummary().getTotalInvoices());
         rowNum = addDataRow(sheet, rowNum, "Total Appointments", data.getSummary().getTotalAppointments());
         rowNum = addDataRow(sheet, rowNum, "Total Patients", data.getSummary().getTotalPatients());
-        rowNum = addDataRow(sheet, rowNum, "Total Employees", data.getSummary().getTotalEmployees());
         rowNum++;
         
         // Invoice Stats
@@ -85,18 +85,17 @@ public class DashboardExportService {
         rowNum = addDataRow(sheet, rowNum, "Total Invoices", data.getInvoices().getTotal());
         rowNum = addDataRow(sheet, rowNum, "Paid Invoices", data.getInvoices().getPaid());
         rowNum = addDataRow(sheet, rowNum, "Pending Invoices", data.getInvoices().getPending());
-        rowNum = addDataRow(sheet, rowNum, "Cancelled Invoices", data.getInvoices().getCancelled());
-        rowNum = addDataRow(sheet, rowNum, "Payment Rate", data.getInvoices().getPaidPercent(), percentStyle);
-        rowNum = addDataRow(sheet, rowNum, "Total Debt", data.getInvoices().getDebt(), currencyStyle);
+        rowNum = addDataRow(sheet, rowNum, "Overdue Invoices", data.getInvoices().getOverdue());
+        rowNum = addDataRow(sheet, rowNum, "Total Amount", data.getInvoices().getTotalAmount(), currencyStyle);
+        rowNum = addDataRow(sheet, rowNum, "Paid Amount", data.getInvoices().getPaidAmount(), currencyStyle);
         rowNum++;
         
         // Appointment Stats
         createSectionHeader(sheet, rowNum++, "Appointment Statistics", headerStyle);
         rowNum = addDataRow(sheet, rowNum, "Total Appointments", data.getAppointments().getTotal());
+        rowNum = addDataRow(sheet, rowNum, "Scheduled", data.getAppointments().getScheduled());
         rowNum = addDataRow(sheet, rowNum, "Completed", data.getAppointments().getCompleted());
         rowNum = addDataRow(sheet, rowNum, "Cancelled", data.getAppointments().getCancelled());
-        rowNum = addDataRow(sheet, rowNum, "No Show", data.getAppointments().getNoShow());
-        rowNum = addDataRow(sheet, rowNum, "Completion Rate", data.getAppointments().getCompletionRate(), percentStyle);
         
         autoSizeColumns(sheet, 2);
     }
@@ -533,8 +532,9 @@ public class DashboardExportService {
         csv.printRecord("Total", data.getInvoices().getTotal());
         csv.printRecord("Paid", data.getInvoices().getPaid());
         csv.printRecord("Pending", data.getInvoices().getPending());
-        csv.printRecord("Payment Rate %", data.getInvoices().getPaidPercent());
-        csv.printRecord("Total Debt", data.getInvoices().getDebt());
+        csv.printRecord("Overdue", data.getInvoices().getOverdue());
+        csv.printRecord("Total Amount", data.getInvoices().getTotalAmount());
+        csv.printRecord("Paid Amount", data.getInvoices().getPaidAmount());
     }
 
     private void exportRevenueExpensesCSV(CSVPrinter csv, String month, LocalDate startDate, LocalDate endDate) throws IOException {

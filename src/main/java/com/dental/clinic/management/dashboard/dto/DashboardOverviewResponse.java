@@ -19,7 +19,6 @@ public class DashboardOverviewResponse {
     private ComparisonStats expenses;
     private InvoiceStats invoices;
     private AppointmentStats appointments;
-    private KPIStats kpis;
     private AlertStats alerts;
 
     @Data
@@ -33,7 +32,6 @@ public class DashboardOverviewResponse {
         private Long totalInvoices;
         private Long totalAppointments;
         private Long totalPatients;
-        private Long totalEmployees;
     }
 
     @Data
@@ -55,9 +53,9 @@ public class DashboardOverviewResponse {
         private Long total;
         private Long paid;
         private Long pending;
-        private Long cancelled;
-        private Double paidPercent;
-        private BigDecimal debt;
+        private Long overdue;
+        private BigDecimal totalAmount;
+        private BigDecimal paidAmount;
     }
 
     @Data
@@ -66,43 +64,9 @@ public class DashboardOverviewResponse {
     @AllArgsConstructor
     public static class AppointmentStats {
         private Long total;
-        private Long scheduled;        // SCHEDULED - Đã đặt lịch
-        private Long checkedIn;        // CHECKED_IN - Đã check-in
-        private Long inProgress;       // IN_PROGRESS - Đang điều trị
-        private Long completed;        // COMPLETED - Hoàn thành
-        private Long cancelled;        // CANCELLED - Đã hủy (>24h)
-        private Long cancelledLate;    // CANCELLED_LATE - Hủy muộn (≤24h)
-        private Long noShow;           // NO_SHOW - Không đến
-        private Double completionRate;
-    }
-
-    /**
-     * Key Performance Indicators (KPIs)
-     */
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class KPIStats {
-        // Average Revenue Per Appointment - Doanh thu trung bình mỗi cuộc hẹn
-        private BigDecimal arpa;
-        
-        // Patient Retention Rate - Tỷ lệ giữ chân bệnh nhân (%)
-        private Double patientRetentionRate;
-        
-        // Appointment Utilization Rate - Tỷ lệ sử dụng lịch hẹn (%)
-        // (Số ca hoàn thành / Tổng số ca) * 100
-        private Double appointmentUtilizationRate;
-        
-        // Revenue per Doctor - Doanh thu trung bình mỗi bác sĩ
-        private BigDecimal revenuePerDoctor;
-        
-        // Profit Margin - Tỷ lệ lợi nhuận (%)
-        // (Lợi nhuận / Doanh thu) * 100
-        private Double profitMarginPercent;
-        
-        // Average Cost per Service - Chi phí trung bình mỗi dịch vụ
-        private BigDecimal avgCostPerService;
+        private Long scheduled;
+        private Long completed;
+        private Long cancelled;
     }
 
     /**
