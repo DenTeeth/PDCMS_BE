@@ -26,6 +26,7 @@ public class ChatbotKnowledge {
     @Column(name = "response", columnDefinition = "TEXT", nullable = false)
     private String response;
 
+    @Builder.Default
     @Column(name = "is_active")
     private Boolean isActive = true;
 }
