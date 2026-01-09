@@ -72,16 +72,16 @@ public class WarehouseV3Controller {
                         @Valid @RequestBody ImportTransactionRequest request,
                         Authentication authentication) {
 
-                log.info("📦 POST /api/v1/warehouse/import - Invoice: {}, Items: {}",
-                                request.getInvoiceNumber(), request.getItems().size());
+                log.info("📦 POST /api/v1/warehouse/import - Supplier: {}, Items: {} (Invoice auto-generated)",
+                                request.getSupplierId(), request.getItems().size());
 
                 String employeeCode = authentication.getName();
 
                 ImportTransactionResponse response = importTransactionService
                                 .createImportTransaction(request, employeeCode);
 
-                log.info(" Import transaction created - Code: {}, Total: {} VNĐ",
-                                response.getTransactionCode(), response.getTotalValue());
+                log.info(" Import transaction created - Code: {}, Invoice: {}, Total: {} VNĐ",
+                                response.getTransactionCode(), response.getInvoiceNumber(), response.getTotalValue());
 
                 return ResponseEntity.status(HttpStatus.CREATED).body(response);
         }

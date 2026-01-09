@@ -61,22 +61,26 @@ public class ImportTransactionService {
                         ImportTransactionRequest request,
                         String employeeCode) {
 
-                log.info("🚀 Creating import transaction - Invoice: {}, Supplier: {}, Items: {}",
-                                request.getInvoiceNumber(), request.getSupplierId(), request.getItems().size());
+                log.info("🚀 Creating import transaction - Supplier: {}, Items: {}",
+                                request.getSupplierId(), request.getItems().size());
 
                 try {
                         // 1. Validate request
                         validateImportRequest(request);
 
-                        // 2. Check duplicate invoice
-                        if (transactionRepository.existsByInvoiceNumber(request.getInvoiceNumber())) {
+                        // ✅ 2. Auto-generate invoice number in format: INV-YYYY-XXX
+                        String invoiceNumber = generateInvoiceNumber();
+                        log.info("📝 Auto-generated invoice number: {}", invoiceNumber);
+
+                        // 3. Check duplicate invoice (should not happen with auto-generation, but keep for safety)
+                        if (transactionRepository.existsByInvoiceNumber(invoiceNumber)) {
                                 throw new ConflictException(
                                                 "DUPLICATE_INVOICE",
-                                                "Invoice Number '" + request.getInvoiceNumber() +
-                                                                "' has already been imported. Please use a different invoice number.");
+                                                "Invoice Number '" + invoiceNumber +
+                                                                "' has already been imported. Please try again.");
                         }
 
-                        // 3. Load entities
+                        // 4. Load entities
                         Supplier supplier = supplierRepository.findById(request.getSupplierId())
                                         .orElseThrow(() -> new NotFoundException(
                                                         "SUPPLIER_NOT_FOUND",
@@ -101,7 +105,7 @@ public class ImportTransactionService {
                         }
 
                         // 4. Create transaction header
-                        StorageTransaction transaction = createTransactionHeader(request, supplier, employee);
+                        StorageTransaction transaction = createTransactionHeader(request, supplier, employee, invoiceNumber);
                         transaction = transactionRepository.save(transaction);
 
                         // 5. Process each item
@@ -173,7 +177,8 @@ public class ImportTransactionService {
         private StorageTransaction createTransactionHeader(
                         ImportTransactionRequest request,
                         Supplier supplier,
-                        Employee employee) {
+                        Employee employee,
+                        String invoiceNumber) {
 
                 String transactionCode = generateTransactionCode();
 
@@ -182,7 +187,7 @@ public class ImportTransactionService {
                                 .transactionType(TransactionType.IMPORT)
                                 .transactionDate(request.getTransactionDate().atStartOfDay())
                                 .supplier(supplier)
-                                .invoiceNumber(request.getInvoiceNumber())
+                                .invoiceNumber(invoiceNumber) // ✅ Use auto-generated invoice number
                                 .expectedDeliveryDate(request.getExpectedDeliveryDate())
                                 .notes(request.getNotes())
                                 .status("COMPLETED")
@@ -519,6 +524,25 @@ public class ImportTransactionService {
                 Long count = transactionRepository.countByTransactionCodeStartingWith(prefix);
 
                 String sequence = String.format("%03d", count + 1);
+                return prefix + sequence;
+        }
+
+        /**
+         * Generate Invoice Number in format: INV-YYYY-XXX
+         * Example: INV-2026-001, INV-2026-002, ...
+         */
+        private String generateInvoiceNumber() {
+                int currentYear = java.time.Year.now().getValue();
+                String prefix = "INV-" + currentYear + "-";
+
+                // Count existing invoices with this year prefix
+                // Note: We count by transaction code prefix since invoiceNumber might not have same pattern
+                // We use a simple counter approach
+                Long count = transactionRepository.countByTransactionCodeStartingWith("PN-" + currentYear);
+                
+                // Generate sequence number (3 digits, zero-padded)
+                String sequence = String.format("%03d", count + 1);
+                
                 return prefix + sequence;
         }
 

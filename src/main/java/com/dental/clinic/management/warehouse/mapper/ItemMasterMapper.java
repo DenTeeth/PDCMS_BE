@@ -29,6 +29,8 @@ public class ItemMasterMapper {
      * Note: CreateItemMasterRequest was rewritten for API 6.9 with unit hierarchy.
      * This old mapper is incompatible with the new DTO structure.
      * Keeping this commented until InventoryService is refactored.
+     * 
+     * ⚠️ UPDATED: itemCode is now auto-generated, so it's not set from request
      */
     @Deprecated
     public ItemMaster toEntity(CreateItemMasterRequest request) {
@@ -44,7 +46,8 @@ public class ItemMasterMapper {
                 .orElse("Unit");
 
         return ItemMaster.builder()
-                .itemCode(request.getItemCode())
+                // ⚠️ itemCode removed - now auto-generated in service layer
+                // .itemCode(request.getItemCode())
                 .itemName(request.getItemName())
                 .warehouseType(request.getWarehouseType())
                 .unitOfMeasure(baseUnitName) // Use base unit name from units array

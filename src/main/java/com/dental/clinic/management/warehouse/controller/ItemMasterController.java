@@ -124,7 +124,7 @@ public class ItemMasterController {
         public ResponseEntity<CreateItemMasterResponse> createItemMaster(
                         @Valid @RequestBody CreateItemMasterRequest request) {
 
-                log.info("POST /api/v1/warehouse/items - Creating item: {}", request.getItemCode());
+                log.info("POST /api/v1/warehouse/items - Creating item with auto-generated code");
 
                 CreateItemMasterResponse response = itemMasterService.createItemMaster(request);
 

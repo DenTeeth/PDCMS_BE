@@ -112,7 +112,7 @@ public class InventoryController {
         @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('MANAGE_WAREHOUSE')")
         public ResponseEntity<ItemMasterSummaryResponse> createItemMaster(
                         @Valid @RequestBody CreateItemMasterRequest request) {
-                log.info("POST /api/v1/inventory/item-master - itemCode: {}", request.getItemCode());
+                log.info("POST /api/v1/inventory/item-master - Auto-generating itemCode");
                 ItemMasterSummaryResponse response = inventoryService.createItemMaster(request);
                 return ResponseEntity.status(HttpStatus.CREATED).body(response);
         }
@@ -274,8 +274,8 @@ public class InventoryController {
                 String employeeCode = SecurityUtil.getCurrentUserLogin()
                                 .orElseThrow(() -> new RuntimeException("Cannot determine current user"));
 
-                log.info("POST /api/v1/inventory/import - Invoice: {}, Supplier: {}, Items: {}",
-                                request.getInvoiceNumber(), request.getSupplierId(), request.getItems().size());
+                log.info("POST /api/v1/inventory/import - Supplier: {}, Items: {} (Invoice auto-generated)",
+                                request.getSupplierId(), request.getItems().size());
 
                 ImportTransactionResponse response = importTransactionService.createImportTransaction(
                                 request, employeeCode);

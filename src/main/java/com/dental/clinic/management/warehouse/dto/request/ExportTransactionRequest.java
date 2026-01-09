@@ -32,15 +32,17 @@ public class ExportTransactionRequest {
     @NotNull(message = "Loại xuất kho là bắt buộc")
     private ExportType exportType; // USAGE, DISPOSAL, RETURN
 
-    @Size(max = 100, message = "Mã tham chiếu không được vượt quá 100 ký tự")
-    private String referenceCode; // Mã phiếu yêu cầu hoặc mã ca điều trị
+    // ❌ REMOVED: referenceCode - No longer needed per FE request
+    // @Size(max = 100, message = "Mã tham chiếu không được vượt quá 100 ký tự")
+    // private String referenceCode; // Mã phiếu yêu cầu hoặc mã ca điều trị
 
     @Schema(description = "Link to appointment (auto-fills referenceCode and relatedAppointment)")
     private Long appointmentId; // When provided, auto-set referenceCode from appointment.appointmentCode
 
+    // ❌ REMOVED: departmentName - No longer needed per FE request
     // Audit Fields (Enhanced from review)
-    @Size(max = 200, message = "Tên bộ phận không được vượt quá 200 ký tự")
-    private String departmentName;
+    // @Size(max = 200, message = "Tên bộ phận không được vượt quá 200 ký tự")
+    // private String departmentName;
 
     @Size(max = 200, message = "Người yêu cầu không được vượt quá 200 ký tự")
     private String requestedBy;

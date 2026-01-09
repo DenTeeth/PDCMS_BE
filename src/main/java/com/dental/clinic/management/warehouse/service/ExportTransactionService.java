@@ -161,8 +161,9 @@ public class ExportTransactionService {
                 .transactionType(TransactionType.EXPORT)
                 .transactionDate(request.getTransactionDate().atStartOfDay())
                 .exportType(request.getExportType().name())
-                .referenceCode(request.getReferenceCode())
-                .departmentName(request.getDepartmentName())
+                // ❌ REMOVED: referenceCode and departmentName per FE request
+                // .referenceCode(request.getReferenceCode())
+                // .departmentName(request.getDepartmentName())
                 .requestedBy(request.getRequestedBy())
                 .notes(request.getNotes())
                 .status("COMPLETED")
@@ -179,11 +180,11 @@ public class ExportTransactionService {
     }
 
     /**
-     * Link appointment to transaction based on appointmentId or referenceCode
-     * Priority: appointmentId > referenceCode pattern matching
+     * Link appointment to transaction based on appointmentId
+     * ⚠️ Note: referenceCode removed per FE request, only appointmentId is used now
      */
     private void linkAppointmentByReference(ExportTransactionRequest request, StorageTransaction transaction) {
-        // Priority 1: If appointmentId is provided, use it and auto-set referenceCode
+        // If appointmentId is provided, link it to the transaction
         if (request.getAppointmentId() != null) {
             log.info("Linking transaction to appointment ID: {}", request.getAppointmentId());
             
@@ -191,34 +192,14 @@ public class ExportTransactionService {
                     .ifPresentOrElse(
                             apt -> {
                                 transaction.setRelatedAppointment(apt);
-                                transaction.setReferenceCode(apt.getAppointmentCode()); // Auto-set reference code
-                                log.info("✓ Linked to appointment: {} (auto-set referenceCode)", apt.getAppointmentCode());
+                                log.info("✓ Linked to appointment: {}", apt.getAppointmentCode());
                             },
                             () -> {
                                 log.warn("⚠ Appointment ID {} not found, proceeding without link", request.getAppointmentId());
                             }
                     );
-            return;
         }
-
-        // Priority 2: If referenceCode looks like appointment code (APT-xxx), try to find it
-        if (request.getReferenceCode() != null && 
-            request.getReferenceCode().trim().toUpperCase().startsWith("APT-")) {
-            
-            String appointmentCode = request.getReferenceCode().trim();
-            log.info("Reference code looks like appointment code, attempting to link: {}", appointmentCode);
-            
-            appointmentRepository.findByAppointmentCode(appointmentCode)
-                    .ifPresentOrElse(
-                            apt -> {
-                                transaction.setRelatedAppointment(apt);
-                                log.info("✓ Auto-linked to appointment by referenceCode: {}", appointmentCode);
-                            },
-                            () -> {
-                                log.info("ℹ Appointment code {} not found, treating as custom reference", appointmentCode);
-                            }
-                    );
-        }
+        // Note: referenceCode logic removed as field no longer exists in request
     }
 
     /**
