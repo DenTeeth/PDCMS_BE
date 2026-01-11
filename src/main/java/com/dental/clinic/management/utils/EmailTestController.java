@@ -24,8 +24,9 @@ public class EmailTestController {
 
     private final JavaMailSender mailSender;
     private final EmailService emailService;
+    private final ResendEmailService resendEmailService;
 
-    @Value("${app.mail.from:hellodenteeth@gmail.com}")
+    @Value("${app.mail.from:onboarding@resend.dev}")
     private String fromEmail;
 
     @Value("${app.mail.from-name:Phòng khám nha khoa DenTeeth}")
@@ -231,6 +232,85 @@ public class EmailTestController {
             result.put("success", false);
             result.put("error", e.getMessage());
             result.put("errorType", e.getClass().getSimpleName());
+
+            return ResponseEntity.status(500).body(result);
+        }
+    }
+
+    /**
+     * POST /api/v1/test/email/resend-welcome
+     * Test Resend email service - send welcome email
+     * 
+     * Example: POST /api/v1/test/email/resend-welcome?email=congthaino0@gmail.com&name=Test&token=abc123
+     */
+    @PostMapping("/resend-welcome")
+    public ResponseEntity<Map<String, Object>> testResendWelcomeEmail(
+            @RequestParam String email,
+            @RequestParam(defaultValue = "Test Patient") String name,
+            @RequestParam(defaultValue = "test-token-123") String token) {
+
+        Map<String, Object> result = new HashMap<>();
+
+        try {
+            log.info("🧪 [TEST] Sending welcome email via Resend to: {}", email);
+            log.info("🧪 [TEST] Name: {}, Token: {}", name, token);
+
+            resendEmailService.sendWelcomeEmailWithPasswordSetup(email, name, token);
+
+            result.put("success", true);
+            result.put("message", "✅ Welcome email sent successfully via Resend");
+            result.put("email", email);
+            result.put("name", name);
+            result.put("token", token);
+            result.put("provider", "Resend");
+
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            log.error("❌ [TEST] Failed to send welcome email via Resend: {}", e.getMessage(), e);
+
+            result.put("success", false);
+            result.put("error", e.getMessage());
+            result.put("errorType", e.getClass().getSimpleName());
+            result.put("provider", "Resend");
+
+            return ResponseEntity.status(500).body(result);
+        }
+    }
+
+    /**
+     * POST /api/v1/test/email/resend-reset
+     * Test Resend email service - send password reset email
+     * 
+     * Example: POST /api/v1/test/email/resend-reset?email=congthaino0@gmail.com&username=test&token=abc123
+     */
+    @PostMapping("/resend-reset")
+    public ResponseEntity<Map<String, Object>> testResendPasswordReset(
+            @RequestParam String email,
+            @RequestParam(defaultValue = "test") String username,
+            @RequestParam(defaultValue = "test-token-123") String token) {
+
+        Map<String, Object> result = new HashMap<>();
+
+        try {
+            log.info("🧪 [TEST] Sending password reset email via Resend to: {}", email);
+
+            resendEmailService.sendPasswordResetEmail(email, username, token);
+
+            result.put("success", true);
+            result.put("message", "✅ Password reset email sent successfully via Resend");
+            result.put("email", email);
+            result.put("provider", "Resend");
+
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            log.error("❌ [TEST] Failed to send password reset email via Resend: {}", e.getMessage(), e);
+
+            result.put("success", false);
+            result.put("error", e.getMessage());
+            result.put("errorType", e.getClass().getSimpleName());
+            result.put("provider", "Resend");
 
             return ResponseEntity.status(500).body(result);
         }

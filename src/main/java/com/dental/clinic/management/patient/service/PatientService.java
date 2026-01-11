@@ -29,6 +29,7 @@ import com.dental.clinic.management.clinical_records.repository.PatientToothStat
 import com.dental.clinic.management.employee.domain.Employee;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.utils.EmailService;
+import com.dental.clinic.management.utils.ResendEmailService;
 import com.dental.clinic.management.utils.SequentialCodeGenerator;
 
 import org.slf4j.Logger;
@@ -66,6 +67,7 @@ public class PatientService {
     private final AccountVerificationTokenRepository verificationTokenRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final EmailService emailService;
+    private final ResendEmailService resendEmailService;
     private final RoleRepository roleRepository;
     private final PatientToothStatusRepository patientToothStatusRepository;
     private final PatientToothStatusHistoryRepository patientToothStatusHistoryRepository;
@@ -81,6 +83,7 @@ public class PatientService {
             AccountVerificationTokenRepository verificationTokenRepository,
             PasswordResetTokenRepository passwordResetTokenRepository,
             EmailService emailService,
+            ResendEmailService resendEmailService,
             RoleRepository roleRepository,
             PatientToothStatusRepository patientToothStatusRepository,
             PatientToothStatusHistoryRepository patientToothStatusHistoryRepository,
@@ -94,6 +97,7 @@ public class PatientService {
         this.verificationTokenRepository = verificationTokenRepository;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.emailService = emailService;
+        this.resendEmailService = resendEmailService;
         this.duplicateDetectionService = duplicateDetectionService;
         this.roleRepository = roleRepository;
         this.employeeRepository = employeeRepository;
@@ -379,12 +383,12 @@ public class PatientService {
                     patientName = request.getFirstName();
                 }
 
-                log.info("📧 Sending welcome email to: {} (name: {})", account.getEmail(), patientName);
-                emailService.sendWelcomeEmailWithPasswordSetup(
+                log.info("📧 [Resend] Sending welcome email to: {} (name: {})", account.getEmail(), patientName);
+                resendEmailService.sendWelcomeEmailWithPasswordSetup(
                         account.getEmail(),
                         patientName,
                         setupToken.getToken());
-                log.info("✅ Welcome email with password setup link sent successfully to: {}", account.getEmail());
+                log.info("✅ [Resend] Welcome email with password setup link sent successfully to: {}", account.getEmail());
 
             } catch (Exception e) {
                 // Log error but don't fail the entire patient creation
