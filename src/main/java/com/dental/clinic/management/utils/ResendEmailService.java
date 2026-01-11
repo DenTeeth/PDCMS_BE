@@ -4,19 +4,19 @@ import com.resend.Resend;
 import com.resend.core.exception.ResendException;
 import com.resend.services.emails.model.CreateEmailOptions;
 import com.resend.services.emails.model.CreateEmailResponse;
-import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import jakarta.annotation.PostConstruct;
+
 /**
  * Email service using Resend API
  * Replaces SendGrid with Resend for email sending
  */
 @Service
-@RequiredArgsConstructor
 public class ResendEmailService {
 
     private static final Logger logger = LoggerFactory.getLogger(ResendEmailService.class);
@@ -36,6 +36,22 @@ public class ResendEmailService {
     @Value("${app.mail.reply-to:hellodenteeth@gmail.com}")
     private String replyToEmail;
 
+    private Resend resend;
+
+    @PostConstruct
+    public void init() {
+        logger.info("🔧 [Resend] Initializing Resend client with API key: {}...",
+                resendApiKey != null ? resendApiKey.substring(0, Math.min(10, resendApiKey.length())) + "..." : "NULL");
+
+        if (resendApiKey == null || resendApiKey.isEmpty()) {
+            logger.error("❌ [Resend] API key is missing! Check RESEND_API_KEY environment variable.");
+            throw new IllegalStateException("Resend API key is not configured");
+        }
+
+        this.resend = new Resend(resendApiKey);
+        logger.info("✅ [Resend] Client initialized successfully");
+    }
+
     /**
      * Send welcome email to new patient with password setup link
      * NOTE: @Async REMOVED temporarily to allow exception to be caught
@@ -45,8 +61,6 @@ public class ResendEmailService {
             logger.info("📧 [Resend] Preparing welcome email to: {}", toEmail);
 
             String setupPasswordUrl = frontendUrl + "/reset-password?token=" + token;
-
-            Resend resend = new Resend(resendApiKey);
 
             String htmlContent = String.format(
                     """
@@ -133,8 +147,6 @@ public class ResendEmailService {
 
             String resetUrl = frontendUrl + "/reset-password?token=" + token;
 
-            Resend resend = new Resend(resendApiKey);
-
             String htmlContent = String.format(
                     """
                             <html>
@@ -180,8 +192,6 @@ public class ResendEmailService {
     public void sendVerificationEmail(String toEmail, String username, String token) {
         try {
             String verificationUrl = frontendUrl + "/verify-email?token=" + token;
-
-            Resend resend = new Resend(resendApiKey);
 
             String htmlContent = String.format(
                     """
