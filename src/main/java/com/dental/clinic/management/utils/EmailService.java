@@ -129,8 +129,12 @@ public class EmailService {
      * This is for newly created patients who need to set their password for the
      * first time
      * Uses the same reset-password flow as forgot password
+     *
+     * NOTE: @Async REMOVED temporarily to allow exception to be caught
+     * When @Async is enabled, exceptions are thrown in separate thread and cannot
+     * be caught
      */
-    @Async
+    // @Async // DISABLED: Causing exceptions to be lost in async thread
     public void sendWelcomeEmailWithPasswordSetup(String toEmail, String patientName, String token) {
         try {
             String setupPasswordUrl = frontendUrl + "/reset-password?token=" + token;
