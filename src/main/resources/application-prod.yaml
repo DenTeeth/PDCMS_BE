@@ -82,16 +82,16 @@ spring:
     # Option 1: SendGrid (RECOMMENDED for DigitalOcean) - 100 emails/day FREE
     host: smtp.sendgrid.net
     port: 587
-    username: apikey  # This is literal "apikey", not your actual key
-    password: ${SENDGRID_API_KEY}  # REQUIRED! Get from: https://app.sendgrid.com/settings/api_keys
-    
+    username: apikey # This is literal "apikey", not your actual key
+    password: ${SENDGRID_API_KEY} # REQUIRED! Get from: https://app.sendgrid.com/settings/api_keys
+
     # Option 2: Gmail SMTP (may not work on DigitalOcean due to port blocking)
     # Uncomment these and comment out SendGrid if you want to try Gmail
     # host: smtp.gmail.com
     # port: 587
     # username: ${MAIL_USERNAME:hellodenteeth@gmail.com}
     # password: ${MAIL_PASSWORD:micnxeutitfjrmxk}
-    
+
     properties:
       mail:
         smtp:
@@ -108,14 +108,14 @@ spring:
 # ==============================
 app:
   frontend-url: ${FRONTEND_URL:https://pdcms.vercel.app}
-  
+
   # Email sender configuration (for EmailService)
   # ⚠️ CRITICAL: Must match verified sender on SendGrid!
   # Single Sender Verification: hellodenteeth@gmail.com
   mail:
     from: ${MAIL_FROM:hellodenteeth@gmail.com}
     from-name: "Phòng khám nha khoa DenTeeth"
-  
+
   cors:
     # Allowed origins for CORS and WebSocket
     allowed-origins: ${CORS_ALLOWED_ORIGINS:https://pdcms.vercel.app,http://localhost:3000}
@@ -185,7 +185,7 @@ management:
       show-details: when-authorized
   health:
     mail:
-      enabled: false  # Disable mail health check to prevent health endpoint from failing if SMTP is down
+      enabled: false # Disable mail health check to prevent health endpoint from failing if SMTP is down
 
 # ==============================
 # Chatbot Configuration (Gemini AI)

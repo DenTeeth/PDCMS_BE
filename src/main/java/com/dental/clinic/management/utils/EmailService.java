@@ -24,11 +24,12 @@ public class EmailService {
     @Value("${app.frontend-url:http://localhost:3000}")
     private String frontendUrl;
 
-    // ⚠️ CRITICAL: Must match verified sender on SendGrid (Single Sender Verification)
+    // ⚠️ CRITICAL: Must match verified sender on SendGrid (Single Sender
+    // Verification)
     // For production: hellodenteeth@gmail.com (verified on SendGrid)
     @Value("${app.mail.from:${spring.mail.username}}")
     private String fromEmail;
-    
+
     // Sender name for better email appearance (works with SendGrid, Gmail, etc.)
     @Value("${app.mail.from-name:Phòng khám nha khoa DenTeeth}")
     private String fromName;
@@ -44,7 +45,7 @@ public class EmailService {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-            helper.setFrom(fromEmail, fromName);  // Add sender name
+            helper.setFrom(fromEmail, fromName); // Add sender name
             helper.setTo(toEmail);
             helper.setSubject("Xác thực tài khoản - Phòng khám nha khoa");
 
@@ -89,7 +90,7 @@ public class EmailService {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-            helper.setFrom(fromEmail, fromName);  // Add sender name
+            helper.setFrom(fromEmail, fromName); // Add sender name
             helper.setTo(toEmail);
             helper.setSubject("Đặt lại mật khẩu - Phòng khám nha khoa");
 
@@ -137,7 +138,7 @@ public class EmailService {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-            helper.setFrom(fromEmail, fromName);  // Add sender name
+            helper.setFrom(fromEmail, fromName); // Add sender name
             helper.setTo(toEmail);
             helper.setSubject("Chào mừng đến với Phòng khám nha khoa - Thiết lập mật khẩu");
 
@@ -221,7 +222,7 @@ public class EmailService {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-            helper.setFrom(fromEmail, fromName);  // Add sender name
+            helper.setFrom(fromEmail, fromName); // Add sender name
             helper.setTo(toEmail);
 
             // Subject line with counts for quick overview
