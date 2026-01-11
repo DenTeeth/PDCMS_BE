@@ -92,8 +92,10 @@ spring:
     # username: ${MAIL_USERNAME:hellodenteeth@gmail.com}
     # password: ${MAIL_PASSWORD:micnxeutitfjrmxk}
 
+    # 🔍 DEBUG MODE: Show detailed SMTP protocol logs (useful for troubleshooting)
     properties:
       mail:
+        debug: true
         smtp:
           auth: true
           starttls:
@@ -155,6 +157,9 @@ logging:
     "[org.hibernate]": WARN
     "[org.hibernate.SQL]": WARN
     "[org.springdoc]": WARN
+    # 📧 Email debugging (shows SMTP protocol communication)
+    "[org.springframework.mail]": DEBUG
+    "[javax.mail]": DEBUG
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

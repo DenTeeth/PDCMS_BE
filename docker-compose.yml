@@ -79,6 +79,10 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
       JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION:-2592000000}
+      # SendGrid Configuration (Production Email)
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY}
+      MAIL_FROM: ${MAIL_FROM:-hellodenteeth@gmail.com}
+      # Legacy Gmail SMTP (not used but kept for reference)
       MAIL_USERNAME: ${MAIL_USERNAME}
       MAIL_PASSWORD: ${MAIL_PASSWORD}
       APP_FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
