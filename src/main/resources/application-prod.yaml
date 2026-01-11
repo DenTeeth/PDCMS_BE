@@ -117,11 +117,12 @@ app:
 
   # Email sender configuration (for Resend)
   # ⚠️ CRITICAL: Must use verified domain on Resend!
-  # For development: onboarding@resend.dev (pre-verified)
-  # For production: your-domain@yourdomain.com (must verify domain first)
+  # For development/test: onboarding@resend.dev (pre-verified by Resend)
+  # For production: verify your own domain first
   mail:
     from: ${MAIL_FROM:onboarding@resend.dev}
     from-name: "Phòng khám nha khoa DenTeeth"
+    reply-to: ${MAIL_REPLY_TO:hellodenteeth@gmail.com}
 
   cors:
     # Allowed origins for CORS and WebSocket

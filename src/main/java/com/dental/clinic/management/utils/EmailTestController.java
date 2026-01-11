@@ -240,8 +240,9 @@ public class EmailTestController {
     /**
      * POST /api/v1/test/email/resend-welcome
      * Test Resend email service - send welcome email
-     * 
-     * Example: POST /api/v1/test/email/resend-welcome?email=congthaino0@gmail.com&name=Test&token=abc123
+     *
+     * Example: POST
+     * /api/v1/test/email/resend-welcome?email=congthaino0@gmail.com&name=Test&token=abc123
      */
     @PostMapping("/resend-welcome")
     public ResponseEntity<Map<String, Object>> testResendWelcomeEmail(
@@ -281,8 +282,9 @@ public class EmailTestController {
     /**
      * POST /api/v1/test/email/resend-reset
      * Test Resend email service - send password reset email
-     * 
-     * Example: POST /api/v1/test/email/resend-reset?email=congthaino0@gmail.com&username=test&token=abc123
+     *
+     * Example: POST
+     * /api/v1/test/email/resend-reset?email=congthaino0@gmail.com&username=test&token=abc123
      */
     @PostMapping("/resend-reset")
     public ResponseEntity<Map<String, Object>> testResendPasswordReset(

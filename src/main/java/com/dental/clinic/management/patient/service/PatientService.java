@@ -388,7 +388,8 @@ public class PatientService {
                         account.getEmail(),
                         patientName,
                         setupToken.getToken());
-                log.info("✅ [Resend] Welcome email with password setup link sent successfully to: {}", account.getEmail());
+                log.info("✅ [Resend] Welcome email with password setup link sent successfully to: {}",
+                        account.getEmail());
 
             } catch (Exception e) {
                 // Log error but don't fail the entire patient creation

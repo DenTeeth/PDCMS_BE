@@ -33,6 +33,9 @@ public class ResendEmailService {
     @Value("${app.mail.from-name:Phòng khám nha khoa DenTeeth}")
     private String fromName;
 
+    @Value("${app.mail.reply-to:hellodenteeth@gmail.com}")
+    private String replyToEmail;
+
     /**
      * Send welcome email to new patient with password setup link
      * NOTE: @Async REMOVED temporarily to allow exception to be caught
@@ -40,9 +43,9 @@ public class ResendEmailService {
     public void sendWelcomeEmailWithPasswordSetup(String toEmail, String patientName, String token) {
         try {
             logger.info("📧 [Resend] Preparing welcome email to: {}", toEmail);
-            
+
             String setupPasswordUrl = frontendUrl + "/reset-password?token=" + token;
-            
+
             Resend resend = new Resend(resendApiKey);
 
             String htmlContent = String.format(
@@ -101,6 +104,7 @@ public class ResendEmailService {
             CreateEmailOptions params = CreateEmailOptions.builder()
                     .from(fromName + " <" + fromEmail + ">")
                     .to(toEmail)
+                    .replyTo(replyToEmail)
                     .subject("Chào mừng đến với Phòng khám nha khoa - Thiết lập mật khẩu")
                     .html(htmlContent)
                     .build();
@@ -126,9 +130,9 @@ public class ResendEmailService {
     public void sendPasswordResetEmail(String toEmail, String username, String token) {
         try {
             logger.info("📧 [Resend] Preparing password reset email to: {}", toEmail);
-            
+
             String resetUrl = frontendUrl + "/reset-password?token=" + token;
-            
+
             Resend resend = new Resend(resendApiKey);
 
             String htmlContent = String.format(
@@ -154,6 +158,7 @@ public class ResendEmailService {
             CreateEmailOptions params = CreateEmailOptions.builder()
                     .from(fromName + " <" + fromEmail + ">")
                     .to(toEmail)
+                    .replyTo(replyToEmail)
                     .subject("Đặt lại mật khẩu - Phòng khám nha khoa")
                     .html(htmlContent)
                     .build();
@@ -175,7 +180,7 @@ public class ResendEmailService {
     public void sendVerificationEmail(String toEmail, String username, String token) {
         try {
             String verificationUrl = frontendUrl + "/verify-email?token=" + token;
-            
+
             Resend resend = new Resend(resendApiKey);
 
             String htmlContent = String.format(
@@ -201,6 +206,7 @@ public class ResendEmailService {
             CreateEmailOptions params = CreateEmailOptions.builder()
                     .from(fromName + " <" + fromEmail + ">")
                     .to(toEmail)
+                    .replyTo(replyToEmail)
                     .subject("Xác thực tài khoản - Phòng khám nha khoa")
                     .html(htmlContent)
                     .build();
