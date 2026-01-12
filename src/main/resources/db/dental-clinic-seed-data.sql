@@ -673,6 +673,14 @@ VALUES
 ON CONFLICT (permission_id) DO NOTHING;
 
 
+-- MODULE 19: FEEDBACK (2 permissions) - Appointment Feedback
+INSERT INTO permissions (permission_id, permission_name, module, description, display_order, parent_permission_id, is_active, created_at)
+VALUES
+('VIEW_FEEDBACK', 'VIEW_FEEDBACK', 'FEEDBACK', 'Xem đánh giá lịch hẹn', 200, NULL, TRUE, NOW()),
+('CREATE_FEEDBACK', 'CREATE_FEEDBACK', 'FEEDBACK', 'Tạo đánh giá lịch hẹn', 201, NULL, TRUE, NOW())
+ON CONFLICT (permission_id) DO NOTHING;
+
+
 -- ============================================
 -- BƯỚC 4: PHÂN QUYỀN CHO CÁC VAI TRÒ
 -- ============================================
@@ -747,7 +755,10 @@ VALUES
 
 -- NOTIFICATION
 ('ROLE_DENTIST', 'VIEW_NOTIFICATION'),
-('ROLE_DENTIST', 'DELETE_NOTIFICATION')
+('ROLE_DENTIST', 'DELETE_NOTIFICATION'),
+
+-- FEEDBACK (view only)
+('ROLE_DENTIST', 'VIEW_FEEDBACK')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
@@ -793,7 +804,10 @@ VALUES
 
 -- NOTIFICATION
 ('ROLE_NURSE', 'VIEW_NOTIFICATION'),
-('ROLE_NURSE', 'DELETE_NOTIFICATION')
+('ROLE_NURSE', 'DELETE_NOTIFICATION'),
+
+-- FEEDBACK (view only)
+('ROLE_NURSE', 'VIEW_FEEDBACK')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
@@ -888,7 +902,10 @@ VALUES
 
 -- NOTIFICATION
 ('ROLE_RECEPTIONIST', 'VIEW_NOTIFICATION'),
-('ROLE_RECEPTIONIST', 'DELETE_NOTIFICATION')
+('ROLE_RECEPTIONIST', 'DELETE_NOTIFICATION'),
+
+-- FEEDBACK (view only)
+('ROLE_RECEPTIONIST', 'VIEW_FEEDBACK')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
@@ -974,7 +991,10 @@ VALUES
 
 -- NOTIFICATION
 ('ROLE_MANAGER', 'VIEW_NOTIFICATION'),
-('ROLE_MANAGER', 'DELETE_NOTIFICATION')
+('ROLE_MANAGER', 'DELETE_NOTIFICATION'),
+
+-- FEEDBACK (view only)
+('ROLE_MANAGER', 'VIEW_FEEDBACK')
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
@@ -1084,7 +1104,11 @@ VALUES
 
 -- NOTIFICATION
 ('ROLE_PATIENT', 'VIEW_NOTIFICATION'), -- View own notifications
-('ROLE_PATIENT', 'DELETE_NOTIFICATION') -- Delete own notifications
+('ROLE_PATIENT', 'DELETE_NOTIFICATION'), -- Delete own notifications
+
+-- FEEDBACK (create and view own feedback)
+('ROLE_PATIENT', 'VIEW_FEEDBACK'), -- View own feedback
+('ROLE_PATIENT', 'CREATE_FEEDBACK') -- Create feedback for own appointments
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 
