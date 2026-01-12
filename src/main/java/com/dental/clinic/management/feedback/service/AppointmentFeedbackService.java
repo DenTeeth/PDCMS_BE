@@ -12,6 +12,7 @@ import com.dental.clinic.management.feedback.dto.FeedbackResponse;
 import com.dental.clinic.management.feedback.dto.FeedbackStatisticsResponse;
 import com.dental.clinic.management.feedback.dto.FeedbackStatisticsResponse.TagCount;
 import com.dental.clinic.management.feedback.repository.AppointmentFeedbackRepository;
+import com.dental.clinic.management.feedback.specification.AppointmentFeedbackSpecification;
 import com.dental.clinic.management.patient.domain.Patient;
 import com.dental.clinic.management.patient.repository.PatientRepository;
 import com.dental.clinic.management.specialization.domain.Specialization;
@@ -22,6 +23,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -167,8 +169,11 @@ public class AppointmentFeedbackService {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortField));
 
-        Page<AppointmentFeedback> feedbacksPage = feedbackRepository.findWithFilters(
-                rating, patientId, fromDate, toDate, pageable);
+        // Use Specification to avoid PostgreSQL type inference issue with NULL parameters
+        Specification<AppointmentFeedback> spec = AppointmentFeedbackSpecification.withFilters(
+                rating, patientId, fromDate, toDate);
+        
+        Page<AppointmentFeedback> feedbacksPage = feedbackRepository.findAll(spec, pageable);
 
         return feedbacksPage.map(feedback -> {
             Appointment appointment = appointmentRepository.findByAppointmentCode(feedback.getAppointmentCode())
@@ -189,17 +194,30 @@ public class AppointmentFeedbackService {
         log.debug("Getting feedback statistics - employeeCode: {}, fromDate: {}, toDate: {}",
                 employeeCode, fromDate, toDate);
 
-        // Count total feedbacks
-        Long totalFeedbacks = feedbackRepository.countWithDateRange(fromDate, toDate);
-
-        // Calculate average rating
-        Double averageRating = feedbackRepository.calculateAverageRating(fromDate, toDate);
+        // Count total feedbacks - FIXED: Use conditional method call
+        Long totalFeedbacks;
+        Double averageRating;
+        List<Object[]> distributionData;
+        
+        if (fromDate != null && toDate != null) {
+            // WITH date filter - use BETWEEN (no NULL check)
+            java.time.LocalDateTime fromDateTime = fromDate.atStartOfDay();
+            java.time.LocalDateTime toDateTime = toDate.atTime(23, 59, 59);
+            totalFeedbacks = feedbackRepository.countFeedbacksByDateRange(fromDateTime, toDateTime);
+            averageRating = feedbackRepository.calculateAverageRatingByDateRange(fromDateTime, toDateTime);
+            distributionData = feedbackRepository.getRatingDistributionByDateRange(fromDateTime, toDateTime);
+        } else {
+            // WITHOUT date filter - get all
+            totalFeedbacks = feedbackRepository.countAllFeedbacks();
+            averageRating = feedbackRepository.calculateAverageRatingAll();
+            distributionData = feedbackRepository.getRatingDistributionAll();
+        }
+        
         if (averageRating == null) {
             averageRating = 0.0;
         }
 
         // Get rating distribution
-        Object[][] distributionData = feedbackRepository.getRatingDistribution(fromDate, toDate);
         Map<String, Long> ratingDistribution = new LinkedHashMap<>();
         // Initialize all ratings to 0
         for (int i = 1; i <= 5; i++) {
@@ -227,9 +245,9 @@ public class AppointmentFeedbackService {
      * Tính toán top tags phổ biến nhất
      */
     private List<TagCount> calculateTopTags(LocalDate fromDate, LocalDate toDate) {
-        // Get all feedbacks within date range
-        List<AppointmentFeedback> feedbacks = feedbackRepository.findWithFilters(
-                null, null, fromDate, toDate, Pageable.unpaged()).getContent();
+        // Get all feedbacks within date range - FIXED: Use Specification
+        Specification<AppointmentFeedback> spec = AppointmentFeedbackSpecification.withDateRange(fromDate, toDate);
+        List<AppointmentFeedback> feedbacks = feedbackRepository.findAll(spec);
 
         // Count all tags
         Map<String, Long> tagCounts = new HashMap<>();
@@ -330,8 +348,17 @@ public class AppointmentFeedbackService {
         log.debug("Getting doctor feedback statistics - startDate: {}, endDate: {}, top: {}, sortBy: {}",
                 startDate, endDate, top, sortBy);
 
-        // Get raw statistics grouped by doctor
-        Object[][] rawStats = feedbackRepository.getDoctorStatisticsGrouped(startDate, endDate);
+        // Get raw statistics grouped by doctor - FIXED: Use conditional method call to avoid NULL parameters
+        List<Object[]> rawStats;
+        if (startDate != null && endDate != null) {
+            // WITH date filter - use BETWEEN (no NULL check pattern)
+            java.time.LocalDateTime fromDateTime = startDate.atStartOfDay();
+            java.time.LocalDateTime toDateTime = endDate.atTime(23, 59, 59);
+            rawStats = feedbackRepository.getDoctorStatisticsByDateRange(fromDateTime, toDateTime);
+        } else {
+            // WITHOUT date filter - get all
+            rawStats = feedbackRepository.getDoctorStatisticsAll();
+        }
 
         // Map to temporary structure for sorting
         List<DoctorStatTemp> tempList = new ArrayList<>();
@@ -385,8 +412,22 @@ public class AppointmentFeedbackService {
             return null;
         }
 
-        // Get rating distribution
-        Object[][] distributionData = feedbackRepository.getDoctorRatingDistribution(employeeId, startDate, endDate);
+        // Get rating distribution - FIXED: Use conditional method call
+        List<Object[]> distributionData;
+        List<AppointmentFeedback> feedbacks;
+        
+        if (startDate != null && endDate != null) {
+            // WITH date filter
+            java.time.LocalDateTime fromDateTime = startDate.atStartOfDay();
+            java.time.LocalDateTime toDateTime = endDate.atTime(23, 59, 59);
+            distributionData = feedbackRepository.getDoctorRatingDistributionByDateRange(employeeId, fromDateTime, toDateTime);
+            feedbacks = feedbackRepository.findByEmployeeIdByDateRange(employeeId, fromDateTime, toDateTime);
+        } else {
+            // WITHOUT date filter
+            distributionData = feedbackRepository.getDoctorRatingDistributionAll(employeeId);
+            feedbacks = feedbackRepository.findByEmployeeIdAll(employeeId);
+        }
+        
         Map<String, Long> ratingDistribution = new LinkedHashMap<>();
         for (int i = 1; i <= 5; i++) {
             ratingDistribution.put(String.valueOf(i), 0L);
@@ -397,9 +438,7 @@ public class AppointmentFeedbackService {
             ratingDistribution.put(String.valueOf(rating), count);
         }
 
-        // Get all feedbacks for this doctor
-        List<AppointmentFeedback> feedbacks = feedbackRepository.findByEmployeeIdAndDateRange(
-                employeeId, startDate, endDate);
+        // Get all feedbacks for this doctor (already fetched above)
 
         // Calculate top tags
         Map<String, Long> tagCounts = new HashMap<>();

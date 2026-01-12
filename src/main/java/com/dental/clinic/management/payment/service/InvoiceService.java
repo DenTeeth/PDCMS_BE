@@ -19,6 +19,7 @@ import com.dental.clinic.management.payment.enums.InvoicePaymentStatus;
 import com.dental.clinic.management.payment.enums.InvoiceType;
 import com.dental.clinic.management.payment.repository.InvoiceItemRepository;
 import com.dental.clinic.management.payment.repository.InvoiceRepository;
+import com.dental.clinic.management.payment.specification.InvoiceSpecification;
 import com.dental.clinic.management.treatment_plans.domain.PatientTreatmentPlan;
 import com.dental.clinic.management.treatment_plans.repository.PatientTreatmentPlanRepository;
 import com.dental.clinic.management.utils.security.SecurityUtil;
@@ -26,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -367,8 +369,11 @@ public class InvoiceService {
             LocalDateTime startDateTime = (startDate != null) ? startDate.atStartOfDay() : null;
             LocalDateTime endDateTime = (endDate != null) ? endDate.atTime(LocalTime.MAX) : null;
             
-            Page<Invoice> invoices = invoiceRepository.findAllWithFilters(
-                    status, type, patientId, startDateTime, endDateTime, pageable);
+            // Use Specification to avoid PostgreSQL type inference issue with NULL parameters
+            Specification<Invoice> spec = InvoiceSpecification.withFilters(
+                    status, type, patientId, startDateTime, endDateTime);
+            
+            Page<Invoice> invoices = invoiceRepository.findAll(spec, pageable);
             
             log.info("Found {} invoices (total: {}, page: {}/{})", 
                      invoices.getNumberOfElements(), invoices.getTotalElements(),
