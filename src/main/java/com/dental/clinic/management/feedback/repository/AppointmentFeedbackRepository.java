@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -82,6 +83,52 @@ public interface AppointmentFeedbackRepository extends JpaRepository<Appointment
            "GROUP BY f.rating " +
            "ORDER BY f.rating")
     Object[][] getRatingDistribution(
+        @Param("fromDate") LocalDate fromDate,
+        @Param("toDate") LocalDate toDate
+    );
+
+    /**
+     * Lấy thống kê feedback theo bác sĩ
+     * Trả về: employeeId, averageRating, totalFeedbacks
+     */
+    @Query("SELECT a.employeeId, AVG(CAST(f.rating AS double)), COUNT(f) " +
+           "FROM AppointmentFeedback f " +
+           "JOIN Appointment a ON f.appointmentCode = a.appointmentCode " +
+           "WHERE (:fromDate IS NULL OR CAST(f.createdAt AS LocalDate) >= :fromDate) " +
+           "AND (:toDate IS NULL OR CAST(f.createdAt AS LocalDate) <= :toDate) " +
+           "GROUP BY a.employeeId " +
+           "ORDER BY AVG(CAST(f.rating AS double)) DESC")
+    Object[][] getDoctorStatisticsGrouped(
+        @Param("fromDate") LocalDate fromDate,
+        @Param("toDate") LocalDate toDate
+    );
+
+    /**
+     * Lấy feedbacks của một bác sĩ cụ thể
+     */
+    @Query("SELECT f FROM AppointmentFeedback f " +
+           "JOIN Appointment a ON f.appointmentCode = a.appointmentCode " +
+           "WHERE a.employeeId = :employeeId " +
+           "AND (:fromDate IS NULL OR CAST(f.createdAt AS LocalDate) >= :fromDate) " +
+           "AND (:toDate IS NULL OR CAST(f.createdAt AS LocalDate) <= :toDate)")
+    List<AppointmentFeedback> findByEmployeeIdAndDateRange(
+        @Param("employeeId") Integer employeeId,
+        @Param("fromDate") LocalDate fromDate,
+        @Param("toDate") LocalDate toDate
+    );
+
+    /**
+     * Lấy rating distribution của một bác sĩ
+     */
+    @Query("SELECT f.rating, COUNT(f) FROM AppointmentFeedback f " +
+           "JOIN Appointment a ON f.appointmentCode = a.appointmentCode " +
+           "WHERE a.employeeId = :employeeId " +
+           "AND (:fromDate IS NULL OR CAST(f.createdAt AS LocalDate) >= :fromDate) " +
+           "AND (:toDate IS NULL OR CAST(f.createdAt AS LocalDate) <= :toDate) " +
+           "GROUP BY f.rating " +
+           "ORDER BY f.rating")
+    Object[][] getDoctorRatingDistribution(
+        @Param("employeeId") Integer employeeId,
         @Param("fromDate") LocalDate fromDate,
         @Param("toDate") LocalDate toDate
     );

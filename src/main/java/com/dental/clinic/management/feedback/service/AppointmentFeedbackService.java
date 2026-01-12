@@ -7,12 +7,14 @@ import com.dental.clinic.management.employee.domain.Employee;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.feedback.domain.AppointmentFeedback;
 import com.dental.clinic.management.feedback.dto.CreateFeedbackRequest;
+import com.dental.clinic.management.feedback.dto.DoctorFeedbackStatisticsResponse;
 import com.dental.clinic.management.feedback.dto.FeedbackResponse;
 import com.dental.clinic.management.feedback.dto.FeedbackStatisticsResponse;
 import com.dental.clinic.management.feedback.dto.FeedbackStatisticsResponse.TagCount;
 import com.dental.clinic.management.feedback.repository.AppointmentFeedbackRepository;
 import com.dental.clinic.management.patient.domain.Patient;
 import com.dental.clinic.management.patient.repository.PatientRepository;
+import com.dental.clinic.management.specialization.domain.Specialization;
 import com.dental.clinic.management.utils.security.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -306,6 +308,178 @@ public class AppointmentFeedbackService {
         }
 
         throw new AccessDeniedException("Bạn không có quyền đánh giá lịch hẹn này");
+    }
+
+    /**
+     * Lấy thống kê feedback theo bác sĩ
+     * Endpoint: GET /api/v1/feedbacks/statistics/by-doctor
+     * 
+     * @param startDate Ngày bắt đầu (optional)
+     * @param endDate Ngày kết thúc (optional)
+     * @param top Số lượng bác sĩ muốn lấy (default: 10)
+     * @param sortBy Sắp xếp theo ("rating" hoặc "feedbackCount")
+     * @return DoctorFeedbackStatisticsResponse
+     */
+    @Transactional(readOnly = true)
+    public DoctorFeedbackStatisticsResponse getStatisticsByDoctor(
+            LocalDate startDate,
+            LocalDate endDate,
+            int top,
+            String sortBy) {
+        
+        log.debug("Getting doctor feedback statistics - startDate: {}, endDate: {}, top: {}, sortBy: {}",
+                startDate, endDate, top, sortBy);
+
+        // Get raw statistics grouped by doctor
+        Object[][] rawStats = feedbackRepository.getDoctorStatisticsGrouped(startDate, endDate);
+
+        // Map to temporary structure for sorting
+        List<DoctorStatTemp> tempList = new ArrayList<>();
+        for (Object[] row : rawStats) {
+            Integer employeeId = (Integer) row[0];
+            Double avgRating = (Double) row[1];
+            Long feedbackCount = (Long) row[2];
+
+            tempList.add(new DoctorStatTemp(employeeId, avgRating, feedbackCount));
+        }
+
+        // Sort based on sortBy parameter
+        if ("feedbackCount".equalsIgnoreCase(sortBy)) {
+            tempList.sort(Comparator.comparing(DoctorStatTemp::getFeedbackCount).reversed());
+        } else {
+            // Default sort by rating
+            tempList.sort(Comparator.comparing(DoctorStatTemp::getAvgRating).reversed());
+        }
+
+        // Take top N
+        List<DoctorStatTemp> topDoctors = tempList.stream()
+                .limit(top)
+                .collect(Collectors.toList());
+
+        // Build detailed statistics for each doctor
+        List<DoctorFeedbackStatisticsResponse.DoctorStatistics> doctorStatsList = new ArrayList<>();
+        for (DoctorStatTemp temp : topDoctors) {
+            DoctorFeedbackStatisticsResponse.DoctorStatistics doctorStats = 
+                    buildDoctorStatistics(temp.getEmployeeId(), startDate, endDate, temp.getAvgRating(), temp.getFeedbackCount());
+            doctorStatsList.add(doctorStats);
+        }
+
+        return DoctorFeedbackStatisticsResponse.builder()
+                .doctors(doctorStatsList)
+                .build();
+    }
+
+    /**
+     * Build detailed statistics for a specific doctor
+     */
+    private DoctorFeedbackStatisticsResponse.DoctorStatistics buildDoctorStatistics(
+            Integer employeeId,
+            LocalDate startDate,
+            LocalDate endDate,
+            Double avgRating,
+            Long totalFeedbacks) {
+        
+        // Get employee info
+        Employee employee = employeeRepository.findById(employeeId).orElse(null);
+        if (employee == null) {
+            return null;
+        }
+
+        // Get rating distribution
+        Object[][] distributionData = feedbackRepository.getDoctorRatingDistribution(employeeId, startDate, endDate);
+        Map<String, Long> ratingDistribution = new LinkedHashMap<>();
+        for (int i = 1; i <= 5; i++) {
+            ratingDistribution.put(String.valueOf(i), 0L);
+        }
+        for (Object[] row : distributionData) {
+            Integer rating = (Integer) row[0];
+            Long count = (Long) row[1];
+            ratingDistribution.put(String.valueOf(rating), count);
+        }
+
+        // Get all feedbacks for this doctor
+        List<AppointmentFeedback> feedbacks = feedbackRepository.findByEmployeeIdAndDateRange(
+                employeeId, startDate, endDate);
+
+        // Calculate top tags
+        Map<String, Long> tagCounts = new HashMap<>();
+        for (AppointmentFeedback feedback : feedbacks) {
+            if (feedback.getTags() != null) {
+                for (String tag : feedback.getTags()) {
+                    tagCounts.put(tag, tagCounts.getOrDefault(tag, 0L) + 1);
+                }
+            }
+        }
+
+        List<TagCount> topTags = tagCounts.entrySet().stream()
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                .limit(5)
+                .map(entry -> TagCount.builder()
+                        .tag(entry.getKey())
+                        .count(entry.getValue())
+                        .build())
+                .collect(Collectors.toList());
+
+        // Get recent comments (top 3 most recent)
+        List<DoctorFeedbackStatisticsResponse.RecentComment> recentComments = feedbacks.stream()
+                .sorted(Comparator.comparing(AppointmentFeedback::getCreatedAt).reversed())
+                .limit(3)
+                .map(feedback -> {
+                    String patientName = null;
+                    Patient patient = patientRepository.findById(feedback.getPatientId()).orElse(null);
+                    if (patient != null) {
+                        patientName = patient.getLastName() + " " + patient.getFirstName();
+                    }
+
+                    return DoctorFeedbackStatisticsResponse.RecentComment.builder()
+                            .feedbackId(feedback.getFeedbackId())
+                            .patientName(patientName)
+                            .rating(feedback.getRating())
+                            .comment(feedback.getComment())
+                            .tags(feedback.getTags())
+                            .createdAt(feedback.getCreatedAt())
+                            .build();
+                })
+                .collect(Collectors.toList());
+
+        // Build statistics object
+        DoctorFeedbackStatisticsResponse.Statistics statistics = 
+                DoctorFeedbackStatisticsResponse.Statistics.builder()
+                        .averageRating(Math.round(avgRating * 10.0) / 10.0)
+                        .totalFeedbacks(totalFeedbacks)
+                        .ratingDistribution(ratingDistribution)
+                        .topTags(topTags)
+                        .recentComments(recentComments)
+                        .build();
+
+        // Build specialization string (join all specializations)
+        String specializationStr = null;
+        if (employee.getSpecializations() != null && !employee.getSpecializations().isEmpty()) {
+            specializationStr = employee.getSpecializations().stream()
+                    .map(Specialization::getSpecializationName)
+                    .collect(Collectors.joining(", "));
+        }
+
+        // Build doctor statistics
+        return DoctorFeedbackStatisticsResponse.DoctorStatistics.builder()
+                .employeeId(employeeId)
+                .employeeCode(employee.getEmployeeCode())
+                .employeeName(employee.getLastName() + " " + employee.getFirstName())
+                .specialization(specializationStr)
+                .avatar(null) // Employee entity doesn't have avatar field
+                .statistics(statistics)
+                .build();
+    }
+
+    /**
+     * Temporary class for sorting
+     */
+    @lombok.Data
+    @lombok.AllArgsConstructor
+    private static class DoctorStatTemp {
+        private Integer employeeId;
+        private Double avgRating;
+        private Long feedbackCount;
     }
 
     /**

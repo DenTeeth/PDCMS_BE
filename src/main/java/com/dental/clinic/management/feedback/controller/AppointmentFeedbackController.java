@@ -1,6 +1,7 @@
 package com.dental.clinic.management.feedback.controller;
 
 import com.dental.clinic.management.feedback.dto.CreateFeedbackRequest;
+import com.dental.clinic.management.feedback.dto.DoctorFeedbackStatisticsResponse;
 import com.dental.clinic.management.feedback.dto.FeedbackResponse;
 import com.dental.clinic.management.feedback.dto.FeedbackStatisticsResponse;
 import com.dental.clinic.management.feedback.service.AppointmentFeedbackService;
@@ -164,4 +165,37 @@ public class AppointmentFeedbackController {
         
         return ResponseEntity.ok(response);
     }
-}
+
+    /**
+     * GET /api/v1/feedbacks/statistics/by-doctor
+     * Get feedback statistics grouped by doctor
+     * 
+     * Authorization: Admin, Manager, Employee with VIEW_FEEDBACK permission
+     */
+    @GetMapping("/statistics/by-doctor")
+    @Operation(
+        summary = "Get feedback statistics by doctor",
+        description = "Lấy thống kê đánh giá theo từng bác sĩ (top bác sĩ, rating, tags, comments nổi bật)"
+    )
+    @ApiMessage("Lấy thống kê đánh giá theo bác sĩ thành công")
+    @PreAuthorize("hasRole('" + ADMIN + "') or hasRole('" + MANAGER + "') or hasAuthority('VIEW_FEEDBACK')")
+    public ResponseEntity<DoctorFeedbackStatisticsResponse> getStatisticsByDoctor(
+            @Parameter(description = "Ngày bắt đầu (YYYY-MM-DD, optional)")
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            
+            @Parameter(description = "Ngày kết thúc (YYYY-MM-DD, optional)")
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            
+            @Parameter(description = "Số lượng bác sĩ muốn lấy (default: 10)")
+            @RequestParam(defaultValue = "10") int top,
+            
+            @Parameter(description = "Sắp xếp theo: 'rating' hoặc 'feedbackCount' (default: rating)")
+            @RequestParam(defaultValue = "rating") String sortBy) {
+        
+        log.info("REST request to get feedback statistics by doctor - top: {}, sortBy: {}", top, sortBy);
+        
+        DoctorFeedbackStatisticsResponse response = feedbackService.getStatisticsByDoctor(
+                startDate, endDate, top, sortBy);
+        
+        return ResponseEntity.ok(response);
+    }}
