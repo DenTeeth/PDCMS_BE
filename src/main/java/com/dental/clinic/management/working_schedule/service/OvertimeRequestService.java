@@ -20,6 +20,7 @@ import com.dental.clinic.management.working_schedule.dto.response.OvertimeReques
 import com.dental.clinic.management.working_schedule.enums.RequestStatus;
 import com.dental.clinic.management.working_schedule.enums.ShiftSource;
 import com.dental.clinic.management.working_schedule.enums.ShiftStatus;
+import com.dental.clinic.management.working_schedule.exception.SelfApprovalNotAllowedException;
 import com.dental.clinic.management.working_schedule.mapper.OvertimeRequestMapper;
 import com.dental.clinic.management.working_schedule.repository.EmployeeShiftRegistrationRepository;
 import com.dental.clinic.management.working_schedule.repository.EmployeeShiftRepository;
@@ -411,6 +412,13 @@ public class OvertimeRequestService {
                 if (!SecurityUtil.hasCurrentUserPermission("APPROVE_OVERTIME")) {
                         log.warn("Người dùng {} không có quyền APPROVE_OVERTIME", approvedBy.getEmployeeId());
                         throw new AccessDeniedException("Bạn không có quyền duyệt yêu cầu OT.");
+                }
+
+                // BR-41: Managers cannot approve their own Leave or Overtime requests
+                if (request.getEmployee().getEmployeeId().equals(approvedBy.getEmployeeId())) {
+                        log.warn("Manager {} attempting to self-approve overtime request {}", 
+                                approvedBy.getEmployeeId(), request.getRequestId());
+                        throw new SelfApprovalNotAllowedException("Làm thêm giờ", request.getRequestId());
                 }
 
                 // CONSTRAINT: Cannot approve if work_date has already passed
