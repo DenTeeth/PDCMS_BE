@@ -58,6 +58,9 @@ public class EmployeeShiftService {
 
     // ISSUE #53: Holiday Validation
     private final com.dental.clinic.management.utils.validation.HolidayValidator holidayValidator;
+    
+    // BR-37: Weekly Working Hours Limit Validation
+    private final WeeklyOvertimeLimitService weeklyOvertimeLimitService;
 
     /**
      * Get shift calendar for an employee with optional filters.
@@ -378,6 +381,14 @@ public class EmployeeShiftService {
         if (totalHours > 8) {
             throw new ExceedsMaxHoursException(workDate, (int) totalHours);
         }
+        
+        // BR-37: Validate weekly working hours limit (48 hours/week)
+        weeklyOvertimeLimitService.validateWeeklyWorkingHoursLimit(
+                employeeId, 
+                workDate, 
+                newWorkShift, 
+                null  // excludeShiftId = null for new shifts
+        );
     }
 
     /**
@@ -486,6 +497,21 @@ public class EmployeeShiftService {
 
             if (exists) {
                 log.debug("⏭ Shift already exists for employee {} on {} - skipping", employeeId, workDate);
+                skippedCount++;
+                continue;
+            }
+            
+            // BR-37: Validate weekly working hours limit before creating each shift
+            try {
+                weeklyOvertimeLimitService.validateWeeklyWorkingHoursLimit(
+                        employeeId,
+                        workDate,
+                        workShift,
+                        null  // excludeShiftId = null for new shifts
+                );
+            } catch (Exception e) {
+                log.warn("⚠️ Skipping shift creation for {} due to weekly limit: {}", 
+                        workDate, e.getMessage());
                 skippedCount++;
                 continue;
             }
