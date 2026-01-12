@@ -136,4 +136,11 @@ public class AppointmentDetailDTO {
      * Null if appointment is not linked to any treatment plan
      */
     private String linkedTreatmentPlanCode;
+
+    /**
+     * Indicates whether this appointment has been rated/reviewed
+     * True if appointment_feedbacks table contains feedback for this appointment
+     * Used by FE to show/hide "Leave Feedback" button
+     */
+    private Boolean hasFeedback;
 }
