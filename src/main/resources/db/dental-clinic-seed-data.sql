@@ -727,6 +727,7 @@ VALUES
 
 -- SERVICE & WAREHOUSE (read-only for prescription)
 ('ROLE_DENTIST', 'VIEW_SERVICE'), -- View services for treatment planning
+('ROLE_DENTIST', 'VIEW_WAREHOUSE'), -- View warehouse for inventory check
 ('ROLE_DENTIST', 'VIEW_ITEMS'), -- View materials for treatment
 ('ROLE_DENTIST', 'VIEW_MEDICINES'), -- View medicines for prescription
 
@@ -802,6 +803,9 @@ VALUES
 -- HOLIDAY (read-only)
 ('ROLE_NURSE', 'VIEW_HOLIDAY'),
 
+-- PAYMENT & INVOICE (view own invoices)
+('ROLE_NURSE', 'VIEW_INVOICE_OWN'), -- View own invoices if they have any
+
 -- NOTIFICATION
 ('ROLE_NURSE', 'VIEW_NOTIFICATION'),
 ('ROLE_NURSE', 'DELETE_NOTIFICATION'),
@@ -839,6 +843,9 @@ VALUES
 -- HOLIDAY (read-only)
 ('ROLE_DENTIST_INTERN', 'VIEW_HOLIDAY'),
 
+-- PAYMENT & INVOICE (view own invoices)
+('ROLE_DENTIST_INTERN', 'VIEW_INVOICE_OWN'), -- View own invoices if they have any
+
 -- NOTIFICATION
 ('ROLE_DENTIST_INTERN', 'VIEW_NOTIFICATION'),
 ('ROLE_DENTIST_INTERN', 'DELETE_NOTIFICATION')
@@ -874,12 +881,26 @@ VALUES
 ('ROLE_RECEPTIONIST', 'VIEW_WAREHOUSE'),
 ('ROLE_RECEPTIONIST', 'VIEW_ITEMS'),
 
--- SCHEDULE_MANAGEMENT (view all schedules + employee self-service)
+-- EMPLOYEE (view for scheduling coordination)
+('ROLE_RECEPTIONIST', 'VIEW_EMPLOYEE'), -- View employees for appointment scheduling
+
+-- SERVICE (view for appointment booking)
+('ROLE_RECEPTIONIST', 'VIEW_SERVICE'), -- View services for appointment booking
+
+-- ROOM (view for appointment booking)
+('ROLE_RECEPTIONIST', 'VIEW_ROOM'), -- View rooms for appointment booking
+
+-- SPECIALIZATION (view for appointment booking)
+('ROLE_RECEPTIONIST', 'VIEW_SPECIALIZATION'), -- View specializations for appointment booking
+
+-- SCHEDULE_MANAGEMENT (view all schedules + employee self-service + management)
 ('ROLE_RECEPTIONIST', 'VIEW_SCHEDULE_ALL'), -- RBAC: View all schedules (for scheduling coordination)
 ('ROLE_RECEPTIONIST', 'VIEW_SCHEDULE_OWN'), -- RBAC: View own schedule
 ('ROLE_RECEPTIONIST', 'VIEW_AVAILABLE_SLOTS'), -- Xem suất part-time có sẵn (cho part-time/flex)
 ('ROLE_RECEPTIONIST', 'VIEW_REGISTRATION_OWN'), -- Xem đăng ký ca của bản thân (cho part-time/flex)
 ('ROLE_RECEPTIONIST', 'CREATE_REGISTRATION'), -- Tạo đăng ký ca part-time/flex
+('ROLE_RECEPTIONIST', 'MANAGE_WORK_SHIFTS'), -- Quản lý mẫu ca làm việc
+('ROLE_RECEPTIONIST', 'MANAGE_WORK_SLOTS'), -- Quản lý suất part-time
 
 -- SHIFT_RENEWAL (fixed schedule renewal - Luồng 1 only)
 ('ROLE_RECEPTIONIST', 'VIEW_RENEWAL_OWN'), -- Xem yêu cầu gia hạn của bản thân
@@ -1069,6 +1090,9 @@ VALUES
 ('ROLE_INVENTORY_MANAGER', 'EXPORT_ITEMS'), -- Create export transactions
 ('ROLE_INVENTORY_MANAGER', 'DISPOSE_ITEMS'), -- Create disposal transactions
 ('ROLE_INVENTORY_MANAGER', 'APPROVE_TRANSACTION'), -- Approve/Reject warehouse transactions (workflow)
+
+-- PAYMENT & INVOICE (view own invoices)
+('ROLE_INVENTORY_MANAGER', 'VIEW_INVOICE_OWN'), -- View own invoices if they have any
 
 -- NOTIFICATION
 ('ROLE_INVENTORY_MANAGER', 'VIEW_NOTIFICATION'),
@@ -1366,10 +1390,9 @@ ON CONFLICT (patient_id) DO NOTHING;
 
 INSERT INTO work_shifts (work_shift_id, shift_name, start_time, end_time, category, is_active)
 VALUES
-('WKS_MORNING_01', 'Ca Sáng (8h-12h)', '08:00:00', '12:00:00', 'NORMAL', TRUE),
-('WKS_AFTERNOON_01', 'Ca Chiều (13h-17h)', '13:00:00', '17:00:00', 'NORMAL', TRUE),
-('WKS_MORNING_02', 'Ca Part-time Sáng (8h-12h)', '08:00:00', '12:00:00', 'NORMAL', TRUE),
-('WKS_AFTERNOON_02', 'Ca Part-time Chiều (13h-17h)', '13:00:00', '17:00:00', 'NORMAL', TRUE)
+('WKS_MORNING_01', 'Ca Sáng', '08:00:00', '12:00:00', 'NORMAL', TRUE),
+('WKS_AFTERNOON_01', 'Ca Chiều', '13:00:00', '17:00:00', 'NORMAL', TRUE),
+('WKS_EVENING_01', 'Ca Tối', '18:00:00', '21:00:00', 'NORMAL', TRUE)
 ON CONFLICT (work_shift_id) DO NOTHING;
 
 
@@ -2251,43 +2274,6 @@ ON CONFLICT (holiday_date, definition_id) DO NOTHING;
 
 
 -- ============================================
--- TEST DATA: MAINTENANCE_WEEK (For FE Testing)
--- ============================================
--- Purpose: Test holiday blocking functionality for shifts
--- Use Case: FE can test shift creation blocking on holidays
--- Dates: Next week (Monday, Wednesday, Friday)
--- Note: These are example dates - update as needed for testing
--- ============================================
-
-INSERT INTO holiday_definitions (definition_id, holiday_name, holiday_type, description, created_at, updated_at)
-VALUES ('MAINTENANCE_WEEK', 'System Maintenance Week', 'COMPANY', 'Scheduled system maintenance - For testing holiday blocking', NOW(), NOW())
-ON CONFLICT (definition_id) DO NOTHING;
-
-
---  OLD DATA (November 2025) - Add 3 maintenance days (Monday, Wednesday, Friday of a test week)
--- Example: November 3, 5, 7, 2025
-INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2025-11-03', 'MAINTENANCE_WEEK', 'Monday maintenance - Test holiday blocking', NOW(), NOW())
-ON CONFLICT (holiday_date, definition_id) DO NOTHING;
-
-INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2025-11-05', 'MAINTENANCE_WEEK', 'Wednesday maintenance - Test holiday blocking', NOW(), NOW())
-ON CONFLICT (holiday_date, definition_id) DO NOTHING;
-
-INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2025-11-07', 'MAINTENANCE_WEEK', 'Friday maintenance - Test holiday blocking', NOW(), NOW())
-ON CONFLICT (holiday_date, definition_id) DO NOTHING;
-
---  NEW DATA (December 2025) - Add Christmas and Year-end maintenance days
-INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2025-12-25', 'MAINTENANCE_WEEK', 'Christmas Day - System maintenance', NOW(), NOW())
-ON CONFLICT (holiday_date, definition_id) DO NOTHING;
-
-INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2025-12-31', 'MAINTENANCE_WEEK', 'New Year Eve - System maintenance', NOW(), NOW())
-ON CONFLICT (holiday_date, definition_id) DO NOTHING;
-
--- ============================================
 -- 2026 HOLIDAYS - National Holidays for Vietnam
 -- ============================================
 
@@ -2355,38 +2341,6 @@ ON CONFLICT (holiday_date, definition_id) DO NOTHING;
 -- National Day 2026 (September 2, 2026)
 INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
 VALUES ('2026-09-02', 'NATIONAL_DAY', 'Quốc khánh Việt Nam 2026', NOW(), NOW())
-ON CONFLICT (holiday_date, definition_id) DO NOTHING;
-
--- ============================================
--- TEST/MAINTENANCE HOLIDAYS FOR 2026
--- ============================================
-
-INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2026-01-26', 'MAINTENANCE_WEEK', 'Pre-Tet system maintenance', NOW(), NOW())
-ON CONFLICT (holiday_date, definition_id) DO NOTHING;
-
-INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2026-01-27', 'MAINTENANCE_WEEK', 'Pre-Tet system maintenance', NOW(), NOW())
-ON CONFLICT (holiday_date, definition_id) DO NOTHING;
-
-INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2026-03-15', 'MAINTENANCE_WEEK', 'Mid-March system maintenance', NOW(), NOW())
-ON CONFLICT (holiday_date, definition_id) DO NOTHING;
-
-INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2026-06-20', 'MAINTENANCE_WEEK', 'Mid-year system maintenance', NOW(), NOW())
-ON CONFLICT (holiday_date, definition_id) DO NOTHING;
-
-INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2026-09-15', 'MAINTENANCE_WEEK', 'Post-National Day maintenance', NOW(), NOW())
-ON CONFLICT (holiday_date, definition_id) DO NOTHING;
-
-INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2026-12-25', 'MAINTENANCE_WEEK', 'Christmas Day - System maintenance', NOW(), NOW())
-ON CONFLICT (holiday_date, definition_id) DO NOTHING;
-
-INSERT INTO holiday_dates (holiday_date, definition_id, description, created_at, updated_at)
-VALUES ('2026-12-31', 'MAINTENANCE_WEEK', 'New Year Eve - System maintenance', NOW(), NOW())
 ON CONFLICT (holiday_date, definition_id) DO NOTHING;
 
 
