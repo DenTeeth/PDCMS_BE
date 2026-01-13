@@ -21,6 +21,7 @@ public class PatientBusinessRulesService {
      * Rule #14: Validate guardian information for minors
      * 
      * Business Rule: Patients under 16 years old MUST have guardian information
+     * AND emergency contact information
      * 
      * @param request CreatePatientRequest or UpdatePatientRequest
      * @param dateOfBirth Patient's date of birth
@@ -34,20 +35,47 @@ public class PatientBusinessRulesService {
         int age = Period.between(dateOfBirth, LocalDate.now()).getYears();
         
         if (age < 16) {
-            // Patient is a minor - guardian info is REQUIRED
+            // Patient is a minor - guardian info AND emergency contact are REQUIRED
             String guardianName = null;
+            String emergencyContactName = null;
+            String emergencyContactPhone = null;
             
             if (request instanceof CreatePatientRequest) {
-                guardianName = ((CreatePatientRequest) request).getGuardianName();
+                CreatePatientRequest createRequest = (CreatePatientRequest) request;
+                guardianName = createRequest.getGuardianName();
+                emergencyContactName = createRequest.getEmergencyContactName();
+                emergencyContactPhone = createRequest.getEmergencyContactPhone();
             } else if (request instanceof com.dental.clinic.management.patient.dto.request.UpdatePatientRequest) {
-                guardianName = ((com.dental.clinic.management.patient.dto.request.UpdatePatientRequest) request).getGuardianName();
+                com.dental.clinic.management.patient.dto.request.UpdatePatientRequest updateRequest = 
+                    (com.dental.clinic.management.patient.dto.request.UpdatePatientRequest) request;
+                guardianName = updateRequest.getGuardianName();
+                emergencyContactName = updateRequest.getEmergencyContactName();
+                emergencyContactPhone = updateRequest.getEmergencyContactPhone();
             }
             
+            // Validate guardian information
             if (guardianName == null || guardianName.trim().isEmpty()) {
                 throw new BadRequestAlertException(
                     String.format("Bệnh nhân dưới 16 tuổi phải có thông tin người giám hộ. Tuổi hiện tại: %d", age),
                     "Patient",
                     "guardianRequired"
+                );
+            }
+            
+            // Validate emergency contact information
+            if (emergencyContactName == null || emergencyContactName.trim().isEmpty()) {
+                throw new BadRequestAlertException(
+                    String.format("Bệnh nhân dưới 16 tuổi phải có tên người liên hệ khẩn cấp. Tuổi hiện tại: %d", age),
+                    "Patient",
+                    "emergencyContactNameRequired"
+                );
+            }
+            
+            if (emergencyContactPhone == null || emergencyContactPhone.trim().isEmpty()) {
+                throw new BadRequestAlertException(
+                    String.format("Bệnh nhân dưới 16 tuổi phải có số điện thoại liên hệ khẩn cấp. Tuổi hiện tại: %d", age),
+                    "Patient",
+                    "emergencyContactPhoneRequired"
                 );
             }
         }
