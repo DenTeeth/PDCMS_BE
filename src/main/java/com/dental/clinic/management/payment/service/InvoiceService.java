@@ -13,12 +13,16 @@ import com.dental.clinic.management.patient.domain.Patient;
 import com.dental.clinic.management.patient.repository.PatientRepository;
 import com.dental.clinic.management.payment.domain.Invoice;
 import com.dental.clinic.management.payment.domain.InvoiceItem;
+// import com.dental.clinic.management.payment.domain.Payment;
 import com.dental.clinic.management.payment.dto.CreateInvoiceRequest;
+import com.dental.clinic.management.payment.dto.InvoiceHistoryItem;
 import com.dental.clinic.management.payment.dto.InvoiceResponse;
+import com.dental.clinic.management.payment.dto.PatientPaymentHistoryResponse;
 import com.dental.clinic.management.payment.enums.InvoicePaymentStatus;
 import com.dental.clinic.management.payment.enums.InvoiceType;
 import com.dental.clinic.management.payment.repository.InvoiceItemRepository;
 import com.dental.clinic.management.payment.repository.InvoiceRepository;
+import com.dental.clinic.management.payment.repository.PaymentRepository;
 import com.dental.clinic.management.payment.specification.InvoiceSpecification;
 import com.dental.clinic.management.treatment_plans.domain.PatientTreatmentPlan;
 import com.dental.clinic.management.treatment_plans.repository.PatientTreatmentPlanRepository;
@@ -48,6 +52,7 @@ public class InvoiceService {
 
     private final InvoiceRepository invoiceRepository;
     private final InvoiceItemRepository invoiceItemRepository;
+    private final PaymentRepository paymentRepository;
     private final VietQRService vietQRService;
 
     // Repositories for populating response fields (Fix FE Issues #1, #2, #3)
@@ -674,5 +679,196 @@ public class InvoiceService {
                 .map(Account::getPatient)
                 .map(Patient::getPatientId)
                 .orElseThrow(() -> new AccessDeniedException("Không tìm thấy bệnh nhân cho người dùng: " + username));
+    }
+
+    /**
+     * Get patient payment history by patient code
+     * Returns paginated list of invoices with summary statistics
+     * 
+     * @param patientCode Patient business code
+     * @param status Optional payment status filter
+     * @param startDate Optional start date filter (inclusive)
+     * @param endDate Optional end date filter (inclusive)
+     * @param pageable Pagination and sorting parameters
+     * @return Patient payment history with pagination and summary
+     */
+    @Transactional(readOnly = true)
+    public PatientPaymentHistoryResponse getPatientPaymentHistory(
+            String patientCode,
+            InvoicePaymentStatus status,
+            LocalDate startDate,
+            LocalDate endDate,
+            Pageable pageable) {
+        
+        log.info("Getting payment history for patient: {} (status: {}, from: {}, to: {})", 
+                 patientCode, status, startDate, endDate);
+
+        // Validate patient exists and get patientId
+        Patient patient = patientRepository.findOneByPatientCode(patientCode)
+                .orElseThrow(() -> new ResourceNotFoundException("PATIENT_NOT_FOUND", 
+                        "Patient not found with code: " + patientCode));
+
+        // Convert LocalDate to LocalDateTime
+        LocalDateTime startDateTime = (startDate != null) ? startDate.atStartOfDay() : null;
+        LocalDateTime endDateTime = (endDate != null) ? endDate.atTime(LocalTime.MAX) : null;
+
+        // Build specification with filters - use patientId instead of patientCode for better performance
+        Specification<Invoice> spec = InvoiceSpecification.withFilters(
+                status, null, patient.getPatientId(), startDateTime, endDateTime);
+
+        // Get paginated invoices
+        Page<Invoice> invoicesPage = invoiceRepository.findAll(spec, pageable);
+
+        // Map to history items
+        List<InvoiceHistoryItem> historyItems = invoicesPage.getContent().stream()
+                .map(invoice -> mapToHistoryItem(invoice, patient))
+                .collect(Collectors.toList());
+
+        // Calculate summary (query all invoices without pagination for accurate totals)
+        PatientPaymentHistoryResponse.PaymentSummary summary = calculatePaymentSummary(
+                patient.getPatientId(), status, startDateTime, endDateTime);
+
+        // Build pagination info
+        PatientPaymentHistoryResponse.PaginationInfo paginationInfo = 
+                PatientPaymentHistoryResponse.PaginationInfo.builder()
+                        .currentPage(invoicesPage.getNumber() + 1) // 1-based for FE
+                        .pageSize(invoicesPage.getSize())
+                        .totalItems(invoicesPage.getTotalElements())
+                        .totalPages(invoicesPage.getTotalPages())
+                        .build();
+
+        log.info("Retrieved {} invoices for patient {} (total: {}, page: {}/{})",
+                 historyItems.size(), patientCode, invoicesPage.getTotalElements(),
+                 paginationInfo.getCurrentPage(), paginationInfo.getTotalPages());
+
+        return PatientPaymentHistoryResponse.builder()
+                .invoices(historyItems)
+                .pagination(paginationInfo)
+                .summary(summary)
+                .build();
+    }
+
+    /**
+     * Map Invoice entity to InvoiceHistoryItem DTO
+     */
+    private InvoiceHistoryItem mapToHistoryItem(Invoice invoice, Patient patient) {
+        try {
+            // Get appointment code if exists
+            String appointmentCode = null;
+            if (invoice.getAppointmentId() != null) {
+                appointmentCode = appointmentRepository.findById(invoice.getAppointmentId())
+                        .map(Appointment::getAppointmentCode)
+                        .orElse(null);
+            }
+
+            // Get treatment plan code if exists
+            String treatmentPlanCode = null;
+            if (invoice.getTreatmentPlanId() != null) {
+                treatmentPlanCode = treatmentPlanRepository.findById(invoice.getTreatmentPlanId().longValue())
+                        .map(PatientTreatmentPlan::getPlanCode)
+                        .orElse(null);
+            }
+
+            // Map invoice items
+            List<InvoiceHistoryItem.InvoiceItemSummary> itemSummaries = invoiceItemRepository
+                    .findByInvoice_InvoiceId(invoice.getInvoiceId())
+                    .stream()
+                    .map(item -> InvoiceHistoryItem.InvoiceItemSummary.builder()
+                            .itemId(item.getItemId())
+                            .serviceName(item.getServiceName())
+                            .serviceCode(item.getServiceCode())
+                            .quantity(item.getQuantity())
+                            .unitPrice(item.getUnitPrice())
+                            .discount(BigDecimal.ZERO) // No discount field in current model
+                            .totalPrice(item.getSubtotal())
+                            .build())
+                    .collect(Collectors.toList());
+
+            // Map payments
+            List<InvoiceHistoryItem.PaymentInfo> paymentInfos = paymentRepository
+                    .findByInvoice_InvoiceIdOrderByPaymentDateDesc(invoice.getInvoiceId())
+                    .stream()
+                    .map(payment -> InvoiceHistoryItem.PaymentInfo.builder()
+                            .paymentId(payment.getPaymentId())
+                            .amount(payment.getAmount())
+                            .paymentMethod(payment.getPaymentMethod())
+                            .paymentDate(payment.getPaymentDate())
+                            .notes(payment.getNotes())
+                            .build())
+                    .collect(Collectors.toList());
+
+            // Get last payment date
+            LocalDateTime lastPaymentDate = paymentInfos.isEmpty() ? null 
+                    : paymentInfos.get(0).getPaymentDate();
+
+            // Determine primary payment method (from first/latest payment, or null)
+            com.dental.clinic.management.payment.enums.PaymentMethod primaryPaymentMethod = 
+                    paymentInfos.isEmpty() ? null : paymentInfos.get(0).getPaymentMethod();
+
+            return InvoiceHistoryItem.builder()
+                    .invoiceCode(invoice.getInvoiceCode())
+                    .patientCode(patient.getPatientCode())
+                    .patientName(patient.getFullName())
+                    .appointmentCode(appointmentCode)
+                    .treatmentPlanCode(treatmentPlanCode)
+                    .totalAmount(invoice.getTotalAmount())
+                    .paidAmount(invoice.getPaidAmount())
+                    .remainingAmount(invoice.getRemainingDebt())
+                    .paymentStatus(invoice.getPaymentStatus())
+                    .paymentMethod(primaryPaymentMethod)
+                    .issuedDate(invoice.getCreatedAt())
+                    .dueDate(invoice.getDueDate())
+                    .lastPaymentDate(lastPaymentDate)
+                    .notes(invoice.getNotes())
+                    .items(itemSummaries)
+                    .payments(paymentInfos)
+                    .build();
+        } catch (Exception e) {
+            log.error("Error mapping invoice {} to history item: {}", 
+                      invoice.getInvoiceCode(), e.getMessage(), e);
+            throw new RuntimeException("Failed to map invoice to history item", e);
+        }
+    }
+
+    /**
+     * Calculate payment summary for patient
+     */
+    private PatientPaymentHistoryResponse.PaymentSummary calculatePaymentSummary(
+            Integer patientId, 
+            InvoicePaymentStatus statusFilter,
+            LocalDateTime startDate, 
+            LocalDateTime endDate) {
+        
+        // Build specification for all invoices (no pagination)
+        Specification<Invoice> spec = InvoiceSpecification.withFilters(
+                statusFilter, null, patientId, startDate, endDate);
+
+        List<Invoice> allInvoices = invoiceRepository.findAll(spec);
+
+        long totalInvoices = allInvoices.size();
+        BigDecimal totalAmount = allInvoices.stream()
+                .map(Invoice::getTotalAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        BigDecimal paidAmount = allInvoices.stream()
+                .map(Invoice::getPaidAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        BigDecimal remainingAmount = allInvoices.stream()
+                .map(Invoice::getRemainingDebt)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        long unpaidInvoices = allInvoices.stream()
+                .filter(inv -> inv.getPaymentStatus() == InvoicePaymentStatus.PENDING_PAYMENT 
+                            || inv.getPaymentStatus() == InvoicePaymentStatus.PARTIAL_PAID)
+                .count();
+
+        return PatientPaymentHistoryResponse.PaymentSummary.builder()
+                .totalInvoices(totalInvoices)
+                .totalAmount(totalAmount)
+                .paidAmount(paidAmount)
+                .remainingAmount(remainingAmount)
+                .unpaidInvoices(unpaidInvoices)
+                .build();
     }
 }
