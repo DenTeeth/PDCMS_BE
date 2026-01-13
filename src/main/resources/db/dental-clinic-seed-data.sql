@@ -3442,9 +3442,9 @@ ALTER TABLE specializations ALTER COLUMN specialization_code TYPE varchar(20);
 
 INSERT INTO specializations (specialization_id, specialization_code, specialization_name, description, is_active, created_at)
 VALUES
-    (901, 'TEST-IMPLANT', 'Test Implant Specialist', 'Chuyên khoa Cấy ghép Implant (Test)', true, CURRENT_TIMESTAMP),
-    (902, 'TEST-ORTHO', 'Test Orthodontics', 'Chuyên khoa Chỉnh nha (Test)', true, CURRENT_TIMESTAMP),
-    (903, 'TEST-GENERAL', 'Test General Dentistry', 'Nha khoa tổng quát (Test)', true, CURRENT_TIMESTAMP)
+    (901, 'TEST-IMPLANT', 'Test Chuyên khoa Cấy ghép', 'Chuyên khoa Cấy ghép Implant (Test)', true, CURRENT_TIMESTAMP),
+    (902, 'TEST-ORTHO', 'Test Chuyên khoa Chỉnh nha', 'Chuyên khoa Chỉnh nha (Test)', true, CURRENT_TIMESTAMP),
+    (903, 'TEST-GENERAL', 'Test Nha khoa tổng quát', 'Nha khoa tổng quát (Test)', true, CURRENT_TIMESTAMP)
 ON CONFLICT (specialization_id) DO NOTHING;
 
 -- =====================================================
@@ -5481,7 +5481,7 @@ INSERT INTO clinical_record_procedures (
     tooth_number, procedure_description, notes, created_at
 ) VALUES
 (1, 1, 1, NULL, NULL, 'Khám tổng quát răng miệng', 'Bệnh nhân không có sâu răng', NOW()),
-(2, 1, 3, NULL, NULL, 'Lấy cao răng (Scaling Level 1)', 'Lấy cao răng toàn hàm', NOW())
+(2, 1, 3, NULL, NULL, 'Cạo vôi răng & Đánh bóng - Mức 1', 'Lấy cao răng toàn hàm', NOW())
 ON CONFLICT (procedure_id) DO NOTHING;
 
 -- Prescription for Clinical Record #1
@@ -5670,14 +5670,14 @@ SELECT setval('patient_tooth_status_history_history_id_seq', (SELECT COALESCE(MA
 -- ✅ Services match appointment_services: GEN_EXAM (service_id=1) + SCALING_L1 (service_id=3)
 INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at)
 VALUES
-('INV-20251104-001', 'APPOINTMENT', 1, 1, 600000, 600000, 0, 'PAID', NOW() + INTERVAL '7 days', 'Payment Code: PDCMS25110401 | Dịch vụ từ lịch hẹn APT-20251104-001', 1, NOW() - INTERVAL '2 days')
+('INV-20251104-001', 'APPOINTMENT', 1, 1, 600000, 600000, 0, 'PAID', NOW() + INTERVAL '7 days', 'Mã thanh toán: PDCMS25110401 | Dịch vụ từ lịch hẹn APT-20251104-001', 1, NOW() - INTERVAL '2 days')
 ON CONFLICT (invoice_code) DO NOTHING;
 
 INSERT INTO invoice_items (invoice_id, service_id, service_code, service_name, quantity, unit_price, subtotal)
-SELECT (SELECT invoice_id FROM invoices WHERE invoice_code = 'INV-20251104-001'), 1, 'GEN_EXAM', 'Khám tổng quát', 1, 300000, 300000
+SELECT (SELECT invoice_id FROM invoices WHERE invoice_code = 'INV-20251104-001'), 1, 'GEN_EXAM', 'Khám tổng quát & Tư vấn', 1, 300000, 300000
 WHERE EXISTS (SELECT 1 FROM invoices WHERE invoice_code = 'INV-20251104-001')
 UNION ALL
-SELECT (SELECT invoice_id FROM invoices WHERE invoice_code = 'INV-20251104-001'), 3, 'SCALING_L1', 'Lấy cao răng Level 1', 1, 300000, 300000
+SELECT (SELECT invoice_id FROM invoices WHERE invoice_code = 'INV-20251104-001'), 3, 'SCALING_L1', 'Cạo vôi răng & Đánh bóng - Mức 1', 1, 300000, 300000
 WHERE EXISTS (SELECT 1 FROM invoices WHERE invoice_code = 'INV-20251104-001');
 
 -- FIX: Payment created_by should also match appointment doctor (EMP001)
@@ -5691,22 +5691,22 @@ WHERE EXISTS (SELECT 1 FROM invoices WHERE invoice_code = 'INV-20251104-001');
 -- ✅ FIX: Service must match appointment_services (GEN_EXAM, not SCALING_L2)
 INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at)
 VALUES
-('INV-20251105-001', 'APPOINTMENT', 2, 2, 300000, 0, 300000, 'PENDING_PAYMENT', NOW() + INTERVAL '3 days', 'Payment Code: PDCMS25110402 | Dịch vụ từ lịch hẹn APT-20251104-002', 2, NOW() - INTERVAL '1 day')
+('INV-20251105-001', 'APPOINTMENT', 2, 2, 300000, 0, 300000, 'PENDING_PAYMENT', NOW() + INTERVAL '3 days', 'Mã thanh toán: PDCMS25110402 | Dịch vụ từ lịch hẹn APT-20251104-002', 2, NOW() - INTERVAL '1 day')
 ON CONFLICT (invoice_code) DO NOTHING;
 
 INSERT INTO invoice_items (invoice_id, service_id, service_code, service_name, quantity, unit_price, subtotal)
-SELECT (SELECT invoice_id FROM invoices WHERE invoice_code = 'INV-20251105-001'), 1, 'GEN_EXAM', 'Khám tổng quát', 1, 300000, 300000
+SELECT (SELECT invoice_id FROM invoices WHERE invoice_code = 'INV-20251105-001'), 1, 'GEN_EXAM', 'Khám tổng quát & Tư vấn', 1, 300000, 300000
 WHERE EXISTS (SELECT 1 FROM invoices WHERE invoice_code = 'INV-20251105-001');
 
 -- Invoice 3: Treatment Plan - Payment FULL (BN-1001, PLAN-20251107-001) - Đã thanh toán
 -- Payment code: PDCMS25110701 (2025-11-07, sequence 01)
 INSERT INTO invoices (invoice_code, invoice_type, patient_id, treatment_plan_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at)
 VALUES
-('INV-20251107-001', 'TREATMENT_PLAN', 1, 101, 48000000, 48000000, 0, 'PAID', NOW() + INTERVAL '7 days', 'Payment Code: PDCMS25110701', 1, NOW() - INTERVAL '5 days')
+('INV-20251107-001', 'TREATMENT_PLAN', 1, 101, 48000000, 48000000, 0, 'PAID', NOW() + INTERVAL '7 days', 'Mã thanh toán: PDCMS25110701', 1, NOW() - INTERVAL '5 days')
 ON CONFLICT (invoice_code) DO NOTHING;
 
 INSERT INTO invoice_items (invoice_id, service_id, service_code, service_name, quantity, unit_price, subtotal)
-SELECT (SELECT invoice_id FROM invoices WHERE invoice_code = 'INV-20251107-001'), 7, 'ORTHO_BRACES', 'Nieng rang kim loai', 1, 48000000, 48000000
+SELECT (SELECT invoice_id FROM invoices WHERE invoice_code = 'INV-20251107-001'), 7, 'ORTHO_BRACES', 'Gắn mắc cài kim loại/sứ', 1, 48000000, 48000000
 WHERE EXISTS (SELECT 1 FROM invoices WHERE invoice_code = 'INV-20251107-001');
 
 INSERT INTO payments (payment_code, invoice_id, amount, payment_method, payment_date, reference_number, created_by, created_at)
@@ -5720,7 +5720,7 @@ VALUES
 ON CONFLICT (invoice_code) DO NOTHING;
 
 INSERT INTO invoice_items (invoice_id, service_id, service_code, service_name, quantity, unit_price, subtotal)
-SELECT (SELECT invoice_id FROM invoices WHERE invoice_code = 'INV-20251105-002'), 5, 'FILLING_L1', 'Tram rang Level 1', 2, 400000, 800000
+SELECT (SELECT invoice_id FROM invoices WHERE invoice_code = 'INV-20251105-002'), 5, 'FILLING_L1', 'Trám răng Composite', 2, 400000, 800000
 WHERE EXISTS (SELECT 1 FROM invoices WHERE invoice_code = 'INV-20251105-002');
 */
 
@@ -5749,85 +5749,86 @@ INSERT INTO appointments (appointment_code, patient_id, employee_id, room_id, ap
 INSERT INTO appointment_services (appointment_id, service_id) SELECT a.appointment_id, s.service_id FROM appointments a CROSS JOIN (VALUES (1), (3), (5)) AS s(service_id) WHERE a.appointment_code LIKE 'APT-202601%TEST%' ON CONFLICT DO NOTHING;
 
 -- Invoices for January 2026 (6 invoices, all PAID)
-INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at) SELECT 'INV-20260102-TEST01', 'APPOINTMENT', 1, a.appointment_id, 900000, 900000, 0, 'PAID', '2026-01-09', 'Dashboard test - Jan', 1, CURRENT_TIMESTAMP FROM appointments a WHERE a.appointment_code = 'APT-20260102-TEST01' ON CONFLICT (invoice_code) DO NOTHING;
-INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at) SELECT 'INV-20260102-TEST02', 'APPOINTMENT', 2, a.appointment_id, 900000, 900000, 0, 'PAID', '2026-01-09', 'Dashboard test - Jan', 2, CURRENT_TIMESTAMP FROM appointments a WHERE a.appointment_code = 'APT-20260102-TEST02' ON CONFLICT (invoice_code) DO NOTHING;
-INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at) SELECT 'INV-20260103-TEST01', 'APPOINTMENT', 3, a.appointment_id, 300000, 300000, 0, 'PAID', '2026-01-10', 'Dashboard test - Jan', 1, CURRENT_TIMESTAMP FROM appointments a WHERE a.appointment_code = 'APT-20260103-TEST01' ON CONFLICT (invoice_code) DO NOTHING;
-INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at) SELECT 'INV-20260105-TEST01', 'APPOINTMENT', 1, a.appointment_id, 800000, 800000, 0, 'PAID', '2026-01-12', 'Dashboard test - Jan', 2, CURRENT_TIMESTAMP FROM appointments a WHERE a.appointment_code = 'APT-20260105-TEST01' ON CONFLICT (invoice_code) DO NOTHING;
-INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at) SELECT 'INV-20260108-TEST01', 'APPOINTMENT', 2, a.appointment_id, 900000, 900000, 0, 'PAID', '2026-01-15', 'Dashboard test - Jan', 1, CURRENT_TIMESTAMP FROM appointments a WHERE a.appointment_code = 'APT-20260108-TEST01' ON CONFLICT (invoice_code) DO NOTHING;
-INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at) SELECT 'INV-20260110-TEST01', 'APPOINTMENT', 3, a.appointment_id, 800000, 800000, 0, 'PAID', '2026-01-17', 'Dashboard test - Jan', 2, CURRENT_TIMESTAMP FROM appointments a WHERE a.appointment_code = 'APT-20260110-TEST01' ON CONFLICT (invoice_code) DO NOTHING;
+INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at) SELECT 'INV-20260102-TEST01', 'APPOINTMENT', 1, a.appointment_id, 900000, 900000, 0, 'PAID', '2026-01-09', 'Dữ liệu test Dashboard - Tháng 1', 1, CURRENT_TIMESTAMP FROM appointments a WHERE a.appointment_code = 'APT-20260102-TEST01' ON CONFLICT (invoice_code) DO NOTHING;
+INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at) SELECT 'INV-20260102-TEST02', 'APPOINTMENT', 2, a.appointment_id, 900000, 900000, 0, 'PAID', '2026-01-09', 'Dữ liệu test Dashboard - Tháng 1', 2, CURRENT_TIMESTAMP FROM appointments a WHERE a.appointment_code = 'APT-20260102-TEST02' ON CONFLICT (invoice_code) DO NOTHING;
+INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at) SELECT 'INV-20260103-TEST01', 'APPOINTMENT', 3, a.appointment_id, 300000, 300000, 0, 'PAID', '2026-01-10', 'Dữ liệu test Dashboard - Tháng 1', 1, CURRENT_TIMESTAMP FROM appointments a WHERE a.appointment_code = 'APT-20260103-TEST01' ON CONFLICT (invoice_code) DO NOTHING;
+INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at) SELECT 'INV-20260105-TEST01', 'APPOINTMENT', 1, a.appointment_id, 800000, 800000, 0, 'PAID', '2026-01-12', 'Dữ liệu test Dashboard - Tháng 1', 2, CURRENT_TIMESTAMP FROM appointments a WHERE a.appointment_code = 'APT-20260105-TEST01' ON CONFLICT (invoice_code) DO NOTHING;
+INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at) SELECT 'INV-20260108-TEST01', 'APPOINTMENT', 2, a.appointment_id, 900000, 900000, 0, 'PAID', '2026-01-15', 'Dữ liệu test Dashboard - Tháng 1', 1, CURRENT_TIMESTAMP FROM appointments a WHERE a.appointment_code = 'APT-20260108-TEST01' ON CONFLICT (invoice_code) DO NOTHING;
+INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at) SELECT 'INV-20260110-TEST01', 'APPOINTMENT', 3, a.appointment_id, 800000, 800000, 0, 'PAID', '2026-01-17', 'Dữ liệu test Dashboard - Tháng 1', 2, CURRENT_TIMESTAMP FROM appointments a WHERE a.appointment_code = 'APT-20260110-TEST01' ON CONFLICT (invoice_code) DO NOTHING;
 
 -- Invoice Items for January 2026 (required for Top Services dashboard query)
 -- Schema: invoice_id, service_id, service_name, service_code, quantity, unit_price, subtotal, notes
 INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
-SELECT i.invoice_id, 1, 'General Examination', 1, 300000, 300000, 'Khám tổng quát'
+SELECT i.invoice_id, 1, 'Khám tổng quát & Tư vấn', 1, 300000, 300000, 'Khám tổng quát'
 FROM invoices i WHERE i.invoice_code = 'INV-20260102-TEST01';
 
 INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
-SELECT i.invoice_id, 3, 'Scaling Level 1', 1, 300000, 300000, 'Cạo vôi răng cơ bản'
+SELECT i.invoice_id, 3, 'Cạo vôi răng & Đánh bóng - Mức 1', 1, 300000, 300000, 'Cạo vôi răng cơ bản'
 FROM invoices i WHERE i.invoice_code = 'INV-20260102-TEST01';
 
 INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
-SELECT i.invoice_id, 5, 'Filling Level 1', 1, 300000, 300000, 'Trám răng sâu - Răng 11'
+SELECT i.invoice_id, 5, 'Trám răng Composite', 1, 300000, 300000, 'Trám răng sâu - Răng 11'
 FROM invoices i WHERE i.invoice_code = 'INV-20260102-TEST01';
 
+
 INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
-SELECT i.invoice_id, 1, 'General Examination', 1, 300000, 300000, 'Khám tổng quát'
+SELECT i.invoice_id, 1, 'Khám tổng quát & Tư vấn', 1, 300000, 300000, 'Khám tổng quát'
 FROM invoices i WHERE i.invoice_code = 'INV-20260102-TEST02';
 
 INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
-SELECT i.invoice_id, 3, 'Scaling Level 1', 1, 300000, 300000, 'Cạo vôi răng cơ bản'
+SELECT i.invoice_id, 3, 'Cạo vôi răng & Đánh bóng - Mức 1', 1, 300000, 300000, 'Cạo vôi răng cơ bản'
 FROM invoices i WHERE i.invoice_code = 'INV-20260102-TEST02';
 
 INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
-SELECT i.invoice_id, 5, 'Filling Level 1', 1, 300000, 300000, 'Trám răng sâu - Răng 12'
+SELECT i.invoice_id, 5, 'Trám răng Composite', 1, 300000, 300000, 'Trám răng sâu - Răng 12'
 FROM invoices i WHERE i.invoice_code = 'INV-20260102-TEST02';
 
 INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
-SELECT i.invoice_id, 1, 'General Examination', 1, 100000, 100000, 'Khám tổng quát'
+SELECT i.invoice_id, 1, 'Khám tổng quát & Tư vấn', 1, 100000, 100000, 'Khám tổng quát'
 FROM invoices i WHERE i.invoice_code = 'INV-20260103-TEST01';
 
 INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
-SELECT i.invoice_id, 3, 'Scaling Level 1', 1, 100000, 100000, 'Cạo vôi răng cơ bản'
+SELECT i.invoice_id, 3, 'Cạo vôi răng & Đánh bóng - Mức 1', 1, 100000, 100000, 'Cạo vôi răng cơ bản'
 FROM invoices i WHERE i.invoice_code = 'INV-20260103-TEST01';
 
 INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
-SELECT i.invoice_id, 5, 'Filling Level 1', 1, 100000, 100000, 'Trám răng sâu - Răng 21'
+SELECT i.invoice_id, 5, 'Trám răng Composite', 1, 100000, 100000, 'Trám răng sâu - Răng 21'
 FROM invoices i WHERE i.invoice_code = 'INV-20260103-TEST01';
 
 INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
-SELECT i.invoice_id, 1, 'General Examination', 1, 300000, 300000, 'Khám tổng quát'
+SELECT i.invoice_id, 1, 'Khám tổng quát & Tư vấn', 1, 300000, 300000, 'Khám tổng quát'
 FROM invoices i WHERE i.invoice_code = 'INV-20260105-TEST01';
 
 INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
-SELECT i.invoice_id, 3, 'Scaling Level 1', 1, 250000, 250000, 'Cạo vôi răng cơ bản'
+SELECT i.invoice_id, 3, 'Cạo vôi răng & Đánh bóng - Mức 1', 1, 250000, 250000, 'Cạo vôi răng cơ bản'
 FROM invoices i WHERE i.invoice_code = 'INV-20260105-TEST01';
 
 INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
-SELECT i.invoice_id, 5, 'Filling Level 1', 1, 250000, 250000, 'Trám răng sâu - Răng 22'
+SELECT i.invoice_id, 5, 'Trám răng Composite', 1, 250000, 250000, 'Trám răng sâu - Răng 22'
 FROM invoices i WHERE i.invoice_code = 'INV-20260105-TEST01';
 
 INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
-SELECT i.invoice_id, 1, 'General Examination', 1, 300000, 300000, 'Khám tổng quát'
+SELECT i.invoice_id, 1, 'Khám tổng quát & Tư vấn', 1, 300000, 300000, 'Khám tổng quát'
 FROM invoices i WHERE i.invoice_code = 'INV-20260108-TEST01';
 
 INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
-SELECT i.invoice_id, 3, 'Scaling Level 1', 1, 300000, 300000, 'Cạo vôi răng cơ bản'
+SELECT i.invoice_id, 3, 'Cạo vôi răng & Đánh bóng - Mức 1', 1, 300000, 300000, 'Cạo vôi răng cơ bản'
 FROM invoices i WHERE i.invoice_code = 'INV-20260108-TEST01';
 
 INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
-SELECT i.invoice_id, 5, 'Filling Level 1', 1, 300000, 300000, 'Trám răng sâu - Răng 31'
+SELECT i.invoice_id, 5, 'Trám răng Composite', 1, 300000, 300000, 'Trám răng sâu - Răng 31'
 FROM invoices i WHERE i.invoice_code = 'INV-20260108-TEST01';
 
 INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
-SELECT i.invoice_id, 1, 'General Examination', 1, 300000, 300000, 'Khám tổng quát'
+SELECT i.invoice_id, 1, 'Khám tổng quát & Tư vấn', 1, 300000, 300000, 'Khám tổng quát'
 FROM invoices i WHERE i.invoice_code = 'INV-20260110-TEST01';
 
 INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
-SELECT i.invoice_id, 3, 'Scaling Level 1', 1, 250000, 250000, 'Cạo vôi răng cơ bản'
+SELECT i.invoice_id, 3, 'Cạo vôi răng & Đánh bóng - Mức 1', 1, 250000, 250000, 'Cạo vôi răng cơ bản'
 FROM invoices i WHERE i.invoice_code = 'INV-20260110-TEST01';
 
 INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
-SELECT i.invoice_id, 5, 'Filling Level 1', 1, 250000, 250000, 'Trám răng sâu - Răng 32'
+SELECT i.invoice_id, 5, 'Trám răng Composite', 1, 250000, 250000, 'Trám răng sâu - Răng 32'
 FROM invoices i WHERE i.invoice_code = 'INV-20260110-TEST01';
 
 -- Storage Transactions for January 2026 (EXPORT for expenses calculation)
