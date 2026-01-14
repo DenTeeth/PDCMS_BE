@@ -75,7 +75,7 @@ public class OvertimeRequestService {
          */
         @Transactional(readOnly = true)
         // ✅ PERMISSIONS: VIEW_OT_ALL (Manager/Admin see all) OR VIEW_OT_OWN (Employee see own)
-        // ROLE_ADMIN & ROLE_MANAGER have VIEW_OT_ALL permission
+        // ROLE_ADMIN & ROLE_MANAGER có quyền VIEW_OT_ALL
         @PreAuthorize("hasAnyAuthority('VIEW_OT_ALL', 'VIEW_OT_OWN')")
         public Page<OvertimeRequestListResponse> getAllOvertimeRequests(RequestStatus status, Pageable pageable) {
                 log.info("Đang lấy danh sách yêu cầu OT với trạng thái: {}", status);
@@ -83,13 +83,13 @@ public class OvertimeRequestService {
                 boolean hasViewAll = SecurityUtil.hasCurrentUserPermission("VIEW_OT_ALL");
 
                 if (hasViewAll) {
-                        // User can see all requests
+                        // Người dùng có thể xem tất cả yêu cầu
                         log.debug("Người dùng có quyền VIEW_OT_ALL");
                         Page<OvertimeRequest> requests = overtimeRequestRepository.findAllWithOptionalStatus(status,
                                         pageable);
                         return requests.map(overtimeRequestMapper::toListResponse);
                 } else {
-                        // User can only see their own requests
+                        // Người dùng chỉ có thể xem yêu cầu của mình
                         log.debug("Người dùng có quyền VIEW_OT_OWN");
                         Employee currentEmployee = getCurrentEmployee();
                         Page<OvertimeRequest> requests = overtimeRequestRepository.findByEmployeeIdAndStatus(

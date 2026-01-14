@@ -17,7 +17,7 @@ import java.time.format.DateTimeFormatter;
 @SpringBootApplication
 @EnableConfigurationProperties
 @EnableScheduling
-@EnableAsync // Enable async email sending
+@EnableAsync
 public class DentalClinicManagementApplication {
 
 	public static void main(String[] args) {
@@ -40,9 +40,9 @@ public class DentalClinicManagementApplication {
 			DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z");
 
 			log.info("========================================");
-			log.info("🚀 PDCMS Backend Application Started");
+			log.info(" PDCMS Backend Application Started");
 			log.info("========================================");
-			log.info("⏰ Current time: {}", now.format(formatter));
+			log.info("Current time: {}", now.format(formatter));
 			log.info("🌏 Timezone: {}", timezone);
 			log.info("📅 Scheduled jobs are ENABLED");
 			log.info("========================================");

@@ -53,14 +53,14 @@ public class AdminLeaveBalanceService {
         public EmployeeLeaveBalanceResponse getEmployeeLeaveBalances(Integer employeeId, Integer cycleYear) {
                 log.debug("Getting leave balances for employee {} in year {}", employeeId, cycleYear);
 
-                // Validate employee exists
+                // Kiểm tra nhân viên có tồn tại không
                 employeeRepository.findById(employeeId)
                                 .orElseThrow(() -> new EmployeeNotFoundException(employeeId));
 
-                // Get all balances for this employee and year
+                // Lấy tất cả số dư phép cho nhân viên này trong năm
                 List<EmployeeLeaveBalance> balances = balanceRepository.findByEmployeeIdAndYear(employeeId, cycleYear);
 
-                // Convert to response DTOs
+                // Chuyển đổi sang response DTOs
                 List<LeaveBalanceDetailResponse> balanceDetails = balances.stream()
                                 .map(this::toBalanceDetailResponse)
                                 .collect(Collectors.toList());
@@ -79,36 +79,36 @@ public class AdminLeaveBalanceService {
         public AllEmployeesLeaveBalanceResponse getAllEmployeesLeaveBalances(Integer cycleYear, String timeOffTypeId) {
                 log.debug("Getting leave balances for all employees in year {} for type {}", cycleYear, timeOffTypeId);
 
-                // 1. Get all active employees
+                // 1. Lấy tất cả nhân viên đang làm việc
                 List<Integer> activeEmployeeIds = employeeRepository.findAllActiveEmployeeIds();
 
-                // 2. Get balances with optional filter
+                // 2. Lấy số dư phép với bộ lọc tùy chọn
                 List<EmployeeLeaveBalance> allBalances;
                 if (timeOffTypeId != null) {
-                        // Filter by specific type
+                        // Lọc theo loại nghỉ phép cụ thể
                         allBalances = balanceRepository.findByYearAndTimeOffTypeId(cycleYear, timeOffTypeId);
                 } else {
-                        // Get all types
+                        // Lấy tất cả loại
                         allBalances = balanceRepository.findByYear(cycleYear);
                 }
 
-                // 3. Group balances by employee_id
+                // 3. Nhóm số dư phép theo employee_id
                 Map<Integer, List<EmployeeLeaveBalance>> balancesByEmployee = allBalances.stream()
                                 .collect(Collectors.groupingBy(EmployeeLeaveBalance::getEmployeeId));
 
-                // 4. Build response for each employee
+                // 4. Tạo response cho từng nhân viên
                 List<AllEmployeesLeaveBalanceResponse.EmployeeBalanceSummary> summaries = activeEmployeeIds.stream()
                                 .map(empId -> {
-                                        // Get employee info
+                                        // Lấy thông tin nhân viên
                                         String employeeName = employeeRepository.findById(empId)
                                                         .map(emp -> emp.getFirstName() + " " + emp.getLastName())
                                                         .orElse("Unknown");
 
-                                        // Get balances for this employee
+                                        // Lấy số dư phép của nhân viên này
                                         List<EmployeeLeaveBalance> empBalances = balancesByEmployee.getOrDefault(empId,
                                                         List.of());
 
-                                        // Convert to balance info
+                                        // Chuyển đổi sang balance info
                                         List<AllEmployeesLeaveBalanceResponse.BalanceInfo> balanceInfos = empBalances
                                                         .stream()
                                                         .map(balance -> {
@@ -136,7 +136,7 @@ public class AdminLeaveBalanceService {
                                 })
                                 .collect(Collectors.toList());
 
-                // 5. Build final response
+                // 5. Tạo response cuối cùng
                 AllEmployeesLeaveBalanceResponse.FilterInfo filterInfo = AllEmployeesLeaveBalanceResponse.FilterInfo
                                 .builder()
                                 .cycleYear(cycleYear)
@@ -158,15 +158,15 @@ public class AdminLeaveBalanceService {
                                 request.getEmployeeId(), request.getTimeOffTypeId(),
                                 request.getCycleYear(), request.getChangeAmount());
 
-                // 1. Validate employee exists
+                // 1. Kiểm tra nhân viên có tồn tại không
                 employeeRepository.findById(request.getEmployeeId())
                                 .orElseThrow(() -> new EmployeeNotFoundException(request.getEmployeeId()));
 
-                // 2. Validate time-off type exists
+                // 2. Kiểm tra loại nghỉ phép có tồn tại không
                 timeOffTypeRepository.findById(request.getTimeOffTypeId())
                                 .orElseThrow(() -> new TimeOffTypeNotFoundException(request.getTimeOffTypeId()));
 
-                // 3. Find or create balance record
+                // 3. Tìm hoặc tạo bản ghi số dư phép
                 EmployeeLeaveBalance balance;
                 try {
                         balance = balanceRepository
@@ -189,23 +189,23 @@ public class AdminLeaveBalanceService {
                                                         request.getCycleYear()));
                 }
 
-                // 4. Apply adjustment
+                // 4. Áp dụng điều chỉnh
                 Double oldTotalAllotted = balance.getTotalAllotted();
                 Double oldUsed = balance.getUsed();
 
                 if (request.getChangeAmount() > 0) {
-                        // Positive: Add to total_days_allowed
+                        // Dương: Thêm vào tổng số ngày được phép
                         balance.setTotalAllotted(balance.getTotalAllotted() + request.getChangeAmount());
                         log.info("Adding {} days to total_allotted: {} -> {}",
                                         request.getChangeAmount(), oldTotalAllotted, balance.getTotalAllotted());
                 } else {
-                        // Negative: Add to days_taken (subtract from remaining)
+                        // Âm: Thêm vào số ngày đã dùng (trừ khỏi số còn lại)
                         balance.setUsed(balance.getUsed() + Math.abs(request.getChangeAmount()));
                         log.info("Adding {} days to used: {} -> {}",
                                         Math.abs(request.getChangeAmount()), oldUsed, balance.getUsed());
                 }
 
-                // 5. Validate: remaining must not be negative
+                // 5. Kiểm tra: số còn lại không được âm
                 Double remaining = balance.getTotalAllotted() - balance.getUsed();
                 if (remaining < 0) {
                         throw new InvalidRequestException(
@@ -215,10 +215,10 @@ public class AdminLeaveBalanceService {
                                                         balance.getTotalAllotted(), balance.getUsed(), remaining));
                 }
 
-                // 6. Save balance
+                // 6. Lưu số dư phép
                 balanceRepository.save(balance);
 
-                // 7. Get current user (admin who made the change)
+                // 7. Lấy người dùng hiện tại (admin thực hiện thay đổi)
                 String username = SecurityUtil.getCurrentUserLogin()
                                 .orElseThrow(() -> new RuntimeException("Người dùng chưa xác thực"));
 
@@ -226,7 +226,7 @@ public class AdminLeaveBalanceService {
                                 .map(account -> account.getEmployee().getEmployeeId())
                                 .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên với người dùng: " + username));
 
-                // 8. Create history record
+                // 8. Tạo bản ghi lịch sử
                 LeaveBalanceHistory history = LeaveBalanceHistory.builder()
                                 .balance(balance) // Set the relationship, not just the ID
                                 .changedBy(changedBy)
@@ -249,7 +249,7 @@ public class AdminLeaveBalanceService {
                 log.info("Starting annual reset for year {} type {} with {} days",
                                 request.getCycleYear(), request.getApplyToTypeId(), request.getDefaultAllowance());
 
-                // 1. Validate year is reasonable (allow current year and next 2 years)
+                // 1. Kiểm tra năm có hợp lý không (cho phép năm hiện tại và 2 năm tiếp theo)
                 int currentYear = Year.now().getValue();
                 if (request.getCycleYear() < currentYear - 1 || request.getCycleYear() > currentYear + 2) {
                         throw new InvalidRequestException(
@@ -258,11 +258,11 @@ public class AdminLeaveBalanceService {
                                                         request.getCycleYear(), currentYear - 1, currentYear + 2));
                 }
 
-                // 2. Validate time-off type exists
+                // 2. Kiểm tra loại nghỉ phép có tồn tại không
                 TimeOffType timeOffType = timeOffTypeRepository.findById(request.getApplyToTypeId())
                                 .orElseThrow(() -> new TimeOffTypeNotFoundException(request.getApplyToTypeId()));
 
-                // 3. Get all active employees
+                // 3. Lấy tất cả nhân viên đang làm việc
                 List<Integer> activeEmployeeIds = employeeRepository.findAllActiveEmployeeIds();
                 log.info("Found {} active employees", activeEmployeeIds.size());
 
@@ -270,7 +270,7 @@ public class AdminLeaveBalanceService {
                 int updatedCount = 0;
                 int skippedCount = 0;
 
-                // 4. For each employee, create or reset balance
+                // 4. Với mỗi nhân viên, tạo hoặc reset số dư phép
                 for (Integer employeeId : activeEmployeeIds) {
                         try {
                                 Optional<EmployeeLeaveBalance> existingBalanceOpt;
