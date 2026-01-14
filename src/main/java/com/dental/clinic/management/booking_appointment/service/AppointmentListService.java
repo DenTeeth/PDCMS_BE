@@ -10,6 +10,7 @@ import com.dental.clinic.management.booking_appointment.repository.AppointmentPa
 import com.dental.clinic.management.booking_appointment.repository.AppointmentRepository;
 import com.dental.clinic.management.booking_appointment.repository.RoomRepository;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
+import com.dental.clinic.management.feedback.repository.AppointmentFeedbackRepository;
 import com.dental.clinic.management.patient.repository.PatientRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -49,6 +50,7 @@ public class AppointmentListService {
     private final EmployeeRepository employeeRepository;
     private final RoomRepository roomRepository;
     private final AppointmentParticipantRepository appointmentParticipantRepository;
+    private final AppointmentFeedbackRepository feedbackRepository;
 
     /**
      * Get paginated appointment list with RBAC filtering
@@ -532,6 +534,7 @@ public class AppointmentListService {
                 .services(services)
                 .participants(participants)
                 .notes(appointment.getNotes())
+                .hasFeedback(feedbackRepository.existsByAppointmentCode(appointment.getAppointmentCode()))
                 .build();
     }
 
@@ -669,6 +672,7 @@ public class AppointmentListService {
                 .services(services)
                 .participants(participants)
                 .notes(appointment.getNotes())
+                .hasFeedback(feedbackRepository.existsByAppointmentCode(appointment.getAppointmentCode()))
                 .build();
     }
 

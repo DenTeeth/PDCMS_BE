@@ -221,6 +221,7 @@ public class ResendEmailService {
                     .html(htmlContent)
                     .build();
 
+            @SuppressWarnings("unused")
             CreateEmailResponse data = resend.emails().send(params);
             logger.info("✅ [Resend] Verification email sent to: {}", toEmail);
 

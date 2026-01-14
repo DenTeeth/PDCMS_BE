@@ -68,7 +68,7 @@ public class ImportTransactionService {
                         // 1. Validate request
                         validateImportRequest(request);
 
-                        // ✅ 2. Auto-generate invoice number in format: INV-YYYY-XXX
+                        // ✅ 2. Auto-generate invoice number in format: INV-YYYY-SEQ
                         String invoiceNumber = generateInvoiceNumber();
                         log.info("📝 Auto-generated invoice number: {}", invoiceNumber);
 
@@ -528,7 +528,7 @@ public class ImportTransactionService {
         }
 
         /**
-         * Generate Invoice Number in format: INV-YYYY-XXX
+         * Generate Invoice Number in format: INV-YYYY-SEQ
          * Example: INV-2026-001, INV-2026-002, ...
          */
         private String generateInvoiceNumber() {

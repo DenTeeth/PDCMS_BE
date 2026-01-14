@@ -13,12 +13,17 @@ import com.dental.clinic.management.patient.domain.Patient;
 import com.dental.clinic.management.patient.repository.PatientRepository;
 import com.dental.clinic.management.payment.domain.Invoice;
 import com.dental.clinic.management.payment.domain.InvoiceItem;
+// import com.dental.clinic.management.payment.domain.Payment;
 import com.dental.clinic.management.payment.dto.CreateInvoiceRequest;
+import com.dental.clinic.management.payment.dto.InvoiceHistoryItem;
 import com.dental.clinic.management.payment.dto.InvoiceResponse;
+import com.dental.clinic.management.payment.dto.PatientPaymentHistoryResponse;
 import com.dental.clinic.management.payment.enums.InvoicePaymentStatus;
 import com.dental.clinic.management.payment.enums.InvoiceType;
 import com.dental.clinic.management.payment.repository.InvoiceItemRepository;
 import com.dental.clinic.management.payment.repository.InvoiceRepository;
+import com.dental.clinic.management.payment.repository.PaymentRepository;
+import com.dental.clinic.management.payment.specification.InvoiceSpecification;
 import com.dental.clinic.management.treatment_plans.domain.PatientTreatmentPlan;
 import com.dental.clinic.management.treatment_plans.repository.PatientTreatmentPlanRepository;
 import com.dental.clinic.management.utils.security.SecurityUtil;
@@ -26,6 +31,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,6 +52,7 @@ public class InvoiceService {
 
     private final InvoiceRepository invoiceRepository;
     private final InvoiceItemRepository invoiceItemRepository;
+    private final PaymentRepository paymentRepository;
     private final VietQRService vietQRService;
 
     // Repositories for populating response fields (Fix FE Issues #1, #2, #3)
@@ -359,17 +366,30 @@ public class InvoiceService {
             LocalDate startDate,
             LocalDate endDate,
             Pageable pageable) {
-        log.info("Getting all invoices with filters - status: {}, type: {}, patientId: {}, startDate: {}, endDate: {}", 
-                 status, type, patientId, startDate, endDate);
-        
-        // Convert LocalDate to LocalDateTime for database queries
-        LocalDateTime startDateTime = (startDate != null) ? startDate.atStartOfDay() : null;
-        LocalDateTime endDateTime = (endDate != null) ? endDate.atTime(LocalTime.MAX) : null;
-        
-        Page<Invoice> invoices = invoiceRepository.findAllWithFilters(
-                status, type, patientId, startDateTime, endDateTime, pageable);
-        
-        return invoices.map(this::mapToResponse);
+        try {
+            log.info("Getting all invoices with filters - status: {}, type: {}, patientId: {}, startDate: {}, endDate: {}, page: {}, size: {}", 
+                     status, type, patientId, startDate, endDate, pageable.getPageNumber(), pageable.getPageSize());
+            
+            // Convert LocalDate to LocalDateTime for database queries
+            LocalDateTime startDateTime = (startDate != null) ? startDate.atStartOfDay() : null;
+            LocalDateTime endDateTime = (endDate != null) ? endDate.atTime(LocalTime.MAX) : null;
+            
+            // Use Specification to avoid PostgreSQL type inference issue with NULL parameters
+            Specification<Invoice> spec = InvoiceSpecification.withFilters(
+                    status, type, patientId, startDateTime, endDateTime);
+            
+            Page<Invoice> invoices = invoiceRepository.findAll(spec, pageable);
+            
+            log.info("Found {} invoices (total: {}, page: {}/{})", 
+                     invoices.getNumberOfElements(), invoices.getTotalElements(),
+                     invoices.getNumber() + 1, invoices.getTotalPages());
+            
+            return invoices.map(this::mapToResponse);
+        } catch (Exception e) {
+            log.error("Error getting all invoices with filters - status: {}, type: {}, patientId: {}, startDate: {}, endDate: {}", 
+                      status, type, patientId, startDate, endDate, e);
+            throw new RuntimeException("Failed to retrieve invoices: " + e.getMessage(), e);
+        }
     }
 
     /**
@@ -423,100 +443,130 @@ public class InvoiceService {
      * Reference: INVOICE_MODULE_ISSUES_AND_CONFIRMATIONS.md (Issues #1, #2, #3)
      */
     private InvoiceResponse mapToResponse(Invoice invoice) {
-        List<InvoiceResponse.InvoiceItemResponse> itemResponses = invoiceItemRepository
-                .findByInvoice_InvoiceId(invoice.getInvoiceId())
-                .stream()
-                .map(item -> InvoiceResponse.InvoiceItemResponse.builder()
-                        .itemId(item.getItemId())
-                        .serviceId(item.getServiceId())
-                        .serviceCode(item.getServiceCode())
-                        .serviceName(item.getServiceName())
-                        .quantity(item.getQuantity())
-                        .unitPrice(item.getUnitPrice())
-                        .subtotal(item.getSubtotal())
-                        .notes(item.getNotes())
-                        .build())
-                .collect(Collectors.toList());
+        try {
+            List<InvoiceResponse.InvoiceItemResponse> itemResponses = invoiceItemRepository
+                    .findByInvoice_InvoiceId(invoice.getInvoiceId())
+                    .stream()
+                    .map(item -> InvoiceResponse.InvoiceItemResponse.builder()
+                            .itemId(item.getItemId())
+                            .serviceId(item.getServiceId())
+                            .serviceCode(item.getServiceCode())
+                            .serviceName(item.getServiceName())
+                            .quantity(item.getQuantity())
+                            .unitPrice(item.getUnitPrice())
+                            .subtotal(item.getSubtotal())
+                            .notes(item.getNotes())
+                            .build())
+                    .collect(Collectors.toList());
 
-        // Extract payment code from notes (format: "Payment Code: PDCMS123456 |
-        // original notes")
-        String paymentCode = extractPaymentCodeFromNotes(invoice.getNotes());
+            // Extract payment code from notes (format: "Payment Code: PDCMS123456 |
+            // original notes")
+            String paymentCode = extractPaymentCodeFromNotes(invoice.getNotes());
 
-        // Generate QR code URL for unpaid/partial paid invoices
-        String qrCodeUrl = null;
-        if (paymentCode != null && invoice.getRemainingDebt().compareTo(BigDecimal.ZERO) > 0) {
-            qrCodeUrl = vietQRService.generateQRUrl(invoice.getRemainingDebt().longValue(), paymentCode);
+            // Generate QR code URL for unpaid/partial paid invoices
+            String qrCodeUrl = null;
+            if (paymentCode != null && invoice.getRemainingDebt() != null 
+                    && invoice.getRemainingDebt().compareTo(BigDecimal.ZERO) > 0) {
+                try {
+                    qrCodeUrl = vietQRService.generateQRUrl(invoice.getRemainingDebt().longValue(), paymentCode);
+                } catch (Exception e) {
+                    log.warn("Failed to generate QR code for invoice {}: {}", invoice.getInvoiceCode(), e.getMessage());
+                }
+            }
+
+            // FIX Issue #1 (HIGH): Populate appointmentCode from Appointment table
+            String appointmentCode = null;
+            if (invoice.getAppointmentId() != null) {
+                try {
+                    appointmentCode = appointmentRepository.findById(invoice.getAppointmentId())
+                            .map(Appointment::getAppointmentCode)
+                            .orElse(null);
+                } catch (Exception e) {
+                    log.warn("Failed to fetch appointmentCode for invoice {}: {}", invoice.getInvoiceCode(), e.getMessage());
+                }
+            }
+
+            // FIX Issue #2 (MEDIUM): Populate patientName from Patient table
+            String patientName = null;
+            if (invoice.getPatientId() != null) {
+                try {
+                    patientName = patientRepository.findById(invoice.getPatientId())
+                            .map(Patient::getFullName)
+                            .orElse(null);
+                } catch (Exception e) {
+                    log.warn("Failed to fetch patientName for invoice {}: {}", invoice.getInvoiceCode(), e.getMessage());
+                }
+            }
+
+            // BONUS: Populate treatmentPlanCode from PatientTreatmentPlan table
+            String treatmentPlanCode = null;
+            if (invoice.getTreatmentPlanId() != null) {
+                try {
+                    treatmentPlanCode = treatmentPlanRepository.findById(invoice.getTreatmentPlanId().longValue())
+                            .map(PatientTreatmentPlan::getPlanCode) // ✅ Fixed: Use planCode, not treatmentPlanCode
+                            .orElse(null);
+                } catch (Exception e) {
+                    log.warn("Failed to fetch treatmentPlanCode for invoice {}: {}", invoice.getInvoiceCode(), e.getMessage());
+                }
+            }
+
+            // FIX Issue #3 (LOW): Populate createdByName from Employee table (Bác sĩ phụ trách)
+            String createdByName = null;
+            if (invoice.getCreatedBy() != null) {
+                try {
+                    createdByName = employeeRepository.findById(invoice.getCreatedBy())
+                            .map(Employee::getFullName)
+                            .orElse(null);
+                } catch (Exception e) {
+                    log.warn("Failed to fetch createdByName for invoice {}: {}", invoice.getInvoiceCode(), e.getMessage());
+                }
+            }
+
+            // ✅ NEW: Populate invoice creator info (Người tạo hóa đơn)
+            Integer invoiceCreatorId = extractInvoiceCreatorIdFromNotes(invoice.getNotes());
+            String invoiceCreatorName = null;
+            if (invoiceCreatorId != null) {
+                try {
+                    invoiceCreatorName = employeeRepository.findById(invoiceCreatorId)
+                            .map(Employee::getFullName)
+                            .orElse(null);
+                } catch (Exception e) {
+                    log.warn("Failed to fetch invoiceCreatorName for invoice {}: {}", invoice.getInvoiceCode(), e.getMessage());
+                }
+            }
+
+            return InvoiceResponse.builder()
+                    .invoiceId(invoice.getInvoiceId())
+                    .invoiceCode(invoice.getInvoiceCode())
+                    .invoiceType(invoice.getInvoiceType())
+                    .patientId(invoice.getPatientId())
+                    .patientName(patientName) // ✅ Fixed - FE Issue #2
+                    .appointmentId(invoice.getAppointmentId())
+                    .appointmentCode(appointmentCode) // ✅ Fixed - FE Issue #1
+                    .treatmentPlanId(invoice.getTreatmentPlanId())
+                    .treatmentPlanCode(treatmentPlanCode) // ✅ Bonus
+                    .phaseNumber(invoice.getPhaseNumber())
+                    .installmentNumber(invoice.getInstallmentNumber())
+                    .totalAmount(invoice.getTotalAmount())
+                    .paidAmount(invoice.getPaidAmount())
+                    .remainingDebt(invoice.getRemainingDebt())
+                    .paymentStatus(invoice.getPaymentStatus())
+                    .dueDate(invoice.getDueDate())
+                    .notes(invoice.getNotes())
+                    .paymentCode(paymentCode)
+                    .qrCodeUrl(qrCodeUrl)
+                    .createdBy(invoice.getCreatedBy()) // Bác sĩ phụ trách
+                    .createdByName(createdByName) // Tên bác sĩ phụ trách
+                    .invoiceCreatorId(invoiceCreatorId) // ✅ NEW: Người tạo hóa đơn
+                    .invoiceCreatorName(invoiceCreatorName) // ✅ NEW: Tên người tạo hóa đơn
+                    .createdAt(invoice.getCreatedAt())
+                    .updatedAt(invoice.getUpdatedAt())
+                    .items(itemResponses)
+                    .build();
+        } catch (Exception e) {
+            log.error("Error mapping invoice {} to response: {}", invoice.getInvoiceCode(), e.getMessage(), e);
+            throw new RuntimeException("Failed to map invoice to response: " + invoice.getInvoiceCode(), e);
         }
-
-        // FIX Issue #1 (HIGH): Populate appointmentCode from Appointment table
-        String appointmentCode = null;
-        if (invoice.getAppointmentId() != null) {
-            appointmentCode = appointmentRepository.findById(invoice.getAppointmentId())
-                    .map(Appointment::getAppointmentCode)
-                    .orElse(null);
-        }
-
-        // FIX Issue #2 (MEDIUM): Populate patientName from Patient table
-        String patientName = null;
-        if (invoice.getPatientId() != null) {
-            patientName = patientRepository.findById(invoice.getPatientId())
-                    .map(Patient::getFullName)
-                    .orElse(null);
-        }
-
-        // BONUS: Populate treatmentPlanCode from PatientTreatmentPlan table
-        String treatmentPlanCode = null;
-        if (invoice.getTreatmentPlanId() != null) {
-            treatmentPlanCode = treatmentPlanRepository.findById(invoice.getTreatmentPlanId().longValue())
-                    .map(PatientTreatmentPlan::getPlanCode) // ✅ Fixed: Use planCode, not treatmentPlanCode
-                    .orElse(null);
-        }
-
-        // FIX Issue #3 (LOW): Populate createdByName from Employee table (Bác sĩ phụ trách)
-        String createdByName = null;
-        if (invoice.getCreatedBy() != null) {
-            createdByName = employeeRepository.findById(invoice.getCreatedBy())
-                    .map(Employee::getFullName)
-                    .orElse(null);
-        }
-
-        // ✅ NEW: Populate invoice creator info (Người tạo hóa đơn)
-        Integer invoiceCreatorId = extractInvoiceCreatorIdFromNotes(invoice.getNotes());
-        String invoiceCreatorName = null;
-        if (invoiceCreatorId != null) {
-            invoiceCreatorName = employeeRepository.findById(invoiceCreatorId)
-                    .map(Employee::getFullName)
-                    .orElse(null);
-        }
-
-        return InvoiceResponse.builder()
-                .invoiceId(invoice.getInvoiceId())
-                .invoiceCode(invoice.getInvoiceCode())
-                .invoiceType(invoice.getInvoiceType())
-                .patientId(invoice.getPatientId())
-                .patientName(patientName) // ✅ Fixed - FE Issue #2
-                .appointmentId(invoice.getAppointmentId())
-                .appointmentCode(appointmentCode) // ✅ Fixed - FE Issue #1
-                .treatmentPlanId(invoice.getTreatmentPlanId())
-                .treatmentPlanCode(treatmentPlanCode) // ✅ Bonus
-                .phaseNumber(invoice.getPhaseNumber())
-                .installmentNumber(invoice.getInstallmentNumber())
-                .totalAmount(invoice.getTotalAmount())
-                .paidAmount(invoice.getPaidAmount())
-                .remainingDebt(invoice.getRemainingDebt())
-                .paymentStatus(invoice.getPaymentStatus())
-                .dueDate(invoice.getDueDate())
-                .notes(invoice.getNotes())
-                .paymentCode(paymentCode)
-                .qrCodeUrl(qrCodeUrl)
-                .createdBy(invoice.getCreatedBy()) // Bác sĩ phụ trách
-                .createdByName(createdByName) // Tên bác sĩ phụ trách
-                .invoiceCreatorId(invoiceCreatorId) // ✅ NEW: Người tạo hóa đơn
-                .invoiceCreatorName(invoiceCreatorName) // ✅ NEW: Tên người tạo hóa đơn
-                .createdAt(invoice.getCreatedAt())
-                .updatedAt(invoice.getUpdatedAt())
-                .items(itemResponses)
-                .build();
     }
 
     /**
@@ -629,5 +679,196 @@ public class InvoiceService {
                 .map(Account::getPatient)
                 .map(Patient::getPatientId)
                 .orElseThrow(() -> new AccessDeniedException("Không tìm thấy bệnh nhân cho người dùng: " + username));
+    }
+
+    /**
+     * Get patient payment history by patient code
+     * Returns paginated list of invoices with summary statistics
+     * 
+     * @param patientCode Patient business code
+     * @param status Optional payment status filter
+     * @param startDate Optional start date filter (inclusive)
+     * @param endDate Optional end date filter (inclusive)
+     * @param pageable Pagination and sorting parameters
+     * @return Patient payment history with pagination and summary
+     */
+    @Transactional(readOnly = true)
+    public PatientPaymentHistoryResponse getPatientPaymentHistory(
+            String patientCode,
+            InvoicePaymentStatus status,
+            LocalDate startDate,
+            LocalDate endDate,
+            Pageable pageable) {
+        
+        log.info("Getting payment history for patient: {} (status: {}, from: {}, to: {})", 
+                 patientCode, status, startDate, endDate);
+
+        // Validate patient exists and get patientId
+        Patient patient = patientRepository.findOneByPatientCode(patientCode)
+                .orElseThrow(() -> new ResourceNotFoundException("PATIENT_NOT_FOUND", 
+                        "Patient not found with code: " + patientCode));
+
+        // Convert LocalDate to LocalDateTime
+        LocalDateTime startDateTime = (startDate != null) ? startDate.atStartOfDay() : null;
+        LocalDateTime endDateTime = (endDate != null) ? endDate.atTime(LocalTime.MAX) : null;
+
+        // Build specification with filters - use patientId instead of patientCode for better performance
+        Specification<Invoice> spec = InvoiceSpecification.withFilters(
+                status, null, patient.getPatientId(), startDateTime, endDateTime);
+
+        // Get paginated invoices
+        Page<Invoice> invoicesPage = invoiceRepository.findAll(spec, pageable);
+
+        // Map to history items
+        List<InvoiceHistoryItem> historyItems = invoicesPage.getContent().stream()
+                .map(invoice -> mapToHistoryItem(invoice, patient))
+                .collect(Collectors.toList());
+
+        // Calculate summary (query all invoices without pagination for accurate totals)
+        PatientPaymentHistoryResponse.PaymentSummary summary = calculatePaymentSummary(
+                patient.getPatientId(), status, startDateTime, endDateTime);
+
+        // Build pagination info
+        PatientPaymentHistoryResponse.PaginationInfo paginationInfo = 
+                PatientPaymentHistoryResponse.PaginationInfo.builder()
+                        .currentPage(invoicesPage.getNumber() + 1) // 1-based for FE
+                        .pageSize(invoicesPage.getSize())
+                        .totalItems(invoicesPage.getTotalElements())
+                        .totalPages(invoicesPage.getTotalPages())
+                        .build();
+
+        log.info("Retrieved {} invoices for patient {} (total: {}, page: {}/{})",
+                 historyItems.size(), patientCode, invoicesPage.getTotalElements(),
+                 paginationInfo.getCurrentPage(), paginationInfo.getTotalPages());
+
+        return PatientPaymentHistoryResponse.builder()
+                .invoices(historyItems)
+                .pagination(paginationInfo)
+                .summary(summary)
+                .build();
+    }
+
+    /**
+     * Map Invoice entity to InvoiceHistoryItem DTO
+     */
+    private InvoiceHistoryItem mapToHistoryItem(Invoice invoice, Patient patient) {
+        try {
+            // Get appointment code if exists
+            String appointmentCode = null;
+            if (invoice.getAppointmentId() != null) {
+                appointmentCode = appointmentRepository.findById(invoice.getAppointmentId())
+                        .map(Appointment::getAppointmentCode)
+                        .orElse(null);
+            }
+
+            // Get treatment plan code if exists
+            String treatmentPlanCode = null;
+            if (invoice.getTreatmentPlanId() != null) {
+                treatmentPlanCode = treatmentPlanRepository.findById(invoice.getTreatmentPlanId().longValue())
+                        .map(PatientTreatmentPlan::getPlanCode)
+                        .orElse(null);
+            }
+
+            // Map invoice items
+            List<InvoiceHistoryItem.InvoiceItemSummary> itemSummaries = invoiceItemRepository
+                    .findByInvoice_InvoiceId(invoice.getInvoiceId())
+                    .stream()
+                    .map(item -> InvoiceHistoryItem.InvoiceItemSummary.builder()
+                            .itemId(item.getItemId())
+                            .serviceName(item.getServiceName())
+                            .serviceCode(item.getServiceCode())
+                            .quantity(item.getQuantity())
+                            .unitPrice(item.getUnitPrice())
+                            .discount(BigDecimal.ZERO) // No discount field in current model
+                            .totalPrice(item.getSubtotal())
+                            .build())
+                    .collect(Collectors.toList());
+
+            // Map payments
+            List<InvoiceHistoryItem.PaymentInfo> paymentInfos = paymentRepository
+                    .findByInvoice_InvoiceIdOrderByPaymentDateDesc(invoice.getInvoiceId())
+                    .stream()
+                    .map(payment -> InvoiceHistoryItem.PaymentInfo.builder()
+                            .paymentId(payment.getPaymentId())
+                            .amount(payment.getAmount())
+                            .paymentMethod(payment.getPaymentMethod())
+                            .paymentDate(payment.getPaymentDate())
+                            .notes(payment.getNotes())
+                            .build())
+                    .collect(Collectors.toList());
+
+            // Get last payment date
+            LocalDateTime lastPaymentDate = paymentInfos.isEmpty() ? null 
+                    : paymentInfos.get(0).getPaymentDate();
+
+            // Determine primary payment method (from first/latest payment, or null)
+            com.dental.clinic.management.payment.enums.PaymentMethod primaryPaymentMethod = 
+                    paymentInfos.isEmpty() ? null : paymentInfos.get(0).getPaymentMethod();
+
+            return InvoiceHistoryItem.builder()
+                    .invoiceCode(invoice.getInvoiceCode())
+                    .patientCode(patient.getPatientCode())
+                    .patientName(patient.getFullName())
+                    .appointmentCode(appointmentCode)
+                    .treatmentPlanCode(treatmentPlanCode)
+                    .totalAmount(invoice.getTotalAmount())
+                    .paidAmount(invoice.getPaidAmount())
+                    .remainingAmount(invoice.getRemainingDebt())
+                    .paymentStatus(invoice.getPaymentStatus())
+                    .paymentMethod(primaryPaymentMethod)
+                    .issuedDate(invoice.getCreatedAt())
+                    .dueDate(invoice.getDueDate())
+                    .lastPaymentDate(lastPaymentDate)
+                    .notes(invoice.getNotes())
+                    .items(itemSummaries)
+                    .payments(paymentInfos)
+                    .build();
+        } catch (Exception e) {
+            log.error("Error mapping invoice {} to history item: {}", 
+                      invoice.getInvoiceCode(), e.getMessage(), e);
+            throw new RuntimeException("Failed to map invoice to history item", e);
+        }
+    }
+
+    /**
+     * Calculate payment summary for patient
+     */
+    private PatientPaymentHistoryResponse.PaymentSummary calculatePaymentSummary(
+            Integer patientId, 
+            InvoicePaymentStatus statusFilter,
+            LocalDateTime startDate, 
+            LocalDateTime endDate) {
+        
+        // Build specification for all invoices (no pagination)
+        Specification<Invoice> spec = InvoiceSpecification.withFilters(
+                statusFilter, null, patientId, startDate, endDate);
+
+        List<Invoice> allInvoices = invoiceRepository.findAll(spec);
+
+        long totalInvoices = allInvoices.size();
+        BigDecimal totalAmount = allInvoices.stream()
+                .map(Invoice::getTotalAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        BigDecimal paidAmount = allInvoices.stream()
+                .map(Invoice::getPaidAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        BigDecimal remainingAmount = allInvoices.stream()
+                .map(Invoice::getRemainingDebt)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        long unpaidInvoices = allInvoices.stream()
+                .filter(inv -> inv.getPaymentStatus() == InvoicePaymentStatus.PENDING_PAYMENT 
+                            || inv.getPaymentStatus() == InvoicePaymentStatus.PARTIAL_PAID)
+                .count();
+
+        return PatientPaymentHistoryResponse.PaymentSummary.builder()
+                .totalInvoices(totalInvoices)
+                .totalAmount(totalAmount)
+                .paidAmount(paidAmount)
+                .remainingAmount(remainingAmount)
+                .unpaidInvoices(unpaidInvoices)
+                .build();
     }
 }

@@ -5581,6 +5581,41 @@ ALTER TABLE ONLY public.customer_contacts
 
 
 --
+-- Table: appointment_feedbacks
+-- Đánh giá lịch hẹn (Appointment Feedback Module)
+--
+
+CREATE TABLE public.appointment_feedbacks (
+    feedback_id BIGSERIAL PRIMARY KEY,
+    appointment_code VARCHAR(50) NOT NULL UNIQUE,
+    patient_id INTEGER NOT NULL,
+    rating SMALLINT NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    comment TEXT,
+    tags JSON,
+    created_by BIGINT NOT NULL,
+    created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+--
+-- Indexes for appointment_feedbacks
+--
+
+CREATE INDEX idx_feedback_appointment ON public.appointment_feedbacks USING btree (appointment_code);
+CREATE INDEX idx_feedback_patient ON public.appointment_feedbacks USING btree (patient_id);
+CREATE INDEX idx_feedback_rating ON public.appointment_feedbacks USING btree (rating);
+
+--
+-- Foreign Keys for appointment_feedbacks
+--
+
+ALTER TABLE ONLY public.appointment_feedbacks
+    ADD CONSTRAINT fk_feedback_appointment FOREIGN KEY (appointment_code) REFERENCES public.appointments(appointment_code) ON DELETE CASCADE;
+
+ALTER TABLE ONLY public.appointment_feedbacks
+    ADD CONSTRAINT fk_feedback_patient FOREIGN KEY (patient_id) REFERENCES public.patients(patient_id) ON DELETE CASCADE;
+
+
+--
 -- PostgreSQL database dump complete
 --
 

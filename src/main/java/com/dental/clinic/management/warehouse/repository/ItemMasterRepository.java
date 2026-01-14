@@ -65,7 +65,7 @@ public interface ItemMasterRepository extends JpaRepository<ItemMaster, Long>, J
 
         /**
          * Count ItemMasters with itemCode starting with given prefix
-         * Used for auto-generating item codes (INV-YYYY-XXX)
+         * Used for auto-generating item codes (INV-YYYY-SEQ)
          */
         Long countByItemCodeStartingWith(String prefix);
 }

@@ -16,6 +16,7 @@ import com.dental.clinic.management.booking_appointment.repository.PatientPlanIt
 import com.dental.clinic.management.booking_appointment.repository.RoomRepository;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.exception.ResourceNotFoundException;
+import com.dental.clinic.management.feedback.repository.AppointmentFeedbackRepository;
 import com.dental.clinic.management.patient.repository.PatientRepository;
 import com.dental.clinic.management.treatment_plans.domain.PatientPlanItem;
 import lombok.RequiredArgsConstructor;
@@ -56,6 +57,7 @@ public class AppointmentDetailService {
     private final AppointmentAuditLogRepository appointmentAuditLogRepository;
     private final AppointmentPlanItemRepository appointmentPlanItemRepository;
     private final PatientPlanItemRepository patientPlanItemRepository;
+    private final AppointmentFeedbackRepository feedbackRepository;
 
     /**
      * Get appointment detail by code with RBAC check
@@ -418,6 +420,7 @@ public class AppointmentDetailService {
                 .createdBy(createdByName)
                 .createdAt(appointment.getCreatedAt())
                 .linkedTreatmentPlanCode(linkedPlanCode)
+                .hasFeedback(feedbackRepository.existsByAppointmentCode(appointment.getAppointmentCode()))
                 .build();
     }
 

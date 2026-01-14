@@ -52,6 +52,16 @@ spring:
       file-size-threshold: 2KB
 
   # ==============================
+  # Web Resources Configuration
+  # ==============================
+  web:
+    resources:
+      # Disable Spring Boot's default static resource handling (/** pattern)
+      # This prevents ResourceHttpRequestHandler from intercepting API routes
+      # Custom resource handlers defined in WebMvcConfig will handle /static/** only
+      add-mappings: false
+
+  # ==============================
   # Mail Configuration (Email Verification & Password Reset)
   # ==============================
   mail:

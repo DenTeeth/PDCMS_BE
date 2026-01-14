@@ -142,7 +142,7 @@ public class InventoryService {
      */
     @Transactional
     public ItemMasterSummaryResponse createItemMaster(CreateItemMasterRequest request) {
-        // ✅ Auto-generate itemCode in format: INV-YYYY-XXX
+        // ✅ Auto-generate itemCode in format: INV-YYYY-SEQ
         String itemCode = generateItemCode();
         log.info("Creating item master with auto-generated code: {}", itemCode);
 
@@ -882,7 +882,7 @@ public class InventoryService {
     }
 
     /**
-     * Generate Item Code (Material Code) in format: INV-YYYY-XXX
+     * Generate Item Code (Material Code) in format: INV-YYYY-SEQ
      * Example: INV-2026-001, INV-2026-002, ...
      */
     private String generateItemCode() {

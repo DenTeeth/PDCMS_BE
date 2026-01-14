@@ -66,6 +66,7 @@ public class PatientService {
     @SuppressWarnings("unused")
     private final AccountVerificationTokenRepository verificationTokenRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
+    @SuppressWarnings("unused")
     private final EmailService emailService;
     private final ResendEmailService resendEmailService;
     private final RoleRepository roleRepository;

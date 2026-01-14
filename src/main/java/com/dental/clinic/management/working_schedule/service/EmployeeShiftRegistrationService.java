@@ -326,10 +326,6 @@ public class EmployeeShiftRegistrationService {
         }
 
         // Validate dates
-        if (request.getEffectiveFrom().isBefore(LocalDate.now())) {
-            throw new PastDateNotAllowedException(request.getEffectiveFrom());
-        }
-
         if (request.getEffectiveTo() == null) {
             throw new IllegalArgumentException("Ngày kết thúc là bắt buộc");
         }
@@ -359,6 +355,17 @@ public class EmployeeShiftRegistrationService {
                     java.util.List.of(slot.getDayOfWeek()),
                     request.getEffectiveFrom(),
                     request.getEffectiveTo());
+        }
+
+        // FIX: Validate that there are future working dates, not just that start date is in future
+        // This allows registration for week 1 even when week 1 has started, as long as there are
+        // work slots (e.g., Thursday, Friday) that haven't occurred yet
+        LocalDate today = LocalDate.now();
+        boolean hasFutureWorkingDates = datesToCheck.stream()
+                .anyMatch(date -> !date.isBefore(today)); // >= today is acceptable
+        
+        if (!hasFutureWorkingDates) {
+            throw new PastDateNotAllowedException(request.getEffectiveFrom());
         }
 
         // NEW: Validate minimum 1-week requirement
