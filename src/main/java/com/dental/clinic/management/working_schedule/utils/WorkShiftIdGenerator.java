@@ -9,13 +9,13 @@ import java.time.LocalTime;
  */
 public class WorkShiftIdGenerator {
 
-    
+
     private static final String PREFIX = "WKS_";
-    
-    // Time ranges for categorization (Clinic hours: 8:00 AM - 9:00 PM)
-    private static final LocalTime MORNING_START = LocalTime.of(8, 0);   // 8:00 AM
-    private static final LocalTime AFTERNOON_START = LocalTime.of(12, 0); // 12:00 PM (after lunch)
-    private static final LocalTime EVENING_START = LocalTime.of(18, 0);   // 6:00 PM
+
+    // Khung thời gian để phân loại (Giờ làm việc phòng khám: 8:00 AM - 9:00 PM)
+    private static final LocalTime MORNING_START = LocalTime.of(8, 0);   // 8:00 sáng
+    private static final LocalTime AFTERNOON_START = LocalTime.of(12, 0); // 12:00 trưa (sau giờ ăn trưa)
+    private static final LocalTime EVENING_START = LocalTime.of(18, 0);   // 6:00 tối
 
     /**
      * Generate work shift ID based on start and end time.
@@ -44,7 +44,6 @@ public class WorkShiftIdGenerator {
         } else if (startTime.compareTo(MORNING_START) >= 0) {
             return "MORNING";
         } else {
-            // Fallback (shouldn't happen due to validation)
             return "SHIFT";
         }
     }

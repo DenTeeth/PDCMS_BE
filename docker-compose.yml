@@ -1,7 +1,5 @@
-# Docker Compose Configuration for PDCMS Backend
-# No version needed - Docker Compose v2+ automatically uses latest format
 services:
-  # 1. Database (Giữ nguyên)
+  # 1. Database
   postgres:
     image: postgres:13-alpine
     container_name: dentalclinic-postgres
@@ -30,7 +28,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # 2. Redis (Giữ nguyên)
+  # 2. Redis
   redis:
     image: redis:7-alpine
     container_name: dentalclinic-redis
@@ -57,7 +55,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # 3. Backend App (Giữ nguyên)
+  # 3. Backend App
   app:
     build:
       context: .
@@ -82,7 +80,6 @@ services:
       # SendGrid Configuration (Production Email)
       SENDGRID_API_KEY: ${SENDGRID_API_KEY}
       MAIL_FROM: ${MAIL_FROM:-hellodenteeth@gmail.com}
-      # Legacy Gmail SMTP (not used but kept for reference)
       MAIL_USERNAME: ${MAIL_USERNAME}
       MAIL_PASSWORD: ${MAIL_PASSWORD}
       APP_FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
@@ -95,7 +92,6 @@ services:
     networks:
       - dental-network
     healthcheck:
-      # Đã sửa lại lỗi cú pháp healthcheck gây spam log
       test:
         [
           "CMD",
@@ -110,7 +106,7 @@ services:
       retries: 3
       start_period: 60s
 
-  # 4. Nginx Proxy Manager (MỚI THÊM - ĐỂ LẤY SSL MIỄN PHÍ)
+  # 4. Nginx Proxy Manager
   nginx-proxy-manager:
     image: "jc21/nginx-proxy-manager:latest"
     container_name: nginx-proxy-manager

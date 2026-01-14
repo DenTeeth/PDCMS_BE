@@ -37,7 +37,7 @@ public class PartTimeSlotService {
 
         /**
          * Create a new part-time slot.
-         * 
+         *
          * NEW SPECIFICATION:
          * - Requires effectiveFrom and effectiveTo
          * - Supports multiple days (comma-separated)
@@ -50,31 +50,29 @@ public class PartTimeSlotService {
                                 request.getWorkShiftId(), request.getDayOfWeek(),
                                 request.getEffectiveFrom(), request.getEffectiveTo(), request.getQuota());
 
-                // Validate work shift exists
+                // Kiểm tra ca làm việc có tồn tại không
                 WorkShift workShift = workShiftRepository.findById(request.getWorkShiftId())
                                 .orElseThrow(() -> new WorkShiftNotFoundException(request.getWorkShiftId()));
 
-                // NEW: Validate date range
+                // MỚI: Kiểm tra khoảng ngày
                 if (request.getEffectiveTo().isBefore(request.getEffectiveFrom())) {
                         throw new IllegalArgumentException("Ngày kết thúc phải sau ngày bắt đầu");
                 }
 
-                // NEW: Validate effective from is not in the past
+                // MỚI: Kiểm tra ngày bắt đầu không được là quá khứ
                 if (request.getEffectiveFrom().isBefore(java.time.LocalDate.now())) {
                         throw new IllegalArgumentException("Ngày bắt đầu không được là quá khứ");
                 }
 
-                // NEW: Validate day of week format (accept comma-separated values)
+                // MỚI: Kiểm tra định dạng ngày trong tuần (chấp nhận giá trị phân cách bằng dấu phẩy)
                 String normalizedDayOfWeek = request.getDayOfWeek().toUpperCase().trim();
                 validateDaysOfWeek(normalizedDayOfWeek);
 
-                // Note: We no longer check for unique constraint since slots can have same
-                // shift+day
-                // but different date ranges. The combination of shift+day+dates should be
-                // unique.
-                // This validation could be added if needed.
+                // Lưu ý: Chúng ta không còn kiểm tra ràng buộc unique vì các slot có thể có cùng
+                // ca + ngày nhưng khác khoảng thời gian. Tổ hợp ca + ngày + khoảng ngày phải là
+                // duy nhất. Có thể thêm validation này nếu cần.
 
-                // Create slot
+                // Tạo slot
                 PartTimeSlot slot = new PartTimeSlot();
                 slot.setWorkShiftId(request.getWorkShiftId());
                 slot.setDayOfWeek(normalizedDayOfWeek);
@@ -94,7 +92,7 @@ public class PartTimeSlotService {
         /**
          * Validate day of week string.
          * Supports single day (FRIDAY) or multiple days (FRIDAY,SATURDAY).
-         * 
+         *
          * @param dayOfWeek The day of week string to validate
          * @throws IllegalArgumentException if invalid
          */
@@ -113,7 +111,7 @@ public class PartTimeSlotService {
                                                 ". Valid values: MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY");
                         }
 
-                        // Optional: Reject SUNDAY if clinic doesn't work on Sundays
+                        // Tùy chọn: Từ chối SUNDAY nếu phòng khám không làm việc vào Chủ nhật
                         if ("SUNDAY".equals(trimmedDay)) {
                                 log.warn("Creating slot for SUNDAY - verify this is intended");
                         }
@@ -149,7 +147,7 @@ public class PartTimeSlotService {
                 PartTimeSlot slot = partTimeSlotRepository.findById(slotId)
                                 .orElseThrow(() -> new SlotNotFoundException(slotId));
 
-                // Check quota violation - NEW: Use countApprovedRegistrations
+                // Kiểm tra vi phạm quota - MỚI: Sử dụng countApprovedRegistrations
                 long currentRegistered = partTimeSlotRepository.countApprovedRegistrations(slotId);
                 if (request.getQuota() < currentRegistered) {
                         throw new QuotaViolationException(slotId, request.getQuota(), currentRegistered);
@@ -181,11 +179,11 @@ public class PartTimeSlotService {
                 WorkShift workShift = workShiftRepository.findById(slot.getWorkShiftId()).orElse(null);
                 String shiftName = workShift != null ? workShift.getShiftName() : "Unknown";
 
-                // Get all active registrations for this slot
+                // Lấy tất cả đăng ký đang hoạt động cho slot này
                 List<PartTimeRegistration> registrations = registrationRepository
                                 .findByPartTimeSlotIdAndIsActive(slotId, true);
 
-                // Build employee info list
+                // Tạo danh sách thông tin nhân viên
                 List<PartTimeSlotDetailResponse.RegisteredEmployeeInfo> employeeInfos = registrations.stream()
                                 .map(reg -> {
                                         Employee employee = employeeRepository.findById(reg.getEmployeeId())
