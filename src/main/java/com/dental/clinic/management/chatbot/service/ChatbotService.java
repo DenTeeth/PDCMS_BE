@@ -50,31 +50,40 @@ public class ChatbotService {
     public String chat(String userMessage) {
         List<ChatbotKnowledge> knowledgeBase = knowledgeRepository.findByIsActiveTrue();
 
-        // Add dynamic IDs for database queries
-        String listIds = knowledgeBase.stream()
+        // Add dynamic IDs for database queries (single assignment for effectively
+        // final)
+        final String listIds = knowledgeBase.stream()
                 .map(ChatbotKnowledge::getKnowledgeId)
-                .collect(Collectors.joining(", "));
-        listIds += ", PRICE_LIST, SERVICE_INFO, SERVICE_SEARCH";
+                .collect(Collectors.joining(", "))
+                + ", PRICE_LIST, SERVICE_INFO, SERVICE_SEARCH, OUT_OF_SCOPE";
 
         String prompt = buildClassificationPrompt(userMessage, listIds);
 
-        String detectedId;
+        final String detectedId;
         try {
-            detectedId = callGeminiApi(prompt).trim().toUpperCase();
+            String rawResponse = callGeminiApi(prompt).trim().toUpperCase();
             // Clean up response - remove quotes, asterisks, extra whitespace
-            detectedId = detectedId.replaceAll("[\"*\\s]", "");
+            detectedId = rawResponse.replaceAll("[\"*\\s]", "");
             log.info("User message: '{}' -> Detected ID: '{}'", userMessage, detectedId);
         } catch (Exception e) {
             log.error("Gemini API error: {}", e.getMessage(), e);
-            return "Dạ em đang gặp sự cố kỹ thuật. Anh/Chị vui lòng gọi Hotline 0909.123.456 để được hỗ trợ ạ!";
+            return "Da em dang gap su co ky thuat. Anh/Chi vui long goi Hotline 076.400.9726 de duoc ho tro a!";
         }
 
         // Handle dynamic database queries
+        if ("OUT_OF_SCOPE".equals(detectedId)) {
+            return getOutOfScopeResponse();
+        }
         if ("PRICE_LIST".equals(detectedId)) {
             return buildPriceListResponse();
         }
         if ("SERVICE_INFO".equals(detectedId) || "SERVICE_SEARCH".equals(detectedId)) {
             return handleServiceQuery(userMessage);
+        }
+        // Handle symptom consultation (deterministic)
+        String symptomResponse = getSymptomResponse(detectedId);
+        if (symptomResponse != null) {
+            return symptomResponse;
         }
 
         // Check static knowledge base
@@ -98,13 +107,20 @@ public class ChatbotService {
                 Task: Classify user message into EXACTLY ONE ID from this list: [%s].
 
                 Classification rules:
-                - GREETING: chào hỏi, xin chào, hello, hi
-                - PRICE_LIST: hỏi về bảng giá, giá dịch vụ, bao nhiêu tiền (general)
-                - SERVICE_INFO: hỏi về dịch vụ cụ thể (tên dịch vụ, chi tiết)
-                - SERVICE_SEARCH: tìm kiếm dịch vụ theo keyword
-                - SYMPTOM_TOOTHACHE: đau răng, nhức răng
-                - ADDRESS: địa chỉ, ở đâu, location
-                - UNKNOWN: không thuộc các loại trên
+                - GREETING: chao hoi, xin chao, hello, hi
+                - PRICE_LIST: hoi ve bang gia, gia dich vu, bao nhieu tien (general)
+                - SERVICE_INFO: hoi ve dich vu cu the (ten dich vu, chi tiet)
+                - SERVICE_SEARCH: tim kiem dich vu theo keyword
+                - SYMPTOM_TOOTHACHE: dau rang, nhuc rang, rang dau
+                - SYMPTOM_BLEEDING_GUMS: chay mau nuou, chay mau loi
+                - SYMPTOM_LOOSE_TOOTH: rang lung lay, rang long
+                - SYMPTOM_BAD_BREATH: hoi mieng, mieng hoi
+                - SYMPTOM_SENSITIVE_TEETH: e buot, rang nhay cam
+                - SYMPTOM_SWOLLEN_FACE: sung ma, sung mat
+                - SYMPTOM_WISDOM_TOOTH: rang khon, rang so 8
+                - ADDRESS: dia chi, o dau, location
+                - OUT_OF_SCOPE: khong lien quan den nha khoa (game, thoi tiet, chinh tri, etc.)
+                - UNKNOWN: khong thuoc cac loai tren
 
                 User message: "%s"
 
@@ -112,6 +128,7 @@ public class ChatbotService {
                 1. Return ONLY the ID, no explanation
                 2. If asking about price/cost, return PRICE_LIST
                 3. If asking about specific service by name, return SERVICE_INFO
+                4. If message has NOTHING to do with dental/healthcare, return OUT_OF_SCOPE
 
                 Your answer:
                 """.formatted(listIds, userMessage);
@@ -242,8 +259,130 @@ public class ChatbotService {
      */
     private String formatPrice(java.math.BigDecimal price) {
         if (price == null)
-            return "Liên hệ";
-        return VND_FORMAT.format(price) + " VNĐ";
+            return "Lien he";
+        return VND_FORMAT.format(price) + " VND";
+    }
+
+    /**
+     * Response for out-of-scope questions (not dental related)
+     */
+    private String getOutOfScopeResponse() {
+        return "Xin loi, em la tro ly ao chuyen ve NHA KHOA cua phong kham DenTeeth.\n\n" +
+                "Em co the giup ban:\n" +
+                "- Tra cuu bang gia dich vu\n" +
+                "- Tu van trieu chung rang mieng\n" +
+                "- Thong tin dia chi, gio lam viec\n" +
+                "- Huong dan dat lich kham\n\n" +
+                "Anh/Chi co cau hoi gi ve rang mieng khong a?\n" +
+                "Hotline: 076.400.9726";
+    }
+
+    /**
+     * Deterministic symptom responses (same symptoms = same response ALWAYS)
+     */
+    private String getSymptomResponse(String symptomId) {
+        return switch (symptomId) {
+            case "SYMPTOM_TOOTHACHE" ->
+                "[TRIEU CHUNG DAU RANG]\n\n" +
+                        "Dua tren trieu chung, co the la mot trong cac van de sau:\n\n" +
+                        "1. Sau rang (Dental Caries) - Pho bien nhat\n" +
+                        "   - Dau khi an do ngot, nong, lanh\n" +
+                        "   - Co the thay lo den tren rang\n\n" +
+                        "2. Viem tuy rang (Pulpitis)\n" +
+                        "   - Dau du doi, keo dai\n" +
+                        "   - Dau tang ve dem\n\n" +
+                        "3. Ap xe rang (Dental Abscess)\n" +
+                        "   - Sung ma, dau nhuc lien tuc\n" +
+                        "   - Co the sot nhe\n\n" +
+                        "Khuyen nghi: Nen kham bac si som de xac dinh chinh xac nguyen nhan.\n" +
+                        "Hotline: 076.400.9726";
+
+            case "SYMPTOM_BLEEDING_GUMS" ->
+                "[TRIEU CHUNG CHAY MAU NUOU]\n\n" +
+                        "Co the la dau hieu cua:\n\n" +
+                        "1. Viem nuou (Gingivitis) - Pho bien nhat\n" +
+                        "   - Nuou do, sung\n" +
+                        "   - Chay mau khi danh rang\n\n" +
+                        "2. Viem nha chu (Periodontitis)\n" +
+                        "   - Nuou tut, rang lung lay\n" +
+                        "   - Co tui nha chu\n\n" +
+                        "3. Thieu Vitamin C\n" +
+                        "   - Nuou yeu, de chay mau\n\n" +
+                        "Khuyen nghi: Can kham va lay cao rang dinh ky.\n" +
+                        "Hotline: 076.400.9726";
+
+            case "SYMPTOM_LOOSE_TOOTH" ->
+                "[TRIEU CHUNG RANG LUNG LAY]\n\n" +
+                        "Nguyen nhan co the:\n\n" +
+                        "1. Viem nha chu nang (Advanced Periodontitis)\n" +
+                        "   - Tieu xuong o rang\n" +
+                        "   - Rang lung lay tu tu\n\n" +
+                        "2. Chan thuong rang\n" +
+                        "   - Do va dap, tai nan\n\n" +
+                        "3. Nghien rang (Bruxism)\n" +
+                        "   - Thuong nghien rang khi ngu\n\n" +
+                        "KHAN CAP: Neu rang rat lung lay, can kham NGAY!\n" +
+                        "Hotline: 076.400.9726";
+
+            case "SYMPTOM_BAD_BREATH" ->
+                "[TRIEU CHUNG HOI MIENG]\n\n" +
+                        "Nguyen nhan pho bien:\n\n" +
+                        "1. Ve sinh rang mieng kem\n" +
+                        "   - Mang bam, cao rang tich tu\n\n" +
+                        "2. Benh nuou/nha chu\n" +
+                        "   - Viem nuou man tinh\n\n" +
+                        "3. Sau rang khong dieu tri\n" +
+                        "   - Thuc an dong trong lo sau\n\n" +
+                        "4. Kho mieng\n" +
+                        "   - Thieu nuoc bot\n\n" +
+                        "Khuyen nghi: Lay cao rang va kham tong quat.\n" +
+                        "Hotline: 076.400.9726";
+
+            case "SYMPTOM_SENSITIVE_TEETH" ->
+                "[TRIEU CHUNG E BUOT RANG]\n\n" +
+                        "Co the do:\n\n" +
+                        "1. Mon men rang\n" +
+                        "   - Do acid tu thuc an/nuoc uong\n" +
+                        "   - Danh rang qua manh\n\n" +
+                        "2. Tut nuou\n" +
+                        "   - Lo chan rang (nga rang)\n\n" +
+                        "3. Sau rang giai doan dau\n" +
+                        "   - Men rang bi ton thuong\n\n" +
+                        "4. Nut rang nho\n" +
+                        "   - Dau khi can\n\n" +
+                        "Khuyen nghi: Dung kem danh rang chong e buot va kham kiem tra.\n" +
+                        "Hotline: 076.400.9726";
+
+            case "SYMPTOM_SWOLLEN_FACE" ->
+                "[TRIEU CHUNG SUNG MA/MAT - KHAN CAP!]\n\n" +
+                        "Nguyen nhan co the:\n\n" +
+                        "1. Ap xe rang (Dental Abscess)\n" +
+                        "   - Nhiem trung nang\n" +
+                        "   - Sung dau, co the sot\n\n" +
+                        "2. Viem mo te bao (Cellulitis)\n" +
+                        "   - Nhiem trung lan rong\n" +
+                        "   - RAT NGUY HIEM\n\n" +
+                        "3. Rang khon moc lech\n" +
+                        "   - Viem quanh than rang\n\n" +
+                        "KHAN CAP: Sung mat kem sot, kho tho -> den benh vien NGAY!\n" +
+                        "Hotline KHAN: 076.400.9726";
+
+            case "SYMPTOM_WISDOM_TOOTH" ->
+                "[VAN DE RANG KHON]\n\n" +
+                        "Cac van de thuong gap:\n\n" +
+                        "1. Rang khon moc lech/ngam\n" +
+                        "   - Dau nhuc vung goc ham\n" +
+                        "   - Kho mo mieng\n\n" +
+                        "2. Viem loi trum\n" +
+                        "   - Sung do nuou phia sau\n" +
+                        "   - Dau khi nhai\n\n" +
+                        "3. Sau rang khon\n" +
+                        "   - Kho ve sinh\n\n" +
+                        "Giai phap: Nho rang khon la phuong phap triet de nhat.\n" +
+                        "Hotline: 076.400.9726";
+
+            default -> null;
+        };
     }
 
     private String callGeminiApi(String prompt) {
