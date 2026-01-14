@@ -1,9 +1,6 @@
 -- ============================================
 -- POSTGRESQL ENUM TYPES FOR DENTAL CLINIC
 -- ============================================
--- This file contains ONLY ENUM type definitions
--- Must be created BEFORE Hibernate generates tables
--- ============================================
 
 -- Appointment ENUMs
 DROP TYPE IF EXISTS appointment_action_type CASCADE;
