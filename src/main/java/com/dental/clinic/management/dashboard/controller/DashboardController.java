@@ -118,10 +118,25 @@ public class DashboardController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/feedbacks")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @Operation(summary = "Get feedback statistics",
+               description = "Get doctor feedback and rating statistics. " +
+                            "Supports date range filtering and sorting by rating or feedback count")
+    public ResponseEntity<com.dental.clinic.management.feedback.dto.DoctorFeedbackStatisticsResponse> getFeedbackStatistics(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(defaultValue = "10") int top,
+            @RequestParam(defaultValue = "rating") String sortBy) {
+        com.dental.clinic.management.feedback.dto.DoctorFeedbackStatisticsResponse response = 
+            dashboardService.getFeedbackStatistics(startDate, endDate, top, sortBy);
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/export/{tab}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     @Operation(summary = "Export dashboard statistics",
-               description = "Export specific tab statistics. Available tabs: overview, revenue-expenses, employees, warehouse, transactions, all. " +
+               description = "Export specific tab statistics. Available tabs: overview, revenue-expenses, employees, warehouse, transactions, feedbacks, all. " +
                             "Formats: excel (default), csv. Supports both month-based and date range filtering")
     public ResponseEntity<?> exportToExcel(
             @PathVariable String tab,
