@@ -26,6 +26,7 @@ public class DashboardExportService {
     private final DashboardEmployeeService employeeService;
     private final DashboardWarehouseService warehouseService;
     private final DashboardTransactionService transactionService;
+    private final com.dental.clinic.management.feedback.service.AppointmentFeedbackService feedbackService;
 
     public byte[] exportToExcel(String tab, String month, LocalDate startDate, LocalDate endDate) {
         log.info("Exporting tab: {} - month: {}, startDate: {}, endDate: {}", tab, month, startDate, endDate);
@@ -39,6 +40,7 @@ public class DashboardExportService {
                 case "employees" -> exportEmployees(workbook, month, startDate, endDate);
                 case "warehouse" -> exportWarehouse(workbook, month, startDate, endDate);
                 case "transactions" -> exportTransactions(workbook, month, startDate, endDate);
+                case "feedbacks" -> exportFeedbacks(workbook, month, startDate, endDate);
                 default -> throw new IllegalArgumentException("Invalid tab: " + tab);
             }
             
@@ -375,6 +377,142 @@ public class DashboardExportService {
         autoSizeColumns(sheet, 2);
     }
 
+    private void exportFeedbacks(Workbook workbook, String month, LocalDate startDate, LocalDate endDate) {
+        com.dental.clinic.management.feedback.dto.DoctorFeedbackStatisticsResponse data = 
+            feedbackService.getStatisticsByDoctor(startDate, endDate, 10, "rating");
+        Sheet sheet = workbook.createSheet("Feedbacks");
+        
+        CellStyle headerStyle = createHeaderStyle(workbook);
+        
+        int rowNum = 0;
+        
+        // Title
+        Row titleRow = sheet.createRow(rowNum++);
+        Cell titleCell = titleRow.createCell(0);
+        String dateRange = month != null ? month : 
+            (startDate != null && endDate != null ? startDate + " to " + endDate : "All Time");
+        titleCell.setCellValue("Feedback & Ratings Statistics - " + dateRange);
+        titleCell.setCellStyle(createTitleStyle(workbook));
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 5));
+        rowNum++;
+        
+        // Overall Statistics
+        createSectionHeader(sheet, rowNum++, "Overall Statistics", headerStyle);
+        long totalDoctors = data.getDoctors().size();
+        double avgRating = data.getDoctors().stream()
+            .mapToDouble(d -> d.getStatistics().getAverageRating())
+            .average().orElse(0.0);
+        long totalFeedbacks = data.getDoctors().stream()
+            .mapToLong(d -> d.getStatistics().getTotalFeedbacks())
+            .sum();
+        long topRatedCount = data.getDoctors().stream()
+            .filter(d -> d.getStatistics().getAverageRating() >= 4.5)
+            .count();
+        
+        rowNum = addDataRow(sheet, rowNum, "Total Doctors", totalDoctors);
+        rowNum = addDataRow(sheet, rowNum, "Average Rating", Math.round(avgRating * 100.0) / 100.0);
+        rowNum = addDataRow(sheet, rowNum, "Total Feedbacks", totalFeedbacks);
+        rowNum = addDataRow(sheet, rowNum, "Top Rated Doctors (≥4.5)", topRatedCount);
+        rowNum++;
+        
+        // Top Doctors by Rating
+        if (!data.getDoctors().isEmpty()) {
+            createSectionHeader(sheet, rowNum++, "Top Doctors by Rating", headerStyle);
+            Row headerRow = sheet.createRow(rowNum++);
+            headerRow.createCell(0).setCellValue("Rank");
+            headerRow.createCell(1).setCellValue("Employee Code");
+            headerRow.createCell(2).setCellValue("Doctor Name");
+            headerRow.createCell(3).setCellValue("Specialization");
+            headerRow.createCell(4).setCellValue("Average Rating");
+            headerRow.createCell(5).setCellValue("Total Feedbacks");
+            headerRow.createCell(6).setCellValue("5-Star");
+            headerRow.createCell(7).setCellValue("4-Star");
+            headerRow.createCell(8).setCellValue("3-Star");
+            headerRow.createCell(9).setCellValue("2-Star");
+            headerRow.createCell(10).setCellValue("1-Star");
+            
+            for (Cell cell : headerRow) {
+                cell.setCellStyle(headerStyle);
+            }
+            
+            int rank = 1;
+            for (com.dental.clinic.management.feedback.dto.DoctorFeedbackStatisticsResponse.DoctorStatistics doctor : data.getDoctors()) {
+                Row row = sheet.createRow(rowNum++);
+                row.createCell(0).setCellValue(rank++);
+                row.createCell(1).setCellValue(doctor.getEmployeeCode());
+                row.createCell(2).setCellValue(doctor.getEmployeeName());
+                row.createCell(3).setCellValue(doctor.getSpecialization());
+                
+                Cell ratingCell = row.createCell(4);
+                ratingCell.setCellValue(doctor.getStatistics().getAverageRating());
+                
+                row.createCell(5).setCellValue(doctor.getStatistics().getTotalFeedbacks());
+                
+                // Rating distribution
+                java.util.Map<String, Long> dist = doctor.getStatistics().getRatingDistribution();
+                row.createCell(6).setCellValue(dist.getOrDefault("5", 0L));
+                row.createCell(7).setCellValue(dist.getOrDefault("4", 0L));
+                row.createCell(8).setCellValue(dist.getOrDefault("3", 0L));
+                row.createCell(9).setCellValue(dist.getOrDefault("2", 0L));
+                row.createCell(10).setCellValue(dist.getOrDefault("1", 0L));
+            }
+        }
+        
+        autoSizeColumns(sheet, 11);
+    }
+
+    private void exportFeedbacksCSV(CSVPrinter csv, String month, LocalDate startDate, LocalDate endDate) throws IOException {
+        com.dental.clinic.management.feedback.dto.DoctorFeedbackStatisticsResponse data = 
+            feedbackService.getStatisticsByDoctor(startDate, endDate, 10, "rating");
+        
+        String dateRange = month != null ? month : 
+            (startDate != null && endDate != null ? startDate + " to " + endDate : "All Time");
+        csv.printRecord("Feedback & Ratings Statistics", dateRange);
+        csv.println();
+        
+        // Overall Statistics
+        long totalDoctors = data.getDoctors().size();
+        double avgRating = data.getDoctors().stream()
+            .mapToDouble(d -> d.getStatistics().getAverageRating())
+            .average().orElse(0.0);
+        long totalFeedbacks = data.getDoctors().stream()
+            .mapToLong(d -> d.getStatistics().getTotalFeedbacks())
+            .sum();
+        long topRatedCount = data.getDoctors().stream()
+            .filter(d -> d.getStatistics().getAverageRating() >= 4.5)
+            .count();
+        
+        csv.printRecord("Overall Statistics");
+        csv.printRecord("Total Doctors", totalDoctors);
+        csv.printRecord("Average Rating", String.format("%.2f", avgRating));
+        csv.printRecord("Total Feedbacks", totalFeedbacks);
+        csv.printRecord("Top Rated Doctors (≥4.5)", topRatedCount);
+        csv.println();
+        
+        // Top Doctors by Rating
+        csv.printRecord("Top Doctors by Rating");
+        csv.printRecord("Rank", "Employee Code", "Doctor Name", "Specialization", "Avg Rating", 
+                       "Total Feedbacks", "5-Star", "4-Star", "3-Star", "2-Star", "1-Star");
+        
+        int rank = 1;
+        for (com.dental.clinic.management.feedback.dto.DoctorFeedbackStatisticsResponse.DoctorStatistics doctor : data.getDoctors()) {
+            java.util.Map<String, Long> dist = doctor.getStatistics().getRatingDistribution();
+            csv.printRecord(
+                rank++,
+                doctor.getEmployeeCode(),
+                doctor.getEmployeeName(),
+                doctor.getSpecialization(),
+                String.format("%.2f", doctor.getStatistics().getAverageRating()),
+                doctor.getStatistics().getTotalFeedbacks(),
+                dist.getOrDefault("5", 0L),
+                dist.getOrDefault("4", 0L),
+                dist.getOrDefault("3", 0L),
+                dist.getOrDefault("2", 0L),
+                dist.getOrDefault("1", 0L)
+            );
+        }
+    }
+
     // Helper methods for styling and formatting
     
     private CellStyle createTitleStyle(Workbook workbook) {
@@ -470,12 +608,13 @@ public class DashboardExportService {
         try (Workbook workbook = new XSSFWorkbook();
              ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             
-            // Export all 5 tabs to one workbook
+            // Export all 6 tabs to one workbook
             exportOverview(workbook, month, startDate, endDate);
             exportRevenueExpenses(workbook, month, startDate, endDate);
             exportEmployees(workbook, month, startDate, endDate);
             exportWarehouse(workbook, month, startDate, endDate);
             exportTransactions(workbook, month, startDate, endDate);
+            exportFeedbacks(workbook, month, startDate, endDate);
             
             workbook.write(out);
             return out.toByteArray();
@@ -501,6 +640,7 @@ public class DashboardExportService {
                 case "employees" -> exportEmployeesCSV(csvPrinter, month, startDate, endDate);
                 case "warehouse" -> exportWarehouseCSV(csvPrinter, month, startDate, endDate);
                 case "transactions" -> exportTransactionsCSV(csvPrinter, month, startDate, endDate);
+                case "feedbacks" -> exportFeedbacksCSV(csvPrinter, month, startDate, endDate);
                 default -> throw new IllegalArgumentException("Invalid tab: " + tab);
             }
             

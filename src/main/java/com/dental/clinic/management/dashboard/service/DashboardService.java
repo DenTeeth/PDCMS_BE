@@ -29,6 +29,7 @@ public class DashboardService {
     private final DashboardEmployeeService employeeService;
     private final DashboardWarehouseService warehouseService;
     private final DashboardTransactionService transactionService;
+    private final com.dental.clinic.management.feedback.service.AppointmentFeedbackService feedbackService;
     
     // Additional repositories for overview statistics
     private final com.dental.clinic.management.warehouse.repository.StorageTransactionRepository storageTransactionRepository;
@@ -178,6 +179,20 @@ public class DashboardService {
     public TransactionStatisticsResponse getTransactionStatistics(String month, LocalDate startDate, LocalDate endDate) {
         log.info("Getting transaction statistics - month: {}, startDate: {}, endDate: {}", month, startDate, endDate);
         return transactionService.getTransactionStatistics(month, startDate, endDate);
+    }
+
+    /**
+     * Get feedback statistics
+     * Supports date range filtering and sorting
+     */
+    @Cacheable(value = "dashboardFeedbacks",
+               key = "#startDate + '_' + #endDate + '_' + #top + '_' + #sortBy",
+               unless = "#result == null")
+    public com.dental.clinic.management.feedback.dto.DoctorFeedbackStatisticsResponse getFeedbackStatistics(
+            LocalDate startDate, LocalDate endDate, int top, String sortBy) {
+        log.info("Getting feedback statistics - startDate: {}, endDate: {}, top: {}, sortBy: {}", 
+                startDate, endDate, top, sortBy);
+        return feedbackService.getStatisticsByDoctor(startDate, endDate, top, sortBy);
     }
 
     /**
