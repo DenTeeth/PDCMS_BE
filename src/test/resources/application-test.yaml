@@ -30,7 +30,7 @@ dentalclinic:
 chatbot:
   gemini:
     api-key: ${GEMINI_API_KEY:test-api-key-for-testing}
-    model-name: gemini-2.5-flash
+    model-name: gemini-2.0-flash
 
 # Disable unnecessary features for testing
 logging:
