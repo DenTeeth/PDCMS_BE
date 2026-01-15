@@ -40,6 +40,29 @@ public class FormatRestResponse implements ResponseBodyAdvice<Object> {
             return body;
         }
 
+        // Không format nếu là binary data (byte[], Resource, InputStream)
+        // Bao gồm: Excel files, PDF files, images, etc.
+        if (body instanceof byte[] || 
+            body instanceof org.springframework.core.io.Resource ||
+            body instanceof java.io.InputStream) {
+            return body;
+        }
+
+        // Không format nếu Content-Type là binary/file types
+        if (selectedContentType != null) {
+            String contentTypeStr = selectedContentType.toString().toLowerCase();
+            if (contentTypeStr.contains("application/octet-stream") ||
+                contentTypeStr.contains("application/vnd.openxmlformats") ||
+                contentTypeStr.contains("application/pdf") ||
+                contentTypeStr.contains("text/csv") ||
+                contentTypeStr.contains("text/plain") && contentTypeStr.contains("attachment") ||
+                selectedContentType.getType().equals("image") ||
+                selectedContentType.getType().equals("video") ||
+                selectedContentType.getType().equals("audio")) {
+                return body;
+            }
+        }
+
         // Không format nếu đã là RestResponse để tránh nested wrapper
         if (body instanceof RestResponse) {
             return body;
