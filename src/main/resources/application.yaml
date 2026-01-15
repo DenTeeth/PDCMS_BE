@@ -28,9 +28,9 @@ spring:
           batch_size: 20
     show-sql: true # Temporarily enable to verify SQL statements
 
-  # SQL Init Configuration - THREE-PHASE INITIALIZATION
+  # SQL Init Configuration
   # EXECUTION ORDER:
-  #   1. schema-locations (enums.sql) runs BEFORE Hibernate - creates ENUMs
+  #   1. schema-locations (enums.sql)
   #   2. Hibernate creates tables using existing ENUMs (ddl-auto: update)
   #   3. DataInitializer bean loads INSERT statements from seed-data.sql AFTER tables exist
   sql:
@@ -56,9 +56,6 @@ spring:
   # ==============================
   web:
     resources:
-      # Disable Spring Boot's default static resource handling (/** pattern)
-      # This prevents ResourceHttpRequestHandler from intercepting API routes
-      # Custom resource handlers defined in WebMvcConfig will handle /static/** only
       add-mappings: false
 
   # ==============================

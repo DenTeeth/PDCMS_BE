@@ -1,20 +1,23 @@
-# PDCMS – Private Dental Clinic Management System
+# PDCMS - Private Dental Clinic Management System
 
 **Project Code:** FA25SE202
+
 **Student Group:** GFA25SE96
 
 ## Team Members:
 
-- Võ Nguyễn Minh Quân – SE160914
-- Đoàn Nguyễn Khôi Nguyên – SE182907
-- Lê Anh Khoa – SE184100
-- Trịnh Công Thái – SE183743
+- Vo Nguyen Minh Quan - SE160914
+- Doan Nguyen Khoi Nguyen - SE182907
+- Le Anh Khoa - SE184100
+- Trinh Cong Thai - SE183743
 
-**Supervisor:** Lâm Hữu Khánh Phương
-**External Supervisor:** Nguyễn Văn Chiến, Nguyễn Xuân Bỉnh
+**Supervisor:** Lam Huu Khanh Phuong
+
+**External Supervisor:** Nguyen Van Chien, Nguyen Xuan Binh
 
 **Semester:** FA25
-**January 14, 2026**
+
+**January 15, 2026**
 
 ---
 
@@ -90,6 +93,8 @@ The PDCMS system is built on a monolithic architecture using Spring Boot, with m
 | Chatbot             | `chatbot/`             | FAQ chatbot with Gemini AI                            |
 | Dashboard           | `dashboard/`           | Reports and analytics                                 |
 | Feedback            | `feedback/`            | Patient feedback and reviews                          |
+| Permission          | `permission/`          | RBAC permission management                            |
+| Role                | `role/`                | Role and base role management                         |
 
 **Build command:**
 
@@ -170,13 +175,19 @@ docker compose down
 
 **Technologies:**
 
-- React/Next.js
-- TypeScript
-- Tailwind CSS
-- TanStack Query (React Query)
+- Next.js 16 with Turbopack
+- React 19
+- TypeScript 5
+- Tailwind CSS 4
+- TanStack Query (React Query) 5
 - React Hook Form + Zod validation
-- Lucide React (icons)
-- WebSocket (real-time updates)
+- Radix UI (Headless components)
+- Lucide React + FontAwesome (icons)
+- FullCalendar (Appointment scheduling)
+- Recharts (Data visualization)
+- WebSocket with STOMP.js + SockJS
+- next-intl (Internationalization)
+- Framer Motion (Animations)
 
 **Development Port:** 3000
 
@@ -187,7 +198,7 @@ docker compose down
 **Install dependencies:**
 
 ```bash
-cd pdcms-fe
+cd PDCMS_FE
 npm install
 ```
 
@@ -227,16 +238,100 @@ npm run build
 
 ### 2.2 Frontend Technologies
 
-| Name            | Version | Purpose                     |
-| --------------- | ------- | --------------------------- |
-| Node.js         | 18+     | JavaScript runtime          |
-| React/Next.js   | Latest  | UI framework                |
-| TypeScript      | 5.x     | Type-safe JavaScript        |
-| Tailwind CSS    | 3.4+    | Utility-first CSS framework |
-| TanStack Query  | 5.x     | Server state management     |
-| React Hook Form | 7.x     | Form management             |
-| Zod             | 3.x     | Schema validation           |
-| Lucide React    | Latest  | Icon library                |
+#### Core Framework & Runtime
+
+| Name       | Version | Purpose                      |
+| ---------- | ------- | ---------------------------- |
+| Node.js    | 20+     | JavaScript runtime           |
+| Next.js    | 16.0+   | React framework with SSR/SSG |
+| React      | 19.2+   | UI framework                 |
+| TypeScript | 5+      | Type-safe JavaScript         |
+
+#### UI Component Libraries
+
+| Name          | Version | Purpose                    |
+| ------------- | ------- | -------------------------- |
+| Radix UI      | Latest  | Headless component library |
+| Lucide React  | 0.544+  | Icon library               |
+| FontAwesome   | 7.0+    | Icon library               |
+| Framer Motion | 12.23+  | Animation library          |
+
+#### Styling
+
+| Name                     | Version | Purpose                       |
+| ------------------------ | ------- | ----------------------------- |
+| Tailwind CSS             | 4+      | Utility-first CSS framework   |
+| Class Variance Authority | 0.7+    | Component variant management  |
+| clsx                     | 2.1+    | Classname utility             |
+| tailwind-merge           | 3.3+    | Merge Tailwind classes        |
+| next-themes              | 0.4+    | Theme management (dark/light) |
+
+#### Form & Validation
+
+| Name                | Version | Purpose                  |
+| ------------------- | ------- | ------------------------ |
+| React Hook Form     | 7.65+   | Form management          |
+| Zod                 | 4.1+    | Schema validation        |
+| @hookform/resolvers | 5.2+    | Form validation resolver |
+
+#### Data Visualization & Calendar
+
+| Name         | Version | Purpose            |
+| ------------ | ------- | ------------------ |
+| Recharts     | 3.3+    | Chart library      |
+| FullCalendar | 6.1+    | Calendar component |
+
+#### Date & Time
+
+| Name             | Version | Purpose               |
+| ---------------- | ------- | --------------------- |
+| date-fns         | 4.1+    | Date utility library  |
+| React Day Picker | 9.11+   | Date picker component |
+
+#### State Management & HTTP
+
+| Name            | Version | Purpose                 |
+| --------------- | ------- | ----------------------- |
+| TanStack Query  | 5.90+   | Server state management |
+| Axios           | 1.13+   | HTTP client             |
+| GraphQL         | 16.12+  | Query language          |
+| graphql-request | 7.4+    | GraphQL client          |
+
+#### Real-time Communication
+
+| Name           | Version | Purpose                |
+| -------------- | ------- | ---------------------- |
+| @stomp/stompjs | 7.2+    | WebSocket STOMP client |
+| sockjs-client  | 1.6+    | WebSocket fallback     |
+
+#### File & Media Handling
+
+| Name                  | Version | Purpose                        |
+| --------------------- | ------- | ------------------------------ |
+| ExcelJS               | 4.4+    | Excel file generation          |
+| Cloudinary            | 2.8+    | Image/video management         |
+| next-cloudinary       | 6.17+   | Cloudinary Next.js integration |
+| React Lazy Load Image | 1.6+    | Image lazy loading             |
+
+#### Medical Imaging
+
+| Name           | Version | Purpose                    |
+| -------------- | ------- | -------------------------- |
+| @niivue/niivue | 0.65+   | NIfTI medical image viewer |
+
+#### Authentication & Cookies
+
+| Name       | Version | Purpose           |
+| ---------- | ------- | ----------------- |
+| jwt-decode | 4.0+    | JWT token decoder |
+| js-cookie  | 3.0+    | Cookie management |
+
+#### Internationalization & Notifications
+
+| Name      | Version | Purpose             |
+| --------- | ------- | ------------------- |
+| next-intl | 4.4+    | i18n for Next.js    |
+| Sonner    | 2.0+    | Toast notifications |
 
 ### 2.3 Database & Infrastructure
 
@@ -256,7 +351,7 @@ npm run build
 | Resend Java SDK    | 3.0.0     | Production email service          |
 | Spring Mail        | 3.2.x     | Email sending abstraction         |
 | LangChain4J Gemini | 0.35.0    | Gemini AI integration for chatbot |
-| Google AI Gemini   | 2.5-flash | AI model for FAQ responses        |
+| Google AI Gemini   | 2.0-flash | AI model for FAQ responses        |
 
 ---
 
@@ -367,6 +462,10 @@ APP_PORT=8080
 NEXT_PUBLIC_API_BASE_URL=http://localhost:8080
 NEXT_PUBLIC_WS_URL=ws://localhost:8080/ws
 
+# Cloudinary Configuration (Image uploads)
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=your-cloud-name
+NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=your-upload-preset
+
 # For production deployment:
 # NEXT_PUBLIC_API_BASE_URL=https://pdcms.duckdns.org
 # NEXT_PUBLIC_WS_URL=wss://pdcms.duckdns.org/ws
@@ -412,7 +511,7 @@ MAIL_REPLY_TO=support@yourdomain.com
 **Required configuration:**
 
 - Google AI API Key
-- Model name (gemini-2.5-flash)
+- Model name (gemini-2.0-flash)
 
 **How to obtain API key:**
 
@@ -839,5 +938,6 @@ After installation, seed data is automatically loaded:
 
 ---
 
-_Document generated: January 14, 2026_
+_Document generated: January 15, 2026_
+
 _Version: 1.0.0_
