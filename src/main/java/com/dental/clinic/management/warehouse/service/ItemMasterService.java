@@ -48,14 +48,16 @@ public class ItemMasterService {
 
         @Transactional
         public CreateItemMasterResponse createItemMaster(CreateItemMasterRequest request) {
-                log.info("Creating item master: {}", request.getItemCode());
+                // ✅ Auto-generate itemCode in format: INV-YYYY-SEQ
+                String itemCode = generateItemCode();
+                log.info("Creating item master with auto-generated code: {}", itemCode);
 
-                // 1. Validate itemCode uniqueness
-                if (itemMasterRepository.findByItemCode(request.getItemCode()).isPresent()) {
-                        log.warn("Item code already exists: {}", request.getItemCode());
+                // 1. Validate itemCode uniqueness (should not happen with auto-generation, but keep for safety)
+                if (itemMasterRepository.findByItemCode(itemCode).isPresent()) {
+                        log.warn("Item code already exists: {}", itemCode);
                         throw new ResponseStatusException(
                                         HttpStatus.CONFLICT,
-                                        "Mã vật tư '" + request.getItemCode() + "' đã tồn tại");
+                                        "Mã vật tư '" + itemCode + "' đã tồn tại");
                 }
 
                 // 2. Validate min < max stock level
@@ -115,7 +117,7 @@ public class ItemMasterService {
 
                 // 7. Create ItemMaster entity
                 ItemMaster itemMaster = ItemMaster.builder()
-                                .itemCode(request.getItemCode())
+                                .itemCode(itemCode) // ✅ Use auto-generated code
                                 .itemName(request.getItemName())
                                 .description(request.getDescription())
                                 .category(category)
@@ -819,5 +821,22 @@ public class ItemMasterService {
                 // 3. Delete item master (cascades to units)
                 itemMasterRepository.delete(itemMaster);
                 log.info("Deleted item master successfully: {} ({})", id, itemMaster.getItemCode());
+        }
+
+        /**
+         * Generate Item Code (Material Code) in format: INV-YYYY-SEQ
+         * Example: INV-2026-001, INV-2026-002, ...
+         */
+        private String generateItemCode() {
+                int currentYear = java.time.Year.now().getValue();
+                String prefix = "INV-" + currentYear + "-";
+
+                // Count existing items with this year prefix
+                Long count = itemMasterRepository.countByItemCodeStartingWith(prefix);
+                
+                // Generate sequence number (3 digits, zero-padded)
+                String sequence = String.format("%03d", count + 1);
+                
+                return prefix + sequence;
         }
 }

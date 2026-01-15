@@ -29,6 +29,7 @@ import com.dental.clinic.management.clinical_records.repository.PatientToothStat
 import com.dental.clinic.management.employee.domain.Employee;
 import com.dental.clinic.management.employee.repository.EmployeeRepository;
 import com.dental.clinic.management.utils.EmailService;
+import com.dental.clinic.management.utils.ResendEmailService;
 import com.dental.clinic.management.utils.SequentialCodeGenerator;
 
 import org.slf4j.Logger;
@@ -65,7 +66,9 @@ public class PatientService {
     @SuppressWarnings("unused")
     private final AccountVerificationTokenRepository verificationTokenRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
+    @SuppressWarnings("unused")
     private final EmailService emailService;
+    private final ResendEmailService resendEmailService;
     private final RoleRepository roleRepository;
     private final PatientToothStatusRepository patientToothStatusRepository;
     private final PatientToothStatusHistoryRepository patientToothStatusHistoryRepository;
@@ -81,6 +84,7 @@ public class PatientService {
             AccountVerificationTokenRepository verificationTokenRepository,
             PasswordResetTokenRepository passwordResetTokenRepository,
             EmailService emailService,
+            ResendEmailService resendEmailService,
             RoleRepository roleRepository,
             PatientToothStatusRepository patientToothStatusRepository,
             PatientToothStatusHistoryRepository patientToothStatusHistoryRepository,
@@ -94,6 +98,7 @@ public class PatientService {
         this.verificationTokenRepository = verificationTokenRepository;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.emailService = emailService;
+        this.resendEmailService = resendEmailService;
         this.duplicateDetectionService = duplicateDetectionService;
         this.roleRepository = roleRepository;
         this.employeeRepository = employeeRepository;
@@ -275,6 +280,7 @@ public class PatientService {
         // email
         if (request.getEmail() != null && !request.getEmail().trim().isEmpty()) {
 
+            log.info("📧 Email provided: {} - Will create account and send welcome email", request.getEmail());
             log.debug("Creating account for patient with email: {}", request.getEmail());
 
             // Check email uniqueness
@@ -289,7 +295,7 @@ public class PatientService {
         // Check phone uniqueness across both Patient and Employee tables
         if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
             log.debug("Checking phone uniqueness: {}", request.getPhone());
-            
+
             if (patientRepository.existsByPhone(request.getPhone())) {
                 throw new BadRequestAlertException(
                         "Số điện thoại đã tồn tại",
@@ -364,8 +370,10 @@ public class PatientService {
             // Create and send password setup token using PasswordResetToken
             // (We use password reset flow for new patient password setup)
             try {
+                log.info("🔐 Creating password setup token for patient: {}", account.getEmail());
                 PasswordResetToken setupToken = new PasswordResetToken(account);
                 passwordResetTokenRepository.save(setupToken);
+                log.info("✅ Password setup token created: {}", setupToken.getToken());
 
                 // Send welcome email with password setup link
                 // Build patient full name from firstName and lastName
@@ -376,21 +384,28 @@ public class PatientService {
                     patientName = request.getFirstName();
                 }
 
-                emailService.sendWelcomeEmailWithPasswordSetup(
+                log.info("📧 [Resend] Sending welcome email to: {} (name: {})", account.getEmail(), patientName);
+                resendEmailService.sendWelcomeEmailWithPasswordSetup(
                         account.getEmail(),
                         patientName,
                         setupToken.getToken());
-                log.info(" Welcome email with password setup link sent to: {}", account.getEmail());
+                log.info("✅ [Resend] Welcome email with password setup link sent successfully to: {}",
+                        account.getEmail());
 
             } catch (Exception e) {
                 // Log error but don't fail the entire patient creation
-                log.error(" Failed to send welcome email to {}: {}", account.getEmail(), e.getMessage(), e);
+                log.error("❌ FAILED TO SEND WELCOME EMAIL to {}", account.getEmail());
+                log.error("❌ Error message: {}", e.getMessage());
+                log.error("❌ Error class: {}", e.getClass().getName());
+                log.error("❌ Full stack trace:", e);
                 log.warn(
-                        " Patient account created successfully, but email not sent. Manual password setup may be required.");
-                log.warn(" Possible causes: SMTP server not configured, network error, invalid email address");
+                        "⚠️ Patient account created successfully, but email not sent. Manual password setup may be required.");
+                log.warn(
+                        "⚠️ Possible causes: SMTP server not configured, network error, invalid email address, SendGrid API key invalid");
                 // Don't throw exception - allow patient creation to succeed
             }
         } else {
+            log.warn("⚠️ NO EMAIL PROVIDED - Creating patient WITHOUT account (no welcome email will be sent)");
             log.debug("Creating patient without account (no email provided)");
         }
 
@@ -438,7 +453,7 @@ public class PatientService {
             // Only check if phone is actually changing
             if (!request.getPhone().equals(patient.getPhone())) {
                 log.debug("Checking phone uniqueness for update: {}", request.getPhone());
-                
+
                 if (patientRepository.existsByPhone(request.getPhone())) {
                     throw new BadRequestAlertException(
                             "Số điện thoại đã tồn tại",

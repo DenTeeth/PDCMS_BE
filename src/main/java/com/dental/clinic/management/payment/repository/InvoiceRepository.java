@@ -6,6 +6,7 @@ import com.dental.clinic.management.payment.enums.InvoiceType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -15,7 +16,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
+public interface InvoiceRepository extends JpaRepository<Invoice, Integer>, JpaSpecificationExecutor<Invoice> {
 
     Optional<Invoice> findByInvoiceCode(String invoiceCode);
 
@@ -60,6 +61,10 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
      * Find all invoices with optional filters and pagination.
      * Supports filtering by payment status, invoice type, patient ID, and date range.
      * 
+     * @deprecated This method causes PostgreSQL type inference errors with NULL date parameters.
+     *             Use InvoiceSpecification.withFilters() with findAll(spec, pageable) instead.
+     * @see com.dental.clinic.management.payment.specification.InvoiceSpecification#withFilters
+     * 
      * @param status Optional payment status filter
      * @param type Optional invoice type filter
      * @param patientId Optional patient ID filter
@@ -68,6 +73,7 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
      * @param pageable Pagination and sorting parameters
      * @return Page of invoices matching the filters
      */
+    @Deprecated(since = "2026-01-13", forRemoval = true)
     @Query("SELECT i FROM Invoice i WHERE " +
            "(:status IS NULL OR i.paymentStatus = :status) AND " +
            "(:type IS NULL OR i.invoiceType = :type) AND " +
@@ -208,6 +214,28 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Integer> {
            "JOIN i.items ii " +
            "WHERE i.createdAt BETWEEN :startDate AND :endDate")
     Long countTotalServicesInRange(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate);
+
+    /**
+     * Count overdue invoices in date range
+     * Invoices that are past their due date and still unpaid
+     */
+    @Query("SELECT COUNT(i) FROM Invoice i " +
+           "WHERE i.createdAt BETWEEN :startDate AND :endDate " +
+           "AND i.paymentStatus IN ('PENDING_PAYMENT', 'PARTIAL_PAID') " +
+           "AND i.dueDate < CURRENT_DATE")
+    Long countOverdueInvoices(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate);
+
+    /**
+     * Calculate total paid revenue (PAID invoices only)
+     */
+    @Query("SELECT COALESCE(SUM(i.paidAmount), 0) FROM Invoice i " +
+           "WHERE i.createdAt BETWEEN :startDate AND :endDate " +
+           "AND i.paymentStatus IN ('PAID', 'PARTIAL_PAID')")
+    java.math.BigDecimal calculatePaidRevenue(
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate);
 }

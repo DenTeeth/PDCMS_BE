@@ -6,6 +6,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.time.ZoneId;
@@ -16,6 +17,7 @@ import java.time.format.DateTimeFormatter;
 @SpringBootApplication
 @EnableConfigurationProperties
 @EnableScheduling
+@EnableAsync
 public class DentalClinicManagementApplication {
 
 	public static void main(String[] args) {
@@ -36,11 +38,11 @@ public class DentalClinicManagementApplication {
 			ZoneId timezone = ZoneId.of("Asia/Ho_Chi_Minh");
 			ZonedDateTime now = ZonedDateTime.now(timezone);
 			DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z");
-			
+
 			log.info("========================================");
-			log.info("🚀 PDCMS Backend Application Started");
+			log.info(" PDCMS Backend Application Started");
 			log.info("========================================");
-			log.info("⏰ Current time: {}", now.format(formatter));
+			log.info("Current time: {}", now.format(formatter));
 			log.info("🌏 Timezone: {}", timezone);
 			log.info("📅 Scheduled jobs are ENABLED");
 			log.info("========================================");

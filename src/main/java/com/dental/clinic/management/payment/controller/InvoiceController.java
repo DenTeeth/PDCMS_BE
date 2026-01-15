@@ -2,6 +2,7 @@ package com.dental.clinic.management.payment.controller;
 
 import com.dental.clinic.management.payment.dto.CreateInvoiceRequest;
 import com.dental.clinic.management.payment.dto.InvoiceResponse;
+import com.dental.clinic.management.payment.dto.PatientPaymentHistoryResponse;
 import com.dental.clinic.management.payment.service.InvoiceService;
 import com.dental.clinic.management.utils.annotation.ApiMessage;
 import com.dental.clinic.management.payment.enums.InvoicePaymentStatus;
@@ -133,6 +134,56 @@ public class InvoiceController {
         
         log.info("Retrieved {} invoices out of {} total", 
                  result.getNumberOfElements(), result.getTotalElements());
+        
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Get patient payment history by patient code.
+     * Returns paginated list of invoices with summary statistics.
+     * 
+     * Supports filtering by:
+     * - status: Invoice payment status (PENDING_PAYMENT, PARTIAL_PAID, PAID, CANCELLED)
+     * - fromDate: Start date for filtering (inclusive)
+     * - toDate: End date for filtering (inclusive)
+     * 
+     * Response includes:
+     * - List of invoices with items and payment history
+     * - Pagination information
+     * - Summary statistics (total amount, paid, remaining, unpaid count)
+     * 
+     * @param patientCode Patient business code (e.g., P2024001)
+     * @param status Optional filter by payment status
+     * @param fromDate Optional start date filter (format: yyyy-MM-dd)
+     * @param toDate Optional end date filter (format: yyyy-MM-dd)
+     * @param pageable Pagination parameters (page, size, sort)
+     * @return Patient payment history with pagination and summary
+     * 
+     * Example: GET /api/v1/invoices/patient-history/P2024001?status=PENDING_PAYMENT&page=0&size=10&sort=createdAt,desc
+     */
+    @GetMapping("/patient-history/{patientCode}")
+    @PreAuthorize("hasAnyAuthority('VIEW_INVOICE_ALL', 'VIEW_INVOICE_OWN')") // RECEPTIONIST, ACCOUNTANT, PATIENT, ADMIN
+    @ApiMessage("Lấy lịch sử thanh toán thành công")
+    @Operation(summary = "Get patient payment history", 
+               description = "Get paginated payment history (invoice list) for a specific patient with summary statistics")
+    public ResponseEntity<PatientPaymentHistoryResponse> getPatientPaymentHistory(
+            @PathVariable String patientCode,
+            @RequestParam(required = false) InvoicePaymentStatus status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        
+        log.info("REST request to get payment history for patient: {} (status: {}, from: {}, to: {}, page: {}, size: {})", 
+                 patientCode, status, fromDate, toDate, pageable.getPageNumber(), pageable.getPageSize());
+        
+        PatientPaymentHistoryResponse result = invoiceService.getPatientPaymentHistory(
+                patientCode, status, fromDate, toDate, pageable);
+        
+        log.info("Retrieved {} invoices for patient {} (total: {}, page: {}/{})", 
+                 result.getInvoices().size(), patientCode, 
+                 result.getPagination().getTotalItems(),
+                 result.getPagination().getCurrentPage(), 
+                 result.getPagination().getTotalPages());
         
         return ResponseEntity.ok(result);
     }

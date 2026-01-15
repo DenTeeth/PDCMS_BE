@@ -62,4 +62,10 @@ public interface ItemMasterRepository extends JpaRepository<ItemMaster, Long>, J
                         "WHERE im.isActive = true " +
                         "AND im.cachedTotalQuantity <= im.minStockLevel")
         Long countLowInventoryItems();
+
+        /**
+         * Count ItemMasters with itemCode starting with given prefix
+         * Used for auto-generating item codes (INV-YYYY-SEQ)
+         */
+        Long countByItemCodeStartingWith(String prefix);
 }

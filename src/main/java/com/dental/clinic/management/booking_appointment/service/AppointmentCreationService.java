@@ -26,6 +26,15 @@ import com.dental.clinic.management.working_schedule.repository.EmployeeShiftRep
 import com.dental.clinic.management.exception.validation.BadRequestAlertException;
 import com.dental.clinic.management.patient.domain.Patient;
 import com.dental.clinic.management.patient.repository.PatientRepository;
+import com.dental.clinic.management.treatment_plans.repository.PatientTreatmentPlanRepository;
+import com.dental.clinic.management.treatment_plans.enums.PlanItemStatus;
+import com.dental.clinic.management.service.service.ClinicalRulesValidationService;
+import com.dental.clinic.management.notification.service.NotificationService;
+import com.dental.clinic.management.notification.dto.CreateNotificationRequest;
+import com.dental.clinic.management.notification.enums.NotificationType;
+import com.dental.clinic.management.notification.enums.NotificationEntityType;
+import com.dental.clinic.management.utils.AppointmentEmailService;
+import com.dental.clinic.management.utils.validation.HolidayValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -75,16 +84,19 @@ public class AppointmentCreationService {
         // Treatment Plan Integration (V2)
         private final PatientPlanItemRepository patientPlanItemRepository;
         private final AppointmentPlanItemRepository appointmentPlanItemRepository;
-        private final com.dental.clinic.management.treatment_plans.repository.PatientTreatmentPlanRepository treatmentPlanRepository;
+        private final PatientTreatmentPlanRepository treatmentPlanRepository;
 
         // V21: Clinical Rules Validation
-        private final com.dental.clinic.management.service.service.ClinicalRulesValidationService clinicalRulesValidationService;
+        private final ClinicalRulesValidationService clinicalRulesValidationService;
 
         // Notification Service
-        private final com.dental.clinic.management.notification.service.NotificationService notificationService;
+        private final NotificationService notificationService;
+
+        // BR-17: Email Service for appointment confirmation and reminders
+        private final AppointmentEmailService appointmentEmailService;
 
         // ISSUE #53: Holiday Validation
-        private final com.dental.clinic.management.utils.validation.HolidayValidator holidayValidator;
+        private final HolidayValidator holidayValidator;
 
         private static final DateTimeFormatter ISO_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
         private static final String ENTITY_NAME = "appointment";
@@ -218,7 +230,7 @@ public class AppointmentCreationService {
 
                         insertAppointmentPlanItems(appointment, request.getPatientPlanItemIds());
                         updatePlanItemsStatus(request.getPatientPlanItemIds(),
-                                        com.dental.clinic.management.treatment_plans.enums.PlanItemStatus.SCHEDULED);
+                                        PlanItemStatus.SCHEDULED);
 
                         // V21: Auto-activate plan (PENDING → IN_PROGRESS) if this is first appointment
                         activatePlanIfFirstAppointment(appointment, request.getPatientPlanItemIds());
@@ -238,6 +250,9 @@ public class AppointmentCreationService {
                 log.info("CALLING sendAppointmentCreatedNotification for appointment: {}", appointment.getAppointmentCode());
                 sendAppointmentCreatedNotification(appointment, patient);
                 log.info("FINISHED sendAppointmentCreatedNotification for appointment: {}", appointment.getAppointmentCode());
+
+                // BR-17: Send confirmation email to patient immediately after booking
+                sendAppointmentConfirmationEmail(appointment, patient, doctor, room, services);
 
                 log.info("Successfully created appointment: {}", appointment.getAppointmentCode());
 
@@ -329,7 +344,7 @@ public class AppointmentCreationService {
                 if (isBookingFromPlan) {
                         insertAppointmentPlanItems(appointment, request.getPatientPlanItemIds());
                         updatePlanItemsStatus(request.getPatientPlanItemIds(),
-                                        com.dental.clinic.management.treatment_plans.enums.PlanItemStatus.SCHEDULED);
+                                        PlanItemStatus.SCHEDULED);
 
                         // V21: Auto-activate plan (PENDING → IN_PROGRESS) if this is first appointment
                         activatePlanIfFirstAppointment(appointment, request.getPatientPlanItemIds());
@@ -598,7 +613,7 @@ public class AppointmentCreationService {
                 // Check 3: All items must be ready for booking
                 List<String> notReadyItems = items.stream()
                                 .filter(item -> item
-                                                .getStatus() != com.dental.clinic.management.treatment_plans.enums.PlanItemStatus.READY_FOR_BOOKING)
+                                                .getStatus() != PlanItemStatus.READY_FOR_BOOKING)
                                 .map(item -> item.getItemId() + " (status: " + item.getStatus() + ")")
                                 .collect(Collectors.toList());
 
@@ -1019,15 +1034,15 @@ public class AppointmentCreationService {
                                 log.info("Sending notification to PATIENT userId={} for appointment {}",
                                                 patientUserId, appointment.getAppointmentCode());
 
-                                com.dental.clinic.management.notification.dto.CreateNotificationRequest patientNotification = com.dental.clinic.management.notification.dto.CreateNotificationRequest
+                                CreateNotificationRequest patientNotification = CreateNotificationRequest
                                                 .builder()
                                                 .userId(patientUserId)
-                                                .type(com.dental.clinic.management.notification.enums.NotificationType.APPOINTMENT_CREATED)
+                                                .type(NotificationType.APPOINTMENT_CREATED)
                                                 .title("Đặt lịch thành công")
                                                 .message(String.format("Cuộc hẹn %s đã được đặt thành công vào %s",
                                                                 appointment.getAppointmentCode(), formattedTime))
                                                 .relatedEntityType(
-                                                                com.dental.clinic.management.notification.enums.NotificationEntityType.APPOINTMENT)
+                                                                NotificationEntityType.APPOINTMENT)
                                                 .relatedEntityId(appointment.getAppointmentCode())
                                                 .build();
 
@@ -1047,15 +1062,15 @@ public class AppointmentCreationService {
                                 log.info("Sending notification to MAIN DOCTOR userId={} (employeeCode={}) for appointment {}",
                                                 doctorUserId, mainDoctor.getEmployeeCode(), appointment.getAppointmentCode());
 
-                                com.dental.clinic.management.notification.dto.CreateNotificationRequest doctorNotification = com.dental.clinic.management.notification.dto.CreateNotificationRequest
+                                CreateNotificationRequest doctorNotification = CreateNotificationRequest
                                                 .builder()
                                                 .userId(doctorUserId)
-                                                .type(com.dental.clinic.management.notification.enums.NotificationType.APPOINTMENT_CREATED)
+                                                .type(NotificationType.APPOINTMENT_CREATED)
                                                 .title("Bạn có lịch hẹn mới")
                                                 .message(String.format("Cuộc hẹn %s vào %s - Bệnh nhân: %s",
                                                                 appointment.getAppointmentCode(), formattedTime, patient.getFullName()))
                                                 .relatedEntityType(
-                                                                com.dental.clinic.management.notification.enums.NotificationEntityType.APPOINTMENT)
+                                                                NotificationEntityType.APPOINTMENT)
                                                 .relatedEntityId(appointment.getAppointmentCode())
                                                 .build();
 
@@ -1107,14 +1122,14 @@ public class AppointmentCreationService {
                                                                 formattedTime,
                                                                 patient.getFullName());
 
-                                                com.dental.clinic.management.notification.dto.CreateNotificationRequest staffNotification = com.dental.clinic.management.notification.dto.CreateNotificationRequest
+                                                CreateNotificationRequest staffNotification = CreateNotificationRequest
                                                                 .builder()
                                                                 .userId(staffUserId)
-                                                                .type(com.dental.clinic.management.notification.enums.NotificationType.APPOINTMENT_CREATED)
+                                                                .type(NotificationType.APPOINTMENT_CREATED)
                                                                 .title(title)
                                                                 .message(message)
                                                                 .relatedEntityType(
-                                                                                com.dental.clinic.management.notification.enums.NotificationEntityType.APPOINTMENT)
+                                                                                NotificationEntityType.APPOINTMENT)
                                                                 .relatedEntityId(appointment.getAppointmentCode())
                                                                 .build();
 
@@ -1148,6 +1163,53 @@ public class AppointmentCreationService {
                         return "Trợ lý";
                 }
                 return role.name();
+        }
+
+        /**
+         * BR-17: Send confirmation email to patient immediately after booking
+         */
+        private void sendAppointmentConfirmationEmail(
+                        Appointment appointment,
+                        Patient patient,
+                        Employee doctor,
+                        Room room,
+                        List<DentalService> services) {
+                try {
+                        // Only send email if patient has valid email address
+                        if (patient.getEmail() == null || patient.getEmail().isEmpty()) {
+                                log.warn("Patient {} has no email, skipping confirmation email", 
+                                        patient.getPatientCode());
+                                return;
+                        }
+
+                        log.info("📧 Sending confirmation email to {} for appointment {}", 
+                                patient.getEmail(), appointment.getAppointmentCode());
+
+                        // Get room name (enhance later if Room entity has name field)
+                        String roomName = "Phòng " + room.getRoomCode();
+
+                        // Concatenate service names
+                        String serviceNames = services.stream()
+                                .map(DentalService::getServiceName)
+                                .collect(Collectors.joining(", "));
+
+                        appointmentEmailService.sendAppointmentConfirmation(
+                                patient.getEmail(),
+                                patient.getFullName(),
+                                appointment.getAppointmentCode(),
+                                appointment.getAppointmentStartTime(),
+                                doctor.getFullName(),
+                                roomName,
+                                serviceNames
+                        );
+
+                        log.info("✅ Confirmation email sent successfully");
+
+                } catch (Exception e) {
+                        log.error("❌ Failed to send confirmation email for appointment {}: {}",
+                                appointment.getAppointmentCode(), e.getMessage());
+                        // Don't throw exception - email failure should not block appointment creation
+                }
         }
 
         // ====================================================================
@@ -1256,7 +1318,7 @@ public class AppointmentCreationService {
          * @throws RuntimeException if update fails (triggers rollback)
          */
         private void updatePlanItemsStatus(List<Long> itemIds,
-                        com.dental.clinic.management.treatment_plans.enums.PlanItemStatus newStatus) {
+                        PlanItemStatus newStatus) {
                 try {
                         // Fetch items again (without JOIN FETCH - simpler for update)
                         List<PatientPlanItem> items = patientPlanItemRepository.findAllById(itemIds);

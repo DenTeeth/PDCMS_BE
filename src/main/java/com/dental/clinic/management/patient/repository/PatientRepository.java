@@ -102,4 +102,17 @@ public interface PatientRepository extends JpaRepository<Patient, Integer>, JpaS
    * @return Count of patients
    */
   long countByIsActive(boolean isActive);
+
+  /**
+   * Count new patients created in a date range
+   * Used for dashboard statistics
+   * 
+   * @param startDate Start of date range
+   * @param endDate End of date range
+   * @return Count of patients created in the period
+   */
+  @Query("SELECT COUNT(p) FROM Patient p WHERE p.createdAt BETWEEN :startDate AND :endDate")
+  Long countByCreatedAtBetween(
+      @Param("startDate") java.time.LocalDateTime startDate,
+      @Param("endDate") java.time.LocalDateTime endDate);
 }

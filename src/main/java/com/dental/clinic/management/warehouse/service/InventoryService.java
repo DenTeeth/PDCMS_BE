@@ -142,11 +142,13 @@ public class InventoryService {
      */
     @Transactional
     public ItemMasterSummaryResponse createItemMaster(CreateItemMasterRequest request) {
-        log.info("Creating item master: {}", request.getItemCode());
+        // ✅ Auto-generate itemCode in format: INV-YYYY-SEQ
+        String itemCode = generateItemCode();
+        log.info("Creating item master with auto-generated code: {}", itemCode);
 
-        // Check duplicate itemCode
-        if (itemMasterRepository.findByItemCode(request.getItemCode()).isPresent()) {
-            throw new IllegalArgumentException("Mã vật tư '" + request.getItemCode() + "' đã tồn tại");
+        // Check duplicate itemCode (should not happen with auto-generation, but keep for safety)
+        if (itemMasterRepository.findByItemCode(itemCode).isPresent()) {
+            throw new IllegalArgumentException("Mã vật tư '" + itemCode + "' đã tồn tại");
         }
 
         // Validate category exists
@@ -157,11 +159,12 @@ public class InventoryService {
         // Create entity using mapper
         @SuppressWarnings("deprecation")
         ItemMaster itemMaster = itemMasterMapper.toEntity(request);
+        itemMaster.setItemCode(itemCode); // ✅ Set auto-generated code
         itemMaster.setCategory(category);
         itemMaster.setIsActive(true);
 
         ItemMaster saved = itemMasterRepository.save(itemMaster);
-        log.info("Created item master successfully: {}", saved.getItemMasterId());
+        log.info("Created item master successfully: {} with code: {}", saved.getItemMasterId(), itemCode);
 
         return itemMasterMapper.toSummaryResponse(saved);
     }
@@ -876,5 +879,22 @@ public class InventoryService {
                 .expiringSoonCount(expiringSoon)
                 .totalQuantity(totalQty)
                 .build();
+    }
+
+    /**
+     * Generate Item Code (Material Code) in format: INV-YYYY-SEQ
+     * Example: INV-2026-001, INV-2026-002, ...
+     */
+    private String generateItemCode() {
+        int currentYear = java.time.Year.now().getValue();
+        String prefix = "INV-" + currentYear + "-";
+
+        // Count existing items with this year prefix
+        Long count = itemMasterRepository.countByItemCodeStartingWith(prefix);
+        
+        // Generate sequence number (3 digits, zero-padded)
+        String sequence = String.format("%03d", count + 1);
+        
+        return prefix + sequence;
     }
 }

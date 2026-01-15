@@ -82,18 +82,20 @@ spring:
     # Option 1: SendGrid (RECOMMENDED for DigitalOcean) - 100 emails/day FREE
     host: smtp.sendgrid.net
     port: 587
-    username: apikey  # This is literal "apikey", not your actual key
-    password: ${SENDGRID_API_KEY:}
-    
+    username: apikey # This is literal "apikey", not your actual key
+    password: ${SENDGRID_API_KEY} # REQUIRED! Get from: https://app.sendgrid.com/settings/api_keys
+
     # Option 2: Gmail SMTP (may not work on DigitalOcean due to port blocking)
     # Uncomment these and comment out SendGrid if you want to try Gmail
     # host: smtp.gmail.com
     # port: 587
     # username: ${MAIL_USERNAME:hellodenteeth@gmail.com}
     # password: ${MAIL_PASSWORD:micnxeutitfjrmxk}
-    
+
+    # 🔍 DEBUG MODE: Show detailed SMTP protocol logs (useful for troubleshooting)
     properties:
       mail:
+        debug: true
         smtp:
           auth: true
           starttls:
@@ -108,6 +110,19 @@ spring:
 # ==============================
 app:
   frontend-url: ${FRONTEND_URL:https://pdcms.vercel.app}
+
+  # Resend API Configuration
+  resend:
+    api-key: ${RESEND_API_KEY}
+
+  # Email sender configuration (for Resend)
+  # ⚠️ CRITICAL: Must use verified domain on Resend!
+  # Using friend's verified domain: nhatlonh.id.vn
+  mail:
+    from: ${MAIL_FROM:noreply@nhatlonh.id.vn}
+    from-name: "Phòng khám nha khoa DenTeeth"
+    reply-to: ${MAIL_REPLY_TO:hellodenteeth@gmail.com}
+
   cors:
     # Allowed origins for CORS and WebSocket
     allowed-origins: ${CORS_ALLOWED_ORIGINS:https://pdcms.vercel.app,http://localhost:3000}
@@ -147,6 +162,9 @@ logging:
     "[org.hibernate]": WARN
     "[org.hibernate.SQL]": WARN
     "[org.springdoc]": WARN
+    # 📧 Email debugging (shows SMTP protocol communication)
+    "[org.springframework.mail]": DEBUG
+    "[javax.mail]": DEBUG
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
@@ -177,7 +195,7 @@ management:
       show-details: when-authorized
   health:
     mail:
-      enabled: false  # Disable mail health check to prevent health endpoint from failing if SMTP is down
+      enabled: false # Disable mail health check to prevent health endpoint from failing if SMTP is down
 
 # ==============================
 # Chatbot Configuration (Gemini AI)

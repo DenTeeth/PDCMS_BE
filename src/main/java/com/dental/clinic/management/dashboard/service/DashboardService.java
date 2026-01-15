@@ -29,6 +29,7 @@ public class DashboardService {
     private final DashboardEmployeeService employeeService;
     private final DashboardWarehouseService warehouseService;
     private final DashboardTransactionService transactionService;
+    private final com.dental.clinic.management.feedback.service.AppointmentFeedbackService feedbackService;
     
     // Additional repositories for overview statistics
     private final com.dental.clinic.management.warehouse.repository.StorageTransactionRepository storageTransactionRepository;
@@ -36,6 +37,7 @@ public class DashboardService {
     private final com.dental.clinic.management.employee.repository.EmployeeRepository employeeRepository;
     private final com.dental.clinic.management.warehouse.repository.ItemMasterRepository itemMasterRepository;
     private final com.dental.clinic.management.warehouse.repository.ItemBatchRepository itemBatchRepository;
+    private final com.dental.clinic.management.patient.repository.PatientRepository patientRepository;
 
     /**
      * Get dashboard overview statistics
@@ -74,7 +76,7 @@ public class DashboardService {
         Long totalInvoices = countInvoices(rangeStart, rangeEnd);
         Long totalAppointments = countAppointments(rangeStart, rangeEnd);
         Long totalPatients = countPatients(rangeStart, rangeEnd);
-        Long totalEmployees = countEmployees();
+        Long newPatientsThisMonth = countNewPatients(rangeStart, rangeEnd);
         
         // Summary stats
         DashboardOverviewResponse.SummaryStats summary = DashboardOverviewResponse.SummaryStats.builder()
@@ -84,7 +86,7 @@ public class DashboardService {
                 .totalInvoices(totalInvoices)
                 .totalAppointments(totalAppointments)
                 .totalPatients(totalPatients)
-                .totalEmployees(totalEmployees)
+                .newPatientsThisMonth(newPatientsThisMonth)
                 .build();
         
         // Build response
@@ -115,10 +117,7 @@ public class DashboardService {
         // Appointment stats
         builder.appointments(buildAppointmentStats(rangeStart, rangeEnd));
         
-        // KPI stats
-        builder.kpis(buildKPIStats(rangeStart, rangeEnd, totalRevenue, totalExpenses, totalAppointments, totalEmployees));
-        
-        // Alert stats
+        // Alert stats (top 5 only)
         DashboardOverviewResponse.InvoiceStats invoiceStats = buildInvoiceStats(rangeStart, rangeEnd);
         DashboardOverviewResponse.AppointmentStats appointmentStats = buildAppointmentStats(rangeStart, rangeEnd);
         builder.alerts(buildAlertStats(totalRevenue, prevRevenue, invoiceStats, appointmentStats));
@@ -180,6 +179,20 @@ public class DashboardService {
     public TransactionStatisticsResponse getTransactionStatistics(String month, LocalDate startDate, LocalDate endDate) {
         log.info("Getting transaction statistics - month: {}, startDate: {}, endDate: {}", month, startDate, endDate);
         return transactionService.getTransactionStatistics(month, startDate, endDate);
+    }
+
+    /**
+     * Get feedback statistics
+     * Supports date range filtering and sorting
+     */
+    @Cacheable(value = "dashboardFeedbacks",
+               key = "#startDate + '_' + #endDate + '_' + #top + '_' + #sortBy",
+               unless = "#result == null")
+    public com.dental.clinic.management.feedback.dto.DoctorFeedbackStatisticsResponse getFeedbackStatistics(
+            LocalDate startDate, LocalDate endDate, int top, String sortBy) {
+        log.info("Getting feedback statistics - startDate: {}, endDate: {}, top: {}, sortBy: {}", 
+                startDate, endDate, top, sortBy);
+        return feedbackService.getStatisticsByDoctor(startDate, endDate, top, sortBy);
     }
 
     /**
@@ -267,9 +280,16 @@ public class DashboardService {
     }
 
     private Long countPatients(LocalDateTime startDate, LocalDateTime endDate) {
-        return invoiceRepository.countUniquePatients(startDate, endDate);
+        // Count all patients in the system (not filtered by date)
+        return patientRepository.count();
     }
 
+    private Long countNewPatients(LocalDateTime startDate, LocalDateTime endDate) {
+        // Count patients created in the selected period
+        return patientRepository.countByCreatedAtBetween(startDate, endDate);
+    }
+
+    @SuppressWarnings("unused")
     private Long countEmployees() {
         return employeeRepository.count();
     }
@@ -292,139 +312,43 @@ public class DashboardService {
     private DashboardOverviewResponse.InvoiceStats buildInvoiceStats(LocalDateTime startDate, LocalDateTime endDate) {
         Long total = invoiceRepository.countInvoicesInRange(startDate, endDate);
         Long paid = invoiceRepository.countByStatusInRange(startDate, endDate, InvoicePaymentStatus.PAID);
-        Long partialPaid = invoiceRepository.countByStatusInRange(startDate, endDate, InvoicePaymentStatus.PARTIAL_PAID);
         Long pending = invoiceRepository.countByStatusInRange(startDate, endDate, InvoicePaymentStatus.PENDING_PAYMENT);
-        Long cancelled = invoiceRepository.countByStatusInRange(startDate, endDate, InvoicePaymentStatus.CANCELLED);
+        Long overdue = invoiceRepository.countOverdueInvoices(startDate, endDate);
         
-        Long totalPaid = paid + partialPaid;
-        Double paidPercent = total == 0 ? 0.0 : (totalPaid.doubleValue() / total.doubleValue()) * 100;
-        BigDecimal debt = invoiceRepository.calculateTotalDebt(startDate, endDate);
+        BigDecimal totalAmount = invoiceRepository.calculateTotalRevenue(startDate, endDate);
+        BigDecimal paidAmount = invoiceRepository.calculatePaidRevenue(startDate, endDate);
         
         return DashboardOverviewResponse.InvoiceStats.builder()
                 .total(total)
-                .paid(totalPaid)
+                .paid(paid)
                 .pending(pending)
-                .cancelled(cancelled)
-                .paidPercent(paidPercent)
-                .debt(debt)
+                .overdue(overdue)
+                .totalAmount(totalAmount)
+                .paidAmount(paidAmount)
                 .build();
     }
 
     private DashboardOverviewResponse.AppointmentStats buildAppointmentStats(LocalDateTime startDate, LocalDateTime endDate) {
         Long total = appointmentRepository.countAppointmentsInRange(startDate, endDate);
         
-        // Count all 7 appointment statuses
         Long scheduled = appointmentRepository.countByStatusInRange(startDate, endDate, 
                 com.dental.clinic.management.booking_appointment.enums.AppointmentStatus.SCHEDULED);
-        Long checkedIn = appointmentRepository.countByStatusInRange(startDate, endDate, 
-                com.dental.clinic.management.booking_appointment.enums.AppointmentStatus.CHECKED_IN);
-        Long inProgress = appointmentRepository.countByStatusInRange(startDate, endDate, 
-                com.dental.clinic.management.booking_appointment.enums.AppointmentStatus.IN_PROGRESS);
         Long completed = appointmentRepository.countByStatusInRange(startDate, endDate, 
                 com.dental.clinic.management.booking_appointment.enums.AppointmentStatus.COMPLETED);
         Long cancelled = appointmentRepository.countByStatusInRange(startDate, endDate, 
                 com.dental.clinic.management.booking_appointment.enums.AppointmentStatus.CANCELLED);
-        Long cancelledLate = appointmentRepository.countByStatusInRange(startDate, endDate, 
-                com.dental.clinic.management.booking_appointment.enums.AppointmentStatus.CANCELLED_LATE);
-        Long noShow = appointmentRepository.countByStatusInRange(startDate, endDate, 
-                com.dental.clinic.management.booking_appointment.enums.AppointmentStatus.NO_SHOW);
-        
-        Double completionRate = total == 0 ? 0.0 : (completed.doubleValue() / total.doubleValue()) * 100;
         
         return DashboardOverviewResponse.AppointmentStats.builder()
                 .total(total)
                 .scheduled(scheduled)
-                .checkedIn(checkedIn)
-                .inProgress(inProgress)
                 .completed(completed)
                 .cancelled(cancelled)
-                .cancelledLate(cancelledLate)
-                .noShow(noShow)
-                .completionRate(completionRate)
                 .build();
-    }
-
-    /**
-     * Build Key Performance Indicators (KPIs)
-     */
-    private DashboardOverviewResponse.KPIStats buildKPIStats(
-            LocalDateTime startDate, 
-            LocalDateTime endDate,
-            BigDecimal totalRevenue,
-            BigDecimal totalExpenses,
-            Long totalAppointments,
-            Long totalEmployees) {
-        
-        // 1. ARPA - Average Revenue Per Appointment
-        BigDecimal arpa = totalAppointments > 0 
-            ? totalRevenue.divide(BigDecimal.valueOf(totalAppointments), 2, RoundingMode.HALF_UP)
-            : BigDecimal.ZERO;
-        
-        // 2. Patient Retention Rate - Patients with multiple appointments in period
-        Double patientRetentionRate = calculatePatientRetentionRate(startDate, endDate);
-        
-        // 3. Appointment Utilization Rate - (Completed / Total) * 100
-        Long completedAppointments = appointmentRepository.countByStatusInRange(
-            startDate, endDate, 
-            com.dental.clinic.management.booking_appointment.enums.AppointmentStatus.COMPLETED);
-        Double appointmentUtilizationRate = totalAppointments > 0
-            ? (completedAppointments.doubleValue() / totalAppointments.doubleValue()) * 100
-            : 0.0;
-        
-        // 4. Revenue per Doctor - Total Revenue / Number of Doctors
-        Long doctorCount = countDoctors();
-        BigDecimal revenuePerDoctor = doctorCount > 0
-            ? totalRevenue.divide(BigDecimal.valueOf(doctorCount), 2, RoundingMode.HALF_UP)
-            : BigDecimal.ZERO;
-        
-        // 5. Profit Margin % - (Net Profit / Total Revenue) * 100
-        BigDecimal netProfit = totalRevenue.subtract(totalExpenses);
-        Double profitMarginPercent = totalRevenue.compareTo(BigDecimal.ZERO) > 0
-            ? netProfit.divide(totalRevenue, 4, RoundingMode.HALF_UP)
-                .multiply(BigDecimal.valueOf(100))
-                .doubleValue()
-            : 0.0;
-        
-        // 6. Average Cost per Service
-        Long totalServices = invoiceRepository.countTotalServicesInRange(startDate, endDate);
-        BigDecimal avgCostPerService = totalServices > 0
-            ? totalExpenses.divide(BigDecimal.valueOf(totalServices), 2, RoundingMode.HALF_UP)
-            : BigDecimal.ZERO;
-        
-        return DashboardOverviewResponse.KPIStats.builder()
-                .arpa(arpa)
-                .patientRetentionRate(patientRetentionRate)
-                .appointmentUtilizationRate(appointmentUtilizationRate)
-                .revenuePerDoctor(revenuePerDoctor)
-                .profitMarginPercent(profitMarginPercent)
-                .avgCostPerService(avgCostPerService)
-                .build();
-    }
-
-    /**
-     * Calculate patient retention rate
-     * Patients who had more than 1 appointment in the period
-     */
-    private Double calculatePatientRetentionRate(LocalDateTime startDate, LocalDateTime endDate) {
-        Long totalPatients = invoiceRepository.countUniquePatients(startDate, endDate);
-        if (totalPatients == 0) {
-            return 0.0;
-        }
-        
-        Long returningPatients = appointmentRepository.countPatientsWithMultipleAppointments(startDate, endDate);
-        return (returningPatients.doubleValue() / totalPatients.doubleValue()) * 100;
-    }
-
-    /**
-     * Count doctors (employees with DOCTOR role)
-     */
-    private Long countDoctors() {
-        return employeeRepository.countByRole("ROLE_DENTIST");
     }
 
     /**
      * Build Alert/Notification statistics
-     * Checks for various threshold violations and potential issues
+     * Limited to top 5 most critical alerts only
      */
     private DashboardOverviewResponse.AlertStats buildAlertStats(
             BigDecimal currentRevenue,
@@ -452,32 +376,30 @@ public class DashboardService {
             }
         }
         
-        // 2. High Debt Alert (>10,000,000 VND)
-        BigDecimal debtThreshold = new BigDecimal("10000000");
-        if (invoiceStats.getDebt().compareTo(debtThreshold) > 0) {
+        // 2. High Unpaid Amount Alert (>10,000,000 VND)
+        BigDecimal unpaidThreshold = new BigDecimal("10000000");
+        BigDecimal unpaidAmount = invoiceStats.getTotalAmount().subtract(invoiceStats.getPaidAmount());
+        if (unpaidAmount.compareTo(unpaidThreshold) > 0) {
             alerts.add(DashboardOverviewResponse.Alert.builder()
                     .type("HIGH_DEBT")
                     .severity("WARNING")
                     .title("Công nợ cao")
                     .message("Tổng công nợ vượt ngưỡng cảnh báo")
-                    .value(String.format("%,.0f VND", invoiceStats.getDebt()))
+                    .value(String.format("%,.0f VND", unpaidAmount))
                     .threshold("10,000,000 VND")
                     .build());
         }
         
-        // 3. High No-Show Rate Alert (>15%)
-        if (appointmentStats.getTotal() > 0) {
-            Double noShowRate = (appointmentStats.getNoShow().doubleValue() / appointmentStats.getTotal().doubleValue()) * 100;
-            if (noShowRate > 15.0) {
-                alerts.add(DashboardOverviewResponse.Alert.builder()
-                        .type("HIGH_NO_SHOW")
-                        .severity("WARNING")
-                        .title("Tỷ lệ không đến cao")
-                        .message("Tỷ lệ bệnh nhân không đến (no-show) cao hơn bình thường")
-                        .value(String.format("%.1f%%", noShowRate))
-                        .threshold("15%")
-                        .build());
-            }
+        // 3. High Overdue Invoices Alert
+        if (invoiceStats.getOverdue() > 5) {
+            alerts.add(DashboardOverviewResponse.Alert.builder()
+                    .type("HIGH_OVERDUE")
+                    .severity("WARNING")
+                    .title("Nhiều hóa đơn quá hạn")
+                    .message(invoiceStats.getOverdue() + " hóa đơn đã quá hạn thanh toán")
+                    .value(invoiceStats.getOverdue().toString() + " invoices")
+                    .threshold("> 5 invoices")
+                    .build());
         }
         
         // 4. Low Inventory Alert
@@ -506,9 +428,20 @@ public class DashboardService {
                     .build());
         }
         
+        // Sort alerts by severity (CRITICAL first, then WARNING) and limit to 5
+        alerts.sort((a, b) -> {
+            if (a.getSeverity().equals(b.getSeverity())) return 0;
+            return a.getSeverity().equals("CRITICAL") ? -1 : 1;
+        });
+        
+        // Limit to top 5 alerts
+        java.util.List<DashboardOverviewResponse.Alert> topAlerts = alerts.size() > 5 
+            ? alerts.subList(0, 5) 
+            : alerts;
+        
         return DashboardOverviewResponse.AlertStats.builder()
-                .totalAlerts(alerts.size())
-                .alerts(alerts)
+                .totalAlerts(topAlerts.size())
+                .alerts(topAlerts)
                 .build();
     }
 

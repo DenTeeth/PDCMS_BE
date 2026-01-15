@@ -18,8 +18,9 @@ public class FormatRestResponse implements ResponseBodyAdvice<Object> {
 
     @Override
     public boolean supports(MethodParameter returnType, Class<? extends HttpMessageConverter<?>> converterType) {
-        return returnType.getDeclaringClass().getPackageName()
-                .startsWith("com.dental.clinic.management.controller");
+        String packageName = returnType.getDeclaringClass().getPackageName();
+        return packageName.startsWith("com.dental.clinic.management") && 
+               packageName.contains(".controller");
     }
 
     @Override
@@ -37,6 +38,29 @@ public class FormatRestResponse implements ResponseBodyAdvice<Object> {
         // Không format nếu là String hoặc error response
         if (body instanceof String || status >= 400) {
             return body;
+        }
+
+        // Không format nếu là binary data (byte[], Resource, InputStream)
+        // Bao gồm: Excel files, PDF files, images, etc.
+        if (body instanceof byte[] || 
+            body instanceof org.springframework.core.io.Resource ||
+            body instanceof java.io.InputStream) {
+            return body;
+        }
+
+        // Không format nếu Content-Type là binary/file types
+        if (selectedContentType != null) {
+            String contentTypeStr = selectedContentType.toString().toLowerCase();
+            if (contentTypeStr.contains("application/octet-stream") ||
+                contentTypeStr.contains("application/vnd.openxmlformats") ||
+                contentTypeStr.contains("application/pdf") ||
+                contentTypeStr.contains("text/csv") ||
+                contentTypeStr.contains("text/plain") && contentTypeStr.contains("attachment") ||
+                selectedContentType.getType().equals("image") ||
+                selectedContentType.getType().equals("video") ||
+                selectedContentType.getType().equals("audio")) {
+                return body;
+            }
         }
 
         // Không format nếu đã là RestResponse để tránh nested wrapper

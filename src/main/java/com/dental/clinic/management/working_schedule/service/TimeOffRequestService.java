@@ -530,6 +530,14 @@ public class TimeOffRequestService {
                                 })
                                 .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên cho người dùng: " + username));
 
+                // BR-41: Managers cannot approve their own Leave or Overtime requests
+                if (timeOffRequest.getEmployeeId().equals(approvedBy)) {
+                        log.warn("Manager {} attempting to self-approve time-off request {}", 
+                                approvedBy, timeOffRequest.getRequestId());
+                        throw new com.dental.clinic.management.working_schedule.exception.SelfApprovalNotAllowedException(
+                                "Nghỉ phép", timeOffRequest.getRequestId());
+                }
+
                 // Update request
                 timeOffRequest.setStatus(TimeOffStatus.APPROVED);
                 timeOffRequest.setApprovedBy(approvedBy);

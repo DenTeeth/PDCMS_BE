@@ -205,6 +205,19 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
         List<Appointment> findByStatus(AppointmentStatus status);
 
         /**
+         * Find scheduled appointments within a time range (for 24h reminder job)
+         * BR-17: Send reminder email 24 hours before appointment
+         */
+        @Query("SELECT a FROM Appointment a " +
+                        "WHERE a.status = :status " +
+                        "AND a.appointmentStartTime BETWEEN :startTime AND :endTime " +
+                        "ORDER BY a.appointmentStartTime ASC")
+        List<Appointment> findByStatusAndStartTimeBetween(
+                        @Param("status") AppointmentStatus status,
+                        @Param("startTime") LocalDateTime startTime,
+                        @Param("endTime") LocalDateTime endTime);
+
+        /**
          * Check if time slot conflicts with existing appointments for an employee
          * Used for: Preventing double-booking
          */
