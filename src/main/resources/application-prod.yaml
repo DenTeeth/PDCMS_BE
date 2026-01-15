@@ -203,7 +203,7 @@ management:
 chatbot:
   gemini:
     api-key: ${GEMINI_API_KEY:AIzaSyDdxkbfIBv0QNIeDvW3C6M0eQX_NiWNQNI}
-    model-name: gemini-2.5-flash
+    model-name: gemini-2.0-flash
 
 # ==============================
 # Payment Configuration (VietQR for QR code generation)
