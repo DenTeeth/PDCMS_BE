@@ -1,498 +1,950 @@
-# PDCMS – Private Dental Clinic Management System# PDCMS – Private Dental Clinic Management System
+# PDCMS – Private Dental Clinic Management System# PDCMS – Private Dental Clinic Management System# PDCMS – Private Dental Clinic Management System
 
-**Project Code:** FA25SE202**Project Code:** FA25SE202
+**Project Code:** FA25SE202**Project Code:** FA25SE202**Project Code:** FA25SE202
 
-**Student Group:** GFA25SE96**Student Group:** GFA25SE96
+**Student Group:** GFA25SE96**Student Group:** GFA25SE96**Student Group:** GFA25SE96
 
-## Team Members:## Team Members:
+## Team Members## Team Members:## Team Members:
 
-- Võ Nguyễn Minh Quân – SE160914- Võ Nguyễn Minh Quân – SE160914
+| Name | Student ID |- Võ Nguyễn Minh Quân – SE160914- Võ Nguyễn Minh Quân – SE160914
 
-- Đoàn Nguyễn Khôi Nguyên – SE182907- Đoàn Nguyễn Khôi Nguyên – SE182907
+|------|------------|
 
-- Lê Anh Khoa – SE184100- Lê Anh Khoa – SE184100
+| Võ Nguyễn Minh Quân | SE160914 |- Đoàn Nguyễn Khôi Nguyên – SE182907- Đoàn Nguyễn Khôi Nguyên – SE182907
+
+| Đoàn Nguyễn Khôi Nguyên | SE182907 |
+
+| Lê Anh Khoa | SE184100 |- Lê Anh Khoa – SE184100- Lê Anh Khoa – SE184100
+
+| Trịnh Công Thái | SE183743 |
 
 - Trịnh Công Thái – SE183743- Trịnh Công Thái – SE183743
 
+**Supervisor:** Lâm Hữu Khánh Phương
+
 **Supervisor:** Lâm Hữu Khánh Phương**Supervisor:** Lâm Hữu Khánh Phương
+
+**External Supervisor:** Nguyễn Văn Chiến, Nguyễn Xuân Bỉnh
 
 **External Supervisor:** Nguyễn Văn Chiến, Nguyễn Xuân Bỉnh**External Supervisor:** Nguyễn Văn Chiến, Nguyễn Xuân Bỉnh
 
+**Semester:** FA25
+
 **Semester:** FA25**Semester:** FA25
+
+**Last Updated:** January 15, 2026
 
 **January 15, 2026\*\***January 14, 2026\*\*
 
 ---
 
+---
+
+## Table of Contents
+
 ## Contents## Contents
 
-1. [Software Modules Created in the Project](#1-software-modules-created-in-the-project)1. [Software Modules Created in the Project](#1-software-modules-created-in-the-project)
+1. [Software Modules Created in the Project](#1-software-modules-created-in-the-project)
 
-   - 1.1 [Backend Application (Monolithic Architecture)](#11-backend-application-monolithic-architecture) - 1.1 [Backend Application (Monolithic Architecture)](#11-backend-application-monolithic-architecture)
+2. [Third-Party Libraries, Frameworks, and Tools](#2-third-party-libraries-frameworks-and-tools)1. [Software Modules Created in the Project](#1-software-modules-created-in-the-project)1. [Software Modules Created in the Project](#1-software-modules-created-in-the-project)
 
-   - 1.2 [Alternative: Starting Backend with Docker Compose](#12-alternative-starting-backend-with-docker-compose) - 1.2 [Alternative: Starting Backend with Docker Compose](#12-alternative-starting-backend-with-docker-compose)
+3. [Security Architecture - RBAC](#3-security-architecture---rbac)
 
-   - 1.3 [Frontend Application](#13-frontend-application) - 1.3 [Frontend Application](#13-frontend-application)
+4. [Configuration Documentation](#4-configuration-documentation) - 1.1 [Backend Application (Monolithic Architecture)](#11-backend-application-monolithic-architecture) - 1.1 [Backend Application (Monolithic Architecture)](#11-backend-application-monolithic-architecture)
 
-2. [Third-Party Libraries, Frameworks, and Tools](#2-third-party-libraries-frameworks-and-tools)2. [Third-Party Libraries, Frameworks, and Tools](#2-third-party-libraries-frameworks-and-tools)
+5. [Demo Accounts](#5-demo-accounts)
 
-   - 2.1 [Backend Technologies](#21-backend-technologies) - 2.1 [Backend Technologies](#21-backend-technologies)
+6. [Installation Guide](#6-installation-guide) - 1.2 [Alternative: Starting Backend with Docker Compose](#12-alternative-starting-backend-with-docker-compose) - 1.2 [Alternative: Starting Backend with Docker Compose](#12-alternative-starting-backend-with-docker-compose)
 
-   - 2.2 [Frontend Technologies](#22-frontend-technologies) - 2.2 [Frontend Technologies](#22-frontend-technologies)
+7. [Documentation Structure](#7-documentation-structure)
 
-   - 2.3 [Database & Infrastructure](#23-database--infrastructure) - 2.3 [Database & Infrastructure](#23-database--infrastructure)
+8. [Source Code Repositories](#8-source-code-repositories) - 1.3 [Frontend Application](#13-frontend-application) - 1.3 [Frontend Application](#13-frontend-application)
 
-   - 2.4 [Email & AI Integration](#24-email--ai-integration) - 2.4 [Email & AI Integration](#24-email--ai-integration)
+---2. [Third-Party Libraries, Frameworks, and Tools](#2-third-party-libraries-frameworks-and-tools)2. [Third-Party Libraries, Frameworks, and Tools](#2-third-party-libraries-frameworks-and-tools)
 
-3. [Security Architecture - RBAC (Role-Based Access Control)](#3-security-architecture---rbac-role-based-access-control)3. [Configuration Documentation](#3-configuration-documentation)
+## 1. Software Modules Created in the Project - 2.1 [Backend Technologies](#21-backend-technologies) - 2.1 [Backend Technologies](#21-backend-technologies)
 
-   - 3.1 [RBAC Overview](#31-rbac-overview) - 3.1 [Internal Software Component Configuration](#31-internal-software-component-configuration)
+The PDCMS system is built on a **monolithic architecture** using Spring Boot, with 22 functional modules organized following domain-driven design. - 2.2 [Frontend Technologies](#22-frontend-technologies) - 2.2 [Frontend Technologies](#22-frontend-technologies)
 
-   - 3.2 [Permission Structure](#32-permission-structure) - 3.2 [Third-Party Service Configuration](#32-third-party-service-configuration)
+### 1.1 Module List - 2.3 [Database & Infrastructure](#23-database--infrastructure) - 2.3 [Database & Infrastructure](#23-database--infrastructure)
 
-   - 3.3 [Role-Permission Mapping](#33-role-permission-mapping)4. [List of All Roles, Username/Password for Demo System](#4-list-of-all-roles-usernamepassword-for-demo-system)
+| # | Module | Description | Key Features | - 2.4 [Email & AI Integration](#24-email--ai-integration) - 2.4 [Email & AI Integration](#24-email--ai-integration)
 
-   - 3.4 [Method-Level Security Implementation](#34-method-level-security-implementation) - 4.1 [System Roles](#41-system-roles)
+|---|--------|-------------|--------------|
 
-   - 3.5 [Permission Modules](#35-permission-modules) - 4.2 [Demo Account List](#42-demo-account-list)
+| 1 | **Authentication** | JWT-based authentication | Login, Register, Password Reset, Email Verification |3. [Security Architecture - RBAC (Role-Based Access Control)](#3-security-architecture---rbac-role-based-access-control)3. [Configuration Documentation](#3-configuration-documentation)
 
-4. [Configuration Documentation](#4-configuration-documentation) - 4.3 [Account Testing Guide](#43-account-testing-guide)
+| 2 | **Patient** | Patient management | CRUD, Medical History, Blocking/Unblocking |
 
-   - 4.1 [Internal Software Component Configuration](#41-internal-software-component-configuration)5. [Complete System Installation Guide](#5-complete-system-installation-guide)
+| 3 | **Employee** | Staff management | Profiles, Contracts, Specializations | - 3.1 [RBAC Overview](#31-rbac-overview) - 3.1 [Internal Software Component Configuration](#31-internal-software-component-configuration)
 
-   - 4.2 [Third-Party Service Configuration](#42-third-party-service-configuration) - 5.1 [Prerequisites](#51-prerequisites)
+| 4 | **Appointment** | Booking system | Scheduling, Status Tracking, Participants |
 
-5. [List of All Roles, Username/Password for Demo System](#5-list-of-all-roles-usernamepassword-for-demo-system) - 5.2 [Quick Installation with Docker Compose (Recommended)](#52-quick-installation-with-docker-compose-recommended)
+| 5 | **Clinical Records** | Medical documentation | Procedures, Prescriptions, Attachments, Tooth Status | - 3.2 [Permission Structure](#32-permission-structure) - 3.2 [Third-Party Service Configuration](#32-third-party-service-configuration)
 
-   - 5.1 [System Roles](#51-system-roles) - 5.3 [Manual Installation](#53-manual-installation)
+| 6 | **Treatment Plan** | Treatment planning | Multi-phase Plans, Auto-scheduling, Payment Types |
 
-   - 5.2 [Demo Account List](#52-demo-account-list) - 5.4 [Initial Data Seeding](#54-initial-data-seeding)
+| 7 | **Invoice** | Billing system | Payment Tracking, History, Export | - 3.3 [Role-Permission Mapping](#33-role-permission-mapping)4. [List of All Roles, Username/Password for Demo System](#4-list-of-all-roles-usernamepassword-for-demo-system)
 
-   - 5.3 [Account Testing Guide](#53-account-testing-guide)6. [Other Related Documents](#6-other-related-documents)
+| 8 | **Payment** | SePay integration | QR Code, Webhook, Auto-confirmation |
 
-6. [Complete System Installation Guide](#6-complete-system-installation-guide) - 6.1 [Project Document List](#61-project-document-list)
+| 9 | **Warehouse** | Inventory management | Items, Categories, Stock In/Out, Expiry Alerts | - 3.4 [Method-Level Security Implementation](#34-method-level-security-implementation) - 4.1 [System Roles](#41-system-roles)
 
-   - 6.1 [Prerequisites](#61-prerequisites) - 6.2 [Source Code Repositories](#62-source-code-repositories)
+| 10 | **Service** | Dental services | Categories, Pricing, Constraints |
 
-   - 6.2 [Quick Installation with Docker Compose (Recommended)](#62-quick-installation-with-docker-compose-recommended)
+| 11 | **Room** | Facility management | Room scheduling, Availability | - 3.5 [Permission Modules](#35-permission-modules) - 4.2 [Demo Account List](#42-demo-account-list)
 
-   - 6.3 [Manual Installation](#63-manual-installation)---
+| 12 | **Shift** | Work scheduling | Fixed/Flex shifts, Time slots |
 
-   - 6.4 [Initial Data Seeding](#64-initial-data-seeding)
+| 13 | **Time-off** | Leave management | Requests, Approvals |4. [Configuration Documentation](#4-configuration-documentation) - 4.3 [Account Testing Guide](#43-account-testing-guide)
 
-7. [Other Related Documents](#7-other-related-documents)## 1. Software Modules Created in the Project
+| 14 | **Overtime** | Overtime tracking | Requests, Limits (BR-41, BR-42) |
 
-   - 7.1 [Project Document List](#71-project-document-list)
+| 15 | **Holiday** | Holiday management | Annual holidays, Auto-skip scheduling | - 4.1 [Internal Software Component Configuration](#41-internal-software-component-configuration)5. [Complete System Installation Guide](#5-complete-system-installation-guide)
 
-   - 7.2 [Source Code Repositories](#72-source-code-repositories)The PDCMS system is built on a monolithic architecture using Spring Boot, with multiple functional modules organized following domain-driven design. All modules can be installed following the instructions in this document.
+| 16 | **Notification** | Alert system | In-app, Email notifications |
 
----### 1.1 Backend Application (Monolithic Architecture)
+| 17 | **Feedback** | Patient reviews | Ratings, Comments, Statistics | - 4.2 [Third-Party Service Configuration](#42-third-party-service-configuration) - 5.1 [Prerequisites](#51-prerequisites)
 
-## 1. Software Modules Created in the Project**Function:** REST API backend for dental clinic management system, including patient management, appointments, clinical records, treatment plans, warehouse inventory, employee scheduling, payments, and AI chatbot.
+| 18 | **Dashboard** | Analytics | Revenue, Appointments, Employee stats |
 
-The PDCMS system is built on a monolithic architecture using Spring Boot, with multiple functional modules organized following domain-driven design. All modules can be installed following the instructions in this document.**Technologies:**
+| 19 | **Role** | Role management | CRUD Roles |5. [List of All Roles, Username/Password for Demo System](#5-list-of-all-roles-usernamepassword-for-demo-system) - 5.2 [Quick Installation with Docker Compose (Recommended)](#52-quick-installation-with-docker-compose-recommended)
 
-### 1.1 Backend Application (Monolithic Architecture)- Spring Boot 3.2.10
+| 20 | **Permission** | Permission management | 75 permissions across modules |
 
-- Spring Data JPA + Hibernate
+| 21 | **Chatbot** | AI Assistant | Gemini 2.0, Dental consultation | - 5.1 [System Roles](#51-system-roles) - 5.3 [Manual Installation](#53-manual-installation)
 
-**Function:** REST API backend for dental clinic management system, including patient management, appointments, clinical records, treatment plans, warehouse inventory, employee scheduling, payments, and AI chatbot.- Spring Security 6 + JWT OAuth2
+| 22 | **File Upload** | Attachment handling | Images, Documents, X-rays |
 
-- Spring WebSocket (Real-time notifications)
+- 5.2 [Demo Account List](#52-demo-account-list) - 5.4 [Initial Data Seeding](#54-initial-data-seeding)
 
-**Technologies:**- PostgreSQL 13+
+### 1.2 Backend Application
 
-- Redis 7 (Caching)
+- 5.3 [Account Testing Guide](#53-account-testing-guide)6. [Other Related Documents](#6-other-related-documents)
 
-- Spring Boot 3.2.10- Java 17
+**Technology Stack:**
 
-- Spring Data JPA + Hibernate
+- Spring Boot 3.2.106. [Complete System Installation Guide](#6-complete-system-installation-guide) - 6.1 [Project Document List](#61-project-document-list)
 
-- Spring Security 6 + JWT OAuth2**Port:** 8080
+- Java 17
 
-- Spring WebSocket (Real-time notifications)
+- Spring Data JPA + Hibernate - 6.1 [Prerequisites](#61-prerequisites) - 6.2 [Source Code Repositories](#62-source-code-repositories)
 
-- PostgreSQL 13+**Database:** dental_clinic_db
+- Spring Security 6 + JWT OAuth2
 
-- Redis 7 (Caching)
+- PostgreSQL 15 - 6.2 [Quick Installation with Docker Compose (Recommended)](#62-quick-installation-with-docker-compose-recommended)
 
-- Java 17**Source code directory:** `src/main/java/com/dental/clinic/management/`
+- Redis Cache
 
-**Port:** 8080**Core Modules:**
+- Gemini AI 2.0 Flash - 6.3 [Manual Installation](#63-manual-installation)---
 
-**Database:** dental_clinic_db| Module | Directory | Description |
+**Starting the Backend:** - 6.4 [Initial Data Seeding](#64-initial-data-seeding)
 
-| ------------------- | ---------------------- | ----------------------------------------------------- |
+````bash7. [Other Related Documents](#7-other-related-documents)## 1. Software Modules Created in the Project
 
-**Source code directory:** `src/main/java/com/dental/clinic/management/`| Authentication | `authentication/` | Login, JWT tokens, email verification, password reset |
+# Option 1: Maven
 
-| Account | `account/` | User account management and profiles |
+./mvnw spring-boot:run -Dspring-boot.run.profiles=dev   - 7.1 [Project Document List](#71-project-document-list)
 
-**Core Modules:**| Employee | `employee/` | Clinic staff management (Dentists, Nurses, etc.) |
 
-| Patient | `patient/` | Patient records and medical history |
 
-| Module | Directory | Description || Booking Appointment | `booking_appointment/` | Appointment scheduling and room management |
+# Option 2: Docker Compose (Recommended)   - 7.2 [Source Code Repositories](#72-source-code-repositories)The PDCMS system is built on a monolithic architecture using Spring Boot, with multiple functional modules organized following domain-driven design. All modules can be installed following the instructions in this document.
 
-| ------------------- | ---------------------- | ----------------------------------------------------- || Treatment Plans | `treatment_plans/` | Multi-phase treatment planning |
+docker-compose up -d
 
-| Authentication | `authentication/` | Login, JWT tokens, email verification, password reset || Clinical Records | `clinical_records/` | Clinical notes, odontogram, attachments |
+```---### 1.1 Backend Application (Monolithic Architecture)
 
-| Account | `account/` | User account management and profiles || Service | `service/` | Dental services and procedures catalog |
 
-| Employee | `employee/` | Clinic staff management (Dentists, Nurses, etc.) || Warehouse | `warehouse/` | Inventory, materials, and stock management |
 
-| Patient | `patient/` | Patient records and medical history || Working Schedule | `working_schedule/` | Employee shifts, time-off, overtime requests |
+### 1.3 Frontend Application## 1. Software Modules Created in the Project**Function:** REST API backend for dental clinic management system, including patient management, appointments, clinical records, treatment plans, warehouse inventory, employee scheduling, payments, and AI chatbot.
 
-| Booking Appointment | `booking_appointment/` | Appointment scheduling and room management || Payment | `payment/` | Invoices, payments, SePay QR integration |
 
-| Treatment Plans | `treatment_plans/` | Multi-phase treatment planning || Notification | `notification/` | Real-time WebSocket notifications |
 
-| Clinical Records | `clinical_records/` | Clinical notes, odontogram, attachments || Chatbot | `chatbot/` | FAQ chatbot with Gemini AI |
+**Technology Stack:**The PDCMS system is built on a monolithic architecture using Spring Boot, with multiple functional modules organized following domain-driven design. All modules can be installed following the instructions in this document.**Technologies:**
 
-| Service | `service/` | Dental services and procedures catalog || Dashboard | `dashboard/` | Reports and analytics |
+- Next.js 14
 
-| Warehouse | `warehouse/` | Inventory, materials, and stock management || Feedback | `feedback/` | Patient feedback and reviews |
+- TypeScript### 1.1 Backend Application (Monolithic Architecture)- Spring Boot 3.2.10
 
-| Working Schedule | `working_schedule/` | Employee shifts, time-off, overtime requests |
+- Tailwind CSS
 
-| Payment | `payment/` | Invoices, payments, SePay QR integration |**Build command:**
+- Shadcn/ui- Spring Data JPA + Hibernate
 
-| Notification | `notification/` | Real-time WebSocket notifications |
 
-| Chatbot | `chatbot/` | FAQ chatbot with Gemini AI |```bash
 
-| Dashboard | `dashboard/` | Reports and analytics |cd PDCMS_BE
+**Starting the Frontend:****Function:** REST API backend for dental clinic management system, including patient management, appointments, clinical records, treatment plans, warehouse inventory, employee scheduling, payments, and AI chatbot.- Spring Security 6 + JWT OAuth2
 
-| Feedback | `feedback/` | Patient feedback and reviews |./mvnw clean package -DskipTests
 
-| **Permission** | `permission/` | **RBAC permission management** |```
 
-| **Role** | `role/` | **Role and base role management** |
+```bash- Spring WebSocket (Real-time notifications)
 
-**Run command:**
+cd PDCMS_FE
 
-**Build command:**
-
-````bash
-
-```bashjava -jar target/dental-clinic-management-0.0.1-SNAPSHOT.jar
-
-cd PDCMS_BE```
-
-./mvnw clean package -DskipTests
-
-```---
-
-
-
-**Run command:**### 1.2 Alternative: Starting Backend with Docker Compose
-
-
-
-```bashInstead of building and running manually as above, you can use Docker Compose to start all services at once.
-
-java -jar target/dental-clinic-management-0.0.1-SNAPSHOT.jar
-
-```**Requirements:**
-
-
-
----- Docker Engine 20.10+
-
-- Docker Compose 2.0+
-
-### 1.2 Alternative: Starting Backend with Docker Compose
-
-**Advantages of this method:**
-
-Instead of building and running manually as above, you can use Docker Compose to start all services at once.
-
-- Automatically build and start backend with PostgreSQL and Redis
-
-**Requirements:**- Manage dependencies and correct startup order
-
-- Automatically create Docker network for services to connect
-
-- Docker Engine 20.10+- Easy to scale and deploy to production
-
-- Docker Compose 2.0+
-
-**Implementation steps:**
-
-**Advantages of this method:**
-
-**Step 1:** Navigate to project directory
-
-- Automatically build and start backend with PostgreSQL and Redis
-
-- Manage dependencies and correct startup order```bash
-
-- Automatically create Docker network for services to connectcd PDCMS_BE
-
-- Easy to scale and deploy to production```
-
-
-
-**Implementation steps:****Step 2:** Ensure file `.env` is configured (see section 3.1.4)
-
-
-
-**Step 1:** Navigate to project directory**Step 3:** Run Docker Compose
-
-
-
-```bash```bash
-
-cd PDCMS_BEdocker compose up --build
-
-````
-
-**Step 2:** Ensure file `.env` is configured (see section 4.1.4)This command will:
-
-**Step 3:** Run Docker Compose- Build Docker image for backend application
-
-- Start services in order: PostgreSQL → Redis → Backend App → Nginx Proxy Manager
-
-````bash- Display logs of all services
-
-docker compose up --build
-
-```**Run in background (detached mode):**
-
-
-
-This command will:```bash
-
-docker compose up --build -d
-
-- Build Docker image for backend application```
-
-- Start services in order: PostgreSQL → Redis → Backend App → Nginx Proxy Manager
-
-- Display logs of all services**View logs:**
-
-
-
-**Run in background (detached mode):**```bash
-
-docker compose logs -f
-
-```bash```
-
-docker compose up --build -d
-
-```**Stop all services:**
-
-
-
-**View logs:**```bash
-
-docker compose down
-
-```bash```
-
-docker compose logs -f
-
-```---
-
-
-
-**Stop all services:**### 1.3 Frontend Application
-
-
-
-```bash**Function:** Web application for Admin, Manager, Dentist, Receptionist, Accountant, Nurse, and Patient roles.
-
-docker compose down
-
-```**Technologies:**
-
-
-
----- React/Next.js
-
-- TypeScript
-
-### 1.3 Frontend Application- Tailwind CSS
-
-- TanStack Query (React Query)
-
-**Function:** Web application for Admin, Manager, Dentist, Receptionist, Accountant, Nurse, and Patient roles.- React Hook Form + Zod validation
-
-- Lucide React (icons)
-
-**Technologies:**- WebSocket (real-time updates)
-
-
-
-- Next.js 16 with Turbopack**Development Port:** 3000
-
-- React 19
-
-- TypeScript 5**Production URL:** https://pdcms.vercel.app
-
-- Tailwind CSS 4
-
-- TanStack Query (React Query) 5**Source code repository:** Separate frontend repository (private)
-
-- React Hook Form + Zod validation
-
-- Radix UI (Headless components)**Install dependencies:**
-
-- Lucide React + FontAwesome (icons)
-
-- FullCalendar (Appointment scheduling)```bash
-
-- Recharts (Data visualization)cd pdcms-fe
-
-- WebSocket with STOMP.js + SockJSnpm install
-
-- next-intl (Internationalization)```
-
-- Framer Motion (Animations)
-
-**Run development server:**
-
-**Development Port:** 3000
-
-```bash
-
-**Production URL:** https://pdcms.vercel.appnpm run dev
-
-````
-
-**Source code repository:** Separate frontend repository (private)
-
-**Build for production:**
-
-**Install dependencies:**
-
-````bash
-
-```bashnpm run build
-
-cd PDCMS_FE```
-
-npm install
-
-```---
-
-
-
-**Run development server:**## 2. Third-Party Libraries, Frameworks, and Tools
-
-
-
-```bash### 2.1 Backend Technologies
+npm install**Technologies:**- PostgreSQL 13+
 
 npm run dev
 
-```| Name                         | Version | Purpose                              |
+```- Redis 7 (Caching)
 
-| ---------------------------- | ------- | ------------------------------------ |
 
-**Build for production:**| Java JDK                     | 17      | Backend programming language         |
 
-| Spring Boot                  | 3.2.10  | Application framework                |
+---- Spring Boot 3.2.10- Java 17
 
-```bash| Spring Data JPA              | 3.2.x   | ORM and database access              |
 
-npm run build| Spring Security              | 6.x     | Authentication and authorization     |
 
-```| Spring WebSocket             | 3.2.x   | Real-time notifications              |
+## 2. Third-Party Libraries, Frameworks, and Tools- Spring Data JPA + Hibernate
 
-| PostgreSQL JDBC Driver       | 42.x    | Database connectivity                |
 
----| Maven                        | 3.9+    | Build tool and dependency management |
 
-| Lombok                       | 1.18.x  | Reduce boilerplate code              |
+### 2.1 Backend Dependencies- Spring Security 6 + JWT OAuth2**Port:** 8080
 
-## 2. Third-Party Libraries, Frameworks, and Tools| JWT (OAuth2 Resource Server) | 6.x     | JSON Web Token authentication        |
 
-| SpringDoc OpenAPI            | 2.5.0   | Swagger API documentation            |
 
-### 2.1 Backend Technologies| Apache POI                   | 5.4.0   | Excel export functionality           |
+| Library | Version | Purpose |- Spring WebSocket (Real-time notifications)
 
-| Apache Commons CSV           | 1.10.0  | CSV export functionality             |
+|---------|---------|---------|
 
-| Name                         | Version | Purpose                              || MapStruct                    | 1.5.x   | DTO mapping                          |
+| Spring Boot | 3.2.10 | Application framework |- PostgreSQL 13+**Database:** dental_clinic_db
 
-| ---------------------------- | ------- | ------------------------------------ |
+| Spring Security | 6.x | Authentication & Authorization |
 
-| Java JDK                     | 17      | Backend programming language         |### 2.2 Frontend Technologies
+| Spring Data JPA | 3.x | Database ORM |- Redis 7 (Caching)
 
-| Spring Boot                  | 3.2.10  | Application framework                |
+| PostgreSQL Driver | 42.x | Database connectivity |
 
-| Spring Data JPA              | 3.2.x   | ORM and database access              || Name            | Version | Purpose                     |
+| Redis | 7.x | Caching |- Java 17**Source code directory:** `src/main/java/com/dental/clinic/management/`
 
-| Spring Security              | 6.x     | Authentication and authorization     || --------------- | ------- | --------------------------- |
+| JWT (jjwt) | 0.12.6 | Token generation |
 
-| Spring WebSocket             | 3.2.x   | Real-time notifications              || Node.js         | 18+     | JavaScript runtime          |
+| Lombok | 1.18.x | Boilerplate reduction |**Port:** 8080**Core Modules:**
 
-| PostgreSQL JDBC Driver       | 42.x    | Database connectivity                || React/Next.js   | Latest  | UI framework                |
+| MapStruct | 1.5.x | Object mapping |
 
-| Maven                        | 3.9+    | Build tool and dependency management || TypeScript      | 5.x     | Type-safe JavaScript        |
+| Apache POI | 5.x | Excel export |**Database:** dental_clinic_db| Module | Directory | Description |
 
-| Lombok                       | 1.18.x  | Reduce boilerplate code              || Tailwind CSS    | 3.4+    | Utility-first CSS framework |
+| OpenCSV | 5.x | CSV export |
 
-| JWT (OAuth2 Resource Server) | 6.x     | JSON Web Token authentication        || TanStack Query  | 5.x     | Server state management     |
+| Springdoc OpenAPI | 2.x | API documentation || ------------------- | ---------------------- | ----------------------------------------------------- |
 
-| SpringDoc OpenAPI            | 2.5.0   | Swagger API documentation            || React Hook Form | 7.x     | Form management             |
 
-| Apache POI                   | 5.4.0   | Excel export functionality           || Zod             | 3.x     | Schema validation           |
 
-| Apache Commons CSV           | 1.10.0  | CSV export functionality             || Lucide React    | Latest  | Icon library                |
+### 2.2 External Services**Source code directory:** `src/main/java/com/dental/clinic/management/`| Authentication | `authentication/` | Login, JWT tokens, email verification, password reset |
 
-| MapStruct                    | 1.5.x   | DTO mapping                          |
 
-### 2.3 Database & Infrastructure
 
-### 2.2 Frontend Technologies
+| Service | Purpose | Configuration || Account | `account/` | User account management and profiles |
 
-| Name                 | Version      | Purpose                          |
+|---------|---------|---------------|
 
-#### Core Framework & Runtime| -------------------- | ------------ | -------------------------------- |
+| **SendGrid** | Email delivery | SMTP + API Key |**Core Modules:**| Employee | `employee/` | Clinic staff management (Dentists, Nurses, etc.) |
 
-| PostgreSQL           | 13+          | Primary relational database      |
+| **Google Gemini AI** | Chatbot | gemini-2.0-flash model |
 
-| Name       | Version | Purpose                              || Redis                | 7-alpine     | Cache and session management     |
+| **SePay** | Payment gateway | Webhook integration || Patient | `patient/` | Patient records and medical history |
 
-| ---------- | ------- | ------------------------------------ || Docker               | 20.10+       | Containerization                 |
+| **DigitalOcean** | Cloud hosting | Droplet + Docker |
 
-| Node.js    | 20+     | JavaScript runtime                   || Docker Compose       | 2.0+         | Multi-container orchestration    |
+| **DuckDNS** | Dynamic DNS | pdcms.duckdns.org || Module | Directory | Description || Booking Appointment | `booking_appointment/` | Appointment scheduling and room management |
 
-| Next.js    | 16.0+   | React framework with SSR/SSG         || Nginx Proxy Manager  | Latest       | Reverse proxy and SSL management |
 
-| React      | 19.2+   | UI framework                         || DigitalOcean Droplet | Ubuntu 22.04 | Production server hosting        |
 
-| TypeScript | 5+      | Type-safe JavaScript                 |
+### 2.3 DevOps Tools| ------------------- | ---------------------- | ----------------------------------------------------- || Treatment Plans | `treatment_plans/` | Multi-phase treatment planning |
 
-### 2.4 Email & AI Integration
 
-#### UI Component Libraries
 
-| Name               | Version   | Purpose                           |
+| Tool | Purpose || Authentication | `authentication/` | Login, JWT tokens, email verification, password reset || Clinical Records | `clinical_records/` | Clinical notes, odontogram, attachments |
 
-| Name                     | Version | Purpose                      || ------------------ | --------- | --------------------------------- |
+|------|---------|
 
-| ------------------------ | ------- | ---------------------------- || Resend Java SDK    | 3.0.0     | Production email service          |
+| Docker | Containerization || Account | `account/` | User account management and profiles || Service | `service/` | Dental services and procedures catalog |
 
-| Radix UI                 | Latest  | Headless component library   || Spring Mail        | 3.2.x     | Email sending abstraction         |
+| Docker Compose | Multi-container orchestration |
 
-| Lucide React             | 0.544+  | Icon library                 || LangChain4J Gemini | 0.35.0    | Gemini AI integration for chatbot |
+| GitHub Actions | CI/CD pipeline || Employee | `employee/` | Clinic staff management (Dentists, Nurses, etc.) || Warehouse | `warehouse/` | Inventory, materials, and stock management |
 
-| FontAwesome              | 7.0+    | Icon library                 || Google AI Gemini   | 2.5-flash | AI model for FAQ responses        |
+| Nginx Proxy Manager | SSL + Reverse proxy |
 
-| Framer Motion            | 12.23+  | Animation library            |
+| Patient | `patient/` | Patient records and medical history || Working Schedule | `working_schedule/` | Employee shifts, time-off, overtime requests |
 
 ---
 
-#### Styling
+| Booking Appointment | `booking_appointment/` | Appointment scheduling and room management || Payment | `payment/` | Invoices, payments, SePay QR integration |
 
-## 3. Configuration Documentation
+## 3. Security Architecture - RBAC
 
-| Name                     | Version | Purpose                      |
+| Treatment Plans | `treatment_plans/` | Multi-phase treatment planning || Notification | `notification/` | Real-time WebSocket notifications |
+
+### 3.1 Overview
+
+| Clinical Records | `clinical_records/` | Clinical notes, odontogram, attachments || Chatbot | `chatbot/` | FAQ chatbot with Gemini AI |
+
+PDCMS implements **Role-Based Access Control (RBAC)** with:
+
+- 6 predefined roles| Service | `service/` | Dental services and procedures catalog || Dashboard | `dashboard/` | Reports and analytics |
+
+- 75 granular permissions
+
+- Method-level security using `@PreAuthorize`| Warehouse | `warehouse/` | Inventory, materials, and stock management || Feedback | `feedback/` | Patient feedback and reviews |
+
+- JWT token with embedded roles/permissions
+
+| Working Schedule | `working_schedule/` | Employee shifts, time-off, overtime requests |
+
+### 3.2 Role Hierarchy
+
+| Payment | `payment/` | Invoices, payments, SePay QR integration |**Build command:**
+
+````
+
+ROLE_ADMIN (Full access)| Notification | `notification/` | Real-time WebSocket notifications |
+
+    └── ROLE_MANAGER (Management access)
+
+            ├── ROLE_DENTIST (Clinical access)| Chatbot | `chatbot/` | FAQ chatbot with Gemini AI |```bash
+
+            ├── ROLE_NURSE (Support access)
+
+            └── ROLE_RECEPTIONIST (Front desk access)| Dashboard | `dashboard/` | Reports and analytics |cd PDCMS_BE
+
+                    └── ROLE_PATIENT (Self-service access)
+
+```| Feedback | `feedback/` | Patient feedback and reviews |./mvnw clean package -DskipTests
+
+### 3.3 Permission Structure| **Permission** | `permission/` | **RBAC permission management** |```
+
+Permissions follow the naming convention: `{ACTION}_{MODULE}`| **Role** | `role/` | **Role and base role management** |
+
+**Actions:** VIEW, CREATE, UPDATE, DELETE, MANAGE, APPROVE**Run command:**
+
+**Example Permissions:\*\***Build command:\*\*
+
+| Permission | Description |````bash
+
+|------------|-------------|
+
+| `VIEW_PATIENT` | View patient list and details |```bashjava -jar target/dental-clinic-management-0.0.1-SNAPSHOT.jar
+
+| `CREATE_APPOINTMENT` | Create new appointments |
+
+| `APPROVE_TIME_OFF` | Approve time-off requests |cd PDCMS_BE```
+
+| `MANAGE_WAREHOUSE` | Full warehouse access |
+
+| `VIEW_DASHBOARD` | Access dashboard analytics |./mvnw clean package -DskipTests
+
+### 3.4 Permission Modules (75 total)```---
+
+| Module | Permissions |
+
+|--------|-------------|
+
+| Patient | VIEW, CREATE, UPDATE, DELETE, BLOCK, UNBLOCK |**Run command:**### 1.2 Alternative: Starting Backend with Docker Compose
+
+| Appointment | VIEW, CREATE, UPDATE, DELETE, MANAGE |
+
+| Clinical Records | VIEW, CREATE, UPDATE, DELETE, UPLOAD_ATTACHMENT |
+
+| Treatment Plan | VIEW, CREATE, UPDATE, DELETE |
+
+| Invoice | VIEW, CREATE, UPDATE, DELETE, EXPORT |```bashInstead of building and running manually as above, you can use Docker Compose to start all services at once.
+
+| Warehouse | VIEW, CREATE, UPDATE, DELETE, MANAGE, EXPORT |
+
+| Employee | VIEW, CREATE, UPDATE, DELETE |java -jar target/dental-clinic-management-0.0.1-SNAPSHOT.jar
+
+| Shift | VIEW, CREATE, UPDATE, DELETE, MANAGE_FIXED, MANAGE_FLEX |
+
+| Time-off | VIEW, CREATE, UPDATE, DELETE, APPROVE |```**Requirements:**
+
+| Overtime | VIEW, CREATE, UPDATE, DELETE, APPROVE |
+
+| Role | VIEW, CREATE, UPDATE, DELETE |
+
+| Permission | VIEW, ASSIGN |
+
+| Dashboard | VIEW, EXPORT |---- Docker Engine 20.10+
+
+| Notification | VIEW, MANAGE |
+
+| Feedback | VIEW, CREATE, DELETE |- Docker Compose 2.0+
+
+| Service | VIEW, CREATE, UPDATE, DELETE |
+
+| Room | VIEW, CREATE, UPDATE, DELETE |### 1.2 Alternative: Starting Backend with Docker Compose
+
+| Holiday | VIEW, CREATE, UPDATE, DELETE |
+
+**Advantages of this method:**
+
+### 3.5 Implementation Example
+
+Instead of building and running manually as above, you can use Docker Compose to start all services at once.
+
+```java
+
+// Controller method with permission check- Automatically build and start backend with PostgreSQL and Redis
+
+@GetMapping("/patients")
+
+@PreAuthorize("hasAuthority('VIEW_PATIENT')")**Requirements:**- Manage dependencies and correct startup order
+
+public ResponseEntity<Page<PatientResponse>> getPatients(...) {
+
+    // Only users with VIEW_PATIENT permission can access- Automatically create Docker network for services to connect
+
+}
+
+- Docker Engine 20.10+- Easy to scale and deploy to production
+
+// Multiple permissions
+
+@PostMapping("/appointments")- Docker Compose 2.0+
+
+@PreAuthorize("hasAnyAuthority('CREATE_APPOINTMENT', 'MANAGE_APPOINTMENT')")
+
+public ResponseEntity<AppointmentResponse> createAppointment(...) {**Implementation steps:**
+
+    // Users with either permission can create appointments
+
+}**Advantages of this method:**
+
+```
+
+**Step 1:** Navigate to project directory
+
+### 3.6 Role-Permission Matrix
+
+- Automatically build and start backend with PostgreSQL and Redis
+
+| Permission | ADMIN | MANAGER | DENTIST | NURSE | RECEPTIONIST | PATIENT |
+
+|------------|:-----:|:-------:|:-------:|:-----:|:------------:|:-------:|- Manage dependencies and correct startup order```bash
+
+| VIEW_PATIENT | ✓ | ✓ | ✓ | ✓ | ✓ | - |
+
+| CREATE_PATIENT | ✓ | ✓ | - | - | ✓ | - |- Automatically create Docker network for services to connectcd PDCMS_BE
+
+| VIEW_APPOINTMENT | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+| CREATE_APPOINTMENT | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |- Easy to scale and deploy to production```
+
+| VIEW_CLINICAL_RECORD | ✓ | ✓ | ✓ | ✓ | - | ✓ |
+
+| CREATE_CLINICAL_RECORD | ✓ | ✓ | ✓ | ✓ | - | - |
+
+| VIEW_DASHBOARD | ✓ | ✓ | - | - | - | - |
+
+| MANAGE_WAREHOUSE | ✓ | ✓ | - | - | - | - |**Implementation steps:\*\***Step 2:\*\* Ensure file `.env` is configured (see section 3.1.4)
+
+| APPROVE_TIME_OFF | ✓ | ✓ | - | - | - | - |
+
+| MANAGE_ROLE | ✓ | - | - | - | - | - |
+
+---**Step 1:** Navigate to project directory**Step 3:** Run Docker Compose
+
+## 4. Configuration Documentation
+
+### 4.1 Environment Variables`bash`bash
+
+`````bashcd PDCMS_BEdocker compose up --build
+
+# Database
+
+POSTGRES_HOST=localhost````
+
+POSTGRES_PORT=5432
+
+POSTGRES_DB=dental_clinic**Step 2:** Ensure file `.env` is configured (see section 4.1.4)This command will:
+
+POSTGRES_USER=postgres
+
+POSTGRES_PASSWORD=your_password**Step 3:** Run Docker Compose- Build Docker image for backend application
+
+
+
+# JWT- Start services in order: PostgreSQL → Redis → Backend App → Nginx Proxy Manager
+
+JWT_SECRET_KEY=your_256_bit_secret_key
+
+JWT_EXPIRATION=86400000````bash- Display logs of all services
+
+
+
+# Email (SendGrid)docker compose up --build
+
+SENDGRID_API_KEY=SG.xxxxx
+
+MAIL_FROM=noreply@pdcms.com```**Run in background (detached mode):**
+
+
+
+# AI Chatbot
+
+GEMINI_API_KEY=AIzaxxxxx
+
+This command will:```bash
+
+# Redis
+
+REDIS_HOST=localhostdocker compose up --build -d
+
+REDIS_PORT=6379
+
+- Build Docker image for backend application```
+
+# SePay Payment
+
+SEPAY_ACCOUNT_NUMBER=0382498470- Start services in order: PostgreSQL → Redis → Backend App → Nginx Proxy Manager
+
+SEPAY_BANK_CODE=MBBank
+
+```- Display logs of all services**View logs:**
+
+
+
+### 4.2 Application Profiles
+
+
+
+| Profile | Purpose | Database |**Run in background (detached mode):**```bash
+
+|---------|---------|----------|
+
+| `dev` | Local development | localhost PostgreSQL |docker compose logs -f
+
+| `test` | Testing | H2 in-memory |
+
+| `prod` | Production | DigitalOcean PostgreSQL |```bash```
+
+
+
+### 4.3 Docker Compose Servicesdocker compose up --build -d
+
+
+
+```yaml```**Stop all services:**
+
+services:
+
+  app:        # Spring Boot application (port 8080)
+
+  postgres:   # PostgreSQL database (port 5432)
+
+  redis:      # Redis cache (port 6379)**View logs:**```bash
+
+  npm:        # Nginx Proxy Manager (ports 80, 443, 81)
+
+```docker compose down
+
+
+
+---```bash```
+
+
+
+## 5. Demo Accountsdocker compose logs -f
+
+
+
+### 5.1 Production URL```---
+
+
+
+- **Backend API:** https://pdcms.duckdns.org/api/v1
+
+- **Swagger UI:** https://pdcms.duckdns.org/swagger-ui.html
+
+**Stop all services:**### 1.3 Frontend Application
+
+### 5.2 Test Accounts
+
+
+
+| Role | Email | Password |
+
+|------|-------|----------|```bash**Function:** Web application for Admin, Manager, Dentist, Receptionist, Accountant, Nurse, and Patient roles.
+
+| **Admin** | admin@dentalclinic.com | Admin@123 |
+
+| **Manager** | manager@dentalclinic.com | Manager@123 |docker compose down
+
+| **Dentist** | dr.minh@dentalclinic.com | Dentist@123 |
+
+| **Nurse** | nurse.lan@dentalclinic.com | Nurse@123 |```**Technologies:**
+
+| **Receptionist** | receptionist@dentalclinic.com | Reception@123 |
+
+| **Patient** | patient@example.com | Patient@123 |
+
+
+
+### 5.3 Login API---- React/Next.js
+
+
+
+```bash- TypeScript
+
+POST /api/v1/auth/login
+
+Content-Type: application/json### 1.3 Frontend Application- Tailwind CSS
+
+
+
+{- TanStack Query (React Query)
+
+  "email": "admin@dentalclinic.com",
+
+  "password": "Admin@123"**Function:** Web application for Admin, Manager, Dentist, Receptionist, Accountant, Nurse, and Patient roles.- React Hook Form + Zod validation
+
+}
+
+```- Lucide React (icons)
+
+
+
+---**Technologies:**- WebSocket (real-time updates)
+
+
+
+## 6. Installation Guide
+
+
+
+### 6.1 Prerequisites- Next.js 16 with Turbopack**Development Port:** 3000
+
+
+
+- Java 17+- React 19
+
+- Docker & Docker Compose
+
+- Node.js 18+ (for frontend)- TypeScript 5**Production URL:** https://pdcms.vercel.app
+
+- Git
+
+- Tailwind CSS 4
+
+### 6.2 Quick Start (Docker)
+
+- TanStack Query (React Query) 5**Source code repository:** Separate frontend repository (private)
+
+```bash
+
+# 1. Clone repository- React Hook Form + Zod validation
+
+git clone https://github.com/DenTeeth/PDCMS_BE.git
+
+cd PDCMS_BE- Radix UI (Headless components)**Install dependencies:**
+
+
+
+# 2. Create .env file- Lucide React + FontAwesome (icons)
+
+cp .env.example .env
+
+# Edit .env with your configurations- FullCalendar (Appointment scheduling)```bash
+
+
+
+# 3. Start all services- Recharts (Data visualization)cd pdcms-fe
+
+docker-compose up -d
+
+- WebSocket with STOMP.js + SockJSnpm install
+
+# 4. Check status
+
+docker-compose ps- next-intl (Internationalization)```
+
+docker-compose logs -f app
+
+```- Framer Motion (Animations)
+
+
+
+### 6.3 Manual Installation**Run development server:**
+
+
+
+```bash**Development Port:** 3000
+
+# 1. Start PostgreSQL & Redis
+
+docker-compose up -d postgres redis```bash
+
+
+
+# 2. Build application**Production URL:** https://pdcms.vercel.appnpm run dev
+
+./mvnw clean package -DskipTests
+
+`````
+
+# 3. Run application
+
+java -jar target/dental-clinic-management-0.0.1-SNAPSHOT.jar --spring.profiles.active=dev**Source code repository:** Separate frontend repository (private)
+
+`````
+
+**Build for production:**
+
+### 6.4 Verify Installation
+
+**Install dependencies:**
+
+```bash
+
+# Health check````bash
+
+curl http://localhost:8080/actuator/health
+
+```bashnpm run build
+
+# Expected response
+
+{"status":"UP"}cd PDCMS_FE```
+
+`````
+
+npm install
+
+---
+
+```---
+
+## 7. Documentation Structure
+
+
+
+```
+
+docs/**Run development server:**## 2. Third-Party Libraries, Frameworks, and Tools
+
+├── PROJECT_DOCUMENTATION.md # This file - Main documentation
+
+├── API_DOCUMENTATION.md # Complete API reference
+
+├── API_ENDPOINTS_WITH_FUNCTION_NAMES_AND_SAMPLES.md
+
+│```bash### 2.1 Backend Technologies
+
+├── api-guides/ # Detailed API guides by module
+
+│ ├── booking/npm run dev
+
+│ ├── clinical-records/
+
+│ ├── notification/```| Name | Version | Purpose |
+
+│ ├── patient/
+
+│ ├── permission/| ---------------------------- | ------- | ------------------------------------ |
+
+│ ├── role/
+
+│ ├── service/**Build for production:**| Java JDK | 17 | Backend programming language |
+
+│ ├── shift-management/
+
+│ ├── treatment-plan/| Spring Boot | 3.2.10 | Application framework |
+
+│ └── warehouse/
+
+│```bash| Spring Data JPA | 3.2.x | ORM and database access |
+
+├── architecture/ # System architecture docs
+
+│ ├── CLINICAL_RECORDS_ATTACHMENTS_FLOW.mdnpm run build| Spring Security | 6.x | Authentication and authorization |
+
+│ ├── CLINICAL_RECORDS_FINAL_DECISION.md
+
+│ └── CRON_JOB_P8_ARCHITECTURE.md```| Spring WebSocket | 3.2.x | Real-time notifications |
+
+│
+
+├── business-rules/ # Business rule implementations| PostgreSQL JDBC Driver | 42.x | Database connectivity |
+
+│ ├── BR-37-WEEKLY-WORKING-HOURS-LIMIT-IMPLEMENTATION.md
+
+│ ├── BR-41-SELF-APPROVAL-PREVENTION.md---| Maven | 3.9+ | Build tool and dependency management |
+
+│ ├── BR_043_044_DUPLICATE_DETECTION_AND_BLACKLIST_FE_GUIDE.md
+
+│ ├── COMPREHENSIVE_BUSINESS_RULES_AND_CONSTRAINTS_V2_COMPLETE.md| Lombok | 1.18.x | Reduce boilerplate code |
+
+│ └── FE_APPOINTMENT_BUSINESS_RULES_SUMMARY.md
+
+│## 2. Third-Party Libraries, Frameworks, and Tools| JWT (OAuth2 Resource Server) | 6.x | JSON Web Token authentication |
+
+├── deployment/ # Production deployment guides
+
+│ ├── DEPLOY_TO_DIGITALOCEAN_STEP_BY_STEP.md| SpringDoc OpenAPI | 2.5.0 | Swagger API documentation |
+
+│ └── SEPAY_WEBHOOK_PRODUCTION_SETUP.md
+
+│### 2.1 Backend Technologies| Apache POI | 5.4.0 | Excel export functionality |
+
+├── fe-integration/ # Frontend integration guides
+
+│ ├── APPOINTMENT_FEEDBACK_FE_INTEGRATION_GUIDE.md| Apache Commons CSV | 1.10.0 | CSV export functionality |
+
+│ ├── BE_4_FE_INTEGRATION_GUIDE.md
+
+│ ├── BE_4_TREATMENT_PLAN_AUTO_SCHEDULING_FE_GUIDE.md| Name | Version | Purpose || MapStruct | 1.5.x | DTO mapping |
+
+│ ├── DASHBOARD_ADVANCED_FEATURES_FE_GUIDE.md
+
+│ ├── FE_MATERIAL_CONSUMPTION_DETAILED_GUIDE.md| ---------------------------- | ------- | ------------------------------------ |
+
+│ ├── FE_PATIENT_DATA_ENHANCEMENT_GUIDE.md
+
+│ ├── FE_SEPAY_PAYMENT_INTEGRATION_GUIDE.md| Java JDK | 17 | Backend programming language |### 2.2 Frontend Technologies
+
+│ ├── JWT_CLAIMS_REFERENCE_FOR_FE.md
+
+│ ├── NOTIFICATION_SYSTEM_FE_BE_INTEGRATION_GUIDE.md| Spring Boot | 3.2.10 | Application framework |
+
+│ ├── PATIENT_BLOCKING_FIELDS_FE_GUIDE.md
+
+│ ├── PATIENT_UNBAN_FE_INTEGRATION_GUIDE.md| Spring Data JPA | 3.2.x | ORM and database access || Name | Version | Purpose |
+
+│ ├── PAYMENT_FLOW_DYNAMIC_QR_WEBHOOK.md
+
+│ ├── PHASE_SCHEDULING_AND_ROOM_FILTERING_API_GUIDE.md| Spring Security | 6.x | Authentication and authorization || --------------- | ------- | --------------------------- |
+
+│ ├── REQUEST_NOTIFICATION_SYSTEM_FE_INTEGRATION_GUIDE.md
+
+│ └── TREATMENT_PLAN_FE_TROUBLESHOOTING_GUIDE.md| Spring WebSocket | 3.2.x | Real-time notifications || Node.js | 18+ | JavaScript runtime |
+
+│
+
+├── features/ # Feature-specific documentation| PostgreSQL JDBC Driver | 42.x | Database connectivity || React/Next.js | Latest | UI framework |
+
+│ ├── CHATBOT_USAGE_GUIDE.md
+
+│ ├── PROCEDURE_MATERIAL_CONSUMPTION_API_GUIDE.md| Maven | 3.9+ | Build tool and dependency management || TypeScript | 5.x | Type-safe JavaScript |
+
+│ ├── SCHEDULED_JOBS_COMPLETE_GUIDE.md
+
+│ ├── WAREHOUSE_EXPIRY_EMAIL_NOTIFICATION_GUIDE.md| Lombok | 1.18.x | Reduce boilerplate code || Tailwind CSS | 3.4+ | Utility-first CSS framework |
+
+│ └── WAREHOUSE_MODULE_API_REFERENCE.md
+
+│| JWT (OAuth2 Resource Server) | 6.x | JSON Web Token authentication || TanStack Query | 5.x | Server state management |
+
+├── setup/ # Configuration & setup guides
+
+│ ├── EMAIL_CONFIGURATION_GUIDE.md| SpringDoc OpenAPI | 2.5.0 | Swagger API documentation || React Hook Form | 7.x | Form management |
+
+│ ├── EMAIL_SYSTEM_TROUBLESHOOTING_GUIDE.md
+
+│ ├── SENDGRID_SETUP_GUIDE.md| Apache POI | 5.4.0 | Excel export functionality || Zod | 3.x | Schema validation |
+
+│ └── UPDATE_SEED_DATA_GUIDE.md
+
+│| Apache Commons CSV | 1.10.0 | CSV export functionality || Lucide React | Latest | Icon library |
+
+└── warehouse-integration/ # Warehouse module integration
+
+    ├── 00_QUICK_START_WAREHOUSE_SERVICE_INTEGRATION.md| MapStruct                    | 1.5.x   | DTO mapping                          |
+
+    ├── 01_TEST_DATA_SETUP.md
+
+    ├── 02_DATA_FLOW_EXPLAINED.md### 2.3 Database & Infrastructure
+
+    ├── 03_API_TESTING_GUIDE.md
+
+    ├── 04_PERMISSIONS_GUIDE.md### 2.2 Frontend Technologies
+
+    ├── 05_SAMPLE_SCENARIOS.md
+
+    └── README.md| Name                 | Version      | Purpose                          |
+
+````
+
+#### Core Framework & Runtime| -------------------- | ------------ | -------------------------------- |
+
+---
+
+| PostgreSQL           | 13+          | Primary relational database      |
+
+## 8. Source Code Repositories
+
+| Name       | Version | Purpose                              || Redis                | 7-alpine     | Cache and session management     |
+
+| Repository | URL | Description |
+
+|------------|-----|-------------|| ---------- | ------- | ------------------------------------ || Docker               | 20.10+       | Containerization                 |
+
+| **Backend** | https://github.com/DenTeeth/PDCMS_BE | Spring Boot API |
+
+| **Frontend** | https://github.com/DenTeeth/PDCMS_FE | Next.js Application || Node.js    | 20+     | JavaScript runtime                   || Docker Compose       | 2.0+         | Multi-container orchestration    |
+
+
+
+---| Next.js    | 16.0+   | React framework with SSR/SSG         || Nginx Proxy Manager  | Latest       | Reverse proxy and SSL management |
+
+
+
+## Appendix: Quick Reference| React      | 19.2+   | UI framework                         || DigitalOcean Droplet | Ubuntu 22.04 | Production server hosting        |
+
+
+
+### API Base URLs| TypeScript | 5+      | Type-safe JavaScript                 |
+
+
+
+| Environment | URL |### 2.4 Email & AI Integration
+
+|-------------|-----|
+
+| Development | http://localhost:8080/api/v1 |#### UI Component Libraries
+
+| Production | https://pdcms.duckdns.org/api/v1 |
+
+| Name               | Version   | Purpose                           |
+
+### Common HTTP Status Codes
+
+| Name                     | Version | Purpose                      || ------------------ | --------- | --------------------------------- |
+
+| Code | Meaning |
+
+|------|---------|| ------------------------ | ------- | ---------------------------- || Resend Java SDK    | 3.0.0     | Production email service          |
+
+| 200 | Success |
+
+| 201 | Created || Radix UI                 | Latest  | Headless component library   || Spring Mail        | 3.2.x     | Email sending abstraction         |
+
+| 400 | Bad Request |
+
+| 401 | Unauthorized || Lucide React             | 0.544+  | Icon library                 || LangChain4J Gemini | 0.35.0    | Gemini AI integration for chatbot |
+
+| 403 | Forbidden |
+
+| 404 | Not Found || FontAwesome              | 7.0+    | Icon library                 || Google AI Gemini   | 2.5-flash | AI model for FAQ responses        |
+
+| 500 | Internal Server Error |
+
+| Framer Motion            | 12.23+  | Animation library            |
+
+### Support Contacts
+
+---
+
+- **Technical Issues:** Create GitHub Issue
+
+- **Email:** support@dentalclinic.com#### Styling
+
+
+
+---## 3. Configuration Documentation
+
+
+
+*Document Version: 2.0*| Name                     | Version | Purpose                      |
+
+*Last Updated: January 15, 2026*
 
 | ------------------------ | ------- | ---------------------------- |### 3.1 Internal Software Component Configuration
 
