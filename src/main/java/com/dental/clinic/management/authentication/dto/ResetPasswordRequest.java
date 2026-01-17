@@ -19,9 +19,11 @@ public class ResetPasswordRequest {
     private String token;
 
     @NotBlank(message = "Mật khẩu mới không được để trống")
-    @Size(min = 6, max = 50, message = "Mật khẩu phải từ 6-50 ký tự")
-    @Pattern(regexp = "^(?=.*[0-9])(?=.*[a-zA-Z]).+$", message = "Mật khẩu phải chứa ít nhất 1 chữ cái và 1 chữ số")
-    @Schema(description = "New password (6-50 chars, must contain letters and numbers)", example = "NewPass123")
+    @Size(min = 8, max = 50, message = "Mật khẩu phải từ 8-50 ký tự")
+    @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]+$", 
+             message = "Mật khẩu phải chứa ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt")
+    @Schema(description = "New password (8-50 chars, must contain uppercase, lowercase, number, and special character)", 
+            example = "NewPass123!")
     private String newPassword;
 
     @NotBlank(message = "Xác nhận mật khẩu không được để trống")

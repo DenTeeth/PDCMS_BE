@@ -2,6 +2,7 @@ package com.dental.clinic.management.exception;
 
 import com.dental.clinic.management.exception.account.AccountNotVerifiedException;
 import com.dental.clinic.management.exception.authentication.InvalidTokenException;
+import com.dental.clinic.management.exception.authentication.RateLimitExceededException;
 import com.dental.clinic.management.exception.authentication.TokenExpiredException;
 import com.dental.clinic.management.exception.time_off.InsufficientLeaveBalanceException;
 import com.dental.clinic.management.exception.time_off.ShiftNotFoundForLeaveException;
@@ -595,15 +596,15 @@ public class GlobalExceptionHandler {
                 .map(error -> error.getField())
                 .collect(java.util.stream.Collectors.toList());
 
-        // Get first error message
+        // Get first error message (just the message, not "field: message")
         String errorMessage = ex.getBindingResult()
                 .getFieldErrors()
                 .stream()
                 .findFirst()
-                .map(error -> error.getField() + ": " + error.getDefaultMessage())
-                .orElse("Validation failed");
+                .map(error -> error.getDefaultMessage())
+                .orElse("Dữ liệu không hợp lệ");
 
-        // For holiday endpoints, provide Vietnamese message
+        // For holiday endpoints, provide Vietnamese message with field names
         if (request.getRequestURI().contains("/api/v1/holiday")) {
             String fields = String.join(", ", missingFields);
             errorMessage = "Thiếu thông tin bắt buộc: " + fields;
@@ -796,6 +797,32 @@ public class GlobalExceptionHandler {
         res.setData(null);
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+    }
+
+    /**
+     * Handle RateLimitExceededException.
+     * Returns 429 Too Many Requests.
+     */
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<FormatRestResponse.RestResponse<Object>> handleRateLimitExceeded(
+            RateLimitExceededException ex,
+            HttpServletRequest request) {
+
+        log.warn("Rate limit exceeded at {}: {}", request.getRequestURI(), ex.getMessage());
+
+        FormatRestResponse.RestResponse<Object> res = new FormatRestResponse.RestResponse<>();
+        res.setStatusCode(HttpStatus.TOO_MANY_REQUESTS.value());
+        res.setMessage(ex.getMessage());
+        res.setError("error.rate.limit.exceeded");
+        
+        // Add retry-after information to response
+        java.util.Map<String, Object> data = new java.util.HashMap<>();
+        data.put("retryAfterSeconds", ex.getRetryAfterSeconds());
+        res.setData(data);
+
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .header("Retry-After", String.valueOf(ex.getRetryAfterSeconds()))
+                .body(res);
     }
 
     /**

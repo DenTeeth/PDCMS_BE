@@ -9,11 +9,14 @@ import com.dental.clinic.management.authentication.dto.response.LoginResponse;
 import com.dental.clinic.management.authentication.dto.response.RefreshTokenResponse;
 import com.dental.clinic.management.authentication.service.AuthenticationService;
 import com.dental.clinic.management.authentication.service.TokenBlacklistService;
+import com.dental.clinic.management.exception.authentication.RateLimitExceededException;
+import com.dental.clinic.management.utils.RateLimiter;
 import com.dental.clinic.management.utils.annotation.ApiMessage;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.*;
@@ -30,11 +33,14 @@ public class AuthenticationController {
 
     private final AuthenticationService authenticationService;
     private final TokenBlacklistService tokenBlacklistService;
+    private final RateLimiter rateLimiter;
 
     public AuthenticationController(AuthenticationService authenticationService,
-            TokenBlacklistService tokenBlacklistService) {
+            TokenBlacklistService tokenBlacklistService,
+            RateLimiter rateLimiter) {
         this.authenticationService = authenticationService;
         this.tokenBlacklistService = tokenBlacklistService;
+        this.rateLimiter = rateLimiter;
     }
 
     /**
@@ -220,49 +226,94 @@ public class AuthenticationController {
 
     /**
      * Initiate password reset process.
+     * For security reasons, always returns success even if email doesn't exist.
+     * Rate limited: 3 requests per 15 minutes per IP address.
      *
      * @param request contains email address
-     * @return 200 OK if reset email sent successfully
-     * @throws com.dental.clinic.management.exception.AccountNotFoundException if
-     *                                                                         account
-     *                                                                         not
-     *                                                                         found
+     * @param httpRequest to extract client IP address
+     * @return 200 OK with success message
+     * @throws RateLimitExceededException if too many requests
      */
     @PostMapping("/forgot-password")
-    @Operation(summary = "Forgot password", description = "Initiate password reset process. Sends password reset email to user.")
+    @Operation(summary = "Forgot password", description = "Initiate password reset process. Sends password reset email to user if account exists. Always returns success to prevent email enumeration. Rate limited to 3 requests per 15 minutes.")
     @ApiMessage("Đã gửi email đặt lại mật khẩu")
     public ResponseEntity<Void> forgotPassword(
-            @Valid @RequestBody com.dental.clinic.management.authentication.dto.ForgotPasswordRequest request) {
+            @Valid @RequestBody com.dental.clinic.management.authentication.dto.ForgotPasswordRequest request,
+            HttpServletRequest httpRequest) {
+        
+        // Rate limiting: 3 requests per 15 minutes per IP
+        String clientIp = getClientIp(httpRequest);
+        String rateLimitKey = clientIp + ":forgot-password";
+        
+        if (!rateLimiter.isAllowed(rateLimitKey, 3, 15)) {
+            long retryAfter = rateLimiter.getSecondsUntilReset(rateLimitKey, 15);
+            org.slf4j.LoggerFactory.getLogger(AuthenticationController.class)
+                .warn("Rate limit exceeded for forgot-password from IP: {} - Retry after {} seconds", clientIp, retryAfter);
+            throw new RateLimitExceededException(
+                "Bạn đã vượt quá số lần yêu cầu cho phép. Vui lòng thử lại sau " + (retryAfter / 60 + 1) + " phút.",
+                retryAfter
+            );
+        }
+        
+        org.slf4j.LoggerFactory.getLogger(AuthenticationController.class)
+            .info("Forgot password request from IP: {} for email: {}", clientIp, request.getEmail());
+        
         authenticationService.forgotPassword(request.getEmail());
         return ResponseEntity.ok().build();
     }
 
     /**
      * Reset password using token from email.
+     * Rate limited: 5 attempts per 10 minutes per IP address to prevent brute force.
      *
      * @param request contains token, new password and confirm password
+     * @param httpRequest to extract client IP address
      * @return 200 OK if password reset successful
-     * @throws com.dental.clinic.management.exception.InvalidTokenException if
-     *                                                                      token
-     *                                                                      is
-     *                                                                      invalid
-     * @throws com.dental.clinic.management.exception.TokenExpiredException if
-     *                                                                      token
-     *                                                                      has
-     *                                                                      expired
-     * @throws IllegalArgumentException                                     if
-     *                                                                      passwords
-     *                                                                      don't
-     *                                                                      match
+     * @throws com.dental.clinic.management.exception.authentication.InvalidTokenException if token is invalid
+     * @throws com.dental.clinic.management.exception.authentication.TokenExpiredException if token has expired
+     * @throws IllegalArgumentException if passwords don't match
+     * @throws RateLimitExceededException if too many attempts
      */
     @PostMapping("/reset-password")
-    @Operation(summary = "Reset password", description = "Reset password using token from email. User must provide new password and confirm password.")
+    @Operation(summary = "Reset password", description = "Reset password using token from email. User must provide new password and confirm password. Rate limited to 5 attempts per 10 minutes to prevent brute force.")
     @ApiMessage("Đặt lại mật khẩu thành công")
     public ResponseEntity<Void> resetPassword(
-            @Valid @RequestBody com.dental.clinic.management.authentication.dto.ResetPasswordRequest request) {
+            @Valid @RequestBody com.dental.clinic.management.authentication.dto.ResetPasswordRequest request,
+            HttpServletRequest httpRequest) {
+        
+        // Rate limiting: 5 attempts per 10 minutes per IP
+        String clientIp = getClientIp(httpRequest);
+        String rateLimitKey = clientIp + ":reset-password";
+        
+        if (!rateLimiter.isAllowed(rateLimitKey, 5, 10)) {
+            long retryAfter = rateLimiter.getSecondsUntilReset(rateLimitKey, 10);
+            org.slf4j.LoggerFactory.getLogger(AuthenticationController.class)
+                .warn("Rate limit exceeded for reset-password from IP: {} - Retry after {} seconds", clientIp, retryAfter);
+            throw new RateLimitExceededException(
+                "Bạn đã vượt quá số lần thử cho phép. Vui lòng thử lại sau " + (retryAfter / 60 + 1) + " phút.",
+                retryAfter
+            );
+        }
+        
+        org.slf4j.LoggerFactory.getLogger(AuthenticationController.class)
+            .info("Reset password attempt from IP: {} with token: {}", clientIp, request.getToken());
+        
         authenticationService.resetPassword(request.getToken(), request.getNewPassword(),
                 request.getConfirmPassword());
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Extract client IP address from request.
+     * Handles X-Forwarded-For header for proxy/load balancer scenarios.
+     */
+    private String getClientIp(HttpServletRequest request) {
+        String xForwardedFor = request.getHeader("X-Forwarded-For");
+        if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
+            // X-Forwarded-For may contain multiple IPs, use the first one
+            return xForwardedFor.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
     }
 
 }
