@@ -8,7 +8,7 @@
 
 ##  Table of Contents
 
-1. [Authentication APIs]#authentication-apis
+1. [Authentication APIs](#authentication-apis)
 2. [Account Management APIs](#account-management-apis)
 3. [Employee Management APIs](#employee-management-apis)
 4. [Patient Management APIs](#patient-management-apis)
@@ -19,7 +19,8 @@
 9. [Time Off & Overtime APIs](#time-off--overtime-apis)
 10. [Role & Permission Management APIs](#role--permission-management-apis)
 11. [Error Handling](#error-handling)
-12. [Status Codes](#status-codes)
+12. [Security & Rate Limiting](#security--rate-limiting)
+13. [Status Codes](#status-codes)
 
 ---
 
@@ -190,11 +191,16 @@ Resend verification email to user if they didn't receive it or token expired.
 
 ---
 
-### 6. Forgot Password  NEW
+### 6. Forgot Password  NEW  🔒 RATE LIMITED
 
 **POST** `/auth/forgot-password`
 
-Initiate password reset process. Sends password reset email to user.
+Initiate password reset process. Sends password reset email to user if account exists.
+
+**Security Features:**
+- ✅ **Email Enumeration Prevention:** Always returns 200 OK regardless of whether email exists
+- ✅ **Rate Limiting:** 3 requests per 15 minutes per IP address
+- ✅ **Logging:** All requests are logged with IP address for security monitoring
 
 **Request Body:**
 
@@ -215,33 +221,63 @@ Initiate password reset process. Sends password reset email to user.
 }
 ```
 
+**Email Contains:**
+- Reset link: `https://yourapp.com/reset-password?token=<uuid>`
+- Token format: UUID (e.g., `550e8400-e29b-41d4-a716-446655440000`)
+- Token validity: 24 hours
+
 **Errors:**
 
-- `404 Not Found` - Email not found
+- `400 Bad Request` - Invalid email format
+- `429 Too Many Requests` - Rate limit exceeded (retry after X seconds)
+
+**Rate Limit Response:**
+
+```json
+{
+  "statusCode": 429,
+  "message": "Bạn đã vượt quá số lần yêu cầu cho phép. Vui lòng thử lại sau 15 phút.",
+  "error": "error.rate.limit.exceeded",
+  "data": {
+    "retryAfterSeconds": 900
+  }
+}
+```
 
 ---
 
-### 7. Reset Password  NEW
+### 7. Reset Password  NEW  🔒 RATE LIMITED
 
 **POST** `/auth/reset-password`
 
-Reset password using token from email. Token expires in 1 hour and can only be used once.
+Reset password using token from email. Token expires in 24 hours and can only be used once.
+
+**Security Features:**
+- ✅ **Single-Use Tokens:** Token cannot be reused after successful reset
+- ✅ **Token Expiration:** 24-hour validity period
+- ✅ **Rate Limiting:** 5 attempts per 10 minutes per IP address (prevents brute force)
+- ✅ **Strong Password Enforcement:** Requires uppercase, lowercase, number, and special character
 
 **Request Body:**
 
 ```json
 {
   "token": "550e8400-e29b-41d4-a716-446655440000",
-  "newPassword": "NewPass123",
-  "confirmPassword": "NewPass123"
+  "newPassword": "NewPass123!",
+  "confirmPassword": "NewPass123!"
 }
 ```
 
-**Validation Rules:**
+**Password Validation Rules:**
 
-- Password: 6-50 characters
-- Must contain at least 1 letter and 1 number
-- newPassword and confirmPassword must match
+- **Minimum length:** 8 characters
+- **Maximum length:** 50 characters
+- **Required characters:**
+  - At least 1 uppercase letter (A-Z)
+  - At least 1 lowercase letter (a-z)
+  - At least 1 number (0-9)
+  - At least 1 special character (@$!%*?&)
+- **Confirmation:** newPassword and confirmPassword must match
 
 **Response:** `200 OK`
 
@@ -256,9 +292,47 @@ Reset password using token from email. Token expires in 1 hour and can only be u
 
 **Errors:**
 
-- `400 Bad Request` - Invalid token, token expired, or token already used
-- `400 Bad Request` - Passwords don't match
-- `400 Bad Request` - Password validation failed
+- `400 Bad Request` - Invalid token format
+- `400 Bad Request` - Token expired: `"Token đặt lại mật khẩu đã hết hạn. Vui lòng yêu cầu đặt lại mật khẩu mới."`
+- `400 Bad Request` - Token already used: `"Token này đã được sử dụng"`
+- `400 Bad Request` - Passwords don't match: `"Mật khẩu xác nhận không khớp"`
+- `400 Bad Request` - Password validation failed: `"Mật khẩu phải chứa ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt"`
+- `429 Too Many Requests` - Rate limit exceeded (retry after X seconds)
+
+**Token Expired Response:**
+
+```json
+{
+  "statusCode": 400,
+  "message": "Token đặt lại mật khẩu đã hết hạn. Vui lòng yêu cầu đặt lại mật khẩu mới.",
+  "error": "error.token.expired",
+  "data": null
+}
+```
+
+**Token Already Used Response:**
+
+```json
+{
+  "statusCode": 400,
+  "message": "Token này đã được sử dụng",
+  "error": "error.token.invalid",
+  "data": null
+}
+```
+
+**Password Validation Failed Response:**
+
+```json
+{
+  "statusCode": 400,
+  "message": "Mật khẩu phải chứa ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt",
+  "error": "VALIDATION_ERROR",
+  "data": {
+    "missingFields": ["newPassword"]
+  }
+}
+```
 
 ---
 
@@ -914,10 +988,62 @@ All error responses follow this format:
 | `error.account.not.verified`  | Account email not verified          |
 | `error.token.expired`         | Verification or reset token expired |
 | `error.token.invalid`         | Invalid token                       |
+| `error.rate.limit.exceeded`   | Too many requests (rate limited)    |
 | `error.validation`            | Request validation failed           |
 | `error.bad.request`           | Malformed request                   |
 | `error.not.found`             | Resource not found                  |
 | `error.internal`              | Internal server error               |
+
+---
+
+## 🔒 Security & Rate Limiting
+
+### Rate Limiting
+
+To prevent abuse and brute force attacks, the following endpoints are rate limited:
+
+| Endpoint              | Limit                      | Window | Purpose                  |
+| --------------------- | -------------------------- | ------ | ------------------------ |
+| `/auth/forgot-password` | 3 requests per IP          | 15 min | Prevent email spam       |
+| `/auth/reset-password`  | 5 attempts per IP          | 10 min | Prevent brute force      |
+
+**Rate Limit Response (429 Too Many Requests):**
+
+```json
+{
+  "statusCode": 429,
+  "message": "Bạn đã vượt quá số lần yêu cầu cho phép. Vui lòng thử lại sau X phút.",
+  "error": "error.rate.limit.exceeded",
+  "data": {
+    "retryAfterSeconds": 600
+  }
+}
+```
+
+**Headers:**
+- `Retry-After: 600` (seconds until rate limit resets)
+
+### Security Best Practices
+
+1. **Email Enumeration Prevention:**
+   - `/auth/forgot-password` always returns 200 OK, even if email doesn't exist
+   - Prevents attackers from discovering valid email addresses
+
+2. **Token Security:**
+   - Password reset tokens are UUID format (128-bit random)
+   - Single-use tokens (cannot be reused)
+   - 24-hour expiration
+   - Tokens are invalidated after use
+
+3. **Password Requirements:**
+   - Minimum 8 characters
+   - Must contain uppercase, lowercase, number, and special character
+   - Same requirements across all password endpoints (reset, create, change)
+
+4. **Request Logging:**
+   - All authentication attempts are logged with IP address
+   - Failed attempts are logged for security monitoring
+   - Rate limit violations are logged
 
 ---
 
@@ -932,6 +1058,7 @@ All error responses follow this format:
 | `403 Forbidden`             | Insufficient permissions              |
 | `404 Not Found`             | Resource not found                    |
 | `409 Conflict`              | Resource already exists (duplicate)   |
+| `429 Too Many Requests`     | Rate limit exceeded                   |
 | `500 Internal Server Error` | Server error                          |
 
 ---

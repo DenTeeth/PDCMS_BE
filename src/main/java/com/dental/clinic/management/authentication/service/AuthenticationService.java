@@ -653,27 +653,34 @@ public class AuthenticationService {
 
         /**
          * Initiate password reset process by sending reset email
-         *
+         * For security reasons, always return success even if email doesn't exist
+         * 
          * @param email the email address to reset password
-         * @throws AccountNotFoundException if account not found
          */
         public void forgotPassword(String email) {
                 log.info("Password reset requested for email: {}", email);
 
-                Account account = accountRepository.findByEmail(email)
-                                .orElseThrow(() -> new AccountNotFoundException("Email không tồn tại trong hệ thống"));
+                // Find account - don't throw exception if not found (security best practice)
+                Account account = accountRepository.findByEmail(email).orElse(null);
+                
+                if (account != null) {
+                        // Delete old password reset tokens
+                        passwordResetTokenRepository.deleteByAccount(account);
 
-                // Delete old password reset tokens
-                passwordResetTokenRepository.deleteByAccount(account);
+                        // Create new password reset token
+                        PasswordResetToken resetToken = new PasswordResetToken(account);
+                        passwordResetTokenRepository.save(resetToken);
 
-                // Create new password reset token
-                PasswordResetToken resetToken = new PasswordResetToken(account);
-                passwordResetTokenRepository.save(resetToken);
+                        // Send password reset email
+                        emailService.sendPasswordResetEmail(account.getEmail(), account.getUsername(), resetToken.getToken());
 
-                // Send password reset email
-                emailService.sendPasswordResetEmail(account.getEmail(), account.getUsername(), resetToken.getToken());
-
-                log.info(" Password reset email sent to: {}", email);
+                        log.info("Password reset email sent to: {}", email);
+                } else {
+                        // Don't reveal that account doesn't exist
+                        log.info("Password reset requested for non-existent email: {}", email);
+                }
+                
+                // Always return success to prevent email enumeration
         }
 
         /**

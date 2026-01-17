@@ -33,7 +33,9 @@ public class CreateEmployeeRequest {
     private String email;
 
     @NotBlank(message = "Mật khẩu là bắt buộc")
-    @Size(min = 6, max = 100, message = "Mật khẩu phải từ 6-100 ký tự")
+    @Size(min = 8, max = 100, message = "Mật khẩu phải từ 8-100 ký tự")
+    @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]+$", 
+             message = "Mật khẩu phải chứa ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt")
     private String password;
 
     // Employee information (REQUIRED)
