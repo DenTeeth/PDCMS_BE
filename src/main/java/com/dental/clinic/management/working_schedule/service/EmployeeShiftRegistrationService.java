@@ -284,6 +284,14 @@ public class EmployeeShiftRegistrationService {
                 startDate,
                 slot.getEffectiveTo());
 
+        // Calculate total required slots across all months
+        int totalRequired = monthlyBreakdown.stream()
+                .mapToInt(month -> month.getTotalWorkingDays() * slot.getQuota())
+                .sum();
+        
+        // Calculate registered: totalRequired - overallRemaining
+        int registered = totalRequired - overallRemaining;
+
         return SlotDetailResponse.builder()
                 .slotId(slot.getSlotId())
                 .shiftName(shiftName)
@@ -292,6 +300,7 @@ public class EmployeeShiftRegistrationService {
                 .effectiveFrom(slot.getEffectiveFrom())
                 .effectiveTo(slot.getEffectiveTo())
                 .overallRemaining(overallRemaining)
+                .registered(registered)
                 .availabilityByMonth(monthlyBreakdown)
                 .build();
     }
