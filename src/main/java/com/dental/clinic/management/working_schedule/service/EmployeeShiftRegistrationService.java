@@ -873,7 +873,7 @@ public class EmployeeShiftRegistrationService {
      * @return Daily availability response with per-day breakdown
      */
     @Transactional(readOnly = true)
-    @PreAuthorize("hasAuthority('VIEW_AVAILABLE_SLOTS') or hasAuthority('MANAGE_PART_TIME_REGISTRATIONS') or hasAuthority('MANAGE_WORK_SLOTS')")
+    @PreAuthorize("hasAuthority('VIEW_AVAILABLE_SLOTS') or hasAuthority('MANAGE_PART_TIME_REGISTRATIONS') or hasAuthority('VIEW_WORK_SLOTS') or hasAuthority('MANAGE_WORK_SLOTS')")
     public com.dental.clinic.management.working_schedule.dto.response.DailyAvailabilityResponse getDailyAvailability(
             Long slotId, String month) {
         log.info("Getting daily availability for slot {} in month {}", slotId, month);

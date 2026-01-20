@@ -120,9 +120,10 @@ public class PartTimeSlotService {
 
         /**
          * Get all slots with registration counts.
+         * Permission: VIEW_WORK_SLOTS (read-only) or MANAGE_WORK_SLOTS (full access)
          */
         @Transactional(readOnly = true)
-        @PreAuthorize("hasAuthority('MANAGE_WORK_SLOTS')")
+        @PreAuthorize("hasAuthority('VIEW_WORK_SLOTS') or hasAuthority('MANAGE_WORK_SLOTS')")
         public List<PartTimeSlotResponse> getAllSlots() {
                 log.info("Fetching all part-time slots");
 
@@ -167,9 +168,10 @@ public class PartTimeSlotService {
 
         /**
          * Get slot detail with list of registered employees.
+         * Permission: VIEW_WORK_SLOTS (read-only) or MANAGE_WORK_SLOTS (full access)
          */
         @Transactional(readOnly = true)
-        @PreAuthorize("hasAuthority('MANAGE_WORK_SLOTS')")
+        @PreAuthorize("hasAuthority('VIEW_WORK_SLOTS') or hasAuthority('MANAGE_WORK_SLOTS')")
         public PartTimeSlotDetailResponse getSlotDetail(Long slotId) {
                 log.info("Fetching detail for slot {}", slotId);
 
@@ -243,9 +245,10 @@ public class PartTimeSlotService {
         /**
          * Get statistics for all work slots.
          * Provides dashboard metrics including utilization and capacity.
+         * Permission: VIEW_WORK_SLOTS (read-only) or MANAGE_WORK_SLOTS (full access)
          */
         @Transactional(readOnly = true)
-        @PreAuthorize("hasAuthority('MANAGE_WORK_SLOTS')")
+        @PreAuthorize("hasAuthority('VIEW_WORK_SLOTS') or hasAuthority('MANAGE_WORK_SLOTS')")
         public com.dental.clinic.management.working_schedule.dto.response.SlotStatisticsResponse getSlotStatistics() {
                 log.info("Generating slot statistics");
 

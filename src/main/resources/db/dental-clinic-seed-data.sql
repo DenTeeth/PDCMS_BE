@@ -578,7 +578,7 @@ VALUES
 ON CONFLICT (permission_id) DO NOTHING;
 
 
--- MODULE 12: SCHEDULE_MANAGEMENT (9 permissions) - MAJOR simplification from 27!
+-- MODULE 12: SCHEDULE_MANAGEMENT (10 permissions) - MAJOR simplification from 27!
 -- Focus on practical operations for small-medium dental clinic
 INSERT INTO permissions (permission_id, permission_name, module, description, display_order, parent_permission_id, is_active, created_at)
 VALUES
@@ -588,9 +588,10 @@ VALUES
 ('VIEW_REGISTRATION_OWN', 'VIEW_REGISTRATION_OWN', 'SCHEDULE_MANAGEMENT', 'Xem đăng ký ca làm việc của bản thân', 133, NULL, TRUE, NOW()),
 ('CREATE_REGISTRATION', 'CREATE_REGISTRATION', 'SCHEDULE_MANAGEMENT', 'Tạo đăng ký ca làm việc part-time/flex', 134, NULL, TRUE, NOW()),
 ('MANAGE_WORK_SHIFTS', 'MANAGE_WORK_SHIFTS', 'SCHEDULE_MANAGEMENT', 'Quản lý mẫu ca làm việc (Tạo/Cập nhật/Xóa)', 135, NULL, TRUE, NOW()),
-('MANAGE_WORK_SLOTS', 'MANAGE_WORK_SLOTS', 'SCHEDULE_MANAGEMENT', 'Quản lý suất part-time (tạo/sửa/xóa)', 136, NULL, TRUE, NOW()),
-('MANAGE_PART_TIME_REGISTRATIONS', 'MANAGE_PART_TIME_REGISTRATIONS', 'SCHEDULE_MANAGEMENT', 'Duyệt/từ chối đăng ký part-time', 137, NULL, TRUE, NOW()),
-('MANAGE_FIXED_REGISTRATIONS', 'MANAGE_FIXED_REGISTRATIONS', 'SCHEDULE_MANAGEMENT', 'Quản lý đăng ký ca cố định (tạo/sửa/xóa)', 138, NULL, TRUE, NOW())
+('VIEW_WORK_SLOTS', 'VIEW_WORK_SLOTS', 'SCHEDULE_MANAGEMENT', 'Xem suất part-time và số lượng đăng ký (chỉ xem)', 136, 'MANAGE_WORK_SLOTS', TRUE, NOW()),
+('MANAGE_WORK_SLOTS', 'MANAGE_WORK_SLOTS', 'SCHEDULE_MANAGEMENT', 'Quản lý suất part-time (tạo/sửa/xóa)', 137, NULL, TRUE, NOW()),
+('MANAGE_PART_TIME_REGISTRATIONS', 'MANAGE_PART_TIME_REGISTRATIONS', 'SCHEDULE_MANAGEMENT', 'Duyệt/từ chối đăng ký part-time', 138, NULL, TRUE, NOW()),
+('MANAGE_FIXED_REGISTRATIONS', 'MANAGE_FIXED_REGISTRATIONS', 'SCHEDULE_MANAGEMENT', 'Quản lý đăng ký ca cố định (tạo/sửa/xóa)', 139, NULL, TRUE, NOW())
 ON CONFLICT (permission_id) DO NOTHING;
 
 
@@ -735,6 +736,7 @@ VALUES
 ('ROLE_DENTIST', 'VIEW_SCHEDULE_OWN'), -- RBAC: View own schedule
 ('ROLE_DENTIST', 'VIEW_AVAILABLE_SLOTS'), -- Xem suất part-time có sẵn (cho part-time/flex)
 ('ROLE_DENTIST', 'VIEW_REGISTRATION_OWN'), -- Xem đăng ký ca của bản thân (cho part-time/flex)
+('ROLE_DENTIST', 'VIEW_WORK_SLOTS'), -- Xem suất part-time và số lượng đăng ký (chỉ xem)
 ('ROLE_DENTIST', 'CREATE_REGISTRATION'), -- Tạo đăng ký ca part-time/flex
 
 -- SHIFT_RENEWAL (fixed schedule renewal - Luồng 1 only)
@@ -788,6 +790,7 @@ VALUES
 ('ROLE_NURSE', 'VIEW_SCHEDULE_OWN'), -- RBAC: View own schedule
 ('ROLE_NURSE', 'VIEW_AVAILABLE_SLOTS'), -- Xem suất part-time có sẵn (cho part-time/flex)
 ('ROLE_NURSE', 'VIEW_REGISTRATION_OWN'), -- Xem đăng ký ca của bản thân (cho part-time/flex)
+('ROLE_NURSE', 'VIEW_WORK_SLOTS'), -- Xem suất part-time và số lượng đăng ký (chỉ xem)
 ('ROLE_NURSE', 'CREATE_REGISTRATION'), -- Tạo đăng ký ca part-time/flex
 
 -- SHIFT_RENEWAL (fixed schedule renewal - Luồng 1 only)
@@ -830,6 +833,7 @@ VALUES
 ('ROLE_DENTIST_INTERN', 'VIEW_SCHEDULE_OWN'), -- RBAC: View own schedule
 ('ROLE_DENTIST_INTERN', 'VIEW_AVAILABLE_SLOTS'), -- Xem suất part-time có sẵn (cho part-time/flex)
 ('ROLE_DENTIST_INTERN', 'VIEW_REGISTRATION_OWN'), -- Xem đăng ký ca của bản thân (cho part-time/flex)
+('ROLE_DENTIST_INTERN', 'VIEW_WORK_SLOTS'), -- Xem suất part-time và số lượng đăng ký (chỉ xem)
 ('ROLE_DENTIST_INTERN', 'CREATE_REGISTRATION'), -- Tạo đăng ký ca part-time/flex
 
 -- SHIFT_RENEWAL (fixed schedule renewal - Luồng 1 only)
@@ -900,6 +904,7 @@ VALUES
 ('ROLE_RECEPTIONIST', 'VIEW_REGISTRATION_OWN'), -- Xem đăng ký ca của bản thân (cho part-time/flex)
 ('ROLE_RECEPTIONIST', 'CREATE_REGISTRATION'), -- Tạo đăng ký ca part-time/flex
 ('ROLE_RECEPTIONIST', 'MANAGE_WORK_SHIFTS'), -- Quản lý mẫu ca làm việc
+('ROLE_RECEPTIONIST', 'VIEW_WORK_SLOTS'), -- Xem suất part-time và số lượng đăng ký (chỉ xem)
 ('ROLE_RECEPTIONIST', 'MANAGE_WORK_SLOTS'), -- Quản lý suất part-time
 
 -- SHIFT_RENEWAL (fixed schedule renewal - Luồng 1 only)
@@ -957,6 +962,7 @@ VALUES
 ('ROLE_MANAGER', 'VIEW_SCHEDULE_OWN'), -- RBAC: View own schedule (for part-time managers)
 ('ROLE_MANAGER', 'VIEW_REGISTRATION_OWN'), -- RBAC: View own shift registrations (for part-time managers)
 ('ROLE_MANAGER', 'MANAGE_WORK_SHIFTS'), -- Manage shift templates
+('ROLE_MANAGER', 'VIEW_WORK_SLOTS'), -- Xem suất part-time và số lượng đăng ký (chỉ xem)
 ('ROLE_MANAGER', 'MANAGE_WORK_SLOTS'), -- Manage part-time slots
 ('ROLE_MANAGER', 'MANAGE_PART_TIME_REGISTRATIONS'), -- Approve part-time registrations (9 usages!)
 ('ROLE_MANAGER', 'MANAGE_FIXED_REGISTRATIONS'), -- Manage fixed shift registrations

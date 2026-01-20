@@ -87,7 +87,7 @@ public class EmployeeShiftRegistrationController {
      * Get daily availability breakdown for a specific part-time flex slot in a given month.
      * Shows quota, registered count from part-time flex employees, and remaining slots for each working day.
      *
-     * Permission: VIEW_AVAILABLE_SLOTS (part-time flex employees), MANAGE_PART_TIME_REGISTRATIONS (managers), MANAGE_WORK_SLOTS (admins)
+     * Permission: VIEW_AVAILABLE_SLOTS (part-time flex employees), MANAGE_PART_TIME_REGISTRATIONS (managers), VIEW_WORK_SLOTS (doctors/staff), MANAGE_WORK_SLOTS (admins)
      * 
      * Business Logic:
      * - Only includes days matching slot's dayOfWeek
@@ -142,7 +142,7 @@ public class EmployeeShiftRegistrationController {
         description = "Retrieve day-by-day availability breakdown for a specific part-time flex slot in a given month showing quota and registered counts from part-time flex employees"
     )
     @GetMapping("/slots/{slotId}/daily-availability")
-    @PreAuthorize("hasAuthority('VIEW_AVAILABLE_SLOTS') or hasAuthority('MANAGE_PART_TIME_REGISTRATIONS') or hasAuthority('MANAGE_WORK_SLOTS')")
+    @PreAuthorize("hasAuthority('VIEW_AVAILABLE_SLOTS') or hasAuthority('MANAGE_PART_TIME_REGISTRATIONS') or hasAuthority('VIEW_WORK_SLOTS') or hasAuthority('MANAGE_WORK_SLOTS')")
     public ResponseEntity<com.dental.clinic.management.working_schedule.dto.response.DailyAvailabilityResponse> getDailyAvailability(
             @PathVariable Long slotId,
             @RequestParam String month) {
