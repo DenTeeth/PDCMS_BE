@@ -128,8 +128,8 @@ public class AppointmentEmailService {
 
                             <p style="margin-top: 30px;">Cần hỗ trợ? Liên hệ với chúng tôi:</p>
                             <p style="color: #666;">
-                                📞 Hotline: <strong>1900-xxxx</strong><br>
-                                ✉️ Email: <strong>%s</strong>
+                                Hotline: <strong>028-1234-5678</strong><br>
+                                Email: <strong>%s</strong>
                             </p>
 
                             <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
@@ -152,7 +152,7 @@ public class AppointmentEmailService {
                 .from(fromName + " <" + fromEmail + ">")
                 .to(toEmail)
                 .replyTo(replyToEmail)
-                .subject("✅ Xác nhận lịch hẹn " + appointmentCode + " - " + formattedTime)
+                .subject("Xác nhận lịch hẹn " + appointmentCode + " - " + formattedTime)
                 .html(htmlContent)
                 .build();
 
@@ -231,7 +231,7 @@ public class AppointmentEmailService {
                             </div>
 
                             <div style="background-color: #ffebee; border-left: 4px solid #f44336; padding: 15px; margin: 20px 0;">
-                                <p style="margin: 0; color: #c62828;"><strong>⚠️ Nhắc nhở quan trọng:</strong></p>
+                                <p style="margin: 0; color: #c62828;"><strong>Nhắc nhở quan trọng:</strong></p>
                                 <ul style="margin: 10px 0; padding-left: 20px; color: #c62828;">
                                     <li><strong>Đến trước 10 phút</strong> để làm thủ tục</li>
                                     <li>Mang theo <strong>CMND/CCCD</strong> và các xét nghiệm liên quan (nếu có)</li>
@@ -241,8 +241,8 @@ public class AppointmentEmailService {
 
                             <p style="margin-top: 30px;">Cần đổi lịch hoặc hủy? Liên hệ ngay:</p>
                             <p style="color: #666;">
-                                📞 Hotline: <strong>1900-xxxx</strong><br>
-                                ✉️ Email: <strong>%s</strong>
+                                Hotline: <strong>028-1234-5678</strong><br>
+                                Email: <strong>%s</strong>
                             </p>
 
                             <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">

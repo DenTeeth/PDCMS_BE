@@ -1344,19 +1344,16 @@ INSERT INTO patients (
     consecutive_no_shows, is_booking_blocked, is_active, created_at, updated_at
 )
 VALUES
-(1, 12, 'BN-1001', 'Đoàn Thanh', 'Phong', 'phong.dt@email.com', '0971111111', '1995-03-15', '123 Lê Văn Việt, Q9, TPHCM', 'MALE',
+(1, 12, 'PAT-001', 'Đoàn Thanh', 'Phong', 'phong.dt@email.com', '0971111111', '1995-03-15', '123 Lê Văn Việt, Q9, TPHCM', 'MALE',
     'Tiền sử viêm lợi, đã điều trị năm 2020', 'Dị ứng Penicillin', 'Đoàn Văn Nam', '0901111111', 'Cha',
     0, FALSE, TRUE, NOW(), NOW()),
-(2, 13, 'BN-1002', 'Phạm Văn', 'Phong', 'phong.pv@email.com', '0972222222', '1990-07-20', '456 Võ Văn Ngân, Thủ Đức, TPHCM', 'MALE',
+(2, 13, 'PAT-002', 'Phạm Văn', 'Phong', 'phong.pv@email.com', '0972222222', '1990-07-20', '456 Võ Văn Ngân, Thủ Đức, TPHCM', 'MALE',
     'Không có tiền sử bệnh lý', 'Không có dị ứng', 'Phạm Thị Lan', '0902222222', 'Vợ',
     0, FALSE, TRUE, NOW(), NOW()),
-(3, 14, 'BN-1003', 'Nguyễn Tuấn', 'Anh', 'anh.nt@email.com', '0973333333', '1988-11-10', '789 Đường D2, Bình Thạnh, TPHCM', 'MALE',
+(3, 14, 'PAT-003', 'Nguyễn Tuấn', 'Anh', 'anh.nt@email.com', '0973333333', '1988-11-10', '789 Đường D2, Bình Thạnh, TPHCM', 'MALE',
     'Cao huyết áp, đang dùng thuốc kiểm soát', 'Dị ứng thuốc gây tê Lidocaine', 'Nguyễn Thị Hoa', '0903333333', 'Vợ',
     0, FALSE, TRUE, NOW(), NOW()),
-(4, 15, 'BN-1004', 'Mít tơ', 'Bít', 'mit.bit@email.com', '0974444444', '2000-01-01', '321 Nguyễn Thị Minh Khai, Q1, TPHCM', 'OTHER',
-    'Không có', 'Không có', 'Bố Mít', '0904444444', 'Cha',
-    0, FALSE, TRUE, NOW(), NOW()),
-(5, 18, 'BN-1005', 'Trần Văn', 'Nam', 'nam.tv@email.com', '0975555555', '1992-05-25', '555 Hoàng Diệu, Q4, TPHCM', 'MALE',
+(4, 18, 'PAT-004', 'Trần Văn', 'Nam', 'nam.tv@email.com', '0975555555', '1992-05-25', '555 Hoàng Diệu, Q4, TPHCM', 'MALE',
     'Tiểu đường type 2, HbA1c: 7.2%', 'Dị ứng tôm cua, aspirin', 'Trần Thị Mai', '0905555555', 'Vợ',
     0, FALSE, TRUE, NOW(), NOW())
 ON CONFLICT (patient_id) DO NOTHING;
@@ -1377,19 +1374,19 @@ INSERT INTO patients (
     consecutive_no_shows, is_booking_blocked, is_active, created_at, updated_at
 )
 VALUES
-(6, 19, 'BN-1006', 'Lê Thị', 'Hoa', 'hoa.lt@email.com', '0976666666', '1993-08-12', '88 Trần Hưng Đạo, Q5, TPHCM', 'FEMALE',
+(5, 19, 'PAT-005', 'Lê Thị', 'Hoa', 'hoa.lt@email.com', '0976666666', '1993-08-12', '88 Trần Hưng Đạo, Q5, TPHCM', 'FEMALE',
     'Đã nhổ 2 răng khôn', 'Dị ứng phấn hoa', 'Lê Văn Hùng', '0906666666', 'Cha', NULL, NULL, NULL, NULL,
     0, FALSE, TRUE, NOW(), NOW()),
-(7, 20, 'BN-1007', 'Võ Văn', 'Khánh', 'khanh.vv@email.com', '0977777777', '1985-04-18', '99 Lê Lợi, Q1, TPHCM', 'MALE',
+(6, 20, 'PAT-006', 'Võ Văn', 'Khánh', 'khanh.vv@email.com', '0977777777', '1985-04-18', '99 Lê Lợi, Q1, TPHCM', 'MALE',
     'Hen suyễn nhẹ', 'Dị ứng bụi', 'Võ Thị Thanh', '0907777777', 'Vợ', NULL, NULL, NULL, NULL,
     0, FALSE, TRUE, NOW(), NOW()),
-(8, 21, 'BN-1008', 'Trần Thị', 'Mai', 'mai.tt@email.com', '0978888888', '1998-12-25', '77 Nguyễn Huệ, Q1, TPHCM', 'FEMALE',
+(7, 21, 'PAT-007', 'Trần Thị', 'Mai', 'mai.tt@email.com', '0978888888', '1998-12-25', '77 Nguyễn Huệ, Q1, TPHCM', 'FEMALE',
     'Không có', 'Không có', 'Trần Văn Long', '0908888888', 'Chồng', NULL, NULL, NULL, NULL,
     0, FALSE, TRUE, NOW(), NOW()),
-(9, 22, 'BN-1009', 'Phan Văn', 'Tú', 'tu.pv@email.com', '0979999999', '1991-06-30', '66 Pasteur, Q3, TPHCM', 'MALE',
+(8, 22, 'PAT-008', 'Phan Văn', 'Tú', 'tu.pv@email.com', '0979999999', '1991-06-30', '66 Pasteur, Q3, TPHCM', 'MALE',
     'Viêm xoang mạn tính', 'Không có', 'Phan Thị Kim', '0909999999', 'Vợ', NULL, NULL, NULL, NULL,
     0, FALSE, TRUE, NOW(), NOW()),
-(10, 23, 'BN-1010', 'Nguyễn Thị', 'Lan', 'lan.nt@email.com', '0970000000', '2011-09-15', '55 Cách Mạng Tháng 8, Q10, TPHCM', 'FEMALE',
+(9, 23, 'PAT-009', 'Nguyễn Thị', 'Lan', 'lan.nt@email.com', '0970000000', '2011-09-15', '55 Cách Mạng Tháng 8, Q10, TPHCM', 'FEMALE',
     'Trẻ em khỏe mạnh', 'Không có', 'Nguyễn Văn Minh', '0900000000', 'Bố', 'Nguyễn Văn Minh', '0900000000', 'Bố', '079088001234',
     0, FALSE, TRUE, NOW(), NOW())
 ON CONFLICT (patient_id) DO NOTHING;
@@ -1664,19 +1661,19 @@ INSERT INTO time_off_requests (
 )
 VALUES
 -- Should be auto-cancelled: 5 days ago
-('TOR_TEST_AUTO_001', 2, 'ANNUAL_LEAVE', NULL,
+-- ('TOR_TEST_AUTO_001', 2, 'ANNUAL_LEAVE', NULL, -- Removed: test data
  CURRENT_DATE - INTERVAL '5 days', CURRENT_DATE - INTERVAL '5 days',
  'PENDING', NULL, NULL, NOW(), 2,
  '🧪 TEST: Nghỉ phép 5 ngày trước - should be auto-cancelled'),
 
 -- Should be auto-cancelled: 2 weeks ago
-('TOR_TEST_AUTO_002', 3, 'SICK_LEAVE', 'WKS_MORNING_01',
+-- ('TOR_TEST_AUTO_002', 3, 'SICK_LEAVE', 'WKS_MORNING_01', -- Removed: test data
  CURRENT_DATE - INTERVAL '14 days', CURRENT_DATE - INTERVAL '14 days',
  'PENDING', NULL, NULL, NOW(), 3,
  '🧪 TEST: Nghỉ ốm 2 tuần trước - should be auto-cancelled'),
 
 -- Should NOT be auto-cancelled: next week (future date)
-('TOR_TEST_AUTO_003', 4, 'ANNUAL_LEAVE', NULL,
+-- ('TOR_TEST_AUTO_003', 4, 'ANNUAL_LEAVE', NULL, -- Removed: test data
  CURRENT_DATE + INTERVAL '7 days', CURRENT_DATE + INTERVAL '7 days',
  'PENDING', NULL, NULL, NOW(), 4,
  '🧪 TEST: Nghỉ phép tuần sau - should NOT be cancelled')
@@ -2786,41 +2783,41 @@ SELECT
     vals.is_active,
     vals.created_at
 FROM (VALUES
--- A. Nha khoa tổng quát (category_code = 'A_GENERAL')
-('GEN_EXAM', 'Khám tổng quát & Tư vấn', 'Khám tổng quát, tư vấn chẩn đoán ban đầu.', 30, 15, 100000, 1, 'A_GENERAL', 1, 0, 0, 0, NULL, true, NOW()),
-('GEN_XRAY_PERI', 'Chụp X-Quang quanh chóp', 'Chụp phim X-quang nhỏ tại ghế - Yêu cầu chuyên môn chẩn đoán hình ảnh.', 10, 5, 50000, 8, 'A_GENERAL', 2, 0, 0, 0, NULL, true, NOW()),
-('SCALING_L1', 'Cạo vôi răng & Đánh bóng - Mức 1', 'Làm sạch vôi răng và mảng bám mức độ ít/trung bình.', 45, 15, 300000, 3, 'A_GENERAL', 3, 0, 0, 0, NULL, true, NOW()),
-('SCALING_L2', 'Cạo vôi răng & Đánh bóng - Mức 2', 'Làm sạch vôi răng và mảng bám mức độ nhiều.', 60, 15, 400000, 3, 'A_GENERAL', 4, 0, 0, 0, NULL, true, NOW()),
-('SCALING_VIP', 'Cạo vôi VIP không đau', 'Sử dụng máy rung siêu âm ít ê buốt.', 60, 15, 500000, 3, 'A_GENERAL', 5, 0, 0, 0, NULL, true, NOW()),
-('FILLING_COMP', 'Trám răng Composite', 'Trám răng sâu, mẻ bằng vật liệu composite thẩm mỹ.', 45, 15, 400000, 2, 'A_GENERAL', 6, 0, 0, 0, NULL, true, NOW()),
-('FILLING_GAP', 'Đắp kẽ răng thưa Composite', 'Đóng kẽ răng thưa nhỏ bằng composite.', 60, 15, 500000, 7, 'A_GENERAL', 7, 0, 0, 0, NULL, true, NOW()),
-('EXTRACT_MILK', 'Nhổ răng sữa', 'Nhổ răng sữa cho trẻ em.', 15, 15, 50000, 6, 'A_GENERAL', 8, 0, 0, 0, NULL, true, NOW()),
-('EXTRACT_NORM', 'Nhổ răng thường', 'Nhổ răng vĩnh viễn đơn giản (không phải răng khôn).', 45, 15, 500000, 5, 'A_GENERAL', 9, 0, 3, 0, NULL, true, NOW()),
-('EXTRACT_WISDOM_L1', 'Nhổ răng khôn mức 1 (Dễ)', 'Tiểu phẫu nhổ răng khôn mọc thẳng, ít phức tạp.', 60, 30, 1500000, 5, 'A_GENERAL', 10, 0, 7, 0, NULL, true, NOW()),
-('EXTRACT_WISDOM_L2', 'Nhổ răng khôn mức 2 (Khó)', 'Tiểu phẫu nhổ răng khôn mọc lệch, ngầm.', 90, 30, 2500000, 5, 'A_GENERAL', 11, 0, 14, 0, 2, true, NOW()),
-('ENDO_TREAT_ANT', 'Điều trị tủy răng trước', 'Lấy tủy, làm sạch, trám bít ống tủy cho răng cửa/răng nanh.', 60, 15, 1500000, 2, 'A_GENERAL', 12, 0, 0, 0, NULL, true, NOW()),
-('ENDO_TREAT_POST', 'Điều trị tủy răng sau', 'Lấy tủy, làm sạch, trám bít ống tủy cho răng tiền cối/răng cối.', 75, 15, 2000000, 2, 'A_GENERAL', 13, 0, 0, 0, NULL, true, NOW()),
-('ENDO_POST_CORE', 'Đóng chốt tái tạo cùi răng', 'Đặt chốt vào ống tủy đã chữa để tăng cường lưu giữ cho mão sứ.', 45, 15, 500000, 4, 'A_GENERAL', 14, 3, 0, 0, NULL, true, NOW()),
+-- A. Nha khoa tổng quát (category_code = 'A_GENERAL') -- DEMO PRICES: All < 100k
+('GEN_EXAM', 'Khám tổng quát & Tư vấn', 'Khám tổng quát, tư vấn chẩn đoán ban đầu.', 30, 15, 30000, 1, 'A_GENERAL', 1, 0, 0, 0, NULL, true, NOW()),
+('GEN_XRAY_PERI', 'Chụp X-Quang quanh chóp', 'Chụp phim X-quang nhỏ tại ghế - Yêu cầu chuyên môn chẩn đoán hình ảnh.', 10, 5, 20000, 8, 'A_GENERAL', 2, 0, 0, 0, NULL, true, NOW()),
+('SCALING_L1', 'Cạo vôi răng & Đánh bóng - Mức 1', 'Làm sạch vôi răng và mảng bám mức độ ít/trung bình.', 45, 15, 50000, 3, 'A_GENERAL', 3, 0, 0, 0, NULL, true, NOW()),
+('SCALING_L2', 'Cạo vôi răng & Đánh bóng - Mức 2', 'Làm sạch vôi răng và mảng bám mức độ nhiều.', 60, 15, 60000, 3, 'A_GENERAL', 4, 0, 0, 0, NULL, true, NOW()),
+('SCALING_VIP', 'Cạo vôi VIP không đau', 'Sử dụng máy rung siêu âm ít ê buốt.', 60, 15, 70000, 3, 'A_GENERAL', 5, 0, 0, 0, NULL, true, NOW()),
+('FILLING_COMP', 'Trám răng Composite', 'Trám răng sâu, mẻ bằng vật liệu composite thẩm mỹ.', 45, 15, 60000, 2, 'A_GENERAL', 6, 0, 0, 0, NULL, true, NOW()),
+('FILLING_GAP', 'Đắp kẽ răng thưa Composite', 'Đóng kẽ răng thưa nhỏ bằng composite.', 60, 15, 70000, 7, 'A_GENERAL', 7, 0, 0, 0, NULL, true, NOW()),
+('EXTRACT_MILK', 'Nhổ răng sữa', 'Nhổ răng sữa cho trẻ em.', 15, 15, 20000, 6, 'A_GENERAL', 8, 0, 0, 0, NULL, true, NOW()),
+('EXTRACT_NORM', 'Nhổ răng thường', 'Nhổ răng vĩnh viễn đơn giản (không phải răng khôn).', 45, 15, 80000, 5, 'A_GENERAL', 9, 0, 3, 0, NULL, true, NOW()),
+('EXTRACT_WISDOM_L1', 'Nhổ răng khôn mức 1 (Dễ)', 'Tiểu phẫu nhổ răng khôn mọc thẳng, ít phức tạp.', 60, 30, 90000, 5, 'A_GENERAL', 10, 0, 7, 0, NULL, true, NOW()),
+('EXTRACT_WISDOM_L2', 'Nhổ răng khôn mức 2 (Khó)', 'Tiểu phẫu nhổ răng khôn mọc lệch, ngầm.', 90, 30, 95000, 5, 'A_GENERAL', 11, 0, 14, 0, 2, true, NOW()),
+('ENDO_TREAT_ANT', 'Điều trị tủy răng trước', 'Lấy tủy, làm sạch, trám bít ống tủy cho răng cửa/răng nanh.', 60, 15, 85000, 2, 'A_GENERAL', 12, 0, 0, 0, NULL, true, NOW()),
+('ENDO_TREAT_POST', 'Điều trị tủy răng sau', 'Lấy tủy, làm sạch, trám bít ống tủy cho răng tiền cối/răng cối.', 75, 15, 90000, 2, 'A_GENERAL', 13, 0, 0, 0, NULL, true, NOW()),
+('ENDO_POST_CORE', 'Đóng chốt tái tạo cùi răng', 'Đặt chốt vào ống tủy đã chữa để tăng cường lưu giữ cho mão sứ.', 45, 15, 75000, 4, 'A_GENERAL', 14, 3, 0, 0, NULL, true, NOW()),
 
--- B. Thẩm mỹ & Phục hình (category_code = 'B_COSMETIC')
-('BLEACH_ATHOME', 'Tẩy trắng răng tại nhà', 'Cung cấp máng và thuốc tẩy trắng tại nhà.', 30, 15, 800000, 7, 'B_COSMETIC', 1, 0, 0, 0, NULL, true, NOW()),
-('BLEACH_INOFFICE', 'Tẩy trắng răng tại phòng (Laser)', 'Tẩy trắng bằng đèn chiếu hoặc laser.', 90, 15, 1200000, 7, 'B_COSMETIC', 2, 0, 0, 0, NULL, true, NOW()),
-('CROWN_PFM', 'Mão răng sứ Kim loại thường', 'Mão sứ sườn kim loại Cr-Co hoặc Ni-Cr.', 60, 15, 1000000, 4, 'B_COSMETIC', 3, 0, 0, 0, NULL, true, NOW()),
-('CROWN_TITAN', 'Mão răng sứ Titan', 'Mão sứ sườn hợp kim Titan.', 60, 15, 2500000, 4, 'B_COSMETIC', 4, 0, 0, 0, NULL, true, NOW()),
-('CROWN_ZIR_KATANA', 'Mão răng toàn sứ Katana/Zir HT', 'Mão sứ 100% Zirconia phổ thông.', 60, 15, 3500000, 4, 'B_COSMETIC', 5, 0, 0, 0, NULL, true, NOW()),
-('CROWN_ZIR_CERCON', 'Mão răng toàn sứ Cercon HT', 'Mão sứ 100% Zirconia cao cấp (Đức).', 60, 15, 5000000, 4, 'B_COSMETIC', 6, 0, 0, 0, NULL, true, NOW()),
-('CROWN_EMAX', 'Mão răng sứ thủy tinh Emax', 'Mão sứ Lithium Disilicate thẩm mỹ cao.', 60, 15, 6000000, 4, 'B_COSMETIC', 7, 0, 0, 0, NULL, true, NOW()),
-('CROWN_ZIR_LAVA', 'Mão răng toàn sứ Lava Plus', 'Mão sứ Zirconia đa lớp (Mỹ).', 60, 15, 8000000, 4, 'B_COSMETIC', 8, 0, 0, 0, NULL, true, NOW()),
-('VENEER_EMAX', 'Mặt dán sứ Veneer Emax', 'Mặt dán sứ Lithium Disilicate mài răng tối thiểu.', 75, 15, 6000000, 7, 'B_COSMETIC', 9, 0, 0, 0, NULL, true, NOW()),
-('VENEER_LISI', 'Mặt dán sứ Veneer Lisi Ultra', 'Mặt dán sứ Lithium Disilicate (Mỹ).', 75, 15, 8000000, 7, 'B_COSMETIC', 10, 0, 0, 0, NULL, true, NOW()),
-('INLAY_ONLAY_ZIR', 'Trám sứ Inlay/Onlay Zirconia', 'Miếng trám gián tiếp bằng sứ Zirconia CAD/CAM.', 60, 15, 2000000, 4, 'B_COSMETIC', 11, 0, 0, 0, NULL, true, NOW()),
-('INLAY_ONLAY_EMAX', 'Trám sứ Inlay/Onlay Emax', 'Miếng trám gián tiếp bằng sứ Emax Press.', 60, 15, 3000000, 4, 'B_COSMETIC', 12, 0, 0, 0, NULL, true, NOW()),
+-- B. Thẩm mỹ & Phục hình (category_code = 'B_COSMETIC') -- DEMO PRICES: All < 100k
+-- ('BLEACH_ATHOME', 'Tẩy trắng răng tại nhà', 'Cung cấp máng và thuốc tẩy trắng tại nhà.', 30, 15, 800000, 7, 'B_COSMETIC', 1, 0, 0, 0, NULL, true, NOW()), -- Removed: home service
+('BLEACH_INOFFICE', 'Tẩy trắng răng tại phòng (Laser)', 'Tẩy trắng bằng đèn chiếu hoặc laser.', 90, 15, 80000, 7, 'B_COSMETIC', 2, 0, 0, 0, NULL, true, NOW()),
+('CROWN_PFM', 'Mão răng sứ Kim loại thường', 'Mão sứ sườn kim loại Cr-Co hoặc Ni-Cr.', 60, 15, 70000, 4, 'B_COSMETIC', 3, 0, 0, 0, NULL, true, NOW()),
+('CROWN_TITAN', 'Mão răng sứ Titan', 'Mão sứ sườn hợp kim Titan.', 60, 15, 75000, 4, 'B_COSMETIC', 4, 0, 0, 0, NULL, true, NOW()),
+('CROWN_ZIR_KATANA', 'Mão răng toàn sứ Katana/Zir HT', 'Mão sứ 100% Zirconia phổ thông.', 60, 15, 80000, 4, 'B_COSMETIC', 5, 0, 0, 0, NULL, true, NOW()),
+('CROWN_ZIR_CERCON', 'Mão răng toàn sứ Cercon HT', 'Mão sứ 100% Zirconia cao cấp (Đức).', 60, 15, 85000, 4, 'B_COSMETIC', 6, 0, 0, 0, NULL, true, NOW()),
+('CROWN_EMAX', 'Mão răng sứ thủy tinh Emax', 'Mão sứ Lithium Disilicate thẩm mỹ cao.', 60, 15, 90000, 4, 'B_COSMETIC', 7, 0, 0, 0, NULL, true, NOW()),
+('CROWN_ZIR_LAVA', 'Mão răng toàn sứ Lava Plus', 'Mão sứ Zirconia đa lớp (Mỹ).', 60, 15, 95000, 4, 'B_COSMETIC', 8, 0, 0, 0, NULL, true, NOW()),
+('VENEER_EMAX', 'Mặt dán sứ Veneer Emax', 'Mặt dán sứ Lithium Disilicate mài răng tối thiểu.', 75, 15, 90000, 7, 'B_COSMETIC', 9, 0, 0, 0, NULL, true, NOW()),
+('VENEER_LISI', 'Mặt dán sứ Veneer Lisi Ultra', 'Mặt dán sứ Lithium Disilicate (Mỹ).', 75, 15, 95000, 7, 'B_COSMETIC', 10, 0, 0, 0, NULL, true, NOW()),
+('INLAY_ONLAY_ZIR', 'Trám sứ Inlay/Onlay Zirconia', 'Miếng trám gián tiếp bằng sứ Zirconia CAD/CAM.', 60, 15, 80000, 4, 'B_COSMETIC', 11, 0, 0, 0, NULL, true, NOW()),
+('INLAY_ONLAY_EMAX', 'Trám sứ Inlay/Onlay Emax', 'Miếng trám gián tiếp bằng sứ Emax Press.', 60, 15, 85000, 4, 'B_COSMETIC', 12, 0, 0, 0, NULL, true, NOW()),
 
--- C. Cắm ghép Implant (category_code = 'C_IMPLANT')
+-- C. Cắm ghép Implant (category_code = 'C_IMPLANT') -- DEMO PRICES: All < 100k
 ('IMPL_CONSULT', 'Khám & Tư vấn Implant', 'Khám, đánh giá tình trạng xương, tư vấn kế hoạch.', 45, 15, 0, 4, 'C_IMPLANT', 1, 0, 0, 0, NULL, true, NOW()),
-('IMPL_CT_SCAN', 'Chụp CT Cone Beam (Implant)', 'Chụp phim 3D phục vụ cắm ghép Implant.', 30, 15, 500000, 4, 'C_IMPLANT', 2, 0, 0, 0, NULL, true, NOW()),
-('IMPL_SURGERY_KR', 'Phẫu thuật đặt trụ Implant Hàn Quốc', 'Phẫu thuật cắm trụ Implant (VD: Osstem, Biotem).', 90, 30, 15000000, 4, 'C_IMPLANT', 3, 7, 90, 0, 1, true, NOW()),
-('IMPL_SURGERY_EUUS', 'Phẫu thuật đặt trụ Implant Thụy Sĩ/Mỹ', 'Phẫu thuật cắm trụ Implant (VD: Straumann, Nobel).', 90, 30, 25000000, 4, 'C_IMPLANT', 4, 7, 90, 0, 1, true, NOW()),
+('IMPL_CT_SCAN', 'Chụp CT Cone Beam (Implant)', 'Chụp phim 3D phục vụ cắm ghép Implant.', 30, 15, 50000, 4, 'C_IMPLANT', 2, 0, 0, 0, NULL, true, NOW()),
+('IMPL_SURGERY_KR', 'Phẫu thuật đặt trụ Implant Hàn Quốc', 'Phẫu thuật cắm trụ Implant (VD: Osstem, Biotem).', 90, 30, 95000, 4, 'C_IMPLANT', 3, 7, 90, 0, 1, true, NOW()),
+('IMPL_SURGERY_EUUS', 'Phẫu thuật đặt trụ Implant Thụy Sĩ/Mỹ', 'Phẫu thuật cắm trụ Implant (VD: Straumann, Nobel).', 90, 30, 98000, 4, 'C_IMPLANT', 4, 7, 90, 0, 1, true, NOW()),
 ('IMPL_BONE_GRAFT', 'Ghép xương ổ răng', 'Phẫu thuật bổ sung xương cho vị trí cắm Implant.', 60, 30, 5000000, 5, 'C_IMPLANT', 5, 0, 14, 0, 2, true, NOW()),
 ('IMPL_SINUS_LIFT', 'Nâng xoang hàm (Hở/Kín)', 'Phẫu thuật nâng xoang để cắm Implant hàm trên.', 75, 30, 8000000, 5, 'C_IMPLANT', 6, 0, 14, 0, 1, true, NOW()),
 ('IMPL_HEALING', 'Gắn trụ lành thương (Healing Abutment)', 'Gắn trụ giúp nướu lành thương đúng hình dạng.', 20, 10, 500000, 4, 'C_IMPLANT', 7, 0, 0, 0, NULL, true, NOW()),
@@ -2828,28 +2825,28 @@ FROM (VALUES
 ('IMPL_CROWN_TITAN', 'Mão sứ Titan trên Implant', 'Làm và gắn mão sứ Titan trên Abutment.', 45, 15, 3000000, 4, 'C_IMPLANT', 9, 0, 0, 0, NULL, true, NOW()),
 ('IMPL_CROWN_ZIR', 'Mão sứ Zirconia trên Implant', 'Làm và gắn mão sứ Zirconia trên Abutment.', 45, 15, 5000000, 4, 'C_IMPLANT', 10, 0, 0, 0, NULL, true, NOW()),
 
--- D. Chỉnh nha (category_code = 'D_ORTHO')
+-- D. Chỉnh nha (category_code = 'D_ORTHO') -- DEMO PRICES: All < 100k
 ('ORTHO_CONSULT', 'Khám & Tư vấn Chỉnh nha', 'Khám, phân tích phim, tư vấn kế hoạch niềng.', 45, 15, 0, 1, 'D_ORTHO', 1, 0, 0, 0, NULL, true, NOW()),
-('ORTHO_FILMS', 'Chụp Phim Chỉnh nha (Pano, Ceph)', 'Chụp phim X-quang Toàn cảnh và Sọ nghiêng.', 30, 15, 500000, 1, 'D_ORTHO', 2, 0, 0, 0, NULL, true, NOW()),
-('ORTHO_BRACES_ON', 'Gắn mắc cài kim loại/sứ', 'Gắn bộ mắc cài lên răng.', 90, 30, 5000000, 1, 'D_ORTHO', 3, 7, 0, 0, NULL, true, NOW()),
-('ORTHO_ADJUST', 'Tái khám Chỉnh nha / Siết niềng', 'Điều chỉnh dây cung, thay thun định kỳ.', 30, 15, 500000, 1, 'D_ORTHO', 4, 0, 0, 30, NULL, true, NOW()),
-('ORTHO_INVIS_SCAN', 'Scan mẫu hàm Invisalign', 'Scan 3D mẫu hàm để gửi làm khay Invisalign.', 45, 15, 1000000, 1, 'D_ORTHO', 5, 0, 0, 0, NULL, true, NOW()),
-('ORTHO_INVIS_ATTACH', 'Gắn Attachment Invisalign', 'Gắn các điểm tạo lực trên răng cho Invisalign.', 60, 15, 2000000, 1, 'D_ORTHO', 6, 0, 0, 0, NULL, true, NOW()),
-('ORTHO_MINIVIS', 'Cắm Mini-vis Chỉnh nha', 'Phẫu thuật nhỏ cắm vít hỗ trợ niềng răng.', 45, 15, 1500000, 1, 'D_ORTHO', 7, 0, 3, 0, NULL, true, NOW()),
-('ORTHO_BRACES_OFF', 'Tháo mắc cài & Vệ sinh', 'Tháo bỏ mắc cài sau khi kết thúc niềng.', 60, 15, 1000000, 1, 'D_ORTHO', 8, 0, 0, 0, NULL, true, NOW()),
-('ORTHO_RETAINER_FIXED', 'Gắn hàm duy trì cố định', 'Dán dây duy trì mặt trong răng.', 30, 15, 1000000, 1, 'D_ORTHO', 9, 0, 0, 0, NULL, true, NOW()),
-('ORTHO_RETAINER_REMOV', 'Làm hàm duy trì tháo lắp', 'Lấy dấu và giao hàm duy trì (máng trong/Hawley).', 30, 15, 1000000, 1, 'D_ORTHO', 10, 0, 0, 0, NULL, true, NOW()),
+('ORTHO_FILMS', 'Chụp Phim Chỉnh nha (Pano, Ceph)', 'Chụp phim X-quang Toàn cảnh và Sọ nghiêng.', 30, 15, 40000, 1, 'D_ORTHO', 2, 0, 0, 0, NULL, true, NOW()),
+('ORTHO_BRACES_ON', 'Gắn mắc cài kim loại/sứ', 'Gắn bộ mắc cài lên răng.', 90, 30, 98000, 1, 'D_ORTHO', 3, 7, 0, 0, NULL, true, NOW()),
+('ORTHO_ADJUST', 'Tái khám Chỉnh nha / Siết niềng', 'Điều chỉnh dây cung, thay thun định kỳ.', 30, 15, 40000, 1, 'D_ORTHO', 4, 0, 0, 30, NULL, true, NOW()),
+('ORTHO_INVIS_SCAN', 'Scan mẫu hàm Invisalign', 'Scan 3D mẫu hàm để gửi làm khay Invisalign.', 45, 15, 75000, 1, 'D_ORTHO', 5, 0, 0, 0, NULL, true, NOW()),
+('ORTHO_INVIS_ATTACH', 'Gắn Attachment Invisalign', 'Gắn các điểm tạo lực trên răng cho Invisalign.', 60, 15, 85000, 1, 'D_ORTHO', 6, 0, 0, 0, NULL, true, NOW()),
+('ORTHO_MINIVIS', 'Cắm Mini-vis Chỉnh nha', 'Phẫu thuật nhỏ cắm vít hỗ trợ niềng răng.', 45, 15, 90000, 1, 'D_ORTHO', 7, 0, 3, 0, NULL, true, NOW()),
+('ORTHO_BRACES_OFF', 'Tháo mắc cài & Vệ sinh', 'Tháo bỏ mắc cài sau khi kết thúc niềng.', 60, 15, 70000, 1, 'D_ORTHO', 8, 0, 0, 0, NULL, true, NOW()),
+('ORTHO_RETAINER_FIXED', 'Gắn hàm duy trì cố định', 'Dán dây duy trì mặt trong răng.', 30, 15, 70000, 1, 'D_ORTHO', 9, 0, 0, 0, NULL, true, NOW()),
+('ORTHO_RETAINER_REMOV', 'Làm hàm duy trì tháo lắp', 'Lấy dấu và giao hàm duy trì (máng trong/Hawley).', 30, 15, 70000, 1, 'D_ORTHO', 10, 0, 0, 0, NULL, true, NOW()),
 
--- E. Phục hình Tháo lắp (category_code = 'E_PROS_DENTURE')
+-- E. Phục hình Tháo lắp (category_code = 'E_PROS_DENTURE') -- DEMO PRICES: All < 100k
 ('PROS_CEMENT', 'Gắn sứ / Thử sứ (Lần 2)', 'Hẹn lần 2 để thử và gắn vĩnh viễn mão sứ, cầu răng, veneer.', 30, 15, 0, 4, 'E_PROS_DENTURE', 1, 0, 0, 0, NULL, true, NOW()),
-('DENTURE_CONSULT', 'Khám & Lấy dấu Hàm Tháo Lắp', 'Lấy dấu lần đầu để làm hàm giả tháo lắp.', 45, 15, 1000000, 4, 'E_PROS_DENTURE', 2, 0, 0, 0, NULL, true, NOW()),
+('DENTURE_CONSULT', 'Khám & Lấy dấu Hàm Tháo Lắp', 'Lấy dấu lần đầu để làm hàm giả tháo lắp.', 45, 15, 85000, 4, 'E_PROS_DENTURE', 2, 0, 0, 0, NULL, true, NOW()),
 ('DENTURE_TRYIN', 'Thử sườn/Thử răng Hàm Tháo Lắp', 'Hẹn thử khung kim loại hoặc thử răng sáp.', 30, 15, 0, 4, 'E_PROS_DENTURE', 3, 0, 0, 0, NULL, true, NOW()),
 ('DENTURE_DELIVERY', 'Giao hàm & Chỉnh khớp cắn', 'Giao hàm hoàn thiện, chỉnh sửa các điểm vướng cộm.', 30, 15, 0, 4, 'E_PROS_DENTURE', 4, 0, 0, 0, NULL, true, NOW()),
 
--- F. Dịch vụ khác (category_code = 'F_OTHER')
-('OTHER_DIAMOND', 'Đính đá/kim cương lên răng', 'Gắn đá thẩm mỹ lên răng.', 30, 15, 300000, 7, 'F_OTHER', 1, 0, 0, 0, NULL, true, NOW()),
-('OTHER_GINGIVECTOMY', 'Phẫu thuật cắt nướu (thẩm mỹ)', 'Làm dài thân răng, điều trị cười hở lợi.', 60, 30, 1000000, 5, 'F_OTHER', 2, 0, 7, 0, NULL, true, NOW()),
-('EMERG_PAIN', 'Khám cấp cứu / Giảm đau', 'Khám và xử lý khẩn cấp các trường hợp đau nhức, sưng, chấn thương.', 30, 15, 150000, 8, 'F_OTHER', 3, 0, 0, 0, NULL, true, NOW()),
+-- F. Dịch vụ khác (category_code = 'F_OTHER') -- DEMO PRICES: All < 100k
+('OTHER_DIAMOND', 'Đính đá/kim cương lên răng', 'Gắn đá thẩm mỹ lên răng.', 30, 15, 35000, 7, 'F_OTHER', 1, 0, 0, 0, NULL, true, NOW()),
+('OTHER_GINGIVECTOMY', 'Phẫu thuật cắt nướu (thẩm mỹ)', 'Làm dài thân răng, điều trị cười hở lợi.', 60, 30, 95000, 5, 'F_OTHER', 2, 0, 7, 0, NULL, true, NOW()),
+('EMERG_PAIN', 'Khám cấp cứu / Giảm đau', 'Khám và xử lý khẩn cấp các trường hợp đau nhức, sưng, chấn thương.', 30, 15, 50000, 8, 'F_OTHER', 3, 0, 0, 0, NULL, true, NOW()),
 ('SURG_CHECKUP', 'Tái khám sau phẫu thuật / Cắt chỉ', 'Kiểm tra vết thương sau nhổ răng khôn, cắm Implant, cắt nướu.', 15, 10, 0, 5, 'F_OTHER', 4, 0, 0, 0, NULL, true, NOW())
 ) AS vals(service_code, service_name, description, default_duration_minutes, default_buffer_minutes, price, specialization_id, category_code_ref, display_order, minimum_preparation_days, recovery_days, spacing_days, max_appointments_per_day, is_active, created_at)
 LEFT JOIN service_categories sc ON sc.category_code = vals.category_code_ref
@@ -4235,28 +4232,27 @@ ON CONFLICT (appointment_id, employee_id) DO NOTHING;
 
 -- ============================================
 -- TEST APPOINTMENT FOR BUG REPORT SCENARIO (Production reproduction)
--- APT-TEST-001: Patient BN-1001 + Doctor Trịnh Công Thái + Service OTHER_DIAMOND
--- This matches the production bug report scenario
+-- APT-TEST-001: REMOVED - test appointment
 -- ============================================
-INSERT INTO appointments (
-    appointment_id, appointment_code, patient_id, employee_id, room_id,
-    appointment_start_time, appointment_end_time, expected_duration_minutes,
-    status, notes, created_by, created_at, updated_at
-) VALUES (
-    999, 'APT-TEST-20260102-001', 1, 2, 'GHE251103002',
-    '2026-01-02 14:00:00', '2026-01-02 14:30:00', 30,
-    'COMPLETED', 'TEST: BN-1001 + BS Trịnh Công Thái + OTHER_DIAMOND - For bug report verification', 5, NOW() - INTERVAL '1 day', NOW() - INTERVAL '1 day'
-)
-ON CONFLICT (appointment_id) DO NOTHING;
+-- INSERT INTO appointments (
+--     appointment_id, appointment_code, patient_id, employee_id, room_id,
+--     appointment_start_time, appointment_end_time, expected_duration_minutes,
+--     status, notes, created_by, created_at, updated_at
+-- ) VALUES (
+--     999, 'APT-TEST-20260102-001', 1, 2, 'GHE251103002',
+--     '2026-01-02 14:00:00', '2026-01-02 14:30:00', 30,
+--     'COMPLETED', 'TEST: BN-1001 + BS Trịnh Công Thái + OTHER_DIAMOND - For bug report verification', 5, NOW() - INTERVAL '1 day', NOW() - INTERVAL '1 day'
+-- )
+-- ON CONFLICT (appointment_id) DO NOTHING;
 
 -- Service for TEST appointment - OTHER_DIAMOND
-INSERT INTO appointment_services (appointment_id, service_id)
-SELECT 999, service_id FROM services WHERE service_code = 'OTHER_DIAMOND'
-ON CONFLICT (appointment_id, service_id) DO NOTHING;
+-- INSERT INTO appointment_services (appointment_id, service_id)
+-- SELECT 999, service_id FROM services WHERE service_code = 'OTHER_DIAMOND'
+-- ON CONFLICT (appointment_id, service_id) DO NOTHING;
 
-INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
-VALUES (999, 7, 'ASSISTANT')  -- Y tá Nguyên
-ON CONFLICT (appointment_id, employee_id) DO NOTHING;
+-- INSERT INTO appointment_participants (appointment_id, employee_id, participant_role)
+-- VALUES (999, 7, 'ASSISTANT')  -- Y tá Nguyên
+-- ON CONFLICT (appointment_id, employee_id) DO NOTHING;
 
 -- ============================================
 
@@ -5744,103 +5740,171 @@ WHERE EXISTS (SELECT 1 FROM invoices WHERE invoice_code = 'INV-20251105-002');
 -- Workaround: SELECT 1 absorbs any SQL parser issues from previous section
 SELECT 1;
 
-INSERT INTO appointments (appointment_code, patient_id, employee_id, room_id, appointment_start_time, appointment_end_time, expected_duration_minutes, status, actual_start_time, actual_end_time, notes, created_by, created_at, updated_at, reschedule_count) VALUES ('APT-20260102-TEST02', 2, 2, 'GHE251103002', '2026-01-02 14:00:00', '2026-01-02 14:45:00', 45, 'COMPLETED', '2026-01-02 14:00:00', '2026-01-02 14:40:00', 'Dashboard test - Jan Week 1', 2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0) ON CONFLICT (appointment_code) DO NOTHING;
-INSERT INTO appointments (appointment_code, patient_id, employee_id, room_id, appointment_start_time, appointment_end_time, expected_duration_minutes, status, actual_start_time, actual_end_time, notes, created_by, created_at, updated_at, reschedule_count) VALUES ('APT-20260102-TEST01', 1, 1, 'GHE251103001', '2026-01-02 09:00:00', '2026-01-02 09:45:00', 45, 'COMPLETED', '2026-01-02 09:00:00', '2026-01-02 09:40:00', 'Dashboard test - Jan Week 1', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0) ON CONFLICT (appointment_code) DO NOTHING;
-INSERT INTO appointments (appointment_code, patient_id, employee_id, room_id, appointment_start_time, appointment_end_time, expected_duration_minutes, status, actual_start_time, actual_end_time, notes, created_by, created_at, updated_at, reschedule_count) VALUES ('APT-20260103-TEST01', 3, 1, 'GHE251103001', '2026-01-03 10:00:00', '2026-01-03 10:30:00', 30, 'COMPLETED', '2026-01-03 10:00:00', '2026-01-03 10:30:00', 'Dashboard test - Jan Week 1', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0) ON CONFLICT (appointment_code) DO NOTHING;
-INSERT INTO appointments (appointment_code, patient_id, employee_id, room_id, appointment_start_time, appointment_end_time, expected_duration_minutes, status, actual_start_time, actual_end_time, notes, created_by, created_at, updated_at, reschedule_count) VALUES ('APT-20260105-TEST01', 1, 2, 'GHE251103002', '2026-01-05 15:00:00', '2026-01-05 16:00:00', 60, 'COMPLETED', '2026-01-05 15:00:00', '2026-01-05 16:00:00', 'Dashboard test - Jan Week 1', 2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0) ON CONFLICT (appointment_code) DO NOTHING;
-INSERT INTO appointments (appointment_code, patient_id, employee_id, room_id, appointment_start_time, appointment_end_time, expected_duration_minutes, status, actual_start_time, actual_end_time, notes, created_by, created_at, updated_at, reschedule_count) VALUES ('APT-20260108-TEST01', 2, 1, 'GHE251103001', '2026-01-08 09:00:00', '2026-01-08 09:45:00', 45, 'COMPLETED', '2026-01-08 09:00:00', '2026-01-08 09:45:00', 'Dashboard test - Jan Week 2', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0) ON CONFLICT (appointment_code) DO NOTHING;
-INSERT INTO appointments (appointment_code, patient_id, employee_id, room_id, appointment_start_time, appointment_end_time, expected_duration_minutes, status, actual_start_time, actual_end_time, notes, created_by, created_at, updated_at, reschedule_count) VALUES ('APT-20260110-TEST01', 3, 2, 'GHE251103002', '2026-01-10 14:00:00', '2026-01-10 15:00:00', 60, 'COMPLETED', '2026-01-10 14:00:00', '2026-01-10 15:00:00', 'Dashboard test - Jan Week 2', 2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0) ON CONFLICT (appointment_code) DO NOTHING;
+INSERT INTO appointments (appointment_code, patient_id, employee_id, room_id, appointment_start_time, appointment_end_time, expected_duration_minutes, status, actual_start_time, actual_end_time, notes, created_by, created_at, updated_at, reschedule_count) VALUES ('APT-20260102-002', 2, 2, 'GHE251103002', '2026-01-02 14:00:00', '2026-01-02 14:45:00', 45, 'COMPLETED', '2026-01-02 14:00:00', '2026-01-02 14:40:00', 'Dashboard data - Jan Week 1', 2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0) ON CONFLICT (appointment_code) DO NOTHING;
+INSERT INTO appointments (appointment_code, patient_id, employee_id, room_id, appointment_start_time, appointment_end_time, expected_duration_minutes, status, actual_start_time, actual_end_time, notes, created_by, created_at, updated_at, reschedule_count) VALUES ('APT-20260102-001', 1, 1, 'GHE251103001', '2026-01-02 09:00:00', '2026-01-02 09:45:00', 45, 'COMPLETED', '2026-01-02 09:00:00', '2026-01-02 09:40:00', 'Dashboard data - Jan Week 1', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0) ON CONFLICT (appointment_code) DO NOTHING;
+INSERT INTO appointments (appointment_code, patient_id, employee_id, room_id, appointment_start_time, appointment_end_time, expected_duration_minutes, status, actual_start_time, actual_end_time, notes, created_by, created_at, updated_at, reschedule_count) VALUES ('APT-20260103-001', 3, 1, 'GHE251103001', '2026-01-03 10:00:00', '2026-01-03 10:30:00', 30, 'COMPLETED', '2026-01-03 10:00:00', '2026-01-03 10:30:00', 'Dashboard data - Jan Week 1', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0) ON CONFLICT (appointment_code) DO NOTHING;
+INSERT INTO appointments (appointment_code, patient_id, employee_id, room_id, appointment_start_time, appointment_end_time, expected_duration_minutes, status, actual_start_time, actual_end_time, notes, created_by, created_at, updated_at, reschedule_count) VALUES ('APT-20260105-001', 1, 2, 'GHE251103002', '2026-01-05 15:00:00', '2026-01-05 16:00:00', 60, 'COMPLETED', '2026-01-05 15:00:00', '2026-01-05 16:00:00', 'Dashboard data - Jan Week 1', 2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0) ON CONFLICT (appointment_code) DO NOTHING;
+INSERT INTO appointments (appointment_code, patient_id, employee_id, room_id, appointment_start_time, appointment_end_time, expected_duration_minutes, status, actual_start_time, actual_end_time, notes, created_by, created_at, updated_at, reschedule_count) VALUES ('APT-20260108-001', 2, 1, 'GHE251103001', '2026-01-08 09:00:00', '2026-01-08 09:45:00', 45, 'COMPLETED', '2026-01-08 09:00:00', '2026-01-08 09:45:00', 'Dashboard data - Jan Week 2', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0) ON CONFLICT (appointment_code) DO NOTHING;
+INSERT INTO appointments (appointment_code, patient_id, employee_id, room_id, appointment_start_time, appointment_end_time, expected_duration_minutes, status, actual_start_time, actual_end_time, notes, created_by, created_at, updated_at, reschedule_count) VALUES ('APT-20260110-001', 3, 2, 'GHE251103002', '2026-01-10 14:00:00', '2026-01-10 15:00:00', 60, 'COMPLETED', '2026-01-10 14:00:00', '2026-01-10 15:00:00', 'Dashboard data - Jan Week 2', 2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0) ON CONFLICT (appointment_code) DO NOTHING;
 
 -- Link services to appointments (3 services per appointment = 18 total)
-INSERT INTO appointment_services (appointment_id, service_id) SELECT a.appointment_id, s.service_id FROM appointments a CROSS JOIN (VALUES (1), (3), (5)) AS s(service_id) WHERE a.appointment_code LIKE 'APT-202601%TEST%' ON CONFLICT DO NOTHING;
+INSERT INTO appointment_services (appointment_id, service_id) SELECT a.appointment_id, s.service_id FROM appointments a CROSS JOIN (VALUES (1), (3), (5)) AS s(service_id) WHERE a.appointment_code LIKE 'APT-202601%' AND a.appointment_code NOT LIKE '%TEST%' ON CONFLICT DO NOTHING;
 
--- Invoices for January 2026 (6 invoices, all PAID)
-INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at) SELECT 'INV-20260102-TEST01', 'APPOINTMENT', 1, a.appointment_id, 900000, 900000, 0, 'PAID', '2026-01-09', 'Dữ liệu test Dashboard - Tháng 1', 1, CURRENT_TIMESTAMP FROM appointments a WHERE a.appointment_code = 'APT-20260102-TEST01' ON CONFLICT (invoice_code) DO NOTHING;
-INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at) SELECT 'INV-20260102-TEST02', 'APPOINTMENT', 2, a.appointment_id, 900000, 900000, 0, 'PAID', '2026-01-09', 'Dữ liệu test Dashboard - Tháng 1', 2, CURRENT_TIMESTAMP FROM appointments a WHERE a.appointment_code = 'APT-20260102-TEST02' ON CONFLICT (invoice_code) DO NOTHING;
-INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at) SELECT 'INV-20260103-TEST01', 'APPOINTMENT', 3, a.appointment_id, 300000, 300000, 0, 'PAID', '2026-01-10', 'Dữ liệu test Dashboard - Tháng 1', 1, CURRENT_TIMESTAMP FROM appointments a WHERE a.appointment_code = 'APT-20260103-TEST01' ON CONFLICT (invoice_code) DO NOTHING;
-INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at) SELECT 'INV-20260105-TEST01', 'APPOINTMENT', 1, a.appointment_id, 800000, 800000, 0, 'PAID', '2026-01-12', 'Dữ liệu test Dashboard - Tháng 1', 2, CURRENT_TIMESTAMP FROM appointments a WHERE a.appointment_code = 'APT-20260105-TEST01' ON CONFLICT (invoice_code) DO NOTHING;
-INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at) SELECT 'INV-20260108-TEST01', 'APPOINTMENT', 2, a.appointment_id, 900000, 900000, 0, 'PAID', '2026-01-15', 'Dữ liệu test Dashboard - Tháng 1', 1, CURRENT_TIMESTAMP FROM appointments a WHERE a.appointment_code = 'APT-20260108-TEST01' ON CONFLICT (invoice_code) DO NOTHING;
-INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at) SELECT 'INV-20260110-TEST01', 'APPOINTMENT', 3, a.appointment_id, 800000, 800000, 0, 'PAID', '2026-01-17', 'Dữ liệu test Dashboard - Tháng 1', 2, CURRENT_TIMESTAMP FROM appointments a WHERE a.appointment_code = 'APT-20260110-TEST01' ON CONFLICT (invoice_code) DO NOTHING;
+-- Invoices for January 2026 (6 invoices, all PAID) -- UPDATED FOR DEMO PRICES
+INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at) SELECT 'INV-20260102-001', 'APPOINTMENT', 1, a.appointment_id, 140000, 140000, 0, 'PAID', '2026-01-09', 'Dữ liệu Dashboard - Tháng 1', 1, CURRENT_TIMESTAMP FROM appointments a WHERE a.appointment_code = 'APT-20260102-001' ON CONFLICT (invoice_code) DO NOTHING;
+INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at) SELECT 'INV-20260102-002', 'APPOINTMENT', 2, a.appointment_id, 140000, 140000, 0, 'PAID', '2026-01-09', 'Dữ liệu Dashboard - Tháng 1', 2, CURRENT_TIMESTAMP FROM appointments a WHERE a.appointment_code = 'APT-20260102-002' ON CONFLICT (invoice_code) DO NOTHING;
+INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at) SELECT 'INV-20260103-001', 'APPOINTMENT', 3, a.appointment_id, 140000, 140000, 0, 'PAID', '2026-01-10', 'Dữ liệu Dashboard - Tháng 1', 1, CURRENT_TIMESTAMP FROM appointments a WHERE a.appointment_code = 'APT-20260103-001' ON CONFLICT (invoice_code) DO NOTHING;
+INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at) SELECT 'INV-20260105-001', 'APPOINTMENT', 1, a.appointment_id, 140000, 140000, 0, 'PAID', '2026-01-12', 'Dữ liệu Dashboard - Tháng 1', 2, CURRENT_TIMESTAMP FROM appointments a WHERE a.appointment_code = 'APT-20260105-001' ON CONFLICT (invoice_code) DO NOTHING;
+INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at) SELECT 'INV-20260108-001', 'APPOINTMENT', 2, a.appointment_id, 140000, 140000, 0, 'PAID', '2026-01-15', 'Dữ liệu Dashboard - Tháng 1', 1, CURRENT_TIMESTAMP FROM appointments a WHERE a.appointment_code = 'APT-20260108-001' ON CONFLICT (invoice_code) DO NOTHING;
+INSERT INTO invoices (invoice_code, invoice_type, patient_id, appointment_id, total_amount, paid_amount, remaining_debt, payment_status, due_date, notes, created_by, created_at) SELECT 'INV-20260110-001', 'APPOINTMENT', 3, a.appointment_id, 140000, 140000, 0, 'PAID', '2026-01-17', 'Dữ liệu Dashboard - Tháng 1', 2, CURRENT_TIMESTAMP FROM appointments a WHERE a.appointment_code = 'APT-20260110-001' ON CONFLICT (invoice_code) DO NOTHING;
 
--- Invoice Items for January 2026 (required for Top Services dashboard query)
+-- Invoice Items for January 2026 (required for Top Services dashboard query) -- UPDATED DEMO PRICES
 -- Schema: invoice_id, service_id, service_name, service_code, quantity, unit_price, subtotal, notes
 INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
-SELECT i.invoice_id, 1, 'Khám tổng quát & Tư vấn', 1, 300000, 300000, 'Khám tổng quát'
-FROM invoices i WHERE i.invoice_code = 'INV-20260102-TEST01';
+SELECT i.invoice_id, 1, 'Khám tổng quát & Tư vấn', 1, 30000, 30000, 'Khám tổng quát'
+FROM invoices i WHERE i.invoice_code = 'INV-20260102-001';
 
 INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
-SELECT i.invoice_id, 3, 'Cạo vôi răng & Đánh bóng - Mức 1', 1, 300000, 300000, 'Cạo vôi răng cơ bản'
-FROM invoices i WHERE i.invoice_code = 'INV-20260102-TEST01';
+SELECT i.invoice_id, 3, 'Cạo vôi răng & Đánh bóng - Mức 1', 1, 50000, 50000, 'Cạo vôi răng cơ bản'
+FROM invoices i WHERE i.invoice_code = 'INV-20260102-001';
 
 INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
-SELECT i.invoice_id, 5, 'Trám răng Composite', 1, 300000, 300000, 'Trám răng sâu - Răng 11'
-FROM invoices i WHERE i.invoice_code = 'INV-20260102-TEST01';
+SELECT i.invoice_id, 5, 'Trám răng Composite', 1, 60000, 60000, 'Trám răng sâu - Răng 11'
+FROM invoices i WHERE i.invoice_code = 'INV-20260102-001';
 
 
 INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
-SELECT i.invoice_id, 1, 'Khám tổng quát & Tư vấn', 1, 300000, 300000, 'Khám tổng quát'
-FROM invoices i WHERE i.invoice_code = 'INV-20260102-TEST02';
+SELECT i.invoice_id, 1, 'Khám tổng quát & Tư vấn', 1, 30000, 30000, 'Khám tổng quát'
+FROM invoices i WHERE i.invoice_code = 'INV-20260102-002';
 
 INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
-SELECT i.invoice_id, 3, 'Cạo vôi răng & Đánh bóng - Mức 1', 1, 300000, 300000, 'Cạo vôi răng cơ bản'
-FROM invoices i WHERE i.invoice_code = 'INV-20260102-TEST02';
+SELECT i.invoice_id, 3, 'Cạo vôi răng & Đánh bóng - Mức 1', 1, 50000, 50000, 'Cạo vôi răng cơ bản'
+FROM invoices i WHERE i.invoice_code = 'INV-20260102-002';
 
 INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
-SELECT i.invoice_id, 5, 'Trám răng Composite', 1, 300000, 300000, 'Trám răng sâu - Răng 12'
-FROM invoices i WHERE i.invoice_code = 'INV-20260102-TEST02';
+SELECT i.invoice_id, 5, 'Trám răng Composite', 1, 60000, 60000, 'Trám răng sâu - Răng 12'
+FROM invoices i WHERE i.invoice_code = 'INV-20260102-002';
 
 INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
-SELECT i.invoice_id, 1, 'Khám tổng quát & Tư vấn', 1, 100000, 100000, 'Khám tổng quát'
-FROM invoices i WHERE i.invoice_code = 'INV-20260103-TEST01';
+SELECT i.invoice_id, 1, 'Khám tổng quát & Tư vấn', 1, 30000, 30000, 'Khám tổng quát'
+FROM invoices i WHERE i.invoice_code = 'INV-20260103-001';
 
 INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
-SELECT i.invoice_id, 3, 'Cạo vôi răng & Đánh bóng - Mức 1', 1, 100000, 100000, 'Cạo vôi răng cơ bản'
-FROM invoices i WHERE i.invoice_code = 'INV-20260103-TEST01';
+SELECT i.invoice_id, 3, 'Cạo vôi răng & Đánh bóng - Mức 1', 1, 50000, 50000, 'Cạo vôi răng cơ bản'
+FROM invoices i WHERE i.invoice_code = 'INV-20260103-001';
 
 INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
-SELECT i.invoice_id, 5, 'Trám răng Composite', 1, 100000, 100000, 'Trám răng sâu - Răng 21'
-FROM invoices i WHERE i.invoice_code = 'INV-20260103-TEST01';
+SELECT i.invoice_id, 5, 'Trám răng Composite', 1, 60000, 60000, 'Trám răng sâu - Răng 21'
+FROM invoices i WHERE i.invoice_code = 'INV-20260103-001';
 
 INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
-SELECT i.invoice_id, 1, 'Khám tổng quát & Tư vấn', 1, 300000, 300000, 'Khám tổng quát'
-FROM invoices i WHERE i.invoice_code = 'INV-20260105-TEST01';
+SELECT i.invoice_id, 1, 'Khám tổng quát & Tư vấn', 1, 30000, 30000, 'Khám tổng quát'
+FROM invoices i WHERE i.invoice_code = 'INV-20260105-001';
 
 INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
-SELECT i.invoice_id, 3, 'Cạo vôi răng & Đánh bóng - Mức 1', 1, 250000, 250000, 'Cạo vôi răng cơ bản'
-FROM invoices i WHERE i.invoice_code = 'INV-20260105-TEST01';
+SELECT i.invoice_id, 3, 'Cạo vôi răng & Đánh bóng - Mức 1', 1, 50000, 50000, 'Cạo vôi răng cơ bản'
+FROM invoices i WHERE i.invoice_code = 'INV-20260105-001';
 
 INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
-SELECT i.invoice_id, 5, 'Trám răng Composite', 1, 250000, 250000, 'Trám răng sâu - Răng 22'
-FROM invoices i WHERE i.invoice_code = 'INV-20260105-TEST01';
+SELECT i.invoice_id, 5, 'Trám răng Composite', 1, 60000, 60000, 'Trám răng sâu - Răng 22'
+FROM invoices i WHERE i.invoice_code = 'INV-20260105-001';
 
 INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
-SELECT i.invoice_id, 1, 'Khám tổng quát & Tư vấn', 1, 300000, 300000, 'Khám tổng quát'
-FROM invoices i WHERE i.invoice_code = 'INV-20260108-TEST01';
+SELECT i.invoice_id, 1, 'Khám tổng quát & Tư vấn', 1, 30000, 30000, 'Khám tổng quát'
+FROM invoices i WHERE i.invoice_code = 'INV-20260108-001';
 
 INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
-SELECT i.invoice_id, 3, 'Cạo vôi răng & Đánh bóng - Mức 1', 1, 300000, 300000, 'Cạo vôi răng cơ bản'
-FROM invoices i WHERE i.invoice_code = 'INV-20260108-TEST01';
+SELECT i.invoice_id, 3, 'Cạo vôi răng & Đánh bóng - Mức 1', 1, 50000, 50000, 'Cạo vôi răng cơ bản'
+FROM invoices i WHERE i.invoice_code = 'INV-20260108-001';
 
 INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
-SELECT i.invoice_id, 5, 'Trám răng Composite', 1, 300000, 300000, 'Trám răng sâu - Răng 31'
-FROM invoices i WHERE i.invoice_code = 'INV-20260108-TEST01';
+SELECT i.invoice_id, 5, 'Trám răng Composite', 1, 60000, 60000, 'Trám răng sâu - Răng 31'
+FROM invoices i WHERE i.invoice_code = 'INV-20260108-001';
 
 INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
-SELECT i.invoice_id, 1, 'Khám tổng quát & Tư vấn', 1, 300000, 300000, 'Khám tổng quát'
-FROM invoices i WHERE i.invoice_code = 'INV-20260110-TEST01';
+SELECT i.invoice_id, 1, 'Khám tổng quát & Tư vấn', 1, 30000, 30000, 'Khám tổng quát'
+FROM invoices i WHERE i.invoice_code = 'INV-20260110-001';
 
 INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
-SELECT i.invoice_id, 3, 'Cạo vôi răng & Đánh bóng - Mức 1', 1, 250000, 250000, 'Cạo vôi răng cơ bản'
-FROM invoices i WHERE i.invoice_code = 'INV-20260110-TEST01';
+SELECT i.invoice_id, 3, 'Cạo vôi răng & Đánh bóng - Mức 1', 1, 50000, 50000, 'Cạo vôi răng cơ bản'
+FROM invoices i WHERE i.invoice_code = 'INV-20260110-001';
 
 INSERT INTO invoice_items (invoice_id, service_id, service_name, quantity, unit_price, subtotal, notes)
-SELECT i.invoice_id, 5, 'Trám răng Composite', 1, 250000, 250000, 'Trám răng sâu - Răng 32'
-FROM invoices i WHERE i.invoice_code = 'INV-20260110-TEST01';
+SELECT i.invoice_id, 5, 'Trám răng Composite', 1, 60000, 60000, 'Trám răng sâu - Răng 32'
+FROM invoices i WHERE i.invoice_code = 'INV-20260110-001';
 
 -- Storage Transactions for January 2026 (EXPORT for expenses calculation)
-INSERT INTO storage_transactions (transaction_code, transaction_type, transaction_date, total_value, status, created_by, created_at, notes) VALUES ('EXP-20260102-001', 'EXPORT', '2026-01-02 10:00:00', 150000, 'APPROVED', 1, CURRENT_TIMESTAMP, 'Dashboard test - Material consumption Jan'), ('EXP-20260105-001', 'EXPORT', '2026-01-05 14:00:00', 200000, 'APPROVED', 2, CURRENT_TIMESTAMP, 'Dashboard test - Material consumption Jan'), ('EXP-20260108-001', 'EXPORT', '2026-01-08 09:00:00', 180000, 'APPROVED', 1, CURRENT_TIMESTAMP, 'Dashboard test - Material consumption Jan') ON CONFLICT (transaction_code) DO NOTHING;
+INSERT INTO storage_transactions (transaction_code, transaction_type, transaction_date, total_value, status, created_by, created_at, notes) VALUES ('EXP-20260102-001', 'EXPORT', '2026-01-02 10:00:00', 150000, 'APPROVED', 1, CURRENT_TIMESTAMP, 'Dashboard data - Material consumption Jan'), ('EXP-20260105-001', 'EXPORT', '2026-01-05 14:00:00', 200000, 'APPROVED', 2, CURRENT_TIMESTAMP, 'Dashboard data - Material consumption Jan'), ('EXP-20260108-001', 'EXPORT', '2026-01-08 09:00:00', 180000, 'APPROVED', 1, CURRENT_TIMESTAMP, 'Dashboard data - Material consumption Jan') ON CONFLICT (transaction_code) DO NOTHING;
+
+-- ============================================
+-- FEEDBACKS FOR DASHBOARD (7-8 entries)
+-- ============================================
+-- Schema: appointment_code, patient_id, rating (1-5), comment, tags (array), created_at
+INSERT INTO appointment_feedbacks (appointment_code, patient_id, rating, comment, tags, created_at)
+SELECT 'APT-20260102-001', 1, 5, 'Dịch vụ tốt, bác sĩ tận tâm. Phòng khám sạch sẽ.', ARRAY['PROFESSIONAL', 'FRIENDLY']::text[], '2026-01-03 10:00:00'::timestamp
+WHERE EXISTS (SELECT 1 FROM appointments WHERE appointment_code = 'APT-20260102-001')
+ON CONFLICT (appointment_code) DO NOTHING;
+
+INSERT INTO appointment_feedbacks (appointment_code, patient_id, rating, comment, tags, created_at)
+SELECT 'APT-20260102-002', 2, 4, 'Hài lòng với kết quả điều trị. Thời gian chờ hơi lâu.', ARRAY['PROFESSIONAL']::text[], '2026-01-03 15:30:00'::timestamp
+WHERE EXISTS (SELECT 1 FROM appointments WHERE appointment_code = 'APT-20260102-002')
+ON CONFLICT (appointment_code) DO NOTHING;
+
+INSERT INTO appointment_feedbacks (appointment_code, patient_id, rating, comment, tags, created_at)
+SELECT 'APT-20260103-001', 3, 5, 'Rất hài lòng! Bác sĩ giải thích kỹ càng, không đau.', ARRAY['PROFESSIONAL', 'CLEAN', 'FRIENDLY']::text[], '2026-01-04 09:15:00'::timestamp
+WHERE EXISTS (SELECT 1 FROM appointments WHERE appointment_code = 'APT-20260103-001')
+ON CONFLICT (appointment_code) DO NOTHING;
+
+INSERT INTO appointment_feedbacks (appointment_code, patient_id, rating, comment, tags, created_at)
+SELECT 'APT-20260105-001', 1, 4, 'Dịch vụ tốt, nhân viên thân thiện. Giá cả hợp lý.', ARRAY['FRIENDLY', 'CLEAN']::text[], '2026-01-06 11:20:00'::timestamp
+WHERE EXISTS (SELECT 1 FROM appointments WHERE appointment_code = 'APT-20260105-001')
+ON CONFLICT (appointment_code) DO NOTHING;
+
+INSERT INTO appointment_feedbacks (appointment_code, patient_id, rating, comment, tags, created_at)
+SELECT 'APT-20260108-001', 2, 5, 'Xuất sắc! Tay nghề bác sĩ cao, tư vấn chi tiết.', ARRAY['PROFESSIONAL', 'FRIENDLY']::text[], '2026-01-09 14:00:00'::timestamp
+WHERE EXISTS (SELECT 1 FROM appointments WHERE appointment_code = 'APT-20260108-001')
+ON CONFLICT (appointment_code) DO NOTHING;
+
+INSERT INTO appointment_feedbacks (appointment_code, patient_id, rating, comment, tags, created_at)
+SELECT 'APT-20260110-001', 3, 3, 'Dịch vụ ổn nhưng thời gian chờ hơi lâu. Cần cải thiện.', ARRAY['CLEAN']::text[], '2026-01-11 16:30:00'::timestamp
+WHERE EXISTS (SELECT 1 FROM appointments WHERE appointment_code = 'APT-20260110-001')
+ON CONFLICT (appointment_code) DO NOTHING;
+
+-- Additional feedback for existing older appointments
+INSERT INTO appointment_feedbacks (appointment_code, patient_id, rating, comment, tags, created_at)
+VALUES ('APT-20250807-001', 3, 5, 'Trải nghiệm tuyệt vời, sẽ quay lại!', ARRAY['PROFESSIONAL', 'FRIENDLY', 'CLEAN']::text[], '2025-08-08 10:00:00')
+ON CONFLICT (appointment_code) DO NOTHING;
+
+INSERT INTO appointment_feedbacks (appointment_code, patient_id, rating, comment, tags, created_at)
+VALUES ('APT-20250808-001', 2, 4, 'Bác sĩ nhiệt tình, tư vấn kỹ lưỡng.', ARRAY['PROFESSIONAL', 'FRIENDLY']::text[], '2025-08-09 11:30:00')
+ON CONFLICT (appointment_code) DO NOTHING;
+
+-- ============================================
+-- TIME OFF REQUESTS FOR DASHBOARD (15 entries)
+-- For demo on 26/1 - Add historical data
+-- ============================================
+-- Format: request_id, employee_id, leave_type, work_shift_id, start_date, end_date, status, approved_by, reviewed_at, requested_at, requested_by, reason
+INSERT INTO time_off_requests (request_id, employee_id, leave_type, work_shift_id, start_date, end_date, status, approved_by, reviewed_at, requested_at, requested_by, reason)
+VALUES
+('TOR-20260105-001', 2, 'ANNUAL_LEAVE', NULL, '2026-01-10', '2026-01-12', 'APPROVED', 5, '2026-01-06 09:00:00', '2026-01-05 14:30:00', 2, 'Nghỉ phép năm - về quê thăm gia đình'),
+('TOR-20260106-001', 3, 'SICK_LEAVE', 'WKS_MORNING_01', '2026-01-07', '2026-01-07', 'APPROVED', 5, '2026-01-06 15:20:00', '2026-01-06 08:00:00', 3, 'Bị cảm, cần nghỉ ca sáng'),
+('TOR-20260107-001', 4, 'ANNUAL_LEAVE', NULL, '2026-01-15', '2026-01-17', 'APPROVED', 5, '2026-01-08 10:15:00', '2026-01-07 16:45:00', 4, 'Nghỉ phép đi du lịch'),
+('TOR-20260108-001', 1, 'UNPAID_LEAVE', 'WKS_AFTERNOON_01', '2026-01-09', '2026-01-09', 'APPROVED', 5, '2026-01-08 11:00:00', '2026-01-08 07:30:00', 1, 'Việc gia đình khẩn cấp'),
+('TOR-20260109-001', 7, 'ANNUAL_LEAVE', NULL, '2026-01-20', '2026-01-22', 'PENDING', NULL, NULL, '2026-01-09 10:00:00', 7, 'Xin nghỉ phép năm'),
+('TOR-20260110-002', 2, 'SICK_LEAVE', NULL, '2026-01-13', '2026-01-14', 'APPROVED', 5, '2026-01-10 14:30:00', '2026-01-10 08:15:00', 2, 'Đau lưng, cần nghỉ ngơi'),
+('TOR-20260111-001', 3, 'ANNUAL_LEAVE', NULL, '2026-01-25', '2026-01-27', 'PENDING', NULL, NULL, '2026-01-11 15:20:00', 3, 'Tham gia hội nghị chuyên môn'),
+('TOR-20260112-001', 4, 'SICK_LEAVE', 'WKS_MORNING_01', '2026-01-14', '2026-01-14', 'REJECTED', 5, '2026-01-12 16:00:00', '2026-01-12 07:00:00', 4, 'Mệt mỏi'),
+('TOR-20260113-001', 1, 'ANNUAL_LEAVE', NULL, '2026-01-28', '2026-01-30', 'PENDING', NULL, NULL, '2026-01-13 09:30:00', 1, 'Nghỉ phép năm cuối tháng'),
+('TOR-20260114-001', 6, 'MATERNITY_LEAVE', NULL, '2026-02-01', '2026-04-30', 'APPROVED', 5, '2026-01-14 10:00:00', '2026-01-14 08:00:00', 6, 'Nghỉ thai sản'),
+('TOR-20260115-001', 7, 'ANNUAL_LEAVE', 'WKS_AFTERNOON_01', '2026-01-16', '2026-01-16', 'APPROVED', 5, '2026-01-15 11:30:00', '2026-01-15 09:00:00', 7, 'Đi khám sức khỏe định kỳ'),
+('TOR-20260116-001', 2, 'ANNUAL_LEAVE', NULL, '2026-02-10', '2026-02-14', 'PENDING', NULL, NULL, '2026-01-16 14:00:00', 2, 'Nghỉ Tết Nguyên Đán'),
+('TOR-20260117-001', 3, 'UNPAID_LEAVE', NULL, '2026-01-23', '2026-01-24', 'APPROVED', 5, '2026-01-17 15:45:00', '2026-01-17 10:20:00', 3, 'Tham gia đám cưới người thân'),
+('TOR-20260118-001', 4, 'SICK_LEAVE', NULL, '2026-01-19', '2026-01-21', 'APPROVED', 5, '2026-01-18 09:15:00', '2026-01-18 07:30:00', 4, 'Viêm họng, sốt cao'),
+('TOR-20260119-001', 1, 'ANNUAL_LEAVE', 'WKS_MORNING_01', '2026-01-24', '2026-01-24', 'REJECTED', 5, '2026-01-19 16:30:00', '2026-01-19 13:00:00', 1, 'Việc cá nhân')
+ON CONFLICT (request_id) DO NOTHING;
 
 -- ============================================
 -- END: DASHBOARD TEST DATA
 -- ============================================
+
 

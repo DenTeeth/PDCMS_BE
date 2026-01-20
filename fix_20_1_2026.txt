@@ -1,0 +1,97 @@
+===============================================
+DANH SÁCH FIX CHO DEMO NGÀY 26/1/2026
+===============================================
+
+[✅ DONE] Hiện tại seed data - có code bệnh nhân là BN-100x 
+         nhưng khi tạo là PAT0xx
+         --> FIXED: Đã đổi tất cả BN-1001, BN-1002... thành PAT-001, PAT-002...
+         --> File: dental-clinic-seed-data.sql
+ 
+[✅ DONE] Phần lịch hẹn seed data đang có chữ TEST
+         ví dụ: APT2026.....-TEST01
+         --> FIXED: Đã xóa tất cả suffix -TEST
+         --> APT-20260102-TEST01 → APT-20260102-001
+         --> APT-20260102-TEST02 → APT-20260102-002
+         --> Đã update cả invoice codes và WHERE clauses
+
+[✅ DONE] Xóa bệnh nhân Mít tơ bít - trôn
+         --> FIXED: Đã xóa patient_id=4 (Mít tơ Bít)
+         --> Renumber patients: PAT-001, PAT-002, PAT-003, PAT-004 (Trần Văn Nam)
+
+[✅ DONE] Hiện tại 1 vài dịch vụ
+         ví dụ: đang trong group dịch vụ chỉnh nha thì 
+         dịch vụ chụp phim - bị lỗi gì đó không thể tạo lịch
+         còn mấy đứa khác thì có thể dù trong 1 group
+         Khoa bảo : random bullshit nó bị 
+         ---> sửa lại data : tên của dịch vụ 
+         có 1 số cái dịch vụ có chữ tại nhà --> xóa
+         --> FIXED: Đã comment out "Tẩy trắng răng tại nhà" (BLEACH_ATHOME)
+         --> NOTE: Nếu còn service nào lỗi khi tạo lịch, cần test lại để tìm
+
+[✅ DONE] Mail xác nhận lịch hẹn gửi cho bệnh nhân nhìn rất AI, emoji ,...
+         fix ngay
+         số đt : 1900-xxxx ???? wwtf
+         --> FIXED: AppointmentEmailService.java
+         --> Removed emojis: 📞, ✉️, ⚠️, ✅
+         --> Changed phone: 1900-xxxx → 028-1234-5678
+         --> Subject: "✅ Xác nhận..." → "Xác nhận..."
+         --> Professional corporate style now!
+
+[✅ DONE] Chỉnh lại giá dịch vụ --> 200,300k --> xuống vài chục ka thôi
+         --> FIXED: ALL services now < 100k for DEMO PAYMENT TESTING
+         --> A_GENERAL: 20k-95k (was 100k-2.5M)
+         --> B_COSMETIC: 70k-95k (was 800k-8M)
+         --> C_IMPLANT: 0-98k (was 0-25M)
+         --> D_ORTHO: 0-98k (was 0-5M)
+         --> E_PROS_DENTURE: 0-85k (was 0-1M)
+         --> F_OTHER: 0-95k (was 0-1M)
+         --> Test invoices: 140k each (30k GEN_EXAM + 50k SCALING + 60k FILLING)
+         --> Reason: Demo on 26/1 needs cheap prices for payment testing!
+
+[✅ DONE] Danh sách yêu cầu nghỉ phép có data bị lỗi
+         TOR_TEST_AUTO ... 
+         --> FIXED: Đã comment out TOR_TEST_AUTO_001, 002, 003
+
+[✅ DONE] Thêm dữ liệu cho phần góp ý --> cho dashboard
+         thêm 7-8 cái gì đó
+         --> FIXED: Added 8 feedbacks
+         --> Ratings: 3-5 stars
+         --> Comments: Professional Vietnamese
+         --> Tags: PROFESSIONAL, FRIENDLY, CLEAN
+         --> Linked to existing appointments
+
+[✅ DONE] Thêm dữ liệu cho đơn nghỉ phép cho mấy ngày của quá khứ , 26/1 ra hội đồng
+         10-20 --> cho dashboard
+         --> FIXED: Added 15 time_off_requests
+         --> TOR-20260105-001 through TOR-20260119-001
+         --> Mix: APPROVED, PENDING, REJECTED
+         --> Types: ANNUAL_LEAVE, SICK_LEAVE, UNPAID_LEAVE, MATERNITY_LEAVE
+         --> Dates: Spread across Jan 2026
+
+===============================================
+SUMMARY
+===============================================
+✅ Completed: 9/9 tasks - ALL DONE!
+⚠️  Skipped: 0
+❌ Pending: 0
+
+FILES MODIFIED:
+1. src/main/resources/db/dental-clinic-seed-data.sql
+   - Patient codes: BN-100x → PAT-00x
+   - Appointment codes: Removed -TEST suffixes
+   - Deleted test patient "Mít tơ bít"
+   - Commented out "Tẩy trắng răng tại nhà" service
+   - Commented out TOR_TEST_AUTO leave requests
+   - Added 8 feedbacks for dashboard
+   - Added 15 time_off_requests for dashboard
+   - Updated ALL services to < 100k prices (6 categories)
+   - Updated test invoices and invoice_items to match new prices
+
+2. src/main/java/com/dentalclinic/service/email/AppointmentEmailService.java
+   - Removed AI-style emojis (📞, ✉️, ⚠️, ✅)
+   - Changed phone: 1900-xxxx → 028-1234-5678
+
+READY FOR DEMO 26/1! 🎉
+ALL DATA CLEANED AND PRICES SET FOR PAYMENT TESTING!
+
+
