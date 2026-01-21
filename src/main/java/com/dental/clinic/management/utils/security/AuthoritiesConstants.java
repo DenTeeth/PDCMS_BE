@@ -216,6 +216,7 @@ public final class AuthoritiesConstants {
     public static final String VIEW_AVAILABLE_SLOTS = "VIEW_AVAILABLE_SLOTS"; // Part-time employees view available slots
     public static final String MANAGE_WORK_SHIFTS = "MANAGE_WORK_SHIFTS"; // Shift templates
     public static final String VIEW_REGISTRATION_OWN = "VIEW_REGISTRATION_OWN"; // Employee view own registrations (RBAC)
+    public static final String VIEW_WORK_SLOTS = "VIEW_WORK_SLOTS"; // View work slots (read-only)
     public static final String MANAGE_WORK_SLOTS = "MANAGE_WORK_SLOTS"; // Part-time slots
     public static final String CREATE_REGISTRATION = "CREATE_REGISTRATION"; // Part-time employees register for slots
     public static final String MANAGE_PART_TIME_REGISTRATIONS = "MANAGE_PART_TIME_REGISTRATIONS"; // Part-time shift registrations
