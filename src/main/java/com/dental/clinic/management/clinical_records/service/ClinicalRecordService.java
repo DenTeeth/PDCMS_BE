@@ -2,6 +2,7 @@ package com.dental.clinic.management.clinical_records.service;
 
 import com.dental.clinic.management.booking_appointment.domain.Appointment;
 import com.dental.clinic.management.booking_appointment.domain.Room;
+import com.dental.clinic.management.booking_appointment.enums.AppointmentStatus;
 import com.dental.clinic.management.booking_appointment.repository.AppointmentParticipantRepository;
 import com.dental.clinic.management.booking_appointment.repository.AppointmentRepository;
 import com.dental.clinic.management.booking_appointment.repository.RoomRepository;
@@ -65,50 +66,53 @@ public class ClinicalRecordService {
         /**
          * Deduct materials for all procedures in an appointment when it's completed
          * This is called by AppointmentStatusService when status changes to COMPLETED
-         * 
+         *
          * @param appointmentId The appointment ID
          */
         @Transactional
         public void deductMaterialsForAppointment(Integer appointmentId) {
                 log.info("Deducting materials for completed appointment: {}", appointmentId);
-                
+
                 // Get clinical record for this appointment
                 ClinicalRecord record = clinicalRecordRepository.findByAppointment_AppointmentId(appointmentId)
-                        .orElse(null);
-                
+                                .orElse(null);
+
                 if (record == null) {
-                        log.info("No clinical record found for appointment {}, skipping material deduction", appointmentId);
+                        log.info("No clinical record found for appointment {}, skipping material deduction",
+                                        appointmentId);
                         return;
                 }
-                
+
                 // Get all procedures that haven't had materials deducted yet
                 List<ClinicalRecordProcedure> procedures = procedureRepository
-                        .findByClinicalRecord_ClinicalRecordId(record.getClinicalRecordId());
-                
+                                .findByClinicalRecord_ClinicalRecordId(record.getClinicalRecordId());
+
                 int deductedCount = 0;
                 int skippedCount = 0;
-                
+
                 for (ClinicalRecordProcedure procedure : procedures) {
                         // Skip if materials already deducted
                         if (procedure.getMaterialsDeductedAt() != null) {
-                                log.info("Materials already deducted for procedure {}, skipping", procedure.getProcedureId());
+                                log.info("Materials already deducted for procedure {}, skipping",
+                                                procedure.getProcedureId());
                                 skippedCount++;
                                 continue;
                         }
-                        
+
                         try {
                                 procedureMaterialService.deductMaterialsForProcedure(procedure.getProcedureId());
-                                log.info("Materials deducted successfully for procedure {}", procedure.getProcedureId());
+                                log.info("Materials deducted successfully for procedure {}",
+                                                procedure.getProcedureId());
                                 deductedCount++;
                         } catch (Exception e) {
-                                log.error("Failed to deduct materials for procedure {}: {}", 
-                                        procedure.getProcedureId(), e.getMessage());
+                                log.error("Failed to deduct materials for procedure {}: {}",
+                                                procedure.getProcedureId(), e.getMessage());
                                 // Continue with next procedure - don't fail the whole operation
                         }
                 }
-                
-                log.info("Material deduction complete for appointment {}: {} deducted, {} skipped", 
-                        appointmentId, deductedCount, skippedCount);
+
+                log.info("Material deduction complete for appointment {}: {} deducted, {} skipped",
+                                appointmentId, deductedCount, skippedCount);
         }
 
         /**
@@ -238,6 +242,38 @@ public class ClinicalRecordService {
                 // User not found as employee or patient
                 log.warn("User {} not found as employee or patient", username);
                 throw new AccessDeniedException("Không có quyền truy cập");
+        }
+
+        /**
+         * Validate appointment status for clinical record operations (create/update/add
+         * procedure)
+         *
+         * Business Rule: Clinical records can only be created or updated when:
+         * - Appointment status is IN_PROGRESS (during treatment)
+         * - Appointment status is COMPLETED (retroactive documentation)
+         *
+         * This ensures medical records are only created/updated during or after actual
+         * treatment.
+         *
+         * @param appointment The appointment to validate
+         * @throws BadRequestException if appointment is not in allowed status
+         */
+        private void validateAppointmentStatusForClinicalRecord(Appointment appointment) {
+                AppointmentStatus status = appointment.getStatus();
+
+                // Allow IN_PROGRESS and COMPLETED appointments
+                if (status == AppointmentStatus.IN_PROGRESS || status == AppointmentStatus.COMPLETED) {
+                        log.info("Appointment {} status {} is valid for clinical record operations",
+                                        appointment.getAppointmentId(), status);
+                        return;
+                }
+
+                // Reject all other statuses
+                log.warn("Appointment {} has status {} - clinical record operations not allowed",
+                                appointment.getAppointmentId(), status);
+                throw new BadRequestException("INVALID_APPOINTMENT_STATUS",
+                                "Không thể tạo/cập nhật bệnh án khi lịch hẹn chưa ở trạng thái đang điều trị (IN_PROGRESS) hoặc đã hoàn thành (COMPLETED). Trạng thái hiện tại: "
+                                                + status);
         }
 
         /**
@@ -521,12 +557,15 @@ public class ClinicalRecordService {
                                 .orElseThrow(() -> new NotFoundException("APPOINTMENT_NOT_FOUND",
                                                 "Appointment not found with ID: " + request.getAppointmentId()));
 
-                // Step 2: Check access permission (removed status restriction - Issue 37 fix)
+                // Step 2: Check access permission
                 checkAccessPermission(appointment);
+
+                // Step 3: Validate appointment status - must be IN_PROGRESS or COMPLETED
+                validateAppointmentStatusForClinicalRecord(appointment);
                 log.info("Creating clinical record for appointment {} with status: {}",
                                 request.getAppointmentId(), appointment.getStatus());
 
-                // Step 3: Check duplicate
+                // Step 4: Check duplicate
                 if (clinicalRecordRepository.findByAppointment_AppointmentId(request.getAppointmentId())
                                 .isPresent()) {
                         throw new com.dental.clinic.management.exception.ConflictException("RECORD_ALREADY_EXISTS",
@@ -579,7 +618,10 @@ public class ClinicalRecordService {
                                 .orElseThrow(() -> new NotFoundException("RECORD_NOT_FOUND",
                                                 "Clinical record ID " + recordId + " does not exist"));
 
-                // Step 2: Update only provided fields
+                // Step 2: Validate appointment status - must be IN_PROGRESS or COMPLETED
+                validateAppointmentStatusForClinicalRecord(record.getAppointment());
+
+                // Step 3: Update only provided fields
                 if (request.getExaminationFindings() != null) {
                         record.setExaminationFindings(request.getExaminationFindings());
                 }
@@ -711,7 +753,10 @@ public class ClinicalRecordService {
                                 .orElseThrow(() -> new NotFoundException("RECORD_NOT_FOUND",
                                                 "Clinical record not found with ID: " + recordId));
 
-                // Step 2: Validate service exists and is active
+                // Step 2: Validate appointment status - must be IN_PROGRESS or COMPLETED
+                validateAppointmentStatusForClinicalRecord(record.getAppointment());
+
+                // Step 3: Validate service exists and is active
                 DentalService service = dentalServiceRepository.findById(request.getServiceId())
                                 .orElseThrow(() -> new NotFoundException("SERVICE_NOT_FOUND",
                                                 "Service not found with ID: " + request.getServiceId()));
@@ -747,7 +792,8 @@ public class ClinicalRecordService {
                 ClinicalRecordProcedure savedProcedure = procedureRepository.save(procedure);
                 log.info("Procedure saved with ID: {}", savedProcedure.getProcedureId());
 
-                // Note: Materials will be auto-deducted when appointment status changes to COMPLETED
+                // Note: Materials will be auto-deducted when appointment status changes to
+                // COMPLETED
                 // This ensures materials are only deducted for completed procedures
 
                 // Step 6: Build response
@@ -800,7 +846,10 @@ public class ClinicalRecordService {
                                 });
                 log.debug("Clinical record found: ID {}", record.getClinicalRecordId());
 
-                // Step 2: Validate procedure exists and belongs to this record
+                // Step 2: Validate appointment status - must be IN_PROGRESS or COMPLETED
+                validateAppointmentStatusForClinicalRecord(record.getAppointment());
+
+                // Step 3: Validate procedure exists and belongs to this record
                 ClinicalRecordProcedure procedure = procedureRepository.findById(procedureId)
                                 .orElseThrow(() -> {
                                         log.error("Procedure not found with ID: {}", procedureId);
@@ -815,7 +864,7 @@ public class ClinicalRecordService {
                 }
                 log.debug("Procedure found and belongs to record: ID {}", procedure.getProcedureId());
 
-                // Step 3: Validate new service exists and is active
+                // Step 4: Validate new service exists and is active
                 DentalService service = dentalServiceRepository.findById(request.getServiceId())
                                 .orElseThrow(() -> {
                                         log.error("Service not found with ID: {}", request.getServiceId());
@@ -899,7 +948,10 @@ public class ClinicalRecordService {
                                 });
                 log.debug("Clinical record found: ID {}", record.getClinicalRecordId());
 
-                // Step 2: Validate procedure exists and belongs to this record
+                // Step 2: Validate appointment status - must be IN_PROGRESS or COMPLETED
+                validateAppointmentStatusForClinicalRecord(record.getAppointment());
+
+                // Step 3: Validate procedure exists and belongs to this record
                 ClinicalRecordProcedure procedure = procedureRepository.findById(procedureId)
                                 .orElseThrow(() -> {
                                         log.error("Procedure not found with ID: {}", procedureId);
@@ -1020,7 +1072,10 @@ public class ClinicalRecordService {
                 Appointment appointment = record.getAppointment();
                 checkAccessPermission(appointment);
 
-                // Step 3: Load or create prescription header
+                // Step 3: Validate appointment status - must be IN_PROGRESS or COMPLETED
+                validateAppointmentStatusForClinicalRecord(appointment);
+
+                // Step 4: Load or create prescription header
                 ClinicalPrescription prescription = prescriptionRepository
                                 .findByClinicalRecord_ClinicalRecordId(recordId)
                                 .orElse(null);
@@ -1129,7 +1184,8 @@ public class ClinicalRecordService {
 
                 // Note: Prescription inventory tracking is out of scope
                 // Prescriptions are for patient take-home medications, not clinic consumption
-                // Only procedure materials (used during treatment) are tracked via procedure_material_usage
+                // Only procedure materials (used during treatment) are tracked via
+                // procedure_material_usage
         }
 
         /**
