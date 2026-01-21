@@ -327,9 +327,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
                         "AND (COALESCE(:patientName, NULL::varchar) IS NULL OR " +
                         "     LOWER((COALESCE(p.first_name, '') || ' ' || COALESCE(p.last_name, ''))::text) LIKE LOWER('%' || :patientName || '%')) "
                         +
-                        "AND (COALESCE(:patientPhone, NULL::varchar) IS NULL OR p.phone LIKE '%' || :patientPhone || '%') "
-                        +
-                        "ORDER BY a.appointment_start_time", countQuery = "SELECT COUNT(DISTINCT a.appointment_id) FROM appointments a "
+                        "AND (COALESCE(:patientPhone, NULL::varchar) IS NULL OR p.phone LIKE '%' || :patientPhone || '%')", countQuery = "SELECT COUNT(DISTINCT a.appointment_id) FROM appointments a "
                                         +
                                         "LEFT JOIN patients p ON a.patient_id = p.patient_id " +
                                         "LEFT JOIN employees e ON a.employee_id = e.employee_id " +
@@ -490,7 +488,8 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
                         "AND (COALESCE(CAST(:statuses AS text[]), NULL::text[]) IS NULL OR a.status::text = ANY(:statuses)) "
                         +
                         "AND (" +
-                        "    p.patient_code ILIKE '%' || :searchCode || '%' " +
+                        "    a.appointment_code ILIKE '%' || :searchCode || '%' " +
+                        "    OR p.patient_code ILIKE '%' || :searchCode || '%' " +
                         "    OR LOWER(CONCAT(p.first_name, ' ', p.last_name)) LIKE LOWER('%' || :searchCode || '%') " +
                         "    OR e.employee_code ILIKE '%' || :searchCode || '%' " +
                         "    OR LOWER(CONCAT(e.first_name, ' ', e.last_name)) LIKE LOWER('%' || :searchCode || '%') " +
