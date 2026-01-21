@@ -21,6 +21,7 @@ public class SlotDetailResponse {
     private LocalDate effectiveFrom;
     private LocalDate effectiveTo;
     private Integer overallRemaining; // Minimum remaining across all dates
+    private Integer registered; // Total number of registered employees across entire date range
     
     private List<MonthlyAvailability> availabilityByMonth;
     

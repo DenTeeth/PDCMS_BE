@@ -284,6 +284,14 @@ public class EmployeeShiftRegistrationService {
                 startDate,
                 slot.getEffectiveTo());
 
+        // Calculate total required slots across all months
+        int totalRequired = monthlyBreakdown.stream()
+                .mapToInt(month -> month.getTotalWorkingDays() * slot.getQuota())
+                .sum();
+        
+        // Calculate registered: totalRequired - overallRemaining
+        int registered = totalRequired - overallRemaining;
+
         return SlotDetailResponse.builder()
                 .slotId(slot.getSlotId())
                 .shiftName(shiftName)
@@ -292,6 +300,7 @@ public class EmployeeShiftRegistrationService {
                 .effectiveFrom(slot.getEffectiveFrom())
                 .effectiveTo(slot.getEffectiveTo())
                 .overallRemaining(overallRemaining)
+                .registered(registered)
                 .availabilityByMonth(monthlyBreakdown)
                 .build();
     }
@@ -864,7 +873,7 @@ public class EmployeeShiftRegistrationService {
      * @return Daily availability response with per-day breakdown
      */
     @Transactional(readOnly = true)
-    @PreAuthorize("hasAuthority('VIEW_AVAILABLE_SLOTS') or hasAuthority('MANAGE_PART_TIME_REGISTRATIONS') or hasAuthority('MANAGE_WORK_SLOTS')")
+    @PreAuthorize("hasAuthority('VIEW_AVAILABLE_SLOTS') or hasAuthority('MANAGE_PART_TIME_REGISTRATIONS') or hasAuthority('VIEW_WORK_SLOTS') or hasAuthority('MANAGE_WORK_SLOTS')")
     public com.dental.clinic.management.working_schedule.dto.response.DailyAvailabilityResponse getDailyAvailability(
             Long slotId, String month) {
         log.info("Getting daily availability for slot {} in month {}", slotId, month);
