@@ -12,7 +12,6 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.stream.Collectors;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Data Initializer - Loads seed data AFTER Hibernate creates tables
@@ -40,31 +39,32 @@ public class DataInitializer {
         try {
             log.info("Starting seed data initialization...");
 
-            // Wait briefly for Hibernate to create schema (some environments are fast, some
-            // slower).
-            // We check for the existence of a known table (roles) in information_schema and
-            // wait up to
-            // ~10 seconds before proceeding. This prevents the initializer from querying
-            // tables that do
-            // not yet exist and failing the whole startup.
-            waitForTable("roles", 20, 500);
             // Check if data already exists in multiple tables (avoid duplicate inserts)
-            Integer roleCount = safeQueryForInt("SELECT COUNT(*) FROM roles WHERE role_id = 'ROLE_ADMIN'");
-            Integer itemCount = safeQueryForInt("SELECT COUNT(*) FROM item_masters");
-            Integer serviceCount = safeQueryForInt("SELECT COUNT(*) FROM services");
+            Integer roleCount = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM roles WHERE role_id = 'ROLE_ADMIN'",
+                    Integer.class);
+            Integer itemCount = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM item_masters",
+                    Integer.class);
+            Integer serviceCount = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM services",
+                    Integer.class);
 
             // API 6.17: Check service_consumables separately (may need reload)
-            Integer consumablesCount = safeQueryForInt("SELECT COUNT(*) FROM service_consumables");
+            Integer consumablesCount = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM service_consumables",
+                    Integer.class);
 
             // FIX: Check invoice_items to prevent duplicate invoice items bug
-            Integer invoiceItemsCount = safeQueryForInt("SELECT COUNT(*) FROM invoice_items");
+            Integer invoiceItemsCount = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM invoice_items",
+                    Integer.class);
 
             // Log counts for debugging
             log.info("Data counts: roles={}, items={}, services={}, consumables={}, invoiceItems={}",
                     roleCount, itemCount, serviceCount, consumablesCount, invoiceItemsCount);
 
-            // If ALL tables have data, still run initialization (idempotent with ON
-            // CONFLICT DO NOTHING)
+            // If ALL tables have data, still run initialization (idempotent with ON CONFLICT DO NOTHING)
             // This ensures dashboard test data and any new seed data always gets loaded
             if (roleCount != null && roleCount > 0 &&
                     itemCount != null && itemCount > 0 &&
@@ -167,59 +167,6 @@ public class DataInitializer {
         } catch (Exception e) {
             log.error("Failed to initialize seed data", e);
             // Don't throw exception - allow server to start even if seed data fails
-        }
-    }
-
-    /**
-     * Safe helper: run a COUNT(*) query and return 0 if the table does not exist or
-     * any SQL error occurs.
-     */
-    private Integer safeQueryForInt(String sql) {
-        try {
-            Integer v = jdbcTemplate.queryForObject(sql, Integer.class);
-            return v == null ? 0 : v;
-        } catch (Exception e) {
-            // Most common reason: table does not exist yet. Log at debug and return 0 so
-            // initialization
-            // proceeds gracefully.
-            log.debug("safeQueryForInt failed for SQL [{}]: {}", sql, e.getMessage());
-            return 0;
-        }
-    }
-
-    /**
-     * Wait for a table to appear in the current schema by polling
-     * information_schema.
-     * Attempts up to maxAttempts sleeping sleepMillis between attempts.
-     */
-    private void waitForTable(String tableName, int maxAttempts, long sleepMillis) {
-        try {
-            int attempts = 0;
-            while (attempts < maxAttempts) {
-                try {
-                    Integer found = jdbcTemplate.queryForObject(
-                            "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = current_schema() AND table_name = ?",
-                            new Object[] { tableName }, Integer.class);
-                    if (found != null && found > 0) {
-                        log.debug("Table '{}' found in schema", tableName);
-                        return;
-                    }
-                } catch (Exception e) {
-                    // ignore and retry
-                    log.trace("Waiting for table '{}' - attempt {}: {}", tableName, attempts + 1, e.getMessage());
-                }
-                attempts++;
-                try {
-                    TimeUnit.MILLISECONDS.sleep(sleepMillis);
-                } catch (InterruptedException ie) {
-                    Thread.currentThread().interrupt();
-                    break;
-                }
-            }
-            log.warn("Table '{}' not found after {} attempts - proceeding anyway (queries will be resilient)",
-                    tableName, maxAttempts);
-        } catch (Exception e) {
-            log.debug("waitForTable encountered error: {}", e.getMessage());
         }
     }
 }

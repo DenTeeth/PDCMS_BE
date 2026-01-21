@@ -67,7 +67,7 @@ public class ChatbotService {
             log.info("User message: '{}' -> Detected ID: '{}'", userMessage, detectedId);
         } catch (Exception e) {
             log.error("Gemini API error: {}", e.getMessage(), e);
-            return "Dạ mình đang gặp sự cố kỹ thuật. Bạn vui lòng gọi Hotline 076.400.9726 để được hỗ trợ nha!";
+            return "Da em dang gap su co ky thuat. Anh/Chi vui long goi Hotline 076.400.9726 de duoc ho tro a!";
         }
 
         // Handle dynamic database queries
@@ -142,7 +142,7 @@ public class ChatbotService {
             List<DentalService> services = dentalServiceRepository.findAllActiveServicesWithCategory();
 
             if (services.isEmpty()) {
-                return "Dạ hiện tại chưa có thông tin bảng giá. Bạn vui lòng liên hệ Hotline 076.400.9726 để được tư vấn nha!";
+                return "Dạ hiện tại chưa có thông tin bảng giá. Anh/Chị vui lòng liên hệ Hotline 076.400.9726 để được tư vấn ạ!";
             }
 
             StringBuilder sb = new StringBuilder();
@@ -164,12 +164,12 @@ public class ChatbotService {
             }
 
             sb.append("\n💡 Giá có thể thay đổi tùy theo tình trạng cụ thể.");
-            sb.append("\n📞 Liên hệ Hotline: 076.400.9726 để được tư vấn chi tiết nha!");
+            sb.append("\n📞 Liên hệ Hotline: 076.400.9726 để được tư vấn chi tiết!");
 
             return sb.toString();
         } catch (Exception e) {
             log.error("Error building price list: {}", e.getMessage(), e);
-            return "Dạ mình không thể lấy bảng giá lúc này. Bạn vui lòng gọi Hotline 076.400.9726 để được hỗ trợ nha!";
+            return "Dạ em không thể lấy bảng giá lúc này. Anh/Chị vui lòng gọi Hotline 076.400.9726 để được hỗ trợ ạ!";
         }
     }
 
@@ -190,7 +190,7 @@ public class ChatbotService {
                     .toList();
 
             if (matched.isEmpty()) {
-                return "Dạ mình không tìm thấy dịch vụ phù hợp. Bạn có thể hỏi \"bảng giá\" để xem danh sách dịch vụ hoặc gọi Hotline 076.400.9726 nha!";
+                return "Dạ em không tìm thấy dịch vụ phù hợp. Anh/Chị có thể hỏi \"bảng giá\" để xem danh sách dịch vụ hoặc gọi Hotline 076.400.9726 ạ!";
             }
 
             StringBuilder sb = new StringBuilder();
@@ -212,12 +212,12 @@ public class ChatbotService {
                 sb.append("\n");
             }
 
-            sb.append("📞 Liên hệ Hotline: 076.400.9726 để đặt lịch nha!");
+            sb.append("📞 Liên hệ Hotline: 076.400.9726 để đặt lịch!");
 
             return sb.toString();
         } catch (Exception e) {
             log.error("Error handling service query: {}", e.getMessage(), e);
-            return "Dạ mình gặp lỗi khi tìm kiếm. Bạn vui lòng thử lại hoặc gọi Hotline 076.400.9726 nha!";
+            return "Dạ em gặp lỗi khi tìm kiếm. Anh/Chị vui lòng thử lại hoặc gọi Hotline 076.400.9726 ạ!";
         }
     }
 
@@ -250,7 +250,7 @@ public class ChatbotService {
             return response.trim();
         } catch (Exception e) {
             log.error("Error generating intelligent response: {}", e.getMessage(), e);
-            return "Dạ mình chưa hiểu rõ ý bạn lắm. Vui lòng gọi Hotline 076.400.9726 để được hỗ trợ trực tiếp nha!";
+            return "Dạ em chưa hiểu rõ ý Anh/Chị lắm. Vui lòng gọi Hotline 076.400.9726 để được hỗ trợ trực tiếp ạ!";
         }
     }
 
@@ -267,13 +267,13 @@ public class ChatbotService {
      * Response for out-of-scope questions (not dental related)
      */
     private String getOutOfScopeResponse() {
-        return "Xin lỗi, mình là trợ lý ảo chuyên về NHA KHOA của phòng khám DenTeeth.\n\n" +
-                "Mình có thể giúp bạn:\n" +
-                "- Tra cứu bảng giá dịch vụ\n" +
-                "- Tư vấn triệu chứng răng miệng\n" +
-                "- Thông tin địa chỉ, giờ làm việc\n" +
-                "- Hướng dẫn đặt lịch khám\n\n" +
-                "Bạn có câu hỏi gì về răng miệng không nha?\n" +
+        return "Xin loi, em la tro ly ao chuyen ve NHA KHOA cua phong kham DenTeeth.\n\n" +
+                "Em co the giup ban:\n" +
+                "- Tra cuu bang gia dich vu\n" +
+                "- Tu van trieu chung rang mieng\n" +
+                "- Thong tin dia chi, gio lam viec\n" +
+                "- Huong dan dat lich kham\n\n" +
+                "Anh/Chi co cau hoi gi ve rang mieng khong a?\n" +
                 "Hotline: 076.400.9726";
     }
 
@@ -283,102 +283,102 @@ public class ChatbotService {
     private String getSymptomResponse(String symptomId) {
         return switch (symptomId) {
             case "SYMPTOM_TOOTHACHE" ->
-                "[TRIỆU CHỨNG ĐAU RĂNG]\n\n" +
-                        "Dựa trên triệu chứng, có thể là một trong các vấn đề sau:\n\n" +
-                        "1. Sâu răng (Dental Caries) - Phổ biến nhất\n" +
-                        "   - Đau khi ăn đồ ngọt, nóng, lạnh\n" +
-                        "   - Có thể thấy lỗ đen trên răng\n\n" +
-                        "2. Viêm tủy răng (Pulpitis)\n" +
-                        "   - Đau dữ dội, kéo dài\n" +
-                        "   - Đau tăng về đêm\n\n" +
-                        "3. Áp xe răng (Dental Abscess)\n" +
-                        "   - Sưng má, đau nhức liên tục\n" +
-                        "   - Có thể sốt nhẹ\n\n" +
-                        "Khuyến nghị: Nên khám bác sĩ sớm để xác định chính xác nguyên nhân nha!\n" +
+                "[TRIEU CHUNG DAU RANG]\n\n" +
+                        "Dua tren trieu chung, co the la mot trong cac van de sau:\n\n" +
+                        "1. Sau rang (Dental Caries) - Pho bien nhat\n" +
+                        "   - Dau khi an do ngot, nong, lanh\n" +
+                        "   - Co the thay lo den tren rang\n\n" +
+                        "2. Viem tuy rang (Pulpitis)\n" +
+                        "   - Dau du doi, keo dai\n" +
+                        "   - Dau tang ve dem\n\n" +
+                        "3. Ap xe rang (Dental Abscess)\n" +
+                        "   - Sung ma, dau nhuc lien tuc\n" +
+                        "   - Co the sot nhe\n\n" +
+                        "Khuyen nghi: Nen kham bac si som de xac dinh chinh xac nguyen nhan.\n" +
                         "Hotline: 076.400.9726";
 
             case "SYMPTOM_BLEEDING_GUMS" ->
-                "[TRIỆU CHỨNG CHẢY MÁU NƯỚU]\n\n" +
-                        "Có thể là dấu hiệu của:\n\n" +
-                        "1. Viêm nướu (Gingivitis) - Phổ biến nhất\n" +
-                        "   - Nướu đỏ, sưng\n" +
-                        "   - Chảy máu khi đánh răng\n\n" +
-                        "2. Viêm nha chu (Periodontitis)\n" +
-                        "   - Nướu tụt, răng lung lay\n" +
-                        "   - Có túi nha chu\n\n" +
-                        "3. Thiếu Vitamin C\n" +
-                        "   - Nướu yếu, dễ chảy máu\n\n" +
-                        "Khuyến nghị: Cần khám và lấy cao răng định kỳ nha!\n" +
+                "[TRIEU CHUNG CHAY MAU NUOU]\n\n" +
+                        "Co the la dau hieu cua:\n\n" +
+                        "1. Viem nuou (Gingivitis) - Pho bien nhat\n" +
+                        "   - Nuou do, sung\n" +
+                        "   - Chay mau khi danh rang\n\n" +
+                        "2. Viem nha chu (Periodontitis)\n" +
+                        "   - Nuou tut, rang lung lay\n" +
+                        "   - Co tui nha chu\n\n" +
+                        "3. Thieu Vitamin C\n" +
+                        "   - Nuou yeu, de chay mau\n\n" +
+                        "Khuyen nghi: Can kham va lay cao rang dinh ky.\n" +
                         "Hotline: 076.400.9726";
 
             case "SYMPTOM_LOOSE_TOOTH" ->
-                "[TRIỆU CHỨNG RĂNG LUNG LAY]\n\n" +
-                        "Nguyên nhân có thể:\n\n" +
-                        "1. Viêm nha chu nặng (Advanced Periodontitis)\n" +
-                        "   - Tiêu xương ổ răng\n" +
-                        "   - Răng lung lay từ từ\n\n" +
-                        "2. Chấn thương răng\n" +
-                        "   - Do va đập, tai nạn\n\n" +
-                        "3. Nghiến răng (Bruxism)\n" +
-                        "   - Thường nghiến răng khi ngủ\n\n" +
-                        "KHẨN CẤP: Nếu răng rất lung lay, cần khám NGAY!\n" +
+                "[TRIEU CHUNG RANG LUNG LAY]\n\n" +
+                        "Nguyen nhan co the:\n\n" +
+                        "1. Viem nha chu nang (Advanced Periodontitis)\n" +
+                        "   - Tieu xuong o rang\n" +
+                        "   - Rang lung lay tu tu\n\n" +
+                        "2. Chan thuong rang\n" +
+                        "   - Do va dap, tai nan\n\n" +
+                        "3. Nghien rang (Bruxism)\n" +
+                        "   - Thuong nghien rang khi ngu\n\n" +
+                        "KHAN CAP: Neu rang rat lung lay, can kham NGAY!\n" +
                         "Hotline: 076.400.9726";
 
             case "SYMPTOM_BAD_BREATH" ->
-                "[TRIỆU CHỨNG HÔI MIỆNG]\n\n" +
-                        "Nguyên nhân phổ biến:\n\n" +
-                        "1. Vệ sinh răng miệng kém\n" +
-                        "   - Mảng bám, cao răng tích tụ\n\n" +
-                        "2. Bệnh nướu/nha chu\n" +
-                        "   - Viêm nướu mãn tính\n\n" +
-                        "3. Sâu răng không điều trị\n" +
-                        "   - Thức ăn đọng trong lỗ sâu\n\n" +
-                        "4. Khô miệng\n" +
-                        "   - Thiếu nước bọt\n\n" +
-                        "Khuyến nghị: Lấy cao răng và khám tổng quát nha!\n" +
+                "[TRIEU CHUNG HOI MIENG]\n\n" +
+                        "Nguyen nhan pho bien:\n\n" +
+                        "1. Ve sinh rang mieng kem\n" +
+                        "   - Mang bam, cao rang tich tu\n\n" +
+                        "2. Benh nuou/nha chu\n" +
+                        "   - Viem nuou man tinh\n\n" +
+                        "3. Sau rang khong dieu tri\n" +
+                        "   - Thuc an dong trong lo sau\n\n" +
+                        "4. Kho mieng\n" +
+                        "   - Thieu nuoc bot\n\n" +
+                        "Khuyen nghi: Lay cao rang va kham tong quat.\n" +
                         "Hotline: 076.400.9726";
 
             case "SYMPTOM_SENSITIVE_TEETH" ->
-                "[TRIỆU CHỨNG Ê BUỐT RĂNG]\n\n" +
-                        "Có thể do:\n\n" +
-                        "1. Mòn men răng\n" +
-                        "   - Do acid từ thức ăn/nước uống\n" +
-                        "   - Đánh răng quá mạnh\n\n" +
-                        "2. Tụt nướu\n" +
-                        "   - Lộ chân răng (ngà răng)\n\n" +
-                        "3. Sâu răng giai đoạn đầu\n" +
-                        "   - Men răng bị tổn thương\n\n" +
-                        "4. Nứt răng nhỏ\n" +
-                        "   - Đau khi cắn\n\n" +
-                        "Khuyến nghị: Dùng kem đánh răng chống ê buốt và khám kiểm tra nha!\n" +
+                "[TRIEU CHUNG E BUOT RANG]\n\n" +
+                        "Co the do:\n\n" +
+                        "1. Mon men rang\n" +
+                        "   - Do acid tu thuc an/nuoc uong\n" +
+                        "   - Danh rang qua manh\n\n" +
+                        "2. Tut nuou\n" +
+                        "   - Lo chan rang (nga rang)\n\n" +
+                        "3. Sau rang giai doan dau\n" +
+                        "   - Men rang bi ton thuong\n\n" +
+                        "4. Nut rang nho\n" +
+                        "   - Dau khi can\n\n" +
+                        "Khuyen nghi: Dung kem danh rang chong e buot va kham kiem tra.\n" +
                         "Hotline: 076.400.9726";
 
             case "SYMPTOM_SWOLLEN_FACE" ->
-                "[TRIỆU CHỨNG SƯNG MÁ/MẶT - KHẨN CẤP!]\n\n" +
-                        "Nguyên nhân có thể:\n\n" +
-                        "1. Áp xe răng (Dental Abscess)\n" +
-                        "   - Nhiễm trùng nặng\n" +
-                        "   - Sưng đau, có thể sốt\n\n" +
-                        "2. Viêm mô tế bào (Cellulitis)\n" +
-                        "   - Nhiễm trùng lan rộng\n" +
-                        "   - RẤT NGUY HIỂM\n\n" +
-                        "3. Răng khôn mọc lệch\n" +
-                        "   - Viêm quanh thân răng\n\n" +
-                        "KHẨN CẤP: Sưng mặt kèm sốt, khó thở -> đến bệnh viện NGAY!\n" +
-                        "Hotline KHẨN: 076.400.9726";
+                "[TRIEU CHUNG SUNG MA/MAT - KHAN CAP!]\n\n" +
+                        "Nguyen nhan co the:\n\n" +
+                        "1. Ap xe rang (Dental Abscess)\n" +
+                        "   - Nhiem trung nang\n" +
+                        "   - Sung dau, co the sot\n\n" +
+                        "2. Viem mo te bao (Cellulitis)\n" +
+                        "   - Nhiem trung lan rong\n" +
+                        "   - RAT NGUY HIEM\n\n" +
+                        "3. Rang khon moc lech\n" +
+                        "   - Viem quanh than rang\n\n" +
+                        "KHAN CAP: Sung mat kem sot, kho tho -> den benh vien NGAY!\n" +
+                        "Hotline KHAN: 076.400.9726";
 
             case "SYMPTOM_WISDOM_TOOTH" ->
-                "[VẤN ĐỀ RĂNG KHÔN]\n\n" +
-                        "Các vấn đề thường gặp:\n\n" +
-                        "1. Răng khôn mọc lệch/ngầm\n" +
-                        "   - Đau nhức vùng góc hàm\n" +
-                        "   - Khó mở miệng\n\n" +
-                        "2. Viêm lợi trùm\n" +
-                        "   - Sưng đỏ nướu phía sau\n" +
-                        "   - Đau khi nhai\n\n" +
-                        "3. Sâu răng khôn\n" +
-                        "   - Khó vệ sinh\n\n" +
-                        "Giải pháp: Nhổ răng khôn là phương pháp triệt để nhất nha!\n" +
+                "[VAN DE RANG KHON]\n\n" +
+                        "Cac van de thuong gap:\n\n" +
+                        "1. Rang khon moc lech/ngam\n" +
+                        "   - Dau nhuc vung goc ham\n" +
+                        "   - Kho mo mieng\n\n" +
+                        "2. Viem loi trum\n" +
+                        "   - Sung do nuou phia sau\n" +
+                        "   - Dau khi nhai\n\n" +
+                        "3. Sau rang khon\n" +
+                        "   - Kho ve sinh\n\n" +
+                        "Giai phap: Nho rang khon la phuong phap triet de nhat.\n" +
                         "Hotline: 076.400.9726";
 
             default -> null;
