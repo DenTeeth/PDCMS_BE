@@ -83,6 +83,8 @@ services:
       MAIL_USERNAME: ${MAIL_USERNAME}
       MAIL_PASSWORD: ${MAIL_PASSWORD}
       APP_FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      # Gemini AI Chatbot
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
       PORT: 8080
     depends_on:
       postgres:
