@@ -287,6 +287,37 @@ public class TransactionHistoryController {
         }
 
         /**
+         * API 6.6.5: Update Transaction Notes
+         */
+        @PatchMapping("/transactions/{id}/notes")
+        @PreAuthorize("hasRole('" + ADMIN + "') or hasAuthority('UPDATE_WAREHOUSE')")
+        @Operation(summary = "Cập nhật ghi chú phiếu kho", description = """
+                        Cập nhật ghi chú cho phiếu giao dịch kho.
+
+                        **Business Logic:**
+                        - Cho phép cập nhật notes ở mọi trạng thái
+                        - Không thay đổi trạng thái phiếu
+                        - Không ảnh hưởng đến tồn kho
+                        - Notes có thể để trống
+
+                        **Permissions:**
+                        - UPDATE_WAREHOUSE: Quyền cập nhật phiếu kho
+                        """)
+        @ApiMessage("Cập nhật ghi chú thành công")
+        public ResponseEntity<?> updateTransactionNotes(
+                        @Parameter(description = "ID của phiếu giao dịch") @PathVariable Long id,
+                        @RequestBody com.dental.clinic.management.warehouse.dto.request.UpdateTransactionNotesRequest request) {
+
+                log.info("PATCH /api/v1/warehouse/transactions/{}/notes - Update notes", id);
+
+                Object response = transactionHistoryService.updateTransactionNotes(id, request.getNotes());
+
+                log.info("Transaction notes updated - ID: {}", id);
+
+                return ResponseEntity.ok(response);
+        }
+
+        /**
          * API 6.6.4: Export Transaction History to Excel
          * Issue #50: Export warehouse transactions to Excel file
          */

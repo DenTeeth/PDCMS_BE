@@ -580,6 +580,29 @@ public class TransactionHistoryService {
     }
 
     /**
+     * Update transaction notes (API 6.6.5)
+     */
+    @Transactional
+    public Object updateTransactionNotes(Long id, String notes) {
+        log.info("Updating transaction notes - ID: {}", id);
+
+        StorageTransaction transaction = transactionRepository.findById(id)
+                .orElseThrow(() -> new BadRequestException(
+                        "TRANSACTION_NOT_FOUND",
+                        "Transaction with ID " + id + " not found"));
+
+        // Update notes (can be null or empty)
+        transaction.setNotes(notes);
+        transactionRepository.save(transaction);
+
+        log.info("Transaction notes updated - ID: {}, Code: {}",
+                id, transaction.getTransactionCode());
+
+        boolean hasViewCostPermission = hasPermission(AuthoritiesConstants.VIEW_WAREHOUSE_COST);
+        return mapToDetailResponse(transaction, hasViewCostPermission);
+    }
+
+    /**
      * Check if current user has specific permission
      */
     private boolean hasPermission(String permission) {
