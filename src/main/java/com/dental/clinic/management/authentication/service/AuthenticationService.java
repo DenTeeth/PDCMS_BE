@@ -39,6 +39,7 @@ import com.dental.clinic.management.exception.authentication.TokenExpiredExcepti
 import com.dental.clinic.management.permission.domain.Permission;
 import com.dental.clinic.management.role.domain.Role;
 import com.dental.clinic.management.utils.EmailService;
+import com.dental.clinic.management.utils.ResendEmailService;
 import com.dental.clinic.management.utils.security.SecurityUtil;
 import com.dental.clinic.management.exception.account.BadCredentialsException;
 
@@ -62,6 +63,7 @@ public class AuthenticationService {
         private final AccountVerificationTokenRepository verificationTokenRepository;
         private final PasswordResetTokenRepository passwordResetTokenRepository;
         private final EmailService emailService;
+        private final ResendEmailService resendEmailService;
         private final PasswordEncoder passwordEncoder;
         private final SessionManagementService sessionManagementService;
 
@@ -73,6 +75,7 @@ public class AuthenticationService {
                         AccountVerificationTokenRepository verificationTokenRepository,
                         PasswordResetTokenRepository passwordResetTokenRepository,
                         EmailService emailService,
+                        ResendEmailService resendEmailService,
                         PasswordEncoder passwordEncoder,
                         SessionManagementService sessionManagementService) {
                 this.authenticationManager = authenticationManager;
@@ -82,6 +85,7 @@ public class AuthenticationService {
                 this.verificationTokenRepository = verificationTokenRepository;
                 this.passwordResetTokenRepository = passwordResetTokenRepository;
                 this.emailService = emailService;
+                this.resendEmailService = resendEmailService;
                 this.passwordEncoder = passwordEncoder;
                 this.sessionManagementService = sessionManagementService;
         }
@@ -134,7 +138,7 @@ public class AuthenticationService {
                 String patientCode = null;
                 String employeeCode = null;
                 String fullName = null;
-                
+
                 if (account.getPatient() != null) {
                         patientCode = account.getPatient().getPatientCode();
                         fullName = account.getPatient().getFullName();
@@ -147,7 +151,8 @@ public class AuthenticationService {
                 // Tạo JWT token chứa thông tin user (including account_id, patientCode,
                 // employeeCode, fullName)
                 String accessToken = securityUtil.createAccessToken(account.getUsername(),
-                                List.of(roleName), permissionIds, account.getAccountId(), patientCode, employeeCode, fullName);
+                                List.of(roleName), permissionIds, account.getAccountId(), patientCode, employeeCode,
+                                fullName);
                 String refreshToken = securityUtil.createRefreshToken(account.getUsername());
 
                 long now = Instant.now().getEpochSecond();
@@ -263,7 +268,7 @@ public class AuthenticationService {
                 String patientCode = null;
                 String employeeCode = null;
                 String fullName = null;
-                
+
                 if (account.getPatient() != null) {
                         patientCode = account.getPatient().getPatientCode();
                         fullName = account.getPatient().getFullName();
@@ -273,7 +278,8 @@ public class AuthenticationService {
                         fullName = account.getEmployee().getFullName();
                 }
 
-                // Tạo access token mới (including account_id, patientCode, employeeCode, fullName)
+                // Tạo access token mới (including account_id, patientCode, employeeCode,
+                // fullName)
                 String newAccess = securityUtil.createAccessToken(username, roles, permissions,
                                 account.getAccountId(), patientCode, employeeCode, fullName);
                 long now = Instant.now().getEpochSecond();
@@ -644,8 +650,9 @@ public class AuthenticationService {
                 AccountVerificationToken verificationToken = new AccountVerificationToken(account);
                 verificationTokenRepository.save(verificationToken);
 
-                // Send verification email
-                emailService.sendVerificationEmail(account.getEmail(), account.getUsername(),
+                // Send verification email using ResendEmailService (consistent with other email
+                // functions)
+                resendEmailService.sendVerificationEmail(account.getEmail(), account.getUsername(),
                                 verificationToken.getToken());
 
                 log.info(" Verification email resent to: {}", email);
@@ -654,7 +661,7 @@ public class AuthenticationService {
         /**
          * Initiate password reset process by sending reset email
          * For security reasons, always return success even if email doesn't exist
-         * 
+         *
          * @param email the email address to reset password
          */
         public void forgotPassword(String email) {
@@ -662,7 +669,7 @@ public class AuthenticationService {
 
                 // Find account - don't throw exception if not found (security best practice)
                 Account account = accountRepository.findByEmail(email).orElse(null);
-                
+
                 if (account != null) {
                         // Delete old password reset tokens
                         passwordResetTokenRepository.deleteByAccount(account);
@@ -671,15 +678,16 @@ public class AuthenticationService {
                         PasswordResetToken resetToken = new PasswordResetToken(account);
                         passwordResetTokenRepository.save(resetToken);
 
-                        // Send password reset email
-                        emailService.sendPasswordResetEmail(account.getEmail(), account.getUsername(), resetToken.getToken());
+                        // Send password reset email using ResendEmailService (same as PatientService)
+                        resendEmailService.sendPasswordResetEmail(account.getEmail(), account.getUsername(),
+                                        resetToken.getToken());
 
                         log.info("Password reset email sent to: {}", email);
                 } else {
                         // Don't reveal that account doesn't exist
                         log.info("Password reset requested for non-existent email: {}", email);
                 }
-                
+
                 // Always return success to prevent email enumeration
         }
 
