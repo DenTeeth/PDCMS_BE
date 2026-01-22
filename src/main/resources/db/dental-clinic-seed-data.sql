@@ -5030,84 +5030,78 @@ END $$;
 -- Consumables: Gang tay y te (Base unit = Đôi/pair)
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
 SELECT im.item_master_id, 'Đôi', 1, TRUE, TRUE, FALSE, TRUE, 3, NOW()
-FROM item_masters im WHERE im.item_code = 'CON-GLOVE-01'
-ON CONFLICT (item_master_id, unit_name) DO NOTHING;
+FROM item_masters im WHERE im.item_code = 'CON-GLOVE-01';
 
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
 SELECT im.item_master_id, 'Cap', 2, FALSE, TRUE, FALSE, FALSE, 2, NOW()
-FROM item_masters im WHERE im.item_code = 'CON-GLOVE-01'
-ON CONFLICT (item_master_id, unit_name) DO NOTHING;
+FROM item_masters im WHERE im.item_code = 'CON-GLOVE-01';
 
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
 SELECT im.item_master_id, 'Hop', 200, FALSE, TRUE, TRUE, FALSE, 1, NOW()
-FROM item_masters im WHERE im.item_code = 'CON-GLOVE-01'
-ON CONFLICT (item_master_id, unit_name) DO NOTHING;
+FROM item_masters im WHERE im.item_code = 'CON-GLOVE-01';
 
 -- Khau trang y te
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
 SELECT im.item_master_id, 'Cái', 1, TRUE, TRUE, FALSE, TRUE, 3, NOW()
-FROM item_masters im WHERE im.item_code = 'CON-MASK-01'
-ON CONFLICT (item_master_id, unit_name) DO NOTHING;
+FROM item_masters im WHERE im.item_code = 'CON-MASK-01';
 
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
 SELECT im.item_master_id, 'Hop', 50, FALSE, TRUE, TRUE, FALSE, 1, NOW()
-FROM item_masters im WHERE im.item_code = 'CON-MASK-01'
-ON CONFLICT (item_master_id, unit_name) DO NOTHING;
+FROM item_masters im WHERE im.item_code = 'CON-MASK-01';
 
 -- Kim tiem nha khoa
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
 SELECT im.item_master_id, 'Cái', 1, TRUE, TRUE, FALSE, TRUE, 2, NOW()
-FROM item_masters im WHERE im.item_code = 'CON-NEEDLE-01'
-ON CONFLICT (item_master_id, unit_name) DO NOTHING;
+FROM item_masters im WHERE im.item_code = 'CON-NEEDLE-01';
 
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
 SELECT im.item_master_id, 'Hop', 100, FALSE, TRUE, TRUE, FALSE, 1, NOW()
-FROM item_masters im WHERE im.item_code = 'CON-NEEDLE-01'
-ON CONFLICT (item_master_id, unit_name) DO NOTHING;
+FROM item_masters im WHERE im.item_code = 'CON-NEEDLE-01';
 
 -- Medicine: Thuoc te Septodont
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
 SELECT im.item_master_id, 'Ong', 1, TRUE, TRUE, FALSE, TRUE, 2, NOW()
-FROM item_masters im WHERE im.item_code = 'MED-SEPT-01'
-ON CONFLICT (item_master_id, unit_name) DO NOTHING;
+FROM item_masters im WHERE im.item_code = 'MED-SEPT-01';
 
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
 SELECT im.item_master_id, 'Hop', 50, FALSE, TRUE, TRUE, FALSE, 1, NOW()
-FROM item_masters im WHERE im.item_code = 'MED-SEPT-01'
-ON CONFLICT (item_master_id, unit_name) DO NOTHING;
+FROM item_masters im WHERE im.item_code = 'MED-SEPT-01';
 
 -- Material: Composite
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
 SELECT im.item_master_id, 'g', 1, TRUE, TRUE, FALSE, TRUE, 2, NOW()
-FROM item_masters im WHERE im.item_code = 'MAT-COMP-01'
-ON CONFLICT (item_master_id, unit_name) DO NOTHING;
+FROM item_masters im WHERE im.item_code = 'MAT-COMP-01';
 
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
 SELECT im.item_master_id, 'Tuyp', 4, FALSE, TRUE, TRUE, FALSE, 1, NOW()
-FROM item_masters im WHERE im.item_code = 'MAT-COMP-01'
-ON CONFLICT (item_master_id, unit_name) DO NOTHING;
+FROM item_masters im WHERE im.item_code = 'MAT-COMP-01';
 
 -- Missing units for API 6.17 service_consumables
 -- Define base units for items that don't have them yet
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
 SELECT im.item_master_id, 'Gói', 1, TRUE, TRUE, FALSE, TRUE, 1, NOW()
-FROM item_masters im WHERE im.item_code = 'CON-GAUZE-01'
-ON CONFLICT DO NOTHING;
+FROM item_masters im WHERE im.item_code = 'CON-GAUZE-01';
 
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
 SELECT im.item_master_id, 'ml', 1, TRUE, TRUE, FALSE, TRUE, 1, NOW()
-FROM item_masters im WHERE im.item_code = 'MAT-ETCH-01'
-ON CONFLICT DO NOTHING;
+FROM item_masters im WHERE im.item_code = 'MAT-ETCH-01';
 
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
 SELECT im.item_master_id, 'ml', 1, TRUE, TRUE, TRUE, FALSE, 1, NOW()
-FROM item_masters im WHERE im.item_code = 'MAT-BOND-01'
-ON CONFLICT DO NOTHING;
+FROM item_masters im WHERE im.item_code = 'MAT-BOND-01';
 
 INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
 SELECT im.item_master_id, 'drop', 0.05, FALSE, TRUE, FALSE, TRUE, 2, NOW()
-FROM item_masters im WHERE im.item_code = 'MAT-BOND-01'
-ON CONFLICT DO NOTHING;
+FROM item_masters im WHERE im.item_code = 'MAT-BOND-01';
+
+-- Units for items used in service_consumables
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
+SELECT im.item_master_id, 'g', 1, TRUE, TRUE, FALSE, TRUE, 1, NOW()
+FROM item_masters im WHERE im.item_code = 'MAT-POL-01';
+
+INSERT INTO item_units (item_master_id, unit_name, conversion_rate, is_base_unit, is_active, is_default_import_unit, is_default_export_unit, display_order, created_at)
+SELECT im.item_master_id, 'g', 1, TRUE, TRUE, FALSE, TRUE, 1, NOW()
+FROM item_masters im WHERE im.item_code = 'MED-GEL-01';
 
 -- Reset sequence
 SELECT setval('item_units_unit_id_seq', (SELECT COALESCE(MAX(unit_id), 0) FROM item_units));
@@ -5362,6 +5356,100 @@ INSERT INTO service_consumables (service_id, item_master_id, quantity_per_servic
 INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 5, u.unit_id, 'Cam mau sau khi nhoi' FROM services s, item_masters im, item_units u WHERE s.service_code = 'EXTRACT_MILK' AND im.item_code = 'CON-GAUZE-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'Gói' ON CONFLICT (service_id, item_master_id) DO NOTHING;
 
 INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 1, u.unit_id, 'Te boi neu tre khong hop tac' FROM services s, item_masters im, item_units u WHERE s.service_code = 'EXTRACT_MILK' AND im.item_code = 'MED-GEL-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'g' ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+-- Dich vu: Tu van chinh nha (ORTHO_CONSULT)
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 1, u.unit_id, 'Kham sang loc ban dau' FROM services s, item_masters im, item_units u WHERE s.service_code = 'ORTHO_CONSULT' AND im.item_code = 'CON-GLOVE-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'Đôi' ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 1, u.unit_id, 'Bao ve bac si va benh nhan' FROM services s, item_masters im, item_units u WHERE s.service_code = 'ORTHO_CONSULT' AND im.item_code = 'CON-MASK-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'Cái' ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 1, u.unit_id, 'Lau nuoc bot khi kham' FROM services s, item_masters im, item_units u WHERE s.service_code = 'ORTHO_CONSULT' AND im.item_code = 'CON-GAUZE-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'Gói' ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+-- Dich vu: Dieu tri tuy rang truoc (ENDO_TREAT_ANT)
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 2, u.unit_id, 'Thay doi nhieu lan trong dieu tri tuy' FROM services s, item_masters im, item_units u WHERE s.service_code = 'ENDO_TREAT_ANT' AND im.item_code = 'CON-GLOVE-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'Đôi' ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 1, u.unit_id, 'Bao ve bac si' FROM services s, item_masters im, item_units u WHERE s.service_code = 'ENDO_TREAT_ANT' AND im.item_code = 'CON-MASK-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'Cái' ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 4, u.unit_id, 'Lau mau va nuoc bot' FROM services s, item_masters im, item_units u WHERE s.service_code = 'ENDO_TREAT_ANT' AND im.item_code = 'CON-GAUZE-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'Gói' ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 8, u.unit_id, 'Tram tam sau dieu tri tuy' FROM services s, item_masters im, item_units u WHERE s.service_code = 'ENDO_TREAT_ANT' AND im.item_code = 'MAT-COMP-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'g' ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 4, u.unit_id, 'Xoi mon men rang truoc khi tram' FROM services s, item_masters im, item_units u WHERE s.service_code = 'ENDO_TREAT_ANT' AND im.item_code = 'MAT-ETCH-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'ml' ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 6, u.unit_id, 'Keo dan tram' FROM services s, item_masters im, item_units u WHERE s.service_code = 'ENDO_TREAT_ANT' AND im.item_code = 'MAT-BOND-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'drop' ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+-- Dich vu: Dieu tri tuy rang sau (ENDO_TREAT_POST)
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 2, u.unit_id, 'Thay doi nhieu lan trong dieu tri tuy' FROM services s, item_masters im, item_units u WHERE s.service_code = 'ENDO_TREAT_POST' AND im.item_code = 'CON-GLOVE-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'Đôi' ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 1, u.unit_id, 'Bao ve bac si' FROM services s, item_masters im, item_units u WHERE s.service_code = 'ENDO_TREAT_POST' AND im.item_code = 'CON-MASK-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'Cái' ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 5, u.unit_id, 'Lau mau va nuoc bot' FROM services s, item_masters im, item_units u WHERE s.service_code = 'ENDO_TREAT_POST' AND im.item_code = 'CON-GAUZE-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'Gói' ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 10, u.unit_id, 'Tram tam sau dieu tri tuy' FROM services s, item_masters im, item_units u WHERE s.service_code = 'ENDO_TREAT_POST' AND im.item_code = 'MAT-COMP-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'g' ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 5, u.unit_id, 'Xoi mon men rang truoc khi tram' FROM services s, item_masters im, item_units u WHERE s.service_code = 'ENDO_TREAT_POST' AND im.item_code = 'MAT-ETCH-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'ml' ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 8, u.unit_id, 'Keo dan tram' FROM services s, item_masters im, item_units u WHERE s.service_code = 'ENDO_TREAT_POST' AND im.item_code = 'MAT-BOND-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'drop' ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+-- Dich vu: Nhoi rang thuong (EXTRACT_NORM)
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 1, u.unit_id, 'Thao tac nhoi rang thong thuong' FROM services s, item_masters im, item_units u WHERE s.service_code = 'EXTRACT_NORM' AND im.item_code = 'CON-GLOVE-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'Đôi' ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 1, u.unit_id, 'Bao ve bac si' FROM services s, item_masters im, item_units u WHERE s.service_code = 'EXTRACT_NORM' AND im.item_code = 'CON-MASK-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'Cái' ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 6, u.unit_id, 'Cam mau sau khi nhoi' FROM services s, item_masters im, item_units u WHERE s.service_code = 'EXTRACT_NORM' AND im.item_code = 'CON-GAUZE-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'Gói' ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 1, u.unit_id, 'Te tai cho truoc khi nhoi' FROM services s, item_masters im, item_units u WHERE s.service_code = 'EXTRACT_NORM' AND im.item_code = 'MED-GEL-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'g' ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+-- Dich vu: Nhoi rang khon muc 1 (EXTRACT_WISDOM_L1)
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 2, u.unit_id, 'Thay doi trong tieu phau' FROM services s, item_masters im, item_units u WHERE s.service_code = 'EXTRACT_WISDOM_L1' AND im.item_code = 'CON-GLOVE-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'Đôi' ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 1, u.unit_id, 'Bao ve bac si' FROM services s, item_masters im, item_units u WHERE s.service_code = 'EXTRACT_WISDOM_L1' AND im.item_code = 'CON-MASK-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'Cái' ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 8, u.unit_id, 'Cam mau sau tieu phau' FROM services s, item_masters im, item_units u WHERE s.service_code = 'EXTRACT_WISDOM_L1' AND im.item_code = 'CON-GAUZE-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'Gói' ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 2, u.unit_id, 'Te tai cho truoc phau thuat' FROM services s, item_masters im, item_units u WHERE s.service_code = 'EXTRACT_WISDOM_L1' AND im.item_code = 'MED-GEL-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'g' ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+-- Dich vu: Nhoi rang khon muc 2 (EXTRACT_WISDOM_L2)
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 3, u.unit_id, 'Thay doi nhieu lan trong phau thuat phuc tap' FROM services s, item_masters im, item_units u WHERE s.service_code = 'EXTRACT_WISDOM_L2' AND im.item_code = 'CON-GLOVE-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'Đôi' ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 1, u.unit_id, 'Bao ve bac si' FROM services s, item_masters im, item_units u WHERE s.service_code = 'EXTRACT_WISDOM_L2' AND im.item_code = 'CON-MASK-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'Cái' ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 12, u.unit_id, 'Cam mau sau phau thuat phuc tap' FROM services s, item_masters im, item_units u WHERE s.service_code = 'EXTRACT_WISDOM_L2' AND im.item_code = 'CON-GAUZE-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'Gói' ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 3, u.unit_id, 'Te tai cho truoc phau thuat' FROM services s, item_masters im, item_units u WHERE s.service_code = 'EXTRACT_WISDOM_L2' AND im.item_code = 'MED-GEL-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'g' ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+-- Dich vu: Cao voi rang muc 2 (SCALING_L2)
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 2, u.unit_id, 'Thay doi trong qua trinh cao voi nhieu' FROM services s, item_masters im, item_units u WHERE s.service_code = 'SCALING_L2' AND im.item_code = 'CON-GLOVE-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'Đôi' ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 1, u.unit_id, 'Bao ve bac si' FROM services s, item_masters im, item_units u WHERE s.service_code = 'SCALING_L2' AND im.item_code = 'CON-MASK-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'Cái' ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 4, u.unit_id, 'Lau mau va nuoc bot nhieu hon' FROM services s, item_masters im, item_units u WHERE s.service_code = 'SCALING_L2' AND im.item_code = 'CON-GAUZE-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'Gói' ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 20, u.unit_id, 'Danh bong sau cao voi muc 2' FROM services s, item_masters im, item_units u WHERE s.service_code = 'SCALING_L2' AND im.item_code = 'MAT-POL-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'g' ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+-- Dich vu: Tay trang rang tai phong (BLEACH_INOFFICE)
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 2, u.unit_id, 'Thay doi trong qua trinh tay trang' FROM services s, item_masters im, item_units u WHERE s.service_code = 'BLEACH_INOFFICE' AND im.item_code = 'CON-GLOVE-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'Đôi' ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 1, u.unit_id, 'Bao ve bac si' FROM services s, item_masters im, item_units u WHERE s.service_code = 'BLEACH_INOFFICE' AND im.item_code = 'CON-MASK-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'Cái' ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 4, u.unit_id, 'Lau chat tay trang va nuoc bot' FROM services s, item_masters im, item_units u WHERE s.service_code = 'BLEACH_INOFFICE' AND im.item_code = 'CON-GAUZE-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'Gói' ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 2, u.unit_id, 'Giam nhuc nhoi sau tay trang' FROM services s, item_masters im, item_units u WHERE s.service_code = 'BLEACH_INOFFICE' AND im.item_code = 'MED-GEL-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'g' ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+-- Dich vu: Phau thuat cat nuou (OTHER_GINGIVECTOMY)
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 2, u.unit_id, 'Thay doi trong phau thuat cat nuou' FROM services s, item_masters im, item_units u WHERE s.service_code = 'OTHER_GINGIVECTOMY' AND im.item_code = 'CON-GLOVE-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'Đôi' ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 1, u.unit_id, 'Bao ve bac si' FROM services s, item_masters im, item_units u WHERE s.service_code = 'OTHER_GINGIVECTOMY' AND im.item_code = 'CON-MASK-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'Cái' ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 10, u.unit_id, 'Cam mau sau phau thuat' FROM services s, item_masters im, item_units u WHERE s.service_code = 'OTHER_GINGIVECTOMY' AND im.item_code = 'CON-GAUZE-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'Gói' ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 2, u.unit_id, 'Te tai cho truoc phau thuat' FROM services s, item_masters im, item_units u WHERE s.service_code = 'OTHER_GINGIVECTOMY' AND im.item_code = 'MED-GEL-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'g' ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+-- Dich vu: Chup phim chinh nha (ORTHO_FILMS)
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 1, u.unit_id, 'Bao ve khi chup phim' FROM services s, item_masters im, item_units u WHERE s.service_code = 'ORTHO_FILMS' AND im.item_code = 'CON-GLOVE-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'Đôi' ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 1, u.unit_id, 'Bao ve bac si' FROM services s, item_masters im, item_units u WHERE s.service_code = 'ORTHO_FILMS' AND im.item_code = 'CON-MASK-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'Cái' ON CONFLICT (service_id, item_master_id) DO NOTHING;
+
+INSERT INTO service_consumables (service_id, item_master_id, quantity_per_service, unit_id, notes) SELECT s.service_id, im.item_master_id, 1, u.unit_id, 'Lau nuoc bot khi chup phim' FROM services s, item_masters im, item_units u WHERE s.service_code = 'ORTHO_FILMS' AND im.item_code = 'CON-GAUZE-01' AND u.item_master_id = im.item_master_id AND u.unit_name = 'Gói' ON CONFLICT (service_id, item_master_id) DO NOTHING;
 
 -- Reset sequence
 SELECT setval('service_consumables_link_id_seq', (SELECT COALESCE(MAX(link_id), 0) FROM service_consumables));
