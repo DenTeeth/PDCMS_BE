@@ -695,6 +695,9 @@ INSERT INTO role_permissions (role_id, permission_id)
 SELECT 'ROLE_ADMIN', permission_id FROM permissions WHERE is_active = TRUE
 ON CONFLICT (role_id, permission_id) DO NOTHING;
 
+-- Remove VIEW_SCHEDULE_OWN from ADMIN (they only need VIEW_SCHEDULE_ALL)
+DELETE FROM role_permissions WHERE role_id = 'ROLE_ADMIN' AND permission_id = 'VIEW_SCHEDULE_OWN';
+
 
 -- ============================================
 -- ROLE_DENTIST: Bác sĩ nha khoa
@@ -861,6 +864,10 @@ ON CONFLICT (role_id, permission_id) DO NOTHING;
 -- ============================================
 INSERT INTO role_permissions (role_id, permission_id)
 VALUES
+-- ACCOUNT (view + manage for user management in sidebar)
+('ROLE_RECEPTIONIST', 'VIEW_ACCOUNT'), -- Để hiện tab sidebar quản lý tài khoản
+('ROLE_RECEPTIONIST', 'MANAGE_ACCOUNT'), -- Quản lý tài khoản nhân viên
+
 -- PATIENT (full management)
 ('ROLE_RECEPTIONIST', 'VIEW_PATIENT'),
 ('ROLE_RECEPTIONIST', 'MANAGE_PATIENT'), -- Create/Update patients
@@ -959,7 +966,7 @@ VALUES
 
 -- SCHEDULE_MANAGEMENT (full management - 8 consolidated permissions)
 ('ROLE_MANAGER', 'VIEW_SCHEDULE_ALL'), -- RBAC: View all schedules
-('ROLE_MANAGER', 'VIEW_SCHEDULE_OWN'), -- RBAC: View own schedule (for part-time managers)
+('ROLE_MANAGER', 'VIEW_AVAILABLE_SLOTS'), -- Xem các suất part-time có sẵn để đăng ký
 ('ROLE_MANAGER', 'VIEW_REGISTRATION_OWN'), -- RBAC: View own shift registrations (for part-time managers)
 ('ROLE_MANAGER', 'MANAGE_WORK_SHIFTS'), -- Manage shift templates
 ('ROLE_MANAGER', 'VIEW_WORK_SLOTS'), -- Xem suất part-time và số lượng đăng ký (chỉ xem)
