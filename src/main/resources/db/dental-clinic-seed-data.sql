@@ -2821,19 +2821,19 @@ FROM (VALUES
 ('INLAY_ONLAY_EMAX', 'Trám sứ Inlay/Onlay Emax', 'Miếng trám gián tiếp bằng sứ Emax Press.', 60, 15, 85000, 4, 'B_COSMETIC', 12, 0, 0, 0, NULL, true, NOW()),
 
 -- C. Cắm ghép Implant (category_code = 'C_IMPLANT') -- DEMO PRICES: All < 100k
-('IMPL_CONSULT', 'Khám & Tư vấn Implant', 'Khám, đánh giá tình trạng xương, tư vấn kế hoạch.', 45, 15, 0, 4, 'C_IMPLANT', 1, 0, 0, 0, NULL, true, NOW()),
+('IMPL_CONSULT', 'Khám & Tư vấn Implant', 'Khám, đánh giá tình trạng xương, tư vấn kế hoạch.', 45, 15, 10000, 4, 'C_IMPLANT', 1, 0, 0, 0, NULL, true, NOW()),
 ('IMPL_CT_SCAN', 'Chụp CT Cone Beam (Implant)', 'Chụp phim 3D phục vụ cắm ghép Implant.', 30, 15, 50000, 4, 'C_IMPLANT', 2, 0, 0, 0, NULL, true, NOW()),
 ('IMPL_SURGERY_KR', 'Phẫu thuật đặt trụ Implant Hàn Quốc', 'Phẫu thuật cắm trụ Implant (VD: Osstem, Biotem).', 90, 30, 95000, 4, 'C_IMPLANT', 3, 7, 90, 0, 1, true, NOW()),
 ('IMPL_SURGERY_EUUS', 'Phẫu thuật đặt trụ Implant Thụy Sĩ/Mỹ', 'Phẫu thuật cắm trụ Implant (VD: Straumann, Nobel).', 90, 30, 98000, 4, 'C_IMPLANT', 4, 7, 90, 0, 1, true, NOW()),
 ('IMPL_BONE_GRAFT', 'Ghép xương ổ răng', 'Phẫu thuật bổ sung xương cho vị trí cắm Implant.', 60, 30, 5000000, 5, 'C_IMPLANT', 5, 0, 14, 0, 2, true, NOW()),
 ('IMPL_SINUS_LIFT', 'Nâng xoang hàm (Hở/Kín)', 'Phẫu thuật nâng xoang để cắm Implant hàm trên.', 75, 30, 8000000, 5, 'C_IMPLANT', 6, 0, 14, 0, 1, true, NOW()),
 ('IMPL_HEALING', 'Gắn trụ lành thương (Healing Abutment)', 'Gắn trụ giúp nướu lành thương đúng hình dạng.', 20, 10, 500000, 4, 'C_IMPLANT', 7, 0, 0, 0, NULL, true, NOW()),
-('IMPL_IMPRESSION', 'Lấy dấu Implant', 'Lấy dấu để làm răng sứ trên Implant.', 30, 15, 0, 4, 'C_IMPLANT', 8, 0, 0, 0, NULL, true, NOW()),
+('IMPL_IMPRESSION', 'Lấy dấu Implant', 'Lấy dấu để làm răng sứ trên Implant.', 30, 15, 10000, 4, 'C_IMPLANT', 8, 0, 0, 0, NULL, true, NOW()),
 ('IMPL_CROWN_TITAN', 'Mão sứ Titan trên Implant', 'Làm và gắn mão sứ Titan trên Abutment.', 45, 15, 3000000, 4, 'C_IMPLANT', 9, 0, 0, 0, NULL, true, NOW()),
 ('IMPL_CROWN_ZIR', 'Mão sứ Zirconia trên Implant', 'Làm và gắn mão sứ Zirconia trên Abutment.', 45, 15, 5000000, 4, 'C_IMPLANT', 10, 0, 0, 0, NULL, true, NOW()),
 
 -- D. Chỉnh nha (category_code = 'D_ORTHO') -- DEMO PRICES: All < 100k
-('ORTHO_CONSULT', 'Khám & Tư vấn Chỉnh nha', 'Khám, phân tích phim, tư vấn kế hoạch niềng.', 45, 15, 0, 1, 'D_ORTHO', 1, 0, 0, 0, NULL, true, NOW()),
+('ORTHO_CONSULT', 'Khám & Tư vấn Chỉnh nha', 'Khám, phân tích phim, tư vấn kế hoạch niềng.', 45, 15, 10000, 1, 'D_ORTHO', 1, 0, 0, 0, NULL, true, NOW()),
 ('ORTHO_FILMS', 'Chụp Phim Chỉnh nha (Pano, Ceph)', 'Chụp phim X-quang Toàn cảnh và Sọ nghiêng.', 30, 15, 40000, 1, 'D_ORTHO', 2, 0, 0, 0, NULL, true, NOW()),
 ('ORTHO_BRACES_ON', 'Gắn mắc cài kim loại/sứ', 'Gắn bộ mắc cài lên răng.', 90, 30, 98000, 1, 'D_ORTHO', 3, 7, 0, 0, NULL, true, NOW()),
 ('ORTHO_ADJUST', 'Tái khám Chỉnh nha / Siết niềng', 'Điều chỉnh dây cung, thay thun định kỳ.', 30, 15, 40000, 1, 'D_ORTHO', 4, 0, 0, 30, NULL, true, NOW()),
@@ -2845,16 +2845,16 @@ FROM (VALUES
 ('ORTHO_RETAINER_REMOV', 'Làm hàm duy trì tháo lắp', 'Lấy dấu và giao hàm duy trì (máng trong/Hawley).', 30, 15, 70000, 1, 'D_ORTHO', 10, 0, 0, 0, NULL, true, NOW()),
 
 -- E. Phục hình Tháo lắp (category_code = 'E_PROS_DENTURE') -- DEMO PRICES: All < 100k
-('PROS_CEMENT', 'Gắn sứ / Thử sứ (Lần 2)', 'Hẹn lần 2 để thử và gắn vĩnh viễn mão sứ, cầu răng, veneer.', 30, 15, 0, 4, 'E_PROS_DENTURE', 1, 0, 0, 0, NULL, true, NOW()),
+('PROS_CEMENT', 'Gắn sứ / Thử sứ (Lần 2)', 'Hẹn lần 2 để thử và gắn vĩnh viễn mão sứ, cầu răng, veneer.', 30, 15, 10000, 4, 'E_PROS_DENTURE', 1, 0, 0, 0, NULL, true, NOW()),
 ('DENTURE_CONSULT', 'Khám & Lấy dấu Hàm Tháo Lắp', 'Lấy dấu lần đầu để làm hàm giả tháo lắp.', 45, 15, 85000, 4, 'E_PROS_DENTURE', 2, 0, 0, 0, NULL, true, NOW()),
-('DENTURE_TRYIN', 'Thử sườn/Thử răng Hàm Tháo Lắp', 'Hẹn thử khung kim loại hoặc thử răng sáp.', 30, 15, 0, 4, 'E_PROS_DENTURE', 3, 0, 0, 0, NULL, true, NOW()),
-('DENTURE_DELIVERY', 'Giao hàm & Chỉnh khớp cắn', 'Giao hàm hoàn thiện, chỉnh sửa các điểm vướng cộm.', 30, 15, 0, 4, 'E_PROS_DENTURE', 4, 0, 0, 0, NULL, true, NOW()),
+('DENTURE_TRYIN', 'Thử sườn/Thử răng Hàm Tháo Lắp', 'Hẹn thử khung kim loại hoặc thử răng sáp.', 30, 15, 10000, 4, 'E_PROS_DENTURE', 3, 0, 0, 0, NULL, true, NOW()),
+('DENTURE_DELIVERY', 'Giao hàm & Chỉnh khớp cắn', 'Giao hàm hoàn thiện, chỉnh sửa các điểm vướng cộm.', 30, 15, 10000, 4, 'E_PROS_DENTURE', 4, 0, 0, 0, NULL, true, NOW()),
 
 -- F. Dịch vụ khác (category_code = 'F_OTHER') -- DEMO PRICES: All < 100k
 ('OTHER_DIAMOND', 'Đính đá/kim cương lên răng', 'Gắn đá thẩm mỹ lên răng.', 30, 15, 35000, 7, 'F_OTHER', 1, 0, 0, 0, NULL, true, NOW()),
 ('OTHER_GINGIVECTOMY', 'Phẫu thuật cắt nướu (thẩm mỹ)', 'Làm dài thân răng, điều trị cười hở lợi.', 60, 30, 95000, 5, 'F_OTHER', 2, 0, 7, 0, NULL, true, NOW()),
 ('EMERG_PAIN', 'Khám cấp cứu / Giảm đau', 'Khám và xử lý khẩn cấp các trường hợp đau nhức, sưng, chấn thương.', 30, 15, 50000, 8, 'F_OTHER', 3, 0, 0, 0, NULL, true, NOW()),
-('SURG_CHECKUP', 'Tái khám sau phẫu thuật / Cắt chỉ', 'Kiểm tra vết thương sau nhổ răng khôn, cắm Implant, cắt nướu.', 15, 10, 0, 5, 'F_OTHER', 4, 0, 0, 0, NULL, true, NOW())
+('SURG_CHECKUP', 'Tái khám sau phẫu thuật / Cắt chỉ', 'Kiểm tra vết thương sau nhổ răng khôn, cắm Implant, cắt nướu.', 15, 10, 10000, 5, 'F_OTHER', 4, 0, 0, 0, NULL, true, NOW())
 ) AS vals(service_code, service_name, description, default_duration_minutes, default_buffer_minutes, price, specialization_id, category_code_ref, display_order, minimum_preparation_days, recovery_days, spacing_days, max_appointments_per_day, is_active, created_at)
 LEFT JOIN service_categories sc ON sc.category_code = vals.category_code_ref
 ON CONFLICT (service_code) DO UPDATE SET
