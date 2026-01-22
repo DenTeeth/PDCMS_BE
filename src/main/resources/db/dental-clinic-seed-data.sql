@@ -1351,16 +1351,16 @@ INSERT INTO patients (
     consecutive_no_shows, is_booking_blocked, is_active, created_at, updated_at
 )
 VALUES
-(1, 12, 'PAT-001', 'Đoàn Thanh', 'Phong', 'phong.dt@email.com', '0971111111', '1995-03-15', '123 Lê Văn Việt, Q9, TPHCM', 'MALE',
+(1, 12, 'PAT001', 'Đoàn Thanh', 'Phong', 'phong.dt@email.com', '0971111111', '1995-03-15', '123 Lê Văn Việt, Q9, TPHCM', 'MALE',
     'Tiền sử viêm lợi, đã điều trị năm 2020', 'Dị ứng Penicillin', 'Đoàn Văn Nam', '0901111111', 'Cha',
     0, FALSE, TRUE, NOW(), NOW()),
-(2, 13, 'PAT-002', 'Phạm Văn', 'Phong', 'phong.pv@email.com', '0972222222', '1990-07-20', '456 Võ Văn Ngân, Thủ Đức, TPHCM', 'MALE',
+(2, 13, 'PAT002', 'Phạm Văn', 'Phong', 'phong.pv@email.com', '0972222222', '1990-07-20', '456 Võ Văn Ngân, Thủ Đức, TPHCM', 'MALE',
     'Không có tiền sử bệnh lý', 'Không có dị ứng', 'Phạm Thị Lan', '0902222222', 'Vợ',
     0, FALSE, TRUE, NOW(), NOW()),
-(3, 14, 'PAT-003', 'Nguyễn Tuấn', 'Anh', 'anh.nt@email.com', '0973333333', '1988-11-10', '789 Đường D2, Bình Thạnh, TPHCM', 'MALE',
+(3, 14, 'PAT003', 'Nguyễn Tuấn', 'Anh', 'anh.nt@email.com', '0973333333', '1988-11-10', '789 Đường D2, Bình Thạnh, TPHCM', 'MALE',
     'Cao huyết áp, đang dùng thuốc kiểm soát', 'Dị ứng thuốc gây tê Lidocaine', 'Nguyễn Thị Hoa', '0903333333', 'Vợ',
     0, FALSE, TRUE, NOW(), NOW()),
-(4, 18, 'PAT-004', 'Trần Văn', 'Nam', 'nam.tv@email.com', '0975555555', '1992-05-25', '555 Hoàng Diệu, Q4, TPHCM', 'MALE',
+(4, 18, 'PAT004', 'Trần Văn', 'Nam', 'nam.tv@email.com', '0975555555', '1992-05-25', '555 Hoàng Diệu, Q4, TPHCM', 'MALE',
     'Tiểu đường type 2, HbA1c: 7.2%', 'Dị ứng tôm cua, aspirin', 'Trần Thị Mai', '0905555555', 'Vợ',
     0, FALSE, TRUE, NOW(), NOW())
 ON CONFLICT (patient_id) DO NOTHING;
@@ -1381,19 +1381,19 @@ INSERT INTO patients (
     consecutive_no_shows, is_booking_blocked, is_active, created_at, updated_at
 )
 VALUES
-(5, 19, 'PAT-005', 'Lê Thị', 'Hoa', 'hoa.lt@email.com', '0976666666', '1993-08-12', '88 Trần Hưng Đạo, Q5, TPHCM', 'FEMALE',
+(5, 19, 'PAT005', 'Lê Thị', 'Hoa', 'hoa.lt@email.com', '0976666666', '1993-08-12', '88 Trần Hưng Đạo, Q5, TPHCM', 'FEMALE',
     'Đã nhổ 2 răng khôn', 'Dị ứng phấn hoa', 'Lê Văn Hùng', '0906666666', 'Cha', NULL, NULL, NULL, NULL,
     0, FALSE, TRUE, NOW(), NOW()),
-(6, 20, 'PAT-006', 'Võ Văn', 'Khánh', 'khanh.vv@email.com', '0977777777', '1985-04-18', '99 Lê Lợi, Q1, TPHCM', 'MALE',
+(6, 20, 'PAT006', 'Võ Văn', 'Khánh', 'khanh.vv@email.com', '0977777777', '1985-04-18', '99 Lê Lợi, Q1, TPHCM', 'MALE',
     'Hen suyễn nhẹ', 'Dị ứng bụi', 'Võ Thị Thanh', '0907777777', 'Vợ', NULL, NULL, NULL, NULL,
     0, FALSE, TRUE, NOW(), NOW()),
-(7, 21, 'PAT-007', 'Trần Thị', 'Mai', 'mai.tt@email.com', '0978888888', '1998-12-25', '77 Nguyễn Huệ, Q1, TPHCM', 'FEMALE',
+(7, 21, 'PAT007', 'Trần Thị', 'Mai', 'mai.tt@email.com', '0978888888', '1998-12-25', '77 Nguyễn Huệ, Q1, TPHCM', 'FEMALE',
     'Không có', 'Không có', 'Trần Văn Long', '0908888888', 'Chồng', NULL, NULL, NULL, NULL,
     0, FALSE, TRUE, NOW(), NOW()),
-(8, 22, 'PAT-008', 'Phan Văn', 'Tú', 'tu.pv@email.com', '0979999999', '1991-06-30', '66 Pasteur, Q3, TPHCM', 'MALE',
+(8, 22, 'PAT008', 'Phan Văn', 'Tú', 'tu.pv@email.com', '0979999999', '1991-06-30', '66 Pasteur, Q3, TPHCM', 'MALE',
     'Viêm xoang mạn tính', 'Không có', 'Phan Thị Kim', '0909999999', 'Vợ', NULL, NULL, NULL, NULL,
     0, FALSE, TRUE, NOW(), NOW()),
-(9, 23, 'PAT-009', 'Nguyễn Thị', 'Lan', 'lan.nt@email.com', '0970000000', '2011-09-15', '55 Cách Mạng Tháng 8, Q10, TPHCM', 'FEMALE',
+(9, 23, 'PAT009', 'Nguyễn Thị', 'Lan', 'lan.nt@email.com', '0970000000', '2011-09-15', '55 Cách Mạng Tháng 8, Q10, TPHCM', 'FEMALE',
     'Trẻ em khỏe mạnh', 'Không có', 'Nguyễn Văn Minh', '0900000000', 'Bố', 'Nguyễn Văn Minh', '0900000000', 'Bố', '079088001234',
     0, FALSE, TRUE, NOW(), NOW())
 ON CONFLICT (patient_id) DO NOTHING;
