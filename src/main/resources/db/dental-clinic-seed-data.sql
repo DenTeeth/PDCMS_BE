@@ -1401,8 +1401,7 @@ ON CONFLICT (patient_id) DO NOTHING;
 INSERT INTO work_shifts (work_shift_id, shift_name, start_time, end_time, category, is_active)
 VALUES
 ('WKS_MORNING_01', 'Ca Sáng', '08:00:00', '12:00:00', 'NORMAL', TRUE),
-('WKS_AFTERNOON_01', 'Ca Chiều', '13:00:00', '17:00:00', 'NORMAL', TRUE),
-('WKS_EVENING_01', 'Ca Tối', '18:00:00', '21:00:00', 'NORMAL', TRUE)
+('WKS_AFTERNOON_01', 'Ca Chiều', '13:00:00', '17:00:00', 'NORMAL', TRUE)
 ON CONFLICT (work_shift_id) DO NOTHING;
 
 
@@ -1650,10 +1649,6 @@ VALUES
 -- Should be auto-cancelled: 1 week ago
 ('OTR_TEST_AUTO_002', 3, 3, CURRENT_DATE - INTERVAL '7 days', 'WKS_AFTERNOON_02',
  '🧪 TEST: Yêu cầu OT 1 tuần trước - should be auto-cancelled', 'PENDING', NULL, NULL, NULL, NULL, NOW()),
-
--- Should be auto-cancelled: yesterday
-('OTR_TEST_AUTO_003', 4, 4, CURRENT_DATE - INTERVAL '1 day', 'WKS_EVENING_01',
- '🧪 TEST: Yêu cầu OT hôm qua - should be auto-cancelled', 'PENDING', NULL, NULL, NULL, NULL, NOW()),
 
 -- Should NOT be auto-cancelled: tomorrow (future date)
 ('OTR_TEST_AUTO_004', 2, 2, CURRENT_DATE + INTERVAL '1 day', 'WKS_MORNING_01',
