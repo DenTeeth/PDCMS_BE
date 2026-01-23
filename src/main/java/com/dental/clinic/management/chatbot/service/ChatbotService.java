@@ -70,33 +70,36 @@ public class ChatbotService {
             return "Dạ em đang gặp sự cố kỹ thuật. Anh/Chị vui lòng gọi Hotline 076.400.9726 để được hỗ trợ ạ!";
         }
 
-        // Handle dynamic database queries
         if ("OUT_OF_SCOPE".equals(detectedId)) {
             return getOutOfScopeResponse();
         }
-        if ("PRICE_LIST".equals(detectedId)) {
+
+        if (detectedId.startsWith("PRICE")) {
             return buildPriceListResponse();
         }
-        if ("SERVICE_INFO".equals(detectedId) || "SERVICE_SEARCH".equals(detectedId)) {
+
+        if (detectedId.startsWith("SERVICE")) {
             return handleServiceQuery(userMessage);
         }
-        // Handle symptom consultation (deterministic)
-        String symptomResponse = getSymptomResponse(detectedId);
+
+        String symptomId = detectedId;
+        if (detectedId.startsWith("SYMP") && !detectedId.startsWith("SYMPTOM_")) {
+            symptomId = detectSymptomFromMessage(userMessage);
+        }
+        String symptomResponse = getSymptomResponse(symptomId);
         if (symptomResponse != null) {
             return symptomResponse;
         }
 
-        // Check static knowledge base
         Optional<ChatbotKnowledge> match = knowledgeBase.stream()
                 .filter(k -> k.getKnowledgeId().equalsIgnoreCase(detectedId))
                 .findFirst();
 
         if (match.isPresent()) {
             return match.get().getResponse();
-        } else {
-            // Try intelligent response using Gemini
-            return generateIntelligentResponse(userMessage);
         }
+
+        return generateIntelligentResponse(userMessage);
     }
 
     /**
@@ -104,33 +107,27 @@ public class ChatbotService {
      */
     private String buildClassificationPrompt(String userMessage, String listIds) {
         return """
-                Task: Classify user message into EXACTLY ONE ID from this list: [%s].
+                Phân loại câu hỏi của khách hàng vào ĐÚNG 1 ID.
 
-                Classification rules:
-                - GREETING: chao hoi, xin chao, hello, hi
-                - PRICE_LIST: hoi ve bang gia, gia dich vu, bao nhieu tien (general)
-                - SERVICE_INFO: hoi ve dich vu cu the (ten dich vu, chi tiet)
-                - SERVICE_SEARCH: tim kiem dich vu theo keyword
-                - SYMPTOM_TOOTHACHE: dau rang, nhuc rang, rang dau
-                - SYMPTOM_BLEEDING_GUMS: chay mau nuou, chay mau loi
-                - SYMPTOM_LOOSE_TOOTH: rang lung lay, rang long
-                - SYMPTOM_BAD_BREATH: hoi mieng, mieng hoi
-                - SYMPTOM_SENSITIVE_TEETH: e buot, rang nhay cam
-                - SYMPTOM_SWOLLEN_FACE: sung ma, sung mat
-                - SYMPTOM_WISDOM_TOOTH: rang khon, rang so 8
-                - ADDRESS: dia chi, o dau, location
-                - OUT_OF_SCOPE: khong lien quan den nha khoa (game, thoi tiet, chinh tri, etc.)
-                - UNKNOWN: khong thuoc cac loai tren
+                Danh sách ID: [%s]
 
-                User message: "%s"
+                Quy tắc:
+                - GREETING: chào hỏi (xin chào, hello, hi, chào bạn)
+                - PRICE_LIST: hỏi giá, bảng giá, bao nhiêu tiền, chi phí
+                - SERVICE_INFO: hỏi về dịch vụ cụ thể (tẩy trắng, niềng răng, implant...)
+                - SYMPTOM_TOOTHACHE: đau răng, nhức răng, răng đau, buốt răng
+                - SYMPTOM_BLEEDING_GUMS: chảy máu nướu, chảy máu lợi, nướu chảy máu
+                - SYMPTOM_LOOSE_TOOTH: răng lung lay, răng lỏng, răng yếu
+                - SYMPTOM_BAD_BREATH: hôi miệng, miệng hôi, mùi hôi
+                - SYMPTOM_SENSITIVE_TEETH: ê buốt, răng nhạy cảm, buốt khi uống lạnh
+                - SYMPTOM_SWOLLEN_FACE: sưng má, sưng mặt, sưng nướu
+                - SYMPTOM_WISDOM_TOOTH: răng khôn, răng số 8, mọc răng khôn
+                - ADDRESS: địa chỉ, ở đâu, chỉ đường
+                - OUT_OF_SCOPE: không liên quan nha khoa (game, thời tiết, chính trị)
 
-                Rules:
-                1. Return ONLY the ID, no explanation
-                2. If asking about price/cost, return PRICE_LIST
-                3. If asking about specific service by name, return SERVICE_INFO
-                4. If message has NOTHING to do with dental/healthcare, return OUT_OF_SCOPE
+                Câu hỏi: "%s"
 
-                Your answer:
+                CHỈ TRẢ LỜI ID, KHÔNG GIẢI THÍCH.
                 """.formatted(listIds, userMessage);
     }
 
@@ -226,24 +223,30 @@ public class ChatbotService {
      */
     private String generateIntelligentResponse(String userMessage) {
         try {
-            // Get service list for context
             List<DentalService> services = dentalServiceRepository.findAllActiveServicesWithCategory();
             String serviceContext = services.stream()
-                    .limit(10)
+                    .limit(15)
                     .map(s -> s.getServiceName() + " (" + formatPrice(s.getPrice()) + ")")
                     .collect(Collectors.joining(", "));
 
             String prompt = """
-                    Bạn là trợ lý ảo của phòng khám nha khoa DenTeeth.
+                    Bạn là trợ lý ảo của phòng khám nha khoa DenTeeth. Tên bạn là "Em".
+                    Xưng hô: Em - Anh/Chị. Giọng điệu: thân thiện, chuyên nghiệp.
 
-                    Thông tin phòng khám:
+                    THÔNG TIN PHÒNG KHÁM:
                     - Địa chỉ: Lô E2a-7, Đường D1, Khu Công nghệ cao, P. Long Thạnh Mỹ, TP. Thủ Đức, TPHCM
                     - Hotline: 076.400.9726
-                    - Một số dịch vụ: %s
+                    - Giờ làm việc: 8h-20h (Thứ 2-CN)
+                    - Dịch vụ: %s
 
-                    Câu hỏi của khách: "%s"
+                    CÂU HỎI: "%s"
 
-                    Trả lời ngắn gọn, thân thiện (dưới 100 từ). Nếu không biết, đề nghị gọi hotline.
+                    YÊU CẦU:
+                    - Trả lời đầy đủ, hữu ích
+                    - Nếu hỏi về triệu chứng: mô tả nguyên nhân + khuyên khám
+                    - Nếu hỏi giá: trả lời giá + gợi ý đặt lịch
+                    - Luôn kết thúc bằng hotline hoặc gợi ý hữu ích
+                    - Dưới 150 từ
                     """.formatted(serviceContext, userMessage);
 
             String response = callGeminiApi(prompt);
@@ -275,6 +278,61 @@ public class ChatbotService {
                 "- Hướng dẫn đặt lịch khám\n\n" +
                 "Anh/Chị có câu hỏi gì về răng miệng không ạ?\n" +
                 "Hotline: 076.400.9726";
+    }
+
+    /**
+     * Detect symptom type from user message using keywords
+     */
+    private String detectSymptomFromMessage(String message) {
+        String lowerMsg = message.toLowerCase();
+
+        // Đau răng, nhức răng
+        if (lowerMsg.contains("dau rang") || lowerMsg.contains("nhuc rang") ||
+                lowerMsg.contains("đau răng") || lowerMsg.contains("nhức răng") ||
+                lowerMsg.contains("dau") && lowerMsg.contains("rang")) {
+            return "SYMPTOM_TOOTHACHE";
+        }
+
+        // Chảy máu nướu/lợi
+        if (lowerMsg.contains("chay mau") || lowerMsg.contains("chảy máu") ||
+                lowerMsg.contains("nuou") || lowerMsg.contains("nướu") ||
+                lowerMsg.contains("loi") || lowerMsg.contains("lợi")) {
+            return "SYMPTOM_BLEEDING_GUMS";
+        }
+
+        // Răng lung lay
+        if (lowerMsg.contains("lung lay") || lowerMsg.contains("lung lay") ||
+                lowerMsg.contains("rang lay") || lowerMsg.contains("răng lay")) {
+            return "SYMPTOM_LOOSE_TOOTH";
+        }
+
+        // Hôi miệng
+        if (lowerMsg.contains("hoi mieng") || lowerMsg.contains("hôi miệng") ||
+                lowerMsg.contains("mui hoi") || lowerMsg.contains("mùi hôi")) {
+            return "SYMPTOM_BAD_BREATH";
+        }
+
+        // Ê buốt răng
+        if (lowerMsg.contains("e buot") || lowerMsg.contains("ê buốt") ||
+                lowerMsg.contains("nhay cam") || lowerMsg.contains("nhạy cảm")) {
+            return "SYMPTOM_SENSITIVE_TEETH";
+        }
+
+        // Sưng mặt/má
+        if (lowerMsg.contains("sung") || lowerMsg.contains("sưng") ||
+                lowerMsg.contains("mat") || lowerMsg.contains("mặt") ||
+                lowerMsg.contains("ma") || lowerMsg.contains("má")) {
+            return "SYMPTOM_SWOLLEN_FACE";
+        }
+
+        // Răng khôn
+        if (lowerMsg.contains("rang khon") || lowerMsg.contains("răng khôn") ||
+                lowerMsg.contains("moc rang") || lowerMsg.contains("mọc răng")) {
+            return "SYMPTOM_WISDOM_TOOTH";
+        }
+
+        // Default to toothache if can't detect
+        return "SYMPTOM_TOOTHACHE";
     }
 
     /**
@@ -394,8 +452,8 @@ public class ChatbotService {
                         Map.of("parts", List.of(
                                 Map.of("text", prompt)))),
                 "generationConfig", Map.of(
-                        "temperature", 0.0,
-                        "maxOutputTokens", 100));
+                        "temperature", 0.3,
+                        "maxOutputTokens", 500));
 
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
 
