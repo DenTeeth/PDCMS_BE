@@ -128,7 +128,7 @@ public class AppointmentEmailService {
 
                             <p style="margin-top: 30px;">Cần hỗ trợ? Liên hệ với chúng tôi:</p>
                             <p style="color: #666;">
-                                Hotline: <strong>028-1234-5678</strong><br>
+                                Hotline: <strong>0764009726</strong><br>
                                 Email: <strong>%s</strong>
                             </p>
 
@@ -241,7 +241,7 @@ public class AppointmentEmailService {
 
                             <p style="margin-top: 30px;">Cần đổi lịch hoặc hủy? Liên hệ ngay:</p>
                             <p style="color: #666;">
-                                Hotline: <strong>028-1234-5678</strong><br>
+                                Hotline: <strong>0764009726</strong><br>
                                 Email: <strong>%s</strong>
                             </p>
 

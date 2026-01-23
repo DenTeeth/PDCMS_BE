@@ -506,7 +506,7 @@ const canReschedule = appointment.rescheduleCount < 2;
 
 {!canReschedule && (
   <Typography variant="caption" color="error">
-    Liên hệ: 1900-xxxx
+    Liên hệ: 0764009726
   </Typography>
 )}
 ```
@@ -668,7 +668,7 @@ When business rules block actions, always provide:
 
 ```javascript
 const CLINIC_CONTACT = {
-  phone: '1900-xxxx',
+  phone: '0764009726',
   email: 'support@dentalclinic.com',
   hours: '8:00 - 20:00 (Thứ 2 - Thứ 7)'
 };
