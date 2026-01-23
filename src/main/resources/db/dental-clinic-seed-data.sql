@@ -1131,6 +1131,7 @@ VALUES
 
 -- CLINICAL_RECORDS (read-only own records)
 ('ROLE_PATIENT', 'VIEW_ATTACHMENT'), -- View attachments of own clinical records
+('ROLE_PATIENT', 'VIEW_VITAL_SIGNS_REFERENCE'), -- View vital signs reference ranges for assessment
 
 -- PATIENT_IMAGES (view own images)
 ('ROLE_PATIENT', 'PATIENT_IMAGE_READ'), -- View own patient images
