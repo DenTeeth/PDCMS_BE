@@ -77,15 +77,17 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
       JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION:-2592000000}
-      # Resend Email API (Production)
-      RESEND_API_KEY: ${RESEND_API_KEY}
+      # Resend Email API
       APP_RESEND_API_KEY: ${RESEND_API_KEY}
-      # SendGrid Configuration (Backup)
+      # Email configuration
+      APP_MAIL_FROM: ${MAIL_FROM:-noreply@nhatlonh.id.vn}
+      APP_MAIL_FROM_NAME: "Phòng khám nha khoa DenTeeth"
+      APP_MAIL_REPLY_TO: ${MAIL_REPLY_TO:-hellodenteeth@gmail.com}
+      # SendGrid (Backup)
       SENDGRID_API_KEY: ${SENDGRID_API_KEY}
-      MAIL_FROM: ${MAIL_FROM:-noreply@nhatlonh.id.vn}
       MAIL_USERNAME: ${MAIL_USERNAME}
       MAIL_PASSWORD: ${MAIL_PASSWORD}
-      APP_FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      APP_FRONTEND_URL: ${FRONTEND_URL:-https://pdcms.vercel.app}
       # Gemini AI Chatbot
       GEMINI_API_KEY: ${GEMINI_API_KEY}
       PORT: 8080
